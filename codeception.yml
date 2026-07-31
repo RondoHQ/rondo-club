@@ -33,5 +33,5 @@ suites:
           adminEmail: "admin@stadion.test"
           plugins:
             - advanced-custom-fields-pro/acf.php
-          theme: stadion
+          theme: rondo-club
           loadOnly: false

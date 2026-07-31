@@ -18,14 +18,10 @@ class AgeGroupAccessTest extends RondoTestCase {
 
 		// Clean up the option before each test.
 		delete_option( 'rondo_age_group_access' );
-
-		// Reset the suppress flag.
-		AccessControl::$suppress_age_group_filter = false;
 	}
 
 	protected function tear_down(): void {
 		delete_option( 'rondo_age_group_access' );
-		AccessControl::$suppress_age_group_filter = false;
 		parent::tear_down();
 	}
 
@@ -105,6 +101,16 @@ class AgeGroupAccessTest extends RondoTestCase {
 	}
 
 	/**
+	 * Sponsor managers need the club-wide people list to find and manage sponsors.
+	 */
+	public function test_returns_null_for_sponsor_manager(): void {
+		$user_id = self::factory()->user->create( [ 'role' => 'rondo_sponsorbeheerder' ] );
+
+		$result = AccessControl::get_permitted_age_groups( $user_id );
+		$this->assertNull( $result, 'User with sponsorbeheer capability should bypass filtering' );
+	}
+
+	/**
 	 * Bestuur role (has all management caps) should bypass filtering.
 	 */
 	public function test_returns_null_for_bestuur_user(): void {
@@ -122,19 +128,19 @@ class AgeGroupAccessTest extends RondoTestCase {
 	}
 
 	/**
-	 * When no age-group config exists, should return null (no restriction).
+	 * When no age-group config exists, a non-management user sees nobody.
 	 */
-	public function test_returns_null_when_no_config_exists(): void {
+	public function test_returns_empty_when_no_config_exists(): void {
 		$user_id = $this->createRondoUser( [ 'user_login' => 'no_config_user' ] );
 
 		$result = AccessControl::get_permitted_age_groups( $user_id );
-		$this->assertNull( $result, 'Should return null when no config exists' );
+		$this->assertSame( [], $result, 'Unconfigured non-management user should see nobody' );
 	}
 
 	/**
-	 * When user's role has an empty array in config, should return null (no restriction).
+	 * When the user's role has an empty array in config, they see nobody.
 	 */
-	public function test_returns_null_when_role_has_empty_config(): void {
+	public function test_returns_empty_when_role_has_empty_config(): void {
 		$user_id = $this->createRondoUser( [ 'user_login' => 'empty_config_user' ] );
 
 		update_option(
@@ -145,7 +151,7 @@ class AgeGroupAccessTest extends RondoTestCase {
 		);
 
 		$result = AccessControl::get_permitted_age_groups( $user_id );
-		$this->assertNull( $result, 'Should return null when role has empty array config' );
+		$this->assertSame( [], $result, 'Empty role config should mean "see nobody"' );
 	}
 
 	/**
@@ -226,7 +232,7 @@ class AgeGroupAccessTest extends RondoTestCase {
 	/**
 	 * When user's role is not in the config, should return null.
 	 */
-	public function test_returns_null_when_role_not_in_config(): void {
+	public function test_returns_empty_when_role_not_in_config(): void {
 		$user_id = $this->createRondoUser( [ 'user_login' => 'unconfigured_role_user' ] );
 
 		update_option(
@@ -237,20 +243,42 @@ class AgeGroupAccessTest extends RondoTestCase {
 		);
 
 		$result = AccessControl::get_permitted_age_groups( $user_id );
-		$this->assertNull( $result, 'Should return null when user role is not in config' );
+		$this->assertSame( [], $result, 'A role absent from the config should see nobody' );
 	}
 
 	/**
-	 * The suppress flag should exist as a static property.
+	 * A user who may see nobody has an empty permitted list. This is the invariant
+	 * that used to be widened by `suppress_age_group`: with that flag removed, an
+	 * empty list is the whole story — there is no path that turns it into "everybody".
 	 */
-	public function test_suppress_flag_exists(): void {
-		$this->assertFalse( AccessControl::$suppress_age_group_filter );
+	public function test_user_who_sees_nobody_has_empty_permitted_list(): void {
+		$user_id = $this->createRondoUser( [ 'user_login' => 'sees_nobody_user' ] );
 
-		AccessControl::$suppress_age_group_filter = true;
-		$this->assertTrue( AccessControl::$suppress_age_group_filter );
+		$this->assertSame(
+			[],
+			AccessControl::get_permitted_age_groups( $user_id ),
+			'A user with no age-group config must see nobody'
+		);
+	}
 
-		// Reset.
-		AccessControl::$suppress_age_group_filter = false;
+	/**
+	 * A coordinator with a configured, non-empty list is scoped to exactly that list.
+	 */
+	public function test_configured_coordinator_is_scoped_to_its_list(): void {
+		$user_id = $this->createRondoUser( [ 'user_login' => 'scoped_coordinator' ] );
+
+		update_option(
+			'rondo_age_group_access',
+			[
+				'rondo_user' => [ 'Onder 11', 'Onder 12' ],
+			]
+		);
+
+		$this->assertSame(
+			[ 'Onder 11', 'Onder 12' ],
+			AccessControl::get_permitted_age_groups( $user_id ),
+			'A coordinator is scoped to their configured age groups'
+		);
 	}
 
 	/**
@@ -259,5 +287,60 @@ class AgeGroupAccessTest extends RondoTestCase {
 	public function test_returns_null_for_no_user(): void {
 		$result = AccessControl::get_permitted_age_groups( 0 );
 		$this->assertNull( $result );
+	}
+
+	/**
+	 * Volunteer coordinators bypass age-group filtering.
+	 *
+	 * Diensten are staffed from the whole club: a coördinator scoped to one age
+	 * group cannot see most of the people they are meant to roster. Configured
+	 * age groups for the role are ignored, exactly as for the other management
+	 * capabilities.
+	 */
+	public function test_returns_null_for_vrijwilligers_user(): void {
+		$user_id = self::factory()->user->create( [ 'role' => 'rondo_vrijwilligers' ] );
+
+		update_option(
+			'rondo_age_group_access',
+			[
+				'rondo_vrijwilligers' => [ 'Onder 11' ],
+			]
+		);
+
+		$this->assertNull(
+			AccessControl::get_permitted_age_groups( $user_id ),
+			'A volunteer coordinator should see every member'
+		);
+		$this->assertFalse(
+			AccessControl::is_scoped_member( $user_id ),
+			'A volunteer coordinator is not a household-scoped member'
+		);
+	}
+
+	/**
+	 * The bypass is a *view* bypass. Coordinators may see every member; editing
+	 * people remains a separate decision, and this assertion is the guard rail
+	 * that keeps the two from being conflated later.
+	 */
+	public function test_vrijwilligers_bypass_grants_no_edit_rights(): void {
+		$user_id = self::factory()->user->create( [ 'role' => 'rondo_vrijwilligers' ] );
+
+		$this->assertFalse(
+			AccessControl::can_edit_people( $user_id ),
+			'Seeing every member must not imply editing them'
+		);
+	}
+
+	/**
+	 * The admin capability matrix clears a role's age-group config once the role
+	 * gains a bypass capability. It reads the list from here rather than keeping
+	 * its own copy, which is what let the two drift before.
+	 */
+	public function test_management_capabilities_are_published_for_the_admin_ui(): void {
+		$caps = AccessControl::get_management_capabilities();
+
+		$this->assertContains( 'vrijwilligers', $caps );
+		$this->assertContains( 'manage_options', $caps );
+		$this->assertContains( 'financieel_read', $caps );
 	}
 }

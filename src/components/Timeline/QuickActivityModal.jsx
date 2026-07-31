@@ -288,7 +288,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                                 ) : (
                                   <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
                                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                                      {person.first_name?.[0] || '?'}
+                                      {person.name?.[0] || person.first_name?.[0] || '?'}
                                     </span>
                                   </div>
                                 )}
@@ -347,4 +347,3 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
     </div>
   );
 }
-

@@ -288,71 +288,71 @@ class Reminders {
 	public function get_upcoming_reminders( $days_ahead = 30 ) {
 		global $wpdb;
 
-		// Query people with birthdate meta, excluding former members
-		$people_with_birthdays = $wpdb->get_results(
-			"SELECT p.ID, p.post_title, pm.meta_value as birthdate
-			FROM {$wpdb->posts} p
-			INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
-			LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'
-			WHERE p.post_type = 'person'
-			AND p.post_status = 'publish'
-			AND pm.meta_key = 'birthdate'
-			AND pm.meta_value != ''
-			AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')"
-		);
-
-		$upcoming = [];
 		$today    = new \DateTime( 'today', wp_timezone() );
 		$end_date = ( clone $today )->modify( "+{$days_ahead} days" );
 
+		$today_str    = $today->format( 'Y-m-d' );
+		$end_date_str = $end_date->format( 'Y-m-d' );
+		$current_year = (int) $today->format( 'Y' );
+
+		// Use SQL date math to filter birthdays within the window, avoiding full table scan.
+		// Calculates next birthday occurrence (this year or next) and filters in the DB.
+		$people_with_birthdays = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT p.ID, p.post_title, pm.meta_value as birthdate,
+					CASE
+						WHEN DATE(CONCAT(%d, '-', SUBSTRING(pm.meta_value, 6))) >= %s
+						THEN DATE(CONCAT(%d, '-', SUBSTRING(pm.meta_value, 6)))
+						ELSE DATE(CONCAT(%d, '-', SUBSTRING(pm.meta_value, 6)))
+					END AS next_occurrence
+				FROM {$wpdb->posts} p
+				INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+				LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'
+				WHERE p.post_type = 'person'
+				AND p.post_status = 'publish'
+				AND pm.meta_key = 'birthdate'
+				AND pm.meta_value != ''
+				AND pm.meta_value REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+				AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')
+				HAVING next_occurrence BETWEEN %s AND %s
+				ORDER BY next_occurrence ASC",
+				$current_year,
+				$today_str,
+				$current_year,
+				$current_year + 1,
+				$today_str,
+				$end_date_str
+			)
+		);
+
+		// Batch-load thumbnails for matched people
+		$person_ids = wp_list_pluck( $people_with_birthdays, 'ID' );
+		if ( ! empty( $person_ids ) ) {
+			update_meta_cache( 'post', $person_ids );
+		}
+
+		$upcoming = [];
 		foreach ( $people_with_birthdays as $person ) {
-			$birthdate = \DateTime::createFromFormat( 'Y-m-d', $person->birthdate, wp_timezone() );
-			if ( ! $birthdate ) {
-				continue;
-			}
-
-			// Calculate next occurrence for birthday (always recurring)
-			$next_occurrence = $this->calculate_next_occurrence( $person->birthdate, true );
-
-			if ( ! $next_occurrence ) {
-				continue;
-			}
-
-			// Check if the next occurrence falls within our window
-			if ( $next_occurrence > $end_date ) {
-				continue;
-			}
-
-			// Only include if next occurrence is today or in the future
-			if ( $next_occurrence < $today ) {
-				continue;
-			}
+			$next_occ = new \DateTime( $person->next_occurrence, wp_timezone() );
+			$name     = html_entity_decode( $person->post_title, ENT_QUOTES, 'UTF-8' );
 
 			$upcoming[] = [
 				'id'              => $person->ID,
-				'title'           => html_entity_decode( $person->post_title, ENT_QUOTES, 'UTF-8' ),
+				'title'           => $name,
 				'date_value'      => $person->birthdate,
-				'next_occurrence' => $next_occurrence->format( 'Y-m-d' ),
-				'days_until'      => (int) $today->diff( $next_occurrence )->days,
+				'next_occurrence' => $person->next_occurrence,
+				'days_until'      => (int) $today->diff( $next_occ )->days,
 				'is_recurring'    => true,
 				'year_unknown'    => false,
 				'related_people'  => [
 					[
 						'id'        => $person->ID,
-						'name'      => html_entity_decode( $person->post_title, ENT_QUOTES, 'UTF-8' ),
+						'name'      => $name,
 						'thumbnail' => get_the_post_thumbnail_url( $person->ID, 'thumbnail' ),
 					],
 				],
 			];
 		}
-
-		// Sort by next occurrence
-		usort(
-			$upcoming,
-			function ( $a, $b ) {
-				return strcmp( $a['next_occurrence'], $b['next_occurrence'] );
-			}
-		);
 
 		return $upcoming;
 	}

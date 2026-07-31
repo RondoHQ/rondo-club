@@ -13,15 +13,19 @@ import Dashboard from '@/pages/Dashboard';
 
 // Lazy-loaded page components (separate file for fast refresh compatibility)
 import {
-  PeopleList, PeopleAnniversaries, PersonDetail, TeamsList, TeamDetail,
+  PeopleList, PeopleAnniversaries, PeopleOnboarding, PersonDetail, TeamsList, TeamDetail,
   Kaderlijst,
   CommissiesList, CommissieDetail, TodosList,
   FeedbackList, FeedbackDetail, Settings, VOG,
   Contributie, DisciplineCasesList,
   FinanceDashboard, Facturen, FactuurDetail, FactuurNieuw, RelationshipTypes,
-  CustomFields, Login, Profile,
+  CustomFields, Login, Profile, ProfileIva, ProfileVog,
   MembershipPassScanner,
   ClothingPage,
+  VrijwilligersDashboard, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten,
+  VrijwilligersDienstForm, VrijwilligersDienstTypeForm, VrijwilligersSjablonen, VrijwilligersSjabloonForm,
+  VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig, Household,
+  TaakuitlegList, TaakuitlegForm,
 } from './lazyPages';
 
 // Page loader for Suspense fallback
@@ -96,9 +100,19 @@ function VOGRoute({ children }) {
   );
 }
 
+// Viewing finance screens: satisfied by financieel_read or financieel.
 function FinancieelRoute({ children }) {
   return (
     <CapabilityRoute checkAccess={(user) => user?.can_access_financieel}>
+      {children}
+    </CapabilityRoute>
+  );
+}
+
+// Screens that only exist to write: creating an invoice, editing finance settings.
+function FinancieelSchrijfRoute({ children }) {
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.can_edit_financieel}>
       {children}
     </CapabilityRoute>
   );
@@ -118,6 +132,42 @@ function ClothingRoute({ children }) {
       {children}
     </CapabilityRoute>
   );
+}
+
+function LedenadministratieRoute({ children }) {
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.can_access_ledenadministratie}>
+      {children}
+    </CapabilityRoute>
+  );
+}
+
+function VrijwilligersRoute({ children }) {
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.can_access_vrijwilligers}>
+      {children}
+    </CapabilityRoute>
+  );
+}
+
+/**
+ * Kader = iedereen met een staf-rol. Plain leden zonder expliciete rechten
+ * krijgen geen "Geen toegang"-scherm maar worden meteen doorgestuurd naar hun
+ * eigen vrijwillig-aanmelding.
+ *
+ * `is_kader` wordt server-side bepaald. Leid het hier niet opnieuw af: de
+ * zijbalk gebruikt hetzelfde veld, en twee definities lopen uiteen — dan landt
+ * iemand op een dashboard waar geen menu-item naartoe wijst.
+ */
+function isKaderUser(user) {
+  return Boolean(user?.is_kader);
+}
+
+function KaderOrVrijwilligRedirect({ children }) {
+  const { data: user, isLoading } = useCurrentUser();
+  if (isLoading) return <PageLoadingSpinner />;
+  if (!isKaderUser(user)) return <Navigate to="/vrijwillig" replace />;
+  return children;
 }
 
 function ProtectedRoute({ children }) {
@@ -166,15 +216,24 @@ const router = createBrowserRouter([
       {
         element: <ProtectedLayout />,
         children: [
-          // Dashboard
-          { index: true, element: <Dashboard /> },
+          // Dashboard — plain leden zonder kader-rol redirecten naar /vrijwillig
+          { index: true, element: <KaderOrVrijwilligRedirect><Dashboard /></KaderOrVrijwilligRedirect> },
 
-          // People routes
-          { path: 'people', element: <PeopleList /> },
-          { path: 'people/jubilarissen', element: <PeopleAnniversaries /> },
-          { path: 'people/:id', element: <PersonDetail /> },
+          // People routes — kader only (plain leden zien hun eigen gegevens via /profile of /vrijwillig)
+          { path: 'people', element: <KaderOrVrijwilligRedirect><PeopleList /></KaderOrVrijwilligRedirect> },
+          { path: 'people/jubilarissen', element: <KaderOrVrijwilligRedirect><PeopleAnniversaries /></KaderOrVrijwilligRedirect> },
+          {
+            path: 'people/onboarding',
+            element: (
+              <LedenadministratieRoute>
+                <PeopleOnboarding />
+              </LedenadministratieRoute>
+            ),
+          },
+          { path: 'people/:id', element: <KaderOrVrijwilligRedirect><PersonDetail /></KaderOrVrijwilligRedirect> },
 
           // VOG routes - requires VOG capability
+          // Canonical lives under /vrijwilligers/vog; legacy /vog kept for back-compat.
           {
             path: 'vog',
             element: (
@@ -195,6 +254,160 @@ const router = createBrowserRouter([
             path: 'vog/instellingen',
             element: <Navigate to="/settings/vog" replace />,
           },
+
+          // Vrijwilligers section - requires vrijwilligers capability
+          {
+            path: 'vrijwilligers',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersDashboard />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/vog',
+            element: (
+              <VOGRoute>
+                <VOG />
+              </VOGRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/vog/:tab',
+            element: (
+              <VOGRoute>
+                <VOG />
+              </VOGRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/iva',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersIva />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/diensten',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersDiensten />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/diensten/nieuw',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersDienstForm />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/diensten/:id',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersDienstForm />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/diensttypes/nieuw',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersDienstTypeForm />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/diensttypes/:id',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersDienstTypeForm />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/sjablonen',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersSjablonen />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/sjablonen/nieuw',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersSjabloonForm />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/sjablonen/:id',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersSjabloonForm />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/vrijstellingen',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersExemptions />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/taakuitleg',
+            element: (
+              <VrijwilligersRoute>
+                <TaakuitlegList />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/taakuitleg/nieuw',
+            element: (
+              <VrijwilligersRoute>
+                <TaakuitlegForm />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/taakuitleg/:id',
+            element: (
+              <VrijwilligersRoute>
+                <TaakuitlegForm />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/datakwaliteit/:category',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersDataQuality />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/relatie-check',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersRelationshipQuality />
+              </VrijwilligersRoute>
+            ),
+          },
+
+          // Member-facing surface (#4) — any logged-in member can use this,
+          // capability gating happens server-side based on linked-person eligibility.
+          { path: 'vrijwillig', element: <Vrijwillig /> },
+          // Mijn gegevens — eigen record + kinderen. Server-side gescoped.
+          { path: 'mijn-gegevens', element: <Household /> },
+          // Legacy: /vrijwillig/profiel is verplaatst naar /profile/iva.
+          { path: 'vrijwillig/profiel', element: <Navigate to="/profile/iva" replace /> },
 
           // Finance routes - requires financieel capability
           {
@@ -229,9 +442,9 @@ const router = createBrowserRouter([
           {
             path: 'financien/facturen/nieuw',
             element: (
-              <FinancieelRoute>
+              <FinancieelSchrijfRoute>
                 <FactuurNieuw />
-              </FinancieelRoute>
+              </FinancieelSchrijfRoute>
             ),
           },
           {
@@ -265,10 +478,10 @@ const router = createBrowserRouter([
             ),
           },
 
-          // Teams routes
-          { path: 'teams', element: <TeamsList /> },
-          { path: 'teams/:id', element: <TeamDetail /> },
-          { path: 'kaderlijst', element: <Kaderlijst /> },
+          // Teams routes — kader only
+          { path: 'teams', element: <KaderOrVrijwilligRedirect><TeamsList /></KaderOrVrijwilligRedirect> },
+          { path: 'teams/:id', element: <KaderOrVrijwilligRedirect><TeamDetail /></KaderOrVrijwilligRedirect> },
+          { path: 'kaderlijst', element: <KaderOrVrijwilligRedirect><Kaderlijst /></KaderOrVrijwilligRedirect> },
           {
             path: 'kleding/:tab',
             element: (
@@ -286,28 +499,30 @@ const router = createBrowserRouter([
             ),
           },
 
-          // Commissies routes
-          { path: 'commissies', element: <CommissiesList /> },
-          { path: 'commissies/:id', element: <CommissieDetail /> },
+          // Commissies routes — kader only
+          { path: 'commissies', element: <KaderOrVrijwilligRedirect><CommissiesList /></KaderOrVrijwilligRedirect> },
+          { path: 'commissies/:id', element: <KaderOrVrijwilligRedirect><CommissieDetail /></KaderOrVrijwilligRedirect> },
 
-          // Todos routes - accessible to all users (tasks are user-isolated at backend)
-          { path: 'todos', element: <TodosList /> },
+          // Todos routes — kader only
+          { path: 'todos', element: <KaderOrVrijwilligRedirect><TodosList /></KaderOrVrijwilligRedirect> },
 
-          // Feedback routes - accessible to all users
-          { path: 'feedback', element: <FeedbackList /> },
-          { path: 'feedback/:id', element: <FeedbackDetail /> },
+          // Feedback routes — kader only
+          { path: 'feedback', element: <KaderOrVrijwilligRedirect><FeedbackList /></KaderOrVrijwilligRedirect> },
+          { path: 'feedback/:id', element: <KaderOrVrijwilligRedirect><FeedbackDetail /></KaderOrVrijwilligRedirect> },
 
-          // Settings routes
+          // Settings routes — kader only
           { path: 'settings/notifications', element: <Navigate to="/profile" replace /> },
-          { path: 'settings', element: <Settings /> },
-          { path: 'settings/:tab', element: <Settings /> },
-          { path: 'settings/:tab/:subtab', element: <Settings /> },
-          { path: 'settings/relationship-types', element: <RelationshipTypes /> },
-          { path: 'settings/custom-fields', element: <CustomFields /> },
+          { path: 'settings', element: <KaderOrVrijwilligRedirect><Settings /></KaderOrVrijwilligRedirect> },
+          { path: 'settings/:tab', element: <KaderOrVrijwilligRedirect><Settings /></KaderOrVrijwilligRedirect> },
+          { path: 'settings/:tab/:subtab', element: <KaderOrVrijwilligRedirect><Settings /></KaderOrVrijwilligRedirect> },
+          { path: 'settings/relationship-types', element: <KaderOrVrijwilligRedirect><RelationshipTypes /></KaderOrVrijwilligRedirect> },
+          { path: 'settings/custom-fields', element: <KaderOrVrijwilligRedirect><CustomFields /></KaderOrVrijwilligRedirect> },
           { path: 'settings/feedback', element: <Navigate to="/feedback" replace /> },
 
-          // Profile route
+          // Profile routes — Profile zelf is voor iedereen, subpagina's voor certificaten
           { path: 'profile', element: <Profile /> },
+          { path: 'profile/vog', element: <ProfileVog /> },
+          { path: 'profile/iva', element: <ProfileIva /> },
 
           // Membership pass scanner
           {

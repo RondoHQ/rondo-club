@@ -110,13 +110,10 @@ use Rondo\REST\People;
 use Rondo\REST\Teams;
 use Rondo\REST\Commissies;
 use Rondo\REST\Todos;
-use Rondo\REST\GoogleSheets as RESTGoogleSheets;
 use Rondo\REST\Feedback as RESTFeedback;
 use Rondo\REST\Invoices as RESTInvoices;
 use Rondo\REST\MembershipPasses as RESTMembershipPasses;
 use Rondo\REST\Clothing as RESTClothing;
-use Rondo\Calendar\Matcher;
-use Rondo\Sheets\GoogleOAuth;
 use Rondo\Notifications\EmailChannel;
 use Rondo\Notifications\LettermintMailer;
 use Rondo\Notifications\LettermintWebhook;
@@ -124,8 +121,8 @@ use Rondo\Collaboration\CommentTypes;
 use Rondo\Collaboration\MentionNotifications;
 use Rondo\Collaboration\Reminders;
 use Rondo\Export\VCard as VCardExport;
-use Rondo\Sheets\GoogleSheetsConnection;
 use Rondo\Data\InverseRelationships;
+use Rondo\Data\PersonDeletionGuard;
 use Rondo\Data\TodoMigration;
 use Rondo\CustomFields\Manager as CustomFieldsManager;
 use Rondo\CustomFields\Validation as CustomFieldsValidation;
@@ -134,12 +131,13 @@ use Rondo\REST\UserSettings as RESTUserSettings;
 use Rondo\REST\Users as RESTUsers;
 use Rondo\REST\Reminders as RESTReminders;
 use Rondo\REST\Vog as RESTVog;
+use Rondo\REST\Volunteer as RESTVolunteer;
+use Rondo\REST\MemberShifts as RESTMemberShifts;
 use Rondo\REST\Fees as RESTFees;
 use Rondo\REST\Lettermint as RESTLettermint;
 use Rondo\REST\Capabilities as RESTCapabilities;
 use Rondo\REST\FinanceSettings as RESTFinanceSettings;
 use Rondo\VOG\VOGEmail;
-use Rondo\Fees\MembershipFees;
 use Rondo\Fees\FeeCacheInvalidator;
 use Rondo\Config\ClubConfig;
 use Rondo\Config\FinanceConfig;
@@ -154,6 +152,7 @@ use Rondo\Finance\InstallmentPaymentService;
 use Rondo\Finance\InstallmentEmailSender;
 use Rondo\Finance\InstallmentScheduler;
 use Rondo\Finance\InvoiceReminderScheduler;
+use Rondo\Finance\InvoiceScheduledSendScheduler;
 use Rondo\Finance\PublicPaymentPage;
 use Rondo\Finance\BulkInvoiceCreator;
 use Rondo\Finance\QrCodeGenerator;
@@ -162,6 +161,7 @@ use Rondo\Demo\DemoAnonymizer;
 use Rondo\Demo\DemoImport;
 use Rondo\Demo\DemoProtection;
 use Rondo\Passes\PublicMembershipPassPage;
+use Rondo\Volunteer\PublicTaakuitlegPage;
 
 define( 'RONDO_THEME_DIR', get_template_directory() );
 define( 'RONDO_THEME_URL', get_template_directory_uri() );
@@ -219,9 +219,6 @@ class_alias( People::class, 'RONDO_REST_People' );
 class_alias( Teams::class, 'RONDO_REST_Teams' );
 class_alias( Todos::class, 'RONDO_REST_Todos' );
 
-// Calendar — used in class-calendar-matcher.php
-class_alias( Matcher::class, 'RONDO_Calendar_Matcher' );
-
 // Notifications — used in class-reminders.php
 class_alias( EmailChannel::class, 'RONDO_Email_Channel' );
 class_alias( MentionNotifications::class, 'RONDO_Mention_Notifications' );
@@ -246,6 +243,38 @@ function rondo_is_rest_request() {
 }
 
 /**
+ * Determine whether a REST error is unexpected enough to log.
+ *
+ * Authentication failures, permission denials, business-rule warnings, and a
+ * client probing beyond the final collection page are normal 4xx responses.
+ * Validation and server errors remain visible in debug.log.
+ *
+ * @param WP_Error $error REST callback error.
+ * @return bool Whether the error should be logged.
+ */
+function rondo_should_log_rest_error( $error ) {
+	if ( ! is_wp_error( $error ) ) {
+		return false;
+	}
+
+	$expected_codes = [
+		'overlap_warning',
+		'rest_cannot_edit',
+		'rest_forbidden',
+		'rest_forbidden_age_group',
+		'rest_forbidden_context',
+		'rest_not_logged_in',
+		'rest_post_invalid_page_number',
+		'rondo_invalid_shift_copy_date',
+		'rondo_shift_copy_date_in_past',
+		'rondo_shift_copy_same_date',
+		'rondo_shift_copy_source_empty',
+	];
+
+	return ! in_array( $error->get_error_code(), $expected_codes, true );
+}
+
+/**
  * Initialize the CRM functionality with conditional class loading
  */
 function rondo_init() {
@@ -263,9 +292,15 @@ function rondo_init() {
 	new PostTypes();
 	new Taxonomies();
 	new AccessControl();
+	new PersonDeletionGuard();
 	new UserRoles();
 	new LettermintMailer();
 	new DemoProtection();
+	// Must load on every request: core password-reset mail is addressed to user_email,
+	// which for a household member is an undeliverable placeholder.
+	new \Rondo\Users\ContactEmailRouter();
+	// Lets members sign in with their KNVB-ID or real email instead of a generated username.
+	new \Rondo\Users\LoginResolver();
 
 	// Skip loading heavy classes for non-relevant requests
 	$is_admin = is_admin();
@@ -286,6 +321,24 @@ function rondo_init() {
 
 		// Initialize fee cache invalidation hooks
 		new FeeCacheInvalidator();
+
+		// Seed volunteer-policy fixtures (dienst_types + pool commissies).
+		new \Rondo\Volunteer\VolunteerSeeder();
+
+		// Hourly shift-completion cron + no-show → boete wiring.
+		new \Rondo\Volunteer\ShiftScheduler();
+
+		// Hourly member reminders and post-shift survey emails.
+		new \Rondo\Volunteer\ShiftEmailScheduler();
+
+		// Enforce the audited, mail-aware cancellation flow for assigned shifts.
+		new \Rondo\Volunteer\ShiftCancellationService();
+
+		// Daily template-expander cron (rolling three-month window).
+		new \Rondo\Volunteer\ShiftTemplateExpander();
+
+		// Invalidate eligibility + relationship cache on person mutations.
+		new \Rondo\Volunteer\VolunteerCacheInvalidator();
 	}
 
 	// REST API classes - only for REST requests
@@ -295,7 +348,6 @@ function rondo_init() {
 		new Teams();
 		new Commissies();
 		new Todos();
-		new RESTGoogleSheets();
 		new RESTCustomFields();
 		new RESTFeedback();
 		new RESTInvoices();
@@ -305,6 +357,9 @@ function rondo_init() {
 		new RESTUsers();
 		new RESTReminders();
 		new RESTVog();
+		new RESTVolunteer();
+		new RESTMemberShifts();
+		new \Rondo\Volunteer\ShiftDayCopier();
 		new RESTFees();
 		new RESTLettermint();
 		new RESTCapabilities();
@@ -314,11 +369,11 @@ function rondo_init() {
 		new MollieWebhook();
 		new LettermintWebhook();
 
-		// Log REST API errors to debug.log
+		// Log actionable REST API errors to debug.log.
 		add_filter(
 			'rest_request_after_callbacks',
 			function ( $response, $handler, $request ) {
-				if ( is_wp_error( $response ) ) {
+				if ( rondo_should_log_rest_error( $response ) ) {
 					error_log(
 						sprintf(
 							'REST API error: %s %s — %s (code: %s)',
@@ -350,11 +405,21 @@ function rondo_init() {
 	// Public membership pass landing page - /lidpas/{token}
 	new PublicMembershipPassPage();
 
+	// Public self-service account activation - /activeren
+	new \Rondo\Users\ActivationPage();
+	add_action( 'rondo_retry_guardian_notification', [ \Rondo\Users\GuardianAccountService::class, 'retry_notification' ] );
+
+	// Public taakuitleg landing page - /uitleg/{slug} (QR target, no auth)
+	new PublicTaakuitlegPage();
+
 	// Installment scheduler — daily cron sweeper for installment emails and reminders
 	new InstallmentScheduler();
 
 	// Invoice reminder scheduler — daily cron sweeper for membership and discipline invoice reminders
 	new InvoiceReminderScheduler();
+
+	// Invoice scheduled-send sweeper — daily cron that sends drafts queued for a future date
+	new InvoiceScheduledSendScheduler();
 
 	$initialized = true;
 }
@@ -658,6 +723,7 @@ function rondo_get_js_config() {
 		'buildTime'           => $build_time,
 		'currentUserPersonId' => $linked_person_id ?: null,
 		'clubName'            => $club_settings['club_name'],
+		'volunteerSignupInfo' => $club_settings['volunteer_signup_info'],
 		'freescoutUrl'        => $club_settings['freescout_url'],
 		'isDemo'              => (bool) get_option( 'rondo_is_demo_site', false ),
 		'isDemoUser'          => (bool) get_option( 'rondo_is_demo_site', false ) && $user && $user->user_login === 'demo',
@@ -674,10 +740,41 @@ function rondo_theme_add_config_to_head() {
 add_action( 'wp_head', 'rondo_theme_add_config_to_head', 0 );
 
 /**
+ * Preload the dashboard API endpoint so the browser starts fetching before JS boots.
+ *
+ * Fires an authenticated fetch (with X-WP-Nonce) inline in <head> and stashes the
+ * promise on window.__dashboardPreload for the React app to consume.
+ */
+function rondo_preload_dashboard_api() {
+	if ( ! is_user_logged_in() ) {
+		return;
+	}
+
+	// WordPress renders the SPA shell for every client-side route. Avoid an
+	// expensive dashboard request when the visitor opened another route
+	// directly (for example /people/123 or /vrijwilligers).
+	$request_path = isset( $_SERVER['REQUEST_URI'] ) ? wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH ) : '';
+	$home_path    = wp_parse_url( home_url( '/' ), PHP_URL_PATH );
+	$request_path = '/' . trim( (string) $request_path, '/' );
+	$home_path    = '/' . trim( (string) $home_path, '/' );
+
+	if ( $request_path !== $home_path ) {
+		return;
+	}
+
+	$dashboard_url = rest_url( 'rondo/v1/dashboard' );
+	$nonce         = wp_create_nonce( 'wp_rest' );
+	echo '<script>window.__dashboardPreload = fetch(' . wp_json_encode( $dashboard_url ) . ', { headers: { "X-WP-Nonce": ' . wp_json_encode( $nonce ) . ' } });</script>' . "\n";
+}
+add_action( 'wp_head', 'rondo_preload_dashboard_api', 1 );
+
+/**
  * Output PWA meta tags for iOS and Android support
  *
- * vite-plugin-pwa handles manifest generation, but we need to manually
- * inject meta tags since WordPress uses PHP templates, not index.html.
+ * The manifest itself is served by rondo_render_manifest() rather than emitted
+ * as a static file by the build, so its name can follow the WordPress site
+ * title. Meta tags are injected here because WordPress uses PHP templates, not
+ * an index.html the build can transform.
  */
 function rondo_pwa_meta_tags() {
 	$theme_url = RONDO_THEME_URL;
@@ -690,13 +787,13 @@ function rondo_pwa_meta_tags() {
 	<meta name="mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="default">
-	<meta name="apple-mobile-web-app-title" content="Rondo Club">
+	<meta name="apple-mobile-web-app-title" content="<?php echo esc_attr( rondo_pwa_app_name() ); ?>">
 
-	<!-- Apple Touch Icon -->
+	<!-- Apple Touch Icon (must be opaque; iOS mattes transparency on black) -->
 	<link rel="apple-touch-icon" href="<?php echo esc_url( $theme_url . '/public/icons/apple-touch-icon-180x180.png' ); ?>">
 
 	<!-- Manifest -->
-	<link rel="manifest" href="<?php echo esc_url( $theme_url . '/dist/manifest.webmanifest' ); ?>">
+	<link rel="manifest" href="<?php echo esc_url( home_url( '/manifest.webmanifest' ) ); ?>">
 
 	<!-- Theme Color (fixed brand colors) -->
 	<meta name="theme-color" media="(prefers-color-scheme: light)" content="<?php echo $brand_color_light; ?>">
@@ -704,6 +801,113 @@ function rondo_pwa_meta_tags() {
 	<?php
 }
 add_action( 'wp_head', 'rondo_pwa_meta_tags', 2 );
+
+/**
+ * Resolve the installed-app name.
+ *
+ * The WordPress site title already carries the right value per deployment
+ * ("AWC Rondo" on production, "Rondo Demo" on demo), so nothing club-specific
+ * has to be baked into the build.
+ *
+ * @return string
+ */
+function rondo_pwa_app_name() {
+	$name = trim( (string) get_bloginfo( 'name' ) );
+
+	return $name !== '' ? $name : 'Rondo';
+}
+
+/**
+ * Serve the web app manifest at /manifest.webmanifest.
+ *
+ * Served from PHP rather than built as a static file for three reasons: the
+ * name follows the site title, the icon URLs are absolute instead of relative
+ * to the build directory, and the response carries the correct
+ * application/manifest+json content type (SiteGround serves the built
+ * .webmanifest with no content type at all).
+ */
+function rondo_render_manifest() {
+	if ( ! get_query_var( 'rondo_manifest' ) ) {
+		return;
+	}
+
+	header( 'Content-Type: application/manifest+json; charset=utf-8' );
+	header( 'Cache-Control: public, max-age=3600' );
+
+	echo rondo_build_manifest(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON encoded above.
+	exit;
+}
+add_action( 'template_redirect', 'rondo_render_manifest', 0 );
+
+/**
+ * Build the manifest document.
+ *
+ * Separate from the route so it can be asserted on without exiting the request.
+ *
+ * @return string JSON encoded manifest.
+ */
+function rondo_build_manifest() {
+	$name  = rondo_pwa_app_name();
+	$icons = RONDO_THEME_URL . '/public/icons';
+
+	// Members install this to reach the club's data, so the crest — not the
+	// Rondo mark — is what belongs on the home screen. Background matches the
+	// icon tile so the Android splash reads as one surface.
+	$manifest = [
+		'id'               => '/',
+		'name'             => $name,
+		'short_name'       => $name,
+		'description'      => rondo_pwa_app_description(),
+		'lang'             => 'nl',
+		'dir'              => 'ltr',
+		'start_url'        => '/',
+		'scope'            => '/',
+		'display'          => 'standalone',
+		'display_override' => [ 'standalone', 'minimal-ui' ],
+		'orientation'      => 'any',
+		'theme_color'      => '#0891b2',
+		'background_color' => '#CCE1D7',
+		'categories'       => [ 'sports', 'productivity' ],
+		'icons'            => [
+			[
+				'src'     => $icons . '/icon-192x192.png',
+				'sizes'   => '192x192',
+				'type'    => 'image/png',
+				'purpose' => 'any',
+			],
+			[
+				'src'     => $icons . '/icon-512x512.png',
+				'sizes'   => '512x512',
+				'type'    => 'image/png',
+				'purpose' => 'any',
+			],
+			[
+				'src'     => $icons . '/icon-512x512-maskable.png',
+				'sizes'   => '512x512',
+				'type'    => 'image/png',
+				'purpose' => 'maskable',
+			],
+		],
+	];
+
+	return wp_json_encode( $manifest );
+}
+
+/**
+ * Build the manifest description from the configured club name.
+ *
+ * @return string
+ */
+function rondo_pwa_app_description() {
+	$club_name = trim( \Rondo\Config\ClubConfig::get_club_name() );
+
+	if ( $club_name === '' ) {
+		return 'Ledenadministratie en vrijwilligersbeheer';
+	}
+
+	/* translators: %s: club name. */
+	return sprintf( 'Ledenadministratie en vrijwilligersbeheer voor %s', $club_name );
+}
 
 /**
  * Add Rondo favicon to frontend pages.
@@ -866,8 +1070,47 @@ add_action( 'template_redirect', 'rondo_theme_template_redirect', 1 );
 function rondo_theme_rewrite_rules() {
 	add_rewrite_rule( '^app/?', 'index.php', 'top' );
 	add_rewrite_rule( '^app/(.+)/?', 'index.php', 'top' );
+
+	// Web app manifest — served by rondo_render_manifest().
+	add_rewrite_rule( '^manifest\.webmanifest$', 'index.php?rondo_manifest=1', 'top' );
 }
 add_action( 'init', 'rondo_theme_rewrite_rules' );
+
+/**
+ * Register the query var backing the manifest route.
+ *
+ * @param array $vars Registered query vars.
+ * @return array
+ */
+function rondo_pwa_query_vars( $vars ) {
+	$vars[] = 'rondo_manifest';
+
+	return $vars;
+}
+add_filter( 'query_vars', 'rondo_pwa_query_vars' );
+
+/**
+ * Flush rewrite rules once after a deploy that adds new public routes.
+ *
+ * Rewrite rules are normally only flushed on theme activation. A plain rsync
+ * deploy (the usual path) does not re-activate the theme, so new rewrite rules
+ * — like the /uitleg/{slug} taakuitleg page — would 404 until someone visits
+ * Settings → Permalinks. Bumping this version flushes exactly once on the first
+ * request after deploy, mirroring rondo_maybe_add_postmeta_indexes().
+ *
+ * Runs late on `init` so every add_rewrite_rule() call has already registered.
+ */
+function rondo_maybe_flush_rewrite_rules() {
+	$rewrite_version = '3'; // Bump when adding/changing a rewrite rule.
+	if ( get_option( 'rondo_rewrite_rules_version' ) === $rewrite_version ) {
+		return;
+	}
+
+	flush_rewrite_rules();
+	update_option( 'rondo_rewrite_rules_version', $rewrite_version, true );
+}
+add_action( 'init', 'rondo_maybe_flush_rewrite_rules', 99 );
+add_action( 'init', 'rondo_maybe_add_postmeta_indexes' );
 
 /**
  * Theme activation - includes CRM initialization
@@ -896,8 +1139,50 @@ function rondo_theme_activation() {
 	// Register public payment page rewrite rules
 	$payment_page = new PublicPaymentPage();
 	$payment_page->register_rewrite_rules();
+
+	// Add custom postmeta indexes for dashboard performance.
+	rondo_maybe_add_postmeta_indexes();
 }
 add_action( 'after_switch_theme', 'rondo_theme_activation' );
+
+/**
+ * Add composite indexes to wp_postmeta for frequently queried meta keys.
+ *
+ * WordPress only has (meta_id, post_id, meta_key) indexes on postmeta. Dashboard
+ * queries that filter by meta_key + meta_value benefit from a composite index.
+ * Runs once per version bump via an option check, and on theme activation.
+ */
+function rondo_maybe_add_postmeta_indexes() {
+	$index_version = '1';
+	if ( get_option( 'rondo_postmeta_index_version' ) === $index_version ) {
+		return;
+	}
+
+	global $wpdb;
+
+	$indexes = [
+		'rondo_meta_key_value' => "ALTER TABLE {$wpdb->postmeta} ADD INDEX rondo_meta_key_value (meta_key(40), meta_value(20))",
+	];
+
+	foreach ( $indexes as $name => $sql ) {
+		// Check if index already exists.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$existing = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = %s AND index_name = %s',
+				$wpdb->postmeta,
+				$name
+			)
+		);
+
+		if ( ! $existing ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( $sql );
+		}
+	}
+
+	update_option( 'rondo_postmeta_index_version', $index_version, true );
+}
 
 /**
  * Theme deactivation - cleanup CRM functionality
@@ -908,6 +1193,11 @@ function rondo_theme_deactivation() {
 
 	// Clear legacy scheduled hook (for backward compatibility)
 	wp_clear_scheduled_hook( 'rondo_daily_reminder_check' );
+
+	// Clear volunteer shift lifecycle hooks.
+	\Rondo\Volunteer\ShiftScheduler::unregister_cron();
+	\Rondo\Volunteer\ShiftEmailScheduler::unregister_cron();
+	\Rondo\Volunteer\ShiftTemplateExpander::unregister_cron();
 
 	// Remove custom user role (must call directly since switch_theme hook already fired)
 	$user_roles = new UserRoles();
@@ -985,22 +1275,6 @@ function rondo_acf_json_save_point( $path ) {
 	return $path;
 }
 add_filter( 'acf/settings/save_json', 'rondo_acf_json_save_point' );
-
-/**
- * Invalidate email lookup cache when a person is saved
- *
- * This ensures that the contact matching cache stays in sync
- * when contact info (emails) are updated on person records.
- */
-function rondo_invalidate_email_lookup_on_person_save( $post_id ) {
-	if ( get_post_type( $post_id ) === 'person' ) {
-		$user_id = get_post_field( 'post_author', $post_id );
-		if ( $user_id ) {
-			Matcher::invalidate_cache( $user_id );
-		}
-	}
-}
-add_action( 'acf/save_post', 'rondo_invalidate_email_lookup_on_person_save', 20 );
 
 /**
  * Reset VOG tracking fields when datum-vog is updated
@@ -1397,4 +1671,23 @@ function rondo_rotate_debug_log() {
 // Schedule daily rotation if not already scheduled
 if ( ! wp_next_scheduled( 'rondo_rotate_debug_log' ) ) {
 	wp_schedule_event( strtotime( 'tomorrow midnight' ), 'daily', 'rondo_rotate_debug_log' );
+}
+
+/**
+ * Warm the anniversary data cache daily at 00:01.
+ *
+ * Rebuilds the shared transient so the first dashboard load of the day
+ * doesn't have to compute anniversary data on the fly.
+ */
+function rondo_warm_anniversary_cache() {
+	$reminders_rest = new \Rondo\REST\Reminders();
+	$data           = $reminders_rest->get_upcoming_anniversaries_data( 365, 20 );
+	set_transient( 'rondo_anniversaries_365', $data, DAY_IN_SECONDS );
+}
+add_action( 'rondo_warm_anniversary_cache', 'rondo_warm_anniversary_cache' );
+
+if ( ! wp_next_scheduled( 'rondo_warm_anniversary_cache' ) ) {
+	// Schedule for 00:01 local time tomorrow.
+	$rondo_tomorrow = new DateTimeImmutable( 'tomorrow 00:01', wp_timezone() );
+	wp_schedule_event( $rondo_tomorrow->getTimestamp(), 'daily', 'rondo_warm_anniversary_cache' );
 }

@@ -540,8 +540,11 @@ class Todos extends Base {
 			];
 		}
 
-		$status           = $this->get_todo_status( $post );
-		$due_date         = get_field( 'due_date', $post->ID );
+		$status   = $this->get_todo_status( $post );
+		$due_date = get_field( 'due_date', $post->ID );
+		if ( is_string( $due_date ) && preg_match( '/^\d{8}$/', $due_date ) ) {
+			$due_date = substr( $due_date, 0, 4 ) . '-' . substr( $due_date, 4, 2 ) . '-' . substr( $due_date, 6, 2 );
+		}
 		$awaiting_since   = get_field( 'awaiting_since', $post->ID );
 		$notes            = get_field( 'notes', $post->ID );
 		$assigned_user_id = (int) get_post_meta( $post->ID, self::ASSIGNED_USER_META_KEY, true );

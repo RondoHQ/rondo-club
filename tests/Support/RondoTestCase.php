@@ -22,6 +22,64 @@ abstract class RondoTestCase extends WPTestCase {
 	}
 
 	/**
+	 * Incorrect-usage notices to treat as background noise for this test.
+	 *
+	 * @var string[]
+	 */
+	private array $ignored_incorrect_usage = [];
+
+	/**
+	 * Ignore one known `_doing_it_wrong()` notice without going deaf to the rest.
+	 *
+	 * `setExpectedIncorrectUsage()` is the wrong tool for a notice that fires
+	 * only for *some* requests in a test — it fails when the notice does not
+	 * appear, so the test ends up coupled to which fields happen to be in the
+	 * payload. This drops the named notice and leaves every other one failing
+	 * the test as it should.
+	 */
+	protected function ignoreIncorrectUsage( string $function_name ): void {
+		$this->ignored_incorrect_usage[] = $function_name;
+	}
+
+	public function assert_post_conditions() {
+		if ( $this->ignored_incorrect_usage ) {
+			// wp-browser proxies this property through __get/__set, so it has to be
+			// read out, modified and written back — unsetting a key in place is
+			// silently discarded.
+			$caught = $this->caught_doing_it_wrong;
+			foreach ( $this->ignored_incorrect_usage as $function_name ) {
+				unset( $caught[ $function_name ] );
+			}
+			$this->caught_doing_it_wrong = $caught;
+		}
+
+		parent::assert_post_conditions();
+	}
+
+	/**
+	 * Register the given REST controllers and rebuild the REST server.
+	 *
+	 * The theme only instantiates its REST controllers on real REST requests, so
+	 * in tests their routes do not exist and every dispatch answers 404 — which
+	 * looks exactly like a permission test passing for the wrong reason. Booting
+	 * the controllers *before* the server is built matters: `rest_get_server()`
+	 * fires `rest_api_init` once, and a controller constructed after that has
+	 * already missed it.
+	 *
+	 * @param class-string[] $controllers Controller classes to instantiate.
+	 */
+	protected function bootRestControllers( array $controllers ): \WP_REST_Server {
+		foreach ( $controllers as $controller ) {
+			new $controller();
+		}
+
+		global $wp_rest_server;
+		$wp_rest_server = null;
+
+		return rest_get_server();
+	}
+
+	/**
 	 * Create a person post with optional ACF fields.
 	 *
 	 * @param array $args Post arguments (post_title, post_author, etc.)

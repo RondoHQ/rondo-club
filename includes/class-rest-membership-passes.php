@@ -7,6 +7,7 @@ namespace Rondo\REST;
 
 use Rondo\Core\AccessControl;
 use Rondo\Passes\MembershipPassQr;
+use Rondo\Core\SponsorStatus;
 use Rondo\Passes\PublicMembershipPassPage;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -181,10 +182,15 @@ class MembershipPasses extends Base {
 	private function format_verified_person_summary( $post ): array {
 		$person = $this->format_person_summary( $post );
 
-		$knvb_id = (string) ( get_field( 'knvb-id', $post->ID ) ?: get_post_meta( $post->ID, 'knvb-id', true ) ?: '' );
+		$knvb_id      = (string) ( get_field( 'knvb-id', $post->ID ) ?: get_post_meta( $post->ID, 'knvb-id', true ) ?: '' );
+		$person_type  = (string) ( get_field( 'person_type', $post->ID ) ?: get_post_meta( $post->ID, 'person_type', true ) ?: '' );
+		$company_name = (string) ( get_field( 'company_name', $post->ID ) ?: get_post_meta( $post->ID, 'company_name', true ) ?: '' );
 
 		$person['knvb_id']         = $knvb_id;
 		$person['knvb-id']         = $knvb_id;
+		$person['person_type']     = $this->sanitize_text( $person_type );
+		$person['is_sponsor']      = SponsorStatus::is_sponsor( (int) $post->ID );
+		$person['company_name']    = $this->sanitize_text( $company_name );
 		$person['photo_thumbnail'] = $person['thumbnail'] ?? '';
 
 		return $person;

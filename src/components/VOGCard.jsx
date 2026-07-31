@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ShieldCheck, ShieldAlert, ShieldX, Mail, FileCheck, Bell } from 'lucide-react';
+import { useRef } from 'react';
+import { ShieldCheck, ShieldAlert, ShieldX, Mail, FileCheck, Bell, CalendarDays } from 'lucide-react';
 import { format } from '@/utils/dateFormat';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { isValidDate } from '@/utils/formatters';
@@ -26,12 +26,46 @@ function calculateVogStatus(vogDate) {
 }
 
 /**
+ * Inline editable date field — always shows an <input type="date">.
+ * Saves on change when a valid date is selected.
+ */
+function DateField({ icon: Icon, label, value, fieldName, onUpdateField, isUpdating, personId }) {
+  const hasValue = !!(value && isValidDate(value));
+  const inputRef = useRef(null);
+
+  const save = () => {
+    const val = inputRef.current?.value;
+    if (val && /^\d{4}-\d{2}-\d{2}$/.test(val) && new Date(val).getFullYear() > 2000 && val !== (value || '')) {
+      onUpdateField(fieldName, val);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <Icon className={`w-4 h-4 flex-shrink-0 ${hasValue ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'}`} />
+      <span className="text-gray-600 dark:text-gray-400 whitespace-nowrap flex-1">
+        {label}
+      </span>
+      <input
+        ref={inputRef}
+        type="date"
+        key={value || ''}
+        defaultValue={value || ''}
+        className="px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-gray-100 w-[160px] shrink-0"
+        disabled={isUpdating || !personId}
+        onChange={save}
+        onBlur={save}
+      />
+    </div>
+  );
+}
+
+/**
  * VOG status card for person detail page
  * Shows VOG information only for current volunteers
  */
 export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }) {
   const { data: currentUser } = useCurrentUser();
-  const [editingField, setEditingField] = useState(null);
 
   // Hide card if user doesn't have VOG capability
   if (!currentUser?.can_access_vog) {
@@ -54,11 +88,6 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
   const justisSubmittedDate = acfData?.vog_justis_submitted_date;
   const reminderSentDate = acfData?.vog_reminder_sent_date;
   const hasValidVogDate = !!(vogDate && isValidDate(vogDate));
-
-  const formatSafeDate = (value) => {
-    if (!value || !isValidDate(value)) return null;
-    return format(new Date(value), 'd MMM yyyy');
-  };
 
   // Determine which icon to show
   function getStatusIcon(status) {
@@ -100,121 +129,58 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
           <span className={`font-medium ${statusColorClass}`}>
             {vogStatus.label}
           </span>
-          {hasValidVogDate && (
-            <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
-              ({formatSafeDate(vogDate)})
-            </span>
-          )}
         </div>
+      </div>
+
+      {/* VOG Date (editable) */}
+      <div className="space-y-2 text-sm mb-3">
+        <DateField
+          icon={CalendarDays}
+          label="Datum VOG:"
+          value={vogDate}
+          fieldName="datum-vog"
+          onUpdateField={onUpdateField}
+          isUpdating={isUpdating}
+          personId={personId}
+        />
       </div>
 
       {/* Show process status when VOG is missing or expired */}
       {(vogStatus.status === 'missing' || vogStatus.status === 'expired') && (
         <div className="space-y-2 text-sm">
-          {/* Email Sent */}
-          <div className="flex items-center gap-2">
-            <Mail className={`w-4 h-4 ${emailSentDate ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'}`} />
-            <span className="text-gray-600 dark:text-gray-400">
-              E-mail verzonden:
-            </span>
-            {editingField === 'vog_email_sent_date' ? (
-              <input
-                type="date"
-                defaultValue={emailSentDate || ''}
-                className="px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600"
-                autoFocus
-                disabled={isUpdating}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val && /^\d{4}-\d{2}-\d{2}$/.test(val) && new Date(val).getFullYear() > 2000) {
-                    onUpdateField('vog_email_sent_date', val);
-                    setEditingField(null);
-                  }
-                }}
-                onBlur={() => setEditingField(null)}
-              />
-            ) : (
-              <button
-                onClick={() => setEditingField('vog_email_sent_date')}
-                disabled={isUpdating || !personId}
-                className="text-gray-900 dark:text-gray-100 hover:text-brand-primary dark:hover:text-brand-secondary underline decoration-dotted disabled:opacity-50"
-              >
-                {formatSafeDate(emailSentDate) || 'Nog niet'}
-              </button>
-            )}
-          </div>
-
-          {/* Justis Submitted */}
-          <div className="flex items-center gap-2">
-            <FileCheck className={`w-4 h-4 ${justisSubmittedDate ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'}`} />
-            <span className="text-gray-600 dark:text-gray-400">
-              Justis aanvraag:
-            </span>
-            {editingField === 'vog_justis_submitted_date' ? (
-              <input
-                type="date"
-                defaultValue={justisSubmittedDate || ''}
-                className="px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600"
-                autoFocus
-                disabled={isUpdating}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val && /^\d{4}-\d{2}-\d{2}$/.test(val) && new Date(val).getFullYear() > 2000) {
-                    onUpdateField('vog_justis_submitted_date', val);
-                    setEditingField(null);
-                  }
-                }}
-                onBlur={() => setEditingField(null)}
-              />
-            ) : (
-              <button
-                onClick={() => setEditingField('vog_justis_submitted_date')}
-                disabled={isUpdating || !personId}
-                className="text-gray-900 dark:text-gray-100 hover:text-brand-primary dark:hover:text-brand-secondary underline decoration-dotted disabled:opacity-50"
-              >
-                {formatSafeDate(justisSubmittedDate) || 'Nog niet'}
-              </button>
-            )}
-          </div>
-
-          {/* Reminder Sent */}
-          <div className="flex items-center gap-2">
-            <Bell className={`w-4 h-4 ${reminderSentDate ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'}`} />
-            <span className="text-gray-600 dark:text-gray-400">
-              Herinnering:
-            </span>
-            {editingField === 'vog_reminder_sent_date' ? (
-              <input
-                type="date"
-                defaultValue={reminderSentDate || ''}
-                className="px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600"
-                autoFocus
-                disabled={isUpdating}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val && /^\d{4}-\d{2}-\d{2}$/.test(val) && new Date(val).getFullYear() > 2000) {
-                    onUpdateField('vog_reminder_sent_date', val);
-                    setEditingField(null);
-                  }
-                }}
-                onBlur={() => setEditingField(null)}
-              />
-            ) : (
-              <button
-                onClick={() => setEditingField('vog_reminder_sent_date')}
-                disabled={isUpdating || !personId}
-                className="text-gray-900 dark:text-gray-100 hover:text-brand-primary dark:hover:text-brand-secondary underline decoration-dotted disabled:opacity-50"
-              >
-                {formatSafeDate(reminderSentDate) || 'Nog niet'}
-              </button>
-            )}
-          </div>
+          <DateField
+            icon={Mail}
+            label="E-mail verzonden:"
+            value={emailSentDate}
+            fieldName="vog_email_sent_date"
+            onUpdateField={onUpdateField}
+            isUpdating={isUpdating}
+            personId={personId}
+          />
+          <DateField
+            icon={FileCheck}
+            label="Justis aanvraag:"
+            value={justisSubmittedDate}
+            fieldName="vog_justis_submitted_date"
+            onUpdateField={onUpdateField}
+            isUpdating={isUpdating}
+            personId={personId}
+          />
+          <DateField
+            icon={Bell}
+            label="Herinnering:"
+            value={reminderSentDate}
+            fieldName="vog_reminder_sent_date"
+            onUpdateField={onUpdateField}
+            isUpdating={isUpdating}
+            personId={personId}
+          />
         </div>
       )}
 
-      {/* Show valid VOG details */}
+      {/* Show expiry date when valid */}
       {vogStatus.status === 'valid' && hasValidVogDate && (
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
           <span>Geldig tot: </span>
           <span className="text-gray-900 dark:text-gray-100">
             {format(new Date(new Date(vogDate).setFullYear(new Date(vogDate).getFullYear() + 3)), 'd MMM yyyy')}

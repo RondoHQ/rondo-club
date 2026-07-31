@@ -7,6 +7,1442 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.82.0] - 2026-07-31
+
+### Added
+
+- **Wie feedback instuurt die we niet gaan doen, hoort dat nu met uitleg.** Afgewezen feedback verdween stilletjes uit beeld: de inzender zag hooguit een status veranderen en kreeg nooit te horen waarom. Bij het afwijzen vraagt Rondo nu om een Nederlandse toelichting, en die gaat als mail naar de inzender — met de titel van zijn feedback, de uitleg onder "Waarom we dit niet doen", en de uitnodiging om gerust nieuwe feedback te sturen. Net als bij opgeloste feedback krijgt niemand die mail twee keer.
+
+### Changed
+
+- Het venster voor het oplossen van feedback doet nu ook het afwijzen, zodat beide om dezelfde soort uitleg vragen en er niets uiteen kan lopen.
+- `wp rondo feedback set-status ... declined` accepteert `--reason` voor diezelfde toelichting.
+
+## [33.81.3] - 2026-07-31
+
+### Fixed
+
+- **Eén geüpload IVA-certificaat levert nog maar één mail per beoordelaar op.** Wie op "Certificaat uploaden" drukte, zag de knop niet uitgeschakeld raken en ook geen "Bezig met uploaden…" verschijnen, dus werd er nog een keer geklikt. Elke klik was een volledige upload, en elke upload mailde alle tien beoordelaars: in het logboek staat één lid met vier uploads binnen vier seconden, goed voor veertig mails. De knop doet nu wat hij hoort te doen, en de melding wordt daarnaast aan de serverkant tien minuten lang niet herhaald voor hetzelfde lid.
+
+## [33.81.2] - 2026-07-31
+
+### Changed
+
+- **Een certificaat Sociale Hygiëne telt net zo goed als een IVA-certificaat.** Dat was altijd al zo, maar nergens stond het, dus wie er al een had ging alsnog de e-learning van NOC*NSF doen. Op je eigen certificaatpagina, in de melding dat je nog niet achter de bar kunt, en in de welkomstmail staat nu dat we het ook accepteren. Op de beoordeelpagina staat het er voor de bestuurslid kantine bij, zodat zo'n certificaat niet per ongeluk wordt afgekeurd.
+
+## [33.81.1] - 2026-07-31
+
+### Fixed
+
+- **Aanhalingstekens in feedbacktitels komen niet langer als code in je mailbox aan.** Een feedbackitem met een apostrof of aanhalingsteken in de titel leverde een mail op met een onderwerp als "Je feedback is opgelost: Kopje &#8216;betaalde vrijwilliger&#8217; verwijderen". De titel wordt bij het opmaken voorzien van echte krulaanhalingstekens, maar die werden daarna niet teruggelezen naar gewone tekst. Dat gebeurt nu wel — zowel in de mail dat je feedback is opgelost als in de melding aan de beheerder dat er nieuwe feedback binnen is.
+
+## [33.81.0] - 2026-07-30
+
+### Added
+
+- **Rondo staat nu als app met het AWC-clublogo op je telefoon.** Wie Rondo op het beginscherm zette, kreeg tot nu toe een vaag Rondo-logo op een zwarte tegel — op de iPhone omdat het pictogram doorzichtig was en iOS dat opvult met zwart, en op elk toestel omdat alle formaten werden vergroot vanuit een plaatje van 145 pixels. De pictogrammen komen nu uit het AWC-clubembleem in vectorvorm, op een lichtgroene achtergrond, in de vier formaten die iOS en Android nodig hebben. Het is je eigen club die op je beginscherm staat, niet een productlogo.
+- **"App installeren" staat voortaan gewoon in het menu.** De uitnodiging om Rondo te installeren verscheen alleen vanzelf, na een aantal bezoeken, en verdween een week lang zodra je hem wegklikte. Wie de app wél wilde, had geen knop om op te drukken. Die staat nu onderin het zijmenu, en legt per apparaat uit waar je browser de installatieknop verstopt — ook op de iPhone, waar geen enkele website dat zelf kan regelen.
+
+### Changed
+
+- **De app heet nu overal "AWC Rondo".** De naam op het beginscherm en in de installatievensters stond vast ingesteld op "Rondo Club", terwijl de sitenaam allang "AWC Rondo" was. Die naam wordt nu overal uit de site-instellingen gelezen, dus de demo-omgeving houdt vanzelf haar eigen naam.
+- Een geïnstalleerde app opent nu direct op het dashboard in plaats van via een omleiding, en toont bij het opstarten dezelfde kleur als het pictogram.
+
+### Fixed
+
+- **De installatieknop van Chrome en Edge verscheen nooit.** Android en desktop laten pas een installatieknop zien als de site een actieve service worker heeft. Die werd sinds een opruimactie in de code nergens meer aangemeld, waardoor de knop in de adresbalk en de installatiemelding op Android al die tijd zijn uitgebleven. Hij wordt weer aangemeld — en werkt nu ook echt voor de hele site in plaats van alleen voor de map met bestanden, waardoor offline gebruik pas nu kan werken.
+- **Voorkomen dat de offlinepagina de hele app zou vervangen.** In de bestaande instellingen stond de offlinepagina klaar als antwoord op élk paginaverzoek, ook met een werkende internetverbinding. Zodra de service worker weer actief werd, zou iedereen "je bent offline" te zien krijgen in plaats van Rondo. De offlinepagina verschijnt nu alleen nog als het netwerk daadwerkelijk niet reageert.
+- Het installatievoorstel werd geteld per keer dat de pagina volledig werd herladen, wat in Rondo vrijwel nooit gebeurt — daardoor verscheen het in de praktijk zelden. Het telt nu gewone klikken door de app.
+
+## [33.80.2] - 2026-07-30
+
+### Changed
+
+- De PHP-testsuite draait nu automatisch mee bij elke wijziging, naast de bestaande controles op codestijl en de frontend-build. De suite was niet uit te voeren en daardoor jarenlang niet gedraaid; hij is nu volledig groen (389 tests) en een falende test blokkeert voortaan een uitrol naar productie. Alleen intern van belang: aan de applicatie zelf verandert niets.
+
+## [33.80.1] - 2026-07-30
+
+### Fixed
+
+- **Zoeken en het dashboard toonden leden aan iedereen die was ingelogd.** Wie geen enkel lid mag inzien, kreeg via de zoekfunctie toch alle namen te zien, en op het dashboard zowel het totale ledenaantal als de laatst toegevoegde leden met naam en toenaam. De oorzaak: deze schermen stellen hun resultaten zelf samen met een WordPress-functie die de afscherming standaard uitschakelt, waardoor de bestaande beperking per leeftijdsgroep of huishouden werd overgeslagen. Zoekresultaten, "recent toegevoegd", "recent contact" en de dashboardtellingen houden zich nu wél aan die beperking. Voor de ledenadministratie, het bestuur en andere rollen die de hele vereniging mogen zien verandert er niets.
+
+## [33.80.0] - 2026-07-30
+
+### Added
+
+- **Het hele seizoen wordt nu vooruit ingepland en is in één keer zichtbaar.** Tot nu toe rolde de planning steeds maar drie maanden vooruit: inschrijftaken van na die periode bestonden simpelweg nog niet, waardoor coördinatoren het voorjaar niet konden voorbereiden en leden niet konden zien wat eraan kwam. De nachtelijke uitrol loopt nu tot en met 30 juni, en de kalender toont standaard het volledige clubjaar van augustus tot en met juni.
+- **Inschrijven gaat per seizoenshelft open.** Inschrijftaken van juli tot en met december staan meteen open; die van januari tot en met juni gaan open op een datum die het bestuur zelf instelt — standaard 1 november. Leden zien de inschrijftaken van de tweede helft wél al staan, met de datum erbij ("Vanaf 1 november"), zodat duidelijk is dat ze eraan komen en wanneer ze te claimen zijn. Dagen die nog niet open zijn, kleuren grijs in plaats van rood: er valt immers nog niets te doen. De datum stel je in bij Instellingen → Club onder "Tweede seizoenshelft opent op".
+- Coördinatoren kunnen wél het hele seizoen vooruit iemand indelen — het inschrijfvenster geldt alleen voor leden die zichzelf aanmelden, niet voor het plannen zelf.
+
+## [33.79.0] - 2026-07-30
+
+### Added
+
+- **Vrijwilligerscoördinatoren kunnen zelf iemand indelen op een inschrijftaak.** Tot nu toe kon alleen het lid zich zelf aanmelden via `/vrijwillig`, waardoor leden zonder account, zonder e-mailadres of met alleen een telefoon buiten het systeem vielen. Op de pagina van een inschrijftaak zit nu "Iemand indelen": zoek op naam, kies de persoon, klaar. De ingedeelde persoon krijgt dezelfde bevestigingsmail met agenda-uitnodiging als bij een eigen aanmelding en kan zich daarna ook gewoon zelf afmelden. Bij de zoekresultaten is direct te zien wie er niet ingedeeld kan worden en waarom — bijvoorbeeld een ontbrekende VOG of IVA. Die eisen gelden namelijk onverkort: een coördinator legt een afspraak vast en zet het beleid niet buiten werking. Overlapt de inschrijftaak met een andere aanmelding van dezelfde persoon, dan volgt eerst een waarschuwing. Bij elke indeling wordt vastgelegd wie het gedaan heeft en wanneer.
+
+### Changed
+
+- Aanmeldingen van een inschrijftaak kunnen niet langer rechtstreeks als veld worden opgeslagen; dat liep om alle controles heen (capaciteit, certificaten, de bevestigingsmail, en de mogelijkheid voor het lid om zich af te melden) en koppelde een uitgerolde inschrijftaak los van zijn sjabloon.
+
+## [33.78.5] - 2026-07-30
+
+### Added
+
+- **Vrijwilligerscoördinatoren kunnen contactgegevens en foto's van leden corrigeren.** Coördinatoren lopen doorlopend tegen verkeerde telefoonnummers en e-mailadressen aan en moesten daarvoor tot nu toe de ledenadministratie inschakelen. Ze mogen nu e-mailadressen, telefoonnummers, adressen en de profielfoto aanpassen — precies de velden die ook terugsynchroniseren naar Sportlink. Alle overige velden blijven onbewerkbaar, en nieuwe leden aanmaken of leden verwijderen kan een coördinator nog steeds niet. Oud-leden blijven volledig alleen-lezen.
+
+### Changed
+
+- De veldbegrenzing voor sponsorbeheerders en vrijwilligerscoördinatoren wordt nu door één controle afgehandeld in plaats van twee losse. Een rol die beide bevoegdheden heeft, kan daardoor zowel de sponsorvelden als de contactgegevens bewerken; met twee aparte controles blokkeerden die elkaar volledig. Ook worden kernvelden van een profiel (zoals de status en de titel) nu expliciet beschermd tegen wijziging door rollen die alleen bepaalde velden mogen bewerken.
+
+## [33.78.4] - 2026-07-30
+
+### Changed
+
+- **Vrijwilligerscoördinatoren zien voortaan alle leden.** Diensten worden bemenst vanuit de hele vereniging, terwijl een coördinator met een leeftijdsgroep-beperking juist het grootste deel van de mensen die zij moeten inroosteren niet kon zien. De `vrijwilligers`-bevoegdheid werkt nu net als de andere beheerbevoegdheden: geen leeftijdsgroep-filter meer. Dit geldt alleen voor het inzien van leden — bewerken blijft ongewijzigd, en de financiële, ondersteunings- en sponsorvelden blijven afgeschermd (zie 33.78.3). Een neveneffect: de kaderlijst toont voor deze rollen nu de hele vereniging in plaats van alleen de eigen leeftijdsgroepen.
+- De lijst met beheerbevoegdheden in Instellingen → Beheer → Capabilities komt nu van de server in plaats van uit een handmatig bijgehouden kopie in de frontend. Die kopie liep achter, waardoor het scherm de leeftijdsgroep-instelling van een rol niet altijd opruimde wanneer die rol een beheerbevoegdheid kreeg.
+
+## [33.78.3] - 2026-07-30
+
+### Changed
+
+- **Financiële en interne velden op een persoon zijn niet langer voor iedereen zichtbaar.** Wie een lid mag zien, zag tot nu toe automatisch álle velden van dat lid — ook de financiële blokkade, de contributiesaldi, het FreeScout-nummer en de Sponsit-koppelingen. Vanaf nu horen die velden bij een eigen bevoegdheid: financiële gegevens zijn zichtbaar voor de penningmeester (en wie financiën mag inzien), FreeScout en onboardingmomenten voor de ledenadministratie en beheerders, en de Sponsit-velden voor sponsorbeheerders. Dit geldt overal waar persoonsgegevens worden opgehaald, inclusief de ledenlijst. Filteren of sorteren op een veld dat je niet mag zien werkt niet langer — anders was de waarde alsnog af te leiden uit de zoekresultaten. Het KNVB-veld "wacht op overschrijving" blijft voor iedereen zichtbaar: dat is ledenadministratie, geen financiën.
+- **Notities en activiteiten bij een persoon zijn voorbehouden aan de ledenadministratie en financiën.** Notities bevatten vrije tekst en dus regelmatig financiële of vertrouwelijke informatie, die niet per veld af te schermen is. Ze zijn daarom nu een eigen bevoegdheid in plaats van iets dat je er automatisch bij krijgt zodra je een lid mag inzien. Voor onder anderen FairPlay-, VOG- en vrijwilligersrollen vervallen notities en activiteiten hiermee. De tijdlijn blijft voor iedereen bereikbaar en toont je eigen taken bij die persoon; alleen de notities, activiteiten en gelogde e-mails verdwijnen eruit. Bestaande notities blijven gewoon bewaard.
+
+## [33.78.2] - 2026-07-30
+
+### Changed
+
+- Het uploaden van een IVA-certificaat is robuuster gemaakt. Het certificaat wordt nu uitgelezen vóórdat er iets wordt opgeslagen, en als het koppelen aan het profiel onverhoopt misgaat worden het bestand en de bijlage automatisch opgeruimd in plaats van als losse restanten achter te blijven. Een mislukte notificatiemail aan de kantinebeheerder laat een geslaagde upload niet langer als fout terugmelden.
+
+## [33.78.1] - 2026-07-30
+
+### Fixed
+
+- Het uploaden van een IVA-certificaat werkte sinds 29 juli niet meer: elke upload liep vast op een serverfout. De automatische certificaatcontrole verwees naar de verkeerde namespace, waardoor de upload afbrak nadat het bestand al was opgeslagen maar vóórdat het aan het lid werd gekoppeld. Leden kregen daardoor een foutmelding en de kantinebeheerder ontving geen beoordelingsverzoek. Uploads werken weer, inclusief de automatische goedkeuring.
+
+## [33.78.0] - 2026-07-29
+
+### Added
+
+- Facturen kunnen nu als **Vervallen** worden gemarkeerd wanneer ze niet meer betaald hoeven te worden (bijvoorbeeld bij kwijtschelding), in plaats van ze onterecht als betaald te markeren. Verstuurde en achterstallige facturen krijgen hiervoor een knop "Laat vervallen" op de factuurpagina; bestaande Mollie-betaallinks worden daarbij gedeactiveerd en de publieke betaalpagina toont een melding dat de factuur vervallen is. Een vervallen factuur kan worden geheractiveerd, telt niet meer mee als openstaand, ontvangt geen herinneringen meer en toont wie de factuur wanneer heeft laten vervallen. (feedback #8658)
+
+## [33.77.0] - 2026-07-29
+
+### Added
+
+- Automatische verificatie van IVA-certificaten: officiële NOC*NSF-certificaten (e-learning "Voor elkaar") worden bij upload uitgelezen. Als de naam op het certificaat overeenkomt met het lid en de behaaldatum maximaal 2 jaar oud is, wordt het certificaat direct goedgekeurd — zonder handmatige beoordeling door de kantinebeheerder. De datum op het certificaat vervangt daarbij de handmatig ingevoerde datum. Niet-herkende bestanden volgen het bestaande beoordelingsproces.
+
+## [33.76.3] - 2026-07-29
+
+### Changed
+
+- De productie-uitrol gebruikt de Node 24-native v8 van GitHub's download-artefactactie, zodat de deployment zonder runtime-verouderingswaarschuwingen wordt uitgevoerd.
+
+## [33.76.2] - 2026-07-29
+
+### Changed
+
+- GitHub Actions gebruikt nu Node 24-compatibele artefactacties. De PHP-controle installeert Composer-afhankelijkheden rechtstreeks, zodat automatische deployments geen verouderde Node 20-actions meer aanroepen.
+
+## [33.76.1] - 2026-07-29
+
+### Changed
+
+- Productiedeployments worden na geslaagde lint- en buildcontroles automatisch door GitHub Actions uitgevoerd wanneer een commit `main` bereikt. GitHub bouwt een reproduceerbaar release-artefact, bewaart dit 30 dagen, controleert de uitrol en ondersteunt handmatig terugrollen naar een eerdere commit op `main`.
+- De lokale deploytool accepteert nu rechtstreeks omgevingsvariabelen en vooraf gebouwde releases; `.env` blijft alleen beschikbaar als noodoplossing voor lokale deployments.
+
+## [33.76.0] - 2026-07-29
+
+### Added
+
+- Het ingestelde WordPress-administratieadres ontvangt bij ieder nieuw feedbackitem een eenmalige, opgemaakte e-mail met de indiener, het type, project, prioriteit, beschrijving en een directe link naar de feedback. Een fout bij het verzenden blokkeert het opslaan van de feedback niet.
+
+## [33.75.1] - 2026-07-29
+
+### Removed
+
+- Het ongebruikte filter **Betaalde vrijwilliger** is verwijderd van de pagina **Vrijstellingen**. (feedback #9263)
+
+## [33.75.0] - 2026-07-22
+
+### Changed
+
+- De Mollie-integratie probeert een API-verzoek nu automatisch opnieuw als Mollie aangeeft dat de aanvraaglimiet is bereikt (HTTP 429), met oplopende wachttijd. Dit sluit aan op de nieuwe API-rate limits van Mollie; betaallinks aanmaken en webhookverwerking blijven werken tijdens korte pieken.
+- Mollie PHP SDK bijgewerkt van v3.9.0 naar v3.13.1.
+
+## [33.74.0] - 2026-07-21
+
+### Added
+
+- Na een nieuwe IVA-upload ontvangen alle bevoegde IVA-goedkeurders een e-mail met een directe, beveiligde reviewlink om het certificaat te bekijken en goed te keuren. Gedeelde e-mailadressen krijgen één melding. (feedback #8626)
+
+## [33.73.8] - 2026-07-21
+
+### Fixed
+
+- Statusbadges bij de vrijwilligersplicht, zoals **Op weg** en **Nog te plannen**, blijven ook naast langere toelichtingen op één regel staan.
+
+## [33.73.7] - 2026-07-21
+
+### Changed
+
+- De vrijwilligersplicht toont de vriendelijke status **Nog te plannen** in amber, met een uitnodigende tekst om de resterende inschrijftaken te kiezen, in plaats van de rode status **Risico**.
+
+## [33.73.6] - 2026-07-21
+
+### Fixed
+
+- De waarschuwing over een ontbrekende of verlopen VOG verschijnt op de vrijwilligerspagina alleen wanneer er in de getoonde kalender daadwerkelijk inschrijftaken met een VOG-vereiste worden verborgen.
+
+## [33.73.5] - 2026-07-21
+
+### Fixed
+
+- De knop **Toch aanmelden** schrijft een vrijwilliger nu daadwerkelijk in wanneer de gekozen inschrijftaak met een bestaande aanmelding overlapt; eventuele vervolgproblemen worden zichtbaar gemeld.
+
+## [33.73.4] - 2026-07-21
+
+### Fixed
+
+- De voortgang van de vrijwilligersplicht toont direct het nieuwe aantal ingeplande inschrijftaken na aanmelden, afmelden of verwijderen door een beheerder, ook wanneer een persistente objectcache actief is. (feedback #8627)
+
+## [33.73.3] - 2026-07-21
+
+### Fixed
+
+- Horizontaal scrollbare tabellen blokkeren op mobiel niet langer het verticaal scrollen van de pagina. (feedback #6584)
+
+## [33.73.2] - 2026-07-21
+
+### Fixed
+
+- Pagineren in de relatieslijst blijft nu op de gekozen pagina staan wanneer er filters actief zijn. (feedback #8281)
+
+## [33.73.1] - 2026-07-21
+
+### Fixed
+
+- De actieve BC-lidfilter toont het label nog maar één keer in de filterchip.
+
+## [33.73.0] - 2026-07-21
+
+### Added
+
+- De relatieslijst heeft naast de sponsorfilter nu een aparte filter voor actieve BC-leden. De selectie blijft in de URL staan en wordt ook toegepast op CSV-exports.
+
+## [33.72.2] - 2026-07-21
+
+### Fixed
+
+- Het datumveld van een losse inschrijftaak beperkt het jaartal nu tot vier cijfers, ook in Chrome en Edge op Windows.
+
+## [33.72.1] - 2026-07-21
+
+### Fixed
+
+- Aangemaakte, gewijzigde, geannuleerde en verwijderde inschrijftaken verschijnen nu direct correct in alle beheerderskalenders, inclusief eerder gebruikte taakfilters.
+
+## [33.72.0] - 2026-07-21
+
+### Added
+
+- Vrijwilligersbeheerders kunnen vanuit een kalenderdag de volledige dagplanning naar een andere datum kopiëren. Tijden, capaciteit, IVA-uitzonderingen en notities blijven behouden; aanmeldingen en statussen worden bewust niet meegenomen en bestaande doelregels worden veilig overgeslagen.
+
+## [33.71.0] - 2026-07-21
+
+### Added
+
+- Bij het oplossen van feedback is nu een Nederlandse uitleg verplicht. Deze uitleg wordt opgeslagen, door de feedbackagent en WP-CLI ondersteund en als uitgelicht onderdeel in de bevestigingsmail aan de indiener getoond.
+
+## [33.70.1] - 2026-07-21
+
+### Fixed
+
+- Het WP-CLI-subcommando voor feedbackstatussen is expliciet geregistreerd als `set-status`, overeenkomstig de documentatie en voorbeelden.
+
+## [33.70.0] - 2026-07-21
+
+### Added
+
+- Feedbackstatussen kunnen veilig via WP-CLI worden gewijzigd met `wp rondo feedback set-status <id> <status>`. De opdracht gebruikt dezelfde statusovergangen, oplostijd en eenmalige e-mailnotificatie als de REST API.
+
+## [33.69.0] - 2026-07-21
+
+### Added
+
+- De indiener van feedback ontvangt een eenmalige, opgemaakte e-mail met een link naar het feedbackitem zodra de status naar **Opgelost** verandert. Gezinsaccounts gebruiken daarbij het echte contactadres in plaats van een technisch WordPress-adres.
+
+## [33.68.10] - 2026-07-21
+
+### Fixed
+
+- Bij het maken of bewerken van een losse inschrijftaak hoeft de datum nog maar één keer te worden ingevuld. Begin- en eindtijd gebruiken automatisch dezelfde datum en de eindtijd moet na de begintijd liggen.
+
+## [33.68.9] - 2026-07-21
+
+### Removed
+
+- Kalenderdeelnemers worden niet langer automatisch aan personen gekoppeld. De matcher, cache-invalidatie bij persoonswijzigingen, uitgestelde hermatching en het bijbehorende WP-CLI-commando zijn verwijderd om onnodige databasequeries en cronwerk te stoppen.
+
+## [33.68.8] - 2026-07-21
+
+### Changed
+
+- Kalenderkoppelingen worden alleen opnieuw gematcht wanneer een vast e-mailadres van een persoon wijzigt. Wijzigingen uit dezelfde importsessie worden per eigenaar samengevoegd tot één uitgestelde cronjob.
+- Verwachte REST-responses voor authenticatie, autorisatie, overlapwaarschuwingen en paginering worden niet langer als applicatiefout naar `debug.log` geschreven.
+
+### Fixed
+
+- Lettermint-mails zonder expliciete `Content-Type`-header gebruiken nu betrouwbaar `text/plain`, zodat onder meer standaard WordPress-mails niet meer worden geweigerd vanwege lege `metadata.content_type`.
+
+## [33.68.7] - 2026-07-20
+
+### Fixed
+
+- Personen kunnen niet meer naar de prullenbak worden verplaatst of definitief worden verwijderd zolang hun profiel nog een actieve relatie met een andere persoon bevat. De verwijdermelding noemt de gekoppelde personen, zodat de relatie eerst kan worden gecorrigeerd of verwijderd.
+
+## [33.68.6] - 2026-07-20
+
+### Fixed
+
+- **Datakwaliteit** onder Vrijwilligers meldt alleen nog spelende leden waarbij Sportlink wel een spelactiviteit maar geen leeftijdsgroep bevat; niet-spelende ouders, sponsorcontacten en andere contacten worden niet langer ten onrechte als probleem geteld.
+- Ex-leden worden nog steeds buiten de vrijwilligersdoelgroep gehouden, maar staan niet langer als datakwaliteitsprobleem op het dashboard.
+
+## [33.68.5] - 2026-07-20
+
+### Changed
+
+- Een oud-lid met een actueel kind bij de club wordt op het persoonsprofiel nu herkenbaar getoond als **Oud-lid · ouder/verzorger**. De historische lidmaatschapsgegevens blijven alleen-lezen, terwijl de actuele oudercontactgegevens via Sportlink worden bijgehouden.
+
+### Fixed
+
+- De oudersync kan actuele contact- en adresgegevens van een oud-lid dat ook ouder/verzorger is verversen zonder diens naam, KNVB-ID of lidmaatschapshistorie te overschrijven.
+
+## [33.68.4] - 2026-07-20
+
+### Fixed
+
+- De Sportlink-sync kan een terugkerende ouder nu ook op e-mailadres in de WordPress-prullenbak vinden, zodat het bestaande ouderrecord wordt hersteld in plaats van een sibling te hergebruiken of een duplicaat aan te maken.
+
+## [33.68.3] - 2026-07-20
+
+### Changed
+
+- De catalogus met soorten inschrijftaken opent op **Vrijwilligers → Inschrijftaken** voortaan via de knop **Inschrijftaken** naast **Sjablonen**, in plaats van als vast blok onder de kalender.
+- Diensten van een aangeklikte kalenderdag openen op de beheerpagina voortaan in een popover bij de gekozen datum.
+
+## [33.68.2] - 2026-07-20
+
+### Changed
+
+- De namen in **Recente aanmeldingen** onder **Vrijwilligers → Inschrijftaken** linken nu rechtstreeks naar het bijbehorende ledenprofiel.
+
+## [33.68.1] - 2026-07-20
+
+### Fixed
+
+- De knop **Wijzigen** onder **Beheer → Gebruikers** opent de accountkoppeling nu direct in een zichtbare modal, ook wanneer de gebruikerstabel langer is dan het scherm.
+
+## [33.68.0] - 2026-07-20
+
+### Changed
+
+- Het blok onderaan **Vrijwilligers → Inschrijftaken** toont niet langer de laatst aangemaakte diensten, maar maximaal 50 diensten met de recentste actuele aanmeldingen. Per dienst staan de ingeschreven namen en het tijdstip van de laatste aanmelding; de dienstnaam opent direct de diensteditor.
+
+## [33.67.0] - 2026-07-20
+
+### Added
+
+- Ledenprofielen tonen alle komende inschrijftaken en de twee meest recente verstreken inschrijftaken van die persoon, inclusief datum, tijd en status.
+- Het nieuwe persoonsendpoint `GET /rondo/v1/people/{person_id}/shifts` levert dit beperkte overzicht met dezelfde toegangscontrole als het ledenprofiel en zonder persoonsgegevens van mede-vrijwilligers.
+
+## [33.66.0] - 2026-07-20
+
+### Added
+
+- Ouders en verzorgers die nog niet als eigen persoon uit Sportlink zijn gesynchroniseerd, kunnen Rondo tijdelijk via het account van hun jeugdlid gebruiken. Rondo vraagt hun naam, toont direct de gezinsplicht en informeert de ledenadministratie.
+- Beheerders kunnen onder **Beheer → Gebruikers** de persoonskoppeling van een account wijzigen zodra de ouder uit Sportlink is gesynchroniseerd.
+
+### Changed
+
+- Bij het wijzigen van een accountkoppeling verhuizen de via dat account gemaakte inschrijvingen en de VOG/IVA-gegevens van het kind naar de ouder. Afwijkende bestaande certificaatgegevens op de ouder blokkeren de verhuizing om overschrijven te voorkomen.
+- Persoonlijke en beheerweergaven van inschrijftaken tonen tijdens de tijdelijke koppeling de opgegeven naam van de ouder/verzorger.
+
+## [33.65.0] - 2026-07-20
+
+### Added
+
+- Het vrijwilligersdashboard toont hoeveel Rondo-gebruikersaccounts aan een persoon zijn gekoppeld.
+
+## [33.64.2] - 2026-07-20
+
+### Fixed
+
+- De voortgangskaart op de persoonlijke vrijwilligerspagina trekt reeds ingeplande inschrijftaken nu af van het aantal dat nog moet worden ingepland. Wanneer de volledige plicht al is ingepland, bevestigt de kaart dat expliciet in plaats van ten onrechte om extra inschrijftaken te vragen.
+
+## [33.64.1] - 2026-07-19
+
+### Fixed
+
+- Vrijwilligersbeheerders (rol met `vrijwilligers`-capability, zonder de generieke `edit_posts`) kunnen nu sjablonen uitrollen en opnieuw uitrollen. De REST-endpoints `POST /rondo/v1/shift-templates/expand` en `.../{id}/rerun` controleerden op `edit_posts` — die capability wordt bij niet-admin Rondo-rollen juist verwijderd — en checken nu op `manage_options` of `vrijwilligers`, gelijk aan de overige vrijwilligers-endpoints.
+
+## [33.64.0] - 2026-07-19
+
+### Added
+
+- Sjablonen kunnen per stuk opnieuw worden uitgerold ("Opnieuw uitrollen" op het sjabloonscherm): nog niet aangepaste, toekomstige inschrijftaken worden verwijderd en opnieuw aangemaakt met de huidige sjablooninstellingen. Handmatig aangepaste inschrijftaken, inschrijftaken met aanmeldingen en geannuleerde inschrijftaken blijven ongewijzigd.
+- Het inschrijftaakscherm toont nu of een taak van een sjabloon komt en of hij is losgekoppeld door een handmatige aanpassing.
+
+### Changed
+
+- Een uitgerolde inschrijftaak wordt automatisch losgekoppeld van zijn sjabloon zodra je hem handmatig bewerkt. De koppeling (herkomst) blijft zichtbaar, maar opnieuw uitrollen laat de taak voortaan met rust.
+
+### Fixed
+
+- Het bewerken (of opnieuw opslaan) van een sjabloon-inschrijftaak leverde geen dubbele inschrijftaak meer op bij de volgende nachtelijke uitrol: de idempotentiecheck herkent nu zowel de `Y-m-d H:i`- als de `Y-m-d H:i:s`-notatie van de starttijd.
+
+## [33.63.6] - 2026-07-17
+
+### Changed
+
+- Inschrijftaakkaarten op de persoonlijke vrijwilligerspagina tonen geen diensttype-kleurbalk meer; de kleurcodering blijft beschikbaar in het beheeroverzicht.
+
+## [33.63.5] - 2026-07-17
+
+### Fixed
+
+- Kalenderbijlagen bij bevestigingsmails bewaren de geplande Nederlandse aanvangs- en eindtijd met expliciete `Europe/Amsterdam`-tijdzone, zodat agenda-apps geen extra uur optellen.
+
+## [33.63.4] - 2026-07-17
+
+### Fixed
+
+- Links in het informatieblok op de vrijwilligerspagina openen nu in een nieuw tabblad.
+
+## [33.63.3] - 2026-07-17
+
+### Changed
+
+- De instelling voor de e-mail na IVA-goedkeuring staat nu logisch gegroepeerd onder **Beheer → E-mails → IVA-goedkeuring** in plaats van bij de algemene clubconfiguratie.
+
+## [33.63.2] - 2026-07-17
+
+### Fixed
+
+- Datums in bevestigings-, herinnerings- en annuleringsmails voor inschrijftaken worden altijd met Nederlandse dag- en maandnamen weergegeven, onafhankelijk van de WordPress-locale.
+
+## [33.63.1] - 2026-07-17
+
+### Fixed
+
+- De kalenderpopover voor inschrijftaken gebruikt de beschikbare ruimte beter, zodat datum- en bezettingsteksten niet onnodig smal worden weergegeven.
+
+## [33.63.0] - 2026-07-17
+
+### Added
+
+- Leden ontvangen tien minuten na hun eerste aanmelding één gecombineerde bevestigingsmail voor alle nieuw geplande inschrijftaken, inclusief een `.ics`-bestand om ze direct aan hun agenda toe te voegen.
+
+## [33.62.2] - 2026-07-17
+
+### Fixed
+
+- De vrijstellingsmelding op `/vrijwillig` noemt een actieve vrijwilligersrol niet langer ten onrechte altijd een commissierol.
+
+## [33.62.1] - 2026-07-17
+
+### Fixed
+
+- Vrijwilligers kunnen zich op `/vrijwillig` aanmelden voor twee aansluitende inschrijftaken waarvan de eind- en starttijd in dezelfde minuut vallen.
+
+## [33.62.0] - 2026-07-15
+
+### Added
+
+- Beheerders kunnen het onderwerp en de berichttekst van de e-mail na IVA-goedkeuring aanpassen via de clubinstellingen.
+
+## [33.61.0] - 2026-07-15
+
+### Added
+
+- Leden ontvangen na goedkeuring van een geldig IVA-certificaat een e-mail met een directe link naar de beschikbare inschrijftaken.
+
+## [33.60.5] - 2026-07-15
+
+### Changed
+
+- De interne WordPress-verwijzing is verwijderd uit de uitleg op het IVA-beheerscherm.
+
+## [33.60.4] - 2026-07-15
+
+### Fixed
+
+- IVA-certificaten worden vanuit het beheer- en profielscherm geauthenticeerd opgehaald, zodat **Bekijk** niet meer eindigt in een `rest_forbidden`-fout.
+
+## [33.60.3] - 2026-07-15
+
+### Changed
+
+- Op `/vrijwillig` verschijnen de inschrijftaken van een gekozen kalenderdatum nu in een popover bij die datum, zodat naar beneden scrollen niet meer nodig is.
+
+## [33.60.2] - 2026-07-14
+
+### Fixed
+
+- Lokale `graphify-out/`-artefacten worden genegeerd door Git en uitgesloten van productiedeploys; Graphify blijft verwijderd uit het project.
+
+## [33.60.1] - 2026-07-14
+
+### Fixed
+
+- Op het beheerscherm van een inschrijftaak worden aangemelde vrijwilligers met hun naam getoond in plaats van alleen als `Persoon {id}`.
+
+## [33.60.0] - 2026-07-14
+
+### Changed
+
+- Op het vrijwilligersdashboard zijn de statistieken voor gezinnen en spelers vervangen door het totale aantal plekken in inschrijftaken en het aantal plekken waarvoor al een vrijwilliger is ingeroosterd.
+
+## [33.59.3] - 2026-07-14
+
+### Changed
+
+- Op **Vrijwilligers → Inschrijftaken** staat het bezettingsoverzicht nu vóór de catalogus; recente inschrijftaken blijven onderaan.
+- De gebruikersgerichte termen **Diensttypes**, **Diensten** en **Shifts** zijn binnen de vrijwilligersfunctionaliteit vervangen door **Inschrijftaken**; technische routes en datasleutels blijven ongewijzigd.
+
+## [33.59.2] - 2026-07-14
+
+### Changed
+
+- Ook het bezettingsoverzicht voor leden op **Vrijwillig** toont nu de huidige en de komende vijf kalendermaanden.
+
+## [33.59.1] - 2026-07-14
+
+### Changed
+
+- Het bezettingsoverzicht op **Vrijwilligers → Diensten** toont nu de huidige en de komende vijf kalendermaanden.
+
+## [33.59.0] - 2026-07-14
+
+### Added
+
+- De knop **Uitrollen** bij vrijwilligerssjablonen vraagt nu om een einddatum en maakt diensten aan tot en met die gekozen datum.
+
+## [33.58.2] - 2026-07-13
+
+### Fixed
+
+- Na het wijzigen van de sponsorrol wordt de persoonspagina volledig ververst, zodat alle rol-afhankelijke velden en rechten direct de nieuwe situatie tonen.
+
+## [33.58.1] - 2026-07-13
+
+### Fixed
+
+- Het veld **Bedrijfsnaam** op de persoonspagina wordt alleen getoond bij een actieve sponsorrol, onafhankelijk van het persoonstype.
+
+## [33.58.0] - 2026-07-13
+
+### Added
+
+- Personen kunnen nu tegelijk lid of contact én sponsor zijn via de onafhankelijke sponsorrol `is_sponsor`.
+- De personenlijst heeft een apart sponsorfilter en toont **+ sponsor** naast het bestaande persoonstype.
+
+### Changed
+
+- `person_type` kent alleen nog `member` en `contact`; sponsorstatus en pasvariant staan daar los van.
+- Een actieve sponsorrol krijgt voorrang bij de digitale pas en valt na beëindiging terug op een eventuele ledenpas.
+- Sponsorbeheerders kunnen op dubbelrolrecords uitsluitend sponsorvelden wijzigen en kunnen het onderliggende lid niet verwijderen.
+
+## [33.57.1] - 2026-07-13
+
+### Fixed
+
+- De velden **Persoonstype** en **Pasvariant** op de sponsorpagina hebben nu consistente horizontale en verticale tussenruimte.
+
+## [33.57.0] - 2026-07-13
+
+### Added
+
+- Per diensttype zijn het onderwerp en de berichttekst van beide annuleringsmails instelbaar: minimaal 48 uur vooraf en binnen 48 uur. De bestaande standaardteksten blijven actief als terugval en ondersteunen dezelfde persoonlijke variabelen als de herinneringsmails.
+
+## [33.56.0] - 2026-07-13
+
+### Added
+
+- Vrijwilligerscoördinatoren kunnen een bezette dienst gecontroleerd annuleren. Alle aangemelde vrijwilligers ontvangen automatisch een persoonlijke e-mail met de dienstgegevens en een optionele reden.
+- Annuleringen binnen 48 uur voor aanvang tellen automatisch mee voor de vrijwilligersplicht; eerdere annuleringen niet. Geannuleerde diensten en hun aanmeldingen blijven als auditbare historie bewaard.
+
+### Changed
+
+- Diensten met aanmeldingen kunnen niet meer definitief worden verwijderd of rechtstreeks op **Geannuleerd** worden gezet. De ledenweergave toont geannuleerde diensten onder **Historie** met de melding of de dienst meetelt.
+
+## [33.55.0] - 2026-07-13
+
+### Added
+
+- Beheerders kunnen onder **Instellingen → Club → Huisstijl** een apart Businessclub-logo uploaden voor Businessclub AWC-passen. Zonder instelling blijft het meegeleverde Businessclub-logo actief.
+
+## [33.54.0] - 2026-07-13
+
+### Added
+
+- Bij het toevoegen van een sponsor is de pasvariant voortaan verplicht: **Businessclub AWC** gebruikt de witte Businessclub-pas met het Businessclub-logo, terwijl **AWC Sponsor** een witte pas met titel **AWC Sponsor** en het gewone AWC-logo krijgt. De keuze blijft wijzigbaar op de persoonspagina.
+
+## [33.53.3] - 2026-07-13
+
+### Changed
+
+- Apple Wallet- en Google Wallet-passen voor sponsoren gebruiken voortaan het eigen Businessclub AWC-logo.
+
+## [33.53.2] - 2026-07-13
+
+### Changed
+
+- De lidpasscanner toont bij een gescande sponsorpas **Bedrijf** met de bedrijfsnaam in plaats van een KNVB ID.
+
+## [33.53.1] - 2026-07-13
+
+### Changed
+
+- Sponsorpassen tonen bovenaan **Businessclub AWC** en vervangen de velden Teams en Functies door **Bedrijf** met de bedrijfsnaam.
+
+## [33.53.0] - 2026-07-13
+
+### Added
+
+- Businessclubleden en sponsoren kunnen als persoonstype **Sponsor** worden toegevoegd, beheerd en gefilterd. De ingebouwde rol **Rondo Sponsorbeheerder** mag uitsluitend sponsorrecords toevoegen, aanpassen en verwijderen.
+- Sponsors krijgen automatisch een digitale toegangspas. De Apple Wallet- en Google Wallet-passen hebben een witte achtergrond en tonen **Sponsor** als pastype.
+
+## [33.52.0] - 2026-07-13
+
+### Added
+
+- Beheerders kunnen onder **Instellingen → Club** een clubspecifiek informatieblok met links en opmaak instellen. Het blok verschijnt direct onder de introductie op `/vrijwillig` en blijft verborgen wanneer het veld leeg is.
+
+## [33.51.1] - 2026-07-13
+
+### Fixed
+
+- Het totaal op `/vrijwilligers` telt nu de werkelijk vereiste diensten per plichteenheid op. Gezinnen met meerdere jeugdleden tellen daardoor volgens de bestaande gezinskorting mee voor meer dan twee diensten, in plaats van slechts als één eenheid te worden getoond.
+
+## [33.51.0] - 2026-07-12
+
+### Added
+
+- Wie via `/activeren` een e-mailadres indient waarvoor alle accounts al bestaan, ontvangt voortaan een eenmalige Magic Login-link. Gedeelde gezinsadressen krijgen één e-mail met een herkenbare, benoemde link per account.
+
+### Changed
+
+- De neutrale bevestiging op `/activeren` vermeldt dat de e-mail zowel een activatie- als directe inloglink kan bevatten, zonder prijs te geven of het adres bekend is.
+
+## [33.50.0] - 2026-07-12
+
+### Added
+
+- De openbare accountactivatiepagina heeft een eigen Open Graph-afbeelding van 1200×630 pixels en bijpassende Open Graph- en Twitter Card-metadata voor herkenbare previews bij het delen van `/activeren`.
+
+## [33.49.0] - 2026-07-12
+
+### Added
+
+- Een gedeelde bezettingskalender op `/vrijwilligers/diensten` en `/vrijwillig` toont de komende drie kalendermaanden per datum: groen wanneer alle diensten gevuld zijn en rood wanneer nog plekken openstaan. Beide weergaven ondersteunen een deelbaar diensttypefilter en tonen details na het kiezen van een datum.
+- Het beveiligde endpoint `GET /rondo/v1/shifts/calendar` levert geaggregeerde bezetting voor vrijwilligerscoördinatoren en een persoonsgebonden, privacyveilige aanmeldweergave voor leden.
+
+### Changed
+
+- De beschikbare-dienstenlijst op `/vrijwillig` is vervangen door de kalender; de persoonlijke lijst onder “Mijn diensten” blijft behouden.
+- Terugkerende dienstsjablonen worden 93 dagen vooruit uitgerold, zodat iedere periode van drie kalendermaanden volledig gevuld kan worden.
+
+### Fixed
+
+- Rechtstreekse aanmeldverzoeken respecteren nu ook de status als actief lid en de vereiste vrijwilligerspool, naast de bestaande VOG- en IVA-controles.
+
+## [33.48.6] - 2026-07-12
+
+### Fixed
+
+- Force fresh Memcached reads for volunteer-shift locks and assignees, so concurrent requests cannot retain stale per-request cache values.
+
+## [33.48.5] - 2026-07-12
+
+### Fixed
+
+- Refresh the per-request WordPress caches while waiting for a volunteer-shift write lock, preventing stale lock and assignee values when Memcached is active.
+
+## [33.48.4] - 2026-07-12
+
+### Fixed
+- Gelijktijdige aanmeldingen, afmeldingen en beheer-verwijderingen voor dezelfde vrijwilligersdienst worden per dienst geserialiseerd met een korte WordPress-option-lock. Daardoor kunnen parallelle wijzigingen aan de `assigned_persons`-lijst elkaar niet meer overschrijven.
+
+## [33.48.3] - 2026-07-12
+
+### Added
+- Herbruikbare, strikt demo-only loadtesttooling voor de vrijwilligersreis. De fixturetool maakt en verwijdert gemarkeerde synthetische vrijwilligers, accounts en diensten; de k6-test meet unieke logins, vrijwilligerslijsten en gelijktijdige inschrijvingen met een afzonderlijke data-integriteitscontrole.
+
+## [33.48.2] - 2026-07-12
+
+### Changed
+- De vrijstellingsmelding op `/vrijwillig` legt voor actieve commissieleden duidelijker uit waarom zij geen diensten hoeven in te plannen en dat zij wel mogen meedoen.
+
+## [33.48.1] - 2026-07-12
+
+### Removed
+- De lokale Graphify-integratie, inclusief de verplichte agentinstructies, Claude-hook en deployconfiguratie. De verouderde kennisgraph indexeerde voornamelijk dependencies en gegenereerde bestanden en vertraagde daardoor ontwikkelwerk zonder bruikbare architectuurinformatie te leveren.
+
+## [33.48.0] - 2026-07-12
+
+### Added
+- Op `/vrijwillig` kunnen beschikbare en eigen diensten worden gefilterd op diensttype. De keuze staat in de URL als `?diensttype=<id>`, zodat een gefilterd overzicht direct gedeeld kan worden.
+
+## [33.47.3] - 2026-07-12
+
+### Changed
+- De bevestiging na een activatieaanvraag noemt `ledenadministratie@svawc.nl` als afzender en toont de hulptekst in een beter leesbare kleur.
+
+### Fixed
+- Accountactivatiemails worden verzonden namens `ledenadministratie@svawc.nl` in plaats van de algemene `noreply@`-afzender.
+
+## [33.47.2] - 2026-07-12
+
+### Changed
+- De uitleg en formulieropmaak op `/activeren` zijn verduidelijkt: leden herkennen welk e-mailadres ze moeten gebruiken, en het veldlabel en de activatieknop hebben meer nadruk en ruimte.
+
+### Fixed
+- De browservalidatie van het e-mailadres op `/activeren` toont Nederlandse meldingen voor een leeg of ongeldig adres.
+
+## [33.47.1] - 2026-07-11
+
+### Fixed
+- De horizontale scrollbar van de brede relatieslijst blijft onder in het venster bereikbaar zolang de gewone scrollbar nog buiten beeld staat. Gebruikers hoeven daardoor niet meer eerst langs alle 100 relaties naar beneden te scrollen om kolommen aan de rechterkant te bekijken. (feedback #6473)
+
+## [33.47.0] - 2026-07-11
+
+### Added
+- Diensttypen hebben aanpasbare onderwerpen en teksten voor herinneringsmails en enquêtemails, plus een Google Forms-link. Aangemelde vrijwilligers ontvangen automatisch en eenmalig een herinnering 2 weken, 1 week en 2 dagen voor de dienst en, als een enquêtelink is ingesteld, één dag na afloop een enquête. De mails ondersteunen variabelen voor naam, dienst, datum, tijden en medevrijwilligers.
+- Vrijwilligersbeheerders kunnen via het dienstbeheer altijd een deelnemer afmelden. Dit recht volgt de bestaande capability `vrijwilligers`, die per rol instelbaar is in de capabilitymatrix.
+
+### Changed
+- Leden kunnen zichzelf tot 3 weken vóór een dienst afmelden. Binnen die grens kan dat alleen nog gedurende 30 minuten na de eigen aanmelding om een foutklik te herstellen; daarna verwijst de interface naar de vrijwilligerscoördinator. Bij aanmelden binnen 3 weken verschijnt vooraf een duidelijke waarschuwing.
+
+## [33.46.2] - 2026-07-11
+
+### Changed
+- De PWA-installatiecache bevat geen dubbele iconen of offlinepagina meer en laadt alleen de Latijnse Montserrat-fontbestanden vooraf. Andere schriftsets blijven op aanvraag beschikbaar en worden na gebruik gecachet.
+
+## [33.46.1] - 2026-07-11
+
+### Changed
+- De PWA precachet bij installatie alleen nog de app-shell; zware paginascripts worden pas bij het eerste bezoek gedownload en daarna langdurig gecachet. Dit verlaagt de gelijktijdige downloadpiek bij nieuwe gebruikers aanzienlijk.
+- Rondo start de dashboard-API alleen vervroegd op de daadwerkelijke dashboardroute en controleert nieuwe versies minder agressief en zonder overlappende verzoeken. Hierdoor veroorzaken directe links en terugkerende tabbladen minder onnodige WordPress REST-belasting.
+
+## [33.46.0] - 2026-07-11
+
+### Added
+- Op **Mijn diensten** is de naam van iedere mede-vrijwilliger met een bekend mobiel nummer een WhatsApp-link, zodat mensen die samen een dienst uitvoeren rechtstreeks contact kunnen opnemen. De link wordt uitsluitend in de persoonlijke dienstenrespons gedeeld; beschikbare diensten blijven alleen namen tonen.
+
+## [33.45.0] - 2026-07-11
+
+### Added
+- Leden zien bij beschikbare en eigen diensten de namen van de andere aangemelde vrijwilligers, zodat vooraf duidelijk is met wie zij de dienst uitvoeren. De leden-API deelt hiervoor alleen weergavenamen en blijft interne persoon-ID's en contactgegevens afschermen.
+
+## [33.44.2] - 2026-07-11
+
+### Changed
+- Het hoofdmenu-item **Leden** heet voortaan **Relaties**, zodat het ook ouders en externe contacten omvat. De classificatiekolom op dit overzicht heet nu kortweg **Type**.
+
+## [33.44.1] - 2026-07-10
+
+### Changed
+- De kolom **Type lid** op de personenlijst toont voortaan één duidelijke categorie: **Bondslid**, **Verenigingslid**, **Ouder** of **Contact**.
+
+## [33.44.0] - 2026-07-10
+
+### Added
+- De overzichten **Tuchtzaken** en **Facturen** kunnen de huidige gefilterde selectie exporteren als een Excel-compatibel CSV-bestand. De export bevat ook relevante detailvelden die niet altijd als zichtbare kolom in het overzicht staan. (feedback #6857)
+
+## [33.43.3] - 2026-07-10
+
+### Added
+- Op een commissiepagina opent **E-mail leden** een nieuw bericht in het standaard mailprogramma, gericht aan alle huidige commissieleden met een bekend e-mailadres. Dubbele adressen worden overgeslagen. (feedback #6861)
+
+## [33.43.2] - 2026-07-10
+
+### Fixed
+- Factuurdetail en facturenoverzicht tonen bij een bedrijfscontact nu dezelfde primaire klantnaam als de PDF: de bedrijfsnaam. De persoonsnaam blijft zichtbaar als contactpersoon, zodat bijvoorbeeld **Businessclub AWC** niet meer als **Roel de Bruijn** in de administratie verschijnt.
+
+## [33.43.1] - 2026-07-10
+
+### Fixed
+- Het formulier **Contact toevoegen** toont een ingevulde voornaam niet langer ten onrechte als foutmelding. Het veld Tussenvoegsel is voor handmatig aangemaakte contacten nu bewerkbaar in plaats van geblokkeerd door de Sportlink-regel voor leden.
+
+## [33.43.0] - 2026-07-10
+
+### Added
+- Contacten kunnen nu een bedrijfsnaam hebben en mogen ook uitsluitend uit een bedrijfsnaam bestaan. Als geen persoonsnaam is ingevuld, gebruikt Rondo de bedrijfsnaam als weergavenaam in lijsten, zoekvelden, facturen, factuurmails en PDF's.
+
+### Changed
+- De CSV-export van personen bevat een aparte kolom Bedrijfsnaam. Op de persoonspagina kan de bedrijfsnaam van een contact worden bijgewerkt.
+
+## [33.42.1] - 2026-07-10
+
+### Changed
+- De dialoog **Contact toevoegen** vermeldt nu duidelijk dat hij alleen voor externe contacten bedoeld is en dat leden en ouders/verzorgers uitsluitend via Sportlink worden toegevoegd en bijgewerkt. Bij het aanmaken kan het persoonstype daarom niet meer naar lid/ouder worden gewijzigd.
+
+## [33.42.0] - 2026-07-10
+
+### Added
+- Externe verenigingscontacten kunnen als persoonstype **Contact** in hetzelfde adresboek als leden en ouders worden bijgehouden. De ledenlijst heeft hiervoor een knop "Contact toevoegen", een persoonstypefilter en herkenbare Contact-labels. Contacten gebruiken dezelfde adres-, relatie- en factuurgegevens als andere personen. (feedback #7921)
+
+### Changed
+- De Relaties-kaart blijft voor bevoegde gebruikers zichtbaar wanneer een persoon nog geen relaties heeft, zodat ook bij een nieuw contact direct de eerste relatie kan worden toegevoegd.
+
+## [33.41.5] - 2026-07-10
+
+### Fixed
+- `/mijn-gegevens` gebruikt nu een eigen household-endpoint en toont altijd alleen de gekoppelde persoon en minderjarige kinderen. Beheerders zien op deze persoonlijke pagina niet langer het volledige ledenbestand.
+
+## [33.41.4] - 2026-07-10
+
+### Fixed
+- De migratie van bestaande IVA-bestanden draait niet langer tijdens de bootstrap van iedere REST-aanvraag. Daardoor blijven de app-API en navigatie direct beschikbaar; de migratie wordt als gecontroleerde eenmalige beheeractie uitgevoerd.
+
+## [33.41.3] - 2026-07-10
+
+### Fixed
+- De eenmalige migratie van bestaande IVA-certificaten gebruikt nu afzonderlijke, geïndexeerde WordPress-metaqueries. De eerdere gecombineerde OR-query kon op productie een timeout veroorzaken voordat de migratie begon.
+
+## [33.41.2] - 2026-07-10
+
+### Security
+- Het deployscript sluit nu lokale `.env`-bestanden, agentconfiguratie, worktrees, tests en overige ontwikkelbestanden uit. Ook bij `--with-node-modules` wordt uitsluitend de benodigde dependency-map meegestuurd.
+
+## [33.41.1] - 2026-07-10
+
+### Security
+- Alle Rondo-posttypes gebruiken nu eigen WordPress-capabilities. Gewone leden hebben geen generieke schrijf-, verwijder- of uploadrechten meer en kunnen daardoor geen facturen, tuchtzaken, kledingrecords of vrijwilligersconfiguratie via de standaard REST API lezen of vervalsen.
+- Financiële overzichten, VOG-bulkacties, vrijwilligersdiagnostiek en zoeken op e-mailadres zijn afgeschermd op hun specifieke functierecht. Dashboardcaches zijn per gebruiker gescheiden en dienstreacties lekken geen persoon-ID's van andere vrijwilligers meer.
+- IVA-certificaten worden buiten de publieke webmap opgeslagen en alleen via een geauthenticeerd endpoint aan het gekoppelde lid of een bevoegde functionaris geleverd. Bestaande certificaten worden eenmalig uit de mediabibliotheek gemigreerd.
+- Axios, React Router, Vite, Guzzle, phpseclib, FPDI en overige kwetsbare indirecte dependencies zijn bijgewerkt naar gepatchte versies. `npm audit` en `composer audit` melden geen bekende kwetsbaarheden meer.
+
+### Fixed
+- De CRUD-tests beschrijven weer het huidige ledenmodel en de actuele rechten per posttype. De todo-fixture en ACF-locatieregel gebruiken nu `rondo_todo` en het huidige meervoudige `related_persons`-veld.
+- Een gekoppeld ledenaccount kan zijn persoonskoppeling niet meer zelf verwijderen of verplaatsen; de provisioning-marker blijft behouden als bescherming tegen dubbele accounts.
+
+## [33.41.0] - 2026-07-10
+
+### Added
+- **Facturen inplannen om automatisch te verzenden.** Je kunt een conceptfactuur nu een verzenddatum in de toekomst geven; de factuur blijft een concept en wordt op die dag automatisch verstuurd (met betaallink, PDF en e-mail, net als een handmatige verzending). Ideaal om bijvoorbeeld BSO-facturen in één keer aan te maken en elk op een eigen datum te laten uitgaan. (feedback #6632)
+  - Stel de datum in via het veld "Automatisch verzenden op" in het factuurformulier, of via "Automatisch verzenden op" op de factuurpagina zelf (met een knop om de inplanning bij te werken of te annuleren).
+  - Op het Facturen-overzicht kun je meerdere concepten selecteren en in één keer inplannen voor dezelfde datum ("Inplannen voor…" in de selectiebalk).
+  - Ingeplande concepten krijgen een "Ingepland · {datum}"-label in het overzicht en op de factuurpagina. Handmatig "Verstuur nu" blijft altijd mogelijk en annuleert de inplanning.
+  - Een dagelijkse achtergrondtaak verstuurt de ingeplande facturen; de verzending wordt toegeschreven aan degene die de factuur heeft ingepland.
+
+### Added
+- **Bestaande factuur kopiëren als nieuw concept.** Op het Facturen-overzicht staat nu bij elke factuur een kopieer-knop, en op de factuurpagina zelf een knop "Kopiëren naar nieuwe factuur". Je komt dan in het factuurformulier met alle gegevens al ingevuld — lid/klant, regels, bedragen, e-mailtekst en eigen velden — zodat je terugkerende facturen (bijvoorbeeld de maandelijkse BSO-facturen) niet opnieuw hoeft in te tikken. Er wordt een nieuw factuurnummer toegekend bij versturen en de vervaldatum wordt opnieuw gezet. Een gekopieerde contributiefactuur wordt als handmatige factuur aangemaakt, omdat contributiefacturen automatisch worden gegenereerd. (feedback #6631)
+
+### Fixed
+- **Creditfacturen kregen de tekst van een reguliere factuur in de e-mail.** Bij het aanmaken van een creditfactuur vulde het factuurformulier het e-mailtekstveld altijd met de reguliere-factuurtekst, ongeacht de factuursoort. Omdat de editor die tekst bij het laden opnieuw opmaakt, werd die reguliere tekst vervolgens als handmatige override meegestuurd en overschreef zo het ingestelde creditfactuur-template. Het formulier gebruikt nu de juiste standaardtekst per factuursoort (creditfactuur-template voor creditfacturen) en wisselt die correct om als je de factuursoort wijzigt. (feedback #6633)
+
+### Changed
+- De herinneringen voor overige facturen staan nu op een eigen tabblad "Overige herinneringen" onder Instellingen → Financieel, in plaats van onder het tabblad "Contributieherinneringen".
+
+## [33.39.0] - 2026-07-10
+
+### Fixed
+- **Herinneringen voor niet-contributiefacturen spraken ten onrechte over contributie.** Bij een betalingsherinnering voor een handmatige factuur of een tuchtzaakfactuur werd de contributie-herinneringstekst gebruikt — inclusief verwijzingen naar "je contributie", "je betaalwijze kiezen" en "eventueel in termijnen", die op dat soort facturen niet van toepassing zijn. De verzender koos één vaste herinneringstekst voor álle factuursoorten. (feedback #6687)
+
+### Added
+- **Aparte herinneringstemplates voor overige facturen.** Onder Instellingen → Financieel → Factuurherinneringen staat nu een tweede blok "Herinneringen voor overige facturen". Contributiefacturen blijven de bestaande contributie-herinneringen gebruiken; handmatige facturen en tuchtzaakfacturen krijgen een neutrale herinnering zonder contributie- of termijncontext. De juiste template wordt automatisch gekozen op basis van het factuurtype. Beide herinneringen (eerste en tweede) hebben een eigen titel en zijn met een testmail te controleren.
+
+### Added
+- **Conceptfacturen in bulk verwijderen.** Op de Facturen-overzichtspagina kun je nu meerdere conceptfacturen aanvinken en in één keer verwijderen, naast de bestaande "verstuur alle"-actie. Er verschijnt een "Verwijder alle"-knop in de selectiebalk met een bevestiging vooraf; alleen conceptfacturen zijn selecteerbaar, dus verstuurde of betaalde facturen kunnen niet per ongeluk verwijderd worden.
+
+## [33.37.0] - 2026-07-10
+
+### Changed
+- **De Kaderlijst is nu server-side afgeschermd.** De pagina haalde tot nu toe álle leden op en filterde in de browser, waardoor een coördinator via de Kaderlijst het hele ledenbestand kon inzien. Er is nu een eigen endpoint (`GET /rondo/v1/kaderlijst/people`) dat alleen kaderleden teruggeeft (mensen met een lopende functie in de werkhistorie) en alleen de velden die de lijst toont. De zichtbaarheid wordt op de server bepaald: beheerders zien alle kaderleden, een coördinator ziet de kaderleden van de teams die hij coördineert (bepaald op basis van de leeftijdsgroep van de huidige spelers in dat team), en een lid ziet alleen het eigen huishouden.
+
+### Removed
+- **`suppress_age_group` is volledig verwijderd.** Deze query-parameter was de laatste plek waar een gescopete account de leeftijdsgroep-afscherming kon omzeilen. De parameter, `AccessControl::can_suppress_age_group()`, de `$suppress_age_group_filter`-vlag en alle bijbehorende vertakkingen zijn weg; de Kaderlijst gebruikt nu het afgeschermde endpoint.
+- De gedeelde Kaderlijst-snapshot (`rondo_kaderlijst_snapshot`, opgeslagen in de opties) is vervangen door een live, per-gebruiker afgeschermde query. Eén gedeelde snapshot is niet verenigbaar met per-gebruiker zichtbaarheid.
+
+## [33.36.0] - 2026-07-10
+
+### Added
+- **Datakwaliteit: "actieve leden zonder e-mailadres".** De ledenadministratie ziet nu op het Vrijwilligers-dashboard hoeveel actieve leden geen geldig e-mailadres hebben (email_1 én email_2 leeg of ongeldig). Zij kunnen geen account activeren via `/activeren` tot iemand een adres verzamelt. Doorklikken toont de lijst met naam, KNVB-ID, leeftijdsgroep en adres, met KNVB-ID erbij zodat ze snel op te zoeken zijn. Deze categorie is afgeschermd op het `ledenadministratie`-recht (beheerders inbegrepen); de bestaande categorieën blijven zichtbaar voor alle goedgekeurde gebruikers.
+- **CSV-export op elke Datakwaliteit-lijst.** De drill-downpagina's (wees-gezinnen, adres-overeenkomst, geen leeftijdsgroep, ex-leden, geen e-mailadres) hebben nu een "Exporteer CSV"-knop, zodat de lijst buiten Rondo nagebeld of afgewerkt kan worden.
+
+## [33.35.0] - 2026-07-10
+
+### Added
+- **Financieel is nu gesplitst in lezen en bewerken.** Wie mee wil kijken met de contributie en de facturen hoeft daarvoor niet langer het recht te krijgen om facturen te versturen, te verwijderen of als betaald te markeren. Een nieuwe capability `financieel_read` geeft alleen inzage.
+- Nieuwe rol **Rondo Financieel Lezen** — direct toe te kennen vanuit de gebruikerslijst. `financieel_read` is daarnaast aan te vinken in de rechtenmatrix onder Instellingen → Beheer.
+- De gebruiker-endpoint geeft nu `can_edit_financieel` terug naast `can_access_financieel`, zodat de interface knoppen kan verbergen in plaats van ze te laten mislukken op een 403.
+
+### Changed
+- `financieel` impliceert `financieel_read`. Iedereen die vandaag financieel beheert, ziet en kan exact hetzelfde als voorheen; de rechten worden bij het laden van het thema eenmalig bijgewerkt.
+- Leesrechten geven inzage in facturen, de contributiepagina, de FinanciënKaart op een persoonspagina en facturen in de zoekresultaten. Ze geven **geen** recht om personen te bewerken, en geen toegang tot Instellingen → Financieel.
+
+## [33.34.1] - 2026-07-10
+
+### Fixed
+- **De penningmeester zag geen seizoenen en geen categorieën op de contributiepagina.** Het Financiën-menu is afgeschermd op de rol-rechten "financieel", maar de bijbehorende endpoints eisten beheerdersrechten (`manage_options`). Wie financieel beheert zonder beheerder te zijn, kreeg dus een leeg scherm. Alle contributie- en factuur-endpoints luisteren nu naar hetzelfde recht als het menu.
+- `/rondo/v1/werkfuncties/available` — nodig om categorieën aan functies te koppelen — is nu ook bereikbaar voor financieel beheerders.
+
+### Changed
+- `Invoices::check_financieel_permission()` was een woordelijke kopie van de methode in `Base` en is verwijderd.
+
+## [33.34.0] - 2026-07-10
+
+### Added
+- **"Mijn gegevens" voor leden.** Een nieuw scherm waar je je eigen gegevens ziet en die van je kinderen onder de 18, precies zoals ze bij de club bekend staan. Alleen-lezen; kloppen ze niet, dan geef je het door aan de ledenadministratie.
+
+### Fixed
+- **Coördinatoren kwamen op een dashboard zonder menu.** "Kader" werd op twee plekken los van elkaar bepaald: de router telde poule- en coördinatorrollen mee, de zijbalk niet. Wie zo'n rol had, belandde op het dashboard terwijl er geen enkel menu-item naartoe wees. Beide lezen nu hetzelfde `is_kader`-veld, dat de server bepaalt.
+
+## [33.33.0] - 2026-07-10
+
+### Added
+- **Leden kunnen zelf een account aanmaken op `/activeren`.** Je vult je e-mailadres in, wij sturen een link naar het adres dat bij de club bekend is. Staan er meerdere leden op dat adres, dan kies je wie je bent. Daarna stel je meteen een wachtwoord in — er komt geen tweede mail aan te pas.
+- `PublicPageChrome` — de gedeelde HTML-schil van `/betaling` en `/activeren`, zodat de twee pagina's niet uit elkaar lopen.
+- `ActivationServiceTest` — 20 tests, met nadruk op misbruik: een link van het ene adres kan geen lid op een ander adres activeren, is eenmalig, en werkt niet na afloop.
+
+### Security
+- De pagina antwoordt **precies hetzelfde** of het e-mailadres nu bekend is of niet. Anders zou het een opzoekregister van clubleden worden.
+- Activatie geeft nooit rechtstreeks toegang: de link gaat altijd naar het adres dat al bij de club bekend staat. Wie een adres gokt, leert niets en ontvangt niets.
+- Van de token wordt alleen de SHA-256 bewaard, en hij wordt na gebruik direct ongeldig.
+- Snelheidsbegrenzing: 3 aanvragen per e-mailadres en 10 per IP-adres per uur.
+
+## [33.32.0] - 2026-07-10
+
+### Added
+- **Inloggen met je KNVB-ID of je eigen e-mailadres.** Leden hoeven de door Rondo aangemaakte gebruikersnaam niet te kennen. Voor het tweede lid van een gezin is dit de enige manier om binnen te komen: het gedeelde adres hoort bij het account van de eerste.
+- `LoginResolverTest` — 10 tests, waaronder de gedeelde gezinsbrievenbus.
+
+### Security
+- Een gedeeld e-mailadres logt nooit in op het verkeerde account. Hoort het adres bij niemands WordPress-account, dan is het dubbelzinnig en weigert het systeem te gokken — die leden gebruiken hun KNVB-ID.
+
+## [33.31.0] - 2026-07-09
+
+### Added
+- **Gezinnen kunnen één e-mailadres delen.** Wie als tweede op een adres een account krijgt, krijgt een onbezorgbaar WordPress-adres (`person-{id}@members.rondo.invalid`); het echte adres staat in `rondo_contact_email`. Voorheen weigerde het systeem zo iemand met "Dit e-mailadres is al in gebruik".
+- **`ContactEmailRouter`** stuurt alle post die naar zo'n plaatsvervangend adres gaat door naar het echte adres — inclusief de wachtwoord-herstelmail van WordPress zelf. Zonder dit zou een tweede gezinslid nooit meer kunnen inloggen.
+- `UserProvisioningEmailTest` — 12 tests, waaronder de wachtwoord-herstelmail naar de gezinsbrievenbus.
+
+### Changed
+- **Ouders zijn nu te vinden in de accountkiezer.** De eis van een KNVB-ID verborg 269 actieve mensen — precies de ouders die de ouderplicht dragen en géén Sportlink-lid zijn. Een geldig e-mailadres is voortaan de enige eis.
+- Bestaat er al een account dat naar de persoon verwijst, maar ontbreekt de terugverwijzing, dan wordt dat account overgenomen in plaats van een tweede aangemaakt.
+
+## [33.30.0] - 2026-07-09
+
+### Added
+- **Leden zien hun eigen gegevens en die van hun minderjarige kinderen.** `AccessControl::can_view_person()` is nu de enige plek waar zichtbaarheid van personen wordt bepaald: beheerders zien iedereen, coördinatoren hun eigen leeftijdsgroepen, gewone leden alleen zichzelf en hun kinderen onder de 18. Leden lezen een uitgeklede set velden — betaalblokkade, wacht-op-overschrijving en freescout-id blijven verborgen, en een later toegevoegd ACF-veld is standaard privé.
+- `PersonVisibilityTest` — 18 tests, inclusief de REST-collectie, de losse persoon en de veldafscherming.
+
+### Fixed
+- **Beveiliging: notities en activiteiten van elk lid waren leesbaar voor elke ingelogde gebruiker.** `user_can_access_post()` gaf voor personen altijd `true` terug, waardoor `/people/{id}/notes`, `/activities` en `/timeline` niet werkelijk afgeschermd waren. Deze routes volgen nu dezelfde zichtbaarheidsregel. Er stonden nog geen notities in het systeem, dus er is niets gelekt.
+
+### Changed
+- De leeftijdsgroep-afscherming stond op twee plekken los van elkaar geïmplementeerd (`filter_rest_query` en `apply_age_group_filter`). Beide gebruiken nu één gedeelde `person_scope()`.
+
+## [33.29.1] - 2026-07-09
+
+### Fixed
+- **Een dienst telde voor twee plichten tegelijk.** Wie zowel een eigen dienstplicht als een gezinsplicht heeft, kreeg elke dienst bij beide plichten bijgeschreven — 3 diensten voldeden zo aan een plicht van 2 + 3. Een dienst telt nu voor precies één plicht: eerst de eigen dienstplicht, daarna de gezinsplicht. Spelers zonder kinderen houden al hun diensten op hun eigen plicht staan, zodat extra werk niet verdwijnt uit de clubtotalen. Een no-show telt één keer, bij de eigen plicht.
+
+### Added
+- `VolunteerShiftAttributionTest` — 8 tests op de toerekening van diensten aan plichten.
+
+## [33.29.0] - 2026-07-09
+
+### Fixed
+- **Spelende ouders zagen hun gezinsplicht niet op /vrijwillig.** Wie zelf O17+ speelt én een kind onder 17 heeft, kreeg alleen de eigen spelersplicht te zien, terwijl het vrijwilligersdashboard de gezinsplicht apart meetelde. Beide plichten gelden — ze worden nu allebei getoond, met de eigen dienstplicht eerst.
+
+### Changed
+- **Meedoen mag ook zonder dienstplicht.** Wie niet onder de vrijwilligersplicht valt — een sponsor, een grootouder, een ouder van wie de kinderen zijn doorgestroomd — kreeg een leeg scherm met "Je valt niet onder de vrijwilligersplicht-doelgroep". Iedereen die actief lid is kan zich nu gewoon aanmelden voor diensten; alleen oud-leden worden geweigerd.
+
+### Added
+- Documentatie van het vrijwilligersplicht-systeem (`features/vrijwilligersplicht`) en van de leeftijdsgroep-afscherming (`features/access-control`).
+- `VolunteerObligationUnitsTest` — 10 tests op de plicht-afleiding, inclusief de cumulatieve plicht van een spelende ouder.
+
+## [33.28.3] - 2026-07-09
+
+### Fixed
+- **De PHP-testsuite draait weer.** `codeception.yml` verwees nog naar het oude thema `stadion` en `composer test` riep de suite aan met de verkeerde hoofdletters. `AgeGroupAccessTest` is bijgewerkt naar de huidige "niet-beheerders zien niemand"-semantiek en dekt nu ook de `suppress_age_group`-fix uit 33.28.2 (18 tests groen).
+
+### Changed
+- Documentatie toegevoegd over het draaien van de testsuite, inclusief de waarschuwing dat 118 van de 153 tests verouderd zijn (geschreven voor het verwijderde goedkeuringssysteem).
+
+## [33.28.2] - 2026-07-09
+
+### Fixed
+- **Beveiliging: `suppress_age_group` kon de leeftijdsgroep-afscherming volledig omzeilen.** Elke ingelogde gebruiker — ook een gewoon lid zonder rechten — kon met `?suppress_age_group=1` op `/wp/v2/people` alle persoonsrecords opvragen, inclusief e-mailadressen. De parameter wordt nu alleen nog gehonoreerd voor gebruikers met een expliciet ingestelde, niet-lege leeftijdsgroep-lijst (coördinatoren, waarvoor de Kaderlijst hem nodig heeft). Beheerders waren al onbeperkt; voor gebruikers die "niemand" mogen zien wordt de parameter genegeerd.
+
+## [33.28.1] - 2026-07-09
+
+### Fixed
+- **Gebruikers met een extra rol komen weer op het dashboard uit.** Wie naast de standaardrol (Rondo User) nog een andere rol heeft — bijvoorbeeld een poule-rol of een zelf aangemaakte rol zonder eigen rechten — werd doorgestuurd naar `/vrijwillig`. Zij zien nu gewoon het dashboard op `/`.
+
+## [33.28.0] - 2026-06-26
+
+### Added
+- **Diensttypes beheren op de frontend.** Je kunt nu diensttypes toevoegen en bewerken vanuit het Diensten-scherm (knop "Diensttype" en het potloodje), in plaats van in wp-admin. Het formulier dekt naam, omschrijving, VOG/IVA/sleutel-vereisten, capaciteit, kleur en een optionele poule.
+
+### Changed
+- **Vrijwilligers-coördinatoren mogen alle vrijwilligers-CPT's bewerken.** De gedeelde-toegangsregel die al voor taakuitleg gold, geldt nu ook voor diensttypes, sjablonen en concrete diensten — ook als die door de seeder of een beheerder zijn aangemaakt. Voorheen kon een coördinator alleen items bewerken die hij zelf had aangemaakt.
+
+### Fixed
+- **Potloodje bij diensttypes ging naar de startpagina.** De bewerk-link verwees naar wp-admin en belandde voor niet-admins op de homepage; hij opent nu het nieuwe frontend-bewerkscherm.
+- **"Update beschikbaar" werkte niet altijd op PWA-installs.** Bij het herladen bleef de oude service worker de gecachte build serveren, waardoor nieuwe pagina's (zoals een net opgeslagen taakuitleg) onvindbaar leken. De herlaadknop ruimt nu de service worker en caches op vóór het verversen.
+
+## [33.27.0] - 2026-06-16
+
+### Changed
+- **Filter "Spelend lid" is nu een Ja/Nee-keuze.** In plaats van alleen spelende leden te tonen, kun je nu ook filteren op niet-spelende leden (geen Spelactiviteit of "-"). De bestaande URL `?spelendLid=1` blijft werken.
+
+## [33.26.0] - 2026-06-16
+
+### Added
+- **Filter "Spelend lid" op /leden.** Nieuwe boolean-schakelaar in de sectie Lidmaatschap die leden toont met een ingevulde Spelactiviteit (niet leeg en niet "-"). Werkt door in de export en "selecteer alles".
+
+## [33.25.0] - 2026-06-11
+
+### Added
+- **Inklapbare zijbalksecties.** Menu-items met subitems (Leden, Teams, Vrijwilligers, Financiën) hebben nu een chevron waarmee je de subitems in- en uitklapt. De keuze wordt per sectie onthouden in `localStorage`, dus blijft staan tussen bezoeken. De sectie waar je je huidige pagina in zit, staat altijd open.
+
+## [33.24.0] - 2026-06-09
+
+### Added
+- **Nieuw posttype Taakuitleg.** Vrijwilligers-gerichte taakinstructies ("hoe gebruik en reinig je de koekenpan") met rich text, inline afbeeldingen en printbare QR-codes.
+  - Nieuw CPT `taakuitleg` (`includes/class-post-types.php`), `public`/`publicly_queryable` op `false` — geen SEO-oppervlak. Titel + body (`post_content`, met `editor`/`revisions`-support) + ACF-`relationship` naar één of meer `dienst_type`'s (`acf-json/group_taakuitleg_fields.json`).
+  - **Publieke leespagina** op `/uitleg/{slug}` (`includes/class-public-taakuitleg-page.php`) — standalone, print-vriendelijke HTML zonder login, naar het voorbeeld van de betaalpagina. Dit is het doel van de QR-codes; een vrijwilliger scant een sticker zonder in te loggen. Alleen `publish`-status wordt getoond; `noindex`.
+  - **Bewerken in de SPA** onder `/vrijwilligers/taakuitleg` (lijst + formulier), gated op de `vrijwilligers`-capability. Gedeeld bewerken voor alle vrijwilligers via een `map_meta_cap`-filter in `class-access-control.php`.
+  - **Inline afbeeldingen** in de Tiptap-editor via een opt-in `enableImages`-prop op `RichTextEditor` (upload naar `/wp/v2/media`); bestaande notitie-/taakvelden blijven ongewijzigd.
+  - **Printbare QR-codes** (`qrcode`) via een stickervoorbeeld-dialoog; printen gebeurt in een geïsoleerde iframe.
+  - Rewrite-regels worden na deploy één keer geflusht via een versie-optie (`rondo_rewrite_rules_version`), zodat `/uitleg/{slug}` zonder handmatige permalink-flush werkt.
+- **Rondo-lokale commissie-informatie.** Commissies kunnen nu extra gegevens bevatten die alleen in Rondo worden bijgehouden, te bewerken via een nieuwe "Commissie-informatie"-kaart op de commissie-detailpagina (`/commissies/:id`):
+  - `lange_omschrijving` — uitgebreide omschrijving (tekstveld).
+  - `taakomschrijving` — wat doet een lid van deze commissie (tekstveld).
+  - `uren_aantal` + `uren_periode` — geschatte tijdsinvestering (aantal uren per week/maand).
+  - `dagen_flexibel` — vrij tekstveld voor vaste dagen of flexibel.
+  - `max_leden` — maximaal aantal leden in de commissie.
+  - `max_wachtlijst` — maximaal aantal personen op de wachtlijst.
+  - Velden zijn ACF-meta op het `commissie`-posttype, blootgesteld via `wp/v2/commissie`. `uren_periode` (select) en de numerieke velden worden op de client genormaliseerd in `sanitizeCommissieAcf` (lege string → `null`) om de ACF REST-enum/number-schemavalidatie te respecteren.
+
+## [33.23.2] - 2026-05-31
+
+### Added
+- **`iva_waived` ook op sjablonen.** Een sjabloon kan nu de IVA-eis voor alle uitgerolde diensten ineens uitschakelen — handig voor de wekelijkse "Kantine bar — zaterdag 08:00"-sjabloon. De expander schrijft `iva_waived` door naar elke nieuw aangemaakte dienst. Bestaande, eerder uitgerolde diensten worden niet aangepast (handmatig aanvinken via dienst-edit blijft mogelijk).
+
+## [33.23.1] - 2026-05-31
+
+### Added
+- **Per-dienst IVA-override.** Op `dienst_shift` is een nieuw veld `iva_waived` (ACF + `register_post_meta`) dat de IVA-eis van het diensttype voor één specifieke dienst uitschakelt. Use case: kantine-bardienst op zaterdag voor 15:00 — geen alcoholschenking, dus geen IVA nodig. De checkbox verschijnt alleen in het dienst-formulier als het gekozen diensttype IVA vereist. Server-side enforcement zit in zowel `get_available_shifts` (lijst-filtering) als in `signup` (laatste check).
+
+## [33.23.0] - 2026-05-31
+
+### Added
+- **Profielsubpagina's voor certificaten.** `/profile/vog` (nieuw, leesalleen) toont VOG-status, afgiftedatum en vervaldatum + uitleg over het aanvraagproces. `/profile/iva` is de bestaande IVA-uploadpagina, verplaatst van `/vrijwillig/profiel`. Het hoofd-Profiel toont nu een "Mijn certificaten"-sectie met cards naar beide.
+- **REST endpoint `GET /rondo/v1/vog/me`** — geeft het lid zelf zijn VOG-status, datum-vog en vervaldatum terug. Read-only; aanvraag/uitgifte regelt de VOG-coördinator extern.
+
+### Changed
+- **`/vrijwillig/profiel` redirect naar `/profile/iva`** (bookmarks blijven werken).
+- **"Mijn certificaten"-link op `/vrijwillig`** wijst nu naar `/profile` (toont beide subpagina's) in plaats van direct naar de IVA-pagina.
+- **Admin IVA-pagina** verwijst nu naar het nieuwe `/profile/iva`-pad.
+
+## [33.22.3] - 2026-05-31
+
+### Changed
+- **"Mijn profiel" rechtsboven op `/vrijwillig` → "Mijn certificaten".** Voorkomt verwarring met de algemene `/profile` (nu via zijbalk bereikbaar voor iedereen), en dekt naast IVA ook toekomstige certificaten (VOG, EHBO, KNVB-diploma's).
+
+## [33.22.2] - 2026-05-31
+
+### Changed
+- **IVA-blokmelding op `/vrijwillig` herschreven.** "IVA-certificaat ontbreekt of is verlopen" → "Je kunt nog geen bardiensten draaien", met uitleg over wat de IVA-cursus inhoudt en directe link naar de NOC*NSF e-learning.
+
+## [33.22.1] - 2026-05-31
+
+### Changed
+- **Kader-routes hard gegate.** `/people`, `/people/:id`, `/people/jubilarissen`, `/teams`, `/teams/:id`, `/kaderlijst`, `/commissies`, `/commissies/:id`, `/todos`, `/feedback`, `/feedback/:id`, `/settings`, `/settings/:tab`, `/settings/relationship-types`, `/settings/custom-fields` redirecten plain leden naar `/vrijwillig` als ze de URL handmatig intypen. Voorheen rendererden ze de pagina-chrome (zonder data dankzij REST-filtering).
+- **Profiel-pagina nu in zijbalk voor iedereen.** Plain leden zien daar alleen Account, Thema en Wachtwoord wijzigen. **Meldingen** en **Sportlink koppeling** blijven kader-only; de notification-API wordt voor plain leden niet eens aangeroepen.
+
+## [33.22.0] - 2026-05-31
+
+### Changed
+- **Plain leden (account zonder kader-rol) zien een minimale zijbalk.** Voorheen kreeg iedereen die inlogde Dashboard, Leden, Jubilarissen, Teams, Kaderlijst, Commissies, Taken, Feedback en Instellingen te zien — ook leden die alleen voor hun eigen vrijwilligerswerk inloggen. Die items zijn nu gegate achter `requiresKader` (= admin of een `can_access_*`-capability). Een plain lid ziet alleen **Mijn diensten** (`/vrijwillig`).
+- **Dashboard `/` redirect naar `/vrijwillig` voor plain leden.** Voorkomt dat een lid zonder kader-rol per ongeluk op het stafdashboard belandt met openstaande taken, ledenstatistieken e.d. Nieuwe component `KaderOrVrijwilligRedirect` in `router.jsx`.
+- **Voorbereiding op "elk lid krijgt een account".** Met deze gates blijft de UI bruikbaar voor zowel kader als plain leden zodra accounts breed worden uitgerold.
+
+## [33.21.2] - 2026-05-31
+
+### Changed
+- **IVA-knop "Goedkeur" → "Keur goed"** (grammaticaal correcter Nederlands).
+
+## [33.21.1] - 2026-05-31
+
+### Fixed
+- **"Reeds aangemeld" in plaats van "Niet beschikbaar" op /vrijwillig.** Shifts waarvoor het lid al ingeschreven is staan ook nog in de "Beschikbaar"-tab zolang er nog plek over is voor anderen. De knop toonde verwarrend "Niet beschikbaar" terwijl `is_signed_up=true` allang in de REST response zat. Vervangen door een groene "Reeds aangemeld"-knop die ook als afmeldknop werkt (hover → rood).
+
+## [33.21.0] - 2026-05-31
+
+### Added
+- **"Uitrollen"-knop op de Sjablonen-pagina.** Rolt direct alle actieve sjablonen uit naar concrete diensten voor de komende 12 weken — handig als de gebruiker een sjabloon heeft aangemaakt vóór de auto-expansion live ging, of bestaande sjablonen alsnog wil uitrollen zonder te wachten op de nachtelijke cron. Nieuwe endpoint: `POST /rondo/v1/shift-templates/expand` (vereist `edit_posts`). Geeft `created` (aantal nieuwe diensten) terug. Idempotent — bestaande diensten worden niet gedupliceerd dankzij `find_existing_shift()`.
+
+## [33.20.4] - 2026-05-31
+
+### Changed
+- **Sjabloon opslaan rolt direct 12 weken aan diensten uit, niet pas de volgende dag.** `ShiftTemplateExpander::expand_on_template_save()` haakt nu op `acf/save_post` voor `shift_template`-posts en roept dezelfde idempotente `expand_template()` aan die de cron 's nachts gebruikt. Bestaande diensten worden niet gedupliceerd (de `(template_id, start_datetime)`-check in `find_existing_shift()` blokkeert dat). Sjabloon-form invalideert nu ook de `dienst-shifts`-cache zodat de Diensten-lijst direct de nieuwe shifts toont.
+
+## [33.20.3] - 2026-05-31
+
+### Fixed
+- **Nieuwe sjabloon/dienst verschijnt direct in het overzicht (geen hard refresh meer).** De QueryClient heeft globaal `refetchOnMount: false` staan; `invalidateQueries` markeerde de lijst alleen als stale en omdat de lijst tijdens het bewerken niet gemount was werd er nooit opnieuw gefetcht. Beide formulieren gebruiken nu `refetchQueries({ type: 'all' })` — dezelfde aanpak als `usePeople.js`.
+
+## [33.20.2] - 2026-05-31
+
+### Fixed
+- **Sjabloon `Dag van de week` werd niet bewaard.** ACF's `day_of_week`-select heeft een string-enum (`"1"`–`"7"`); de frontend stuurde een JS-getal, waardoor ACF de waarde stilletjes verwierp en de oude waarde bleef staan (titel wel bijgewerkt, dag niet). Form stuurt nu `String(form.day_of_week)`.
+
+## [33.20.1] - 2026-05-30
+
+### Fixed
+- **Sjabloon- en dienst-formulieren tonen en bewaren nu de velden correct.** De frontend las/schreef onder `meta` terwijl ACF deze CPT-velden onder `acf` exposeert; WP REST liet de `meta`-payload stilletjes vallen bij opslag. Resultaat: nieuw aangemaakte diensten/sjablonen hadden geen postmeta (kolommen Start/Eind leeg in het overzicht, edit-form leeg). Zowel `VrijwilligersDienstForm`, `VrijwilligersSjabloonForm`, `VrijwilligersDiensten` als `VrijwilligersSjablonen` lezen/schrijven nu via `acf`. ACF-datums (`active_from`/`active_until`) worden bij weergave van `YYYYMMDD` genormaliseerd naar `YYYY-MM-DD`.
+- **Bestaande diensten zonder meta blijven leeg** — handmatig aangemaakte diensten (bv. shift 6810) hebben geen opgeslagen waarden en moeten opnieuw bewerkt of verwijderd worden.
+
+## [33.20.0] - 2026-05-28
+
+### Added
+- **Nieuw veld `wacht_op_overschrijving` op personen.** Leden die van een andere club afkomen staan in Sportlink (en dus in Rondo) zodra ze aangemeld zijn, maar hebben pas een voetbalactiviteit zodra de KNVB-overschrijving rond is. Sportlink markeert ze tot die tijd met de Tooltip "Actie van een ander (overschrijving)". De rondo-sync herkent dat nu en zet `wacht_op_overschrijving` op `true`; zodra de overschrijving verwerkt is wordt de flag weer op `false` gezet bij de volgende sync.
+  - Read-only ACF-veld onder Basic Information (zelfde plek als Oud-lid).
+  - Oranje "Wacht op overschrijving"-badge op de personenlijst (naast Oud-lid) en op de persoondetailpagina (naast Afmelding in de toekomst).
+  - Boolean-filter "Wacht op overschrijving" in de Lidmaatschap-sectie van de People-pagina, via nieuwe REST-query `?wacht_op_overschrijving=1` op `GET /rondo/v1/people-filtered`.
+
+## [33.19.0] - 2026-05-28
+
+### Changed
+- **Contributievrijstelling sluit niet langer uit van vrijwilligers-doelgroep.** `_exclude_from_contributie` (donateurs, ereleden, Lid van Verdienste, handmatig contributievrij) bepaalde tot nu toe ook of iemand in de vrijwilligers-doelgroep zat — wat conceptueel onjuist is: contributie-vrijstelling en vrijwilligers-vrijstelling zijn losse beslissingen. Vrijstelling van vrijwilligerstaken loopt nu uitsluitend via `VolunteerExemptionResolver` (commissie, staf-rol, betaalde vrijwilliger, handmatige vrijstelling) of via een actieve honorary role (Donateur/Erelid/Lid van Verdienste/Verenigingslid voor het leven met die job_title in `work_history`).
+  - Nieuwe `VolunteerEligibilityService::is_active_member()` checkt alleen `former_member`.
+  - `is_contributie_member()` is verwijderd (had geen consumers meer).
+  - Diagnostic `skipped_non_paying` → `skipped_former_members`; drill-down `get_non_paying_ids()` → `get_former_member_ids()`; REST-categorie `non_paying` → `former_members`.
+  - Dashboard- en data-quality-teksten bijgewerkt.
+
+### Removed
+- **`/wp-json/rondo/v1/volunteer/data-quality?category=non_paying`** — vervangen door `category=former_members`. Drill-down toont nu alleen ex-leden, niet meer contributievrije leden (want die zitten gewoon in de doelgroep).
+
+## [33.18.0] - 2026-05-28
+
+### Added
+- **`?former_member=0|1` query param op `GET /wp/v2/people`** — server-side filter via `rest_person_query`. Voorheen moest de rondo-sync change detector ALLE recent gewijzigde personen ophalen (incl. ACF-blob) en dan in JavaScript op `former_member` filteren; nu kan de query 95% van die rijen op WP_Query-niveau wegfilteren. `former_member=0` matcht ook posts zonder `former_member` meta (zoals net-aangemaakte personen). `former_member=1` matcht alleen oud-leden. Andere waarden negeren we, dus oudere clients blijven ongewijzigd werken.
+
+## [33.17.0] - 2026-05-28
+
+### Changed
+- **Oud-leden zijn nu alleen-lezen in Rondo Club.** Sportlink weigert sowieso elke wijziging voor hun lidsoort ("Oud bondslid" / "Oud verenigingslid"), dus elke bewerking werd door de reverse-sync afgewezen en bleef in een oneindige re-detectie-loop hangen (één lid had 17 identieke pogingen sinds februari). Vanaf nu:
+  - **Frontend** (`PersonDetail.jsx`) toont een prominente "Oud-lid — alleen-lezen"-banner en verbergt alle bewerk-knoppen wanneer `former_member` waar is. `canEditPeople` wordt onder de motorkap op `false` gezet zodra de persoon als oud-lid geladen is, waardoor de bestaande edit-affordances vanzelf verdwijnen (Bewerken-knoppen, foto-upload, relaties/adressen/contact-modals etc.).
+  - **Backend** (`class-rest-people.php`, nieuwe `block_former_member_edits()` op het `rest_pre_insert_person` filter) weigert ACF-edits met HTTP 403 (`rondo_former_member_readonly`) wanneer de bestaande persoon `former_member=true` is en de aanvragende gebruiker geen `manage_options` heeft. Admins (en daarmee de sync-service-account) zijn vrijgesteld zodat de forward-sync z'n werk kan blijven doen.
+  - De enige toegestane wijziging voor niet-admins blijft het `former_member`-veld zelf, zodat een beheerder de status kan terugzetten naar actief vóórdat de overige velden bewerkbaar worden.
+
+## [33.16.0] - 2026-05-28
+
+### Added
+- **Functiegeschiedenis-paneel toont nu historische teams als tekst** — als een work_history-entry geen gekoppeld team-post heeft maar wel `team_name_text` (gevuld door de player-history-sync voor oude Sportlink-seizoenen), wordt die naam nu getoond. Geldt voor zowel de Functiegeschiedenis-lijst in de Werk-tab als de huidige-positie-regel in de header (bv. "Teamspeler bij Zaterdag E5 (seizoen 2014/'15)").
+
+### Fixed
+- **YYYYMMDD-datums in `work_history` worden nu correct gerenderd.** ACF slaat de `date_picker` velden op als `YYYYMMDD` (bv. "20140708"), wat `new Date()` niet parset — dus alle entries die door de sync zijn geschreven toonden tot nu toe een lege " - " in plaats van een datumbereik. Nieuwe `parseAcfDate()`-helper in `formatters.js` herkent beide formaten (YYYY-MM-DD én YYYYMMDD); `isValidDate` delegeert ernaar, en `PersonDetail.jsx` gebruikt de helper voor work_history-datums. Lost zichtbaar het probleem op voor álle bestaande work_history-entries die in compact formaat zijn opgeslagen.
+
+## [33.15.0] - 2026-05-28
+
+### Added
+- **`team_name_text` veld op `work_history` repeater** — vrij-tekst teamnaam voor historische Sportlink-teams die niet als post in Rondo Club bestaan (bv. "Zaterdag E5 (seizoen 2014/'15)"). Alleen zichtbaar/gebruikt als het normale Team / Commissie-veld leeg is. Wordt automatisch gevuld door de `player-history`-sync wanneer een Sportlink-team niet matcht met een bestaand Rondo Club-team.
+
+## [33.14.8] - 2026-05-28
+
+### Changed
+- **"Actieve leden zonder leeftijdsgroep"-rapport** filtert nu ook honorary leden eruit (Donateur, Erelid, Lid van Verdienste, Verenigingslid voor het leven — komt uit `VolunteerStatus::get_excluded_roles()`, dus volgt de instellingen in Instellingen → Vrijwilligers), én ouders die een directe `Kind`-relatie hebben — ook als hun kind zélf geen leeftijdsgroep heeft (dan wordt er geen gezin-unit gebouwd en bleef de ouder eerder onterecht in de lijst staan).
+
+## [33.14.7] - 2026-05-28
+
+### Changed
+- **"Actieve leden zonder leeftijdsgroep"-rapport** filtert nu ook ouders/huisgenoten eruit die al via een gezin-unit (relationships of adres-fallback) gekoppeld zijn. Die hebben terecht geen Sportlink-spelactiviteit en stonden onterecht als data-gap. Wat overblijft zijn alleen nog actieve, contributieplichtige, niet-vrijwilligende, niet-aan-een-gezin-gekoppelde leden zonder leeftijdsgroep — echte sync-issues of leden die als donateur/erelid/contributievrij gemarkeerd moeten worden.
+
+## [33.14.6] - 2026-05-28
+
+### Changed
+- **"Actieve leden zonder leeftijdsgroep"-rapport** filtert nu ook huidige vrijwilligers eruit. Vrijwilligers zonder spelactiviteit hebben terecht geen leeftijdsgroep en horen niet in de doelgroep — ze stonden onterecht als data-quality issue gemarkeerd. Backend (`get_skipped_no_leeftijdsgroep_ids()` en de diagnostic-teller) en frontend-intro bijgewerkt.
+
+## [33.14.5] - 2026-05-28
+
+### Fixed
+- **Relatie wijzigen gaf 400-fout** voor personen die geen betaalde vrijwilliger zijn. De frontend stuurde `vergoeding_reden: ""` mee in elke ACF-update, maar ACF's REST-schema accepteert alleen de vier gedefinieerde keuzes — niet een lege string. `sanitizePersonAcf()` zet nu, net als bij `gender`, lege waarden voor `vergoeding_reden` om naar `null`.
+
+## [33.14.4] - 2026-05-27
+
+### Removed
+- "Status van de uitrol"-blok van het Vrijwilligers-dashboard verwijderd.
+
+## [33.14.3] - 2026-05-27
+
+### Changed
+- **"Personen zonder leeftijdsgroep"-diagnostic** filtert nu ex-leden en handmatig uitgesloten leden eruit. Wat overblijft zijn actieve leden waar de Sportlink-sync gehaperd heeft of waar het veld om een andere reden leeg is — daar kan een admin daadwerkelijk iets aan doen. Dashboard copy + drill-down intro bijgewerkt.
+
+## [33.14.2] - 2026-05-27
+
+### Changed
+- **Relatie-kwaliteitscheck**: regel "zelfde leeftijdsgroep" verwijderd. Twee mensen in dezelfde Sportlink-groep (bv. allebei Senioren) kunnen prima ouder/kind zijn als het leeftijdsverschil > 14 jaar is. De `age_gap_too_small`-regel vangt het echte probleem af; de `same_age_group`-regel produceerde false positives bij volwassen ouder/kind-koppels die toevallig in dezelfde leeftijdsgroep zaten.
+
+## [33.14.1] - 2026-05-27
+
+### Performance
+- **Vrijwilligers-dashboard laadt nu in milliseconden** in plaats van tientallen seconden. Drie wins:
+  1. `VolunteerEligibilityService::get_eligibility_view()` en `RelationshipQualityChecker::find_suspect_pairs()` hebben elk een 5-minuten transient-cache. Eerste call doet het zware werk, daarna O(1).
+  2. `address_adults_map()` vervangt N losse SQL queries (één per orphaned youth player) door 2 bulk-queries die in PHP de adres→volwassenen-mapping bouwen.
+  3. Hot-loop `get_field()` calls voor `leeftijdsgroep`, `birthdate`, `former_member` vervangen door directe `get_post_meta()` — 10–100× sneller in iteraties over 1000+ personen.
+- Nieuwe `VolunteerCacheInvalidator` wist beide transients automatisch bij elke person-mutatie (save_post, REST insert/update, ACF save, post delete) zodat data wel vers blijft.
+- **Handmatige "Ververs"-knop** rechtsbovenaan het dashboard + nieuwe `POST /rondo/v1/volunteer-cache/refresh` endpoint voor admins die nu meteen iets hebben aangepast en niet 5 minuten willen wachten.
+
+## [33.14.0] - 2026-05-27
+
+### Added
+- **Frontend CRUD voor sjablonen en diensten** — geen WP-admin meer nodig voor het beheren van shift_templates en dienst_shifts.
+  - `/vrijwilligers/sjablonen` — overzicht van alle sjablonen, sorteerbaar op dag + tijd.
+  - `/vrijwilligers/sjablonen/nieuw` en `/vrijwilligers/sjablonen/:id` — create/edit form met dienst_type, dag-van-de-week, start/eindtijd, capaciteit, actief-vanaf/tot, notities. Auto-generated titel.
+  - `/vrijwilligers/diensten/nieuw` en `/vrijwilligers/diensten/:id` — ad-hoc dienst form (datetime, capaciteit, status, notities). Bij bestaande diensten is er een sectie "Aanmeldingen" met handmatig-verwijderen-knop per aangemelde persoon.
+  - Verwijderknop met confirm op beide editors.
+- "Nieuwe dienst" en "Sjablonen" knoppen op het Diensten-overzicht openen nu de frontend forms in plaats van WP-admin.
+
+### Changed
+- Recente-diensten-tabel: de titel + actie-icoon linken naar de frontend-editor (`/vrijwilligers/diensten/:id`) i.p.v. WP-admin.
+
+
+
+### Added
+- **`/vrijwillig/profiel` — lid-facing IVA-upload flow.** Geen WP-admin meer nodig: een lid kiest datum + bestand (PDF/JPG/PNG, max 10 MB), upload, en ziet de huidige status (Geldig / Wacht op goedkeuring / Verlopen / Niet ingeleverd) plus de vervaldatum. Bij upload wordt `iva-approved` automatisch teruggezet zodat de bestuurslid kantine het opnieuw beoordeelt.
+- **`POST /rondo/v1/iva/upload`** voor de upload zelf (multipart, gebruikt `rondo_linked_person_id` om het juiste persoonsrecord te vinden).
+- **`GET /rondo/v1/iva/me`** voor de lid-facing status — geen admin-cap nodig.
+- "Mijn profiel"-link rechtsbovenaan `/vrijwillig` en directe deeplink in de IVA-hard-block banner.
+
+### Changed
+- Welkomstmail voor nieuwe vrijwilligers verwijst nu naar **Vrijwilligers → Mijn profiel** voor het uploaden van het IVA-certificaat in plaats van "mail het naar de kantinebeheerder".
+- Admin-IVA-pagina footer verwijst niet meer naar de WP-admin person-bewerk-flow.
+
+## [33.12.0] - 2026-05-27
+
+### Added
+- **Relatie-kwaliteitscheck** — `RelationshipQualityChecker` doorloopt alle `relationships`-entries en vlagged ouder/kind-koppels met te klein leeftijdsverschil (vaak in werkelijkheid siblings) en sibling-koppels met een wel erg groot verschil. Drie regels: zelfde leeftijdsgroep (rood), <14 jaar verschil (amber), >30 jaar voor siblings (paars).
+- **`GET /rondo/v1/relationship-quality`** retourneert de verdachte paren met namen, thumbnails en leeftijdsgroepen. Aantal verdachte relaties zit ook in de `diagnostics` van `/volunteer-eligibility` zodat de Datakwaliteit-kaart in één call alles kan tonen.
+- **`/vrijwilligers/relatie-check`** drill-down pagina toont de paren met een directe link naar elke persoonspagina om het `relationship_type` te corrigeren. InverseRelationships hangt de wijziging automatisch aan de andere kant aan.
+- Nieuwe rij op de Datakwaliteit-kaart die naar deze pagina linkt.
+
+## [33.11.0] - 2026-05-27
+
+### Changed
+- **Alleen spelend/contributie-plichtige leden vallen onder de vrijwilligersplicht.** `VolunteerEligibilityService` filtert speler- en gezin-trigger-personen nu op `is_contributie_member()`: ex-leden (`former_member`) en handmatig uitgesloten leden (`_exclude_from_contributie`) tellen niet meer mee. Ouders en huisgenoten in een gezin-unit worden niet gefilterd — het kind blijft het ankerpunt.
+- Nieuwe diagnostic `skipped_non_paying` op `GET /rondo/v1/volunteer-eligibility` + drill-down `/vrijwilligers/datakwaliteit/non_paying` zodat admins kunnen zien wie er buiten de doelgroep valt en waarom (donateurs, ereleden, contributievrij, ex-leden).
+
+## [33.10.0] - 2026-05-27
+
+### Added
+- **Doorklik-pagina's voor de Datakwaliteit-categorieën.** Elk telcijfer op het Vrijwilligers-dashboard linkt nu naar een eigen pagina `/vrijwilligers/datakwaliteit/{category}` met de daadwerkelijke personen + adres, leeftijdsgroep en aantal relaties, plus directe link naar de persoonspagina om de data te repareren.
+  - `orphan` — JO16- spelers zonder ouder-relatie én zonder huisgenoot.
+  - `address_fallback` — personen waar het gezin uit gedeeld adres is afgeleid (gegroepeerd per adres voor context).
+  - `missing_leeftijdsgroep` — personen zonder leeftijdsgroep-veld.
+- **`GET /rondo/v1/volunteer-data-quality/{category}`** levert de personen achter elke categorie. Drie nieuwe public methods op `VolunteerEligibilityService`: `get_orphan_youth_ids()`, `get_address_fallback_person_ids()`, `get_skipped_no_leeftijdsgroep_ids()`.
+
+## [33.9.0] - 2026-05-27
+
+### Changed
+- **Eligibility-derivatie verliest geen JO16-spelers meer.** Voorheen dropte `VolunteerEligibilityService` stilletjes elke jeugdspeler zonder ouder-relatie én zonder gedeelde-adres-volwassene. Nu krijgt elk JO16-kind gegarandeerd een gezin-unit, met een `data_quality` vlag (`ok` / `address_fallback` / `orphan`). Ook personen zonder `leeftijdsgroep` worden niet meer onzichtbaar — ze worden geteld als diagnostic.
+- **`GET /rondo/v1/volunteer-eligibility`** retourneert nu een `diagnostics` blok met: aantal gezinnen via relaties, via adres-fallback, orphan-gezinnen, en het aantal personen overgeslagen wegens ontbrekende `leeftijdsgroep`.
+- **Vrijwilligers-dashboard toont een "Datakwaliteit"-kaart** zodra een van de diagnostics > 0 is, met klikbare uitleg per categorie. Helpt admins gericht stuk-voor-stuk de relaties of leeftijdsgroep-velden bij te werken.
+
+Verklaart waarom het Gezin-totaal eerst te laag was: een fors deel van de JO16-spelers heeft (nog) geen ouder-record in `relationships`.
+
+## [33.8.2] - 2026-05-27
+
+### Fixed
+- **IVA-pagina gaf 400.** `VrijwilligersIva` riep `/rondo/v1/people/filtered?per_page=1000` aan terwijl die endpoint `per_page` op 100 capt. Vervangen door een dedicated `GET /rondo/v1/iva/people` endpoint dat alleen de personen met IVA-relevante velden teruggeeft (datum-iva, iva-certificaat of iva-approved). Geen paginering nodig — typische scope is tientallen records. De status (missing/pending/valid/expired) wordt server-side bepaald via `IvaStatus`, dus de UI hoeft geen datum-rekenwerk meer te doen.
+
+## [33.8.1] - 2026-05-27
+
+### Changed
+- **Ouderplicht uitgebreid van t/m JO15 naar t/m JO16.** `VolunteerEligibilityService::YOUTH_MAX_AGE` is opgerekt naar 16 (was 15). Spelers in "Onder 16" en hun ouders vallen nu in de doelgroep. `ADULT_MIN_AGE` blijft 17 — geen gap. Dashboard copy en interne docstrings bijgewerkt.
+
+### Fixed
+- **Vrijwilligers-dashboard "Status van de uitrol"** liet nog steeds zien dat IVA-geldigheidstermijn, multi-child-regel en boete-pipeline op het bestuur wachtten. Het bestuur heeft alles besloten — copy bijgewerkt om de feitelijke status weer te geven.
+
+## [33.8.0] - 2026-05-26
+
+### Added — Member-facing /vrijwillig surface (Fase D #4)
+
+- **`/vrijwillig` route** — logged-in members see their personal obligation card (X van Y diensten gedaan, progress bar, status bucket), two tabs (Beschikbaar / Mijn diensten), and one-click signup/afmelden. Page resolves the caller via `rondo_linked_person_id` user meta; unlinked accounts get a friendly "contact ledenadministratie" prompt instead of a stack trace.
+- **Hard-block banners** for missing VOG or IVA per #8/#9 — the same eligibility-filtered shift list hides VOG-/IVA-vereiste shifts until the cert is valid (bestuursbesluit: hard block, no soft warning route).
+- **Overlap warning** — when signing up for a shift that overlaps with an existing assignment the server returns `overlap_warning` with a `can_force=true` hint; the UI shows a "toch aanmelden" prompt.
+- **Auto-fill on capacity** — signups that reach capacity flip the shift status to `vol`; afmeldingen flip it back to `open`.
+- **Pool-only shifts** are hidden from non-pool members. `dienst_type.required_pool` (commissie post id) is honored server-side.
+- **`GET /rondo/v1/my-shifts`** returns the caller's assigned + completed shifts plus the decorated obligation unit and exemption (if any) for the current season.
+- **`GET /rondo/v1/shifts/available`** lists open shifts within the 84-day window, filtered by eligibility/VOG/IVA/pool.
+- **`POST /rondo/v1/shifts/{id}/signup`** and **`/cancel`** drive the member flow. Afmelden is altijd toegestaan (bestuursbesluit) tot de shift voltooid is.
+
+### Operational follow-up (not in this release)
+
+Member-facing flow assumes Magic Login is configured on production and that eligible members have WP-accounts with `rondo_linked_person_id` set. Bulk-provisioning of accounts for the full eligible pool is a one-time operation that happens outside the codebase.
+
+## [33.7.0] - 2026-05-26
+
+### Added — Volunteer Policy: trainings/leider exemption UI, team kickoff, welkomstmail
+
+- **Settings → Beheer → Rollen** now has a "Staf-rollen — vrijgesteld van vrijwilligersplicht" checkbox section below the player/excluded matrix (#12). Defaults to the seven board-approved roles (Trainer, Hoofdtrainer, Assistent-trainer, Leider, Teammanager, Coördinator, Scheidsrechter); admin can adjust per club's actual Sportlink job-title spelling. Persists via the existing `/rondo/v1/volunteer-roles/settings` endpoint.
+- **Team CPT gets `kickoff_done_at` (date) + `kickoff_notes` (textarea)** ACF fields exposed in REST (#13). Lets Guido tick off the per-team vrijwilligersbeleid-gesprek with optional notes — input for the dashboard "kickoffs nog te doen" widget (Fase D follow-up). Website-uitleg-pagina blijft in het Astro-project.
+- **Welkomstmail voor nieuwe vrijwilligers** is uitgebreid met een vrijwilligersbeleid-blok (#14): 2-diensten-plicht in het kort, links naar VOG/IVA, en de uitleg dat trainers/commissieleden/betaalde vrijwilligers automatisch vrijgesteld zijn. Volledig editable in **Settings → Beheer → Welkomstmail → Nieuwe vrijwilliger**.
+
+## [33.6.0] - 2026-05-26
+
+### Added — Volunteer Policy scheduling core + sancties (Fase C & E)
+
+Implements every roadmap item that the 2026-05-26 bestuursvergadering unblocked.
+
+- **Multi-child scaling (#6).** `VolunteerEligibilityService` now applies the contribution-discount rule: kid 1 = 2 diensten, kid 2 = 1,5 (75%), kid 3+ = 1 elk, floor-rounded. Each gezin unit carries a `child_count` plus the scaled `required_count`. The single-person resolver merges all youth children before scaling so a parent of 3 kids sees the full 4-diensten obligation.
+- **IVA 5-year validity (#9).** New `Rondo\Volunteer\IvaStatus` helper with status enum (missing / pending / valid / expired), `expires_at()` and `needs_renewal_reminder()` (3-month window). New REST: `GET /rondo/v1/iva/{person_id}/status`, `POST /rondo/v1/iva/{person_id}/approve` (replaces the previous direct ACF write).
+- **`rondo_iva_approve` capability + `rondo_iva_approver` role** for the bestuurslid kantine. Administrator and `rondo_bestuur` inherit it. IVA approval endpoint is gated on this cap.
+- **IVA admin UI extended:** new "Geldig" / "Verlopen" tabs, dedicated "Verloopt" column with red highlighting when expired. Approval uses the new dedicated endpoint.
+- **`VolunteerObligationCalculator` service (#6).** Per-unit counter: required / completed / pending / no-show counts + a status bucket (voldaan / op-weg / risico / geen-actie). Transient cache (`rondo_vobligation_*`, 5 min TTL) auto-invalidated by shift completion and no-show events. Aggregate dashboard stats too.
+- **No-show endpoint (#6).** `POST /rondo/v1/shifts/{id}/no-show` (+ `revert=true` to undo). 72-hour window after `end_datetime` is enforced. Fires `rondo_volunteer_no_show_marked` action.
+- **Hourly shift-completion cron (#6).** `rondo_complete_shifts` flips shifts past `end_datetime + 1h` to `voltooid`, clears obligation cache.
+- **`VolunteerFineGenerator` (#7).** Hooks `rondo_volunteer_no_show_marked` and creates a €30 `rondo_invoice` with `invoice_type=volunteer_fine`, routed to the primary parent (first `relationship_type=parent` entry on the child's repeater) or the player themselves for O17+. Idempotent — back-references the shift to prevent double-billing. New invoice-number prefix `V` (e.g. `2026V0001`).
+- **Daily `ShiftTemplateExpander` cron (#3b).** Rolls out `shift_template` records into concrete `dienst_shift` posts for the next 84 days. Idempotent — keyed on (template_id, start_datetime).
+- **`GET /rondo/v1/volunteer-obligations`** — surfaces the decorated units + aggregate dashboard stats consumed by the Vrijwilligers dashboard.
+
+### Changed
+- `invoice_type` enum on `rondo_invoice` accepts `volunteer_fine` (was `discipline|membership|manual`). All REST validators and the InvoiceNumbering format map updated accordingly.
+
+## [33.5.0] - 2026-05-26
+
+### Added — Volunteer Policy admin section (Fase B)
+
+- **New top-level Vrijwilligers section in the sidebar** with four sub-routes:
+  - `/vrijwilligers` — Dashboard with eligibility stats (totaal, gezinnen, spelers) and quick navigation cards.
+  - `/vrijwilligers/vog` — VOG management (existing page accessible at both the legacy `/vog` and the new canonical path).
+  - `/vrijwilligers/iva` — Three-tab IVA approval queue (Wacht op goedkeuring / Goedgekeurd / Niet ingeleverd) with one-click approve/intrekken.
+  - `/vrijwilligers/diensten` — Diensttype catalog (cards with VOG/IVA/sleutel badges, capacity) + recent shifts list, links into WP admin for editing.
+  - `/vrijwilligers/vrijstellingen` — Filterable view of vrijgestelde personen by reason (commissielid / trainer-leider / betaalde vrijwilliger / handmatig).
+- **`VrijwilligersRoute` capability guard** mirrors the existing `VOGRoute` / `FinancieelRoute` pattern; uses `can_access_vrijwilligers` from the current-user response.
+- **API client additions:** `getVolunteerEligibility()`, `getVolunteerExemption()`, `getManagedCommissies()`.
+
+## [33.4.0] - 2026-05-26
+
+### Added — Volunteer Policy foundation (Fase A)
+
+Backend foundation for the AWC vrijwilligersbeleid. No user-visible UI changes yet — Fase B will surface this in a Vrijwilligers admin section. See `.planning/VOLUNTEER-POLICY-ROADMAP.md` for the full plan.
+
+- **`rondo_vrijwilligers` capability + role.** Mirrors the existing `vog` / `financieel` / `ledenadministratie` pattern. `rondo_bestuur` inherits it; administrators auto-receive it. New pool roles: `rondo_pool_schoonmaak`, `rondo_pool_activiteiten`, `rondo_pool_werkploeg`. `can_access_vrijwilligers` flag added to `GET /rondo/v1/user/current`.
+- **Three new CPTs** (admin-only): `dienst_type` (task catalog), `shift_template` (seasonal recurring rules), `dienst_shift` (concrete scheduled shifts). Includes ACF field groups and REST-exposed post meta.
+- **`VolunteerSeeder`.** Idempotent on-activation seed of six initial dienst types (Terreinmeester, Kantine bar/keuken-prep/keuken-verkoop, Schoonmaak, Terreinonderhoud) and three Rondo-managed pool commissies (Schoonmaakpoule, Activiteitenpoule, Werkploeg terreinonderhoud). Stored option `rondo_volunteer_pool_commissies` maps pool slugs to commissie IDs.
+- **`VolunteerExemptionResolver`.** Single-source-of-truth service for the 4 auto + 1 manual vrijstellingsroutes (active commissie / staff role / betaalde vrijwilliger / handmatig). Consumed by every downstream feature so we never duplicate the rule.
+- **`VolunteerEligibilityService` + `GET /rondo/v1/volunteer-eligibility`.** Pure derived view of the eligible units per KNVB-seizoen — one gezin-unit per huishouden with a JO15- player (parents-relationship primary, address fallback), one speler-unit per O17+ player. Multi-child scaling defaults to per-gezin (board decision pending).
+- **`GET /rondo/v1/volunteer-exemption/{person_id}`.** Returns the resolved exemption reason for a single person, or null.
+- **`GET /rondo/v1/managed-commissies`.** Public list of Rondo-managed commissie IDs so `rondo-sync` can skip them during its untracked-commissie cleanup. The `rondo-sync` repo's `submit-rondo-club-commissies.js` now consumes this whitelist.
+- **`VolunteerStatus::OPTION_STAFF_ROLES` + default list** (Trainer, Hoofdtrainer, Assistent-trainer, Leider, Teamleider, Teammanager, Coördinator, Scheidsrechter). Surfaced in `GET/POST /rondo/v1/volunteer-roles/settings` next to `player_roles` and `excluded_roles` so admins can refine via the Capabilities settings UI.
+- **New ACF field group on `person`:** `betaalde_vrijwilliger` + `vergoeding_reden` + `vergoeding_tot` (vrijwilligersvergoeding), `vrijgesteld_handmatig` + `vrijstelling_reden` + `vrijstelling_seizoen` (handmatige vrijstelling), `datum-iva` + `iva-certificaat` + `iva-approved` (IVA alcoholtraining tracking — admin-approval flow).
+
+### Deferred (board decisions)
+- Multi-child scaling rule for ouderplicht (#6).
+- Boete-pipeline (#7) — trigger, ontvanger, vrijkoop, bedrag.
+- VOG bulk-rollout mechanism (#8).
+- IVA geldigheidstermijn (#9).
+
+## [33.3.1] - 2026-05-26
+
+### Added
+- **New `ledenadministratie` capability and `rondo_ledenadministratie` role.** Admins now control who can see the Leden → Onboarding screen and send onboarding emails. Editable in **Instellingen → Beheer → Capabilities** (Ledenadministratie column) and `Rollen` (the new base role). Administrators auto-receive the capability; `rondo_bestuur` includes it.
+- `can_access_ledenadministratie` flag on `GET /rondo/v1/user/me`.
+
+### Changed
+- **Onboarding screen is now gated behind the new `ledenadministratie` capability** (previously visible to every approved user). The sidebar item disappears for users without it; direct navigation to `/people/onboarding` yields the "Geen toegang" page. `POST /rondo/v1/people/onboarding-email` rejects callers without the capability (admins always pass).
+
+## [33.3.0] - 2026-05-26
+
+### Added
+- **People list: "Nieuw lid dit seizoen" filter.** New boolean filter on the People list (under Lidmaatschap) that shows every member whose `lid-sinds` (membership start date) falls inside the current Dutch sports season (1 July through 30 June). Same season-window logic as "Afgemeld dit seizoen" but on the opposite end of the membership lifecycle. Backed by `lid_sinds_season=1` on `GET /rondo/v1/people`. Does NOT auto-include former members — the goal is current members who joined this season, not people who joined and already left.
+- When this filter is active, the People list force-shows `Lid sinds` and `Type lid` as the first two columns after Name (parallel to how the cancellation filter force-shows lid-sinds + lid-tot). User's stored Column Settings are untouched while the filter is off.
+
+### Changed
+- DRY: extracted the season-window computation in `class-rest-people.php` into a private `get_current_season_window()` helper shared by `lid_tot_season` and `lid_sinds_season`. Behaviour unchanged for the existing filter.
+
+## [33.2.2] - 2026-05-26
+
+### Changed
+- People list filter sections re-tuned: `Foto datum` moved to **Persoon** (it's a profile attribute, not a VOG-volunteer concern) and `Gewijzigd` moved to **Administratief** (the Activiteit section is gone — recent-edits sits better with bookkeeping filters like financiële blokkade).
+
+## [33.2.1] - 2026-05-26
+
+### Changed
+- **People list filter dropdown is now grouped + two-column.** Filters are organised into named sections (Lidmaatschap / Persoon / Activiteit / Vrijwilliger & VOG / Administratief) and laid out in a two-column grid on screens ≥ 640px (single column below). The panel widens from 256px → 576px on roomy viewports, caps at 80vh with internal scroll, and clamps its left edge so the wider panel can't run off the right side of the viewport. Resolves the "too tall to fit on a laptop screen" complaint without losing any filters.
+- `createColumn()` accepts an optional `filterSection` argument (surfaced as `meta.filterSection`) — columns without a section land in a default "Overige" group. Backwards-compatible: existing consumers (NogTeFactureren, CommissiesList, PeopleAnniversaries) still render correctly without sections.
+
+## [33.2.0] - 2026-05-26
+
+### Added
+- **Onboarding screen for new members and new volunteers.** New page under Leden → Onboarding with two tabs: Nieuwe leden (lid-sinds ≤ 30 days, no member onboarding email sent) and Nieuwe vrijwilligers (vrijwilliger-sinds ≤ 60 days, huidig-vrijwilliger=1, no volunteer onboarding email sent). Each row has a Verstuur button; the toolbar has a multi-select bulk send. Sent recipients drop out of the list automatically because the server stamps a timestamp on the person.
+- **Two new ACF datetime fields on person:** `onboarding-email-lid-sent` and `onboarding-email-vrijwilliger-sent` (readonly). Server stamps these on successful send so the same person can't be re-onboarded for the same type.
+- **Two new welkomstmail templates.** Settings → Beheer → Welkomstmail now has three sub-tabs: Account aanmaken (existing), Nieuw lid (new), Nieuwe vrijwilliger (new). Each onboarding template stores subject + HTML body; supports `{first_name}`, `{infix}`, `{last_name}`, `{full_name}`, `{email}`, `{club_naam}` placeholders. Templates fall back to a sensible Dutch default when unset.
+- **New REST endpoints:**
+  - `POST /rondo/v1/people/onboarding-email` — body `{ person_ids: int[], type: 'lid'|'vrijwilliger' }`. Sends per person, stamps the timestamp only on a successful `wp_mail()`, returns per-id status (sent / already_sent / no_email / send_failed / not_found). People with no email are reported back, not errored.
+  - `GET|POST /rondo/v1/onboarding/email-settings/{lid|vrijwilliger}` — read/update the new welkomstmail templates (admin only).
+  - `GET /rondo/v1/people/filtered` gains two parameters: `onboarding_new_members=1` and `onboarding_new_volunteers=1`.
+- Onboarding emails get a timeline entry on the person via `CommentTypes::create_email_log()`, same as account-provisioning welcome emails.
+
+### Fixed
+- Birthday entries in the daily digest email and the dashboard reminder widget now display the person's birth year (instead of the current year) and append the age they're turning, e.g. `15 mei 1990 (wordt 36)`.
+- Credit invoice emails now use the dedicated credit template body and subject instead of the regular payment-request template. `InvoiceEmailSender::send()` now detects `_invoice_kind === 'credit'` before template selection and pulls `FinanceConfig::get_credit_email_template()` and `get_credit_email_subject()`. Previously only the heading was swapped, so credit invoices still went out with "pay this amount" body copy + QR code + betaallink placeholders.
+
+### Added (other)
+- `rondo_finance_credit_email_subject` option + settings UI field for configuring the credit invoice email subject (default: `Creditfactuur {factuur_nummer} - {organisatie_naam}`).
+
+## [33.1.1] - 2026-05-26
+
+### Changed
+- When the "Afgemeld dit seizoen" filter is active, the People list now force-shows `Lid sinds` and `Lid tot` as the first two columns after Name. User's stored Column Settings are untouched — the override only applies while the filter is on, so the matching reason is always visible without manual column tweaking.
+
+## [33.1.0] - 2026-05-26
+
+### Added
+- **People list: "Afgemeld dit seizoen" filter.** New boolean filter on the People list that shows every member whose `lid-tot` (membership end date) falls inside the current Dutch sports season (1 July through 30 June). The server computes the season window from `today`: before 1 July it spans (year-1)-07-01 → year-06-30, on/after 1 July it spans year-07-01 → (year+1)-06-30. Backed by `lid_tot_season=1` on `GET /rondo/v1/people`. Auto-flips `include_former=1` on the server because Sportlink marks members as former once their `lid-tot` has passed, so without it the season's cancellations would silently disappear from the list.
+- **`Lid tot` as a list column.** Added `lid-tot` to the available Sportlink columns so it can be enabled via Column Settings, sorted on, and exported via CSV. Pairs naturally with the new filter — turn on the filter, add the column, sort by date.
+
+## [33.0.0] - 2026-04-09
+
+### Changed
+- **Fee system god class retired.** `Rondo\Fees\MembershipFees` (2,137 lines, 65 methods) has been decomposed into 8 focused classes across 5 direct-style phases (214–218) of the v33.0 Fee Service Decomposition milestone. No user-visible behaviour changes — this is a pure internal refactor, validated at every phase with a production fee snapshot diff (4,021 active members) and (for phases 217–218) a `wp option list` byte-for-byte diff of all 101 `rondo_*` option keys.
+- Phase 214: Extracted `Rondo\Fees\FeeCategoryResolver` (362 lines) with 8 category-matching methods (`predict_next_season_age_class`, `get_category_by_age_class`, `get_category`, `get_category_by_team_match`, `get_category_by_werkfunctie_match`, `is_recreational_team`, `is_donateur`, `find_recreational_team_ids`). Added the `bin/fee-snapshot.sh` / `bin/fee-snapshot.php` regression harness used by every subsequent phase. `is_donateur` signature changed from `int $person_id` to `array $werkfuncties` so the resolver stays stateless.
+- Phase 215: Extracted `Rondo\Fees\FamilyGroupingService` (487 lines) with 7 family-discount methods (`build_family_groups`, `get_family_key`, `recalculate_all_family_positions`, `recalculate_family_positions_for_person`, `clear_all_family_discount_meta`, `normalize_postal_code`, `extract_house_number`). Fixed the STRU-04 coupling smell in `FeeCacheInvalidator`: it now holds a typed `FamilyGroupingService` property instead of reaching through a god-object reference.
+- Phase 216: Extracted `Rondo\Fees\FeeCalculator` (454 lines) with the 4 fee-math methods (`calculate_fee`, `calculate_fee_with_family_discount`, `calculate_full_fee`, `get_prorata_percentage`). Explicit typed constructor collaborators per STRU-02. The `FeeCalculator ↔ FamilyGroupingService` cycle is broken with a deferred callable on `FamilyGroupingService`. `get_effective_werkfuncties` and `normalize_werkfuncties_for_fee_match` promoted from private to public.
+- Phase 217: Extracted `Rondo\Fees\MembershipFeeSettings` (590 lines) with 26 Options API storage methods + 2 legacy payload migrations (`maybe_migrate_age_classes`, `maybe_migrate_matching_rules`). Zero constructor dependencies. The matching-rules migration inlines its own recreational-team lookup to avoid coupling the settings repository to `FeeCategoryResolver`. 42 call sites across 4 files (`class-rest-fees.php`, `class-public-payment-page.php`, `class-bulk-invoice-creator.php`, `class-rest-google-sheets.php`) rewired to go through `$fees->settings()->X()`.
+- Phase 218: **Deleted `includes/class-membership-fees.php` entirely** (Option A from the roadmap). Remaining methods distributed into three new focused classes: `Rondo\Fees\FeeCache` (277 lines, 10 cache/snapshot storage methods), `Rondo\Fees\PersonFeeContext` (244 lines, 4 person-data helpers with zero dependencies), and `Rondo\Fees\FeeServices` (193 lines, static service locator with 6 lazy accessors and zero methods of its own). 17 `new MembershipFees()` instantiations deleted and ~74 method calls rewired to `FeeServices::accessor()->X()` across 5 files.
+- `FeeCacheInvalidator` constructor now pulls its `FeeCache` and `FamilyGroupingService` references from `FeeServices` instead of constructing its own `MembershipFees` instance.
+
+### Fixed
+- `bin/deploy.sh` wrinkle documented: rsync doesn't `--delete` theme files, so Phase 218's deleted `class-membership-fees.php` required a manual `ssh + rm + composer dump-autoload -o --quiet + wp cache flush` to clear the orphan on production. See `.planning/phases/218-retire-membershipfees/NOTES.md` for the recipe.
+
+### Removed
+- `includes/class-membership-fees.php` — the god class is gone.
+- `MembershipFees::get_fee_for_person()` (non-cached variant) — dead code, no callers.
+- `MembershipFees::get_calculation_status()` — dead diagnostic, never wired into any REST endpoint or UI.
+
+## [32.8.0] - 2026-03-30
+
+### Changed
+- Dashboard now loads with a single API call (down from 10): user profile, dashboard settings, VOG counts, discipline case count, and todos all consolidated into `/rondo/v1/dashboard`
+- Dashboard API response preloaded via fetch in wp_head so the browser starts fetching before JS boots
+- Birthday reminders query rewritten with SQL date math instead of loading all people and filtering in PHP
+- Anniversary data cached in a shared transient (1 day TTL) instead of per-user since the data is the same for all users
+- Added composite database index on wp_postmeta (meta_key, meta_value) for faster dashboard count queries
+- Anniversary query loads only person IDs first, does date math on raw meta, then loads full objects only for matches
+- Replaced 3 separate WP_Query count queries (people, volunteers, open feedback) with a single SQL query
+- VOG counts computed server-side in one SQL query instead of 3 separate filtered people API calls
+- Transient cache TTL increased from 5 to 15 minutes (with same invalidation triggers)
+- Frontend staleTime aligned to 15 minutes to match server cache
+- Removed debug console.log from useDashboard hook
+
 ## [32.6.1] - 2026-03-15
 
 ### Changed

@@ -23,9 +23,59 @@ npm run dev      # Start Vite dev server (port 5173, HMR enabled)
 npm run build    # Production build to dist/
 npm run lint     # ESLint check (max-warnings: 0)
 npm run preview  # Preview production build
+composer lint    # phpcs — run before every deploy
+composer test    # Codeception wpunit suite
 ```
 
 **Important:** The deploy script (`bin/deploy.sh`) runs `npm run build` automatically before syncing. You do not need to build separately before deploying. However, when creating PRs, run `npm run build` to verify the frontend compiles before committing.
+
+### Running the PHP test suite
+
+**The suite is green: 389 tests, 0 failures. Keep it that way — a red suite is a regression, not
+the status quo.** It also runs in CI on every push and pull request.
+
+`composer test` needs a WordPress install with the theme symlinked in, ACF Pro, and MySQL (not
+SQLite — it cannot evaluate the `DATETIME` meta comparisons this codebase uses). Full setup, and
+the conventions for writing tests, are in **[docs/testing.md](docs/testing.md)**.
+
+```bash
+docker start rondo-test-db && composer test
+vendor/bin/codecept run Wpunit AgeGroupAccessTest   # one file
+```
+
+Two things that will otherwise waste an afternoon:
+
+- **REST routes must be booted in the test.** The theme only instantiates its controllers on real
+  REST requests, so routes do not exist and every dispatch answers 404 — indistinguishable from a
+  permission check working. Use `$this->bootRestControllers( [ Controller::class ] )`.
+- **ACF Pro trips a `_doing_it_wrong()` notice** on person and shift select fields under WP 7.0.
+  Silence it per class with `$this->ignoreIncorrectUsage( 'rest_handle_multi_type_schema' )`, never
+  with `setExpectedIncorrectUsage()`.
+
+## Fetching feedback items
+
+Users file feature requests and bug reports as `rondo_feedback` posts, referenced by URLs like
+`https://rondo.svawc.nl/feedback/8658`. In remote/cloud sessions there is no SSH access, but the
+environment provides `RONDO_API_URL`, `RONDO_API_USER`, and `RONDO_API_PASSWORD` (a WordPress
+application password). Fetch a feedback item with:
+
+```bash
+curl -sS -u "$RONDO_API_USER:$RONDO_API_PASSWORD" "$RONDO_API_URL/wp-json/rondo/v1/feedback/<id>"
+```
+
+The response contains `title`, `content`, `author`, and `meta` (feedback_type, status, priority,
+`url_context` — the app page the user was on, `use_case`, plus steps/expected/actual for bugs).
+Comments live at `/wp-json/rondo/v1/feedback/<id>/comments`. When you start work on an item, record
+your branch, and when your work is ready for review, update the status (allowed: `new`, `approved`,
+`in_progress`, `in_review`, `resolved`, `declined`, `needs_info`; resolving requires
+`resolution_summary`):
+
+```bash
+curl -sS -X POST -u "$RONDO_API_USER:$RONDO_API_PASSWORD" \
+  -H 'Content-Type: application/json' \
+  -d '{"status":"in_review","agent_branch":"claude/feedback-<id>-xxxxx","pr_url":"<pr-url>"}' \
+  "$RONDO_API_URL/wp-json/rondo/v1/feedback/<id>"
+```
 
 ## Development Setup
 
@@ -211,6 +261,52 @@ This is a single repository containing both backend (PHP) and frontend (React) c
 
 **Adding PHP classes:** Create new class file in `includes/`, load it in `functions.php` via `rondo_init()`
 
+## Common Pitfalls
+
+### ACF select fields reject empty strings via REST — coerce to `null` on the client
+
+**Symptom — this exact error has bitten us multiple times:**
+```
+{
+  "code": "rest_invalid_param",
+  "message": "Invalid parameter(s): acf",
+  "data": {
+    "params": { "acf": "acf[<field_name>] is not one of <choice1>, <choice2>, ..." }
+  }
+}
+```
+
+**Why it happens:**
+ACF auto-generates a JSON Schema for every field exposed in REST. For `type: "select"` fields it emits `enum: [<choice1>, <choice2>, ...]`. **That enum does NOT include `""` — even when the field has `allow_null: 1` and `default_value: ""` in its ACF config.** So any REST update whose `acf` payload contains `<field>: ""` is rejected by WP REST schema validation *before* any of our PHP code runs. The whole request fails, including the unrelated field the user was actually trying to change (e.g. a relationship update).
+
+**The frontend trigger:**
+Most person/team writes round-trip the full `acf` object (read it, mutate one field, send it all back). So a person editing a *relationship* still POSTs `vergoeding_reden: ""` if the person isn't a paid volunteer. Same for any other select field that's empty on this record.
+
+**The fix — always done on the client:**
+Add the field name to the `enumFields` list inside the relevant sanitizer in `src/utils/formatters.js` (`sanitizePersonAcf`, `sanitizeTeamAcf`, etc.). That sanitizer converts `""` → `null` before submit, which IS accepted by the schema.
+
+**When you add a new ACF select to any CPT:**
+1. Add the field name to the `enumFields` array of the corresponding sanitizer in `src/utils/formatters.js`.
+2. Make sure every code path that builds an ACF payload routes through that sanitizer (`sanitizePersonAcf(person.acf, { ... })`), not raw object spread.
+3. Same applies to `radio` and `button_group` ACF types — they generate the same enum schema.
+
+**If you see this error in production:** grep the field name out of the error message, check it's a select-type field in `acf-json/`, then add it to the sanitizer. Don't try to fix it server-side by loosening the ACF schema — that fights the framework and breaks the next ACF Pro upgrade.
+
+### `former_member=true` persons are read-only end-to-end
+
+Sportlink rejects every contact / profile write for the lidsoorten that map to `former_member=true` ("Oud bondslid", "Oud verenigingslid"). Accepting an edit here just generates reverse-sync work in the `rondo-sync` repo that can never land. The policy is enforced in two places that **MUST stay in sync** if you touch either side:
+
+- **Backend:** `class-rest-people.php` — `block_former_member_edits()` on the `rest_pre_insert_person` filter rejects non-admin ACF writes with `HTTP 403 rondo_former_member_readonly`. Admins (incl. the `RONDO_USERNAME`-authenticated sync service user with `manage_options`) are exempt so the forward sync keeps working on former-member records.
+- **Frontend:** `src/pages/People/PersonDetail.jsx` — `canEditPeople` flips to `false` when `acf.former_member === true`, hiding every existing edit affordance. A "Oud-lid — alleen-lezen" banner explains why and tells the user to ask a beheerder.
+
+The only allowed non-admin write is the `former_member` field itself, so an admin can flip a person back to active to make them editable. When adding new edit UI: route through the same `canEditPeople` gate (don't introduce a parallel "can edit" boolean), and don't try to relax the REST filter for "just one field" — the next reverse-sync loop will find you.
+
+### ACF `date_picker` fields store `YYYYMMDD`, not `YYYY-MM-DD` — use `parseAcfDate()`
+
+ACF persists `date_picker` values in compact `Ymd` format (e.g. `"20140708"`) regardless of `return_format`. `new Date("20140708")` returns `Invalid Date`. Affects any date field returned by `wp/v2/people` via ACF — `birthdate`, `lid-sinds`, `lid-tot`, `datum-vog`, every `work_history.start_date`/`end_date`, etc.
+
+Use `parseAcfDate()` from `src/utils/formatters.js` — it handles both `YYYYMMDD` and `YYYY-MM-DD`. `isValidDate()` already delegates to it. Anywhere you'd write `new Date(acf.foo_date)` to format an ACF date, write `parseAcfDate(acf.foo_date)` instead. This bit us once when work_history dates rendered as empty `" - "` for every sync-written entry — only the legacy hand-entered records survived because they were in the other format.
+
 ## Required rules for every change
 
 ### Rule 0: Use WordPress & ACF native data models
@@ -330,24 +426,32 @@ git push
 
 **WHEN you're in a worktree, do not EVER push to production**
 
-**ALWAYS deploy to production BEFORE asking for verification or UAT.** The user tests on production, not locally. Deploy after every phase execution, before presenting verification checklists.
+**ALWAYS deploy to production BEFORE asking for verification or UAT.** The user tests on production, not locally.
 
-Use the deployment script in `bin/deploy.sh`:
+Production deployment is automatic:
+
+1. Commit and push the milestone.
+2. A commit on `main` runs `.github/workflows/ci.yml`.
+3. JavaScript lint/build and PHP coding standards must pass.
+4. GitHub Actions builds a production release, deploys it over SSH, clears
+   WordPress and SiteGround caches, and verifies the live version and URL.
+5. Wait for the **CI and deploy** workflow to complete successfully before
+   presenting verification or UAT steps.
+
+Feature and worktree branches do not deploy. When a pull request is used, merge
+it into `main` and wait for the resulting `main` workflow.
+
+`bin/deploy.sh` is a break-glass fallback only. It reads exported deployment
+variables first and uses `.env` only when required values are absent:
 
 ```bash
-# Standard deploy (excludes node_modules)
-bin/deploy.sh
-
-# Deploy including node_modules (after npm install/update)
-bin/deploy.sh --with-node-modules
+bin/deploy.sh --prune
 ```
 
-The script reads server credentials from `.env` (see `.env.example` for required variables). It:
-1. Syncs `dist/` folder with `--delete` to remove stale build artifacts
-2. Syncs remaining theme files (excluding `.git`, `node_modules`, `dist`)
-3. Clears WordPress and SiteGround caches
+Use the **Roll back production** GitHub workflow with a full earlier commit SHA
+from `main` to restore a previous release.
 
-**Production URL:** See `DEPLOY_PRODUCTION_URL` in `.env`
+**Production URL:** See the GitHub `production` environment or local `.env`.
 
 ### Rondo Club Sites
 

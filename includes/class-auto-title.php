@@ -17,14 +17,6 @@ class AutoTitle {
 		// Generate title for REST API person creation/update (priority 20 = same as acf/save_post)
 		add_action( 'rest_after_insert_person', [ $this, 'auto_generate_person_title_rest' ], 20, 2 );
 
-		// Trigger calendar re-matching after person save (priority 25 = after title generation)
-		// Hook both acf/save_post (admin) and rest_after_insert_person (REST API)
-		add_action( 'acf/save_post', [ $this, 'trigger_calendar_rematch' ], 25 );
-		add_action( 'rest_after_insert_person', [ $this, 'trigger_calendar_rematch_rest' ], 25, 2 );
-
-		// Handle async calendar rematch cron job
-		add_action( 'rondo_async_calendar_rematch', [ $this, 'handle_async_calendar_rematch' ] );
-
 		// Hide title field in admin for person CPT
 		add_filter( 'acf/prepare_field/name=_post_title', [ $this, 'hide_title_field' ] );
 
@@ -131,6 +123,10 @@ class AutoTitle {
 		);
 
 		if ( empty( $full_name ) ) {
+			$full_name = trim( (string) get_field( 'company_name', $post_id ) );
+		}
+
+		if ( empty( $full_name ) ) {
 			$full_name = __( 'Unnamed Person', 'rondo' );
 		}
 
@@ -177,74 +173,5 @@ class AutoTitle {
 		}
 
 		return $value;
-	}
-
-	/**
-	 * Trigger calendar event re-matching when a person is saved
-	 *
-	 * This ensures that when email addresses are added/changed on a person,
-	 * existing calendar events with those emails are now matched to the person.
-	 *
-	 * @param int $post_id Post ID being saved
-	 */
-	public function trigger_calendar_rematch( $post_id ) {
-		if ( ! $this->is_valid_person_save( $post_id ) ) {
-			return;
-		}
-
-		// Schedule async rematch - don't block the save
-		$this->schedule_calendar_rematch( $post_id );
-	}
-
-	/**
-	 * Trigger calendar re-matching from REST API insert
-	 *
-	 * Called via rest_after_insert_person hook when a person is created/updated via REST API.
-	 *
-	 * @param WP_Post         $post    Inserted or updated post object.
-	 * @param WP_REST_Request $request Request object.
-	 */
-	public function trigger_calendar_rematch_rest( $post, $request ) {
-		// Schedule async rematch - don't block the API response
-		$this->schedule_calendar_rematch( $post->ID );
-	}
-
-	/**
-	 * Schedule calendar rematch to run asynchronously
-	 *
-	 * Uses a static flag to prevent duplicate scheduling within the same request
-	 * (since both acf/save_post and rest_after_insert_person can fire).
-	 *
-	 * @param int $post_id Person post ID.
-	 */
-	private function schedule_calendar_rematch( int $post_id ): void {
-		static $scheduled = [];
-
-		// Prevent scheduling multiple times for the same person in one request
-		if ( isset( $scheduled[ $post_id ] ) ) {
-			return;
-		}
-		$scheduled[ $post_id ] = true;
-
-		// Clear any existing scheduled event for this person
-		$timestamp = wp_next_scheduled( 'rondo_async_calendar_rematch', [ $post_id ] );
-		if ( $timestamp ) {
-			wp_unschedule_event( $timestamp, 'rondo_async_calendar_rematch', [ $post_id ] );
-		}
-
-		// Schedule to run immediately (next cron tick)
-		wp_schedule_single_event( time(), 'rondo_async_calendar_rematch', [ $post_id ] );
-
-		// Trigger cron to run soon (non-blocking)
-		spawn_cron();
-	}
-
-	/**
-	 * Handle async calendar rematch cron job
-	 *
-	 * @param int $post_id Person post ID.
-	 */
-	public function handle_async_calendar_rematch( int $post_id ): void {
-		\Rondo\Calendar\Matcher::on_person_saved( $post_id );
 	}
 }

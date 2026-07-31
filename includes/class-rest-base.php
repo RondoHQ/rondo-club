@@ -61,12 +61,44 @@ abstract class Base {
 	}
 
 	/**
-	 * Check if the current user has the financieel capability.
+	 * Check if the user may manage contributie and facturen — the write gate.
+	 *
+	 * `financieel` alone — no `manage_options` fallback, because
+	 * UserRoles::register_role() grants the capability to the administrator role.
+	 * The Financiën section of the UI is gated on exactly this capability, so every
+	 * endpoint behind it must be too. Gating those on `manage_options` gave the
+	 * penningmeester a menu full of empty screens.
+	 *
+	 * Use this for anything that creates, mutates, sends, or deletes. Read-only
+	 * endpoints belong behind check_financieel_read_permission().
 	 *
 	 * @return bool True if user has financieel capability.
 	 */
 	public function check_financieel_permission() {
-		return current_user_can( 'financieel' );
+		return \Rondo\Core\UserRoles::can_manage_finances();
+	}
+
+	/**
+	 * Check if the user may view contributie and facturen — the read gate.
+	 *
+	 * Satisfied by `financieel_read` or by `financieel`, which implies it.
+	 *
+	 * @return bool True if user may view finance data.
+	 */
+	public function check_financieel_read_permission() {
+		return \Rondo\Core\UserRoles::can_view_finances();
+	}
+
+	/**
+	 * Check if user is admin or has the Financieel capability.
+	 *
+	 * For endpoints shared between the admin settings screens and the contributie
+	 * screens, such as the list of available werkfuncties.
+	 *
+	 * @return bool True if user has manage_options or financieel capability.
+	 */
+	public function check_admin_or_financieel_permission() {
+		return current_user_can( 'manage_options' ) || current_user_can( 'financieel' );
 	}
 
 	/**
@@ -76,6 +108,32 @@ abstract class Base {
 	 */
 	public function check_clothing_permission() {
 		return current_user_can( 'manage_clothing' ) || current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Check if the current user can manage membership administration.
+	 *
+	 * Used to gate the Onboarding screen (Leden → Onboarding) and the
+	 * `POST /people/onboarding-email` endpoint. Admins always pass.
+	 *
+	 * @return bool True if user has ledenadministratie capability or is admin.
+	 */
+	public function check_ledenadministratie_permission() {
+		return current_user_can( 'ledenadministratie' ) || current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Check if the current user may manage the volunteer programme.
+	 */
+	public function check_vrijwilligers_permission() {
+		return current_user_can( 'vrijwilligers' ) || current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Check if the current user may manage VOG records and communications.
+	 */
+	public function check_vog_permission() {
+		return current_user_can( 'vog' ) || current_user_can( 'manage_options' );
 	}
 
 	/**
@@ -119,8 +177,17 @@ abstract class Base {
 			return false;
 		}
 
-		// Check if user has people-editing capability
-		if ( ! \Rondo\Core\AccessControl::can_edit_people() ) {
+		// Check the record-specific people-editing scope. Sponsor managers may
+		// edit sponsors, but never members or ordinary contacts. Volunteer
+		// coordinators reach every person for contact details and photos.
+		if ( ! \Rondo\Core\AccessControl::can_edit_person( $person_id ) ) {
+			return false;
+		}
+
+		// Former members are read-only end-to-end for non-admins. The ACF writes
+		// are stopped by People::block_former_member_edits(), which this route
+		// never passes through, so the same rule is applied here.
+		if ( ! current_user_can( 'manage_options' ) && get_field( 'former_member', $person_id ) ) {
 			return false;
 		}
 

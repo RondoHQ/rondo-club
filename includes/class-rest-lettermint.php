@@ -104,6 +104,8 @@ class Lettermint extends Base {
 									'reminder_2',
 									'invoice_reminder_1',
 									'invoice_reminder_2',
+									'generic_invoice_reminder_1',
+									'generic_invoice_reminder_2',
 									'credit',
 								],
 								true
@@ -478,6 +480,12 @@ class Lettermint extends Base {
 				break;
 			case 'invoice_reminder_2':
 				$template = $config->get_invoice_reminder_2_email_template();
+				break;
+			case 'generic_invoice_reminder_1':
+				$template = $config->get_generic_invoice_reminder_1_email_template();
+				break;
+			case 'generic_invoice_reminder_2':
+				$template = $config->get_generic_invoice_reminder_2_email_template();
 				break;
 			case 'credit':
 				$template = $config->get_credit_email_template();

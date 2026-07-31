@@ -1,6 +1,7 @@
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { useEngagementTracking } from '@/hooks/useEngagementTracking';
 import { Download, X } from 'lucide-react';
+import { getAppName } from '@/constants/app';
 
 /**
  * InstallPrompt - Android PWA install banner
@@ -37,7 +38,7 @@ export function InstallPrompt() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-              Installeer Rondo Club
+              Installeer {getAppName()}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Voor snellere toegang en offline gebruik
@@ -60,7 +61,7 @@ export function InstallPrompt() {
           </button>
           <button
             onClick={handleInstall}
-            className="px-3 py-1.5 text-sm bg-electric-cyan text-white rounded-md hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:ring-offset-2"
+            className="btn-primary text-sm px-3 py-1.5"
           >
             Installeer
           </button>

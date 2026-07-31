@@ -1,5 +1,88 @@
 # Project Milestones: Rondo Club
 
+## v33.0 Fee Service Decomposition (Shipped: 2026-04-09)
+
+**Delivered:** Retired the `Rondo\Fees\MembershipFees` god class (2,137 lines, 65 methods — the #1 god node in graphify with 66 edges) by decomposing it into 8 focused classes across 5 phases. Pure internal refactor with zero user-visible behaviour changes. Every phase validated against a production fee snapshot of 4,021 active members with a `wp option list` byte-for-byte diff of all 101 `rondo_*` option keys across phases 217-218. No regressions.
+
+**Phases completed:** 214-218 (5 phases, 7 plans, 11 atomic commits)
+
+- Phase 214: FeeCategoryResolver + Snapshot Infrastructure (2 plans) — 8 methods moved; built `bin/fee-snapshot.sh` regression harness used by every subsequent phase
+- Phase 215: FamilyGroupingService (1 plan) — 7 methods moved; STRU-04 coupling smell fixed in `FeeCacheInvalidator`
+- Phase 216: FeeCalculator (1 plan) — 4 methods moved; circular dependency broken with deferred closure
+- Phase 217: MembershipFeeSettings (2 plans) — 26 CRUD methods + 2 migrations moved; 42 call sites rewired
+- Phase 218: Retire MembershipFees (1 plan) — god class deleted entirely (Option A); 3 new classes created, 2 dead methods removed, 17 instantiations rewired
+
+**Key accomplishments:**
+
+- **`MembershipFees` god class deleted.** The #1 graphify god node (66 edges, cohesion 0.08) is gone. 45 methods relocated to focused services across phases 214-217, 14 methods relocated in phase 218, 2 dead methods removed.
+- **Fee system now 8 focused classes** totalling 2,692 lines vs the original 2,137-line god class — slightly larger in raw LOC (expected for a split — each extracted class adds file header, namespace, class doc) but every class is single-purpose, under 600 lines.
+- **`bin/fee-snapshot.sh` regression harness** — WP-CLI-backed `{person_id, category, base_fee, family_discount, final_fee}` JSON dump for every active member. Used as the regression net at every phase: pre-phase snapshot → deploy → post-phase snapshot → `jq -S .rows` diff must be empty. Captures 4,021 rows across 7 fee categories in the current season.
+- **`FeeCalculator ↔ FamilyGroupingService` circular dependency broken** with a deferred `callable` closure on `FamilyGroupingService`, letting each service hold a typed reference without construction-time recursion. The same deferred-closure pattern is applied to `FeeCache` ↔ `FeeCalculator`.
+- **`FeeCacheInvalidator` STRU-04 coupling smell fixed** — it used to reach through `$this->fees` (a `MembershipFees` god-class reference) for every cache clear and family operation. It now holds typed `FeeCache` and `FamilyGroupingService` properties resolved from `FeeServices` at construction time.
+- **`Rondo\Fees\FeeServices` static locator** (193 lines, zero methods of its own) gives external callers the same ergonomics MembershipFees used to provide (`FeeServices::settings()->X()`) without bundling any business logic.
+
+**New service graph:**
+
+| Class | Lines | Responsibility |
+|---|---|---|
+| `SeasonKey` | 89 | "YYYY-YYYY" season arithmetic (extracted earlier) |
+| `FeeServices` | 193 | Lazy static service locator, no methods |
+| `PersonFeeContext` | 244 | Person-data helpers (teams, werkfuncties, former-member) |
+| `FeeCache` | 277 | Cache + snapshot post-meta storage |
+| `FeeCategoryResolver` | 362 | Category resolution (age class, team, werkfunctie matching) |
+| `FeeCalculator` | 454 | Fee math (base, family discount, pro-rata) |
+| `FamilyGroupingService` | 483 | Family grouping + position recalculation |
+| `MembershipFeeSettings` | 590 | Options API storage + legacy payload migrations |
+
+**Stats:**
+
+- 5 phases, 7 plans, 11 atomic commits on `main` (all direct-style — no `/gsd:plan-phase` or `/gsd:execute-phase` ceremony)
+- Duration: 2026-04-08 → 2026-04-09 (under 24 hours end-to-end)
+- Validation: 5 clean fee snapshot diffs × 4,021 rows = 20,105 verified fee calculations; 3 clean option-list diffs × 101 keys = 303 verified option-key contract checks
+
+**Git range:** `be6cdd12` → `88750fa1` (Phase 214 Plan 01 through Phase 218 closure)
+
+**Tech debt:** Two minor items documented in `.planning/milestones/v33.0-MILESTONE-AUDIT.md`: (1) `bin/deploy.sh` doesn't `--delete` theme files on rsync, so Phase 218's class deletion required a manual `ssh + rm + composer dump-autoload + wp cache flush` — low priority, only matters when a future phase deletes class files; (2) cosmetic stale doc-comment references to MembershipFees remain in `FeeCalculator` and `FamilyGroupingService` — pure housekeeping.
+
+**Audit:** 13/13 requirements satisfied, 5/5 phases shipped, zero regressions. See `.planning/milestones/v33.0-MILESTONE-AUDIT.md` for the full 3-source cross-reference.
+
+**What's next:** v34.0 to be scoped.
+
+---
+
+## v32.0 Interface Touch-up (Shipped: 2026-04-08)
+
+**Delivered:** Established a four-tier button hierarchy (filled primary, outlined secondary, ghost tertiary, destructive danger) in CSS, then rolled it out across ~54 JSX files covering Finance, People, Teams, Commissies, Feedback, VOG, Contributie, Clothing, Settings, modals, and DataTable toolbar. Audit-driven gap closure caught and fixed 21 missed buttons across Settings sub-pages, VOG bulk modals, and InstallPrompt in a decimal-inserted phase 213.1.
+
+**Phases completed:** 212-213.1 (3 phases, 6 plans including gap closure)
+
+- Phase 212: Button CSS System (1 plan)
+- Phase 213: Sitewide Rollout (4 plans)
+- Phase 213.1: Button Rollout Closure (1 plan, decimal-inserted gap closure from milestone audit)
+
+**Key accomplishments:**
+
+- Four-tier button CSS system defined with light/dark mode variants: btn-primary (filled gradient), btn-secondary (outlined), btn-tertiary (ghost), btn-danger (red filled)
+- Rolled out semantic tier hierarchy across all major subsystems, replacing ad-hoc inline color overrides with consistent class names
+- Established audit-driven refactor discipline: initial audit found 3 partial requirements, planned as gap-closure phase 213.1, executed and re-audited to passed status
+- Fixed Phase 212 DRY anti-pattern in src/index.css via CSS selector lists (idiomatic for Tailwind v4 CSS-first mode where @apply cannot extend custom class names)
+- Validated the pattern that prompted v33.0 Fee Service Decomposition: small focused refactors, direct execution, immediate deploy + audit
+
+**Stats:**
+
+- 3 phases, 5 original plans + 1 gap closure plan
+- Phase 213.1 alone: 8 files modified, 21 buttons converted
+- Audit score: 12/12 requirements satisfied, 12/12 integration verified, 3/3 critical flows intact
+- Code version: 32.8.0 (package.json, style.css)
+
+**Git range:** Phase 213 work 2026-03-11 → Phase 213.1 closure 2026-04-08 (commit `53b31894`)
+
+**Known tech debt:** Nyquist VALIDATION.md missing for both phases 212 and 213 (consistent with v31.0 audit pattern, where phases 209-211 also lacked VALIDATION.md). Decision to backfill deferred — simple UI refactor phases arguably don't benefit from formal Nyquist validation.
+
+**What's next:** v33.0 Fee Service Decomposition — break the 2,204-line Rondo\Fees\MembershipFees god class into focused services (FeeCategoryResolver, FamilyGroupingService, FeeCalculator, MembershipFeeSettings). 5 phases drafted at `.planning/milestones/v33.0-ROADMAP.md`, precedent set by the SeasonKey extraction (commit `e25cef7b`).
+
+---
+
 ## v20.0 Configurable Roles (Shipped: 2026-02-08)
 
 **Delivered:** Replaced hardcoded club-specific arrays with database-driven settings and dynamic queries so any sports club can use Rondo Club without code changes. Filter options are now dynamic, role classifications are configurable, and sync layer has no default fallbacks.

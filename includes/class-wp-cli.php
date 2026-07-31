@@ -10,11 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Import namespaced classes for WP-CLI commands
 use Rondo\Collaboration\Reminders;
 use Rondo\Notifications\EmailChannel;
-use Rondo\Calendar\Matcher;
 use Rondo\Export\VCard;
 use Rondo\Collaboration\CommentTypes;
 use Rondo\Demo\DemoExport;
 use Rondo\Demo\DemoImport;
+use Rondo\Feedback\StatusService;
 
 // Only load if WP-CLI is available
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -1001,53 +1001,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			} else {
 				WP_CLI::success( sprintf( 'Migration complete! %d todo(s) migrated to multi-person format.', $migrated ) );
 			}
-		}
-	}
-
-	/**
-	 * Calendar Sync WP-CLI Commands
-	 */
-	class RONDO_Calendar_CLI_Command {
-
-		/**
-		 * Re-match calendar events against contacts
-		 *
-		 * Invalidates the email lookup cache and re-matches all calendar events
-		 * against the user's contacts. Useful after adding new email addresses
-		 * to contacts or after bulk imports.
-		 *
-		 * ## OPTIONS
-		 *
-		 * [--user-id=<user_id>]
-		 * : User ID to re-match events for (required)
-		 *
-		 * ## EXAMPLES
-		 *
-		 *     wp prm calendar rematch --user-id=1
-		 *
-		 * @when after_wp_load
-		 */
-		public function rematch( $args, $assoc_args ) {
-			$user_id = isset( $assoc_args['user-id'] ) ? (int) $assoc_args['user-id'] : 0;
-
-			if ( ! $user_id ) {
-				WP_CLI::error( 'No user ID provided. Use --user-id=ID' );
-				return;
-			}
-
-			$user = get_user_by( 'ID', $user_id );
-			if ( ! $user ) {
-				WP_CLI::error( "User {$user_id} not found." );
-				return;
-			}
-
-			WP_CLI::log( "Invalidating email cache for user {$user_id}..." );
-			Matcher::invalidate_cache( $user_id );
-
-			WP_CLI::log( "Re-matching calendar events for user {$user_id}..." );
-			$count = Matcher::rematch_events_for_user( $user_id );
-
-			WP_CLI::success( "Re-matched {$count} calendar events for user {$user->display_name}." );
 		}
 	}
 
@@ -2130,6 +2083,92 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	}
 
 	/**
+	 * Feedback WP-CLI commands.
+	 */
+	class RONDO_Feedback_CLI_Command {
+
+		/**
+		 * Change the status of a feedback item.
+		 *
+		 * Uses the same status service as the REST API, including resolution
+		 * timestamps and the one-time resolution email.
+		 *
+		 * ## OPTIONS
+		 *
+		 * <feedback_id>
+		 * : Feedback post ID.
+		 *
+		 * <status>
+		 * : New status: new, approved, in_progress, in_review, resolved, declined, or needs_info.
+		 *
+		 * [--message=<message>]
+		 * : Dutch explanation of how the feedback was fixed. Required when newly resolving feedback.
+		 *
+		 * [--reason=<reason>]
+		 * : Dutch explanation of why the feedback is being declined. Required when newly declining feedback.
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp rondo feedback set-status 8496 resolved --message="Het formulier gebruikt nu één datum met aparte begin- en eindtijden."
+		 *     wp rondo feedback set-status 8496 declined --reason="Dit kan al via de knop rechtsboven op het dashboard."
+		 *     wp rondo feedback set-status 8496 needs_info
+		 *
+		 * @subcommand set-status
+		 * @when after_wp_load
+		 */
+		public function set_status( $args, $assoc_args ) {
+			$feedback_id = isset( $args[0] ) ? absint( $args[0] ) : 0;
+			$new_status  = isset( $args[1] ) ? sanitize_key( $args[1] ) : '';
+			$message     = isset( $assoc_args['message'] ) ? sanitize_textarea_field( $assoc_args['message'] ) : '';
+			$reason      = isset( $assoc_args['reason'] ) ? sanitize_textarea_field( $assoc_args['reason'] ) : '';
+
+			if ( $feedback_id === 0 ) {
+				WP_CLI::error( 'Please provide a valid feedback ID.' );
+			}
+
+			if ( ! in_array( $new_status, StatusService::ALLOWED_STATUSES, true ) ) {
+				WP_CLI::error( 'Invalid status. Allowed: ' . implode( ', ', StatusService::ALLOWED_STATUSES ) . '.' );
+			}
+
+			$result = ( new StatusService() )->update( $feedback_id, $new_status, $message, $reason );
+			if ( is_wp_error( $result ) ) {
+				WP_CLI::error( $result->get_error_message() );
+			}
+
+			$title = get_the_title( $feedback_id );
+			if ( ! $result['changed'] ) {
+				WP_CLI::success( sprintf( 'Feedback #%d (%s) already has status %s.', $feedback_id, $title, $new_status ) );
+				return;
+			}
+
+			WP_CLI::log( sprintf( 'Status: %s → %s', $result['previous_status'], $result['status'] ) );
+			if ( isset( $result['resolution_email'] ) ) {
+				$email_status = $result['resolution_email']['status'];
+				if ( $email_status === 'sent' ) {
+					WP_CLI::log( 'Resolution email: sent.' );
+				} elseif ( $email_status === 'already_sent' ) {
+					WP_CLI::log( 'Resolution email: already sent previously.' );
+				} else {
+					WP_CLI::warning( 'Resolution email: ' . $email_status . '.' );
+				}
+			}
+
+			if ( isset( $result['decline_email'] ) ) {
+				$email_status = $result['decline_email']['status'];
+				if ( $email_status === 'sent' ) {
+					WP_CLI::log( 'Decline email: sent.' );
+				} elseif ( $email_status === 'already_sent' ) {
+					WP_CLI::log( 'Decline email: already sent previously.' );
+				} else {
+					WP_CLI::warning( 'Decline email: ' . $email_status . '.' );
+				}
+			}
+
+			WP_CLI::success( sprintf( 'Updated feedback #%d (%s).', $feedback_id, $title ) );
+		}
+	}
+
+	/**
 	 * Demo WP-CLI Commands
 	 */
 	class RONDO_Demo_CLI_Command {
@@ -2321,10 +2360,10 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'prm migrate', 'RONDO_Migration_CLI_Command' );
 	WP_CLI::add_command( 'prm vcard', 'RONDO_VCard_CLI_Command' );
 	WP_CLI::add_command( 'prm todos', 'RONDO_Todos_CLI_Command' );
-	WP_CLI::add_command( 'prm calendar', 'RONDO_Calendar_CLI_Command' );
 	WP_CLI::add_command( 'prm event', 'RONDO_Event_CLI_Command' );
 	WP_CLI::add_command( 'prm relationships', 'RONDO_Relationships_CLI_Command' );
 	WP_CLI::add_command( 'rondo tasks', 'RONDO_Tasks_CLI_Command' );
+	WP_CLI::add_command( 'rondo feedback', 'RONDO_Feedback_CLI_Command' );
 	WP_CLI::add_command( 'rondo demo', 'RONDO_Demo_CLI_Command' );
 	WP_CLI::add_command( 'prm invoices', 'RONDO_Invoices_CLI_Command' );
 }

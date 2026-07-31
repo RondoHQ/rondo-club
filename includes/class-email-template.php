@@ -102,6 +102,22 @@ class EmailTemplate {
 	}
 
 	/**
+	 * Turn a post title into plain text fit for an email subject or body.
+	 *
+	 * `get_the_title()` runs the `the_title` filters, and `wptexturize()` emits
+	 * curly quotes as HTML entities (`&#8216;`). Stripping tags leaves those
+	 * entities intact, so an untreated title reaches the subject line as
+	 * "Kopje &#8216;betaalde vrijwilliger&#8217; verwijderen". Decode them back
+	 * to real characters. Callers that render into HTML still escape afterwards.
+	 *
+	 * @param string $title Raw title, typically from `get_the_title()`.
+	 * @return string
+	 */
+	public static function decode_title( string $title ): string {
+		return trim( html_entity_decode( wp_strip_all_tags( $title ), ENT_QUOTES, 'UTF-8' ) );
+	}
+
+	/**
 	 * Convert plain text content into HTML paragraphs.
 	 *
 	 * @param string $text Plain text.

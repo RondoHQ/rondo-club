@@ -63,6 +63,44 @@ class Users extends Base {
 			]
 		);
 
+		// Search published people that can become the new identity behind an
+		// existing account (admin repair workflow).
+		register_rest_route(
+			'rondo/v1',
+			'/users/linkable-people',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_linkable_people' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'search' => [
+						'required'          => true,
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/users/(?P<user_id>\d+)/linked-person',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'relink_user' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'user_id'   => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'person_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+				],
+			]
+		);
+
 		// User search (for sharing)
 		register_rest_route(
 			'rondo/v1',
@@ -117,6 +155,25 @@ class Users extends Base {
 				],
 			]
 		);
+
+		// Onboarding email template settings, per type (admin only).
+		// Stored as separate options so the existing account-provisioning template is untouched.
+		register_rest_route(
+			'rondo/v1',
+			'/onboarding/email-settings/(?P<type>lid|vrijwilliger)',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_onboarding_email_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_onboarding_email_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+			]
+		);
 	}
 
 	/**
@@ -149,6 +206,8 @@ class Users extends Base {
 				}
 			}
 
+			$pending_guardian = \Rondo\Users\GuardianAccountService::pending_for_user( $user->ID );
+
 			$user_list[] = [
 				'id'                 => $user->ID,
 				'name'               => $user->display_name,
@@ -157,10 +216,63 @@ class Users extends Base {
 				'last_active'        => get_user_meta( $user->ID, 'rondo_last_active', true ) ?: null,
 				'linked_person_id'   => $linked_person_id ?: null,
 				'linked_person_name' => $linked_person_name,
+				'pending_guardian'   => $pending_guardian,
 			];
 		}
 
 		return rest_ensure_response( $user_list );
+	}
+
+	/**
+	 * Search people without another valid linked account.
+	 */
+	public function get_linkable_people( $request ) {
+		$search = trim( (string) $request->get_param( 'search' ) );
+		if ( mb_strlen( $search ) < 2 ) {
+			return rest_ensure_response( [] );
+		}
+
+		$person_ids = get_posts(
+			[
+				'post_type'      => 'person',
+				'post_status'    => 'publish',
+				'posts_per_page' => 20,
+				'fields'         => 'ids',
+				's'              => $search,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+			]
+		);
+
+		$result = [];
+		foreach ( $person_ids as $person_id ) {
+			$linked_user_id = (int) get_post_meta( $person_id, \Rondo\Users\UserProvisioning::META_USER_ID, true );
+			if ( $linked_user_id > 0 && get_userdata( $linked_user_id ) ) {
+				continue;
+			}
+			$result[] = [
+				'id'      => (int) $person_id,
+				'name'    => get_the_title( $person_id ),
+				'email'   => (string) ( get_field( 'email_1', $person_id ) ?: get_field( 'email_2', $person_id ) ),
+				'knvb_id' => (string) get_post_meta( $person_id, 'knvb-id', true ),
+			];
+		}
+
+		return rest_ensure_response( $result );
+	}
+
+	/**
+	 * Move an account and its temporary guardian data to another person.
+	 */
+	public function relink_user( $request ) {
+		$result = \Rondo\Users\GuardianAccountService::relink(
+			(int) $request->get_param( 'user_id' ),
+			(int) $request->get_param( 'person_id' )
+		);
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		return rest_ensure_response( $result );
 	}
 
 	/**
@@ -184,16 +296,13 @@ class Users extends Base {
 				'post_status'    => 'publish',
 				'posts_per_page' => -1,
 				's'              => $search,
+				// No knvb-id requirement: the parents who carry the ouderplicht are not
+				// Sportlink members and have none. An email address is the only thing a
+				// provisionable person actually needs.
 				'meta_query'     => [
-					'relation' => 'AND',
 					[
 						'key'     => $meta_key,
 						'compare' => 'NOT EXISTS',
-					],
-					[
-						'key'     => 'knvb-id',
-						'compare' => '!=',
-						'value'   => '',
 					],
 				],
 				'fields'         => 'ids',
@@ -282,6 +391,41 @@ class Users extends Base {
 		);
 
 		return rest_ensure_response( $provisioner->update_settings( $settings ) );
+	}
+
+	/**
+	 * Get onboarding email template settings for a given type.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response
+	 */
+	public function get_onboarding_email_settings( $request ) {
+		$type   = $request->get_param( 'type' );
+		$sender = new \Rondo\Notifications\OnboardingEmailSender();
+		return rest_ensure_response( $sender->get_settings( $type ) );
+	}
+
+	/**
+	 * Update onboarding email template settings for a given type.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response
+	 */
+	public function update_onboarding_email_settings( $request ) {
+		$type   = $request->get_param( 'type' );
+		$sender = new \Rondo\Notifications\OnboardingEmailSender();
+
+		$settings = array_filter(
+			[
+				'subject' => $request->get_param( 'subject' ),
+				'body'    => $request->get_param( 'body' ),
+			],
+			function ( $v ) {
+				return $v !== null;
+			}
+		);
+
+		return rest_ensure_response( $sender->update_settings( $type, $settings ) );
 	}
 
 	/**

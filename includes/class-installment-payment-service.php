@@ -14,8 +14,6 @@
 
 namespace Rondo\Finance;
 
-use Rondo\Config\FinanceConfig;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -50,12 +48,12 @@ class InstallmentPaymentService {
 	 */
 	public static function create_payment( int $invoice_id, int $installment_number ): string|\WP_Error {
 		// Guard: Mollie API key must be configured.
-		$config     = new FinanceConfig();
+		$mollie     = FinanceServices::mollie();
 		$account_id = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
 		if ( $account_id === '' ) {
-			$account_id = $config->get_default_mollie_account_id( 'membership' );
+			$account_id = $mollie->get_default_mollie_account_id( 'membership' );
 		}
-		$api_key = $config->get_mollie_api_key_for_account( $account_id );
+		$api_key = $mollie->get_mollie_api_key_for_account( $account_id );
 		if ( empty( $api_key ) ) {
 			return new \WP_Error( 'mollie_not_configured', 'Voor deze contributiefactuur is geen Mollie API-sleutel geconfigureerd.' );
 		}
@@ -106,7 +104,9 @@ class InstallmentPaymentService {
 		try {
 			$mollie_client = new MollieClient( $api_key );
 			$mollie        = $mollie_client->get();
-			$payment_link  = $mollie->paymentLinks->create( $payload );
+			$payment_link  = MollieClient::with_retry(
+				fn() => $mollie->paymentLinks->create( $payload )
+			);
 		} catch ( \Mollie\Api\Exceptions\ApiException $e ) {
 			error_log( 'Mollie API exception (installment ' . $installment_number . '): ' . $e->getMessage() );
 			return new \WP_Error( 'mollie_api_error', $e->getMessage() );

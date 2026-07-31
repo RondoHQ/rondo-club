@@ -20,6 +20,16 @@ export function formatCurrency(amount, decimals = 2) {
 }
 
 /**
+ * Whether an ACF person payload has the independent sponsor role.
+ *
+ * @param {Object} acf Person ACF values.
+ * @returns {boolean}
+ */
+export function hasSponsorRole(acf = {}) {
+  return acf.is_sponsor === true || acf.is_sponsor === 1 || acf.is_sponsor === '1';
+}
+
+/**
  * Format a decimal rate as a percentage
  *
  * @param {number} rate - Decimal rate (e.g., 0.25 for 25%)
@@ -162,16 +172,23 @@ export function formatDateValue(dateString, yearUnknown = false, formatFn) {
 
 /**
  * Sanitize ACF data for person updates via REST API
- * - Converts empty strings to null for enum fields (gender)
+ * - Converts empty strings to null for enum fields (select fields with restricted choices)
  * - Ensures repeater fields are always arrays
- * 
+ *
+ * Why: ACF generates a JSON Schema with `enum: [<choice>, ...]` for select fields and
+ * does NOT include `""` in that enum, even when `allow_null: 1` is set on the field.
+ * Sending `""` for any of these fields makes WP REST reject the whole request with
+ * `rest_invalid_param`. Coerce to `null` here so the schema accepts it.
+ *
+ * Add a field here whenever you add a new ACF select on the Person CPT.
+ *
  * @param {Object} acfData - The ACF data to sanitize
  * @param {Object} overrides - Fields to override in the sanitized data
  * @returns {Object} Sanitized ACF data ready for API submission
  */
 export function sanitizePersonAcf(acfData, overrides = {}) {
   // Fields that are select/enum and should be null instead of empty string
-  const enumFields = ['gender'];
+  const enumFields = ['gender', 'vergoeding_reden', 'person_type', 'sponsor_pass_variant'];
 
   // Fields that expect number|null — convert empty strings to null, string numbers to numbers
   const numericFields = [
@@ -258,7 +275,15 @@ export function sanitizeCommissieAcf(acfData, overrides = {}) {
   // Fields that are repeaters and should always be arrays
   const repeaterFields = ['contact_info'];
 
-  const sanitized = { ...acfData };
+  // Fields that are select/enum and should be null instead of empty string
+  // (ACF auto-generates a REST enum schema that rejects "" — see CLAUDE.md pitfall)
+  const enumFields = ['uren_periode'];
+
+  // Fields that expect number|null — convert empty strings to null, string numbers to numbers
+  const numericFields = ['uren_aantal', 'max_leden', 'max_wachtlijst'];
+
+  // Merge overrides first so coercion below also applies to edited values
+  const sanitized = { ...acfData, ...overrides };
 
   // Ensure repeater fields are arrays
   repeaterFields.forEach(field => {
@@ -267,10 +292,47 @@ export function sanitizeCommissieAcf(acfData, overrides = {}) {
     }
   });
 
-  // Apply overrides
-  Object.assign(sanitized, overrides);
+  // Convert empty strings to null for enum/select fields
+  enumFields.forEach(field => {
+    if (sanitized[field] === '') {
+      sanitized[field] = null;
+    }
+  });
+
+  // Convert numeric fields to proper type
+  numericFields.forEach(field => {
+    if (sanitized[field] === '' || sanitized[field] === undefined) {
+      sanitized[field] = null;
+    } else if (typeof sanitized[field] === 'string') {
+      sanitized[field] = Number(sanitized[field]);
+    }
+  });
 
   return sanitized;
+}
+
+/**
+ * Parse a date value coming from ACF or the REST API.
+ *
+ * Handles two formats both seen in practice:
+ *  - ISO 8601 / "YYYY-MM-DD" / full datetime — passed straight to `new Date()`
+ *  - "YYYYMMDD" — ACF's internal date_picker storage format, which `new Date()`
+ *    does NOT parse natively (returns Invalid Date). Common on work_history
+ *    entries written by the rondo-sync pipeline.
+ *
+ * @param {string|null|undefined} dateString
+ * @returns {Date|null} Parsed Date, or null if input is missing/invalid
+ */
+export function parseAcfDate(dateString) {
+  if (!dateString || typeof dateString !== 'string') return null;
+  const trimmed = dateString.trim();
+  let date;
+  if (/^\d{8}$/.test(trimmed)) {
+    date = new Date(`${trimmed.slice(0, 4)}-${trimmed.slice(4, 6)}-${trimmed.slice(6, 8)}`);
+  } else {
+    date = new Date(trimmed);
+  }
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 /**
@@ -280,9 +342,7 @@ export function sanitizeCommissieAcf(acfData, overrides = {}) {
  * @returns {boolean} True if valid date
  */
 export function isValidDate(dateString) {
-  if (!dateString) return false;
-  const date = new Date(dateString);
-  return date instanceof Date && !isNaN(date.getTime());
+  return parseAcfDate(dateString) !== null;
 }
 
 /**
@@ -418,4 +478,3 @@ export function isDutchMobilePhone(phone) {
 
   return cleaned.startsWith('+316') || cleaned.startsWith('06');
 }
-

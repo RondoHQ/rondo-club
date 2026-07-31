@@ -319,7 +319,7 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
           type="button"
           onClick={handleSubmit}
           disabled={isSaving || !formData.label}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+          className="btn-primary disabled:opacity-50"
         >
           {isSaving ? (
             <>
@@ -334,7 +334,7 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
           type="button"
           onClick={onCancel}
           disabled={isSaving}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+          className="btn-secondary disabled:opacity-50"
         >
           Annuleren
         </button>
@@ -482,7 +482,7 @@ function FamilyDiscountSection({ discountConfig, onSave, isSaving }) {
           type="button"
           onClick={handleSave}
           disabled={isSaving || !isDirty}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+          className="btn-primary disabled:opacity-50"
         >
           {isSaving ? (
             <>
@@ -497,7 +497,7 @@ function FamilyDiscountSection({ discountConfig, onSave, isSaving }) {
           type="button"
           onClick={handleReset}
           disabled={isSaving}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+          className="btn-secondary disabled:opacity-50"
         >
           Reset naar standaard
         </button>
@@ -637,7 +637,7 @@ function EntryDiscountSection({ discountConfig, onSave, isSaving }) {
           type="button"
           onClick={handleSave}
           disabled={isSaving || !isDirty}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+          className="btn-primary disabled:opacity-50"
         >
           {isSaving ? (
             <>
@@ -652,7 +652,7 @@ function EntryDiscountSection({ discountConfig, onSave, isSaving }) {
           type="button"
           onClick={handleReset}
           disabled={isSaving}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+          className="btn-secondary disabled:opacity-50"
         >
           Herstel standaard
         </button>
@@ -1236,7 +1236,7 @@ export default function FeeCategorySettings({
                 type="button"
                 onClick={() => billingMutation.mutate({ season: activeSeasonKey, installment_admin_fee: installmentAdminFee })}
                 disabled={billingMutation.isPending || !activeSeasonKey}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-electric-cyan hover:bg-electric-cyan/90 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {billingMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                 Opslaan termijnkosten
@@ -1261,7 +1261,7 @@ export default function FeeCategorySettings({
                 type="button"
                 onClick={onSaveMembershipPaymentClause}
                 disabled={savingMembershipPaymentClause || !onSaveMembershipPaymentClause}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-electric-cyan hover:bg-electric-cyan/90 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {savingMembershipPaymentClause && <Loader2 className="w-4 h-4 animate-spin" />}
                 Opslaan clausule

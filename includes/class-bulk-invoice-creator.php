@@ -10,8 +10,7 @@
 
 namespace Rondo\Finance;
 
-use Rondo\Config\FinanceConfig;
-use Rondo\Fees\MembershipFees;
+use Rondo\Fees\FeeServices;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -169,10 +168,9 @@ class BulkInvoiceCreator {
 	 * @return string 'created', 'skipped', or 'error'.
 	 */
 	public function create_membership_invoice( int $person_id, string $season ): string {
-		$fees = new MembershipFees();
 
 		// Get fee for this person.
-		$fee_data = $fees->get_fee_for_person_cached( $person_id, $season );
+		$fee_data = FeeServices::fee_cache()->get_fee_for_person_cached( $person_id, $season );
 
 		if ( $fee_data === null ) {
 			return 'skipped';
@@ -255,7 +253,7 @@ class BulkInvoiceCreator {
 		update_field( 'total_amount', $final_fee, $post_id );
 
 		// Look up category label for line item description.
-		$categories     = $fees->get_categories_for_season( $season );
+		$categories     = FeeServices::settings()->get_categories_for_season( $season );
 		$category_slug  = $fee_data['category'] ?? '';
 		$category_label = $categories[ $category_slug ]['label'] ?? $category_slug;
 
@@ -294,8 +292,7 @@ class BulkInvoiceCreator {
 
 		update_field( 'line_items', $line_items, $post_id );
 
-		$finance_config  = new FinanceConfig();
-		$payment_account = $finance_config->get_payment_account_snapshot_for_invoice_type( 'membership' );
+		$payment_account = FinanceServices::mollie()->get_payment_account_snapshot_for_invoice_type( 'membership' );
 		if ( is_wp_error( $payment_account ) ) {
 			error_log( 'Membership invoice account resolution failed for person ' . $person_id . ': ' . $payment_account->get_error_message() );
 			wp_delete_post( $post_id, true );

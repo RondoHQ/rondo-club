@@ -33,6 +33,7 @@ function transformPerson(person) {
     first_name: person.acf?.first_name || '',
     infix: person.acf?.infix || '',
     last_name: person.acf?.last_name || '',
+    company_name: person.acf?.company_name || '',
     is_deceased: person.is_deceased || false,
     birth_year: person.birth_year || null,
     modified: person.modified || null,
@@ -104,6 +105,9 @@ export function usePeople(params = {}, options = {}) {
  * @param {string} filters.huidigeVrijwilliger - '1' for yes, '0' for no, '' for all
  * @param {string} filters.financieleBlokkade - '1' for yes, '0' for no, '' for all
  * @param {string} filters.typeLid - Filter by member type value
+ * @param {string} filters.personType - Filter by Rondo person type (`member` or `contact`)
+ * @param {string} filters.isSponsor - Filter by independent sponsor role (`1` or `0`)
+ * @param {string} filters.isBusinessclubMember - Filter by active Businessclub membership (`1` or `0`)
  * @param {string} filters.fotoMissing - '1' to show only people without photo date
  * @param {string} filters.vogMissing - '1' to show only people without VOG date
  * @param {number} filters.vogOlderThanYears - Filter for VOG older than N years
@@ -112,12 +116,13 @@ export function usePeople(params = {}, options = {}) {
  * @param {string} filters.vogJustisStatus - 'submitted' or 'not_submitted' to filter by Justis status
  * @param {string} filters.vogReminderStatus - 'sent' or 'not_sent' to filter by reminder status
  * @param {string} filters.lidTotFuture - '1' to show only people with lid-tot date in the future
+ * @param {string} filters.lidTotSeason - '1' to show only people whose lid-tot falls in the current sports season (1 Jul – 30 Jun); auto-includes former members on the server
+ * @param {string} filters.lidSindsSeason - '1' to show only people whose lid-sinds falls in the current sports season (1 Jul – 30 Jun) — i.e. new members this season
  * @param {Object} options - TanStack Query options (staleTime, enabled, etc.)
  * @returns {Object} TanStack Query result with data, isLoading, error, etc.
  */
-export function useFilteredPeople(filters = {}, options = {}) {
-  // Normalize filter keys for backend (snake_case)
-  const params = {
+export function buildFilteredPeopleParams(filters = {}) {
+  return {
     page: filters.page || 1,
     per_page: filters.perPage || 100,
     ownership: filters.ownership || 'all',
@@ -127,10 +132,12 @@ export function useFilteredPeople(filters = {}, options = {}) {
     birth_month: filters.birthMonth || null,
     orderby: filters.orderby || 'first_name',
     order: filters.order || 'asc',
-    // Custom field filters
     huidig_vrijwilliger: filters.huidigeVrijwilliger || null,
     financiele_blokkade: filters.financieleBlokkade || null,
     type_lid: filters.typeLid || null,
+    person_type: filters.personType || null,
+    is_sponsor: filters.isSponsor || null,
+    is_businessclub_member: filters.isBusinessclubMember || null,
     foto_missing: filters.fotoMissing || null,
     vog_missing: filters.vogMissing || null,
     vog_older_than_years: filters.vogOlderThanYears || null,
@@ -142,8 +149,18 @@ export function useFilteredPeople(filters = {}, options = {}) {
     vog_reminder_status: filters.vogReminderStatus || null,
     include_former: filters.includeFormer || null,
     lid_tot_future: filters.lidTotFuture || null,
+    lid_tot_season: filters.lidTotSeason || null,
+    lid_sinds_season: filters.lidSindsSeason || null,
     spelactiviteit_no_team: filters.spelactiviteitNoTeam || null,
+    spelend_lid: filters.spelendLid || null,
+    wacht_op_overschrijving: filters.wachtOverschrijving || null,
+    onboarding_new_members: filters.onboardingNewMembers || null,
+    onboarding_new_volunteers: filters.onboardingNewVolunteers || null,
   };
+}
+
+export function useFilteredPeople(filters = {}, options = {}) {
+  const params = buildFilteredPeopleParams(filters);
 
   return useQuery({
     // Include all filter params in query key for proper cache separation
@@ -160,6 +177,24 @@ export function useFilteredPeople(filters = {}, options = {}) {
     // Allow staleTime, enabled, etc. to be passed
     ...options,
   });
+}
+
+// Fetch every matching person across all pages. Backend caps per_page at 100,
+// so we walk pages sequentially. Page 1 tells us total_pages; the rest fan out.
+export async function fetchAllFilteredPeople(filters = {}) {
+  const firstParams = { ...buildFilteredPeopleParams(filters), page: 1, per_page: 100 };
+  const first = (await prmApi.getFilteredPeople(firstParams)).data;
+  const totalPages = first.total_pages || 1;
+  if (totalPages <= 1) return first.people || [];
+
+  const rest = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, i) => i + 2).map(async (page) => {
+      const response = await prmApi.getFilteredPeople({ ...firstParams, page });
+      return response.data.people || [];
+    })
+  );
+
+  return [...(first.people || []), ...rest.flat()];
 }
 
 /**
@@ -232,13 +267,17 @@ export function useCreatePerson({ onSuccess } = {}) {
 
       // Build the full payload with fixed contact fields
       const payload = {
-        title: formatPersonName(data.first_name, data.infix, data.last_name),
+        title: formatPersonName(data.first_name, data.infix, data.last_name) || data.company_name,
         status: 'publish',
         acf: {
           first_name: data.first_name,
           infix: data.infix || '',
           last_name: data.last_name,
           nickname: data.nickname,
+          company_name: data.company_name || '',
+          person_type: data.person_type || 'contact',
+          is_sponsor: Boolean(data.is_sponsor),
+          ...(data.is_sponsor ? { sponsor_pass_variant: data.sponsor_pass_variant } : {}),
           gender: data.gender || null,
           pronouns: data.pronouns || null,
           email_1: data.email || '',
@@ -253,7 +292,7 @@ export function useCreatePerson({ onSuccess } = {}) {
       return response.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: peopleKeys.all });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
       queryClient.invalidateQueries({ queryKey: ['person-meetings'] });
@@ -270,7 +309,7 @@ export function useUpdatePerson() {
     mutationFn: ({ id, data }) => wpApi.updatePerson(id, data),
     onSuccess: (_, { id, data }) => {
       queryClient.invalidateQueries({ queryKey: peopleKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: peopleKeys.all });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
 
       // If relationships were updated, invalidate cache for related people
@@ -365,6 +404,24 @@ export function useBulkUpdatePeople() {
       // Refetch people list to show updated data immediately
       await queryClient.refetchQueries({ queryKey: peopleKeys.lists() });
       // Invalidate details for individual person views
+      queryClient.invalidateQueries({ queryKey: peopleKeys.details() });
+    },
+  });
+}
+
+/**
+ * Send onboarding email(s) to one or more people. Server stamps a per-type
+ * timestamp on each successful send so they drop out of the onboarding list.
+ *
+ * @returns mutation that accepts { personIds: number[], type: 'lid' | 'vrijwilliger' }
+ */
+export function useSendOnboardingEmail() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ personIds, type }) => prmApi.sendOnboardingEmail(personIds, type),
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: peopleKeys.lists() });
       queryClient.invalidateQueries({ queryKey: peopleKeys.details() });
     },
   });

@@ -8,7 +8,9 @@
 
 namespace Rondo\Passes;
 
+use Rondo\Core\SponsorStatus;
 use Rondo\Config\FinanceConfig;
+use Rondo\Fees\SeasonKey;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -34,7 +36,9 @@ class PublicMembershipPassPage {
 	/**
 	 * Token length in bytes (hex-encoded => 64 chars).
 	 */
-	const TOKEN_LENGTH = 32;
+	const TOKEN_LENGTH                      = 32;
+	const SPONSOR_PASS_VARIANT_BUSINESSCLUB = 'businessclub';
+	const SPONSOR_PASS_VARIANT_AWC_SPONSOR  = 'awc_sponsor';
 
 	/**
 	 * Constructor.
@@ -211,11 +215,16 @@ class PublicMembershipPassPage {
 	 *
 	 * - `bondslid`: Type lid is Bondslid.
 	 * - `verenigingslid`: Type lid is Verenigingslid.
+	 * - `sponsor`: Rondo person type is Sponsor.
 	 *
 	 * @param int $person_id Person post ID.
 	 * @return string
 	 */
 	public static function get_person_member_tier( int $person_id ): string {
+		if ( SponsorStatus::is_sponsor( $person_id ) ) {
+			return self::get_sponsor_pass_variant( $person_id ) !== '' ? 'sponsor' : '';
+		}
+
 		$type_lid = strtolower( trim( (string) get_field( 'type-lid', $person_id ) ) );
 
 		if ( $type_lid === 'bondslid' ) {
@@ -227,6 +236,22 @@ class PublicMembershipPassPage {
 		}
 
 		return '';
+	}
+
+	/**
+	 * Resolve the required wallet pass variant for a Sponsor.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return string Valid variant or an empty string when none is selected.
+	 */
+	public static function get_sponsor_pass_variant( int $person_id ): string {
+		$variant = sanitize_key( (string) ( get_field( 'sponsor_pass_variant', $person_id ) ?: get_post_meta( $person_id, 'sponsor_pass_variant', true ) ) );
+		$allowed = [
+			self::SPONSOR_PASS_VARIANT_BUSINESSCLUB,
+			self::SPONSOR_PASS_VARIANT_AWC_SPONSOR,
+		];
+
+		return in_array( $variant, $allowed, true ) ? $variant : '';
 	}
 
 	/**
@@ -306,12 +331,15 @@ class PublicMembershipPassPage {
 		$infix        = (string) ( get_field( 'infix', $person_id ) ?: '' );
 		$last_name    = (string) ( get_field( 'last_name', $person_id ) ?: '' );
 		$name         = trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
+		$name         = $name !== '' ? $name : (string) get_field( 'company_name', $person_id );
 		$knvb_id      = (string) get_field( 'knvb-id', $person_id );
 		$member_tier  = self::get_person_member_tier( $person_id );
-		$member_label = $member_tier === 'verenigingslid' ? 'Verenigingslid' : 'Bondslid';
+		$member_label = $member_tier === 'sponsor'
+			? 'Sponsor'
+			: ( $member_tier === 'verenigingslid' ? 'Verenigingslid' : 'Bondslid' );
+		$pass_label   = $member_tier === 'sponsor' ? 'toegangspas' : 'ledenpas';
 
-		$fees   = new \Rondo\Fees\MembershipFees();
-		$season = $fees->get_season_key();
+		$season = SeasonKey::current();
 
 		$apple_service  = new MembershipPassApple();
 		$google_service = new MembershipPassGoogle();
@@ -340,7 +368,7 @@ class PublicMembershipPassPage {
 		header( 'Content-Type: text/html; charset=UTF-8' );
 
 		$this->render_html_header(
-			'Ledenpas — ' . esc_html( $branding['name'] ),
+			ucfirst( $pass_label ) . ' — ' . esc_html( $branding['name'] ),
 			$branding['accent_color'],
 			$branding['accent_background_color'],
 			$branding['logo_url']
@@ -351,7 +379,7 @@ class PublicMembershipPassPage {
 		<?php if ( $branding['logo_url'] ) : ?>
 			<img src="<?php echo esc_url( $branding['logo_url'] ); ?>" alt="<?php echo esc_attr( $branding['name'] ); ?>" class="club-logo" />
 		<?php endif; ?>
-		<h1>Digitale ledenpas</h1>
+		<h1>Digitale <?php echo esc_html( $pass_label ); ?></h1>
 		<p class="header-intro">Gebruik deze pas voor gratis toegang tot de meeste thuiswedstrijden van AWC 1.</p>
 	</div>
 
@@ -367,7 +395,7 @@ class PublicMembershipPassPage {
 	</div>
 
 	<div class="card">
-		<h2 class="wallet-section-title">Voeg de ledenpas toe aan je wallet!</h2>
+		<h2 class="wallet-section-title">Voeg de <?php echo esc_html( $pass_label ); ?> toe aan je wallet!</h2>
 		<?php if ( count( $work_options ) > 1 ) : ?>
 			<form method="get" class="role-selector-form">
 				<span class="role-selector-label">Welke rol bij AWC wil je graag op je ledenpas hebben staan?</span>

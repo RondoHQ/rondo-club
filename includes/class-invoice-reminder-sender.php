@@ -66,15 +66,24 @@ class InvoiceReminderSender {
 	 * @return true|\WP_Error True on success, WP_Error on failure.
 	 */
 	public static function send_reminder_1( int $invoice_id ): true|\WP_Error {
-		$config   = new FinanceConfig();
-		$template = $config->get_invoice_reminder_1_email_template();
+		$config = new FinanceConfig();
+
+		// Membership invoices use the contributie-specific reminder; all other
+		// invoice types (manual, discipline) use the neutral generic reminder.
+		if ( self::is_membership_invoice( $invoice_id ) ) {
+			$template     = $config->get_invoice_reminder_1_email_template();
+			$heading_type = 'invoice_reminder_1';
+		} else {
+			$template     = $config->get_generic_invoice_reminder_1_email_template();
+			$heading_type = 'generic_invoice_reminder_1';
+		}
 
 		// Write timestamp BEFORE wp_mail to prevent duplicate sends.
 		update_post_meta( $invoice_id, '_invoice_reminder_1_sent_at', current_time( 'mysql' ) );
 
 		$subject_prefix = 'Herinnering';
 
-		return self::resolve_and_send( $invoice_id, $template, $subject_prefix, false, 'invoice_reminder_1' );
+		return self::resolve_and_send( $invoice_id, $template, $subject_prefix, false, $heading_type );
 	}
 
 	/**
@@ -90,15 +99,38 @@ class InvoiceReminderSender {
 	 * @return true|\WP_Error True on success, WP_Error on failure.
 	 */
 	public static function send_reminder_2( int $invoice_id ): true|\WP_Error {
-		$config   = new FinanceConfig();
-		$template = $config->get_invoice_reminder_2_email_template();
+		$config = new FinanceConfig();
+
+		// Membership invoices use the contributie-specific reminder; all other
+		// invoice types (manual, discipline) use the neutral generic reminder.
+		if ( self::is_membership_invoice( $invoice_id ) ) {
+			$template     = $config->get_invoice_reminder_2_email_template();
+			$heading_type = 'invoice_reminder_2';
+		} else {
+			$template     = $config->get_generic_invoice_reminder_2_email_template();
+			$heading_type = 'generic_invoice_reminder_2';
+		}
 
 		// Write timestamp BEFORE wp_mail to prevent duplicate sends.
 		update_post_meta( $invoice_id, '_invoice_reminder_2_sent_at', current_time( 'mysql' ) );
 
 		$subject_prefix = 'Tweede herinnering';
 
-		return self::resolve_and_send( $invoice_id, $template, $subject_prefix, true, 'invoice_reminder_2' );
+		return self::resolve_and_send( $invoice_id, $template, $subject_prefix, true, $heading_type );
+	}
+
+	/**
+	 * Determine whether an invoice is a membership (contributie) invoice.
+	 *
+	 * Membership invoices carry the contributie-specific reminder wording
+	 * (plan selection, installments). Every other invoice_type — manual and
+	 * discipline — should receive the neutral generic reminder instead.
+	 *
+	 * @param int $invoice_id Invoice post ID.
+	 * @return bool True when the invoice_type field equals 'membership'.
+	 */
+	private static function is_membership_invoice( int $invoice_id ): bool {
+		return (string) get_field( 'invoice_type', $invoice_id ) === 'membership';
 	}
 
 	/**
@@ -120,31 +152,33 @@ class InvoiceReminderSender {
 		bool $add_bcc,
 		string $heading_type = 'invoice_reminder_1'
 	): true|\WP_Error {
-		// Resolve person from invoice.
+		// Resolve person from invoice, or fall back to customer fields for manual invoices.
 		$person_id = get_field( 'person', $invoice_id );
 		$person    = $person_id ? get_post( $person_id ) : null;
 
-		if ( ! $person || $person->post_type !== 'person' ) {
-			return new \WP_Error(
-				'invalid_person',
-				'Persoon niet gevonden voor factuur ' . $invoice_id . '.'
-			);
+		if ( $person && $person->post_type === 'person' ) {
+			// Build person name.
+			$first_name  = (string) ( get_field( 'first_name', $person_id ) ?: get_field( 'company_name', $person_id ) );
+			$person_name = (string) ( get_field( 'company_name', $person_id ) ?: $person->post_title );
+
+			// Resolve all invoice recipients (person emails + parents if minor).
+			$recipient_emails = InvoiceEmailSender::resolve_invoice_recipient_emails( (int) $person_id );
+		} else {
+			// Manual invoice without a linked person — use customer fields.
+			$customer_attention = (string) get_post_meta( $invoice_id, '_customer_attention', true );
+			$customer_name      = (string) get_post_meta( $invoice_id, '_customer_name', true );
+			$first_name         = $customer_attention ?: $customer_name;
+			$person_name        = $customer_attention ?: $customer_name;
+
+			$customer_email    = (string) get_post_meta( $invoice_id, '_customer_email', true );
+			$customer_cc_email = (string) get_post_meta( $invoice_id, '_customer_cc_email', true );
+			$recipient_emails  = array_filter( [ $customer_email, $customer_cc_email ] );
 		}
-
-		// Build person name.
-		$first_name  = (string) get_field( 'first_name', $person_id );
-		$infix       = (string) get_field( 'infix', $person_id );
-		$last_name   = (string) get_field( 'last_name', $person_id );
-		$name_parts  = array_filter( [ $first_name, $infix, $last_name ] );
-		$person_name = implode( ' ', $name_parts );
-
-		// Resolve all invoice recipients (person emails + parents if minor).
-		$recipient_emails = InvoiceEmailSender::resolve_invoice_recipient_emails( (int) $person_id );
 
 		if ( empty( $recipient_emails ) ) {
 			return new \WP_Error(
 				'no_email',
-				'Geen e-mailadres gevonden voor persoon ' . $person_id . '.'
+				'Geen e-mailadres gevonden voor factuur ' . $invoice_id . '.'
 			);
 		}
 

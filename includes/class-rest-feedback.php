@@ -8,6 +8,9 @@
 
 namespace Rondo\REST;
 
+use Rondo\Feedback\NewFeedbackEmailSender;
+use Rondo\Feedback\StatusService;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -435,6 +438,10 @@ class Feedback extends Base {
 			}
 		}
 
+		// Notify the site administrator after all feedback fields are available.
+		// Delivery failure must not prevent the feedback item from being created.
+		( new NewFeedbackEmailSender() )->send( (int) $post_id );
+
 		// Return formatted feedback
 		$post = get_post( $post_id );
 		return rest_ensure_response( $this->format_feedback( $post ) );
@@ -479,8 +486,7 @@ class Feedback extends Base {
 			);
 		}
 
-		$is_admin       = current_user_can( 'manage_options' );
-		$current_status = get_field( 'status', $feedback_id ) ?: 'new';
+		$is_admin = current_user_can( 'manage_options' );
 
 		// Check field-level permissions for status and priority
 		$new_status = $request->get_param( 'status' );
@@ -501,6 +507,24 @@ class Feedback extends Base {
 			);
 		}
 
+		$resolution_summary = $request->get_param( 'resolution_summary' );
+		if ( $resolution_summary !== null && ! $is_admin ) {
+			return new \WP_Error(
+				'rest_forbidden',
+				__( 'Only administrators can add a feedback resolution summary.', 'rondo' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		$decline_reason = $request->get_param( 'decline_reason' );
+		if ( $decline_reason !== null && ! $is_admin ) {
+			return new \WP_Error(
+				'rest_forbidden',
+				__( 'Only administrators can add a feedback decline reason.', 'rondo' ),
+				[ 'status' => 403 ]
+			);
+		}
+
 		// Validate field values
 		$feedback_type = $request->get_param( 'feedback_type' );
 		if ( $feedback_type !== null && ! in_array( $feedback_type, [ 'bug', 'feature_request' ], true ) ) {
@@ -514,7 +538,7 @@ class Feedback extends Base {
 			);
 		}
 
-		if ( $new_status !== null && ! in_array( $new_status, [ 'new', 'approved', 'in_progress', 'in_review', 'resolved', 'declined', 'needs_info' ], true ) ) {
+		if ( $new_status !== null && ! in_array( $new_status, StatusService::ALLOWED_STATUSES, true ) ) {
 			return new \WP_Error(
 				'rest_invalid_param',
 				__( 'Invalid status.', 'rondo' ),
@@ -558,12 +582,18 @@ class Feedback extends Base {
 			update_field( 'feedback_type', $feedback_type, $feedback_id );
 		}
 
-		if ( $new_status !== null ) {
-			update_field( 'status', $new_status, $feedback_id );
-			if ( $new_status === 'resolved' && $current_status !== 'resolved' ) {
-				update_post_meta( $feedback_id, '_feedback_resolved_at', current_time( 'mysql', true ) );
-			} elseif ( $new_status !== 'resolved' && $current_status === 'resolved' ) {
-				delete_post_meta( $feedback_id, '_feedback_resolved_at' );
+		if ( $new_status !== null || $resolution_summary !== null || $decline_reason !== null ) {
+			$status_for_update = $new_status !== null
+				? $new_status
+				: (string) ( get_field( 'status', $feedback_id ) ?: 'new' );
+			$status_update     = ( new StatusService() )->update(
+				$feedback_id,
+				$status_for_update,
+				$resolution_summary !== null ? (string) $resolution_summary : '',
+				$decline_reason !== null ? (string) $decline_reason : ''
+			);
+			if ( is_wp_error( $status_update ) ) {
+				return $status_update;
 			}
 		}
 
@@ -643,8 +673,13 @@ class Feedback extends Base {
 		}
 
 		// Return formatted updated feedback
-		$feedback = get_post( $feedback_id );
-		return rest_ensure_response( $this->format_feedback( $feedback ) );
+		$feedback  = get_post( $feedback_id );
+		$formatted = $this->format_feedback( $feedback );
+		if ( isset( $status_update['resolution_email'] ) ) {
+			$formatted['resolution_email'] = $status_update['resolution_email'];
+		}
+
+		return rest_ensure_response( $formatted );
 	}
 
 	/**
@@ -828,6 +863,9 @@ class Feedback extends Base {
 				'use_case'           => $this->sanitize_text( get_field( 'use_case', $post->ID ) ?: '' ),
 				'project'            => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_project', true ) ?: 'rondo-club' ),
 				'resolved_at'        => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_resolved_at', true ) ?: '' ),
+				'resolution_summary' => $this->sanitize_text( get_post_meta( $post->ID, StatusService::META_RESOLUTION_SUMMARY, true ) ?: '' ),
+				'declined_at'        => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_declined_at', true ) ?: '' ),
+				'decline_reason'     => $this->sanitize_text( get_post_meta( $post->ID, StatusService::META_DECLINE_REASON, true ) ?: '' ),
 				'pr_url'             => $this->sanitize_url( get_post_meta( $post->ID, '_feedback_pr_url', true ) ?: '' ),
 				'agent_branch'       => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_agent_branch', true ) ?: '' ),
 				'agent_plan'         => get_post_meta( $post->ID, '_feedback_agent_plan', true ) ?: '',

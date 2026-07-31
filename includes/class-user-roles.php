@@ -14,13 +14,36 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class UserRoles {
 
-	const ROLE_NAME             = 'rondo_user';
-	const ROLE_DISPLAY_NAME     = 'Rondo User';
-	const FAIRPLAY_CAPABILITY   = 'fairplay';
-	const VOG_CAPABILITY        = 'vog';
-	const FINANCIEEL_CAPABILITY = 'financieel';
-	const TOEGANG_CAPABILITY    = 'toegangscontrole';
-	const CLOTHING_CAPABILITY   = 'manage_clothing';
+	const ROLE_NAME                     = 'rondo_user';
+	const ROLE_DISPLAY_NAME             = 'Rondo User';
+	const FAIRPLAY_CAPABILITY           = 'fairplay';
+	const VOG_CAPABILITY                = 'vog';
+	const FINANCIEEL_CAPABILITY         = 'financieel';
+	const FINANCIEEL_READ_CAPABILITY    = 'financieel_read';
+	const TOEGANG_CAPABILITY            = 'toegangscontrole';
+	const CLOTHING_CAPABILITY           = 'manage_clothing';
+	const LEDENADMINISTRATIE_CAPABILITY = 'ledenadministratie';
+	const SPONSORBEHEER_CAPABILITY      = 'sponsorbeheer';
+	const VRIJWILLIGERS_CAPABILITY      = 'vrijwilligers';
+	const IVA_APPROVE_CAPABILITY        = 'rondo_iva_approve';
+
+	/**
+	 * Option key holding the schema version of the registered roles.
+	 * Bump ROLES_VERSION whenever BASE_ROLES gains a capability that existing
+	 * installs must also receive; add_role() does not touch existing roles.
+	 */
+	const ROLES_VERSION_OPTION = 'rondo_roles_version';
+	const ROLES_VERSION        = 5;
+
+	/** Generic WordPress write capabilities removed from non-admin Rondo roles. */
+	private const LEGACY_GENERIC_WRITE_CAPS = [
+		'edit_posts',
+		'publish_posts',
+		'delete_posts',
+		'edit_published_posts',
+		'delete_published_posts',
+		'upload_files',
+	];
 
 	/**
 	 * WordPress option key for admin-created custom roles.
@@ -34,14 +57,58 @@ class UserRoles {
 	 * Custom roles are stored separately in the rondo_custom_roles wp_option.
 	 */
 	const BASE_ROLES = [
-		'rondo_user'             => [ 'Rondo User', [] ],
-		'rondo_fairplay'         => [ 'Rondo FairPlay', [ 'fairplay' ] ],
-		'rondo_vog'              => [ 'Rondo VOG', [ 'vog' ] ],
-		'rondo_financieel'       => [ 'Rondo Financieel', [ 'financieel' ] ],
-		'rondo_toegangscontrole' => [ 'Rondo Toegangscontrole', [ 'toegangscontrole' ] ],
-		'rondo_clothing_manager' => [ 'Rondo Kledingbeheer', [ 'manage_clothing' ] ],
-		'rondo_bestuur'          => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing' ] ],
+		'rondo_user'               => [ 'Rondo User', [] ],
+		'rondo_fairplay'           => [ 'Rondo FairPlay', [ 'fairplay' ] ],
+		'rondo_vog'                => [ 'Rondo VOG', [ 'vog' ] ],
+		'rondo_financieel'         => [ 'Rondo Financieel', [ 'financieel', 'financieel_read' ] ],
+		'rondo_financieel_lezen'   => [ 'Rondo Financieel Lezen', [ 'financieel_read' ] ],
+		'rondo_toegangscontrole'   => [ 'Rondo Toegangscontrole', [ 'toegangscontrole' ] ],
+		'rondo_clothing_manager'   => [ 'Rondo Kledingbeheer', [ 'manage_clothing' ] ],
+		'rondo_ledenadministratie' => [ 'Rondo Ledenadministratie', [ 'ledenadministratie' ] ],
+		'rondo_sponsorbeheerder'   => [ 'Rondo Sponsorbeheerder', [ 'sponsorbeheer' ] ],
+		'rondo_vrijwilligers'      => [ 'Rondo Vrijwilligers', [ 'vrijwilligers' ] ],
+		'rondo_iva_approver'       => [ 'Rondo IVA Goedkeurder (Bestuurslid Kantine)', [ 'rondo_iva_approve', 'vrijwilligers' ] ],
+		'rondo_pool_schoonmaak'    => [ 'Rondo Schoonmaakpoule', [] ],
+		'rondo_pool_activiteiten'  => [ 'Rondo Activiteitenpoule', [] ],
+		'rondo_pool_werkploeg'     => [ 'Rondo Werkploeg terreinonderhoud', [] ],
+		'rondo_bestuur'            => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'vrijwilligers', 'rondo_iva_approve' ] ],
 	];
+
+	/**
+	 * May the user see finance data (facturen, contributie, betaalstatus)?
+	 *
+	 * `financieel` implies read: a custom role may carry the write capability
+	 * alone, and a treasurer who cannot read their own invoices is nonsense.
+	 *
+	 * @param int|null $user_id User ID, defaults to the current user.
+	 * @return bool True if the user may view finance data.
+	 */
+	public static function can_view_finances( $user_id = null ) {
+		$user_id = $user_id ?? get_current_user_id();
+
+		if ( ! $user_id ) {
+			return false;
+		}
+
+		return user_can( $user_id, self::FINANCIEEL_READ_CAPABILITY )
+			|| user_can( $user_id, self::FINANCIEEL_CAPABILITY );
+	}
+
+	/**
+	 * May the user change finance data — create, send, delete, mark paid?
+	 *
+	 * @param int|null $user_id User ID, defaults to the current user.
+	 * @return bool True if the user may write finance data.
+	 */
+	public static function can_manage_finances( $user_id = null ) {
+		$user_id = $user_id ?? get_current_user_id();
+
+		if ( ! $user_id ) {
+			return false;
+		}
+
+		return user_can( $user_id, self::FINANCIEEL_CAPABILITY );
+	}
 
 	public function __construct() {
 		// Register role on theme activation
@@ -52,6 +119,9 @@ class UserRoles {
 
 		// Ensure role exists on init (in case theme was already active)
 		add_action( 'init', [ $this, 'ensure_role_exists' ], 20 );
+
+		// Backfill capabilities added to BASE_ROLES after this install was created.
+		add_action( 'init', [ $this, 'maybe_upgrade_roles' ], 21 );
 
 		// Delete user's posts when user is deleted
 		add_action( 'delete_user', [ $this, 'delete_user_posts' ], 10, 1 );
@@ -117,16 +187,8 @@ class UserRoles {
 			);
 		}
 
-		// Base capabilities — same as rondo_user.
-		$capabilities = [
-			'read'                   => true,
-			'edit_posts'             => true,
-			'publish_posts'          => true,
-			'delete_posts'           => true,
-			'edit_published_posts'   => true,
-			'delete_published_posts' => true,
-			'upload_files'           => true,
-		];
+		// New roles start at the least-privilege member baseline.
+		$capabilities = self::base_capabilities();
 
 		$result = add_role( $slug, $label, $capabilities );
 
@@ -137,6 +199,8 @@ class UserRoles {
 				[ 'status' => 500 ]
 			);
 		}
+
+		self::sync_role_capabilities( $slug );
 
 		// Persist in custom roles option.
 		$custom          = self::get_custom_roles();
@@ -204,6 +268,49 @@ class UserRoles {
 	}
 
 	/**
+	 * Backfill capabilities that BASE_ROLES gained after this install was created.
+	 *
+	 * `add_role()` is a no-op for a role that already exists, so widening BASE_ROLES
+	 * never reaches installs that registered the role earlier. Roles are also live,
+	 * admin-edited state (see the capability matrix in Settings → Admin), which rules
+	 * out simply re-adding them.
+	 *
+	 * Version 2: every role holding `financieel` also gets `financieel_read`.
+	 * Version 3: generic post/media access is replaced by dedicated CPT caps.
+	 * Version 4: the Sponsorbeheerder role and `sponsorbeheer` capability are added.
+	 * Version 5: `vrijwilligers` roles gain person edit primitives for contact fields.
+	 */
+	public function maybe_upgrade_roles() {
+		$installed_version = (int) get_option( self::ROLES_VERSION_OPTION, 0 );
+		if ( $installed_version >= self::ROLES_VERSION ) {
+			return;
+		}
+
+		$slugs = array_merge( self::get_role_slugs(), [ 'administrator' ] );
+
+		foreach ( $slugs as $slug ) {
+			$role = get_role( $slug );
+			if ( ! $role ) {
+				continue;
+			}
+
+			if ( ! empty( $role->capabilities[ self::FINANCIEEL_CAPABILITY ] )
+				&& empty( $role->capabilities[ self::FINANCIEEL_READ_CAPABILITY ] ) ) {
+				$role->add_cap( self::FINANCIEEL_READ_CAPABILITY );
+			}
+
+			if ( $installed_version < 4
+				&& in_array( $slug, [ 'rondo_sponsorbeheerder', 'rondo_bestuur', 'administrator' ], true ) ) {
+				$role->add_cap( self::SPONSORBEHEER_CAPABILITY );
+			}
+
+			self::sync_role_capabilities( $slug );
+		}
+
+		update_option( self::ROLES_VERSION_OPTION, self::ROLES_VERSION );
+	}
+
+	/**
 	 * Register all Rondo roles (base + custom)
 	 */
 	public function register_role() {
@@ -215,6 +322,7 @@ class UserRoles {
 				$capabilities[ $cap ] = true;
 			}
 			add_role( $slug, $display_name, $capabilities );
+			self::sync_role_capabilities( $slug );
 		}
 
 		// Add app-specific capabilities to administrator role
@@ -223,9 +331,182 @@ class UserRoles {
 			$admin_role->add_cap( self::FAIRPLAY_CAPABILITY );
 			$admin_role->add_cap( self::VOG_CAPABILITY );
 			$admin_role->add_cap( self::FINANCIEEL_CAPABILITY );
+			$admin_role->add_cap( self::FINANCIEEL_READ_CAPABILITY );
 			$admin_role->add_cap( self::TOEGANG_CAPABILITY );
 			$admin_role->add_cap( self::CLOTHING_CAPABILITY );
+			$admin_role->add_cap( self::LEDENADMINISTRATIE_CAPABILITY );
+			$admin_role->add_cap( self::SPONSORBEHEER_CAPABILITY );
+			$admin_role->add_cap( self::VRIJWILLIGERS_CAPABILITY );
+			$admin_role->add_cap( self::IVA_APPROVE_CAPABILITY );
+			self::sync_role_capabilities( 'administrator' );
 		}
+	}
+
+	/**
+	 * Synchronize the dedicated CPT capabilities derived from business caps.
+	 *
+	 * @param string $slug WordPress role slug.
+	 */
+	public static function sync_role_capabilities( string $slug ): void {
+		$role = get_role( $slug );
+		if ( ! $role ) {
+			return;
+		}
+
+		$is_admin = $slug === 'administrator';
+
+		if ( ! $is_admin ) {
+			foreach ( self::LEGACY_GENERIC_WRITE_CAPS as $cap ) {
+				$role->remove_cap( $cap );
+			}
+		}
+
+		// Always rebuild derived primitives so capability-matrix removals propagate.
+		foreach ( array_keys( PostTypes::CAPABILITY_DOMAINS ) as $post_type ) {
+			foreach ( array_values( PostTypes::capability_map( $post_type ) ) as $cap ) {
+				$role->remove_cap( $cap );
+			}
+		}
+
+		$desired = [ 'read' ];
+
+		if ( $is_admin ) {
+			foreach ( array_keys( PostTypes::CAPABILITY_DOMAINS ) as $post_type ) {
+				$desired = array_merge( $desired, self::cpt_capabilities( $post_type, 'manage' ) );
+			}
+			$desired[] = 'upload_files';
+		} else {
+			// Core member surfaces: household people plus read-only club structure.
+			foreach ( [ 'person', 'team', 'commissie' ] as $post_type ) {
+				$desired = array_merge( $desired, self::cpt_capabilities( $post_type, 'read' ) );
+			}
+
+			if ( $role->has_cap( self::FAIRPLAY_CAPABILITY ) ) {
+				$desired = array_merge(
+					$desired,
+					self::cpt_capabilities( 'person', 'manage' ),
+					self::cpt_capabilities( 'discipline_case', 'read' )
+				);
+			}
+
+			if ( $role->has_cap( self::VOG_CAPABILITY ) ) {
+				$desired = array_merge( $desired, self::cpt_capabilities( 'person', 'manage' ) );
+			}
+
+			if ( $role->has_cap( self::LEDENADMINISTRATIE_CAPABILITY ) ) {
+				$desired = array_merge( $desired, self::cpt_capabilities( 'person', 'manage' ) );
+			}
+
+			if ( $role->has_cap( self::SPONSORBEHEER_CAPABILITY ) ) {
+				$desired = array_merge( $desired, self::cpt_capabilities( 'person', 'manage' ) );
+			}
+
+			if ( $role->has_cap( self::FINANCIEEL_CAPABILITY ) ) {
+				$desired = array_merge(
+					$desired,
+					self::cpt_capabilities( 'person', 'manage' ),
+					self::cpt_capabilities( 'rondo_invoice', 'manage' ),
+					self::cpt_capabilities( 'discipline_case', 'read' )
+				);
+			} elseif ( $role->has_cap( self::FINANCIEEL_READ_CAPABILITY ) ) {
+				$desired = array_merge(
+					$desired,
+					self::cpt_capabilities( 'rondo_invoice', 'read' ),
+					self::cpt_capabilities( 'discipline_case', 'read' )
+				);
+			}
+
+			if ( $role->has_cap( self::CLOTHING_CAPABILITY ) ) {
+				$desired = array_merge(
+					$desired,
+					self::cpt_capabilities( 'rondo_clothing_item', 'manage' ),
+					self::cpt_capabilities( 'rondo_clothing_txn', 'manage' )
+				);
+			}
+
+			if ( $role->has_cap( self::VRIJWILLIGERS_CAPABILITY ) ) {
+				foreach ( [ 'dienst_type', 'shift_template', 'dienst_shift', 'taakuitleg' ] as $post_type ) {
+					$desired = array_merge( $desired, self::cpt_capabilities( $post_type, 'manage' ) );
+				}
+
+				// Coordinators run into wrong phone numbers and e-mail addresses
+				// constantly. `edit` — not `manage` — so they can correct a record
+				// but never create or delete one. Which *fields* they may write is
+				// narrowed separately by AccessControl::CONTACT_WRITE_FIELDS.
+				$desired = array_merge( $desired, self::cpt_capabilities( 'person', 'edit' ) );
+			}
+
+			if (
+				$role->has_cap( self::FAIRPLAY_CAPABILITY )
+				|| $role->has_cap( self::VOG_CAPABILITY )
+				|| $role->has_cap( self::FINANCIEEL_CAPABILITY )
+				|| $role->has_cap( self::CLOTHING_CAPABILITY )
+				|| $role->has_cap( self::LEDENADMINISTRATIE_CAPABILITY )
+				|| $role->has_cap( self::SPONSORBEHEER_CAPABILITY )
+				|| $role->has_cap( self::VRIJWILLIGERS_CAPABILITY )
+			) {
+				$desired[] = 'upload_files';
+			}
+		}
+
+		foreach ( array_unique( $desired ) as $cap ) {
+			$role->add_cap( $cap );
+		}
+	}
+
+	/**
+	 * Primitive capabilities for a CPT access level.
+	 *
+	 * @param string $post_type Registered post type.
+	 * @param string $level     `read` or `manage`.
+	 * @return string[]
+	 */
+	private static function cpt_capabilities( string $post_type, string $level ): array {
+		$map = PostTypes::capability_map( $post_type );
+		if ( empty( $map ) ) {
+			return [];
+		}
+
+		$read = array_values(
+			array_filter(
+				[
+					$map['read'] ?? null,
+					$map['read_post'] ?? null,
+					$map['read_private_posts'] ?? null,
+				]
+			)
+		);
+
+		if ( $level === 'read' ) {
+			return $read;
+		}
+
+		// `edit` sits between read and manage: change existing records, but never
+		// create or delete them. Volunteer coordinators correct contact details on
+		// members whose records belong to Sportlink — creating or deleting a person
+		// is a different decision with a different owner.
+		if ( $level === 'edit' ) {
+			return array_values(
+				array_unique(
+					array_merge(
+						$read,
+						array_values(
+							array_filter(
+								[
+									$map['edit_post'] ?? null,
+									$map['edit_posts'] ?? null,
+									$map['edit_others_posts'] ?? null,
+									$map['edit_published_posts'] ?? null,
+									$map['edit_private_posts'] ?? null,
+								]
+							)
+						)
+					)
+				)
+			);
+		}
+
+		return array_values( array_unique( $map ) );
 	}
 
 	/**
@@ -238,8 +519,13 @@ class UserRoles {
 			$admin_role->remove_cap( self::FAIRPLAY_CAPABILITY );
 			$admin_role->remove_cap( self::VOG_CAPABILITY );
 			$admin_role->remove_cap( self::FINANCIEEL_CAPABILITY );
+			$admin_role->remove_cap( self::FINANCIEEL_READ_CAPABILITY );
 			$admin_role->remove_cap( self::TOEGANG_CAPABILITY );
 			$admin_role->remove_cap( self::CLOTHING_CAPABILITY );
+			$admin_role->remove_cap( self::LEDENADMINISTRATIE_CAPABILITY );
+			$admin_role->remove_cap( self::SPONSORBEHEER_CAPABILITY );
+			$admin_role->remove_cap( self::VRIJWILLIGERS_CAPABILITY );
+			$admin_role->remove_cap( self::IVA_APPROVE_CAPABILITY );
 		}
 
 		foreach ( self::get_all_roles() as $slug => $_ ) {
@@ -255,33 +541,17 @@ class UserRoles {
 	/**
 	 * Get capabilities for Rondo User role
 	 *
-	 * Minimal permissions needed to:
-	 * - Create, edit, and delete their own people and teams
-	 * - Upload files (for photos and logos)
-	 * - Read content (required for WordPress)
+	 * Plain members receive only WordPress login/read access here. Dedicated
+	 * read capabilities for their household and club structure are derived by
+	 * sync_role_capabilities().
 	 */
 	private function get_role_capabilities() {
-		return [
-			// Basic WordPress capabilities
-			'read'                   => true,
+		return self::base_capabilities();
+	}
 
-			// Post capabilities (used by person, team, and other post types)
-			'edit_posts'             => true,                    // Can create and edit their own posts
-			'publish_posts'          => true,                 // Can publish their own posts
-			'delete_posts'           => true,                  // Can delete their own posts
-			'edit_published_posts'   => true,          // Can edit their own published posts
-			'delete_published_posts' => true,        // Can delete their own published posts
-
-			// Media capabilities
-			'upload_files'           => true,                  // Can upload files (photos, logos)
-
-			// No other capabilities - users can't:
-			// - Edit other users' posts
-			// - Manage other users
-			// - Access WordPress admin settings
-			// - Install plugins or themes
-			// - Edit themes or plugins
-		];
+	/** @return array<string, bool> */
+	private static function base_capabilities(): array {
+		return [ 'read' => true ];
 	}
 
 

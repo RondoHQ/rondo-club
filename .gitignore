@@ -32,6 +32,7 @@ npm-debug.log*
 coverage/
 tests/.env
 tests/_output/
+tests/load/results/
 
 # Certificates (mTLS)
 certs/
@@ -42,10 +43,14 @@ certs/
 # Local demo export artifact
 fixtures/demo-fixture.json
 
+# Local Graphify artifacts (Graphify is not part of this project)
+graphify-out/
+
 # ── GSD baseline (auto-generated) ──
 .gsd/activity/
 .gsd/runtime/
 .gsd/worktrees/
+.claude/worktrees/
 .gsd/auto.lock
 .gsd/metrics.json
 .gsd/STATE.md

@@ -277,15 +277,22 @@ ensure_clean_main() {
 update_feedback_status() {
     local feedback_id="$1"
     local new_status="$2"
+    local resolution_summary="${3:-}"
 
     log "INFO" "Updating feedback #${feedback_id} status to: ${new_status}"
     echo -e "${YELLOW}Updating feedback #${feedback_id} status to: ${new_status}${NC}" >&2
+
+    local json_data
+    json_data=$(jq -n \
+        --arg status "$new_status" \
+        --arg summary "$resolution_summary" \
+        '$summary | if length > 0 then {status: $status, resolution_summary: $summary} else {status: $status} end')
 
     local response=$(curl -s -w "\n%{http_code}" \
         -X PUT \
         -u "${RONDO_API_USER}:${RONDO_API_PASSWORD}" \
         -H "Content-Type: application/json" \
-        -d "{\"status\": \"${new_status}\"}" \
+        -d "$json_data" \
         "${RONDO_API_URL}/wp-json/rondo/v1/feedback/${feedback_id}")
 
     local http_code=$(echo "$response" | tail -n1)
@@ -295,8 +302,11 @@ update_feedback_status() {
         echo -e "${GREEN}Feedback status updated successfully.${NC}" >&2
         return 0
     else
+        local response_body
+        response_body=$(echo "$response" | sed '$d' | jq -r '.message // empty' 2>/dev/null)
         log "ERROR" "Failed to update feedback #${feedback_id} status (HTTP $http_code)"
         echo -e "${RED}Failed to update feedback status (HTTP $http_code)${NC}" >&2
+        [ -n "$response_body" ] && echo -e "${RED}${response_body}${NC}" >&2
         return 1
     fi
 }
@@ -525,7 +535,7 @@ format_feedback_for_claude() {
     fi
 }
 
-# Parse Claude's response for status, PR URL, and question
+# Parse Claude's response for status, PR URL, resolution summary, and question
 parse_claude_response() {
     local response="$1"
 
@@ -544,6 +554,9 @@ parse_claude_response() {
 
     # Extract PR URL
     PARSED_PR_URL=$(echo "$response" | grep -i "PR_URL:" | tail -1 | sed 's/.*PR_URL:\s*//' | tr -d '[:space:]')
+
+    # Extract the Dutch explanation that will be included in the resolution email
+    PARSED_RESOLUTION=$(echo "$response" | grep -i "RESOLUTION:" | tail -1 | sed 's/.*RESOLUTION:\s*//')
 
     # Extract question
     PARSED_QUESTION=$(echo "$response" | grep -i "QUESTION:" | tail -1 | sed 's/.*QUESTION:\s*//')
@@ -747,7 +760,7 @@ Follow the implementation plan above. The plan was created by a senior engineer 
 3. Run \`npm run build\` to verify (for rondo-club)
 4. Commit and push
 5. Create the PR as described in the plan
-6. Output your status (STATUS: IN_REVIEW with PR_URL, or STATUS: NEEDS_INFO/DECLINED if you hit a blocker)"
+6. Output your status (STATUS: IN_REVIEW with PR_URL and a one-line Dutch RESOLUTION explaining how it was fixed, or STATUS: NEEDS_INFO/DECLINED if you hit a blocker)"
 
         prompt_file=$(mktemp)
         output_file=$(mktemp)
@@ -776,7 +789,7 @@ Follow the implementation plan above. The plan was created by a senior engineer 
 
     case "$PARSED_STATUS" in
         in_review)
-            update_feedback_status "$CURRENT_FEEDBACK_ID" "in_review"
+            update_feedback_status "$CURRENT_FEEDBACK_ID" "in_review" "$PARSED_RESOLUTION"
             update_feedback_plan "$CURRENT_FEEDBACK_ID" ""
             if [ -n "$PARSED_PR_URL" ]; then
                 update_feedback_meta "$CURRENT_FEEDBACK_ID" "$PARSED_PR_URL" ""
@@ -790,7 +803,7 @@ Follow the implementation plan above. The plan was created by a senior engineer 
             fi
             ;;
         resolved)
-            update_feedback_status "$CURRENT_FEEDBACK_ID" "resolved"
+            update_feedback_status "$CURRENT_FEEDBACK_ID" "resolved" "$PARSED_RESOLUTION"
             update_feedback_plan "$CURRENT_FEEDBACK_ID" ""
             if [ -n "$PARSED_PR_URL" ]; then
                 update_feedback_meta "$CURRENT_FEEDBACK_ID" "$PARSED_PR_URL" ""

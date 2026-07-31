@@ -29,17 +29,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 class FeeCacheInvalidator {
 
 	/**
-	 * MembershipFees instance
+	 * Fee cache storage service (Phase 218).
 	 *
-	 * @var MembershipFees
+	 * Replaces the MembershipFees reference this class held from its
+	 * inception. Before Phase 218, every cache clear went through
+	 * `$this->fee_cache->clear_fee_cache()`; now they go through
+	 * `$this->fee_cache->clear_fee_cache()` on an explicit typed
+	 * dependency.
+	 *
+	 * @var FeeCache
 	 */
-	private $fees;
+	private FeeCache $fee_cache;
+
+	/**
+	 * FamilyGroupingService instance.
+	 *
+	 * Explicit dependency established in Phase 215 (STRU-04). All five
+	 * family-grouping call sites go through this property instead of
+	 * reaching through a god-class reference.
+	 *
+	 * @var FamilyGroupingService
+	 */
+	private FamilyGroupingService $family_grouping;
 
 	/**
 	 * Constructor - registers all invalidation hooks
 	 */
 	public function __construct() {
-		$this->fees = new MembershipFees();
+		$this->fee_cache       = FeeServices::fee_cache();
+		$this->family_grouping = FeeServices::family_grouping();
 
 		// Age group changes affect fee category
 		add_filter( 'acf/update_value/name=leeftijdsgroep', [ $this, 'invalidate_person_cache' ], 10, 3 );
@@ -104,7 +122,7 @@ class FeeCacheInvalidator {
 			return $value;
 		}
 
-		$this->fees->clear_fee_cache( $post_id );
+		$this->fee_cache->clear_fee_cache( $post_id );
 
 		return $value;
 	}
@@ -128,10 +146,10 @@ class FeeCacheInvalidator {
 		}
 
 		// Clear this person's cache first
-		$this->fees->clear_fee_cache( $post_id );
+		$this->fee_cache->clear_fee_cache( $post_id );
 
 		// Get family key BEFORE the address update (using current saved value)
-		$old_family_key = $this->fees->get_family_key( $post_id );
+		$old_family_key = $this->family_grouping->get_family_key( $post_id );
 
 		// Clear family discount meta for this person (will be recalculated on next cache miss)
 		delete_post_meta( $post_id, '_family_discount_rate' );
@@ -155,7 +173,7 @@ class FeeCacheInvalidator {
 	 * @param int    $exclude_id Person ID to exclude from invalidation (already invalidated).
 	 */
 	private function invalidate_and_recalculate_family( string $family_key, int $exclude_id ): void {
-		$families = $this->fees->build_family_groups()['families'];
+		$families = $this->family_grouping->build_family_groups()['families'];
 
 		if ( empty( $families[ $family_key ] ) ) {
 			return;
@@ -163,14 +181,14 @@ class FeeCacheInvalidator {
 
 		foreach ( $families[ $family_key ] as $member_id ) {
 			if ( (int) $member_id !== $exclude_id ) {
-				$this->fees->clear_fee_cache( (int) $member_id );
+				$this->fee_cache->clear_fee_cache( (int) $member_id );
 				delete_post_meta( $member_id, '_family_discount_rate' );
 				delete_post_meta( $member_id, '_family_discount_position' );
 			}
 		}
 
 		$first_member = (int) $families[ $family_key ][0];
-		$this->fees->recalculate_family_positions_for_person( $first_member );
+		$this->family_grouping->recalculate_family_positions_for_person( $first_member );
 	}
 
 	/**
@@ -180,7 +198,7 @@ class FeeCacheInvalidator {
 	 * @param \WP_REST_Request $request The request object.
 	 */
 	public function invalidate_person_cache_rest( $post, $request ) {
-		$this->fees->clear_fee_cache( $post->ID );
+		$this->fee_cache->clear_fee_cache( $post->ID );
 	}
 
 	/**
@@ -340,8 +358,8 @@ class FeeCacheInvalidator {
 	 * @return int Number of caches cleared.
 	 */
 	public function invalidate_all_caches( ?string $season = null ): int {
-		$season = $season ?: $this->fees->get_season_key();
-		return $this->fees->clear_all_fee_caches( $season );
+		$season = $season ?: SeasonKey::current();
+		return $this->fee_cache->clear_all_fee_caches( $season );
 	}
 
 	/**
@@ -353,11 +371,11 @@ class FeeCacheInvalidator {
 	 * @param mixed $new_value The new option value.
 	 */
 	public function schedule_bulk_recalculation( $old_value, $new_value ) {
-		$season = $this->fees->get_season_key();
+		$season = SeasonKey::current();
 
 		// Clear all caches and family discount meta immediately
-		$cleared = $this->fees->clear_all_fee_caches( $season );
-		$this->fees->clear_all_family_discount_meta();
+		$cleared = $this->fee_cache->clear_all_fee_caches( $season );
+		$this->family_grouping->clear_all_family_discount_meta();
 
 		// Schedule background recalculation (10 seconds from now)
 		if ( ! wp_next_scheduled( 'rondo_recalculate_all_fees', [ $season ] ) ) {
@@ -384,7 +402,7 @@ class FeeCacheInvalidator {
 	 */
 	public function recalculate_all_fees_background( $season ) {
 		// Recalculate all family positions first (single pass over all persons)
-		$positions_updated = $this->fees->recalculate_all_family_positions( $season );
+		$positions_updated = $this->family_grouping->recalculate_all_family_positions( $season );
 
 		error_log(
 			sprintf(
@@ -409,10 +427,10 @@ class FeeCacheInvalidator {
 
 		foreach ( $query->posts as $person_id ) {
 			// Clear existing cache first to force fresh calculation
-			$this->fees->clear_fee_cache( (int) $person_id, $season );
+			$this->fee_cache->clear_fee_cache( (int) $person_id, $season );
 
 			// Now get_fee_for_person_cached will calculate fresh and save
-			$result = $this->fees->get_fee_for_person_cached( (int) $person_id, $season );
+			$result = $this->fee_cache->get_fee_for_person_cached( (int) $person_id, $season );
 
 			if ( $result !== null ) {
 				++$calculated;

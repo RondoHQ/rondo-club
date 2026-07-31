@@ -1,14 +1,14 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Download, Info } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Download, Info, Loader2, Plus } from 'lucide-react';
 import { DataTableToolbar, createColumn, FILTER_TYPES } from '@/components/DataTable';
-import { useFilteredPeople, useFilterOptions, useBulkUpdatePeople } from '@/hooks/usePeople';
+import { useFilteredPeople, useFilterOptions, useBulkUpdatePeople, useCreatePerson, fetchAllFilteredPeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { buildCsv, downloadCsv } from '@/utils/csvExport';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
-import { getTeamName, formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
+import { getTeamName, formatPhoneForTel, formatPhoneForDisplay, hasSponsorRole } from '@/utils/formatters';
 import { format, parseYmd, isValid } from '@/utils/dateFormat';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import Pagination from '@/components/Pagination';
@@ -16,6 +16,8 @@ import { useListPreferences } from '@/hooks/useListPreferences';
 import { useColumnResize } from '@/hooks/useColumnResize';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import ColumnSettingsModal from './ColumnSettingsModal';
+import PersonEditModal from '@/components/PersonEditModal';
+import FloatingHorizontalScrollbar from '@/components/FloatingHorizontalScrollbar';
 
 // Helper function to get first email from fixed fields
 function getFirstEmail(person) {
@@ -27,11 +29,41 @@ function getFirstPhone(person) {
   return person.acf?.mobile_1 || person.acf?.telephone_1 || person.acf?.mobile_2 || person.acf?.telephone_2 || null;
 }
 
+// Primary address is the first row of the ACF `addresses` repeater.
+function getPrimaryAddress(person) {
+  const addresses = person.acf?.addresses;
+  return Array.isArray(addresses) && addresses.length > 0 ? addresses[0] : null;
+}
+
+function formatStreetLine(address) {
+  if (!address) return '';
+  const street = address.street_name || '';
+  const number = [address.house_number, address.house_number_addition].filter(Boolean).join('');
+  return [street, number].filter(Boolean).join(' ').trim();
+}
+
 function formatBirthdateDisplay(birthdate) {
   if (!birthdate) return '-';
   const parsed = parseYmd(birthdate);
   if (!isValid(parsed)) return '-';
   return format(parsed, 'd MMM yyyy');
+}
+
+function getMembershipTypeLabel(person) {
+  const acf = person.acf || {};
+  const sponsorSuffix = hasSponsorRole(acf) ? ' + sponsor' : '';
+
+  if (acf.person_type === 'contact') return `Contact${sponsorSuffix}`;
+
+  const sportlinkType = String(acf['type-lid'] || '').trim().toLowerCase();
+  if (sportlinkType.includes('verenigingslid')) return `Verenigingslid${sponsorSuffix}`;
+  if (sportlinkType.includes('bondslid')) return `Bondslid${sponsorSuffix}`;
+  if (sportlinkType.includes('ouder')) return `Ouder${sponsorSuffix}`;
+
+  const isParent = acf.isparent === true || acf.isparent === 1 || acf.isparent === '1';
+  if (isParent || !acf['knvb-id']) return `Ouder${sponsorSuffix}`;
+
+  return `Bondslid${sponsorSuffix}`;
 }
 
 // Helper function to get current team ID from person's work history
@@ -70,6 +102,7 @@ const COLUMN_SORT_FIELDS = {
   'type-lid': 'custom_type-lid',
   'leeftijdsgroep': 'custom_leeftijdsgroep',
   'lid-sinds': 'custom_lid-sinds',
+  'lid-tot': 'custom_lid-tot',
   'vrijwilliger-sinds': 'custom_vrijwilliger-sinds',
   'datum-foto': 'custom_datum-foto',
   'datum-vog': 'custom_datum-vog',
@@ -79,7 +112,7 @@ const COLUMN_SORT_FIELDS = {
   'freescout-id': 'custom_freescout-id',
 };
 
-const UNSORTABLE_CORE_COLUMNS = new Set(['email', 'phone']);
+const UNSORTABLE_CORE_COLUMNS = new Set(['email', 'phone', 'address', 'postal_code', 'city', 'country']);
 const SORTABLE_CUSTOM_TYPES = new Set(['text', 'textarea', 'number', 'date', 'select', 'email', 'url', 'true_false']);
 
 function getColumnSortField(colId, column) {
@@ -119,8 +152,8 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
         <Link to={`/people/${person.id}`} className="flex items-center justify-center">
           <PersonAvatar
             thumbnail={person.thumbnail}
-            name={person.first_name}
-            firstName={person.first_name}
+            name={person.name || person.company_name}
+            firstName={person.first_name || person.company_name}
             size="md"
           />
         </Link>
@@ -135,12 +168,27 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
       >
         <Link to={`/people/${person.id}`} className="flex items-center">
           <span className="text-sm font-medium text-gray-900 dark:text-gray-50">
-            {[person.first_name, person.infix, person.last_name].filter(Boolean).join(' ')}
+            {person.name || [person.first_name, person.infix, person.last_name].filter(Boolean).join(' ') || person.company_name}
             {person.is_deceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
           </span>
           {person.former_member && (
             <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300">
               Oud-lid
+            </span>
+          )}
+          {person.acf?.person_type === 'contact' && (
+            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
+              Contact
+            </span>
+          )}
+          {hasSponsorRole(person.acf) && (
+            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300">
+              Sponsor
+            </span>
+          )}
+          {person.acf?.wacht_op_overschrijving && (
+            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+              Wacht op overschrijving
             </span>
           )}
         </Link>
@@ -156,6 +204,18 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
           minWidth: `${width}px`,
           maxWidth: `${width}px`,
         } : {};
+
+        if (colId === 'type-lid') {
+          return (
+            <td
+              key={colId}
+              className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
+              style={style}
+            >
+              {getMembershipTypeLabel(person)}
+            </td>
+          );
+        }
 
         // Check if this is a custom field
         const customField = customFieldsMap[colId];
@@ -238,6 +298,24 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
                   {formatPhoneForDisplay(phone)}
                 </a>
               ) : '-'}
+            </td>
+          );
+        }
+
+        if (colId === 'address' || colId === 'postal_code' || colId === 'city' || colId === 'country') {
+          const address = getPrimaryAddress(person);
+          let value = '';
+          if (address) {
+            if (colId === 'address') value = formatStreetLine(address);
+            else value = address[colId] || '';
+          }
+          return (
+            <td
+              key={colId}
+              className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
+              style={style}
+            >
+              {value || '-'}
             </td>
           );
         }
@@ -345,9 +423,16 @@ function PersonListView({
   onSort,
   onColumnWidthChange,
 }) {
+  const scrollContainerRef = useRef(null);
+
   return (
-    <div className="card !overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+    <>
+      <div
+        ref={scrollContainerRef}
+        className="card !overflow-x-auto"
+        data-horizontal-scroll="true"
+      >
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead className="bg-gray-50 dark:bg-gray-800">
           <tr className="shadow-sm dark:shadow-gray-900/50">
             {/* Checkbox column - sticky */}
@@ -423,8 +508,10 @@ function PersonListView({
             />
           ))}
         </tbody>
-      </table>
-    </div>
+        </table>
+      </div>
+      <FloatingHorizontalScrollbar targetRef={scrollContainerRef} />
+    </>
   );
 }
 
@@ -544,6 +631,7 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, teams, onSubmit
 
 export default function PeopleList() {
   const { data: currentUser } = useCurrentUser();
+  const navigate = useNavigate();
 
   // URL-based filter state for persistence on back navigation
   const [searchParams, setSearchParams] = useSearchParams();
@@ -560,16 +648,23 @@ export default function PeopleList() {
   const huidigeVrijwilliger = searchParams.get('vrijwilliger') || '';
   const financieleBlokkade = searchParams.get('blokkade') || '';
   const typeLid = searchParams.get('typeLid') || '';
+  const personType = searchParams.get('personType') || '';
+  const sponsorOnly = searchParams.get('sponsor') || '';
+  const businessclubMember = searchParams.get('businessclub') || '';
   const leeftijdsgroep = searchParams.get('leeftijdsgroep') || '';
   const fotoMissing = searchParams.get('fotoMissing') || '';
   const vogMissing = searchParams.get('vogMissing') || '';
   const vogOlderThanYears = searchParams.get('vogOuder') ? parseInt(searchParams.get('vogOuder'), 10) : null;
   const includeFormer = searchParams.get('oudLeden') || '';
   const lidTotFuture = searchParams.get('lidTot') || '';
+  const lidTotSeason = searchParams.get('lidTotSeizoen') || '';
+  const lidSindsSeason = searchParams.get('lidSindsSeizoen') || '';
   const spelactiviteitNoTeam = searchParams.get('spelactiviteitZonderTeam') || '';
+  const spelendLid = searchParams.get('spelendLid') || '';
+  const wachtOverschrijving = searchParams.get('wachtOverschrijving') || '';
 
   // Helper to update URL params
-  const updateSearchParams = useCallback((updates) => {
+  const updateSearchParams = useCallback((updates, { resetPage = true } = {}) => {
     setSearchParams(prev => {
       const next = new URLSearchParams(prev);
       Object.entries(updates).forEach(([key, value]) => {
@@ -582,7 +677,7 @@ export default function PeopleList() {
         }
       });
       // Reset page when filters change (except when explicitly setting page)
-      if (!('page' in updates)) {
+      if (resetPage && !('page' in updates)) {
         next.delete('page');
       }
       return next;
@@ -619,6 +714,18 @@ export default function PeopleList() {
     updateSearchParams({ typeLid: value });
   }, [updateSearchParams]);
 
+  const setPersonType = useCallback((value) => {
+    updateSearchParams({ personType: value });
+  }, [updateSearchParams]);
+
+  const setSponsorOnly = useCallback((value) => {
+    updateSearchParams({ sponsor: value });
+  }, [updateSearchParams]);
+
+  const setBusinessclubMember = useCallback((value) => {
+    updateSearchParams({ businessclub: value });
+  }, [updateSearchParams]);
+
   const setLeeftijdsgroep = useCallback((value) => {
     updateSearchParams({ leeftijdsgroep: value });
   }, [updateSearchParams]);
@@ -635,8 +742,24 @@ export default function PeopleList() {
     updateSearchParams({ lidTot: value });
   }, [updateSearchParams]);
 
+  const setLidTotSeason = useCallback((value) => {
+    updateSearchParams({ lidTotSeizoen: value });
+  }, [updateSearchParams]);
+
+  const setLidSindsSeason = useCallback((value) => {
+    updateSearchParams({ lidSindsSeizoen: value });
+  }, [updateSearchParams]);
+
   const setSpelactiviteitNoTeam = useCallback((value) => {
     updateSearchParams({ spelactiviteitZonderTeam: value });
+  }, [updateSearchParams]);
+
+  const setSpelendLid = useCallback((value) => {
+    updateSearchParams({ spelendLid: value });
+  }, [updateSearchParams]);
+
+  const setWachtOverschrijving = useCallback((value) => {
+    updateSearchParams({ wachtOverschrijving: value });
   }, [updateSearchParams]);
 
   // Local UI state (not persisted in URL)
@@ -645,8 +768,16 @@ export default function PeopleList() {
   const [showBulkOrganizationModal, setShowBulkOrganizationModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [showColumnSettings, setShowColumnSettings] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [newPersonMode, setNewPersonMode] = useState(null);
   const bulkDropdownRef = useRef(null);
   const queryClient = useQueryClient();
+  const createPersonMutation = useCreatePerson({
+    onSuccess: (createdPerson) => {
+      setNewPersonMode(null);
+      navigate(`/people/${createdPerson.id}`);
+    },
+  });
 
   // Column preferences hook
   const {
@@ -679,13 +810,20 @@ export default function PeopleList() {
     huidigeVrijwilliger,
     financieleBlokkade,
     typeLid,
+    personType,
+    isSponsor: sponsorOnly,
+    isBusinessclubMember: businessclubMember,
     leeftijdsgroep,
     fotoMissing,
     vogMissing,
     vogOlderThanYears,
     includeFormer: includeFormer || null,
     lidTotFuture: lidTotFuture || null,
+    lidTotSeason: lidTotSeason || null,
+    lidSindsSeason: lidSindsSeason || null,
     spelactiviteitNoTeam: spelactiviteitNoTeam || null,
+    spelendLid: spelendLid || null,
+    wachtOverschrijving: wachtOverschrijving || null,
   });
 
   // Extract data from response
@@ -737,19 +875,34 @@ export default function PeopleList() {
     return map;
   }, [preferences?.available_columns]);
 
-  // Get visible columns (excluding 'name' which is always shown in a fixed position)
+  // Get visible columns (excluding 'name' which is always shown in a fixed position).
+  // When a season-based membership filter is active, force the relevant date columns
+  // to appear first so the matching reason is visible without fiddling with Column
+  // Settings. User's stored preferences are unchanged.
+  //   lid_tot_season   → lid-sinds, lid-tot
+  //   lid_sinds_season → lid-sinds, type-lid
   const visibleColumns = useMemo(() => {
+    let forced = [];
+    if (lidTotSeason === '1') forced = ['lid-sinds', 'lid-tot'];
+    else if (lidSindsSeason === '1') forced = ['lid-sinds', 'type-lid'];
+
     if (!preferences?.visible_columns || !preferences?.column_order) {
       // Fallback to default columns if preferences not loaded
-      return ['team'];
+      return forced.length > 0 ? [...forced, 'team'] : ['team'];
     }
 
     // Filter column_order to only visible columns, excluding 'name'
     const visibleSet = new Set(preferences.visible_columns);
-    return preferences.column_order.filter(colId =>
+    const cols = preferences.column_order.filter(colId =>
       colId !== 'name' && visibleSet.has(colId)
     );
-  }, [preferences?.visible_columns, preferences?.column_order]);
+
+    if (forced.length > 0) {
+      return [...forced, ...cols.filter(colId => !forced.includes(colId))];
+    }
+
+    return cols;
+  }, [preferences?.visible_columns, preferences?.column_order, lidTotSeason, lidSindsSeason]);
 
   // Get column widths from preferences
   const columnWidths = preferences?.column_widths || {};
@@ -784,13 +937,47 @@ export default function PeopleList() {
   }, []);
 
   const filterColumns = useMemo(() => [
-    createColumn({ id: 'include_former', header: 'Toon oud-leden', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '' }),
-    createColumn({ id: 'lid_tot_future', header: 'Afmelding in de toekomst', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '' }),
-    createColumn({ id: 'spelactiviteit_no_team', header: 'Spelactiviteit zonder team', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '' }),
+    // Lidmaatschap — who counts as a member right now / cancellations
+    createColumn({ id: 'include_former', header: 'Toon oud-leden', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
+    createColumn({ id: 'lid_tot_future', header: 'Afmelding in de toekomst', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
+    createColumn({ id: 'lid_tot_season', header: 'Afgemeld dit seizoen', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Afgemeld dit seizoen', filterSection: 'Lidmaatschap' }),
+    createColumn({ id: 'lid_sinds_season', header: 'Nieuw lid dit seizoen', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Nieuw lid dit seizoen', filterSection: 'Lidmaatschap' }),
+    createColumn({ id: 'spelactiviteit_no_team', header: 'Spelactiviteit zonder team', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
+    createColumn({
+      id: 'spelend_lid', header: 'Spelend lid', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
+      getFilterLabel: (val) => `Spelend lid: ${val === '1' ? 'Ja' : 'Nee'}`,
+      filterSection: 'Lidmaatschap',
+    }),
+    createColumn({ id: 'wacht_overschrijving', header: 'Wacht op overschrijving', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Wacht op overschrijving', filterSection: 'Lidmaatschap' }),
+
+    createColumn({
+      id: 'person_type', header: 'Persoonstype', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: 'member', label: 'Leden en ouders' },
+        { value: 'contact', label: 'Contacten' },
+      ],
+      getFilterLabel: (val) => val === 'contact' ? 'Persoonstype: Contact' : 'Persoonstype: Lid / ouder',
+      filterSection: 'Persoon',
+    }),
+    createColumn({
+      id: 'is_sponsor', header: 'Sponsor', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
+      getFilterLabel: (val) => `Sponsor: ${val === '1' ? 'Ja' : 'Nee'}`,
+      filterSection: 'Persoon',
+    }),
+    createColumn({
+      id: 'is_businessclub_member', header: 'BC-lid', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
+      filterSection: 'Persoon',
+    }),
+
+    // Persoon — birth/age/category attributes
     createColumn({
       id: 'birth_year', header: 'Geboortejaar', filterType: FILTER_TYPES.SELECT,
       filterOptions: availableBirthYears.map(y => ({ value: String(y), label: String(y) })),
       getFilterLabel: (val) => `Geboren ${val}`,
+      filterSection: 'Persoon',
     }),
     createColumn({
       id: 'birthday_month', header: 'Verjaardagmaand', filterType: FILTER_TYPES.SELECT,
@@ -825,38 +1012,32 @@ export default function PeopleList() {
         };
         return `Verjaardag: ${monthLabels[val] || val}`;
       },
+      filterSection: 'Persoon',
     }),
     createColumn({
-      id: 'last_modified', header: 'Gewijzigd', filterType: FILTER_TYPES.SELECT,
-      filterOptions: [
-        { value: '7', label: 'Laatste 7 dagen' }, { value: '30', label: 'Laatste 30 dagen' },
-        { value: '90', label: 'Laatste 90 dagen' }, { value: '365', label: 'Laatste jaar' },
-      ],
-      getFilterLabel: (val) => ({ '7': 'Laatste 7 dagen', '30': 'Laatste 30 dagen', '90': 'Laatste 90 dagen', '365': 'Laatste jaar' }[val] || val),
-    }),
-    createColumn({
-      id: 'vrijwilliger', header: 'Huidig vrijwilliger', filterType: FILTER_TYPES.SELECT,
-      filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
-      getFilterLabel: (val) => `Vrijwilliger: ${val === '1' ? 'Ja' : 'Nee'}`,
-    }),
-    createColumn({
-      id: 'blokkade', header: 'Financiële blokkade', filterType: FILTER_TYPES.SELECT,
-      filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
-      getFilterLabel: (val) => `Blokkade: ${val === '1' ? 'Ja' : 'Nee'}`,
-    }),
-    createColumn({
-      id: 'type_lid', header: 'Type lid', filterType: FILTER_TYPES.SELECT,
+      id: 'type_lid', header: 'Type', filterType: FILTER_TYPES.SELECT,
       filterOptions: filterOptions?.member_types?.map(opt => ({ value: opt.value, label: `${opt.value} (${opt.count})` })) || [],
       getFilterLabel: (val) => `Type: ${val}`,
+      filterSection: 'Persoon',
     }),
     createColumn({
       id: 'leeftijdsgroep', header: 'Leeftijdsgroep', filterType: FILTER_TYPES.SELECT,
       filterOptions: filterOptions?.age_groups?.map(opt => ({ value: opt.value, label: `${opt.value} (${opt.count})` })) || [],
+      filterSection: 'Persoon',
     }),
     createColumn({
       id: 'foto_missing', header: 'Foto datum', filterType: FILTER_TYPES.SELECT,
       filterOptions: [{ value: '1', label: 'Ontbreekt' }],
       getFilterLabel: () => 'Foto ontbreekt',
+      filterSection: 'Persoon',
+    }),
+
+    // Vrijwilliger & VOG
+    createColumn({
+      id: 'vrijwilliger', header: 'Huidig vrijwilliger', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
+      getFilterLabel: (val) => `Vrijwilliger: ${val === '1' ? 'Ja' : 'Nee'}`,
+      filterSection: 'Vrijwilliger & VOG',
     }),
     createColumn({
       id: 'vog_datum', header: 'VOG datum', filterType: FILTER_TYPES.SELECT,
@@ -866,6 +1047,24 @@ export default function PeopleList() {
         { value: 'older_5', label: 'Ouder dan 5 jaar' },
       ],
       getFilterLabel: (val) => ({ missing: 'VOG ontbreekt', older_3: 'VOG ouder dan 3 jaar', older_5: 'VOG ouder dan 5 jaar' }[val] || val),
+      filterSection: 'Vrijwilliger & VOG',
+    }),
+
+    // Administratief
+    createColumn({
+      id: 'blokkade', header: 'Financiële blokkade', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
+      getFilterLabel: (val) => `Blokkade: ${val === '1' ? 'Ja' : 'Nee'}`,
+      filterSection: 'Administratief',
+    }),
+    createColumn({
+      id: 'last_modified', header: 'Gewijzigd', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: '7', label: 'Laatste 7 dagen' }, { value: '30', label: 'Laatste 30 dagen' },
+        { value: '90', label: 'Laatste 90 dagen' }, { value: '365', label: 'Laatste jaar' },
+      ],
+      getFilterLabel: (val) => ({ '7': 'Laatste 7 dagen', '30': 'Laatste 30 dagen', '90': 'Laatste 90 dagen', '365': 'Laatste jaar' }[val] || val),
+      filterSection: 'Administratief',
     }),
   ], [availableBirthYears, filterOptions]);
 
@@ -889,13 +1088,20 @@ export default function PeopleList() {
   const filterValues = {
     include_former: includeFormer,
     lid_tot_future: lidTotFuture,
+    lid_tot_season: lidTotSeason,
+    lid_sinds_season: lidSindsSeason,
     spelactiviteit_no_team: spelactiviteitNoTeam,
+    spelend_lid: spelendLid,
+    wacht_overschrijving: wachtOverschrijving,
     birth_year: selectedBirthYear,
     birthday_month: selectedBirthMonth,
     last_modified: lastModifiedFilter,
     vrijwilliger: huidigeVrijwilliger,
     blokkade: financieleBlokkade,
     type_lid: typeLid,
+    person_type: personType,
+    is_sponsor: sponsorOnly,
+    is_businessclub_member: businessclubMember,
     leeftijdsgroep,
     foto_missing: fotoMissing,
     vog_datum: vogMissing === '1' ? 'missing' : vogOlderThanYears ? `older_${vogOlderThanYears}` : '',
@@ -905,15 +1111,17 @@ export default function PeopleList() {
 
   // Update filteredCount URL param when filters are active and data is loaded
   useEffect(() => {
+    const current = searchParams.get('filteredCount');
+
     if (hasActiveFilters && !isLoading) {
-      // Set filteredCount param when filters are active
-      updateSearchParams({ filteredCount: totalPeople });
-    } else {
-      // Remove filteredCount param when no filters
-      const current = searchParams.get('filteredCount');
-      if (current !== null) {
-        updateSearchParams({ filteredCount: null });
+      const next = String(totalPeople);
+
+      // This derived navigation count must not reset an explicitly selected page.
+      if (current !== next) {
+        updateSearchParams({ filteredCount: totalPeople }, { resetPage: false });
       }
+    } else if (current !== null) {
+      updateSearchParams({ filteredCount: null }, { resetPage: false });
     }
   }, [hasActiveFilters, totalPeople, isLoading, searchParams, updateSearchParams]);
 
@@ -949,13 +1157,20 @@ export default function PeopleList() {
     switch (colId) {
       case 'include_former': setIncludeFormer(value); break;
       case 'lid_tot_future': setLidTotFuture(value); break;
+      case 'lid_tot_season': setLidTotSeason(value); break;
+      case 'lid_sinds_season': setLidSindsSeason(value); break;
       case 'spelactiviteit_no_team': setSpelactiviteitNoTeam(value); break;
+      case 'spelend_lid': setSpelendLid(value); break;
+      case 'wacht_overschrijving': setWachtOverschrijving(value); break;
       case 'birth_year': setSelectedBirthYear(value); break;
       case 'birthday_month': setSelectedBirthMonth(value); break;
       case 'last_modified': setLastModifiedFilter(value); break;
       case 'vrijwilliger': setHuidigeVrijwilliger(value); break;
       case 'blokkade': setFinancieleBlokkade(value); break;
       case 'type_lid': setTypeLid(value); break;
+      case 'person_type': setPersonType(value); break;
+      case 'is_sponsor': setSponsorOnly(value); break;
+      case 'is_businessclub_member': setBusinessclubMember(value); break;
       case 'leeftijdsgroep': setLeeftijdsgroep(value); break;
       case 'foto_missing': setFotoMissing(value); break;
       case 'vog_datum':
@@ -965,7 +1180,7 @@ export default function PeopleList() {
         break;
       default: break;
     }
-  }, [setIncludeFormer, setLidTotFuture, setSpelactiviteitNoTeam, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
+  }, [setIncludeFormer, setLidTotFuture, setLidTotSeason, setLidSindsSeason, setSpelactiviteitNoTeam, setSpelendLid, setWachtOverschrijving, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setPersonType, setSponsorOnly, setBusinessclubMember, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
 
   // Selection helper functions
   const toggleSelection = (personId) => {
@@ -998,7 +1213,7 @@ export default function PeopleList() {
   // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, spelactiviteitNoTeam, page, people]);
+  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, personType, sponsorOnly, businessclubMember, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, spelendLid, wachtOverschrijving, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
@@ -1057,20 +1272,74 @@ export default function PeopleList() {
     }
   }, [sortField, sortOrder, updateSearchParams]);
 
-  // Handle CSV export
-  const handleExportCsv = () => {
-    const headers = ['Naam', 'Voornaam', 'Tussenvoegsel', 'Achternaam', 'Email', 'Telefoon', 'Team'];
-    const rows = people.map(person => [
-      [person.first_name, person.infix, person.last_name].filter(Boolean).join(' '),
-      person.first_name || '',
-      person.infix || '',
-      person.last_name || '',
-      getFirstEmail(person) || '',
-      getFirstPhone(person) || '',
-      personTeamMap[person.id] || '',
-    ]);
-    const csv = buildCsv([headers, ...rows]);
-    downloadCsv(csv, `leden-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+  // Handle CSV export — fetches every matching person across all pages
+  // (list view is capped at 100 per page; export must include the full set).
+  const handleExportCsv = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const allPeople = await fetchAllFilteredPeople({
+        perPage: 100,
+        ownership: 'all',
+        modifiedDays: lastModifiedFilter ? parseInt(lastModifiedFilter, 10) : null,
+        birthYearFrom: selectedBirthYear ? parseInt(selectedBirthYear, 10) : null,
+        birthYearTo: selectedBirthYear ? parseInt(selectedBirthYear, 10) : null,
+        birthMonth: selectedBirthMonth ? parseInt(selectedBirthMonth, 10) : null,
+        orderby: resolvedOrderBy,
+        order: sortOrder,
+        huidigeVrijwilliger,
+        financieleBlokkade,
+        typeLid,
+        personType,
+        isSponsor: sponsorOnly,
+        isBusinessclubMember: businessclubMember,
+        leeftijdsgroep,
+        fotoMissing,
+        vogMissing,
+        vogOlderThanYears,
+        includeFormer: includeFormer || null,
+        lidTotFuture: lidTotFuture || null,
+        lidTotSeason: lidTotSeason || null,
+        lidSindsSeason: lidSindsSeason || null,
+        spelactiviteitNoTeam: spelactiviteitNoTeam || null,
+        spelendLid: spelendLid || null,
+        wachtOverschrijving: wachtOverschrijving || null,
+      });
+
+      const allTeamIds = [...new Set(allPeople.map(getCurrentTeamId).filter(Boolean))];
+      const exportTeamMap = {};
+      for (let i = 0; i < allTeamIds.length; i += 100) {
+        const chunk = allTeamIds.slice(i, i + 100);
+        const response = await wpApi.getTeams({ per_page: 100, include: chunk.join(',') });
+        (response.data || []).forEach(team => {
+          exportTeamMap[team.id] = getTeamName(team);
+        });
+      }
+
+      const headers = ['Naam', 'Bedrijfsnaam', 'Voornaam', 'Tussenvoegsel', 'Achternaam', 'Email', 'Telefoon', 'Team', 'Adres', 'Postcode', 'Plaats', 'Land'];
+      const rows = allPeople.map(person => {
+        const teamId = getCurrentTeamId(person);
+        const address = getPrimaryAddress(person);
+        return [
+          person.name || [person.first_name, person.infix, person.last_name].filter(Boolean).join(' ') || person.company_name || '',
+          person.acf?.company_name || person.company_name || '',
+          person.first_name || '',
+          person.infix || '',
+          person.last_name || '',
+          getFirstEmail(person) || '',
+          getFirstPhone(person) || '',
+          (teamId && exportTeamMap[teamId]) || '',
+          formatStreetLine(address),
+          address?.postal_code || '',
+          address?.city || '',
+          address?.country || '',
+        ];
+      });
+      const csv = buildCsv([headers, ...rows]);
+      downloadCsv(csv, `leden-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -1086,14 +1355,30 @@ export default function PeopleList() {
           activeFilterCount={activeFilterCount}
           onOpenColumnSettings={() => setShowColumnSettings(true)}
           toolbarEnd={
-            <button
-              onClick={handleExportCsv}
-              className="btn-tertiary"
-              title="Downloaden als CSV"
-              disabled={!people.length}
-            >
-              <Download className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              {currentUser?.can_edit_people && (
+                <button onClick={() => setNewPersonMode('contact')} className="btn-primary">
+                  <Plus className="w-4 h-4 md:mr-2" />
+                  <span className="hidden md:inline">Contact toevoegen</span>
+                </button>
+              )}
+              {(currentUser?.can_edit_people || currentUser?.can_manage_sponsors) && (
+                <button onClick={() => setNewPersonMode('sponsor')} className="btn-primary">
+                  <Plus className="w-4 h-4 md:mr-2" />
+                  <span className="hidden md:inline">Sponsor toevoegen</span>
+                </button>
+              )}
+              <button
+                onClick={handleExportCsv}
+                className="btn-tertiary"
+                title={isExporting ? 'Bezig met exporteren…' : 'Downloaden als CSV'}
+                disabled={isExporting || totalPeople === 0}
+              >
+                {isExporting
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <Download className="w-4 h-4" />}
+              </button>
+            </div>
           }
         />
 
@@ -1235,6 +1520,15 @@ export default function PeopleList() {
       <ColumnSettingsModal
         isOpen={showColumnSettings}
         onClose={() => setShowColumnSettings(false)}
+      />
+
+      <PersonEditModal
+        isOpen={newPersonMode !== null}
+        onClose={() => setNewPersonMode(null)}
+        onSubmit={(data) => createPersonMutation.mutate(data)}
+        isLoading={createPersonMutation.isPending}
+        initialPersonType="contact"
+        initialSponsor={newPersonMode === 'sponsor'}
       />
 
       {/* Bulk Organization Modal */}

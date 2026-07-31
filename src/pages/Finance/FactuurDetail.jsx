@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, CheckCircle, XCircle, RefreshCw, Download, FileText, Receipt, User, UserCheck, CreditCard, ExternalLink, QrCode, Trash2, Pencil } from 'lucide-react';
-import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice, useToggleInstallments, useUpdateMembershipInvoiceDiscount, useAddDraftInvoiceLineItem, useUpdateDraftInvoice } from '@/hooks/useInvoices';
+import { ArrowLeft, Send, CheckCircle, XCircle, RefreshCw, Download, FileText, Receipt, User, UserCheck, CreditCard, ExternalLink, QrCode, Trash2, Pencil, Copy, CalendarClock, Ban } from 'lucide-react';
+import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice, useToggleInstallments, useUpdateMembershipInvoiceDiscount, useAddDraftInvoiceLineItem, useUpdateDraftInvoice, useScheduleInvoice } from '@/hooks/useInvoices';
 import { useCreatePaymentLink, useFinanceSettings } from '@/hooks/useFinanceSettings';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, parseYmd } from '@/utils/dateFormat';
 import { formatCurrency } from '@/utils/formatters';
 import { prmApi } from '@/api/client';
 import InvoiceDraftForm from '@/components/finance/InvoiceDraftForm';
+import { mapInvoiceToInitialValues } from '@/utils/invoiceFormValues';
 
 // Status badge colors (same as Facturen.jsx)
 const statusColors = {
@@ -16,6 +18,7 @@ const statusColors = {
   paid: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   overdue: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
   overdue_warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  cancelled: 'bg-gray-100 text-gray-500 line-through dark:bg-gray-800 dark:text-gray-400',
 };
 
 // Status display labels
@@ -24,6 +27,7 @@ const statusLabels = {
   sent: 'Verstuurd',
   paid: 'Betaald',
   overdue: 'Achterstallig',
+  cancelled: 'Vervallen',
 };
 
 // Installment status badge colors
@@ -77,9 +81,17 @@ function getPlanLabel(plan, installmentCount) {
 /**
  * Status badge component
  */
-function StatusBadge({ status, reminderCount = 0 }) {
+function StatusBadge({ status, reminderCount = 0, scheduledSendDate = null }) {
   let colorKey = status;
   let label = statusLabels[status] || status;
+
+  if (status === 'draft' && scheduledSendDate) {
+    return (
+      <span className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+        Ingepland · {format(parseYmd(scheduledSendDate), 'd MMM yyyy')}
+      </span>
+    );
+  }
 
   if (status === 'overdue' && reminderCount > 0) {
     if (reminderCount >= 2) {
@@ -164,7 +176,9 @@ export default function FactuurDetail() {
   const updateMembershipDiscount = useUpdateMembershipInvoiceDiscount();
   const addDraftLineItem = useAddDraftInvoiceLineItem();
   const updateDraftInvoice = useUpdateDraftInvoice();
-  const { data: financeSettings } = useFinanceSettings();
+  const { data: currentUser } = useCurrentUser();
+  const canEditFinancieel = currentUser?.can_edit_financieel ?? false;
+  const { data: financeSettings } = useFinanceSettings({ enabled: canEditFinancieel });
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -173,6 +187,8 @@ export default function FactuurDetail() {
   const [entryDiscountPercentInput, setEntryDiscountPercentInput] = useState('');
   const [draftAdjustmentDescription, setDraftAdjustmentDescription] = useState('Correctie');
   const [draftAdjustmentAmount, setDraftAdjustmentAmount] = useState('');
+  const scheduleInvoice = useScheduleInvoice();
+  const [scheduleDateInput, setScheduleDateInput] = useState('');
   const displayCustomFields = getDisplayCustomFields(invoice?.custom_fields);
   const customerAttention = normalizeAttentionValue(invoice?.customer_attention);
 
@@ -213,6 +229,38 @@ export default function FactuurDetail() {
       setIsEditingDraft(false);
     }
   }, [invoice?.status]);
+
+  // Seed the schedule date input from the invoice's stored schedule (Ymd -> Y-m-d).
+  useEffect(() => {
+    const value = invoice?.scheduled_send_date || '';
+    setScheduleDateInput(/^\d{8}$/.test(value) ? `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}` : '');
+  }, [invoice?.scheduled_send_date]);
+
+  const todayInputValue = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })();
+
+  const handleSchedule = async () => {
+    if (!scheduleDateInput) return;
+    setErrorMessage('');
+    try {
+      await scheduleInvoice.mutateAsync({ id: invoice.id, scheduledSendDate: scheduleDateInput.replaceAll('-', '') });
+      setSuccessMessage('Factuur ingepland om automatisch te versturen.');
+    } catch (err) {
+      setErrorMessage(err?.response?.data?.message || 'Inplannen is mislukt.');
+    }
+  };
+
+  const handleClearSchedule = async () => {
+    setErrorMessage('');
+    try {
+      await scheduleInvoice.mutateAsync({ id: invoice.id, scheduledSendDate: '' });
+      setSuccessMessage('Inplanning geannuleerd.');
+    } catch (err) {
+      setErrorMessage(err?.response?.data?.message || 'Annuleren is mislukt.');
+    }
+  };
 
   const handleSend = async () => {
     if (!window.confirm('Weet je zeker dat je deze factuur wilt versturen?')) {
@@ -255,6 +303,32 @@ export default function FactuurDetail() {
       setSuccessMessage('Factuur gemarkeerd als onbetaald.');
     } catch (err) {
       setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het markeren als onbetaald.');
+    }
+  };
+
+  const handleMarkCancelled = async () => {
+    if (!window.confirm('Weet je zeker dat je deze factuur wilt laten vervallen? De factuur hoeft dan niet meer betaald te worden en bestaande betaallinks worden gedeactiveerd.')) {
+      return;
+    }
+    setErrorMessage('');
+    try {
+      await updateInvoiceStatus.mutateAsync({ id, status: 'cancelled' });
+      setSuccessMessage('Factuur gemarkeerd als vervallen.');
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het laten vervallen van de factuur.');
+    }
+  };
+
+  const handleReactivate = async () => {
+    if (!window.confirm('Weet je zeker dat je deze vervallen factuur wilt heractiveren? De status wordt teruggezet naar "Verstuurd". Maak daarna zo nodig een nieuwe betaallink aan.')) {
+      return;
+    }
+    setErrorMessage('');
+    try {
+      await updateInvoiceStatus.mutateAsync({ id, status: 'sent' });
+      setSuccessMessage('Factuur geheractiveerd.');
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het heractiveren van de factuur.');
     }
   };
 
@@ -412,7 +486,7 @@ export default function FactuurDetail() {
     }
   };
 
-  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending || regeneratePaymentLink.isPending || resetPaymentState.isPending || deleteInvoice.isPending || updateMembershipDiscount.isPending || addDraftLineItem.isPending || updateDraftInvoice.isPending;
+  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending || regeneratePaymentLink.isPending || resetPaymentState.isPending || deleteInvoice.isPending || updateMembershipDiscount.isPending || addDraftLineItem.isPending || updateDraftInvoice.isPending || scheduleInvoice.isPending;
 
   if (isLoading) {
     return (
@@ -478,21 +552,32 @@ export default function FactuurDetail() {
             <h1 className="text-2xl font-bold text-brand-gradient mb-2">
               {invoice.invoice_number}{invoice.invoice_kind === 'credit' ? ' · Credit' : ''}
             </h1>
-            {invoice.status === 'draft' && (
-              <button
-                onClick={() => {
-                  setIsEditingDraft((current) => !current);
-                  setErrorMessage('');
-                }}
-                disabled={isPending && !isEditingDraft}
-                className="btn-tertiary gap-2"
-              >
-                <Pencil className="w-4 h-4" />
-                {isEditingDraft ? 'Sluit bewerken' : 'Bewerk concept'}
-              </button>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {invoice.status === 'draft' && canEditFinancieel && (
+                <button
+                  onClick={() => {
+                    setIsEditingDraft((current) => !current);
+                    setErrorMessage('');
+                  }}
+                  disabled={isPending && !isEditingDraft}
+                  className="btn-tertiary gap-2"
+                >
+                  <Pencil className="w-4 h-4" />
+                  {isEditingDraft ? 'Sluit bewerken' : 'Bewerk concept'}
+                </button>
+              )}
+              {canEditFinancieel && (
+                <button
+                  onClick={() => navigate(`/financien/facturen/nieuw?copyFrom=${invoice.id}`)}
+                  className="btn-tertiary gap-2"
+                >
+                  <Copy className="w-4 h-4" />
+                  Kopiëren naar nieuwe factuur
+                </button>
+              )}
+            </div>
           </div>
-          <StatusBadge status={invoice.status} reminderCount={invoice.reminder_count || 0} />
+          <StatusBadge status={invoice.status} reminderCount={invoice.reminder_count || 0} scheduledSendDate={invoice.scheduled_send_date} />
         </div>
       </div>
 
@@ -500,27 +585,7 @@ export default function FactuurDetail() {
         <InvoiceDraftForm
           invoiceType={invoice.invoice_type || 'manual'}
           formKey={`draft-${invoice.id}`}
-          initialValues={{
-            invoiceKind: invoice.invoice_kind || 'normal',
-            invoiceTarget: invoice.person?.id ? 'member' : 'external',
-            customerName: invoice.customer_name || '',
-            customerAttention: invoice.customer_attention || '',
-            customerEmail: invoice.customer_email || '',
-            customerCcEmail: invoice.customer_cc_email || '',
-            customerAddress: invoice.customer_address || '',
-            personId: invoice.person?.id || null,
-            personLabel: invoice.person?.name || '',
-            dueDate: invoice.due_date || '',
-            paymentAccountId: invoice.payment_account?.id || '',
-            emailSubject: invoice.email_subject || '',
-            emailBody: invoice.email_body_override || '',
-            customFields: invoice.custom_fields || [],
-            lineItems: (invoice.line_items || []).map((item) => ({
-              description: item.description || '',
-              amount: item.amount ?? '',
-              discipline_case_id: item.discipline_case?.id || null,
-            })),
-          }}
+          initialValues={mapInvoiceToInitialValues(invoice)}
           onSubmit={handleUpdateDraft}
           submitLabel="Wijzigingen opslaan"
           isSubmitting={updateDraftInvoice.isPending}
@@ -552,7 +617,7 @@ export default function FactuurDetail() {
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</h3>
                 <div className="mt-1">
-                  <StatusBadge status={invoice.status} reminderCount={invoice.reminder_count || 0} />
+                  <StatusBadge status={invoice.status} reminderCount={invoice.reminder_count || 0} scheduledSendDate={invoice.scheduled_send_date} />
                 </div>
               </div>
               <div>
@@ -660,6 +725,12 @@ export default function FactuurDetail() {
                 <p className="text-gray-700 dark:text-gray-300">{invoice.person?.name || invoice.customer_name || '-'}</p>
               )}
             </div>
+            {invoice.person?.contact_name && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Contactpersoon</h3>
+                <p className="text-gray-700 dark:text-gray-300">{invoice.person.contact_name}</p>
+              </div>
+            )}
             {customerAttention && (
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Ter attentie van</h3>
@@ -705,7 +776,6 @@ export default function FactuurDetail() {
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Regels</h2>
         <div
           className="overflow-x-auto"
-          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
           data-horizontal-scroll="true"
         >
           <table className="w-full">
@@ -754,7 +824,7 @@ export default function FactuurDetail() {
             </tfoot>
           </table>
         </div>
-        {invoice.status === 'draft' && !isEditingDraft && (
+        {invoice.status === 'draft' && !isEditingDraft && canEditFinancieel && (
           <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Extra regel toevoegen</h3>
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
@@ -799,7 +869,6 @@ export default function FactuurDetail() {
           </h2>
           <div
             className="overflow-x-auto"
-            style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
             data-horizontal-scroll="true"
           >
             <table className="w-full">
@@ -931,7 +1000,45 @@ export default function FactuurDetail() {
         </div>
       )}
 
+      {/* Vervallen (cancelled) info */}
+      {invoice.status === 'cancelled' && invoice.cancelled_at && (
+        <div className="card p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <Ban className="w-5 h-5" />
+            Vervallen
+          </h2>
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Deze factuur is vervallen en hoeft niet meer betaald te worden. Betaallinks zijn gedeactiveerd.
+            </p>
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Vervallen op</h3>
+              <p className="text-gray-700 dark:text-gray-300">
+                {format(new Date(invoice.cancelled_at), 'd MMM yyyy HH:mm')}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Vervallen door</h3>
+              <p className="text-gray-700 dark:text-gray-300">
+                {invoice.cancelled_by?.name || 'Onbekend'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Read-only finance users get the PDF and nothing else. */}
+      {!canEditFinancieel && invoice.pdf_path && (
+        <div className="card p-6">
+          <button onClick={handleDownloadPdf} className="btn-tertiary gap-2">
+            <Download className="w-4 h-4" />
+            Download PDF
+          </button>
+        </div>
+      )}
+
       {/* Action buttons */}
+      {canEditFinancieel && (
       <div className="card p-6">
         <div className="flex flex-wrap gap-3">
           {/* Draft status actions */}
@@ -963,6 +1070,49 @@ export default function FactuurDetail() {
                 )}
                 {isTestMode ? 'Verstuur factuur (test)' : 'Verstuur factuur'}
               </button>
+              <div className="w-full basis-full rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                <div className="flex flex-wrap items-end gap-3">
+                  <label className="text-sm text-gray-700 dark:text-gray-300">
+                    <span className="flex items-center gap-1.5">
+                      <CalendarClock className="w-4 h-4" />
+                      Automatisch verzenden op
+                    </span>
+                    <input
+                      type="date"
+                      value={scheduleDateInput}
+                      min={todayInputValue}
+                      onChange={(e) => setScheduleDateInput(e.target.value)}
+                      className="input mt-1"
+                    />
+                  </label>
+                  <button
+                    onClick={handleSchedule}
+                    disabled={isPending || !scheduleDateInput}
+                    className="btn-tertiary gap-2"
+                  >
+                    {scheduleInvoice.isPending ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                    ) : (
+                      <CalendarClock className="w-4 h-4" />
+                    )}
+                    {invoice.scheduled_send_date ? 'Inplanning bijwerken' : 'Inplannen'}
+                  </button>
+                  {invoice.scheduled_send_date && (
+                    <button
+                      onClick={handleClearSchedule}
+                      disabled={isPending}
+                      className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                      Inplanning annuleren
+                    </button>
+                  )}
+                </div>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  {invoice.scheduled_send_date
+                    ? `Deze factuur wordt automatisch verstuurd op ${format(parseYmd(invoice.scheduled_send_date), 'd MMMM yyyy')}. Je kunt hem ook nu al handmatig versturen.`
+                    : 'De factuur blijft een concept en wordt op de gekozen dag automatisch verstuurd.'}
+                </p>
+              </div>
               <button
                 onClick={() => handleMarkPaid({ fromDraft: true })}
                 disabled={isPending}
@@ -1094,6 +1244,18 @@ export default function FactuurDetail() {
                 Markeer als betaald
               </button>
               <button
+                onClick={handleMarkCancelled}
+                disabled={isPending}
+                className="btn-tertiary gap-2"
+              >
+                {updateInvoiceStatus.isPending ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                ) : (
+                  <Ban className="w-4 h-4" />
+                )}
+                Laat vervallen
+              </button>
+              <button
                 onClick={handleResend}
                 disabled={isPending}
                 className="btn-tertiary gap-2"
@@ -1131,7 +1293,7 @@ export default function FactuurDetail() {
           )}
 
           {/* Payment link button (for any unpaid invoice without a link) */}
-          {invoice.status !== 'paid' && !invoice.payment_link && (
+          {invoice.status !== 'paid' && invoice.status !== 'cancelled' && !invoice.payment_link && (
             <button
               onClick={handleCreatePaymentLink}
               disabled={isPending}
@@ -1147,7 +1309,7 @@ export default function FactuurDetail() {
           )}
 
           {/* Regenerate payment link button (for any unpaid invoice WITH an existing link) */}
-          {invoice.status !== 'paid' && invoice.payment_link && (
+          {invoice.status !== 'paid' && invoice.status !== 'cancelled' && invoice.payment_link && (
             <button
               onClick={handleRegeneratePaymentLink}
               disabled={isPending}
@@ -1160,6 +1322,34 @@ export default function FactuurDetail() {
               )}
               Betaallink opnieuw aanmaken
             </button>
+          )}
+
+          {/* Cancelled status actions */}
+          {invoice.status === 'cancelled' && (
+            <>
+              <button
+                onClick={handleReactivate}
+                disabled={isPending}
+                className="btn-secondary gap-2"
+              >
+                {updateInvoiceStatus.isPending ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+                Heractiveer factuur
+              </button>
+              {invoice.pdf_path && (
+                <button
+                  onClick={handleDownloadPdf}
+                  disabled={isPending}
+                  className="btn-tertiary gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Download PDF
+                </button>
+              )}
+            </>
           )}
 
           {/* Paid status actions */}
@@ -1234,6 +1424,7 @@ export default function FactuurDetail() {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

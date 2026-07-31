@@ -14,7 +14,7 @@ use Google\Service\Walletobjects\Image;
 use Google\Service\Walletobjects\ImageUri;
 use Google\Service\Walletobjects\TextModuleData;
 use Rondo\Config\FinanceConfig;
-use Rondo\Fees\MembershipFees;
+use Rondo\Fees\SeasonKey;
 use Rondo\Config\ClubConfig;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -50,6 +50,11 @@ class MembershipPassGoogle {
 			return new \WP_Error( 'membership_pass_person_not_found', 'Persoon niet gevonden.' );
 		}
 
+		$member_tier = PublicMembershipPassPage::get_person_member_tier( $person_id );
+		if ( $member_tier === '' ) {
+			return new \WP_Error( 'membership_pass_ineligible_member', 'Dit lidtype komt niet in aanmerking voor een ledenpas.' );
+		}
+
 		$issuer_id = $this->get_issuer_id();
 		$json_path = $this->get_service_account_path();
 		if ( $issuer_id === '' || $json_path === '' || ! file_exists( $json_path ) ) {
@@ -70,8 +75,7 @@ class MembershipPassGoogle {
 
 		$class_suffix = $this->get_class_suffix();
 		$class_id     = $issuer_id . '.' . $class_suffix;
-		$fees         = new MembershipFees();
-		$season       = $fees->get_season_key();
+		$season       = SeasonKey::current();
 
 		$qr_service = new MembershipPassQr();
 		$qr_result  = $qr_service->issue_for_person( $person_id );
@@ -79,21 +83,24 @@ class MembershipPassGoogle {
 			return $qr_result;
 		}
 
-		$person_name = $this->get_person_full_name( $person_id );
-		$issuer_name = $this->get_issuer_name();
-		$member_type = $this->get_member_type_label( $person_id );
-		$knvb_id     = trim( (string) get_field( 'knvb-id', $person_id ) );
-		$details     = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
-		$team_name   = $details['teams'] !== '' ? $details['teams'] : '-';
-		$functions   = $details['functions'] !== '' ? $details['functions'] : '-';
-		$object_id   = $issuer_id . '.member_' . $person_id;
+		$person_name          = $this->get_person_full_name( $person_id );
+		$issuer_name          = $this->get_issuer_name();
+		$member_type          = $this->get_member_type_label( $member_tier );
+		$knvb_id              = trim( (string) get_field( 'knvb-id', $person_id ) );
+		$details              = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
+		$team_name            = $details['teams'] !== '' ? $details['teams'] : '-';
+		$functions            = $details['functions'] !== '' ? $details['functions'] : '-';
+		$company_name         = trim( (string) get_field( 'company_name', $person_id ) );
+		$sponsor_pass_variant = $member_tier === 'sponsor' ? PublicMembershipPassPage::get_sponsor_pass_variant( $person_id ) : '';
+		$card_title           = $this->get_card_title( $issuer_name, $member_tier, $sponsor_pass_variant );
+		$object_id            = $issuer_id . '.member_' . $person_id;
 		if ( $details['selection'] !== '' ) {
 			$object_id .= '_' . substr( hash( 'sha256', $details['selection'] ), 0, 12 );
 		}
 
 		try {
 			$this->ensure_class( $service, $class_id );
-			$this->upsert_object( $service, $object_id, $class_id, $issuer_name, $person_name, $member_type, $team_name, $functions, $knvb_id, $season, $qr_result['token'] );
+			$this->upsert_object( $service, $object_id, $class_id, $card_title, $person_name, $member_type, $team_name, $functions, $company_name, $knvb_id, $season, $qr_result['token'], $member_tier, $sponsor_pass_variant );
 		} catch ( \Throwable $e ) {
 			return new \WP_Error( 'membership_pass_google_api_error', 'Google Wallet API fout: ' . $e->getMessage() );
 		}
@@ -169,42 +176,19 @@ class MembershipPassGoogle {
 	 * @param string        $member_type Membership type label.
 	 * @param string        $team_name Team label.
 	 * @param string        $functions Functions label.
+	 * @param string        $company_name Company name.
 	 * @param string        $knvb_id KNVB ID.
 	 * @param string        $season Season key.
 	 * @param string        $qr_payload QR payload.
+	 * @param string        $member_tier Resolved pass tier.
+	 * @param string        $sponsor_pass_variant Sponsor pass variant.
 	 */
-	private function upsert_object( Walletobjects $service, string $object_id, string $class_id, string $card_title, string $person_name, string $member_type, string $team_name, string $functions, string $knvb_id, string $season, string $qr_payload ) {
-		$text_modules = [
-			new TextModuleData(
-				[
-					'id'     => 'functie',
-					'header' => 'FUNCTIE',
-					'body'   => $functions,
-				]
-			),
-			new TextModuleData(
-				[
-					'id'     => 'team',
-					'header' => 'TEAM',
-					'body'   => $team_name,
-				]
-			),
-		];
-		if ( $knvb_id !== '' ) {
-			$text_modules[] = new TextModuleData(
-				[
-					'id'     => 'knvb_id',
-					'header' => 'KNVB ID',
-					'body'   => $knvb_id,
-				]
-			);
-		}
-		$text_modules[] = new TextModuleData(
-			[
-				'id'     => 'seizoen',
-				'header' => 'SEIZOEN',
-				'body'   => $season,
-			]
+	private function upsert_object( Walletobjects $service, string $object_id, string $class_id, string $card_title, string $person_name, string $member_type, string $team_name, string $functions, string $company_name, string $knvb_id, string $season, string $qr_payload, string $member_tier, string $sponsor_pass_variant ) {
+		$text_modules = array_map(
+			static function ( array $module ): TextModuleData {
+				return new TextModuleData( $module );
+			},
+			$this->get_text_module_definitions( $member_tier, $team_name, $functions, $company_name, $knvb_id, $season )
 		);
 
 		$object = new GenericObject(
@@ -238,13 +222,13 @@ class MembershipPassGoogle {
 					]
 				),
 				'textModulesData'    => $text_modules,
-				'hexBackgroundColor' => $this->get_hex_background_color(),
+				'hexBackgroundColor' => $this->get_hex_background_color( $member_tier ),
 			]
 		);
-		$logo   = $this->get_logo_image_url();
+		$logo   = $this->get_logo_image_url( $member_tier, $sponsor_pass_variant );
 		if ( $logo !== '' ) {
 			$object->setLogo(
-				$this->build_logo_image( $logo )
+				$this->build_logo_image( $logo, $member_tier, $sponsor_pass_variant )
 			);
 		}
 
@@ -348,7 +332,8 @@ class MembershipPassGoogle {
 		$infix      = (string) get_field( 'infix', $person_id );
 		$last_name  = (string) get_field( 'last_name', $person_id );
 
-		return trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
+		$name = trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
+		return $name !== '' ? $name : trim( (string) get_field( 'company_name', $person_id ) );
 	}
 
 	/**
@@ -482,10 +467,28 @@ class MembershipPassGoogle {
 	/**
 	 * Resolve logo image URL.
 	 *
+	 * @param string $member_tier Resolved pass tier.
+	 * @param string $sponsor_pass_variant Sponsor pass variant.
 	 * @return string
 	 */
-	private function get_logo_image_url(): string {
-		$config  = new FinanceConfig();
+	private function get_logo_image_url( string $member_tier = '', string $sponsor_pass_variant = '' ): string {
+		$config = new FinanceConfig();
+
+		if ( $member_tier === 'sponsor' && $sponsor_pass_variant === PublicMembershipPassPage::SPONSOR_PASS_VARIANT_BUSINESSCLUB ) {
+			$logo_id = $config->get_businessclub_logo_id();
+			if ( $logo_id > 0 ) {
+				$url = wp_get_attachment_url( $logo_id );
+				if ( is_string( $url ) && $url !== '' ) {
+					return $url;
+				}
+			}
+
+			$businessclub_logo = get_template_directory() . '/public/icons/businessclub-awc-logo.png';
+			if ( file_exists( $businessclub_logo ) ) {
+				return get_template_directory_uri() . '/public/icons/businessclub-awc-logo.png';
+			}
+		}
+
 		$logo_id = $config->get_club_logo_id();
 		if ( $logo_id > 0 ) {
 			$padded = $this->get_padded_logo_image_url( $logo_id );
@@ -505,16 +508,20 @@ class MembershipPassGoogle {
 	 * Build logo image payload with localized content description.
 	 *
 	 * @param string $logo_url Logo URL.
+	 * @param string $member_tier Resolved pass tier.
+	 * @param string $sponsor_pass_variant Sponsor pass variant.
 	 * @return Image
 	 */
-	private function build_logo_image( string $logo_url ): Image {
+	private function build_logo_image( string $logo_url, string $member_tier = '', string $sponsor_pass_variant = '' ): Image {
+		$logo_name = $this->get_card_title( $this->get_issuer_name(), $member_tier, $sponsor_pass_variant );
+
 		return new Image(
 			[
 				'sourceUri'          => new ImageUri( [ 'uri' => $logo_url ] ),
 				'contentDescription' => [
 					'defaultValue' => [
 						'language' => 'nl-NL',
-						'value'    => $this->get_issuer_name() . ' Logo',
+						'value'    => $logo_name . ' Logo',
 					],
 				],
 			]
@@ -625,15 +632,86 @@ class MembershipPassGoogle {
 	/**
 	 * Resolve membership type label shown above the member name.
 	 *
-	 * @param int $person_id Person ID.
+	 * @param string $member_tier Resolved pass tier.
 	 * @return string
 	 */
-	private function get_member_type_label( int $person_id ): string {
-		$type_lid = strtolower( trim( (string) get_field( 'type-lid', $person_id ) ) );
-		if ( $type_lid === 'verenigingslid' ) {
+	private function get_member_type_label( string $member_tier ): string {
+		if ( $member_tier === 'sponsor' ) {
+			return 'Sponsor';
+		}
+		if ( $member_tier === 'verenigingslid' ) {
 			return 'Verenigingslid';
 		}
 		return 'Bondslid';
+	}
+
+	/**
+	 * Resolve the title shown at the top of the pass.
+	 *
+	 * @param string $issuer_name Configured issuer name.
+	 * @param string $member_tier Resolved pass tier.
+	 * @param string $sponsor_pass_variant Sponsor pass variant.
+	 * @return string
+	 */
+	private function get_card_title( string $issuer_name, string $member_tier, string $sponsor_pass_variant = '' ): string {
+		if ( $member_tier !== 'sponsor' ) {
+			return $issuer_name;
+		}
+
+		return $sponsor_pass_variant === PublicMembershipPassPage::SPONSOR_PASS_VARIANT_AWC_SPONSOR
+			? $issuer_name . ' Sponsor'
+			: 'Businessclub ' . $issuer_name;
+	}
+
+	/**
+	 * Build Google Wallet text module definitions.
+	 *
+	 * @param string $member_tier Resolved pass tier.
+	 * @param string $team_name Team label.
+	 * @param string $functions Functions label.
+	 * @param string $company_name Company name.
+	 * @param string $knvb_id KNVB ID.
+	 * @param string $season Season key.
+	 * @return array<int, array{id: string, header: string, body: string}>
+	 */
+	private function get_text_module_definitions( string $member_tier, string $team_name, string $functions, string $company_name, string $knvb_id, string $season ): array {
+		if ( $member_tier === 'sponsor' ) {
+			$modules = [
+				[
+					'id'     => 'bedrijf',
+					'header' => 'BEDRIJF',
+					'body'   => $company_name !== '' ? $company_name : '-',
+				],
+			];
+		} else {
+			$modules = [
+				[
+					'id'     => 'functie',
+					'header' => 'FUNCTIE',
+					'body'   => $functions,
+				],
+				[
+					'id'     => 'team',
+					'header' => 'TEAM',
+					'body'   => $team_name,
+				],
+			];
+		}
+
+		if ( $member_tier === 'bondslid' && $knvb_id !== '' ) {
+			$modules[] = [
+				'id'     => 'knvb_id',
+				'header' => 'KNVB ID',
+				'body'   => $knvb_id,
+			];
+		}
+		$modules[] = [
+			'id'     => 'seizoen',
+			'header' => 'SEIZOEN',
+			'body'   => $season,
+		];
+
+		return $modules;
 	}
 
 	/**
@@ -641,7 +719,11 @@ class MembershipPassGoogle {
 	 *
 	 * @return string
 	 */
-	private function get_hex_background_color(): string {
+	private function get_hex_background_color( string $member_tier = '' ): string {
+		if ( $member_tier === 'sponsor' ) {
+			return '#ffffff';
+		}
+
 		$config = new FinanceConfig();
 		$hex    = trim( $config->get_accent_color() );
 		if ( preg_match( '/^#?[a-f0-9]{6}$/i', $hex ) ) {

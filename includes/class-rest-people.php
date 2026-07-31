@@ -8,6 +8,7 @@
 namespace Rondo\REST;
 
 use Rondo\CustomFields\Manager;
+use Rondo\Core\SponsorStatus;
 use Rondo\Passes\PublicMembershipPassPage;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -34,12 +35,41 @@ class People extends Base {
 
 		// Add computed fields (is_deceased) to person REST responses
 		add_filter( 'rest_prepare_person', [ $this, 'add_person_computed_fields' ], 20, 3 );
+
+		// Reject ACF edits on persons marked former_member=true. Sportlink
+		// rejects writes for these members' lidsoort ("Oud bondslid" /
+		// "Oud verenigingslid"), so anything we accept here just generates
+		// reverse-sync work that can never land. Admins (incl. the sync
+		// service user) are exempt so the sync itself can still touch
+		// former-member records. The only allowed non-admin write is the
+		// former_member toggle itself — flip it off first, then edit.
+		add_filter( 'rest_pre_insert_person', [ $this, 'block_former_member_edits' ], 10, 2 );
+		add_filter( 'rest_pre_insert_person', [ $this, 'enforce_person_field_scope' ], 15, 2 );
+		add_filter( 'rest_pre_insert_person', [ $this, 'validate_sponsor_pass_variant' ], 18, 2 );
+		add_filter( 'rest_pre_insert_person', [ $this, 'validate_person_identity' ], 20, 2 );
+
+		// Allow callers to filter person list endpoints by former_member via
+		// a ?former_member=0 (or =1) query param. Used by rondo-sync's
+		// change detector to skip former members at the database level
+		// instead of pulling them all into JS and filtering there.
+		add_filter( 'rest_person_query', [ $this, 'filter_by_former_member' ], 20, 2 );
 	}
 
 	/**
 	 * Register custom REST routes for people domain
 	 */
 	public function register_routes() {
+		// Personal household scope, independent of broader management privileges.
+		register_rest_route(
+			'rondo/v1',
+			'/people/household',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_household' ],
+				'permission_callback' => 'is_user_logged_in',
+			]
+		);
+
 		// Dates by person
 		register_rest_route(
 			'rondo/v1',
@@ -101,6 +131,44 @@ class People extends Base {
 				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => [ $this, 'remove_share' ],
 				'permission_callback' => [ $this, 'check_post_owner' ],
+			]
+		);
+
+		// Onboarding email send endpoint
+		register_rest_route(
+			'rondo/v1',
+			'/people/onboarding-email',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'send_onboarding_emails' ],
+				'permission_callback' => [ $this, 'check_ledenadministratie_permission' ],
+				'args'                => [
+					'person_ids' => [
+						'required'          => true,
+						'validate_callback' => function ( $param ) {
+							if ( ! is_array( $param ) || empty( $param ) ) {
+								return false;
+							}
+							foreach ( $param as $id ) {
+								if ( ! is_numeric( $id ) ) {
+									return false;
+								}
+							}
+							return true;
+						},
+						'sanitize_callback' => function ( $param ) {
+							return array_map( 'intval', $param );
+						},
+					],
+					'type'       => [
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ 'lid', 'vrijwilliger' ], true );
+						},
+					],
+				],
 			]
 		);
 
@@ -171,27 +239,27 @@ class People extends Base {
 				'callback'            => [ $this, 'get_filtered_people' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
-					'page'                     => [
+					'page'                      => [
 						'default'           => 1,
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param ) && (int) $param > 0;
 						},
 						'sanitize_callback' => 'absint',
 					],
-					'per_page'                 => [
+					'per_page'                  => [
 						'default'           => 100,
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param ) && (int) $param > 0 && (int) $param <= 100;
 						},
 						'sanitize_callback' => 'absint',
 					],
-					'ownership'                => [
+					'ownership'                 => [
 						'default'           => 'all',
 						'validate_callback' => function ( $param ) {
 							return in_array( $param, [ 'mine', 'shared', 'all' ], true );
 						},
 					],
-					'modified_days'            => [
+					'modified_days'             => [
 						'default'           => null,
 						'validate_callback' => function ( $param ) {
 							return $param === null || $param === '' || ( is_numeric( $param ) && (int) $param > 0 );
@@ -200,11 +268,11 @@ class People extends Base {
 							return $param === null || $param === '' ? null : absint( $param );
 						},
 					],
-					'orderby'                  => [
+					'orderby'                   => [
 						'default'           => 'first_name',
 						'validate_callback' => [ $this, 'validate_orderby_param' ],
 					],
-					'order'                    => [
+					'order'                     => [
 						'default'           => 'asc',
 						'validate_callback' => function ( $param ) {
 							return in_array( strtolower( $param ), [ 'asc', 'desc' ], true );
@@ -213,7 +281,7 @@ class People extends Base {
 							return strtolower( $param );
 						},
 					],
-					'birth_year_from'          => [
+					'birth_year_from'           => [
 						'description'       => 'Filter by birth year (minimum year, inclusive)',
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -221,7 +289,7 @@ class People extends Base {
 							return $value >= 1900 && $value <= 2100;
 						},
 					],
-					'birth_year_to'            => [
+					'birth_year_to'             => [
 						'description'       => 'Filter by birth year (maximum year, inclusive)',
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -229,7 +297,7 @@ class People extends Base {
 							return $value >= 1900 && $value <= 2100;
 						},
 					],
-					'birth_month'              => [
+					'birth_month'               => [
 						'description'       => 'Filter by birth month (1-12)',
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -238,7 +306,7 @@ class People extends Base {
 						},
 					],
 					// Custom field filters
-					'huidig_vrijwilliger'      => [
+					'huidig_vrijwilliger'       => [
 						'description'       => 'Filter by current volunteer status (1=yes, 0=no, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -246,7 +314,7 @@ class People extends Base {
 							return in_array( $value, [ '', '1', '0' ], true );
 						},
 					],
-					'financiele_blokkade'      => [
+					'financiele_blokkade'       => [
 						'description'       => 'Filter by financial block status (1=yes, 0=no, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -254,12 +322,36 @@ class People extends Base {
 							return in_array( $value, [ '', '1', '0' ], true );
 						},
 					],
-					'type_lid'                 => [
+					'type_lid'                  => [
 						'description'       => 'Filter by member type',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					],
-					'foto_missing'             => [
+					'person_type'               => [
+						'description'       => 'Filter by Rondo person type (member or contact)',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', 'member', 'contact' ], true );
+						},
+					],
+					'is_sponsor'                => [
+						'description'       => 'Filter by active sponsor role (1=yes, 0=no, empty=all)',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1', '0' ], true );
+						},
+					],
+					'is_businessclub_member'    => [
+						'description'       => 'Filter by active Businessclub membership (1=yes, 0=no, empty=all)',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1', '0' ], true );
+						},
+					],
+					'foto_missing'              => [
 						'description'       => 'Filter for people without photo date (1=missing, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -267,7 +359,7 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
-					'vog_missing'              => [
+					'vog_missing'               => [
 						'description'       => 'Filter for people without VOG date (1=missing, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -275,7 +367,7 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
-					'vog_older_than_years'     => [
+					'vog_older_than_years'      => [
 						'description'       => 'Filter for VOG older than N years',
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -283,7 +375,7 @@ class People extends Base {
 							return $value >= 1 && $value <= 10;
 						},
 					],
-					'vog_email_status'         => [
+					'vog_email_status'          => [
 						'description'       => 'Filter by VOG email status (sent, not_sent, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -291,7 +383,7 @@ class People extends Base {
 							return in_array( $value, [ '', 'sent', 'not_sent' ], true );
 						},
 					],
-					'vog_type'                 => [
+					'vog_type'                  => [
 						'description'       => 'Filter by VOG type (nieuw=no VOG, vernieuwing=expired VOG)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -299,12 +391,12 @@ class People extends Base {
 							return in_array( $value, [ '', 'nieuw', 'vernieuwing' ], true );
 						},
 					],
-					'leeftijdsgroep'           => [
+					'leeftijdsgroep'            => [
 						'description'       => 'Filter by age group',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					],
-					'vog_expiring_within_days' => [
+					'vog_expiring_within_days'  => [
 						'description'       => 'Filter for VOG expiring within N days (valid but expiring soon)',
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -312,7 +404,7 @@ class People extends Base {
 							return $value >= 1 && $value <= 365;
 						},
 					],
-					'vog_justis_status'        => [
+					'vog_justis_status'         => [
 						'description'       => 'Filter by VOG Justis status (submitted, not_submitted, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -320,7 +412,7 @@ class People extends Base {
 							return in_array( $value, [ '', 'submitted', 'not_submitted' ], true );
 						},
 					],
-					'vog_reminder_status'      => [
+					'vog_reminder_status'       => [
 						'description'       => 'Filter by VOG reminder status (sent, not_sent, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -328,7 +420,7 @@ class People extends Base {
 							return in_array( $value, [ '', 'sent', 'not_sent' ], true );
 						},
 					],
-					'include_former'           => [
+					'include_former'            => [
 						'description'       => 'Include former members in results (1=include, empty=exclude)',
 						'type'              => 'string',
 						'default'           => '',
@@ -337,7 +429,7 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
-					'lid_tot_future'           => [
+					'lid_tot_future'            => [
 						'description'       => 'Filter for people with lid-tot date in the future (1=future only, empty=all)',
 						'type'              => 'string',
 						'default'           => '',
@@ -346,8 +438,62 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
-					'spelactiviteit_no_team'   => [
+					'lid_tot_season'            => [
+						'description'       => 'Filter for people with lid-tot date in the current sports season (1 Jul – 30 Jun). 1=only this season, empty=all. Auto-includes former members.',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
+					'lid_sinds_season'          => [
+						'description'       => 'Filter for people with lid-sinds date in the current sports season (1 Jul – 30 Jun) — i.e. members who joined this season. 1=only this season, empty=all.',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
+					'wacht_op_overschrijving'   => [
+						'description'       => 'Filter for people waiting on KNVB transfer (1=only waiting, empty=all)',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
+					'spelactiviteit_no_team'    => [
 						'description'       => 'Filter for people with spelactiviteit but no team (1=filter, empty=all)',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
+					'spelend_lid'               => [
+						'description'       => 'Filter by playing-member status: spelactiviteit set and not "-" (1=yes, 0=no, empty=all)',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1', '0' ], true );
+						},
+					],
+					'onboarding_new_members'    => [
+						'description'       => 'New members (lid-sinds <= 30 days ago) who have not yet received an onboarding email. 1=filter, empty=all.',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
+					'onboarding_new_volunteers' => [
+						'description'       => 'New volunteers (vrijwilliger-sinds <= 60 days ago, huidig-vrijwilliger=1) who have not yet received an onboarding email. 1=filter, empty=all.',
 						'type'              => 'string',
 						'default'           => '',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -369,6 +515,53 @@ class People extends Base {
 				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
 		);
+	}
+
+	/** Return only the linked person and their minor children. */
+	public function get_household() {
+		$ids = \Rondo\Core\AccessControl::get_visible_person_ids();
+		if ( empty( $ids ) ) {
+			return rest_ensure_response( [] );
+		}
+
+		$posts = get_posts(
+			[
+				'post_type'        => 'person',
+				'post_status'      => 'publish',
+				'post__in'         => $ids,
+				'posts_per_page'   => count( $ids ),
+				'orderby'          => 'post__in',
+				'suppress_filters' => true,
+			]
+		);
+
+		$fields = [
+			'first_name',
+			'infix',
+			'last_name',
+			'email_1',
+			'mobile_1',
+			'telephone_1',
+			'addresses',
+			'birthdate',
+			'leeftijdsgroep',
+			'knvb-id',
+			'lid-sinds',
+			'datum-vog',
+		];
+		$people = [];
+		foreach ( $posts as $post ) {
+			$acf = [];
+			foreach ( $fields as $field ) {
+				$acf[ $field ] = get_field( $field, $post->ID );
+			}
+			$people[] = [
+				'id'  => $post->ID,
+				'acf' => $acf,
+			];
+		}
+
+		return rest_ensure_response( $people );
 	}
 
 	/**
@@ -549,7 +742,9 @@ class People extends Base {
 		$data = $response->get_data();
 
 		// Deceased status field (reserved for future use)
-		$data['is_deceased'] = false;
+		$data['is_deceased']       = false;
+		$is_former_member          = ! empty( $data['acf']['former_member'] );
+		$data['is_current_parent'] = $is_former_member && $this->has_current_child_relationship( $post->ID );
 
 		// Get birth year from birthdate field on person
 		$data['birth_year'] = null;
@@ -561,8 +756,9 @@ class People extends Base {
 			}
 		}
 
-		// Expose contributie exclusion flag only to users with financieel capability
-		if ( current_user_can( 'financieel' ) ) {
+		// Expose contributie exclusion flag only to users who may view finance data.
+		// Writing it still requires 'financieel' — see the auth_callback in PostTypes.
+		if ( \Rondo\Core\UserRoles::can_view_finances() ) {
 			$data['exclude_from_contributie'] = (bool) get_post_meta( $post->ID, '_exclude_from_contributie', true );
 		}
 
@@ -602,7 +798,7 @@ class People extends Base {
 				$data['linked_user_roles'] = array_values(
 					array_intersect(
 						$user->roles,
-						[ 'rondo_user', 'rondo_fairplay', 'rondo_vog', 'rondo_financieel', 'rondo_toegangscontrole', 'rondo_bestuur', 'administrator' ]
+						[ 'rondo_user', 'rondo_fairplay', 'rondo_vog', 'rondo_financieel', 'rondo_financieel_lezen', 'rondo_toegangscontrole', 'rondo_ledenadministratie', 'rondo_sponsorbeheerder', 'rondo_bestuur', 'administrator' ]
 					)
 				);
 			}
@@ -611,6 +807,497 @@ class People extends Base {
 		$response->set_data( $data );
 
 		return $response;
+	}
+
+	/**
+	 * Whether this person currently has a parent role for a published,
+	 * non-former person. This role is independent from their own membership
+	 * status: a former member can still be an active parent or guardian.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return bool
+	 */
+	private function has_current_child_relationship( int $person_id ): bool {
+		$child_term = get_term_by( 'slug', 'child', 'relationship_type' );
+		if ( ! $child_term || is_wp_error( $child_term ) ) {
+			return false;
+		}
+
+		$relationships = get_field( 'relationships', $person_id ) ?: [];
+		foreach ( $relationships as $relationship ) {
+			$type_values = $relationship['relationship_type'] ?? [];
+			$type_values = is_array( $type_values ) ? $type_values : [ $type_values ];
+			$is_child    = false;
+
+			foreach ( $type_values as $type_value ) {
+				$type_id = 0;
+				if ( $type_value instanceof \WP_Term ) {
+					$type_id = (int) $type_value->term_id;
+				} elseif ( is_array( $type_value ) ) {
+					$type_id = (int) ( $type_value['term_id'] ?? 0 );
+				} elseif ( is_numeric( $type_value ) ) {
+					$type_id = (int) $type_value;
+				}
+
+				if ( $type_id === (int) $child_term->term_id ) {
+					$is_child = true;
+					break;
+				}
+			}
+
+			if ( ! $is_child ) {
+				continue;
+			}
+
+			$related    = $relationship['related_person'] ?? 0;
+			$related_id = 0;
+			if ( $related instanceof \WP_Post ) {
+				$related_id = (int) $related->ID;
+			} elseif ( is_array( $related ) ) {
+				$related_id = (int) ( $related['ID'] ?? 0 );
+			} elseif ( is_numeric( $related ) ) {
+				$related_id = (int) $related;
+			}
+
+			if (
+				$related_id > 0 &&
+				get_post_status( $related_id ) === 'publish' &&
+				! (bool) get_field( 'former_member', $related_id )
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Block ACF edits on persons marked former_member=true, except for the
+	 * former_member toggle itself. Admins (including the rondo-sync service
+	 * user, which authenticates with manage_options) bypass the check so
+	 * the sync can still write to former-member records.
+	 *
+	 * Filter signature: rest_pre_insert_{$post_type}. Runs before WordPress
+	 * persists a REST insert/update; returning WP_Error aborts the write.
+	 *
+	 * @param stdClass $prepared_post Sanitized post data ready for insert.
+	 * @param WP_REST_Request $request The originating request.
+	 * @return stdClass|WP_Error Original $prepared_post to allow, WP_Error to block.
+	 */
+	public function block_former_member_edits( $prepared_post, $request ) {
+		// Skip on create (no existing ID) — this hook is about edits.
+		if ( empty( $prepared_post->ID ) ) {
+			return $prepared_post;
+		}
+
+		// Admins (incl. the sync service user) are exempt.
+		if ( current_user_can( 'manage_options' ) ) {
+			return $prepared_post;
+		}
+
+		// Existing post's former_member state.
+		$is_former = (bool) get_field( 'former_member', $prepared_post->ID );
+		if ( ! $is_former ) {
+			return $prepared_post;
+		}
+
+		$acf = $request->get_param( 'acf' );
+		if ( ! is_array( $acf ) || empty( $acf ) ) {
+			// Non-ACF write (e.g., title-only edit) on a former member is
+			// also blocked — there's nothing legitimate to change here.
+			return $this->former_member_readonly_error();
+		}
+
+		// Identify which ACF fields the request actually changes vs. current.
+		$current_acf  = get_fields( $prepared_post->ID ) ?: [];
+		$changed_keys = [];
+		foreach ( $acf as $key => $new_value ) {
+			$current = $current_acf[ $key ] ?? null;
+			// Loose serialized comparison handles arrays, post relations,
+			// ACF date-picker formats, etc., without false positives on
+			// type coercion.
+			if ( maybe_serialize( $new_value ) !== maybe_serialize( $current ) ) {
+				$changed_keys[] = $key;
+			}
+		}
+
+		// Only allowed change: flipping former_member itself.
+		$other_changes = array_diff( $changed_keys, [ 'former_member' ] );
+		if ( empty( $other_changes ) ) {
+			return $prepared_post;
+		}
+
+		return $this->former_member_readonly_error( $other_changes );
+	}
+
+	/**
+	 * Require either a personal first name or a company name.
+	 *
+	 * ACF's first_name field is optional so company-only contacts can be saved,
+	 * but a person record must never become entirely nameless.
+	 *
+	 * @param stdClass        $prepared_post Sanitized post data ready for insert.
+	 * @param WP_REST_Request $request       Originating REST request.
+	 * @return stdClass|WP_Error
+	 */
+	public function validate_person_identity( $prepared_post, $request ) {
+		if ( is_wp_error( $prepared_post ) ) {
+			return $prepared_post;
+		}
+
+		$acf = $request->get_param( 'acf' );
+		if ( ! is_array( $acf ) ) {
+			return $prepared_post;
+		}
+
+		$post_id      = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : 0;
+		$first_name   = array_key_exists( 'first_name', $acf ) ? $acf['first_name'] : ( $post_id ? get_field( 'first_name', $post_id ) : '' );
+		$company_name = array_key_exists( 'company_name', $acf ) ? $acf['company_name'] : ( $post_id ? get_field( 'company_name', $post_id ) : '' );
+		$person_type  = array_key_exists( 'person_type', $acf ) ? $acf['person_type'] : ( $post_id ? get_field( 'person_type', $post_id ) : 'member' );
+
+		if ( trim( (string) $first_name ) === '' && trim( (string) $company_name ) === '' ) {
+			return new \WP_Error(
+				'rondo_person_name_required',
+				__( 'Vul een voornaam of bedrijfsnaam in.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( trim( (string) $first_name ) === '' && $person_type !== 'contact' ) {
+			return new \WP_Error(
+				'rondo_company_only_contact_required',
+				__( 'Alleen contacten en sponsors mogen uitsluitend een bedrijfsnaam hebben.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		return $prepared_post;
+	}
+
+	/**
+	 * Require an explicit valid pass variant whenever the sponsor role is active.
+	 *
+	 * @param stdClass        $prepared_post Sanitized post data ready for insert.
+	 * @param WP_REST_Request $request       Originating REST request.
+	 * @return stdClass|WP_Error
+	 */
+	public function validate_sponsor_pass_variant( $prepared_post, $request ) {
+		if ( is_wp_error( $prepared_post ) ) {
+			return $prepared_post;
+		}
+
+		$acf = $request->get_param( 'acf' );
+		if ( ! is_array( $acf ) ) {
+			return $prepared_post;
+		}
+
+		$post_id              = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : 0;
+		$current_is_sponsor   = $post_id ? SponsorStatus::is_sponsor( $post_id ) : false;
+		$requested_is_sponsor = array_key_exists( 'is_sponsor', $acf )
+			? SponsorStatus::value_is_true( $acf['is_sponsor'] )
+			: $current_is_sponsor;
+		$has_variant          = array_key_exists( 'sponsor_pass_variant', $acf );
+		$variant              = $has_variant ? sanitize_key( (string) $acf['sponsor_pass_variant'] ) : '';
+		$allowed              = [
+			PublicMembershipPassPage::SPONSOR_PASS_VARIANT_BUSINESSCLUB,
+			PublicMembershipPassPage::SPONSOR_PASS_VARIANT_AWC_SPONSOR,
+		];
+
+		if ( $has_variant && $variant !== '' && ! in_array( $variant, $allowed, true ) ) {
+			return $this->sponsor_pass_variant_error();
+		}
+
+		$current_variant   = $post_id ? PublicMembershipPassPage::get_sponsor_pass_variant( $post_id ) : '';
+		$effective_variant = $has_variant ? $variant : $current_variant;
+		if ( $requested_is_sponsor && ! in_array( $effective_variant, $allowed, true ) ) {
+			return $this->sponsor_pass_variant_error();
+		}
+
+		return $prepared_post;
+	}
+
+	/**
+	 * Build the validation error for a missing or invalid Sponsor pass variant.
+	 *
+	 * @return WP_Error
+	 */
+	private function sponsor_pass_variant_error() {
+		return new \WP_Error(
+			'rondo_sponsor_pass_variant_required',
+			__( 'Kies Businessclub AWC of AWC Sponsor als pasvariant.', 'rondo' ),
+			[ 'status' => 400 ]
+		);
+	}
+
+	/**
+	 * Keep partial people-editors inside the fields their capability owns.
+	 *
+	 * Two capabilities grant person edit without granting full people management,
+	 * and a role can hold both:
+	 *
+	 * - `sponsorbeheer` owns the sponsor fields, and may create contact+sponsor
+	 *   records outright.
+	 * - `vrijwilligers` owns the contact fields on any person.
+	 *
+	 * The allowed set is therefore the **union** of what the caller's capabilities
+	 * grant. Enforcing them as two independent guards would deadlock: each would
+	 * refuse what the other allows, and a user holding both could edit nothing.
+	 *
+	 * Core REST create permissions are capability-based and have no post ID yet,
+	 * so record creation is handled separately and stays sponsor-only.
+	 *
+	 * @param stdClass        $prepared_post Sanitized post data ready for insert.
+	 * @param WP_REST_Request $request       Originating REST request.
+	 * @return stdClass|WP_Error
+	 */
+	public function enforce_person_field_scope( $prepared_post, $request ) {
+		if ( is_wp_error( $prepared_post ) || \Rondo\Core\AccessControl::can_edit_people() ) {
+			return $prepared_post;
+		}
+
+		$may_manage_sponsors = \Rondo\Core\AccessControl::can_manage_sponsors();
+		$may_edit_contact    = \Rondo\Core\AccessControl::can_edit_person_contact();
+
+		if ( ! $may_manage_sponsors && ! $may_edit_contact ) {
+			return $prepared_post; // No partial editing capability — core caps already decided.
+		}
+
+		$acf     = $request->get_param( 'acf' );
+		$acf     = is_array( $acf ) ? $acf : [];
+		$post_id = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : 0;
+
+		if ( $post_id === 0 ) {
+			// Creation: only sponsor managers may mint a record, and only an
+			// explicit contact+sponsor one. Contact editors never create people.
+			if ( $may_manage_sponsors ) {
+				$requested_type       = sanitize_key( (string) ( $acf['person_type'] ?? '' ) );
+				$requested_is_sponsor = SponsorStatus::value_is_true( $acf['is_sponsor'] ?? false );
+				if ( $requested_type === 'contact' && $requested_is_sponsor ) {
+					return $prepared_post;
+				}
+			}
+
+			return $this->person_field_scope_error();
+		}
+
+		// A record's own identity fields stay with its owner: a sponsor manager
+		// may not un-sponsor a record or change its type.
+		$is_sponsor_record = SponsorStatus::is_sponsor( $post_id );
+		if ( $may_manage_sponsors && $is_sponsor_record ) {
+			$current_type = sanitize_key( (string) get_post_meta( $post_id, 'person_type', true ) );
+			if ( array_key_exists( 'is_sponsor', $acf ) && ! SponsorStatus::value_is_true( $acf['is_sponsor'] ) ) {
+				return $this->person_field_scope_error();
+			}
+			if ( array_key_exists( 'person_type', $acf )
+				&& sanitize_key( (string) $acf['person_type'] ) !== $current_type ) {
+				return $this->person_field_scope_error();
+			}
+		}
+
+		$allowed_fields = $this->allowed_person_fields( $post_id, $may_manage_sponsors, $may_edit_contact );
+
+		if ( $allowed_fields === null ) {
+			return $this->person_field_scope_error();
+		}
+
+		if ( $allowed_fields === self::ALL_FIELDS_ALLOWED ) {
+			return $prepared_post;
+		}
+
+		// Judge the request on what it *changes*, not on what it sends: person
+		// writes in this app round-trip the whole ACF object, so an untouched
+		// field arriving unchanged must not be read as an attempted edit.
+		$blocked_fields = array_values(
+			array_diff( $this->changed_acf_keys( $post_id, $acf ), $allowed_fields )
+		);
+
+		if ( ! empty( $blocked_fields ) ) {
+			return $this->person_field_scope_error( $blocked_fields );
+		}
+
+		// With `edit_post` granted, core post fields are otherwise wide open —
+		// `status: draft` alone would hide a member from every list in the app.
+		$blocked_core = $this->changed_core_post_fields( $prepared_post, $post_id );
+		if ( ! empty( $blocked_core ) ) {
+			return $this->person_field_scope_error( $blocked_core );
+		}
+
+		return $prepared_post;
+	}
+
+	/** Sentinel: every field may be written (a sponsor-only record, for its manager). */
+	private const ALL_FIELDS_ALLOWED = [ '*' ];
+
+	/**
+	 * The union of person fields the caller's capabilities may write.
+	 *
+	 * @param int  $post_id             Person being edited.
+	 * @param bool $may_manage_sponsors Caller holds `sponsorbeheer`.
+	 * @param bool $may_edit_contact    Caller holds `vrijwilligers`.
+	 * @return string[]|null Allowed field names, ALL_FIELDS_ALLOWED, or null when
+	 *                       the record is out of scope entirely.
+	 */
+	private function allowed_person_fields( int $post_id, bool $may_manage_sponsors, bool $may_edit_contact ) {
+		$allowed = [];
+
+		if ( $may_manage_sponsors && SponsorStatus::is_sponsor( $post_id ) ) {
+			// A sponsor-only record is wholly the sponsor manager's — they created
+			// it. A dual-role member is not: there the sponsor fields are the grant.
+			if ( ! SponsorStatus::is_dual_role( $post_id ) ) {
+				return self::ALL_FIELDS_ALLOWED;
+			}
+
+			$allowed = array_merge( $allowed, [ 'company_name', 'is_sponsor', 'sponsor_pass_variant' ] );
+		}
+
+		if ( $may_edit_contact ) {
+			$allowed = array_merge( $allowed, \Rondo\Core\AccessControl::CONTACT_WRITE_FIELDS );
+		}
+
+		return empty( $allowed ) ? null : array_values( array_unique( $allowed ) );
+	}
+
+	/**
+	 * ACF keys whose submitted value differs from what is stored.
+	 *
+	 * @param int   $post_id Person post ID.
+	 * @param array $acf     Submitted ACF payload.
+	 * @return string[]
+	 */
+	private function changed_acf_keys( int $post_id, array $acf ): array {
+		$current = get_fields( $post_id ) ?: [];
+		$changed = [];
+
+		foreach ( $acf as $key => $new_value ) {
+			if ( maybe_serialize( $new_value ) !== maybe_serialize( $current[ $key ] ?? null ) ) {
+				$changed[] = $key;
+			}
+		}
+
+		return $changed;
+	}
+
+	/**
+	 * Core post fields the request would change. Partial editors may change none.
+	 *
+	 * @param stdClass $prepared_post Prepared post object.
+	 * @param int      $post_id       Existing person post ID.
+	 * @return string[]
+	 */
+	private function changed_core_post_fields( $prepared_post, int $post_id ): array {
+		$existing = get_post( $post_id );
+		if ( ! $existing ) {
+			return [];
+		}
+
+		$blocked = [];
+		foreach ( [ 'post_status', 'post_title', 'post_author', 'post_name', 'post_type' ] as $field ) {
+			if ( isset( $prepared_post->$field ) && (string) $prepared_post->$field !== (string) $existing->$field ) {
+				$blocked[] = $field;
+			}
+		}
+
+		return $blocked;
+	}
+
+	/**
+	 * Build the person field-scope error.
+	 *
+	 * @param array $blocked_fields Fields outside the caller's allowlist.
+	 * @return WP_Error
+	 */
+	private function person_field_scope_error( array $blocked_fields = [] ) {
+		$data = [ 'status' => 403 ];
+		if ( ! empty( $blocked_fields ) ) {
+			$data['blocked_fields'] = array_values( $blocked_fields );
+		}
+
+		return new \WP_Error(
+			'rondo_person_field_scope',
+			__( 'Je mag alleen de velden bewerken die bij jouw rol horen.', 'rondo' ),
+			$data
+		);
+	}
+
+	/**
+	 * Build the standard WP_Error returned when a non-admin tries to edit
+	 * a former member's data.
+	 *
+	 * @param array $blocked_fields Names of the fields the caller tried to change.
+	 * @return WP_Error
+	 */
+	protected function former_member_readonly_error( array $blocked_fields = [] ) {
+		$message = __(
+			'Deze persoon is gemarkeerd als oud-lid en kan niet worden bewerkt. Zet eerst "Oud-lid" uit als je de gegevens wilt aanpassen.',
+			'rondo'
+		);
+		$data    = [ 'status' => 403 ];
+		if ( ! empty( $blocked_fields ) ) {
+			$data['blocked_fields'] = array_values( $blocked_fields );
+		}
+		return new \WP_Error( 'rondo_former_member_readonly', $message, $data );
+	}
+
+	/**
+	 * Server-side filter on the ?former_member=0|1 query param for GET
+	 * /wp/v2/people. Pushes the predicate into the meta query instead of
+	 * making clients fetch everything and filter client-side.
+	 *
+	 * - `former_member=0` (or `false`, `no`) → only members whose
+	 *   former_member meta is NOT '1'. Matches "no value at all" too, so
+	 *   newly-created persons that haven't been touched yet show up.
+	 * - `former_member=1` (or `true`, `yes`) → only members where
+	 *   former_member meta is '1'.
+	 * - Any other value (incl. missing param) → no filter applied.
+	 *
+	 * @param array $args WP_Query args being built for this REST call.
+	 * @param WP_REST_Request $request
+	 * @return array
+	 */
+	public function filter_by_former_member( $args, $request ) {
+		$param = $request->get_param( 'former_member' );
+		if ( $param === null || $param === '' ) {
+			return $args;
+		}
+
+		$truthy = [ '1', 1, 'true', true, 'yes' ];
+		$falsy  = [ '0', 0, 'false', false, 'no' ];
+
+		if ( in_array( $param, $truthy, true ) ) {
+			$args['meta_query'] = array_merge(
+				$args['meta_query'] ?? [],
+				[
+					[
+						'key'   => 'former_member',
+						'value' => '1',
+					],
+				]
+				);
+			return $args;
+		}
+
+		if ( in_array( $param, $falsy, true ) ) {
+			$args['meta_query'] = array_merge(
+				$args['meta_query'] ?? [],
+				[
+					[
+						'relation' => 'OR',
+						[
+							'key'     => 'former_member',
+							'compare' => 'NOT EXISTS',
+						],
+						[
+							'key'     => 'former_member',
+							'value'   => '1',
+							'compare' => '!=',
+						],
+					],
+				]
+				);
+			return $args;
+		}
+
+		return $args;
 	}
 
 	/**
@@ -738,6 +1425,50 @@ class People extends Base {
 	}
 
 	/**
+	 * Send onboarding emails to a batch of people.
+	 *
+	 * Skips people who already received the email; records a timestamp on
+	 * successful sends so they drop out of the onboarding list. People with no
+	 * email are reported back so the caller can flag them — they do not fail
+	 * the whole batch.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response
+	 */
+	public function send_onboarding_emails( $request ) {
+		$person_ids = $request->get_param( 'person_ids' );
+		$type       = $request->get_param( 'type' );
+
+		$sender  = new \Rondo\Notifications\OnboardingEmailSender();
+		$results = [];
+		$counts  = [
+			'sent'         => 0,
+			'already_sent' => 0,
+			'no_email'     => 0,
+			'send_failed'  => 0,
+			'not_found'    => 0,
+			'invalid_type' => 0,
+		];
+
+		foreach ( $person_ids as $person_id ) {
+			$result    = $sender->send( (int) $person_id, $type );
+			$results[] = $result;
+			if ( isset( $counts[ $result['status'] ] ) ) {
+				++$counts[ $result['status'] ];
+			}
+		}
+
+		return rest_ensure_response(
+			[
+				'success' => $counts['send_failed'] === 0 && $counts['invalid_type'] === 0,
+				'type'    => $type,
+				'counts'  => $counts,
+				'results' => $results,
+			]
+		);
+	}
+
+	/**
 	 * Validate orderby parameter - accepts built-in fields or custom_ prefixed fields.
 	 *
 	 * @param string $param The orderby value to validate.
@@ -817,21 +1548,49 @@ class People extends Base {
 		$order           = strtoupper( $request->get_param( 'order' ) );
 
 		// Custom field filter parameters
-		$huidig_vrijwilliger      = $request->get_param( 'huidig_vrijwilliger' );
-		$financiele_blokkade      = $request->get_param( 'financiele_blokkade' );
-		$type_lid                 = $request->get_param( 'type_lid' );
-		$foto_missing             = $request->get_param( 'foto_missing' );
-		$vog_missing              = $request->get_param( 'vog_missing' );
-		$vog_older_than_years     = $request->get_param( 'vog_older_than_years' );
-		$vog_expiring_within_days = $request->get_param( 'vog_expiring_within_days' );
-		$vog_email_status         = $request->get_param( 'vog_email_status' );
-		$vog_type                 = $request->get_param( 'vog_type' );
-		$leeftijdsgroep           = $request->get_param( 'leeftijdsgroep' );
-		$vog_justis_status        = $request->get_param( 'vog_justis_status' );
-		$vog_reminder_status      = $request->get_param( 'vog_reminder_status' );
-		$include_former           = $request->get_param( 'include_former' );
-		$lid_tot_future           = $request->get_param( 'lid_tot_future' );
-		$spelactiviteit_no_team   = $request->get_param( 'spelactiviteit_no_team' );
+		$huidig_vrijwilliger       = $request->get_param( 'huidig_vrijwilliger' );
+		$financiele_blokkade       = $request->get_param( 'financiele_blokkade' );
+		$type_lid                  = $request->get_param( 'type_lid' );
+		$person_type               = $request->get_param( 'person_type' );
+		$is_sponsor                = $request->get_param( 'is_sponsor' );
+		$is_businessclub_member    = $request->get_param( 'is_businessclub_member' );
+		$foto_missing              = $request->get_param( 'foto_missing' );
+		$vog_missing               = $request->get_param( 'vog_missing' );
+		$vog_older_than_years      = $request->get_param( 'vog_older_than_years' );
+		$vog_expiring_within_days  = $request->get_param( 'vog_expiring_within_days' );
+		$vog_email_status          = $request->get_param( 'vog_email_status' );
+		$vog_type                  = $request->get_param( 'vog_type' );
+		$leeftijdsgroep            = $request->get_param( 'leeftijdsgroep' );
+		$vog_justis_status         = $request->get_param( 'vog_justis_status' );
+		$vog_reminder_status       = $request->get_param( 'vog_reminder_status' );
+		$include_former            = $request->get_param( 'include_former' );
+		$lid_tot_future            = $request->get_param( 'lid_tot_future' );
+		$lid_tot_season            = $request->get_param( 'lid_tot_season' );
+		$lid_sinds_season          = $request->get_param( 'lid_sinds_season' );
+		$spelactiviteit_no_team    = $request->get_param( 'spelactiviteit_no_team' );
+		$spelend_lid               = $request->get_param( 'spelend_lid' );
+		$wacht_op_overschrijving   = $request->get_param( 'wacht_op_overschrijving' );
+		$onboarding_new_members    = $request->get_param( 'onboarding_new_members' );
+		$onboarding_new_volunteers = $request->get_param( 'onboarding_new_volunteers' );
+
+		// Cancellation-this-season filter implies former members must be visible:
+		// once lid-tot has passed, Sportlink flips `former_member` to '1', and the
+		// default people query hides those. Auto-flip include_former so the user
+		// sees every cancellation in the season window, not just the not-yet-expired ones.
+		if ( $lid_tot_season === '1' ) {
+			$include_former = '1';
+		}
+
+		// Filtering or sorting on a field the caller may not read would hand them
+		// its value through result membership and result order. Drop both silently:
+		// erroring would confirm the field exists just as loudly.
+		if ( \Rondo\Core\AccessControl::acf_field_is_hidden( 'financiele_blokkade' ) ) {
+			$financiele_blokkade = null;
+		}
+		if ( strpos( (string) $orderby, 'custom_' ) === 0
+			&& \Rondo\Core\AccessControl::acf_field_is_hidden( substr( $orderby, 7 ) ) ) {
+			$orderby = 'first_name';
+		}
 
 		// Double-check access control (permission_callback should have caught this,
 		// but custom $wpdb queries bypass pre_get_posts hooks, so we verify explicitly)
@@ -853,7 +1612,7 @@ class People extends Base {
 		$volunteers_only = user_can( $current_user_id, 'vog' ) && ! user_can( $current_user_id, 'fairplay' );
 
 		// Build query components
-		$select_fields  = 'p.ID, p.post_modified, p.post_author';
+		$select_fields  = 'p.ID, p.post_title, p.post_modified, p.post_author';
 		$join_clauses   = [];
 		$where_clauses  = [
 			"p.post_type = 'person'",
@@ -898,19 +1657,25 @@ class People extends Base {
 		}
 
 		// Age-group access filtering
-		if ( ! \Rondo\Core\AccessControl::$suppress_age_group_filter ) {
-			$permitted_age_groups = \Rondo\Core\AccessControl::get_permitted_age_groups( $current_user_id );
+		$permitted_age_groups = \Rondo\Core\AccessControl::get_permitted_age_groups( $current_user_id );
 
-			if ( $permitted_age_groups !== null ) {
-				if ( empty( $permitted_age_groups ) ) {
-					// Empty array = see nobody. Force zero results.
+		if ( $permitted_age_groups !== null ) {
+			if ( empty( $permitted_age_groups ) ) {
+				// Scoped member: their own household, nothing else.
+				$visible = \Rondo\Core\AccessControl::get_visible_person_ids( $current_user_id );
+
+				if ( empty( $visible ) ) {
 					$where_clauses[] = '1 = 0';
 				} else {
-					$ag_placeholders = implode( ', ', array_fill( 0, count( $permitted_age_groups ), '%s' ) );
-					$join_clauses[]  = "INNER JOIN {$wpdb->postmeta} ag ON p.ID = ag.post_id AND ag.meta_key = 'leeftijdsgroep'";
-					$where_clauses[] = "ag.meta_value IN ($ag_placeholders)";
-					$prepare_values  = array_merge( $prepare_values, $permitted_age_groups );
+					$id_placeholders = implode( ', ', array_fill( 0, count( $visible ), '%d' ) );
+					$where_clauses[] = "p.ID IN ($id_placeholders)";
+					$prepare_values  = array_merge( $prepare_values, $visible );
 				}
+			} else {
+				$ag_placeholders = implode( ', ', array_fill( 0, count( $permitted_age_groups ), '%s' ) );
+				$join_clauses[]  = "INNER JOIN {$wpdb->postmeta} ag ON p.ID = ag.post_id AND ag.meta_key = 'leeftijdsgroep'";
+				$where_clauses[] = "ag.meta_value IN ($ag_placeholders)";
+				$prepare_values  = array_merge( $prepare_values, $permitted_age_groups );
 			}
 		}
 
@@ -982,6 +1747,35 @@ class People extends Base {
 			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} tl ON p.ID = tl.post_id AND tl.meta_key = 'type-lid'";
 			$where_clauses[]  = 'tl.meta_value = %s';
 			$prepare_values[] = $type_lid;
+		}
+
+		// Rondo person type. Legacy records without this field are members/parents.
+		if ( ! empty( $person_type ) ) {
+			$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} pt ON p.ID = pt.post_id AND pt.meta_key = 'person_type'";
+			if ( $person_type === 'contact' ) {
+				$where_clauses[]  = 'pt.meta_value = %s';
+				$prepare_values[] = $person_type;
+			} else {
+				$where_clauses[] = "(pt.meta_value IS NULL OR pt.meta_value = '' OR pt.meta_value = 'member')";
+			}
+		}
+
+		// Sponsorship is an independent role and can overlap either person type.
+		if ( $is_sponsor !== null && $is_sponsor !== '' ) {
+			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} sp ON p.ID = sp.post_id AND sp.meta_key = 'is_sponsor'";
+			$where_clauses[] = $is_sponsor === '1'
+				? "(sp.meta_value = '1')"
+				: "(sp.meta_value IS NULL OR sp.meta_value = '' OR sp.meta_value = '0')";
+		}
+
+		// Businessclub membership is the active sponsor role with the Businessclub pass variant.
+		if ( $is_businessclub_member !== null && $is_businessclub_member !== '' ) {
+			$join_clauses[]         = "LEFT JOIN {$wpdb->postmeta} bcsp ON p.ID = bcsp.post_id AND bcsp.meta_key = 'is_sponsor'";
+			$join_clauses[]         = "LEFT JOIN {$wpdb->postmeta} bcpv ON p.ID = bcpv.post_id AND bcpv.meta_key = 'sponsor_pass_variant'";
+			$businessclub_condition = "(COALESCE(bcsp.meta_value, '') = '1' AND COALESCE(bcpv.meta_value, '') = 'businessclub')";
+			$where_clauses[]        = $is_businessclub_member === '1'
+				? $businessclub_condition
+				: "NOT {$businessclub_condition}";
 		}
 
 		// Leeftijdsgroep (age group) - select filter
@@ -1076,6 +1870,28 @@ class People extends Base {
 			$prepare_values[] = $today;
 		}
 
+		// Lid-tot cancelled-this-season filter (Dutch sports season: 1 Jul – 30 Jun).
+		// Window: members whose lid-tot falls inside the season that contains today.
+		if ( $lid_tot_season === '1' && $lid_tot_future !== '1' ) {
+			[ $season_start, $season_end ] = $this->get_current_season_window();
+			$join_clauses[]                = "LEFT JOIN {$wpdb->postmeta} lt ON p.ID = lt.post_id AND lt.meta_key = 'lid-tot'";
+			$where_clauses[]               = "(lt.meta_value IS NOT NULL AND lt.meta_value != '' AND lt.meta_value >= %s AND lt.meta_value <= %s)";
+			$prepare_values[]              = $season_start;
+			$prepare_values[]              = $season_end;
+		}
+
+		// Lid-sinds new-this-season filter (Dutch sports season: 1 Jul – 30 Jun).
+		// Window: members whose lid-sinds falls inside the season that contains today.
+		// Does NOT auto-include former members — by default we want current members who joined this season,
+		// not people who joined and already cancelled.
+		if ( $lid_sinds_season === '1' ) {
+			[ $season_start, $season_end ] = $this->get_current_season_window();
+			$join_clauses[]                = "LEFT JOIN {$wpdb->postmeta} ls ON p.ID = ls.post_id AND ls.meta_key = 'lid-sinds'";
+			$where_clauses[]               = "(ls.meta_value IS NOT NULL AND ls.meta_value != '' AND ls.meta_value >= %s AND ls.meta_value <= %s)";
+			$prepare_values[]              = $season_start;
+			$prepare_values[]              = $season_end;
+		}
+
 		// Spelactiviteit without team filter
 		// Shows people who have a spelactiviteit value but no current PLAYER role in a team.
 		// Volunteer/staff roles in teams should NOT exclude a person from this filter.
@@ -1112,14 +1928,55 @@ class People extends Base {
 			$where_clauses[] = "(sa.meta_value IS NOT NULL AND sa.meta_value != '' AND NOT EXISTS ($player_team_subquery))";
 		}
 
+		// Spelend lid — playing members have a spelactiviteit value other than empty or '-'.
+		// 1 = playing (value set and not '-'), 0 = not playing (no value or '-').
+		if ( $spelend_lid !== null && $spelend_lid !== '' ) {
+			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} sl ON p.ID = sl.post_id AND sl.meta_key = 'spelactiviteit'";
+			$where_clauses[] = $spelend_lid === '1'
+				? "(sl.meta_value IS NOT NULL AND sl.meta_value != '' AND sl.meta_value != '-')"
+				: "(sl.meta_value IS NULL OR sl.meta_value = '' OR sl.meta_value = '-')";
+		}
+
+		// Wacht op overschrijving — members transferred in from another club whose
+		// KNVB transfer hasn't been processed yet (Sportlink Tooltip "Actie van
+		// een ander (overschrijving)").
+		if ( $wacht_op_overschrijving === '1' ) {
+			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} wo ON p.ID = wo.post_id AND wo.meta_key = 'wacht_op_overschrijving'";
+			$where_clauses[] = "(wo.meta_value = '1')";
+		}
+
+		// Onboarding: new members.
+		// lid-sinds within the last 30 days AND no onboarding-email-lid-sent timestamp.
+		if ( $onboarding_new_members === '1' ) {
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} ols ON p.ID = ols.post_id AND ols.meta_key = 'lid-sinds'";
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} oles ON p.ID = oles.post_id AND oles.meta_key = 'onboarding-email-lid-sent'";
+			$cutoff           = gmdate( 'Y-m-d', strtotime( '-30 days' ) );
+			$where_clauses[]  = '(ols.meta_value IS NOT NULL AND ols.meta_value != \'\' AND ols.meta_value >= %s)';
+			$where_clauses[]  = '(oles.meta_value IS NULL OR oles.meta_value = \'\')';
+			$prepare_values[] = $cutoff;
+		}
+
+		// Onboarding: new volunteers.
+		// vrijwilliger-sinds within last 60 days AND huidig-vrijwilliger=1 AND no onboarding-email-vrijwilliger-sent timestamp.
+		if ( $onboarding_new_volunteers === '1' ) {
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} ovs ON p.ID = ovs.post_id AND ovs.meta_key = 'vrijwilliger-sinds'";
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} ohv ON p.ID = ohv.post_id AND ohv.meta_key = 'huidig-vrijwilliger'";
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} oves ON p.ID = oves.post_id AND oves.meta_key = 'onboarding-email-vrijwilliger-sent'";
+			$cutoff           = gmdate( 'Y-m-d', strtotime( '-60 days' ) );
+			$where_clauses[]  = '(ovs.meta_value IS NOT NULL AND ovs.meta_value != \'\' AND ovs.meta_value >= %s)';
+			$where_clauses[]  = "(ohv.meta_value = '1')";
+			$where_clauses[]  = '(oves.meta_value IS NULL OR oves.meta_value = \'\')';
+			$prepare_values[] = $cutoff;
+		}
+
 		// Build ORDER BY clause (columns are whitelisted in args validation)
 		// ORDER and orderby are safe - validated against whitelist
 		switch ( $orderby ) {
 			case 'first_name':
-				$order_clause = "ORDER BY fn.meta_value $order, ln.meta_value $order";
+				$order_clause = "ORDER BY COALESCE(NULLIF(fn.meta_value, ''), p.post_title) $order, ln.meta_value $order";
 				break;
 			case 'last_name':
-				$order_clause = "ORDER BY ln.meta_value $order, fn.meta_value $order";
+				$order_clause = "ORDER BY COALESCE(NULLIF(ln.meta_value, ''), p.post_title) $order, fn.meta_value $order";
 				break;
 			case 'modified':
 				$order_clause = "ORDER BY p.post_modified $order";
@@ -1154,6 +2011,7 @@ class People extends Base {
 				$order_clause = "ORDER BY COALESCE(dv.meta_value, '') $order, fn.meta_value ASC";
 				break;
 			case 'custom_lid-sinds':
+			case 'custom_lid-tot':
 			case 'custom_vrijwilliger-sinds':
 			case 'custom_datum-foto':
 				// ACF date fields (not from Manager)
@@ -1309,10 +2167,12 @@ class People extends Base {
 		$total = (int) $wpdb->get_var( $prepared_count_sql );
 
 		// Format results
-		$people = [];
+		$is_scoped_member = \Rondo\Core\AccessControl::is_scoped_member();
+		$people           = [];
 		foreach ( $results as $row ) {
 			$person = [
 				'id'            => (int) $row->ID,
+				'name'          => $this->sanitize_text( $row->post_title ?: '' ),
 				'first_name'    => $this->sanitize_text( $row->first_name ?: '' ),
 				'infix'         => $this->sanitize_text( $row->infix ?: '' ),
 				'last_name'     => $this->sanitize_text( $row->last_name ?: '' ),
@@ -1323,26 +2183,36 @@ class People extends Base {
 				'thumbnail'     => $this->sanitize_url( get_the_post_thumbnail_url( $row->ID, 'thumbnail' ) ),
 			];
 
-			// Add ACF fields for custom field columns
+			// Add ACF fields for custom field columns.
+			// This endpoint builds its response by hand and never passes through
+			// `rest_prepare_person`, so it has to apply the same redaction the
+			// core routes get from AccessControl::filter_rest_single_access().
 			if ( function_exists( 'get_fields' ) ) {
 				$acf_fields = get_fields( $row->ID );
 				if ( $acf_fields ) {
-					$person['acf'] = $acf_fields;
+					if ( $is_scoped_member ) {
+						$acf_fields = \Rondo\Core\AccessControl::filter_member_visible_acf( $acf_fields );
+					}
+					$person['acf'] = \Rondo\Core\AccessControl::filter_sensitive_acf( $acf_fields );
 				}
 			}
 
-			// Add VOG-related post meta fields to acf array for frontend consistency
-			$vog_email_sent = get_post_meta( $row->ID, 'vog_email_sent_date', true );
-			$vog_justis     = get_post_meta( $row->ID, 'vog_justis_submitted_date', true );
-			$vog_reminder   = get_post_meta( $row->ID, 'vog_reminder_sent_date', true );
-			if ( $vog_email_sent ) {
-				$person['acf']['vog_email_sent_date'] = $vog_email_sent;
-			}
-			if ( $vog_justis ) {
-				$person['acf']['vog_justis_submitted_date'] = $vog_justis;
-			}
-			if ( $vog_reminder ) {
-				$person['acf']['vog_reminder_sent_date'] = $vog_reminder;
+			// Add VOG-related post meta fields to acf array for frontend consistency.
+			// These are VOG-workflow timestamps, not member-facing data, so they stay
+			// out of a scoped member's allowlisted payload.
+			if ( ! $is_scoped_member ) {
+				$vog_email_sent = get_post_meta( $row->ID, 'vog_email_sent_date', true );
+				$vog_justis     = get_post_meta( $row->ID, 'vog_justis_submitted_date', true );
+				$vog_reminder   = get_post_meta( $row->ID, 'vog_reminder_sent_date', true );
+				if ( $vog_email_sent ) {
+					$person['acf']['vog_email_sent_date'] = $vog_email_sent;
+				}
+				if ( $vog_justis ) {
+					$person['acf']['vog_justis_submitted_date'] = $vog_justis;
+				}
+				if ( $vog_reminder ) {
+					$person['acf']['vog_reminder_sent_date'] = $vog_reminder;
+				}
 			}
 
 			$people[] = $person;
@@ -1366,6 +2236,26 @@ class People extends Base {
 	 *
 	 * @return array Filter configuration.
 	 */
+	/**
+	 * Return [start, end] dates (Y-m-d strings) for the Dutch sports season
+	 * that contains "today" — 1 July through 30 June.
+	 *
+	 * Before 1 July: season ran (year-1)-07-01 .. year-06-30
+	 * On/after 1 July: season runs year-07-01 .. (year+1)-06-30
+	 *
+	 * @return array{0:string,1:string} Tuple of [season_start, season_end].
+	 */
+	private function get_current_season_window(): array {
+		$today_year  = (int) gmdate( 'Y' );
+		$today_month = (int) gmdate( 'n' );
+
+		if ( $today_month < 7 ) {
+			return [ ( $today_year - 1 ) . '-07-01', $today_year . '-06-30' ];
+		}
+
+		return [ $today_year . '-07-01', ( $today_year + 1 ) . '-06-30' ];
+	}
+
 	private function get_dynamic_filter_config() {
 		return [
 			'age_groups'   => [

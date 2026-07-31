@@ -13,57 +13,297 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Api extends Base {
 
-	private const KADERLIJST_SNAPSHOT_OPTION = 'rondo_kaderlijst_snapshot';
-	private const KADERLIJST_UPDATED_OPTION  = 'rondo_kaderlijst_snapshot_updated_at';
+	/**
+	 * ACF fields the Kaderlijst renders. The endpoint returns nothing else — a
+	 * scoped viewer never sees a kaderlid's financial flags or private meta.
+	 */
+	private const KADERLIJST_ACF_FIELDS = [
+		'first_name',
+		'infix',
+		'last_name',
+		'work_history',
+		'email_1',
+		'email_2',
+		'mobile_1',
+		'mobile_2',
+		'telephone_1',
+		'telephone_2',
+	];
 
 	/**
-	 * Get persisted kaderlijst snapshot from WordPress options.
+	 * Memoised player-role lookup (role name => true) for the current request.
+	 *
+	 * @var array<string, true>|null
+	 */
+	private $player_role_lookup = null;
+
+	/**
+	 * Return the kaderleden the current user may see, with only the fields the
+	 * Kaderlijst renders.
+	 *
+	 * "Kader" is anyone with a current `work_history` job linked to a team. The
+	 * result is scoped server-side — this is the surface that replaced the old
+	 * `suppress_age_group` full-club fetch:
+	 *
+	 *   - Management (unrestricted) sees every kaderlid.
+	 *   - A coordinator sees kaderleden attached to a team whose current roster
+	 *     includes one of their permitted `leeftijdsgroep` values — i.e. the
+	 *     kader of the age groups they coordinate, not kader who merely share
+	 *     their own (adult) age group.
+	 *   - A scoped member sees only kaderleden in their own household.
 	 *
 	 * @param \WP_REST_Request $request The request object.
 	 * @return \WP_REST_Response
 	 */
-	public function get_kaderlijst_snapshot( $request ) {
-		$snapshot   = get_option( self::KADERLIJST_SNAPSHOT_OPTION, null );
-		$updated_at = get_option( self::KADERLIJST_UPDATED_OPTION, null );
+	public function get_kaderlijst_people( $request ) {
+		$permitted = \Rondo\Core\AccessControl::get_permitted_age_groups();
 
-		if ( ! is_array( $snapshot ) || ! isset( $snapshot['teams'], $snapshot['rows'] ) ) {
-			$snapshot = null;
+		// Scoped member: only their own household, and only if they are kader.
+		if ( is_array( $permitted ) && empty( $permitted ) ) {
+			$visible = \Rondo\Core\AccessControl::get_visible_person_ids();
+
+			return rest_ensure_response(
+				[ 'people' => empty( $visible ) ? [] : $this->build_kaderlijst_people( $visible ) ]
+			);
+		}
+
+		$candidate_ids = $this->kaderlijst_candidate_ids();
+
+		// Coordinator: keep only kaderleden attached to a team they coordinate.
+		if ( is_array( $permitted ) && ! empty( $permitted ) ) {
+			$scoped_teams  = $this->teams_for_age_groups( $permitted );
+			$candidate_ids = $this->filter_candidates_by_teams( $candidate_ids, $scoped_teams );
 		}
 
 		return rest_ensure_response(
-			[
-				'snapshot'   => $snapshot,
-				'updated_at' => is_string( $updated_at ) ? $updated_at : null,
-			]
+			[ 'people' => $this->build_kaderlijst_people( $candidate_ids ) ]
 		);
 	}
 
 	/**
-	 * Persist kaderlijst snapshot in WordPress options.
+	 * Person IDs of the kader: at least one current `work_history` job whose
+	 * job_title is not a player role. Excludes former members.
 	 *
-	 * @param \WP_REST_Request $request The request object.
-	 * @return \WP_REST_Response|\WP_Error
+	 * A job is "current" when its end date is empty or today-or-later — the same
+	 * rule the client applies (`isCurrentJob`), which ignores the `is_current`
+	 * flag. Player rows are dropped here for the same reason the client hides them:
+	 * they are not kader. A player who is also a coach still qualifies on the coach
+	 * row. The team is deliberately optional — the old list showed teamless
+	 * coordinator functies too, and they are re-derived from the role text client-side.
+	 *
+	 * ACF stores repeater rows as flat meta (`work_history_{N}_job_title`,
+	 * `work_history_{N}_end_date`) and date_pickers as `Ymd` (a few legacy rows are
+	 * `Y-m-d`), so the end date is normalised with REPLACE before comparison.
+	 *
+	 * @return int[]
 	 */
-	public function update_kaderlijst_snapshot( $request ) {
-		$snapshot = $request->get_param( 'snapshot' );
-		if ( ! is_array( $snapshot ) || ! isset( $snapshot['teams'], $snapshot['rows'] ) || ! is_array( $snapshot['teams'] ) || ! is_array( $snapshot['rows'] ) ) {
-			return new \WP_Error(
-				'invalid_snapshot',
-				__( 'Invalid kaderlijst snapshot payload.', 'rondo' ),
-				[ 'status' => 400 ]
-			);
+	private function kaderlijst_candidate_ids(): array {
+		global $wpdb;
+
+		$player_roles = \Rondo\Core\VolunteerStatus::get_player_roles();
+		$today        = current_time( 'Ymd' );
+
+		if ( empty( $player_roles ) ) {
+			$player_roles = [ '' ];
 		}
 
-		update_option( self::KADERLIJST_SNAPSHOT_OPTION, $snapshot, false );
-		$updated_at = gmdate( 'c' );
-		update_option( self::KADERLIJST_UPDATED_OPTION, $updated_at, false );
+		$role_placeholders = implode( ', ', array_fill( 0, count( $player_roles ), '%s' ) );
 
-		return rest_ensure_response(
-			[
-				'snapshot'   => $snapshot,
-				'updated_at' => $updated_at,
-			]
+		$sql = $wpdb->prepare(
+			"SELECT DISTINCT p.ID
+			 FROM {$wpdb->posts} p
+			 JOIN {$wpdb->postmeta} wh_jt
+			   ON wh_jt.post_id = p.ID
+			   AND wh_jt.meta_key REGEXP '^work_history_[0-9]+_job_title$'
+			   AND wh_jt.meta_value <> ''
+			   AND wh_jt.meta_value NOT IN ($role_placeholders)
+			 LEFT JOIN {$wpdb->postmeta} wh_ed
+			   ON wh_ed.post_id = p.ID
+			   AND wh_ed.meta_key = REPLACE( wh_jt.meta_key, '_job_title', '_end_date' )
+			 LEFT JOIN {$wpdb->postmeta} fm
+			   ON fm.post_id = p.ID AND fm.meta_key = 'former_member'
+			 WHERE p.post_type = 'person'
+			   AND p.post_status = 'publish'
+			   AND ( fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0' )
+			   AND ( wh_ed.meta_value IS NULL OR wh_ed.meta_value = '' OR REPLACE( wh_ed.meta_value, '-', '' ) >= %s )",
+			...array_merge( $player_roles, [ $today ] )
 		);
+
+		return array_map( 'intval', (array) $wpdb->get_col( $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Prepared above.
+	}
+
+	/**
+	 * Team IDs whose current roster includes a player in one of the given
+	 * `leeftijdsgroep` values. This is how a coordinator's age-group scope
+	 * (`Onder 12`, `Onder 9 Meiden`, `Senioren Vrouwen`, …) resolves to the set
+	 * of teams they coordinate, without parsing team names.
+	 *
+	 * @param string[] $age_groups Permitted leeftijdsgroep values.
+	 * @return int[] Team post IDs.
+	 */
+	private function teams_for_age_groups( array $age_groups ): array {
+		global $wpdb;
+
+		$player_roles = \Rondo\Core\VolunteerStatus::get_player_roles();
+
+		if ( empty( $age_groups ) || empty( $player_roles ) ) {
+			return [];
+		}
+
+		$ag_placeholders   = implode( ', ', array_fill( 0, count( $age_groups ), '%s' ) );
+		$role_placeholders = implode( ', ', array_fill( 0, count( $player_roles ), '%s' ) );
+
+		$sql = $wpdb->prepare(
+			"SELECT DISTINCT wh_tm.meta_value AS team_id
+			 FROM {$wpdb->postmeta} lg
+			 JOIN {$wpdb->postmeta} wh_jt
+			   ON wh_jt.post_id = lg.post_id
+			   AND wh_jt.meta_key REGEXP '^work_history_[0-9]+_job_title$'
+			   AND wh_jt.meta_value IN ($role_placeholders)
+			 JOIN {$wpdb->postmeta} wh_ic
+			   ON wh_ic.post_id = lg.post_id
+			   AND wh_ic.meta_key = REPLACE( wh_jt.meta_key, '_job_title', '_is_current' )
+			   AND wh_ic.meta_value = '1'
+			 JOIN {$wpdb->postmeta} wh_tm
+			   ON wh_tm.post_id = lg.post_id
+			   AND wh_tm.meta_key = REPLACE( wh_jt.meta_key, '_job_title', '_team' )
+			 WHERE lg.meta_key = 'leeftijdsgroep'
+			   AND lg.meta_value IN ($ag_placeholders)",
+			...array_merge( $player_roles, $age_groups )
+		);
+
+		return array_map( 'intval', (array) $wpdb->get_col( $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Prepared above.
+	}
+
+	/**
+	 * Keep only candidates who have a current, team-linked job on one of the
+	 * given teams.
+	 *
+	 * @param int[] $candidate_ids Person IDs to filter.
+	 * @param int[] $team_ids      Allowed team IDs.
+	 * @return int[]
+	 */
+	private function filter_candidates_by_teams( array $candidate_ids, array $team_ids ): array {
+		if ( empty( $candidate_ids ) || empty( $team_ids ) ) {
+			return [];
+		}
+
+		$allowed = array_flip( array_map( 'intval', $team_ids ) );
+		$kept    = [];
+
+		foreach ( $candidate_ids as $person_id ) {
+			foreach ( $this->current_team_ids_for_person( $person_id ) as $team_id ) {
+				if ( isset( $allowed[ $team_id ] ) ) {
+					$kept[] = $person_id;
+					break;
+				}
+			}
+		}
+
+		return $kept;
+	}
+
+	/**
+	 * Team IDs a person currently coaches: the teams of their current, non-player
+	 * work_history jobs. This is the set a coordinator's team scope is matched
+	 * against, so a player's own team never widens what a coordinator can see.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return int[]
+	 */
+	private function current_team_ids_for_person( int $person_id ): array {
+		$work_history = get_field( 'work_history', $person_id );
+
+		if ( empty( $work_history ) || ! is_array( $work_history ) ) {
+			return [];
+		}
+
+		$player_roles = $this->player_role_lookup();
+		$team_ids     = [];
+
+		foreach ( $work_history as $job ) {
+			$team_id = (int) ( $job['team'] ?? 0 );
+			$role    = trim( (string) ( $job['job_title'] ?? '' ) );
+
+			if ( $team_id && $role !== '' && ! isset( $player_roles[ $role ] ) && $this->is_current_job( $job ) ) {
+				$team_ids[] = $team_id;
+			}
+		}
+
+		return $team_ids;
+	}
+
+	/**
+	 * Player role names as a lookup map (role => true), memoised per request.
+	 *
+	 * @return array<string, true>
+	 */
+	private function player_role_lookup(): array {
+		if ( $this->player_role_lookup === null ) {
+			$this->player_role_lookup = array_fill_keys( \Rondo\Core\VolunteerStatus::get_player_roles(), true );
+		}
+
+		return $this->player_role_lookup;
+	}
+
+	/**
+	 * Whether a work_history row is current. Mirrors the client's `isCurrentJob`:
+	 * current when the end date is empty, or a parseable date that is today or
+	 * later. The `is_current` flag is deliberately ignored — the client ignores it
+	 * too (both of its branches reduce to the same end-date test).
+	 *
+	 * @param array $job Work history row.
+	 * @return bool
+	 */
+	private function is_current_job( array $job ): bool {
+		$end_date = trim( (string) ( $job['end_date'] ?? '' ) );
+
+		if ( $end_date === '' ) {
+			return true;
+		}
+
+		$digits = preg_replace( '/\D/', '', $end_date );
+
+		if ( strlen( $digits ) !== 8 ) {
+			return false;
+		}
+
+		$end = \DateTimeImmutable::createFromFormat( 'Ymd', $digits );
+
+		return $end && $end >= new \DateTimeImmutable( 'today' );
+	}
+
+	/**
+	 * Build the trimmed person payload for the given IDs, in the wp/v2 shape the
+	 * Kaderlijst already consumes (`{ id, acf }`).
+	 *
+	 * @param int[] $person_ids Person post IDs.
+	 * @return array<int, array{id:int, acf:array}>
+	 */
+	private function build_kaderlijst_people( array $person_ids ): array {
+		$people = [];
+
+		foreach ( array_unique( array_map( 'intval', $person_ids ) ) as $person_id ) {
+			if ( $person_id <= 0 || get_post_type( $person_id ) !== 'person' ) {
+				continue;
+			}
+
+			if ( get_field( 'former_member', $person_id ) ) {
+				continue;
+			}
+
+			$acf = [];
+			foreach ( self::KADERLIJST_ACF_FIELDS as $field ) {
+				$acf[ $field ] = get_field( $field, $person_id );
+			}
+
+			$people[] = [
+				'id'  => $person_id,
+				'acf' => $acf,
+			];
+		}
+
+		return $people;
 	}
 
 	public function __construct() {
@@ -73,7 +313,7 @@ class Api extends Base {
 		// moved to Rondo\REST\Reminders constructor
 
 		// Dashboard cache invalidation hooks.
-		$post_types = [ 'person', 'team', 'commissie', 'rondo_todo', 'rondo_feedback' ];
+		$post_types = [ 'person', 'team', 'commissie', 'rondo_todo', 'rondo_feedback', 'discipline_case' ];
 		foreach ( $post_types as $post_type ) {
 			add_action( 'save_post_' . $post_type, [ $this, 'invalidate_dashboard_cache' ] );
 		}
@@ -87,6 +327,7 @@ class Api extends Base {
 	public function invalidate_dashboard_cache() {
 		global $wpdb;
 		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_rondo_dashboard_%' OR option_name LIKE '_transient_timeout_rondo_dashboard_%'" );
+		delete_transient( 'rondo_anniversaries_365' );
 	}
 
 	/**
@@ -144,16 +385,14 @@ class Api extends Base {
 		);
 
 		// Find person by email (for sync deduplication)
-		// Uses check_authenticated instead of check_user_approved for sync scripts
+		// Restricted to membership administration and the admin-authenticated sync user.
 		register_rest_route(
 			'rondo/v1',
 			'/people/find-by-email',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'find_person_by_email' ],
-				'permission_callback' => function () {
-					return is_user_logged_in();
-				},
+				'permission_callback' => [ $this, 'check_ledenadministratie_permission' ],
 				'args'                => [
 					'email' => [
 						'required'          => true,
@@ -176,29 +415,14 @@ class Api extends Base {
 			]
 		);
 
-		// Kaderlijst snapshot (database-backed)
+		// Kaderlijst — scoped kader people, visibility enforced server-side.
 		register_rest_route(
 			'rondo/v1',
-			'/kaderlijst/snapshot',
+			'/kaderlijst/people',
 			[
-				[
-					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_kaderlijst_snapshot' ],
-					'permission_callback' => [ $this, 'check_user_approved' ],
-				],
-				[
-					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'update_kaderlijst_snapshot' ],
-					'permission_callback' => [ $this, 'check_user_approved' ],
-					'args'                => [
-						'snapshot' => [
-							'required'          => true,
-							'validate_callback' => function ( $param ) {
-								return is_array( $param ) && isset( $param['teams'], $param['rows'] ) && is_array( $param['teams'] ) && is_array( $param['rows'] );
-							},
-						],
-					],
-				],
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_kaderlijst_people' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
 		);
 
@@ -276,46 +500,62 @@ class Api extends Base {
 					'callback'            => [ $this, 'update_club_config' ],
 					'permission_callback' => [ $this, 'check_admin_permission' ],
 					'args'                => [
-						'club_name'                 => [
+						'club_name'                   => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'freescout_url'             => [
+						'volunteer_signup_info'       => [
+							'required'          => false,
+							'sanitize_callback' => 'wp_kses_post',
+						],
+						'volunteer_second_half_opens' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'iva_approval_email_subject'  => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'iva_approval_email_body'     => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_textarea_field',
+						],
+						'freescout_url'               => [
 							'required'          => false,
 							'sanitize_callback' => 'esc_url_raw',
 						],
-						'freescout_api_key'         => [
+						'freescout_api_key'           => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_api_token'      => [
+						'lettermint_api_token'        => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_team_api_token' => [
+						'lettermint_team_api_token'   => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_project_id'     => [
+						'lettermint_project_id'       => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_route_id'       => [
+						'lettermint_route_id'         => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_from_email'     => [
+						'lettermint_from_email'       => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_email',
 							'validate_callback' => function ( $param ) {
 								return $param === null || $param === '' || is_email( $param );
 							},
 						],
-						'lettermint_from_name'      => [
+						'lettermint_from_name'        => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_webhook_secret' => [
+						'lettermint_webhook_secret'   => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
@@ -376,6 +616,26 @@ class Api extends Base {
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'sync_all_capabilities' ],
 				'permission_callback' => [ $this, 'check_admin_permission' ],
+			]
+		);
+
+		// Sportlink individual sync (admin and toegangscontrole users)
+		register_rest_route(
+			'rondo/v1',
+			'/sportlink/sync-individual',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'sync_individual_from_sportlink' ],
+				'permission_callback' => [ $this, 'check_admin_or_toegangscontrole_permission' ],
+				'args'                => [
+					'knvb_id' => [
+						'required'          => true,
+						'type'              => 'string',
+						'validate_callback' => function ( $param ) {
+							return is_string( $param ) && ! empty( $param );
+						},
+					],
+				],
 			]
 		);
 
@@ -467,8 +727,9 @@ class Api extends Base {
 	/**
 	 * Find a person by email address (for sync deduplication)
 	 *
-	 * Searches all people for a matching email in fixed fields.
-	 * Returns the person ID if found, null otherwise.
+	 * Searches published and trashed people for a matching email in fixed fields.
+	 * The legacy top-level ID remains the first published match (or first trashed
+	 * match) while `matches` lets the sync exclude children and restore a parent.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response Response with person ID or null.
@@ -480,30 +741,47 @@ class Api extends Base {
 			return new \WP_REST_Response( [ 'id' => null ], 200 );
 		}
 
-		// Search by email_1 first, then email_2.
-		foreach ( [ 'email_1', 'email_2' ] as $field ) {
-			$matches = get_posts(
-				[
-					'post_type'        => 'person',
-					'posts_per_page'   => 1,
-					'post_status'      => 'publish',
-					'suppress_filters' => true,
-					'meta_query'       => [
-						[
-							'key'     => $field,
-							'value'   => $email,
-							'compare' => '=',
-						],
-					],
-				]
-			);
+		$found = [];
 
-			if ( ! empty( $matches ) ) {
-				return new \WP_REST_Response( [ 'id' => $matches[0]->ID ], 200 );
+		// Prefer published matches for backward compatibility, but expose trashed
+		// matches so rondo-sync can restore an existing parent instead of duplicating it.
+		foreach ( [ 'publish', 'trash' ] as $status ) {
+			foreach ( [ 'email_1', 'email_2' ] as $field ) {
+				$matches = get_posts(
+					[
+						'post_type'        => 'person',
+						'posts_per_page'   => -1,
+						'post_status'      => $status,
+						'suppress_filters' => true,
+						'meta_query'       => [
+							[
+								'key'     => $field,
+								'value'   => $email,
+								'compare' => '=',
+							],
+						],
+					]
+				);
+
+				foreach ( $matches as $match ) {
+					$found[ $match->ID ] = [
+						'id'     => (int) $match->ID,
+						'status' => (string) $match->post_status,
+					];
+				}
 			}
 		}
 
-		return new \WP_REST_Response( [ 'id' => null ], 200 );
+		$matches = array_values( $found );
+
+		return new \WP_REST_Response(
+			[
+				'id'      => $matches[0]['id'] ?? null,
+				'status'  => $matches[0]['status'] ?? null,
+				'matches' => $matches,
+			],
+			200
+		);
 	}
 
 	/**
@@ -524,10 +802,11 @@ class Api extends Base {
 		// Query 1: First name matches (highest priority)
 		$first_name_matches = get_posts(
 			[
-				'post_type'      => 'person',
-				'posts_per_page' => 20,
-				'post_status'    => 'publish',
-				'meta_query'     => [
+				'post_type'        => 'person',
+				'suppress_filters' => false,
+				'posts_per_page'   => 20,
+				'post_status'      => 'publish',
+				'meta_query'       => [
 					[
 						'key'     => 'first_name',
 						'value'   => $query,
@@ -559,10 +838,11 @@ class Api extends Base {
 		// Query 2: Infix matches (score: 50)
 		$infix_matches = get_posts(
 			[
-				'post_type'      => 'person',
-				'posts_per_page' => 20,
-				'post_status'    => 'publish',
-				'meta_query'     => [
+				'post_type'        => 'person',
+				'suppress_filters' => false,
+				'posts_per_page'   => 20,
+				'post_status'      => 'publish',
+				'meta_query'       => [
 					[
 						'key'     => 'infix',
 						'value'   => $query,
@@ -584,10 +864,11 @@ class Api extends Base {
 		// Query 3: Last name matches (lower priority)
 		$last_name_matches = get_posts(
 			[
-				'post_type'      => 'person',
-				'posts_per_page' => 20,
-				'post_status'    => 'publish',
-				'meta_query'     => [
+				'post_type'        => 'person',
+				'suppress_filters' => false,
+				'posts_per_page'   => 20,
+				'post_status'      => 'publish',
+				'meta_query'       => [
 					[
 						'key'     => 'last_name',
 						'value'   => $query,
@@ -609,10 +890,11 @@ class Api extends Base {
 		// Query 4: General WordPress search (catches title, content)
 		$general_matches = get_posts(
 			[
-				'post_type'      => 'person',
-				's'              => $query,
-				'posts_per_page' => 20,
-				'post_status'    => 'publish',
+				'post_type'        => 'person',
+				'suppress_filters' => false,
+				's'                => $query,
+				'posts_per_page'   => 20,
+				'post_status'      => 'publish',
 			]
 		);
 
@@ -632,10 +914,11 @@ class Api extends Base {
 
 			$custom_field_matches = get_posts(
 				[
-					'post_type'      => 'person',
-					'posts_per_page' => 20,
-					'post_status'    => 'publish',
-					'meta_query'     => $custom_meta_query,
+					'post_type'        => 'person',
+					'suppress_filters' => false,
+					'posts_per_page'   => 20,
+					'post_status'      => 'publish',
+					'meta_query'       => $custom_meta_query,
 				]
 			);
 
@@ -652,10 +935,11 @@ class Api extends Base {
 			// Query 6: KNVB ID matches (score: 70)
 			$knvb_matches = get_posts(
 				[
-					'post_type'      => 'person',
-					'posts_per_page' => 20,
-					'post_status'    => 'publish',
-					'meta_query'     => [
+					'post_type'        => 'person',
+					'suppress_filters' => false,
+					'posts_per_page'   => 20,
+					'post_status'      => 'publish',
+					'meta_query'       => [
 						'relation' => 'OR',
 						[
 							'key'     => 'knvb-id',
@@ -799,13 +1083,13 @@ class Api extends Base {
 			$results['teams'][] = $this->format_company_summary( $item['team'] );
 		}
 
-		// Search invoices (only for users with financieel capability)
-		if ( current_user_can( 'financieel' ) ) {
+		// Search invoices (only for users who may view finance data)
+		if ( \Rondo\Core\UserRoles::can_view_finances() ) {
 			$invoice_posts = get_posts(
 				[
 					'post_type'      => 'rondo_invoice',
 					'posts_per_page' => 10,
-					'post_status'    => [ 'publish', 'rondo_sent', 'rondo_paid', 'rondo_overdue', 'draft' ],
+					'post_status'    => [ 'publish', 'rondo_sent', 'rondo_paid', 'rondo_overdue', 'rondo_cancelled', 'draft' ],
 					'meta_query'     => [
 						[
 							'key'     => 'invoice_number',
@@ -889,37 +1173,19 @@ class Api extends Base {
 			return rest_ensure_response( $cached );
 		}
 
-		// Get post counts (all approved users see all data)
-		// Access control is already applied via WP_Query filters
-		// Exclude former members from people count
-		$people_query     = new \WP_Query(
-			[
-				'post_type'      => 'person',
-				'post_status'    => 'publish',
-				'posts_per_page' => 1,
-				'fields'         => 'ids',
-				'meta_query'     => [
-					'relation' => 'OR',
-					[
-						'key'     => 'former_member',
-						'compare' => 'NOT EXISTS',
-					],
-					[
-						'key'     => 'former_member',
-						'value'   => '1',
-						'compare' => '!=',
-					],
-				],
-			]
-		);
-		$total_people     = $people_query->found_posts;
-		$total_teams      = wp_count_posts( 'team' )->publish;
-		$total_commissies = wp_count_posts( 'commissie' )->publish;
+		// Consolidated counts: people, volunteers, and open feedback in a single query.
+		$counts              = $this->get_dashboard_counts();
+		$total_people        = (int) $counts->total_people;
+		$total_volunteers    = (int) $counts->total_volunteers;
+		$open_feedback_count = (int) $counts->open_feedback_count;
+		$total_teams         = wp_count_posts( 'team' )->publish;
+		$total_commissies    = wp_count_posts( 'commissie' )->publish;
 
 		// Recent people (exclude former members)
 		$recent_people = get_posts(
 			[
 				'post_type'              => 'person',
+				'suppress_filters'       => false,
 				'posts_per_page'         => 5,
 				'post_status'            => 'publish',
 				'orderby'                => 'modified',
@@ -941,44 +1207,68 @@ class Api extends Base {
 			]
 		);
 
-		// Upcoming reminders
-		$reminders_handler      = new \RONDO_Reminders();
-		$upcoming_reminders     = $reminders_handler->get_upcoming_reminders( 14 );
-		$reminders_rest         = new Reminders();
-		$upcoming_anniversaries = $reminders_rest->get_upcoming_anniversaries_data( 365, 20 );
+		// Upcoming reminders (birthday query now filtered in SQL)
+		$reminders_handler  = new \RONDO_Reminders();
+		$upcoming_reminders = $reminders_handler->get_upcoming_reminders( 14 );
 
-		// Get open todos count
-		$open_todos_count = $this->count_open_todos();
+		// Anniversaries are visibility-scoped, so their cache must be per user.
+		$anniversary_cache_key  = 'rondo_anniversaries_365_' . get_current_user_id();
+		$upcoming_anniversaries = get_transient( $anniversary_cache_key );
+		if ( $upcoming_anniversaries === false ) {
+			$reminders_rest         = new Reminders();
+			$upcoming_anniversaries = $reminders_rest->get_upcoming_anniversaries_data( 365, 20 );
+			set_transient( $anniversary_cache_key, $upcoming_anniversaries, DAY_IN_SECONDS );
+		}
 
-		// Get awaiting todos count
+		// Get open/awaiting todos count (user-specific, can't consolidate)
+		$open_todos_count     = $this->count_open_todos();
 		$awaiting_todos_count = $this->count_awaiting_todos();
-
-		// Get total volunteers count
-		$total_volunteers = $this->count_volunteers();
-
-		// Get open feedback count
-		$open_feedback_count = $this->count_open_feedback();
 
 		// Recently contacted (people with most recent activities)
 		$recently_contacted = $this->get_recently_contacted_people( 5 );
 
+		// VOG counts (conditional on capability)
+		$vog_counts = null;
+		if ( current_user_can( 'vog' ) ) {
+			$vog_counts = $this->get_vog_counts();
+		}
+
+		// Discipline case count (conditional on capability)
+		$discipline_case_count = null;
+		if ( current_user_can( 'fairplay' ) ) {
+			$discipline_case_count = $this->get_discipline_case_count();
+		}
+
+		// Open todos for dashboard display (limited to 5)
+		$open_todos = $this->get_dashboard_todos( 5 );
+
+		// User settings (avoids separate API calls)
+		$user_settings      = new \Rondo\REST\UserSettings();
+		$dashboard_settings = $user_settings->get_dashboard_settings_data( $user_id );
+		$current_user_data  = $user_settings->get_current_user_data( $user_id );
+
 		$response_data = [
 			'stats'                  => [
-				'total_people'         => $total_people,
-				'total_teams'          => $total_teams,
-				'total_commissies'     => $total_commissies,
-				'open_todos_count'     => $open_todos_count,
-				'awaiting_todos_count' => $awaiting_todos_count,
-				'total_volunteers'     => $total_volunteers,
-				'open_feedback_count'  => $open_feedback_count,
+				'total_people'          => $total_people,
+				'total_teams'           => $total_teams,
+				'total_commissies'      => $total_commissies,
+				'open_todos_count'      => $open_todos_count,
+				'awaiting_todos_count'  => $awaiting_todos_count,
+				'total_volunteers'      => $total_volunteers,
+				'open_feedback_count'   => $open_feedback_count,
+				'vog_counts'            => $vog_counts,
+				'discipline_case_count' => $discipline_case_count,
 			],
 			'recent_people'          => array_map( [ $this, 'format_person_summary' ], $recent_people ),
 			'upcoming_reminders'     => $this->limit_items_with_all_today( $upcoming_reminders, 5 ),
 			'upcoming_anniversaries' => $this->limit_items_with_all_today( $upcoming_anniversaries, 5 ),
 			'recently_contacted'     => $recently_contacted,
+			'open_todos'             => $open_todos,
+			'dashboard_settings'     => $dashboard_settings,
+			'current_user'           => $current_user_data,
 		];
 
-		set_transient( $cache_key, $response_data, 5 * MINUTE_IN_SECONDS );
+		set_transient( $cache_key, $response_data, 15 * MINUTE_IN_SECONDS );
 
 		return rest_ensure_response( $response_data );
 	}
@@ -1145,65 +1435,217 @@ class Api extends Base {
 	 * Counts published person posts with huidig-vrijwilliger meta set to true,
 	 * excluding former members.
 	 */
-	private function count_volunteers() {
-		$query = new \WP_Query(
-			[
-				'post_type'      => 'person',
-				'post_status'    => 'publish',
-				'posts_per_page' => 1,
-				'fields'         => 'ids',
-				'meta_query'     => [
-					'relation' => 'AND',
-					[
-						'key'   => 'huidig-vrijwilliger',
-						'value' => '1',
-					],
-					[
-						'relation' => 'OR',
-						[
-							'key'     => 'former_member',
-							'compare' => 'NOT EXISTS',
-						],
-						[
-							'key'     => 'former_member',
-							'value'   => '1',
-							'compare' => '!=',
-						],
-					],
-				],
-			]
+	/**
+	 * Get people, volunteer, and open feedback counts in a single query.
+	 *
+	 * Replaces three separate WP_Query calls with one raw SQL query.
+	 *
+	 * @return object Object with total_people, total_volunteers, open_feedback_count.
+	 */
+	private function get_dashboard_counts() {
+		global $wpdb;
+
+		// Raw SQL bypasses every query filter, so the person scope has to be
+		// applied by hand — otherwise a member who may see nobody is still told
+		// how many people the club has.
+		$visible_person_ids = \Rondo\Core\AccessControl::visible_person_ids_or_null();
+		$person_scope_sql   = '';
+		if ( $visible_person_ids !== null ) {
+			$ids              = implode( ',', array_map( 'absint', $visible_person_ids ?: [ 0 ] ) );
+			$person_scope_sql = " AND ( p.post_type <> 'person' OR p.ID IN ($ids) )";
+		}
+
+		return $wpdb->get_row(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IDs are absint-cast above.
+			"SELECT
+				SUM(CASE WHEN p.post_type = 'person'
+					AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')
+					THEN 1 ELSE 0 END) AS total_people,
+				SUM(CASE WHEN p.post_type = 'person'
+					AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')
+					AND hv.meta_value = '1'
+					THEN 1 ELSE 0 END) AS total_volunteers,
+				SUM(CASE WHEN p.post_type = 'rondo_feedback'
+					AND (fs.meta_value IS NULL OR fs.meta_value NOT IN ('resolved','declined'))
+					THEN 1 ELSE 0 END) AS open_feedback_count
+			FROM {$wpdb->posts} p
+			LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'
+			LEFT JOIN {$wpdb->postmeta} hv ON p.ID = hv.post_id AND hv.meta_key = 'huidig-vrijwilliger'
+			LEFT JOIN {$wpdb->postmeta} fs ON p.ID = fs.post_id AND fs.meta_key = 'status'
+			WHERE p.post_status = 'publish'
+			AND p.post_type IN ('person', 'rondo_feedback')" . $person_scope_sql
 		);
+	}
+
+	/**
+	 * Get VOG counts for the dashboard in a single query.
+	 *
+	 * Returns three counts:
+	 * - not_submitted_to_justis: volunteers needing VOG who have NOT been submitted
+	 * - submitted_to_justis: volunteers needing VOG who HAVE been submitted
+	 * - expiring_soon: volunteers whose VOG expires within 30 days
+	 *
+	 * @return array Associative array with the three counts.
+	 */
+	private function get_vog_counts() {
+		global $wpdb;
+
+		$cutoff_date   = gmdate( 'Y-m-d', strtotime( '-3 years' ) );
+		$expired_date  = gmdate( 'Y-m-d', strtotime( '-3 years' ) );
+		$expiring_date = gmdate( 'Y-m-d', strtotime( '+30 days -3 years' ) );
+
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT
+					SUM(CASE WHEN needs_vog = 1 AND (vjs.meta_value IS NULL OR vjs.meta_value = '') THEN 1 ELSE 0 END) AS not_submitted_to_justis,
+					SUM(CASE WHEN needs_vog = 1 AND (vjs.meta_value IS NOT NULL AND vjs.meta_value != '') THEN 1 ELSE 0 END) AS submitted_to_justis,
+					SUM(CASE WHEN expiring_soon = 1 THEN 1 ELSE 0 END) AS expiring_soon
+				FROM (
+					SELECT p.ID,
+						CASE WHEN (dv.meta_value IS NULL OR dv.meta_value = '' OR dv.meta_value <= %s) THEN 1 ELSE 0 END AS needs_vog,
+						CASE WHEN (dv.meta_value IS NOT NULL AND dv.meta_value != '' AND dv.meta_value > %s AND dv.meta_value <= %s) THEN 1 ELSE 0 END AS expiring_soon
+					FROM {$wpdb->posts} p
+					INNER JOIN {$wpdb->postmeta} hv ON p.ID = hv.post_id AND hv.meta_key = 'huidig-vrijwilliger' AND hv.meta_value = '1'
+					LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'
+					LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'
+					WHERE p.post_type = 'person'
+					AND p.post_status = 'publish'
+					AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')
+				) AS volunteers
+				LEFT JOIN {$wpdb->postmeta} vjs ON volunteers.ID = vjs.post_id AND vjs.meta_key = 'vog_justis_submitted_date'",
+				$cutoff_date,
+				$expired_date,
+				$expiring_date
+			)
+		);
+
+		return [
+			'not_submitted_to_justis' => (int) ( $row->not_submitted_to_justis ?? 0 ),
+			'submitted_to_justis'     => (int) ( $row->submitted_to_justis ?? 0 ),
+			'expiring_soon'           => (int) ( $row->expiring_soon ?? 0 ),
+		];
+	}
+
+	/**
+	 * Get discipline case count for the current season.
+	 *
+	 * @return int Number of discipline cases in the current season.
+	 */
+	private function get_discipline_case_count() {
+		$taxonomies     = new \RONDO_Taxonomies();
+		$current_season = $taxonomies->get_current_season();
+
+		$args = [
+			'post_type'      => 'discipline_case',
+			'post_status'    => 'publish',
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+			'no_found_rows'  => false,
+		];
+
+		if ( $current_season ) {
+			$args['tax_query'] = [
+				[
+					'taxonomy' => 'seizoen',
+					'terms'    => $current_season->term_id,
+				],
+			];
+		}
+
+		$query = new \WP_Query( $args );
 		return $query->found_posts;
 	}
 
 	/**
-	 * Count open feedback items.
+	 * Get open todos for dashboard display.
 	 *
-	 * Counts published feedback posts with status NOT IN ('resolved', 'declined').
-	 * Also includes posts without a status field (which default to 'new').
+	 * Returns formatted todos visible to the current user, sorted by due date.
+	 *
+	 * @param int $limit Maximum number of todos to return.
+	 * @return array Formatted todo items.
 	 */
-	private function count_open_feedback() {
-		$query = new \WP_Query(
+	private function get_dashboard_todos( $limit = 5 ) {
+		$current_user_id = get_current_user_id();
+
+		$todos = get_posts(
 			[
-				'post_type'      => 'rondo_feedback',
-				'post_status'    => 'publish',
-				'posts_per_page' => 1,
-				'fields'         => 'ids',
-				'meta_query'     => [
-					'relation' => 'OR',
-					[
-						'key'     => 'status',
-						'value'   => [ 'resolved', 'declined' ],
-						'compare' => 'NOT IN',
-					],
-					[
-						'key'     => 'status',
-						'compare' => 'NOT EXISTS',
-					],
-				],
+				'post_type'        => 'rondo_todo',
+				'posts_per_page'   => $limit * 2, // Fetch extra to account for access filtering
+				'post_status'      => 'rondo_open',
+				'suppress_filters' => false,
+				'orderby'          => 'date',
+				'order'            => 'DESC',
 			]
 		);
-		return $query->found_posts;
+
+		$formatted = [];
+		foreach ( $todos as $todo ) {
+			// Access check: user must be author or assigned user
+			$assigned_user = (int) get_post_meta( $todo->ID, 'assigned_user_id', true );
+			if ( (int) $todo->post_author !== $current_user_id && $assigned_user !== $current_user_id ) {
+				continue;
+			}
+
+			$person_ids = get_field( 'related_persons', $todo->ID ) ?: [];
+			if ( ! is_array( $person_ids ) ) {
+				$person_ids = $person_ids ? [ $person_ids ] : [];
+			}
+
+			$persons = [];
+			foreach ( $person_ids as $pid ) {
+				$persons[] = [
+					'id'        => (int) $pid,
+					'name'      => html_entity_decode( get_the_title( $pid ), ENT_QUOTES, 'UTF-8' ),
+					'thumbnail' => get_the_post_thumbnail_url( $pid, 'thumbnail' ) ?: '',
+				];
+			}
+
+			$status_map = [
+				'rondo_open'      => 'open',
+				'rondo_awaiting'  => 'awaiting',
+				'rondo_completed' => 'completed',
+				'publish'         => 'open',
+			];
+
+			$formatted[] = [
+				'id'               => $todo->ID,
+				'type'             => 'todo',
+				'content'          => html_entity_decode( $todo->post_title, ENT_QUOTES, 'UTF-8' ),
+				'person_id'        => $persons[0]['id'] ?? null,
+				'person_name'      => $persons[0]['name'] ?? '',
+				'person_thumbnail' => $persons[0]['thumbnail'] ?? '',
+				'persons'          => $persons,
+				'author_id'        => (int) $todo->post_author,
+				'assigned_user_id' => $assigned_user > 0 ? $assigned_user : null,
+				'created'          => $todo->post_date,
+				'status'           => $status_map[ $todo->post_status ] ?? 'open',
+				'due_date'         => get_field( 'due_date', $todo->ID ) ?: null,
+				'awaiting_since'   => get_field( 'awaiting_since', $todo->ID ) ?: null,
+			];
+
+			if ( count( $formatted ) >= $limit ) {
+				break;
+			}
+		}
+
+		// Sort by due date (earliest first), nulls last
+		usort(
+			$formatted,
+			function ( $a, $b ) {
+				if ( $a['due_date'] && $b['due_date'] ) {
+					return strtotime( $a['due_date'] ) - strtotime( $b['due_date'] );
+				}
+				if ( $a['due_date'] && ! $b['due_date'] ) {
+					return -1;
+				}
+				if ( ! $a['due_date'] && $b['due_date'] ) {
+					return 1;
+				}
+				return strtotime( $b['created'] ) - strtotime( $a['created'] );
+			}
+		);
+
+		return $formatted;
 	}
 
 	/**
@@ -1258,6 +1700,7 @@ class Api extends Base {
 			[
 				'post__in'               => $person_ids,
 				'post_type'              => 'person',
+				'suppress_filters'       => false,
 				'post_status'            => 'publish',
 				'posts_per_page'         => count( $person_ids ),
 				'orderby'                => 'post__in',
@@ -1384,6 +1827,31 @@ class Api extends Base {
 			\Rondo\Config\ClubConfig::update_club_name( $club_name );
 		}
 
+		$volunteer_signup_info = $request->get_param( 'volunteer_signup_info' );
+		if ( $volunteer_signup_info !== null ) {
+			\Rondo\Config\ClubConfig::update_volunteer_signup_info( $volunteer_signup_info );
+		}
+
+		$second_half_opens = $request->get_param( 'volunteer_second_half_opens' );
+		if ( $second_half_opens !== null
+			&& ! \Rondo\Config\ClubConfig::update_volunteer_second_half_opens( $second_half_opens ) ) {
+			return new \WP_Error(
+				'rondo_invalid_second_half_opens',
+				__( 'Gebruik een geldige datum in de vorm MM-DD, bijvoorbeeld 11-01.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$iva_approval_email_subject = $request->get_param( 'iva_approval_email_subject' );
+		if ( $iva_approval_email_subject !== null ) {
+			\Rondo\Config\ClubConfig::update_iva_approval_email_subject( $iva_approval_email_subject );
+		}
+
+		$iva_approval_email_body = $request->get_param( 'iva_approval_email_body' );
+		if ( $iva_approval_email_body !== null ) {
+			\Rondo\Config\ClubConfig::update_iva_approval_email_body( $iva_approval_email_body );
+		}
+
 		// Update freescout_url if provided
 		$freescout_url = $request->get_param( 'freescout_url' );
 		if ( $freescout_url !== null ) {
@@ -1480,7 +1948,7 @@ class Api extends Base {
 					'X-Sync-API-Key' => RONDO_SYNC_API_KEY,
 				],
 				'body'    => wp_json_encode( [ 'knvb_id' => $knvb_id ] ),
-				'timeout' => 60,
+				'timeout' => 180,
 			]
 		);
 
@@ -1533,6 +2001,42 @@ class Api extends Base {
 		}
 
 		return rest_ensure_response( $body );
+	}
+
+	/**
+	 * Find people where email_1 or email_2 matches a query fragment.
+	 *
+	 * @param string $query Email search fragment.
+	 * @param int    $limit Max number of results.
+	 * @return array<int, \WP_Post>
+	 */
+	private function find_people_by_contact_email_fragment( string $query, int $limit = 20 ): array {
+		$query_lower = strtolower( trim( $query ) );
+		if ( $query_lower === '' ) {
+			return [];
+		}
+
+		return get_posts(
+			[
+				'post_type'        => 'person',
+				'suppress_filters' => false,
+				'post_status'      => 'publish',
+				'posts_per_page'   => $limit,
+				'meta_query'       => [
+					'relation' => 'OR',
+					[
+						'key'     => 'email_1',
+						'value'   => $query_lower,
+						'compare' => 'LIKE',
+					],
+					[
+						'key'     => 'email_2',
+						'value'   => $query_lower,
+						'compare' => 'LIKE',
+					],
+				],
+			]
+		);
 	}
 
 	/**

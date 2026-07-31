@@ -43,7 +43,7 @@ function readStoredVisibility(storageKey) {
  * @param {ReactNode} [props.emptyIcon] - Icon for empty state
  * @param {string} [props.emptyTitle] - Heading for empty state
  * @param {string} [props.emptyDescription] - Description for empty state
- * @param {ReactNode} [props.toolbarEnd] - Extra elements on the right side of the toolbar
+ * @param {ReactNode|function} [props.toolbarEnd] - Extra elements on the right side of the toolbar, or a render function receiving the current table rows
  * @param {ReactNode} [props.footer] - Optional <tfoot> element appended inside <table>
  * @param {string} [props.className] - Additional class for the card wrapper
  *
@@ -67,6 +67,8 @@ export default function DataTable({
   filters: controlledFilters,
   onFilterChange: controlledOnFilterChange,
   onClearFilters: controlledOnClearFilters,
+  // Optional row className function: (rowData, index) => string
+  rowClassName,
 }) {
   const isControlled = controlledFilters !== undefined;
 
@@ -149,6 +151,9 @@ export default function DataTable({
   });
 
   const rows = table.getRowModel().rows;
+  const resolvedToolbarEnd = typeof toolbarEnd === 'function'
+    ? toolbarEnd({ table, filteredRows: rows.map((row) => row.original) })
+    : toolbarEnd;
 
   return (
     <div className="space-y-4">
@@ -160,12 +165,11 @@ export default function DataTable({
         hasActiveFilters={hasActiveFilters}
         activeFilterCount={activeFilterCount}
         onOpenColumnSettings={() => setIsColumnSettingsOpen(true)}
-        toolbarEnd={toolbarEnd}
+        toolbarEnd={resolvedToolbarEnd}
       />
 
       <div
         className={`card !overflow-x-auto overscroll-x-contain ${className}`}
-        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
         data-horizontal-scroll="true"
       >
         {isLoading ? (
@@ -229,13 +233,15 @@ export default function DataTable({
               ))}
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {rows.map((row, index) => (
+              {rows.map((row, index) => {
+                const extraClass = rowClassName ? rowClassName(row.original, index) : '';
+                return (
                 <tr
                   key={row.id}
                   className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                    index % 2 === 1
+                    extraClass || (index % 2 === 1
                       ? 'bg-gray-50 dark:bg-gray-800/50'
-                      : 'bg-white dark:bg-gray-800'
+                      : 'bg-white dark:bg-gray-800')
                   }`}
                 >
                   {row.getVisibleCells().map((cell) => {
@@ -253,7 +259,8 @@ export default function DataTable({
                     );
                   })}
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
             {footer}
           </table>

@@ -14,7 +14,7 @@
             "label": "First Name",
             "name": "first_name",
             "type": "text",
-            "required": 1,
+            "required": 0,
             "wrapper": {
                 "width": "33"
             }
@@ -45,6 +45,125 @@
             "label": "Nickname",
             "name": "nickname",
             "type": "text",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_company_name",
+            "label": "Bedrijfsnaam",
+            "name": "company_name",
+            "type": "text",
+            "instructions": "Optioneel voor externe contacten. Bij een contact zonder persoonsnaam wordt dit de weergavenaam.",
+            "required": 0,
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_person_type",
+            "label": "Persoonstype",
+            "name": "person_type",
+            "type": "select",
+            "instructions": "Gebruik Contact voor externe relaties. Sponsorschap wordt los van het persoonstype vastgelegd.",
+            "required": 0,
+            "choices": {
+                "member": "Lid / ouder",
+                "contact": "Contact"
+            },
+            "default_value": "member",
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0,
+            "return_format": "value",
+            "ajax": 0,
+            "placeholder": "",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_is_sponsor",
+            "label": "Sponsor",
+            "name": "is_sponsor",
+            "type": "true_false",
+            "instructions": "Actieve sponsorrol, onafhankelijk van het persoonstype.",
+            "required": 0,
+            "default_value": 0,
+            "ui": 1,
+            "ui_on_text": "Ja",
+            "ui_off_text": "Nee",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_sponsor_pass_variant",
+            "label": "Pasvariant",
+            "name": "sponsor_pass_variant",
+            "type": "select",
+            "instructions": "Kies welke witte toegangspas deze sponsor krijgt.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_is_sponsor",
+                        "operator": "==",
+                        "value": "1"
+                    }
+                ]
+            ],
+            "choices": {
+                "businessclub": "Businessclub AWC",
+                "awc_sponsor": "AWC Sponsor"
+            },
+            "default_value": "",
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0,
+            "return_format": "value",
+            "ajax": 0,
+            "placeholder": "",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_sponsit_contact_id",
+            "label": "Sponsit contact-ID",
+            "name": "sponsit_contact_id",
+            "type": "text",
+            "instructions": "Stabiele bron-ID voor de Sponsit-sync.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_is_sponsor",
+                        "operator": "==",
+                        "value": "1"
+                    }
+                ]
+            ],
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_sponsit_person_id",
+            "label": "Sponsit persoon-ID",
+            "name": "sponsit_person_id",
+            "type": "text",
+            "instructions": "Stabiele contactpersoon-ID voor de Sponsit-sync.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_is_sponsor",
+                        "operator": "==",
+                        "value": "1"
+                    }
+                ]
+            ],
             "wrapper": {
                 "width": "50"
             }
@@ -113,6 +232,16 @@
             "default_value": 0,
             "ui": 1,
             "message": "Dit lid is niet meer actief bij de club",
+            "readonly": 1
+        },
+        {
+            "key": "field_wacht_op_overschrijving",
+            "label": "Wacht op overschrijving",
+            "name": "wacht_op_overschrijving",
+            "type": "true_false",
+            "default_value": 0,
+            "ui": 1,
+            "message": "Dit lid komt van een andere club en moet nog worden overgeschreven",
             "readonly": 1
         },
         {
@@ -326,6 +455,24 @@
                     ],
                     "return_format": "id",
                     "allow_null": 1,
+                    "wrapper": {
+                        "width": "50"
+                    }
+                },
+                {
+                    "key": "field_work_team_name_text",
+                    "label": "Team name (historical)",
+                    "name": "team_name_text",
+                    "type": "text",
+                    "instructions": "Free-text team name for historical Sportlink teams that don't exist in Rondo Club as posts (e.g. \"Zaterdag E5 (seizoen 2014/'15)\"). Only used when Team / Commissie is empty.",
+                    "conditional_logic": [
+                        [
+                            {
+                                "field": "field_work_company",
+                                "operator": "==empty"
+                            }
+                        ]
+                    ],
                     "wrapper": {
                         "width": "50"
                     }
@@ -712,6 +859,34 @@
             "wrapper": {
                 "width": "33"
             }
+        },
+        {
+            "key": "field_onboarding_email_lid_sent",
+            "label": "Onboarding e-mail lid verstuurd",
+            "name": "onboarding-email-lid-sent",
+            "type": "date_time_picker",
+            "instructions": "Tijdstip waarop de onboarding e-mail voor nieuwe leden is verstuurd",
+            "required": 0,
+            "display_format": "d-m-Y H:i",
+            "return_format": "Y-m-d H:i:s",
+            "readonly": 1,
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_onboarding_email_vrijwilliger_sent",
+            "label": "Onboarding e-mail vrijwilliger verstuurd",
+            "name": "onboarding-email-vrijwilliger-sent",
+            "type": "date_time_picker",
+            "instructions": "Tijdstip waarop de onboarding e-mail voor nieuwe vrijwilligers is verstuurd",
+            "required": 0,
+            "display_format": "d-m-Y H:i",
+            "return_format": "Y-m-d H:i:s",
+            "readonly": 1,
+            "wrapper": {
+                "width": "50"
+            }
         }
     ],
     "location": [
@@ -738,5 +913,5 @@
     ],
     "active": true,
     "show_in_rest": 1,
-    "modified": 1773327234
+    "modified": 1783939607
 }

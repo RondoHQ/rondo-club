@@ -9,6 +9,7 @@ import {
   Menu,
   X,
   Home,
+  IdCard,
   LogOut,
   Search,
   CheckSquare,
@@ -23,7 +24,13 @@ import {
   Gavel,
   Wallet,
   Receipt,
-  Shirt
+  Shirt,
+  UserPlus,
+  HeartHandshake,
+  Wine,
+  CalendarClock,
+  BookOpen,
+  ChevronRight
 } from 'lucide-react';
 
 // Wordmark URLs from theme directory.
@@ -34,6 +41,7 @@ import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch, useDashboard } from '@/hooks/useDashboard';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import FeedbackModal from '@/components/FeedbackModal';
+import { InstallAppButton } from '@/components/InstallAppButton';
 import { useCreateFeedback } from '@/hooks/useFeedback';
 
 import { useVOGCount } from '@/hooks/useVOGCount';
@@ -41,22 +49,31 @@ import { useDisciplineCasesCount } from '@/hooks/useDisciplineCases';
 import { prmApi } from '@/api/client';
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: Home },
-  { name: 'Leden', href: '/people', icon: Users },
-  { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true },
-  { name: 'VOG', href: '/vog', icon: FileCheck, indent: true, requiresVOG: true },
+  { name: 'Mijn inschrijftaken', href: '/vrijwillig', icon: HeartHandshake },
+  { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, memberOnly: true },
+  { name: 'Dashboard', href: '/', icon: Home, requiresKader: true },
+  { name: 'Relaties', href: '/people', icon: Users, requiresKader: true },
+  { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
+  { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true, requiresKader: true },
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
-  { name: 'Teams', href: '/teams', icon: Building2 },
-  { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true },
+  { name: 'Teams', href: '/teams', icon: Building2, requiresKader: true },
+  { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true, requiresKader: true },
   { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true },
-  { name: 'Commissies', href: '/commissies', icon: UsersRound },
+  { name: 'Commissies', href: '/commissies', icon: UsersRound, requiresKader: true },
+  { name: 'Vrijwilligers', href: '/vrijwilligers', icon: HeartHandshake, requiresVrijwilligers: true },
+  { name: 'VOG', href: '/vrijwilligers/vog', icon: FileCheck, indent: true, requiresVOG: true },
+  { name: 'IVA', href: '/vrijwilligers/iva', icon: Wine, indent: true, requiresVrijwilligers: true },
+  { name: 'Inschrijftaken', href: '/vrijwilligers/diensten', icon: CalendarClock, indent: true, requiresVrijwilligers: true },
+  { name: 'Taakuitleg', href: '/vrijwilligers/taakuitleg', icon: BookOpen, indent: true, requiresVrijwilligers: true },
+  { name: 'Vrijstellingen', href: '/vrijwilligers/vrijstellingen', icon: UsersRound, indent: true, requiresVrijwilligers: true },
   { name: 'Financiën', href: '/financien', icon: Wallet, requiresFinancieel: true },
   { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true },
   { name: 'Lidpas Scanner', href: '/lidpas-scanner', icon: QrCode, requiresToegangscontrole: true, mobileOnly: true },
-  { name: 'Taken', href: '/todos', icon: CheckSquare },
-  { name: 'Feedback', href: '/feedback', icon: MessageSquare },
-  { name: 'Instellingen', href: '/settings', icon: Settings },
+  { name: 'Taken', href: '/todos', icon: CheckSquare, requiresKader: true },
+  { name: 'Feedback', href: '/feedback', icon: MessageSquare, requiresKader: true },
+  { name: 'Instellingen', href: '/settings', icon: Settings, requiresKader: true },
+  { name: 'Profiel', href: '/profile', icon: User },
 ];
 
 function Sidebar({ mobile = false, onClose, stats }) {
@@ -72,7 +89,14 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
   const canAccessToegangscontrole = currentUser?.can_access_toegangscontrole ?? false;
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
+  const canAccessLedenadministratie = currentUser?.can_access_ledenadministratie ?? false;
+  const canAccessVrijwilligers = currentUser?.can_access_vrijwilligers ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
+
+  // `isKader` = iedereen met een staf-rol. Plain leden (account zonder
+  // expliciete rechten) zien alleen hun eigen items in de zijbalk. Server-side
+  // bepaald, net als in router.jsx — leid het hier niet opnieuw af.
+  const isKader = currentUser?.is_kader ?? false;
 
   // Finance menu counters
   const { data: invoiceData = [] } = useQuery({
@@ -112,7 +136,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
   // Map navigation items to their counts
   const getCounts = (name) => {
     switch (name) {
-      case 'Leden': return stats?.total_people || null;
+      case 'Relaties': return stats?.total_people || null;
       case 'Teams': return stats?.total_teams || null;
       case 'Commissies': return stats?.total_commissies || null;
       case 'Taken': return stats?.open_todos_count || null;
@@ -127,6 +151,115 @@ function Sidebar({ mobile = false, onClose, stats }) {
       case 'Tuchtzaken': return disciplineCasesCount > 0 ? disciplineCasesCount : null;
       default: return null;
     }
+  };
+
+  // Collapsible sections — persist collapsed state across visits.
+  const COLLAPSE_STORAGE_KEY = 'rondo:sidebar:collapsed';
+  const [collapsedSections, setCollapsedSections] = useState(() => {
+    try {
+      const stored = localStorage.getItem(COLLAPSE_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(COLLAPSE_STORAGE_KEY, JSON.stringify(collapsedSections));
+    } catch {
+      // Ignore storage failures (private mode, quota).
+    }
+  }, [collapsedSections]);
+
+  const toggleSection = (name) => {
+    setCollapsedSections((prev) => ({ ...prev, [name]: !prev[name] }));
+  };
+
+  // The section containing the current route always shows expanded.
+  const location = useLocation();
+  const isHrefActive = (href) => {
+    if (!href) return false;
+    if (href === '/') return location.pathname === '/';
+    return location.pathname === href || location.pathname.startsWith(`${href}/`);
+  };
+
+  // Filter to the items this user may see, then group each top-level item
+  // with its following indented sub-items into a collapsible section.
+  const visibleNav = navigation.filter((item) => {
+    // Enforce mobile-only items regardless of role.
+    if (item.mobileOnly && !mobile) return false;
+    if (isAdmin) return true;
+    if (item.adminOnly && !isAdmin) return false;
+    if (item.requiresFairplay && !canAccessFairplay) return false;
+    if (item.requiresVOG && !canAccessVOG) return false;
+    if (item.requiresFinancieel && !canAccessFinancieel) return false;
+    if (item.requiresToegangscontrole && !canAccessToegangscontrole) return false;
+    if (item.requiresClothing && !canAccessClothing) return false;
+    if (item.requiresLedenadministratie && !canAccessLedenadministratie) return false;
+    if (item.requiresVrijwilligers && !canAccessVrijwilligers) return false;
+    if (item.requiresKader && !isKader) return false;
+    // Kader normally does not need the member-facing household page.
+    if (item.memberOnly && isKader) return false;
+    return true;
+  });
+
+  const navGroups = [];
+  for (const item of visibleNav) {
+    if (item.indent && navGroups.length > 0) {
+      navGroups[navGroups.length - 1].children.push(item);
+    } else {
+      navGroups.push({ parent: item, children: [] });
+    }
+  }
+
+  // Renders a single nav entry (section header, disabled item, or link).
+  const renderItem = (item) => {
+    const count = getCounts(item.name);
+
+    if (item.type === 'section') {
+      return (
+        <div className="flex items-center px-3 pt-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider dark:text-gray-500">
+          <item.icon className="w-4 h-4 mr-2" />
+          {item.name}
+        </div>
+      );
+    }
+
+    if (item.disabled) {
+      return (
+        <div
+          className={`flex items-center py-2 text-sm font-medium rounded-lg opacity-50 cursor-default pointer-events-none ${
+            item.indent ? 'pl-8 pr-3' : 'px-3'
+          } text-gray-700 dark:text-gray-200`}
+        >
+          <item.icon className="w-5 h-5 mr-3" />
+          {item.name}
+        </div>
+      );
+    }
+
+    return (
+      <NavLink
+        to={item.href}
+        onClick={mobile ? onClose : undefined}
+        className={({ isActive }) =>
+          `flex items-center py-2 text-sm font-medium rounded-lg transition-colors ${
+            item.indent ? 'pl-8 pr-3' : 'px-3'
+          } ${
+            isActive
+              ? 'bg-cyan-50 text-bright-cobalt dark:bg-gray-700 dark:text-electric-cyan dark:border-l-2 dark:border-electric-cyan'
+              : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'
+          }`
+        }
+      >
+        <item.icon className="w-5 h-5 mr-3" />
+        {item.name}
+        {count != null && (
+          <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">{formatMenuCount(count)}</span>
+        )}
+      </NavLink>
+    );
   };
 
   return (
@@ -146,74 +279,36 @@ function Sidebar({ mobile = false, onClose, stats }) {
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
-        {navigation
-          .filter(item => {
-            // Enforce mobile-only items regardless of role.
-            if (item.mobileOnly && !mobile) return false;
-            if (isAdmin) return true;
-            if (item.adminOnly && !isAdmin) return false;
-            if (item.requiresFairplay && !canAccessFairplay) return false;
-            if (item.requiresVOG && !canAccessVOG) return false;
-            if (item.requiresFinancieel && !canAccessFinancieel) return false;
-            if (item.requiresToegangscontrole && !canAccessToegangscontrole) return false;
-            if (item.requiresClothing && !canAccessClothing) return false;
-            return true;
-          })
-          .map((item) => {
-            const count = getCounts(item.name);
+        {navGroups.map(({ parent, children }) => {
+          // Top-level item with no sub-items: render as-is.
+          if (children.length === 0) {
+            return <div key={parent.href || parent.name}>{renderItem(parent)}</div>;
+          }
 
-            // Render section header
-            if (item.type === 'section') {
-              return (
-                <div
-                  key={item.name}
-                  className="flex items-center px-3 pt-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider dark:text-gray-500"
+          // Section with sub-items: collapsible, but always open when active.
+          const groupActive = isHrefActive(parent.href) || children.some((c) => isHrefActive(c.href));
+          const expanded = groupActive || !collapsedSections[parent.name];
+
+          return (
+            <div key={parent.href || parent.name} className="space-y-1">
+              <div className="flex items-center">
+                <div className="flex-1 min-w-0">{renderItem(parent)}</div>
+                <button
+                  type="button"
+                  onClick={() => toggleSection(parent.name)}
+                  aria-expanded={expanded}
+                  aria-label={`${expanded ? 'Inklappen' : 'Uitklappen'}: ${parent.name}`}
+                  className="flex-shrink-0 p-1.5 ml-1 rounded-lg text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
                 >
-                  <item.icon className="w-4 h-4 mr-2" />
-                  {item.name}
-                </div>
-              );
-            }
-
-            // Render disabled item (grayed out, not clickable)
-            if (item.disabled) {
-              return (
-                <div
-                  key={item.href || item.name}
-                  className={`flex items-center py-2 text-sm font-medium rounded-lg opacity-50 cursor-default pointer-events-none ${
-                    item.indent ? 'pl-8 pr-3' : 'px-3'
-                  } text-gray-700 dark:text-gray-200`}
-                >
-                  <item.icon className="w-5 h-5 mr-3" />
-                  {item.name}
-                </div>
-              );
-            }
-
-            // Render regular navigation link
-            return (
-              <NavLink
-                key={item.href || item.name}
-                to={item.href}
-                onClick={mobile ? onClose : undefined}
-                className={({ isActive }) =>
-                  `flex items-center py-2 text-sm font-medium rounded-lg transition-colors ${
-                    item.indent ? 'pl-8 pr-3' : 'px-3'
-                  } ${
-                    isActive
-                      ? 'bg-cyan-50 text-bright-cobalt dark:bg-gray-700 dark:text-electric-cyan dark:border-l-2 dark:border-electric-cyan'
-                      : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'
-                  }`
-                }
-              >
-                <item.icon className="w-5 h-5 mr-3" />
-                {item.name}
-                {count != null && (
-                  <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">{formatMenuCount(count)}</span>
-                )}
-              </NavLink>
-            );
-          })}
+                  <ChevronRight className={`w-4 h-4 transition-transform ${expanded ? 'rotate-90' : ''}`} />
+                </button>
+              </div>
+              {expanded && children.map((child) => (
+                <div key={child.href || child.name}>{renderItem(child)}</div>
+              ))}
+            </div>
+          );
+        })}
       </nav>
 
       {/* User identity + Logout */}
@@ -258,6 +353,8 @@ function Sidebar({ mobile = false, onClose, stats }) {
             )}
           </Link>
         )}
+        {/* Install affordance — renders nothing once the app is installed */}
+        <InstallAppButton />
         {/* Logout link — unchanged styling */}
         <a href={logoutUrl} className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors dark:text-gray-200 dark:hover:bg-gray-700">
           <LogOut className="w-5 h-5 mr-3" />
@@ -361,7 +458,7 @@ function SearchModal({ isOpen, onClose }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Zoek leden en teams..."
+              placeholder="Zoek relaties en teams..."
               className="flex-1 px-4 py-4 text-lg outline-none placeholder:text-gray-400 bg-transparent dark:text-gray-100"
               autoComplete="off"
             />
@@ -389,7 +486,7 @@ function SearchModal({ isOpen, onClose }) {
                 {safeResults.people && safeResults.people.length > 0 && (
                   <div className="px-2">
                     <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide dark:text-gray-400">
-                      Leden
+                      Relaties
                     </div>
                     {safeResults.people.map((person, index) => {
                       const globalIndex = index;
@@ -575,7 +672,8 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
     const path = location.pathname;
     if (path === '/') return 'Dashboard';
     if (path.startsWith('/people/jubilarissen')) return 'Jubilarissen';
-    if (path.startsWith('/people')) return 'Leden';
+    if (path.startsWith('/people/onboarding')) return 'Onboarding';
+    if (path.startsWith('/people')) return 'Relaties';
     if (path === '/financien' || path === '/financien/') return 'Financiën';
     if (path.startsWith('/financien/contributie')) return 'Contributie';
     if (path.startsWith('/financien/facturen')) return 'Facturen';

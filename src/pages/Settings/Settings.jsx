@@ -38,7 +38,7 @@ const ADMIN_SUBTABS = [
   { id: 'rollen', label: 'Rollen' },
   { id: 'functies', label: 'Functies' },
   { id: 'capabilities', label: 'Capabilities' },
-  { id: 'welkomstmail', label: 'Welkomstmail' },
+  { id: 'welkomstmail', label: 'E-mails' },
   { id: 'anniversaries', label: 'Jubilarissen', icon: Award },
   { id: 'systeem', label: 'Systeem', icon: Wrench },
 ];
@@ -49,7 +49,7 @@ export default function Settings() {
   const config = window.rondoConfig || {};
   const { data: currentUser, isLoading: currentUserLoading } = useCurrentUser();
   const isAdmin = (currentUser?.is_admin ?? config.isAdmin) || false;
-  const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
+  const canEditFinancieel = currentUser?.can_edit_financieel ?? false;
   const canAccessVOG = currentUser?.can_access_vog ?? false;
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
   const userId = config.userId;
@@ -88,7 +88,7 @@ export default function Settings() {
   const visibleTabs = TABS.filter((tab) => {
     if (tab.adminOnly && !isAdmin) return false;
     if (tab.requiresClothing && !canAccessClothing) return false;
-    if (tab.requiresFinancieel && !canAccessFinancieel) return false;
+    if (tab.requiresFinancieel && !canEditFinancieel) return false;
     if (tab.requiresVOG && !canAccessVOG) return false;
     return true;
   });
@@ -119,8 +119,8 @@ export default function Settings() {
 
   // Volunteer role classification state
   const [availableRoles, setAvailableRoles] = useState([]);
-  const [roleSettings, setRoleSettings] = useState({ player_roles: [], excluded_roles: [] });
-  const [roleDefaults, setRoleDefaults] = useState({ default_player_roles: [], default_excluded_roles: [] });
+  const [roleSettings, setRoleSettings] = useState({ player_roles: [], excluded_roles: [], staff_roles: [] });
+  const [roleDefaults, setRoleDefaults] = useState({ default_player_roles: [], default_excluded_roles: [], default_staff_roles: [] });
   const [rolesLoading, setRolesLoading] = useState(true);
   const [rolesSaving, setRolesSaving] = useState(false);
   const [rolesMessage, setRolesMessage] = useState('');
@@ -156,6 +156,7 @@ export default function Settings() {
   // Capability matrix state (admin only)
   const [capabilityMatrix, setCapabilityMatrix] = useState({});
   const [capabilityLabels, setCapabilityLabels] = useState({});
+  const [managementCaps, setManagementCaps] = useState([]);
   const [capabilityMatrixLoading, setCapabilityMatrixLoading] = useState(false);
   const [capabilityMatrixSaving, setCapabilityMatrixSaving] = useState(false);
   const [capabilityMatrixMessage, setCapabilityMatrixMessage] = useState('');
@@ -200,9 +201,16 @@ export default function Settings() {
           prmApi.getVolunteerRoleSettings(),
         ]);
         setAvailableRoles(availableResponse.data || []);
-        const { player_roles, excluded_roles, default_player_roles, default_excluded_roles } = settingsResponse.data;
-        setRoleSettings({ player_roles, excluded_roles });
-        setRoleDefaults({ default_player_roles, default_excluded_roles });
+        const {
+          player_roles,
+          excluded_roles,
+          staff_roles = [],
+          default_player_roles,
+          default_excluded_roles,
+          default_staff_roles = [],
+        } = settingsResponse.data;
+        setRoleSettings({ player_roles, excluded_roles, staff_roles });
+        setRoleDefaults({ default_player_roles, default_excluded_roles, default_staff_roles });
       } catch {
         // Role settings fetch failed silently
       } finally {
@@ -247,6 +255,7 @@ export default function Settings() {
       ]);
       setCapabilityMatrix(matrixRes.data?.roles || {});
       setCapabilityLabels(matrixRes.data?.capability_labels || {});
+      setManagementCaps(matrixRes.data?.management_capabilities || []);
       setAgeGroupAccess(ageGroupRes.data?.roles || {});
       setAvailableAgeGroups(ageGroupRes.data?.available_age_groups || []);
     } catch (error) {
@@ -363,6 +372,7 @@ export default function Settings() {
       const matrixResponse = await prmApi.updateCapabilityMatrix({ roles: capabilityMatrix });
       setCapabilityMatrix(matrixResponse.data?.roles || capabilityMatrix);
       setCapabilityLabels(matrixResponse.data?.capability_labels || capabilityLabels);
+      setManagementCaps(matrixResponse.data?.management_capabilities || managementCaps);
 
       // Save age-group access config alongside
       const ageGroupResponse = await prmApi.updateAgeGroupAccess({ roles: ageGroupAccess });
@@ -407,8 +417,8 @@ export default function Settings() {
     setRolesMessage('');
     try {
       const response = await prmApi.updateVolunteerRoleSettings(roleSettings);
-      const { player_roles, excluded_roles, people_recalculated } = response.data;
-      setRoleSettings({ player_roles, excluded_roles });
+      const { player_roles, excluded_roles, staff_roles = [], people_recalculated } = response.data;
+      setRoleSettings({ player_roles, excluded_roles, staff_roles });
       setRolesMessage(
         people_recalculated !== undefined && people_recalculated !== null
           ? `Rolclassificatie opgeslagen. ${people_recalculated} personen herberekend.`
@@ -493,13 +503,19 @@ export default function Settings() {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'appearance':
-        return <AppearanceTab />;
+        return (
+          <AppearanceTab
+            clubConfig={clubConfig}
+            setClubConfig={setClubConfig}
+            clubConfigLoading={clubConfigLoading}
+          />
+        );
       case 'connections':
         return <ConnectionsTab
           activeSubtab={activeSubtab}
           setActiveSubtab={setActiveSubtab}
           isAdmin={isAdmin}
-          canAccessFinancieel={canAccessFinancieel}
+          canEditFinancieel={canEditFinancieel}
           currentUserEmail={currentUser?.email || ''}
           config={config}
           // Club config props
@@ -521,7 +537,7 @@ export default function Settings() {
           formatDate={formatDate}
         />;
       case 'financieel':
-        return canAccessFinancieel ? (
+        return canEditFinancieel ? (
           <FinanceSettings
             allowedTabs={['organization', 'payment', 'discipline', 'contributie', 'email']}
             activeTab={activeSubtab}
@@ -572,6 +588,7 @@ export default function Settings() {
             capabilityMatrix={capabilityMatrix}
             setCapabilityMatrix={setCapabilityMatrix}
             capabilityLabels={capabilityLabels}
+            managementCaps={managementCaps}
             capabilityMatrixLoading={capabilityMatrixLoading}
             capabilityMatrixSaving={capabilityMatrixSaving}
             capabilityMatrixMessage={capabilityMatrixMessage}
@@ -587,6 +604,9 @@ export default function Settings() {
             welcomeSaving={welcomeSaving}
             welcomeSaved={welcomeSaved}
             handleWelcomeSave={handleWelcomeSave}
+            clubConfig={clubConfig}
+            setClubConfig={setClubConfig}
+            clubConfigLoading={clubConfigLoading}
             anniversarySettings={anniversarySettings}
             setAnniversarySettings={setAnniversarySettings}
             anniversarySettingsLoading={anniversarySettingsLoading}
@@ -727,22 +747,33 @@ function ClothingSettingsTab() {
 }
 
 // Appearance Tab Component
-function AppearanceTab() {
+function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
   const config = window.rondoConfig || {};
   const isAdmin = config.isAdmin || false;
 
   // Club Configuration state (admin only)
   const [clubName, setClubName] = useState(config.clubName || '');
+  const [volunteerSignupInfo, setVolunteerSignupInfo] = useState(config.volunteerSignupInfo || '');
+  const [secondHalfOpens, setSecondHalfOpens] = useState('11-01');
   const [savingClubConfig, setSavingClubConfig] = useState(false);
   const [clubConfigSaved, setClubConfigSaved] = useState(false);
   const [clubLogoId, setClubLogoId] = useState(0);
   const [clubLogoUrl, setClubLogoUrl] = useState('');
+  const [businessclubLogoId, setBusinessclubLogoId] = useState(0);
+  const [businessclubLogoUrl, setBusinessclubLogoUrl] = useState('');
   const [primaryColor, setPrimaryColor] = useState('');
   const [accentColor, setAccentColor] = useState('');
   const [loadingBranding, setLoadingBranding] = useState(false);
   const [savingBranding, setSavingBranding] = useState(false);
   const [brandingSaved, setBrandingSaved] = useState(false);
   const [brandingError, setBrandingError] = useState('');
+
+  useEffect(() => {
+    if (!clubConfig) return;
+    setClubName(clubConfig.club_name || '');
+    setVolunteerSignupInfo(clubConfig.volunteer_signup_info || '');
+    setSecondHalfOpens(clubConfig.volunteer_second_half_opens || '11-01');
+  }, [clubConfig]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -754,6 +785,8 @@ function AppearanceTab() {
         const response = await prmApi.getFinanceBranding();
         setClubLogoId(response.data?.club_logo_id || 0);
         setClubLogoUrl(response.data?.club_logo_url || '');
+        setBusinessclubLogoId(response.data?.businessclub_logo_id || 0);
+        setBusinessclubLogoUrl(response.data?.businessclub_logo_url || '');
         setPrimaryColor(response.data?.accent_color || '');
         setAccentColor(response.data?.accent_background_color || '');
       } catch (error) {
@@ -773,9 +806,13 @@ function AppearanceTab() {
     try {
       const response = await prmApi.updateClubConfig({
         club_name: clubName,
+        volunteer_signup_info: volunteerSignupInfo,
+        volunteer_second_half_opens: secondHalfOpens,
       });
       // Update window.rondoConfig with saved values
       window.rondoConfig.clubName = response.data.club_name;
+      window.rondoConfig.volunteerSignupInfo = response.data.volunteer_signup_info;
+      setClubConfig(response.data);
 
       setClubConfigSaved(true);
       setTimeout(() => setClubConfigSaved(false), 3000);
@@ -786,7 +823,7 @@ function AppearanceTab() {
     }
   };
 
-  const handleLogoUpload = async (event) => {
+  const handleLogoUpload = async (event, setLogoId, setLogoUrl) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -801,8 +838,8 @@ function AppearanceTab() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      setClubLogoId(response.data.id);
-      setClubLogoUrl(response.data.source_url);
+      setLogoId(response.data.id);
+      setLogoUrl(response.data.source_url);
     } catch (error) {
       setBrandingError(error.response?.data?.message || 'Fout bij uploaden logo');
     } finally {
@@ -817,6 +854,7 @@ function AppearanceTab() {
     try {
       await prmApi.updateFinanceBranding({
         club_logo_id: clubLogoId,
+        businessclub_logo_id: businessclubLogoId,
         accent_color: primaryColor,
         accent_background_color: accentColor,
       });
@@ -856,11 +894,44 @@ function AppearanceTab() {
               </p>
             </div>
 
+            <div>
+              <label className="label">Informatie op vrijwilligerspagina</label>
+              <RichTextEditor
+                value={volunteerSignupInfo}
+                onChange={setVolunteerSignupInfo}
+                placeholder="Aanvullende informatie voor leden die een inschrijftaak willen inplannen..."
+                disabled={clubConfigLoading}
+                minHeight="120px"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Wordt als informatieblok direct onder de introductie op <code>/vrijwillig</code> getoond. Laat leeg om het blok te verbergen.
+              </p>
+            </div>
+
+            <div>
+              <label className="label" htmlFor="second-half-opens">Tweede seizoenshelft opent op</label>
+              <input
+                id="second-half-opens"
+                type="text"
+                inputMode="numeric"
+                value={secondHalfOpens}
+                onChange={(e) => setSecondHalfOpens(e.target.value)}
+                className="input max-w-[10rem]"
+                placeholder="11-01"
+                pattern="\\d{2}-\\d{2}"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Maand en dag (MM-DD) waarop inschrijftaken van januari tot en met juni opengaan voor
+                aanmelding. Geldt elk seizoen opnieuw, dus dit hoef je niet jaarlijks aan te passen.
+                Leden zien die inschrijftaken al wel staan, met de datum erbij.
+              </p>
+            </div>
+
             {/* Save Button */}
             <div className="flex items-center gap-3">
               <button
                 onClick={handleSaveClubConfig}
-                disabled={savingClubConfig}
+                disabled={clubConfigLoading || savingClubConfig}
                 className="btn-primary"
               >
                 {savingClubConfig ? 'Opslaan...' : 'Opslaan'}
@@ -915,11 +986,44 @@ function AppearanceTab() {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={handleLogoUpload}
+                  onChange={(event) => handleLogoUpload(event, setClubLogoId, setClubLogoUrl)}
                   className="mt-2 block w-full text-sm text-gray-700 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-electric-cyan file:text-white hover:file:bg-electric-cyan/90 file:cursor-pointer"
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Logo wordt getoond op facturen. Kies een afbeelding met transparante achtergrond voor het beste resultaat.
+                  Wordt getoond op facturen en reguliere passen. Kies een afbeelding met transparante achtergrond voor het beste resultaat.
+                </p>
+              </div>
+
+              <div>
+                <label className="label">Businessclub-logo</label>
+                {businessclubLogoUrl ? (
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={businessclubLogoUrl}
+                      alt="Businessclub-logo"
+                      className="max-h-[60px] object-contain"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBusinessclubLogoId(0);
+                        setBusinessclubLogoUrl('');
+                        setBrandingSaved(false);
+                      }}
+                      className="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                    >
+                      Verwijderen
+                    </button>
+                  </div>
+                ) : null}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => handleLogoUpload(event, setBusinessclubLogoId, setBusinessclubLogoUrl)}
+                  className="mt-2 block w-full text-sm text-gray-700 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-electric-cyan file:text-white hover:file:bg-electric-cyan/90 file:cursor-pointer"
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Wordt gebruikt op Businessclub AWC-passen. Zonder instelling gebruikt Rondo het meegeleverde Businessclub-logo.
                 </p>
               </div>
 
@@ -1033,7 +1137,7 @@ function AppearanceTab() {
 // ConnectionsTab Component - Container for connection subtabs
 function ConnectionsTab({
   activeSubtab, setActiveSubtab,
-  isAdmin, canAccessFinancieel, currentUserEmail,
+  isAdmin, canEditFinancieel, currentUserEmail,
   config,
   // Club config props
   clubConfig, setClubConfig, clubConfigLoading,
@@ -1102,10 +1206,10 @@ function ConnectionsTab({
         />
       )}
       {activeSubtab === 'payment-providers' && (
-        <PaymentProvidersSubtab canAccessFinancieel={canAccessFinancieel} />
+        <PaymentProvidersSubtab canEditFinancieel={canEditFinancieel} />
       )}
       {activeSubtab === 'wallets' && (
-        <WalletsSubtab canAccessFinancieel={canAccessFinancieel} />
+        <WalletsSubtab canEditFinancieel={canEditFinancieel} />
       )}
     </div>
   );
@@ -1814,8 +1918,8 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
   );
 }
 
-function PaymentProvidersSubtab({ canAccessFinancieel }) {
-  if (!canAccessFinancieel) {
+function PaymentProvidersSubtab({ canEditFinancieel }) {
+  if (!canEditFinancieel) {
     return (
       <div className="card p-6">
         <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -1828,8 +1932,8 @@ function PaymentProvidersSubtab({ canAccessFinancieel }) {
   return <FinanceSettings initialTab="mollie" allowedTabs={['mollie', 'rabobank']} />;
 }
 
-function WalletsSubtab({ canAccessFinancieel }) {
-  if (!canAccessFinancieel) {
+function WalletsSubtab({ canEditFinancieel }) {
+  if (!canEditFinancieel) {
     return (
       <div className="card p-6">
         <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -2017,6 +2121,7 @@ function AdminTabWithSubtabs({
   capabilityMatrix,
   setCapabilityMatrix,
   capabilityLabels,
+  managementCaps,
   capabilityMatrixLoading,
   capabilityMatrixSaving,
   capabilityMatrixMessage,
@@ -2032,6 +2137,9 @@ function AdminTabWithSubtabs({
   welcomeSaving,
   welcomeSaved,
   handleWelcomeSave,
+  clubConfig,
+  setClubConfig,
+  clubConfigLoading,
   anniversarySettings,
   setAnniversarySettings,
   anniversarySettingsLoading,
@@ -2099,6 +2207,7 @@ function AdminTabWithSubtabs({
             matrixState={capabilityMatrix}
             setMatrixState={setCapabilityMatrix}
             capabilityLabels={capabilityLabels}
+            managementCaps={managementCaps}
             loading={capabilityMatrixLoading}
             saving={capabilityMatrixSaving}
             message={capabilityMatrixMessage}
@@ -2119,6 +2228,9 @@ function AdminTabWithSubtabs({
             saving={welcomeSaving}
             saved={welcomeSaved}
             handleSave={handleWelcomeSave}
+            clubConfig={clubConfig}
+            setClubConfig={setClubConfig}
+            clubConfigLoading={clubConfigLoading}
           />
         </div>
       ) : activeSubtab === 'anniversaries' ? (
@@ -2152,6 +2264,12 @@ function GebruikersTab() {
   const [inviteSearch, setInviteSearch] = useState('');
   const [inviteResults, setInviteResults] = useState([]);
   const [inviteSearching, setInviteSearching] = useState(false);
+  const [relinkAccount, setRelinkAccount] = useState(null);
+  const [relinkSearch, setRelinkSearch] = useState('');
+  const [relinkResults, setRelinkResults] = useState([]);
+  const [relinkSearching, setRelinkSearching] = useState(false);
+  const [relinking, setRelinking] = useState(null);
+  const relinkSearchInputRef = useRef(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -2187,6 +2305,26 @@ function GebruikersTab() {
     return () => clearTimeout(timer);
   }, [inviteSearch]);
 
+  // Debounced search for the new person behind an existing account.
+  useEffect(() => {
+    if (!relinkAccount || relinkSearch.length < 2) {
+      setRelinkResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setRelinkSearching(true);
+      try {
+        const res = await prmApi.searchLinkablePeople(relinkSearch);
+        setRelinkResults(res.data || []);
+      } catch {
+        setRelinkResults([]);
+      } finally {
+        setRelinkSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [relinkAccount, relinkSearch]);
+
   const handleProvision = async (personId, personName) => {
     setProvisioning(personId);
     setProvisionMessage(null);
@@ -2203,6 +2341,62 @@ function GebruikersTab() {
       });
     } finally {
       setProvisioning(null);
+    }
+  };
+
+  const openRelink = (user) => {
+    setRelinkAccount(user);
+    setRelinkSearch(user.pending_guardian?.name || '');
+    setRelinkResults([]);
+    setProvisionMessage(null);
+  };
+
+  const closeRelink = () => {
+    setRelinkAccount(null);
+    setRelinkSearch('');
+    setRelinkResults([]);
+  };
+
+  useEffect(() => {
+    if (!relinkAccount) return undefined;
+
+    relinkSearchInputRef.current?.focus();
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && !relinking) {
+        closeRelink();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [relinkAccount, relinking]);
+
+  const handleRelink = async (person) => {
+    if (!relinkAccount) return;
+
+    const sourceName = relinkAccount.pending_guardian?.name || relinkAccount.linked_person_name || relinkAccount.name;
+    const confirmed = window.confirm(
+      `Account van ${sourceName} koppelen aan ${person.name}? Inschrijvingen en VOG/IVA-gegevens van dit account worden verplaatst.`
+    );
+    if (!confirmed) return;
+
+    setRelinking(person.id);
+    setProvisionMessage(null);
+    try {
+      const response = await prmApi.relinkUser(relinkAccount.id, person.id);
+      const migrated = response.data?.migrated_shifts || 0;
+      setProvisionMessage({
+        type: 'success',
+        text: `Account gekoppeld aan ${person.name}. ${migrated} ${migrated === 1 ? 'inschrijving is' : 'inschrijvingen zijn'} meeverhuisd.`,
+      });
+      closeRelink();
+      await fetchUsers();
+    } catch (error) {
+      setProvisionMessage({
+        type: 'error',
+        text: error.response?.data?.message || `Kan het account niet koppelen aan ${person.name}.`,
+      });
+    } finally {
+      setRelinking(null);
     }
   };
 
@@ -2270,6 +2464,7 @@ function GebruikersTab() {
                     <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">E-mail</th>
                     <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">Geregistreerd</th>
                     <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">Laatst actief</th>
+                    <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">Accountkoppeling</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -2277,9 +2472,16 @@ function GebruikersTab() {
                     <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <td className="px-4 py-2.5 text-sm">
                         {user.linked_person_id ? (
-                          <Link to={`/people/${user.linked_person_id}`} className="text-electric-cyan hover:underline">
-                            {user.linked_person_name || user.name}
-                          </Link>
+                          <div>
+                            <Link to={`/people/${user.linked_person_id}`} className="text-electric-cyan hover:underline">
+                              {user.linked_person_name || user.name}
+                            </Link>
+                            {user.pending_guardian && (
+                              <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                                {user.pending_guardian.name} gebruikt het account als ouder/verzorger
+                              </p>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-gray-900 dark:text-gray-100">{user.name}</span>
                         )}
@@ -2287,6 +2489,16 @@ function GebruikersTab() {
                       <td className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400">{user.email}</td>
                       <td className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400">{formatDate(user.registered)}</td>
                       <td className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400">{formatDateTime(user.last_active)}</td>
+                      <td className="px-4 py-2.5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => openRelink(user)}
+                          className="inline-flex items-center gap-1.5 text-sm text-electric-cyan hover:underline"
+                        >
+                          <LinkIcon className="w-3.5 h-3.5" />
+                          Wijzigen
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -2294,7 +2506,94 @@ function GebruikersTab() {
             </div>
           </div>
         )}
+
       </div>
+
+      {relinkAccount && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="relink-account-title"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !relinking) closeRelink();
+          }}
+        >
+          <div className="w-full max-w-xl rounded-lg bg-white shadow-xl dark:bg-gray-800">
+            <div className="flex items-start justify-between gap-4 border-b border-gray-200 p-4 dark:border-gray-700">
+              <div>
+                <h3 id="relink-account-title" className="font-medium text-gray-900 dark:text-gray-100">
+                  Accountkoppeling wijzigen
+                </h3>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                  Zoek de gesynchroniseerde persoon voor {relinkAccount.pending_guardian?.name || relinkAccount.name}.
+                  Inschrijvingen en VOG/IVA-gegevens die via dit account op {relinkAccount.linked_person_name} staan, verhuizen mee.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeRelink}
+                disabled={Boolean(relinking)}
+                aria-label="Sluiten"
+                className="text-gray-500 hover:text-gray-700 disabled:opacity-50 dark:hover:text-gray-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  ref={relinkSearchInputRef}
+                  type="text"
+                  value={relinkSearch}
+                  onChange={(event) => setRelinkSearch(event.target.value)}
+                  placeholder="Zoek de ouder/verzorger op naam..."
+                  className="w-full pl-9 pr-9 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
+                />
+                {relinkSearching && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
+                )}
+              </div>
+
+              {relinkSearch.length >= 2 && !relinkSearching && relinkResults.length === 0 && (
+                <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Geen beschikbare personen gevonden.</p>
+              )}
+
+              {relinkResults.length > 0 && (
+                <div className="mt-3 max-h-72 overflow-y-auto rounded-md border border-gray-300 dark:border-gray-600">
+                  {relinkResults.map(person => (
+                    <div key={person.id} className="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 last:border-0 dark:border-gray-700">
+                      <div>
+                        <Link to={`/people/${person.id}`} className="text-sm text-electric-cyan hover:underline">
+                          {person.name}
+                        </Link>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {[person.email, person.knvb_id].filter(Boolean).join(' · ') || 'Geen aanvullende gegevens'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRelink(person)}
+                        disabled={Boolean(relinking)}
+                        className="btn-primary gap-1.5 px-3 py-1.5 text-sm disabled:opacity-50"
+                      >
+                        {relinking === person.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <LinkIcon className="w-3.5 h-3.5" />
+                        )}
+                        Koppelen
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Invite by search */}
       <div className="card p-6">
@@ -2341,7 +2640,7 @@ function GebruikersTab() {
                         <button
                           onClick={() => handleProvision(person.id, person.name)}
                           disabled={provisioning === person.id}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md text-white bg-electric-cyan hover:bg-bright-cobalt disabled:opacity-50 transition-colors"
+                          className="btn-primary gap-1.5 text-sm px-3 py-1.5 disabled:opacity-50"
                         >
                           {provisioning === person.id ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -2720,12 +3019,55 @@ function RollenTab({
             </div>
           </div>
 
+          {/* Staf-rollen: vrijgesteld van 2-diensten-plicht (#12 vrijwilligersbeleid) */}
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-base font-medium text-gray-900 dark:text-gray-100">
+              Staf-rollen — vrijgesteld van vrijwilligersplicht
+            </h4>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Personen met een actieve werkrol in deze lijst zijn automatisch vrijgesteld van de vrijwilligersplicht van twee inschrijftaken.
+              Vink de functies aan die als trainer/leider/teammanager-rol gelden.
+            </p>
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 max-h-64 overflow-y-auto border rounded-md border-gray-200 dark:border-gray-700 p-3">
+              {allRoles.map((role) => {
+                const isStaff = (roleSettings.staff_roles || []).includes(role);
+                const defaultStaff = (roleDefaults.default_staff_roles || []).includes(role);
+                const modified = defaultStaff !== isStaff;
+                return (
+                  <label key={`staff-${role}`} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isStaff}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setRoleSettings((prev) => {
+                          const current = new Set(prev.staff_roles || []);
+                          if (checked) {
+                            current.add(role);
+                          } else {
+                            current.delete(role);
+                          }
+                          return { ...prev, staff_roles: Array.from(current).sort() };
+                        });
+                      }}
+                      className="h-4 w-4 text-electric-cyan focus:ring-electric-cyan border-gray-300 rounded"
+                    />
+                    <span className="text-gray-900 dark:text-gray-100">{role}</span>
+                    {modified && (
+                      <span className="text-xs text-amber-600 dark:text-amber-400">(gewijzigd)</span>
+                    )}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Save button and message */}
           <div className="flex items-center gap-4">
             <button
               onClick={handleRolesSave}
               disabled={rolesSaving}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+              className="btn-primary disabled:opacity-50"
             >
               {rolesSaving ? (
                 <>
@@ -2869,7 +3211,7 @@ function FunctiesTab({
             <button
               onClick={handleSave}
               disabled={saving}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+              className="btn-primary disabled:opacity-50"
             >
               {saving ? (
                 <>
@@ -2942,7 +3284,7 @@ function FunctiesTab({
                   <button
                     onClick={handleCommissieSave}
                     disabled={commissieSaving}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+                    className="btn-primary disabled:opacity-50"
                   >
                     {commissieSaving ? (
                       <>
@@ -2998,7 +3340,7 @@ function FunctiesTab({
 }
 
 // Capabilities Tab Component - Role × Capability matrix
-function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loading, saving, message, handleSave, ageGroupAccess, setAgeGroupAccess, availableAgeGroups, ageGroupAccessLoading, refetchData }) {
+function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, managementCaps = [], loading, saving, message, handleSave, ageGroupAccess, setAgeGroupAccess, availableAgeGroups, ageGroupAccessLoading, refetchData }) {
   const roleEntries = Object.entries(matrixState);
   const [openDropdownRole, setOpenDropdownRole] = useState(null);
   const [newRoleName, setNewRoleName] = useState('');
@@ -3019,9 +3361,6 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openDropdownRole]);
 
-  // Management capabilities that bypass age-group filtering (mirrors AGE_GROUP_BYPASS_CAPS in PHP)
-  const MANAGEMENT_CAPS = ['manage_options', 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing'];
-
   const handleCheckboxChange = (roleSlug, capSlug, checked) => {
     setMatrixState(prev => ({
       ...prev,
@@ -3034,8 +3373,10 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
       },
     }));
 
-    // If adding a management capability, auto-clear age-group restriction for that role
-    if (checked && MANAGEMENT_CAPS.includes(capSlug)) {
+    // If adding a management capability, auto-clear age-group restriction for that role.
+    // The list comes from the server (AccessControl::AGE_GROUP_BYPASS_CAPS) — a copy
+    // maintained here went stale every time that constant changed.
+    if (checked && managementCaps.includes(capSlug)) {
       setAgeGroupAccess(prev => {
         const next = { ...prev };
         delete next[roleSlug];
@@ -3046,7 +3387,7 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
 
   // Check if a role has any management capability (bypasses age-group filtering)
   const roleHasManagementCap = (roleData) => {
-    return MANAGEMENT_CAPS.some(cap => roleData.capabilities?.[cap]);
+    return managementCaps.some(cap => roleData.capabilities?.[cap]);
   };
 
   // Handle age-group checkbox toggle for a role
@@ -3264,7 +3605,7 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
             <button
               onClick={handleSave}
               disabled={saving}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+              className="btn-primary disabled:opacity-50"
             >
               {saving ? (
                 <>
@@ -3287,9 +3628,272 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
   );
 }
 
-// Welkomstmail Tab Component - Welcome email template configuration
-function WelkomstmailTab({ settings, setSettings, loading, saving, saved, handleSave }) {
-  const inputClass = 'w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-electric-cyan';
+// E-mail Tab Component — four templates, selected via sub-tabs:
+// 1) Account aanmaken (existing) — sent on user provisioning
+// 2) Nieuw lid (onboarding) — sent from the Onboarding screen, leden tab
+// 3) Nieuwe vrijwilliger (onboarding) — sent from the Onboarding screen, vrijwilligers tab
+// 4) IVA-goedkeuring — sent when an IVA certificate is approved
+function WelkomstmailTab({
+  settings,
+  setSettings,
+  loading,
+  saving,
+  saved,
+  handleSave,
+  clubConfig,
+  setClubConfig,
+  clubConfigLoading,
+}) {
+  const [activeSubTab, setActiveSubTab] = useState('account');
+
+  const [lidSettings, setLidSettings] = useState(null);
+  const [lidLoading, setLidLoading] = useState(false);
+  const [lidSaving, setLidSaving] = useState(false);
+  const [lidSaved, setLidSaved] = useState(false);
+
+  const [vrijwilligerSettings, setVrijwilligerSettings] = useState(null);
+  const [vrijwilligerLoading, setVrijwilligerLoading] = useState(false);
+  const [vrijwilligerSaving, setVrijwilligerSaving] = useState(false);
+  const [vrijwilligerSaved, setVrijwilligerSaved] = useState(false);
+
+  useEffect(() => {
+    if (activeSubTab === 'lid' && !lidSettings && !lidLoading) {
+      setLidLoading(true);
+      prmApi.getOnboardingEmailSettings('lid')
+        .then((res) => setLidSettings(res.data))
+        .catch(() => {})
+        .finally(() => setLidLoading(false));
+    }
+  }, [activeSubTab, lidSettings, lidLoading]);
+
+  useEffect(() => {
+    if (activeSubTab === 'vrijwilliger' && !vrijwilligerSettings && !vrijwilligerLoading) {
+      setVrijwilligerLoading(true);
+      prmApi.getOnboardingEmailSettings('vrijwilliger')
+        .then((res) => setVrijwilligerSettings(res.data))
+        .catch(() => {})
+        .finally(() => setVrijwilligerLoading(false));
+    }
+  }, [activeSubTab, vrijwilligerSettings, vrijwilligerLoading]);
+
+  const handleOnboardingSave = async (type, value, setValue, setSavingState, setSavedState) => {
+    setSavingState(true);
+    setSavedState(false);
+    try {
+      const res = await prmApi.updateOnboardingEmailSettings(type, value);
+      setValue(res.data);
+      setSavedState(true);
+      setTimeout(() => setSavedState(false), 2000);
+    } catch {
+      // Silent — backend errors surface in browser console
+    } finally {
+      setSavingState(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">E-mails</h3>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Beheer de e-mails voor accountaanmaak, onboarding en IVA-goedkeuring.
+        </p>
+      </div>
+
+      <div className="flex items-end gap-6 border-b border-gray-200 dark:border-gray-700">
+        <TabButton label="Account aanmaken" isActive={activeSubTab === 'account'} onClick={() => setActiveSubTab('account')} />
+        <TabButton label="Nieuw lid" isActive={activeSubTab === 'lid'} onClick={() => setActiveSubTab('lid')} />
+        <TabButton label="Nieuwe vrijwilliger" isActive={activeSubTab === 'vrijwilliger'} onClick={() => setActiveSubTab('vrijwilliger')} />
+        <TabButton label="IVA-goedkeuring" isActive={activeSubTab === 'iva'} onClick={() => setActiveSubTab('iva')} />
+      </div>
+
+      {activeSubTab === 'account' && (
+        <AccountWelkomstmailForm
+          settings={settings}
+          setSettings={setSettings}
+          loading={loading}
+          saving={saving}
+          saved={saved}
+          handleSave={handleSave}
+        />
+      )}
+
+      {activeSubTab === 'lid' && (
+        <OnboardingWelkomstmailForm
+          description="Verstuurd vanaf de Onboarding-pagina aan leden die in de afgelopen 30 dagen lid zijn geworden."
+          settings={lidSettings}
+          setSettings={setLidSettings}
+          loading={lidLoading}
+          saving={lidSaving}
+          saved={lidSaved}
+          onSave={() => handleOnboardingSave('lid', lidSettings, setLidSettings, setLidSaving, setLidSaved)}
+        />
+      )}
+
+      {activeSubTab === 'vrijwilliger' && (
+        <OnboardingWelkomstmailForm
+          description="Verstuurd vanaf de Onboarding-pagina aan vrijwilligers die in de afgelopen 60 dagen actief zijn geworden."
+          settings={vrijwilligerSettings}
+          setSettings={setVrijwilligerSettings}
+          loading={vrijwilligerLoading}
+          saving={vrijwilligerSaving}
+          saved={vrijwilligerSaved}
+          onSave={() => handleOnboardingSave('vrijwilliger', vrijwilligerSettings, setVrijwilligerSettings, setVrijwilligerSaving, setVrijwilligerSaved)}
+        />
+      )}
+
+      {activeSubTab === 'iva' && (
+        <IvaApprovalEmailForm
+          clubConfig={clubConfig}
+          setClubConfig={setClubConfig}
+          loading={clubConfigLoading}
+        />
+      )}
+    </div>
+  );
+}
+
+const TEMPLATE_INPUT_CLASS = 'w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-electric-cyan';
+
+// Sub-form: existing account-provisioning email (includes from_email/from_name).
+function AccountWelkomstmailForm({ settings, setSettings, loading, saving, saved, handleSave }) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="w-6 h-6 animate-spin text-electric-cyan" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Verstuurd zodra een nieuwe gebruiker een account krijgt.
+      </p>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Van e-mailadres</label>
+        <input
+          type="text"
+          value={settings?.from_email || ''}
+          onChange={(e) => setSettings((prev) => ({ ...prev, from_email: e.target.value }))}
+          className={TEMPLATE_INPUT_CLASS}
+          placeholder="noreply@example.com"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Van naam</label>
+        <input
+          type="text"
+          value={settings?.from_name || ''}
+          onChange={(e) => setSettings((prev) => ({ ...prev, from_name: e.target.value }))}
+          className={TEMPLATE_INPUT_CLASS}
+          placeholder="Rondo Club"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Onderwerp</label>
+        <input
+          type="text"
+          value={settings?.subject || ''}
+          onChange={(e) => setSettings((prev) => ({ ...prev, subject: e.target.value }))}
+          className={TEMPLATE_INPUT_CLASS}
+          placeholder="Welkom bij {club_naam}"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bericht</label>
+        <RichTextEditor
+          value={settings?.body || ''}
+          onChange={(html) => setSettings((prev) => ({ ...prev, body: html }))}
+          placeholder="Hallo {first_name},..."
+          minHeight="200px"
+        />
+        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+          Beschikbare variabelen: <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{first_name}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{login}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{email}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{set_password_url}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{club_naam}'}</code>
+        </p>
+      </div>
+
+      <SaveRow saving={saving} saved={saved} disabled={!settings} onSave={handleSave} />
+    </div>
+  );
+}
+
+// Sub-form: onboarding template (subject + body only — uses WordPress default from address).
+function OnboardingWelkomstmailForm({ description, settings, setSettings, loading, saving, saved, onSave }) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="w-6 h-6 animate-spin text-electric-cyan" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Onderwerp</label>
+        <input
+          type="text"
+          value={settings?.subject || ''}
+          onChange={(e) => setSettings((prev) => ({ ...prev, subject: e.target.value }))}
+          className={TEMPLATE_INPUT_CLASS}
+          placeholder="Welkom bij {club_naam}"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bericht</label>
+        <RichTextEditor
+          value={settings?.body || ''}
+          onChange={(html) => setSettings((prev) => ({ ...prev, body: html }))}
+          placeholder="Hallo {first_name},..."
+          minHeight="200px"
+        />
+        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+          Beschikbare variabelen: <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{first_name}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{infix}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{last_name}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{full_name}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{email}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{club_naam}'}</code>
+        </p>
+      </div>
+
+      <SaveRow saving={saving} saved={saved} disabled={!settings} onSave={onSave} />
+    </div>
+  );
+}
+
+function IvaApprovalEmailForm({ clubConfig, setClubConfig, loading }) {
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (!clubConfig) return;
+    setSubject(clubConfig.iva_approval_email_subject || '');
+    setBody(clubConfig.iva_approval_email_body || '');
+  }, [clubConfig]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaved(false);
+    try {
+      const response = await prmApi.updateClubConfig({
+        iva_approval_email_subject: subject,
+        iva_approval_email_body: body,
+      });
+      setClubConfig(response.data);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      // Keep the form available so the administrator can retry.
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -3300,97 +3904,70 @@ function WelkomstmailTab({ settings, setSettings, loading, saving, saved, handle
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Verstuurd zodra een geldig IVA-certificaat wordt goedgekeurd.
+      </p>
+
       <div>
-        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Welkomstmail</h3>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Stel het sjabloon in voor de welkomstmail die verstuurd wordt als een account wordt aangemaakt.
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="iva-approval-email-subject">Onderwerp</label>
+        <input
+          id="iva-approval-email-subject"
+          type="text"
+          value={subject}
+          onChange={(event) => setSubject(event.target.value)}
+          className={TEMPLATE_INPUT_CLASS}
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="iva-approval-email-body">Berichttekst</label>
+        <textarea
+          id="iva-approval-email-body"
+          value={body}
+          onChange={(event) => setBody(event.target.value)}
+          className={`${TEMPLATE_INPUT_CLASS} min-h-40 resize-y`}
+          required
+        />
+        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+          Beschikbare variabelen: <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{first_name}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{full_name}'}</code> en <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{club_name}'}</code>. De knop naar de inschrijftaken wordt automatisch toegevoegd.
         </p>
       </div>
 
-      <div className="space-y-5">
-        {/* From email */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Van e-mailadres
-          </label>
-          <input
-            type="text"
-            value={settings?.from_email || ''}
-            onChange={(e) => setSettings(prev => ({ ...prev, from_email: e.target.value }))}
-            className={inputClass}
-            placeholder="noreply@example.com"
-          />
-        </div>
+      <SaveRow
+        saving={saving}
+        saved={saved}
+        disabled={!clubConfig || !subject.trim() || !body.trim()}
+        onSave={handleSave}
+      />
+    </div>
+  );
+}
 
-        {/* From name */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Van naam
-          </label>
-          <input
-            type="text"
-            value={settings?.from_name || ''}
-            onChange={(e) => setSettings(prev => ({ ...prev, from_name: e.target.value }))}
-            className={inputClass}
-            placeholder="Rondo Club"
-          />
-        </div>
-
-        {/* Subject */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Onderwerp
-          </label>
-          <input
-            type="text"
-            value={settings?.subject || ''}
-            onChange={(e) => setSettings(prev => ({ ...prev, subject: e.target.value }))}
-            className={inputClass}
-            placeholder="Welkom bij {club_naam}"
-          />
-        </div>
-
-        {/* Body */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Bericht
-          </label>
-          <RichTextEditor
-            value={settings?.body || ''}
-            onChange={(html) => setSettings(prev => ({ ...prev, body: html }))}
-            placeholder="Hallo {first_name},..."
-            minHeight="200px"
-          />
-          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-            Beschikbare variabelen: <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{first_name}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{login}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{email}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{set_password_url}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{club_naam}'}</code>
-          </p>
-        </div>
-
-        {/* Save button */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleSave}
-            disabled={saving || !settings}
-            className="btn-primary gap-2 disabled:opacity-50"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Opslaan...
-              </>
-            ) : (
-              'Opslaan'
-            )}
-          </button>
-          {saved && (
-            <span className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
-              <Check className="w-4 h-4" />
-              Opgeslagen
-            </span>
-          )}
-        </div>
-      </div>
+function SaveRow({ saving, saved, disabled, onSave }) {
+  return (
+    <div className="flex items-center gap-3">
+      <button
+        onClick={onSave}
+        disabled={saving || disabled}
+        className="btn-primary gap-2 disabled:opacity-50"
+      >
+        {saving ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Opslaan...
+          </>
+        ) : (
+          'Opslaan'
+        )}
+      </button>
+      {saved && (
+        <span className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
+          <Check className="w-4 h-4" />
+          Opgeslagen
+        </span>
+      )}
     </div>
   );
 }

@@ -12,9 +12,12 @@ export default function PersonEditModal({
   onSubmit,
   isLoading,
   person = null, // Pass person data for editing
-  prefillData = null // Pass prefillData for pre-filling from external context (e.g., meeting attendee)
+  prefillData = null, // Pass prefillData for pre-filling from external context (e.g., meeting attendee)
+  initialPersonType = 'contact',
+  initialSponsor = false
 }) {
   const isEditing = !!person;
+  const isSponsor = initialSponsor || Boolean(person?.acf?.is_sponsor);
   const isOnline = useOnlineStatus();
   
   // vCard import state
@@ -46,12 +49,15 @@ export default function PersonEditModal({
     },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, getValues, formState: { errors } } = useForm({
     defaultValues: {
       first_name: '',
       infix: '',
       last_name: '',
       nickname: '',
+      company_name: '',
+      person_type: initialPersonType,
+      sponsor_pass_variant: '',
       gender: '',
       pronouns: '',
       email: '',
@@ -60,7 +66,6 @@ export default function PersonEditModal({
       birthday: '',
     },
   });
-
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -76,6 +81,9 @@ export default function PersonEditModal({
           infix: person.acf?.infix || '',
           last_name: person.acf?.last_name || '',
           nickname: person.acf?.nickname || '',
+          company_name: person.acf?.company_name || '',
+          person_type: person.acf?.person_type || 'member',
+          sponsor_pass_variant: person.acf?.sponsor_pass_variant || '',
           gender: person.acf?.gender || '',
           pronouns: person.acf?.pronouns || '',
           email: person.acf?.email_1 || '',
@@ -90,6 +98,9 @@ export default function PersonEditModal({
           infix: prefillData.infix || '',
           last_name: prefillData.last_name || '',
           nickname: '',
+          company_name: prefillData.company_name || '',
+          person_type: prefillData.person_type || initialPersonType,
+          sponsor_pass_variant: prefillData.sponsor_pass_variant || '',
           gender: '',
           pronouns: '',
           email: prefillData.email || '',
@@ -104,6 +115,9 @@ export default function PersonEditModal({
           infix: '',
           last_name: '',
           nickname: '',
+          company_name: '',
+          person_type: initialPersonType,
+          sponsor_pass_variant: '',
           gender: '',
           pronouns: '',
           email: '',
@@ -113,7 +127,7 @@ export default function PersonEditModal({
         });
       }
     }
-  }, [isOpen, person, prefillData, reset]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen, person, prefillData, initialPersonType, reset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle vCard drag and drop
   const handleDrag = useCallback((e) => {
@@ -153,6 +167,9 @@ export default function PersonEditModal({
           infix: data.infix || '',
           last_name: data.last_name || '',
           nickname: data.nickname || '',
+          company_name: data.company_name || '',
+          person_type: initialPersonType,
+          sponsor_pass_variant: '',
           gender: data.gender || '',
           pronouns: data.pronouns || '',
           email: data.email || '',
@@ -191,6 +208,8 @@ export default function PersonEditModal({
   const handleFormSubmit = (data) => {
     onSubmit({
       ...data,
+      person_type: isSponsor ? 'contact' : data.person_type,
+      is_sponsor: isSponsor,
       birthdayType: birthdayType, // Pass birthday type for creating birthday date
     });
   };
@@ -199,7 +218,9 @@ export default function PersonEditModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Lid bewerken' : 'Lid toevoegen'}</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+            {isEditing ? 'Persoon bewerken' : isSponsor ? 'Sponsor toevoegen' : 'Contact toevoegen'}
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -211,6 +232,17 @@ export default function PersonEditModal({
         
         <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {!isEditing && (
+              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                <p>
+                  {isSponsor
+                    ? 'Voeg hier een businessclublid of sponsor toe. Deze persoon krijgt automatisch een digitale toegangspas.'
+                    : 'Voeg hier alleen externe contacten toe. Leden en ouders/verzorgers worden uitsluitend via Sportlink toegevoegd en bijgewerkt.'}
+                </p>
+              </div>
+            )}
+
             {/* vCard Import - only when creating */}
             {!isEditing && (
               <div>
@@ -274,13 +306,46 @@ export default function PersonEditModal({
                 )}
               </div>
             )}
+
+            {isSponsor && (
+              <div>
+                <label className="label">Pasvariant</label>
+                <select
+                  {...register('sponsor_pass_variant', { required: 'Kies een pasvariant' })}
+                  className="input"
+                  disabled={isLoading}
+                >
+                  <option value="">Kies een pasvariant...</option>
+                  <option value="businessclub">Businessclub AWC</option>
+                  <option value="awc_sponsor">AWC Sponsor</option>
+                </select>
+                {errors.sponsor_pass_variant && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.sponsor_pass_variant.message}</p>
+                )}
+              </div>
+            )}
             
+            <div>
+              <label className="label">Bedrijfsnaam</label>
+              <input
+                {...register('company_name')}
+                className="input"
+                placeholder="Voorbeeld BV"
+                disabled={isLoading}
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Vul een bedrijfsnaam, een persoonsnaam of beide in.
+              </p>
+            </div>
+
             {/* Name fields */}
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="label">Voornaam *</label>
+                <label className="label">Voornaam</label>
                 <input
-                  {...register('first_name', { required: 'Voornaam is verplicht' })}
+                  {...register('first_name', {
+                    validate: (value) => Boolean(value?.trim() || getValues('company_name')?.trim()) || 'Vul een voornaam of bedrijfsnaam in',
+                  })}
                   className="input"
                   placeholder="Jan"
                   disabled={isLoading}
@@ -295,10 +360,9 @@ export default function PersonEditModal({
                 <label className="label">Tussenvoegsel</label>
                 <input
                   {...register('infix')}
-                  className="input bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                  className="input"
                   placeholder="van de"
-                  disabled={true}
-                  title="Komt van Sportlink"
+                  disabled={isLoading}
                 />
               </div>
 
@@ -323,6 +387,20 @@ export default function PersonEditModal({
                 disabled={isLoading}
               />
             </div>
+
+            {isEditing && (
+              <div>
+                <label className="label">Persoonstype</label>
+                <select
+                  {...register('person_type')}
+                  className="input"
+                  disabled={isLoading}
+                >
+                  <option value="member">Lid / ouder</option>
+                  <option value="contact">Contact</option>
+                </select>
+              </div>
+            )}
 
             {/* Gender and Pronouns */}
             <div className="grid grid-cols-2 gap-4">
@@ -419,7 +497,7 @@ export default function PersonEditModal({
               className={`btn-primary ${!isOnline ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={!isOnline || isLoading}
             >
-              {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Lid aanmaken')}
+              {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Contact aanmaken')}
             </button>
           </div>
         </form>

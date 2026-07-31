@@ -174,6 +174,7 @@ class Commissies extends Base {
 
 				if ( $job_commissie_id === $commissie_id ) {
 					$person_data               = $this->format_person_summary( $person );
+					$person_data['email']      = $this->get_primary_email( $person->ID );
 					$person_data['job_title']  = $job['job_title'] ?? '';
 					$person_data['start_date'] = $job['start_date'] ?? '';
 					$person_data['end_date']   = $job['end_date'] ?? '';
@@ -215,6 +216,23 @@ class Commissies extends Base {
 				'former'  => $former,
 			]
 		);
+	}
+
+	/**
+	 * Get the first valid email address for a commissie member.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return string Valid email address, or an empty string.
+	 */
+	private function get_primary_email( int $person_id ): string {
+		foreach ( [ 'email_1', 'email_2' ] as $field_name ) {
+			$email = sanitize_email( (string) get_field( $field_name, $person_id ) );
+			if ( is_email( $email ) ) {
+				return $email;
+			}
+		}
+
+		return '';
 	}
 
 	/**

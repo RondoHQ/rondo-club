@@ -143,14 +143,14 @@ class MollieWebhook {
 			return rest_ensure_response( [ 'ok' => true ] );
 		}
 
-		$config     = new \Rondo\Config\FinanceConfig();
+		$mollie     = FinanceServices::mollie();
 		$account_id = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
-		$api_key    = $config->get_mollie_api_key_for_account( $account_id );
+		$api_key    = $mollie->get_mollie_api_key_for_account( $account_id );
 
 		// Fallback: if no account ID stored (legacy invoices from before multi-account),
 		// try all configured Mollie accounts to find the one that owns this payment link.
 		if ( $api_key === '' ) {
-			$resolved = $this->resolve_api_key_by_payment_link( $config, $payment_link_id );
+			$resolved = $this->resolve_api_key_by_payment_link( $mollie, $payment_link_id );
 			if ( $resolved !== null ) {
 				$api_key    = $resolved['api_key'];
 				$account_id = $resolved['account_id'];
@@ -166,7 +166,9 @@ class MollieWebhook {
 
 		try {
 			$mollie_client = new MollieClient( $api_key );
-			$payment_link  = $mollie_client->get()->paymentLinks->get( $payment_link_id );
+			$payment_link  = MollieClient::with_retry(
+				fn() => $mollie_client->get()->paymentLinks->get( $payment_link_id )
+			);
 		} catch ( \Mollie\Api\Exceptions\ApiException $e ) {
 			error_log( 'Mollie webhook: API exception for payment link ' . $payment_link_id . ': ' . $e->getMessage() );
 			return rest_ensure_response( [ 'ok' => true ] );
@@ -375,22 +377,24 @@ class MollieWebhook {
 	 * Used as a fallback when `_payment_account_id` is missing on legacy invoices
 	 * created before the multi-account system was introduced.
 	 *
-	 * @param \Rondo\Config\FinanceConfig $config         Finance config instance.
-	 * @param string                      $payment_link_id Mollie payment link ID (pl_xxx).
+	 * @param MollieConfig $mollie          MollieConfig service instance.
+	 * @param string       $payment_link_id Mollie payment link ID (pl_xxx).
 	 * @return array{api_key: string, account_id: string}|null Resolved key and account, or null.
 	 */
-	private function resolve_api_key_by_payment_link( \Rondo\Config\FinanceConfig $config, string $payment_link_id ): ?array {
-		$accounts = $config->get_mollie_accounts();
+	private function resolve_api_key_by_payment_link( MollieConfig $mollie, string $payment_link_id ): ?array {
+		$accounts = $mollie->get_mollie_accounts();
 
 		foreach ( $accounts as $account ) {
-			$key = $config->get_mollie_api_key_for_account( $account['id'] ?? '' );
+			$key = $mollie->get_mollie_api_key_for_account( $account['id'] ?? '' );
 			if ( $key === '' ) {
 				continue;
 			}
 
 			try {
 				$client = new MollieClient( $key );
-				$client->get()->paymentLinks->get( $payment_link_id );
+				MollieClient::with_retry(
+					fn() => $client->get()->paymentLinks->get( $payment_link_id )
+				);
 
 				// If we reach here, this account owns the payment link.
 				return [

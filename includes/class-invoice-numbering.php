@@ -19,16 +19,20 @@ class InvoiceNumbering {
 	 * @var array<string,array{prefix:string,pad:int}>
 	 */
 	private const TYPE_FORMAT_MAP = [
-		'manual'     => [
+		'manual'         => [
 			'prefix' => 'F',
 			'pad'    => 3,
 		],
-		'discipline' => [
+		'discipline'     => [
 			'prefix' => 'T',
 			'pad'    => 3,
 		],
-		'membership' => [
+		'membership'     => [
 			'prefix' => 'C',
+			'pad'    => 3,
+		],
+		'volunteer_fine' => [
+			'prefix' => 'V',
 			'pad'    => 3,
 		],
 	];
@@ -69,11 +73,12 @@ class InvoiceNumbering {
 		// Query all invoices with numbers starting with this year's prefix.
 		$query = new \WP_Query(
 			[
-				'post_type'      => 'rondo_invoice',
-				'post_status'    => 'any',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-				'meta_query'     => [
+				'post_type'        => 'rondo_invoice',
+				'post_status'      => 'any',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'suppress_filters' => true,
+				'meta_query'       => [
 					[
 						'key'     => 'invoice_number',
 						'value'   => $prefix,
@@ -124,12 +129,12 @@ class InvoiceNumbering {
 	 * Validate invoice number format.
 	 *
 	 * Checks if the provided string matches the expected format:
-	 * 4-digit year + one of F/T/C + at least 3 digits (e.g., "2026F0001")
+	 * 4-digit year + one of F/T/C/V + at least 3 digits (e.g., "2026F0001")
 	 *
 	 * @param string $number The invoice number to validate.
 	 * @return bool True if valid, false otherwise.
 	 */
 	public static function is_valid( string $number ): bool {
-		return (bool) preg_match( '/^\d{4}[FTC]\d{3,}$/', $number );
+		return (bool) preg_match( '/^\d{4}[FTCV]\d{3,}$/', $number );
 	}
 }

@@ -96,15 +96,31 @@ export const prmApi = {
   // Current season helper
   getCurrentSeason: () => api.get('/rondo/v1/current-season'),
   
-  // Dashboard
-  getDashboard: () => api.get('/rondo/v1/dashboard'),
+  // Dashboard — uses preloaded fetch from wp_head if available
+  getDashboard: async () => {
+    if (window.__dashboardPreload) {
+      try {
+        const preloaded = window.__dashboardPreload;
+        window.__dashboardPreload = null; // Use only once
+        const response = await preloaded;
+        if (response.ok) {
+          const data = await response.json();
+          return { data };
+        }
+      } catch {
+        // Preload failed, fall through to normal fetch
+      }
+    }
+    return api.get('/rondo/v1/dashboard');
+  },
 
-  // Kaderlijst snapshot (database-backed cache)
-  getKaderlijstSnapshot: () => api.get('/rondo/v1/kaderlijst/snapshot'),
-  updateKaderlijstSnapshot: (snapshot) => api.post('/rondo/v1/kaderlijst/snapshot', { snapshot }),
+  // Kaderlijst — scoped kader people, visibility enforced server-side.
+  getKaderlijstPeople: () => api.get('/rondo/v1/kaderlijst/people'),
+  getHousehold: () => api.get('/rondo/v1/people/household'),
   
   // Bulk operations
   bulkUpdatePeople: (ids, updates) => api.post('/rondo/v1/people/bulk-update', { ids, updates }),
+  sendOnboardingEmail: (personIds, type) => api.post('/rondo/v1/people/onboarding-email', { person_ids: personIds, type }),
   bulkUpdateTeams: (ids, updates) => api.post('/rondo/v1/teams/bulk-update', { ids, updates }),
   bulkUpdateCommissies: (ids, updates) => api.post('/rondo/v1/commissies/bulk-update', { ids, updates }),
 
@@ -121,6 +137,8 @@ export const prmApi = {
   // User management (admin only)
   getUsers: () => api.get('/rondo/v1/users'),
   deleteUser: (userId) => api.delete(`/rondo/v1/users/${userId}`),
+  searchLinkablePeople: (query) => api.get('/rondo/v1/users/linkable-people', { params: { search: query } }),
+  relinkUser: (userId, personId) => api.post(`/rondo/v1/users/${userId}/linked-person`, { person_id: personId }),
   searchUsers: (query) => api.get('/rondo/v1/users/search', { params: { q: query } }),
   
   // Search
@@ -236,6 +254,7 @@ export const prmApi = {
   // Linked person (for filtering current user from attendee lists)
   getLinkedPerson: () => api.get('/rondo/v1/user/linked-person'),
   updateLinkedPerson: (personId) => api.post('/rondo/v1/user/linked-person', { person_id: personId }),
+  claimGuardianAccount: (name) => api.post('/rondo/v1/user/guardian-claim', { name }),
 
   // Person meetings
   getPersonMeetings: (personId, params = {}) => api.get(`/rondo/v1/people/${personId}/meetings`, { params }),
@@ -244,12 +263,6 @@ export const prmApi = {
   // Meeting notes
   getMeetingNotes: (eventId) => api.get(`/rondo/v1/calendar/events/${eventId}/notes`),
   updateMeetingNotes: (eventId, notes) => api.put(`/rondo/v1/calendar/events/${eventId}/notes`, { notes }),
-
-  // Google Sheets OAuth
-  getSheetsStatus: () => api.get('/rondo/v1/google-sheets/status'),
-  getSheetsAuthUrl: () => api.get('/rondo/v1/google-sheets/auth'),
-  disconnectSheets: () => api.delete('/rondo/v1/google-sheets/disconnect'),
-  exportPeopleToSheets: (data) => api.post('/rondo/v1/google-sheets/export-people', data),
 
   // Custom Fields management (admin only)
   getCustomFields: (postType) => api.get(`/rondo/v1/custom-fields/${postType}`),
@@ -304,6 +317,8 @@ export const prmApi = {
   provisionUser: (personId) => api.post(`/rondo/v1/people/${personId}/provision`),
   getProvisioningSettings: () => api.get('/rondo/v1/provisioning/settings'),
   updateProvisioningSettings: (data) => api.post('/rondo/v1/provisioning/settings', data),
+  getOnboardingEmailSettings: (type) => api.get(`/rondo/v1/onboarding/email-settings/${type}`),
+  updateOnboardingEmailSettings: (type, data) => api.post(`/rondo/v1/onboarding/email-settings/${type}`, data),
 
   // Club configuration (admin only)
   getClubConfig: () => api.get('/rondo/v1/config'),
@@ -351,6 +366,7 @@ export const prmApi = {
   bulkCreateInvoices: (caseIds) => api.post('/rondo/v1/invoices/bulk', { case_ids: caseIds }),
   generateInvoicePdf: (id) => api.post(`/rondo/v1/invoices/${id}/generate-pdf`),
   sendInvoice: (id, data = {}) => api.post(`/rondo/v1/invoices/${id}/send`, data),
+  scheduleInvoice: (id, data = {}) => api.post(`/rondo/v1/invoices/${id}/schedule`, data),
   resendInvoice: (id, data = {}) => api.post(`/rondo/v1/invoices/${id}/resend`, data),
   deleteInvoice: (id) => api.delete(`/rondo/v1/invoices/${id}`),
   getInvoicePdfUrl: (id) => `${window.rondoConfig?.apiUrl || '/wp-json'}rondo/v1/invoices/${id}/pdf?_wpnonce=${window.rondoConfig?.nonce || ''}`,
@@ -361,7 +377,6 @@ export const prmApi = {
   getFeeSummary: (params = {}) => api.get('/rondo/v1/fees/summary', { params }),
   getPersonFee: (personId, params = {}) => api.get(`/rondo/v1/fees/person/${personId}`, { params }),
   recalculateAllFees: (params = {}) => api.post('/rondo/v1/fees/recalculate', params),
-  exportFeesToSheets: (data) => api.post('/rondo/v1/google-sheets/export-fees', data),
 
   // Bulk invoice creation
   startBulkInvoiceJob: (data) => api.post('/rondo/v1/fees/bulk-create-invoices', data),
@@ -377,10 +392,85 @@ export const prmApi = {
   bulkMarkVOGJustis: (ids) => api.post('/rondo/v1/vog/bulk-mark-justis', { ids }),
   bulkSendVOGReminders: (ids) => api.post('/rondo/v1/vog/bulk-send-reminder', { ids }),
 
+  // Volunteer Policy
+  getVolunteerEligibility: (params = {}) => api.get('/rondo/v1/volunteer-eligibility', { params }),
+  getVolunteerExemption: (personId, params = {}) => api.get(`/rondo/v1/volunteer-exemption/${personId}`, { params }),
+  getVolunteerDataQuality: (category, params = {}) => api.get(`/rondo/v1/volunteer-data-quality/${category}`, { params }),
+  getRelationshipQuality: () => api.get('/rondo/v1/relationship-quality'),
+  refreshVolunteerCache: () => api.post('/rondo/v1/volunteer-cache/refresh'),
+  getManagedCommissies: () => api.get('/rondo/v1/managed-commissies'),
+
+  // IVA
+  approveIva: (personId, approve = true) => api.post(`/rondo/v1/iva/${personId}/approve`, { approve }),
+  getIvaStatus: (personId) => api.get(`/rondo/v1/iva/${personId}/status`),
+  getIvaPeople: () => api.get('/rondo/v1/iva/people'),
+  getMyIva: () => api.get('/rondo/v1/iva/me'),
+  getIvaCertificate: (personId) => api.get(`/rondo/v1/iva/${personId}/certificate`, { responseType: 'blob' }),
+  getMyVog: () => api.get('/rondo/v1/vog/me'),
+  uploadMyIva: (file, datumIva) => {
+    const fd = new FormData();
+    fd.append('certificaat', file);
+    if (datumIva) fd.append('datum_iva', datumIva);
+    return api.post('/rondo/v1/iva/upload', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  // Member-facing shift signup (/vrijwillig)
+  getMyShifts: (params = {}) => api.get('/rondo/v1/my-shifts', { params }),
+  getPersonShifts: (personId) => api.get(`/rondo/v1/people/${personId}/shifts`),
+  getAvailableShifts: () => api.get('/rondo/v1/shifts/available'),
+  getRecentShiftSignups: () => api.get('/rondo/v1/shifts/recent-signups'),
+  getShiftCalendar: (params = {}) => api.get('/rondo/v1/shifts/calendar', { params }),
+  signupForShift: (shiftId, opts = {}) => api.post(`/rondo/v1/shifts/${shiftId}/signup`, opts),
+  cancelShift: (shiftId) => api.post(`/rondo/v1/shifts/${shiftId}/cancel`),
+  cancelDienstShift: (shiftId, data = {}) => api.post(`/rondo/v1/shifts/${shiftId}/cancellation`, data),
+  removeShiftAssignee: (shiftId, personId) => api.delete(`/rondo/v1/shifts/${shiftId}/assignees/${personId}`),
+  addShiftAssignee: (shiftId, data) => api.post(`/rondo/v1/shifts/${shiftId}/assignees`, data),
+  getAssignablePeople: (shiftId, search) =>
+    api.get(`/rondo/v1/shifts/${shiftId}/assignable-people`, { params: { search } }),
+  copyShiftDay: (sourceDate, targetDate) => api.post('/rondo/v1/shifts/copy-day', {
+    source_date: sourceDate,
+    target_date: targetDate,
+  }),
+
+  // Admin no-show endpoint
+  markShiftNoShow: (shiftId, personId, opts = {}) => api.post(`/rondo/v1/shifts/${shiftId}/no-show`, { person_id: personId, ...opts }),
+
+  // Volunteer obligations (admin dashboard)
+  getVolunteerObligations: (params = {}) => api.get('/rondo/v1/volunteer-obligations', { params }),
+
+  // Dienst types & shifts & templates — admin CRUD via wp/v2 onder de motorkap.
+  getDienstTypes: (params = { per_page: 100 }) => api.get('/wp/v2/dienst-types', { params }),
+  getDienstType: (id) => api.get(`/wp/v2/dienst-types/${id}`, { params: { context: 'edit' } }),
+  createDienstType: (data) => api.post('/wp/v2/dienst-types', data),
+  updateDienstType: (id, data) => api.post(`/wp/v2/dienst-types/${id}`, data),
+  deleteDienstType: (id) => api.delete(`/wp/v2/dienst-types/${id}`, { params: { force: true } }),
+  getShiftTemplates: (params = { per_page: 100 }) => api.get('/wp/v2/shift-templates', { params }),
+  getShiftTemplate: (id) => api.get(`/wp/v2/shift-templates/${id}`),
+  createShiftTemplate: (data) => api.post('/wp/v2/shift-templates', data),
+  updateShiftTemplate: (id, data) => api.post(`/wp/v2/shift-templates/${id}`, data),
+  deleteShiftTemplate: (id) => api.delete(`/wp/v2/shift-templates/${id}`, { params: { force: true } }),
+  getDienstShifts: (params = { per_page: 100, orderby: 'date', order: 'desc' }) => api.get('/wp/v2/dienst-shifts', { params }),
+  getDienstShift: (id) => api.get(`/wp/v2/dienst-shifts/${id}`),
+  createDienstShift: (data) => api.post('/wp/v2/dienst-shifts', data),
+  updateDienstShift: (id, data) => api.post(`/wp/v2/dienst-shifts/${id}`, data),
+  deleteDienstShift: (id) => api.delete(`/wp/v2/dienst-shifts/${id}`, { params: { force: true } }),
+  expandShiftTemplates: (until) => api.post('/rondo/v1/shift-templates/expand', { until }),
+  rerunShiftTemplate: (id) => api.post(`/rondo/v1/shift-templates/${id}/rerun`),
+
+  // Taakuitleg — volunteer task instructions (rich text + inline images),
+  // linked to dienst_types. The QR codes point at the public /uitleg/{slug} page.
+  getTaakuitleg: (params = { per_page: 100, orderby: 'title', order: 'asc' }) => api.get('/wp/v2/taakuitleg', { params }),
+  getTaakuitlegItem: (id) => api.get(`/wp/v2/taakuitleg/${id}`, { params: { context: 'edit' } }),
+  createTaakuitleg: (data) => api.post('/wp/v2/taakuitleg', data),
+  updateTaakuitleg: (id, data) => api.post(`/wp/v2/taakuitleg/${id}`, data),
+  deleteTaakuitleg: (id) => api.delete(`/wp/v2/taakuitleg/${id}`, { params: { force: true } }),
+
   // Sportlink sync
   syncFromSportlink: (knvbId) => api.post(
     '/rondo/v1/sportlink/sync-individual',
     { knvb_id: knvbId },
-    { timeout: 60000 }
+    { timeout: 180000 }
   ),
 };

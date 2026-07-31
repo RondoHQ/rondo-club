@@ -3,7 +3,7 @@
  * REST API Endpoints for Invoice Custom Post Type
  *
  * Provides CRUD operations for invoices (facturen) via the REST API at rondo/v1/invoices.
- * All endpoints require the 'financieel' capability.
+ * Reads require 'financieel_read' (implied by 'financieel'); every write requires 'financieel'.
  */
 
 namespace Rondo\REST;
@@ -15,6 +15,7 @@ use Rondo\Finance\PublicPaymentPage;
 use Rondo\Finance\RabobankOAuth;
 use Rondo\Finance\RabobankPayment;
 use Rondo\Finance\MolliePayment;
+use Rondo\Finance\FinanceServices;
 use Rondo\Config\FinanceConfig;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -43,7 +44,7 @@ class Invoices extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_invoiced_case_ids' ],
-					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
 					'args'                => [
 						'person_id' => [
 							'required'          => true,
@@ -65,7 +66,7 @@ class Invoices extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_all_invoiced_case_ids' ],
-					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
 				],
 			]
 		);
@@ -96,7 +97,7 @@ class Invoices extends Base {
 						'invoice_type' => [
 							'required'          => false,
 							'validate_callback' => function ( $param ) {
-								return empty( $param ) || in_array( $param, [ 'manual', 'discipline', 'membership' ], true );
+								return empty( $param ) || in_array( $param, [ 'manual', 'discipline', 'membership', 'volunteer_fine' ], true );
 							},
 						],
 					],
@@ -112,12 +113,12 @@ class Invoices extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_invoice_list' ],
-					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
 					'args'                => [
 						'status'       => [
 							'default'           => '',
 							'validate_callback' => function ( $param ) {
-								return empty( $param ) || in_array( $param, [ 'draft', 'sent', 'paid', 'overdue' ], true );
+								return empty( $param ) || in_array( $param, [ 'draft', 'sent', 'paid', 'overdue', 'cancelled' ], true );
 							},
 						],
 						'person_id'    => [
@@ -130,7 +131,7 @@ class Invoices extends Base {
 						'type'         => [
 							'default'           => '',
 							'validate_callback' => function ( $param ) {
-								return empty( $param ) || in_array( $param, [ 'membership', 'discipline', 'manual' ], true );
+								return empty( $param ) || in_array( $param, [ 'membership', 'discipline', 'manual', 'volunteer_fine' ], true );
 							},
 						],
 						'payment_plan' => [
@@ -157,7 +158,7 @@ class Invoices extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_invoice' ],
-					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
 					'args'                => [
 						'id' => [
 							'validate_callback' => function ( $param ) {
@@ -278,7 +279,7 @@ class Invoices extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'download_pdf' ],
-					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
 					'args'                => [
 						'id' => [
 							'validate_callback' => function ( $param ) {
@@ -311,6 +312,30 @@ class Invoices extends Base {
 							'validate_callback' => function ( $param ) {
 								return empty( $param ) || is_email( $param );
 							},
+						],
+					],
+				],
+			]
+		);
+
+		// Schedule (or clear) a future automatic send date for a draft invoice
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/(?P<id>\d+)/schedule',
+			[
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'schedule_invoice' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'id'                  => [
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+						'scheduled_send_date' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
 						],
 					],
 				],
@@ -372,7 +397,7 @@ class Invoices extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'download_qr' ],
-					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
 					'args'                => [
 						'id' => [
 							'validate_callback' => function ( $param ) {
@@ -453,17 +478,6 @@ class Invoices extends Base {
 	}
 
 	/**
-	 * Check if user has financieel capability
-	 *
-	 * Permission callback for invoice endpoints.
-	 *
-	 * @return bool True if user has financieel capability, false otherwise.
-	 */
-	public function check_financieel_permission() {
-		return current_user_can( 'financieel' );
-	}
-
-	/**
 	 * Get discipline case IDs that already have invoices for a person
 	 *
 	 * @param \WP_REST_Request $request The REST request object.
@@ -475,7 +489,7 @@ class Invoices extends Base {
 		// Query all invoices for this person (all non-trash statuses)
 		$args = [
 			'post_type'      => 'rondo_invoice',
-			'post_status'    => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ],
+			'post_status'    => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue', 'rondo_cancelled' ],
 			'posts_per_page' => -1,
 			'meta_query'     => [
 				[
@@ -517,7 +531,7 @@ class Invoices extends Base {
 		// Query all invoices (all non-trash statuses, all persons)
 		$args = [
 			'post_type'      => 'rondo_invoice',
-			'post_status'    => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ],
+			'post_status'    => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue', 'rondo_cancelled' ],
 			'posts_per_page' => -1,
 		];
 
@@ -712,7 +726,7 @@ class Invoices extends Base {
 	 */
 	public function get_next_invoice_number( $request ) {
 		$invoice_type = sanitize_key( (string) ( $request->get_param( 'invoice_type' ) ?: 'manual' ) );
-		if ( ! in_array( $invoice_type, [ 'manual', 'discipline', 'membership' ], true ) ) {
+		if ( ! in_array( $invoice_type, [ 'manual', 'discipline', 'membership', 'volunteer_fine' ], true ) ) {
 			$invoice_type = 'manual';
 		}
 
@@ -746,7 +760,7 @@ class Invoices extends Base {
 		if ( ! empty( $status ) ) {
 			$args['post_status'] = 'rondo_' . $status;
 		} else {
-			$args['post_status'] = [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ];
+			$args['post_status'] = [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue', 'rondo_cancelled' ];
 		}
 
 		// Initialize meta_query — filters are composed via AND relation
@@ -1009,14 +1023,23 @@ class Invoices extends Base {
 			);
 		}
 
-		if ( ! in_array( $status, [ 'draft', 'sent', 'paid', 'overdue' ], true ) ) {
+		if ( ! in_array( $status, [ 'draft', 'sent', 'paid', 'overdue', 'cancelled' ], true ) ) {
 			return new \WP_Error(
 				'rest_invalid_param',
 				__( 'Invalid status.', 'rondo' ),
 				[
 					'status' => 400,
-					'params' => [ 'status' => 'Must be "draft", "sent", "paid", or "overdue"' ],
+					'params' => [ 'status' => 'Must be "draft", "sent", "paid", "overdue", or "cancelled"' ],
 				]
+			);
+		}
+
+		// Paid invoices cannot be cancelled — mark them unpaid first.
+		if ( $status === 'cancelled' && $invoice->post_status === 'rondo_paid' ) {
+			return new \WP_Error(
+				'invoice_paid',
+				__( 'Betaalde facturen kunnen niet vervallen. Markeer de factuur eerst als onbetaald.', 'rondo' ),
+				[ 'status' => 400 ]
 			);
 		}
 
@@ -1035,8 +1058,8 @@ class Invoices extends Base {
 		update_field( 'status', $status, $invoice_id );
 
 			// If transitioning to "sent", set sent_date and calculate due_date.
-			// Skip when reverting from paid → sent (marking unpaid) to preserve original dates.
-			$is_reverting_from_paid = ( $invoice->post_status === 'rondo_paid' && $status === 'sent' );
+			// Skip when reverting from paid/cancelled → sent to preserve original dates.
+			$is_reverting_from_paid = ( in_array( $invoice->post_status, [ 'rondo_paid', 'rondo_cancelled' ], true ) && $status === 'sent' );
 		if ( $status === 'sent' && ! $is_reverting_from_paid ) {
 			$sent_date = current_time( 'Ymd' );
 			update_field( 'field_invoice_sent_date', $sent_date, $invoice_id );
@@ -1072,6 +1095,29 @@ class Invoices extends Base {
 			delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
 			delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
 			$this->clear_qr_code( $invoice_id );
+		}
+
+			// If transitioning to cancelled (vervallen), store audit trail and disable payment routes.
+		if ( $status === 'cancelled' ) {
+			update_post_meta( $invoice_id, '_cancelled_at', current_time( 'mysql' ) );
+			$current_user_id = get_current_user_id();
+			if ( $current_user_id > 0 ) {
+				update_post_meta( $invoice_id, '_cancelled_by', $current_user_id );
+			}
+
+			// Archive Mollie payment links (full + installments) so the invoice can no longer be paid.
+			( new MolliePayment() )->archive_payment_links( $invoice_id );
+
+			// Remove payment artifacts (link/QR/provider IDs). The _payment_token is kept so the
+			// public payment page can show a "vervallen" message instead of a broken-link error.
+			update_field( 'payment_link', '', $invoice_id );
+			delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
+			delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
+			$this->clear_qr_code( $invoice_id );
+		} elseif ( $invoice->post_status === 'rondo_cancelled' ) {
+			// Leaving cancelled — clear the cancellation audit trail.
+			delete_post_meta( $invoice_id, '_cancelled_at' );
+			delete_post_meta( $invoice_id, '_cancelled_by' );
 		}
 
 			// If transitioning from paid to sent/overdue (marking as unpaid), store audit trail.
@@ -1353,7 +1399,7 @@ class Invoices extends Base {
 			}
 		} else {
 			// Discipline/other invoices: create direct Mollie/Rabobank payment link + QR.
-			$active_provider = $finance_config->get_active_payment_provider();
+			$active_provider = FinanceServices::mollie()->get_active_payment_provider();
 
 			if ( $active_provider === 'mollie' ) {
 				$mollie_payment = new MolliePayment();
@@ -1447,6 +1493,10 @@ class Invoices extends Base {
 		// Update ACF status field
 		update_field( 'status', 'sent', $invoice_id );
 
+		// Clear any pending scheduled-send date now that the invoice is sent.
+		delete_post_meta( $invoice_id, '_scheduled_send_date' );
+		delete_post_meta( $invoice_id, '_scheduled_send_by_user_id' );
+
 		// Set sent_date
 		$sent_date = current_time( 'Ymd' );
 		update_field( 'field_invoice_sent_date', $sent_date, $invoice_id );
@@ -1483,6 +1533,86 @@ class Invoices extends Base {
 		// Return updated invoice detail
 		$invoice = get_post( $invoice_id );
 		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
+	 * Schedule (or clear) the future automatic send date for a draft invoice.
+	 *
+	 * An empty scheduled_send_date clears the schedule. A future date queues the
+	 * invoice for the daily scheduled-send cron sweeper
+	 * (InvoiceScheduledSendScheduler), which runs the normal send flow on that day.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function schedule_invoice( $request ) {
+		$invoice_id = (int) $request->get_param( 'id' );
+		$invoice    = get_post( $invoice_id );
+
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+			return new \WP_Error( 'rest_not_found', __( 'Factuur niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+		}
+
+		if ( $invoice->post_status !== 'rondo_draft' ) {
+			return new \WP_Error(
+				'invoice_not_draft',
+				__( 'Alleen conceptfacturen kunnen worden ingepland.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$raw = (string) $request->get_param( 'scheduled_send_date' );
+
+		// Empty value clears any existing schedule.
+		if ( trim( $raw ) === '' ) {
+			delete_post_meta( $invoice_id, '_scheduled_send_date' );
+			delete_post_meta( $invoice_id, '_scheduled_send_by_user_id' );
+			return rest_ensure_response( $this->format_invoice_detail( get_post( $invoice_id ) ) );
+		}
+
+		$ymd = self::normalize_scheduled_send_date( $raw );
+		if ( $ymd === '' ) {
+			return new \WP_Error( 'invalid_date', __( 'Ongeldige verzenddatum.', 'rondo' ), [ 'status' => 400 ] );
+		}
+
+		if ( $ymd < current_time( 'Ymd' ) ) {
+			return new \WP_Error(
+				'date_in_past',
+				__( 'De verzenddatum moet vandaag of in de toekomst liggen.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		update_post_meta( $invoice_id, '_scheduled_send_date', $ymd );
+		update_post_meta( $invoice_id, '_scheduled_send_by_user_id', get_current_user_id() );
+
+		return rest_ensure_response( $this->format_invoice_detail( get_post( $invoice_id ) ) );
+	}
+
+	/**
+	 * Normalize a date input (Y-m-d or Ymd) to a valid Ymd string, or '' if invalid.
+	 *
+	 * @param string $value Raw date value.
+	 * @return string
+	 */
+	private static function normalize_scheduled_send_date( string $value ): string {
+		$value = trim( $value );
+		if ( preg_match( '/^\d{8}$/', $value ) ) {
+			$ymd = $value;
+		} elseif ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ) {
+			$ymd = str_replace( '-', '', $value );
+		} else {
+			return '';
+		}
+
+		$year  = (int) substr( $ymd, 0, 4 );
+		$month = (int) substr( $ymd, 4, 2 );
+		$day   = (int) substr( $ymd, 6, 2 );
+		if ( ! checkdate( $month, $day, $year ) ) {
+			return '';
+		}
+
+		return $ymd;
 	}
 
 	/**
@@ -1557,7 +1687,7 @@ class Invoices extends Base {
 		// Ensure payment link and QR code exist before resending
 		$existing_payment_link = get_field( 'payment_link', $invoice_id );
 		if ( empty( $existing_payment_link ) ) {
-			$active_provider = $config->get_active_payment_provider();
+			$active_provider = FinanceServices::mollie()->get_active_payment_provider();
 			if ( $active_provider === 'mollie' ) {
 				$mollie_payment = new MolliePayment();
 				$payment_result = $mollie_payment->create_payment_link( $invoice_id );
@@ -1642,9 +1772,15 @@ class Invoices extends Base {
 				[ 'status' => 400 ]
 			);
 		}
+		if ( $status === 'cancelled' ) {
+			return new \WP_Error(
+				'invoice_cancelled',
+				__( 'Vervallen facturen kunnen geen nieuwe betaallink krijgen.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
 
-		$finance_config  = new FinanceConfig();
-		$active_provider = $finance_config->get_active_payment_provider();
+		$active_provider = FinanceServices::mollie()->get_active_payment_provider();
 
 		if ( $active_provider === 'mollie' ) {
 			// Clear Mollie payment link ID to bypass idempotency and force a new payment link
@@ -1925,12 +2061,13 @@ class Invoices extends Base {
 		$provider = $settings['active_payment_provider'] ?? '';
 
 		if ( $provider === 'mollie' ) {
+			$mollie     = FinanceServices::mollie();
 			$account_id = $invoice_id > 0
 				? (string) get_post_meta( $invoice_id, '_payment_account_id', true )
-				: $config->get_default_mollie_account_id( 'manual' );
+				: $mollie->get_default_mollie_account_id( 'manual' );
 
 			if ( $account_id === '' ) {
-				$default_account = $config->get_default_mollie_account( 'manual' );
+				$default_account = $mollie->get_default_mollie_account( 'manual' );
 				$account_id      = is_array( $default_account ) ? (string) ( $default_account['id'] ?? '' ) : '';
 			}
 
@@ -1938,7 +2075,7 @@ class Invoices extends Base {
 				return false;
 			}
 
-			$account = $config->get_mollie_account_by_id( $account_id );
+			$account = $mollie->get_mollie_account_by_id( $account_id );
 			return is_array( $account ) && ( $account['environment'] ?? '' ) === 'test';
 		}
 
@@ -2113,30 +2250,31 @@ class Invoices extends Base {
 		}
 
 		return [
-			'id'                 => $post->ID,
-			'invoice_number'     => get_field( 'invoice_number', $post->ID ),
-			'person'             => $this->get_invoice_person_summary( $post->ID ),
-			'customer_name'      => (string) get_post_meta( $post->ID, '_customer_name', true ),
-			'customer_attention' => (string) get_post_meta( $post->ID, '_customer_attention', true ),
-			'customer_email'     => (string) get_post_meta( $post->ID, '_customer_email', true ),
-			'customer_cc_email'  => (string) get_post_meta( $post->ID, '_customer_cc_email', true ),
-			'customer_address'   => (string) get_post_meta( $post->ID, '_customer_address', true ),
-			'invoice_kind'       => get_post_meta( $post->ID, '_invoice_kind', true ) ?: 'normal',
-			'total_amount'       => (float) get_field( 'total_amount', $post->ID ),
-			'status'             => $status,
-			'post_status'        => $post->post_status,
-			'sent_date'          => get_post_meta( $post->ID, 'sent_date', true ) ?: null,
-			'due_date'           => get_post_meta( $post->ID, 'due_date', true ) ?: null,
-			'payment_link'       => $payment_link,
-			'payment_account'    => $this->get_invoice_payment_account( $post->ID ),
-			'created'            => $post->post_date,
-			'invoice_type'       => get_field( 'invoice_type', $post->ID ) ?: null,
-			'installment_plan'   => get_post_meta( $post->ID, '_installment_plan', true ) ?: null,
-			'installment_count'  => (int) get_post_meta( $post->ID, '_installment_count', true ) ?: null,
-			'paid_installments'  => $this->count_paid_installments( $post->ID ),
-			'reminder_sent_at'   => $reminder_sent_at,
-			'reminder_count'     => $reminder_count,
-			'sent_by'            => $this->get_user_summary_by_id( $sent_by_user_id ?: $last_sent_by_user_id ),
+			'id'                  => $post->ID,
+			'invoice_number'      => get_field( 'invoice_number', $post->ID ),
+			'person'              => $this->get_invoice_person_summary( $post->ID ),
+			'customer_name'       => (string) get_post_meta( $post->ID, '_customer_name', true ),
+			'customer_attention'  => (string) get_post_meta( $post->ID, '_customer_attention', true ),
+			'customer_email'      => (string) get_post_meta( $post->ID, '_customer_email', true ),
+			'customer_cc_email'   => (string) get_post_meta( $post->ID, '_customer_cc_email', true ),
+			'customer_address'    => (string) get_post_meta( $post->ID, '_customer_address', true ),
+			'invoice_kind'        => get_post_meta( $post->ID, '_invoice_kind', true ) ?: 'normal',
+			'total_amount'        => (float) get_field( 'total_amount', $post->ID ),
+			'status'              => $status,
+			'post_status'         => $post->post_status,
+			'sent_date'           => get_post_meta( $post->ID, 'sent_date', true ) ?: null,
+			'due_date'            => get_post_meta( $post->ID, 'due_date', true ) ?: null,
+			'scheduled_send_date' => get_post_meta( $post->ID, '_scheduled_send_date', true ) ?: null,
+			'payment_link'        => $payment_link,
+			'payment_account'     => $this->get_invoice_payment_account( $post->ID ),
+			'created'             => $post->post_date,
+			'invoice_type'        => get_field( 'invoice_type', $post->ID ) ?: null,
+			'installment_plan'    => get_post_meta( $post->ID, '_installment_plan', true ) ?: null,
+			'installment_count'   => (int) get_post_meta( $post->ID, '_installment_count', true ) ?: null,
+			'paid_installments'   => $this->count_paid_installments( $post->ID ),
+			'reminder_sent_at'    => $reminder_sent_at,
+			'reminder_count'      => $reminder_count,
+			'sent_by'             => $this->get_user_summary_by_id( $sent_by_user_id ?: $last_sent_by_user_id ),
 		];
 	}
 
@@ -2262,6 +2400,12 @@ class Invoices extends Base {
 		$custom_fields       = $request->get_param( 'custom_fields' );
 		$finance_config      = new FinanceConfig();
 
+		// Optional future automatic send date. Only kept when today or later.
+		$scheduled_send_date = self::normalize_scheduled_send_date( (string) $request->get_param( 'scheduled_send_date' ) );
+		if ( $scheduled_send_date !== '' && $scheduled_send_date < current_time( 'Ymd' ) ) {
+			$scheduled_send_date = '';
+		}
+
 		if ( empty( $line_items ) || ! is_array( $line_items ) ) {
 			return new \WP_Error(
 				'rest_missing_param',
@@ -2345,7 +2489,7 @@ class Invoices extends Base {
 			$invoice_type = $fallback_invoice_type;
 		}
 
-		$selected_payment_account = $this->resolve_payment_account_for_payload( $finance_config, $invoice_type, $payment_account_id );
+		$selected_payment_account = $this->resolve_payment_account_for_payload( $invoice_type, $payment_account_id );
 		if ( is_wp_error( $selected_payment_account ) ) {
 			return $selected_payment_account;
 		}
@@ -2377,6 +2521,7 @@ class Invoices extends Base {
 			'payment_account'     => $selected_payment_account,
 			'email_subject'       => $email_subject,
 			'email_body_override' => $email_body_override,
+			'scheduled_send_date' => $scheduled_send_date,
 			'custom_fields'       => $normalized_custom_fields,
 			'line_items'          => $rows,
 			'total_amount'        => $total_amount,
@@ -2411,21 +2556,30 @@ class Invoices extends Base {
 		update_post_meta( $invoice_id, '_payment_account_linked_provider', (string) ( $payment_account['linked_provider'] ?? '' ) );
 		update_post_meta( $invoice_id, '_email_subject', $payload['email_subject'] );
 		update_post_meta( $invoice_id, '_email_body_override', $payload['email_body_override'] );
+
+		// Optional scheduled automatic send date.
+		if ( ! empty( $payload['scheduled_send_date'] ) ) {
+			update_post_meta( $invoice_id, '_scheduled_send_date', $payload['scheduled_send_date'] );
+			update_post_meta( $invoice_id, '_scheduled_send_by_user_id', get_current_user_id() );
+		} else {
+			delete_post_meta( $invoice_id, '_scheduled_send_date' );
+			delete_post_meta( $invoice_id, '_scheduled_send_by_user_id' );
+		}
+
 		update_post_meta( $invoice_id, '_custom_fields', wp_json_encode( $payload['custom_fields'] ) );
 	}
 
 	/**
 	 * Resolve a payment-account snapshot from request payload and invoice type.
 	 *
-	 * @param FinanceConfig $finance_config Finance config service.
-	 * @param string        $invoice_type Invoice type slug.
-	 * @param string        $payment_account_id Requested account ID.
+	 * @param string $invoice_type Invoice type slug.
+	 * @param string $payment_account_id Requested account ID.
 	 * @return array<string, string>|\WP_Error
 	 */
-	private function resolve_payment_account_for_payload( FinanceConfig $finance_config, string $invoice_type, string $payment_account_id ) {
+	private function resolve_payment_account_for_payload( string $invoice_type, string $payment_account_id ) {
 		$requested_account_id = $invoice_type === 'manual' ? $payment_account_id : '';
 
-		return $finance_config->get_payment_account_snapshot_for_invoice_type( $invoice_type, $requested_account_id );
+		return FinanceServices::mollie()->get_payment_account_snapshot_for_invoice_type( $invoice_type, $requested_account_id );
 	}
 
 	/**
@@ -2452,18 +2606,18 @@ class Invoices extends Base {
 			];
 		}
 
-		$finance_config = new FinanceConfig();
-		$default        = $finance_config->get_payment_account_snapshot_for_invoice_type( $invoice_type ?: 'manual' );
+		$default = FinanceServices::mollie()->get_payment_account_snapshot_for_invoice_type( $invoice_type ?: 'manual' );
 
 		if ( is_array( $default ) ) {
 			return $default;
 		}
 
+		$fc = new FinanceConfig();
 		return [
 			'id'              => '',
 			'internal_name'   => '',
-			'account_holder'  => $finance_config->get_org_name(),
-			'iban'            => $finance_config->get_iban(),
+			'account_holder'  => $fc->get_org_name(),
+			'iban'            => $fc->get_iban(),
 			'linked_provider' => '',
 		];
 	}
@@ -2561,6 +2715,10 @@ class Invoices extends Base {
 		$invoice['manually_marked_unpaid_at'] = (string) get_post_meta( $post->ID, '_manually_marked_unpaid_at', true ) ?: null;
 		$invoice['manually_marked_unpaid_by'] = $this->get_user_summary_by_id( (int) get_post_meta( $post->ID, '_manually_marked_unpaid_by', true ) );
 
+		// Cancellation (vervallen) audit trail.
+		$invoice['cancelled_at'] = (string) get_post_meta( $post->ID, '_cancelled_at', true ) ?: null;
+		$invoice['cancelled_by'] = $this->get_user_summary_by_id( (int) get_post_meta( $post->ID, '_cancelled_by', true ) );
+
 		return $invoice;
 	}
 
@@ -2583,6 +2741,41 @@ class Invoices extends Base {
 			return null;
 		}
 
-		return $this->format_person_summary( $person );
+		return $this->format_invoice_person_summary( $person );
+	}
+
+	/**
+	 * Format a linked person as the customer shown on an invoice.
+	 *
+	 * Company contacts use the company as the primary customer name while the
+	 * personal name remains available as contact_name for secondary display.
+	 *
+	 * @param \WP_Post $person Linked person post.
+	 * @return array Invoice customer summary.
+	 */
+	protected function format_invoice_person_summary( $person ) {
+		$summary      = $this->format_person_summary( $person );
+		$company_name = trim( (string) get_field( 'company_name', $person->ID ) );
+
+		if ( $company_name === '' ) {
+			return $summary;
+		}
+
+		$contact_name = implode(
+			' ',
+			array_filter(
+				[
+					get_field( 'first_name', $person->ID ),
+					get_field( 'infix', $person->ID ),
+					get_field( 'last_name', $person->ID ),
+				]
+			)
+		);
+
+		$summary['name']         = $this->sanitize_text( $company_name );
+		$summary['company_name'] = $this->sanitize_text( $company_name );
+		$summary['contact_name'] = $this->sanitize_text( $contact_name ) ?: null;
+
+		return $summary;
 	}
 }

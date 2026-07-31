@@ -8,7 +8,7 @@
  * Eligible invoices:
  * - Membership invoices where the member has NOT yet selected a payment plan
  *   (i.e. _installment_plan meta does NOT exist)
- * - Discipline invoices (including legacy discipline invoices with missing/
+ * - Discipline and manual invoices (including legacy invoices with missing/
  *   empty invoice_type) identified via Mollie payment-link metadata
  *
  * Email timing:
@@ -106,14 +106,14 @@ class InvoiceReminderScheduler {
 	 *
 	 * Queries rondo_invoice posts with rondo_sent status where either:
 	 * 1. Membership invoice without installment plan selected
-	 * 2. Discipline invoice (including legacy invoices with missing/empty type)
+	 * 2. Discipline or manual invoice (including legacy invoices with missing/empty type)
 	 *    identified via Mollie payment link meta
 	 */
 	private function process_invoices(): void {
 		$invoice_ids = get_posts(
 			[
 				'post_type'        => 'rondo_invoice',
-				'post_status'      => 'rondo_sent',
+				'post_status'      => [ 'rondo_sent', 'rondo_overdue' ],
 				'posts_per_page'   => -1,
 				'fields'           => 'ids',
 				'no_found_rows'    => true,
@@ -142,6 +142,10 @@ class InvoiceReminderScheduler {
 							[
 								'key'   => 'invoice_type',
 								'value' => 'discipline',
+							],
+							[
+								'key'   => 'invoice_type',
+								'value' => 'manual',
 							],
 							[
 								'key'     => 'invoice_type',

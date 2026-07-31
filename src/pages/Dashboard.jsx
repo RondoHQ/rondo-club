@@ -17,8 +17,6 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useDashboard,
-  useTodos,
-  useDashboardSettings,
   useUpdateDashboardSettings,
   DEFAULT_DASHBOARD_CARDS,
 } from '@/hooks/useDashboard.js';
@@ -31,9 +29,6 @@ import {
 } from '@/utils/timeline.js';
 import PersonAvatar from '@/components/PersonAvatar.jsx';
 import DashboardCard from '@/components/DashboardCard.jsx';
-import { useVOGCount } from '@/hooks/useVOGCount';
-import { useDisciplineCasesCount } from '@/hooks/useDisciplineCases';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal.jsx';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal.jsx';
 import DashboardCustomizeModal from '@/components/DashboardCustomizeModal.jsx';
@@ -94,6 +89,12 @@ function ReminderCard({ reminder }) {
   const firstPersonId = reminder.related_people?.[0]?.id;
   const hasRelatedPeople = reminder.related_people?.length > 0;
 
+  const occYear = parseInt(reminder.next_occurrence?.substring(0, 4), 10);
+  const birthYear = reminder.date_value ? parseInt(reminder.date_value.substring(0, 4), 10) : null;
+  const isBirthday = reminder.is_recurring && !reminder.year_unknown && birthYear && birthYear < occYear;
+  const displayDate = isBirthday ? reminder.date_value : reminder.next_occurrence;
+  const ageSuffix = isBirthday ? ` (wordt ${occYear - birthYear})` : '';
+
   const cardContent = (
     <>
       <div className={`px-2 py-1 rounded text-xs font-medium ${urgencyClass}`}>
@@ -102,7 +103,7 @@ function ReminderCard({ reminder }) {
       <div className="ml-3 flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 dark:text-gray-50">{reminder.title}</p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          {format(new Date(reminder.next_occurrence), 'd MMMM yyyy')}
+          {format(new Date(displayDate), 'd MMMM yyyy')}{ageSuffix}
         </p>
       </div>
       {hasRelatedPeople && (
@@ -349,8 +350,9 @@ function DashboardError({ error }) {
  * - Aan te vragen: people not yet submitted to Justis
  * - In afwachting: total people on the VOG list
  */
-function VOGStatCard() {
-  const { notSubmittedToJustis, submittedToJustis } = useVOGCount();
+function VOGStatCard({ vogCounts }) {
+  const notSubmittedToJustis = vogCounts?.not_submitted_to_justis || 0;
+  const submittedToJustis = vogCounts?.submitted_to_justis || 0;
 
   // Total people needing VOG
   const totaal = notSubmittedToJustis + submittedToJustis;
@@ -380,9 +382,7 @@ function VOGStatCard() {
 /**
  * Tuchtzaken statistics card showing the count of discipline cases.
  */
-function TuchtzakenStatCard() {
-  const { count } = useDisciplineCasesCount();
-
+function TuchtzakenStatCard({ count }) {
   return (
     <StatCard title="Tuchtzaken" value={count} icon={Gavel} href="/tuchtzaken" />
   );
@@ -392,20 +392,16 @@ function TuchtzakenStatCard() {
  * Stats row component for the dashboard header.
  */
 function StatsRow({ stats }) {
-  const { data: currentUser } = useCurrentUser();
-  const canAccessVOG = currentUser?.can_access_vog ?? false;
-  const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
-
   return (
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
       <StatCard title="Totaal leden" value={stats?.total_people || 0} icon={Users} href="/people" />
       <StatCard title="Vrijwilligers" value={stats?.total_volunteers || 0} icon={HeartHandshake} href="/people?vrijwilliger=1" />
       <StatCard title="Teams" value={stats?.total_teams || 0} icon={Building2} href="/teams" />
-      {canAccessVOG && (
-        <VOGStatCard />
+      {stats?.vog_counts && (
+        <VOGStatCard vogCounts={stats.vog_counts} />
       )}
-      {canAccessFairplay ? (
-        <TuchtzakenStatCard />
+      {stats?.discipline_case_count !== null && stats?.discipline_case_count !== undefined ? (
+        <TuchtzakenStatCard count={stats.discipline_case_count} />
       ) : (
         <StatCard title="Open taken" value={stats?.open_todos_count || 0} icon={CheckSquare} href="/todos" />
       )}
@@ -415,8 +411,6 @@ function StatsRow({ stats }) {
 
 export default function Dashboard() {
   const { data, isLoading, error } = useDashboard();
-  const { data: openTodos } = useTodos('open');
-  const { data: dashboardSettings } = useDashboardSettings();
   const updateDashboardSettings = useUpdateDashboardSettings();
   const queryClient = useQueryClient();
 
@@ -432,7 +426,6 @@ export default function Dashboard() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
       queryClient.invalidateQueries({ queryKey: ['reminders'] }),
-      queryClient.invalidateQueries({ queryKey: ['todos'] }),
     ]);
   };
 
@@ -455,7 +448,7 @@ export default function Dashboard() {
     return <DashboardError error={error} />;
   }
 
-  const { stats, recent_people, upcoming_reminders, upcoming_anniversaries, recently_contacted } = data || {};
+  const { stats, recent_people, upcoming_reminders, upcoming_anniversaries, recently_contacted, open_todos: openTodos, dashboard_settings: dashboardSettings } = data || {};
   const totalItems = (stats?.total_people || 0) + (stats?.total_teams || 0) + (stats?.total_dates || 0);
   const isEmpty = totalItems === 0;
 
@@ -474,8 +467,7 @@ export default function Dashboard() {
   const cardOrder = dashboardSettings?.card_order || DEFAULT_DASHBOARD_CARDS;
   const orderedVisibleCards = cardOrder.filter((cardId) => visibleCards.includes(cardId));
 
-  // Limit todos for dashboard display
-  const dashboardTodos = openTodos?.slice(0, 5) || [];
+  const dashboardTodos = openTodos || [];
 
   // Card renderers
   const cardRenderers = {
@@ -514,7 +506,7 @@ export default function Dashboard() {
         key="todos"
         title="Open taken"
         icon={CheckSquare}
-        count={openTodos?.length}
+        count={stats?.open_todos_count || 0}
         linkTo="/todos"
         emptyMessage="Geen open taken"
       >

@@ -31,6 +31,13 @@ export default function FeedbackEditModal({
 }) {
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm();
   const feedbackType = watch('feedback_type');
+  const selectedStatus = watch('status');
+  const requiresResolutionSummary = isAdmin
+    && selectedStatus === 'resolved'
+    && (feedback?.meta?.status || feedback?.status || 'new') !== 'resolved';
+  const requiresDeclineReason = isAdmin
+    && selectedStatus === 'declined'
+    && (feedback?.meta?.status || feedback?.status || 'new') !== 'declined';
 
   // Reset form with feedback data when opening
   useEffect(() => {
@@ -42,6 +49,8 @@ export default function FeedbackEditModal({
         project: feedback.meta?.project || 'rondo-club',
         status: feedback.meta?.status || feedback.status || 'new',
         priority: feedback.meta?.priority || feedback.priority || 'medium',
+        resolution_summary: feedback.meta?.resolution_summary || '',
+        decline_reason: feedback.meta?.decline_reason || '',
         steps_to_reproduce: feedback.meta?.steps_to_reproduce || feedback.steps_to_reproduce || '',
         expected_behavior: feedback.meta?.expected_behavior || feedback.expected_behavior || '',
         actual_behavior: feedback.meta?.actual_behavior || feedback.actual_behavior || '',
@@ -63,6 +72,12 @@ export default function FeedbackEditModal({
     if (isAdmin) {
       submitData.status = data.status;
       submitData.priority = data.priority;
+      if (data.status === 'resolved') {
+        submitData.resolution_summary = data.resolution_summary;
+      }
+      if (data.status === 'declined') {
+        submitData.decline_reason = data.decline_reason;
+      }
     }
 
     // Add type-specific fields
@@ -205,6 +220,48 @@ export default function FeedbackEditModal({
                 </div>
               </div>
             )}
+
+            {isAdmin && selectedStatus === 'resolved' ? (
+              <div>
+                <label className="label">Zo hebben we het opgelost {requiresResolutionSummary ? '*' : ''}</label>
+                <textarea
+                  {...register('resolution_summary', {
+                    validate: (value) => !requiresResolutionSummary || value?.trim() || 'Leg in het Nederlands uit hoe de feedback is opgelost',
+                  })}
+                  className="input"
+                  rows={4}
+                  placeholder="Deze uitleg wordt in de bevestigingsmail opgenomen"
+                  disabled={isLoading}
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  De indiener ontvangt deze Nederlandse uitleg per e-mail wanneer je de feedback oplost.
+                </p>
+                {errors.resolution_summary ? (
+                  <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.resolution_summary.message}</p>
+                ) : null}
+              </div>
+            ) : null}
+
+            {isAdmin && selectedStatus === 'declined' ? (
+              <div>
+                <label className="label">Waarom we dit niet doen {requiresDeclineReason ? '*' : ''}</label>
+                <textarea
+                  {...register('decline_reason', {
+                    validate: (value) => !requiresDeclineReason || value?.trim() || 'Leg in het Nederlands uit waarom de feedback wordt afgewezen',
+                  })}
+                  className="input"
+                  rows={4}
+                  placeholder="Deze uitleg wordt in de afwijzingsmail opgenomen"
+                  disabled={isLoading}
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  De indiener ontvangt deze Nederlandse uitleg per e-mail wanneer je de feedback afwijst.
+                </p>
+                {errors.decline_reason ? (
+                  <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.decline_reason.message}</p>
+                ) : null}
+              </div>
+            ) : null}
 
             {/* Description */}
             <div>

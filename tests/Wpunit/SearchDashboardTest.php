@@ -38,17 +38,16 @@ class SearchDashboardTest extends RondoTestCase {
 		// Create fresh access control instance for testing
 		$this->access_control = new RONDO_Access_Control();
 
-		// Initialize REST server and ensure routes are registered
-		global $wp_rest_server;
-		$wp_rest_server = new WP_REST_Server();
-		$this->server   = $wp_rest_server;
-
-		// Instantiate REST API classes to register routes (bypasses rondo_is_rest_request() check)
-		new \RONDO_REST_API();
-		new \RONDO_REST_Todos();
-
-		// Trigger REST API initialization to register routes
-		do_action( 'rest_api_init' );
+		// Reminders and anniversaries were extracted out of the Api controller
+		// into their own class; without it their routes simply do not exist and
+		// every request here answers 404.
+		$this->server = $this->bootRestControllers(
+			[
+				\Rondo\REST\Api::class,
+				\Rondo\REST\Todos::class,
+				\Rondo\REST\Reminders::class,
+			]
+		);
 	}
 
 	/**
@@ -57,12 +56,6 @@ class SearchDashboardTest extends RondoTestCase {
 	 * @param array $args User arguments
 	 * @return int User ID
 	 */
-	private function createApprovedRondoUser( array $args = [] ): int {
-		$user_id = $this->createRondoUser( $args );
-		update_user_meta( $user_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
-		return $user_id;
-	}
-
 	/**
 	 * Helper to make an internal REST request.
 	 *
@@ -89,7 +82,9 @@ class SearchDashboardTest extends RondoTestCase {
 	 * Test basic search returns matching person.
 	 */
 	public function test_search_returns_matching_person(): void {
-		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
+		// Membership administration is entitled to the whole club. A plain member
+		// sees only their own household, which would make this a scoping test.
+		$alice_id = self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create persons
@@ -122,46 +117,58 @@ class SearchDashboardTest extends RondoTestCase {
 	}
 
 	/**
-	 * Test search isolation - user A cannot see user B's contacts.
+	 * Search is scoped to what the caller may see.
+	 *
+	 * Authorship stopped deciding this: a person record belongs to the club, not
+	 * to whoever typed it in. A plain member reaches only their own household, so
+	 * search must return nothing for people outside it — including records they
+	 * created themselves.
 	 */
-	public function test_search_isolation_between_users(): void {
-		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
-		$bob_id   = $this->createApprovedRondoUser( [ 'user_login' => 'bob' ] );
+	public function test_search_is_scoped_to_the_callers_people(): void {
+		$alice_id = $this->createRondoUser( [ 'user_login' => 'alice' ] );
+		$bob_id   = $this->createRondoUser( [ 'user_login' => 'bob' ] );
 
-		// Create person for Alice
 		$alice_john = $this->createPerson(
 			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Johns Contact',
 			]
 		);
-
-		// Create person for Bob
-		$bob_john = $this->createPerson(
+		$bob_john   = $this->createPerson(
 			[
 				'post_author' => $bob_id,
 				'post_title'  => 'Johns Other Contact',
 			]
 		);
 
-		// Set current user to Alice and search
 		wp_set_current_user( $alice_id );
 		$response = $this->doRestRequest( 'GET', '/rondo/v1/search', [ 'q' => 'John' ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
-		$data       = $response->get_data();
-		$result_ids = array_column( $data['people'], 'id' );
+		$result_ids = array_column( $response->get_data()['people'], 'id' );
 
-		$this->assertContains( $alice_john, $result_ids, 'Alice should see her own Johns Contact' );
-		$this->assertNotContains( $bob_john, $result_ids, 'Alice should NOT see Bobs Johns Other Contact' );
+		$this->assertNotContains( $bob_john, $result_ids, 'A member must not find another member\'s people' );
+		$this->assertNotContains( $alice_john, $result_ids, 'Authoring a record does not put it in your household' );
+
+		// The membership desk, entitled to the whole club, finds both.
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] ) );
+		$admin_ids = array_column(
+			$this->doRestRequest( 'GET', '/rondo/v1/search', [ 'q' => 'John' ] )->get_data()['people'],
+			'id'
+		);
+
+		$this->assertContains( $alice_john, $admin_ids );
+		$this->assertContains( $bob_john, $admin_ids );
 	}
 
 	/**
 	 * Test search across custom post types (person and team).
 	 */
 	public function test_search_across_post_types(): void {
-		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
+		// Membership administration is entitled to the whole club. A plain member
+		// sees only their own household, which would make this a scoping test.
+		$alice_id = self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person
@@ -200,7 +207,7 @@ class SearchDashboardTest extends RondoTestCase {
 	 * Test search validation - empty query returns 400.
 	 */
 	public function test_search_validation_empty_query(): void {
-		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
+		$alice_id = $this->createRondoUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Search with empty query - should fail validation
@@ -213,29 +220,13 @@ class SearchDashboardTest extends RondoTestCase {
 	 * Test search validation - single character returns 400.
 	 */
 	public function test_search_validation_single_character(): void {
-		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
+		$alice_id = $this->createRondoUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Search with single character - should fail validation (min 2 chars)
 		$response = $this->doRestRequest( 'GET', '/rondo/v1/search', [ 'q' => 'A' ] );
 
 		$this->assertEquals( 400, $response->get_status(), 'Single character search should return 400' );
-	}
-
-	/**
-	 * Test unapproved user is blocked from search endpoint.
-	 */
-	public function test_search_blocked_for_unapproved_user(): void {
-		// Create unapproved user
-		$unapproved_id = $this->createRondoUser( [ 'user_login' => 'unapproved' ] );
-		update_user_meta( $unapproved_id, RONDO_User_Roles::APPROVAL_META_KEY, '0' );
-		wp_set_current_user( $unapproved_id );
-
-		// Attempt search
-		$response = $this->doRestRequest( 'GET', '/rondo/v1/search', [ 'q' => 'Test' ] );
-
-		// Should be denied (403 Forbidden)
-		$this->assertEquals( 403, $response->get_status(), 'Unapproved user should be denied access to search' );
 	}
 
 	/**
@@ -259,7 +250,9 @@ class SearchDashboardTest extends RondoTestCase {
 	 * Test dashboard summary returns correct counts.
 	 */
 	public function test_dashboard_returns_correct_counts(): void {
-		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
+		// Membership administration is entitled to the whole club. A plain member
+		// sees only their own household, which would make this a scoping test.
+		$alice_id = self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create 3 persons
@@ -308,52 +301,45 @@ class SearchDashboardTest extends RondoTestCase {
 	}
 
 	/**
-	 * Test dashboard isolation - user A only sees their own data in counts.
+	 * Dashboard counts are scoped too.
+	 *
+	 * A count is a disclosure: telling a member the club has 739 people is telling
+	 * them something they may not see. The dashboard builds its numbers in raw
+	 * SQL, which no query filter reaches, so the scope is applied by hand there.
 	 */
-	public function test_dashboard_isolation_between_users(): void {
-		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
-		$bob_id   = $this->createApprovedRondoUser( [ 'user_login' => 'bob' ] );
+	public function test_dashboard_counts_are_scoped_to_the_caller(): void {
+		$author_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 
-		// Create 5 contacts for Alice
 		for ( $i = 1; $i <= 5; $i++ ) {
 			$this->createPerson(
 				[
-					'post_author' => $alice_id,
-					'post_title'  => "Alice Person $i",
+					'post_author' => $author_id,
+					'post_title'  => "Club Person $i",
 				]
 			);
 		}
 
-		// Create 3 contacts for Bob
-		for ( $i = 1; $i <= 3; $i++ ) {
-			$this->createPerson(
-				[
-					'post_author' => $bob_id,
-					'post_title'  => "Bob Person $i",
-				]
-			);
-		}
+		wp_set_current_user( $this->createRondoUser( [ 'user_login' => 'scoped_member' ] ) );
+		$member_data = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' )->get_data();
 
-		// Get Alice's dashboard
-		wp_set_current_user( $alice_id );
-		$alice_response = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' );
-		$alice_data     = $alice_response->get_data();
+		$this->assertEquals(
+			0,
+			$member_data['stats']['total_people'],
+			'A member who may see nobody should be told of nobody'
+		);
+		$this->assertSame( [], $member_data['recent_people'], 'and shown no names' );
 
-		$this->assertEquals( 5, $alice_data['stats']['total_people'], 'Alice should see 5 people' );
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] ) );
+		$desk_data = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' )->get_data();
 
-		// Get Bob's dashboard
-		wp_set_current_user( $bob_id );
-		$bob_response = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' );
-		$bob_data     = $bob_response->get_data();
-
-		$this->assertEquals( 3, $bob_data['stats']['total_people'], 'Bob should see 3 people' );
+		$this->assertEquals( 5, $desk_data['stats']['total_people'], 'Membership administration sees the club' );
 	}
 
 	/**
 	 * Test dashboard for new user with no data shows zero counts.
 	 */
 	public function test_dashboard_empty_for_new_user(): void {
-		$newuser_id = $this->createApprovedRondoUser( [ 'user_login' => 'emptyuser' ] );
+		$newuser_id = $this->createRondoUser( [ 'user_login' => 'emptyuser' ] );
 		wp_set_current_user( $newuser_id );
 
 		// Get dashboard for user with no data
@@ -367,23 +353,26 @@ class SearchDashboardTest extends RondoTestCase {
 	}
 
 	/**
-	 * Test dashboard blocked for unapproved user.
+	 * Test dashboard is blocked for a logged-out visitor.
+	 *
+	 * The user-approval system this test was written for is gone: every
+	 * logged-in user now reaches these endpoints, and what they see is
+	 * narrowed per record instead. The property still worth guarding is
+	 * that an anonymous request gets nothing at all.
 	 */
-	public function test_dashboard_blocked_for_unapproved_user(): void {
-		$unapproved_id = $this->createRondoUser( [ 'user_login' => 'unapproved' ] );
-		update_user_meta( $unapproved_id, RONDO_User_Roles::APPROVAL_META_KEY, '0' );
-		wp_set_current_user( $unapproved_id );
+	public function test_dashboard_blocked_for_logged_out_user(): void {
+		wp_set_current_user( 0 );
 
 		$response = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' );
 
-		$this->assertEquals( 403, $response->get_status(), 'Unapproved user should be denied dashboard access' );
+		$this->assertEquals( 401, $response->get_status(), 'A logged-out visitor should be denied dashboard access' );
 	}
 
 	/**
 	 * Test reminders endpoint returns upcoming birthdays.
 	 */
 	public function test_reminders_returns_upcoming_birthdays(): void {
-		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
+		$alice_id = $this->createRondoUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create a person with a birthdate 5 days from now (same month/day, any year)
@@ -412,7 +401,7 @@ class SearchDashboardTest extends RondoTestCase {
 	 * Test reminders filters by days_ahead parameter.
 	 */
 	public function test_reminders_filters_by_days_ahead(): void {
-		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
+		$alice_id = $this->createRondoUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create a person with birthdate 60 days from now
@@ -441,7 +430,7 @@ class SearchDashboardTest extends RondoTestCase {
 	 * Test reminders validation - days_ahead=0 returns 400.
 	 */
 	public function test_reminders_validation_zero_days(): void {
-		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
+		$alice_id = $this->createRondoUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		$response = $this->doRestRequest( 'GET', '/rondo/v1/reminders', [ 'days_ahead' => 0 ] );
@@ -453,7 +442,7 @@ class SearchDashboardTest extends RondoTestCase {
 	 * Test reminders validation - days_ahead too large returns 400.
 	 */
 	public function test_reminders_validation_days_too_large(): void {
-		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
+		$alice_id = $this->createRondoUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		$response = $this->doRestRequest( 'GET', '/rondo/v1/reminders', [ 'days_ahead' => 500 ] );
@@ -462,16 +451,19 @@ class SearchDashboardTest extends RondoTestCase {
 	}
 
 	/**
-	 * Test reminders blocked for unapproved user.
+	 * Test reminders is blocked for a logged-out visitor.
+	 *
+	 * The user-approval system this test was written for is gone: every
+	 * logged-in user now reaches these endpoints, and what they see is
+	 * narrowed per record instead. The property still worth guarding is
+	 * that an anonymous request gets nothing at all.
 	 */
-	public function test_reminders_blocked_for_unapproved_user(): void {
-		$unapproved_id = $this->createRondoUser( [ 'user_login' => 'unapproved' ] );
-		update_user_meta( $unapproved_id, RONDO_User_Roles::APPROVAL_META_KEY, '0' );
-		wp_set_current_user( $unapproved_id );
+	public function test_reminders_blocked_for_logged_out_user(): void {
+		wp_set_current_user( 0 );
 
 		$response = $this->doRestRequest( 'GET', '/rondo/v1/reminders' );
 
-		$this->assertEquals( 403, $response->get_status(), 'Unapproved user should be denied reminders access' );
+		$this->assertEquals( 401, $response->get_status(), 'A logged-out visitor should be denied reminders access' );
 	}
 
 	/**
@@ -485,18 +477,20 @@ class SearchDashboardTest extends RondoTestCase {
 	 * @return int Post ID
 	 */
 	private function createTodo( int $person_id, string $content, int $user_id, bool $completed = false, string $due_date = '' ): int {
+		// Todos carry their state in post_status (rondo_open / rondo_awaiting /
+		// rondo_completed) and relate to people through the `related_persons`
+		// array. The older single `related_person` + `is_completed` shape this
+		// helper used is not what the endpoints query any more.
 		$post_id = self::factory()->post->create(
 			[
 				'post_type'   => 'rondo_todo',
-				'post_status' => 'publish',
+				'post_status' => $completed ? 'rondo_completed' : 'rondo_open',
 				'post_title'  => $content,
 				'post_author' => $user_id,
 			]
 		);
 
-		update_field( 'related_person', $person_id, $post_id );
-		update_field( 'is_completed', $completed, $post_id );
-		update_field( 'visibility', 'private', $post_id );
+		update_field( 'related_persons', [ $person_id ], $post_id );
 
 		if ( $due_date ) {
 			update_field( 'due_date', $due_date, $post_id );
@@ -509,7 +503,7 @@ class SearchDashboardTest extends RondoTestCase {
 	 * Test todos endpoint returns uncompleted todos.
 	 */
 	public function test_todos_returns_uncompleted_todos(): void {
-		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
+		$alice_id = $this->createRondoUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person
@@ -542,7 +536,7 @@ class SearchDashboardTest extends RondoTestCase {
 	 * Test todos endpoint with completed=true returns all todos.
 	 */
 	public function test_todos_returns_all_with_completed_filter(): void {
-		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice_completed' ] );
+		$alice_id = $this->createRondoUser( [ 'user_login' => 'alice_completed' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person
@@ -559,8 +553,9 @@ class SearchDashboardTest extends RondoTestCase {
 		// Create completed todo
 		$completed_todo_id = $this->createTodo( $person_id, 'Send email', $alice_id, true );
 
-		// Get all todos including completed (use string 'true' as that's what the REST API expects)
-		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos', [ 'completed' => 'true' ] );
+		// The endpoint selects on a `status` param (open / awaiting / completed /
+		// all), not the old boolean `completed` flag.
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos', [ 'status' => 'all' ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -575,8 +570,8 @@ class SearchDashboardTest extends RondoTestCase {
 	 * Test todos endpoint isolation - user cannot see other user's todos.
 	 */
 	public function test_todos_isolation_between_users(): void {
-		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
-		$bob_id   = $this->createApprovedRondoUser( [ 'user_login' => 'bob' ] );
+		$alice_id = $this->createRondoUser( [ 'user_login' => 'alice' ] );
+		$bob_id   = $this->createRondoUser( [ 'user_login' => 'bob' ] );
 
 		// Create person for Alice
 		$alice_person = $this->createPerson(
@@ -616,15 +611,18 @@ class SearchDashboardTest extends RondoTestCase {
 	}
 
 	/**
-	 * Test todos blocked for unapproved user.
+	 * Test todos is blocked for a logged-out visitor.
+	 *
+	 * The user-approval system this test was written for is gone: every
+	 * logged-in user now reaches these endpoints, and what they see is
+	 * narrowed per record instead. The property still worth guarding is
+	 * that an anonymous request gets nothing at all.
 	 */
-	public function test_todos_blocked_for_unapproved_user(): void {
-		$unapproved_id = $this->createRondoUser( [ 'user_login' => 'unapproved' ] );
-		update_user_meta( $unapproved_id, RONDO_User_Roles::APPROVAL_META_KEY, '0' );
-		wp_set_current_user( $unapproved_id );
+	public function test_todos_blocked_for_logged_out_user(): void {
+		wp_set_current_user( 0 );
 
 		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos' );
 
-		$this->assertEquals( 403, $response->get_status(), 'Unapproved user should be denied todos access' );
+		$this->assertEquals( 401, $response->get_status(), 'A logged-out visitor should be denied todos access' );
 	}
 }

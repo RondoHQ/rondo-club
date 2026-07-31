@@ -3,9 +3,10 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Trash2, Mail, Phone,
   MapPin, Building2, Plus, Pencil, MessageCircle, X, Camera, Download,
-  CheckSquare2, TrendingUp, StickyNote, ExternalLink, Gavel, RefreshCw, CreditCard
+  CheckSquare2, TrendingUp, StickyNote, ExternalLink, Gavel, RefreshCw, CreditCard,
+  CalendarClock
 } from 'lucide-react';
-import { usePerson, usePersonTimeline, useDeleteNote, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
+import { usePerson, usePersonTimeline, useDeleteNote, useDeletePerson, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
 import TimelineView from '@/components/Timeline/TimelineView';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
@@ -29,12 +30,87 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { wpApi, prmApi } from '@/api/client';
-import { decodeHtml, getTeamName, sanitizePersonAcf, isValidDate, getGenderSymbol, formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
+import { decodeHtml, formatPersonName, getTeamName, sanitizePersonAcf, isValidDate, parseAcfDate, getGenderSymbol, formatPhoneForTel, formatPhoneForDisplay, hasSponsorRole } from '@/utils/formatters';
 import { downloadVCard } from '@/utils/vcard';
 import { getSocialIcon, getSocialIconColor, sortSocialLinks } from '@/utils/socialIcons';
 import TodoItem from '@/components/TodoItem.jsx';
 import TabButton from '@/components/TabButton.jsx';
 import { useClothingPersonProfile } from '@/hooks/useClothing';
+
+function PersonShiftItem({ shift }) {
+  const status = shift.no_show
+    ? { label: 'No-show', classes: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' }
+    : shift.status === 'voltooid'
+      ? { label: 'Voltooid', classes: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' }
+      : shift.status === 'geannuleerd'
+        ? { label: 'Geannuleerd', classes: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' }
+        : { label: 'Ingepland', classes: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300' };
+
+  return (
+    <li className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            {shift.dienst_type_name || shift.title}
+          </p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {format(shift.start_datetime, 'EEEE d MMMM yyyy, HH:mm')}
+            {shift.end_datetime ? ` – ${format(shift.end_datetime, 'HH:mm')}` : ''}
+          </p>
+        </div>
+        <span className={`shrink-0 rounded px-2 py-0.5 text-xs font-medium ${status.classes}`}>
+          {status.label}
+        </span>
+      </div>
+    </li>
+  );
+}
+
+function PersonShiftOverview({ overview, isLoading }) {
+  const upcoming = overview?.upcoming || [];
+  const recent = overview?.recent || [];
+
+  return (
+    <section className="card p-6 md:col-span-2">
+      <div className="mb-4 flex items-center gap-2">
+        <CalendarClock className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+        <h2 className="font-semibold text-brand-gradient">Inschrijftaken</h2>
+      </div>
+
+      {isLoading ? (
+        <p className="text-sm text-gray-500 dark:text-gray-400">Inschrijftaken laden…</p>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Komend ({upcoming.length})
+            </h3>
+            {upcoming.length > 0 ? (
+              <ul className="space-y-2">
+                {upcoming.map((shift) => <PersonShiftItem key={shift.id} shift={shift} />)}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400">Geen komende inschrijftaken gepland.</p>
+            )}
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Laatste 2 inschrijftaken
+            </h3>
+            {recent.length > 0 ? (
+              <ul className="space-y-2">
+                {recent.map((shift) => <PersonShiftItem key={shift.id} shift={shift} />)}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400">Nog geen eerdere inschrijftaken.</p>
+            )}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
 
 export default function PersonDetail() {
   const { id } = useParams();
@@ -43,6 +119,7 @@ export default function PersonDetail() {
   const { data: person, isLoading, error } = usePerson(id);
   const { data: timeline } = usePersonTimeline(id);
   const deleteNote = useDeleteNote();
+  const deletePerson = useDeletePerson();
   const updatePerson = useUpdatePerson();
   const createNote = useCreateNote();
   const createActivity = useCreateActivity();
@@ -57,6 +134,7 @@ export default function PersonDetail() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['people', 'detail', id] }),
       queryClient.invalidateQueries({ queryKey: ['people', id, 'timeline'] }),
+      queryClient.invalidateQueries({ queryKey: ['people', id, 'shifts'] }),
     ]);
   };
 
@@ -75,13 +153,30 @@ export default function PersonDetail() {
 
   const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
   const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
+  const canEditFinancieel = currentUser?.can_edit_financieel ?? false;
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
   const canAccessToegangscontrole = currentUser?.can_access_toegangscontrole ?? false;
-  const canEditPeople = currentUser?.can_edit_people ?? false;
+  const canEditAllPeople = currentUser?.can_edit_people ?? false;
+  const canAccessPersonNotes = currentUser?.can_access_person_notes ?? false;
+  const canManageSponsors = currentUser?.can_manage_sponsors ?? false;
+  const isSponsorPerson = hasSponsorRole(person?.acf);
+  const isDualRoleSponsor = isSponsorPerson && (person?.acf?.person_type || 'member') !== 'contact';
+  let canEditPeople = canEditAllPeople || (canManageSponsors && isSponsorPerson && !isDualRoleSponsor);
+  // Volunteer coordinators may correct contact details and photos on any person,
+  // but nothing else — the server enforces the same field boundary.
+  let canEditContact = canEditPeople || (currentUser?.can_edit_person_contact ?? false);
+  let canEditSponsorFields = canEditAllPeople || (canManageSponsors && isSponsorPerson);
   const canSyncFromSportlink = (currentUser?.is_admin ?? window.rondoConfig?.isAdmin ?? false) || canAccessToegangscontrole;
 
   const { data: clothingProfile } = useClothingPersonProfile(id, {
     enabled: canAccessClothing && !!id,
+  });
+
+  const { data: shiftOverview, isLoading: isShiftOverviewLoading } = useQuery({
+    queryKey: ['people', id, 'shifts'],
+    queryFn: async () => (await prmApi.getPersonShifts(id)).data,
+    enabled: !!id,
+    staleTime: 60 * 1000,
   });
 
   // Fetch discipline cases for this person (fairplay users only)
@@ -120,6 +215,9 @@ export default function PersonDetail() {
   const [editingRelationship, setEditingRelationship] = useState(null);
   const [editingRelationshipIndex, setEditingRelationshipIndex] = useState(null);
   const [showAddressModal, setShowAddressModal] = useState(false);
+  const [isSavingPersonType, setIsSavingPersonType] = useState(false);
+  const [isSavingSponsorPassVariant, setIsSavingSponsorPassVariant] = useState(false);
+  const [companyNameDraft, setCompanyNameDraft] = useState('');
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
   const [editingAddressIndex, setEditingAddressIndex] = useState(null);
@@ -132,6 +230,10 @@ export default function PersonDetail() {
 
   // Mobile todos panel state
   const [showMobileTodos, setShowMobileTodos] = useState(false);
+
+  useEffect(() => {
+    setCompanyNameDraft(person?.acf?.company_name || '');
+  }, [person?.acf?.company_name]);
 
   // Update document title with person's name - MUST be called before early returns
   // to ensure consistent hook calls on every render
@@ -186,6 +288,64 @@ export default function PersonDetail() {
       alert('Contacten konden niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSavingContacts(false);
+    }
+  };
+
+  const handlePersonTypeChange = async (personType) => {
+    setIsSavingPersonType(true);
+    try {
+      const acfData = sanitizePersonAcf(person.acf, { person_type: personType });
+      await updatePerson.mutateAsync({ id, data: { acf: acfData } });
+    } catch {
+      alert('Persoonstype kon niet worden opgeslagen. Probeer het opnieuw.');
+    } finally {
+      setIsSavingPersonType(false);
+    }
+  };
+
+  const handleSponsorRoleChange = async (sponsorPassVariant) => {
+    setIsSavingSponsorPassVariant(true);
+    try {
+      const sponsorFields = sponsorPassVariant
+        ? { is_sponsor: true, sponsor_pass_variant: sponsorPassVariant }
+        : { is_sponsor: false, sponsor_pass_variant: null };
+      const acfData = canEditAllPeople
+        ? sanitizePersonAcf(person.acf, sponsorFields)
+        : sponsorFields;
+      await updatePerson.mutateAsync({ id, data: { acf: acfData } });
+      window.location.reload();
+    } catch {
+      alert('Sponsorrol kon niet worden opgeslagen. Probeer het opnieuw.');
+    } finally {
+      setIsSavingSponsorPassVariant(false);
+    }
+  };
+
+  const handleDeleteSponsor = async () => {
+    if (!isSponsorPerson || isDualRoleSponsor || !confirm(`Weet je zeker dat je ${person?.name || 'deze sponsor'} definitief wilt verwijderen?`)) return;
+
+    try {
+      await deletePerson.mutateAsync(Number(id));
+      navigate('/people');
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Sponsor kon niet worden verwijderd. Probeer het opnieuw.');
+    }
+  };
+
+  const handleCompanyNameSave = async () => {
+    const companyName = companyNameDraft.trim();
+    if (companyName === (person.acf?.company_name || '')) return;
+    if (!companyName && !person.acf?.first_name) {
+      alert('Vul een bedrijfsnaam of voornaam in.');
+      setCompanyNameDraft(person.acf?.company_name || '');
+      return;
+    }
+
+    try {
+      await updatePerson.mutateAsync({ id, data: { acf: { company_name: companyName } } });
+    } catch {
+      alert('Bedrijfsnaam kon niet worden opgeslagen. Probeer het opnieuw.');
+      setCompanyNameDraft(person.acf?.company_name || '');
     }
   };
 
@@ -862,19 +1022,49 @@ export default function PersonDetail() {
     const groups = new Map();
 
     positionsToShow.forEach(job => {
-      const team = job.team && teamMap[job.team];
-      const isVerenigingsbreed = team?.name === 'Verenigingsbreed';
-      const groupKey = (!team || isVerenigingsbreed) ? null : job.team;
+      const linkedTeam = job.team && teamMap[job.team];
+      const isVerenigingsbreed = linkedTeam?.name === 'Verenigingsbreed';
+
+      // Three buckets:
+      // - Linked team (not Verenigingsbreed) → group by team id, render as link
+      // - Text-fallback (no linked team, but team_name_text present from
+      //   historical-team sync) → group by text name, render as plain text
+      // - Verenigingsbreed / no team at all → null group (sorted first)
+      let groupKey, groupData;
+      if (linkedTeam && !isVerenigingsbreed) {
+        groupKey = `id:${job.team}`;
+        groupData = {
+          teamId: job.team,
+          team: linkedTeam,
+          teamName: linkedTeam.name,
+          teamType: linkedTeam.type,
+          showTeamLink: true,
+          titles: []
+        };
+      } else if (!linkedTeam && job.team_name_text) {
+        groupKey = `text:${job.team_name_text.toLowerCase()}`;
+        groupData = {
+          teamId: null,
+          team: null,
+          teamName: job.team_name_text,
+          teamType: null,
+          showTeamLink: false,
+          titles: []
+        };
+      } else {
+        groupKey = null;
+        groupData = {
+          teamId: null,
+          team: null,
+          teamName: null,
+          teamType: null,
+          showTeamLink: false,
+          titles: []
+        };
+      }
 
       if (!groups.has(groupKey)) {
-        groups.set(groupKey, {
-          teamId: groupKey,
-          team: groupKey ? team : null,
-          teamName: groupKey ? team.name : null,
-          teamType: groupKey ? team.type : null,
-          showTeamLink: groupKey !== null, // Don't show link for Verenigingsbreed or no-team
-          titles: []
-        });
+        groups.set(groupKey, groupData);
       }
 
       if (job.job_title) {
@@ -882,13 +1072,15 @@ export default function PersonDetail() {
       }
     });
 
-    // Convert to array and sort: Verenigingsbreed (null key) first, then other teams
+    // Convert to array and sort: Verenigingsbreed (null group, no name) first,
+    // then linked teams and text-fallback teams in insertion order.
     const result = Array.from(groups.values())
-      .filter(group => group.titles.length > 0) // Only show groups with titles
+      .filter(group => group.titles.length > 0)
       .sort((a, b) => {
-        // null (Verenigingsbreed/no-team) first
-        if (a.teamId === null && b.teamId !== null) return -1;
-        if (a.teamId !== null && b.teamId === null) return 1;
+        const aIsBreed = a.teamId === null && !a.teamName;
+        const bIsBreed = b.teamId === null && !b.teamName;
+        if (aIsBreed && !bIsBreed) return -1;
+        if (!aIsBreed && bIsBreed) return 1;
         return 0;
       });
 
@@ -1004,6 +1196,20 @@ export default function PersonDetail() {
   }
   
   const acf = person.acf || {};
+  const personalName = formatPersonName(acf.first_name, acf.infix, acf.last_name);
+  const isFormerMember = acf.former_member === true;
+  const isCurrentParent = person.is_current_parent === true;
+
+  // Former members are read-only — Sportlink rejects writes for their
+  // lidsoort ("Oud bondslid" / "Oud verenigingslid") so any UI edit
+  // would just generate doomed reverse-sync work. Backend enforces the
+  // same rule (rest_pre_insert_person filter); hiding edit affordances
+  // here just keeps users from trying.
+  if (isFormerMember) {
+    canEditPeople = false;
+    canEditContact = false;
+    canEditSponsorFields = false;
+  }
 
   // Build contact display items from fixed fields
   const contactItems = [
@@ -1091,12 +1297,33 @@ export default function PersonDetail() {
             <Download className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Exporteer vCard</span>
           </button>
+          {isSponsorPerson && !isDualRoleSponsor && canEditPeople && (
+            <button
+              onClick={handleDeleteSponsor}
+              disabled={deletePerson.isPending}
+              className="btn-tertiary text-red-600 hover:text-red-700 dark:text-red-400"
+            >
+              <Trash2 className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Sponsor verwijderen</span>
+            </button>
+          )}
         </div>
       </div>
       {syncErrorMessage && (
         <p className="text-sm text-red-600 dark:text-red-400">{syncErrorMessage}</p>
       )}
       
+      {isFormerMember && (
+        <div className="mb-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+          <span className="font-medium">
+            {isCurrentParent ? 'Oud-lid én actuele ouder/verzorger — alleen-lezen.' : 'Oud-lid — alleen-lezen.'}
+          </span>{' '}
+          {isCurrentParent
+            ? 'De historische lidmaatschapsgegevens blijven bewaard. Actuele contact- en adresgegevens worden bijgehouden via de oudergegevens van het kind in Sportlink.'
+            : 'Sportlink staat geen contact- of profielwijzigingen toe voor de lidsoort van deze persoon (Oud bondslid / Oud verenigingslid), dus elke aanpassing zou alsnog door de sync afgewezen worden. Vraag een beheerder om eerst de oud-lid-status uit te zetten als je deze gegevens wilt aanpassen.'}
+        </div>
+      )}
+
       {/* Profile header */}
       <div className={`card p-6 relative ${acf['financiele-blokkade'] ? 'bg-red-50 dark:bg-red-950/30' : acf.former_member ? 'bg-gray-50 dark:bg-gray-900/30' : ''}`}>
 
@@ -1111,12 +1338,12 @@ export default function PersonDetail() {
             ) : (
               <div className="w-28 h-28 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
                 <span className="text-3xl font-medium text-gray-500 dark:text-gray-300">
-                  {person.first_name?.[0] || '?'}
+                  {person.name?.[0] || acf.company_name?.[0] || '?'}
                 </span>
               </div>
             )}
             {/* Upload overlay */}
-            {canEditPeople && (
+            {canEditContact && (
               <>
                 <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center cursor-pointer"
                      onClick={() => fileInputRef.current?.click()}
@@ -1147,12 +1374,27 @@ export default function PersonDetail() {
               </h1>
               {acf.former_member && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300">
-                  Oud-lid
+                  {isCurrentParent ? 'Oud-lid · ouder/verzorger' : 'Oud-lid'}
+                </span>
+              )}
+              {acf.person_type === 'contact' && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
+                  Contact
+                </span>
+              )}
+              {isSponsorPerson && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300">
+                  Sponsor
                 </span>
               )}
               {!acf.former_member && hasValidLidTot && new Date(acf['lid-tot']) > new Date() && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
                   Afmelding in de toekomst
+                </span>
+              )}
+              {acf.wacht_op_overschrijving && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                  Wacht op overschrijving
                 </span>
               )}
               {acf['huidig-vrijwilliger'] && (
@@ -1161,6 +1403,59 @@ export default function PersonDetail() {
                 </span>
               )}
             </div>
+            {acf.company_name && personalName && (
+              <p className="text-base text-gray-600 dark:text-gray-300">{acf.company_name}</p>
+            )}
+            {(canEditAllPeople || canEditSponsorFields) && (
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                {canEditAllPeople && (
+                  <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <span>Persoonstype</span>
+                    <select
+                      value={acf.person_type || 'member'}
+                      onChange={(event) => handlePersonTypeChange(event.target.value)}
+                      className="input py-1 text-sm w-auto"
+                      disabled={isSavingPersonType}
+                    >
+                      <option value="member">Lid / ouder</option>
+                      <option value="contact">Contact</option>
+                    </select>
+                  </label>
+                )}
+                {(canEditAllPeople || canEditSponsorFields) && (
+                  <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <span>Sponsorrol</span>
+                    <select
+                      value={isSponsorPerson ? (acf.sponsor_pass_variant || '') : ''}
+                      onChange={(event) => handleSponsorRoleChange(event.target.value)}
+                      className="input py-1 text-sm w-auto"
+                      disabled={isSavingSponsorPassVariant}
+                    >
+                      {canEditAllPeople && <option value="">Geen sponsor</option>}
+                      <option value="businessclub">Businessclub AWC</option>
+                      <option value="awc_sponsor">AWC Sponsor</option>
+                    </select>
+                  </label>
+                )}
+              </div>
+            )}
+            {isSponsorPerson && canEditSponsorFields && (
+              <label className="block max-w-sm text-sm text-gray-500 dark:text-gray-400">
+                <span className="mb-1 block">Bedrijfsnaam</span>
+                <input
+                  type="text"
+                  value={companyNameDraft}
+                  onChange={(event) => setCompanyNameDraft(event.target.value)}
+                  onBlur={handleCompanyNameSave}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') event.currentTarget.blur();
+                  }}
+                  className="input py-1 text-sm"
+                  placeholder="Voorbeeld BV"
+                  disabled={updatePerson.isPending}
+                />
+              </label>
+            )}
             {groupedPositions.length > 0 && (
               <p className="text-base text-gray-600 dark:text-gray-300">
                 {groupedPositions.map((group, groupIdx) => (
@@ -1176,6 +1471,12 @@ export default function PersonDetail() {
                         >
                           {group.teamName}
                         </Link>
+                      </>
+                    )}
+                    {!group.showTeamLink && group.teamName && (
+                      <>
+                        <span className="text-gray-400 dark:text-gray-500"> bij </span>
+                        <span>{group.teamName}</span>
                       </>
                     )}
                   </span>
@@ -1318,7 +1619,7 @@ export default function PersonDetail() {
             <div className="card p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-brand-gradient">Contactgegevens</h2>
-                {canEditPeople && (
+                {canEditContact && (
                   <button
                     onClick={() => setShowContactModal(true)}
                     className="btn-tertiary text-sm"
@@ -1357,7 +1658,7 @@ export default function PersonDetail() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
-                Nog geen contactgegevens.{canEditPeople && <> <button onClick={() => setShowContactModal(true)} className="text-electric-cyan hover:underline">Toevoegen</button></>}
+                Nog geen contactgegevens.{canEditContact && <> <button onClick={() => setShowContactModal(true)} className="text-electric-cyan hover:underline">Toevoegen</button></>}
               </p>
             )}
             {/* View in Google Contacts link - only for synced contacts with email */}
@@ -1382,7 +1683,7 @@ export default function PersonDetail() {
               <div className="card p-6">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="font-semibold text-brand-gradient">Adressen</h2>
-                  {canEditPeople && (
+                  {canEditContact && (
                     <button
                       onClick={() => {
                         setEditingAddress(null);
@@ -1425,7 +1726,7 @@ export default function PersonDetail() {
                               ))}
                             </a>
                           </div>
-                          {canEditPeople && (
+                          {canEditContact && (
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                               <button
                                 onClick={() => {
@@ -1453,7 +1754,7 @@ export default function PersonDetail() {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500 text-center py-4">
-                    Nog geen adressen.{canEditPeople && <> <button onClick={() => { setEditingAddress(null); setEditingAddressIndex(null); setShowAddressModal(true); }} className="text-electric-cyan hover:underline">Toevoegen</button></>}
+                    Nog geen adressen.{canEditContact && <> <button onClick={() => { setEditingAddress(null); setEditingAddressIndex(null); setShowAddressModal(true); }} className="text-electric-cyan hover:underline">Toevoegen</button></>}
                   </p>
                 )}
               </div>
@@ -1481,8 +1782,8 @@ export default function PersonDetail() {
             {/* Sportlink Card */}
             <SportlinkCard acfData={person?.acf} metaData={person?.meta} primaryTeam={sportlinkPrimaryTeam} />
 
-            {/* Relationships - only show when relationships exist */}
-            {sortedRelationships?.length > 0 && (
+            {/* Keep the card available for editable people so the first relationship can be added. */}
+            {(canEditPeople || sortedRelationships?.length > 0) && (
             <div className="card p-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold text-brand-gradient">Relaties</h2>
@@ -1574,6 +1875,8 @@ export default function PersonDetail() {
               isUpdating={updatePerson.isPending}
             />
             </div>
+
+            <PersonShiftOverview overview={shiftOverview} isLoading={isShiftOverviewLoading} />
           </div>
         )}
 
@@ -1672,6 +1975,13 @@ export default function PersonDetail() {
               )}
             </div>
 
+            {!canAccessPersonNotes && (
+              <p className="mb-4 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-400">
+                Notities en activiteiten zijn alleen zichtbaar voor de ledenadministratie en de
+                penningmeester. Je ziet hier je eigen taken bij deze persoon.
+              </p>
+            )}
+
             <TimelineView
               timeline={timeline || []}
               onEdit={canEditPeople ? handleEditTimelineItem : undefined}
@@ -1694,6 +2004,8 @@ export default function PersonDetail() {
                 {sortedWorkHistory.map((job) => {
                   const teamData = job.team ? teamMap[job.team] : null;
                   const originalIndex = job.originalIndex;
+                  const startDate = parseAcfDate(job.start_date);
+                  const endDate = parseAcfDate(job.end_date);
 
                   return (
                     <div key={originalIndex} className="flex items-start">
@@ -1718,10 +2030,15 @@ export default function PersonDetail() {
                             {teamData.name}
                           </Link>
                         )}
+                        {!job.team && job.team_name_text && (
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            {job.team_name_text}
+                          </p>
+                        )}
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {job.start_date && isValidDate(job.start_date) && format(new Date(job.start_date), 'MMM yyyy')}
+                          {startDate && format(startDate, 'MMM yyyy')}
                           {' - '}
-                          {job.is_current ? 'Heden' : job.end_date && isValidDate(job.end_date) ? format(new Date(job.end_date), 'MMM yyyy') : ''}
+                          {job.is_current ? 'Heden' : endDate ? format(endDate, 'MMM yyyy') : ''}
                         </p>
                         {job.description && (
                           <p className="text-sm text-gray-600 mt-1">{job.description}</p>
@@ -1798,7 +2115,7 @@ export default function PersonDetail() {
               onSelectionChange={setSelectedCaseIds}
               onCreateInvoice={handleCreateInvoice}
               isCreatingInvoice={createInvoice.isPending}
-              canCreateInvoice={canAccessFairplay && canAccessFinancieel}
+              canCreateInvoice={canAccessFairplay && canEditFinancieel}
             />
           </div>
         )}

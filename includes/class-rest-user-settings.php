@@ -54,6 +54,26 @@ class UserSettings extends Base {
 			'label' => 'Laatst gewijzigd',
 			'type'  => 'core',
 		],
+		[
+			'id'    => 'address',
+			'label' => 'Adres',
+			'type'  => 'core',
+		],
+		[
+			'id'    => 'postal_code',
+			'label' => 'Postcode',
+			'type'  => 'core',
+		],
+		[
+			'id'    => 'city',
+			'label' => 'Plaats',
+			'type'  => 'core',
+		],
+		[
+			'id'    => 'country',
+			'label' => 'Land',
+			'type'  => 'core',
+		],
 	];
 
 	/**
@@ -67,7 +87,7 @@ class UserSettings extends Base {
 		],
 		[
 			'id'    => 'type-lid',
-			'label' => 'Type lid',
+			'label' => 'Type',
 			'type'  => 'text',
 		],
 		[
@@ -78,6 +98,11 @@ class UserSettings extends Base {
 		[
 			'id'    => 'lid-sinds',
 			'label' => 'Lid sinds',
+			'type'  => 'date',
+		],
+		[
+			'id'    => 'lid-tot',
+			'label' => 'Lid tot',
 			'type'  => 'date',
 		],
 		[
@@ -321,6 +346,24 @@ class UserSettings extends Base {
 			]
 		);
 
+		// A parent can temporarily identify themselves through an account that is
+		// still linked to their child, pending the Sportlink person sync.
+		register_rest_route(
+			'rondo/v1',
+			'/user/guardian-claim',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'claim_guardian_account' ],
+				'permission_callback' => 'is_user_logged_in',
+				'args'                => [
+					'name' => [
+						'required'          => true,
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+				],
+			]
+		);
+
 		// Update user's linked person ID
 		register_rest_route(
 			'rondo/v1',
@@ -541,9 +584,13 @@ class UserSettings extends Base {
 	 *
 	 * @return \WP_REST_Response
 	 */
-	public function get_dashboard_settings() {
-		$user_id = get_current_user_id();
-
+	/**
+	 * Get dashboard settings data for a user.
+	 *
+	 * @param int $user_id The user ID.
+	 * @return array Dashboard settings array.
+	 */
+	public function get_dashboard_settings_data( $user_id ) {
 		$visible_cards = get_user_meta( $user_id, 'rondo_dashboard_visible_cards', true );
 		if ( empty( $visible_cards ) || ! is_array( $visible_cards ) ) {
 			$visible_cards = self::DEFAULT_DASHBOARD_ORDER;
@@ -554,12 +601,17 @@ class UserSettings extends Base {
 			$card_order = self::DEFAULT_DASHBOARD_ORDER;
 		}
 
-		return rest_ensure_response(
-			[
-				'visible_cards' => $visible_cards,
-				'card_order'    => $card_order,
-			]
-		);
+		return [
+			'visible_cards' => $visible_cards,
+			'card_order'    => $card_order,
+		];
+	}
+
+	/**
+	 * REST callback for getting dashboard settings.
+	 */
+	public function get_dashboard_settings() {
+		return rest_ensure_response( $this->get_dashboard_settings_data( get_current_user_id() ) );
 	}
 
 	/**
@@ -892,16 +944,24 @@ class UserSettings extends Base {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function update_linked_person( $request ) {
-		$user_id   = get_current_user_id();
-		$person_id = $request->get_param( 'person_id' );
+		$user_id           = get_current_user_id();
+		$person_id         = $request->get_param( 'person_id' );
+		$current_person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+
+		// Provisioned members cannot move or remove their identity link themselves.
+		// Administrators can repair links through the user-management workflow.
+		if ( $current_person_id > 0 && (int) $person_id !== $current_person_id && ! current_user_can( 'manage_options' ) ) {
+			return new \WP_Error(
+				'permission_denied',
+				__( 'Your linked person can only be changed by an administrator.', 'rondo' ),
+				[ 'status' => 403 ]
+			);
+		}
 
 		// Handle unlinking
 		if ( ! $person_id || $person_id === 0 ) {
-			$old_person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
 			delete_user_meta( $user_id, 'rondo_linked_person_id' );
-			if ( $old_person_id ) {
-				delete_post_meta( $old_person_id, \Rondo\Users\UserProvisioning::META_USER_ID );
-			}
+			// Keep the forward provisioning marker as a duplicate-account guard.
 			return rest_ensure_response(
 				[
 					'success'   => true,
@@ -950,28 +1010,69 @@ class UserSettings extends Base {
 	}
 
 	/**
+	 * Store a temporary parent/verzorger identity on the current child account.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function claim_guardian_account( $request ) {
+		$user_id   = get_current_user_id();
+		$person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+		$result    = \Rondo\Users\GuardianAccountService::claim(
+			$user_id,
+			$person_id,
+			(string) $request->get_param( 'name' )
+		);
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return rest_ensure_response( $result );
+	}
+
+	/**
 	 * Get current user info.
 	 *
 	 * @param \WP_REST_Request $request The request object.
 	 * @return \WP_REST_Response|\WP_Error
 	 */
-	public function get_current_user( $request ) {
-		$user_id = get_current_user_id();
-
-		if ( ! $user_id ) {
-			return new \WP_Error( 'not_logged_in', __( 'User is not logged in.', 'rondo' ), [ 'status' => 401 ] );
-		}
-
+	/**
+	 * Get current user data as an array.
+	 *
+	 * @param int $user_id The user ID.
+	 * @return array|null User data array, or null if user not found.
+	 */
+	public function get_current_user_data( $user_id ) {
 		$user = get_userdata( $user_id );
 
 		if ( ! $user ) {
-			return new \WP_Error( 'user_not_found', __( 'User not found.', 'rondo' ), [ 'status' => 404 ] );
+			return null;
 		}
 
 		$avatar_url = get_avatar_url( $user_id, [ 'size' => 96 ] );
 		$is_admin   = current_user_can( 'manage_options' );
 
+		// Roles beyond the plain member baseline — e.g. poule-rollen of custom rollen
+		// zonder eigen capability. Deze gebruikers horen het dashboard te zien.
+		$has_extra_roles = ! empty( array_diff( (array) $user->roles, [ \Rondo\Core\UserRoles::ROLE_NAME, 'subscriber' ] ) );
+
+		// The single definition of "kader". The React router and the sidebar both read
+		// this; deriving it separately in either place lets them disagree, and a user
+		// lands on a dashboard with no navigation to it.
+		$is_kader = $is_admin
+			|| $has_extra_roles
+			|| current_user_can( 'fairplay' )
+			|| current_user_can( 'vog' )
+			|| \Rondo\Core\UserRoles::can_view_finances()
+			|| current_user_can( 'toegangscontrole' )
+			|| current_user_can( 'manage_clothing' )
+			|| current_user_can( 'ledenadministratie' )
+			|| current_user_can( 'sponsorbeheer' )
+			|| current_user_can( 'vrijwilligers' );
+
 		$person_id           = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+		$pending_guardian    = \Rondo\Users\GuardianAccountService::pending_for_user( $user_id );
 		$linked_person_name  = null;
 		$linked_person_photo = null;
 		$active_functies     = [];
@@ -993,27 +1094,56 @@ class UserSettings extends Base {
 			}
 		}
 
-		return rest_ensure_response(
-			[
-				'id'                          => $user_id,
-				'name'                        => $user->display_name,
-				'email'                       => $user->user_email,
-				'avatar_url'                  => $avatar_url,
-				'is_admin'                    => $is_admin,
-				'can_edit_people'             => \Rondo\Core\AccessControl::can_edit_people(),
-				'can_access_fairplay'         => current_user_can( 'fairplay' ),
-				'can_access_vog'              => current_user_can( 'vog' ),
-				'can_access_financieel'       => current_user_can( 'financieel' ),
-				'can_access_toegangscontrole' => current_user_can( 'toegangscontrole' ),
-				'can_access_clothing'         => current_user_can( 'manage_clothing' ) || current_user_can( 'manage_options' ),
-				'permitted_age_groups'        => \Rondo\Core\AccessControl::get_permitted_age_groups(),
-				'profile_url'                 => admin_url( 'profile.php' ),
-				'admin_url'                   => admin_url(),
-				'linked_person_name'          => $linked_person_name,
-				'active_functies'             => $active_functies,
-				'linked_person_photo'         => $linked_person_photo,
-			]
-		);
+		return [
+			'id'                            => $user_id,
+			'name'                          => $user->display_name,
+			'email'                         => $user->user_email,
+			'avatar_url'                    => $avatar_url,
+			'is_admin'                      => $is_admin,
+			'has_extra_roles'               => $has_extra_roles,
+			'is_kader'                      => $is_kader,
+			'can_edit_people'               => \Rondo\Core\AccessControl::can_edit_people(),
+			'can_edit_person_contact'       => \Rondo\Core\AccessControl::can_edit_person_contact(),
+			'can_manage_sponsors'           => \Rondo\Core\AccessControl::can_manage_sponsors(),
+			'can_access_fairplay'           => current_user_can( 'fairplay' ),
+			'can_access_vog'                => current_user_can( 'vog' ),
+			'can_access_financieel'         => \Rondo\Core\UserRoles::can_view_finances(),
+			'can_edit_financieel'           => \Rondo\Core\UserRoles::can_manage_finances(),
+			'can_access_toegangscontrole'   => current_user_can( 'toegangscontrole' ),
+			'can_access_clothing'           => current_user_can( 'manage_clothing' ) || current_user_can( 'manage_options' ),
+			'can_access_ledenadministratie' => current_user_can( 'ledenadministratie' ) || current_user_can( 'manage_options' ),
+			'can_access_vrijwilligers'      => current_user_can( 'vrijwilligers' ) || current_user_can( 'manage_options' ),
+			'can_access_person_notes'       => \Rondo\Core\AccessControl::can_access_person_notes(),
+			'permitted_age_groups'          => \Rondo\Core\AccessControl::get_permitted_age_groups(),
+			'profile_url'                   => admin_url( 'profile.php' ),
+			'admin_url'                     => admin_url(),
+			'linked_person_id'              => $person_id ?: null,
+			'linked_person_name'            => $linked_person_name,
+			'active_functies'               => $active_functies,
+			'linked_person_photo'           => $linked_person_photo,
+			'pending_guardian'              => $pending_guardian,
+		];
+	}
+
+	/**
+	 * REST callback for getting current user.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 */
+	public function get_current_user( $request ) {
+		$user_id = get_current_user_id();
+
+		if ( ! $user_id ) {
+			return new \WP_Error( 'not_logged_in', __( 'User is not logged in.', 'rondo' ), [ 'status' => 401 ] );
+		}
+
+		$data = $this->get_current_user_data( $user_id );
+
+		if ( ! $data ) {
+			return new \WP_Error( 'user_not_found', __( 'User not found.', 'rondo' ), [ 'status' => 404 ] );
+		}
+
+		return rest_ensure_response( $data );
 	}
 
 	/**

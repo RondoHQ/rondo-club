@@ -7,7 +7,7 @@
 
 namespace Rondo\Passes;
 
-use Rondo\Fees\MembershipFees;
+use Rondo\Fees\SeasonKey;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -34,7 +34,7 @@ class MembershipPassQr {
 
 		$season = isset( $options['season'] ) && is_string( $options['season'] ) ? sanitize_text_field( $options['season'] ) : '';
 		if ( $season === '' ) {
-			$season = ( new MembershipFees() )->get_season_key();
+			$season = SeasonKey::current();
 		}
 
 		if ( ! preg_match( '/^\d{4}-\d{4}$/', $season ) ) {
@@ -174,6 +174,7 @@ class MembershipPassQr {
 		$infix      = (string) ( get_field( 'infix', $person_id ) ?: '' );
 		$last_name  = (string) ( get_field( 'last_name', $person_id ) ?: '' );
 		$full_name  = trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
+		$full_name  = $full_name !== '' ? $full_name : trim( (string) get_field( 'company_name', $person_id ) );
 
 		$knvb_id = get_field( 'knvb-id', $person_id );
 

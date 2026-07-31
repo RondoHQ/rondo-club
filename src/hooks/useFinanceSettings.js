@@ -6,13 +6,17 @@ import { prmApi } from '@/api/client';
  *
  * @returns {Object} Query result with data, isLoading, error
  */
-export function useFinanceSettings() {
+// GET /finance/settings carries payment-provider config and is gated on `financieel`,
+// not `financieel_read`. Callers reachable by read-only finance users must pass
+// { enabled: false } rather than let it 403.
+export function useFinanceSettings(options = {}) {
   return useQuery({
     queryKey: ['finance-settings'],
     queryFn: async () => {
       const response = await prmApi.getFinanceSettings();
       return response.data;
     },
+    ...options,
   });
 }
 

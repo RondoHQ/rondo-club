@@ -10,7 +10,10 @@ const ROLE_LABELS = {
   rondo_fairplay: 'FairPlay',
   rondo_vog: 'VOG',
   rondo_financieel: 'Financieel',
+  rondo_financieel_lezen: 'Financieel (lezen)',
   rondo_toegangscontrole: 'Toegangscontrole',
+  rondo_ledenadministratie: 'Ledenadministratie',
+  rondo_sponsorbeheerder: 'Sponsorbeheerder',
   rondo_bestuur: 'Bestuur',
   administrator: 'Admin',
 };

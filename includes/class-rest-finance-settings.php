@@ -91,6 +91,14 @@ class FinanceSettings extends Base {
 							'required'          => false,
 							'sanitize_callback' => 'wp_kses_post',
 						],
+						'generic_invoice_reminder_1_email_template' => [
+							'required'          => false,
+							'sanitize_callback' => 'wp_kses_post',
+						],
+						'generic_invoice_reminder_2_email_template' => [
+							'required'          => false,
+							'sanitize_callback' => 'wp_kses_post',
+						],
 						'credit_email_template'            => [
 							'required'          => false,
 							'sanitize_callback' => 'wp_kses_post',
@@ -135,6 +143,14 @@ class FinanceSettings extends Base {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
+						'generic_invoice_reminder_1_email_heading' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'generic_invoice_reminder_2_email_heading' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
 						'credit_email_heading'             => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
@@ -175,6 +191,10 @@ class FinanceSettings extends Base {
 							},
 						],
 						'club_logo_id'                     => [
+							'required' => false,
+							'type'     => 'integer',
+						],
+						'businessclub_logo_id'             => [
 							'required' => false,
 							'type'     => 'integer',
 						],
@@ -254,6 +274,10 @@ class FinanceSettings extends Base {
 							'required' => false,
 							'type'     => 'integer',
 						],
+						'businessclub_logo_id'    => [
+							'required' => false,
+							'type'     => 'integer',
+						],
 						'accent_color'            => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
@@ -312,6 +336,8 @@ class FinanceSettings extends Base {
 			[
 				'club_logo_id'            => (int) ( $settings['club_logo_id'] ?? 0 ),
 				'club_logo_url'           => isset( $settings['club_logo_url'] ) ? (string) $settings['club_logo_url'] : '',
+				'businessclub_logo_id'    => (int) ( $settings['businessclub_logo_id'] ?? 0 ),
+				'businessclub_logo_url'   => isset( $settings['businessclub_logo_url'] ) ? (string) $settings['businessclub_logo_url'] : '',
 				'accent_color'            => isset( $settings['accent_color'] ) ? (string) $settings['accent_color'] : '',
 				'accent_background_color' => isset( $settings['accent_background_color'] ) ? (string) $settings['accent_background_color'] : '',
 			]
@@ -333,6 +359,11 @@ class FinanceSettings extends Base {
 		$club_logo_id = $request->get_param( 'club_logo_id' );
 		if ( $club_logo_id !== null ) {
 			$data['club_logo_id'] = (int) $club_logo_id;
+		}
+
+		$businessclub_logo_id = $request->get_param( 'businessclub_logo_id' );
+		if ( $businessclub_logo_id !== null ) {
+			$data['businessclub_logo_id'] = (int) $businessclub_logo_id;
 		}
 
 		$accent_color = $request->get_param( 'accent_color' );

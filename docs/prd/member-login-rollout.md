@@ -1,0 +1,339 @@
+# Member login rollout
+
+**Status:** draft plan, 2026-07-09
+**Question:** can every Rondo member log in? No — 9 of the 739 people who need to can.
+
+## Who actually needs a login
+
+The population is not "members". It is **the people who owe a volunteer obligation**, because
+that is what `/vrijwillig` exists to serve. `VolunteerEligibilityService` already models this as
+two unit kinds:
+
+- **SPELER** — one obligation per O17+ player. The player acts for themselves.
+- **GEZIN** — one obligation per household with a JO16- player. *The parents act, not the child.*
+  The code comment says it outright: "in te vullen door één of meerdere ouders samen".
+
+Measured on production (2026-07-09), current season:
+
+| | count |
+|---|---|
+| Obligation units | 738 (343 gezin + 395 speler) |
+| **Distinct people who must be able to act** | **739** |
+| — spelers (O17+ players) | 395 |
+| — parents carrying ouderplicht | 361 |
+| — people who are both | 17 |
+| Of those 739, have a WordPress account today | **9** |
+
+## The finding that inverts the obvious plan
+
+Parents are mostly **not KNVB members**.
+
+| Actor group | n | has email | has KNVB-ID | has birthdate |
+|---|---|---|---|---|
+| Spelers | 395 | 395 | 395 | 395 |
+| Parents | 361 | 305 | 88 | 88 |
+
+The 273 parents without a KNVB-ID also have no birthdate — across the whole `person` CPT the two
+fields are missing from *exactly* the same 328 active records. Those records are parents, sponsors
+and external contacts, not Sportlink members.
+
+Two consequences:
+
+1. **Scoping login to "members aged 16+" is wrong.** It would hand accounts to 676 members while
+   locking out the 273 parents who carry the ouderplicht for their children.
+2. **Keying activation on KNVB-ID + birthdate is wrong.** It excludes those same 273 people.
+   The only identifier a parent reliably has is an **email address**.
+
+## The good news
+
+The obligation machinery is already parent-aware. `get_eligible_unit_for_person()` walks
+`find_youth_children()` and returns the merged gezin unit for a non-playing adult, with multi-child
+scaling applied. `/vrijwillig` resolves the logged-in user to a person via `rondo_linked_person_id`
+and asks for that unit. **A parent who has an account already sees and can claim the family's
+diensten today.** Nothing in the sign-up path needs to change.
+
+The gap is entirely **identity and provisioning**, not volunteer logic.
+
+## Decisions taken (2026-07-09)
+
+1. **A playing parent owes both duties** — the speler obligation *and* the gezin obligation.
+2. **A parent may see their child's person record.**
+3. **Anyone in the system may activate an account.** Willingness to volunteer is not gated on owing
+   an obligation.
+4. **Shift attribution is a fixed order: the speler duty fills first, then the gezin duty.** A shift
+   discharges exactly one unit. No member-facing choice, no new UI.
+
+Each of these collides with something in the current code. See blockers 0, 5, 6 and 7.
+
+## Blockers, in order of severity
+
+### 0. SECURITY — any logged-in user can read all 4,095 person records — **FIXED in 33.28.2**
+`AccessControl::filter_rest_query()` honours a `suppress_age_group` request parameter with no
+capability check at all — the only condition is `is_user_logged_in()`:
+
+```php
+if ( $post_type === 'person' && $request->get_param( 'suppress_age_group' ) && is_user_logged_in() ) {
+    self::$suppress_age_group_filter = true;
+}
+```
+
+Reproduced on production as `borre.valk`, a plain `rondo_user` with no capabilities:
+
+| request | result |
+|---|---|
+| `GET /wp/v2/people` | 200, `X-WP-Total: 0` |
+| `GET /wp/v2/people/{id}` | 403 |
+| `GET /wp/v2/people?suppress_age_group=1` | **200, `X-WP-Total: 4095`, ACF included (names, emails)** |
+
+Only `src/pages/Teams/Kaderlijst.jsx` passes the flag legitimately. Today this is a **live privilege
+escalation** for the four coordinator accounts, whose `rondo_age_group_access` restriction to one
+age group they can shed at will. The moment members activate, it becomes a full member-database
+disclosure — an AVG breach involving minors. `self::$suppress_age_group_filter` is also a static
+that is never reset once set.
+
+**Fixed in 33.28.2.** The flag is now honoured only for users whose `get_permitted_age_groups()`
+returns a *non-empty* list — coordinators, the Kaderlijst case it was built for. Management users
+are unrestricted already, so it stays a no-op for them; users with an empty list ("see nobody")
+have the flag ignored. Verified on production after deploy:
+
+| user | `suppress=0` | `suppress=1` |
+|---|---|---|
+| plain member (`borre.valk`) | 0 | **0** (was 4095) |
+| coordinator (`jasper.jansen`) | 252 | 4095 |
+| admin (`joost`) | 4095 | 4095 |
+
+`/rondo/v1/people/filtered` reads the same static but nothing ever sets it on that route
+(`filter_rest_query` is hooked on `rest_person_query`, which only fires for `wp/v2/people`), so it
+always applied the age filter and was never exposed.
+
+**Residual — CLOSED in 33.37.0.** The flag let a coordinator widen to all 4,095 records with full
+ACF because `Kaderlijst.jsx` fetched *every* person (`_fields=id,acf`, all pages) and filtered
+client-side. It is gone: `GET /rondo/v1/kaderlijst/people` returns only kader (people with a current
+`work_history` functie), with only the fields the list renders, scoped server-side. `suppress_age_group`
+and the shared snapshot were deleted with it. See item 12.
+
+### 1. No way to create 730 accounts — *partly addressed*
+`provision()` is called one `person_id` at a time from an admin picker and sends its welcome email
+inline. The `knvb-id` filter on `/rondo/v1/users/provisionable` — which hid every non-member parent
+— is **gone as of 33.31.0**: the provisionable population went from 1,048 to 1,317, the 269
+difference being exactly the parents.
+
+Still no self-service route. That is item 9, and it is the only remaining piece that sends mail to
+real members, so it needs explicit sign-off before it ships.
+
+### 2. Shared email addresses — **FIXED in 33.31.0**
+WordPress enforces one account per `user_email`, and `provision()` rejected the second member of a
+household with `email_taken`. The first claimant now keeps the real address; later members get an
+undeliverable `person-{id}@members.rondo.invalid` placeholder, with the real address in
+`rondo_contact_email` user meta.
+
+The trap this surfaced: WordPress core addresses the password-reset link straight to `user_email`,
+so a placeholder account would have been **unrecoverable**. `ContactEmailRouter` hooks `wp_mail` and
+rewrites synthetic recipients to the real address, dropping the recipient when none is known.
+Covered by a test that drives `retrieve_password()` end to end.
+
+Five unprovisioned people currently share an address with an existing WP user; they will get a
+placeholder. Verified on production: all 17 existing users still resolve to a deliverable address.
+
+### 3. 56 parents have no email address at all
+They cannot be reached by any activation flow. Ledenadministratie must collect these.
+
+### 4. 27 gezin units have no parent (`data_quality=orphan`)
+A youth player with no `relationships` entry and no adult housemate. Nobody can fulfil the
+obligation. Already surfaced in `diagnostics.gezinnen_orphan`; needs chasing, not code.
+
+### 5. Playing parents are counted in two units at once — a live bug
+17 people are both an O17+ player and the parent of a JO16- player. For them, both code paths agree
+that they are a speler, and *both also* build a gezin unit from their child. The result:
+
+- `compute_eligibility_view()` emits **two** units containing the same adult — `speler-{id}` and
+  `gezin-rel-{id}` — so the club's obligation total double-counts the household. Lennart Nieuwenhuis
+  (person 52) shows as speler (2 diensten) **and** as a 2-child gezin (3 diensten): 5 in total.
+- `get_eligible_unit_for_person()` returns a **single** unit and hits `return build_speler_unit()`
+  before it ever calls `find_youth_children()`. So `/vrijwillig` shows Lennart 2 diensten.
+- `compute_progress()` matches shifts against `unit['person_ids']`, so every shift Lennart claims
+  counts toward **both** units.
+
+Verified on production: person 25 (gezin required 2 / speler 2), person 52 (3 / 2), person 115
+(2 / 2). Where the numbers coincide the bug is silent; where they don't, the member's page
+under-states what the club believes the household owes.
+
+Today this is nearly invisible — 9 people have accounts. The moment 739 log in, 17 households see a
+number that contradicts the coordinator's dashboard.
+
+**Decision 1 says the parent owes both.** That makes the dashboard's two units correct and exposes
+two separate defects:
+
+- `get_eligible_unit_for_person()` must return **all** units a person belongs to, not the first one.
+  `/vrijwillig` must render more than one obligation.
+- ~~**Double-crediting silently discounts the duty.**~~ **Fixed in 33.29.1.** `compute_progress()`
+  credited a shift to every unit whose `person_ids` contain the actor, so Lennart's 2 + 3 = 5 duty
+  was satisfied by 3 shifts. Needed **no data-model change** — the order is fixed and the speler
+  duty is per-person, so the split is derivable. Each person's shifts fill their own speler duty
+  first; the surplus flows to their gezin unit:
+
+  ```
+  speler.completed = min( completed[p], speler.required )
+  gezin.completed  = Σ over p in gezin.person_ids of max( 0, completed[p] − speler_required(p) )
+  ```
+
+  where `speler_required(p)` is 2 for an O17+ player and 0 for everyone else (children, non-playing
+  parents). Pending shifts are consumed after completed ones. `assigned_persons` needs no unit
+  reference. A player with no youth children has nowhere to spill, so their speler unit keeps every
+  shift — capping there would erase real work from `total_completed`.
+
+  Shipped with zero risk: there were **no shift assignments at all** on production (19 shifts, all
+  `open`), so no migration and no live progress numbers to disturb. Covered by
+  `VolunteerShiftAttributionTest`; 4 of its 8 tests fail against the old calculator.
+
+The header comment `SPELER : one obligation per O17+ player (vervangt de ouderplicht)` is now wrong
+and must be corrected.
+
+### 6. A parent cannot see their child's record — **FIXED in 33.30.0**
+`can_view_person()` is now the single authority: management sees everyone, coordinators their
+configured age groups, plain members themselves plus their children under 18. Enforced in
+`filter_rest_query()`, `apply_age_group_filter()` (the `pre_get_posts` path — a second, separate
+copy of the rule that had to be unified), `filter_rest_single_access()`, the raw-SQL
+`/rondo/v1/people/filtered`, and `user_can_access_post()`. Writes stay closed via
+`restrict_person_editing()`.
+
+Members read an allowlisted ACF subset; `financiele-blokkade`, `wacht_op_overschrijving` and
+`freescout-id` are withheld, and a field added later is private by default. A person with no usable
+birthdate is treated as an adult — fail closed.
+
+Verified on production: `borre.valk` sees exactly 1 person (himself, was 0), a stranger returns 403,
+`user_can_access_post()` on a stranger is `false`, and his own record returns 19 ACF fields with
+none of the three withheld ones. `jasper.jansen` still sees his 252, `joost` all 4,095.
+
+**Still missing: the UI.** The grant is server-side only. `/people/:id` is wrapped in
+`KaderOrVrijwilligRedirect`, so a member navigating there is still bounced to `/vrijwillig`. Item 13.
+
+### 6b. SECURITY — notes and activities were readable on any person — **FIXED in 33.30.0**
+`user_can_access_post()` returned `true` for every logged-in user on every person, and it is the
+permission callback behind `/rondo/v1/people/{id}/notes`, `/activities` and `/timeline`. The same
+class of bug as `suppress_age_group`. There are zero `rondo_note` comments site-wide, so nothing was
+disclosed. It now obeys `can_view_person()`.
+
+### 6c. Coordinator roles are not actually scoped
+`rondo_coordinator-junioren` carries the `fairplay` and `vog` capabilities, both of which are in
+`AGE_GROUP_BYPASS_CAPS`. So `patrice` reads as a management user and sees all 4,095 people; the
+role's `rondo_age_group_access` entry is dead configuration. `rondo_coordinator-pupillen` has no
+such capabilities, so `jasper.jansen` *is* correctly scoped to 252.
+
+This is a **capability-matrix configuration** issue, not a code bug. Item 14.
+
+### 7. A willing volunteer with no obligation is refused
+Decision 3 says anyone may activate because they might want to volunteer. But
+`get_available_shifts()` refuses them:
+
+```php
+$eligible = get_eligible_unit_for_person( $person_id, $season ) !== null
+    || $exempt !== null; // Exempt members may still volunteer voluntarily.
+if ( ! $eligible ) { return [ 'eligible' => false, 'shifts' => [],
+    'block_reason' => 'Je valt niet onder de vrijwilligersplicht-doelgroep.' ]; }
+```
+
+So a sponsor, a grandparent, or an O17+ player's willing partner activates an account and lands on
+an empty page telling them they are not in the target group. Exempt members are already allowed
+through, which shows the intent: **owing an obligation and being allowed to volunteer are different
+things.** Split them — `may_volunteer()` should be true for any active person; the unit only decides
+whether progress is *required*.
+
+Note that activation under decision 3 reaches the 396 active members under 16. Creating accounts for
+under-16s raises an AVG consent question that is a club/legal decision, not a technical one.
+
+## Proposed approach
+
+### Status, 2026-07-10 — the rollout is live
+
+**`/activeren` is open on production.** Any of the 1,317 provisionable people can create their own
+account. Nothing has been announced yet, so no mail has gone to a member.
+
+Verified end to end against production with a throwaway person (token minted directly, so no mail
+was sent), then cleaned up — user count back to 17:
+
+- `GET /activeren` → 200, form with nonce
+- `POST /activeren` without a nonce → 403
+- `POST /activeren` with an unknown address → the same "Kijk in je mailbox" as a known one
+- `GET /activeren/{token}` → the "Wie ben je?" picker listing the person
+- `POST` with a person on **another** address → 400, "hoort niet bij dit e-mailadres"
+- `POST` with the right person → 302 to `wp-login.php?action=rp&key=…`
+- replaying the burned token → 400, "verlopen of ongeldig"
+- `GET /betaling/{bogus}` → 404 with its normal error page (chrome extraction did not break payments)
+
+The member-facing household view shipped in 33.34.0 as `/mijn-gegevens`. Verified on production with
+a throwaway account linked to a real parent (Linda Van Blijderveen): `GET /wp/v2/people` returned
+her and her child Morris Witte, 19 allowlisted ACF fields, nothing else. Cleaned up afterwards.
+
+That work also fixed a bug introduced in 33.28.1: "kader" was derived independently in `router.jsx`
+and `Layout.jsx`, and only the router counted `has_extra_roles`. A coordinator was routed to the
+dashboard while the sidebar hid every link to it. `is_kader` is now computed server-side and both
+read it.
+
+Remaining: the capability-matrix audit (14). It does not block the announcement.
+
+**Before announcing:** `wp rewrite flush` has been run; re-run it after any deploy that adds rewrite
+rules.
+
+### Identity model — synthetic email only on collision
+- Keep `user_email` = the real address whenever it is free. Those members log in with their email,
+  exactly as the 17 existing accounts do. No migration.
+- When the address is already claimed by another WP user, assign a synthetic
+  `person-{id}@{no-mx-subdomain}` and set the real address in `rondo_contact_email` user meta.
+- Set `rondo_contact_email` for **every** provisioned user, so all outbound Rondo mail has one
+  code path and never has to ask which address is real.
+- Add an `authenticate` filter resolving username → KNVB-ID → unique `rondo_contact_email` match.
+- Filter password-reset mail to `rondo_contact_email`. Suppress any WordPress mail addressed to the
+  synthetic domain.
+
+### Activation — email-first, link is the proof
+A public page at `/activeren`, styled like the existing standalone `/betaling/{token}` page
+(`class-public-payment-page.php` is the pattern to copy).
+
+1. Member enters an email address. Nothing else — a parent has nothing else to enter.
+2. Server finds every active, non-former `person` whose `email_1`/`email_2` matches.
+3. Server **always** responds "Als we een lid gevonden hebben, is er een e-mail verstuurd."
+   (no enumeration).
+4. If there were matches, one email goes to that address with a signed, expiring token.
+5. The token page lists the matched people — "Wie ben je?" — and creates the account for the chosen
+   person, then sets a password.
+
+The security property that makes email-only acceptable: **activation never grants access directly.**
+The link always goes to the address already on file. Someone who guesses an address learns nothing
+and receives nothing. A household mailbox can activate any person on that mailbox, which is the
+intended behaviour for a gezin.
+
+Rate-limit per IP and per email via transients.
+
+### Rollout
+No mass mailing. Announce the activation URL through the club's existing channels and let members
+come. Provisioning happens lazily, one member at a time, at the moment they ask for it.
+
+## Work breakdown
+
+| # | Work | Depends on |
+|---|---|---|
+| ~~0~~ | ~~Gate `suppress_age_group`~~ — **done, shipped in 33.28.2** | — |
+| ~~1~~ | ~~`get_eligible_units_for_person()` returns all units; `/vrijwillig` renders both~~ — **done, 33.29.0** | — |
+| ~~3~~ | ~~Split `may_volunteer()` from owing an obligation~~ — **done, 33.29.0** | — |
+| ~~2~~ | ~~Attribute each shift to one unit, speler duty first~~ — **done, 33.29.1** | — |
+| ~~12~~ | ~~Scoped Kaderlijst endpoint, then delete `suppress_age_group`~~ — **done, 33.37.0**. `GET /rondo/v1/kaderlijst/people` returns only kader (current work_history job), scoped server-side: management sees all, a coordinator sees kader of the teams they coordinate (team age-group derived from the current roster's `leeftijdsgroep`, so `Onder 12`/`Meiden`/`Vrouwen` variants resolve correctly), a member sees own household. `suppress_age_group` and the shared snapshot are gone. | 1 |
+| ~~4~~ | ~~Scoped read grant: member sees own record + children~~ — **done, 33.30.0** | — |
+| ~~13~~ | ~~Member-facing UI for the household view~~ — **done, 33.34.0** (`/mijn-gegevens`) | — |
+| 14 | Audit the capability matrix: coordinator roles holding `vog`/`fairplay` are not scoped — *deferred, config decision, left as-is 2026-07-10* | — |
+| ~~5~~ | ~~`rondo_contact_email` + synthetic-email fallback~~ — **done, 33.31.0** | — |
+| ~~6~~ | ~~Drop the `knvb-id` requirement from `/rondo/v1/users/provisionable`~~ — **done, 33.31.0** | — |
+| ~~8~~ | ~~Reroute password-reset and WP notification mail~~ — **done, 33.31.0** (`ContactEmailRouter`) | — |
+| ~~7~~ | ~~username / KNVB-ID / unique contact-email login~~ — **done, 33.32.0** (`LoginResolver`) | — |
+| ~~9~~ | ~~Public `/activeren` page + token endpoints + rate limiting~~ — **done, 33.33.0** | — |
+| ~~10~~ | ~~Data-quality report: parents without email, orphan gezinnen~~ — **done, 33.36.0**. Orphan gezinnen already had a drill-down; added a `no_email` category (gated on `ledenadministratie`) + CSV export to the Vrijwilligers → Datakwaliteit drill-downs. | — |
+| 11 | Docs in `../developer/src/content/docs/features/` | all |
+
+Item 0 is a live vulnerability and must not wait for the rest. Items 1, 3, 5, 6 and 10 are
+independent. Nothing in 5–9 should be deployed before 0 and 4 are done, because they are what let
+738 new people through the door.
+
+## Open questions
+
+- AVG consent for the 396 active members under 16 who may now activate.
+- Do we re-evaluate obligations as children age past JO16 mid-season, or only at season roll-over?

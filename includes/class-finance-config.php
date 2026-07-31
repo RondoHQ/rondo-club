@@ -12,6 +12,7 @@ namespace Rondo\Config;
 
 use Rondo\Data\CredentialEncryption;
 use Rondo\Config\ClubConfig;
+use Rondo\Finance\FinanceServices;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -50,6 +51,7 @@ class FinanceConfig {
 	const OPTION_EMAIL_TEMPLATE                             = 'rondo_finance_email_template';
 	const OPTION_RABOBANK_CREDENTIALS                       = 'rondo_finance_rabobank_credentials';
 	const OPTION_CLUB_LOGO_ID                               = 'rondo_finance_club_logo_id';
+	const OPTION_BUSINESSCLUB_LOGO_ID                       = 'rondo_finance_businessclub_logo_id';
 	const OPTION_ACCENT_COLOR                               = 'rondo_finance_accent_color';
 	const OPTION_ACCENT_BACKGROUND_COLOR                    = 'rondo_finance_accent_background_color';
 	const OPTION_BCC_EMAIL                                  = 'rondo_finance_bcc_email';
@@ -85,8 +87,13 @@ class FinanceConfig {
 	const OPTION_REMINDER_2_EMAIL_HEADING                             = 'rondo_finance_reminder_2_email_heading';
 	const OPTION_INVOICE_REMINDER_1_EMAIL_HEADING                     = 'rondo_finance_invoice_reminder_1_email_heading';
 	const OPTION_INVOICE_REMINDER_2_EMAIL_HEADING                     = 'rondo_finance_invoice_reminder_2_email_heading';
+	const OPTION_GENERIC_INVOICE_REMINDER_1_EMAIL_TEMPLATE            = 'rondo_finance_generic_invoice_reminder_1_email_template';
+	const OPTION_GENERIC_INVOICE_REMINDER_2_EMAIL_TEMPLATE            = 'rondo_finance_generic_invoice_reminder_2_email_template';
+	const OPTION_GENERIC_INVOICE_REMINDER_1_EMAIL_HEADING             = 'rondo_finance_generic_invoice_reminder_1_email_heading';
+	const OPTION_GENERIC_INVOICE_REMINDER_2_EMAIL_HEADING             = 'rondo_finance_generic_invoice_reminder_2_email_heading';
 	const OPTION_CREDIT_EMAIL_TEMPLATE                                = 'rondo_finance_credit_email_template';
 	const OPTION_CREDIT_EMAIL_HEADING                                 = 'rondo_finance_credit_email_heading';
+	const OPTION_CREDIT_EMAIL_SUBJECT                                 = 'rondo_finance_credit_email_subject';
 
 	/**
 	 * Default configuration values
@@ -94,43 +101,49 @@ class FinanceConfig {
 	 * @var array<string, mixed>
 	 */
 	const DEFAULTS = [
-		'org_name'                             => '',
-		'org_address'                          => '',
-		'contact_email'                        => '',
-		'iban'                                 => '',
-		'mollie_accounts'                      => [],
-		'payment_term_days'                    => 14,
-		'payment_clause'                       => '',
-		'club_logo_id'                         => 0,
-		'accent_color'                         => '',
-		'accent_background_color'              => '',
-		'bcc_email'                            => '',
-		'admin_fee'                            => 0.00,
-		'installment_admin_fee'                => 0.00,
-		'membership_pass_google_class_suffix'  => 'rondo_membership',
-		'email_template'                       => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {naam},</p><p>Bijgevoegd vindt u de factuur {factuur_nummer} voor opgelegde boetes vanuit de tuchtcommissie.</p>{tuchtzaken_lijst}<p>Het totaalbedrag is <strong>{totaal_bedrag}</strong>.</p><p>U kunt betalen via de volgende link: {betaallink}</p>{qr_code}<p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
-		'installment_email_template'           => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Hierbij ontvangt u het betaalverzoek voor termijn {termijn_nummer} van {totaal_termijnen} van uw contributie (factuur {factuur_nummer}).</p><p><strong>Termijnbedrag:</strong> {termijn_bedrag}<br/><strong>Vervaldatum:</strong> {vervaldatum}</p><p>U kunt betalen via de volgende link:<br/>{betaallink}</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
-		'reminder_1_email_template'            => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Wij hebben geconstateerd dat termijn {termijn_nummer} van {totaal_termijnen} van uw contributie (factuur {factuur_nummer}) nog niet is voldaan.</p><p><strong>Termijnbedrag:</strong> {termijn_bedrag}<br/><strong>Vervaldatum was:</strong> {vervaldatum}<br/><strong>Aantal dagen te laat:</strong> {dagen_te_laat}</p><p>Wij verzoeken u vriendelijk dit bedrag zo spoedig mogelijk te voldoen via:<br/>{betaallink}</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
-		'reminder_2_email_template'            => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Dit is onze tweede en laatste herinnering voor termijn {termijn_nummer} van {totaal_termijnen} van uw contributie (factuur {factuur_nummer}).</p><p><strong>Termijnbedrag:</strong> {termijn_bedrag}<br/><strong>Vervaldatum was:</strong> {vervaldatum}<br/><strong>Aantal dagen te laat:</strong> {dagen_te_laat}</p><p>Wij verzoeken u dringend dit bedrag direct te voldoen via:<br/>{betaallink}</p><p>Indien u niet reageert, zullen wij de vordering overdragen aan ons bestuur.</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
-		'membership_email_template'            => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Bijgevoegd vindt u de factuur {factuur_nummer} voor uw contributie.</p><p>Het totaalbedrag is <strong>{totaal_bedrag}</strong>.</p><p>U kunt betalen via de volgende link: {betaallink}</p>{qr_code}<p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
-		'membership_payment_clause'            => '',
-		'invoice_reminder_1_email_template'    => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Op {factuurdatum} hebben wij u een factuur ({factuur_nummer}) gestuurd voor uw contributie ter hoogte van <strong>{totaal_bedrag}</strong>.</p><p>Wij hebben nog geen betaling ontvangen. Via onderstaande link kunt u uw betaalwijze kiezen en direct betalen:</p><p>{betaallink}</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
-		'invoice_reminder_2_email_template'    => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Dit is onze tweede en laatste herinnering voor factuur {factuur_nummer} voor uw contributie ter hoogte van <strong>{totaal_bedrag}</strong>, verstuurd op {factuurdatum}.</p><p>Het is nu {dagen_sinds_factuur} dagen geleden dat deze factuur is verstuurd en wij hebben nog geen betaling ontvangen.</p><p>Wij verzoeken u dringend zo spoedig mogelijk te betalen via:<br/>{betaallink}</p><p>Indien u niet reageert, zullen wij contact met u opnemen.</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
-		'regular_invoice_email_subject'        => 'Factuur {factuur_nummer} - {organisatie_naam}',
-		'regular_invoice_email_body'           => "Beste {naam},\n\nBijgevoegd vindt u factuur {factuur_nummer}.\n\nHet totaalbedrag is {totaal_bedrag}.\nU kunt betalen via: {betaallink}\n\nMet vriendelijke groet,\n{organisatie_naam}",
-		'regular_invoice_email_heading'        => 'Factuur',
-		'discipline_email_heading'             => 'Factuur',
-		'membership_email_heading'             => 'Contributie',
-		'installment_email_heading'            => 'Termijnbetaling',
-		'reminder_1_email_heading'             => 'Herinnering termijn',
-		'reminder_2_email_heading'             => 'Tweede herinnering',
-		'invoice_reminder_1_email_heading'     => 'Herinnering',
-		'invoice_reminder_2_email_heading'     => 'Tweede herinnering',
-		'credit_email_template'                => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {naam},</p><p>Bijgevoegd vindt u de creditfactuur {factuur_nummer}.</p>{tuchtzaken_lijst}<p>Het totaal creditbedrag is <strong>{totaal_bedrag}</strong>.</p><p>Dit bedrag wordt verrekend met een openstaande factuur of aan u terugbetaald.</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
-		'credit_email_heading'                 => 'Creditfactuur',
-		'mollie_default_membership_account_id' => '',
-		'mollie_default_discipline_account_id' => '',
-		'mollie_default_manual_account_id'     => '',
+		'org_name'                                  => '',
+		'org_address'                               => '',
+		'contact_email'                             => '',
+		'iban'                                      => '',
+		'mollie_accounts'                           => [],
+		'payment_term_days'                         => 14,
+		'payment_clause'                            => '',
+		'club_logo_id'                              => 0,
+		'businessclub_logo_id'                      => 0,
+		'accent_color'                              => '',
+		'accent_background_color'                   => '',
+		'bcc_email'                                 => '',
+		'admin_fee'                                 => 0.00,
+		'installment_admin_fee'                     => 0.00,
+		'membership_pass_google_class_suffix'       => 'rondo_membership',
+		'email_template'                            => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {naam},</p><p>Bijgevoegd vindt u de factuur {factuur_nummer} voor opgelegde boetes vanuit de tuchtcommissie.</p>{tuchtzaken_lijst}<p>Het totaalbedrag is <strong>{totaal_bedrag}</strong>.</p><p>U kunt betalen via de volgende link: {betaallink}</p>{qr_code}<p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
+		'installment_email_template'                => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Hierbij ontvangt u het betaalverzoek voor termijn {termijn_nummer} van {totaal_termijnen} van uw contributie (factuur {factuur_nummer}).</p><p><strong>Termijnbedrag:</strong> {termijn_bedrag}<br/><strong>Vervaldatum:</strong> {vervaldatum}</p><p>U kunt betalen via de volgende link:<br/>{betaallink}</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
+		'reminder_1_email_template'                 => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Wij hebben geconstateerd dat termijn {termijn_nummer} van {totaal_termijnen} van uw contributie (factuur {factuur_nummer}) nog niet is voldaan.</p><p><strong>Termijnbedrag:</strong> {termijn_bedrag}<br/><strong>Vervaldatum was:</strong> {vervaldatum}<br/><strong>Aantal dagen te laat:</strong> {dagen_te_laat}</p><p>Wij verzoeken u vriendelijk dit bedrag zo spoedig mogelijk te voldoen via:<br/>{betaallink}</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
+		'reminder_2_email_template'                 => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Dit is onze tweede en laatste herinnering voor termijn {termijn_nummer} van {totaal_termijnen} van uw contributie (factuur {factuur_nummer}).</p><p><strong>Termijnbedrag:</strong> {termijn_bedrag}<br/><strong>Vervaldatum was:</strong> {vervaldatum}<br/><strong>Aantal dagen te laat:</strong> {dagen_te_laat}</p><p>Wij verzoeken u dringend dit bedrag direct te voldoen via:<br/>{betaallink}</p><p>Indien u niet reageert, zullen wij de vordering overdragen aan ons bestuur.</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
+		'membership_email_template'                 => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Bijgevoegd vindt u de factuur {factuur_nummer} voor uw contributie.</p><p>Het totaalbedrag is <strong>{totaal_bedrag}</strong>.</p><p>U kunt betalen via de volgende link: {betaallink}</p>{qr_code}<p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
+		'membership_payment_clause'                 => '',
+		'invoice_reminder_1_email_template'         => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Op {factuurdatum} hebben wij u een factuur ({factuur_nummer}) gestuurd voor uw contributie ter hoogte van <strong>{totaal_bedrag}</strong>.</p><p>Wij hebben nog geen betaling ontvangen. Via onderstaande link kunt u uw betaalwijze kiezen en direct betalen:</p><p>{betaallink}</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
+		'invoice_reminder_2_email_template'         => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Dit is onze tweede en laatste herinnering voor factuur {factuur_nummer} voor uw contributie ter hoogte van <strong>{totaal_bedrag}</strong>, verstuurd op {factuurdatum}.</p><p>Het is nu {dagen_sinds_factuur} dagen geleden dat deze factuur is verstuurd en wij hebben nog geen betaling ontvangen.</p><p>Wij verzoeken u dringend zo spoedig mogelijk te betalen via:<br/>{betaallink}</p><p>Indien u niet reageert, zullen wij contact met u opnemen.</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
+		'regular_invoice_email_subject'             => 'Factuur {factuur_nummer} - {organisatie_naam}',
+		'regular_invoice_email_body'                => "Beste {naam},\n\nBijgevoegd vindt u factuur {factuur_nummer}.\n\nHet totaalbedrag is {totaal_bedrag}.\nU kunt betalen via: {betaallink}\n\nMet vriendelijke groet,\n{organisatie_naam}",
+		'regular_invoice_email_heading'             => 'Factuur',
+		'discipline_email_heading'                  => 'Factuur',
+		'membership_email_heading'                  => 'Contributie',
+		'installment_email_heading'                 => 'Termijnbetaling',
+		'reminder_1_email_heading'                  => 'Herinnering termijn',
+		'reminder_2_email_heading'                  => 'Tweede herinnering',
+		'invoice_reminder_1_email_heading'          => 'Herinnering',
+		'invoice_reminder_2_email_heading'          => 'Tweede herinnering',
+		'generic_invoice_reminder_1_email_template' => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Op {factuurdatum} hebben wij je factuur {factuur_nummer} gestuurd ter hoogte van <strong>{totaal_bedrag}</strong>.</p><p>Wij hebben nog geen betaling ontvangen. Je kunt de factuur betalen via onderstaande link:</p><p>{betaalknop}</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
+		'generic_invoice_reminder_2_email_template' => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Dit is onze tweede en laatste herinnering voor factuur {factuur_nummer} ter hoogte van <strong>{totaal_bedrag}</strong>, verstuurd op {factuurdatum}.</p><p>Het is nu {dagen_sinds_factuur} dagen geleden dat deze factuur is verstuurd en wij hebben nog geen betaling ontvangen.</p><p>Wij verzoeken je dringend zo spoedig mogelijk te betalen via:</p><p>{betaalknop}</p><p>Indien je niet reageert, nemen wij contact met je op.</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
+		'generic_invoice_reminder_1_email_heading'  => 'Herinnering',
+		'generic_invoice_reminder_2_email_heading'  => 'Tweede herinnering',
+		'credit_email_template'                     => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {naam},</p><p>Bijgevoegd vindt u de creditfactuur {factuur_nummer}.</p>{tuchtzaken_lijst}<p>Het totaal creditbedrag is <strong>{totaal_bedrag}</strong>.</p><p>Dit bedrag wordt verrekend met een openstaande factuur of aan u terugbetaald.</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
+		'credit_email_heading'                      => 'Creditfactuur',
+		'credit_email_subject'                      => 'Creditfactuur {factuur_nummer} - {organisatie_naam}',
+		'mollie_default_membership_account_id'      => '',
+		'mollie_default_discipline_account_id'      => '',
+		'mollie_default_manual_account_id'          => '',
 	];
 
 	/**
@@ -187,8 +200,8 @@ class FinanceConfig {
 	 * @return string The IBAN (empty string if not configured)
 	 */
 	public function get_iban(): string {
-		$default_account = $this->get_active_payment_provider() === 'mollie'
-			? $this->get_default_mollie_account( 'manual' )
+		$default_account = FinanceServices::mollie()->get_active_payment_provider() === 'mollie'
+			? FinanceServices::mollie()->get_default_mollie_account( 'manual' )
 			: null;
 
 		if ( is_array( $default_account ) && ! empty( $default_account['iban'] ) ) {
@@ -196,202 +209,6 @@ class FinanceConfig {
 		}
 
 		return get_option( self::OPTION_IBAN, self::DEFAULTS['iban'] );
-	}
-
-	/**
-	 * Get configured Mollie accounts without exposing API keys.
-	 *
-	 * @return array<int, array<string, string>>
-	 */
-	public function get_mollie_accounts(): array {
-		$stored_accounts = get_option( self::OPTION_MOLLIE_ACCOUNTS, [] );
-		$normalized      = $this->normalize_mollie_accounts_for_storage( is_array( $stored_accounts ) ? $stored_accounts : [] );
-
-		if ( is_wp_error( $normalized ) ) {
-			return [];
-		}
-
-		return array_map(
-			function ( array $account ): array {
-				$api_key = $this->decrypt_mollie_account_api_key( $account );
-
-				return [
-					'id'             => (string) ( $account['id'] ?? '' ),
-					'internal_name'  => (string) ( $account['internal_name'] ?? '' ),
-					'account_holder' => (string) ( $account['account_holder'] ?? '' ),
-					'iban'           => (string) ( $account['iban'] ?? '' ),
-					'has_api_key'    => $api_key !== '',
-					'environment'    => $this->derive_mollie_environment( $api_key ),
-				];
-			},
-			$normalized
-		);
-	}
-
-	/**
-	 * Get a configured Mollie account by ID without exposing its API key.
-	 *
-	 * @param string $account_id Mollie account ID.
-	 * @return array<string, string>|null
-	 */
-	public function get_mollie_account_by_id( string $account_id ): ?array {
-		$account_id = sanitize_key( $account_id );
-		if ( $account_id === '' ) {
-			return null;
-		}
-
-		foreach ( $this->get_mollie_accounts() as $account ) {
-			if ( ( $account['id'] ?? '' ) === $account_id ) {
-				return $account;
-			}
-		}
-
-		return null;
-	}
-
-	/**
-	 * Get a configured Mollie account by ID including its decrypted API key.
-	 *
-	 * @param string $account_id Mollie account ID.
-	 * @return array<string, string>|null
-	 */
-	private function get_mollie_account_record_by_id( string $account_id ): ?array {
-		$account_id = sanitize_key( $account_id );
-		if ( $account_id === '' ) {
-			return null;
-		}
-
-		$stored_accounts = get_option( self::OPTION_MOLLIE_ACCOUNTS, [] );
-		$normalized      = $this->normalize_mollie_accounts_for_storage( is_array( $stored_accounts ) ? $stored_accounts : [] );
-		if ( is_wp_error( $normalized ) ) {
-			return null;
-		}
-
-		foreach ( $normalized as $account ) {
-			if ( ( $account['id'] ?? '' ) === $account_id ) {
-				return $account;
-			}
-		}
-
-		return null;
-	}
-
-	/**
-	 * Get the decrypted Mollie API key for an account.
-	 *
-	 * @param string $account_id Mollie account ID.
-	 * @return string
-	 */
-	public function get_mollie_api_key_for_account( string $account_id ): string {
-		$account = $this->get_mollie_account_record_by_id( $account_id );
-		if ( ! is_array( $account ) ) {
-			return '';
-		}
-
-		return $this->decrypt_mollie_account_api_key( $account );
-	}
-
-	/**
-	 * Get Mollie accounts that have an API key configured.
-	 *
-	 * @return array<int, array<string, string>>
-	 */
-	public function get_usable_mollie_accounts(): array {
-		return array_values(
-			array_filter(
-				$this->get_mollie_accounts(),
-				static fn( array $account ): bool => ! empty( $account['has_api_key'] )
-			)
-		);
-	}
-
-	/**
-	 * Get the configured default Mollie account ID for an invoice type.
-	 *
-	 * @param string $invoice_type Invoice type slug.
-	 * @return string
-	 */
-	public function get_default_mollie_account_id( string $invoice_type ): string {
-		return match ( $invoice_type ) {
-			'membership' => (string) get_option( self::OPTION_MOLLIE_DEFAULT_MEMBERSHIP_ACCOUNT_ID, self::DEFAULTS['mollie_default_membership_account_id'] ),
-			'discipline' => (string) get_option( self::OPTION_MOLLIE_DEFAULT_DISCIPLINE_ACCOUNT_ID, self::DEFAULTS['mollie_default_discipline_account_id'] ),
-			default => (string) get_option( self::OPTION_MOLLIE_DEFAULT_MANUAL_ACCOUNT_ID, self::DEFAULTS['mollie_default_manual_account_id'] ),
-		};
-	}
-
-	/**
-	 * Get the default Mollie account for an invoice type.
-	 *
-	 * @param string $invoice_type Invoice type slug.
-	 * @return array<string, string>|null
-	 */
-	public function get_default_mollie_account( string $invoice_type ): ?array {
-		$account_id = $this->get_default_mollie_account_id( $invoice_type );
-		if ( $account_id !== '' ) {
-			$account = $this->get_mollie_account_by_id( $account_id );
-			if ( is_array( $account ) && ! empty( $account['has_api_key'] ) ) {
-				return $account;
-			}
-		}
-
-		$usable_accounts = $this->get_usable_mollie_accounts();
-		if ( count( $usable_accounts ) === 1 ) {
-			return $usable_accounts[0];
-		}
-
-		return null;
-	}
-
-	/**
-	 * Build a payment-account snapshot for the given invoice type.
-	 *
-	 * @param string $invoice_type Invoice type slug.
-	 * @param string $requested_account_id Optional override account ID for manual invoices.
-	 * @return array<string, string>|\WP_Error
-	 */
-	public function get_payment_account_snapshot_for_invoice_type( string $invoice_type, string $requested_account_id = '' ) {
-		$provider = $this->get_active_payment_provider();
-		if ( $provider !== 'mollie' ) {
-			return [
-				'id'              => '',
-				'internal_name'   => '',
-				'account_holder'  => $this->get_org_name(),
-				'iban'            => $this->get_iban(),
-				'linked_provider' => $provider,
-			];
-		}
-
-		$account = null;
-		if ( $invoice_type === 'manual' && $requested_account_id !== '' ) {
-			$account = $this->get_mollie_account_by_id( $requested_account_id );
-			if ( ! is_array( $account ) || empty( $account['has_api_key'] ) ) {
-				return new \WP_Error(
-					'invalid_payment_account',
-					__( 'De gekozen Mollie-rekening bestaat niet of heeft geen API-sleutel.', 'rondo' ),
-					[ 'status' => 400 ]
-				);
-			}
-		}
-
-		if ( ! is_array( $account ) ) {
-			$account = $this->get_default_mollie_account( $invoice_type );
-		}
-
-		if ( ! is_array( $account ) ) {
-			return new \WP_Error(
-				'mollie_account_not_configured',
-				__( 'Er is geen standaard Mollie-rekening ingesteld voor dit factuurtype.', 'rondo' ),
-				[ 'status' => 400 ]
-			);
-		}
-
-		return [
-			'id'              => (string) ( $account['id'] ?? '' ),
-			'internal_name'   => (string) ( $account['internal_name'] ?? '' ),
-			'account_holder'  => (string) ( $account['account_holder'] ?? '' ),
-			'iban'            => (string) ( $account['iban'] ?? '' ),
-			'linked_provider' => 'mollie',
-		];
 	}
 
 	/**
@@ -502,6 +319,30 @@ class FinanceConfig {
 	}
 
 	/**
+	 * Get first generic invoice reminder email template.
+	 *
+	 * Used for reminders of non-membership invoices (manual and discipline),
+	 * which have no contributie or installment context.
+	 *
+	 * @return string The first generic invoice reminder email template (default template if not configured)
+	 */
+	public function get_generic_invoice_reminder_1_email_template(): string {
+		return get_option( self::OPTION_GENERIC_INVOICE_REMINDER_1_EMAIL_TEMPLATE, self::DEFAULTS['generic_invoice_reminder_1_email_template'] );
+	}
+
+	/**
+	 * Get second generic invoice reminder email template.
+	 *
+	 * Used for reminders of non-membership invoices (manual and discipline).
+	 * The treasurer receives a BCC.
+	 *
+	 * @return string The second generic invoice reminder email template (default template if not configured)
+	 */
+	public function get_generic_invoice_reminder_2_email_template(): string {
+		return get_option( self::OPTION_GENERIC_INVOICE_REMINDER_2_EMAIL_TEMPLATE, self::DEFAULTS['generic_invoice_reminder_2_email_template'] );
+	}
+
+	/**
 	 * Get credit invoice email template
 	 *
 	 * Sent when a credit invoice is emailed. Uses a template without payment link
@@ -511,6 +352,15 @@ class FinanceConfig {
 	 */
 	public function get_credit_email_template(): string {
 		return get_option( self::OPTION_CREDIT_EMAIL_TEMPLATE, self::DEFAULTS['credit_email_template'] );
+	}
+
+	/**
+	 * Get credit invoice email subject template
+	 *
+	 * @return string Subject template for credit invoices.
+	 */
+	public function get_credit_email_subject(): string {
+		return get_option( self::OPTION_CREDIT_EMAIL_SUBJECT, self::DEFAULTS['credit_email_subject'] );
 	}
 
 	/**
@@ -542,6 +392,8 @@ class FinanceConfig {
 			'reminder_2'         => self::OPTION_REMINDER_2_EMAIL_HEADING,
 			'invoice_reminder_1' => self::OPTION_INVOICE_REMINDER_1_EMAIL_HEADING,
 			'invoice_reminder_2' => self::OPTION_INVOICE_REMINDER_2_EMAIL_HEADING,
+			'generic_invoice_reminder_1' => self::OPTION_GENERIC_INVOICE_REMINDER_1_EMAIL_HEADING,
+			'generic_invoice_reminder_2' => self::OPTION_GENERIC_INVOICE_REMINDER_2_EMAIL_HEADING,
 			'credit'             => self::OPTION_CREDIT_EMAIL_HEADING,
 			default              => null,
 		};
@@ -560,6 +412,30 @@ class FinanceConfig {
 	 */
 	public function get_club_logo_id(): int {
 		return (int) get_option( self::OPTION_CLUB_LOGO_ID, self::DEFAULTS['club_logo_id'] );
+	}
+
+	/**
+	 * Get Businessclub logo ID.
+	 *
+	 * @return int The Businessclub logo attachment ID (0 if not configured).
+	 */
+	public function get_businessclub_logo_id(): int {
+		return (int) get_option( self::OPTION_BUSINESSCLUB_LOGO_ID, self::DEFAULTS['businessclub_logo_id'] );
+	}
+
+	/**
+	 * Resolve an attachment URL for settings output.
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 * @return string Attachment URL or an empty string.
+	 */
+	private function get_attachment_url( int $attachment_id ): string {
+		if ( $attachment_id <= 0 ) {
+			return '';
+		}
+
+		$url = wp_get_attachment_url( $attachment_id );
+		return is_string( $url ) ? $url : '';
 	}
 
 	/**
@@ -635,15 +511,11 @@ class FinanceConfig {
 	 * @return array<string, mixed> Array of all configuration settings
 	 */
 	public function get_all_settings(): array {
-		$rabobank_creds = $this->get_rabobank_credentials();
-		$club_logo_id   = $this->get_club_logo_id();
-		$club_logo_url  = '';
-		if ( $club_logo_id > 0 ) {
-			$url = wp_get_attachment_url( $club_logo_id );
-			if ( $url ) {
-				$club_logo_url = $url;
-			}
-		}
+		$rabobank_creds        = $this->get_rabobank_credentials();
+		$club_logo_id          = $this->get_club_logo_id();
+		$businessclub_logo_id  = $this->get_businessclub_logo_id();
+		$club_logo_url         = $this->get_attachment_url( $club_logo_id );
+		$businessclub_logo_url = $this->get_attachment_url( $businessclub_logo_id );
 
 		$apple_cert_id  = $this->get_membership_pass_apple_cert_attachment_id();
 		$google_sa_id   = $this->get_membership_pass_google_service_account_attachment_id();
@@ -655,7 +527,7 @@ class FinanceConfig {
 			'org_address'                                => $this->get_org_address(),
 			'contact_email'                              => $this->get_contact_email(),
 			'iban'                                       => $this->get_iban(),
-			'mollie_accounts'                            => $this->get_mollie_accounts(),
+			'mollie_accounts'                            => FinanceServices::mollie()->get_mollie_accounts(),
 			'payment_term_days'                          => $this->get_payment_term_days(),
 			'payment_clause'                             => $this->get_payment_clause(),
 			'membership_payment_clause'                  => $this->get_membership_payment_clause(),
@@ -666,7 +538,10 @@ class FinanceConfig {
 			'reminder_2_email_template'                  => $this->get_reminder_2_email_template(),
 			'invoice_reminder_1_email_template'          => $this->get_invoice_reminder_1_email_template(),
 			'invoice_reminder_2_email_template'          => $this->get_invoice_reminder_2_email_template(),
+			'generic_invoice_reminder_1_email_template'  => $this->get_generic_invoice_reminder_1_email_template(),
+			'generic_invoice_reminder_2_email_template'  => $this->get_generic_invoice_reminder_2_email_template(),
 			'credit_email_template'                      => $this->get_credit_email_template(),
+			'credit_email_subject'                       => $this->get_credit_email_subject(),
 			'regular_invoice_email_subject'              => $this->get_regular_invoice_email_subject(),
 			'regular_invoice_email_body'                 => $this->get_regular_invoice_email_body(),
 			'regular_invoice_email_heading'              => $this->get_email_heading( 'regular_invoice' ),
@@ -677,9 +552,13 @@ class FinanceConfig {
 			'reminder_2_email_heading'                   => $this->get_email_heading( 'reminder_2' ),
 			'invoice_reminder_1_email_heading'           => $this->get_email_heading( 'invoice_reminder_1' ),
 			'invoice_reminder_2_email_heading'           => $this->get_email_heading( 'invoice_reminder_2' ),
+			'generic_invoice_reminder_1_email_heading'   => $this->get_email_heading( 'generic_invoice_reminder_1' ),
+			'generic_invoice_reminder_2_email_heading'   => $this->get_email_heading( 'generic_invoice_reminder_2' ),
 			'credit_email_heading'                       => $this->get_email_heading( 'credit' ),
 			'club_logo_id'                               => $club_logo_id,
 			'club_logo_url'                              => $club_logo_url,
+			'businessclub_logo_id'                       => $businessclub_logo_id,
+			'businessclub_logo_url'                      => $businessclub_logo_url,
 			'accent_color'                               => $this->get_accent_color(),
 			'accent_background_color'                    => $this->get_accent_background_color(),
 			'bcc_email'                                  => $this->get_bcc_email(),
@@ -687,11 +566,11 @@ class FinanceConfig {
 			'installment_admin_fee'                      => $this->get_installment_admin_fee(),
 			'rabobank_has_credentials'                   => $rabobank_creds !== null,
 			'rabobank_environment'                       => $rabobank_creds['environment'] ?? '',
-			'mollie_redirect_url'                        => $this->get_mollie_redirect_url(),
-			'mollie_default_membership_account_id'       => $this->get_default_mollie_account_id( 'membership' ),
-			'mollie_default_discipline_account_id'       => $this->get_default_mollie_account_id( 'discipline' ),
-			'mollie_default_manual_account_id'           => $this->get_default_mollie_account_id( 'manual' ),
-			'active_payment_provider'                    => $this->get_active_payment_provider(),
+			'mollie_redirect_url'                        => FinanceServices::mollie()->get_mollie_redirect_url(),
+			'mollie_default_membership_account_id'       => FinanceServices::mollie()->get_default_mollie_account_id( 'membership' ),
+			'mollie_default_discipline_account_id'       => FinanceServices::mollie()->get_default_mollie_account_id( 'discipline' ),
+			'mollie_default_manual_account_id'           => FinanceServices::mollie()->get_default_mollie_account_id( 'manual' ),
+			'active_payment_provider'                    => FinanceServices::mollie()->get_active_payment_provider(),
 			'membership_pass_apple_cert_attachment_id'   => $apple_cert_id,
 			'membership_pass_apple_cert_url'             => $apple_cert_url,
 			'membership_pass_apple_has_cert_password'    => $this->get_membership_pass_apple_cert_password() !== '',
@@ -722,7 +601,7 @@ class FinanceConfig {
 			case 'iban':
 				return $this->get_iban();
 			case 'mollie_accounts':
-				return $this->get_mollie_accounts();
+				return FinanceServices::mollie()->get_mollie_accounts();
 			case 'payment_term_days':
 				return $this->get_payment_term_days();
 			case 'payment_clause':
@@ -743,14 +622,22 @@ class FinanceConfig {
 				return $this->get_invoice_reminder_1_email_template();
 			case 'invoice_reminder_2_email_template':
 				return $this->get_invoice_reminder_2_email_template();
+			case 'generic_invoice_reminder_1_email_template':
+				return $this->get_generic_invoice_reminder_1_email_template();
+			case 'generic_invoice_reminder_2_email_template':
+				return $this->get_generic_invoice_reminder_2_email_template();
 			case 'credit_email_template':
 				return $this->get_credit_email_template();
+			case 'credit_email_subject':
+				return $this->get_credit_email_subject();
 			case 'regular_invoice_email_subject':
 				return $this->get_regular_invoice_email_subject();
 			case 'regular_invoice_email_body':
 				return $this->get_regular_invoice_email_body();
 			case 'club_logo_id':
 				return $this->get_club_logo_id();
+			case 'businessclub_logo_id':
+				return $this->get_businessclub_logo_id();
 			case 'accent_color':
 				return $this->get_accent_color();
 			case 'accent_background_color':
@@ -796,7 +683,7 @@ class FinanceConfig {
 
 		$resolved_mollie_accounts = null;
 		if ( isset( $data['mollie_accounts'] ) ) {
-			$resolved_mollie_accounts = $this->normalize_mollie_accounts_for_storage( is_array( $data['mollie_accounts'] ) ? $data['mollie_accounts'] : [] );
+			$resolved_mollie_accounts = FinanceServices::mollie()->normalize_accounts_for_storage( is_array( $data['mollie_accounts'] ) ? $data['mollie_accounts'] : [] );
 			if ( is_wp_error( $resolved_mollie_accounts ) ) {
 				return $resolved_mollie_accounts;
 			}
@@ -852,8 +739,20 @@ class FinanceConfig {
 			$success = update_option( self::OPTION_INVOICE_REMINDER_2_EMAIL_TEMPLATE, wp_kses_post( $data['invoice_reminder_2_email_template'] ) ) && $success;
 		}
 
+		if ( isset( $data['generic_invoice_reminder_1_email_template'] ) ) {
+			$success = update_option( self::OPTION_GENERIC_INVOICE_REMINDER_1_EMAIL_TEMPLATE, wp_kses_post( $data['generic_invoice_reminder_1_email_template'] ) ) && $success;
+		}
+
+		if ( isset( $data['generic_invoice_reminder_2_email_template'] ) ) {
+			$success = update_option( self::OPTION_GENERIC_INVOICE_REMINDER_2_EMAIL_TEMPLATE, wp_kses_post( $data['generic_invoice_reminder_2_email_template'] ) ) && $success;
+		}
+
 		if ( isset( $data['credit_email_template'] ) ) {
 			$success = update_option( self::OPTION_CREDIT_EMAIL_TEMPLATE, wp_kses_post( $data['credit_email_template'] ) ) && $success;
+		}
+
+		if ( isset( $data['credit_email_subject'] ) ) {
+			$success = update_option( self::OPTION_CREDIT_EMAIL_SUBJECT, sanitize_text_field( $data['credit_email_subject'] ) ) && $success;
 		}
 
 		if ( isset( $data['regular_invoice_email_subject'] ) ) {
@@ -865,15 +764,17 @@ class FinanceConfig {
 		}
 
 		$heading_fields = [
-			'regular_invoice_email_heading'    => self::OPTION_REGULAR_INVOICE_EMAIL_HEADING,
-			'discipline_email_heading'         => self::OPTION_DISCIPLINE_EMAIL_HEADING,
-			'membership_email_heading'         => self::OPTION_MEMBERSHIP_EMAIL_HEADING,
-			'installment_email_heading'        => self::OPTION_INSTALLMENT_EMAIL_HEADING,
-			'reminder_1_email_heading'         => self::OPTION_REMINDER_1_EMAIL_HEADING,
-			'reminder_2_email_heading'         => self::OPTION_REMINDER_2_EMAIL_HEADING,
-			'invoice_reminder_1_email_heading' => self::OPTION_INVOICE_REMINDER_1_EMAIL_HEADING,
-			'invoice_reminder_2_email_heading' => self::OPTION_INVOICE_REMINDER_2_EMAIL_HEADING,
-			'credit_email_heading'             => self::OPTION_CREDIT_EMAIL_HEADING,
+			'regular_invoice_email_heading'            => self::OPTION_REGULAR_INVOICE_EMAIL_HEADING,
+			'discipline_email_heading'                 => self::OPTION_DISCIPLINE_EMAIL_HEADING,
+			'membership_email_heading'                 => self::OPTION_MEMBERSHIP_EMAIL_HEADING,
+			'installment_email_heading'                => self::OPTION_INSTALLMENT_EMAIL_HEADING,
+			'reminder_1_email_heading'                 => self::OPTION_REMINDER_1_EMAIL_HEADING,
+			'reminder_2_email_heading'                 => self::OPTION_REMINDER_2_EMAIL_HEADING,
+			'invoice_reminder_1_email_heading'         => self::OPTION_INVOICE_REMINDER_1_EMAIL_HEADING,
+			'invoice_reminder_2_email_heading'         => self::OPTION_INVOICE_REMINDER_2_EMAIL_HEADING,
+			'generic_invoice_reminder_1_email_heading' => self::OPTION_GENERIC_INVOICE_REMINDER_1_EMAIL_HEADING,
+			'generic_invoice_reminder_2_email_heading' => self::OPTION_GENERIC_INVOICE_REMINDER_2_EMAIL_HEADING,
+			'credit_email_heading'                     => self::OPTION_CREDIT_EMAIL_HEADING,
 		];
 
 		foreach ( $heading_fields as $key => $option ) {
@@ -885,6 +786,11 @@ class FinanceConfig {
 		if ( isset( $data['club_logo_id'] ) ) {
 			$logo_id = absint( $data['club_logo_id'] );
 			$success = update_option( self::OPTION_CLUB_LOGO_ID, $logo_id ) && $success;
+		}
+
+		if ( isset( $data['businessclub_logo_id'] ) ) {
+			$logo_id = absint( $data['businessclub_logo_id'] );
+			$success = update_option( self::OPTION_BUSINESSCLUB_LOGO_ID, $logo_id ) && $success;
 		}
 
 		if ( isset( $data['accent_color'] ) ) {
@@ -989,8 +895,8 @@ class FinanceConfig {
 		}
 
 		$current_mollie_accounts = is_array( $resolved_mollie_accounts )
-			? $this->build_safe_mollie_accounts_from_storage( $resolved_mollie_accounts )
-			: $this->get_mollie_accounts();
+			? FinanceServices::mollie()->build_safe_accounts_from_storage( $resolved_mollie_accounts )
+			: FinanceServices::mollie()->get_mollie_accounts();
 
 		$default_keys = [
 			'mollie_default_membership_account_id' => self::OPTION_MOLLIE_DEFAULT_MEMBERSHIP_ACCOUNT_ID,
@@ -1032,100 +938,12 @@ class FinanceConfig {
 
 		// Handle active payment provider
 		if ( isset( $data['active_payment_provider'] ) ) {
-			$success = $this->update_active_payment_provider(
+			$success = FinanceServices::mollie()->update_active_payment_provider(
 				sanitize_text_field( $data['active_payment_provider'] )
 			) && $success;
 		}
 
 		return $success;
-	}
-
-	/**
-	 * Normalize and validate Mollie accounts before storage.
-	 *
-	 * @param array $accounts Raw bank accounts payload.
-	 * @return array<int, array<string, string>>|\WP_Error
-	 */
-	private function normalize_mollie_accounts_for_storage( array $accounts ) {
-		$normalized        = [];
-		$existing_accounts = get_option( self::OPTION_MOLLIE_ACCOUNTS, [] );
-		$existing_by_id    = [];
-
-		if ( is_array( $existing_accounts ) ) {
-			foreach ( $existing_accounts as $existing_account ) {
-				if ( is_array( $existing_account ) && ! empty( $existing_account['id'] ) ) {
-					$existing_by_id[ sanitize_key( (string) $existing_account['id'] ) ] = $existing_account;
-				}
-			}
-		}
-
-		foreach ( $accounts as $index => $account ) {
-			if ( ! is_array( $account ) ) {
-				continue;
-			}
-
-			$internal_name  = sanitize_text_field( (string) ( $account['internal_name'] ?? '' ) );
-			$account_holder = sanitize_text_field( (string) ( $account['account_holder'] ?? '' ) );
-			$iban           = strtoupper( str_replace( ' ', '', sanitize_text_field( (string) ( $account['iban'] ?? '' ) ) ) );
-			$account_id     = sanitize_key( (string) ( $account['id'] ?? '' ) );
-			$api_key        = sanitize_text_field( (string) ( $account['api_key'] ?? '' ) );
-
-			if ( $internal_name === '' && $account_holder === '' && $iban === '' && $api_key === '' ) {
-				continue;
-			}
-
-			if ( $internal_name === '' || $account_holder === '' || $iban === '' ) {
-				return new \WP_Error(
-					'invalid_mollie_account',
-					// translators: %d is the Mollie account number (1-based index).
-				sprintf( __( 'Mollie-rekening %d is onvolledig. Vul interne naam, tenaamstelling en IBAN in.', 'rondo' ), (int) $index + 1 ),
-					[ 'status' => 400 ]
-				);
-			}
-
-			if ( $account_id === '' ) {
-				$account_id = 'mollie-' . sanitize_key( wp_generate_uuid4() );
-			}
-
-			$encrypted_api_key = (string) ( $existing_by_id[ $account_id ]['api_key_encrypted'] ?? '' );
-			if ( $api_key !== '' ) {
-				$encrypted_api_key = CredentialEncryption::encrypt( [ 'api_key' => $api_key ] );
-			}
-
-			$normalized[] = [
-				'id'                => $account_id,
-				'internal_name'     => $internal_name,
-				'account_holder'    => $account_holder,
-				'iban'              => $iban,
-				'api_key_encrypted' => $encrypted_api_key,
-			];
-		}
-
-		return array_values( $normalized );
-	}
-
-	/**
-	 * Convert stored Mollie accounts into their safe API representation.
-	 *
-	 * @param array<int, array<string, string>> $accounts Stored Mollie accounts.
-	 * @return array<int, array<string, string|bool>>
-	 */
-	private function build_safe_mollie_accounts_from_storage( array $accounts ): array {
-		return array_map(
-			function ( array $account ): array {
-				$api_key = $this->decrypt_mollie_account_api_key( $account );
-
-				return [
-					'id'             => (string) ( $account['id'] ?? '' ),
-					'internal_name'  => (string) ( $account['internal_name'] ?? '' ),
-					'account_holder' => (string) ( $account['account_holder'] ?? '' ),
-					'iban'           => (string) ( $account['iban'] ?? '' ),
-					'has_api_key'    => $api_key !== '',
-					'environment'    => $this->derive_mollie_environment( $api_key ),
-				];
-			},
-			$accounts
-		);
 	}
 
 	/**
@@ -1222,69 +1040,5 @@ class FinanceConfig {
 
 		$encrypted = CredentialEncryption::encrypt( $credentials );
 		return update_option( self::OPTION_RABOBANK_CREDENTIALS, $encrypted );
-	}
-
-	/**
-	 * Decrypt the stored API key for a Mollie account.
-	 *
-	 * @param array<string, string> $account Stored Mollie account record.
-	 * @return string
-	 */
-	private function decrypt_mollie_account_api_key( array $account ): string {
-		$encrypted = (string) ( $account['api_key_encrypted'] ?? '' );
-		if ( $encrypted === '' ) {
-			return '';
-		}
-
-		$data = CredentialEncryption::decrypt( $encrypted );
-		return (string) ( $data['api_key'] ?? '' );
-	}
-
-	/**
-	 * Get Mollie redirect URL (where payer lands after payment)
-	 *
-	 * @return string The redirect URL, or empty string if not configured.
-	 */
-	public function get_mollie_redirect_url(): string {
-		return get_option( self::OPTION_MOLLIE_REDIRECT_URL, '' );
-	}
-
-	/**
-	 * Get active payment provider
-	 *
-	 * @return string Active payment provider slug ('rabobank' or 'mollie'). Defaults to 'rabobank'.
-	 */
-	public function get_active_payment_provider(): string {
-		return get_option( self::OPTION_ACTIVE_PAYMENT_PROVIDER, 'rabobank' );
-	}
-
-	/**
-	 * Update active payment provider
-	 *
-	 * @param string $provider Payment provider slug ('rabobank' or 'mollie')
-	 * @return bool True on success, false for invalid provider
-	 */
-	public function update_active_payment_provider( string $provider ): bool {
-		$allowed = [ 'rabobank', 'mollie' ];
-
-		if ( ! in_array( $provider, $allowed, true ) ) {
-			return false;
-		}
-
-		return update_option( self::OPTION_ACTIVE_PAYMENT_PROVIDER, $provider );
-	}
-
-	/**
-	 * Derive Mollie environment from API key prefix
-	 *
-	 * @param string $api_key Mollie API key
-	 * @return string 'live', 'test', or '' if no key is set
-	 */
-	private function derive_mollie_environment( string $api_key ): string {
-		if ( empty( $api_key ) ) {
-			return '';
-		}
-
-		return str_starts_with( $api_key, 'live_' ) ? 'live' : 'test';
 	}
 }

@@ -67,6 +67,15 @@ class Capabilities extends Base {
 								return array_values( array_unique( array_map( 'sanitize_text_field', $param ) ) );
 							},
 						],
+						'staff_roles'    => [
+							'required'          => false,
+							'validate_callback' => function ( $param ) {
+								return is_array( $param );
+							},
+							'sanitize_callback' => function ( $param ) {
+								return array_values( array_unique( array_map( 'sanitize_text_field', $param ) ) );
+							},
+						],
 					],
 				],
 			]
@@ -79,7 +88,7 @@ class Capabilities extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_available_werkfuncties' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_admin_or_financieel_permission' ],
 			]
 		);
 
@@ -247,8 +256,10 @@ class Capabilities extends Base {
 			[
 				'player_roles'           => \Rondo\Core\VolunteerStatus::get_player_roles(),
 				'excluded_roles'         => \Rondo\Core\VolunteerStatus::get_excluded_roles(),
+				'staff_roles'            => \Rondo\Core\VolunteerStatus::get_staff_roles(),
 				'default_player_roles'   => \Rondo\Core\VolunteerStatus::get_default_player_roles(),
 				'default_excluded_roles' => \Rondo\Core\VolunteerStatus::get_default_excluded_roles(),
+				'default_staff_roles'    => \Rondo\Core\VolunteerStatus::get_default_staff_roles(),
 			]
 		);
 	}
@@ -262,6 +273,7 @@ class Capabilities extends Base {
 	public function update_volunteer_role_settings( $request ) {
 		$player_roles   = $request->get_param( 'player_roles' );
 		$excluded_roles = $request->get_param( 'excluded_roles' );
+		$staff_roles    = $request->get_param( 'staff_roles' );
 
 		if ( $player_roles !== null ) {
 			update_option( \Rondo\Core\VolunteerStatus::OPTION_PLAYER_ROLES, $player_roles );
@@ -271,6 +283,10 @@ class Capabilities extends Base {
 			update_option( \Rondo\Core\VolunteerStatus::OPTION_EXCLUDED_ROLES, $excluded_roles );
 		}
 
+		if ( $staff_roles !== null ) {
+			update_option( \Rondo\Core\VolunteerStatus::OPTION_STAFF_ROLES, $staff_roles );
+		}
+
 		// Trigger volunteer status recalculation for all people.
 		$people_recalculated = $this->trigger_vog_recalculation();
 
@@ -278,6 +294,7 @@ class Capabilities extends Base {
 			[
 				'player_roles'        => \Rondo\Core\VolunteerStatus::get_player_roles(),
 				'excluded_roles'      => \Rondo\Core\VolunteerStatus::get_excluded_roles(),
+				'staff_roles'         => \Rondo\Core\VolunteerStatus::get_staff_roles(),
 				'people_recalculated' => $people_recalculated,
 			]
 		);
@@ -462,11 +479,16 @@ class Capabilities extends Base {
 	 */
 	public function get_capability_matrix() {
 		$capability_labels = [
-			'fairplay'         => 'FairPlay',
-			'vog'              => 'VOG',
-			'financieel'       => 'Financieel',
-			'toegangscontrole' => 'Toegangscontrole',
-			'manage_clothing'  => 'Kledingbeheer',
+			'fairplay'           => 'FairPlay',
+			'vog'                => 'VOG',
+			'financieel'         => 'Financieel (bewerken)',
+			'financieel_read'    => 'Financieel (lezen)',
+			'toegangscontrole'   => 'Toegangscontrole',
+			'manage_clothing'    => 'Kledingbeheer',
+			'ledenadministratie' => 'Ledenadministratie',
+			'sponsorbeheer'      => 'Sponsorbeheer',
+			'vrijwilligers'      => 'Vrijwilligersbeheer',
+			'rondo_iva_approve'  => 'IVA goedkeuren',
 		];
 
 		$wp_roles     = wp_roles();
@@ -502,8 +524,13 @@ class Capabilities extends Base {
 
 		return new \WP_REST_Response(
 			[
-				'roles'             => $roles,
-				'capability_labels' => $capability_labels,
+				'roles'                   => $roles,
+				'capability_labels'       => $capability_labels,
+				// Granting one of these makes a role's age-group restriction
+				// meaningless, so the UI clears it. Served from the PHP constant
+				// rather than duplicated in the frontend, where the copy silently
+				// went stale every time the list changed.
+				'management_capabilities' => \Rondo\Core\AccessControl::get_management_capabilities(),
 			]
 		);
 	}
@@ -529,7 +556,7 @@ class Capabilities extends Base {
 			);
 		}
 
-		$allowed_caps  = [ 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing' ];
+		$allowed_caps  = [ 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'vrijwilligers', 'rondo_iva_approve' ];
 		$valid_slugs   = array_keys( \Rondo\Core\UserRoles::get_all_roles() );
 		$valid_slugs[] = 'administrator';
 
@@ -566,6 +593,8 @@ class Capabilities extends Base {
 					$role_obj->remove_cap( $cap );
 				}
 			}
+
+			\Rondo\Core\UserRoles::sync_role_capabilities( $slug );
 		}
 
 		// Return fresh matrix state.

@@ -7,7 +7,7 @@ namespace Rondo\Passes;
 
 use PKPass\PKPass;
 use Rondo\Config\FinanceConfig;
-use Rondo\Fees\MembershipFees;
+use Rondo\Fees\SeasonKey;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -48,12 +48,16 @@ class MembershipPassApple {
 		}
 
 		$knvb_id     = (string) get_field( 'knvb-id', $person_id );
-		$member_tier = $this->get_member_tier( $person_id );
+		$member_tier = PublicMembershipPassPage::get_person_member_tier( $person_id );
 		if ( $member_tier === '' ) {
 			return new \WP_Error( 'membership_pass_ineligible_member', 'Dit lidtype komt niet in aanmerking voor een ledenpas.' );
 		}
 
-		$member_label = $member_tier === 'verenigingslid' ? 'Verenigingslid' : 'Bondslid';
+		$is_sponsor           = $member_tier === 'sponsor';
+		$sponsor_pass_variant = $is_sponsor ? PublicMembershipPassPage::get_sponsor_pass_variant( $person_id ) : '';
+		$member_label         = $is_sponsor
+			? 'Sponsor'
+			: ( $member_tier === 'verenigingslid' ? 'Verenigingslid' : 'Bondslid' );
 
 		$cert_path = $this->get_cert_path();
 		if ( $cert_path === '' || ! file_exists( $cert_path ) ) {
@@ -66,14 +70,17 @@ class MembershipPassApple {
 			return $qr_result;
 		}
 
-		$fees   = new MembershipFees();
-		$season = $fees->get_season_key();
+		$season = SeasonKey::current();
 
-		$person_name = $this->get_person_full_name( $person_id );
-		$details     = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
-		$team_name   = $details['teams'] !== '' ? $details['teams'] : '-';
-		$functions   = $details['functions'] !== '' ? $details['functions'] : '-';
-		$serial      = 'person-' . $person_id;
+		$person_name       = $this->get_person_full_name( $person_id );
+		$details           = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
+		$team_name         = $details['teams'] !== '' ? $details['teams'] : '-';
+		$functions         = $details['functions'] !== '' ? $details['functions'] : '-';
+		$company_name      = trim( (string) get_field( 'company_name', $person_id ) );
+		$organization_name = $this->get_organization_name();
+		$card_title        = $this->get_card_title( $organization_name, $member_tier, $sponsor_pass_variant );
+		$card_fields       = $this->get_card_fields( $member_tier, $team_name, $functions, $company_name, $knvb_id, $season );
+		$serial            = 'person-' . $person_id;
 		if ( $details['selection'] !== '' ) {
 			$serial .= '-' . substr( hash( 'sha256', $details['selection'] ), 0, 12 );
 		}
@@ -83,11 +90,12 @@ class MembershipPassApple {
 			'passTypeIdentifier' => $this->get_pass_type_identifier(),
 			'serialNumber'       => $serial,
 			'teamIdentifier'     => $this->get_team_identifier(),
-			'organizationName'   => $this->get_organization_name(),
-			'description'        => 'Rondo lidmaatschapspas',
-			'logoText'           => $this->get_organization_name(),
-			'foregroundColor'    => 'rgb(255,255,255)',
-			'backgroundColor'    => $this->get_background_color(),
+			'organizationName'   => $card_title,
+			'description'        => $is_sponsor ? 'Rondo toegangspas' : 'Rondo lidmaatschapspas',
+			'logoText'           => $card_title,
+			'foregroundColor'    => $is_sponsor ? 'rgb(17,24,39)' : 'rgb(255,255,255)',
+			'labelColor'         => $is_sponsor ? 'rgb(55,65,81)' : 'rgb(255,255,255)',
+			'backgroundColor'    => $this->get_background_color( $member_tier ),
 			'generic'            => [
 				'primaryFields'   => [
 					[
@@ -96,37 +104,8 @@ class MembershipPassApple {
 						'value' => $person_name,
 					],
 				],
-				'secondaryFields' => [
-					[
-						'key'   => 'team',
-						'label' => 'TEAMS',
-						'value' => $team_name,
-					],
-					[
-						'key'   => 'season',
-						'label' => 'SEIZOEN',
-						'value' => $season,
-					],
-				],
-				'auxiliaryFields' => array_values(
-					array_filter(
-						[
-							[
-								'key'   => 'functions',
-								'label' => 'FUNCTIES',
-								'value' => $functions,
-							],
-							[
-								'key'   => 'knvb_id',
-								'label' => 'KNVB ID',
-								'value' => ( $member_tier === 'bondslid' && $knvb_id !== '' ) ? $knvb_id : null,
-							],
-						],
-						static function ( $field ) {
-							return isset( $field['value'] ) && $field['value'] !== null && $field['value'] !== '';
-						}
-					)
-				),
+				'secondaryFields' => $card_fields['secondary'],
+				'auxiliaryFields' => $card_fields['auxiliary'],
 			],
 			'barcode'            => [
 				'format'          => 'PKBarcodeFormatQR',
@@ -139,7 +118,7 @@ class MembershipPassApple {
 
 		try {
 			$pass->setData( $pass_data );
-			$this->add_default_images( $pass, $person_id );
+			$this->add_default_images( $pass, $person_id, $member_tier, $sponsor_pass_variant );
 			$binary = $pass->create( false );
 		} catch ( \Throwable $e ) {
 			return new \WP_Error( 'membership_pass_apple_generate_failed', 'Genereren van Apple pass mislukt: ' . $e->getMessage() );
@@ -150,7 +129,7 @@ class MembershipPassApple {
 		}
 
 		return [
-			'filename' => 'rondo-lidpas-' . $person_id . '.pkpass',
+			'filename' => 'rondo-' . ( $is_sponsor ? 'toegangspas' : 'lidpas' ) . '-' . $person_id . '.pkpass',
 			'content'  => $binary,
 		];
 	}
@@ -160,20 +139,13 @@ class MembershipPassApple {
 	 *
 	 * @param PKPass $pass Pass instance.
 	 * @param int    $person_id Person ID.
+	 * @param string $member_tier Resolved pass tier.
+	 * @param string $sponsor_pass_variant Sponsor pass variant.
 	 */
-	private function add_default_images( PKPass $pass, int $person_id ) {
+	private function add_default_images( PKPass $pass, int $person_id, string $member_tier = '', string $sponsor_pass_variant = '' ) {
 		$theme_dir = get_template_directory();
 		$default   = $theme_dir . '/public/icons/apple-touch-icon-180x180.png';
-		$logo_path = $default;
-
-		$config  = new FinanceConfig();
-		$logo_id = $config->get_club_logo_id();
-		if ( $logo_id > 0 ) {
-			$path = get_attached_file( $logo_id );
-			if ( is_string( $path ) && file_exists( $path ) ) {
-				$logo_path = $path;
-			}
-		}
+		$logo_path = $this->get_logo_image_path( $member_tier, $sponsor_pass_variant );
 
 		$thumbnail_path = $this->get_person_photo_path( $person_id );
 
@@ -196,6 +168,44 @@ class MembershipPassApple {
 				$pass->addFileContent( $thumbnail_bytes, 'thumbnail@2x.png' );
 			}
 		}
+	}
+
+	/**
+	 * Resolve the local logo path for a pass tier.
+	 *
+	 * @param string $member_tier Resolved pass tier.
+	 * @param string $sponsor_pass_variant Sponsor pass variant.
+	 * @return string
+	 */
+	private function get_logo_image_path( string $member_tier = '', string $sponsor_pass_variant = '' ): string {
+		$theme_dir = get_template_directory();
+		$default   = $theme_dir . '/public/icons/apple-touch-icon-180x180.png';
+		$config    = new FinanceConfig();
+
+		if ( $member_tier === 'sponsor' && $sponsor_pass_variant === PublicMembershipPassPage::SPONSOR_PASS_VARIANT_BUSINESSCLUB ) {
+			$logo_id = $config->get_businessclub_logo_id();
+			if ( $logo_id > 0 ) {
+				$path = get_attached_file( $logo_id );
+				if ( is_string( $path ) && file_exists( $path ) ) {
+					return $path;
+				}
+			}
+
+			$businessclub_logo = $theme_dir . '/public/icons/businessclub-awc-logo.png';
+			if ( file_exists( $businessclub_logo ) ) {
+				return $businessclub_logo;
+			}
+		}
+
+		$logo_id = $config->get_club_logo_id();
+		if ( $logo_id > 0 ) {
+			$path = get_attached_file( $logo_id );
+			if ( is_string( $path ) && file_exists( $path ) ) {
+				return $path;
+			}
+		}
+
+		return $default;
 	}
 
 	/**
@@ -244,24 +254,8 @@ class MembershipPassApple {
 		$infix      = (string) get_field( 'infix', $person_id );
 		$last_name  = (string) get_field( 'last_name', $person_id );
 
-		return trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
-	}
-
-	/**
-	 * Resolve member tier from Type lid.
-	 *
-	 * @param int $person_id Person ID.
-	 * @return string
-	 */
-	private function get_member_tier( int $person_id ): string {
-		$type_lid = strtolower( trim( (string) get_field( 'type-lid', $person_id ) ) );
-		if ( $type_lid === 'bondslid' ) {
-			return 'bondslid';
-		}
-		if ( $type_lid === 'verenigingslid' ) {
-			return 'verenigingslid';
-		}
-		return '';
+		$name = trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
+		return $name !== '' ? $name : trim( (string) get_field( 'company_name', $person_id ) );
 	}
 
 	/**
@@ -471,11 +465,80 @@ class MembershipPassApple {
 	}
 
 	/**
+	 * Resolve the title shown at the top of the pass.
+	 *
+	 * @param string $organization_name Configured organization name.
+	 * @param string $member_tier Resolved pass tier.
+	 * @param string $sponsor_pass_variant Sponsor pass variant.
+	 * @return string
+	 */
+	private function get_card_title( string $organization_name, string $member_tier, string $sponsor_pass_variant = '' ): string {
+		if ( $member_tier !== 'sponsor' ) {
+			return $organization_name;
+		}
+
+		return $sponsor_pass_variant === PublicMembershipPassPage::SPONSOR_PASS_VARIANT_AWC_SPONSOR
+			? $organization_name . ' Sponsor'
+			: 'Businessclub ' . $organization_name;
+	}
+
+	/**
+	 * Build the detail fields for the Apple pass.
+	 *
+	 * @param string $member_tier Resolved pass tier.
+	 * @param string $team_name Team label.
+	 * @param string $functions Functions label.
+	 * @param string $company_name Company name.
+	 * @param string $knvb_id KNVB ID.
+	 * @param string $season Season key.
+	 * @return array{secondary: array<int, array<string, string>>, auxiliary: array<int, array<string, string>>}
+	 */
+	private function get_card_fields( string $member_tier, string $team_name, string $functions, string $company_name, string $knvb_id, string $season ): array {
+		$secondary = [
+			[
+				'key'   => $member_tier === 'sponsor' ? 'company' : 'team',
+				'label' => $member_tier === 'sponsor' ? 'BEDRIJF' : 'TEAMS',
+				'value' => $member_tier === 'sponsor' ? ( $company_name !== '' ? $company_name : '-' ) : $team_name,
+			],
+			[
+				'key'   => 'season',
+				'label' => 'SEIZOEN',
+				'value' => $season,
+			],
+		];
+
+		$auxiliary = [];
+		if ( $member_tier !== 'sponsor' ) {
+			$auxiliary[] = [
+				'key'   => 'functions',
+				'label' => 'FUNCTIES',
+				'value' => $functions,
+			];
+		}
+		if ( $member_tier === 'bondslid' && $knvb_id !== '' ) {
+			$auxiliary[] = [
+				'key'   => 'knvb_id',
+				'label' => 'KNVB ID',
+				'value' => $knvb_id,
+			];
+		}
+
+		return [
+			'secondary' => $secondary,
+			'auxiliary' => $auxiliary,
+		];
+	}
+
+	/**
 	 * Resolve pass background color.
 	 *
 	 * @return string
 	 */
-	private function get_background_color(): string {
+	private function get_background_color( string $member_tier = '' ): string {
+		if ( $member_tier === 'sponsor' ) {
+			return 'rgb(255,255,255)';
+		}
+
 		$config = new FinanceConfig();
 		$hex    = trim( $config->get_accent_color() );
 		if ( preg_match( '/^#?([a-f0-9]{6})$/i', $hex, $matches ) ) {

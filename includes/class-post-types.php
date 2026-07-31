@@ -11,6 +11,75 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class PostTypes {
 
+	/**
+	 * Capability slugs for each custom post type.
+	 *
+	 * Every CPT must use its own primitives. Reusing WordPress' generic `post`
+	 * capabilities lets any role with `edit_posts` create or mutate every
+	 * REST-exposed Rondo record, including invoices and discipline cases.
+	 */
+	public const CAPABILITY_DOMAINS = [
+		'person'              => [ 'person', 'people' ],
+		'team'                => [ 'team', 'teams' ],
+		'commissie'           => [ 'commissie', 'commissies' ],
+		'rondo_clothing_item' => [ 'clothing_item', 'clothing_items' ],
+		'rondo_clothing_txn'  => [ 'clothing_transaction', 'clothing_transactions' ],
+		'rondo_todo'          => [ 'todo', 'todos' ],
+		'calendar_event'      => [ 'calendar_event', 'calendar_events' ],
+		'rondo_feedback'      => [ 'feedback_item', 'feedback_items' ],
+		'discipline_case'     => [ 'discipline_case', 'discipline_cases' ],
+		'rondo_invoice'       => [ 'invoice', 'invoices' ],
+		'dienst_type'         => [ 'dienst_type', 'dienst_types' ],
+		'shift_template'      => [ 'shift_template', 'shift_templates' ],
+		'dienst_shift'        => [ 'dienst_shift', 'dienst_shifts' ],
+		'taakuitleg'          => [ 'taakuitleg', 'taakuitleg_items' ],
+	];
+
+	/**
+	 * Build the complete primitive/meta capability map for a Rondo CPT.
+	 *
+	 * @param string $post_type Registered post type.
+	 * @return array<string, string>
+	 */
+	public static function capability_map( string $post_type ): array {
+		if ( ! isset( self::CAPABILITY_DOMAINS[ $post_type ] ) ) {
+			return [];
+		}
+
+		[ $singular, $plural ] = self::CAPABILITY_DOMAINS[ $post_type ];
+
+		return [
+			'edit_post'              => 'edit_rondo_' . $singular,
+			'read_post'              => 'read_rondo_' . $singular,
+			'delete_post'            => 'delete_rondo_' . $singular,
+			'edit_posts'             => 'edit_rondo_' . $plural,
+			'edit_others_posts'      => 'edit_others_rondo_' . $plural,
+			'publish_posts'          => 'publish_rondo_' . $plural,
+			'read_private_posts'     => 'read_private_rondo_' . $plural,
+			'delete_posts'           => 'delete_rondo_' . $plural,
+			'delete_private_posts'   => 'delete_private_rondo_' . $plural,
+			'delete_published_posts' => 'delete_published_rondo_' . $plural,
+			'delete_others_posts'    => 'delete_others_rondo_' . $plural,
+			'edit_private_posts'     => 'edit_private_rondo_' . $plural,
+			'edit_published_posts'   => 'edit_published_rondo_' . $plural,
+			'create_posts'           => 'create_rondo_' . $plural,
+			'read'                   => 'read_rondo_' . $plural,
+		];
+	}
+
+	/**
+	 * Registration arguments shared by every Rondo CPT.
+	 *
+	 * @param string $post_type Registered post type.
+	 * @return array<string, mixed>
+	 */
+	private static function capability_args( string $post_type ): array {
+		return [
+			'capabilities' => self::capability_map( $post_type ),
+			'map_meta_cap' => true,
+		];
+	}
+
 	public function __construct() {
 		add_action( 'init', [ $this, 'register_post_types' ] );
 	}
@@ -31,6 +100,10 @@ class PostTypes {
 		$this->register_discipline_case_post_type();
 		$this->register_invoice_statuses();
 		$this->register_invoice_post_type();
+		$this->register_dienst_type_post_type();
+		$this->register_shift_template_post_type();
+		$this->register_dienst_shift_post_type();
+		$this->register_taakuitleg_post_type();
 	}
 
 	/**
@@ -52,33 +125,41 @@ class PostTypes {
 			'all_items'          => __( 'All People', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'people',
-			'query_var'          => false,
-			'rewrite'            => false, // Disable rewrite rules - React Router handles routing
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 5,
-			'menu_icon'          => 'dashicons-groups',
-			'supports'           => [ 'title', 'thumbnail', 'comments', 'author', 'custom-fields' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'people',
+				'query_var'          => false,
+				'rewrite'            => false, // Disable rewrite rules - React Router handles routing
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 5,
+				'menu_icon'          => 'dashicons-groups',
+				'supports'           => [ 'title', 'thumbnail', 'comments', 'author', 'custom-fields' ],
+			],
+			self::capability_args( 'person' )
+			);
 
 		register_post_type( 'person', $args );
 
 		// Person meta: string fields exposed in REST (VOG, Sportlink, primary team).
 		$person_string_meta = [
+			'datum-vog',
 			'vog_email_sent_date',
 			'vog_justis_submitted_date',
 			'vog_reminder_sent_date',
 			'vrijwilliger-sinds',
 			'team',
+			'datum-iva',
+			'vergoeding_reden',
+			'vergoeding_tot',
+			'vrijstelling_reden',
+			'vrijstelling_seizoen',
 		];
 		foreach ( $person_string_meta as $key ) {
 			register_post_meta(
@@ -89,6 +170,26 @@ class PostTypes {
 					'single'            => true,
 					'show_in_rest'      => true,
 					'sanitize_callback' => 'sanitize_text_field',
+				]
+			);
+		}
+
+		// Person meta: boolean flags exposed in REST.
+		$person_bool_meta = [
+			'betaalde_vrijwilliger',
+			'vrijgesteld_handmatig',
+			'iva-approved',
+		];
+		foreach ( $person_bool_meta as $key ) {
+			register_post_meta(
+				'person',
+				$key,
+				[
+					'type'              => 'boolean',
+					'single'            => true,
+					'show_in_rest'      => true,
+					'default'           => false,
+					'sanitize_callback' => 'rest_sanitize_boolean',
 				]
 			);
 		}
@@ -131,25 +232,50 @@ class PostTypes {
 			'all_items'          => __( 'All Teams', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'teams',
-			'query_var'          => false,
-			'rewrite'            => false, // Disable rewrite rules - React Router handles routing
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => true, // Enable parent-child relationships
-			'menu_position'      => 6,
-			'menu_icon'          => 'dashicons-groups',
-			'supports'           => [ 'title', 'editor', 'thumbnail', 'author', 'page-attributes' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'teams',
+				'query_var'          => false,
+				'rewrite'            => false, // Disable rewrite rules - React Router handles routing
+				'has_archive'        => false,
+				'hierarchical'       => true, // Enable parent-child relationships
+				'menu_position'      => 6,
+				'menu_icon'          => 'dashicons-groups',
+				'supports'           => [ 'title', 'editor', 'thumbnail', 'author', 'page-attributes' ],
+			],
+			self::capability_args( 'team' )
+			);
 
 		register_post_type( 'team', $args );
+
+		// Volunteer-policy kickoff tracking (#13): per-team status of Guido's
+		// vrijwilligersbeleid-gesprek aan het begin van het seizoen.
+		register_post_meta(
+			'team',
+			'kickoff_done_at',
+			[
+				'type'              => 'string',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'sanitize_callback' => 'sanitize_text_field',
+			]
+		);
+		register_post_meta(
+			'team',
+			'kickoff_notes',
+			[
+				'type'              => 'string',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'sanitize_callback' => 'sanitize_textarea_field',
+			]
+		);
 	}
 
 	/**
@@ -173,23 +299,25 @@ class PostTypes {
 			'all_items'          => __( 'All Commissies', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'commissies',
-			'query_var'          => false,
-			'rewrite'            => false, // Disable rewrite rules - React Router handles routing
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => true, // Enable parent-child relationships
-			'menu_position'      => 7,
-			'menu_icon'          => 'dashicons-businessperson',
-			'supports'           => [ 'title', 'editor', 'thumbnail', 'author', 'page-attributes' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'commissies',
+				'query_var'          => false,
+				'rewrite'            => false, // Disable rewrite rules - React Router handles routing
+				'has_archive'        => false,
+				'hierarchical'       => true, // Enable parent-child relationships
+				'menu_position'      => 7,
+				'menu_icon'          => 'dashicons-businessperson',
+				'supports'           => [ 'title', 'editor', 'thumbnail', 'author', 'page-attributes' ],
+			],
+			self::capability_args( 'commissie' )
+			);
 
 		register_post_type( 'commissie', $args );
 	}
@@ -213,23 +341,25 @@ class PostTypes {
 			'all_items'          => __( 'All Clothing Items', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'clothing-items',
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 8,
-			'menu_icon'          => 'dashicons-tickets-alt',
-			'supports'           => [ 'title', 'thumbnail', 'author', 'custom-fields' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'clothing-items',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 8,
+				'menu_icon'          => 'dashicons-tickets-alt',
+				'supports'           => [ 'title', 'thumbnail', 'author', 'custom-fields' ],
+			],
+			self::capability_args( 'rondo_clothing_item' )
+			);
 
 		register_post_type( 'rondo_clothing_item', $args );
 	}
@@ -253,23 +383,25 @@ class PostTypes {
 			'all_items'          => __( 'All Clothing Assignments', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'clothing-assignments',
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 9,
-			'menu_icon'          => 'dashicons-clipboard',
-			'supports'           => [ 'title', 'author', 'custom-fields' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'clothing-assignments',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 9,
+				'menu_icon'          => 'dashicons-clipboard',
+				'supports'           => [ 'title', 'author', 'custom-fields' ],
+			],
+			self::capability_args( 'rondo_clothing_txn' )
+			);
 
 		register_post_type( 'rondo_clothing_txn', $args );
 	}
@@ -344,23 +476,25 @@ class PostTypes {
 			'all_items'          => __( 'All Todos', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'todos',
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 8,
-			'menu_icon'          => 'dashicons-yes-alt',
-			'supports'           => [ 'title', 'editor', 'author' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'todos',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 8,
+				'menu_icon'          => 'dashicons-yes-alt',
+				'supports'           => [ 'title', 'editor', 'author' ],
+			],
+			self::capability_args( 'rondo_todo' )
+			);
 
 		register_post_type( 'rondo_todo', $args );
 	}
@@ -388,21 +522,22 @@ class PostTypes {
 			'all_items'          => __( 'All Events', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => false, // No admin UI needed
-			'show_in_menu'       => false,
-			'show_in_rest'       => false, // Custom endpoints only
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capability_type'    => 'post',
-			'map_meta_cap'       => true,
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'supports'           => [ 'title', 'author' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => false, // No admin UI needed
+				'show_in_menu'       => false,
+				'show_in_rest'       => false, // Custom endpoints only
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'calendar_event' )
+			);
 
 		register_post_type( 'calendar_event', $args );
 	}
@@ -429,23 +564,25 @@ class PostTypes {
 			'all_items'          => __( 'All Feedback', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'feedback',
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 26,
-			'menu_icon'          => 'dashicons-megaphone',
-			'supports'           => [ 'title', 'editor', 'author' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'feedback',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 26,
+				'menu_icon'          => 'dashicons-megaphone',
+				'supports'           => [ 'title', 'editor', 'author' ],
+			],
+			self::capability_args( 'rondo_feedback' )
+			);
 
 		register_post_type( 'rondo_feedback', $args );
 	}
@@ -472,23 +609,25 @@ class PostTypes {
 			'all_items'          => __( 'All Tuchtzaken', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'discipline-cases',
-			'query_var'          => false,
-			'rewrite'            => false, // React Router handles routing
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 9,
-			'menu_icon'          => 'dashicons-warning',
-			'supports'           => [ 'title', 'author' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'discipline-cases',
+				'query_var'          => false,
+				'rewrite'            => false, // React Router handles routing
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 9,
+				'menu_icon'          => 'dashicons-warning',
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'discipline_case' )
+			);
 
 		register_post_type( 'discipline_case', $args );
 	}
@@ -551,6 +690,19 @@ class PostTypes {
 				'label_count'               => _n_noop( 'Verlopen <span class="count">(%s)</span>', 'Verlopen <span class="count">(%s)</span>', 'rondo' ),
 			]
 		);
+
+		register_post_status(
+			'rondo_cancelled',
+			[
+				'label'                     => _x( 'Vervallen', 'Invoice status', 'rondo' ),
+				'public'                    => true,
+				'exclude_from_search'       => false,
+				'show_in_admin_all_list'    => true,
+				'show_in_admin_status_list' => true,
+				// translators: %s is the number of cancelled invoices.
+				'label_count'               => _n_noop( 'Vervallen <span class="count">(%s)</span>', 'Vervallen <span class="count">(%s)</span>', 'rondo' ),
+			]
+		);
 	}
 
 	/**
@@ -575,24 +727,433 @@ class PostTypes {
 			'all_items'          => __( 'All Facturen', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'invoices',
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 10,
-			'menu_icon'          => 'dashicons-media-text',
-			'supports'           => [ 'title', 'author' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'invoices',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 10,
+				'menu_icon'          => 'dashicons-media-text',
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'rondo_invoice' )
+			);
 
 		register_post_type( 'rondo_invoice', $args );
+	}
+
+	/**
+	 * Register Dienst Type CPT
+	 *
+	 * Catalog of volunteer task categories (terreinmeester, kantine bar/keuken,
+	 * schoonmaak, terreinonderhoud, …). Admin-only — there is no public view.
+	 * Consumed by shift_template / dienst_shift for scheduling.
+	 */
+	private function register_dienst_type_post_type() {
+		$labels = [
+			'name'               => _x( 'Inschrijftaken', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Inschrijftaak', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Inschrijftaken', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Inschrijftaak', 'rondo' ),
+			'edit_item'          => __( 'Edit Inschrijftaak', 'rondo' ),
+			'new_item'           => __( 'New Inschrijftaak', 'rondo' ),
+			'view_item'          => __( 'View Inschrijftaak', 'rondo' ),
+			'search_items'       => __( 'Search Inschrijftaken', 'rondo' ),
+			'not_found'          => __( 'No inschrijftaken found', 'rondo' ),
+			'not_found_in_trash' => __( 'No inschrijftaken found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Inschrijftaken', 'rondo' ),
+		];
+
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'dienst-types',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 11,
+				'menu_icon'          => 'dashicons-clipboard',
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'dienst_type' )
+			);
+
+		register_post_type( 'dienst_type', $args );
+
+		$dienst_type_bool_meta = [
+			'vog_required',
+			'iva_required',
+			'sleutel_involved',
+		];
+		foreach ( $dienst_type_bool_meta as $key ) {
+			register_post_meta(
+				'dienst_type',
+				$key,
+				[
+					'type'              => 'boolean',
+					'single'            => true,
+					'show_in_rest'      => true,
+					'default'           => false,
+					'sanitize_callback' => 'rest_sanitize_boolean',
+				]
+			);
+		}
+
+		register_post_meta(
+			'dienst_type',
+			'default_capacity',
+			[
+				'type'              => 'integer',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'default'           => 1,
+				'sanitize_callback' => 'absint',
+			]
+		);
+
+		register_post_meta(
+			'dienst_type',
+			'color',
+			[
+				'type'              => 'string',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'default'           => '#6b7280',
+				'sanitize_callback' => 'sanitize_hex_color',
+			]
+		);
+
+		register_post_meta(
+			'dienst_type',
+			'description',
+			[
+				'type'              => 'string',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'default'           => '',
+				'sanitize_callback' => 'sanitize_textarea_field',
+			]
+		);
+
+		register_post_meta(
+			'dienst_type',
+			'required_pool',
+			[
+				'type'              => 'integer',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'default'           => 0,
+				'sanitize_callback' => 'absint',
+			]
+		);
+
+		$dienst_type_text_meta = [
+			'reminder_email_subject'                 => 'sanitize_text_field',
+			'reminder_email_body'                    => 'sanitize_textarea_field',
+			'cancellation_early_email_subject'       => 'sanitize_text_field',
+			'cancellation_early_email_body'          => 'sanitize_textarea_field',
+			'cancellation_last_minute_email_subject' => 'sanitize_text_field',
+			'cancellation_last_minute_email_body'    => 'sanitize_textarea_field',
+			'survey_email_subject'                   => 'sanitize_text_field',
+			'survey_email_body'                      => 'sanitize_textarea_field',
+			'survey_url'                             => 'esc_url_raw',
+		];
+		foreach ( $dienst_type_text_meta as $key => $sanitize_callback ) {
+			register_post_meta(
+				'dienst_type',
+				$key,
+				[
+					'type'              => 'string',
+					'single'            => true,
+					'show_in_rest'      => true,
+					'default'           => '',
+					'sanitize_callback' => $sanitize_callback,
+				]
+			);
+		}
+	}
+
+	/**
+	 * Register Shift Template CPT
+	 *
+	 * Seasonal recurring shift rules (e.g. "every Saturday 7:30–12, Kantine bar,
+	 * capacity 2"). Template-expander cron expands these into concrete
+	 * `dienst_shift` records for an upcoming window.
+	 */
+	private function register_shift_template_post_type() {
+		$labels = [
+			'name'               => _x( 'Inschrijftaaksjablonen', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Inschrijftaaksjabloon', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Inschrijftaaksjablonen', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Inschrijftaaksjabloon', 'rondo' ),
+			'edit_item'          => __( 'Edit Inschrijftaaksjabloon', 'rondo' ),
+			'new_item'           => __( 'New Inschrijftaaksjabloon', 'rondo' ),
+			'view_item'          => __( 'View Inschrijftaaksjabloon', 'rondo' ),
+			'search_items'       => __( 'Search Inschrijftaaksjablonen', 'rondo' ),
+			'not_found'          => __( 'No inschrijftaaksjablonen found', 'rondo' ),
+			'not_found_in_trash' => __( 'No inschrijftaaksjablonen found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Inschrijftaaksjablonen', 'rondo' ),
+		];
+
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'shift-templates',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 12,
+				'menu_icon'          => 'dashicons-calendar-alt',
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'shift_template' )
+			);
+
+		register_post_type( 'shift_template', $args );
+
+		$shift_template_int_meta = [
+			'dienst_type_id',
+			'day_of_week',
+			'capacity',
+		];
+		foreach ( $shift_template_int_meta as $key ) {
+			register_post_meta(
+				'shift_template',
+				$key,
+				[
+					'type'              => 'integer',
+					'single'            => true,
+					'show_in_rest'      => true,
+					'sanitize_callback' => 'absint',
+				]
+			);
+		}
+
+		$shift_template_string_meta = [
+			'start_time',
+			'end_time',
+			'active_from',
+			'active_until',
+			'notes',
+		];
+		foreach ( $shift_template_string_meta as $key ) {
+			register_post_meta(
+				'shift_template',
+				$key,
+				[
+					'type'              => 'string',
+					'single'            => true,
+					'show_in_rest'      => true,
+					'sanitize_callback' => 'sanitize_text_field',
+				]
+			);
+		}
+
+		// Sjabloon-niveau IVA-override; expander schrijft deze waarde door naar
+		// elke uitgerolde dienst_shift.
+		register_post_meta(
+			'shift_template',
+			'iva_waived',
+			[
+				'type'              => 'boolean',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'default'           => false,
+				'sanitize_callback' => 'rest_sanitize_boolean',
+			]
+		);
+	}
+
+	/**
+	 * Register Dienst Shift CPT
+	 *
+	 * A concrete scheduled volunteer shift in time. Either expanded from a
+	 * shift_template by the cron expander, or created ad-hoc by an admin
+	 * (e.g. an evening match that needs extra bar staff).
+	 */
+	private function register_dienst_shift_post_type() {
+		$labels = [
+			'name'               => _x( 'Inschrijftaken', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Inschrijftaak', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Inschrijftaken', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Inschrijftaak', 'rondo' ),
+			'edit_item'          => __( 'Edit Inschrijftaak', 'rondo' ),
+			'new_item'           => __( 'New Inschrijftaak', 'rondo' ),
+			'view_item'          => __( 'View Inschrijftaak', 'rondo' ),
+			'search_items'       => __( 'Search Inschrijftaken', 'rondo' ),
+			'not_found'          => __( 'No inschrijftaken found', 'rondo' ),
+			'not_found_in_trash' => __( 'No inschrijftaken found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Inschrijftaken', 'rondo' ),
+		];
+
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'dienst-shifts',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 13,
+				'menu_icon'          => 'dashicons-clock',
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'dienst_shift' )
+			);
+
+		register_post_type( 'dienst_shift', $args );
+
+		$shift_int_meta = [
+			'dienst_type_id',
+			'template_id',
+			'capacity',
+		];
+		foreach ( $shift_int_meta as $key ) {
+			register_post_meta(
+				'dienst_shift',
+				$key,
+				[
+					'type'              => 'integer',
+					'single'            => true,
+					'show_in_rest'      => true,
+					'sanitize_callback' => 'absint',
+				]
+			);
+		}
+
+		$shift_string_meta = [
+			'start_datetime',
+			'end_datetime',
+			'status',
+			'notes',
+		];
+		foreach ( $shift_string_meta as $key ) {
+			register_post_meta(
+				'dienst_shift',
+				$key,
+				[
+					'type'              => 'string',
+					'single'            => true,
+					'show_in_rest'      => true,
+					'sanitize_callback' => 'sanitize_text_field',
+				]
+			);
+		}
+
+		// Per-dienst override op het IVA-vereiste van het diensttype. Use case:
+		// kantine-bardienst op zaterdag voor 15:00 — geen alcoholschenking, dus
+		// IVA niet nodig ook al staat 'iva_required' op het diensttype.
+		register_post_meta(
+			'dienst_shift',
+			'iva_waived',
+			[
+				'type'              => 'boolean',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'default'           => false,
+				'sanitize_callback' => 'rest_sanitize_boolean',
+			]
+		);
+
+		// Assigned persons as a serialized array of post IDs.
+		register_post_meta(
+			'dienst_shift',
+			'assigned_persons',
+			[
+				'type'         => 'array',
+				'single'       => true,
+				'show_in_rest' => [
+					'schema' => [
+						'type'  => 'array',
+						'items' => [ 'type' => 'integer' ],
+					],
+				],
+				'default'      => [],
+			]
+		);
+	}
+
+	/**
+	 * Register Taakuitleg CPT
+	 *
+	 * Volunteer-facing task instructions ("how to use and clean the frying pan").
+	 * Each entry is a rich-text explanation with inline images, linked to one or
+	 * more dienst_types. A printable QR code points at the public read-only page
+	 * at /uitleg/{slug} (see PublicTaakuitlegPage) so a volunteer can scan a
+	 * sticker without logging in.
+	 *
+	 * `public`/`publicly_queryable` are false — the CPT carries no SEO surface
+	 * and is not exposed through WordPress' own routing. The public view is
+	 * served by our own rewrite rule, exactly like the payment landing page.
+	 * Editing happens in the React SPA (gated by the `vrijwilligers` capability).
+	 */
+	private function register_taakuitleg_post_type() {
+		$labels = [
+			'name'               => _x( 'Taakuitleg', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Taakuitleg', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Taakuitleg', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Taakuitleg', 'rondo' ),
+			'edit_item'          => __( 'Edit Taakuitleg', 'rondo' ),
+			'new_item'           => __( 'New Taakuitleg', 'rondo' ),
+			'view_item'          => __( 'View Taakuitleg', 'rondo' ),
+			'search_items'       => __( 'Search Taakuitleg', 'rondo' ),
+			'not_found'          => __( 'No taakuitleg found', 'rondo' ),
+			'not_found_in_trash' => __( 'No taakuitleg found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Taakuitleg', 'rondo' ),
+		];
+
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'taakuitleg',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 14,
+				'menu_icon'          => 'dashicons-media-document',
+				// `editor` stores the rich-text body (with inline images) in
+				// post_content, exposed as the `content` field over REST; `revisions`
+				// gives us a free edit history and the modified date.
+				'supports'           => [ 'title', 'editor', 'author', 'revisions' ],
+			],
+			self::capability_args( 'taakuitleg' )
+			);
+
+		register_post_type( 'taakuitleg', $args );
 	}
 }
