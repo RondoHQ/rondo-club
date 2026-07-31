@@ -2104,9 +2104,13 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 * [--message=<message>]
 		 * : Dutch explanation of how the feedback was fixed. Required when newly resolving feedback.
 		 *
+		 * [--reason=<reason>]
+		 * : Dutch explanation of why the feedback is being declined. Required when newly declining feedback.
+		 *
 		 * ## EXAMPLES
 		 *
 		 *     wp rondo feedback set-status 8496 resolved --message="Het formulier gebruikt nu één datum met aparte begin- en eindtijden."
+		 *     wp rondo feedback set-status 8496 declined --reason="Dit kan al via de knop rechtsboven op het dashboard."
 		 *     wp rondo feedback set-status 8496 needs_info
 		 *
 		 * @subcommand set-status
@@ -2116,6 +2120,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			$feedback_id = isset( $args[0] ) ? absint( $args[0] ) : 0;
 			$new_status  = isset( $args[1] ) ? sanitize_key( $args[1] ) : '';
 			$message     = isset( $assoc_args['message'] ) ? sanitize_textarea_field( $assoc_args['message'] ) : '';
+			$reason      = isset( $assoc_args['reason'] ) ? sanitize_textarea_field( $assoc_args['reason'] ) : '';
 
 			if ( $feedback_id === 0 ) {
 				WP_CLI::error( 'Please provide a valid feedback ID.' );
@@ -2125,7 +2130,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				WP_CLI::error( 'Invalid status. Allowed: ' . implode( ', ', StatusService::ALLOWED_STATUSES ) . '.' );
 			}
 
-			$result = ( new StatusService() )->update( $feedback_id, $new_status, $message );
+			$result = ( new StatusService() )->update( $feedback_id, $new_status, $message, $reason );
 			if ( is_wp_error( $result ) ) {
 				WP_CLI::error( $result->get_error_message() );
 			}
@@ -2145,6 +2150,17 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					WP_CLI::log( 'Resolution email: already sent previously.' );
 				} else {
 					WP_CLI::warning( 'Resolution email: ' . $email_status . '.' );
+				}
+			}
+
+			if ( isset( $result['decline_email'] ) ) {
+				$email_status = $result['decline_email']['status'];
+				if ( $email_status === 'sent' ) {
+					WP_CLI::log( 'Decline email: sent.' );
+				} elseif ( $email_status === 'already_sent' ) {
+					WP_CLI::log( 'Decline email: already sent previously.' );
+				} else {
+					WP_CLI::warning( 'Decline email: ' . $email_status . '.' );
 				}
 			}
 

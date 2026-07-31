@@ -516,6 +516,15 @@ class Feedback extends Base {
 			);
 		}
 
+		$decline_reason = $request->get_param( 'decline_reason' );
+		if ( $decline_reason !== null && ! $is_admin ) {
+			return new \WP_Error(
+				'rest_forbidden',
+				__( 'Only administrators can add a feedback decline reason.', 'rondo' ),
+				[ 'status' => 403 ]
+			);
+		}
+
 		// Validate field values
 		$feedback_type = $request->get_param( 'feedback_type' );
 		if ( $feedback_type !== null && ! in_array( $feedback_type, [ 'bug', 'feature_request' ], true ) ) {
@@ -573,14 +582,15 @@ class Feedback extends Base {
 			update_field( 'feedback_type', $feedback_type, $feedback_id );
 		}
 
-		if ( $new_status !== null || $resolution_summary !== null ) {
+		if ( $new_status !== null || $resolution_summary !== null || $decline_reason !== null ) {
 			$status_for_update = $new_status !== null
 				? $new_status
 				: (string) ( get_field( 'status', $feedback_id ) ?: 'new' );
 			$status_update     = ( new StatusService() )->update(
 				$feedback_id,
 				$status_for_update,
-				$resolution_summary !== null ? (string) $resolution_summary : ''
+				$resolution_summary !== null ? (string) $resolution_summary : '',
+				$decline_reason !== null ? (string) $decline_reason : ''
 			);
 			if ( is_wp_error( $status_update ) ) {
 				return $status_update;
@@ -854,6 +864,8 @@ class Feedback extends Base {
 				'project'            => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_project', true ) ?: 'rondo-club' ),
 				'resolved_at'        => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_resolved_at', true ) ?: '' ),
 				'resolution_summary' => $this->sanitize_text( get_post_meta( $post->ID, StatusService::META_RESOLUTION_SUMMARY, true ) ?: '' ),
+				'declined_at'        => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_declined_at', true ) ?: '' ),
+				'decline_reason'     => $this->sanitize_text( get_post_meta( $post->ID, StatusService::META_DECLINE_REASON, true ) ?: '' ),
 				'pr_url'             => $this->sanitize_url( get_post_meta( $post->ID, '_feedback_pr_url', true ) ?: '' ),
 				'agent_branch'       => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_agent_branch', true ) ?: '' ),
 				'agent_plan'         => get_post_meta( $post->ID, '_feedback_agent_plan', true ) ?: '',

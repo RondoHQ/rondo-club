@@ -7,7 +7,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
 import FeedbackModal from '@/components/FeedbackModal';
-import FeedbackResolutionModal from '@/components/FeedbackResolutionModal';
+import FeedbackOutcomeModal from '@/components/FeedbackOutcomeModal';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { DataTable, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
@@ -129,6 +129,7 @@ export default function FeedbackList() {
   const location = useLocation();
   const [showModal, setShowModal] = useState(false);
   const [feedbackToResolve, setFeedbackToResolve] = useState(null);
+  const [feedbackToDecline, setFeedbackToDecline] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const queryClient = useQueryClient();
@@ -206,6 +207,11 @@ export default function FeedbackList() {
       return;
     }
 
+    if (newStatus === 'declined' && feedbackItem.meta?.status !== 'declined') {
+      setFeedbackToDecline(feedbackItem);
+      return;
+    }
+
     updateFeedback.mutate({ id: feedbackItem.id, data: { status: newStatus } });
   }, [updateFeedback]);
 
@@ -218,6 +224,17 @@ export default function FeedbackList() {
       },
     });
     setFeedbackToResolve(null);
+  };
+
+  const handleDeclineConfirm = async (declineReason) => {
+    await updateFeedback.mutateAsync({
+      id: feedbackToDecline.id,
+      data: {
+        status: 'declined',
+        decline_reason: declineReason,
+      },
+    });
+    setFeedbackToDecline(null);
   };
 
   const handlePriorityChange = useCallback((id, newPriority) => {
@@ -427,10 +444,21 @@ export default function FeedbackList() {
         />
 
         {feedbackToResolve ? (
-          <FeedbackResolutionModal
+          <FeedbackOutcomeModal
             feedback={feedbackToResolve}
+            variant="resolve"
             onClose={() => setFeedbackToResolve(null)}
             onConfirm={handleResolutionConfirm}
+            isLoading={updateFeedback.isPending}
+          />
+        ) : null}
+
+        {feedbackToDecline ? (
+          <FeedbackOutcomeModal
+            feedback={feedbackToDecline}
+            variant="decline"
+            onClose={() => setFeedbackToDecline(null)}
+            onConfirm={handleDeclineConfirm}
             isLoading={updateFeedback.isPending}
           />
         ) : null}
