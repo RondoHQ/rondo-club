@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.81.0] - 2026-07-30
+
+### Added
+
+- **Rondo staat nu als app met het AWC-clublogo op je telefoon.** Wie Rondo op het beginscherm zette, kreeg tot nu toe een vaag Rondo-logo op een zwarte tegel — op de iPhone omdat het pictogram doorzichtig was en iOS dat opvult met zwart, en op elk toestel omdat alle formaten werden vergroot vanuit een plaatje van 145 pixels. De pictogrammen komen nu uit het AWC-clubembleem in vectorvorm, op een lichtgroene achtergrond, in de vier formaten die iOS en Android nodig hebben. Het is je eigen club die op je beginscherm staat, niet een productlogo.
+- **"App installeren" staat voortaan gewoon in het menu.** De uitnodiging om Rondo te installeren verscheen alleen vanzelf, na een aantal bezoeken, en verdween een week lang zodra je hem wegklikte. Wie de app wél wilde, had geen knop om op te drukken. Die staat nu onderin het zijmenu, en legt per apparaat uit waar je browser de installatieknop verstopt — ook op de iPhone, waar geen enkele website dat zelf kan regelen.
+
+### Changed
+
+- **De app heet nu overal "AWC Rondo".** De naam op het beginscherm en in de installatievensters stond vast ingesteld op "Rondo Club", terwijl de sitenaam allang "AWC Rondo" was. Die naam wordt nu overal uit de site-instellingen gelezen, dus de demo-omgeving houdt vanzelf haar eigen naam.
+- Een geïnstalleerde app opent nu direct op het dashboard in plaats van via een omleiding, en toont bij het opstarten dezelfde kleur als het pictogram.
+
+### Fixed
+
+- **De installatieknop van Chrome en Edge verscheen nooit.** Android en desktop laten pas een installatieknop zien als de site een actieve service worker heeft. Die werd sinds een opruimactie in de code nergens meer aangemeld, waardoor de knop in de adresbalk en de installatiemelding op Android al die tijd zijn uitgebleven. Hij wordt weer aangemeld — en werkt nu ook echt voor de hele site in plaats van alleen voor de map met bestanden, waardoor offline gebruik pas nu kan werken.
+- **Voorkomen dat de offlinepagina de hele app zou vervangen.** In de bestaande instellingen stond de offlinepagina klaar als antwoord op élk paginaverzoek, ook met een werkende internetverbinding. Zodra de service worker weer actief werd, zou iedereen "je bent offline" te zien krijgen in plaats van Rondo. De offlinepagina verschijnt nu alleen nog als het netwerk daadwerkelijk niet reageert.
+- Het installatievoorstel werd geteld per keer dat de pagina volledig werd herladen, wat in Rondo vrijwel nooit gebeurt — daardoor verscheen het in de praktijk zelden. Het telt nu gewone klikken door de app.
+
 ## [33.80.2] - 2026-07-30
 
 ### Changed

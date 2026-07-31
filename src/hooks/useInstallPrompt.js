@@ -1,11 +1,17 @@
 import { useState, useEffect } from 'react';
 import { installTracking } from '../utils/installTracking';
+import { isStandalone } from '../utils/platform';
 
 /**
  * React hook that captures the beforeinstallprompt event for Android PWA installation.
  * Manages install prompt state and provides functions to trigger or dismiss the prompt.
  *
- * @returns {Object} - { canInstall, promptInstall, hidePrompt, isInstalled }
+ * `canInstall` drives the automatic banner and respects the dismissal backoff.
+ * `hasNativePrompt` reports whether a real prompt was captured at all, and
+ * ignores the backoff — an explicit "App installeren" click should always fire
+ * the native dialog, however often the passive banner was waved away.
+ *
+ * @returns {Object} - { canInstall, hasNativePrompt, promptInstall, hidePrompt, isInstalled }
  */
 export function useInstallPrompt() {
   const [installPrompt, setInstallPrompt] = useState(null);
@@ -13,17 +19,10 @@ export function useInstallPrompt() {
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
-    // Check if app is already installed
-    const checkInstalled = () => {
-      const standalone = window.matchMedia('(display-mode: standalone)').matches;
-      const iosStandalone = window.navigator.standalone === true;
-      return standalone || iosStandalone;
-    };
-
-    setIsInstalled(checkInstalled());
+    setIsInstalled(isStandalone());
 
     // If already installed, don't set up listeners
-    if (checkInstalled()) {
+    if (isStandalone()) {
       return;
     }
 
@@ -105,6 +104,7 @@ export function useInstallPrompt() {
 
   return {
     canInstall,
+    hasNativePrompt: installPrompt !== null,
     promptInstall,
     hidePrompt,
     isInstalled,

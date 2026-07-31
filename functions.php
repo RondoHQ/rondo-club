@@ -771,8 +771,10 @@ add_action( 'wp_head', 'rondo_preload_dashboard_api', 1 );
 /**
  * Output PWA meta tags for iOS and Android support
  *
- * vite-plugin-pwa handles manifest generation, but we need to manually
- * inject meta tags since WordPress uses PHP templates, not index.html.
+ * The manifest itself is served by rondo_render_manifest() rather than emitted
+ * as a static file by the build, so its name can follow the WordPress site
+ * title. Meta tags are injected here because WordPress uses PHP templates, not
+ * an index.html the build can transform.
  */
 function rondo_pwa_meta_tags() {
 	$theme_url = RONDO_THEME_URL;
@@ -785,13 +787,13 @@ function rondo_pwa_meta_tags() {
 	<meta name="mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="default">
-	<meta name="apple-mobile-web-app-title" content="Rondo Club">
+	<meta name="apple-mobile-web-app-title" content="<?php echo esc_attr( rondo_pwa_app_name() ); ?>">
 
-	<!-- Apple Touch Icon -->
+	<!-- Apple Touch Icon (must be opaque; iOS mattes transparency on black) -->
 	<link rel="apple-touch-icon" href="<?php echo esc_url( $theme_url . '/public/icons/apple-touch-icon-180x180.png' ); ?>">
 
 	<!-- Manifest -->
-	<link rel="manifest" href="<?php echo esc_url( $theme_url . '/dist/manifest.webmanifest' ); ?>">
+	<link rel="manifest" href="<?php echo esc_url( home_url( '/manifest.webmanifest' ) ); ?>">
 
 	<!-- Theme Color (fixed brand colors) -->
 	<meta name="theme-color" media="(prefers-color-scheme: light)" content="<?php echo $brand_color_light; ?>">
@@ -799,6 +801,113 @@ function rondo_pwa_meta_tags() {
 	<?php
 }
 add_action( 'wp_head', 'rondo_pwa_meta_tags', 2 );
+
+/**
+ * Resolve the installed-app name.
+ *
+ * The WordPress site title already carries the right value per deployment
+ * ("AWC Rondo" on production, "Rondo Demo" on demo), so nothing club-specific
+ * has to be baked into the build.
+ *
+ * @return string
+ */
+function rondo_pwa_app_name() {
+	$name = trim( (string) get_bloginfo( 'name' ) );
+
+	return $name !== '' ? $name : 'Rondo';
+}
+
+/**
+ * Serve the web app manifest at /manifest.webmanifest.
+ *
+ * Served from PHP rather than built as a static file for three reasons: the
+ * name follows the site title, the icon URLs are absolute instead of relative
+ * to the build directory, and the response carries the correct
+ * application/manifest+json content type (SiteGround serves the built
+ * .webmanifest with no content type at all).
+ */
+function rondo_render_manifest() {
+	if ( ! get_query_var( 'rondo_manifest' ) ) {
+		return;
+	}
+
+	header( 'Content-Type: application/manifest+json; charset=utf-8' );
+	header( 'Cache-Control: public, max-age=3600' );
+
+	echo rondo_build_manifest(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON encoded above.
+	exit;
+}
+add_action( 'template_redirect', 'rondo_render_manifest', 0 );
+
+/**
+ * Build the manifest document.
+ *
+ * Separate from the route so it can be asserted on without exiting the request.
+ *
+ * @return string JSON encoded manifest.
+ */
+function rondo_build_manifest() {
+	$name  = rondo_pwa_app_name();
+	$icons = RONDO_THEME_URL . '/public/icons';
+
+	// Members install this to reach the club's data, so the crest — not the
+	// Rondo mark — is what belongs on the home screen. Background matches the
+	// icon tile so the Android splash reads as one surface.
+	$manifest = [
+		'id'               => '/',
+		'name'             => $name,
+		'short_name'       => $name,
+		'description'      => rondo_pwa_app_description(),
+		'lang'             => 'nl',
+		'dir'              => 'ltr',
+		'start_url'        => '/',
+		'scope'            => '/',
+		'display'          => 'standalone',
+		'display_override' => [ 'standalone', 'minimal-ui' ],
+		'orientation'      => 'any',
+		'theme_color'      => '#0891b2',
+		'background_color' => '#CCE1D7',
+		'categories'       => [ 'sports', 'productivity' ],
+		'icons'            => [
+			[
+				'src'     => $icons . '/icon-192x192.png',
+				'sizes'   => '192x192',
+				'type'    => 'image/png',
+				'purpose' => 'any',
+			],
+			[
+				'src'     => $icons . '/icon-512x512.png',
+				'sizes'   => '512x512',
+				'type'    => 'image/png',
+				'purpose' => 'any',
+			],
+			[
+				'src'     => $icons . '/icon-512x512-maskable.png',
+				'sizes'   => '512x512',
+				'type'    => 'image/png',
+				'purpose' => 'maskable',
+			],
+		],
+	];
+
+	return wp_json_encode( $manifest );
+}
+
+/**
+ * Build the manifest description from the configured club name.
+ *
+ * @return string
+ */
+function rondo_pwa_app_description() {
+	$club_name = trim( \Rondo\Config\ClubConfig::get_club_name() );
+
+	if ( $club_name === '' ) {
+		return 'Ledenadministratie en vrijwilligersbeheer';
+	}
+
+	/* translators: %s: club name. */
+	return sprintf( 'Ledenadministratie en vrijwilligersbeheer voor %s', $club_name );
+}
 
 /**
  * Add Rondo favicon to frontend pages.
@@ -961,8 +1070,24 @@ add_action( 'template_redirect', 'rondo_theme_template_redirect', 1 );
 function rondo_theme_rewrite_rules() {
 	add_rewrite_rule( '^app/?', 'index.php', 'top' );
 	add_rewrite_rule( '^app/(.+)/?', 'index.php', 'top' );
+
+	// Web app manifest — served by rondo_render_manifest().
+	add_rewrite_rule( '^manifest\.webmanifest$', 'index.php?rondo_manifest=1', 'top' );
 }
 add_action( 'init', 'rondo_theme_rewrite_rules' );
+
+/**
+ * Register the query var backing the manifest route.
+ *
+ * @param array $vars Registered query vars.
+ * @return array
+ */
+function rondo_pwa_query_vars( $vars ) {
+	$vars[] = 'rondo_manifest';
+
+	return $vars;
+}
+add_filter( 'query_vars', 'rondo_pwa_query_vars' );
 
 /**
  * Flush rewrite rules once after a deploy that adds new public routes.
@@ -976,7 +1101,7 @@ add_action( 'init', 'rondo_theme_rewrite_rules' );
  * Runs late on `init` so every add_rewrite_rule() call has already registered.
  */
 function rondo_maybe_flush_rewrite_rules() {
-	$rewrite_version = '2'; // Bump when adding/changing a rewrite rule.
+	$rewrite_version = '3'; // Bump when adding/changing a rewrite rule.
 	if ( get_option( 'rondo_rewrite_rules_version' ) === $rewrite_version ) {
 		return;
 	}

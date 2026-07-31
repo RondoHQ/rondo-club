@@ -41,6 +41,7 @@ import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch, useDashboard } from '@/hooks/useDashboard';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import FeedbackModal from '@/components/FeedbackModal';
+import { InstallAppButton } from '@/components/InstallAppButton';
 import { useCreateFeedback } from '@/hooks/useFeedback';
 
 import { useVOGCount } from '@/hooks/useVOGCount';
@@ -352,6 +353,8 @@ function Sidebar({ mobile = false, onClose, stats }) {
             )}
           </Link>
         )}
+        {/* Install affordance — renders nothing once the app is installed */}
+        <InstallAppButton />
         {/* Logout link — unchanged styling */}
         <a href={logoutUrl} className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors dark:text-gray-200 dark:hover:bg-gray-700">
           <LogOut className="w-5 h-5 mr-3" />
