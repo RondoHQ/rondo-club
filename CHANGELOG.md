@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.82.2] - 2026-07-31
+
+### Fixed
+
+- **Oud-leden tellen niet meer mee voor gezinskorting.** Alleen actieve jeugdleden op hetzelfde adres bepalen voortaan de kortingsvolgorde. Als iemand oud-lid wordt, worden ook de contributiecaches en kortingsposities van de overige gezinsleden ongeldig gemaakt; achtergebleven korting op het oud-lid zelf wordt genegeerd en opgeruimd.
+
 ## [33.82.1] - 2026-07-31
 
 ### Changed
