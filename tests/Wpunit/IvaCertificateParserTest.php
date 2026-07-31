@@ -20,6 +20,7 @@ class IvaCertificateParserTest extends RondoTestCase {
 		$this->assertSame( 'Joost de Valk', $parsed['name'] );
 		$this->assertSame( '2026-05-31', $parsed['datum'] );
 		$this->assertSame( '210777', $parsed['user_id'] );
+		$this->assertSame( 'voor_elkaar', $parsed['format'] );
 	}
 
 	/**
@@ -31,6 +32,36 @@ class IvaCertificateParserTest extends RondoTestCase {
 		$this->assertSame( 'Joost de Valk', $parsed['name'] );
 		$this->assertSame( '2026-05-31', $parsed['datum'] );
 		$this->assertSame( '210777', $parsed['user_id'] );
+	}
+
+	public function test_parses_vrijwilligerswerknl_certificate_from_tcpdf_metadata(): void {
+		$parsed = IvaCertificateParser::parse_text(
+			"t van de Groes\n30 juli 2026\nNiet ingesteld\nPowered by TCPDF (www.tcpdf.org)",
+			[
+				'Title'    => '_Certificaat_IVA_-_VrijwilligerswerkNL.pdf',
+				'Producer' => 'TCPDF (http://www.tcpdf.org)',
+			]
+		);
+
+		$this->assertSame( 't van de Groes', $parsed['name'] );
+		$this->assertSame( '2026-07-30', $parsed['datum'] );
+		$this->assertSame( '', $parsed['user_id'] );
+		$this->assertSame( 'vrijwilligerswerknl', $parsed['format'] );
+	}
+
+	public function test_rejects_vrijwilligerswerknl_text_without_matching_tcpdf_metadata(): void {
+		$text = "t van de Groes\n30 juli 2026\nNiet ingesteld\nPowered by TCPDF (www.tcpdf.org)";
+
+		$this->assertNull( IvaCertificateParser::parse_text( $text ) );
+		$this->assertNull(
+			IvaCertificateParser::parse_text(
+				$text,
+				[
+					'Title'    => '_Certificaat_IVA_-_VrijwilligerswerkNL.pdf',
+					'Producer' => 'Onbekende PDF-generator',
+				]
+			)
+		);
 	}
 
 	public function test_rejects_pdf_without_voor_elkaar_marker(): void {
@@ -116,5 +147,52 @@ class IvaCertificateParserTest extends RondoTestCase {
 
 		$too_old = array_merge( $recent, [ 'datum' => gmdate( 'Y-m-d', strtotime( '-3 years' ) ) ] );
 		$this->assertFalse( IvaCertificateParser::should_auto_approve( $too_old, $person_id ) );
+	}
+
+	public function test_vrijwilligerswerknl_allows_known_truncated_given_name(): void {
+		$person_id = self::factory()->post->create(
+			[
+				'post_type'  => 'person',
+				'post_title' => 'Jurgen van de Groes',
+			]
+		);
+		update_post_meta( $person_id, 'first_name', 'Jurgen' );
+		update_post_meta( $person_id, 'last_name', 'Groes' );
+
+		$parsed = [
+			'name'   => 't van de Groes',
+			'datum'  => gmdate( 'Y-m-d' ),
+			'format' => 'vrijwilligerswerknl',
+		];
+
+		$this->assertTrue( IvaCertificateParser::should_auto_approve( $parsed, $person_id ) );
+		$this->assertFalse(
+			IvaCertificateParser::should_auto_approve(
+				array_merge( $parsed, [ 'format' => 'voor_elkaar' ] ),
+				$person_id
+			),
+			'Legacy certificates retain the full-name match.'
+		);
+	}
+
+	public function test_vrijwilligerswerknl_truncated_match_requires_multiword_surname(): void {
+		$person_id = self::factory()->post->create(
+			[
+				'post_type'  => 'person',
+				'post_title' => 'Jan Jansen',
+			]
+		);
+		update_post_meta( $person_id, 'first_name', 'Jan' );
+
+		$this->assertFalse(
+			IvaCertificateParser::should_auto_approve(
+				[
+					'name'   => 'n Jansen',
+					'datum'  => gmdate( 'Y-m-d' ),
+					'format' => 'vrijwilligerswerknl',
+				],
+				$person_id
+			)
+		);
 	}
 }

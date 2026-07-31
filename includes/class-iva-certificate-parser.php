@@ -3,10 +3,10 @@
  * IvaCertificateParser
  *
  * Extracts the personalized fields from an official IVA e-learning
- * certificate PDF ("Verantwoord alcohol verstrekken", VWS / NOC*NSF,
- * e-learning "Voor elkaar"). Those PDFs are TCPDF-generated: the entire
- * design is a background image and only the personalized values (naam,
- * branche, user-id, e-learning, datum) exist as a text layer.
+ * certificate PDF ("Verantwoord alcohol verstrekken"). Both the legacy
+ * VWS / NOC*NSF "Voor elkaar" certificate and the newer
+ * VrijwilligerswerkNL certificate are TCPDF-generated: the entire design is
+ * a background image and only the personalized values exist as a text layer.
  *
  * Used by the member IVA upload to auto-approve a certificate when the
  * name on it matches the linked person and the behaaldatum is recent.
@@ -23,6 +23,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class IvaCertificateParser {
+
+	private const FORMAT_VOOR_ELKAAR          = 'voor_elkaar';
+	private const FORMAT_VRIJWILLIGERSWERK_NL = 'vrijwilligerswerknl';
 
 	/**
 	 * Certificates older than this are not auto-approved, even though the
@@ -55,7 +58,7 @@ class IvaCertificateParser {
 	 * Parse an IVA certificate PDF from disk.
 	 *
 	 * @param string $path Absolute path to the PDF file.
-	 * @return array{name: string, datum: string, user_id: string}|null
+	 * @return array{name: string, datum: string, user_id: string, format: string}|null
 	 *         Extracted fields (datum as Y-m-d), or null when the file is
 	 *         not a recognizable IVA certificate.
 	 */
@@ -65,13 +68,14 @@ class IvaCertificateParser {
 		}
 
 		try {
-			$pdf  = ( new \Smalot\PdfParser\Parser() )->parseFile( $path );
-			$text = (string) $pdf->getText();
+			$pdf     = ( new \Smalot\PdfParser\Parser() )->parseFile( $path );
+			$text    = (string) $pdf->getText();
+			$details = $pdf->getDetails();
 		} catch ( \Throwable $e ) {
 			return null;
 		}
 
-		return self::parse_text( $text );
+		return self::parse_text( $text, is_array( $details ) ? $details : [] );
 	}
 
 	/**
@@ -82,12 +86,13 @@ class IvaCertificateParser {
 	 * ("Voor elkaar210777"), so matching is pattern-based instead of
 	 * line-order based.
 	 *
-	 * @param string $text Raw text extracted from the PDF.
-	 * @return array{name: string, datum: string, user_id: string}|null
+	 * @param string              $text    Raw text extracted from the PDF.
+	 * @param array<string,mixed> $details PDF document metadata.
+	 * @return array{name: string, datum: string, user_id: string, format: string}|null
 	 */
-	public static function parse_text( string $text ): ?array {
-		// Require the e-learning marker so random PDFs never parse as IVA.
-		if ( stripos( $text, 'Voor elkaar' ) === false ) {
+	public static function parse_text( string $text, array $details = [] ): ?array {
+		$format = self::detect_format( $text, $details );
+		if ( $format === null ) {
 			return null;
 		}
 
@@ -119,7 +124,36 @@ class IvaCertificateParser {
 			'name'    => $name,
 			'datum'   => $datum,
 			'user_id' => $user_id,
+			'format'  => $format,
 		];
+	}
+
+	/**
+	 * Identify the supported certificate generations without trusting a
+	 * user-supplied filename. Legacy certificates carry their marker in the
+	 * text layer. The newer generation identifies itself in TCPDF metadata.
+	 *
+	 * @param string              $text    Raw text extracted from the PDF.
+	 * @param array<string,mixed> $details PDF document metadata.
+	 */
+	private static function detect_format( string $text, array $details ): ?string {
+		if ( stripos( $text, 'Voor elkaar' ) !== false ) {
+			return self::FORMAT_VOOR_ELKAAR;
+		}
+
+		$title    = (string) ( $details['Title'] ?? $details['dc:title'] ?? '' );
+		$producer = (string) ( $details['Producer'] ?? $details['pdf:producer'] ?? '' );
+		$title    = self::normalize_document_marker( $title );
+
+		if (
+			stripos( $producer, 'TCPDF' ) !== false
+			&& str_contains( $title, 'certificaat iva' )
+			&& str_contains( $title, 'vrijwilligerswerknl' )
+		) {
+			return self::FORMAT_VRIJWILLIGERSWERK_NL;
+		}
+
+		return null;
 	}
 
 	/**
@@ -179,7 +213,56 @@ class IvaCertificateParser {
 			return false;
 		}
 
-		return self::name_matches_person( $parsed['name'] ?? '', $person_id );
+		if ( self::name_matches_person( $parsed['name'] ?? '', $person_id ) ) {
+			return true;
+		}
+
+		return ( $parsed['format'] ?? '' ) === self::FORMAT_VRIJWILLIGERSWERK_NL
+			&& self::truncated_name_matches_person( $parsed['name'] ?? '', $person_id );
+	}
+
+	/**
+	 * The newer VrijwilligerswerkNL PDFs can expose only the final character
+	 * of the given name through their embedded font map. Accept that known
+	 * extraction defect only when the remaining multi-word surname exactly
+	 * matches the linked person's title and the unexplained prefix is at most
+	 * two characters. Other formats retain the stricter full-name comparison.
+	 */
+	private static function truncated_name_matches_person( string $cert_name, int $person_id ): bool {
+		$cert     = self::normalize_name( $cert_name );
+		$title    = self::normalize_name( get_the_title( $person_id ) );
+		$first    = self::normalize_name( (string) get_field( 'first_name', $person_id ) );
+		$nickname = self::normalize_name( (string) get_field( 'nickname', $person_id ) );
+
+		if ( $cert === '' || $title === '' ) {
+			return false;
+		}
+
+		foreach ( array_unique( array_filter( [ $first, $nickname ] ) ) as $given_name ) {
+			if ( ! str_starts_with( $title, $given_name . ' ' ) ) {
+				continue;
+			}
+
+			$surname = trim( substr( $title, strlen( $given_name ) ) );
+			if ( substr_count( $surname, ' ' ) < 1 ) {
+				continue;
+			}
+
+			if ( $cert === $surname ) {
+				return true;
+			}
+
+			if ( ! str_ends_with( $cert, ' ' . $surname ) ) {
+				continue;
+			}
+
+			$unknown_prefix = trim( substr( $cert, 0, -strlen( $surname ) ) );
+			if ( strlen( str_replace( ' ', '', $unknown_prefix ) ) <= 2 ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -232,7 +315,11 @@ class IvaCertificateParser {
 			if ( stripos( $line, 'TCPDF' ) !== false || stripos( $line, 'Voor elkaar' ) !== false ) {
 				continue;
 			}
-			if ( strcasecmp( $line, 'Sport' ) === 0 || strcasecmp( $line, 'Horeca' ) === 0 ) {
+			if (
+				strcasecmp( $line, 'Sport' ) === 0
+				|| strcasecmp( $line, 'Horeca' ) === 0
+				|| strcasecmp( $line, 'Niet ingesteld' ) === 0
+			) {
 				continue;
 			}
 			if ( preg_match( '/^\d+$/', $line ) ) {
@@ -249,6 +336,20 @@ class IvaCertificateParser {
 		}
 
 		return '';
+	}
+
+	/**
+	 * Normalize a metadata marker into lowercase words.
+	 */
+	private static function normalize_document_marker( string $value ): string {
+		if ( function_exists( 'remove_accents' ) ) {
+			$value = remove_accents( $value );
+		}
+
+		$value = strtolower( $value );
+		$value = (string) preg_replace( '/[^a-z0-9]+/', ' ', $value );
+
+		return trim( (string) preg_replace( '/\s+/', ' ', $value ) );
 	}
 
 	/**

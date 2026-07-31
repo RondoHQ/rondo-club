@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.82.5] - 2026-07-31
+
+### Changed
+
+- De IVA-upload vraagt leden voortaan bij voorkeur het originele PDF-bestand te gebruiken en legt uit dat foto's, screenshots en certificaten Sociale Hygiëne handmatig worden beoordeeld.
+
+### Fixed
+
+- Automatische IVA-goedkeuring herkent naast de bestaande NOC*NSF- en "Voor elkaar"-PDF's nu ook het nieuwe TCPDF-certificaatformaat van VrijwilligerswerkNL, inclusief de bekende onvolledige naamtekst van dat formaat.
+
 ## [33.82.4] - 2026-07-31
 
 ### Fixed
