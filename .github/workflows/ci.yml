@@ -200,7 +200,10 @@ jobs:
 
       - name: Run the test suite
         if: steps.acf.outputs.available == 'true'
-        run: composer test
+        # --debug for now: wp-browser switches the theme in a subprocess and
+        # reports only its stdout, which comes back empty, so the actual error
+        # is invisible without it. Drop this once the suite is green here.
+        run: vendor/bin/codecept run Wpunit --debug
 
   deploy:
     name: Deploy successful main commit
