@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.82.3] - 2026-07-31
+
+### Changed
+
+- De vrijwilligerskalender toont maanden uit een nog gesloten inschrijfperiode pas zodra leden zich voor die periode kunnen aanmelden. Vrijwilligerscoördinatoren blijven in de beheerkalender het volledige seizoen vooruitzien.
+
 ## [33.82.2] - 2026-07-31
 
 ### Fixed
