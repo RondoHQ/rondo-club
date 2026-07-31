@@ -203,11 +203,11 @@ export default function ProfileIva() {
 
           <button
             type="submit"
-            disabled={!file || uploadMutation.isLoading}
+            disabled={!file || uploadMutation.isPending}
             className="inline-flex items-center gap-2 btn-primary disabled:opacity-50"
           >
             <Upload className="w-4 h-4" />
-            {uploadMutation.isLoading ? 'Bezig met uploaden…' : 'Certificaat uploaden'}
+            {uploadMutation.isPending ? 'Bezig met uploaden…' : 'Certificaat uploaden'}
           </button>
         </form>
       </section>
