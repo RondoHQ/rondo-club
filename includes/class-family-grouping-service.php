@@ -214,10 +214,9 @@ class FamilyGroupingService {
 		$youth_categories = $this->settings->get_youth_category_slugs( $season );
 
 		foreach ( $query->posts as $person_id ) {
-			// Skip former members not eligible for this season's fee list
-			$is_former = (bool) get_field( 'former_member', $person_id );
-			if ( $is_former && ! $this->person_context->is_former_member_in_season( $person_id, $season ) ) {
-				continue; // Skip former members not in this season
+			// Family discounts are based on the current household, never on former members.
+			if ( (bool) get_field( 'former_member', $person_id ) ) {
+				continue;
 			}
 
 			// Calculate fee for this person using season-specific rates
@@ -389,15 +388,16 @@ class FamilyGroupingService {
 		foreach ( $all_persons->posts as $pid ) {
 			$pid = (int) $pid;
 
-			// Skip former members not in season
-			$is_former = ( get_field( 'former_member', $pid ) === true );
-			if ( $is_former && ! $this->person_context->is_former_member_in_season( $pid, $season ) ) {
-				continue;
-			}
-
 			// Check if same family key
 			$pid_key = $this->get_family_key( $pid );
 			if ( $pid_key !== $family_key ) {
+				continue;
+			}
+
+			// Former members never participate in the current household discount.
+			if ( (bool) get_field( 'former_member', $pid ) ) {
+				update_post_meta( $pid, '_family_discount_rate', '0' );
+				update_post_meta( $pid, '_family_discount_position', '' );
 				continue;
 			}
 

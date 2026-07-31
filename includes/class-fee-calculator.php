@@ -205,6 +205,22 @@ class FeeCalculator {
 			return null;
 		}
 
+		// A former member may still owe a fee for the season, but never receives
+		// a discount based on the club's current household composition.
+		if ( (bool) get_field( 'former_member', $person_id ) ) {
+			return array_merge(
+				$fee_data,
+				[
+					'family_discount_rate'   => 0.0,
+					'family_discount_amount' => 0,
+					'final_fee'              => $fee_data['base_fee'],
+					'family_position'        => null,
+					'family_key'             => null,
+					'family_size'            => null,
+				]
+			);
+		}
+
 		// Youth categories eligible for family discount
 		$youth_categories = $this->settings->get_youth_category_slugs( $season );
 
