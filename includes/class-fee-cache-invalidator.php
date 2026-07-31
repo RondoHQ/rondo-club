@@ -79,7 +79,9 @@ class FeeCacheInvalidator {
 	public function invalidate_native_field( int $post_id, string $canonical_name, $value, $old_value, array $field ): void {
 		if ( $canonical_name === 'addresses' ) {
 			$this->invalidate_family_cache( $value, $post_id, $field );
-		} elseif ( in_array( $canonical_name, [ 'leeftijdsgroep', 'work_history', 'lid_sinds', 'former_member' ], true ) ) {
+		} elseif ( $canonical_name === 'former_member' ) {
+			$this->invalidate_family_membership_cache( $value, $post_id, $field );
+		} elseif ( in_array( $canonical_name, [ 'leeftijdsgroep', 'work_history', 'lid_sinds' ], true ) ) {
 			$this->invalidate_person_cache( $value, $post_id, $field );
 		}
 	}
@@ -123,6 +125,45 @@ class FeeCacheInvalidator {
 	}
 
 	/**
+	 * Clear one person's fee cache and stored family-discount position.
+	 *
+	 * @param int $post_id Person post ID.
+	 */
+	private function clear_person_family_cache( int $post_id ): void {
+		$this->fee_cache->clear_fee_cache( $post_id );
+		delete_post_meta( $post_id, '_family_discount_rate' );
+		delete_post_meta( $post_id, '_family_discount_position' );
+	}
+
+	/**
+	 * Invalidate and recalculate the household after former-member status changes.
+	 *
+	 * Native field update actions run after the new value is persisted, so the
+	 * rebuilt family uses the new active/former state immediately.
+	 *
+	 * @param mixed $value   The new field value.
+	 * @param mixed $post_id The post ID.
+	 * @param array $field   The canonical field array.
+	 * @return mixed The unmodified value.
+	 */
+	public function invalidate_family_membership_cache( $value, $post_id, $field ) {
+		$post_id = $this->resolve_person_post_id( $post_id );
+
+		if ( $post_id === null ) {
+			return $value;
+		}
+
+		$family_key = $this->family_grouping->get_family_key( $post_id );
+		$this->clear_person_family_cache( $post_id );
+
+		if ( $family_key !== null ) {
+			$this->invalidate_and_recalculate_family( $family_key, $post_id );
+		}
+
+		return $value;
+	}
+
+	/**
 	 * Invalidate fee cache for entire family when address changes
 	 *
 	 * Address changes affect family grouping, which impacts discounts for all
@@ -141,18 +182,14 @@ class FeeCacheInvalidator {
 		}
 
 		// Clear this person's cache first
-		$this->fee_cache->clear_fee_cache( $post_id );
+		$this->clear_person_family_cache( $post_id );
 
-		// Get family key BEFORE the address update (using current saved value)
-		$old_family_key = $this->family_grouping->get_family_key( $post_id );
-
-		// Clear family discount meta for this person (will be recalculated on next cache miss)
-		delete_post_meta( $post_id, '_family_discount_rate' );
-		delete_post_meta( $post_id, '_family_discount_position' );
+		// Native field actions run after persistence, so this is the new address.
+		$family_key = $this->family_grouping->get_family_key( $post_id );
 
 		// If person was in a family, invalidate all members and recalculate positions in one pass
-		if ( $old_family_key !== null ) {
-			$this->invalidate_and_recalculate_family( $old_family_key, $post_id );
+		if ( $family_key !== null ) {
+			$this->invalidate_and_recalculate_family( $family_key, $post_id );
 		}
 
 		return $value;
@@ -176,9 +213,7 @@ class FeeCacheInvalidator {
 
 		foreach ( $families[ $family_key ] as $member_id ) {
 			if ( (int) $member_id !== $exclude_id ) {
-				$this->fee_cache->clear_fee_cache( (int) $member_id );
-				delete_post_meta( $member_id, '_family_discount_rate' );
-				delete_post_meta( $member_id, '_family_discount_position' );
+				$this->clear_person_family_cache( (int) $member_id );
 			}
 		}
 
