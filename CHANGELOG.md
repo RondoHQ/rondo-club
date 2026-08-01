@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.0.2] - 2026-08-01
+
+### Changed
+
+- Het blok Inschrijftaken op individuele profielen is één kolom breed, toont de persoonlijke en gedeelde gezinsplicht voor het huidige seizoen en houdt rekening met gezinskorting en vrijstellingen.
+
 ## [34.0.0] - 2026-08-01
 
 ### Added

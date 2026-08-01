@@ -2,10 +2,12 @@
 
 namespace Tests\Wpunit;
 
+use Rondo\Fields\Fields;
 use Rondo\REST\MemberShifts;
 use Rondo\Fees\SeasonKey;
 use Rondo\Volunteer\ShiftCancellationService;
 use Rondo\Volunteer\ShiftEmailScheduler;
+use Rondo\Volunteer\VolunteerEligibilityService;
 use Rondo\Volunteer\VolunteerObligationCalculator;
 use Tests\Support\RondoTestCase;
 use WP_REST_Request;
@@ -15,6 +17,8 @@ use WP_REST_Server;
  * Regression coverage for member cancellation and scheduled shift emails.
  */
 class MemberShiftLifecycleTest extends RondoTestCase {
+	private const TYPE_PARENT = 2;
+	private const TYPE_CHILD  = 3;
 
 	private MemberShifts $controller;
 	private WP_REST_Server $server;
@@ -73,6 +77,25 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		return $shift_id;
 	}
 
+	private function link_parent_child( int $parent_id, int $child_id ): void {
+		$parent_relationships   = Fields::get_for_post( $parent_id, 'relationships' ) ?: [];
+		$parent_relationships[] = [
+			'related_person'    => $child_id,
+			'relationship_type' => self::TYPE_CHILD,
+		];
+		Fields::update_for_post( $parent_id, 'relationships', $parent_relationships );
+		Fields::update_for_post(
+			$child_id,
+			'relationships',
+			[
+				[
+					'related_person'    => $parent_id,
+					'relationship_type' => self::TYPE_PARENT,
+				],
+			]
+		);
+	}
+
 	public function test_person_profile_shifts_include_all_future_and_only_two_most_recent_past_shifts(): void {
 		[, $person_id] = $this->member( 'person_shift_overview_member' );
 
@@ -99,6 +122,30 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertNotContains( $cancelled, array_column( $data['upcoming'], 'id' ) );
 		$this->assertArrayNotHasKey( 'assigned_person_ids', $data['upcoming'][0] );
 		$this->assertArrayNotHasKey( 'fellow_volunteer_contacts', $data['upcoming'][0] );
+	}
+
+	public function test_person_profile_includes_discounted_shared_family_obligation(): void {
+		$parent_id    = $this->createPerson( [ 'post_title' => 'Ouder' ] );
+		$first_child  = $this->createPerson( [ 'post_title' => 'Eerste kind' ] );
+		$second_child = $this->createPerson( [ 'post_title' => 'Tweede kind' ] );
+		update_post_meta( $first_child, 'leeftijdsgroep', 'Onder 12' );
+		update_post_meta( $second_child, 'leeftijdsgroep', 'Onder 9' );
+		$this->link_parent_child( $parent_id, $first_child );
+		$this->link_parent_child( $parent_id, $second_child );
+		VolunteerEligibilityService::invalidate_cache();
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+
+		$request = new WP_REST_Request( 'GET', "/rondo/v1/people/{$second_child}/shifts" );
+		$request->set_param( 'person_id', $second_child );
+		$response = $this->server->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$data = $response->get_data();
+
+		$this->assertSame( SeasonKey::current(), $data['season'] );
+		$this->assertCount( 1, $data['obligations'] );
+		$this->assertSame( 'gezin', $data['obligations'][0]['kind'] );
+		$this->assertSame( 2, $data['obligations'][0]['child_count'] );
+		$this->assertSame( 3, $data['obligations'][0]['required_count'] );
 	}
 
 	public function test_recent_signups_returns_at_most_fifty_shifts_with_names_in_signup_order(): void {

@@ -69,9 +69,14 @@ function PersonShiftItem({ shift }) {
 function PersonShiftOverview({ overview, isLoading }) {
   const upcoming = overview?.upcoming || [];
   const recent = overview?.recent || [];
+  const obligations = overview?.obligations || [];
+  const activeObligations = obligations.filter((obligation) => !obligation.exemption);
+  const required = activeObligations.reduce((total, obligation) => total + obligation.required_count, 0);
+  const hasFamilyObligation = obligations.some((obligation) => obligation.kind === 'gezin');
+  const hasPersonalObligation = obligations.some((obligation) => obligation.kind === 'speler');
 
   return (
-    <section className="card p-6 md:col-span-2">
+    <section className="card p-6">
       <div className="mb-4 flex items-center gap-2">
         <CalendarClock className="h-5 w-5 text-gray-500 dark:text-gray-400" />
         <h2 className="font-semibold text-brand-gradient">Inschrijftaken</h2>
@@ -80,7 +85,43 @@ function PersonShiftOverview({ overview, isLoading }) {
       {isLoading ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">Inschrijftaken laden…</p>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="space-y-6">
+          <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800/60">
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Vrijwilligersplicht {overview?.season ? `· ${overview.season}` : ''}
+            </p>
+            <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
+              {required} {required === 1 ? 'inschrijftaak' : 'inschrijftaken'} vereist
+            </p>
+            {obligations.length === 0 ? (
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Geen persoonlijke of gezinsplicht.</p>
+            ) : (
+              <div className="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+                {obligations.map((obligation) => {
+                  const isFamily = obligation.kind === 'gezin';
+                  const label = isFamily
+                    ? `Gezin${obligation.child_count > 0 ? ` (${obligation.child_count} ${obligation.child_count === 1 ? 'kind' : 'kinderen'})` : ''}`
+                    : 'Persoonlijk';
+
+                  return (
+                    <p key={obligation.kind}>
+                      <span className="font-medium">{label}:</span>{' '}
+                      {obligation.exemption
+                        ? 'vrijgesteld'
+                        : `${obligation.required_count} ${obligation.required_count === 1 ? 'inschrijftaak' : 'inschrijftaken'}`}
+                    </p>
+                  );
+                })}
+                {hasFamilyObligation && (
+                  <p className="pt-1 text-xs text-gray-500 dark:text-gray-400">
+                    De gezinsplicht is gedeeld; inschrijftaken van gezinsleden tellen hierin mee.
+                    {hasPersonalObligation ? ' De persoonlijke plicht komt daar bovenop.' : ''}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
           <div>
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
               Komend ({upcoming.length})

@@ -515,6 +515,31 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'invalid_person', 'Persoon bestaat niet.', [ 'status' => 404 ] );
 		}
 
+		$season      = SeasonKey::current();
+		$eligibility = new VolunteerEligibilityService();
+		$units       = $eligibility->get_eligible_units_for_person( $person_id, $season );
+
+		// A youth player has no personal duty, but their profile should still show
+		// the shared family duty they trigger. This also preserves the multi-child
+		// discount when the profile is opened from any member of the household.
+		if ( empty( $units ) ) {
+			$gezin_unit = $eligibility->get_gezin_unit_for_youth( $person_id, $season );
+			$units      = $gezin_unit ? [ $gezin_unit ] : [];
+		}
+
+		$obligations = array_map(
+			function ( array $obligation ) use ( $season ): array {
+				$obligation = $this->add_unit_exemption( $obligation, $season );
+				return [
+					'kind'           => (string) ( $obligation['kind'] ?? '' ),
+					'required_count' => (int) ( $obligation['required_count'] ?? 0 ),
+					'child_count'    => (int) ( $obligation['child_count'] ?? 0 ),
+					'exemption'      => $obligation['exemption'] ?? null,
+				];
+			},
+			$units
+		);
+
 		$now      = current_datetime()->getTimestamp();
 		$upcoming = [];
 		$recent   = [];
@@ -546,9 +571,11 @@ class MemberShifts extends Base {
 
 		return rest_ensure_response(
 			[
-				'person_id' => $person_id,
-				'upcoming'  => $upcoming,
-				'recent'    => array_slice( $recent, 0, 2 ),
+				'person_id'   => $person_id,
+				'season'      => $season,
+				'obligations' => $obligations,
+				'upcoming'    => $upcoming,
+				'recent'      => array_slice( $recent, 0, 2 ),
 			]
 		);
 	}
