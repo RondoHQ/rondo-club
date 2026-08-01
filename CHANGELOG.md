@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.85.2] - 2026-08-01
+
+### Fixed
+
+- Het overbodige instructiebericht bovenaan het inloglink-formulier is verborgen; de bevestiging na verzenden blijft zichtbaar.
+
 ## [33.85.1] - 2026-08-01
 
 ### Fixed
