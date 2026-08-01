@@ -7,11 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [33.82.6] - 2026-08-01
+## [33.84.1] - 2026-08-01
 
 ### Added
 
 - Read-only production preflight commands export all dynamic ACF definitions with storage/population counts and audit saved field identifiers before the 34.0.0 cutover, without exposing stored values.
+
+## [33.84.0] - 2026-08-01
+
+### Added
+
+- De inlogpagina toont een verwijzing naar de activatiepagina voor leden die nog geen account hebben.
+
+### Fixed
+
+- De Magic Login-teksten op de inlogpagina ("or", "Send me the login link" en de bijbehorende meldingen) worden nu in het Nederlands weergegeven. De plugin levert zelf geen Nederlandse vertaling mee.
+
+## [33.83.1] - 2026-08-01
+
+### Changed
+
+- De inlogpagina toont de sitetitel (de applicatienaam) onder het logo in plaats van de geconfigureerde clubnaam.
+
+## [33.83.0] - 2026-08-01
+
+### Changed
+
+- De inlogpagina gebruikt voortaan het geconfigureerde clublogo en de clubkleuren (accentkleur uit de instellingen) in plaats van het standaard Rondo-logo en de vaste cyaan kleuren. Zonder configuratie blijft de bestaande Rondo-huisstijl gelden.
 
 ## [33.82.5] - 2026-07-31
 
