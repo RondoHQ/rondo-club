@@ -28,6 +28,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Het publieke `acf`-responseveld, ondersteuning voor `acf`-writes, alle runtime-helper- en hookafhankelijkheden, plugininstallatie/licentiecode, en de map `acf-json/`. Oude writes krijgen een gerichte HTTP 400 met `fields` als vervanging.
 
+## [33.85.5] - 2026-08-01
+
+### Fixed
+
+- De vrijwilligerspagina neemt bij een gezinsplicht nu de vrijstelling van alle verantwoordelijke ouders/verzorgers mee, ook wanneer een ouder tijdelijk via het account van een kind is aangemeld.
+
+## [33.85.4] - 2026-08-01
+
+### Changed
+
+- De knop "App installeren" staat niet meer in de desktop-sidebar; op mobiel blijft de installatie-optie beschikbaar.
+
+### Fixed
+
+- De naam onderaan de sidebar gebruikt nu de gekoppelde persoonsnaam, zodat een tussenvoegsel correct tussen voor- en achternaam staat.
+
 ## [33.85.3] - 2026-08-01
 
 ### Changed

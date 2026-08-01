@@ -2,6 +2,7 @@
 
 namespace Tests\Wpunit;
 
+use Rondo\REST\MemberShifts;
 use Rondo\Users\GuardianAccountService;
 use Rondo\Users\UserProvisioning;
 use Rondo\Volunteer\VolunteerEligibilityService;
@@ -11,6 +12,8 @@ use Tests\Support\RondoTestCase;
  * Tests the temporary parent identity and the later account migration.
  */
 class GuardianAccountServiceTest extends RondoTestCase {
+	private const TYPE_PARENT = 2;
+	private const TYPE_CHILD  = 3;
 
 	private function person( string $name, ?string $age_group = null ): int {
 		$person_id        = $this->createPerson( [ 'post_title' => $name ] );
@@ -34,6 +37,29 @@ class GuardianAccountServiceTest extends RondoTestCase {
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
 		update_post_meta( $person_id, UserProvisioning::META_USER_ID, $user_id );
 		return $user_id;
+	}
+
+	private function link_parent_child( int $parent_id, int $child_id ): void {
+		\Rondo\Fields\Fields::update_for_post(
+			$parent_id,
+			'relationships',
+			[
+				[
+					'related_person'    => $child_id,
+					'relationship_type' => self::TYPE_CHILD,
+				],
+			]
+		);
+		\Rondo\Fields\Fields::update_for_post(
+			$child_id,
+			'relationships',
+			[
+				[
+					'related_person'    => $parent_id,
+					'relationship_type' => self::TYPE_PARENT,
+				],
+			]
+		);
 	}
 
 	public function test_claim_sends_the_requested_notification_and_stores_the_guardian(): void {
@@ -74,6 +100,46 @@ class GuardianAccountServiceTest extends RondoTestCase {
 		$this->assertSame( 'gezin', $unit['kind'] );
 		$this->assertSame( 2, $unit['required_count'] );
 		$this->assertContains( $child_id, $unit['trigger_person_ids'] );
+	}
+
+	public function test_pending_guardian_sees_family_exemption_from_commissie_parent(): void {
+		$child_id  = $this->person( 'Jeugdlid', 'Onder 12' );
+		$parent_id = $this->person( 'Vrijwillige Ouder' );
+		$user_id   = $this->linked_user( $child_id );
+		$this->link_parent_child( $parent_id, $child_id );
+
+		$commissie_id = self::factory()->post->create(
+			[
+				'post_type'   => 'commissie',
+				'post_status' => 'publish',
+				'post_title'  => 'Jeugdcommissie',
+			]
+		);
+		\Rondo\Fields\Fields::update_for_post(
+			$parent_id,
+			'work_history',
+			[
+				[
+					'team'        => $commissie_id,
+					'entity_type' => 'commissie',
+					'job_title'   => 'Lid',
+					'is_current'  => 1,
+				],
+			]
+		);
+
+		add_filter( 'pre_wp_mail', '__return_true' );
+		GuardianAccountService::claim( $user_id, $child_id, 'Andere Ouder' );
+		wp_set_current_user( $user_id );
+
+		$response = ( new MemberShifts() )->get_my_shifts( new \WP_REST_Request( 'GET', '/rondo/v1/my-shifts' ) );
+		$data     = $response->get_data();
+
+		$this->assertCount( 1, $data['obligations'] );
+		$this->assertSame( 'gezin', $data['obligations'][0]['kind'] );
+		$this->assertSame( $parent_id, $data['obligations'][0]['exemption']['person_id'] );
+		$this->assertSame( 'Vrijwillige Ouder', $data['obligations'][0]['exemption']['person_name'] );
+		$this->assertSame( 'commissie', $data['obligations'][0]['exemption']['reason'] );
 	}
 
 	public function test_relink_moves_account_owned_shifts_and_vog_iva_data(): void {
