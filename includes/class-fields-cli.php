@@ -15,7 +15,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** WP-CLI commands supporting the field-contract migration. */
 final class FieldsCli {
-	/** Export the exact native dynamic-definition store for backup/restore. */
+	/**
+	 * Export the exact native dynamic-definition store for backup/restore.
+	 *
+	 * @subcommand backup-dynamic
+	 */
 	public function backup_dynamic(): void {
 		$manager = new Manager();
 		\WP_CLI::line( wp_json_encode( $manager->export_store(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
@@ -37,6 +41,7 @@ final class FieldsCli {
 	 *
 	 * @param string[]            $args Positional arguments.
 	 * @param array<string,mixed> $assoc_args Named arguments.
+	 * @subcommand import-dynamic
 	 */
 	public function import_dynamic( array $args, array $assoc_args ): void {
 		$path = $args[0] ?? '';
@@ -66,6 +71,7 @@ final class FieldsCli {
 	 *
 	 *     wp rondo fields export-dynamic > dynamic-fields.json
 	 *
+	 * @subcommand export-dynamic
 	 * @when after_wp_load
 	 */
 	public function export_dynamic(): void {
@@ -124,6 +130,7 @@ final class FieldsCli {
 	 *
 	 *     wp rondo fields audit-persisted > persisted-field-references.json
 	 *
+	 * @subcommand audit-persisted
 	 * @when after_wp_load
 	 */
 	public function audit_persisted(): void {
@@ -223,6 +230,7 @@ final class FieldsCli {
 	 * @when after_wp_load
 	 * @param string[]            $args Positional arguments.
 	 * @param array<string,mixed> $assoc_args Named arguments.
+	 * @subcommand migrate-persisted
 	 */
 	public function migrate_persisted( array $args, array $assoc_args ): void {
 		global $wpdb;
