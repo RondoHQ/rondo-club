@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.85.1] - 2026-08-01
+
+### Fixed
+
+- De opmaak van het "Nog geen account?"-blok op de inlogpagina werd overschreven door de stijl-reset van WordPress zelf.
+
 ## [33.85.0] - 2026-08-01
 
 ### Changed

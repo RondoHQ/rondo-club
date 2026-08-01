@@ -1503,8 +1503,10 @@ function rondo_login_styles() {
 			text-decoration: underline;
 		}
 
-		/* Activation hint for members without an account, below the login box */
-		.rondo-activation-hint {
+		/* Activation hint for members without an account, below the login box.
+			Selectors carry the .login prefix to out-rank the `.login *` reset
+			in WordPress core's login.css. */
+		.login .rondo-activation-hint {
 			background: #ffffff;
 			border: 1px solid <?php echo esc_attr( $brand_color_border ); ?>;
 			border-radius: 12px;
@@ -1517,18 +1519,18 @@ function rondo_login_styles() {
 			color: <?php echo esc_attr( $brand_color_darkest ); ?>;
 		}
 
-		.rondo-activation-hint h2 {
+		.login .rondo-activation-hint h2 {
 			margin: 0 0 6px;
 			font-size: 15px;
 			font-weight: 600;
 			color: <?php echo esc_attr( $brand_color_darkest ); ?>;
 		}
 
-		.rondo-activation-hint p {
+		.login .rondo-activation-hint p {
 			margin: 0;
 		}
 
-		.rondo-activation-hint a {
+		.login .rondo-activation-hint a {
 			color: <?php echo esc_attr( $brand_color_dark ); ?>;
 			font-weight: 600;
 		}
