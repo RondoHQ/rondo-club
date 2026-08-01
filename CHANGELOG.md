@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.85.6] - 2026-08-01
+
+### Changed
+
+- De clubspecifieke uitleg op de vrijwilligerspagina staat nu in de subtitel onder de paginatitel; het losse lichtblauwe informatieblok is verwijderd.
+
 ## [33.85.5] - 2026-08-01
 
 ### Fixed
