@@ -507,17 +507,16 @@ export default function Vrijwillig() {
         <div className="p-2 bg-cyan-50 dark:bg-gray-700 rounded-lg">
           <HeartHandshake className="w-6 h-6 text-bright-cobalt dark:text-electric-cyan" />
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 sm:pr-6">
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Vrijwilligers</h1>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            <span>Plan je inschrijftaken in en houd je voortgang bij voor het seizoen {mine?.season}.</span>
-            {volunteerSignupInfo ? (
+          {volunteerSignupInfo ? (
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               <div
-                className="contents prose prose-sm max-w-none prose-p:inline prose-p:ml-1 prose-p:my-0 prose-p:text-inherit prose-a:text-bright-cobalt prose-a:font-medium hover:prose-a:underline dark:prose-invert dark:prose-a:text-electric-cyan"
+                className="contents prose prose-sm max-w-none prose-p:inline prose-p:my-0 prose-p:text-inherit prose-a:text-bright-cobalt prose-a:font-medium hover:prose-a:underline dark:prose-invert dark:prose-a:text-electric-cyan"
                 dangerouslySetInnerHTML={{ __html: openHtmlLinksInNewTab(volunteerSignupInfo) }}
               />
-            ) : null}
-          </div>
+            </div>
+          ) : null}
         </div>
         <Link
           to="/profile"
