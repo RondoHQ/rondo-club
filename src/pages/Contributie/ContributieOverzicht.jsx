@@ -22,6 +22,7 @@ export function ContributieOverzicht() {
 
   // Read billing method from fee summary
   const billingMethod = data?.billing_method ?? 'nikki';
+  const visibleJobStatus = jobStatus?.season === data?.season ? jobStatus : null;
 
   // Mutation to start bulk invoice job
   const startBulkJob = useMutation({
@@ -86,10 +87,10 @@ export function ContributieOverzicht() {
         {isAdmin && billingMethod === 'rondo' && !isForecast && (
           <button
             onClick={() => startBulkJob.mutate()}
-            disabled={jobStatus?.status === 'running' || startBulkJob.isPending}
+            disabled={visibleJobStatus?.status === 'running' || startBulkJob.isPending}
             className="btn-primary gap-2"
           >
-            {(jobStatus?.status === 'running' || startBulkJob.isPending) ? (
+            {(visibleJobStatus?.status === 'running' || startBulkJob.isPending) ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <FileText className="w-4 h-4" />
@@ -100,24 +101,23 @@ export function ContributieOverzicht() {
       </div>
 
       {/* Bulk job progress */}
-      {jobStatus && ['running', 'done', 'error'].includes(jobStatus.status) && !isForecast && (
+      {visibleJobStatus && ['running', 'done', 'error'].includes(visibleJobStatus.status) && !isForecast && (
         <div className="card p-4">
-          {jobStatus.status === 'running' && (
+          {visibleJobStatus.status === 'running' && (
             <div className="flex items-center gap-3">
               <Loader2 className="w-5 h-5 animate-spin text-electric-cyan" />
               <span className="text-sm text-gray-700 dark:text-gray-300">
-                {jobStatus.created + jobStatus.skipped} van {jobStatus.total} facturen verwerkt
-                ({jobStatus.created} aangemaakt, {jobStatus.skipped} overgeslagen)
+                {visibleJobStatus.created + visibleJobStatus.skipped} van {visibleJobStatus.total} betaalregels gecontroleerd
               </span>
             </div>
           )}
-          {jobStatus.status === 'done' && (
+          {visibleJobStatus.status === 'done' && (
             <div className="text-sm text-green-700 dark:text-green-400">
-              Klaar: {jobStatus.created} facturen aangemaakt, {jobStatus.skipped} overgeslagen
-              {jobStatus.errors > 0 && `, ${jobStatus.errors} fouten`}
+              Klaar: {visibleJobStatus.created + visibleJobStatus.skipped} betaalregels gecontroleerd
+              {visibleJobStatus.errors > 0 && `, ${visibleJobStatus.errors} fouten`}
             </div>
           )}
-          {jobStatus.status === 'error' && (
+          {visibleJobStatus.status === 'error' && (
             <div className="text-sm text-red-600 dark:text-red-400">
               Er is een fout opgetreden bij het aanmaken van facturen.
             </div>
