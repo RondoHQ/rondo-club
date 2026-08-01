@@ -311,6 +311,19 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertNotEmpty( get_post_meta( $shift_id, '_shift_email_reminder_2_sent_' . $person_id, true ) );
 	}
 
+	public function test_reminders_ignore_invalid_assignee_ids(): void {
+		$now       = new \DateTimeImmutable( '2026-09-01 10:00:00', wp_timezone() );
+		$type_id   = $this->dienst_type();
+		$person_id = $this->mail_person( 'Anne', 'anne-invalid-assignees@example.com' );
+		$shift_id  = $this->dated_shift( $type_id, [ 0, 999999, $person_id ], $now->modify( '+14 days' ) );
+
+		$this->assertSame( 1, ( new ShiftEmailScheduler() )->run_sweep( $now ) );
+		$this->assertCount( 1, $this->sent_mail );
+		$this->assertNotEmpty( get_post_meta( $shift_id, '_shift_email_reminder_14_sent_' . $person_id, true ) );
+		$this->assertEmpty( get_post_meta( $shift_id, '_shift_email_reminder_14_sent_0', true ) );
+		$this->assertEmpty( get_post_meta( $shift_id, '_shift_email_reminder_14_sent_999999', true ) );
+	}
+
 	public function test_survey_is_sent_one_day_later_with_google_forms_link(): void {
 		$now       = new \DateTimeImmutable( '2026-09-16 12:00:00', wp_timezone() );
 		$type_id   = $this->dienst_type();
