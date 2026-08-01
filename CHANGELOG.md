@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.85.0] - 2026-08-01
+
+### Changed
+
+- De inloglink-knop heet nu "Mail mij een inloglink" en legt eronder uit hoe de functie werkt.
+- Het inlogveld heet nu "E-mailadres" in plaats van "Gebruikersnaam of e-mailadres"; inloggen met gebruikersnaam blijft werken.
+- De verwijzing naar de activatiepagina staat nu onder het inlogformulier, met de kop "Nog geen account?".
+- "Onthoud mij" staat altijd aan; het selectievakje is verborgen.
+- De taalwissel-knop op de inlogpagina volgt nu de clubkleuren.
+
 ## [33.84.1] - 2026-08-01
 
 ### Added

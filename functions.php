@@ -1468,13 +1468,24 @@ function rondo_login_styles() {
 			transform: translateY(1px);
 		}
 
-		/* Remember me checkbox */
+		/* Remember me is always on (see rondo_force_remember_me), so hide the checkbox */
 		.login .forgetmenot {
-			margin-top: 10px;
+			display: none;
 		}
 
 		.login input[type="checkbox"] {
 			accent-color: <?php echo esc_attr( $brand_color ); ?>;
+		}
+
+		/* Explain what the magic login button does */
+		.login .continue-with-magic-login::after {
+			content: "Vul je e-mailadres in en klik op deze knop: je ontvangt een e-mail met een link waarmee je zonder wachtwoord direct inlogt.";
+			display: block;
+			margin-top: 10px;
+			font-size: 12px;
+			line-height: 1.5;
+			color: #64748b;
+			text-align: center;
 		}
 
 		/* Links */
@@ -1492,21 +1503,55 @@ function rondo_login_styles() {
 			text-decoration: underline;
 		}
 
-		/* Activation hint for members without an account */
-		.login .rondo-activation-hint {
+		/* Activation hint for members without an account, below the login box */
+		.rondo-activation-hint {
 			background: #ffffff;
 			border: 1px solid <?php echo esc_attr( $brand_color_border ); ?>;
-			border-radius: 8px;
-			padding: 12px 16px;
-			margin-bottom: 16px;
+			border-radius: 12px;
+			padding: 16px 20px;
+			margin: 24px auto 0;
+			max-width: 320px;
+			box-sizing: border-box;
 			font-size: 13px;
 			line-height: 1.5;
 			color: <?php echo esc_attr( $brand_color_darkest ); ?>;
 		}
 
-		.login .rondo-activation-hint a {
+		.rondo-activation-hint h2 {
+			margin: 0 0 6px;
+			font-size: 15px;
+			font-weight: 600;
+			color: <?php echo esc_attr( $brand_color_darkest ); ?>;
+		}
+
+		.rondo-activation-hint p {
+			margin: 0;
+		}
+
+		.rondo-activation-hint a {
 			color: <?php echo esc_attr( $brand_color_dark ); ?>;
 			font-weight: 600;
+		}
+
+		/* Language switcher */
+		.login .language-switcher .button {
+			background: #ffffff;
+			border: 1px solid <?php echo esc_attr( $brand_color_border ); ?>;
+			border-radius: 8px;
+			color: <?php echo esc_attr( $brand_color_dark ); ?>;
+			font-weight: 600;
+		}
+
+		.login .language-switcher .button:hover,
+		.login .language-switcher .button:focus {
+			background: <?php echo esc_attr( $brand_color_lightest ); ?>;
+			border-color: <?php echo esc_attr( $brand_color ); ?>;
+			color: <?php echo esc_attr( $brand_color_darkest ); ?>;
+		}
+
+		.login .language-switcher select {
+			border: 1px solid <?php echo esc_attr( $brand_color_border ); ?>;
+			border-radius: 8px;
 		}
 
 		/* Error/message boxes */
@@ -1563,7 +1608,20 @@ add_action( 'login_head', 'rondo_login_favicon' );
  * @return string
  */
 function rondo_magic_login_dutch( $translation, $text, $domain ) {
-	if ( $domain !== 'magic-login' || ! str_starts_with( determine_locale(), 'nl' ) ) {
+	if ( ! str_starts_with( determine_locale(), 'nl' ) ) {
+		return $translation;
+	}
+
+	// Login accepts a username too, but members only know their e-mail address,
+	// so the login screen presents the field as e-mail only.
+	if ( $domain === 'default' ) {
+		if ( ( $GLOBALS['pagenow'] ?? '' ) === 'wp-login.php' && $text === 'Username or Email Address' ) {
+			return 'E-mailadres';
+		}
+		return $translation;
+	}
+
+	if ( $domain !== 'magic-login' ) {
 		return $translation;
 	}
 
@@ -1571,15 +1629,15 @@ function rondo_magic_login_dutch( $translation, $text, $domain ) {
 		'Log In'                                      => 'Inloggen',
 		'Log in'                                      => 'Inloggen',
 		'or'                                          => 'of',
-		'Send me the login link'                      => 'Stuur mij de inloglink',
-		'Username or Email Address'                   => 'Gebruikersnaam of e-mailadres',
-		'Username'                                    => 'Gebruikersnaam',
-		'Please enter your username. You will receive an email message to log in.' => 'Vul je gebruikersnaam of e-mailadres in. Je ontvangt een e-mail met een inloglink.',
+		'Send me the login link'                      => 'Mail mij een inloglink',
+		'Username or Email Address'                   => 'E-mailadres',
+		'Username'                                    => 'E-mailadres',
+		'Please enter your username. You will receive an email message to log in.' => 'Vul je e-mailadres in. Je ontvangt een e-mail met een inloglink.',
 		'Please check your inbox for the login link. If you did not receive a login email, check your spam folder too.' => 'Controleer je inbox voor de inloglink. Geen e-mail ontvangen? Kijk dan ook in je spammap.',
 		'If an account matches your request, please check your inbox for the login link. If you did not receive a login email, check your spam folder too.' => 'Als er een account bestaat voor deze gegevens, ontvang je een e-mail met de inloglink. Geen e-mail ontvangen? Kijk dan ook in je spammap.',
 		'We have already sent several login emails recently. Please check your inbox and spam folder before requesting another link.' => 'We hebben recent al meerdere inlogmails gestuurd. Controleer je inbox en spammap voordat je een nieuwe link aanvraagt.',
-		'There is no account with that username or email address.' => 'Er is geen account met die gebruikersnaam of dat e-mailadres.',
-		'There is no account with that username.'     => 'Er is geen account met die gebruikersnaam.',
+		'There is no account with that username or email address.' => 'Er is geen account met dat e-mailadres.',
+		'There is no account with that username.'     => 'Er is geen account met dat e-mailadres.',
 		'Invalid login code.'                         => 'Ongeldige inlogcode.',
 		'Invalid magic login token. <a href="%s">Try signing in instead</a>?' => 'Ongeldige of verlopen inloglink. <a href="%s">Probeer opnieuw in te loggen</a>.',
 		'Unable to process your request. Please try again.' => 'We konden je verzoek niet verwerken. Probeer het opnieuw.',
@@ -1593,23 +1651,47 @@ function rondo_magic_login_dutch( $translation, $text, $domain ) {
 add_filter( 'gettext', 'rondo_magic_login_dutch', 10, 3 );
 
 /**
- * Point members without an account to the activation page, below the login form heading.
+ * Point members without an account to the activation page, below the login box.
  *
- * @param string $message Existing login message.
- * @return string
+ * Rendered in the login footer, then moved into #login with a small script so
+ * it sits directly under the form and its navigation links.
  */
-function rondo_login_activation_message( $message ) {
+function rondo_login_activation_hint() {
 	$branding = \Rondo\Pages\PublicPageChrome::branding();
-	$hint     = sprintf(
-		'Als je lid bent van %1$s maar nog geen %2$s account hebt, ga dan naar <a href="%3$s">de activatiepagina en maak je account aan</a>.',
-		esc_html( $branding['name'] ),
-		esc_html( get_bloginfo( 'name' ) ),
-		esc_url( home_url( '/activeren' ) )
-	);
-
-	return $message . '<p class="rondo-activation-hint">' . $hint . '</p>';
+	?>
+	<div class="rondo-activation-hint" id="rondo-activation-hint">
+		<h2>Nog geen account?</h2>
+		<p>
+			Als je lid bent van <?php echo esc_html( $branding['name'] ); ?> maar nog geen
+			<?php echo esc_html( get_bloginfo( 'name' ) ); ?> account hebt, ga dan naar
+			<a href="<?php echo esc_url( home_url( '/activeren' ) ); ?>">de activatiepagina en maak je account aan</a>.
+		</p>
+	</div>
+	<script type="text/javascript">
+		(function () {
+			var hint  = document.getElementById( 'rondo-activation-hint' );
+			var login = document.getElementById( 'login' );
+			if ( hint && login ) {
+				login.appendChild( hint );
+			}
+		})();
+	</script>
+	<?php
 }
-add_filter( 'login_message', 'rondo_login_activation_message' );
+add_action( 'login_footer', 'rondo_login_activation_hint' );
+
+/**
+ * Always keep users logged in: the "remember me" checkbox is hidden via the
+ * login CSS, and the flag is forced here for every login submission. Magic
+ * Login links already remember unconditionally.
+ */
+function rondo_force_remember_me() {
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- wp-login.php owns this form; we only force a flag.
+	if ( ! empty( $_POST ) ) {
+		$_POST['rememberme'] = 'forever';
+	}
+}
+add_action( 'login_init', 'rondo_force_remember_me' );
 
 /**
  * Change login logo URL to homepage
