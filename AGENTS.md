@@ -77,6 +77,38 @@ curl -sS -X POST -u "$RONDO_API_USER:$RONDO_API_PASSWORD" \
   "$RONDO_API_URL/wp-json/rondo/v1/feedback/<id>"
 ```
 
+## Production data access with the Rondo AWC MCP connector
+
+Use the configured `rondo_awc` MCP server (display name **Novamira — AWC Rondo**) for live
+production record inspection and repair. Prefer it over the REST helper or SSH/WP-CLI when the
+task is about production WordPress data and the connector is available.
+
+The connector exposes three adapter tools:
+
+1. `mcp-adapter-discover-abilities` — list the available WordPress abilities and site guidance.
+2. `mcp-adapter-get-ability-info` — load the input/output schema and safety instructions for an
+   ability before first use.
+3. `mcp-adapter-execute-ability` — execute an ability. For native data inspection and tightly
+   scoped repairs, use `novamira/execute-php` and WordPress/ACF functions.
+
+Production-write rules:
+
+- Read first and verify exact IDs, post types, titles, and stable external identifiers before a
+  mutation.
+- Use WordPress and ACF APIs; do not query or update the database directly.
+- Treat the connector as unrestricted production access. Get explicit approval for broad,
+  permanent, or destructive changes, and run a separate read-only verification afterwards.
+- Never print, commit, or document connector credentials. MCP bundles may contain application
+  passwords in plaintext; keep those values redacted.
+- ACF's `update_field()` can return `false` even when a repeater update was persisted. Do not retry
+  blindly. Re-read the field and its raw references to distinguish an unchanged/saved value from
+  a genuine failure.
+- Before permanently deleting a team that is still referenced by `work_history`, preserve history
+  by converting each relation to the existing external-team representation: set `team` to false,
+  fill `team_name_text`, set `entity_type` to `external_team`, and close current roles on the
+  correct end date. Delete the team only after verifying that no numeric relationship references
+  remain.
+
 ## Development Setup
 
 1. Set `WP_DEBUG = true` in `wp-config.php` for development mode
