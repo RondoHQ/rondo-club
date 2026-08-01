@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.85.3] - 2026-08-01
+
+### Changed
+
+- De link "Je wachtwoord vergeten?" staat nu gecentreerd onder het inlogformulier.
+- Het "Nog geen account?"-blok verschijnt alleen nog op het hoofdinlogscherm, niet meer op het inloglink-formulier, de bevestiging daarvan of de wachtwoord-vergeten-pagina's.
+
 ## [33.85.2] - 2026-08-01
 
 ### Fixed

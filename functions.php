@@ -1489,11 +1489,18 @@ function rondo_login_styles() {
 		}
 
 		/* Links */
+		.login #nav {
+			text-align: center;
+			padding: 0;
+			margin-top: 16px;
+		}
+
 		.login #nav a,
 		.login #backtoblog a {
 			color: <?php echo esc_attr( $brand_color_dark ); ?>;
 			text-decoration: none;
 			font-size: 13px;
+			font-weight: 600;
 			transition: color 0.2s;
 		}
 
@@ -1665,6 +1672,14 @@ add_filter( 'gettext', 'rondo_magic_login_dutch', 10, 3 );
  * it sits directly under the form and its navigation links.
  */
 function rondo_login_activation_hint() {
+	// Only on the main login screen — it is noise on the magic login form and
+	// its confirmation, the lost-password flow, and other wp-login actions.
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- reading the wp-login action, no state change.
+	$action = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : 'login';
+	if ( ! in_array( $action, [ 'login', '' ], true ) ) {
+		return;
+	}
+
 	$branding = \Rondo\Pages\PublicPageChrome::branding();
 	?>
 	<div class="rondo-activation-hint" id="rondo-activation-hint">
