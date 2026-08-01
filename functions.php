@@ -1556,6 +1556,12 @@ function rondo_login_styles() {
 			border-radius: 8px;
 		}
 
+		/* The magic login form explains itself; hide the instruction message it
+			inherits from core, but keep the "check your inbox" confirmation. */
+		.login-action-magic_login #login .message:not(.magic_login_block_login_success) {
+			display: none;
+		}
+
 		/* Error/message boxes */
 		.login .message,
 		.login .success {
