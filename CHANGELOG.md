@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.83.0] - 2026-08-01
+
+### Changed
+
+- De inlogpagina gebruikt voortaan het geconfigureerde clublogo en de clubkleuren (accentkleur uit de instellingen) in plaats van het standaard Rondo-logo en de vaste cyaan kleuren. Zonder configuratie blijft de bestaande Rondo-huisstijl gelden.
+
 ## [33.82.5] - 2026-07-31
 
 ### Changed
