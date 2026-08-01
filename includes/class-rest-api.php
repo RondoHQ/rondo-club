@@ -14,7 +14,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Api extends Base {
 
 	/**
-	 * canonical fields the Kaderlijst renders. The endpoint returns nothing else — a
+	 * Option containing the current dashboard cache generation.
+	 */
+	private const DASHBOARD_CACHE_GENERATION_OPTION = 'rondo_dashboard_cache_generation';
+
+	/**
+	 * Canonical fields the Kaderlijst renders. The endpoint returns nothing else — a
 	 * scoped viewer never sees a kaderlid's financial flags or private meta.
 	 */
 	private const KADERLIJST_FIELDS = [
@@ -327,9 +332,23 @@ class Api extends Base {
 	 * Invalidate all dashboard transient caches.
 	 */
 	public function invalidate_dashboard_cache() {
-		global $wpdb;
-		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_rondo_dashboard_%' OR option_name LIKE '_transient_timeout_rondo_dashboard_%'" );
+		update_option( self::DASHBOARD_CACHE_GENERATION_OPTION, wp_generate_uuid4(), false );
 		delete_transient( 'rondo_anniversaries_365' );
+	}
+
+	/**
+	 * Build a persistent-object-cache-safe dashboard transient key.
+	 *
+	 * Advancing the generation makes every existing per-user cache unreachable.
+	 * The old transients expire naturally after their normal 15-minute lifetime.
+	 *
+	 * @param int $user_id Current user ID.
+	 * @return string
+	 */
+	private function get_dashboard_cache_key( int $user_id ): string {
+		$generation = (string) get_option( self::DASHBOARD_CACHE_GENERATION_OPTION, '1' );
+
+		return 'rondo_dashboard_' . $generation . '_' . $user_id;
 	}
 
 	/**
@@ -1132,7 +1151,7 @@ class Api extends Base {
 		$user_id = get_current_user_id();
 
 		// Check transient cache.
-		$cache_key = 'rondo_dashboard_' . $user_id;
+		$cache_key = $this->get_dashboard_cache_key( $user_id );
 		$cached    = get_transient( $cache_key );
 		if ( $cached !== false ) {
 			return rest_ensure_response( $cached );

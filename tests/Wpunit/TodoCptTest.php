@@ -526,6 +526,39 @@ class TodoCptTest extends RondoTestCase {
 	}
 
 	/**
+	 * Completing a todo must bypass the previously cached dashboard response.
+	 */
+	public function test_completing_todo_invalidates_dashboard_cache(): void {
+		$user_id = $this->createApprovedRondoUser( 'dashboard_cache_user' );
+		wp_set_current_user( $user_id );
+
+		$person_id = $this->createPerson(
+			[
+				'post_author' => $user_id,
+				'post_title'  => 'Dashboard Cache Person',
+			]
+		);
+		$todo_id   = $this->createTodo( $person_id, $user_id );
+
+		$dashboard = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' )->get_data();
+		$this->assertEquals( 1, $dashboard['stats']['open_todos_count'] );
+
+		$response = $this->doRestRequest(
+			'PUT',
+			'/rondo/v1/todos/' . $todo_id,
+			[ 'status' => 'completed' ]
+		);
+		$this->assertEquals( 200, $response->get_status() );
+
+		$dashboard = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' )->get_data();
+		$this->assertEquals(
+			0,
+			$dashboard['stats']['open_todos_count'],
+			'Completing a todo should invalidate the cached dashboard response.'
+		);
+	}
+
+	/**
 	 * Test dashboard counts only user's own todos.
 	 */
 	public function test_dashboard_counts_only_own_todos(): void {
