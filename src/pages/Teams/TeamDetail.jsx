@@ -1,11 +1,11 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Building2, Globe, Users, GitBranch, TrendingUp, User, Share2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, Building2, Globe, Users, GitBranch, Share2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useVolunteerRoleSettings } from '@/hooks/useVolunteerRoleSettings';
-import { getTeamName, decodeHtml, sanitizeTeamFields } from '@/utils/formatters';
+import { getTeamName, sanitizeTeamFields } from '@/utils/formatters';
 import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
@@ -55,85 +55,11 @@ export default function TeamDetail() {
     },
   });
   
-  const investorIds = useMemo(() => team?.fields?.investors || [], [team?.fields?.investors]);
-
-  // Resolve related entities explicitly; the canonical fields contract does not
-  // depend on native field's private embedded-post relation namespace.
-  const { data: investorPosts = [] } = useQuery({
-    queryKey: ['team-investors', investorIds.join(',')],
-    queryFn: async () => Promise.all(
-      investorIds.map(async (investorId) => {
-        const response = await prmApi.getEntity(investorId);
-        return response.data;
-      })
-    ),
-    enabled: investorIds.length > 0,
-  });
-
-  const mediaIds = useMemo(() => {
-    return investorPosts
-      .filter(p => investorIds.includes(p.id) && p.featured_media)
-      .map(p => p.featured_media);
-  }, [investorPosts, investorIds]);
-
-  // Fetch thumbnails for investors (embedded posts don't include nested media)
-  const { data: mediaItems = [] } = useQuery({
-    queryKey: ['investor-media', mediaIds.join(',')],
-    queryFn: async () => {
-      if (!mediaIds.length) return [];
-      const response = await wpApi.getMedia({ include: mediaIds.join(','), per_page: 100 });
-      return response.data;
-    },
-    enabled: mediaIds.length > 0,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes - media URLs rarely change
-  });
-
-  // Build investor details with thumbnails
-  const investorDetails = useMemo(() => {
-    if (!investorIds.length || !investorPosts.length) return [];
-
-    // Create a map of media ID to source URL
-    const mediaMap = new Map(mediaItems.map(m => [m.id, m.source_url]));
-
-    // Map investors in the order they appear in investorIds
-    return investorIds.map(investorId => {
-      const post = investorPosts.find(p => p.id === investorId);
-      if (!post) return null;
-
-      const isPerson = post.type === 'person';
-      const thumbnail = post.featured_media
-        ? mediaMap.get(post.featured_media)
-        : post.fields?.photo_gallery?.[0]?.url;
-
-      return {
-        id: post.id,
-        type: post.type,
-        name: isPerson
-          ? decodeHtml(post.title?.rendered || '')
-          : getTeamName(post),
-        thumbnail,
-      };
-    }).filter(Boolean);
-  }, [investorIds, investorPosts, mediaItems]);
-  
-  // Fetch teams that this team has invested in
-  const { data: investments = [] } = useQuery({
-    queryKey: ['investments', id],
-    queryFn: async () => {
-      const response = await prmApi.getInvestments(id);
-      return response.data;
-    },
-    enabled: !!id,
-  });
-  
-  
   const updateTeam = useMutation({
     mutationFn: (data) => wpApi.updateTeam(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['team', id] });
       queryClient.invalidateQueries({ queryKey: ['teams'] });
-      queryClient.invalidateQueries({ queryKey: ['team-investors', id] });
-      queryClient.invalidateQueries({ queryKey: ['team-investors-edit', parseInt(id)] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
@@ -363,99 +289,6 @@ export default function TeamDetail() {
           </div>
         );
       })()}
-      
-      {/* Sponsors */}
-      {investorDetails.length > 0 && (
-        <div className="card p-6">
-          <h2 className="font-semibold text-brand-gradient mb-4 flex items-center">
-            <TrendingUp className="w-5 h-5 mr-2" />
-            Sponsoren
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {investorDetails.map((investor) => {
-              const isPerson = investor.type === 'person';
-              const isCommissie = investor.type === 'commissie';
-              const linkPath = isPerson
-                ? `/people/${investor.id}`
-                : isCommissie
-                  ? `/commissies/${investor.id}`
-                  : `/teams/${investor.id}`;
-
-              return (
-                <Link
-                  key={`${investor.type}-${investor.id}`}
-                  to={linkPath}
-                  className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
-                >
-                  {investor.thumbnail ? (
-                    <img
-                      src={investor.thumbnail}
-                      alt={investor.name}
-                      loading="lazy"
-                      className={`w-10 h-10 object-cover ${isPerson ? 'rounded-full' : 'rounded'}`}
-                    />
-                  ) : (
-                    <div className={`w-10 h-10 bg-gray-100 dark:bg-gray-700 flex items-center justify-center ${isPerson ? 'rounded-full' : 'rounded'}`}>
-                      {isPerson ? (
-                        <User className="w-5 h-5 text-gray-400" />
-                      ) : (
-                        <Building2 className="w-5 h-5 text-gray-400" />
-                      )}
-                    </div>
-                  )}
-                  <div className="ml-3">
-                    <p className="text-sm font-medium">{investor.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {isPerson ? 'Lid' : isCommissie ? 'Commissie' : 'Team'}
-                    </p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
-      
-      {/* Invested in (teams/commissies this team sponsors) */}
-      {investments.length > 0 && (
-        <div className="card p-6">
-          <h2 className="font-semibold text-brand-gradient mb-4 flex items-center">
-            <TrendingUp className="w-5 h-5 mr-2" />
-            Investeert in
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {investments.map((investment) => {
-              const isCommissie = investment.type === 'commissie';
-              const linkPath = isCommissie
-                ? `/commissies/${investment.id}`
-                : `/teams/${investment.id}`;
-              return (
-                <Link
-                  key={investment.id}
-                  to={linkPath}
-                  className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
-                >
-                  {investment.thumbnail ? (
-                    <img
-                      src={investment.thumbnail}
-                      alt={investment.name}
-                      loading="lazy"
-                      className="w-10 h-10 object-contain rounded"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 flex items-center justify-center rounded">
-                      <Building2 className="w-5 h-5 text-gray-400" />
-                    </div>
-                  )}
-                  <div className="ml-3">
-                    <p className="text-sm font-medium">{investment.name}</p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
       
       {/* Contact info */}
       {fields.contact_info?.length > 0 && (
