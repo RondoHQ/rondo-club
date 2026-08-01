@@ -254,7 +254,7 @@ class ShiftEmailScheduler {
 		$start        = $this->parse_datetime( (string) get_post_meta( $shift_id, 'start_datetime', true ) );
 		$end          = $this->parse_datetime( (string) get_post_meta( $shift_id, 'end_datetime', true ) );
 		$type_id      = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
-		$assigned     = array_values( array_unique( array_filter( array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) ) ) ) );
+		$assigned     = $this->valid_assigned_person_ids( $shift_id );
 		if ( ! $cancellation || ! $start || ! $end || $type_id <= 0 || empty( $assigned ) ) {
 			return $result;
 		}
@@ -335,7 +335,7 @@ class ShiftEmailScheduler {
 			return 0;
 		}
 
-		$assigned = array_values( array_unique( array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) ) ) );
+		$assigned = $this->valid_assigned_person_ids( $shift_id );
 		if ( empty( $assigned ) ) {
 			return 0;
 		}
@@ -454,12 +454,30 @@ class ShiftEmailScheduler {
 
 	private function get_person_email( int $person_id ): ?string {
 		foreach ( [ 'email_1', 'email_2' ] as $field_name ) {
-			$email = (string) \Rondo\Fields\Fields::get_for_post( $person_id, $field_name );
+			$email = (string) \Rondo\Fields\Fields::try_get_for_post( $person_id, $field_name );
 			if ( is_email( $email ) ) {
 				return $email;
 			}
 		}
 		return null;
+	}
+
+	/** @return int[] Existing person post IDs assigned to a shift. */
+	private function valid_assigned_person_ids( int $shift_id ): array {
+		$person_ids = array_values(
+			array_unique(
+				array_filter(
+					array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) )
+				)
+			)
+		);
+
+		return array_values(
+			array_filter(
+				$person_ids,
+				static fn ( int $person_id ): bool => get_post_type( $person_id ) === 'person'
+			)
+		);
 	}
 
 	private static function signup_confirmation_queue_key( int $person_id ): string {
