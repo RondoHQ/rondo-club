@@ -105,6 +105,37 @@ class DynamicFieldsStoreTest extends RondoTestCase {
 		$this->assertSame( [ $second['key'], $first['key'] ], array_column( $this->manager->get_fields( 'team' ), 'key' ) );
 	}
 
+	public function test_preexisting_dynamic_collision_is_skipped_at_runtime(): void {
+		update_option(
+			Manager::OPTION_NAME,
+			[
+				'schema_version' => Manager::SCHEMA_VERSION,
+				'contexts'       => [
+					'person'    => [
+						[
+							'id'             => 'field_legacy_first_name',
+							'key'            => 'field_legacy_first_name',
+							'label'          => 'Legacy first name',
+							'name'           => 'legacy-first-name',
+							'storage_key'    => 'legacy-first-name',
+							'canonical_name' => 'first_name',
+							'type'           => 'text',
+							'active'         => true,
+							'menu_order'     => 1,
+						],
+					],
+					'team'      => [],
+					'commissie' => [],
+				],
+			],
+			false
+		);
+		Registry::reset();
+
+		$this->assertSame( 'first_name', Registry::fields_for( 'person' )['first_name']['canonical_name'] );
+		$this->assertArrayNotHasKey( 'legacy-first-name', Registry::fields_for( 'person' ) );
+	}
+
 	public function test_import_rejects_static_collisions_and_unsupported_types(): void {
 		$document = [
 			'schema_version' => Manager::SCHEMA_VERSION,

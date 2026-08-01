@@ -552,9 +552,15 @@ class CommentTypes {
 				'post_status'    => [ 'rondo_open', 'rondo_awaiting', 'rondo_completed' ],
 				'posts_per_page' => -1,
 				'meta_query'     => [
+					'relation' => 'OR',
 					[
 						'key'     => 'related_persons',
 						'value'   => sprintf( '"%d"', $person_id ),
+						'compare' => 'LIKE',
+					],
+					[
+						'key'     => 'related_persons',
+						'value'   => sprintf( 'i:%d;', $person_id ),
 						'compare' => 'LIKE',
 					],
 				],
@@ -564,6 +570,13 @@ class CommentTypes {
 		foreach ( $todos as $todo ) {
 			// Get all related persons for this todo (native field returns array or false)
 			$related_person_ids = \Rondo\Fields\Fields::get_for_post( $todo->ID, 'related_persons' ) ?: [];
+			$todo_dates         = \Rondo\Fields\Formatter::for_wire(
+				'rondo_todo',
+				[
+					'due_date'       => \Rondo\Fields\Fields::get_for_post( $todo->ID, 'due_date' ),
+					'awaiting_since' => \Rondo\Fields\Fields::get_for_post( $todo->ID, 'awaiting_since' ),
+				]
+			);
 
 			// Build persons array with details
 			$persons = [];
@@ -589,8 +602,8 @@ class CommentTypes {
 				'notes'          => \Rondo\Fields\Fields::get_for_post( $todo->ID, 'notes' ) ?: null,
 				'status'         => self::STATUS_MAP[ $todo->post_status ] ?? 'open',
 				'is_completed'   => $todo->post_status === 'rondo_completed',
-				'due_date'       => \Rondo\Fields\Fields::get_for_post( $todo->ID, 'due_date' ) ?: null,
-				'awaiting_since' => \Rondo\Fields\Fields::get_for_post( $todo->ID, 'awaiting_since' ) ?: null,
+				'due_date'       => $todo_dates['due_date'],
+				'awaiting_since' => $todo_dates['awaiting_since'],
 			];
 		}
 

@@ -148,8 +148,17 @@ class FamilyGroupingService {
 	public function get_family_key( int $person_id ): ?string {
 		// Get addresses from person
 		$addresses = \Rondo\Fields\Fields::get_for_post( $person_id, 'addresses' ) ?: [];
+		return $this->get_family_key_from_addresses( $addresses );
+	}
 
-		if ( empty( $addresses ) ) {
+	/**
+	 * Build a family key from an address payload, including a pre-update value.
+	 *
+	 * @param mixed $addresses Native address repeater rows.
+	 */
+	public function get_family_key_from_addresses( $addresses ): ?string {
+
+		if ( ! is_array( $addresses ) || empty( $addresses ) || ! is_array( $addresses[0] ) ) {
 			return null;
 		}
 
@@ -165,10 +174,6 @@ class FamilyGroupingService {
 
 		// Normalize postal code
 		$normalized_postal = $this->normalize_postal_code( $postal_code );
-
-		if ( $house_number === null ) {
-			return null;
-		}
 
 		// Validate postal code format (4 digits + 2 letters)
 		if ( ! preg_match( '/^\d{4}[A-Z]{2}$/', $normalized_postal ) ) {

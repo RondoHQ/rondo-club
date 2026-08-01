@@ -39,7 +39,12 @@ function splitDateTime(value) {
 
 function toStoredDateTime(date, time) {
   if (!date || !time) return '';
-  return `${date} ${time}:00`;
+  const local = new Date(`${date}T${time}:00`);
+  const offsetMinutes = -local.getTimezoneOffset();
+  const sign = offsetMinutes >= 0 ? '+' : '-';
+  const hours = String(Math.floor(Math.abs(offsetMinutes) / 60)).padStart(2, '0');
+  const minutes = String(Math.abs(offsetMinutes) % 60).padStart(2, '0');
+  return `${date}T${time}:00${sign}${hours}:${minutes}`;
 }
 
 export default function VrijwilligersDienstForm() {

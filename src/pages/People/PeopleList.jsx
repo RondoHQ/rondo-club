@@ -75,7 +75,7 @@ function getCurrentTeamId(person) {
 
   // First, try to find current position
   const currentJob = workHistory.find(job => job.is_current && job.team_id);
-  if (currentJob) return currentJob.team;
+  if (currentJob) return currentJob.team_id;
 
   // Otherwise, get the most recent (by start_date)
   const jobsWithTeam = workHistory
@@ -86,7 +86,7 @@ function getCurrentTeamId(person) {
       return dateB - dateA; // Most recent first
     });
 
-  return jobsWithTeam.length > 0 ? jobsWithTeam[0].team : null;
+  return jobsWithTeam.length > 0 ? jobsWithTeam[0].team_id : null;
 }
 
 // Map column IDs to sort field names

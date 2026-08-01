@@ -17,6 +17,24 @@ use Tests\Support\RondoTestCase;
  */
 class FamilyDiscountFormerMemberTest extends RondoTestCase {
 
+	public function test_family_key_can_be_derived_from_pre_update_addresses(): void {
+		$service = ( new \ReflectionClass( FamilyGroupingService::class ) )->newInstanceWithoutConstructor();
+
+		$this->assertSame(
+			'1234AB-12A',
+			$service->get_family_key_from_addresses(
+				[
+					[
+						'postal_code'           => '1234 ab',
+						'house_number'          => '12',
+						'house_number_addition' => 'A',
+					],
+				]
+			)
+		);
+		$this->assertNull( $service->get_family_key_from_addresses( null ) );
+	}
+
 	private function configure_youth_fees(): MembershipFeeSettings {
 		$settings = new MembershipFeeSettings();
 		$settings->save_categories_for_season(

@@ -140,14 +140,15 @@ class MembershipPassQr {
 	 * @return array
 	 */
 	public function get_person_status( int $person_id, string $season ): array {
-		$is_former = (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' );
-		$lid_tot   = \Rondo\Fields\Fields::get_for_post( $person_id, 'lid_tot' );
-		$today     = gmdate( 'Y-m-d' );
+		$is_former   = (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' );
+		$lid_tot_raw = \Rondo\Fields\Fields::get_for_post( $person_id, 'lid_tot' );
+		$lid_tot     = \Rondo\Fields\Formatter::for_wire( 'person', [ 'lid_tot' => $lid_tot_raw ] )['lid_tot'];
+		$today       = gmdate( 'Y-m-d' );
 
 		$status = 'active';
 		if ( $is_former ) {
 			$status = 'former';
-		} elseif ( ! empty( $lid_tot ) && is_string( $lid_tot ) && $lid_tot < $today ) {
+		} elseif ( is_string( $lid_tot ) && $lid_tot < $today ) {
 			$status = 'expired';
 		}
 
@@ -156,7 +157,7 @@ class MembershipPassQr {
 		return [
 			'status'        => $status,
 			'former_member' => $is_former,
-			'lid_tot'       => ! empty( $lid_tot ) ? $lid_tot : null,
+			'lid_tot'       => $lid_tot,
 			'season_end'    => $season_end,
 		];
 	}

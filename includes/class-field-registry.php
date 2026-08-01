@@ -102,7 +102,12 @@ final class Registry {
 		foreach ( $manager->get_fields( $context, false ) as $dynamic ) {
 			$canonical_name = (string) $dynamic['canonical_name'];
 			if ( isset( $fields[ $canonical_name ] ) ) {
-				throw new RuntimeException( "Dynamic field {$context}.{$canonical_name} collides with a static field." );
+				// A legacy database field must never make the entire site fail at
+				// bootstrap. The static contract owns the name; retain the dynamic
+				// definition in its store for audit/export and skip it at runtime.
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( "Rondo fields: skipped dynamic field {$context}.{$canonical_name}; it collides with a static field." );
+				continue;
 			}
 			$definition                   = $dynamic;
 			$definition['canonical_name'] = $canonical_name;
@@ -242,6 +247,9 @@ final class Registry {
 				}
 				$child_path = "{$path}.{$row_index}.{$child['canonical_name']}";
 				if ( $for_write && ! empty( $child['read_only'] ) ) {
+					if ( $child['storage_name'] === null ) {
+						continue;
+					}
 					throw new InvalidArgumentException( "{$child_path} is read-only." );
 				}
 				$output_name = $to_canonical ? $child['canonical_name'] : $child['storage_name'];

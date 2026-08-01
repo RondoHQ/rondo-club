@@ -6,11 +6,22 @@ use ReflectionClass;
 use Rondo\Config\FinanceConfig;
 use Rondo\Passes\MembershipPassApple;
 use Rondo\Passes\MembershipPassGoogle;
+use Rondo\Passes\MembershipPassQr;
 use Rondo\Passes\PublicMembershipPassPage;
 use Rondo\REST\MembershipPasses;
 use Tests\Support\RondoTestCase;
 
 class MembershipPassSponsorTest extends RondoTestCase {
+
+	public function test_expired_member_uses_wire_date_in_status_payload(): void {
+		$person_id = $this->createPerson();
+		update_post_meta( $person_id, 'lid-tot', '20260630' );
+
+		$status = ( new MembershipPassQr() )->get_person_status( $person_id, '2025-2026' );
+
+		$this->assertSame( 'expired', $status['status'] );
+		$this->assertSame( '2026-06-30', $status['lid_tot'] );
+	}
 
 	public function test_sponsor_is_eligible_for_a_membership_pass_url(): void {
 		$sponsor_id = $this->createPerson(

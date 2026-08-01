@@ -1091,9 +1091,9 @@ class Api extends Base {
 				$person_name    = null;
 
 				if ( ! empty( $person_id ) ) {
-					$first_name  = \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '';
-					$infix       = \Rondo\Fields\Fields::get_for_post( $person_id, 'infix' ) ?: '';
-					$last_name   = \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '';
+					$first_name  = \Rondo\Fields\Fields::try_get_for_post( $person_id, 'first_name' ) ?: '';
+					$infix       = \Rondo\Fields\Fields::try_get_for_post( $person_id, 'infix' ) ?: '';
+					$last_name   = \Rondo\Fields\Fields::try_get_for_post( $person_id, 'last_name' ) ?: '';
 					$name_parts  = array_filter( [ $first_name, $infix, $last_name ] );
 					$person_name = implode( ' ', $name_parts ) ?: null;
 				}
@@ -1584,6 +1584,13 @@ class Api extends Base {
 				'rondo_completed' => 'completed',
 				'publish'         => 'open',
 			];
+			$todo_dates = \Rondo\Fields\Formatter::for_wire(
+				'rondo_todo',
+				[
+					'due_date'       => \Rondo\Fields\Fields::get_for_post( $todo->ID, 'due_date' ),
+					'awaiting_since' => \Rondo\Fields\Fields::get_for_post( $todo->ID, 'awaiting_since' ),
+				]
+			);
 
 			$formatted[] = [
 				'id'               => $todo->ID,
@@ -1597,8 +1604,8 @@ class Api extends Base {
 				'assigned_user_id' => $assigned_user > 0 ? $assigned_user : null,
 				'created'          => $todo->post_date,
 				'status'           => $status_map[ $todo->post_status ] ?? 'open',
-				'due_date'         => \Rondo\Fields\Fields::get_for_post( $todo->ID, 'due_date' ) ?: null,
-				'awaiting_since'   => \Rondo\Fields\Fields::get_for_post( $todo->ID, 'awaiting_since' ) ?: null,
+				'due_date'         => $todo_dates['due_date'],
+				'awaiting_since'   => $todo_dates['awaiting_since'],
 			];
 
 			if ( count( $formatted ) >= $limit ) {
