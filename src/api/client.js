@@ -396,6 +396,7 @@ export const prmApi = {
   // Volunteer Policy
   getVolunteerEligibility: (params = {}) => api.get('/rondo/v1/volunteer-eligibility', { params }),
   getVolunteerExemption: (personId, params = {}) => api.get(`/rondo/v1/volunteer-exemption/${personId}`, { params }),
+  updateVolunteerExemption: (personId, data) => api.put(`/rondo/v1/volunteer-exemption/${personId}`, data),
   getVolunteerDataQuality: (category, params = {}) => api.get(`/rondo/v1/volunteer-data-quality/${category}`, { params }),
   getRelationshipQuality: () => api.get('/rondo/v1/relationship-quality'),
   refreshVolunteerCache: () => api.post('/rondo/v1/volunteer-cache/refresh'),
