@@ -28,6 +28,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Het publieke `acf`-responseveld, ondersteuning voor `acf`-writes, alle runtime-helper- en hookafhankelijkheden, plugininstallatie/licentiecode, en de map `acf-json/`. Oude writes krijgen een gerichte HTTP 400 met `fields` als vervanging.
 
+## [33.85.8] - 2026-08-01
+
+### Changed
+
+- De vrijwilligerspagina toont onder de titel alleen nog de instelbare clubtekst; de vaste seizoenszin is verwijderd en er is meer ruimte tot de link "Mijn certificaten".
+
+## [33.85.7] - 2026-08-01
+
+### Added
+
+- Gebruikers die met een inloglink werken of hun huidige wachtwoord niet kennen, kunnen vanuit hun profiel een beveiligde eenmalige link aanvragen om een wachtwoord in te stellen.
+
+## [33.85.6] - 2026-08-01
+
+### Changed
+
+- De clubspecifieke uitleg op de vrijwilligerspagina staat nu in de subtitel onder de paginatitel; het losse lichtblauwe informatieblok is verwijderd.
+
 ## [33.85.5] - 2026-08-01
 
 ### Fixed
