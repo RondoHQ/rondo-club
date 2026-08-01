@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.85.8] - 2026-08-01
+
+### Changed
+
+- De vrijwilligerspagina toont onder de titel alleen nog de instelbare clubtekst; de vaste seizoenszin is verwijderd en er is meer ruimte tot de link "Mijn certificaten".
+
 ## [33.85.7] - 2026-08-01
 
 ### Added
