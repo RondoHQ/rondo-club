@@ -1491,6 +1491,23 @@ function rondo_login_styles() {
 			text-decoration: underline;
 		}
 
+		/* Activation hint for members without an account */
+		.login .rondo-activation-hint {
+			background: #ffffff;
+			border: 1px solid <?php echo esc_attr( $brand_color_border ); ?>;
+			border-radius: 8px;
+			padding: 12px 16px;
+			margin-bottom: 16px;
+			font-size: 13px;
+			line-height: 1.5;
+			color: <?php echo esc_attr( $brand_color_darkest ); ?>;
+		}
+
+		.login .rondo-activation-hint a {
+			color: <?php echo esc_attr( $brand_color_dark ); ?>;
+			font-weight: 600;
+		}
+
 		/* Error/message boxes */
 		.login .message,
 		.login .success {
@@ -1531,6 +1548,67 @@ function rondo_login_favicon() {
 	echo '<link rel="icon" sizes="192x192" href="' . esc_url( $icon_url ) . '">';
 }
 add_action( 'login_head', 'rondo_login_favicon' );
+
+/**
+ * Dutch translations for the Magic Login plugin.
+ *
+ * The plugin ships only German and French translations, so on this nl_NL site
+ * its login-page strings ("or", "Send me the login link", …) fall back to
+ * English. Translate them here until the plugin provides Dutch itself.
+ *
+ * @param string $translation Translated text.
+ * @param string $text        Original text.
+ * @param string $domain      Text domain.
+ * @return string
+ */
+function rondo_magic_login_dutch( $translation, $text, $domain ) {
+	if ( 'magic-login' !== $domain || ! str_starts_with( determine_locale(), 'nl' ) ) {
+		return $translation;
+	}
+
+	$strings = [
+		'Log In'                       => 'Inloggen',
+		'Log in'                       => 'Inloggen',
+		'or'                           => 'of',
+		'Send me the login link'       => 'Stuur mij de inloglink',
+		'Username or Email Address'    => 'Gebruikersnaam of e-mailadres',
+		'Username'                     => 'Gebruikersnaam',
+		'Please enter your username. You will receive an email message to log in.' => 'Vul je gebruikersnaam of e-mailadres in. Je ontvangt een e-mail met een inloglink.',
+		'Please check your inbox for the login link. If you did not receive a login email, check your spam folder too.' => 'Controleer je inbox voor de inloglink. Geen e-mail ontvangen? Kijk dan ook in je spammap.',
+		'If an account matches your request, please check your inbox for the login link. If you did not receive a login email, check your spam folder too.' => 'Als er een account bestaat voor deze gegevens, ontvang je een e-mail met de inloglink. Geen e-mail ontvangen? Kijk dan ook in je spammap.',
+		'We have already sent several login emails recently. Please check your inbox and spam folder before requesting another link.' => 'We hebben recent al meerdere inlogmails gestuurd. Controleer je inbox en spammap voordat je een nieuwe link aanvraagt.',
+		'There is no account with that username or email address.' => 'Er is geen account met die gebruikersnaam of dat e-mailadres.',
+		'There is no account with that username.' => 'Er is geen account met die gebruikersnaam.',
+		'Invalid login code.'          => 'Ongeldige inlogcode.',
+		'Invalid magic login token. <a href="%s">Try signing in instead</a>?' => 'Ongeldige of verlopen inloglink. <a href="%s">Probeer opnieuw in te loggen</a>.',
+		'Unable to process your request. Please try again.' => 'We konden je verzoek niet verwerken. Probeer het opnieuw.',
+		'Login link will expire in %1$s %2$s.' => 'De inloglink verloopt over %1$s %2$s.',
+		'Please enter the code sent to your email.' => 'Vul de code in die naar je e-mail is gestuurd.',
+		'Please check your phone for the login link.' => 'Controleer je telefoon voor de inloglink.',
+	];
+
+	return $strings[ $text ] ?? $translation;
+}
+add_filter( 'gettext', 'rondo_magic_login_dutch', 10, 3 );
+
+/**
+ * Point members without an account to the activation page, below the login form heading.
+ *
+ * @param string $message Existing login message.
+ * @return string
+ */
+function rondo_login_activation_message( $message ) {
+	$branding = \Rondo\Pages\PublicPageChrome::branding();
+	$hint     = sprintf(
+		'Als je lid bent van %1$s maar nog geen %2$s account hebt, ga dan naar <a href="%3$s">de activatiepagina en maak je account aan</a>.',
+		esc_html( $branding['name'] ),
+		esc_html( get_bloginfo( 'name' ) ),
+		esc_url( home_url( '/activeren' ) )
+	);
+
+	return $message . '<p class="rondo-activation-hint">' . $hint . '</p>';
+}
+add_filter( 'login_message', 'rondo_login_activation_message' );
 
 /**
  * Change login logo URL to homepage

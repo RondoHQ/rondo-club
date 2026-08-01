@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.84.0] - 2026-08-01
+
+### Added
+
+- De inlogpagina toont een verwijzing naar de activatiepagina voor leden die nog geen account hebben.
+
+### Fixed
+
+- De Magic Login-teksten op de inlogpagina ("or", "Send me the login link" en de bijbehorende meldingen) worden nu in het Nederlands weergegeven. De plugin levert zelf geen Nederlandse vertaling mee.
+
 ## [33.83.1] - 2026-08-01
 
 ### Changed
