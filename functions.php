@@ -1353,7 +1353,9 @@ function rondo_login_styles() {
 	$brand_color_border   = rondo_login_mix_color( $brand_color, '#ffffff', 0.72 );
 	$brand_rgb            = implode( ', ', rondo_login_hex_to_rgb( $brand_color ) );
 
-	$display_name = $branding['name'];
+	// The site title is the application name ("AWC Rondo"), distinct from the
+	// club name that branding() prefers for payment pages and emails.
+	$display_name = get_bloginfo( 'name' );
 
 	// Club logo if configured, otherwise the Rondo logo.
 	$logo_url = $branding['logo_url'] ?: RONDO_THEME_URL . '/public/icons/rondo-logo.png';

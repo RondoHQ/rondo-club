@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.83.1] - 2026-08-01
+
+### Changed
+
+- De inlogpagina toont de sitetitel (de applicatienaam) onder het logo in plaats van de geconfigureerde clubnaam.
+
 ## [33.83.0] - 2026-08-01
 
 ### Changed
