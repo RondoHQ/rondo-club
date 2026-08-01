@@ -92,6 +92,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessLedenadministratie = currentUser?.can_access_ledenadministratie ?? false;
   const canAccessVrijwilligers = currentUser?.can_access_vrijwilligers ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
+  const sidebarUserName = currentUser?.linked_person_name || currentUser?.name || '';
 
   // `isKader` = iedereen met een staf-rol. Plain leden (account zonder
   // expliciete rechten) zien alleen hun eigen items in de zijbalk. Server-side
@@ -319,7 +320,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
             {currentUser?.linked_person_photo ? (
               <img
                 src={currentUser.linked_person_photo}
-                alt={currentUser?.name || ''}
+                alt={sidebarUserName}
                 className="w-8 h-8 rounded-full object-cover flex-shrink-0"
               />
             ) : (
@@ -327,9 +328,9 @@ function Sidebar({ mobile = false, onClose, stats }) {
                 <User className="w-4 h-4 text-bright-cobalt dark:text-electric-cyan-light" />
               </div>
             )}
-            {currentUser?.name && (
+            {sidebarUserName && (
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                {currentUser.name}
+                {sidebarUserName}
               </span>
             )}
           </div>
@@ -338,7 +339,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
             {currentUser?.linked_person_photo ? (
               <img
                 src={currentUser.linked_person_photo}
-                alt={currentUser?.name || ''}
+                alt={sidebarUserName}
                 className="w-8 h-8 rounded-full object-cover flex-shrink-0"
               />
             ) : (
@@ -346,15 +347,15 @@ function Sidebar({ mobile = false, onClose, stats }) {
                 <User className="w-4 h-4 text-bright-cobalt dark:text-electric-cyan-light" />
               </div>
             )}
-            {currentUser?.name && (
+            {sidebarUserName && (
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                {currentUser.name}
+                {sidebarUserName}
               </span>
             )}
           </Link>
         )}
-        {/* Install affordance — renders nothing once the app is installed */}
-        <InstallAppButton />
+        {/* Keep the install affordance in the mobile menu, but omit it from the desktop sidebar. */}
+        {mobile ? <InstallAppButton /> : null}
         {/* Logout link — unchanged styling */}
         <a href={logoutUrl} className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors dark:text-gray-200 dark:hover:bg-gray-700">
           <LogOut className="w-5 h-5 mr-3" />
