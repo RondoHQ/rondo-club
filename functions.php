@@ -1300,29 +1300,63 @@ function rondo_reset_vog_tracking_on_datum_update( $value, $post_id, $field, $or
 add_filter( 'acf/update_value/name=datum-vog', 'rondo_reset_vog_tracking_on_datum_update', 10, 4 );
 
 /**
- * Custom login page styling
+ * Convert a hex colour to an [r, g, b] array.
+ *
+ * @param string $hex Hex colour, with or without leading '#', 3 or 6 digits.
+ * @return int[] RGB components; falls back to the Rondo cyan on invalid input.
+ */
+function rondo_login_hex_to_rgb( $hex ) {
+	$hex = ltrim( trim( (string) $hex ), '#' );
+	if ( strlen( $hex ) === 3 ) {
+		$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+	}
+	if ( ! preg_match( '/^[0-9a-fA-F]{6}$/', $hex ) ) {
+		$hex = '0891b2';
+	}
+	return [
+		(int) hexdec( substr( $hex, 0, 2 ) ),
+		(int) hexdec( substr( $hex, 2, 2 ) ),
+		(int) hexdec( substr( $hex, 4, 2 ) ),
+	];
+}
+
+/**
+ * Mix a hex colour with another hex colour.
+ *
+ * @param string $hex    Base colour, e.g. '#0891b2'.
+ * @param string $mix    Colour to mix in, e.g. '#ffffff'.
+ * @param float  $weight Share of the mix colour, 0–1.
+ * @return string Resulting hex colour.
+ */
+function rondo_login_mix_color( $hex, $mix, $weight ) {
+	$base_rgb = rondo_login_hex_to_rgb( $hex );
+	$mix_rgb  = rondo_login_hex_to_rgb( $mix );
+	$out      = [];
+	foreach ( [ 0, 1, 2 ] as $i ) {
+		$out[] = (int) round( $base_rgb[ $i ] * ( 1 - $weight ) + $mix_rgb[ $i ] * $weight );
+	}
+	return sprintf( '#%02x%02x%02x', $out[0], $out[1], $out[2] );
+}
+
+/**
+ * Custom login page styling, using the club's configured logo and accent colour.
  */
 function rondo_login_styles() {
-	$site_name = get_bloginfo( 'name' );
+	$branding = \Rondo\Pages\PublicPageChrome::branding();
 
-	// Get club name for display
-	$club_name = \Rondo\Config\ClubConfig::get_club_name();
+	// Club accent colour (falls back to the Rondo cyan), with derived shades and tints.
+	$brand_color          = $branding['accent_color'];
+	$brand_color_dark     = rondo_login_mix_color( $brand_color, '#000000', 0.15 );
+	$brand_color_darkest  = rondo_login_mix_color( $brand_color, '#000000', 0.35 );
+	$brand_color_light    = rondo_login_mix_color( $brand_color, '#ffffff', 0.55 );
+	$brand_color_lightest = rondo_login_mix_color( $brand_color, '#ffffff', 0.88 );
+	$brand_color_border   = rondo_login_mix_color( $brand_color, '#ffffff', 0.72 );
+	$brand_rgb            = implode( ', ', rondo_login_hex_to_rgb( $brand_color ) );
 
-	// Fixed brand color (electric-cyan from Phase 162)
-	$brand_color = '#0891b2';
+	$display_name = $branding['name'];
 
-	// Pre-calculated color variants
-	$brand_color_dark     = '#0e7490';  // Darker shade
-	$brand_color_darkest  = '#155e75';  // Darkest shade
-	$brand_color_light    = '#67e8f9';  // Light tint
-	$brand_color_lightest = '#cffafe'; // Very light tint for backgrounds
-	$brand_color_border   = '#a5f3fc';  // Medium light tint for borders
-
-	// Use club name if configured, otherwise site name
-	$display_name = ! empty( $club_name ) ? $club_name : $site_name;
-
-	// Rondo logo URL
-	$logo_url = RONDO_THEME_URL . '/public/icons/rondo-logo.png';
+	// Club logo if configured, otherwise the Rondo logo.
+	$logo_url = $branding['logo_url'] ?: RONDO_THEME_URL . '/public/icons/rondo-logo.png';
 	?>
 	<style type="text/css">
 		/* Background gradient */
@@ -1364,7 +1398,7 @@ function rondo_login_styles() {
 			background: #ffffff;
 			border: 1px solid <?php echo esc_attr( $brand_color_border ); ?>;
 			border-radius: 12px;
-			box-shadow: 0 10px 25px rgba(8, 145, 178, 0.1);
+			box-shadow: 0 10px 25px rgba(<?php echo esc_attr( $brand_rgb ); ?>, 0.1);
 			padding: 26px 24px;
 		}
 
@@ -1381,7 +1415,7 @@ function rondo_login_styles() {
 		.login input[type="text"]:focus,
 		.login input[type="password"]:focus {
 			border-color: <?php echo esc_attr( $brand_color ); ?>;
-			box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.15);
+			box-shadow: 0 0 0 3px rgba(<?php echo esc_attr( $brand_rgb ); ?>, 0.15);
 			outline: none;
 		}
 
@@ -1404,7 +1438,7 @@ function rondo_login_styles() {
 			background: linear-gradient(135deg, <?php echo esc_attr( $brand_color_light ); ?> 0%, <?php echo esc_attr( $brand_color ); ?> 100%) !important;
 			border: none !important;
 			border-radius: 8px !important;
-			box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3) !important;
+			box-shadow: 0 4px 12px rgba(<?php echo esc_attr( $brand_rgb ); ?>, 0.3) !important;
 			color: #ffffff !important;
 			font-weight: 600 !important;
 			font-size: 15px !important;
@@ -1422,7 +1456,7 @@ function rondo_login_styles() {
 		.wp-core-ui .button-primary:hover,
 		.wp-core-ui .button-primary:focus {
 			background: linear-gradient(135deg, <?php echo esc_attr( $brand_color ); ?> 0%, <?php echo esc_attr( $brand_color_dark ); ?> 100%) !important;
-			box-shadow: 0 6px 16px rgba(14, 116, 144, 0.4) !important;
+			box-shadow: 0 6px 16px rgba(<?php echo esc_attr( $brand_rgb ); ?>, 0.4) !important;
 			border-color: transparent !important;
 		}
 
@@ -1487,11 +1521,12 @@ function rondo_login_styles() {
 add_action( 'login_enqueue_scripts', 'rondo_login_styles' );
 
 /**
- * Add favicon to login page
+ * Add favicon to login page, preferring the club's configured logo.
  */
 function rondo_login_favicon() {
-	$icon_url = RONDO_THEME_URL . '/public/icons/rondo-logo.png';
-	echo '<link rel="icon" type="image/png" sizes="192x192" href="' . esc_url( $icon_url ) . '">';
+	$branding = \Rondo\Pages\PublicPageChrome::branding();
+	$icon_url = $branding['logo_url'] ?: RONDO_THEME_URL . '/public/icons/rondo-logo.png';
+	echo '<link rel="icon" sizes="192x192" href="' . esc_url( $icon_url ) . '">';
 }
 add_action( 'login_head', 'rondo_login_favicon' );
 
