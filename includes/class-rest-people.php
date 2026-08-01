@@ -9,6 +9,7 @@ namespace Rondo\REST;
 
 use Rondo\CustomFields\Manager;
 use Rondo\Core\SponsorStatus;
+use Rondo\Fields\Registry;
 use Rondo\Passes\PublicMembershipPassPage;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -30,13 +31,10 @@ class People extends Base {
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 
-		// Expand relationship data in person REST responses
-		add_filter( 'rest_prepare_person', [ $this, 'expand_person_relationships' ], 10, 3 );
-
 		// Add computed fields (is_deceased) to person REST responses
 		add_filter( 'rest_prepare_person', [ $this, 'add_person_computed_fields' ], 20, 3 );
 
-		// Reject ACF edits on persons marked former_member=true. Sportlink
+		// Reject native field edits on persons marked former_member=true. Sportlink
 		// rejects writes for these members' lidsoort ("Oud bondslid" /
 		// "Oud verenigingslid"), so anything we accept here just generates
 		// reverse-sync work that can never land. Admins (incl. the sync
@@ -551,13 +549,17 @@ class People extends Base {
 		];
 		$people = [];
 		foreach ( $posts as $post ) {
-			$acf = [];
-			foreach ( $fields as $field ) {
-				$acf[ $field ] = get_field( $field, $post->ID );
-			}
 			$people[] = [
-				'id'  => $post->ID,
-				'acf' => $acf,
+				'id'     => $post->ID,
+				'fields' => array_intersect_key(
+					\Rondo\Fields\RestFields::for_post( 'person', $post->ID ),
+					array_flip(
+						array_map(
+							fn( $name ) => \Rondo\Fields\Registry::resolve( 'person', $name )['canonical_name'],
+							$fields
+						)
+					)
+				),
 			];
 		}
 
@@ -594,8 +596,8 @@ class People extends Base {
 		}
 
 		// Get person's name for filename
-		$first_name = get_field( 'first_name', $person_id ) ?: '';
-		$last_name  = get_field( 'last_name', $person_id ) ?: '';
+		$first_name = \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '';
+		$last_name  = \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '';
 		$name_slug  = sanitize_title( strtolower( trim( $first_name . ' ' . $last_name ) ) );
 
 		// Get file extension
@@ -643,88 +645,6 @@ class People extends Base {
 	}
 
 	/**
-	 * Expand relationship data with person names and relationship type names
-	 *
-	 * @param WP_REST_Response $response The REST response object.
-	 * @param WP_Post $post The post object.
-	 * @param WP_REST_Request $request The REST request object.
-	 * @return WP_REST_Response Modified response with expanded relationships.
-	 */
-	public function expand_person_relationships( $response, $post, $request ) {
-		// Return early if response is an error (e.g., unauthorized access)
-		if ( is_wp_error( $response ) ) {
-			return $response;
-		}
-
-		$data = $response->get_data();
-
-		if ( ! isset( $data['acf']['relationships'] ) || ! is_array( $data['acf']['relationships'] ) ) {
-			return $response;
-		}
-
-		$expanded_relationships = [];
-
-		foreach ( $data['acf']['relationships'] as $rel ) {
-			// Get person ID - could be an object, array, or just an ID
-			$person_id = null;
-			if ( is_object( $rel['related_person'] ) ) {
-				$person_id = $rel['related_person']->ID;
-			} elseif ( is_array( $rel['related_person'] ) ) {
-				$person_id = $rel['related_person']['ID'] ?? null;
-			} else {
-				$person_id = $rel['related_person'];
-			}
-
-			// Get relationship type - could be term object, array, or ID
-			$type_id   = null;
-			$type_name = '';
-			$type_slug = '';
-
-			if ( is_object( $rel['relationship_type'] ) ) {
-				$type_id   = $rel['relationship_type']->term_id;
-				$type_name = $rel['relationship_type']->name;
-				$type_slug = $rel['relationship_type']->slug;
-			} elseif ( is_array( $rel['relationship_type'] ) ) {
-				$type_id   = $rel['relationship_type']['term_id'] ?? null;
-				$type_name = $rel['relationship_type']['name'] ?? '';
-				$type_slug = $rel['relationship_type']['slug'] ?? '';
-			} else {
-				$type_id = $rel['relationship_type'];
-				if ( $type_id ) {
-					$term = get_term( $type_id, 'relationship_type' );
-					if ( $term && ! is_wp_error( $term ) ) {
-						$type_name = $term->name;
-						$type_slug = $term->slug;
-					}
-				}
-			}
-
-			// Get person name
-			$person_name      = '';
-			$person_thumbnail = '';
-			if ( $person_id ) {
-				$person_name      = get_the_title( $person_id );
-				$person_thumbnail = get_the_post_thumbnail_url( $person_id, 'thumbnail' );
-			}
-
-			$expanded_relationships[] = [
-				'related_person'     => $person_id,
-				'person_name'        => $person_name,
-				'person_thumbnail'   => $person_thumbnail ?: '',
-				'relationship_type'  => $type_id,
-				'relationship_name'  => $type_name,
-				'relationship_slug'  => $type_slug,
-				'relationship_label' => $rel['relationship_label'] ?? '',
-			];
-		}
-
-		$data['acf']['relationships'] = $expanded_relationships;
-		$response->set_data( $data );
-
-		return $response;
-	}
-
-	/**
 	 * Add computed fields to person REST response
 	 * This includes is_deceased and birth_year
 	 *
@@ -743,12 +663,12 @@ class People extends Base {
 
 		// Deceased status field (reserved for future use)
 		$data['is_deceased']       = false;
-		$is_former_member          = ! empty( $data['acf']['former_member'] );
+		$is_former_member          = ! empty( $data['fields']['former_member'] );
 		$data['is_current_parent'] = $is_former_member && $this->has_current_child_relationship( $post->ID );
 
 		// Get birth year from birthdate field on person
 		$data['birth_year'] = null;
-		$birthdate          = get_field( 'birthdate', $post->ID );
+		$birthdate          = \Rondo\Fields\Fields::get_for_post( $post->ID, 'birthdate' );
 		if ( $birthdate ) {
 			$year = (int) gmdate( 'Y', strtotime( $birthdate ) );
 			if ( $year > 0 ) {
@@ -823,7 +743,7 @@ class People extends Base {
 			return false;
 		}
 
-		$relationships = get_field( 'relationships', $person_id ) ?: [];
+		$relationships = \Rondo\Fields\Fields::get_for_post( $person_id, 'relationships' ) ?: [];
 		foreach ( $relationships as $relationship ) {
 			$type_values = $relationship['relationship_type'] ?? [];
 			$type_values = is_array( $type_values ) ? $type_values : [ $type_values ];
@@ -862,7 +782,7 @@ class People extends Base {
 			if (
 				$related_id > 0 &&
 				get_post_status( $related_id ) === 'publish' &&
-				! (bool) get_field( 'former_member', $related_id )
+				! (bool) \Rondo\Fields\Fields::get_for_post( $related_id, 'former_member' )
 			) {
 				return true;
 			}
@@ -872,7 +792,7 @@ class People extends Base {
 	}
 
 	/**
-	 * Block ACF edits on persons marked former_member=true, except for the
+	 * Block native field edits on persons marked former_member=true, except for the
 	 * former_member toggle itself. Admins (including the rondo-sync service
 	 * user, which authenticates with manage_options) bypass the check so
 	 * the sync can still write to former-member records.
@@ -896,25 +816,25 @@ class People extends Base {
 		}
 
 		// Existing post's former_member state.
-		$is_former = (bool) get_field( 'former_member', $prepared_post->ID );
+		$is_former = (bool) \Rondo\Fields\Fields::get_for_post( $prepared_post->ID, 'former_member' );
 		if ( ! $is_former ) {
 			return $prepared_post;
 		}
 
-		$acf = $request->get_param( 'acf' );
-		if ( ! is_array( $acf ) || empty( $acf ) ) {
-			// Non-ACF write (e.g., title-only edit) on a former member is
+		$fields = \Rondo\Fields\RestFields::request_payload( $request, 'person' );
+		if ( empty( $fields ) ) {
+			// Non-native field write (e.g., title-only edit) on a former member is
 			// also blocked — there's nothing legitimate to change here.
 			return $this->former_member_readonly_error();
 		}
 
-		// Identify which ACF fields the request actually changes vs. current.
-		$current_acf  = get_fields( $prepared_post->ID ) ?: [];
-		$changed_keys = [];
-		foreach ( $acf as $key => $new_value ) {
-			$current = $current_acf[ $key ] ?? null;
+		// Identify which canonical fields the request actually changes vs. current.
+		$current_fields = \Rondo\Fields\Fields::all_for_post( $prepared_post->ID ) ?: [];
+		$changed_keys   = [];
+		foreach ( $fields as $key => $new_value ) {
+			$current = $current_fields[ $key ] ?? null;
 			// Loose serialized comparison handles arrays, post relations,
-			// ACF date-picker formats, etc., without false positives on
+			// native field date-picker formats, etc., without false positives on
 			// type coercion.
 			if ( maybe_serialize( $new_value ) !== maybe_serialize( $current ) ) {
 				$changed_keys[] = $key;
@@ -933,7 +853,7 @@ class People extends Base {
 	/**
 	 * Require either a personal first name or a company name.
 	 *
-	 * ACF's first_name field is optional so company-only contacts can be saved,
+	 * native field's first_name field is optional so company-only contacts can be saved,
 	 * but a person record must never become entirely nameless.
 	 *
 	 * @param stdClass        $prepared_post Sanitized post data ready for insert.
@@ -945,15 +865,15 @@ class People extends Base {
 			return $prepared_post;
 		}
 
-		$acf = $request->get_param( 'acf' );
-		if ( ! is_array( $acf ) ) {
+		$fields = \Rondo\Fields\RestFields::request_payload( $request, 'person' );
+		if ( empty( $fields ) ) {
 			return $prepared_post;
 		}
 
 		$post_id      = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : 0;
-		$first_name   = array_key_exists( 'first_name', $acf ) ? $acf['first_name'] : ( $post_id ? get_field( 'first_name', $post_id ) : '' );
-		$company_name = array_key_exists( 'company_name', $acf ) ? $acf['company_name'] : ( $post_id ? get_field( 'company_name', $post_id ) : '' );
-		$person_type  = array_key_exists( 'person_type', $acf ) ? $acf['person_type'] : ( $post_id ? get_field( 'person_type', $post_id ) : 'member' );
+		$first_name   = array_key_exists( 'first_name', $fields ) ? $fields['first_name'] : ( $post_id ? \Rondo\Fields\Fields::get_for_post( $post_id, 'first_name' ) : '' );
+		$company_name = array_key_exists( 'company_name', $fields ) ? $fields['company_name'] : ( $post_id ? \Rondo\Fields\Fields::get_for_post( $post_id, 'company_name' ) : '' );
+		$person_type  = array_key_exists( 'person_type', $fields ) ? $fields['person_type'] : ( $post_id ? \Rondo\Fields\Fields::get_for_post( $post_id, 'person_type' ) : 'member' );
 
 		if ( trim( (string) $first_name ) === '' && trim( (string) $company_name ) === '' ) {
 			return new \WP_Error(
@@ -986,18 +906,18 @@ class People extends Base {
 			return $prepared_post;
 		}
 
-		$acf = $request->get_param( 'acf' );
-		if ( ! is_array( $acf ) ) {
+		$fields = \Rondo\Fields\RestFields::request_payload( $request, 'person' );
+		if ( empty( $fields ) ) {
 			return $prepared_post;
 		}
 
 		$post_id              = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : 0;
 		$current_is_sponsor   = $post_id ? SponsorStatus::is_sponsor( $post_id ) : false;
-		$requested_is_sponsor = array_key_exists( 'is_sponsor', $acf )
-			? SponsorStatus::value_is_true( $acf['is_sponsor'] )
+		$requested_is_sponsor = array_key_exists( 'is_sponsor', $fields )
+			? SponsorStatus::value_is_true( $fields['is_sponsor'] )
 			: $current_is_sponsor;
-		$has_variant          = array_key_exists( 'sponsor_pass_variant', $acf );
-		$variant              = $has_variant ? sanitize_key( (string) $acf['sponsor_pass_variant'] ) : '';
+		$has_variant          = array_key_exists( 'sponsor_pass_variant', $fields );
+		$variant              = $has_variant ? sanitize_key( (string) $fields['sponsor_pass_variant'] ) : '';
 		$allowed              = [
 			PublicMembershipPassPage::SPONSOR_PASS_VARIANT_BUSINESSCLUB,
 			PublicMembershipPassPage::SPONSOR_PASS_VARIANT_AWC_SPONSOR,
@@ -1062,16 +982,15 @@ class People extends Base {
 			return $prepared_post; // No partial editing capability — core caps already decided.
 		}
 
-		$acf     = $request->get_param( 'acf' );
-		$acf     = is_array( $acf ) ? $acf : [];
+		$fields  = \Rondo\Fields\RestFields::request_payload( $request, 'person' );
 		$post_id = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : 0;
 
 		if ( $post_id === 0 ) {
 			// Creation: only sponsor managers may mint a record, and only an
 			// explicit contact+sponsor one. Contact editors never create people.
 			if ( $may_manage_sponsors ) {
-				$requested_type       = sanitize_key( (string) ( $acf['person_type'] ?? '' ) );
-				$requested_is_sponsor = SponsorStatus::value_is_true( $acf['is_sponsor'] ?? false );
+				$requested_type       = sanitize_key( (string) ( $fields['person_type'] ?? '' ) );
+				$requested_is_sponsor = SponsorStatus::value_is_true( $fields['is_sponsor'] ?? false );
 				if ( $requested_type === 'contact' && $requested_is_sponsor ) {
 					return $prepared_post;
 				}
@@ -1085,11 +1004,11 @@ class People extends Base {
 		$is_sponsor_record = SponsorStatus::is_sponsor( $post_id );
 		if ( $may_manage_sponsors && $is_sponsor_record ) {
 			$current_type = sanitize_key( (string) get_post_meta( $post_id, 'person_type', true ) );
-			if ( array_key_exists( 'is_sponsor', $acf ) && ! SponsorStatus::value_is_true( $acf['is_sponsor'] ) ) {
+			if ( array_key_exists( 'is_sponsor', $fields ) && ! SponsorStatus::value_is_true( $fields['is_sponsor'] ) ) {
 				return $this->person_field_scope_error();
 			}
-			if ( array_key_exists( 'person_type', $acf )
-				&& sanitize_key( (string) $acf['person_type'] ) !== $current_type ) {
+			if ( array_key_exists( 'person_type', $fields )
+				&& sanitize_key( (string) $fields['person_type'] ) !== $current_type ) {
 				return $this->person_field_scope_error();
 			}
 		}
@@ -1104,11 +1023,10 @@ class People extends Base {
 			return $prepared_post;
 		}
 
-		// Judge the request on what it *changes*, not on what it sends: person
-		// writes in this app round-trip the whole ACF object, so an untouched
-		// field arriving unchanged must not be read as an attempted edit.
+		// Judge the request on what it changes. An unchanged field arriving in a
+		// request must not be read as an attempted edit.
 		$blocked_fields = array_values(
-			array_diff( $this->changed_acf_keys( $post_id, $acf ), $allowed_fields )
+			array_diff( $this->changed_field_keys( $post_id, $fields ), $allowed_fields )
 		);
 
 		if ( ! empty( $blocked_fields ) ) {
@@ -1158,17 +1076,17 @@ class People extends Base {
 	}
 
 	/**
-	 * ACF keys whose submitted value differs from what is stored.
+	 * native field keys whose submitted value differs from what is stored.
 	 *
 	 * @param int   $post_id Person post ID.
-	 * @param array $acf     Submitted ACF payload.
+	 * @param array $fields     Submitted native field payload.
 	 * @return string[]
 	 */
-	private function changed_acf_keys( int $post_id, array $acf ): array {
-		$current = get_fields( $post_id ) ?: [];
+	private function changed_field_keys( int $post_id, array $fields ): array {
+		$current = \Rondo\Fields\Fields::all_for_post( $post_id ) ?: [];
 		$changed = [];
 
-		foreach ( $acf as $key => $new_value ) {
+		foreach ( $fields as $key => $new_value ) {
 			if ( maybe_serialize( $new_value ) !== maybe_serialize( $current[ $key ] ?? null ) ) {
 				$changed[] = $key;
 			}
@@ -1372,7 +1290,7 @@ class People extends Base {
 					$org_id = $updates['organization_id'];
 
 					// Get current work_history
-					$work_history = get_field( 'work_history', $post_id ) ?: [];
+					$work_history = \Rondo\Fields\Fields::get_for_post( $post_id, 'work_history' ) ?: [];
 
 					if ( $org_id === null ) {
 						// Clear current organization: set is_current=false on all entries
@@ -1403,7 +1321,7 @@ class People extends Base {
 						}
 					}
 
-					update_field( 'work_history', $work_history, $post_id );
+					\Rondo\Fields\Fields::update_for_post( $post_id, 'work_history', $work_history );
 				}
 
 				$updated[] = $post_id;
@@ -1469,59 +1387,81 @@ class People extends Base {
 	}
 
 	/**
-	 * Validate orderby parameter - accepts built-in fields or custom_ prefixed fields.
+	 * Validate a canonical orderby parameter or a bounded legacy alias.
 	 *
 	 * @param string $param The orderby value to validate.
 	 * @return bool True if valid, false otherwise.
 	 */
 	public function validate_orderby_param( $param ) {
-		// Check built-in fields first.
+		return $this->resolve_orderby_definition( (string) $param ) !== null;
+	}
+
+	/**
+	 * Resolve an order identifier to its canonical public name and storage metadata.
+	 *
+	 * The public source of truth is `field_{canonical_name}`. During the compatibility
+	 * window, `custom_{storage_name}` is accepted and normalized through the registry.
+	 *
+	 * @return array{identifier:string,storage_name:?string,type:?string}|null
+	 */
+	private function resolve_orderby_definition( string $param ): ?array {
 		$built_in_fields = [
 			'first_name',
 			'last_name',
 			'modified',
 			'birthdate',
 			'organization',
-			// Sportlink fields (ACF fields, not from Manager)
-			'custom_knvb-id',
-			'custom_type-lid',
-			'custom_leeftijdsgroep',
-			'custom_lid-sinds',
-			'custom_vrijwilliger-sinds',
-			'custom_datum-foto',
-			'custom_datum-vog',
-			'custom_isparent',
-			'custom_huidig-vrijwilliger',
-			'custom_financiele-blokkade',
-			'custom_freescout-id',
 		];
 		if ( in_array( $param, $built_in_fields, true ) ) {
-			return true;
+			return [
+				'identifier'   => $param,
+				'storage_name' => null,
+				'type'         => null,
+			];
 		}
 
-		// Check for custom field (must start with 'custom_').
-		if ( strpos( $param, 'custom_' ) !== 0 ) {
-			return false;
+		$is_canonical = strpos( $param, 'field_' ) === 0;
+		$is_legacy    = strpos( $param, 'custom_' ) === 0;
+		if ( ! $is_canonical && ! $is_legacy ) {
+			return null;
 		}
 
-		// Extract field name (remove 'custom_' prefix).
-		$field_name = substr( $param, 7 );
+		$identifier     = substr( $param, 6 + ( $is_legacy ? 1 : 0 ) );
+		$sortable_types = [ 'text', 'textarea', 'number', 'date', 'date_picker', 'select', 'email', 'url', 'true_false' ];
 
-		// Get all active custom fields for person entity.
+		try {
+			$definition = Registry::resolve( 'person', $identifier );
+			if ( ! in_array( $definition['type'], $sortable_types, true ) ) {
+				return null;
+			}
+
+			return [
+				'identifier'   => 'field_' . $definition['canonical_name'],
+				'storage_name' => $definition['storage_name'],
+				'type'         => $definition['type'],
+			];
+		} catch ( \InvalidArgumentException $error ) {
+			// Dynamic definitions join the native registry in Phase F. Until then,
+			// their immutable canonical field name is the compatibility storage key.
+		}
+
 		$manager = new Manager();
 		$fields  = $manager->get_fields( 'person', false );
-
-		// Find field by name and validate it's sortable.
 		foreach ( $fields as $field ) {
-			if ( $field['name'] === $field_name ) {
-				// Only allow sortable field types.
-				$sortable_types = [ 'text', 'textarea', 'number', 'date', 'select', 'email', 'url', 'true_false' ];
-				return in_array( $field['type'], $sortable_types, true );
+			$canonical_name = isset( $field['rondo_canonical_name'] )
+				? (string) $field['rondo_canonical_name']
+				: str_replace( '-', '_', (string) $field['name'] );
+			$matches        = $is_canonical ? $canonical_name === $identifier : $field['name'] === $identifier;
+			if ( $matches && in_array( $field['type'], $sortable_types, true ) ) {
+				return [
+					'identifier'   => 'field_' . $canonical_name,
+					'storage_name' => (string) $field['name'],
+					'type'         => (string) $field['type'],
+				];
 			}
 		}
 
-		// Field not found or inactive.
-		return false;
+		return null;
 	}
 
 	/**
@@ -1537,15 +1477,20 @@ class People extends Base {
 		global $wpdb;
 
 		// Extract validated parameters
-		$page            = (int) $request->get_param( 'page' );
-		$per_page        = (int) $request->get_param( 'per_page' );
-		$ownership       = $request->get_param( 'ownership' );
-		$modified_days   = $request->get_param( 'modified_days' );
-		$birth_year_from = $request->get_param( 'birth_year_from' );
-		$birth_year_to   = $request->get_param( 'birth_year_to' );
-		$birth_month     = $request->get_param( 'birth_month' );
-		$orderby         = $request->get_param( 'orderby' );
-		$order           = strtoupper( $request->get_param( 'order' ) );
+		$page             = (int) $request->get_param( 'page' );
+		$per_page         = (int) $request->get_param( 'per_page' );
+		$ownership        = $request->get_param( 'ownership' );
+		$modified_days    = $request->get_param( 'modified_days' );
+		$birth_year_from  = $request->get_param( 'birth_year_from' );
+		$birth_year_to    = $request->get_param( 'birth_year_to' );
+		$birth_month      = $request->get_param( 'birth_month' );
+		$orderby          = (string) $request->get_param( 'orderby' );
+		$order_definition = $this->resolve_orderby_definition( $orderby );
+		if ( $order_definition === null ) {
+			$order_definition = $this->resolve_orderby_definition( 'first_name' );
+		}
+		$orderby = $order_definition['identifier'];
+		$order   = strtoupper( $request->get_param( 'order' ) );
 
 		// Custom field filter parameters
 		$huidig_vrijwilliger       = $request->get_param( 'huidig_vrijwilliger' );
@@ -1584,12 +1529,13 @@ class People extends Base {
 		// Filtering or sorting on a field the caller may not read would hand them
 		// its value through result membership and result order. Drop both silently:
 		// erroring would confirm the field exists just as loudly.
-		if ( \Rondo\Core\AccessControl::acf_field_is_hidden( 'financiele_blokkade' ) ) {
+		if ( \Rondo\Core\AccessControl::field_is_hidden( 'financiele_blokkade' ) ) {
 			$financiele_blokkade = null;
 		}
-		if ( strpos( (string) $orderby, 'custom_' ) === 0
-			&& \Rondo\Core\AccessControl::acf_field_is_hidden( substr( $orderby, 7 ) ) ) {
-			$orderby = 'first_name';
+		if ( $order_definition['storage_name'] !== null
+			&& \Rondo\Core\AccessControl::field_is_hidden( $order_definition['storage_name'] ) ) {
+			$order_definition = $this->resolve_orderby_definition( 'first_name' );
+			$orderby          = 'first_name';
 		}
 
 		// Double-check access control (permission_callback should have caught this,
@@ -1904,7 +1850,7 @@ class People extends Base {
 
 			// Subquery: person has at least one current work_history entry that is
 			// (a) linked to a team (post_type = 'team'), and (b) has a player job_title.
-			// ACF repeater rows are stored as work_history_{N}_job_title, work_history_{N}_team, etc.
+			// native field repeater rows are stored as work_history_{N}_job_title, work_history_{N}_team, etc.
 			$player_team_subquery = $wpdb->prepare(
 				"SELECT 1
 				 FROM {$wpdb->postmeta} wh_jt
@@ -1994,8 +1940,8 @@ class People extends Base {
 					CAST(REPLACE($birthdate_value_sql, '-', '') AS UNSIGNED) $order,
 					fn.meta_value ASC";
 				break;
-			case 'custom_datum-vog':
-				// ACF date field - not a custom field from Manager, so handle explicitly
+			case 'field_datum_vog':
+				// native field date field - not a custom field from Manager, so handle explicitly
 				// Check if 'dv' alias already exists from VOG filtering (lines 1114-1149)
 				// to avoid duplicate JOINs on the same table
 				$has_dv_join = false;
@@ -2010,51 +1956,51 @@ class People extends Base {
 				}
 				$order_clause = "ORDER BY COALESCE(dv.meta_value, '') $order, fn.meta_value ASC";
 				break;
-			case 'custom_lid-sinds':
-			case 'custom_lid-tot':
-			case 'custom_vrijwilliger-sinds':
-			case 'custom_datum-foto':
-				// ACF date fields (not from Manager)
-				$field_name     = substr( $orderby, 7 ); // Remove 'custom_' prefix
+			case 'field_lid_sinds':
+			case 'field_lid_tot':
+			case 'field_vrijwilliger_sinds':
+			case 'field_datum_foto':
+				// native field date fields (not from Manager)
+				$field_name     = $order_definition['storage_name'];
 				$join_clauses[] = $wpdb->prepare(
 					"LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = %s",
 					$field_name
 				);
 				$order_clause   = "ORDER BY STR_TO_DATE(cf.meta_value, '%%Y-%%m-%%d') $order, fn.meta_value ASC";
 				break;
-			case 'custom_isparent':
-			case 'custom_huidig-vrijwilliger':
-			case 'custom_financiele-blokkade':
-				// Boolean ACF fields
-				$field_name     = substr( $orderby, 7 );
+			case 'field_isparent':
+			case 'field_huidig_vrijwilliger':
+			case 'field_financiele_blokkade':
+				// Boolean canonical fields
+				$field_name     = $order_definition['storage_name'];
 				$join_clauses[] = $wpdb->prepare(
 					"LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = %s",
 					$field_name
 				);
 				$order_clause   = "ORDER BY CAST(COALESCE(cf.meta_value, '0') AS UNSIGNED) $order, fn.meta_value ASC";
 				break;
-			case 'custom_freescout-id':
-				// Numeric ACF field
-				$field_name     = substr( $orderby, 7 );
+			case 'field_freescout_id':
+				// Numeric canonical field
+				$field_name     = $order_definition['storage_name'];
 				$join_clauses[] = $wpdb->prepare(
 					"LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = %s",
 					$field_name
 				);
 				$order_clause   = "ORDER BY CAST(cf.meta_value AS DECIMAL(10,2)) $order, fn.meta_value ASC";
 				break;
-			case 'custom_knvb-id':
-			case 'custom_type-lid':
-				// Text ACF fields
-				$field_name     = substr( $orderby, 7 );
+			case 'field_knvb_id':
+			case 'field_type_lid':
+				// Text canonical fields
+				$field_name     = $order_definition['storage_name'];
 				$join_clauses[] = $wpdb->prepare(
 					"LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = %s",
 					$field_name
 				);
 				$order_clause   = "ORDER BY COALESCE(cf.meta_value, '') $order, fn.meta_value ASC";
 				break;
-			case 'custom_leeftijdsgroep':
-				// ACF field with custom age group sorting logic
-				$field_name     = substr( $orderby, 7 );
+			case 'field_leeftijdsgroep':
+				// canonical field with custom age group sorting logic
+				$field_name     = $order_definition['storage_name'];
 				$join_clauses[] = $wpdb->prepare(
 					"LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = %s",
 					$field_name
@@ -2073,21 +2019,9 @@ class People extends Base {
 					fn.meta_value ASC";
 				break;
 			default:
-				// Check if this is a custom field (starts with 'custom_')
-				if ( strpos( $orderby, 'custom_' ) === 0 ) {
-					$field_name = substr( $orderby, 7 );
-
-					// Get the field definition to determine type-appropriate sorting
-					$manager    = new Manager();
-					$fields     = $manager->get_fields( 'person', false );
-					$field_type = null;
-
-					foreach ( $fields as $field ) {
-						if ( $field['name'] === $field_name ) {
-							$field_type = $field['type'];
-							break;
-						}
-					}
+				if ( strpos( $orderby, 'field_' ) === 0 && $order_definition['storage_name'] !== null ) {
+					$field_name = $order_definition['storage_name'];
+					$field_type = $order_definition['type'];
 
 					// Add LEFT JOIN for the custom field meta
 					$join_clauses[] = $wpdb->prepare(
@@ -2115,11 +2049,11 @@ class People extends Base {
 						// Numeric sort with NULLS LAST
 						$order_clause = "ORDER BY CAST(cf.meta_value AS DECIMAL(10,2)) $order, fn.meta_value ASC";
 					} elseif ( $field_type === 'date' ) {
-						// Date sort (ACF stores dates as Y-m-d format) with NULLS LAST
+						// Date sort (native field stores dates as Y-m-d format) with NULLS LAST
 						// Double %% to escape for wpdb->prepare()
 						$order_clause = "ORDER BY STR_TO_DATE(cf.meta_value, '%%Y-%%m-%%d') $order, fn.meta_value ASC";
 					} elseif ( $field_type === 'true_false' ) {
-						// Boolean sort (ACF stores as 1 or 0/empty) - cast to integer
+						// Boolean sort (native field stores as 1 or 0/empty) - cast to integer
 						$order_clause = "ORDER BY CAST(COALESCE(cf.meta_value, '0') AS UNSIGNED) $order, fn.meta_value ASC";
 					} else {
 						// Text-based sort (text, textarea, select, email, url) with NULLS LAST
@@ -2183,37 +2117,7 @@ class People extends Base {
 				'thumbnail'     => $this->sanitize_url( get_the_post_thumbnail_url( $row->ID, 'thumbnail' ) ),
 			];
 
-			// Add ACF fields for custom field columns.
-			// This endpoint builds its response by hand and never passes through
-			// `rest_prepare_person`, so it has to apply the same redaction the
-			// core routes get from AccessControl::filter_rest_single_access().
-			if ( function_exists( 'get_fields' ) ) {
-				$acf_fields = get_fields( $row->ID );
-				if ( $acf_fields ) {
-					if ( $is_scoped_member ) {
-						$acf_fields = \Rondo\Core\AccessControl::filter_member_visible_acf( $acf_fields );
-					}
-					$person['acf'] = \Rondo\Core\AccessControl::filter_sensitive_acf( $acf_fields );
-				}
-			}
-
-			// Add VOG-related post meta fields to acf array for frontend consistency.
-			// These are VOG-workflow timestamps, not member-facing data, so they stay
-			// out of a scoped member's allowlisted payload.
-			if ( ! $is_scoped_member ) {
-				$vog_email_sent = get_post_meta( $row->ID, 'vog_email_sent_date', true );
-				$vog_justis     = get_post_meta( $row->ID, 'vog_justis_submitted_date', true );
-				$vog_reminder   = get_post_meta( $row->ID, 'vog_reminder_sent_date', true );
-				if ( $vog_email_sent ) {
-					$person['acf']['vog_email_sent_date'] = $vog_email_sent;
-				}
-				if ( $vog_justis ) {
-					$person['acf']['vog_justis_submitted_date'] = $vog_justis;
-				}
-				if ( $vog_reminder ) {
-					$person['acf']['vog_reminder_sent_date'] = $vog_reminder;
-				}
-			}
+			$person['fields'] = \Rondo\Fields\RestFields::for_post( 'person', (int) $row->ID );
 
 			$people[] = $person;
 		}

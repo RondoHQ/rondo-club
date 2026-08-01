@@ -180,13 +180,13 @@ class PersonTypeFilterTest extends RondoTestCase {
 		$contact = current( array_filter( $data['people'], static fn( $person ) => $person['id'] === $contact_id ) );
 
 		$this->assertSame( 'Voorbeeld BV', $contact['name'] );
-		$this->assertSame( 'Voorbeeld BV', $contact['acf']['company_name'] );
+		$this->assertSame( 'Voorbeeld BV', $contact['fields']['company_name'] );
 	}
 
 	public function test_rest_identity_validation_accepts_company_without_first_name(): void {
 		$request = new \WP_REST_Request( 'POST' );
 		$request->set_param(
-			'acf',
+			'fields',
 			[
 				'first_name'   => '',
 				'company_name' => 'Voorbeeld BV',
@@ -201,7 +201,7 @@ class PersonTypeFilterTest extends RondoTestCase {
 	public function test_rest_identity_validation_accepts_company_only_sponsor(): void {
 		$request = new \WP_REST_Request( 'POST' );
 		$request->set_param(
-			'acf',
+			'fields',
 			[
 				'first_name'   => '',
 				'company_name' => 'Sponsor BV',
@@ -217,7 +217,7 @@ class PersonTypeFilterTest extends RondoTestCase {
 	public function test_rest_identity_validation_rejects_nameless_person(): void {
 		$request = new \WP_REST_Request( 'POST' );
 		$request->set_param(
-			'acf',
+			'fields',
 			[
 				'first_name'   => '',
 				'company_name' => '',
@@ -233,7 +233,7 @@ class PersonTypeFilterTest extends RondoTestCase {
 	public function test_rest_identity_validation_rejects_company_only_member(): void {
 		$request = new \WP_REST_Request( 'POST' );
 		$request->set_param(
-			'acf',
+			'fields',
 			[
 				'first_name'   => '',
 				'company_name' => 'Voorbeeld BV',

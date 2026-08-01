@@ -96,9 +96,11 @@ class TodoMigration {
 		foreach ( $todos as $todo_id ) {
 			++$stats['total'];
 
-			$is_completed            = get_field( 'is_completed', $todo_id );
-			$awaiting_response       = get_field( 'awaiting_response', $todo_id );
-			$awaiting_response_since = get_field( 'awaiting_response_since', $todo_id );
+			// These are retired pre-registry meta keys; read them directly so the
+			// one-time migration remains usable after the canonical cutover.
+			$is_completed            = get_post_meta( $todo_id, 'is_completed', true );
+			$awaiting_response       = get_post_meta( $todo_id, 'awaiting_response', true );
+			$awaiting_response_since = get_post_meta( $todo_id, 'awaiting_response_since', true );
 
 			// Determine new status
 			if ( $is_completed && $awaiting_response ) {
@@ -124,13 +126,13 @@ class TodoMigration {
 
 				// Rename awaiting_response_since to awaiting_since if migrating to awaiting
 				if ( $new_status === 'rondo_awaiting' && $awaiting_response_since ) {
-					update_field( 'awaiting_since', $awaiting_response_since, $todo_id );
+					\Rondo\Fields\Fields::update_for_post( $todo_id, 'awaiting_since', $awaiting_response_since );
 				}
 
 				// Clean up old meta fields
-				delete_field( 'is_completed', $todo_id );
-				delete_field( 'awaiting_response', $todo_id );
-				delete_field( 'awaiting_response_since', $todo_id );
+				delete_post_meta( $todo_id, 'is_completed' );
+				delete_post_meta( $todo_id, 'awaiting_response' );
+				delete_post_meta( $todo_id, 'awaiting_response_since' );
 			}
 		}
 

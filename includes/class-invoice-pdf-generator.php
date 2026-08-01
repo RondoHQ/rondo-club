@@ -41,15 +41,15 @@ class InvoicePdfGenerator {
 		}
 
 		// Gather invoice data
-		$invoice_number = get_field( 'invoice_number', $invoice_id );
-		$person_id      = get_field( 'person', $invoice_id );
-		$total_amount   = (float) get_field( 'total_amount', $invoice_id );
-		$line_items     = get_field( 'line_items', $invoice_id );
-		$sent_date      = get_field( 'sent_date', $invoice_id );
-		$due_date       = get_field( 'due_date', $invoice_id );
-		$invoice_type   = get_field( 'invoice_type', $invoice_id ) ?: 'discipline';
-		$payment_link   = get_field( 'payment_link', $invoice_id );
-		$invoice_status = get_field( 'status', $invoice_id ) ?: str_replace( 'rondo_', '', (string) $invoice->post_status );
+		$invoice_number = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_number' );
+		$person_id      = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'person' );
+		$total_amount   = (float) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'total_amount' );
+		$line_items     = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'line_items' );
+		$sent_date      = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'sent_date' );
+		$due_date       = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'due_date' );
+		$invoice_type   = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_type' ) ?: 'discipline';
+		$payment_link   = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'payment_link' );
+		$invoice_status = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'status' ) ?: str_replace( 'rondo_', '', (string) $invoice->post_status );
 		$is_paid        = ( $invoice_status === 'paid' || $invoice->post_status === 'rondo_paid' );
 		$invoice_kind   = (string) get_post_meta( $invoice_id, '_invoice_kind', true ) ?: 'normal';
 		$is_credit      = ( $invoice_kind === 'credit' );
@@ -79,12 +79,12 @@ class InvoicePdfGenerator {
 
 		$person = $person_id ? get_post( $person_id ) : null;
 		if ( $person && $person->post_type === 'person' ) {
-			$member_name = (string) ( get_field( 'company_name', $person_id ) ?: $person->post_title );
+			$member_name = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) ?: $person->post_title );
 			if ( $person_name === '' ) {
 				$person_name = $member_name;
 			}
 
-			$addresses = get_field( 'addresses', $person_id );
+			$addresses = \Rondo\Fields\Fields::get_for_post( $person_id, 'addresses' );
 			if ( $addresses && is_array( $addresses ) && count( $addresses ) > 0 ) {
 				$format_address = function ( array $addr ): array {
 					return [
@@ -110,10 +110,10 @@ class InvoicePdfGenerator {
 			}
 
 			if ( trim( $person_email ) === '' ) {
-				$person_email = (string) get_field( 'email_1', $person_id );
+				$person_email = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'email_1' );
 			}
 			if ( trim( $person_email ) === '' ) {
-				$person_email = (string) get_field( 'email_2', $person_id );
+				$person_email = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'email_2' );
 			}
 		}
 
@@ -154,7 +154,7 @@ class InvoicePdfGenerator {
 		}
 
 		// Get QR code path if available
-		$qr_code_path    = get_field( 'qr_code_path', $invoice_id );
+		$qr_code_path    = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'qr_code_path' );
 		$qr_code_abspath = null;
 		if ( ! empty( $qr_code_path ) ) {
 			$upload_dir   = wp_upload_dir();
@@ -234,7 +234,7 @@ class InvoicePdfGenerator {
 			$mpdf->Output( $full_path, \Mpdf\Output\Destination::FILE );
 
 			// Store PDF path on invoice
-			update_field( 'pdf_path', $relative_path, $invoice_id );
+			\Rondo\Fields\Fields::update_for_post( $invoice_id, 'pdf_path', $relative_path );
 
 			return $relative_path;
 
@@ -366,9 +366,9 @@ class InvoicePdfGenerator {
 
 					if ( ! empty( $item['discipline_case'] ) ) {
 						$case_id       = $item['discipline_case'];
-						$match_desc    = get_field( 'match_description', $case_id );
-						$sanction_desc = get_field( 'sanction_description', $case_id );
-						$charge_codes  = get_field( 'charge_codes', $case_id );
+						$match_desc    = \Rondo\Fields\Fields::get_for_post( $case_id, 'match_description' );
+						$sanction_desc = \Rondo\Fields\Fields::get_for_post( $case_id, 'sanction_description' );
+						$charge_codes  = \Rondo\Fields\Fields::get_for_post( $case_id, 'charge_codes' );
 
 						$description = $match_desc ?: ( $item['description'] ?? '' );
 
@@ -632,7 +632,7 @@ table.line-items .total-row td {
 	}
 
 	/**
-	 * Format date from ACF Ymd format to Dutch date format
+	 * Format date from native field Ymd format to Dutch date format
 	 *
 	 * @param string $ymd_date Date in Ymd format (e.g., "20260216").
 	 * @return string Formatted Dutch date (e.g., "16 februari 2026").
@@ -674,7 +674,7 @@ table.line-items .total-row td {
 	 * @return array<string, string>
 	 */
 	private static function get_invoice_payment_account( int $invoice_id, FinanceConfig $finance_config ): array {
-		$invoice_type    = (string) get_field( 'invoice_type', $invoice_id );
+		$invoice_type    = (string) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_type' );
 		$account_id      = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
 		$internal_name   = (string) get_post_meta( $invoice_id, '_payment_account_internal_name', true );
 		$account_holder  = (string) get_post_meta( $invoice_id, '_payment_account_account_holder', true );

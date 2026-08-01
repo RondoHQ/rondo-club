@@ -7,19 +7,9 @@ use lucatume\WPBrowser\TestCase\WPTestCase;
 /**
  * Base test case for Rondo Club theme tests.
  *
- * Provides helper methods for creating test fixtures and
- * ensures ACF is properly loaded.
+ * Provides helpers for creating native field-backed fixtures.
  */
 abstract class RondoTestCase extends WPTestCase {
-
-	protected function set_up(): void {
-		parent::set_up();
-
-		// Ensure ACF is fully loaded with local JSON
-		if ( function_exists( 'acf_get_local_json_files' ) ) {
-			acf_get_local_json_files();
-		}
-	}
 
 	/**
 	 * Incorrect-usage notices to treat as background noise for this test.
@@ -69,6 +59,9 @@ abstract class RondoTestCase extends WPTestCase {
 	 * @param class-string[] $controllers Controller classes to instantiate.
 	 */
 	protected function bootRestControllers( array $controllers ): \WP_REST_Server {
+		if ( ! in_array( \Rondo\Fields\RestFields::class, $controllers, true ) ) {
+			array_unshift( $controllers, \Rondo\Fields\RestFields::class );
+		}
 		foreach ( $controllers as $controller ) {
 			new $controller();
 		}
@@ -80,13 +73,13 @@ abstract class RondoTestCase extends WPTestCase {
 	}
 
 	/**
-	 * Create a person post with optional ACF fields.
+	 * Create a person post with optional canonical fields.
 	 *
 	 * @param array $args Post arguments (post_title, post_author, etc.)
-	 * @param array $acf ACF field values keyed by field name
+	 * @param array $fields Field values keyed by canonical name.
 	 * @return int Post ID
 	 */
-	protected function createPerson( array $args = [], array $acf = [] ): int {
+	protected function createPerson( array $args = [], array $fields = [] ): int {
 		$defaults = [
 			'post_type'   => 'person',
 			'post_status' => 'publish',
@@ -95,8 +88,8 @@ abstract class RondoTestCase extends WPTestCase {
 
 		$post_id = self::factory()->post->create( array_merge( $defaults, $args ) );
 
-		foreach ( $acf as $field => $value ) {
-			update_field( $field, $value, $post_id );
+		foreach ( $fields as $field => $value ) {
+			\Rondo\Fields\Fields::update_for_post( $post_id, $field, $value );
 		}
 
 		return $post_id;
@@ -106,10 +99,10 @@ abstract class RondoTestCase extends WPTestCase {
 	 * Create an organization (team) post.
 	 *
 	 * @param array $args Post arguments
-	 * @param array $acf ACF field values
+	 * @param array $fields Field values keyed by canonical name.
 	 * @return int Post ID
 	 */
-	protected function createOrganization( array $args = [], array $acf = [] ): int {
+	protected function createOrganization( array $args = [], array $fields = [] ): int {
 		$defaults = [
 			'post_type'   => 'team',
 			'post_status' => 'publish',
@@ -118,8 +111,8 @@ abstract class RondoTestCase extends WPTestCase {
 
 		$post_id = self::factory()->post->create( array_merge( $defaults, $args ) );
 
-		foreach ( $acf as $field => $value ) {
-			update_field( $field, $value, $post_id );
+		foreach ( $fields as $field => $value ) {
+			\Rondo\Fields\Fields::update_for_post( $post_id, $field, $value );
 		}
 
 		return $post_id;

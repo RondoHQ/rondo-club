@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.0.0] - 2026-08-01
+
+### Added
+
+- Rondo beheert alle domeinvelden nu zelf via een centrale PHP-registry, een canoniek `fields`-REST-contract en native WordPress-metadata. Daaronder vallen ook repeaters, media, relaties, datums en dynamische velden.
+- Beheercommando's kunnen opgeslagen veldnamen controleren en migreren en dynamische velddefinities exporteren, importeren en veilig back-uppen.
+
+### Changed
+
+- De React-app, demo-import/export, onderhoudsscripts en rondo-sync lezen en schrijven uitsluitend canonieke snake_case-namen onder `fields`; wijzigingen kunnen als gedeeltelijke update worden verstuurd.
+- Dynamische velddefinities staan in een versiegebonden WordPress-optie met vaste identiteiten en opslagkeys. Deactiveren verwijdert geen waarden.
+- CI en de volledige PHP-testsuite draaien zonder externe veldplugin. De documentatie beschrijft de native registry, opslag, veldworkflow, uitrol en terugval.
+
+### Fixed
+
+- Oud-leden tellen niet mee voor gezinskorting; een wijziging van de oud-lidstatus vernieuwt ook de contributiecaches en kortingsposities van het actieve huishouden.
+
+### Removed
+
+- Het publieke `acf`-responseveld, ondersteuning voor `acf`-writes, alle runtime-helper- en hookafhankelijkheden, plugininstallatie/licentiecode, en de map `acf-json/`. Oude writes krijgen een gerichte HTTP 400 met `fields` als vervanging.
+
 ## [33.86.0] - 2026-08-01
 
 ### Added

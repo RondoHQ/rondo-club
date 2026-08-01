@@ -45,7 +45,7 @@ class AccessControl {
 	 * from the whole club, so a coördinator scoped to one age group cannot see most
 	 * of the people they are meant to roster. Also a view bypass only — it is
 	 * likewise absent from can_edit_people(), and the fields it may read are
-	 * narrowed independently by SENSITIVE_ACF_FIELD_GROUPS.
+	 * narrowed independently by SENSITIVE_FIELD_GROUPS.
 	 *
 	 * Exposed through get_management_capabilities() so the capability-matrix UI can
 	 * ask rather than keep its own copy.
@@ -80,13 +80,13 @@ class AccessControl {
 	private const CHILD_VISIBILITY_MAX_AGE = 18;
 
 	/**
-	 * ACF fields a scoped member may read on their own and their children's records.
+	 * canonical fields a scoped member may read on their own and their children's records.
 	 *
 	 * An allowlist, deliberately: a field added to the person CPT later is private
 	 * until someone consciously adds it here. Notably absent are `financiele-blokkade`,
 	 * `wacht_op_overschrijving` and `freescout-id`.
 	 */
-	private const MEMBER_VISIBLE_ACF_FIELDS = [
+	private const MEMBER_VISIBLE_FIELDS = [
 		'first_name',
 		'infix',
 		'last_name',
@@ -112,7 +112,7 @@ class AccessControl {
 	];
 
 	/**
-	 * ACF fields that require a capability of their own, whoever is asking.
+	 * canonical fields that require a capability of their own, whoever is asking.
 	 *
 	 * Person access has two independent axes: *which people* you may see
 	 * (age groups / household, see can_view_person()) and *which fields* you may
@@ -127,7 +127,7 @@ class AccessControl {
 	 * field but is a KNVB transfer flag — membership administration, and the
 	 * ledenadministratie list renders it as a badge.
 	 */
-	private const SENSITIVE_ACF_FIELD_GROUPS = [
+	private const SENSITIVE_FIELD_GROUPS = [
 		'finance' => [
 			'financiele-blokkade',
 			'nikki-contributie-status',
@@ -618,7 +618,7 @@ class AccessControl {
 	 * @return int[] Child person post IDs.
 	 */
 	private static function minor_children_of( $person_id ) {
-		$relationships = get_field( 'relationships', $person_id );
+		$relationships = \Rondo\Fields\Fields::get_for_post( $person_id, 'relationships' );
 
 		if ( empty( $relationships ) || ! is_array( $relationships ) ) {
 			return [];
@@ -656,7 +656,7 @@ class AccessControl {
 	/**
 	 * Is this person under CHILD_VISIBILITY_MAX_AGE?
 	 *
-	 * ACF `date_picker` stores `Ymd`, not `Y-m-d`. A person with no usable birthdate
+	 * native field `date_picker` stores `Ymd`, not `Y-m-d`. A person with no usable birthdate
 	 * is treated as an adult — fail closed, do not expose a record on a missing field.
 	 *
 	 * @param int $person_id Person post ID.
@@ -682,13 +682,13 @@ class AccessControl {
 	}
 
 	/**
-	 * Strip a person's ACF payload down to what a scoped member may read.
+	 * Strip a person's native field payload down to what a scoped member may read.
 	 *
-	 * @param array $acf Full ACF payload.
+	 * @param array $fields Full native field payload.
 	 * @return array Allowlisted subset.
 	 */
-	public static function filter_member_visible_acf( array $acf ) {
-		return array_intersect_key( $acf, array_flip( self::MEMBER_VISIBLE_ACF_FIELDS ) );
+	public static function filter_member_visible_fields( array $fields ) {
+		return array_intersect_key( $fields, array_flip( self::MEMBER_VISIBLE_FIELDS ) );
 	}
 
 	/**
@@ -701,7 +701,7 @@ class AccessControl {
 	 *   not hold `manage_options`, and the membership desk chases onboarding
 	 *   mails, so ledenadministratie qualifies alongside administrators.
 	 *
-	 * @param string   $group   Group key from SENSITIVE_ACF_FIELD_GROUPS.
+	 * @param string   $group   Group key from SENSITIVE_FIELD_GROUPS.
 	 * @param int|null $user_id User ID, defaults to the current user.
 	 * @return bool
 	 */
@@ -733,34 +733,34 @@ class AccessControl {
 	 *
 	 * Applies to every caller at every tier — a management user who may see the
 	 * whole club still only reads the finance flags if finance is their job.
-	 * Call this at every site that assembles a person ACF payload.
+	 * Call this at every site that assembles a person native field payload.
 	 *
-	 * @param array    $acf     Person ACF payload.
+	 * @param array    $fields     Person native field payload.
 	 * @param int|null $user_id User ID, defaults to the current user.
 	 * @return array Payload without the groups this user may not read.
 	 */
-	public static function filter_sensitive_acf( array $acf, $user_id = null ) {
-		foreach ( self::SENSITIVE_ACF_FIELD_GROUPS as $group => $fields ) {
+	public static function filter_sensitive_fields( array $fields, $user_id = null ) {
+		foreach ( self::SENSITIVE_FIELD_GROUPS as $group => $sensitive_fields ) {
 			if ( self::can_read_sensitive_group( $group, $user_id ) ) {
 				continue;
 			}
 
-			foreach ( $fields as $field ) {
+			foreach ( $sensitive_fields as $field ) {
 				if ( ! str_ends_with( $field, '*' ) ) {
-					unset( $acf[ $field ] );
+					unset( $fields[ $field ] );
 					continue;
 				}
 
 				$prefix = substr( $field, 0, -1 );
-				foreach ( array_keys( $acf ) as $key ) {
+				foreach ( array_keys( $fields ) as $key ) {
 					if ( str_starts_with( (string) $key, $prefix ) ) {
-						unset( $acf[ $key ] );
+						unset( $fields[ $key ] );
 					}
 				}
 			}
 		}
 
-		return $acf;
+		return $fields;
 	}
 
 	/**
@@ -769,17 +769,17 @@ class AccessControl {
 	 * Redacting a field from the response body is only half the job: a list
 	 * endpoint that still accepts `?financiele_blokkade=1`, or sorts by it,
 	 * leaks the same flag through result membership and result order. Query
-	 * parameters spell fields with underscores where ACF uses hyphens, so both
+	 * parameters spell fields with underscores where native field uses hyphens, so both
 	 * are normalised before comparing.
 	 *
-	 * @param string   $field   ACF field name or the query-parameter spelling of one.
+	 * @param string   $field   canonical field name or the query-parameter spelling of one.
 	 * @param int|null $user_id User ID, defaults to the current user.
 	 * @return bool True when this user may not read the field.
 	 */
-	public static function acf_field_is_hidden( string $field, $user_id = null ) {
+	public static function field_is_hidden( string $field, $user_id = null ) {
 		$needle = str_replace( '-', '_', $field );
 
-		foreach ( self::SENSITIVE_ACF_FIELD_GROUPS as $group => $fields ) {
+		foreach ( self::SENSITIVE_FIELD_GROUPS as $group => $fields ) {
 			foreach ( $fields as $sensitive_field ) {
 				$candidate = str_replace( '-', '_', $sensitive_field );
 				$matches   = str_ends_with( $candidate, '*' )
@@ -1211,18 +1211,7 @@ class AccessControl {
 				);
 			}
 
-			// A scoped member reads an allowlisted subset — never the financial flags.
-			// Everyone else still loses the sensitive groups their capabilities do
-			// not cover. `rest_prepare_person` fires per item, so this covers
-			// collection responses as well as the single-item route.
-			$data = $response->get_data();
-			if ( isset( $data['acf'] ) && is_array( $data['acf'] ) ) {
-				if ( self::is_scoped_member() ) {
-					$data['acf'] = self::filter_member_visible_acf( $data['acf'] );
-				}
-				$data['acf'] = self::filter_sensitive_acf( $data['acf'] );
-				$response->set_data( $data );
-			}
+			// Canonical field visibility is enforced centrally by RestFields.
 		}
 
 		return $response;

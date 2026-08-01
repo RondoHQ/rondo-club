@@ -84,7 +84,7 @@ export default function ClothingPage() {
   const { data: selectedPerson } = usePerson(selectedPersonId);
 
   const currentRoles = useMemo(() => {
-    const workHistory = selectedPerson?.acf?.work_history;
+    const workHistory = selectedPerson?.fields?.work_history;
     if (!Array.isArray(workHistory) || workHistory.length === 0) return [];
 
     const toTeamId = (team) => {
@@ -105,7 +105,7 @@ export default function ClothingPage() {
 
     const ranked = workHistory
       .map((job) => {
-        const teamId = toTeamId(job?.team);
+        const teamId = toTeamId(job?.team_id);
         const endTs = toTimestamp(job?.end_date);
         return {
           teamId,

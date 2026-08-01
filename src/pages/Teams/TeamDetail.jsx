@@ -1,11 +1,11 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Building2, Globe, Users, GitBranch, TrendingUp, User, Share2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, Building2, Globe, Users, GitBranch, Share2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useVolunteerRoleSettings } from '@/hooks/useVolunteerRoleSettings';
-import { getTeamName, decodeHtml, sanitizeTeamAcf } from '@/utils/formatters';
+import { getTeamName, sanitizeTeamFields } from '@/utils/formatters';
 import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
@@ -55,75 +55,11 @@ export default function TeamDetail() {
     },
   });
   
-  // Get investor details from embedded data (already included in team response)
-  const investorIds = useMemo(() => team?.acf?.investors || [], [team?.acf?.investors]);
-
-  // Extract featured_media IDs from embedded posts for thumbnail fetching
-  const embeddedPosts = useMemo(() => team?._embedded?.['acf:post'] || [], [team?._embedded]);
-  const mediaIds = useMemo(() => {
-    return embeddedPosts
-      .filter(p => investorIds.includes(p.id) && p.featured_media)
-      .map(p => p.featured_media);
-  }, [embeddedPosts, investorIds]);
-
-  // Fetch thumbnails for investors (embedded posts don't include nested media)
-  const { data: mediaItems = [] } = useQuery({
-    queryKey: ['investor-media', mediaIds.join(',')],
-    queryFn: async () => {
-      if (!mediaIds.length) return [];
-      const response = await wpApi.getMedia({ include: mediaIds.join(','), per_page: 100 });
-      return response.data;
-    },
-    enabled: mediaIds.length > 0,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes - media URLs rarely change
-  });
-
-  // Build investor details with thumbnails
-  const investorDetails = useMemo(() => {
-    if (!investorIds.length || !embeddedPosts.length) return [];
-
-    // Create a map of media ID to source URL
-    const mediaMap = new Map(mediaItems.map(m => [m.id, m.source_url]));
-
-    // Map investors in the order they appear in investorIds
-    return investorIds.map(investorId => {
-      const post = embeddedPosts.find(p => p.id === investorId);
-      if (!post) return null;
-
-      const isPerson = post.type === 'person';
-      const thumbnail = post.featured_media
-        ? mediaMap.get(post.featured_media)
-        : post.acf?.photo_gallery?.[0]?.url;
-
-      return {
-        id: post.id,
-        type: post.type,
-        name: isPerson
-          ? decodeHtml(post.title?.rendered || '')
-          : getTeamName(post),
-        thumbnail,
-      };
-    }).filter(Boolean);
-  }, [investorIds, embeddedPosts, mediaItems]);
-  
-  // Fetch teams that this team has invested in
-  const { data: investments = [] } = useQuery({
-    queryKey: ['investments', id],
-    queryFn: async () => {
-      const response = await prmApi.getInvestments(id);
-      return response.data;
-    },
-    enabled: !!id,
-  });
-  
-  
   const updateTeam = useMutation({
     mutationFn: (data) => wpApi.updateTeam(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['team', id] });
       queryClient.invalidateQueries({ queryKey: ['teams'] });
-      queryClient.invalidateQueries({ queryKey: ['team-investors', id] });
-      queryClient.invalidateQueries({ queryKey: ['team-investors-edit', parseInt(id)] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
@@ -165,7 +101,7 @@ export default function TeamDetail() {
     return null;
   }
   
-  const acf = team.acf || {};
+  const fields = team.fields || {};
 
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
@@ -200,20 +136,20 @@ export default function TeamDetail() {
             )}
             <h1 className="text-2xl font-bold text-brand-gradient">{getTeamName(team)}</h1>
             {/* Subtitle: Activiteit - Gender */}
-            {(acf.activiteit || acf.gender) && (
+            {(fields.activiteit || fields.gender) && (
               <p className="text-gray-500 dark:text-gray-400">
-                {[acf.activiteit, acf.gender].filter(Boolean).join(' - ')}
+                {[fields.activiteit, fields.gender].filter(Boolean).join(' - ')}
               </p>
             )}
-            {acf.website && (
+            {fields.website && (
               <a 
-                href={acf.website} 
+                href={fields.website}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-electric-cyan dark:text-electric-cyan hover:underline flex items-center mt-1"
               >
                 <Globe className="w-4 h-4 mr-1" />
-                {acf.website}
+                {fields.website}
               </a>
             )}
           </div>
@@ -343,10 +279,10 @@ export default function TeamDetail() {
             <CustomFieldsSection
               postType="team"
               postId={parseInt(id)}
-              acfData={team?.acf}
-              onUpdate={(newAcfValues) => {
-                const acfData = sanitizeTeamAcf(team?.acf, newAcfValues);
-                updateTeam.mutateAsync({ acf: acfData });
+              fieldData={team?.fields}
+              onUpdate={(newFieldValues) => {
+                const fieldData = sanitizeTeamFields(team?.fields, newFieldValues);
+                updateTeam.mutateAsync({ fields: fieldData });
               }}
               isUpdating={updateTeam.isPending}
             />
@@ -354,105 +290,12 @@ export default function TeamDetail() {
         );
       })()}
       
-      {/* Sponsors */}
-      {investorDetails.length > 0 && (
-        <div className="card p-6">
-          <h2 className="font-semibold text-brand-gradient mb-4 flex items-center">
-            <TrendingUp className="w-5 h-5 mr-2" />
-            Sponsoren
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {investorDetails.map((investor) => {
-              const isPerson = investor.type === 'person';
-              const isCommissie = investor.type === 'commissie';
-              const linkPath = isPerson
-                ? `/people/${investor.id}`
-                : isCommissie
-                  ? `/commissies/${investor.id}`
-                  : `/teams/${investor.id}`;
-
-              return (
-                <Link
-                  key={`${investor.type}-${investor.id}`}
-                  to={linkPath}
-                  className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
-                >
-                  {investor.thumbnail ? (
-                    <img
-                      src={investor.thumbnail}
-                      alt={investor.name}
-                      loading="lazy"
-                      className={`w-10 h-10 object-cover ${isPerson ? 'rounded-full' : 'rounded'}`}
-                    />
-                  ) : (
-                    <div className={`w-10 h-10 bg-gray-100 dark:bg-gray-700 flex items-center justify-center ${isPerson ? 'rounded-full' : 'rounded'}`}>
-                      {isPerson ? (
-                        <User className="w-5 h-5 text-gray-400" />
-                      ) : (
-                        <Building2 className="w-5 h-5 text-gray-400" />
-                      )}
-                    </div>
-                  )}
-                  <div className="ml-3">
-                    <p className="text-sm font-medium">{investor.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {isPerson ? 'Lid' : isCommissie ? 'Commissie' : 'Team'}
-                    </p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
-      
-      {/* Invested in (teams/commissies this team sponsors) */}
-      {investments.length > 0 && (
-        <div className="card p-6">
-          <h2 className="font-semibold text-brand-gradient mb-4 flex items-center">
-            <TrendingUp className="w-5 h-5 mr-2" />
-            Investeert in
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {investments.map((investment) => {
-              const isCommissie = investment.type === 'commissie';
-              const linkPath = isCommissie
-                ? `/commissies/${investment.id}`
-                : `/teams/${investment.id}`;
-              return (
-                <Link
-                  key={investment.id}
-                  to={linkPath}
-                  className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
-                >
-                  {investment.thumbnail ? (
-                    <img
-                      src={investment.thumbnail}
-                      alt={investment.name}
-                      loading="lazy"
-                      className="w-10 h-10 object-contain rounded"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 flex items-center justify-center rounded">
-                      <Building2 className="w-5 h-5 text-gray-400" />
-                    </div>
-                  )}
-                  <div className="ml-3">
-                    <p className="text-sm font-medium">{investment.name}</p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
-      
       {/* Contact info */}
-      {acf.contact_info?.length > 0 && (
+      {fields.contact_info?.length > 0 && (
         <div className="card p-6">
           <h2 className="font-semibold text-brand-gradient mb-4">Contactgegevens</h2>
           <div className="space-y-3">
-            {acf.contact_info.map((contact, index) => (
+            {fields.contact_info.map((contact, index) => (
               <div key={index}>
                 <span className="text-sm text-gray-500 dark:text-gray-400">
                   {contact.contact_label || contact.contact_type}:

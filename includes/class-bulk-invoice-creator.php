@@ -161,7 +161,7 @@ class BulkInvoiceCreator {
 	 * Create a membership invoice for a single person.
 	 *
 	 * Checks fee eligibility, idempotency, then creates a concept invoice with
-	 * ACF fields, line items, season meta, and payment token.
+	 * canonical fields, line items, season meta, and payment token.
 	 *
 	 * @param int    $person_id Person post ID.
 	 * @param string $season    Season key in "YYYY-YYYY" format.
@@ -177,9 +177,9 @@ class BulkInvoiceCreator {
 		}
 
 		// Check former member eligibility.
-		$is_former = ( get_field( 'former_member', $person_id ) === true );
+		$is_former = ( \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' ) === true );
 		if ( $is_former ) {
-			$lid_sinds = get_field( 'lid-sinds', $person_id );
+			$lid_sinds = \Rondo\Fields\Fields::get_for_post( $person_id, 'lid_sinds' );
 			if ( empty( $lid_sinds ) ) {
 				return 'skipped';
 			}
@@ -245,12 +245,12 @@ class BulkInvoiceCreator {
 			return 'error';
 		}
 
-		// Set ACF fields.
-		update_field( 'invoice_number', $invoice_number, $post_id );
-		update_field( 'person', $person_id, $post_id );
-		update_field( 'status', 'draft', $post_id );
-		update_field( 'invoice_type', 'membership', $post_id );
-		update_field( 'total_amount', $final_fee, $post_id );
+		// Set canonical fields.
+		\Rondo\Fields\Fields::update_for_post( $post_id, 'invoice_number', $invoice_number );
+		\Rondo\Fields\Fields::update_for_post( $post_id, 'person', $person_id );
+		\Rondo\Fields\Fields::update_for_post( $post_id, 'status', 'draft' );
+		\Rondo\Fields\Fields::update_for_post( $post_id, 'invoice_type', 'membership' );
+		\Rondo\Fields\Fields::update_for_post( $post_id, 'total_amount', $final_fee );
 
 		// Look up category label for line item description.
 		$categories     = FeeServices::settings()->get_categories_for_season( $season );
@@ -290,7 +290,7 @@ class BulkInvoiceCreator {
 			];
 		}
 
-		update_field( 'line_items', $line_items, $post_id );
+		\Rondo\Fields\Fields::update_for_post( $post_id, 'line_items', $line_items );
 
 		$payment_account = FinanceServices::mollie()->get_payment_account_snapshot_for_invoice_type( 'membership' );
 		if ( is_wp_error( $payment_account ) ) {

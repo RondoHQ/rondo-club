@@ -167,8 +167,8 @@ class UserProvisioning {
 		$wp_email = email_exists( $email ) ? $this->synthetic_email( $person_id ) : $email;
 
 		// Get person name fields.
-		$first_name = (string) ( get_field( 'first_name', $person_id ) ?: '' );
-		$last_name  = (string) ( get_field( 'last_name', $person_id ) ?: '' );
+		$first_name = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '' );
+		$last_name  = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '' );
 
 		// Generate a unique username.
 		$username = $this->generate_username( $first_name, $last_name );
@@ -188,7 +188,7 @@ class UserProvisioning {
 		$user->set_role( \Rondo\Core\UserRoles::ROLE_NAME );
 
 		// Assign roles from work history Functies (Phase 204 integration).
-		$work_history = get_field( 'work_history', $person_id );
+		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' );
 		if ( is_array( $work_history ) ) {
 			$assigned_roles = [];
 			foreach ( $work_history as $job ) {
@@ -211,7 +211,7 @@ class UserProvisioning {
 		update_post_meta( $person_id, self::META_USER_ID, $user_id );
 
 		// Store KNVB ID on user (PROV-04).
-		$knvb_id = get_field( 'knvb-id', $person_id );
+		$knvb_id = \Rondo\Fields\Fields::get_for_post( $person_id, 'knvb_id' );
 		if ( $knvb_id ) {
 			update_user_meta( $user_id, self::META_KNVB_ID, $knvb_id );
 		}
@@ -319,7 +319,7 @@ class UserProvisioning {
 		);
 
 		// Get person name for substitution.
-		$first_name = (string) ( get_field( 'first_name', $person_id ) ?: '' );
+		$first_name = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '' );
 
 		// Determine club name.
 		$club_naam = '';
@@ -600,12 +600,12 @@ EOT;
 	}
 
 	private function get_person_email( int $person_id ): ?string {
-		$email = get_field( 'email_1', $person_id );
+		$email = \Rondo\Fields\Fields::get_for_post( $person_id, 'email_1' );
 		if ( is_email( $email ) ) {
 			return $email;
 		}
 
-		$email = get_field( 'email_2', $person_id );
+		$email = \Rondo\Fields\Fields::get_for_post( $person_id, 'email_2' );
 		if ( is_email( $email ) ) {
 			return $email;
 		}

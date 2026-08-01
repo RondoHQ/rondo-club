@@ -183,8 +183,8 @@ class InvoiceReminderScheduler {
 	 * @param int $invoice_id Invoice post ID.
 	 */
 	private function process_invoice( int $invoice_id ): void {
-		// Read sent_date ACF field (stored as Ymd string, e.g. '20260215').
-		$sent_date = (string) get_field( 'sent_date', $invoice_id );
+		// Read sent_date canonical field (stored as Ymd string, e.g. '20260215').
+		$sent_date = (string) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'sent_date' );
 
 		if ( empty( $sent_date ) ) {
 			error_log(

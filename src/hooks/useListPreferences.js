@@ -32,6 +32,17 @@ function saveColumnWidthsToStorage(widths) {
   }
 }
 
+function migrateColumnWidths(widths, availableColumns) {
+  const aliases = Object.fromEntries(
+    (availableColumns || [])
+      .filter((column) => column.legacy_id && column.legacy_id !== column.id)
+      .map((column) => [column.legacy_id, column.id])
+  );
+  return Object.fromEntries(
+    Object.entries(widths || {}).map(([identifier, width]) => [aliases[identifier] || identifier, width])
+  );
+}
+
 /**
  * Hook for managing People list column preferences
  *
@@ -75,9 +86,9 @@ export function useListPreferences() {
   // Sync column_widths to localStorage when query succeeds
   useEffect(() => {
     if (data?.column_widths && typeof data.column_widths === 'object') {
-      saveColumnWidthsToStorage(data.column_widths);
+      saveColumnWidthsToStorage(migrateColumnWidths(data.column_widths, data.available_columns));
     }
-  }, [data?.column_widths]);
+  }, [data?.column_widths, data?.available_columns]);
 
   // PATCH preferences with optimistic update
   const updateMutation = useMutation({

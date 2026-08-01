@@ -24,9 +24,7 @@ class VolunteerCacheInvalidator {
 		add_action( 'rest_after_insert_person', [ $this, 'invalidate_rest' ], 10, 2 );
 		add_action( 'rest_after_update_person', [ $this, 'invalidate_rest' ], 10, 2 );
 
-		// ACF saves (admin form + ACF REST) — covers relationships / addresses
-		// repeater changes that don't fire save_post on the related person.
-		add_action( 'acf/save_post', [ $this, 'invalidate_on_acf_save' ], 30 );
+		add_action( 'rondo_fields_saved_post', [ $this, 'invalidate_on_field_save' ], 30 );
 	}
 
 	public function invalidate() {
@@ -47,11 +45,7 @@ class VolunteerCacheInvalidator {
 		}
 	}
 
-	public function invalidate_on_acf_save( $post_id ) {
-		// Skip autosaves/options-style ACF saves.
-		if ( ! is_numeric( $post_id ) ) {
-			return;
-		}
+	public function invalidate_on_field_save( $post_id ) {
 		if ( get_post_type( (int) $post_id ) !== 'person' ) {
 			return;
 		}

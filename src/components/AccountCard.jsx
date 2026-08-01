@@ -25,7 +25,7 @@ const ROLE_LABELS = {
  *
  * Props:
  *   personId  - string or number, the person post ID
- *   personData - full person object from usePerson (includes acf, linked_user_id, welcome_email_sent_at)
+ *   personData - full person object from usePerson (includes fields, linked_user_id, welcome_email_sent_at)
  */
 export default function AccountCard({ personId, personData }) {
   const config = window.rondoConfig || {};
@@ -47,7 +47,7 @@ export default function AccountCard({ personId, personData }) {
   const linkedUserRoles = personData?.linked_user_roles;
 
   // Check if person has an email address
-  const hasEmail = !!(personData?.acf?.email_1?.trim());
+  const hasEmail = !!(personData?.fields?.email_1?.trim());
 
   const handleSyncRoles = async () => {
     setSyncingRoles(true);

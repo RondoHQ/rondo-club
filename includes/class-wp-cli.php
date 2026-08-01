@@ -273,8 +273,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			$people_with_addresses = 0;
 
 			foreach ( $person_ids as $post_id ) {
-				$contact_info       = get_field( 'contact_info', $post_id ) ?: [];
-				$existing_addresses = get_field( 'addresses', $post_id ) ?: [];
+				$contact_info       = \Rondo\Fields\Fields::get_for_post( $post_id, 'contact_info' ) ?: [];
+				$existing_addresses = \Rondo\Fields\Fields::get_for_post( $post_id, 'addresses' ) ?: [];
 
 				// Find address entries in contact_info
 				$address_entries = array_filter(
@@ -326,10 +326,10 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 				if ( ! $dry_run ) {
 					// Save updated addresses
-					update_field( 'addresses', $new_addresses, $post_id );
+					\Rondo\Fields\Fields::update_for_post( $post_id, 'addresses', $new_addresses );
 
 					// Save updated contact_info (without addresses)
-					update_field( 'contact_info', $updated_contact_info, $post_id );
+					\Rondo\Fields\Fields::update_for_post( $post_id, 'contact_info', $updated_contact_info );
 
 					++$migrated_count;
 				}
@@ -419,7 +419,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			$skipped_types     = [];
 
 			foreach ( $person_ids as $person_id ) {
-				$contact_info = get_field( 'contact_info', $person_id );
+				$contact_info = \Rondo\Fields\Fields::get_for_post( $person_id, 'contact_info' );
 
 				if ( empty( $contact_info ) || ! is_array( $contact_info ) ) {
 					++$persons_skipped;
@@ -432,7 +432,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				// Track which fixed fields are already populated (for idempotency).
 				$current_values = [];
 				foreach ( [ 'email_1', 'email_2', 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2' ] as $field_name ) {
-					$current_values[ $field_name ] = get_field( $field_name, $person_id );
+					$current_values[ $field_name ] = \Rondo\Fields\Fields::get_for_post( $person_id, $field_name );
 				}
 
 				$person_fields_set = 0;
@@ -472,7 +472,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 						}
 
 						if ( ! $dry_run ) {
-							update_field( $target_field, $value, $person_id );
+							\Rondo\Fields\Fields::update_for_post( $person_id, $target_field, $value );
 						}
 
 						// Mark as populated so subsequent entries go to the next slot.
@@ -830,7 +830,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					'post_title'  => $todo_content,
 					'post_author' => $todo->user_id,
 					'post_date'   => $todo->comment_date,
-					'post_status' => 'publish',
+					'post_status' => ! empty( $is_completed ) ? 'rondo_completed' : 'rondo_open',
 				];
 
 				$new_post_id = wp_insert_post( $post_data, true );
@@ -846,12 +846,11 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					continue;
 				}
 
-				// Set ACF fields
-				update_field( 'related_person', $person_id, $new_post_id );
-				update_field( 'is_completed', ! empty( $is_completed ), $new_post_id );
+				// Set canonical fields
+				\Rondo\Fields\Fields::update_for_post( $new_post_id, 'related_persons', [ $person_id ] );
 
 				if ( ! empty( $due_date ) ) {
-					update_field( 'due_date', $due_date, $new_post_id );
+					\Rondo\Fields\Fields::update_for_post( $new_post_id, 'due_date', $due_date );
 				}
 
 				WP_CLI::log( sprintf( '  Created rondo_todo post ID %d', $new_post_id ) );
@@ -948,7 +947,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			foreach ( $todo_ids as $todo_id ) {
 				// Check if already has new format (related_persons)
-				$new_field = get_field( 'related_persons', $todo_id );
+				$new_field = \Rondo\Fields\Fields::get_for_post( $todo_id, 'related_persons' );
 				if ( $new_field && is_array( $new_field ) && count( $new_field ) > 0 ) {
 					++$skipped_already_migrated;
 					continue;
@@ -978,7 +977,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 				if ( ! $dry_run ) {
 					// Save new array format
-					update_field( 'related_persons', [ $old_person_id ], $todo_id );
+					\Rondo\Fields\Fields::update_for_post( $todo_id, 'related_persons', [ $old_person_id ] );
 					// Remove old meta
 					delete_post_meta( $todo_id, 'related_person' );
 				}
@@ -1147,8 +1146,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			foreach ( $people as $person ) {
 				// Collect name key for this person
-				$first_name = get_field( 'first_name', $person->ID ) ?: '';
-				$last_name  = get_field( 'last_name', $person->ID ) ?: '';
+				$first_name = \Rondo\Fields\Fields::get_for_post( $person->ID, 'first_name' ) ?: '';
+				$last_name  = \Rondo\Fields\Fields::get_for_post( $person->ID, 'last_name' ) ?: '';
 				$name_key   = strtolower( trim( trim( $first_name ) . ' ' . trim( $last_name ) ) );
 
 				// Store name key for this person
@@ -1164,7 +1163,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 				// Collect emails from fixed fields
 				foreach ( [ 'email_1', 'email_2' ] as $email_field ) {
-					$email = strtolower( trim( (string) get_field( $email_field, $person->ID ) ) );
+					$email = strtolower( trim( (string) \Rondo\Fields\Fields::get_for_post( $person->ID, $email_field ) ) );
 					if ( ! empty( $email ) ) {
 						if ( ! isset( $email_to_persons[ $email ] ) ) {
 							$email_to_persons[ $email ] = [];
@@ -1292,8 +1291,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 */
 		private function merge_person( $duplicate_id, $original_id ) {
 			// Get relationships from both records
-			$duplicate_relationships = get_field( 'relationships', $duplicate_id ) ?: [];
-			$original_relationships  = get_field( 'relationships', $original_id ) ?: [];
+			$duplicate_relationships = \Rondo\Fields\Fields::get_for_post( $duplicate_id, 'relationships' ) ?: [];
+			$original_relationships  = \Rondo\Fields\Fields::get_for_post( $original_id, 'relationships' ) ?: [];
 
 			// Get existing related person IDs from original
 			$existing_related_ids = array_map(
@@ -1313,7 +1312,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			if ( ! empty( $new_relationships ) ) {
 				$merged_relationships = array_merge( $original_relationships, $new_relationships );
-				update_field( 'relationships', $merged_relationships, $original_id );
+				\Rondo\Fields\Fields::update_for_post( $original_id, 'relationships', $merged_relationships );
 				WP_CLI::log( sprintf( '  - Added %d relationship(s) to original.', count( $new_relationships ) ) );
 			}
 
@@ -1353,7 +1352,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					continue;
 				}
 
-				$relationships = get_field( 'relationships', $person->ID ) ?: [];
+				$relationships = \Rondo\Fields\Fields::get_for_post( $person->ID, 'relationships' ) ?: [];
 				$changed       = false;
 
 				foreach ( $relationships as &$rel ) {
@@ -1365,7 +1364,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				unset( $rel );
 
 				if ( $changed ) {
-					update_field( 'relationships', $relationships, $person->ID );
+					\Rondo\Fields\Fields::update_for_post( $person->ID, 'relationships', $relationships );
 					++$updated;
 				}
 			}
@@ -1387,7 +1386,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 * : Preview changes without making them.
 		 *
 		 * [--force]
-		 * : Force update all records even if value unchanged (fixes ACF refs).
+		 * : Force update all records even if value unchanged (fixes native field refs).
 		 *
 		 * ## EXAMPLES
 		 *
@@ -1408,7 +1407,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			}
 
 			if ( $force ) {
-				WP_CLI::log( 'Force mode - updating all records to fix ACF references.' );
+				WP_CLI::log( 'Force mode - updating all records to fix native field references.' );
 			}
 
 			// Get all person IDs using direct DB query to bypass access control hooks
@@ -1450,8 +1449,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 				if ( $needs_update ) {
 					if ( ! $dry_run ) {
-						// Use update_field() to properly set ACF reference key
-						update_field( 'field_custom_person_huidig-vrijwilliger', $new_value, $person_id );
+						// Use the field API so the compatible reference row is preserved.
+						\Rondo\Fields\Fields::update_for_post( $person_id, 'huidig_vrijwilliger', $new_value );
 					}
 					++$updated;
 
@@ -1606,14 +1605,14 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 				// Phase 1: Normalize all phone values.
 				foreach ( $phone_fields as $field ) {
-					$raw = get_field( $field, $pid );
+					$raw = \Rondo\Fields\Fields::get_for_post( $pid, $field );
 
 					if ( empty( $raw ) ) {
 						$values[ $field ] = '';
 						continue;
 					}
 
-					// Use the same normalization logic as the ACF hook.
+					// Use the same normalization logic as the native field hook.
 					$normalized = $normalizer->normalize_phone_number( $raw, $pid, [ 'name' => $field ], $raw );
 
 					$values[ $field ] = $normalized;
@@ -1626,7 +1625,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 						}
 
 						if ( ! $dry_run ) {
-							update_field( $field, $normalized, $pid );
+							\Rondo\Fields\Fields::update_for_post( $pid, $field, $normalized );
 						}
 					}
 				}
@@ -1648,7 +1647,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 						}
 
 						if ( ! $dry_run ) {
-							update_field( $field, '', $pid );
+							\Rondo\Fields\Fields::update_for_post( $pid, $field, '' );
 						}
 					} else {
 						$seen[ $val ] = $field;
@@ -1732,7 +1731,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			$parent_children_map = [];
 
 			foreach ( $people as $person ) {
-				$relationships = get_field( 'relationships', $person->ID );
+				$relationships = \Rondo\Fields\Fields::get_for_post( $person->ID, 'relationships' );
 				if ( ! is_array( $relationships ) ) {
 					continue;
 				}
@@ -1859,7 +1858,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 * @return bool True if relationship exists
 		 */
 		private function has_sibling_relationship( $from_person_id, $to_person_id, $sibling_type_id ) {
-			$relationships = get_field( 'relationships', $from_person_id );
+			$relationships = \Rondo\Fields\Fields::get_for_post( $from_person_id, 'relationships' );
 			if ( ! is_array( $relationships ) ) {
 				return false;
 			}
@@ -1901,7 +1900,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 * @param int $sibling_type_id The sibling relationship type ID
 		 */
 		private function add_sibling_relationship( $from_person_id, $to_person_id, $sibling_type_id ) {
-			$relationships = get_field( 'relationships', $from_person_id );
+			$relationships = \Rondo\Fields\Fields::get_for_post( $from_person_id, 'relationships' );
 			if ( ! is_array( $relationships ) ) {
 				$relationships = [];
 			}
@@ -1914,7 +1913,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			];
 
 			// Save relationships
-			update_field( 'relationships', $relationships, $from_person_id );
+			\Rondo\Fields\Fields::update_for_post( $from_person_id, 'relationships', $relationships );
 		}
 	}
 
@@ -2007,7 +2006,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 					if ( ! $verify ) {
 						// Attempt to determine correct author from related_persons
-						$person_ids = get_field( 'related_persons', $todo->ID );
+						$person_ids = \Rondo\Fields\Fields::get_for_post( $todo->ID, 'related_persons' );
 						if ( ! is_array( $person_ids ) ) {
 							$person_ids = $person_ids ? [ $person_ids ] : [];
 						}
@@ -2321,7 +2320,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			$progress = \WP_CLI\Utils\make_progress_bar( 'Backfilling invoice_type', $total );
 
 			foreach ( $invoices as $invoice_id ) {
-				$current = get_field( 'invoice_type', $invoice_id );
+				$current = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_type' );
 
 				// Skip if already set
 				if ( ! empty( $current ) ) {
@@ -2331,7 +2330,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				}
 
 				if ( ! $dry_run ) {
-					update_field( 'invoice_type', 'discipline', $invoice_id );
+					\Rondo\Fields\Fields::update_for_post( $invoice_id, 'invoice_type', 'discipline' );
 				}
 
 				++$updated;

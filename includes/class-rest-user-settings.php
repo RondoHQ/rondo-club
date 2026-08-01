@@ -23,7 +23,7 @@ class UserSettings extends Base {
 	/**
 	 * List preferences schema version. Bump when new default columns are added.
 	 */
-	private const LIST_PREFERENCES_VERSION = 2;
+	private const LIST_PREFERENCES_VERSION = 3;
 
 	/**
 	 * Core columns (non-custom-field columns).
@@ -77,7 +77,7 @@ class UserSettings extends Base {
 	];
 
 	/**
-	 * Sportlink fields (ACF fields from the person field group synced from Sportlink).
+	 * Sportlink fields (canonical fields from the person field group synced from Sportlink).
 	 */
 	private const SPORTLINK_FIELDS = [
 		[
@@ -684,8 +684,52 @@ class UserSettings extends Base {
 			$visible_columns = self::DEFAULT_LIST_COLUMNS;
 		}
 
-		$available_columns = $this->get_available_columns_metadata();
-		$valid_column_ids  = array_column( $available_columns, 'id' );
+		$available_columns   = $this->get_available_columns_metadata();
+		$valid_column_ids    = array_column( $available_columns, 'id' );
+		$preferences_version = (int) get_user_meta( $user_id, 'rondo_people_list_pref_version', true );
+
+		if ( $preferences_version < 3 ) {
+			$aliases = [];
+			foreach ( $available_columns as $column ) {
+				if ( ! empty( $column['legacy_id'] ) && $column['legacy_id'] !== $column['id'] ) {
+					$aliases[ $column['legacy_id'] ] = $column['id'];
+				}
+			}
+
+			$map_identifiers = static function ( array $identifiers ) use ( $aliases ): array {
+				return array_values( array_unique( array_map( static fn( $identifier ) => $aliases[ $identifier ] ?? $identifier, $identifiers ) ) );
+			};
+			$visible_columns = $map_identifiers( $visible_columns );
+			$column_order    = is_array( $column_order ) ? $map_identifiers( $column_order ) : $column_order;
+
+			if ( is_array( $column_widths ) ) {
+				$migrated_widths = [];
+				foreach ( $column_widths as $identifier => $width ) {
+					$migrated_widths[ $aliases[ $identifier ] ?? $identifier ] = $width;
+				}
+				$column_widths = $migrated_widths;
+			}
+
+			$all_identifiers = array_merge(
+				$visible_columns,
+				is_array( $column_order ) ? $column_order : [],
+				is_array( $column_widths ) ? array_keys( $column_widths ) : []
+			);
+			$unresolved      = array_values( array_unique( array_diff( $all_identifiers, $valid_column_ids ) ) );
+			if ( $unresolved ) {
+				update_user_meta( $user_id, 'rondo_people_list_unresolved_identifiers', $unresolved );
+			} else {
+				delete_user_meta( $user_id, 'rondo_people_list_unresolved_identifiers' );
+			}
+
+			update_user_meta( $user_id, 'rondo_people_list_preferences', $visible_columns );
+			if ( is_array( $column_order ) ) {
+				update_user_meta( $user_id, 'rondo_people_list_column_order', $column_order );
+			}
+			if ( is_array( $column_widths ) ) {
+				update_user_meta( $user_id, 'rondo_people_list_column_widths', $column_widths );
+			}
+		}
 
 		$visible_columns = array_values( array_intersect( $visible_columns, $valid_column_ids ) );
 
@@ -716,7 +760,6 @@ class UserSettings extends Base {
 		}
 
 		// One-time migration: append new default columns for legacy preference sets.
-		$preferences_version = (int) get_user_meta( $user_id, 'rondo_people_list_pref_version', true );
 		if ( $preferences_version < self::LIST_PREFERENCES_VERSION ) {
 			if ( in_array( 'birthdate', $valid_column_ids, true ) && ! in_array( 'birthdate', $visible_columns, true ) ) {
 				$visible_columns[] = 'birthdate';
@@ -894,11 +937,14 @@ class UserSettings extends Base {
 		$columns = array_merge( $columns, self::CORE_LIST_COLUMNS );
 
 		foreach ( self::SPORTLINK_FIELDS as $field ) {
-			$columns[] = [
-				'id'     => $field['id'],
-				'label'  => $field['label'],
-				'type'   => $field['type'],
-				'custom' => true,
+			$definition = \Rondo\Fields\Registry::resolve( 'person', $field['id'] );
+			$columns[]  = [
+				'id'             => $definition['canonical_name'],
+				'legacy_id'      => $definition['storage_name'],
+				'canonical_name' => $definition['canonical_name'],
+				'label'          => $field['label'],
+				'type'           => $field['type'],
+				'custom'         => true,
 			];
 		}
 
@@ -907,10 +953,12 @@ class UserSettings extends Base {
 
 		foreach ( $custom_fields as $field ) {
 			$columns[] = [
-				'id'     => $field['name'],
-				'label'  => $field['label'],
-				'type'   => $field['type'],
-				'custom' => true,
+				'id'             => $field['canonical_name'],
+				'legacy_id'      => $field['storage_key'],
+				'canonical_name' => $field['canonical_name'],
+				'label'          => $field['label'],
+				'type'           => $field['type'],
+				'custom'         => true,
 			];
 		}
 
@@ -933,8 +981,8 @@ class UserSettings extends Base {
 		if ( $person_id ) {
 			$person = get_post( $person_id );
 			if ( $person && $person->post_type === 'person' && $person->post_status === 'publish' ) {
-				$first_name = get_field( 'first_name', $person_id ) ?: '';
-				$last_name  = get_field( 'last_name', $person_id ) ?: '';
+				$first_name = \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '';
+				$last_name  = \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '';
 				$thumbnail  = get_the_post_thumbnail_url( $person_id, 'thumbnail' );
 
 				$response['person'] = [
@@ -1004,8 +1052,8 @@ class UserSettings extends Base {
 		update_user_meta( $user_id, 'rondo_linked_person_id', (int) $person_id );
 		update_post_meta( (int) $person_id, \Rondo\Users\UserProvisioning::META_USER_ID, $user_id );
 
-		$first_name = get_field( 'first_name', $person_id ) ?: '';
-		$last_name  = get_field( 'last_name', $person_id ) ?: '';
+		$first_name = \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '';
+		$last_name  = \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '';
 		$thumbnail  = get_the_post_thumbnail_url( $person_id, 'thumbnail' );
 
 		return rest_ensure_response(
@@ -1092,13 +1140,13 @@ class UserSettings extends Base {
 		if ( $person_id ) {
 			$person = get_post( $person_id );
 			if ( $person && $person->post_type === 'person' ) {
-				$first               = get_field( 'first_name', $person_id ) ?: '';
-				$infix               = get_field( 'infix', $person_id ) ?: '';
-				$last                = get_field( 'last_name', $person_id ) ?: '';
+				$first               = \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '';
+				$infix               = \Rondo\Fields\Fields::get_for_post( $person_id, 'infix' ) ?: '';
+				$last                = \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '';
 				$linked_person_name  = implode( ' ', array_filter( [ $first, $infix, $last ] ) ) ?: null;
 				$linked_person_photo = get_the_post_thumbnail_url( $person_id, 'thumbnail' ) ?: null;
 
-				$work_history = get_field( 'work_history', $person_id ) ?: [];
+				$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' ) ?: [];
 				foreach ( $work_history as $job ) {
 					if ( ! empty( $job['is_current'] ) && ! empty( $job['job_title'] ) ) {
 						$active_functies[] = $job['job_title'];

@@ -30,7 +30,7 @@ const EMPTY = {
   notes: '',
 };
 
-function acfDateToInput(value) {
+function fieldDateToInput(value) {
   if (!value) return '';
   if (/^\d{8}$/.test(value)) return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`;
   return value;
@@ -61,18 +61,18 @@ export default function VrijwilligersSjabloonForm() {
 
   useEffect(() => {
     if (!existing) return;
-    const acf = existing.acf || {};
+    const fields = existing.fields || {};
     setForm({
       title: existing.title?.rendered || existing.title || '',
-      dienst_type_id: Number(acf.dienst_type_id) || 0,
-      day_of_week: Number(acf.day_of_week) || 6,
-      start_time: acf.start_time || '09:00',
-      end_time: acf.end_time || '12:00',
-      capacity: acf.capacity ? String(acf.capacity) : '',
-      active_from: acfDateToInput(acf.active_from),
-      active_until: acfDateToInput(acf.active_until),
-      iva_waived: Boolean(acf.iva_waived),
-      notes: acf.notes || '',
+      dienst_type_id: Number(fields.dienst_type_id) || 0,
+      day_of_week: Number(fields.day_of_week) || 6,
+      start_time: fields.start_time || '09:00',
+      end_time: fields.end_time || '12:00',
+      capacity: fields.capacity ? String(fields.capacity) : '',
+      active_from: fieldDateToInput(fields.active_from),
+      active_until: fieldDateToInput(fields.active_until),
+      iva_waived: Boolean(fields.iva_waived),
+      notes: fields.notes || '',
     });
   }, [existing]);
 
@@ -80,7 +80,7 @@ export default function VrijwilligersSjabloonForm() {
     () => types.find((t) => t.id === Number(form.dienst_type_id)),
     [types, form.dienst_type_id]
   );
-  const typeRequiresIva = Boolean(selectedType?.acf?.iva_required);
+  const typeRequiresIva = Boolean(selectedType?.fields?.iva_required);
 
   const defaultTitle = useMemo(() => {
     if (form.title) return form.title;
@@ -179,14 +179,14 @@ export default function VrijwilligersSjabloonForm() {
           saveMutation.mutate({
             title: defaultTitle,
             status: 'publish',
-            acf: {
+            fields: {
               dienst_type_id: Number(form.dienst_type_id),
               day_of_week: String(form.day_of_week),
               start_time: form.start_time,
               end_time: form.end_time,
               capacity: form.capacity === '' ? 0 : Number(form.capacity),
-              active_from: form.active_from,
-              active_until: form.active_until,
+              active_from: form.active_from || null,
+              active_until: form.active_until || null,
               iva_waived: typeRequiresIva ? Boolean(form.iva_waived) : false,
               notes: form.notes,
             },

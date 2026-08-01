@@ -27,7 +27,6 @@ class ShiftCancellationService {
 	public function __construct() {
 		add_filter( 'pre_delete_post', [ $this, 'prevent_delete_with_assignees' ], 10, 3 );
 		add_filter( 'rest_pre_insert_dienst_shift', [ $this, 'prevent_direct_rest_cancellation' ], 10, 2 );
-		add_filter( 'acf/validate_value/key=field_dienst_shift_status', [ $this, 'prevent_direct_acf_cancellation' ], 10, 4 );
 	}
 
 	/**
@@ -144,8 +143,8 @@ class ShiftCancellationService {
 			return new \WP_Error( 'cancelled_shift_readonly', 'Een geannuleerde inschrijftaak kan niet meer worden bewerkt.', [ 'status' => 409 ] );
 		}
 
-		$acf              = $request->get_param( 'acf' );
-		$requested_status = is_array( $acf ) ? (string) ( $acf['status'] ?? '' ) : '';
+		$fields           = \Rondo\Fields\RestFields::request_payload( $request, 'dienst_shift' );
+		$requested_status = (string) ( $fields['status'] ?? '' );
 		if ( $requested_status !== 'geannuleerd' ) {
 			return $prepared_post;
 		}
@@ -155,29 +154,6 @@ class ShiftCancellationService {
 			'Annuleer deze inschrijftaak via de annuleringsactie, zodat vrijwilligers bericht krijgen en de punten correct worden verwerkt.',
 			[ 'status' => 409 ]
 		);
-	}
-
-	/**
-	 * Keep the WordPress ACF editor on the same audited cancellation path.
-	 *
-	 * @param mixed  $valid Current validation result.
-	 * @param mixed  $value Submitted value.
-	 * @param array  $field ACF field definition.
-	 * @param string $input Input name.
-	 * @return mixed
-	 */
-	public function prevent_direct_acf_cancellation( $valid, $value, $field, $input ) {
-		if ( $valid !== true || (string) $value !== 'geannuleerd' ) {
-			return $valid;
-		}
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- ACF performs nonce verification before value validation.
-		$post_id = isset( $_POST['post_ID'] ) ? absint( wp_unslash( $_POST['post_ID'] ) ) : 0;
-		if ( $post_id > 0 && (string) get_post_meta( $post_id, 'status', true ) === 'geannuleerd' ) {
-			return $valid;
-		}
-
-		return 'Annuleer deze inschrijftaak via Rondo, zodat vrijwilligers bericht krijgen en de punten correct worden verwerkt.';
 	}
 
 	private static function parse_datetime( string $value ): ?\DateTimeImmutable {

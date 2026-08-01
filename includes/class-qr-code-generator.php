@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Provider-agnostic branded QR code generator.
  *
  * Generates QR codes with the club's accent color and optional logo overlay,
- * saving the PNG to wp-content/uploads/invoices/ and updating the ACF field.
+ * saving the PNG to wp-content/uploads/invoices/ and updating the canonical field.
  */
 class QrCodeGenerator {
 
@@ -36,7 +36,7 @@ class QrCodeGenerator {
 	 * Generate a branded QR code PNG for a payment URL.
 	 *
 	 * Applies the club accent color to all dark modules and optionally overlays the club logo
-	 * in the center. Saves the PNG to uploads/invoices/ and updates the qr_code_path ACF field.
+	 * in the center. Saves the PNG to uploads/invoices/ and updates the qr_code_path canonical field.
 	 *
 	 * @param string $url        The URL to encode in the QR code.
 	 * @param int    $invoice_id The invoice post ID.
@@ -47,7 +47,7 @@ class QrCodeGenerator {
 		$invoices_dir = $upload_dir['basedir'] . '/invoices';
 		wp_mkdir_p( $invoices_dir );
 
-		$invoice_number = get_field( 'invoice_number', $invoice_id );
+		$invoice_number = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_number' );
 		if ( empty( $invoice_number ) ) {
 			$invoice_number = $invoice_id;
 		}
@@ -60,7 +60,7 @@ class QrCodeGenerator {
 		}
 
 		$relative_path = 'invoices/qr-' . $invoice_number . '.png';
-		update_field( 'qr_code_path', $relative_path, $invoice_id );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'qr_code_path', $relative_path );
 
 		return $relative_path;
 	}

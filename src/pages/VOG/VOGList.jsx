@@ -13,15 +13,15 @@ import SortableHeader from '@/components/SortableHeader';
 import { DataTableToolbar, ColumnSettingsPanel, useColumnVisibility, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
 function getFirstEmail(person) {
-  return person.acf?.email_1 || person.acf?.email_2 || null;
+  return person.fields?.email_1 || person.fields?.email_2 || null;
 }
 
 function getFirstPhone(person) {
-  return person.acf?.mobile_1 || person.acf?.telephone_1 || person.acf?.mobile_2 || person.acf?.telephone_2 || null;
+  return person.fields?.mobile_1 || person.fields?.telephone_1 || person.fields?.mobile_2 || person.fields?.telephone_2 || null;
 }
 
 function VOGBadge({ person }) {
-  const datumVog = person.acf?.['datum-vog'];
+  const datumVog = person.fields?.['datum_vog'];
   const isNew = !datumVog;
 
   return (
@@ -36,7 +36,7 @@ function VOGBadge({ person }) {
 }
 
 function VOGEmailIndicator({ person }) {
-  const emailSentDate = person.acf?.['vog_email_sent_date'];
+  const emailSentDate = person.fields?.['vog_email_sent_date'];
   if (!emailSentDate) return null;
 
   return (
@@ -103,10 +103,10 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection,
 
       {isColVisible('knvb_id') && (
         <td className={`px-4 py-3 text-sm ${isSelected ? 'text-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
-          {customFieldsMap['knvb-id'] ? (
-            <CustomFieldColumn field={customFieldsMap['knvb-id']} value={person.acf?.['knvb-id']} />
+          {customFieldsMap['knvb_id'] ? (
+            <CustomFieldColumn field={customFieldsMap['knvb_id']} value={person.fields?.['knvb_id']} />
           ) : (
-            person.acf?.['knvb-id'] || '-'
+            person.fields?.['knvb_id'] || '-'
           )}
         </td>
       )}
@@ -133,34 +133,34 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection,
 
       {isColVisible('datum_vog') && (
         <td className={`px-4 py-3 text-sm ${isSelected ? 'text-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
-          {customFieldsMap['datum-vog'] ? (
-            <CustomFieldColumn field={customFieldsMap['datum-vog']} value={person.acf?.['datum-vog']} />
+          {customFieldsMap['datum_vog'] ? (
+            <CustomFieldColumn field={customFieldsMap['datum_vog']} value={person.fields?.['datum_vog']} />
           ) : (
-            person.acf?.['datum-vog'] || '-'
+            person.fields?.['datum_vog'] || '-'
           )}
         </td>
       )}
 
       {isColVisible('vog_email_sent') && (
         <td className={`px-4 py-3 text-sm ${isSelected ? 'text-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
-          {person.acf?.['vog_email_sent_date']
-            ? format(new Date(person.acf['vog_email_sent_date']), 'yyyy-MM-dd')
+          {person.fields?.['vog_email_sent_date']
+            ? format(new Date(person.fields['vog_email_sent_date']), 'yyyy-MM-dd')
             : '-'}
         </td>
       )}
 
       {isColVisible('justis') && (
         <td className={`px-4 py-3 text-sm ${isSelected ? 'text-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
-          {person.acf?.['vog_justis_submitted_date']
-            ? format(new Date(person.acf['vog_justis_submitted_date']), 'yyyy-MM-dd')
+          {person.fields?.['vog_justis_submitted_date']
+            ? format(new Date(person.fields['vog_justis_submitted_date']), 'yyyy-MM-dd')
             : '-'}
         </td>
       )}
 
       {isColVisible('reminder') && (
         <td className={`px-4 py-3 text-sm ${isSelected ? 'text-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
-          {person.acf?.['vog_reminder_sent_date']
-            ? format(new Date(person.acf['vog_reminder_sent_date']), 'yyyy-MM-dd')
+          {person.fields?.['vog_reminder_sent_date']
+            ? format(new Date(person.fields['vog_reminder_sent_date']), 'yyyy-MM-dd')
             : '-'}
         </td>
       )}
@@ -169,7 +169,7 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection,
 }
 
 export default function VOGList() {
-  const [orderby, setOrderby] = useState('custom_datum-vog');
+  const [orderby, setOrderby] = useState('field_datum_vog');
   const [order, setOrder] = useState('asc');
 
   const [emailStatusFilter, setEmailStatusFilter] = useState('');
@@ -231,8 +231,8 @@ export default function VOGList() {
         [p.first_name, p.infix, p.last_name].filter(Boolean).join(' ').toLowerCase().includes(search)
       );
     }
-    if (knvbIdFilter === 'heeft') result = result.filter(p => p.acf?.['knvb-id']);
-    else if (knvbIdFilter === 'geen') result = result.filter(p => !p.acf?.['knvb-id']);
+    if (knvbIdFilter === 'heeft') result = result.filter(p => p.fields?.['knvb_id']);
+    else if (knvbIdFilter === 'geen') result = result.filter(p => !p.fields?.['knvb_id']);
     if (emailPresenceFilter === 'heeft') result = result.filter(p => getFirstEmail(p));
     else if (emailPresenceFilter === 'geen') result = result.filter(p => !getFirstEmail(p));
     return result;
@@ -240,28 +240,28 @@ export default function VOGList() {
 
   const emailCounts = useMemo(() => {
     const allPeople = allData?.people || [];
-    const sent = allPeople.filter(p => p.acf?.['vog_email_sent_date']).length;
+    const sent = allPeople.filter(p => p.fields?.['vog_email_sent_date']).length;
     const notSent = allPeople.length - sent;
     return { total: allPeople.length, sent, notSent };
   }, [allData?.people]);
 
   const vogTypeCounts = useMemo(() => {
     const allPeople = allData?.people || [];
-    const nieuw = allPeople.filter(p => !p.acf?.['datum-vog']).length;
+    const nieuw = allPeople.filter(p => !p.fields?.['datum_vog']).length;
     const vernieuwing = allPeople.length - nieuw;
     return { total: allPeople.length, nieuw, vernieuwing };
   }, [allData?.people]);
 
   const justisCounts = useMemo(() => {
     const allPeople = allData?.people || [];
-    const submitted = allPeople.filter(p => p.acf?.['vog_justis_submitted_date']).length;
+    const submitted = allPeople.filter(p => p.fields?.['vog_justis_submitted_date']).length;
     const notSubmitted = allPeople.length - submitted;
     return { total: allPeople.length, submitted, notSubmitted };
   }, [allData?.people]);
 
   const knvbIdCounts = useMemo(() => {
     const allPeople = allData?.people || [];
-    const heeft = allPeople.filter(p => p.acf?.['knvb-id']).length;
+    const heeft = allPeople.filter(p => p.fields?.['knvb_id']).length;
     return { heeft, geen: allPeople.length - heeft };
   }, [allData?.people]);
 
@@ -499,14 +499,14 @@ export default function VOGList() {
     const formatDate = (d) => d ? format(new Date(d), 'yyyy-MM-dd') : '';
     const rows = people.map(person => [
       [person.first_name, person.infix, person.last_name].filter(Boolean).join(' '),
-      person.acf?.['knvb-id'] || '',
+      person.fields?.['knvb_id'] || '',
       getFirstEmail(person) || '',
       getFirstPhone(person) || '',
-      formatDate(person.acf?.['datum-vog']),
-      person.acf?.['datum-vog'] ? 'Vernieuwing' : 'Nieuw',
-      formatDate(person.acf?.['vog_email_sent_date']),
-      formatDate(person.acf?.['vog_justis_submitted_date']),
-      formatDate(person.acf?.['vog_reminder_sent_date']),
+      formatDate(person.fields?.['datum_vog']),
+      person.fields?.['datum_vog'] ? 'Vernieuwing' : 'Nieuw',
+      formatDate(person.fields?.['vog_email_sent_date']),
+      formatDate(person.fields?.['vog_justis_submitted_date']),
+      formatDate(person.fields?.['vog_reminder_sent_date']),
     ]);
     const csv = buildCsv([headers, ...rows]);
     downloadCsv(csv, `vog-${format(new Date(), 'yyyy-MM-dd')}.csv`);
@@ -658,7 +658,7 @@ export default function VOGList() {
                 </th>
                 <SortableHeader label="Naam" columnId="first_name" sortField={orderby} sortOrder={order} onSort={handleSort} />
                 {isVisible('knvb_id') && (
-                  <SortableHeader label="KNVB ID" columnId="knvb-id" sortField={orderby} sortOrder={order} onSort={handleSort} sortable={false} />
+                  <SortableHeader label="KNVB ID" columnId="knvb_id" sortField={orderby} sortOrder={order} onSort={handleSort} sortable={false} />
                 )}
                 {isVisible('email') && (
                   <SortableHeader label="Email" columnId="email" sortField={orderby} sortOrder={order} onSort={handleSort} sortable={false} />
@@ -667,7 +667,7 @@ export default function VOGList() {
                   <SortableHeader label="Telefoon" columnId="phone" sortField={orderby} sortOrder={order} onSort={handleSort} sortable={false} />
                 )}
                 {isVisible('datum_vog') && (
-                  <SortableHeader label="Datum VOG" columnId="custom_datum-vog" sortField={orderby} sortOrder={order} onSort={handleSort} />
+                  <SortableHeader label="Datum VOG" columnId="field_datum_vog" sortField={orderby} sortOrder={order} onSort={handleSort} />
                 )}
                 {isVisible('vog_email_sent') && (
                   <SortableHeader label="1e email" columnId="custom_vog_email_sent_date" sortField={orderby} sortOrder={order} onSort={handleSort} />

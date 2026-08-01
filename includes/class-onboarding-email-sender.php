@@ -84,9 +84,9 @@ class OnboardingEmailSender {
 			];
 		}
 
-		$first_name = (string) ( get_field( 'first_name', $person_id ) ?: '' );
-		$infix      = (string) ( get_field( 'infix', $person_id ) ?: '' );
-		$last_name  = (string) ( get_field( 'last_name', $person_id ) ?: '' );
+		$first_name = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '' );
+		$infix      = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'infix' ) ?: '' );
+		$last_name  = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '' );
 		$full_name  = trim( implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) ) );
 
 		$club_naam = $this->get_club_name();
@@ -128,9 +128,9 @@ class OnboardingEmailSender {
 			];
 		}
 
-		// Stamp the timestamp via ACF so it round-trips through get_field().
+		// Stamp the timestamp through the native field API.
 		$timestamp = current_time( 'Y-m-d H:i:s' );
-		update_field( $meta_key, $timestamp, $person_id );
+		\Rondo\Fields\Fields::update_for_post( $person_id, $meta_key, $timestamp );
 
 		// Log to the person's timeline.
 		if ( class_exists( '\Rondo\Collaboration\CommentTypes' ) ) {
@@ -276,12 +276,12 @@ EOT;
 	 * @return string|null Email address or null if not found.
 	 */
 	private function get_person_email( int $person_id ): ?string {
-		$email = get_field( 'email_1', $person_id );
+		$email = \Rondo\Fields\Fields::get_for_post( $person_id, 'email_1' );
 		if ( is_email( $email ) ) {
 			return $email;
 		}
 
-		$email = get_field( 'email_2', $person_id );
+		$email = \Rondo\Fields\Fields::get_for_post( $person_id, 'email_2' );
 		if ( is_email( $email ) ) {
 			return $email;
 		}

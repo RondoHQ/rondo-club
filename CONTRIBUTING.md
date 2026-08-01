@@ -16,7 +16,6 @@ Thanks for contributing to Rondo Club.
 - Node.js 18+
 - Composer
 - WordPress 6+
-- Advanced Custom Fields Pro
 
 ### Install
 

@@ -33,16 +33,16 @@ class FormerMemberParentRoleTest extends RondoTestCase {
 		);
 		$child_id  = $this->createPerson( [ 'post_title' => 'Current child' ] );
 
-		update_field(
+		\Rondo\Fields\Fields::update_for_post(
+			$parent_id,
 			'relationships',
 			[
 				[
 					'related_person'    => $child_id,
 					'relationship_type' => $this->child_relationship_type,
 				],
-			],
-			$parent_id
-		);
+			]
+			);
 
 		$response = rest_do_request( new \WP_REST_Request( 'GET', '/wp/v2/people/' . $parent_id ) );
 
@@ -60,16 +60,16 @@ class FormerMemberParentRoleTest extends RondoTestCase {
 			[ 'former_member' => true ]
 		);
 
-		update_field(
+		\Rondo\Fields\Fields::update_for_post(
+			$parent_id,
 			'relationships',
 			[
 				[
 					'related_person'    => $child_id,
 					'relationship_type' => $this->child_relationship_type,
 				],
-			],
-			$parent_id
-		);
+			]
+			);
 
 		$response = rest_do_request( new \WP_REST_Request( 'GET', '/wp/v2/people/' . $parent_id ) );
 

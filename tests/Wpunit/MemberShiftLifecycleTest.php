@@ -207,8 +207,8 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 
 	public function test_signup_confirmation_combines_shifts_after_ten_minutes_and_attaches_calendar(): void {
 		[, $person_id] = $this->member( 'shift_confirmation_member' );
-		update_field( 'first_name', 'Anne', $person_id );
-		update_field( 'email_1', 'anne@example.com', $person_id );
+		\Rondo\Fields\Fields::update_for_post( $person_id, 'first_name', 'Anne' );
+		\Rondo\Fields\Fields::update_for_post( $person_id, 'email_1', 'anne@example.com' );
 		$type_id   = $this->dienst_type();
 		$shift_one = $this->dated_shift( $type_id, [], new \DateTimeImmutable( '2026-12-04 09:00:00', wp_timezone() ) );
 		$shift_two = $this->dated_shift( $type_id, [], new \DateTimeImmutable( '2026-12-05 09:00:00', wp_timezone() ) );
@@ -255,7 +255,7 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 
 	public function test_cancelling_during_confirmation_delay_suppresses_the_email(): void {
 		[, $person_id] = $this->member( 'cancelled_shift_confirmation_member' );
-		update_field( 'email_1', 'cancelled@example.com', $person_id );
+		\Rondo\Fields\Fields::update_for_post( $person_id, 'email_1', 'cancelled@example.com' );
 		$type_id  = $this->dienst_type();
 		$shift_id = $this->dated_shift( $type_id, [], current_datetime()->modify( '+22 days' ) );
 		$request  = new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $shift_id . '/signup' );

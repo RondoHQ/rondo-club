@@ -25,7 +25,7 @@ export default function TaakuitlegList() {
 
   const filtered = useMemo(() => {
     if (!filter) return items;
-    return items.filter((item) => (item.acf?.dienst_types || []).map(Number).includes(Number(filter)));
+    return items.filter((item) => (item.fields?.dienst_types || []).map(Number).includes(Number(filter)));
   }, [items, filter]);
 
   if (isLoading) return <ContentLoadingSpinner />;
@@ -77,7 +77,7 @@ export default function TaakuitlegList() {
         <ul className="space-y-2">
           {filtered.map((item) => {
             const title = item.title?.rendered || '(zonder titel)';
-            const typeIds = (item.acf?.dienst_types || []).map(Number);
+            const typeIds = (item.fields?.dienst_types || []).map(Number);
             const isDraft = item.status === 'draft';
             return (
               <li key={item.id} className="card p-4 flex items-center justify-between gap-3">

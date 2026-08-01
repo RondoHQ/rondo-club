@@ -109,7 +109,7 @@ class PersonDeletionGuard {
 	 * @return array<int, array{id: int, name: string, relationship_type: string}>
 	 */
 	public function get_active_relationships( int $person_id ): array {
-		$rows = get_field( 'relationships', $person_id );
+		$rows = \Rondo\Fields\Fields::get_for_post( $person_id, 'relationships' );
 		if ( ! is_array( $rows ) ) {
 			return [];
 		}
@@ -154,9 +154,9 @@ class PersonDeletionGuard {
 	}
 
 	/**
-	 * Extract an ID from the ACF scalar, object, or array return formats.
+	 * Extract an ID from the native field scalar, object, or array return formats.
 	 *
-	 * @param mixed  $value Value returned by ACF.
+	 * @param mixed  $value Value returned by native field.
 	 * @param string $key   Object/array key containing the ID.
 	 * @return int|null
 	 */

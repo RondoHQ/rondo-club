@@ -7,7 +7,7 @@
  *
  * 1. **Fee cache** (`rondo_fee_cache_{season}`) — short-lived performance
  *    cache for the cached-read fast path. Invalidated by
- *    {@see FeeCacheInvalidator} on ACF field updates.
+ *    {@see FeeCacheInvalidator} on canonical field updates.
  * 2. **Fee snapshot** (`fee_snapshot_{season}`) — season-lock storage used
  *    by the admin "lock fees for a season" flow. Retained for future use
  *    even though the current codebase doesn't populate it automatically
@@ -211,7 +211,7 @@ class FeeCache {
 		}
 
 		// Cache miss - calculate fresh using lid-sinds (PRO-04 fix)
-		$lid_sinds = get_field( 'lid-sinds', $person_id );
+		$lid_sinds = \Rondo\Fields\Fields::get_for_post( $person_id, 'lid_sinds' );
 		$result    = ( $this->full_fee_calculator )( $person_id, $lid_sinds ?: null, $season );
 
 		if ( $result === null ) {
@@ -219,7 +219,7 @@ class FeeCache {
 		}
 
 		// Add former member flag for diagnostics
-		$is_former                  = (bool) get_field( 'former_member', $person_id );
+		$is_former                  = (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' );
 		$result['is_former_member'] = $is_former;
 
 		// Save to cache

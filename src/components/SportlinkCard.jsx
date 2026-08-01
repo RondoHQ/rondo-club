@@ -7,17 +7,17 @@ import { isValidDate } from '@/utils/formatters';
  * Sportlink info card for person detail page
  * Shows Sportlink sync fields (lid-sinds, lid-tot, vrijwilliger-sinds, leeftijdsgroep, type-lid, datum-foto, isparent, team)
  */
-export default function SportlinkCard({ acfData, metaData, primaryTeam }) {
+export default function SportlinkCard({ fieldData, metaData, primaryTeam }) {
   // Get Sportlink field values
-  const knvbId = acfData?.['knvb-id'];
-  const lidSinds = acfData?.['lid-sinds'];
-  const vrijwilligerSinds = metaData?.['vrijwilliger-sinds'] || acfData?.['vrijwilliger-sinds'];
-  const lidTot = acfData?.['lid-tot'];
-  const leeftijdsgroep = acfData?.leeftijdsgroep;
-  const spelactiviteit = acfData?.spelactiviteit;
-  const typeLid = acfData?.['type-lid'];
-  const datumFoto = acfData?.['datum-foto'];
-  const isParent = acfData?.isparent;
+  const knvbId = fieldData?.['knvb_id'];
+  const lidSinds = fieldData?.['lid_sinds'];
+  const vrijwilligerSinds = metaData?.['vrijwilliger_sinds'] || fieldData?.['vrijwilliger_sinds'];
+  const lidTot = fieldData?.['lid_tot'];
+  const leeftijdsgroep = fieldData?.leeftijdsgroep;
+  const spelactiviteit = fieldData?.spelactiviteit;
+  const typeLid = fieldData?.['type_lid'];
+  const datumFoto = fieldData?.['datum_foto'];
+  const isParent = fieldData?.isparent;
   const teamName = primaryTeam?.name || '';
   const teamId = primaryTeam?.id || null;
 
@@ -31,14 +31,14 @@ export default function SportlinkCard({ acfData, metaData, primaryTeam }) {
 
   // Field configuration with Dutch labels
   const fields = [
-    { key: 'knvb-id', label: 'KNVB ID', value: knvbId, type: 'text' },
-    { key: 'lid-sinds', label: 'Lid sinds', value: lidSinds, type: 'date' },
-    { key: 'vrijwilliger-sinds', label: 'Vrijwilliger sinds', value: vrijwilligerSinds, type: 'date', showWhenEmpty: true },
-    { key: 'lid-tot', label: 'Lid tot', value: lidTot, type: 'date' },
+    { key: 'knvb_id', label: 'KNVB ID', value: knvbId, type: 'text' },
+    { key: 'lid_sinds', label: 'Lid sinds', value: lidSinds, type: 'date' },
+    { key: 'vrijwilliger_sinds', label: 'Vrijwilliger sinds', value: vrijwilligerSinds, type: 'date', showWhenEmpty: true },
+    { key: 'lid_tot', label: 'Lid tot', value: lidTot, type: 'date' },
     { key: 'leeftijdsgroep', label: 'Leeftijdsgroep', value: leeftijdsgroep, type: 'text' },
     { key: 'spelactiviteit', label: 'Spelactiviteit', value: spelactiviteit, type: 'text' },
-    { key: 'type-lid', label: 'Type lid', value: typeLid, type: 'text' },
-    { key: 'datum-foto', label: 'Datum foto', value: datumFoto, type: 'date' },
+    { key: 'type_lid', label: 'Type lid', value: typeLid, type: 'text' },
+    { key: 'datum_foto', label: 'Datum foto', value: datumFoto, type: 'date' },
     {
       key: 'team',
       label: 'Team',

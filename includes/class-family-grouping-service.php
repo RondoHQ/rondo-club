@@ -30,7 +30,7 @@ class FamilyGroupingService {
 	/**
 	 * Person fee context collaborator (Phase 218).
 	 *
-	 * Provides `is_former_member_in_season()` — reads ACF fields and
+	 * Provides `is_former_member_in_season()` — reads canonical fields and
 	 * compares timestamps. Before Phase 218 this was reached via a
 	 * MembershipFees god-class reference; now it's on an explicit typed
 	 * service with zero dependencies.
@@ -147,9 +147,18 @@ class FamilyGroupingService {
 	 */
 	public function get_family_key( int $person_id ): ?string {
 		// Get addresses from person
-		$addresses = get_field( 'addresses', $person_id ) ?: [];
+		$addresses = \Rondo\Fields\Fields::get_for_post( $person_id, 'addresses' ) ?: [];
+		return $this->get_family_key_from_addresses( $addresses );
+	}
 
-		if ( empty( $addresses ) ) {
+	/**
+	 * Build a family key from an address payload, including a pre-update value.
+	 *
+	 * @param mixed $addresses Native address repeater rows.
+	 */
+	public function get_family_key_from_addresses( $addresses ): ?string {
+
+		if ( ! is_array( $addresses ) || empty( $addresses ) || ! is_array( $addresses[0] ) ) {
 			return null;
 		}
 
@@ -165,10 +174,6 @@ class FamilyGroupingService {
 
 		// Normalize postal code
 		$normalized_postal = $this->normalize_postal_code( $postal_code );
-
-		if ( $house_number === null ) {
-			return null;
-		}
 
 		// Validate postal code format (4 digits + 2 letters)
 		if ( ! preg_match( '/^\d{4}[A-Z]{2}$/', $normalized_postal ) ) {
@@ -215,7 +220,7 @@ class FamilyGroupingService {
 
 		foreach ( $query->posts as $person_id ) {
 			// Family discounts are based on the current household, never on former members.
-			if ( (bool) get_field( 'former_member', $person_id ) ) {
+			if ( (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' ) ) {
 				continue;
 			}
 
@@ -395,7 +400,7 @@ class FamilyGroupingService {
 			}
 
 			// Former members never participate in the current household discount.
-			if ( (bool) get_field( 'former_member', $pid ) ) {
+			if ( (bool) \Rondo\Fields\Fields::get_for_post( $pid, 'former_member' ) ) {
 				update_post_meta( $pid, '_family_discount_rate', '0' );
 				update_post_meta( $pid, '_family_discount_position', '' );
 				continue;

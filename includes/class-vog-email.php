@@ -315,7 +315,7 @@ class VOGEmail {
 		}
 
 		// Get person's first name
-		$first_name = get_field( 'first_name', $person_id );
+		$first_name = \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' );
 		if ( empty( $first_name ) ) {
 			$first_name = $person->post_title;
 		}
@@ -327,9 +327,9 @@ class VOGEmail {
 
 		// For renewal, get previous VOG date
 		if ( $template_type === 'renewal' ) {
-			$previous_vog_date = get_field( 'datum-vog', $person_id );
+			$previous_vog_date = \Rondo\Fields\Fields::get_for_post( $person_id, 'datum_vog' );
 			if ( $previous_vog_date ) {
-				// Format date for display (ACF returns Y-m-d format)
+				// Format date for display (native field returns Y-m-d format)
 				$vars['previous_vog_date'] = date_i18n( get_option( 'date_format' ), strtotime( $previous_vog_date ) );
 			} else {
 				$vars['previous_vog_date'] = __( 'onbekend', 'rondo' );
@@ -484,12 +484,12 @@ class VOGEmail {
 	 * @return string|null Email address or null if not found.
 	 */
 	private function get_person_email( int $person_id ): ?string {
-		$email = get_field( 'email_1', $person_id );
+		$email = \Rondo\Fields\Fields::get_for_post( $person_id, 'email_1' );
 		if ( is_email( $email ) ) {
 			return $email;
 		}
 
-		$email = get_field( 'email_2', $person_id );
+		$email = \Rondo\Fields\Fields::get_for_post( $person_id, 'email_2' );
 		if ( is_email( $email ) ) {
 			return $email;
 		}
@@ -584,7 +584,7 @@ class VOGEmail {
 		}
 
 		// Get person's first name
-		$first_name = get_field( 'first_name', $person_id );
+		$first_name = \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' );
 		if ( empty( $first_name ) ) {
 			$first_name = $person->post_title;
 		}
@@ -614,9 +614,9 @@ class VOGEmail {
 
 		// For renewal, get previous VOG date
 		if ( $template_type === 'reminder_renewal' ) {
-			$previous_vog_date = get_field( 'datum-vog', $person_id );
+			$previous_vog_date = \Rondo\Fields\Fields::get_for_post( $person_id, 'datum_vog' );
 			if ( $previous_vog_date ) {
-				// Format date for display (ACF returns Y-m-d format)
+				// Format date for display (native field returns Y-m-d format)
 				$vars['previous_vog_date'] = date_i18n( get_option( 'date_format' ), strtotime( $previous_vog_date ) );
 			} else {
 				$vars['previous_vog_date'] = __( 'onbekend', 'rondo' );

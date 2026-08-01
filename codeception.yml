@@ -31,7 +31,5 @@ suites:
           tablePrefix: "wp_"
           domain: "%WP_DOMAIN%"
           adminEmail: "admin@stadion.test"
-          plugins:
-            - advanced-custom-fields-pro/acf.php
           theme: rondo-club
           loadOnly: false

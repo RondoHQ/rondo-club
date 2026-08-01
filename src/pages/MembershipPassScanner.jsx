@@ -166,7 +166,7 @@ export default function MembershipPassScanner() {
 
   const isActiveMembership = result?.membership?.status === 'active';
   const resultPhoto = result?.person?.photo_thumbnail || result?.person?.thumbnail || '';
-  const resultKnvbId = result?.person?.knvb_id || result?.person?.['knvb-id'] || '';
+  const resultKnvbId = result?.person?.knvb_id || result?.person?.['knvb_id'] || '';
   const isSponsor = result?.person?.is_sponsor === true;
   const resultCompanyName = result?.person?.company_name || '';
 

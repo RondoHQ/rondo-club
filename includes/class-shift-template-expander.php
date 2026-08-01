@@ -28,7 +28,7 @@ class ShiftTemplateExpander {
 	public function __construct() {
 		add_action( 'init', [ $this, 'register_cron' ] );
 		add_action( self::CRON_HOOK, [ $this, 'expand_default_window' ] );
-		add_action( 'acf/save_post', [ $this, 'expand_on_template_save' ], 20 );
+		add_action( 'rondo_fields_saved_post', [ $this, 'expand_on_template_save' ], 20 );
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 		add_action( 'rest_after_insert_dienst_shift', [ $this, 'detach_on_manual_edit' ], 10, 3 );
 	}
@@ -277,7 +277,7 @@ class ShiftTemplateExpander {
 	 * for the next three months without waiting for the daily cron. Idempotent —
 	 * relies on `find_existing_shift()` to skip already-rolled-out dates.
 	 *
-	 * @param int|string $post_id ACF save_post payload (post ID or "options").
+	 * @param int|string $post_id native field save_post payload (post ID or "options").
 	 */
 	public function expand_on_template_save( $post_id ) {
 		if ( ! is_numeric( $post_id ) ) {
@@ -421,7 +421,7 @@ class ShiftTemplateExpander {
 		while ( $cursor !== false && $cursor <= $end_ts ) {
 			// PHP date('N') returns 1=Monday..7=Sunday — matches our convention.
 			if ( (int) gmdate( 'N', $cursor ) === $day_of_week ) {
-				// Store the canonical `Y-m-d H:i:s` form ACF also writes, so an admin
+				// Store the canonical `Y-m-d H:i:s` form native field also writes, so an admin
 				// edit through the shift editor can't produce a phantom mismatch that
 				// re-spawns a duplicate on the next expansion.
 				$start_datetime = gmdate( 'Y-m-d', $cursor ) . ' ' . self::normalize_time( $start_time ) . ':00';
@@ -465,7 +465,7 @@ class ShiftTemplateExpander {
 	 *
 	 * Historic rows were stored without seconds (`Y-m-d H:i`); current rows carry
 	 * the canonical `Y-m-d H:i:s`. Match both so neither legacy data nor an
-	 * ACF-normalized edit slips past the de-dup and spawns a duplicate.
+	 * native field-normalized edit slips past the de-dup and spawns a duplicate.
 	 */
 	private static function find_existing_shift( int $template_id, string $start_datetime ): int {
 		$variants = array_values( array_unique( [ $start_datetime, preg_replace( '/:00$/', '', $start_datetime ) ] ) );

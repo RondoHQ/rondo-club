@@ -2,6 +2,7 @@
 
 namespace Tests\Wpunit;
 
+use Rondo\Fields\Fields;
 use Rondo\REST\Volunteer;
 use Rondo\Volunteer\VolunteerExemptionResolver;
 use Tests\Support\RondoTestCase;
@@ -61,9 +62,9 @@ class VolunteerExemptionApiTest extends RondoTestCase {
 
 	public function test_disabling_manual_exemption_clears_its_details(): void {
 		$person_id = $this->createPerson( [ 'post_title' => 'Tijdelijk Vrijgesteld' ] );
-		update_field( 'field_vrijgesteld_handmatig', 1, $person_id );
-		update_field( 'field_vrijstelling_reden', 'Tijdelijk', $person_id );
-		update_field( 'field_vrijstelling_seizoen', '2026-2027', $person_id );
+		Fields::update_for_post( $person_id, 'vrijgesteld_handmatig', 1 );
+		Fields::update_for_post( $person_id, 'vrijstelling_reden', 'Tijdelijk' );
+		Fields::update_for_post( $person_id, 'vrijstelling_seizoen', '2026-2027' );
 
 		$response = $this->request(
 			'PUT',

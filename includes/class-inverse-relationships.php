@@ -32,18 +32,25 @@ class InverseRelationships {
 	private $old_relationships = [];
 
 	public function __construct() {
-		// Validate relationships before saving (remove self-refs and duplicates)
-		add_filter( 'acf/update_value/name=relationships', [ $this, 'validate_relationships' ], 4, 3 );
+		add_filter( 'rondo_fields_validate_value', [ $this, 'validate_native_relationships' ], 4, 4 );
+		add_action( 'rondo_fields_saved_post', [ $this, 'sync_native_relationships' ], 20, 2 );
+	}
 
-		// Capture old value before update
-		add_filter( 'acf/update_value/name=relationships', [ $this, 'capture_old_relationships' ], 5, 3 );
+	public function validate_native_relationships( $value, int $post_id, array $field, $old_value ) {
+		if ( $field['canonical_name'] !== 'relationships' ) {
+			return $value;
+		}
+		$this->old_relationships[ $post_id ] = $old_value;
+		return $this->validate_relationships( $value, $post_id, $field );
+	}
 
-		// Sync inverse relationships after relationships field is saved
-		add_action( 'acf/save_post', [ $this, 'sync_inverse_relationships' ], 20 );
-
-		// Also hook into REST API updates to ensure sync happens
-		add_action( 'rest_after_insert_person', [ $this, 'sync_inverse_relationships' ], 20, 1 );
-		add_action( 'rest_after_update_person', [ $this, 'sync_inverse_relationships' ], 20, 1 );
+	public function sync_native_relationships( int $post_id, array $changes ): void {
+		foreach ( $changes as $change ) {
+			if ( ( $change[0]['canonical_name'] ?? '' ) === 'relationships' ) {
+				$this->sync_inverse_relationships( $post_id );
+				return;
+			}
+		}
 	}
 
 	/**
@@ -128,7 +135,7 @@ class InverseRelationships {
 	 */
 	public function capture_old_relationships( $value, $post_id, $field ) {
 		// Store the old value before it's overwritten
-		$old_value                           = get_field( 'relationships', $post_id, false );
+		$old_value                           = \Rondo\Fields\Fields::get_for_post( $post_id, 'relationships' );
 		$this->old_relationships[ $post_id ] = $old_value;
 
 		// Return the new value unchanged
@@ -167,7 +174,7 @@ class InverseRelationships {
 		}
 
 		// Get current relationships (new value)
-		$current_relationships = get_field( 'relationships', $post_id );
+		$current_relationships = \Rondo\Fields\Fields::get_for_post( $post_id, 'relationships' );
 		if ( ! is_array( $current_relationships ) ) {
 			$current_relationships = [];
 		}
@@ -267,7 +274,7 @@ class InverseRelationships {
 
 	/**
 	 * Normalize relationship array for comparison
-	 * Handles different ACF return formats
+	 * Handles different native field return formats
 	 */
 	private function normalize_relationships( $relationships ) {
 		$normalized = [];
@@ -335,9 +342,9 @@ class InverseRelationships {
 			return;
 		}
 
-		// Get inverse relationship type from ACF field
+		// Get inverse relationship type from canonical field
 		// Use false parameter to get raw value (ID) instead of formatted value
-		$inverse_type_id = get_field( 'inverse_relationship_type', 'relationship_type_' . $relationship_type_id, false );
+		$inverse_type_id = \Rondo\Fields\Fields::get_for_term( 'relationship_type', $relationship_type_id, 'inverse_relationship_type' );
 
 		if ( ! $inverse_type_id ) {
 			// No inverse mapping defined - try to set it up for symmetric relationships
@@ -353,7 +360,7 @@ class InverseRelationships {
 			}
 		}
 
-		// Normalize to integer (handle ACF return formats: id, array, object)
+		// Normalize to integer (handle native field return formats: id, array, object)
 		if ( is_array( $inverse_type_id ) ) {
 			// Could be array with term_id or array of IDs
 			if ( isset( $inverse_type_id['term_id'] ) ) {
@@ -385,7 +392,7 @@ class InverseRelationships {
 		}
 
 		// Get existing relationships for the related person
-		$related_person_relationships = get_field( 'relationships', $to_person_id );
+		$related_person_relationships = \Rondo\Fields\Fields::get_for_post( $to_person_id, 'relationships' );
 		if ( ! is_array( $related_person_relationships ) ) {
 			$related_person_relationships = [];
 		}
@@ -430,7 +437,7 @@ class InverseRelationships {
 		}
 
 		// Save relationships (this will trigger the hook again, but we're protected by $processing)
-		update_field( 'relationships', $related_person_relationships, $to_person_id );
+		\Rondo\Fields\Fields::update_for_post( $to_person_id, 'relationships', $related_person_relationships );
 
 		// Unmark as processing
 		unset( $this->processing[ $to_person_id ] );
@@ -471,9 +478,9 @@ class InverseRelationships {
 			return;
 		}
 
-		// Get inverse relationship type from ACF field
+		// Get inverse relationship type from canonical field
 		// Use false parameter to get raw value (ID) instead of formatted value
-		$inverse_type_id = get_field( 'inverse_relationship_type', 'relationship_type_' . $relationship_type_id, false );
+		$inverse_type_id = \Rondo\Fields\Fields::get_for_term( 'relationship_type', $relationship_type_id, 'inverse_relationship_type' );
 
 		if ( ! $inverse_type_id ) {
 			// No inverse mapping defined - try to set it up for symmetric relationships
@@ -489,7 +496,7 @@ class InverseRelationships {
 			}
 		}
 
-		// Normalize to integer (handle ACF return formats: id, array, object)
+		// Normalize to integer (handle native field return formats: id, array, object)
 		if ( is_array( $inverse_type_id ) ) {
 			// Could be array with term_id or array of IDs
 			if ( isset( $inverse_type_id['term_id'] ) ) {
@@ -521,7 +528,7 @@ class InverseRelationships {
 		}
 
 		// Get existing relationships for the related person
-		$related_person_relationships = get_field( 'relationships', $from_person_id );
+		$related_person_relationships = \Rondo\Fields\Fields::get_for_post( $from_person_id, 'relationships' );
 		if ( ! is_array( $related_person_relationships ) ) {
 			return;
 		}
@@ -565,7 +572,7 @@ class InverseRelationships {
 			$this->processing[ $from_person_id ] = true;
 
 			// Save relationships (this will trigger the hook again, but we're protected by $processing)
-			update_field( 'relationships', $related_person_relationships, $from_person_id );
+			\Rondo\Fields\Fields::update_for_post( $from_person_id, 'relationships', $related_person_relationships );
 
 			// Unmark as processing
 			unset( $this->processing[ $from_person_id ] );
@@ -626,7 +633,7 @@ class InverseRelationships {
 				continue;
 			}
 
-			$relationships = get_field( 'relationships', $person_id );
+			$relationships = \Rondo\Fields\Fields::get_for_post( $person_id, 'relationships' );
 			if ( ! is_array( $relationships ) ) {
 				continue;
 			}
@@ -699,7 +706,7 @@ class InverseRelationships {
 			return;
 		}
 
-		$relationships = get_field( 'relationships', $from_person_id );
+		$relationships = \Rondo\Fields\Fields::get_for_post( $from_person_id, 'relationships' );
 		if ( ! is_array( $relationships ) ) {
 			$relationships = [];
 		}
@@ -745,7 +752,7 @@ class InverseRelationships {
 			$this->processing[ $from_person_id ] = true;
 
 			// Save relationships
-			update_field( 'relationships', $relationships, $from_person_id );
+			\Rondo\Fields\Fields::update_for_post( $from_person_id, 'relationships', $relationships );
 
 			// Unmark as processing
 			unset( $this->processing[ $from_person_id ] );
@@ -763,7 +770,7 @@ class InverseRelationships {
 	 */
 	private function remove_siblings_on_parent_removal( $child_id, $parent_id ) {
 		// Check if child still has any parent relationships
-		$relationships = get_field( 'relationships', $child_id );
+		$relationships = \Rondo\Fields\Fields::get_for_post( $child_id, 'relationships' );
 		if ( ! is_array( $relationships ) ) {
 			$relationships = [];
 		}
@@ -841,13 +848,13 @@ class InverseRelationships {
 		// Update child's relationships (removing siblings)
 		if ( count( $updated_relationships ) !== count( $relationships ) ) {
 			$this->processing[ $child_id ] = true;
-			update_field( 'relationships', $updated_relationships, $child_id );
+			\Rondo\Fields\Fields::update_for_post( $child_id, 'relationships', $updated_relationships );
 			unset( $this->processing[ $child_id ] );
 		}
 
 		// Remove inverse sibling relationships from all siblings
 		foreach ( $siblings_to_clean as $sibling_id ) {
-			$sibling_relationships = get_field( 'relationships', $sibling_id );
+			$sibling_relationships = \Rondo\Fields\Fields::get_for_post( $sibling_id, 'relationships' );
 			if ( ! is_array( $sibling_relationships ) ) {
 				continue;
 			}
@@ -887,7 +894,7 @@ class InverseRelationships {
 
 			if ( $needs_update ) {
 				$this->processing[ $sibling_id ] = true;
-				update_field( 'relationships', $sibling_updated, $sibling_id );
+				\Rondo\Fields\Fields::update_for_post( $sibling_id, 'relationships', $sibling_updated );
 				unset( $this->processing[ $sibling_id ] );
 			}
 		}
