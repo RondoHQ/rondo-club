@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.82.6] - 2026-08-01
+
+### Added
+
+- Read-only production preflight commands export all dynamic ACF definitions with storage/population counts and audit saved field identifiers before the 34.0.0 cutover, without exposing stored values.
+
 ## [33.82.5] - 2026-07-31
 
 ### Changed

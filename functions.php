@@ -550,6 +550,7 @@ add_action( 'rest_api_init', 'rondo_migrate_options' );
 // Load WP-CLI commands if WP-CLI is available
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	require_once RONDO_PLUGIN_DIR . '/class-wp-cli.php';
+	\WP_CLI::add_command( 'rondo acf-preflight', \Rondo\Fields\AcfPreflightCli::class );
 	new TodoMigration();
 
 	// Class alias for backward compatibility
