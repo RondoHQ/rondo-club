@@ -249,11 +249,13 @@ class CustomFields extends WP_REST_Controller {
 		$metadata = array_map(
 			function ( $field ) {
 				$display_props = [
-					'key'          => $field['key'],
-					'name'         => $field['name'],
-					'label'        => $field['label'],
-					'type'         => $field['type'],
-					'instructions' => $field['instructions'] ?? '',
+					'key'            => $field['key'],
+					'name'           => $field['name'],
+					'canonical_name' => $field['canonical_name'],
+					'storage_key'    => $field['storage_key'],
+					'label'          => $field['label'],
+					'type'           => $field['type'],
+					'instructions'   => $field['instructions'] ?? '',
 				];
 
 				// Add type-specific display properties.
@@ -305,9 +307,12 @@ class CustomFields extends WP_REST_Controller {
 		if ( $post_type === 'person' ) {
 			$sportlink_fields = \Rondo\REST\UserSettings::get_sportlink_fields();
 			foreach ( $sportlink_fields as $field ) {
-				$entry = [
+				$definition = \Rondo\Fields\Registry::resolve( 'person', $field['id'] );
+				$entry      = [
 					'key'            => $field['id'],
 					'name'           => $field['id'],
+					'canonical_name' => $definition['canonical_name'],
+					'storage_key'    => $definition['storage_name'],
 					'label'          => $field['label'],
 					'type'           => $field['type'],
 					'instructions'   => '',
@@ -317,11 +322,8 @@ class CustomFields extends WP_REST_Controller {
 
 				// Include localized on/off labels for true_false fields.
 				if ( $field['type'] === 'true_false' ) {
-					$acf_field = acf_get_field( $field['id'] );
-					if ( $acf_field ) {
-						$entry['ui_on_text']  = $acf_field['ui_on_text'] ?? '';
-						$entry['ui_off_text'] = $acf_field['ui_off_text'] ?? '';
-					}
+					$entry['ui_on_text']  = $definition['ui_on_text'] ?? '';
+					$entry['ui_off_text'] = $definition['ui_off_text'] ?? '';
 				}
 
 				$metadata[] = $entry;
@@ -404,7 +406,7 @@ class CustomFields extends WP_REST_Controller {
 			}
 		}
 
-		// Map relation_post_types back to post_type for ACF.
+		// Map relation_post_types back to post_type for native field.
 		if ( isset( $field_config['relation_post_types'] ) ) {
 			$field_config['post_type'] = $field_config['relation_post_types'];
 			unset( $field_config['relation_post_types'] );
@@ -510,7 +512,7 @@ class CustomFields extends WP_REST_Controller {
 			}
 		}
 
-		// Map relation_post_types back to post_type for ACF.
+		// Map relation_post_types back to post_type for native field.
 		if ( isset( $updates['relation_post_types'] ) ) {
 			$updates['post_type'] = $updates['relation_post_types'];
 			unset( $updates['relation_post_types'] );
@@ -611,7 +613,7 @@ class CustomFields extends WP_REST_Controller {
 			'type'                => [
 				'type'        => 'string',
 				'required'    => true,
-				'description' => 'ACF field type (text, textarea, number, url, email, select, checkbox, radio, true_false, date)',
+				'description' => 'canonical field type (text, textarea, number, url, email, select, checkbox, radio, true_false, date)',
 			],
 			// Core optional parameters.
 			'name'                => [

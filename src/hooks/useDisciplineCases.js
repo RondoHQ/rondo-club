@@ -57,11 +57,11 @@ export function usePersonDisciplineCases(personId, { enabled = true } = {}) {
         order: 'desc',
       };
 
-      // Fetch all and filter by person (ACF meta queries can be unreliable)
+      // Fetch all and filter by person (native field meta queries can be unreliable)
       const response = await wpApi.getDisciplineCases(params);
 
-      // Client-side filter (ACF post_object returns integer)
-      return response.data.filter(dc => dc.acf?.person === parseInt(personId, 10));
+      // Client-side filter (native field post_object returns integer)
+      return response.data.filter(dc => dc.fields?.person === parseInt(personId, 10));
     },
     enabled: !!personId && enabled,
   });

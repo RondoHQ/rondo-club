@@ -15,7 +15,7 @@ export function useTaakuitlegList() {
 }
 
 /**
- * Fetch a single taakuitleg in edit context (so post_content + acf are present).
+ * Fetch a single taakuitleg in edit context (so post_content + fields are present).
  */
 export function useTaakuitlegItem(id) {
   return useQuery({

@@ -239,6 +239,11 @@ class DemoExport {
 		return $value;
 	}
 
+	/** Format one stored value for the canonical fixture contract. */
+	private function wire_value( string $context, string $field_name, $value ) {
+		return \Rondo\Fields\Formatter::for_wire( $context, [ $field_name => $value ] )[ $field_name ];
+	}
+
 	/**
 	 * Export fixed contact fields for person post type.
 	 *
@@ -250,7 +255,7 @@ class DemoExport {
 		$exported = [];
 
 		foreach ( $fields as $field ) {
-			$value = get_field( $field, $post_id );
+			$value = \Rondo\Fields\Fields::get_for_post( $post_id, $field );
 			if ( ! empty( $value ) ) {
 				$exported[ $field ] = $value;
 			}
@@ -266,7 +271,7 @@ class DemoExport {
 	 * @return array Array of contact info objects.
 	 */
 	private function export_contact_info( $post_id ) {
-		$contact_info = get_field( 'contact_info', $post_id );
+		$contact_info = \Rondo\Fields\Fields::get_for_post( $post_id, 'contact_info' );
 
 		if ( ! $contact_info || ! is_array( $contact_info ) ) {
 			return [];
@@ -314,18 +319,18 @@ class DemoExport {
 				'_ref'      => $this->get_ref( $post->ID, 'person' ),
 				'title'     => $post->post_title,
 				'status'    => $post->post_status,
-				'acf'       => [
+				'fields'    => [
 					// Basic Information
-					'first_name'          => get_field( 'first_name', $post->ID ),
-					'infix'               => $this->normalize_value( get_field( 'infix', $post->ID ) ),
-					'last_name'           => get_field( 'last_name', $post->ID ),
-					'nickname'            => $this->normalize_value( get_field( 'nickname', $post->ID ) ),
-					'gender'              => $this->normalize_value( get_field( 'gender', $post->ID ) ),
-					'pronouns'            => $this->normalize_value( get_field( 'pronouns', $post->ID ) ),
-					'birthdate'           => get_field( 'birthdate', $post->ID ),
-					'former_member'       => (bool) get_field( 'former_member', $post->ID ),
-					'lid-tot'             => $this->normalize_value( get_field( 'lid-tot', $post->ID ) ),
-					'datum-overlijden'    => $this->normalize_value( get_field( 'datum-overlijden', $post->ID ) ),
+					'first_name'          => \Rondo\Fields\Fields::get_for_post( $post->ID, 'first_name' ),
+					'infix'               => $this->normalize_value( \Rondo\Fields\Fields::get_for_post( $post->ID, 'infix' ) ),
+					'last_name'           => \Rondo\Fields\Fields::get_for_post( $post->ID, 'last_name' ),
+					'nickname'            => $this->normalize_value( \Rondo\Fields\Fields::get_for_post( $post->ID, 'nickname' ) ),
+					'gender'              => $this->normalize_value( \Rondo\Fields\Fields::get_for_post( $post->ID, 'gender' ) ),
+					'pronouns'            => $this->normalize_value( \Rondo\Fields\Fields::get_for_post( $post->ID, 'pronouns' ) ),
+					'birthdate'           => $this->wire_value( 'person', 'birthdate', \Rondo\Fields\Fields::get_for_post( $post->ID, 'birthdate' ) ),
+					'former_member'       => (bool) \Rondo\Fields\Fields::get_for_post( $post->ID, 'former_member' ),
+					'lid_tot'             => $this->wire_value( 'person', 'lid_tot', \Rondo\Fields\Fields::get_for_post( $post->ID, 'lid_tot' ) ),
+					'datum_overlijden'    => $this->wire_value( 'person', 'datum_overlijden', \Rondo\Fields\Fields::get_for_post( $post->ID, 'datum_overlijden' ) ),
 
 					// Contact Information (fixed fields)
 					...$this->export_contact_fields( $post->ID ),
@@ -340,16 +345,16 @@ class DemoExport {
 					'relationships'       => $this->export_relationships( $post->ID ),
 
 					// Sportlink-Synced Fields
-					'lid-sinds'           => $this->normalize_value( get_field( 'lid-sinds', $post->ID ) ),
-					'vrijwilliger-sinds'  => $this->normalize_value( get_field( 'vrijwilliger-sinds', $post->ID ) ),
-					'leeftijdsgroep'      => $this->normalize_value( get_field( 'leeftijdsgroep', $post->ID ) ),
-					'datum-vog'           => $this->normalize_value( get_field( 'datum-vog', $post->ID ) ),
-					'datum-foto'          => $this->normalize_value( get_field( 'datum-foto', $post->ID ) ),
-					'type-lid'            => $this->normalize_value( get_field( 'type-lid', $post->ID ) ),
-					'huidig-vrijwilliger' => $this->normalize_value( get_field( 'huidig-vrijwilliger', $post->ID ) ),
-					'financiele-blokkade' => (bool) get_field( 'financiele-blokkade', $post->ID ),
-					'knvb-id'             => $this->normalize_value( get_field( 'knvb-id', $post->ID ) ),
-					'freescout-id'        => $this->normalize_value( get_field( 'freescout-id', $post->ID ) ),
+					'lid_sinds'           => $this->wire_value( 'person', 'lid_sinds', \Rondo\Fields\Fields::get_for_post( $post->ID, 'lid_sinds' ) ),
+					'vrijwilliger_sinds'  => $this->wire_value( 'person', 'vrijwilliger_sinds', \Rondo\Fields\Fields::get_for_post( $post->ID, 'vrijwilliger_sinds' ) ),
+					'leeftijdsgroep'      => $this->normalize_value( \Rondo\Fields\Fields::get_for_post( $post->ID, 'leeftijdsgroep' ) ),
+					'datum_vog'           => $this->wire_value( 'person', 'datum_vog', \Rondo\Fields\Fields::get_for_post( $post->ID, 'datum_vog' ) ),
+					'datum_foto'          => $this->wire_value( 'person', 'datum_foto', \Rondo\Fields\Fields::get_for_post( $post->ID, 'datum_foto' ) ),
+					'type_lid'            => $this->normalize_value( \Rondo\Fields\Fields::get_for_post( $post->ID, 'type_lid' ) ),
+					'huidig_vrijwilliger' => $this->normalize_value( \Rondo\Fields\Fields::get_for_post( $post->ID, 'huidig_vrijwilliger' ) ),
+					'financiele_blokkade' => (bool) \Rondo\Fields\Fields::get_for_post( $post->ID, 'financiele_blokkade' ),
+					'knvb_id'             => $this->normalize_value( \Rondo\Fields\Fields::get_for_post( $post->ID, 'knvb_id' ) ),
+					'freescout_id'        => $this->normalize_value( \Rondo\Fields\Fields::get_for_post( $post->ID, 'freescout_id' ) ),
 				],
 				'post_meta' => $this->export_person_post_meta( $post->ID ),
 			];
@@ -372,7 +377,7 @@ class DemoExport {
 	 * @return array Array of address objects.
 	 */
 	private function export_addresses( $post_id ) {
-		$addresses = get_field( 'addresses', $post_id );
+		$addresses = \Rondo\Fields\Fields::get_for_post( $post_id, 'addresses' );
 
 		if ( ! $addresses || ! is_array( $addresses ) ) {
 			return [];
@@ -403,7 +408,7 @@ class DemoExport {
 	 * @return array Array of work history objects.
 	 */
 	private function export_work_history( $post_id ) {
-		$work_history = get_field( 'work_history', $post_id );
+		$work_history = \Rondo\Fields\Fields::get_for_post( $post_id, 'work_history' );
 
 		if ( ! $work_history || ! is_array( $work_history ) ) {
 			return [];
@@ -423,12 +428,12 @@ class DemoExport {
 			}
 
 			$exported[] = [
-				'team'        => $team_ref,
+				'team_id'     => $team_ref,
 				'entity_type' => $entity_type,
 				'job_title'   => $row['job_title'] ?? '',
 				'description' => $this->normalize_value( $row['description'] ?? '' ),
-				'start_date'  => $this->normalize_value( $row['start_date'] ?? '' ),
-				'end_date'    => $this->normalize_value( $row['end_date'] ?? '' ),
+				'start_date'  => $this->wire_value( 'person', 'work_history', [ [ 'start_date' => $row['start_date'] ?? '' ] ] )[0]['start_date'],
+				'end_date'    => $this->wire_value( 'person', 'work_history', [ [ 'end_date' => $row['end_date'] ?? '' ] ] )[0]['end_date'],
 				'is_current'  => (bool) ( $row['is_current'] ?? false ),
 			];
 		}
@@ -443,7 +448,7 @@ class DemoExport {
 	 * @return array Array of relationship objects.
 	 */
 	private function export_relationships( $post_id ) {
-		$relationships = get_field( 'relationships', $post_id );
+		$relationships = \Rondo\Fields\Fields::get_for_post( $post_id, 'relationships' );
 
 		if ( ! $relationships || ! is_array( $relationships ) ) {
 			return [];
@@ -475,9 +480,9 @@ class DemoExport {
 			}
 
 			$exported[] = [
-				'related_person'     => $this->get_ref( $related_person_id, 'person' ),
-				'relationship_type'  => $relationship_type_ref,
-				'relationship_label' => $this->normalize_value( $row['relationship_label'] ?? '' ),
+				'related_person_id'    => $this->get_ref( $related_person_id, 'person' ),
+				'relationship_type_id' => $relationship_type_ref,
+				'relationship_label'   => $this->normalize_value( $row['relationship_label'] ?? '' ),
 			];
 		}
 
@@ -486,7 +491,7 @@ class DemoExport {
 
 
 	/**
-	 * Export person post_meta (non-ACF fields)
+	 * Export person post_meta (non-registry metadata)
 	 *
 	 * @param int $post_id Post ID.
 	 * @return array Object with post meta fields.
@@ -525,33 +530,33 @@ class DemoExport {
 	 */
 	private function anonymize_person( $person ) {
 		$ref    = $person['_ref'];
-		$gender = $person['acf']['gender'] ?? null;
+		$gender = $person['fields']['gender'] ?? null;
 
 		// Generate consistent fake identity for this person.
 		$identity = $this->anonymizer->generate_identity( $ref, $gender );
 
 		// Replace name fields.
-		$person['acf']['first_name'] = $identity['first_name'];
-		$person['acf']['infix']      = $identity['infix'];
-		$person['acf']['last_name']  = $identity['last_name'];
-		$person['acf']['nickname']   = null; // Strip nicknames.
+		$person['fields']['first_name'] = $identity['first_name'];
+		$person['fields']['infix']      = $identity['infix'];
+		$person['fields']['last_name']  = $identity['last_name'];
+		$person['fields']['nickname']   = null; // Strip nicknames.
 
 		// Rebuild title from fake name.
 		$name_parts      = array_filter( [ $identity['first_name'], $identity['infix'], $identity['last_name'] ] );
 		$person['title'] = implode( ' ', $name_parts );
 
 		// Replace contact fields with anonymized data.
-		$person['acf'] = $this->anonymize_contact_fields( $person['acf'], $identity );
+		$person['fields'] = $this->anonymize_contact_fields( $person['fields'], $identity );
 
 		// Replace addresses.
-		$person['acf']['addresses'] = $this->anonymize_addresses( $person['acf']['addresses'] );
+		$person['fields']['addresses'] = $this->anonymize_addresses( $person['fields']['addresses'] );
 
 		// Replace Sportlink fields that contain PII.
-		$person['acf']['knvb-id']      = $this->anonymizer->generate_knvb_id();
-		$person['acf']['freescout-id'] = null; // Strip external system ID.
+		$person['fields']['knvb_id']      = $this->anonymizer->generate_knvb_id();
+		$person['fields']['freescout_id'] = null; // Strip external system ID.
 
 		// Strip photo date (no photo = no photo date).
-		$person['acf']['datum-foto'] = null;
+		$person['fields']['datum_foto'] = null;
 
 		// Anonymize financial data in post_meta.
 		$person['post_meta'] = $this->anonymize_financials( $person['post_meta'] );
@@ -560,29 +565,29 @@ class DemoExport {
 	}
 
 	/**
-	 * Anonymize fixed contact fields in ACF array.
+	 * Anonymize fixed contact fields in native field array.
 	 *
-	 * @param array $acf      ACF fields array.
+	 * @param array $fields      canonical fields array.
 	 * @param array $identity Generated identity.
-	 * @return array ACF array with anonymized contact fields.
+	 * @return array native field array with anonymized contact fields.
 	 */
-	private function anonymize_contact_fields( array $acf, array $identity ): array {
+	private function anonymize_contact_fields( array $fields, array $identity ): array {
 		// Anonymize emails
-		if ( ! empty( $acf['email_1'] ) ) {
-			$acf['email_1'] = $identity['email'];
+		if ( ! empty( $fields['email_1'] ) ) {
+			$fields['email_1'] = $identity['email'];
 		}
-		if ( ! empty( $acf['email_2'] ) ) {
-			$acf['email_2'] = str_replace( '@', '2@', $identity['email'] );
+		if ( ! empty( $fields['email_2'] ) ) {
+			$fields['email_2'] = str_replace( '@', '2@', $identity['email'] );
 		}
 
 		// Anonymize phone numbers
 		foreach ( [ 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2' ] as $field ) {
-			if ( ! empty( $acf[ $field ] ) ) {
-				$acf[ $field ] = $this->anonymizer->generate_phone();
+			if ( ! empty( $fields[ $field ] ) ) {
+				$fields[ $field ] = $this->anonymizer->generate_phone();
 			}
 		}
 
-		return $acf;
+		return $fields;
 	}
 
 	/**
@@ -749,7 +754,7 @@ class DemoExport {
 	 * @return array Anonymized discipline case array.
 	 */
 	private function anonymize_discipline_case( $case ) {
-		$person_ref = $case['acf']['person'] ?? null;
+		$person_ref = $case['fields']['person'] ?? null;
 
 		// Rebuild title with fake name if person ref exists.
 		if ( $person_ref ) {
@@ -757,19 +762,19 @@ class DemoExport {
 			$name_parts = array_filter( [ $identity['first_name'], $identity['infix'], $identity['last_name'] ] );
 			$fake_name  = implode( ' ', $name_parts );
 
-			$match_description = $case['acf']['match_description'] ?? '';
-			$match_date        = $case['acf']['match_date'] ?? '';
+			$match_description = $case['fields']['match_description'] ?? '';
+			$match_date        = $case['fields']['match_date'] ?? '';
 
 			$case['title'] = sprintf( '%s - %s - %s', $fake_name, $match_description, $match_date );
 		}
 
 		// Randomize dossier_id (7 digits + ".0").
-		$case['acf']['dossier_id'] = sprintf( '%d.0', wp_rand( 1000000, 9999999 ) );
+		$case['fields']['dossier_id'] = sprintf( '%d.0', wp_rand( 1000000, 9999999 ) );
 
 		// Randomize administrative fee (typical values: 10.00, 19.60, 30.00, 40.60, 50.00).
-		$base                              = wp_rand( 1, 5 ) * 10;
-		$cents                             = wp_rand( 0, 1 ) * 0.60;
-		$case['acf']['administrative_fee'] = $base + $cents;
+		$base                                 = wp_rand( 1, 5 ) * 10;
+		$cents                                = wp_rand( 0, 1 ) * 0.60;
+		$case['fields']['administrative_fee'] = $base + $cents;
 
 		return $case;
 	}
@@ -838,8 +843,8 @@ class DemoExport {
 		$todo['title'] = $generic_titles[ $index ];
 
 		// Strip content and notes (may contain PII).
-		$todo['content']      = null;
-		$todo['acf']['notes'] = null;
+		$todo['content']         = null;
+		$todo['fields']['notes'] = null;
 
 		return $todo;
 	}
@@ -869,8 +874,8 @@ class DemoExport {
 				'content' => ! empty( $post->post_content ) ? $post->post_content : null,
 				'status'  => $post->post_status,
 				'parent'  => $post->post_parent > 0 ? $this->get_ref( $post->post_parent, 'team' ) : null,
-				'acf'     => [
-					'website'      => $this->normalize_value( get_field( 'website', $post->ID ) ),
+				'fields'  => [
+					'website'      => $this->normalize_value( \Rondo\Fields\Fields::get_for_post( $post->ID, 'website' ) ),
 					'contact_info' => $this->strip_org_contact_info( $this->export_contact_info( $post->ID ) ),
 				],
 			];
@@ -908,8 +913,8 @@ class DemoExport {
 				'content' => ! empty( $post->post_content ) ? $post->post_content : null,
 				'status'  => $post->post_status,
 				'parent'  => $post->post_parent > 0 ? $this->get_ref( $post->post_parent, 'commissie' ) : null,
-				'acf'     => [
-					'website'      => $this->normalize_value( get_field( 'website', $post->ID ) ),
+				'fields'  => [
+					'website'      => $this->normalize_value( \Rondo\Fields\Fields::get_for_post( $post->ID, 'website' ) ),
 					'contact_info' => $this->strip_org_contact_info( $this->export_contact_info( $post->ID ) ),
 				],
 			];
@@ -943,7 +948,7 @@ class DemoExport {
 
 		foreach ( $posts as $post ) {
 			// Get person reference
-			$person_field = get_field( 'person', $post->ID );
+			$person_field = \Rondo\Fields\Fields::get_for_post( $post->ID, 'person' );
 			$person_id    = null;
 			if ( is_object( $person_field ) && isset( $person_field->ID ) ) {
 				$person_id = (int) $person_field->ID;
@@ -963,18 +968,18 @@ class DemoExport {
 				'_ref'    => $this->get_ref( $post->ID, 'discipline_case' ),
 				'title'   => $post->post_title,
 				'status'  => $post->post_status,
-				'acf'     => [
-					'dossier_id'           => get_field( 'dossier_id', $post->ID ),
+				'fields'  => [
+					'dossier_id'           => \Rondo\Fields\Fields::get_for_post( $post->ID, 'dossier_id' ),
 					'person'               => $person_ref,
-					'match_date'           => $this->normalize_value( get_field( 'match_date', $post->ID ) ),
-					'processing_date'      => $this->normalize_value( get_field( 'processing_date', $post->ID ) ),
-					'match_description'    => $this->normalize_value( get_field( 'match_description', $post->ID ) ),
-					'team_name'            => $this->normalize_value( get_field( 'team_name', $post->ID ) ),
-					'charge_codes'         => $this->normalize_value( get_field( 'charge_codes', $post->ID ) ),
-					'charge_description'   => $this->normalize_value( get_field( 'charge_description', $post->ID ) ),
-					'sanction_description' => $this->normalize_value( get_field( 'sanction_description', $post->ID ) ),
-					'administrative_fee'   => $this->normalize_value( (float) get_field( 'administrative_fee', $post->ID ) ),
-					'is_charged'           => (bool) get_field( 'is_charged', $post->ID ),
+					'match_date'           => $this->wire_value( 'discipline_case', 'match_date', \Rondo\Fields\Fields::get_for_post( $post->ID, 'match_date' ) ),
+					'processing_date'      => $this->wire_value( 'discipline_case', 'processing_date', \Rondo\Fields\Fields::get_for_post( $post->ID, 'processing_date' ) ),
+					'match_description'    => $this->normalize_value( \Rondo\Fields\Fields::get_for_post( $post->ID, 'match_description' ) ),
+					'team_name'            => $this->normalize_value( \Rondo\Fields\Fields::get_for_post( $post->ID, 'team_name' ) ),
+					'charge_codes'         => $this->normalize_value( \Rondo\Fields\Fields::get_for_post( $post->ID, 'charge_codes' ) ),
+					'charge_description'   => $this->normalize_value( \Rondo\Fields\Fields::get_for_post( $post->ID, 'charge_description' ) ),
+					'sanction_description' => $this->normalize_value( \Rondo\Fields\Fields::get_for_post( $post->ID, 'sanction_description' ) ),
+					'administrative_fee'   => $this->normalize_value( (float) \Rondo\Fields\Fields::get_for_post( $post->ID, 'administrative_fee' ) ),
+					'is_charged'           => (bool) \Rondo\Fields\Fields::get_for_post( $post->ID, 'is_charged' ),
 				],
 				'seizoen' => $seizoen,
 			];
@@ -1010,10 +1015,10 @@ class DemoExport {
 		$seq      = 1;
 
 		foreach ( $posts as $post ) {
-			$invoice_type = get_field( 'invoice_type', $post->ID );
+			$invoice_type = \Rondo\Fields\Fields::get_for_post( $post->ID, 'invoice_type' );
 
 			// Get person reference
-			$person_field = get_field( 'person', $post->ID );
+			$person_field = \Rondo\Fields\Fields::get_for_post( $post->ID, 'person' );
 			$person_id    = null;
 			if ( is_object( $person_field ) && isset( $person_field->ID ) ) {
 				$person_id = (int) $person_field->ID;
@@ -1023,7 +1028,7 @@ class DemoExport {
 			$person_ref = $person_id ? $this->get_ref( $person_id, 'person' ) : null;
 
 			// Get line items, resolving discipline_case refs
-			$raw_line_items = get_field( 'line_items', $post->ID );
+			$raw_line_items = \Rondo\Fields\Fields::get_for_post( $post->ID, 'line_items' );
 			$line_items     = [];
 			if ( is_array( $raw_line_items ) ) {
 				foreach ( $raw_line_items as $item ) {
@@ -1092,14 +1097,14 @@ class DemoExport {
 				'_ref'      => $this->get_ref( $post->ID, 'invoice' ),
 				'title'     => $invoice_number,
 				'status'    => $post->post_status,
-				'acf'       => [
+				'fields'    => [
 					'invoice_number' => $invoice_number,
 					'invoice_type'   => $invoice_type,
 					'person'         => $person_ref,
-					'status'         => get_field( 'status', $post->ID ),
+					'status'         => \Rondo\Fields\Fields::get_for_post( $post->ID, 'status' ),
 					'total_amount'   => $total_amount,
-					'sent_date'      => $this->normalize_value( get_field( 'sent_date', $post->ID ) ),
-					'due_date'       => $this->normalize_value( get_field( 'due_date', $post->ID ) ),
+					'sent_date'      => $this->wire_value( 'rondo_invoice', 'sent_date', \Rondo\Fields\Fields::get_for_post( $post->ID, 'sent_date' ) ),
+					'due_date'       => $this->wire_value( 'rondo_invoice', 'due_date', \Rondo\Fields\Fields::get_for_post( $post->ID, 'due_date' ) ),
 					'line_items'     => $line_items,
 					'payment_link'   => null,
 					'pdf_path'       => null,
@@ -1142,7 +1147,7 @@ class DemoExport {
 
 		foreach ( $posts as $post ) {
 			// Get related persons (array of post IDs)
-			$related_persons_field = get_field( 'related_persons', $post->ID );
+			$related_persons_field = \Rondo\Fields\Fields::get_for_post( $post->ID, 'related_persons' );
 			$related_persons_refs  = [];
 
 			if ( is_array( $related_persons_field ) ) {
@@ -1172,11 +1177,11 @@ class DemoExport {
 				'content' => ! empty( $post->post_content ) ? $post->post_content : null,
 				'status'  => $post->post_status,
 				'date'    => $date,
-				'acf'     => [
+				'fields'  => [
 					'related_persons' => $related_persons_refs,
-					'notes'           => $this->normalize_value( get_field( 'notes', $post->ID ) ),
-					'awaiting_since'  => $this->normalize_value( get_field( 'awaiting_since', $post->ID ) ),
-					'due_date'        => $this->normalize_value( get_field( 'due_date', $post->ID ) ),
+					'notes'           => $this->normalize_value( \Rondo\Fields\Fields::get_for_post( $post->ID, 'notes' ) ),
+					'awaiting_since'  => $this->wire_value( 'rondo_todo', 'awaiting_since', \Rondo\Fields\Fields::get_for_post( $post->ID, 'awaiting_since' ) ),
+					'due_date'        => $this->wire_value( 'rondo_todo', 'due_date', \Rondo\Fields\Fields::get_for_post( $post->ID, 'due_date' ) ),
 				],
 			];
 
@@ -1325,11 +1330,11 @@ class DemoExport {
 		$relationship_types = [];
 
 		foreach ( $terms as $term ) {
-			$inverse_field = get_field( 'inverse_relationship_type', 'relationship_type_' . $term->term_id );
+			$inverse_field = \Rondo\Fields\Fields::get_for_term( 'relationship_type', $term->term_id, 'inverse_relationship_type' );
 			$inverse_ref   = null;
 
 			if ( $inverse_field ) {
-				// ACF returns term ID - convert to slug
+				// native field returns term ID - convert to slug
 				if ( is_numeric( $inverse_field ) ) {
 					$inverse_term = get_term( $inverse_field );
 					if ( $inverse_term && ! is_wp_error( $inverse_term ) ) {
@@ -1341,10 +1346,10 @@ class DemoExport {
 			}
 
 			$relationship_type = [
-				'_ref' => 'relationship_type:' . $term->slug,
-				'name' => $term->name,
-				'slug' => $term->slug,
-				'acf'  => [
+				'_ref'   => 'relationship_type:' . $term->slug,
+				'name'   => $term->name,
+				'slug'   => $term->slug,
+				'fields' => [
 					'inverse_relationship_type' => $inverse_ref,
 				],
 			];

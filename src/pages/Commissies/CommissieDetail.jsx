@@ -4,7 +4,7 @@ import { ArrowLeft, Building2, Globe, Users, GitBranch, Share2, Info, Pencil, Ch
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { getCommissieName, sanitizeCommissieAcf } from '@/utils/formatters';
+import { getCommissieName, sanitizeCommissieFields } from '@/utils/formatters';
 import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
@@ -19,22 +19,22 @@ const PERIOD_LABELS = {
  * Editable card showing the Rondo-local commissie information
  * (long description, task description, time investment, member limits).
  *
- * These fields are stored as ACF meta on the commissie post and round-trip
+ * These fields are stored as native field meta on the commissie post and round-trip
  * through wp/v2/commissie. The card has a view mode and an inline edit form.
  */
-function CommissieInfoCard({ acf, onSave, isSaving }) {
+function CommissieInfoCard({ fields, onSave, isSaving }) {
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({});
 
   const startEdit = () => {
     setForm({
-      lange_omschrijving: acf.lange_omschrijving ?? '',
-      taakomschrijving: acf.taakomschrijving ?? '',
-      uren_aantal: acf.uren_aantal ?? '',
-      uren_periode: acf.uren_periode ?? '',
-      dagen_flexibel: acf.dagen_flexibel ?? '',
-      max_leden: acf.max_leden ?? '',
-      max_wachtlijst: acf.max_wachtlijst ?? '',
+      lange_omschrijving: fields.lange_omschrijving ?? '',
+      taakomschrijving: fields.taakomschrijving ?? '',
+      uren_aantal: fields.uren_aantal ?? '',
+      uren_periode: fields.uren_periode ?? '',
+      dagen_flexibel: fields.dagen_flexibel ?? '',
+      max_leden: fields.max_leden ?? '',
+      max_wachtlijst: fields.max_wachtlijst ?? '',
     });
     setIsEditing(true);
   };
@@ -46,18 +46,18 @@ function CommissieInfoCard({ acf, onSave, isSaving }) {
     setIsEditing(false);
   };
 
-  const hours = acf.uren_aantal !== '' && acf.uren_aantal !== null && acf.uren_aantal !== undefined
-    ? `${acf.uren_aantal} uur ${PERIOD_LABELS[acf.uren_periode] || ''}`.trim()
+  const hours = fields.uren_aantal !== '' && fields.uren_aantal !== null && fields.uren_aantal !== undefined
+    ? `${fields.uren_aantal} uur ${PERIOD_LABELS[fields.uren_periode] || ''}`.trim()
     : null;
 
   const hasAnyValue = [
-    acf.lange_omschrijving,
-    acf.taakomschrijving,
-    acf.dagen_flexibel,
+    fields.lange_omschrijving,
+    fields.taakomschrijving,
+    fields.dagen_flexibel,
   ].some((v) => v != null && v !== '')
     || hours
-    || acf.max_leden != null && acf.max_leden !== ''
-    || acf.max_wachtlijst != null && acf.max_wachtlijst !== '';
+    || fields.max_leden != null && fields.max_leden !== ''
+    || fields.max_wachtlijst != null && fields.max_wachtlijst !== '';
 
   return (
     <div className="card p-6">
@@ -201,17 +201,17 @@ function CommissieInfoCard({ acf, onSave, isSaving }) {
             </p>
           )}
 
-          {acf.lange_omschrijving && (
+          {fields.lange_omschrijving && (
             <div>
               <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Omschrijving</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">{acf.lange_omschrijving}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">{fields.lange_omschrijving}</p>
             </div>
           )}
 
-          {acf.taakomschrijving && (
+          {fields.taakomschrijving && (
             <div>
               <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Taakomschrijving</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">{acf.taakomschrijving}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">{fields.taakomschrijving}</p>
             </div>
           )}
 
@@ -222,22 +222,22 @@ function CommissieInfoCard({ acf, onSave, isSaving }) {
                 <span><span className="font-medium text-gray-700 dark:text-gray-300">Tijdsinvestering:</span> {hours}</span>
               </div>
             )}
-            {acf.dagen_flexibel && (
+            {fields.dagen_flexibel && (
               <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                 <CalendarDays className="w-4 h-4 mr-2 text-gray-400" />
-                <span><span className="font-medium text-gray-700 dark:text-gray-300">Dagen:</span> {acf.dagen_flexibel}</span>
+                <span><span className="font-medium text-gray-700 dark:text-gray-300">Dagen:</span> {fields.dagen_flexibel}</span>
               </div>
             )}
-            {acf.max_leden != null && acf.max_leden !== '' && (
+            {fields.max_leden != null && fields.max_leden !== '' && (
               <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                 <Users className="w-4 h-4 mr-2 text-gray-400" />
-                <span><span className="font-medium text-gray-700 dark:text-gray-300">Max. leden:</span> {acf.max_leden}</span>
+                <span><span className="font-medium text-gray-700 dark:text-gray-300">Max. leden:</span> {fields.max_leden}</span>
               </div>
             )}
-            {acf.max_wachtlijst != null && acf.max_wachtlijst !== '' && (
+            {fields.max_wachtlijst != null && fields.max_wachtlijst !== '' && (
               <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                 <ListOrdered className="w-4 h-4 mr-2 text-gray-400" />
-                <span><span className="font-medium text-gray-700 dark:text-gray-300">Max. wachtlijst:</span> {acf.max_wachtlijst}</span>
+                <span><span className="font-medium text-gray-700 dark:text-gray-300">Max. wachtlijst:</span> {fields.max_wachtlijst}</span>
               </div>
             )}
           </div>
@@ -334,7 +334,7 @@ export default function CommissieDetail() {
     return null;
   }
   
-  const acf = commissie.acf || {};
+  const fields = commissie.fields || {};
   const memberEmails = [...new Set(
     (employees?.current || [])
       .map((person) => person.email?.trim().toLowerCase())
@@ -376,15 +376,15 @@ export default function CommissieDetail() {
               </Link>
             )}
             <h1 className="text-2xl font-bold text-brand-gradient">{getCommissieName(commissie)}</h1>
-            {acf.website && (
+            {fields.website && (
               <a 
-                href={acf.website} 
+                href={fields.website}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-electric-cyan dark:text-electric-cyan hover:underline flex items-center mt-1"
               >
                 <Globe className="w-4 h-4 mr-1" />
-                {acf.website}
+                {fields.website}
               </a>
             )}
           </div>
@@ -393,11 +393,11 @@ export default function CommissieDetail() {
 
       {/* Rondo-local commissie information */}
       <CommissieInfoCard
-        acf={acf}
+        fields={fields}
         isSaving={updateCommissie.isPending}
         onSave={(values) => {
-          const acfData = sanitizeCommissieAcf(commissie?.acf, values);
-          return updateCommissie.mutateAsync({ acf: acfData });
+          const fieldData = sanitizeCommissieFields(commissie?.fields, values);
+          return updateCommissie.mutateAsync({ fields: fieldData });
         }}
       />
 
@@ -482,11 +482,11 @@ export default function CommissieDetail() {
       </div>
       
       {/* Contact info */}
-      {acf.contact_info?.length > 0 && (
+      {fields.contact_info?.length > 0 && (
         <div className="card p-6">
           <h2 className="font-semibold text-brand-gradient mb-4">Contactgegevens</h2>
           <div className="space-y-3">
-            {acf.contact_info.map((contact, index) => (
+            {fields.contact_info.map((contact, index) => (
               <div key={index}>
                 <span className="text-sm text-gray-500 dark:text-gray-400">
                   {contact.contact_label || contact.contact_type}:
@@ -502,10 +502,10 @@ export default function CommissieDetail() {
       <CustomFieldsSection
         postType="commissie"
         postId={parseInt(id)}
-        acfData={commissie?.acf}
-        onUpdate={(newAcfValues) => {
-          const acfData = sanitizeCommissieAcf(commissie?.acf, newAcfValues);
-          updateCommissie.mutateAsync({ acf: acfData });
+        fieldData={commissie?.fields}
+        onUpdate={(newFieldValues) => {
+          const fieldData = sanitizeCommissieFields(commissie?.fields, newFieldValues);
+          updateCommissie.mutateAsync({ fields: fieldData });
         }}
         isUpdating={updateCommissie.isPending}
       />

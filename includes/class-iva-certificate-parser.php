@@ -171,9 +171,9 @@ class IvaCertificateParser {
 			return false;
 		}
 
-		$first    = (string) get_field( 'first_name', $person_id );
-		$last     = (string) get_field( 'last_name', $person_id );
-		$nickname = (string) get_field( 'nickname', $person_id );
+		$first    = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' );
+		$last     = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' );
+		$nickname = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'nickname' );
 
 		$candidates = [
 			get_the_title( $person_id ),
@@ -231,8 +231,8 @@ class IvaCertificateParser {
 	private static function truncated_name_matches_person( string $cert_name, int $person_id ): bool {
 		$cert     = self::normalize_name( $cert_name );
 		$title    = self::normalize_name( get_the_title( $person_id ) );
-		$first    = self::normalize_name( (string) get_field( 'first_name', $person_id ) );
-		$nickname = self::normalize_name( (string) get_field( 'nickname', $person_id ) );
+		$first    = self::normalize_name( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) );
+		$nickname = self::normalize_name( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'nickname' ) );
 
 		if ( $cert === '' || $title === '' ) {
 			return false;

@@ -15,8 +15,8 @@ function SearchablePersonSelector({ value, onChange, people, isLoading, excludeP
   const sortedAndFilteredPeople = useMemo(() => {
     const filtered = people.filter(p => p.id !== excludePersonId);
     return filtered.sort((a, b) => {
-      const firstNameA = (a.first_name || a.acf?.first_name || '').toLowerCase();
-      const firstNameB = (b.first_name || b.acf?.first_name || '').toLowerCase();
+      const firstNameA = (a.first_name || a.fields?.first_name || '').toLowerCase();
+      const firstNameB = (b.first_name || b.fields?.first_name || '').toLowerCase();
       if (firstNameA < firstNameB) return -1;
       if (firstNameA > firstNameB) return 1;
       return 0;
@@ -29,8 +29,8 @@ function SearchablePersonSelector({ value, onChange, people, isLoading, excludeP
     const term = searchTerm.toLowerCase();
     return sortedAndFilteredPeople.filter(p => {
       const name = getPersonName(p).toLowerCase();
-      const firstName = (p.first_name || p.acf?.first_name || '').toLowerCase();
-      const lastName = (p.last_name || p.acf?.last_name || '').toLowerCase();
+      const firstName = (p.first_name || p.fields?.first_name || '').toLowerCase();
+      const lastName = (p.last_name || p.fields?.last_name || '').toLowerCase();
       
       return name.includes(term) || firstName.includes(term) || lastName.includes(term);
     }).slice(0, 10);
@@ -159,8 +159,8 @@ export default function RelationshipEditModal({
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm({
     defaultValues: {
-      related_person: null,
-      relationship_type: '',
+      related_person_id: null,
+      relationship_type_id: '',
       relationship_label: '',
     },
   });
@@ -170,14 +170,14 @@ export default function RelationshipEditModal({
     if (isOpen) {
       if (relationship) {
         reset({
-          related_person: relationship.related_person || null,
-          relationship_type: relationship.relationship_type ? String(relationship.relationship_type) : '',
+          related_person_id: relationship.related_person_id || null,
+          relationship_type_id: relationship.relationship_type_id ? String(relationship.relationship_type_id) : '',
           relationship_label: relationship.relationship_label || '',
         });
       } else {
         reset({
-          related_person: null,
-          relationship_type: '',
+          related_person_id: null,
+          relationship_type_id: '',
           relationship_label: '',
         });
       }
@@ -188,8 +188,8 @@ export default function RelationshipEditModal({
 
   const handleFormSubmit = (data) => {
     onSubmit({
-      related_person: data.related_person || null,
-      relationship_type: data.relationship_type ? parseInt(data.relationship_type, 10) : null,
+      related_person_id: data.related_person_id || null,
+      relationship_type_id: data.relationship_type_id ? parseInt(data.relationship_type_id, 10) : null,
       relationship_label: data.relationship_label || '',
     });
   };
@@ -214,7 +214,7 @@ export default function RelationshipEditModal({
             <div>
               <label className="label">Gerelateerde persoon *</label>
               <Controller
-                name="related_person"
+                name="related_person_id"
                 control={control}
                 rules={{ required: 'Selecteer een persoon' }}
                 render={({ field }) => (
@@ -227,8 +227,8 @@ export default function RelationshipEditModal({
                   />
                 )}
               />
-              {errors.related_person && (
-                <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.related_person.message}</p>
+              {errors.related_person_id && (
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.related_person_id.message}</p>
               )}
               {!isEditing && onCreatePerson && (
                 <div className="mt-2">
@@ -248,7 +248,7 @@ export default function RelationshipEditModal({
             <div>
               <label className="label">Type relatie</label>
               <select
-                {...register('relationship_type')}
+                {...register('relationship_type_id')}
                 className="input"
                 disabled={isRelationshipTypesLoading || isLoading}
               >

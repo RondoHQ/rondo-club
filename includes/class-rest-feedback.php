@@ -376,8 +376,8 @@ class Feedback extends Base {
 			);
 		}
 
-		// Save ACF fields
-		update_field( 'feedback_type', $feedback_type, $post_id );
+		// Save canonical fields
+		\Rondo\Fields\Fields::update_for_post( $post_id, 'feedback_type', $feedback_type );
 
 		// Save project (post meta, defaults to rondo-club)
 		$project = $request->get_param( 'project' );
@@ -390,8 +390,8 @@ class Feedback extends Base {
 		// Determine default status: admins get 'approved', regular users get 'new'
 		$default_status = current_user_can( 'manage_options' ) ? 'approved' : 'new';
 		$initial_status = $request->get_param( 'status' ) ?? $default_status;
-		update_field( 'status', $initial_status, $post_id );
-		update_field( 'priority', $request->get_param( 'priority' ) ?? 'medium', $post_id );
+		\Rondo\Fields\Fields::update_for_post( $post_id, 'status', $initial_status );
+		\Rondo\Fields\Fields::update_for_post( $post_id, 'priority', $request->get_param( 'priority' ) ?? 'medium' );
 		if ( $initial_status === 'resolved' ) {
 			update_post_meta( $post_id, '_feedback_resolved_at', current_time( 'mysql', true ) );
 		}
@@ -399,34 +399,34 @@ class Feedback extends Base {
 		// Optional context fields
 		$browser_info = $request->get_param( 'browser_info' );
 		if ( ! empty( $browser_info ) ) {
-			update_field( 'browser_info', sanitize_text_field( $browser_info ), $post_id );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'browser_info', sanitize_text_field( $browser_info ) );
 		}
 
 		$app_version = $request->get_param( 'app_version' );
 		if ( ! empty( $app_version ) ) {
-			update_field( 'app_version', sanitize_text_field( $app_version ), $post_id );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'app_version', sanitize_text_field( $app_version ) );
 		}
 
 		$url_context = $request->get_param( 'url_context' );
 		if ( ! empty( $url_context ) ) {
-			update_field( 'url_context', esc_url_raw( $url_context ), $post_id );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'url_context', esc_url_raw( $url_context ) );
 		}
 
 		// Bug-specific fields
 		if ( $feedback_type === 'bug' ) {
 			$steps_to_reproduce = $request->get_param( 'steps_to_reproduce' );
 			if ( ! empty( $steps_to_reproduce ) ) {
-				update_field( 'steps_to_reproduce', sanitize_textarea_field( $steps_to_reproduce ), $post_id );
+				\Rondo\Fields\Fields::update_for_post( $post_id, 'steps_to_reproduce', sanitize_textarea_field( $steps_to_reproduce ) );
 			}
 
 			$expected_behavior = $request->get_param( 'expected_behavior' );
 			if ( ! empty( $expected_behavior ) ) {
-				update_field( 'expected_behavior', sanitize_textarea_field( $expected_behavior ), $post_id );
+				\Rondo\Fields\Fields::update_for_post( $post_id, 'expected_behavior', sanitize_textarea_field( $expected_behavior ) );
 			}
 
 			$actual_behavior = $request->get_param( 'actual_behavior' );
 			if ( ! empty( $actual_behavior ) ) {
-				update_field( 'actual_behavior', sanitize_textarea_field( $actual_behavior ), $post_id );
+				\Rondo\Fields\Fields::update_for_post( $post_id, 'actual_behavior', sanitize_textarea_field( $actual_behavior ) );
 			}
 		}
 
@@ -434,7 +434,7 @@ class Feedback extends Base {
 		if ( $feedback_type === 'feature_request' ) {
 			$use_case = $request->get_param( 'use_case' );
 			if ( ! empty( $use_case ) ) {
-				update_field( 'use_case', sanitize_textarea_field( $use_case ), $post_id );
+				\Rondo\Fields\Fields::update_for_post( $post_id, 'use_case', sanitize_textarea_field( $use_case ) );
 			}
 		}
 
@@ -577,15 +577,15 @@ class Feedback extends Base {
 			wp_update_post( $update_args );
 		}
 
-		// Update ACF fields
+		// Update canonical fields
 		if ( $feedback_type !== null ) {
-			update_field( 'feedback_type', $feedback_type, $feedback_id );
+			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'feedback_type', $feedback_type );
 		}
 
 		if ( $new_status !== null || $resolution_summary !== null || $decline_reason !== null ) {
 			$status_for_update = $new_status !== null
 				? $new_status
-				: (string) ( get_field( 'status', $feedback_id ) ?: 'new' );
+				: (string) ( \Rondo\Fields\Fields::get_for_post( $feedback_id, 'status' ) ?: 'new' );
 			$status_update     = ( new StatusService() )->update(
 				$feedback_id,
 				$status_for_update,
@@ -598,45 +598,45 @@ class Feedback extends Base {
 		}
 
 		if ( $new_priority !== null ) {
-			update_field( 'priority', $new_priority, $feedback_id );
+			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'priority', $new_priority );
 		}
 
 		// Optional context fields
 		$browser_info = $request->get_param( 'browser_info' );
 		if ( $browser_info !== null ) {
-			update_field( 'browser_info', sanitize_text_field( $browser_info ), $feedback_id );
+			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'browser_info', sanitize_text_field( $browser_info ) );
 		}
 
 		$app_version = $request->get_param( 'app_version' );
 		if ( $app_version !== null ) {
-			update_field( 'app_version', sanitize_text_field( $app_version ), $feedback_id );
+			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'app_version', sanitize_text_field( $app_version ) );
 		}
 
 		$url_context = $request->get_param( 'url_context' );
 		if ( $url_context !== null ) {
-			update_field( 'url_context', esc_url_raw( $url_context ), $feedback_id );
+			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'url_context', esc_url_raw( $url_context ) );
 		}
 
 		// Bug-specific fields
 		$steps_to_reproduce = $request->get_param( 'steps_to_reproduce' );
 		if ( $steps_to_reproduce !== null ) {
-			update_field( 'steps_to_reproduce', sanitize_textarea_field( $steps_to_reproduce ), $feedback_id );
+			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'steps_to_reproduce', sanitize_textarea_field( $steps_to_reproduce ) );
 		}
 
 		$expected_behavior = $request->get_param( 'expected_behavior' );
 		if ( $expected_behavior !== null ) {
-			update_field( 'expected_behavior', sanitize_textarea_field( $expected_behavior ), $feedback_id );
+			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'expected_behavior', sanitize_textarea_field( $expected_behavior ) );
 		}
 
 		$actual_behavior = $request->get_param( 'actual_behavior' );
 		if ( $actual_behavior !== null ) {
-			update_field( 'actual_behavior', sanitize_textarea_field( $actual_behavior ), $feedback_id );
+			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'actual_behavior', sanitize_textarea_field( $actual_behavior ) );
 		}
 
 		// Feature-specific fields
 		$use_case = $request->get_param( 'use_case' );
 		if ( $use_case !== null ) {
-			update_field( 'use_case', sanitize_textarea_field( $use_case ), $feedback_id );
+			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'use_case', sanitize_textarea_field( $use_case ) );
 		}
 
 		// Project meta
@@ -800,9 +800,9 @@ class Feedback extends Base {
 
 		// When a user replies to needs_info feedback, require re-approval
 		if ( $author_type === 'user' ) {
-			$current_status = get_field( 'status', $feedback_id );
+			$current_status = \Rondo\Fields\Fields::get_for_post( $feedback_id, 'status' );
 			if ( $current_status === 'needs_info' ) {
-				update_field( 'status', 'new', $feedback_id );
+				\Rondo\Fields\Fields::update_for_post( $feedback_id, 'status', 'new' );
 			}
 		}
 
@@ -851,16 +851,16 @@ class Feedback extends Base {
 			'date'     => $post->post_date_gmt,
 			'modified' => $post->post_modified_gmt,
 			'meta'     => [
-				'feedback_type'      => get_field( 'feedback_type', $post->ID ) ?: '',
-				'status'             => get_field( 'status', $post->ID ) ?: 'new',
-				'priority'           => get_field( 'priority', $post->ID ) ?: 'medium',
-				'browser_info'       => $this->sanitize_text( get_field( 'browser_info', $post->ID ) ?: '' ),
-				'app_version'        => $this->sanitize_text( get_field( 'app_version', $post->ID ) ?: '' ),
-				'url_context'        => $this->sanitize_url( get_field( 'url_context', $post->ID ) ?: '' ),
-				'steps_to_reproduce' => $this->sanitize_text( get_field( 'steps_to_reproduce', $post->ID ) ?: '' ),
-				'expected_behavior'  => $this->sanitize_text( get_field( 'expected_behavior', $post->ID ) ?: '' ),
-				'actual_behavior'    => $this->sanitize_text( get_field( 'actual_behavior', $post->ID ) ?: '' ),
-				'use_case'           => $this->sanitize_text( get_field( 'use_case', $post->ID ) ?: '' ),
+				'feedback_type'      => \Rondo\Fields\Fields::get_for_post( $post->ID, 'feedback_type' ) ?: '',
+				'status'             => \Rondo\Fields\Fields::get_for_post( $post->ID, 'status' ) ?: 'new',
+				'priority'           => \Rondo\Fields\Fields::get_for_post( $post->ID, 'priority' ) ?: 'medium',
+				'browser_info'       => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $post->ID, 'browser_info' ) ?: '' ),
+				'app_version'        => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $post->ID, 'app_version' ) ?: '' ),
+				'url_context'        => $this->sanitize_url( \Rondo\Fields\Fields::get_for_post( $post->ID, 'url_context' ) ?: '' ),
+				'steps_to_reproduce' => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $post->ID, 'steps_to_reproduce' ) ?: '' ),
+				'expected_behavior'  => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $post->ID, 'expected_behavior' ) ?: '' ),
+				'actual_behavior'    => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $post->ID, 'actual_behavior' ) ?: '' ),
+				'use_case'           => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $post->ID, 'use_case' ) ?: '' ),
 				'project'            => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_project', true ) ?: 'rondo-club' ),
 				'resolved_at'        => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_resolved_at', true ) ?: '' ),
 				'resolution_summary' => $this->sanitize_text( get_post_meta( $post->ID, StatusService::META_RESOLUTION_SUMMARY, true ) ?: '' ),

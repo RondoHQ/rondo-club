@@ -20,13 +20,13 @@ export function formatCurrency(amount, decimals = 2) {
 }
 
 /**
- * Whether an ACF person payload has the independent sponsor role.
+ * Whether an native field person payload has the independent sponsor role.
  *
- * @param {Object} acf Person ACF values.
+ * @param {Object} fields Person native field values.
  * @returns {boolean}
  */
-export function hasSponsorRole(acf = {}) {
-  return acf.is_sponsor === true || acf.is_sponsor === 1 || acf.is_sponsor === '1';
+export function hasSponsorRole(fields = {}) {
+  return fields.is_sponsor === true || fields.is_sponsor === 1 || fields.is_sponsor === '1';
 }
 
 /**
@@ -138,7 +138,7 @@ export function getPersonInitial(person) {
   if (!person) return '?';
   
   // Prefer first_name if available
-  const firstName = person.first_name || person.acf?.first_name;
+  const firstName = person.first_name || person.fields?.first_name;
   if (firstName) return firstName[0];
   
   // Fall back to full name
@@ -171,28 +171,21 @@ export function formatDateValue(dateString, yearUnknown = false, formatFn) {
 }
 
 /**
- * Sanitize ACF data for person updates via REST API
+ * Sanitize a partial canonical person-fields update.
  * - Converts empty strings to null for enum fields (select fields with restricted choices)
  * - Ensures repeater fields are always arrays
  *
- * Why: ACF generates a JSON Schema with `enum: [<choice>, ...]` for select fields and
- * does NOT include `""` in that enum, even when `allow_null: 1` is set on the field.
- * Sending `""` for any of these fields makes WP REST reject the whole request with
- * `rest_invalid_param`. Coerce to `null` here so the schema accepts it.
- *
- * Add a field here whenever you add a new ACF select on the Person CPT.
- *
- * @param {Object} acfData - The ACF data to sanitize
+ * @param {Object} currentFields - Current fields (retained for call-site compatibility)
  * @param {Object} overrides - Fields to override in the sanitized data
- * @returns {Object} Sanitized ACF data ready for API submission
+ * @returns {Object} Sanitized partial fields payload ready for API submission
  */
-export function sanitizePersonAcf(acfData, overrides = {}) {
+export function sanitizePersonFields(currentFields, overrides = {}) {
   // Fields that are select/enum and should be null instead of empty string
   const enumFields = ['gender', 'vergoeding_reden', 'person_type', 'sponsor_pass_variant'];
 
   // Fields that expect number|null — convert empty strings to null, string numbers to numbers
   const numericFields = [
-    'freescout-id',
+    'freescout_id',
     '_nikki_2025_total',
     '_nikki_2025_saldo',
     '_nikki_2024_total',
@@ -206,17 +199,18 @@ export function sanitizePersonAcf(acfData, overrides = {}) {
   // Fields that are repeaters and should always be arrays
   const repeaterFields = ['addresses', 'work_history', 'relationships', 'photo_gallery'];
   
-  const sanitized = { ...acfData };
+  const sanitized = { ...overrides };
   
   // Convert empty strings to null for enum fields
   enumFields.forEach(field => {
-    if (sanitized[field] === '') {
+    if (Object.hasOwn(sanitized, field) && sanitized[field] === '') {
       sanitized[field] = null;
     }
   });
 
   // Convert numeric fields to proper type
   numericFields.forEach(field => {
+    if (!Object.hasOwn(sanitized, field)) return;
     if (sanitized[field] === '' || sanitized[field] === undefined) {
       sanitized[field] = null;
     } else if (typeof sanitized[field] === 'string') {
@@ -226,32 +220,26 @@ export function sanitizePersonAcf(acfData, overrides = {}) {
 
   // Ensure repeater fields are arrays
   repeaterFields.forEach(field => {
-    if (!Array.isArray(sanitized[field])) {
+    if (Object.hasOwn(sanitized, field) && !Array.isArray(sanitized[field])) {
       sanitized[field] = [];
     }
   });
-
-  // Apply overrides
-  Object.assign(sanitized, overrides);
 
   return sanitized;
 }
 
-export function sanitizeTeamAcf(acfData, overrides = {}) {
+export function sanitizeTeamFields(currentFields, overrides = {}) {
   // Fields that are repeaters and should always be arrays
   const repeaterFields = ['contact_info'];
 
-  const sanitized = { ...acfData };
+  const sanitized = { ...overrides };
 
   // Ensure repeater fields are arrays
   repeaterFields.forEach(field => {
-    if (!Array.isArray(sanitized[field])) {
+    if (Object.hasOwn(sanitized, field) && !Array.isArray(sanitized[field])) {
       sanitized[field] = [];
     }
   });
-
-  // Apply overrides
-  Object.assign(sanitized, overrides);
 
   return sanitized;
 }
@@ -271,36 +259,37 @@ export function getCommissieName(commissie) {
   return decodeHtml(rawName);
 }
 
-export function sanitizeCommissieAcf(acfData, overrides = {}) {
+export function sanitizeCommissieFields(currentFields, overrides = {}) {
   // Fields that are repeaters and should always be arrays
   const repeaterFields = ['contact_info'];
 
   // Fields that are select/enum and should be null instead of empty string
-  // (ACF auto-generates a REST enum schema that rejects "" — see CLAUDE.md pitfall)
+  // (native field auto-generates a REST enum schema that rejects "" — see CLAUDE.md pitfall)
   const enumFields = ['uren_periode'];
 
   // Fields that expect number|null — convert empty strings to null, string numbers to numbers
   const numericFields = ['uren_aantal', 'max_leden', 'max_wachtlijst'];
 
   // Merge overrides first so coercion below also applies to edited values
-  const sanitized = { ...acfData, ...overrides };
+  const sanitized = { ...overrides };
 
   // Ensure repeater fields are arrays
   repeaterFields.forEach(field => {
-    if (!Array.isArray(sanitized[field])) {
+    if (Object.hasOwn(sanitized, field) && !Array.isArray(sanitized[field])) {
       sanitized[field] = [];
     }
   });
 
   // Convert empty strings to null for enum/select fields
   enumFields.forEach(field => {
-    if (sanitized[field] === '') {
+    if (Object.hasOwn(sanitized, field) && sanitized[field] === '') {
       sanitized[field] = null;
     }
   });
 
   // Convert numeric fields to proper type
   numericFields.forEach(field => {
+    if (!Object.hasOwn(sanitized, field)) return;
     if (sanitized[field] === '' || sanitized[field] === undefined) {
       sanitized[field] = null;
     } else if (typeof sanitized[field] === 'string') {
@@ -312,18 +301,18 @@ export function sanitizeCommissieAcf(acfData, overrides = {}) {
 }
 
 /**
- * Parse a date value coming from ACF or the REST API.
+ * Parse a date value coming from native field or the REST API.
  *
  * Handles two formats both seen in practice:
  *  - ISO 8601 / "YYYY-MM-DD" / full datetime — passed straight to `new Date()`
- *  - "YYYYMMDD" — ACF's internal date_picker storage format, which `new Date()`
+ *  - "YYYYMMDD" — native field's internal date_picker storage format, which `new Date()`
  *    does NOT parse natively (returns Invalid Date). Common on work_history
  *    entries written by the rondo-sync pipeline.
  *
  * @param {string|null|undefined} dateString
  * @returns {Date|null} Parsed Date, or null if input is missing/invalid
  */
-export function parseAcfDate(dateString) {
+export function parseFieldDate(dateString) {
   if (!dateString || typeof dateString !== 'string') return null;
   const trimmed = dateString.trim();
   let date;
@@ -342,7 +331,7 @@ export function parseAcfDate(dateString) {
  * @returns {boolean} True if valid date
  */
 export function isValidDate(dateString) {
-  return parseAcfDate(dateString) !== null;
+  return parseFieldDate(dateString) !== null;
 }
 
 /**
@@ -368,19 +357,19 @@ export function getGenderSymbol(gender) {
 }
 
 /**
- * Calculate VOG (Certificate of Conduct) status based on ACF data
+ * Calculate VOG (Certificate of Conduct) status based on native field data
  *
- * @param {Object} acf - ACF data object containing volunteer status and VOG date
+ * @param {Object} fields - native field data object containing volunteer status and VOG date
  * @returns {Object|null} Status object with status, label, and color, or null if not applicable
  */
-export function getVogStatus(acf) {
+export function getVogStatus(fields) {
   // Only show VOG status for current volunteers.
-  const isVolunteer = acf?.['huidig-vrijwilliger'] === true || acf?.['huidig-vrijwilliger'] === '1';
+  const isVolunteer = fields?.['huidig_vrijwilliger'] === true || fields?.['huidig_vrijwilliger'] === '1';
   if (!isVolunteer) {
     return null;
   }
 
-  const vogDate = acf?.['datum-vog'] || acf?.vog_datum;
+  const vogDate = fields?.['datum_vog'] || fields?.vog_datum;
   if (!vogDate) {
     return { status: 'missing', label: 'Geen VOG', color: 'red' };
   }

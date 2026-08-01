@@ -94,7 +94,7 @@ class VolunteerStatus {
 	];
 
 	/**
-	 * The ACF field key for huidig-vrijwilliger.
+	 * The canonical field key for huidig-vrijwilliger.
 	 *
 	 * @var string
 	 */
@@ -161,15 +161,11 @@ class VolunteerStatus {
 	 * Constructor.
 	 */
 	public function __construct() {
-		// Hook into ACF save for person post type (priority 25 = after auto-title)
-		add_action( 'acf/save_post', [ $this, 'update_volunteer_status' ], 25 );
-
-		// Also hook into REST API updates
-		add_action( 'rest_after_insert_person', [ $this, 'update_volunteer_status_rest' ], 25, 2 );
+		add_action( 'rondo_fields_saved_post', [ $this, 'update_volunteer_status' ], 25 );
 	}
 
 	/**
-	 * Update volunteer status when person is saved via ACF/admin.
+	 * Update volunteer status when person is saved via native field/admin.
 	 *
 	 * @param int $post_id The post ID.
 	 */
@@ -209,8 +205,8 @@ class VolunteerStatus {
 	public function calculate_and_update_status( $post_id ) {
 		$is_volunteer = $this->is_current_volunteer( $post_id );
 
-		// Update the custom field using ACF's update_field for proper reference handling
-		update_field( self::VOLUNTEER_FIELD_KEY, $is_volunteer ? '1' : '0', $post_id );
+		// Update the custom field using native field's update_field for proper reference handling
+		\Rondo\Fields\Fields::update_for_post( $post_id, self::VOLUNTEER_FIELD_KEY, $is_volunteer );
 	}
 
 	/**
@@ -220,7 +216,7 @@ class VolunteerStatus {
 	 * @return bool True if the person is a current volunteer.
 	 */
 	private function is_current_volunteer( $post_id ) {
-		$work_history = get_field( 'work_history', $post_id );
+		$work_history = \Rondo\Fields\Fields::get_for_post( $post_id, 'work_history' );
 
 		if ( empty( $work_history ) || ! is_array( $work_history ) ) {
 			return false;

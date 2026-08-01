@@ -142,12 +142,12 @@ const parseDate = (dateStr) => {
  * @param {Object} props
  * @param {'person'|'team'} props.postType - The post type
  * @param {number} props.postId - The post ID
- * @param {Object} props.acfData - The ACF data object from the post
- * @param {Function} props.onUpdate - Callback after successful save, receives updated ACF data
+ * @param {Object} props.fieldData - The native field data object from the post
+ * @param {Function} props.onUpdate - Callback after successful save, receives updated native field data
  * @param {boolean} props.isUpdating - Whether parent is currently saving
  * @param {string[]} props.excludeLabelPrefixes - Array of label prefixes to exclude from display
  */
-export default function CustomFieldsSection({ postType, postId, acfData, onUpdate, isUpdating, excludeLabelPrefixes = [] }) {
+export default function CustomFieldsSection({ postType, postId, fieldData, onUpdate, isUpdating, excludeLabelPrefixes = [] }) {
   const [showModal, setShowModal] = useState(false);
 
   // Fetch field definitions
@@ -242,7 +242,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
       }
 
       case 'select':
-        // Value is already the display value from ACF
+        // Value is already the display value from native field
         return <span>{value}</span>;
 
       case 'checkbox': {
@@ -378,7 +378,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
                 const postTypeSlug = item.post_type;
                 const linkPath = postTypeSlug === 'person' ? `/people/${item.ID}` : `/teams/${item.ID}`;
                 const IconComponent = postTypeSlug === 'person' ? User : Building2;
-                // ACF may include featured image in object format
+                // native field may include featured image in object format
                 const thumbnail = item.featured_image_url || item._embedded?.['wp:featuredmedia']?.[0]?.source_url;
 
                 return (
@@ -470,7 +470,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
                 {field.label}
               </div>
               <div className="w-2/3 text-sm">
-                {renderFieldValue(field, acfData?.[field.name])}
+                {renderFieldValue(field, fieldData?.[(field.canonical_name || field.name)])}
               </div>
             </div>
           ))}
@@ -484,7 +484,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
           postType={postType}
           postId={postId}
           fieldDefs={fieldDefs}
-          currentValues={acfData}
+          currentValues={fieldData}
           onSubmit={handleSubmit}
           isLoading={isUpdating}
         />

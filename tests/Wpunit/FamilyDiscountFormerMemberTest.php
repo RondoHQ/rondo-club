@@ -17,9 +17,24 @@ use Tests\Support\RondoTestCase;
  */
 class FamilyDiscountFormerMemberTest extends RondoTestCase {
 
-	/**
-	 * Store a minimal youth fee configuration for the current season.
-	 */
+	public function test_family_key_can_be_derived_from_pre_update_addresses(): void {
+		$service = ( new \ReflectionClass( FamilyGroupingService::class ) )->newInstanceWithoutConstructor();
+
+		$this->assertSame(
+			'1234AB-12A',
+			$service->get_family_key_from_addresses(
+				[
+					[
+						'postal_code'           => '1234 ab',
+						'house_number'          => '12',
+						'house_number_addition' => 'A',
+					],
+				]
+			)
+		);
+		$this->assertNull( $service->get_family_key_from_addresses( null ) );
+	}
+
 	private function configure_youth_fees(): MembershipFeeSettings {
 		$settings = new MembershipFeeSettings();
 		$settings->save_categories_for_season(
@@ -40,9 +55,6 @@ class FamilyDiscountFormerMemberTest extends RondoTestCase {
 		return $settings;
 	}
 
-	/**
-	 * Create a youth member at the shared test address.
-	 */
 	private function create_youth_member( bool $former = false ): int {
 		return $this->createPerson(
 			[],
@@ -63,9 +75,6 @@ class FamilyDiscountFormerMemberTest extends RondoTestCase {
 		);
 	}
 
-	/**
-	 * Build the grouping service with deterministic base fees.
-	 */
 	private function family_grouping( MembershipFeeSettings $settings ): FamilyGroupingService {
 		return new FamilyGroupingService(
 			new PersonFeeContext(),
@@ -80,29 +89,21 @@ class FamilyDiscountFormerMemberTest extends RondoTestCase {
 		);
 	}
 
-	public function test_family_groups_only_contain_active_youth_members(): void {
+	public function test_family_groups_only_contain_active_youth_members_and_clear_stale_meta(): void {
 		$settings = $this->configure_youth_fees();
 		$active_1 = $this->create_youth_member();
 		$active_2 = $this->create_youth_member();
 		$former   = $this->create_youth_member( true );
-
-		$groups = $this->family_grouping( $settings )->build_family_groups();
-
-		$this->assertSame( [ $active_1, $active_2 ], $groups['families']['1234AB-12'] );
-		$this->assertArrayNotHasKey( $former, $groups['person_data'] );
-	}
-
-	public function test_recalculation_clears_a_former_members_stale_discount(): void {
-		$settings = $this->configure_youth_fees();
-		$active_1 = $this->create_youth_member();
-		$active_2 = $this->create_youth_member();
-		$former   = $this->create_youth_member( true );
+		$grouping = $this->family_grouping( $settings );
 
 		update_post_meta( $former, '_family_discount_rate', '0.5' );
 		update_post_meta( $former, '_family_discount_position', '3' );
 
-		$this->family_grouping( $settings )->recalculate_family_positions_for_person( $active_1 );
+		$groups = $grouping->build_family_groups();
+		$grouping->recalculate_family_positions_for_person( $active_1 );
 
+		$this->assertSame( [ $active_1, $active_2 ], $groups['families']['1234AB-12'] );
+		$this->assertArrayNotHasKey( $former, $groups['person_data'] );
 		$this->assertSame( '0', get_post_meta( $former, '_family_discount_rate', true ) );
 		$this->assertSame( '', get_post_meta( $former, '_family_discount_position', true ) );
 		$this->assertSame( '1', get_post_meta( $active_1, '_family_discount_position', true ) );
@@ -134,7 +135,7 @@ class FamilyDiscountFormerMemberTest extends RondoTestCase {
 		$this->assertNull( $fee['family_key'] );
 	}
 
-	public function test_former_member_change_invalidates_the_whole_household(): void {
+	public function test_former_member_change_invalidates_and_recalculates_the_household(): void {
 		$current = $this->create_youth_member();
 		$sibling = $this->create_youth_member();
 
@@ -155,18 +156,18 @@ class FamilyDiscountFormerMemberTest extends RondoTestCase {
 			);
 
 		$family_grouping = $this->createMock( FamilyGroupingService::class );
-		$family_grouping->expects( $this->once() )
-			->method( 'get_family_key' )
-			->with( $current )
-			->willReturn( '1234AB-12' );
+		$family_grouping->expects( $this->once() )->method( 'get_family_key' )->with( $current )->willReturn( '1234AB-12' );
 		$family_grouping->expects( $this->once() )
 			->method( 'build_family_groups' )
 			->willReturn(
 				[
-					'families'    => [ '1234AB-12' => [ $current, $sibling ] ],
+					'families'    => [ '1234AB-12' => [ $sibling ] ],
 					'person_data' => [],
 				]
 			);
+		$family_grouping->expects( $this->once() )
+			->method( 'recalculate_family_positions_for_person' )
+			->with( $sibling );
 
 		$reflection  = new \ReflectionClass( FeeCacheInvalidator::class );
 		$invalidator = $reflection->newInstanceWithoutConstructor();
@@ -174,13 +175,11 @@ class FamilyDiscountFormerMemberTest extends RondoTestCase {
 		$cache_property = $reflection->getProperty( 'fee_cache' );
 		$cache_property->setAccessible( true );
 		$cache_property->setValue( $invalidator, $fee_cache );
-
 		$family_property = $reflection->getProperty( 'family_grouping' );
 		$family_property->setAccessible( true );
 		$family_property->setValue( $invalidator, $family_grouping );
 
 		$returned = $invalidator->invalidate_family_membership_cache( true, $current, [] );
-
 		sort( $cleared );
 		$expected = [ $current, $sibling ];
 		sort( $expected );
@@ -188,8 +187,6 @@ class FamilyDiscountFormerMemberTest extends RondoTestCase {
 		$this->assertTrue( $returned );
 		$this->assertSame( $expected, $cleared );
 		$this->assertSame( '', get_post_meta( $current, '_family_discount_rate', true ) );
-		$this->assertSame( '', get_post_meta( $current, '_family_discount_position', true ) );
 		$this->assertSame( '', get_post_meta( $sibling, '_family_discount_rate', true ) );
-		$this->assertSame( '', get_post_meta( $sibling, '_family_discount_position', true ) );
 	}
 }

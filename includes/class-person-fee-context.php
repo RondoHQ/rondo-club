@@ -3,7 +3,7 @@
  * Person Fee Context
  *
  * Person-data helpers that the fee system needs: current team membership
- * derived from the work_history ACF repeater, effective werkfuncties list
+ * derived from the work_history native field repeater, effective werkfuncties list
  * with donateur normalisation, and the former-member-in-season eligibility
  * check used by fee snapshots and invoicing.
  *
@@ -13,7 +13,7 @@
  * because FeeCalculator, FamilyGroupingService and the snapshot tool all
  * need them side by side.
  *
- * Zero constructor dependencies: all methods read ACF fields directly.
+ * Zero constructor dependencies: all methods read canonical fields directly.
  * Any service can instantiate `new PersonFeeContext()` freely.
  *
  * @package Rondo\Fees
@@ -79,7 +79,7 @@ class PersonFeeContext {
 	 * @return array<string> List of unique werkfuncties.
 	 */
 	public function get_effective_werkfuncties( int $person_id ): array {
-		$work_history = get_field( 'work_history', $person_id ) ?: [];
+		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' ) ?: [];
 		if ( empty( $work_history ) ) {
 			return [];
 		}
@@ -144,7 +144,7 @@ class PersonFeeContext {
 	/**
 	 * Get current team IDs for a person.
 	 *
-	 * Retrieves team IDs from the work_history ACF repeater where the
+	 * Retrieves team IDs from the work_history native field repeater where the
 	 * person is currently active (is_current flag or end_date in future /
 	 * not set).
 	 *
@@ -157,7 +157,7 @@ class PersonFeeContext {
 	 * @return array<int> Array of unique team IDs.
 	 */
 	public function get_current_teams( int $person_id ): array {
-		$work_history = get_field( 'work_history', $person_id ) ?: [];
+		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' ) ?: [];
 		$team_ids     = [];
 
 		if ( empty( $work_history ) ) {
@@ -215,13 +215,13 @@ class PersonFeeContext {
 	 */
 	public function is_former_member_in_season( int $person_id, ?string $season = null ): bool {
 		// Only applies to former members
-		$is_former = (bool) get_field( 'former_member', $person_id );
+		$is_former = (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' );
 		if ( ! $is_former ) {
 			return false;
 		}
 
 		// Get lid-sinds date
-		$lid_sinds = get_field( 'lid-sinds', $person_id );
+		$lid_sinds = \Rondo\Fields\Fields::get_for_post( $person_id, 'lid_sinds' );
 		if ( empty( $lid_sinds ) ) {
 			// Cannot determine eligibility without membership date
 			return false;

@@ -19,20 +19,20 @@ function OrganizationListRow({ commissie, listViewFields, isSelected, onToggleSe
         _name: commissie.title?.rendered || commissie.title || '',
       };
       listViewFields.forEach(field => {
-        initialValues[field.name] = commissie.acf?.[field.name] ?? '';
+        initialValues[(field.canonical_name || field.name)] = commissie.fields?.[(field.canonical_name || field.name)] ?? '';
       });
       setEditedFields(initialValues);
     } else {
       setEditedFields({});
     }
-  }, [isEditing, commissie.acf, commissie.title, listViewFields]);
+  }, [isEditing, commissie.fields, commissie.title, listViewFields]);
 
   const handleFieldChange = (fieldName, value) => {
     setEditedFields(prev => ({ ...prev, [fieldName]: value }));
   };
 
   const handleSave = () => {
-    onSaveRow(commissie.id, editedFields, commissie.acf);
+    onSaveRow(commissie.id, editedFields, commissie.fields);
   };
 
   const handleKeyDown = (e) => {
@@ -89,14 +89,14 @@ function OrganizationListRow({ commissie, listViewFields, isSelected, onToggleSe
           {isEditing ? (
             <InlineFieldInput
               field={field}
-              value={editedFields[field.name]}
+              value={editedFields[(field.canonical_name || field.name)]}
               onChange={handleFieldChange}
               onKeyDown={handleKeyDown}
               disabled={isUpdating}
             />
           ) : (
             <span className="cursor-pointer">
-              <CustomFieldColumn field={field} value={commissie.acf?.[field.name]} />
+              <CustomFieldColumn field={field} value={commissie.fields?.[(field.canonical_name || field.name)]} />
             </span>
           )}
         </td>
@@ -167,7 +167,7 @@ function OrganizationListView({ commissies, listViewFields, selectedIds, onToggl
             {listViewFields.map(field => (
               <SortableHeader
                 key={field.key}
-                columnId={`custom_${field.name}`}
+                columnId={`custom_${(field.canonical_name || field.name)}`}
                 label={field.label}
                 sortField={sortField}
                 sortOrder={sortOrder}
@@ -210,7 +210,7 @@ export default function CommissiesList() {
   const [editingRowId, setEditingRowId] = useState(null);
   const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
 
-  const { isVisible, toggle } = useColumnVisibility('commissies');
+  const { isVisible, toggle, migrateAliases } = useColumnVisibility('commissies');
 
   const currentUserId = window.rondoConfig?.userId;
 
@@ -220,24 +220,10 @@ export default function CommissiesList() {
     await queryClient.invalidateQueries({ queryKey: ['commissies'] });
   };
 
-  const arrayTypeAcfFields = ['contact_info'];
-
   const updateRowMutation = useMutation({
-    mutationFn: async ({ commissieId, editedFields, existingAcf }) => {
+    mutationFn: async ({ commissieId, editedFields }) => {
       const { _name, ...customFields } = editedFields;
-
-      const mergedAcf = {
-        ...existingAcf,
-        ...customFields
-      };
-
-      arrayTypeAcfFields.forEach(fieldName => {
-        if (mergedAcf[fieldName] === null || mergedAcf[fieldName] === undefined) {
-          mergedAcf[fieldName] = [];
-        }
-      });
-
-      const updatePayload = { acf: mergedAcf };
+      const updatePayload = { fields: customFields };
 
       if (_name !== undefined) {
         updatePayload.title = _name;
@@ -252,14 +238,14 @@ export default function CommissiesList() {
     },
   });
 
-  const handleSaveRow = async (commissieId, editedFields, existingAcf) => {
+  const handleSaveRow = async (commissieId, editedFields) => {
     const processedFields = { ...editedFields };
     listViewFields.forEach(field => {
-      if (field.type === 'number' && processedFields[field.name] === '') {
-        processedFields[field.name] = null;
+      if (field.type === 'number' && processedFields[(field.canonical_name || field.name)] === '') {
+        processedFields[(field.canonical_name || field.name)] = null;
       }
     });
-    await updateRowMutation.mutateAsync({ commissieId, editedFields: processedFields, existingAcf });
+    await updateRowMutation.mutateAsync({ commissieId, editedFields: processedFields });
   };
 
   const handleStartEdit = (commissieId) => setEditingRowId(commissieId);
@@ -286,6 +272,14 @@ export default function CommissiesList() {
       .filter(f => f.show_in_list_view)
       .sort((a, b) => (a.list_view_order || 999) - (b.list_view_order || 999));
   }, [customFields]);
+
+  useEffect(() => {
+    migrateAliases(Object.fromEntries(
+      customFields
+        .filter((field) => field.storage_key && field.canonical_name && field.storage_key !== field.canonical_name)
+        .map((field) => [`custom_${field.storage_key}`, `custom_${field.canonical_name}`])
+    ));
+  }, [customFields, migrateAliases]);
 
   const hasActiveFilters = !!(commissieFilter || ownershipFilter || memberCountFilter);
   const activeFilterCount = [commissieFilter, ownershipFilter, memberCountFilter].filter(Boolean).length;
@@ -379,8 +373,8 @@ export default function CommissiesList() {
       } else if (sortField.startsWith('custom_')) {
         const fieldName = sortField.replace('custom_', '');
         const fieldMeta = listViewFields.find(f => f.name === fieldName);
-        valueA = a.acf?.[fieldName];
-        valueB = b.acf?.[fieldName];
+        valueA = a.fields?.[fieldName];
+        valueB = b.fields?.[fieldName];
 
         if (fieldMeta?.type === 'number') {
           valueA = parseFloat(valueA) || 0;

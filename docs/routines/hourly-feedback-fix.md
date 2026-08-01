@@ -105,7 +105,7 @@ Conservative by default. When in doubt, downgrade one tier.
 ALL of these must hold:
 
 - Diff ≤ 30 lines, single file, single hunk in intent.
-- No changes to: DB schema / migrations, ACF field definitions, `class-rest-*.php` endpoint contracts, `class-access-control.php`, `class-user-roles.php`, `class-membership-fees.php` or anything under `Fees/` / `Contributie/`, `class-google-*.php`, `.env`, `.claude/`, `.planning/`, workflow files under `.github/`, `bin/deploy.sh`.
+- No changes to: DB schema / migrations, native field definitions, `class-rest-*.php` endpoint contracts, `class-access-control.php`, `class-user-roles.php`, `class-membership-fees.php` or anything under `Fees/` / `Contributie/`, `class-google-*.php`, `.env`, `.claude/`, `.planning/`, workflow files under `.github/`, `bin/deploy.sh`.
 - Feedback issue explicitly specifies the target value (e.g. "the button label should read X" — X is unambiguous).
 - `npm run lint`, `npm run build`, and `composer lint` all pass on the change.
 - If the file has associated Codeception tests that are currently green (`AgeGroupAccessTest` and any others confirmed green on `main`), those tests still pass.
@@ -152,7 +152,7 @@ Routine's obligation:
 |---|---|---|
 | "Typo in the welcome banner: 'welkkom' → 'welkom'" | Direct commit | 1 char, unambiguous, no logic. |
 | "The 'Save' button on Person edit is grey — should be blue like elsewhere" | Direct commit | Copy-through of an existing pattern, single class change. |
-| "Add a 'Notes' field to the person profile" | PR | New field → ACF + REST + React. Multi-file, needs migration plan. |
+| "Add a 'Notes' field to the person profile" | PR | New field → registry + REST + React. Multi-file, needs a contract change. |
 | "Team overview should show U19 highlighted" | PR-with-question | "Highlighted how — background color, badge, tooltip?" — pick one, ask. |
 | "Login is broken for me since yesterday" | PR-with-question | Need repro; also touches auth = never direct commit. |
 | "Add German translation of the dashboard" | PR | Large, non-trivial i18n, needs infra decision. |
@@ -168,7 +168,7 @@ Baked into the SKILL, not policy documents:
 2. **Refuse to fix if the working tree isn't clean** (`git status --porcelain` non-empty) OR `main` isn't checked out OR local `main` is behind `origin/main` and can't fast-forward.
 3. **Always start from a fresh `git fetch origin && git checkout main && git pull --ff-only`.**
 4. **Test-gate direct commits.** Before any commit to `main`, run `npm run lint && npm run build && composer lint`. On any failure, downgrade to PR and paste the failing output into the PR body.
-5. **Never touch** `.env`, `.claude/`, `.planning/`, `.github/workflows/`, `bin/deploy.sh`, `wp-config.php`, or `acf-json/*.json` (unless the feedback explicitly says so, in which case it's PR-tier at minimum).
+5. **Never touch** `.env`, `.claude/`, `.planning/`, `.github/workflows/`, `bin/deploy.sh`, `wp-config.php`, or `includes/config/field-registry.php` (unless the feedback explicitly says so, in which case it's PR-tier at minimum).
 6. **Never run `bin/deploy.sh` directly.** Deploys go through the GitHub Actions pipeline triggered by push to `main`.
 7. **Every commit + PR body links to the feedback:** admin URL `https://rondo.svawc.nl/feedback/{id}` + feedback ID + a short "why this fix" paragraph in Dutch (for the resolution email later).
 8. **Status transitions:**

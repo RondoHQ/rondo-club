@@ -12,6 +12,7 @@
 namespace Rondo\REST;
 
 use Rondo\Fees\SeasonKey;
+use Rondo\Fields\Fields;
 use Rondo\Volunteer\IvaApprovalEmailSender;
 use Rondo\Volunteer\IvaCertificateParser;
 use Rondo\Volunteer\IvaReviewNotificationEmailSender;
@@ -177,7 +178,7 @@ class Volunteer extends Base {
 		);
 
 		// IVA upload — door het lid zélf, via /vrijwillig/profiel. Schrijft het
-		// uploadbestand naar de attachment-library, koppelt het aan het ACF veld
+		// uploadbestand naar de attachment-library, koppelt het aan het native field veld
 		// op de gelinkte persoon, en reset iva-approved zodat de bestuurslid
 		// kantine het opnieuw beoordeelt.
 		register_rest_route(
@@ -379,14 +380,14 @@ class Volunteer extends Base {
 
 		$people = [];
 		foreach ( $query->posts as $post ) {
-			$cert_field = get_field( 'iva-certificaat', $post->ID );
+			$cert_field = \Rondo\Fields\Fields::get_for_post( $post->ID, 'iva_certificaat' );
 			$cert_url   = $cert_field ? $this->iva_certificate_url( $post->ID ) : '';
 
 			$people[] = [
 				'id'              => $post->ID,
 				'name'            => $this->sanitize_text( $post->post_title ),
 				'thumbnail'       => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
-				'datum_iva'       => (string) get_field( 'datum-iva', $post->ID ),
+				'datum_iva'       => \Rondo\Fields\Formatter::for_wire( 'person', [ 'datum_iva' => \Rondo\Fields\Fields::get_for_post( $post->ID, 'datum_iva' ) ] )['datum_iva'],
 				'iva_certificaat' => $cert_url ? $this->sanitize_url( $cert_url ) : '',
 				'iva_approved'    => (bool) get_post_meta( $post->ID, 'iva-approved', true ),
 				'status'          => IvaStatus::status( $post->ID ),
@@ -433,7 +434,7 @@ class Volunteer extends Base {
 	 * POST /rondo/v1/iva/upload
 	 *
 	 * Lid-zelf upload. Schrijft het bestand naar de attachment-library,
-	 * koppelt het aan het ACF veld iva-certificaat van de gelinkte persoon,
+	 * koppelt het aan het native field veld iva-certificaat van de gelinkte persoon,
 	 * en reset iva-approved zodat de bestuurslid kantine het opnieuw beoordeelt.
 	 * Accepteert een optionele datum_iva (anders: vandaag).
 	 */
@@ -547,16 +548,16 @@ class Volunteer extends Base {
 		// achter die aan geen enkel lid gekoppeld is — precies wat er in
 		// 33.78.0 zestien keer gebeurde.
 		//
-		// Schrijf via ACF zodat zowel de admin-form als de relationships-pipeline
+		// Schrijf via native field zodat zowel de admin-form als de relationships-pipeline
 		// het correct ophalen.
 		try {
 			$old_attachment_id = $this->iva_attachment_id( $person_id );
-			update_field( 'iva-certificaat', $attachment_id, $person_id );
+			\Rondo\Fields\Fields::update_for_post( $person_id, 'iva_certificaat', $attachment_id );
 			if ( $old_attachment_id > 0 && $old_attachment_id !== $attachment_id ) {
 				$this->delete_private_attachment( $old_attachment_id );
 			}
-			update_field( 'datum-iva', $datum, $person_id );
-			update_field( 'iva-approved', $auto_approved ? 1 : 0, $person_id );
+			\Rondo\Fields\Fields::update_for_post( $person_id, 'datum_iva', $datum );
+			\Rondo\Fields\Fields::update_for_post( $person_id, 'iva_approved', $auto_approved ? 1 : 0 );
 			update_post_meta( $person_id, 'iva-approved', $auto_approved ? 1 : 0 );
 		} catch ( \Throwable $e ) {
 			$this->delete_private_attachment( $attachment_id );
@@ -613,7 +614,7 @@ class Volunteer extends Base {
 			return new \WP_Error( 'no_linked_person', 'Geen gekoppeld lid-profiel.', [ 'status' => 404 ] );
 		}
 
-		$cert     = get_field( 'iva-certificaat', $person_id );
+		$cert     = \Rondo\Fields\Fields::get_for_post( $person_id, 'iva_certificaat' );
 		$cert_url = $cert ? $this->iva_certificate_url( $person_id ) : '';
 
 		return rest_ensure_response(
@@ -621,7 +622,7 @@ class Volunteer extends Base {
 				'person_id'              => $person_id,
 				'status'                 => IvaStatus::status( $person_id ),
 				'expires_at'             => IvaStatus::expires_at( $person_id ),
-				'datum_iva'              => (string) get_field( 'datum-iva', $person_id ),
+				'datum_iva'              => \Rondo\Fields\Formatter::for_wire( 'person', [ 'datum_iva' => \Rondo\Fields\Fields::get_for_post( $person_id, 'datum_iva' ) ] )['datum_iva'],
 				'iva_certificaat_url'    => $cert_url ? $this->sanitize_url( $cert_url ) : '',
 				'iva_approved'           => (bool) get_post_meta( $person_id, 'iva-approved', true ),
 				'needs_renewal_reminder' => IvaStatus::needs_renewal_reminder( $person_id ),
@@ -736,7 +737,7 @@ class Volunteer extends Base {
 	}
 
 	private function iva_attachment_id( int $person_id ): int {
-		$value = get_field( 'iva-certificaat', $person_id, false );
+		$value = \Rondo\Fields\Fields::get_for_post( $person_id, 'iva_certificaat' );
 		if ( is_array( $value ) ) {
 			$value = $value['ID'] ?? $value['id'] ?? 0;
 		}
@@ -769,7 +770,7 @@ class Volunteer extends Base {
 			return new \WP_Error( 'no_linked_person', 'Geen gekoppeld lid-profiel.', [ 'status' => 404 ] );
 		}
 
-		$datum_vog              = (string) get_field( 'datum-vog', $person_id );
+		$datum_vog              = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'datum_vog' );
 		$expires_at             = '';
 		$status                 = 'missing';
 		$needs_renewal_reminder = false;
@@ -793,7 +794,7 @@ class Volunteer extends Base {
 			[
 				'person_id'              => $person_id,
 				'status'                 => $status,
-				'datum_vog'              => $datum_vog,
+				'datum_vog'              => \Rondo\Fields\Formatter::for_wire( 'person', [ 'datum_vog' => $datum_vog ] )['datum_vog'],
 				'expires_at'             => $expires_at,
 				'needs_renewal_reminder' => $needs_renewal_reminder,
 				'validity_years'         => 3,
@@ -814,7 +815,7 @@ class Volunteer extends Base {
 
 		$was_approved = IvaStatus::is_approved( $person_id );
 		update_post_meta( $person_id, 'iva-approved', $approve ? 1 : 0 );
-		update_field( 'iva-approved', $approve ? 1 : 0, $person_id );
+		\Rondo\Fields\Fields::update_for_post( $person_id, 'iva_approved', $approve ? 1 : 0 );
 
 		$notification = [ 'status' => 'not_applicable' ];
 		if ( $approve && ! $was_approved && IvaStatus::is_valid( $person_id ) ) {
@@ -1084,7 +1085,7 @@ class Volunteer extends Base {
 	 *
 	 * Stores the narrowly scoped manual exemption fields. This intentionally
 	 * bypasses general person-edit permissions: the `vrijwilligers` capability
-	 * owns this policy decision, but does not gain access to unrelated ACF data.
+	 * owns this policy decision, but does not gain access to unrelated person data.
 	 */
 	public function update_manual_exemption( \WP_REST_Request $request ) {
 		$person_id = (int) $request->get_param( 'person_id' );
@@ -1097,9 +1098,9 @@ class Volunteer extends Base {
 		$reason  = $enabled ? (string) $request->get_param( 'reason' ) : '';
 		$season  = $enabled ? trim( (string) $request->get_param( 'season' ) ) : '';
 
-		update_field( 'field_vrijgesteld_handmatig', $enabled ? 1 : 0, $person_id );
-		update_field( 'field_vrijstelling_reden', $reason, $person_id );
-		update_field( 'field_vrijstelling_seizoen', $season, $person_id );
+		Fields::update_for_post( $person_id, 'vrijgesteld_handmatig', $enabled ? 1 : 0 );
+		Fields::update_for_post( $person_id, 'vrijstelling_reden', $reason );
+		Fields::update_for_post( $person_id, 'vrijstelling_seizoen', $season );
 
 		VolunteerEligibilityService::invalidate_cache();
 		RelationshipQualityChecker::invalidate_cache();
@@ -1203,10 +1204,10 @@ class Volunteer extends Base {
 				continue;
 			}
 
-			$age_group = (string) get_field( 'leeftijdsgroep', $pid );
-			$addresses = get_field( 'addresses', $pid );
+			$age_group = (string) \Rondo\Fields\Fields::get_for_post( $pid, 'leeftijdsgroep' );
+			$addresses = \Rondo\Fields\Fields::get_for_post( $pid, 'addresses' );
 			$primary   = is_array( $addresses ) && ! empty( $addresses ) ? $addresses[0] : null;
-			$rels      = get_field( 'relationships', $pid );
+			$rels      = \Rondo\Fields\Fields::get_for_post( $pid, 'relationships' );
 			$rel_count = is_array( $rels ) ? count( $rels ) : 0;
 
 			$persons[] = [

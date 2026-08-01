@@ -175,8 +175,8 @@ class Todos extends Base {
 	public function get_person_todos( $request ) {
 		$person_id = (int) $request->get_param( 'person_id' );
 
-		// Use LIKE query since ACF stores serialized arrays
-		// The serialized format contains the ID as a quoted string: "123"
+		// Multiple post IDs are stored as a serialized array. Match both the old
+		// string-ID representation and native integer IDs during the transition.
 		// Note: suppress_filters must be false for access control to apply
 		$todos = get_posts(
 			[
@@ -185,9 +185,15 @@ class Todos extends Base {
 				'post_status'      => [ 'rondo_open', 'rondo_awaiting', 'rondo_completed' ],
 				'suppress_filters' => false,
 				'meta_query'       => [
+					'relation' => 'OR',
 					[
 						'key'     => 'related_persons',
 						'value'   => sprintf( '"%d"', $person_id ),
+						'compare' => 'LIKE',
+					],
+					[
+						'key'     => 'related_persons',
+						'value'   => sprintf( 'i:%d;', $person_id ),
 						'compare' => 'LIKE',
 					],
 				],
@@ -253,16 +259,16 @@ class Todos extends Base {
 			return new \WP_Error( 'create_failed', __( 'Failed to create todo.', 'rondo' ), [ 'status' => 500 ] );
 		}
 
-		// Save ACF fields - use new multi-person field
-		update_field( 'related_persons', $person_ids, $post_id );
+		// Save canonical fields - use new multi-person field
+		\Rondo\Fields\Fields::update_for_post( $post_id, 'related_persons', $person_ids );
 
 		if ( ! empty( $due_date ) ) {
-			update_field( 'due_date', $due_date, $post_id );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'due_date', $due_date );
 		}
 
 		// Save notes if provided (sanitize HTML for XSS protection)
 		if ( $notes !== null ) {
-			update_field( 'notes', wp_kses_post( $notes ), $post_id );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'notes', wp_kses_post( $notes ) );
 		}
 
 		if ( $assigned_user_id !== null ) {
@@ -275,7 +281,7 @@ class Todos extends Base {
 
 		// Set awaiting_since timestamp if creating with awaiting status
 		if ( $status === 'awaiting' ) {
-			update_field( 'awaiting_since', gmdate( 'Y-m-d H:i:s' ), $post_id );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'awaiting_since', gmdate( 'Y-m-d H:i:s' ) );
 		}
 
 		$todo = get_post( $post_id );
@@ -421,12 +427,12 @@ class Todos extends Base {
 
 			// Set awaiting_since timestamp when changing to awaiting
 			if ( $status === 'awaiting' && $current_status !== 'awaiting' ) {
-				update_field( 'awaiting_since', gmdate( 'Y-m-d H:i:s' ), $todo_id );
+				\Rondo\Fields\Fields::update_for_post( $todo_id, 'awaiting_since', gmdate( 'Y-m-d H:i:s' ) );
 			}
 
 			// Clear awaiting_since when leaving awaiting status
 			if ( $status !== 'awaiting' && $current_status === 'awaiting' ) {
-				update_field( 'awaiting_since', '', $todo_id );
+				\Rondo\Fields\Fields::update_for_post( $todo_id, 'awaiting_since', '' );
 			}
 
 			$update_args['post_status'] = $new_post_status;
@@ -437,25 +443,25 @@ class Todos extends Base {
 			wp_update_post( $update_args );
 		}
 
-		// Update due_date ACF field
+		// Update due_date canonical field
 		if ( $due_date !== null ) {
 			if ( empty( $due_date ) ) {
-				update_field( 'due_date', '', $todo_id );
+				\Rondo\Fields\Fields::update_for_post( $todo_id, 'due_date', '' );
 			} else {
-				update_field( 'due_date', sanitize_text_field( $due_date ), $todo_id );
+				\Rondo\Fields\Fields::update_for_post( $todo_id, 'due_date', sanitize_text_field( $due_date ) );
 			}
 		}
 
 		// Update persons if provided (multi-person support)
 		if ( $person_ids !== null ) {
 			if ( is_array( $person_ids ) && ! empty( $person_ids ) ) {
-				update_field( 'related_persons', array_map( 'intval', $person_ids ), $todo_id );
+				\Rondo\Fields\Fields::update_for_post( $todo_id, 'related_persons', array_map( 'intval', $person_ids ) );
 			}
 		}
 
 		// Update notes if provided (sanitize HTML for XSS protection)
 		if ( $notes !== null ) {
-			update_field( 'notes', wp_kses_post( $notes ), $todo_id );
+			\Rondo\Fields\Fields::update_for_post( $todo_id, 'notes', wp_kses_post( $notes ) );
 		}
 
 		if ( $assigned_user_param !== null ) {
@@ -525,7 +531,7 @@ class Todos extends Base {
 	 */
 	private function format_todo( $post ) {
 		// Get persons array (new multi-person format)
-		$person_ids = get_field( 'related_persons', $post->ID ) ?: [];
+		$person_ids = \Rondo\Fields\Fields::get_for_post( $post->ID, 'related_persons' ) ?: [];
 		if ( ! is_array( $person_ids ) ) {
 			$person_ids = $person_ids ? [ $person_ids ] : [];
 		}
@@ -541,12 +547,12 @@ class Todos extends Base {
 		}
 
 		$status   = $this->get_todo_status( $post );
-		$due_date = get_field( 'due_date', $post->ID );
+		$due_date = \Rondo\Fields\Fields::get_for_post( $post->ID, 'due_date' );
 		if ( is_string( $due_date ) && preg_match( '/^\d{8}$/', $due_date ) ) {
 			$due_date = substr( $due_date, 0, 4 ) . '-' . substr( $due_date, 4, 2 ) . '-' . substr( $due_date, 6, 2 );
 		}
-		$awaiting_since   = get_field( 'awaiting_since', $post->ID );
-		$notes            = get_field( 'notes', $post->ID );
+		$awaiting_since   = \Rondo\Fields\Fields::get_for_post( $post->ID, 'awaiting_since' );
+		$notes            = \Rondo\Fields\Fields::get_for_post( $post->ID, 'notes' );
 		$assigned_user_id = (int) get_post_meta( $post->ID, self::ASSIGNED_USER_META_KEY, true );
 		$assignee         = null;
 		if ( $assigned_user_id > 0 ) {
@@ -637,12 +643,12 @@ class Todos extends Base {
 	 */
 	private function find_first_email_from_persons( array $person_ids ): string {
 		foreach ( $person_ids as $person_id ) {
-			$email = sanitize_email( (string) get_field( 'email_1', (int) $person_id ) );
+			$email = sanitize_email( (string) \Rondo\Fields\Fields::get_for_post( (int) $person_id, 'email_1' ) );
 			if ( is_email( $email ) ) {
 				return $email;
 			}
 
-			$email = sanitize_email( (string) get_field( 'email_2', (int) $person_id ) );
+			$email = sanitize_email( (string) \Rondo\Fields\Fields::get_for_post( (int) $person_id, 'email_2' ) );
 			if ( is_email( $email ) ) {
 				return $email;
 			}
@@ -696,7 +702,7 @@ class Todos extends Base {
 			$title = __( '(zonder titel)', 'rondo' );
 		}
 
-		$description = $fallback_description !== null ? $fallback_description : (string) get_field( 'notes', $todo_id );
+		$description = $fallback_description !== null ? $fallback_description : (string) \Rondo\Fields\Fields::get_for_post( $todo_id, 'notes' );
 		$description = $this->normalize_todo_description_for_email( $description );
 
 		$subject  = sprintf( '[Rondo] Nieuwe taak: %s', $title );

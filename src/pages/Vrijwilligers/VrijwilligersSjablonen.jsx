@@ -14,7 +14,7 @@ const DUTCH_DATE_FORMATTER = new Intl.DateTimeFormat('nl-NL', {
   year: 'numeric',
 });
 
-function formatAcfDate(value) {
+function formatFieldDate(value) {
   if (!value) return '';
   if (/^\d{8}$/.test(value)) return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`;
   return value;
@@ -150,10 +150,10 @@ export default function VrijwilligersSjablonen() {
 
   const rows = useMemo(() => {
     return [...templates].sort((a, b) => {
-      const da = Number(a.acf?.day_of_week || 0);
-      const db = Number(b.acf?.day_of_week || 0);
+      const da = Number(a.fields?.day_of_week || 0);
+      const db = Number(b.fields?.day_of_week || 0);
       if (da !== db) return da - db;
-      return (a.acf?.start_time || '').localeCompare(b.acf?.start_time || '');
+      return (a.fields?.start_time || '').localeCompare(b.fields?.start_time || '');
     });
   }, [templates]);
 
@@ -232,23 +232,23 @@ export default function VrijwilligersSjablonen() {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {rows.map((tpl) => {
-                const acf = tpl.acf || {};
+                const fields = tpl.fields || {};
                 return (
                   <tr key={tpl.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-4 py-2">
                       <Link to={`/vrijwilligers/sjablonen/${tpl.id}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline">
-                        {typeMap.get(Number(acf.dienst_type_id)) || '—'}
+                        {typeMap.get(Number(fields.dienst_type_id)) || '—'}
                       </Link>
                     </td>
-                    <td className="px-4 py-2 text-gray-700 dark:text-gray-300">{DAYS[Number(acf.day_of_week) || 0] || '—'}</td>
+                    <td className="px-4 py-2 text-gray-700 dark:text-gray-300">{DAYS[Number(fields.day_of_week) || 0] || '—'}</td>
                     <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
-                      {acf.start_time || '—'} – {acf.end_time || '—'}
+                      {fields.start_time || '—'} – {fields.end_time || '—'}
                     </td>
                     <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
-                      {acf.capacity > 0 ? acf.capacity : <span className="text-gray-400">default</span>}
+                      {fields.capacity > 0 ? fields.capacity : <span className="text-gray-400">default</span>}
                     </td>
                     <td className="px-4 py-2 text-gray-700 dark:text-gray-300 text-xs">
-                      {formatAcfDate(acf.active_from) || '—'} → {formatAcfDate(acf.active_until) || 'doorlopend'}
+                      {formatFieldDate(fields.active_from) || '—'} → {formatFieldDate(fields.active_until) || 'doorlopend'}
                     </td>
                     <td className="px-4 py-2 text-right">
                       <Link

@@ -272,9 +272,9 @@ class RabobankPayment {
 		}
 
 		// Load invoice data
-		$invoice_number = get_field( 'invoice_number', $invoice_id );
-		$total_amount   = get_field( 'total_amount', $invoice_id );
-		$person_id      = get_field( 'person', $invoice_id );
+		$invoice_number = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_number' );
+		$total_amount   = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'total_amount' );
+		$person_id      = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'person' );
 
 		// Get finance config for IBAN and credentials
 		$finance_config = new \Rondo\Config\FinanceConfig();
@@ -421,7 +421,7 @@ class RabobankPayment {
 		}
 
 		// Store payment link on invoice
-		update_field( 'payment_link', $payment_link, $invoice_id );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'payment_link', $payment_link );
 
 		// Store payment request ID for QR code retrieval
 		$payment_request_id = $data['paymentRequestId'] ?? $data['assignedId'] ?? $data['id'] ?? null;
@@ -566,7 +566,7 @@ class RabobankPayment {
 			wp_mkdir_p( $invoices_dir );
 		}
 
-		$invoice_number = get_field( 'invoice_number', $invoice_id );
+		$invoice_number = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_number' );
 		$filename       = 'qr-' . $invoice_number . '.png';
 		$full_path      = $invoices_dir . '/' . $filename;
 		$relative_path  = 'invoices/' . $filename;
@@ -581,7 +581,7 @@ class RabobankPayment {
 		}
 
 		// Store path on invoice
-		update_field( 'qr_code_path', $relative_path, $invoice_id );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'qr_code_path', $relative_path );
 
 		return $relative_path;
 	}

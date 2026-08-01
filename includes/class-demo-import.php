@@ -357,19 +357,19 @@ class DemoImport {
 				case 'email':
 				case 'email2':
 					if ( $email_index <= 2 ) {
-						update_field( "email_{$email_index}", $value, $post_id );
+						\Rondo\Fields\Fields::update_for_post( $post_id, "email_{$email_index}", $value );
 						++$email_index;
 					}
 					break;
 				case 'mobile':
 					if ( $mobile_index <= 2 ) {
-						update_field( "mobile_{$mobile_index}", $value, $post_id );
+						\Rondo\Fields\Fields::update_for_post( $post_id, "mobile_{$mobile_index}", $value );
 						++$mobile_index;
 					}
 					break;
 				case 'phone':
 					if ( $telephone_index <= 2 ) {
-						update_field( "telephone_{$telephone_index}", $value, $post_id );
+						\Rondo\Fields\Fields::update_for_post( $post_id, "telephone_{$telephone_index}", $value );
 						++$telephone_index;
 					}
 					break;
@@ -396,6 +396,11 @@ class DemoImport {
 			WP_CLI::warning( sprintf( 'Failed to shift date "%s": %s', $date_string, $e->getMessage() ) );
 			return $date_string;
 		}
+	}
+
+	/** Normalize one canonical fixture value for the existing metadata layout. */
+	private function storage_value( string $context, string $field_name, $value ) {
+		return \Rondo\Fields\Formatter::for_storage( $context, [ $field_name => $value ] )[ $field_name ];
 	}
 
 	/**
@@ -480,14 +485,14 @@ class DemoImport {
 		// Second pass: set inverse relationship types
 		foreach ( $relationship_types as $rel_type ) {
 			$ref         = $rel_type['_ref'];
-			$inverse_ref = $rel_type['acf']['inverse_relationship_type'] ?? null;
+			$inverse_ref = $rel_type['fields']['inverse_relationship_type'] ?? null;
 
 			if ( $inverse_ref ) {
 				$term_id         = $this->resolve_ref( $ref );
 				$inverse_term_id = $this->resolve_ref( $inverse_ref );
 
 				if ( $term_id && $inverse_term_id ) {
-					update_field( 'inverse_relationship_type', $inverse_term_id, 'relationship_type_' . $term_id );
+					\Rondo\Fields\Fields::update_for_term( 'relationship_type', $term_id, 'inverse_relationship_type', $inverse_term_id );
 				}
 			}
 		}
@@ -565,7 +570,7 @@ class DemoImport {
 		$resolved = [];
 
 		foreach ( $rows as $row ) {
-			$team_ref         = $row['team'] ?? null;
+			$team_ref         = $row['team_id'] ?? null;
 			$resolved_team_id = $team_ref ? $this->resolve_ref( $team_ref ) : null;
 
 			$resolved[] = [
@@ -630,23 +635,23 @@ class DemoImport {
 			// Store ref mapping
 			$this->ref_map[ $ref ] = $post_id;
 
-			// Set ACF fields
-			$acf = $entity['acf'] ?? [];
+			// Set canonical fields
+			$fields = $entity['fields'] ?? [];
 
-			if ( isset( $acf['website'] ) ) {
-				update_field( 'website', $acf['website'], $post_id );
+			if ( isset( $fields['website'] ) ) {
+				\Rondo\Fields\Fields::update_for_post( $post_id, 'website', $fields['website'] );
 			}
 
 			// Write contact info from fixed fields or legacy contact_info array
-			if ( isset( $acf['email_1'] ) ) {
+			if ( isset( $fields['email_1'] ) ) {
 				foreach ( [ 'email_1', 'email_2', 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2' ] as $cf ) {
-					if ( isset( $acf[ $cf ] ) ) {
-						update_field( $cf, $acf[ $cf ], $post_id );
+					if ( isset( $fields[ $cf ] ) ) {
+						\Rondo\Fields\Fields::update_for_post( $post_id, $cf, $fields[ $cf ] );
 					}
 				}
-			} elseif ( isset( $acf['contact_info'] ) ) {
+			} elseif ( isset( $fields['contact_info'] ) ) {
 				// Legacy format: map contact_info array to fixed fields
-				$this->write_contact_info_to_fixed_fields( $acf['contact_info'], $post_id );
+				$this->write_contact_info_to_fixed_fields( $fields['contact_info'], $post_id );
 			}
 		}
 
@@ -680,7 +685,7 @@ class DemoImport {
 		$people = $this->fixture['people'] ?? [];
 		$total  = count( $people );
 
-		// Pass 1: Create all person posts with simple ACF fields
+		// Pass 1: Create all person posts with simple canonical fields
 		foreach ( $people as $i => $person ) {
 			// Progress logging every 100 people
 			if ( ( $i + 1 ) % 100 === 0 ) {
@@ -708,47 +713,47 @@ class DemoImport {
 			// Store ref mapping
 			$this->ref_map[ $ref ] = $post_id;
 
-			// Set simple ACF fields
-			$acf = $person['acf'] ?? [];
+			// Set simple canonical fields
+			$fields = $person['fields'] ?? [];
 
 			// Basic Information
-			update_field( 'first_name', $acf['first_name'] ?? '', $post_id );
-			update_field( 'infix', $acf['infix'] ?? null, $post_id );
-			update_field( 'last_name', $acf['last_name'] ?? '', $post_id );
-			update_field( 'nickname', $acf['nickname'] ?? null, $post_id );
-			update_field( 'gender', $acf['gender'] ?? null, $post_id );
-			update_field( 'pronouns', $acf['pronouns'] ?? null, $post_id );
-			update_field( 'birthdate', $this->shift_birthdate( $acf['birthdate'] ?? '' ), $post_id );
-			update_field( 'former_member', $acf['former_member'] ?? false, $post_id );
-			update_field( 'lid-tot', $this->shift_date( $acf['lid-tot'] ?? null ), $post_id );
-			update_field( 'datum-overlijden', $this->shift_date( $acf['datum-overlijden'] ?? null ), $post_id );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'first_name', $fields['first_name'] ?? '' );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'infix', $fields['infix'] ?? null );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'last_name', $fields['last_name'] ?? '' );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'nickname', $fields['nickname'] ?? null );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'gender', $fields['gender'] ?? null );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'pronouns', $fields['pronouns'] ?? null );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'birthdate', $this->storage_value( 'person', 'birthdate', $this->shift_birthdate( $fields['birthdate'] ?? '' ) ) );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'former_member', $fields['former_member'] ?? false );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'lid_tot', $this->storage_value( 'person', 'lid_tot', $this->shift_date( $fields['lid_tot'] ?? null ) ) );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'datum_overlijden', $this->storage_value( 'person', 'datum_overlijden', $this->shift_date( $fields['datum_overlijden'] ?? null ) ) );
 
 			// Contact Information (fixed fields)
-			if ( isset( $acf['email_1'] ) ) {
+			if ( isset( $fields['email_1'] ) ) {
 				foreach ( [ 'email_1', 'email_2', 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2' ] as $cf ) {
-					update_field( $cf, $acf[ $cf ] ?? '', $post_id );
+					\Rondo\Fields\Fields::update_for_post( $post_id, $cf, $fields[ $cf ] ?? '' );
 				}
-			} elseif ( isset( $acf['contact_info'] ) ) {
+			} elseif ( isset( $fields['contact_info'] ) ) {
 				// Legacy format: map contact_info array to fixed fields
-				$this->write_contact_info_to_fixed_fields( $acf['contact_info'], $post_id );
+				$this->write_contact_info_to_fixed_fields( $fields['contact_info'], $post_id );
 			}
 
 			// Addresses
-			update_field( 'addresses', $acf['addresses'] ?? [], $post_id );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'addresses', $fields['addresses'] ?? [] );
 
 			// Sportlink-Synced Fields
-			update_field( 'lid-sinds', $this->shift_date( $acf['lid-sinds'] ?? null ), $post_id );
-			update_field( 'vrijwilliger-sinds', $this->shift_date( $acf['vrijwilliger-sinds'] ?? null ), $post_id );
-			update_field( 'leeftijdsgroep', $acf['leeftijdsgroep'] ?? null, $post_id );
-			update_field( 'datum-vog', $this->shift_date( $acf['datum-vog'] ?? null ), $post_id );
-			update_field( 'datum-foto', $this->shift_date( $acf['datum-foto'] ?? null ), $post_id );
-			update_field( 'type-lid', $acf['type-lid'] ?? null, $post_id );
-			update_field( 'huidig-vrijwilliger', $acf['huidig-vrijwilliger'] ?? null, $post_id );
-			update_field( 'financiele-blokkade', $acf['financiele-blokkade'] ?? false, $post_id );
-			update_field( 'knvb-id', $acf['knvb-id'] ?? ( $acf['relatiecode'] ?? null ), $post_id );
-			update_field( 'freescout-id', $acf['freescout-id'] ?? null, $post_id );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'lid_sinds', $this->storage_value( 'person', 'lid_sinds', $this->shift_date( $fields['lid_sinds'] ?? null ) ) );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'vrijwilliger_sinds', $this->storage_value( 'person', 'vrijwilliger_sinds', $this->shift_date( $fields['vrijwilliger_sinds'] ?? null ) ) );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'leeftijdsgroep', $fields['leeftijdsgroep'] ?? null );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'datum_vog', $this->storage_value( 'person', 'datum_vog', $this->shift_date( $fields['datum_vog'] ?? null ) ) );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'datum_foto', $this->storage_value( 'person', 'datum_foto', $this->shift_date( $fields['datum_foto'] ?? null ) ) );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'type_lid', $fields['type_lid'] ?? null );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'huidig_vrijwilliger', $fields['huidig_vrijwilliger'] ?? null );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'financiele_blokkade', $fields['financiele_blokkade'] ?? false );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'knvb_id', $fields['knvb_id'] ?? ( $fields['relatiecode'] ?? null ) );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'freescout_id', $fields['freescout_id'] ?? null );
 
-			// Set post_meta directly (non-ACF fields)
+			// Set post_meta directly (non-registry metadata)
 			$post_meta = $person['post_meta'] ?? [];
 			foreach ( $post_meta as $meta_key => $meta_value ) {
 				if ( $meta_value !== null ) {
@@ -795,21 +800,21 @@ class DemoImport {
 				continue;
 			}
 
-			$acf = $person['acf'] ?? [];
+			$fields = $person['fields'] ?? [];
 
 			// Resolve work_history refs
-			$work_history = $this->resolve_team_relationships( $acf['work_history'] ?? [] );
+			$work_history = $this->storage_value( 'person', 'work_history', $this->resolve_team_relationships( $fields['work_history'] ?? [] ) );
 			if ( ! empty( $work_history ) ) {
-				update_field( 'work_history', $work_history, $post_id );
+				\Rondo\Fields\Fields::update_for_post( $post_id, 'work_history', $work_history );
 			}
 
 			// Resolve relationships refs
-			$relationships          = $acf['relationships'] ?? [];
+			$relationships          = $fields['relationships'] ?? [];
 			$resolved_relationships = [];
 
 			foreach ( $relationships as $row ) {
-				$related_person_ref    = $row['related_person'] ?? null;
-				$relationship_type_ref = $row['relationship_type'] ?? null;
+				$related_person_ref    = $row['related_person_id'] ?? null;
+				$relationship_type_ref = $row['relationship_type_id'] ?? null;
 
 				$resolved_person_id = $related_person_ref ? $this->resolve_ref( $related_person_ref ) : null;
 				$resolved_type_id   = $relationship_type_ref ? $this->resolve_ref( $relationship_type_ref ) : null;
@@ -824,7 +829,7 @@ class DemoImport {
 			}
 
 			if ( ! empty( $resolved_relationships ) ) {
-				update_field( 'relationships', $resolved_relationships, $post_id );
+				\Rondo\Fields\Fields::update_for_post( $post_id, 'relationships', $resolved_relationships );
 			}
 		}
 
@@ -860,26 +865,26 @@ class DemoImport {
 			// Store ref mapping
 			$this->ref_map[ $ref ] = $post_id;
 
-			// Set ACF fields
-			$acf = $case['acf'] ?? [];
+			// Set canonical fields
+			$fields = $case['fields'] ?? [];
 
-			update_field( 'dossier_id', $acf['dossier_id'] ?? '', $post_id );
-			update_field( 'match_date', $this->shift_date( $acf['match_date'] ?? null, 'Ymd' ), $post_id );
-			update_field( 'processing_date', $this->shift_date( $acf['processing_date'] ?? null, 'Ymd' ), $post_id );
-			update_field( 'match_description', $acf['match_description'] ?? null, $post_id );
-			update_field( 'team_name', $acf['team_name'] ?? null, $post_id );
-			update_field( 'charge_codes', $acf['charge_codes'] ?? null, $post_id );
-			update_field( 'charge_description', $acf['charge_description'] ?? null, $post_id );
-			update_field( 'sanction_description', $acf['sanction_description'] ?? null, $post_id );
-			update_field( 'administrative_fee', $acf['administrative_fee'] ?? null, $post_id );
-			update_field( 'is_charged', $acf['is_charged'] ?? false, $post_id );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'dossier_id', $fields['dossier_id'] ?? '' );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'match_date', $this->storage_value( 'discipline_case', 'match_date', $this->shift_date( $fields['match_date'] ?? null ) ) );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'processing_date', $this->storage_value( 'discipline_case', 'processing_date', $this->shift_date( $fields['processing_date'] ?? null ) ) );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'match_description', $fields['match_description'] ?? null );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'team_name', $fields['team_name'] ?? null );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'charge_codes', $fields['charge_codes'] ?? null );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'charge_description', $fields['charge_description'] ?? null );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'sanction_description', $fields['sanction_description'] ?? null );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'administrative_fee', $fields['administrative_fee'] ?? null );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'is_charged', $fields['is_charged'] ?? false );
 
 			// Resolve person ref
-			$person_ref = $acf['person'] ?? null;
+			$person_ref = $fields['person'] ?? null;
 			if ( $person_ref ) {
 				$person_id = $this->resolve_ref( $person_ref );
 				if ( $person_id ) {
-					update_field( 'person', $person_id, $post_id );
+					\Rondo\Fields\Fields::update_for_post( $post_id, 'person', $person_id );
 				}
 			}
 
@@ -923,30 +928,30 @@ class DemoImport {
 			// Store ref mapping
 			$this->ref_map[ $ref ] = $post_id;
 
-			// Set ACF fields
-			$acf = $invoice['acf'] ?? [];
+			// Set canonical fields
+			$fields = $invoice['fields'] ?? [];
 
-			update_field( 'invoice_number', $acf['invoice_number'] ?? '', $post_id );
-			update_field( 'invoice_type', $acf['invoice_type'] ?? null, $post_id );
-			update_field( 'status', $acf['status'] ?? null, $post_id );
-			update_field( 'total_amount', $acf['total_amount'] ?? 0, $post_id );
-			update_field( 'sent_date', $this->shift_date( $acf['sent_date'] ?? null, 'Ymd' ), $post_id );
-			update_field( 'due_date', $this->shift_date( $acf['due_date'] ?? null, 'Ymd' ), $post_id );
-			update_field( 'payment_link', null, $post_id );
-			update_field( 'pdf_path', null, $post_id );
-			update_field( 'qr_code_path', null, $post_id );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'invoice_number', $fields['invoice_number'] ?? '' );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'invoice_type', $fields['invoice_type'] ?? null );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'status', $fields['status'] ?? null );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'total_amount', $fields['total_amount'] ?? 0 );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'sent_date', $this->storage_value( 'rondo_invoice', 'sent_date', $this->shift_date( $fields['sent_date'] ?? null ) ) );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'due_date', $this->storage_value( 'rondo_invoice', 'due_date', $this->shift_date( $fields['due_date'] ?? null ) ) );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'payment_link', null );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'pdf_path', null );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'qr_code_path', null );
 
 			// Resolve person ref
-			$person_ref = $acf['person'] ?? null;
+			$person_ref = $fields['person'] ?? null;
 			if ( $person_ref ) {
 				$person_id = $this->resolve_ref( $person_ref );
 				if ( $person_id ) {
-					update_field( 'person', $person_id, $post_id );
+					\Rondo\Fields\Fields::update_for_post( $post_id, 'person', $person_id );
 				}
 			}
 
 			// Resolve line items
-			$raw_line_items      = $acf['line_items'] ?? [];
+			$raw_line_items      = $fields['line_items'] ?? [];
 			$resolved_line_items = [];
 
 			foreach ( $raw_line_items as $item ) {
@@ -961,7 +966,7 @@ class DemoImport {
 			}
 
 			if ( ! empty( $resolved_line_items ) ) {
-				update_field( 'line_items', $resolved_line_items, $post_id );
+				\Rondo\Fields\Fields::update_for_post( $post_id, 'line_items', $resolved_line_items );
 			}
 
 			// Set post meta
@@ -1035,11 +1040,11 @@ class DemoImport {
 			// Store ref mapping
 			$this->ref_map[ $ref ] = $post_id;
 
-			// Set ACF fields
-			$acf = $todo['acf'] ?? [];
+			// Set canonical fields
+			$fields = $todo['fields'] ?? [];
 
 			// Resolve related_persons refs
-			$related_persons_refs = $acf['related_persons'] ?? [];
+			$related_persons_refs = $fields['related_persons'] ?? [];
 			$resolved_person_ids  = [];
 
 			foreach ( $related_persons_refs as $person_ref ) {
@@ -1049,10 +1054,11 @@ class DemoImport {
 				}
 			}
 
-			update_field( 'related_persons', $resolved_person_ids, $post_id );
-			update_field( 'notes', $acf['notes'] ?? null, $post_id );
-			update_field( 'awaiting_since', $this->shift_date( $acf['awaiting_since'] ?? null, 'Y-m-d H:i:s' ), $post_id );
-			update_field( 'due_date', $this->shift_date( $acf['due_date'] ?? null ), $post_id );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'related_persons', $resolved_person_ids );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'notes', $fields['notes'] ?? null );
+			$awaiting_since = $this->shift_date( $fields['awaiting_since'] ?? null, DATE_RFC3339 );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'awaiting_since', $this->storage_value( 'rondo_todo', 'awaiting_since', $awaiting_since ) );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'due_date', $this->storage_value( 'rondo_todo', 'due_date', $this->shift_date( $fields['due_date'] ?? null ) ) );
 		}
 
 		WP_CLI::log( sprintf( '  Imported %d todos', $total ) );

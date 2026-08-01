@@ -14,8 +14,15 @@ class Taxonomies {
 	public function __construct() {
 		add_action( 'init', [ $this, 'register_taxonomies' ] );
 
-		// Add unique validation for discipline case dossier_id
-		add_filter( 'acf/validate_value/name=dossier_id', [ $this, 'validate_unique_dossier_id' ], 10, 4 );
+		add_filter( 'rondo_fields_validate_value', [ $this, 'validate_native_dossier_id' ], 10, 4 );
+	}
+
+	public function validate_native_dossier_id( $value, int $post_id, array $field, $old_value ) {
+		if ( $field['canonical_name'] !== 'dossier_id' ) {
+			return $value;
+		}
+		$result = $this->validate_unique_dossier_id( true, $value, $field, '', $post_id );
+		return $result === true ? $value : new \WP_Error( 'rondo_duplicate_dossier_id', (string) $result, [ 'status' => 400 ] );
 	}
 
 	/**
@@ -125,12 +132,6 @@ class Taxonomies {
 	 * Includes inverse mappings for symmetric and asymmetric types
 	 */
 	public function setup_default_relationship_configurations() {
-		// ACF must be loaded for get_field/update_field to work
-		// During theme activation, ACF may not be ready yet
-		if ( ! function_exists( 'get_field' ) ) {
-			return;
-		}
-
 		// Get all relationship type terms by slug
 		$types     = [];
 		$all_terms = get_terms(
@@ -150,9 +151,9 @@ class Taxonomies {
 		$symmetric = [ 'sibling' ];
 		foreach ( $symmetric as $slug ) {
 			if ( isset( $types[ $slug ] ) ) {
-				$inverse = get_field( 'inverse_relationship_type', 'relationship_type_' . $types[ $slug ] );
+				$inverse = \Rondo\Fields\Fields::get_for_term( 'relationship_type', $types[ $slug ], 'inverse_relationship_type' );
 				if ( ! $inverse ) {
-					update_field( 'inverse_relationship_type', $types[ $slug ], 'relationship_type_' . $types[ $slug ] );
+					\Rondo\Fields\Fields::update_for_term( 'relationship_type', $types[ $slug ], 'inverse_relationship_type', $types[ $slug ] );
 				}
 			}
 		}
@@ -165,9 +166,9 @@ class Taxonomies {
 
 		foreach ( $asymmetric as $from_slug => $to_slug ) {
 			if ( isset( $types[ $from_slug ] ) && isset( $types[ $to_slug ] ) ) {
-				$inverse = get_field( 'inverse_relationship_type', 'relationship_type_' . $types[ $from_slug ] );
+				$inverse = \Rondo\Fields\Fields::get_for_term( 'relationship_type', $types[ $from_slug ], 'inverse_relationship_type' );
 				if ( ! $inverse ) {
-					update_field( 'inverse_relationship_type', $types[ $to_slug ], 'relationship_type_' . $types[ $from_slug ] );
+					\Rondo\Fields\Fields::update_for_term( 'relationship_type', $types[ $from_slug ], 'inverse_relationship_type', $types[ $to_slug ] );
 				}
 			}
 		}
@@ -307,20 +308,20 @@ class Taxonomies {
 	 * @param string $input_name The input name/key
 	 * @return mixed True if valid, error message string if invalid
 	 */
-	public function validate_unique_dossier_id( $valid, $value, $field, $input_name ) {
+	public function validate_unique_dossier_id( $valid, $value, $field, $input_name, ?int $native_post_id = null ) {
 		// Skip if already invalid or empty
 		if ( ! $valid || empty( $value ) ) {
 			return $valid;
 		}
 
 		// Get current post ID from various sources
-		$post_id = 0;
+		$post_id = $native_post_id ?? 0;
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		if ( isset( $_POST['post_ID'] ) ) {
+		if ( $post_id === 0 && isset( $_POST['post_ID'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$post_id = intval( $_POST['post_ID'] );
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		} elseif ( isset( $_POST['post_id'] ) ) {
+		} elseif ( $post_id === 0 && isset( $_POST['post_id'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$post_id = intval( $_POST['post_id'] );
 		}

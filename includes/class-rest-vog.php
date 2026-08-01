@@ -244,7 +244,7 @@ class Vog extends Base {
 
 		foreach ( $ids as $person_id ) {
 			// Determine template type based on datum-vog
-			$datum_vog     = get_field( 'datum-vog', $person_id );
+			$datum_vog     = \Rondo\Fields\Fields::get_for_post( $person_id, 'datum_vog' );
 			$template_type = empty( $datum_vog ) ? 'new' : 'renewal';
 
 			$result = $vog_email->send( (int) $person_id, $template_type );
@@ -344,7 +344,7 @@ class Vog extends Base {
 
 		foreach ( $ids as $person_id ) {
 			// Determine template type based on datum-vog
-			$datum_vog     = get_field( 'datum-vog', $person_id );
+			$datum_vog     = \Rondo\Fields\Fields::get_for_post( $person_id, 'datum_vog' );
 			$template_type = empty( $datum_vog ) ? 'reminder_new' : 'reminder_renewal';
 
 			$result = $vog_email->send_reminder( (int) $person_id, $template_type );
@@ -379,7 +379,7 @@ class Vog extends Base {
 	/**
 	 * Add VOG-related post meta fields to person REST API response
 	 *
-	 * These fields are stored as post meta (not ACF fields) and need to be
+	 * These fields are stored as post meta (not canonical fields) and need to be
 	 * exposed in the REST API for the VOG status card on the person detail page.
 	 *
 	 * @param \WP_REST_Response $response The response object.
@@ -395,27 +395,26 @@ class Vog extends Base {
 
 		$data = $response->get_data();
 
-		// Ensure acf array exists
-		if ( ! isset( $data['acf'] ) ) {
-			$data['acf'] = [];
+		if ( ! isset( $data['fields'] ) ) {
+			$data['fields'] = [];
 		}
 
 		// Add VOG email sent date from post meta
 		$vog_email_sent = get_post_meta( $post->ID, 'vog_email_sent_date', true );
 		if ( $vog_email_sent ) {
-			$data['acf']['vog_email_sent_date'] = $vog_email_sent;
+			$data['fields']['vog_email_sent_date'] = $vog_email_sent;
 		}
 
 		// Add VOG Justis submitted date from post meta
 		$vog_justis = get_post_meta( $post->ID, 'vog_justis_submitted_date', true );
 		if ( $vog_justis ) {
-			$data['acf']['vog_justis_submitted_date'] = $vog_justis;
+			$data['fields']['vog_justis_submitted_date'] = $vog_justis;
 		}
 
 		// Add VOG reminder sent date from post meta
 		$vog_reminder = get_post_meta( $post->ID, 'vog_reminder_sent_date', true );
 		if ( $vog_reminder ) {
-			$data['acf']['vog_reminder_sent_date'] = $vog_reminder;
+			$data['fields']['vog_reminder_sent_date'] = $vog_reminder;
 		}
 
 		$response->set_data( $data );
@@ -426,7 +425,7 @@ class Vog extends Base {
 	 * Add computed discipline case charging exception status to REST response.
 	 *
 	 * Cases belonging to configured exempt teams are exposed with is_charged = 'exception'
-	 * so frontend can display "Uitzondering" without mutating stored ACF values.
+	 * so frontend can display "Uitzondering" without mutating stored native field values.
 	 *
 	 * @param \WP_REST_Response $response The response object.
 	 * @param \WP_Post          $post     The post object.
@@ -449,11 +448,10 @@ class Vog extends Base {
 		}
 
 		$data = $response->get_data();
-		if ( ! isset( $data['acf'] ) || ! is_array( $data['acf'] ) ) {
-			$data['acf'] = [];
+		if ( ! isset( $data['fields'] ) || ! is_array( $data['fields'] ) ) {
+			$data['fields'] = [];
 		}
-
-		$data['acf']['is_charged'] = 'exception';
+		$data['fields']['is_charged'] = 'exception';
 		$response->set_data( $data );
 		return $response;
 	}
@@ -499,7 +497,7 @@ class Vog extends Base {
 		}
 
 		// Fallback: match by team_name text when home/away team IDs are missing.
-		$team_name = get_field( 'team_name', $case_id );
+		$team_name = \Rondo\Fields\Fields::get_for_post( $case_id, 'team_name' );
 		if ( ! is_string( $team_name ) || trim( $team_name ) === '' ) {
 			return false;
 		}
@@ -525,8 +523,8 @@ class Vog extends Base {
 	 * @return int|null Team post ID or null.
 	 */
 	private function get_discipline_case_team_id( int $case_id ): ?int {
-		$home_team = get_field( 'home_team', $case_id );
-		$away_team = get_field( 'away_team', $case_id );
+		$home_team = \Rondo\Fields\Fields::get_for_post( $case_id, 'home_team' );
+		$away_team = \Rondo\Fields\Fields::get_for_post( $case_id, 'away_team' );
 
 		$home_id = is_numeric( $home_team ) ? (int) $home_team : 0;
 		$away_id = is_numeric( $away_team ) ? (int) $away_team : 0;

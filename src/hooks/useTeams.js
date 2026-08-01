@@ -3,7 +3,7 @@ import { wpApi, prmApi } from '@/api/client';
 
 /**
  * Create a new team/organization.
- * Handles payload building with all required ACF fields.
+ * Handles payload building with all required canonical fields.
  *
  * @param {Object} options - Hook options
  * @param {Function} options.onSuccess - Called with created team data after successful creation
@@ -18,9 +18,8 @@ export function useCreateTeam({ onSuccess } = {}) {
         title: data.title,
         status: 'publish',
         parent: data.parentId || 0,
-        acf: {
+        fields: {
           website: data.website,
-          investors: data.investors || [],
         },
       };
 

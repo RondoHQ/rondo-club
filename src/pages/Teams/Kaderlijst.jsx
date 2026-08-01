@@ -59,14 +59,14 @@ function normalizeTeamNameForRoster(name) {
 }
 
 function getPrimaryContactByType(person, type) {
-  if (type === 'email') return person?.acf?.email_1 || person?.acf?.email_2 || '';
-  if (type === 'mobile') return person?.acf?.mobile_1 || person?.acf?.mobile_2 || '';
-  if (type === 'phone') return person?.acf?.telephone_1 || person?.acf?.telephone_2 || '';
+  if (type === 'email') return person?.fields?.email_1 || person?.fields?.email_2 || '';
+  if (type === 'mobile') return person?.fields?.mobile_1 || person?.fields?.mobile_2 || '';
+  if (type === 'phone') return person?.fields?.telephone_1 || person?.fields?.telephone_2 || '';
   return '';
 }
 
 function getPrimaryPhone(person) {
-  return person?.acf?.mobile_1 || person?.acf?.telephone_1 || person?.acf?.mobile_2 || person?.acf?.telephone_2 || '';
+  return person?.fields?.mobile_1 || person?.fields?.telephone_1 || person?.fields?.mobile_2 || person?.fields?.telephone_2 || '';
 }
 
 function parseYearFromLabel(label) {
@@ -249,19 +249,19 @@ async function buildKaderlijst() {
 
   const rows = [];
   people.forEach((person) => {
-    if (isTruthy(person?.acf?.former_member)) return;
+    if (isTruthy(person?.fields?.former_member)) return;
 
-    const workHistory = Array.isArray(person?.acf?.work_history) ? person.acf.work_history : [];
+    const workHistory = Array.isArray(person?.fields?.work_history) ? person.fields.work_history : [];
     if (workHistory.length === 0) return;
 
-    const firstName = person?.acf?.first_name || '';
-    const infix = person?.acf?.infix || '';
-    const lastName = person?.acf?.last_name || '';
+    const firstName = person?.fields?.first_name || '';
+    const infix = person?.fields?.infix || '';
+    const lastName = person?.fields?.last_name || '';
     const mobile = getPrimaryPhone(person);
     const email = getPrimaryContactByType(person, 'email');
 
     workHistory.forEach((job) => {
-      const teamId = Number.parseInt(job?.team, 10);
+      const teamId = Number.parseInt(job?.team_id, 10);
       if (!isCurrentJob(job)) return;
 
       const team = teamId ? teamsById.get(teamId) : null;

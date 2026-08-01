@@ -38,7 +38,7 @@ class GuardianAccountService {
 		'iva-approved',
 	];
 
-	private const PERSON_ACF_TRANSFER_FIELDS = [
+	private const PERSON_FIELD_TRANSFER_FIELDS = [
 		'datum-vog',
 		'datum-iva',
 		'iva-certificaat',
@@ -99,7 +99,7 @@ class GuardianAccountService {
 			return $pending['name'];
 		}
 
-		$first_name = trim( (string) get_field( 'first_name', $person_id ) );
+		$first_name = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) );
 		return $first_name !== '' ? $first_name : get_the_title( $person_id );
 	}
 
@@ -260,9 +260,9 @@ class GuardianAccountService {
 			delete_user_meta( $user_id, UserProvisioning::META_KNVB_ID );
 		}
 
-		$first = trim( (string) get_field( 'first_name', $target_person_id ) );
-		$infix = trim( (string) get_field( 'infix', $target_person_id ) );
-		$last  = trim( (string) get_field( 'last_name', $target_person_id ) );
+		$first = trim( (string) \Rondo\Fields\Fields::get_for_post( $target_person_id, 'first_name' ) );
+		$infix = trim( (string) \Rondo\Fields\Fields::get_for_post( $target_person_id, 'infix' ) );
+		$last  = trim( (string) \Rondo\Fields\Fields::get_for_post( $target_person_id, 'last_name' ) );
 		$name  = trim( implode( ' ', array_filter( [ $first, $infix, $last ] ) ) );
 		$name  = $name !== '' ? $name : get_the_title( $target_person_id );
 		wp_update_user(
@@ -360,9 +360,9 @@ class GuardianAccountService {
 				continue;
 			}
 
-			if ( in_array( $field, self::PERSON_ACF_TRANSFER_FIELDS, true ) ) {
-				update_field( $field, $value, $target_person_id );
-				delete_field( $field, $source_person_id );
+			if ( in_array( $field, self::PERSON_FIELD_TRANSFER_FIELDS, true ) ) {
+				\Rondo\Fields\Fields::update_for_post( $target_person_id, $field, $value );
+				\Rondo\Fields\Fields::delete_for_post( $source_person_id, $field );
 			} else {
 				update_post_meta( $target_person_id, $field, $value );
 				delete_post_meta( $source_person_id, $field );

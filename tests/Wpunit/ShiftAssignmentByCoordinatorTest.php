@@ -24,13 +24,6 @@ class ShiftAssignmentByCoordinatorTest extends RondoTestCase {
 
 		$this->bootRestControllers( [ MemberShifts::class ] );
 
-		// ACF Pro emits a REST schema for the shift select fields whose `type`
-		// keyword WordPress 7.0 rejects as non-built-in. Upstream ACF issue,
-		// silent in production because _doing_it_wrong() only speaks up under
-		// WP_DEBUG. Ignored rather than expected: it fires only for requests
-		// that touch one of those fields.
-		$this->ignoreIncorrectUsage( 'rest_handle_multi_type_schema' );
-
 		$this->dienst_type_id = self::factory()->post->create(
 			[
 				'post_type'   => 'dienst_type',
@@ -235,12 +228,11 @@ class ShiftAssignmentByCoordinatorTest extends RondoTestCase {
 	public function test_writing_assigned_persons_directly_is_refused(): void {
 		$this->as_coordinator();
 
-		// ACF marks several shift fields required, so a payload carrying only
-		// assigned_persons is rejected by schema validation before the guard is
-		// reached. Send what the editor sends, so the 403 proves the guard fired.
+		// Send the complete editor payload so the 403 proves the assignment guard,
+		// rather than unrelated field validation, produced the response.
 		$request = new WP_REST_Request( 'POST', '/wp/v2/dienst-shifts/' . $this->shift_id );
 		$request->set_param(
-			'acf',
+			'fields',
 			[
 				'dienst_type_id'   => $this->dienst_type_id,
 				'start_datetime'   => (string) get_post_meta( $this->shift_id, 'start_datetime', true ),
@@ -258,10 +250,9 @@ class ShiftAssignmentByCoordinatorTest extends RondoTestCase {
 	}
 
 	/**
-	 * ACF relationship fields arrive as strings over REST, and the shift editor
-	 * round-trips the whole ACF object — several fields of which ACF marks
-	 * required. Comparing raw values would refuse that unchanged round-trip and
-	 * break every ordinary shift edit.
+	 * Relationship IDs may arrive as strings over REST, and the shift editor
+	 * round-trips the whole canonical fields object. Comparing raw values would
+	 * refuse that unchanged round-trip and break every ordinary shift edit.
 	 */
 	public function test_unchanged_assigned_persons_may_ride_along_as_strings(): void {
 		$this->as_coordinator();
@@ -269,15 +260,15 @@ class ShiftAssignmentByCoordinatorTest extends RondoTestCase {
 
 		$request = new WP_REST_Request( 'POST', '/wp/v2/dienst-shifts/' . $this->shift_id );
 		$request->set_param(
-			'acf',
+			'fields',
 			[
 				// What the editor actually sends back, required fields included.
 				'dienst_type_id'   => $this->dienst_type_id,
-				'start_datetime'   => (string) get_post_meta( $this->shift_id, 'start_datetime', true ),
-				'end_datetime'     => (string) get_post_meta( $this->shift_id, 'end_datetime', true ),
+				'start_datetime'   => wp_date( DATE_RFC3339, strtotime( (string) get_post_meta( $this->shift_id, 'start_datetime', true ) ) ),
+				'end_datetime'     => wp_date( DATE_RFC3339, strtotime( (string) get_post_meta( $this->shift_id, 'end_datetime', true ) ) ),
 				'status'           => 'open',
 				'capacity'         => 2,
-				// Unchanged, but string-typed as an ACF relationship field is over REST.
+				// Unchanged, but string-typed as relationship IDs can be over REST.
 				'assigned_persons' => [ (string) $this->person_id ],
 				'notes'            => 'Bijgewerkte notitie',
 			]

@@ -11,7 +11,7 @@ use Tests\Support\RondoTestCase;
  * - WordPress is loaded correctly
  * - Rondo Club theme is active
  * - Custom post types are registered
- * - ACF Pro is available
+ * - the native field API works without ACF
  * - Factory methods work
  */
 class SmokeTest extends RondoTestCase {
@@ -38,15 +38,10 @@ class SmokeTest extends RondoTestCase {
 		$this->assertNotNull( $post_type, 'Team post type should be registered' );
 	}
 
-	public function test_acf_pro_is_available(): void {
-		$this->assertTrue(
-			function_exists( 'get_field' ),
-			'ACF Pro should be loaded (get_field function)'
-		);
-		$this->assertTrue(
-			function_exists( 'update_field' ),
-			'ACF Pro should be loaded (update_field function)'
-		);
+	public function test_native_fields_work_without_acf(): void {
+		$this->assertFalse( function_exists( 'get_field' ), 'The ACF plugin must not be loaded in CI.' );
+		$person_id = $this->createPerson( [], [ 'first_name' => 'Native' ] );
+		$this->assertSame( 'Native', \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) );
 	}
 
 	public function test_rondo_user_role_exists(): void {

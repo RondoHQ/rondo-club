@@ -100,21 +100,21 @@ class VolunteerFineGenerator {
 			);
 		}
 
-		update_field( 'invoice_number', $invoice_number, $invoice_id );
-		update_field( 'invoice_type', self::INVOICE_TYPE, $invoice_id );
-		update_field( 'person', $invoice_recipient, $invoice_id );
-		update_field( 'total_amount', self::FINE_AMOUNT_EUR, $invoice_id );
-		update_field(
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'invoice_number', $invoice_number );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'invoice_type', self::INVOICE_TYPE );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'person', $invoice_recipient );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'total_amount', self::FINE_AMOUNT_EUR );
+		\Rondo\Fields\Fields::update_for_post(
+			$invoice_id,
 			'line_items',
 			[
 				[
 					'description' => $description,
 					'amount'      => self::FINE_AMOUNT_EUR,
 				],
-			],
-			$invoice_id
-		);
-		update_field( 'status', 'draft', $invoice_id );
+			]
+			);
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'status', 'draft' );
 
 		update_post_meta( $invoice_id, '_invoice_kind', self::INVOICE_KIND );
 		update_post_meta( $invoice_id, '_volunteer_fine_shift_id', $shift_id );
@@ -157,7 +157,7 @@ class VolunteerFineGenerator {
 		}
 
 		// JO16- → primary parent from relationships.
-		$rels = get_field( 'relationships', $person_id );
+		$rels = \Rondo\Fields\Fields::get_for_post( $person_id, 'relationships' );
 		if ( is_array( $rels ) ) {
 			foreach ( $rels as $rel ) {
 				$type_id = self::extract_term_id( $rel['relationship_type'] ?? null );

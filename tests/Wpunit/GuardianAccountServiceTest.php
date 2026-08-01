@@ -18,8 +18,8 @@ class GuardianAccountServiceTest extends RondoTestCase {
 	private function person( string $name, ?string $age_group = null ): int {
 		$person_id        = $this->createPerson( [ 'post_title' => $name ] );
 		[ $first, $last ] = array_pad( explode( ' ', $name, 2 ), 2, '' );
-		update_field( 'first_name', $first, $person_id );
-		update_field( 'last_name', $last, $person_id );
+		\Rondo\Fields\Fields::update_for_post( $person_id, 'first_name', $first );
+		\Rondo\Fields\Fields::update_for_post( $person_id, 'last_name', $last );
 		if ( $age_group !== null ) {
 			update_post_meta( $person_id, 'leeftijdsgroep', $age_group );
 		}
@@ -40,25 +40,25 @@ class GuardianAccountServiceTest extends RondoTestCase {
 	}
 
 	private function link_parent_child( int $parent_id, int $child_id ): void {
-		update_field(
+		\Rondo\Fields\Fields::update_for_post(
+			$parent_id,
 			'relationships',
 			[
 				[
 					'related_person'    => $child_id,
 					'relationship_type' => self::TYPE_CHILD,
 				],
-			],
-			$parent_id
+			]
 		);
-		update_field(
+		\Rondo\Fields\Fields::update_for_post(
+			$child_id,
 			'relationships',
 			[
 				[
 					'related_person'    => $parent_id,
 					'relationship_type' => self::TYPE_PARENT,
 				],
-			],
-			$child_id
+			]
 		);
 	}
 
@@ -115,7 +115,8 @@ class GuardianAccountServiceTest extends RondoTestCase {
 				'post_title'  => 'Jeugdcommissie',
 			]
 		);
-		update_field(
+		\Rondo\Fields\Fields::update_for_post(
+			$parent_id,
 			'work_history',
 			[
 				[
@@ -124,8 +125,7 @@ class GuardianAccountServiceTest extends RondoTestCase {
 					'job_title'   => 'Lid',
 					'is_current'  => 1,
 				],
-			],
-			$parent_id
+			]
 		);
 
 		add_filter( 'pre_wp_mail', '__return_true' );
@@ -149,10 +149,10 @@ class GuardianAccountServiceTest extends RondoTestCase {
 		add_filter( 'pre_wp_mail', '__return_true' );
 		GuardianAccountService::claim( $user_id, $child_id, 'Bas van Haren' );
 
-		update_field( 'datum-vog', '20260720', $child_id );
+		\Rondo\Fields\Fields::update_for_post( $child_id, 'datum_vog', '20260720' );
 		update_post_meta( $child_id, 'vog_justis_submitted_date', '2026-07-20' );
-		update_field( 'datum-iva', '20260719', $child_id );
-		update_field( 'iva-approved', 1, $child_id );
+		\Rondo\Fields\Fields::update_for_post( $child_id, 'datum_iva', '20260719' );
+		\Rondo\Fields\Fields::update_for_post( $child_id, 'iva_approved', 1 );
 		update_post_meta( $child_id, 'iva-approved', 1 );
 
 		$shift_id = self::factory()->post->create(
@@ -189,8 +189,8 @@ class GuardianAccountServiceTest extends RondoTestCase {
 		$child_id  = $this->person( 'Kind', 'Onder 12' );
 		$parent_id = $this->person( 'Ouder' );
 		$user_id   = $this->linked_user( $child_id );
-		update_field( 'datum-vog', '20260720', $child_id );
-		update_field( 'datum-vog', '20250101', $parent_id );
+		\Rondo\Fields\Fields::update_for_post( $child_id, 'datum_vog', '20260720' );
+		\Rondo\Fields\Fields::update_for_post( $parent_id, 'datum_vog', '20250101' );
 
 		$result = GuardianAccountService::relink( $user_id, $parent_id );
 

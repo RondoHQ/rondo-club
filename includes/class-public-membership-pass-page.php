@@ -50,7 +50,7 @@ class PublicMembershipPassPage {
 		add_action( 'init', [ $this, 'maybe_backfill_pass_urls' ], 20 );
 
 		add_action( 'save_post_person', [ $this, 'sync_person_pass_meta' ], 20, 3 );
-		add_action( 'acf/save_post', [ $this, 'sync_person_pass_meta_on_acf_save' ], 20 );
+		add_action( 'rondo_fields_saved_post', [ $this, 'sync_person_pass_meta_on_field_save' ], 20 );
 	}
 
 	/**
@@ -225,7 +225,7 @@ class PublicMembershipPassPage {
 			return self::get_sponsor_pass_variant( $person_id ) !== '' ? 'sponsor' : '';
 		}
 
-		$type_lid = strtolower( trim( (string) get_field( 'type-lid', $person_id ) ) );
+		$type_lid = strtolower( trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'type_lid' ) ) );
 
 		if ( $type_lid === 'bondslid' ) {
 			return 'bondslid';
@@ -245,7 +245,7 @@ class PublicMembershipPassPage {
 	 * @return string Valid variant or an empty string when none is selected.
 	 */
 	public static function get_sponsor_pass_variant( int $person_id ): string {
-		$variant = sanitize_key( (string) ( get_field( 'sponsor_pass_variant', $person_id ) ?: get_post_meta( $person_id, 'sponsor_pass_variant', true ) ) );
+		$variant = sanitize_key( (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'sponsor_pass_variant' ) ?: get_post_meta( $person_id, 'sponsor_pass_variant', true ) ) );
 		$allowed = [
 			self::SPONSOR_PASS_VARIANT_BUSINESSCLUB,
 			self::SPONSOR_PASS_VARIANT_AWC_SPONSOR,
@@ -301,11 +301,11 @@ class PublicMembershipPassPage {
 	}
 
 	/**
-	 * acf/save_post hook handler for person records.
+	 * Native field-save hook handler for person records.
 	 *
-	 * @param mixed $post_id Post ID or ACF identifier.
+	 * @param mixed $post_id Post ID or native field identifier.
 	 */
-	public function sync_person_pass_meta_on_acf_save( $post_id ) {
+	public function sync_person_pass_meta_on_field_save( $post_id ) {
 		$person_id = (int) $post_id;
 		if ( $person_id <= 0 ) {
 			return;
@@ -327,12 +327,12 @@ class PublicMembershipPassPage {
 	 * @param string $selected_work Selected work option key.
 	 */
 	private function render_page( int $person_id, string $token, string $selected_work = '' ) {
-		$first_name   = (string) ( get_field( 'first_name', $person_id ) ?: '' );
-		$infix        = (string) ( get_field( 'infix', $person_id ) ?: '' );
-		$last_name    = (string) ( get_field( 'last_name', $person_id ) ?: '' );
+		$first_name   = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '' );
+		$infix        = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'infix' ) ?: '' );
+		$last_name    = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '' );
 		$name         = trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
-		$name         = $name !== '' ? $name : (string) get_field( 'company_name', $person_id );
-		$knvb_id      = (string) get_field( 'knvb-id', $person_id );
+		$name         = $name !== '' ? $name : (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' );
+		$knvb_id      = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'knvb_id' );
 		$member_tier  = self::get_person_member_tier( $person_id );
 		$member_label = $member_tier === 'sponsor'
 			? 'Sponsor'

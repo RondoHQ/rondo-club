@@ -16,17 +16,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Validation class for custom fields.
  *
- * Handles unique validation via ACF's validate_value hook.
+ * Handles unique validation via native field's validate_value hook.
  */
 class Validation {
 
 	/**
 	 * Constructor.
 	 *
-	 * Registers ACF validation hooks.
+	 * Registers native field validation hooks.
 	 */
 	public function __construct() {
-		add_filter( 'acf/validate_value', [ $this, 'validate_unique' ], 10, 4 );
+		add_filter( 'rondo_fields_validate_value', [ $this, 'validate_native_unique' ], 10, 4 );
+	}
+
+	public function validate_native_unique( $value, int $post_id, array $field, $old_value ) {
+		if ( empty( $field['dynamic'] ) || empty( $field['unique'] ) || $value === '' || $value === null ) {
+			return $value;
+		}
+		$result = $this->validate_unique( true, $value, $field, '', $post_id );
+		return $result === true ? $value : new \WP_Error( 'rondo_duplicate_field', (string) $result, [ 'status' => 400 ] );
 	}
 
 	/**
@@ -41,7 +49,7 @@ class Validation {
 	 * @param string      $input_name The input name (for error targeting).
 	 * @return bool|string True if valid, error message if invalid.
 	 */
-	public function validate_unique( $valid, $value, $field, $input_name ) {
+	public function validate_unique( $valid, $value, $field, $input_name, ?int $native_post_id = null ) {
 		// Bail early if already invalid.
 		if ( $valid !== true ) {
 			return $valid;
@@ -58,25 +66,20 @@ class Validation {
 		}
 
 		// Get current post ID from the $_POST data.
-		$post_id = 0;
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- ACF handles nonce verification.
-		if ( isset( $_POST['post_ID'] ) ) {
+		$post_id = $native_post_id ?? 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- native field handles nonce verification.
+		if ( $post_id === 0 && isset( $_POST['post_ID'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$post_id = (int) $_POST['post_ID'];
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		} elseif ( isset( $_POST['post_id'] ) ) {
+		} elseif ( $post_id === 0 && isset( $_POST['post_id'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$post_id = (int) $_POST['post_id'];
 		}
 
 		// Determine post type from field key.
 		// Field keys are like: field_custom_person_xxx or field_custom_company_xxx.
-		$post_type = null;
-		if ( strpos( $field['key'], 'field_custom_person_' ) === 0 ) {
-			$post_type = 'person';
-		} elseif ( strpos( $field['key'], 'field_custom_company_' ) === 0 ) {
-			$post_type = 'team';
-		}
+		$post_type = $field['context'] ?? null;
 
 		if ( ! $post_type ) {
 			return $valid;

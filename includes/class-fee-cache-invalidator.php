@@ -3,7 +3,7 @@
  * Fee Cache Invalidation
  *
  * Automatically invalidates cached membership fees when relevant fields change.
- * Hooks into ACF update_value filters and REST API updates.
+ * Hooks into native field update_value filters and REST API updates.
  *
  * @package Rondo\Fees
  */
@@ -59,20 +59,7 @@ class FeeCacheInvalidator {
 		$this->fee_cache       = FeeServices::fee_cache();
 		$this->family_grouping = FeeServices::family_grouping();
 
-		// Age group changes affect fee category
-		add_filter( 'acf/update_value/name=leeftijdsgroep', [ $this, 'invalidate_person_cache' ], 10, 3 );
-
-		// Address changes affect family grouping (invalidate entire family)
-		add_filter( 'acf/update_value/name=addresses', [ $this, 'invalidate_family_cache' ], 10, 3 );
-
-		// Team changes affect senior vs recreant categorization
-		add_filter( 'acf/update_value/name=work_history', [ $this, 'invalidate_person_cache' ], 10, 3 );
-
-		// lid-sinds changes affect pro-rata calculation (PRO-04)
-		add_filter( 'acf/update_value/name=lid-sinds', [ $this, 'invalidate_person_cache' ], 10, 3 );
-
-		// Former-member changes affect the family discount for the whole household.
-		add_filter( 'acf/update_value/name=former_member', [ $this, 'invalidate_family_membership_cache' ], 10, 3 );
+		add_action( 'rondo_fields_updated', [ $this, 'invalidate_native_field' ], 10, 5 );
 
 		// REST API updates
 		add_action( 'rest_after_insert_person', [ $this, 'invalidate_person_cache_rest' ], 10, 2 );
@@ -89,10 +76,20 @@ class FeeCacheInvalidator {
 		add_action( 'rondo_recalculate_all_fees', [ $this, 'recalculate_all_fees_background' ] );
 	}
 
+	public function invalidate_native_field( int $post_id, string $canonical_name, $value, $old_value, array $field ): void {
+		if ( $canonical_name === 'addresses' ) {
+			$this->invalidate_family_cache( $value, $post_id, $field, $old_value );
+		} elseif ( $canonical_name === 'former_member' ) {
+			$this->invalidate_family_membership_cache( $value, $post_id, $field );
+		} elseif ( in_array( $canonical_name, [ 'leeftijdsgroep', 'work_history', 'lid_sinds' ], true ) ) {
+			$this->invalidate_person_cache( $value, $post_id, $field );
+		}
+	}
+
 	/**
-	 * Resolve a post ID from an int or ACF object, returning null if not a person post.
+	 * Resolve a post ID from an int or native field object, returning null if not a person post.
 	 *
-	 * @param mixed $post_id Raw post ID (int or ACF object with ->ID).
+	 * @param mixed $post_id Raw post ID (int or native field object with ->ID).
 	 * @return int|null Resolved integer post ID, or null if not a person post.
 	 */
 	private function resolve_person_post_id( $post_id ): ?int {
@@ -112,7 +109,7 @@ class FeeCacheInvalidator {
 	 *
 	 * @param mixed $value   The new field value.
 	 * @param mixed $post_id The post ID.
-	 * @param array $field   The ACF field array.
+	 * @param array $field   The canonical field array.
 	 * @return mixed The unmodified value (filter passthrough).
 	 */
 	public function invalidate_person_cache( $value, $post_id, $field ) {
@@ -139,16 +136,15 @@ class FeeCacheInvalidator {
 	}
 
 	/**
-	 * Invalidate the household when a person's former-member status changes.
+	 * Invalidate and recalculate the household after former-member status changes.
 	 *
-	 * ACF calls update_value filters before persisting the new value. Clear all
-	 * currently related caches here, but defer recalculation until the next cache
-	 * miss so it uses the new former-member state.
+	 * Native field update actions run after the new value is persisted, so the
+	 * rebuilt family uses the new active/former state immediately.
 	 *
 	 * @param mixed $value   The new field value.
 	 * @param mixed $post_id The post ID.
-	 * @param array $field   The ACF field array.
-	 * @return mixed The unmodified value (filter passthrough).
+	 * @param array $field   The canonical field array.
+	 * @return mixed The unmodified value.
 	 */
 	public function invalidate_family_membership_cache( $value, $post_id, $field ) {
 		$post_id = $this->resolve_person_post_id( $post_id );
@@ -160,16 +156,8 @@ class FeeCacheInvalidator {
 		$family_key = $this->family_grouping->get_family_key( $post_id );
 		$this->clear_person_family_cache( $post_id );
 
-		if ( $family_key === null ) {
-			return $value;
-		}
-
-		$families = $this->family_grouping->build_family_groups()['families'];
-		foreach ( $families[ $family_key ] ?? [] as $member_id ) {
-			$member_id = (int) $member_id;
-			if ( $member_id !== $post_id ) {
-				$this->clear_person_family_cache( $member_id );
-			}
+		if ( $family_key !== null ) {
+			$this->invalidate_and_recalculate_family( $family_key, $post_id );
 		}
 
 		return $value;
@@ -183,10 +171,10 @@ class FeeCacheInvalidator {
 	 *
 	 * @param mixed $value   The new field value.
 	 * @param mixed $post_id The post ID.
-	 * @param array $field   The ACF field array.
+	 * @param array $field   The canonical field array.
 	 * @return mixed The unmodified value (filter passthrough).
 	 */
-	public function invalidate_family_cache( $value, $post_id, $field ) {
+	public function invalidate_family_cache( $value, $post_id, $field, $old_value = null ) {
 		$post_id = $this->resolve_person_post_id( $post_id );
 
 		if ( $post_id === null ) {
@@ -196,12 +184,18 @@ class FeeCacheInvalidator {
 		// Clear this person's cache first
 		$this->clear_person_family_cache( $post_id );
 
-		// Get family key BEFORE the address update (using current saved value)
-		$old_family_key = $this->family_grouping->get_family_key( $post_id );
+		// Native field actions run after persistence. Rebuild both the household
+		// the person left and the household they joined.
+		$old_family_key = $this->family_grouping->get_family_key_from_addresses( $old_value );
+		$family_key     = $this->family_grouping->get_family_key( $post_id );
+
+		if ( $old_family_key !== null && $old_family_key !== $family_key ) {
+			$this->invalidate_and_recalculate_family( $old_family_key, $post_id );
+		}
 
 		// If person was in a family, invalidate all members and recalculate positions in one pass
-		if ( $old_family_key !== null ) {
-			$this->invalidate_and_recalculate_family( $old_family_key, $post_id );
+		if ( $family_key !== null ) {
+			$this->invalidate_and_recalculate_family( $family_key, $post_id );
 		}
 
 		return $value;

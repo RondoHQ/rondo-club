@@ -10,7 +10,7 @@ Prefer Read over `cat`, Grep over `grep/rg` in Bash, and Glob over `find` in Bas
 **Rondo Club** is a React-powered WordPress theme for sports team management. This theme provides a modern, single-page application interface for managing people, teams, and club operations.
 
 **Tech Stack:**
-- Backend: WordPress 6.0+, PHP 8.0+, ACF Pro (required)
+- Backend: WordPress 6.0+, PHP 8.0+, native post/term metadata
 - Frontend: React 18, React Router 6, TanStack Query, Tailwind CSS v4
 - Build: Vite 5.0
 
@@ -31,10 +31,10 @@ composer test    # Codeception wpunit suite
 
 ### Running the PHP test suite
 
-**The suite is green: 389 tests, 0 failures. Keep it that way — a red suite is a regression, not
+**The suite is green: 437 tests, 0 failures. Keep it that way — a red suite is a regression, not
 the status quo.** It also runs in CI on every push and pull request.
 
-`composer test` needs a WordPress install with the theme symlinked in, ACF Pro, and MySQL (not
+`composer test` needs a WordPress install with the theme symlinked in and MySQL (not
 SQLite — it cannot evaluate the `DATETIME` meta comparisons this codebase uses). Full setup, and
 the conventions for writing tests, are in **[docs/testing.md](docs/testing.md)**.
 
@@ -48,9 +48,8 @@ Two things that will otherwise waste an afternoon:
 - **REST routes must be booted in the test.** The theme only instantiates its controllers on real
   REST requests, so routes do not exist and every dispatch answers 404 — indistinguishable from a
   permission check working. Use `$this->bootRestControllers( [ Controller::class ] )`.
-- **ACF Pro trips a `_doing_it_wrong()` notice** on person and shift select fields under WP 7.0.
-  Silence it per class with `$this->ignoreIncorrectUsage( 'rest_handle_multi_type_schema' )`, never
-  with `setExpectedIncorrectUsage()`.
+- The suite intentionally boots without field plugins. `SmokeTest` guards this and verifies the
+  native field API on every run.
 
 ## Fetching feedback items
 
@@ -122,7 +121,7 @@ Production-write rules:
 Entry point: `functions.php`
 
 **Initialization flow (`rondo_init()`):**
-- Checks for ACF Pro dependency
+- Registers the native field schema and storage services
 - Loads classes from `includes/` conditionally on `after_setup_theme` and `plugins_loaded`
 - Core classes (PostTypes, Taxonomies, AccessControl, UserRoles, DemoProtection) load on every request
 - REST API classes load only for REST requests; Reminders only for admin/cron
@@ -136,7 +135,8 @@ Entry point: `functions.php`
 - **Integrations:** GoogleOAuth, ICalFeed
 - **Other:** Reminders, MembershipFees, FeeCacheInvalidator, VogEmail, DemoProtection, ClubConfig
 
-**ACF field groups** are stored as JSON in `acf-json/` for version control.
+**Field definitions** live in `includes/config/field-registry.php`. It is the source of truth for
+canonical API names, legacy-compatible storage names, types, validation, and repeater children.
 
 ### Frontend (React SPA)
 
@@ -225,7 +225,7 @@ This applies to all payments, including installments. The only exception would b
 ### Payment Flows
 
 **Membership fee invoices** (created by cron via `MembershipFees`):
-1. Invoice created → `PublicPaymentPage::generate_token()` stores `/betaling/{token}` as `payment_link` ACF field
+1. Invoice created → `PublicPaymentPage::generate_token()` stores `/betaling/{token}` as the `payment_link` field
 2. Email sent with `{betaallink}` → links to `/betaling/{token}` (public page, always valid)
 3. Member visits public page → selects plan (full / 3 termijnen / 8 termijnen)
 4. `InstallmentPaymentService::create_payment()` creates a Mollie **payment link** (`pl_xxx`)
@@ -235,7 +235,7 @@ This applies to all payments, including installments. The only exception would b
 
 **Discipline case invoices** (created manually via admin):
 1. `MolliePayment::create_payment_link()` creates a Mollie **payment link** (`pl_xxx`)
-2. Checkout URL stored in `payment_link` ACF field and emailed directly
+2. Checkout URL stored in `payment_link` and emailed directly
 3. Webhook fires → routes through Path 0b (full payment link)
 
 ### Webhook Routing (4 paths)
@@ -285,7 +285,9 @@ This is a single repository containing both backend (PHP) and frontend (React) c
 
 ## Extending the System
 
-**Adding ACF fields:** Edit in WordPress admin when `WP_DEBUG` is true; changes auto-save to `acf-json/`
+**Adding fields:** Add the definition to `includes/config/field-registry.php`, use a canonical
+snake_case API name, keep the existing storage key where compatibility matters, and add contract,
+storage-layout, permission, and formatting tests.
 
 **Adding REST endpoints:** Extend `Rondo\REST\Api` class in `includes/class-rest-api.php`
 
@@ -295,53 +297,31 @@ This is a single repository containing both backend (PHP) and frontend (React) c
 
 ## Common Pitfalls
 
-### ACF select fields reject empty strings via REST — coerce to `null` on the client
+### Canonical field writes are partial and strictly validated
 
-**Symptom — this exact error has bitten us multiple times:**
-```
-{
-  "code": "rest_invalid_param",
-  "message": "Invalid parameter(s): acf",
-  "data": {
-    "params": { "acf": "acf[<field_name>] is not one of <choice1>, <choice2>, ..." }
-  }
-}
-```
-
-**Why it happens:**
-ACF auto-generates a JSON Schema for every field exposed in REST. For `type: "select"` fields it emits `enum: [<choice1>, <choice2>, ...]`. **That enum does NOT include `""` — even when the field has `allow_null: 1` and `default_value: ""` in its ACF config.** So any REST update whose `acf` payload contains `<field>: ""` is rejected by WP REST schema validation *before* any of our PHP code runs. The whole request fails, including the unrelated field the user was actually trying to change (e.g. a relationship update).
-
-**The frontend trigger:**
-Most person/team writes round-trip the full `acf` object (read it, mutate one field, send it all back). So a person editing a *relationship* still POSTs `vergoeding_reden: ""` if the person isn't a paid volunteer. Same for any other select field that's empty on this record.
-
-**The fix — always done on the client:**
-Add the field name to the `enumFields` list inside the relevant sanitizer in `src/utils/formatters.js` (`sanitizePersonAcf`, `sanitizeTeamAcf`, etc.). That sanitizer converts `""` → `null` before submit, which IS accepted by the schema.
-
-**When you add a new ACF select to any CPT:**
-1. Add the field name to the `enumFields` array of the corresponding sanitizer in `src/utils/formatters.js`.
-2. Make sure every code path that builds an ACF payload routes through that sanitizer (`sanitizePersonAcf(person.acf, { ... })`), not raw object spread.
-3. Same applies to `radio` and `button_group` ACF types — they generate the same enum schema.
-
-**If you see this error in production:** grep the field name out of the error message, check it's a select-type field in `acf-json/`, then add it to the sanitizer. Don't try to fix it server-side by loosening the ACF schema — that fights the framework and breaks the next ACF Pro upgrade.
+Send domain updates under `fields` and include only values that changed. Field names are canonical
+snake_case names from the registry. Dates use `YYYY-MM-DD`, datetimes use RFC 3339 with an explicit
+timezone, and times use `HH:mm`. Use `null` to clear a nullable scalar and `[]` to clear a repeater.
+Unknown, read-only, invalid, and retired legacy payloads receive field-specific HTTP 400 errors.
 
 ### `former_member=true` persons are read-only end-to-end
 
 Sportlink rejects every contact / profile write for the lidsoorten that map to `former_member=true` ("Oud bondslid", "Oud verenigingslid"). Accepting an edit here just generates reverse-sync work in the `rondo-sync` repo that can never land. The policy is enforced in two places that **MUST stay in sync** if you touch either side:
 
-- **Backend:** `class-rest-people.php` — `block_former_member_edits()` on the `rest_pre_insert_person` filter rejects non-admin ACF writes with `HTTP 403 rondo_former_member_readonly`. Admins (incl. the `RONDO_USERNAME`-authenticated sync service user with `manage_options`) are exempt so the forward sync keeps working on former-member records.
-- **Frontend:** `src/pages/People/PersonDetail.jsx` — `canEditPeople` flips to `false` when `acf.former_member === true`, hiding every existing edit affordance. A "Oud-lid — alleen-lezen" banner explains why and tells the user to ask a beheerder.
+- **Backend:** `class-rest-people.php` — `block_former_member_edits()` rejects non-admin `fields` writes with `HTTP 403 rondo_former_member_readonly`. Administrators and the sync integration remain exempt.
+- **Frontend:** `src/pages/People/PersonDetail.jsx` — `canEditPeople` flips to `false` when `fields.former_member === true`, hiding every existing edit affordance. A "Oud-lid — alleen-lezen" banner explains why and tells the user to ask a beheerder.
 
 The only allowed non-admin write is the `former_member` field itself, so an admin can flip a person back to active to make them editable. When adding new edit UI: route through the same `canEditPeople` gate (don't introduce a parallel "can edit" boolean), and don't try to relax the REST filter for "just one field" — the next reverse-sync loop will find you.
 
-### ACF `date_picker` fields store `YYYYMMDD`, not `YYYY-MM-DD` — use `parseAcfDate()`
+### REST dates are canonical; storage dates remain compact
 
-ACF persists `date_picker` values in compact `Ymd` format (e.g. `"20140708"`) regardless of `return_format`. `new Date("20140708")` returns `Invalid Date`. Affects any date field returned by `wp/v2/people` via ACF — `birthdate`, `lid-sinds`, `lid-tot`, `datum-vog`, every `work_history.start_date`/`end_date`, etc.
-
-Use `parseAcfDate()` from `src/utils/formatters.js` — it handles both `YYYYMMDD` and `YYYY-MM-DD`. `isValidDate()` already delegates to it. Anywhere you'd write `new Date(acf.foo_date)` to format an ACF date, write `parseAcfDate(acf.foo_date)` instead. This bit us once when work_history dates rendered as empty `" - "` for every sync-written entry — only the legacy hand-entered records survived because they were in the other format.
+REST consumers receive `YYYY-MM-DD` and should use `parseFieldDate()` from
+`src/utils/formatters.js`. Storage-oriented PHP code uses `Fields` and the registry formatter;
+consumer code must not depend on compact metadata dates.
 
 ## Required rules for every change
 
-### Rule 0: Use WordPress & ACF native data models
+### Rule 0: Use WordPress native data models
 
 **NEVER create custom database tables.** Always use WordPress native data storage:
 
@@ -349,7 +329,7 @@ Use `parseAcfDate()` from `src/utils/formatters.js` — it handles both `YYYYMMD
 |-----------|---------------|
 | Entities (contacts, events, etc.) | Custom Post Types (`register_post_type`) |
 | Entity metadata | Post meta (`update_post_meta`, `get_post_meta`) |
-| Complex/repeatable fields | ACF field groups (stored in `acf-json/`) |
+| Complex/repeatable fields | Native numbered post-meta rows declared in the field registry |
 | Categories/tags | Custom Taxonomies (`register_taxonomy`) |
 | User settings | User meta (`update_user_meta`, `get_user_meta`) |
 | Site-wide settings | Options API (`update_option`, `get_option`) |
@@ -362,10 +342,11 @@ Use `parseAcfDate()` from `src/utils/formatters.js` — it handles both `YYYYMMD
 - REST: Extend `WP_REST_Controller` or register via `register_rest_route`
 - Caching: Use WordPress object cache, transients, or WP_Query caching
 
-**ACF for complex fields:**
-- Use ACF for repeaters, flexible content, relationships
-- Store field groups in `acf-json/` for version control
-- Access via `get_field()`, `update_field()`, or native `get_post_meta()` with ACF field keys
+**Native field layer:**
+- Use `Rondo\Fields\Fields` for domain field reads and writes.
+- Keep canonical API names separate from compatible storage names in the registry.
+- Repeaters use one count row plus numbered child rows; write them as one logical update so stale
+  rows are removed and domain side effects run once.
 
 ### Rule 1: Semantic Versioning
 

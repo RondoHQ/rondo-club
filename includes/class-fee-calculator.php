@@ -117,7 +117,7 @@ class FeeCalculator {
 		}
 
 		// Get leeftijdsgroep from person
-		$leeftijdsgroep     = get_field( 'leeftijdsgroep', $person_id );
+		$leeftijdsgroep     = \Rondo\Fields\Fields::get_for_post( $person_id, 'leeftijdsgroep' );
 		$age_class_category = null;
 
 		// Parse age group if available
@@ -207,7 +207,7 @@ class FeeCalculator {
 
 		// A former member may still owe a fee for the season, but never receives
 		// a discount based on the club's current household composition.
-		if ( (bool) get_field( 'former_member', $person_id ) ) {
+		if ( (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' ) ) {
 			return array_merge(
 				$fee_data,
 				[
@@ -343,8 +343,8 @@ class FeeCalculator {
 		$siblings = [];
 		foreach ( $sorted as $member ) {
 			if ( $member['person_id'] !== $person_id ) {
-				$first_name = get_field( 'first_name', $member['person_id'] ) ?: '';
-				$last_name  = get_field( 'last_name', $member['person_id'] ) ?: '';
+				$first_name = \Rondo\Fields\Fields::get_for_post( $member['person_id'], 'first_name' ) ?: '';
+				$last_name  = \Rondo\Fields\Fields::get_for_post( $member['person_id'], 'last_name' ) ?: '';
 				$name       = trim( $first_name . ' ' . $last_name );
 				if ( empty( $name ) ) {
 					$name = get_the_title( $member['person_id'] );
@@ -375,7 +375,7 @@ class FeeCalculator {
 	 *
 	 * Calculates: base_fee -> apply family discount -> apply pro-rata -> final_fee
 	 *
-	 * The registration_date should come from ACF field 'lid-sinds' (membership join date).
+	 * The registration_date should come from canonical field 'lid-sinds' (membership join date).
 	 *
 	 * @param int         $person_id         The person post ID.
 	 * @param string|null $registration_date Sportlink registration date (Y-m-d format).
@@ -399,7 +399,7 @@ class FeeCalculator {
 		$prorata_amount     = round( $fee_after_discount * $prorata_percentage, 2 );
 
 		// Add former member flag for diagnostics
-		$is_former = (bool) get_field( 'former_member', $person_id );
+		$is_former = (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' );
 
 		// Add pro-rata fields to result
 		return array_merge(

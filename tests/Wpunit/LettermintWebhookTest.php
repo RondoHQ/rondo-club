@@ -41,7 +41,7 @@ class LettermintWebhookTest extends RondoTestCase {
 		update_option( LettermintConfig::OPTION_WEBHOOK_SECRET, $secret );
 
 		$person_id = $this->createPerson( [ 'post_title' => 'Bounced Member' ] );
-		update_field( 'email_1', 'bounce@example.com', $person_id );
+		\Rondo\Fields\Fields::update_for_post( $person_id, 'email_1', 'bounce@example.com' );
 
 		$payload = [
 			'event' => 'message.hard_bounced',
@@ -64,7 +64,7 @@ class LettermintWebhookTest extends RondoTestCase {
 		$tasks_after_first = $this->get_tasks_for_event( 'evt_test_001' );
 		$this->assertNotEmpty( $tasks_after_first, 'Expected at least one follow-up task for the webhook event.' );
 
-		$related_people = get_field( 'related_persons', $tasks_after_first[0] ) ?: [];
+		$related_people = \Rondo\Fields\Fields::get_for_post( $tasks_after_first[0], 'related_persons' ) ?: [];
 		$this->assertContains( $person_id, array_map( 'intval', (array) $related_people ) );
 
 		$suppressed = get_option( LettermintWebhook::OPTION_SUPPRESSED_EMAILS, [] );

@@ -89,15 +89,15 @@ class TodoCptTest extends RondoTestCase {
 			]
 		);
 
-		update_field( 'field_todo_related_person', [ $person_id ], $post_id );
+		\Rondo\Fields\Fields::update_for_post( $post_id, 'related_persons', [ $person_id ] );
 
 		if ( ! empty( $data['due_date'] ) ) {
-			update_field( 'due_date', $data['due_date'], $post_id );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'due_date', $data['due_date'] );
 		}
 
 		// Set awaiting_since timestamp for awaiting status
 		if ( $data['status'] === 'awaiting' ) {
-			update_field( 'awaiting_since', gmdate( 'Y-m-d H:i:s' ), $post_id );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'awaiting_since', gmdate( 'Y-m-d H:i:s' ) );
 		}
 
 		return $post_id;

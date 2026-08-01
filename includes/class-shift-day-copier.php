@@ -272,7 +272,7 @@ class ShiftDayCopier {
 	}
 
 	/**
-	 * Normalize stored ACF datetimes to their canonical seconds precision.
+	 * Normalize stored native field datetimes to their canonical seconds precision.
 	 */
 	private function normalize_datetime( string $value ): ?string {
 		$value  = trim( str_replace( 'T', ' ', $value ) );

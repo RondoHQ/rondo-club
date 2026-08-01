@@ -73,7 +73,7 @@ class IvaApprovalEmailSender {
 
 	private function get_person_email( int $person_id ): ?string {
 		foreach ( [ 'email_1', 'email_2' ] as $field_name ) {
-			$email = (string) get_field( $field_name, $person_id );
+			$email = (string) \Rondo\Fields\Fields::get_for_post( $person_id, $field_name );
 			if ( is_email( $email ) ) {
 				return $email;
 			}
@@ -89,7 +89,7 @@ class IvaApprovalEmailSender {
 	 */
 	private function get_template_values( int $person_id ): array {
 		$full_name  = trim( (string) get_the_title( $person_id ) );
-		$first_name = trim( (string) get_field( 'first_name', $person_id ) );
+		$first_name = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) );
 		$club_name  = trim( ClubConfig::get_club_name() );
 
 		if ( $first_name === '' ) {

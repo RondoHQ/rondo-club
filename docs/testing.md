@@ -1,7 +1,7 @@
 # Running the test suite
 
 The PHP suite is Codeception + wp-browser, running the theme inside a real
-WordPress install. 389 tests, green.
+WordPress install. The suite boots without external field plugins.
 
 ```bash
 composer test                                   # everything
@@ -11,7 +11,7 @@ vendor/bin/codecept run Wpunit AgeGroupAccessTest:returns_null_for_admin_user
 
 ## What it needs
 
-Three things, none of them in the repository, all pointed at by `tests/.env`
+Two things, neither in the repository, both pointed at by `tests/.env`
 (gitignored, because the paths are machine-specific).
 
 ### 1. A throwaway WordPress install
@@ -29,20 +29,7 @@ copy — edit code, rerun, no sync step. Keep the WordPress version in step with
 production (`wp core version` over SSH tells you what that is); the CI workflow
 pins the same one.
 
-### 2. ACF Pro
-
-The suite loads `advanced-custom-fields-pro/acf.php` explicitly, and the theme
-refuses to boot without it. It is a paid plugin, so it cannot live in the repo.
-Copy the licensed build from production:
-
-```bash
-cd ~/Code/rondo/wp-test/wp-content/plugins
-source ~/Code/rondo/rondo-club/.env
-scp -P "$DEPLOY_SSH_PORT" -r \
-  "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST:$DEPLOY_REMOTE_WP_PATH/wp-content/plugins/advanced-custom-fields-pro" .
-```
-
-### 3. MySQL
+### 2. MySQL
 
 ```bash
 docker run -d --name rondo-test-db \
@@ -85,21 +72,13 @@ Order matters: `rest_get_server()` fires `rest_api_init` once, and a controller
 constructed after that has already missed it. `bootRestControllers()` handles
 this — do not hand-roll it.
 
-### Known `_doing_it_wrong()` noise
+### Native field contracts
 
-ACF Pro emits a REST schema whose `type` keyword WordPress 7.0 rejects, on every
-person and shift select field. It is upstream, and silent in production because
-`_doing_it_wrong()` only speaks up under `WP_DEBUG` — but `WP_UnitTestCase` fails
-any test that triggers an unexpected one. Declare it per test class:
-
-```php
-$this->ignoreIncorrectUsage( 'rest_handle_multi_type_schema' );
-```
-
-Not `setExpectedIncorrectUsage()`: that *requires* the notice to fire, and it
-only fires for payloads that happen to carry such a field, so the test ends up
-coupled to which fields are in the request. `ignoreIncorrectUsage()` drops that
-one notice and leaves every other one fatal.
+REST tests should write partial canonical payloads under `fields` and assert that
+responses never contain the retired legacy attribute. Storage tests should also
+assert the exact meta keys, repeater count, numbered child rows, reference rows,
+and stale-row cleanup. `SmokeTest` verifies that the old helper functions are not
+present, which prevents a plugin from masking an incomplete native code path.
 
 ### Fixtures follow the current model, not the old one
 
@@ -109,9 +88,8 @@ Two shapes changed and still catch people out:
   `rondo_completed`) and relate through a `related_persons` **array**. The older
   `is_completed` + singular `related_person` shape is not what the endpoints
   query.
-- **Person writes** round-trip the whole ACF object, and ACF marks several
-  fields required. A partial `acf` payload is rejected with `400` before any of
-  our guards run, so a test asserting `403` needs to send what the UI sends.
+- **Person writes** use partial `fields` objects. Dates and nested relationship
+  keys must use their canonical wire formats and names.
 
 ### Person access has two axes
 
@@ -125,7 +103,5 @@ old ownership model; use a role entitled to the record.
 `.github/workflows/ci.yml` runs the suite on every push and pull request, with a
 MySQL service container and the same pinned WordPress version.
 
-It needs the repository secret **`ACF_PRO_LICENSE_KEY`** (ACF → Updates in
-wp-admin, or the ACF account page). Without it the tests step is skipped with a
-warning annotation rather than failing, so the absence of the secret is visible
-but does not block deploys.
+No paid-plugin download or license secret is required. The CI test job always
+runs and therefore blocks deployment on a PHP regression.

@@ -86,11 +86,11 @@ class MembershipPassGoogle {
 		$person_name          = $this->get_person_full_name( $person_id );
 		$issuer_name          = $this->get_issuer_name();
 		$member_type          = $this->get_member_type_label( $member_tier );
-		$knvb_id              = trim( (string) get_field( 'knvb-id', $person_id ) );
+		$knvb_id              = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'knvb_id' ) );
 		$details              = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
 		$team_name            = $details['teams'] !== '' ? $details['teams'] : '-';
 		$functions            = $details['functions'] !== '' ? $details['functions'] : '-';
-		$company_name         = trim( (string) get_field( 'company_name', $person_id ) );
+		$company_name         = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
 		$sponsor_pass_variant = $member_tier === 'sponsor' ? PublicMembershipPassPage::get_sponsor_pass_variant( $person_id ) : '';
 		$card_title           = $this->get_card_title( $issuer_name, $member_tier, $sponsor_pass_variant );
 		$object_id            = $issuer_id . '.member_' . $person_id;
@@ -328,12 +328,12 @@ class MembershipPassGoogle {
 	 * @return string
 	 */
 	private function get_person_full_name( int $person_id ): string {
-		$first_name = (string) get_field( 'first_name', $person_id );
-		$infix      = (string) get_field( 'infix', $person_id );
-		$last_name  = (string) get_field( 'last_name', $person_id );
+		$first_name = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' );
+		$infix      = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'infix' );
+		$last_name  = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' );
 
 		$name = trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
-		return $name !== '' ? $name : trim( (string) get_field( 'company_name', $person_id ) );
+		return $name !== '' ? $name : trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
 	}
 
 	/**
@@ -402,7 +402,7 @@ class MembershipPassGoogle {
 	 * @return array<int,array{key:string,label:string,team:string,function:string}>
 	 */
 	private function build_current_work_entries( int $person_id ): array {
-		$work_history = get_field( 'work_history', $person_id );
+		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' );
 		if ( ! is_array( $work_history ) ) {
 			return [];
 		}

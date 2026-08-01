@@ -174,9 +174,9 @@ export default function RelationshipTypes() {
         name: name,
       };
 
-      // Include ACF field if inverse is set
+      // Include canonical field if inverse is set
       if (inverseId) {
-        data.acf = {
+        data.fields = {
           inverse_relationship_type: parseInt(inverseId, 10),
         };
       }
@@ -198,9 +198,9 @@ export default function RelationshipTypes() {
         name: name,
       };
 
-      // Include ACF field if inverse is set
+      // Include canonical field if inverse is set
       if (inverseId) {
-        data.acf = {
+        data.fields = {
           inverse_relationship_type: parseInt(inverseId, 10),
         };
       }
@@ -261,8 +261,8 @@ export default function RelationshipTypes() {
   const handleEdit = (type) => {
     setEditingId(type.id);
     setEditingName(type.name);
-    // Handle ACF field - could be ID directly or nested object
-    const inverseId = type.acf?.inverse_relationship_type;
+    // Handle canonical field - could be ID directly or nested object
+    const inverseId = type.fields?.inverse_relationship_type;
     setEditingInverse(
       inverseId
         ? (typeof inverseId === 'object' ? inverseId.toString() : inverseId.toString())
@@ -418,8 +418,8 @@ export default function RelationshipTypes() {
           ) : (
             relationshipTypes.map((type) => {
               const isEditing = editingId === type.id;
-              // Handle ACF field - could be ID directly or nested object
-              const inverseId = type.acf?.inverse_relationship_type;
+              // Handle canonical field - could be ID directly or nested object
+              const inverseId = type.fields?.inverse_relationship_type;
               const inverseIdValue = typeof inverseId === 'object' && inverseId?.ID
                 ? inverseId.ID
                 : (typeof inverseId === 'object' && inverseId?.id
@@ -489,7 +489,7 @@ export default function RelationshipTypes() {
                             Omgekeerd: <span className="font-medium">{inverseType.name}</span>
                           </div>
                         )}
-                        {!inverseType && type.acf?.inverse_relationship_type === null && (
+                        {!inverseType && type.fields?.inverse_relationship_type === null && (
                           <div className="text-sm text-gray-400 dark:text-gray-500 mt-1 italic">Geen omgekeerd relatietype</div>
                         )}
                       </div>

@@ -82,9 +82,9 @@ export default function WorkHistoryEditModal({
       if (workHistoryItem) {
         // Convert old format (team ID only) to new format (type:id)
         let entityValue = null;
-        if (workHistoryItem.team) {
+        if (workHistoryItem.team_id) {
           const entityType = workHistoryItem.entity_type || 'team'; // default to team for backward compatibility
-          entityValue = `${entityType}:${workHistoryItem.team}`;
+          entityValue = `${entityType}:${workHistoryItem.team_id}`;
         }
         reset({
           entity: entityValue,
@@ -120,7 +120,7 @@ export default function WorkHistoryEditModal({
     }
 
     onSubmit({
-      team: teamId,
+      team_id: teamId,
       entity_type: entityType,
       job_title: data.job_title || '',
       description: data.description || '',

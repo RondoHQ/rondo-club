@@ -55,7 +55,6 @@ find options:
 get options:
   --id ID                 Required person ID
   --field KEY             Required field key (example: first_name)
-  --source SOURCE         auto|fields|acf|meta (default: auto)
   --json                  Output JSON object instead of plain value
 
 set options:
@@ -63,7 +62,6 @@ set options:
   --field KEY             Required field key
   --value VALUE           Required value
   --type TYPE             string|number|boolean|null|json (default: string)
-  --source SOURCE         auto|fields|acf|meta (default: auto)
   --dry-run               Print payload(s) without updating
   --json                  Output JSON object
 
@@ -144,17 +142,6 @@ ensure_ok() {
 	fi
 }
 
-validate_source() {
-	local source="$1"
-	case "$source" in
-		auto|fields|acf|meta) ;;
-		*)
-			echo "Error: Invalid --source '$source'. Use auto, fields, acf, or meta." >&2
-			exit 1
-			;;
-	esac
-}
-
 json_value_for_type() {
 	local value="$1"
 	local type="$2"
@@ -195,33 +182,15 @@ json_value_for_type() {
 }
 
 resolve_get_value() {
-	local source="$1"
-	local field="$2"
+	local field="$1"
 
-	case "$source" in
-		fields|acf|meta)
-			echo "$RESP_BODY" | jq -c --arg src "$source" --arg key "$field" '
-				if (.[$src] | type == "object") and (.[$src] | has($key)) then
-					{source: $src, value: .[$src][$key]}
-				else
-					null
-				end
-			'
-			;;
-		auto)
-			echo "$RESP_BODY" | jq -c --arg key "$field" '
-				if (.fields | type == "object") and (.fields | has($key)) then
-					{source: "fields", value: .fields[$key]}
-				elif (.acf | type == "object") and (.acf | has($key)) then
-					{source: "acf", value: .acf[$key]}
-				elif (.meta | type == "object") and (.meta | has($key)) then
-					{source: "meta", value: .meta[$key]}
-				else
-					null
-				end
-			'
-			;;
-	esac
+	echo "$RESP_BODY" | jq -c --arg key "$field" '
+		if (.fields | type == "object") and (.fields | has($key)) then
+			{source: "fields", value: .fields[$key]}
+		else
+			null
+		end
+	'
 }
 
 run_find() {
@@ -295,7 +264,6 @@ run_find() {
 run_get() {
 	local id=""
 	local field=""
-	local source="auto"
 	local json_output="false"
 
 	while [ $# -gt 0 ]; do
@@ -306,10 +274,6 @@ run_get() {
 				;;
 			--field)
 				field="${2:-}"
-				shift 2
-				;;
-			--source)
-				source="${2:-}"
 				shift 2
 				;;
 			--json)
@@ -348,17 +312,16 @@ run_get() {
 		exit 1
 	fi
 
-	validate_source "$source"
 	require_auth
 
 	api_request "GET" "/wp/v2/people/${id}?context=edit"
 	ensure_ok
 
 	local resolved
-	resolved="$(resolve_get_value "$source" "$field")"
+	resolved="$(resolve_get_value "$field")"
 
 	if [ "$resolved" = "null" ] || [ -z "$resolved" ]; then
-		echo "Error: Field '$field' not found for person $id in source '$source'." >&2
+		echo "Error: Canonical field '$field' not found for person $id." >&2
 		exit 1
 	fi
 
@@ -375,7 +338,6 @@ run_set() {
 	local value=""
 	local has_value="false"
 	local value_type="string"
-	local source="auto"
 	local json_output="false"
 	local dry_run="false"
 
@@ -396,10 +358,6 @@ run_set() {
 				;;
 			--type)
 				value_type="${2:-}"
-				shift 2
-				;;
-			--source)
-				source="${2:-}"
 				shift 2
 				;;
 			--dry-run)
@@ -442,73 +400,36 @@ run_set() {
 		exit 1
 	fi
 
-	validate_source "$source"
 	require_auth
 
 	local value_json
 	value_json="$(json_value_for_type "$value" "$value_type")"
 
-	local targets=()
-	if [ "$source" = "auto" ]; then
-		targets=(fields acf meta)
-	else
-		targets=("$source")
-	fi
-
-	local bucket
-	local payload=""
-	local last_error=""
-	local success_bucket=""
-
-	for bucket in "${targets[@]}"; do
-		payload="$(jq -cn --arg bucket "$bucket" --arg key "$field" --argjson value "$value_json" '{($bucket): {($key): $value}}')"
-
-		if [ "$dry_run" = "true" ]; then
-			echo "$payload" | jq '.'
-			continue
-		fi
-
-		api_request "POST" "/wp/v2/people/${id}" "$payload"
-
-		if [[ "$RESP_STATUS" == "200" || "$RESP_STATUS" == "201" ]]; then
-			success_bucket="$bucket"
-			break
-		fi
-
-		last_error="HTTP $RESP_STATUS: $(api_error_message)"
-
-		if [ "$source" != "auto" ]; then
-			break
-		fi
-
-		if [[ "$RESP_STATUS" == "401" || "$RESP_STATUS" == "403" || "$RESP_STATUS" == "404" ]]; then
-			break
-		fi
-	done
+	local payload
+	payload="$(jq -cn --arg key "$field" --argjson value "$value_json" '{fields: {($key): $value}}')"
 
 	if [ "$dry_run" = "true" ]; then
+		echo "$payload" | jq '.'
 		exit 0
 	fi
 
-	if [ -z "$success_bucket" ]; then
-		if [ -n "$last_error" ]; then
-			echo "Error: Could not update field '$field' for person $id. Last error: $last_error" >&2
-		else
-			echo "Error: Could not update field '$field' for person $id." >&2
-		fi
+	api_request "POST" "/wp/v2/people/${id}" "$payload"
+
+	if [[ "$RESP_STATUS" != "200" && "$RESP_STATUS" != "201" ]]; then
+		echo "Error: Could not update field '$field' for person $id. HTTP $RESP_STATUS: $(api_error_message)" >&2
 		exit 1
 	fi
 
 	local resolved
-	resolved="$(resolve_get_value "$success_bucket" "$field")"
+	resolved="$(resolve_get_value "$field")"
 	if [ "$resolved" = "null" ] || [ -z "$resolved" ]; then
-		resolved="$(jq -cn --arg src "$success_bucket" --argjson val "$value_json" '{source: $src, value: $val}')"
+		resolved="$(jq -cn --argjson val "$value_json" '{source: "fields", value: $val}')"
 	fi
 
 	if [ "$json_output" = "true" ]; then
 		echo "$resolved" | jq --arg field "$field" --argjson id "$id" '. + {id: $id, field: $field}'
 	else
-		echo "Updated person ${id} field '${field}' via ${success_bucket}."
+		echo "Updated person ${id} canonical field '${field}'."
 		echo "$resolved" | jq -r '.value | if type == "string" then . else @json end'
 	fi
 }

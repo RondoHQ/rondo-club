@@ -50,25 +50,25 @@ export default function VrijwilligersDienstTypeForm() {
 
   useEffect(() => {
     if (!existing) return;
-    const acf = existing.acf || {};
+    const fields = existing.fields || {};
     setForm({
       title: existing.title?.raw ?? existing.title?.rendered ?? '',
-      description: acf.description || '',
-      vog_required: Boolean(acf.vog_required),
-      iva_required: Boolean(acf.iva_required),
-      sleutel_involved: Boolean(acf.sleutel_involved),
-      default_capacity: acf.default_capacity != null ? String(acf.default_capacity) : '1',
-      color: acf.color || '#6b7280',
-      required_pool: Number(acf.required_pool) || 0,
-      reminder_email_subject: acf.reminder_email_subject || EMPTY.reminder_email_subject,
-      reminder_email_body: acf.reminder_email_body || EMPTY.reminder_email_body,
-      cancellation_early_email_subject: acf.cancellation_early_email_subject || EMPTY.cancellation_early_email_subject,
-      cancellation_early_email_body: acf.cancellation_early_email_body || EMPTY.cancellation_early_email_body,
-      cancellation_last_minute_email_subject: acf.cancellation_last_minute_email_subject || EMPTY.cancellation_last_minute_email_subject,
-      cancellation_last_minute_email_body: acf.cancellation_last_minute_email_body || EMPTY.cancellation_last_minute_email_body,
-      survey_email_subject: acf.survey_email_subject || EMPTY.survey_email_subject,
-      survey_email_body: acf.survey_email_body || EMPTY.survey_email_body,
-      survey_url: acf.survey_url || '',
+      description: fields.description || '',
+      vog_required: Boolean(fields.vog_required),
+      iva_required: Boolean(fields.iva_required),
+      sleutel_involved: Boolean(fields.sleutel_involved),
+      default_capacity: fields.default_capacity != null ? String(fields.default_capacity) : '1',
+      color: fields.color || '#6b7280',
+      required_pool: Number(fields.required_pool) || 0,
+      reminder_email_subject: fields.reminder_email_subject || EMPTY.reminder_email_subject,
+      reminder_email_body: fields.reminder_email_body || EMPTY.reminder_email_body,
+      cancellation_early_email_subject: fields.cancellation_early_email_subject || EMPTY.cancellation_early_email_subject,
+      cancellation_early_email_body: fields.cancellation_early_email_body || EMPTY.cancellation_early_email_body,
+      cancellation_last_minute_email_subject: fields.cancellation_last_minute_email_subject || EMPTY.cancellation_last_minute_email_subject,
+      cancellation_last_minute_email_body: fields.cancellation_last_minute_email_body || EMPTY.cancellation_last_minute_email_body,
+      survey_email_subject: fields.survey_email_subject || EMPTY.survey_email_subject,
+      survey_email_body: fields.survey_email_body || EMPTY.survey_email_body,
+      survey_url: fields.survey_url || '',
     });
   }, [existing]);
 
@@ -136,7 +136,7 @@ export default function VrijwilligersDienstTypeForm() {
           saveMutation.mutate({
             title: form.title.trim(),
             status: 'publish',
-            acf: {
+            fields: {
               description: form.description,
               vog_required: Boolean(form.vog_required),
               iva_required: Boolean(form.iva_required),

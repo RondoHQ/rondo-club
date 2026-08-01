@@ -136,7 +136,7 @@ class VCard {
 	 * @return string|null Birthday date in Y-m-d format or null
 	 */
 	public static function get_birthday( $person_id ) {
-		$birthdate = get_field( 'birthdate', $person_id );
+		$birthdate = \Rondo\Fields\Fields::get_for_post( $person_id, 'birthdate' );
 		return ! empty( $birthdate ) ? $birthdate : null;
 	}
 
@@ -200,8 +200,8 @@ class VCard {
 			return '';
 		}
 
-		$acf   = get_fields( $person->ID ) ?: [];
-		$lines = [];
+		$fields = \Rondo\Fields\Fields::all_for_post( $person->ID ) ?: [];
+		$lines  = [];
 
 		// BEGIN:VCARD
 		$lines[] = 'BEGIN:VCARD';
@@ -212,9 +212,9 @@ class VCard {
 		$lines[]  = 'UID:' . $person->ID . '@' . $site_url;
 
 		// Name fields
-		$first_name = $acf['first_name'] ?? '';
-		$infix      = $acf['infix'] ?? '';
-		$last_name  = $acf['last_name'] ?? '';
+		$first_name = $fields['first_name'] ?? '';
+		$infix      = $fields['infix'] ?? '';
+		$last_name  = $fields['last_name'] ?? '';
 		$full_name  = $person->post_title ?: implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) ) ?: 'Unknown';
 
 		// FN (Full Name) - required
@@ -224,41 +224,41 @@ class VCard {
 		$lines[] = 'N:' . self::escape_value( $last_name ) . ';' . self::escape_value( $first_name ) . ';' . self::escape_value( $infix ) . ';;';
 
 		// Nickname
-		if ( ! empty( $acf['nickname'] ) ) {
-			$lines[] = 'NICKNAME:' . self::escape_value( $acf['nickname'] );
+		if ( ! empty( $fields['nickname'] ) ) {
+			$lines[] = 'NICKNAME:' . self::escape_value( $fields['nickname'] );
 		}
 
 		// Gender (vCard 4.0 style, but widely supported)
-		if ( ! empty( $acf['gender'] ) ) {
+		if ( ! empty( $fields['gender'] ) ) {
 			$gender_map  = [
 				'male'              => 'M',
 				'female'            => 'F',
 				'other'             => 'O',
 				'prefer_not_to_say' => 'N',
 			];
-			$gender_code = $gender_map[ $acf['gender'] ] ?? '';
+			$gender_code = $gender_map[ $fields['gender'] ] ?? '';
 			if ( $gender_code ) {
 				$lines[] = "GENDER:{$gender_code}";
 			}
 		}
 
 		// Pronouns (RFC 9554 + Apple X- extension for compatibility)
-		if ( ! empty( $acf['pronouns'] ) ) {
-			$pronouns = self::escape_value( $acf['pronouns'] );
+		if ( ! empty( $fields['pronouns'] ) ) {
+			$pronouns = self::escape_value( $fields['pronouns'] );
 			$lines[]  = "X-PRONOUNS:{$pronouns}";  // Apple compatibility
 			$lines[]  = "PRONOUNS:{$pronouns}";     // RFC 9554 standard
 		}
 
 		// Contact information from fixed fields
 		foreach ( [ 'email_1', 'email_2' ] as $field ) {
-			$value = $acf[ $field ] ?? '';
+			$value = $fields[ $field ] ?? '';
 			if ( ! empty( $value ) ) {
 				$lines[] = 'EMAIL;TYPE=INTERNET:' . self::escape_value( $value );
 			}
 		}
 
 		foreach ( [ 'mobile_1', 'mobile_2' ] as $field ) {
-			$value = $acf[ $field ] ?? '';
+			$value = $fields[ $field ] ?? '';
 			if ( ! empty( $value ) ) {
 				$formatted_phone = self::format_phone( $value );
 				if ( $formatted_phone ) {
@@ -268,7 +268,7 @@ class VCard {
 		}
 
 		foreach ( [ 'telephone_1', 'telephone_2' ] as $field ) {
-			$value = $acf[ $field ] ?? '';
+			$value = $fields[ $field ] ?? '';
 			if ( ! empty( $value ) ) {
 				$formatted_phone = self::format_phone( $value );
 				if ( $formatted_phone ) {
@@ -278,8 +278,8 @@ class VCard {
 		}
 
 		// Addresses (structured format)
-		if ( ! empty( $acf['addresses'] ) && is_array( $acf['addresses'] ) ) {
-			foreach ( $acf['addresses'] as $address ) {
+		if ( ! empty( $fields['addresses'] ) && is_array( $fields['addresses'] ) ) {
+			foreach ( $fields['addresses'] as $address ) {
 				$addr_type = ! empty( $address['address_label'] ) ?
 					'ADR;TYPE=' . strtoupper( $address['address_label'] ) :
 					'ADR;TYPE=HOME';
@@ -299,7 +299,7 @@ class VCard {
 		}
 
 		// Organization and title from work history
-		$job = self::get_current_job( $acf['work_history'] ?? [] );
+		$job = self::get_current_job( $fields['work_history'] ?? [] );
 		if ( $job['org'] ) {
 			$lines[] = 'ORG:' . self::escape_value( $job['org'] );
 		}
@@ -341,7 +341,7 @@ class VCard {
 	/**
 	 * Generate vCard from array data
 	 *
-	 * @param array $data Person data array with ACF fields
+	 * @param array $data Person data array with canonical fields
 	 * @return string vCard content
 	 */
 	public static function generate_from_array( $data ) {
