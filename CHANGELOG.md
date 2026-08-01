@@ -28,6 +28,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Het publieke `acf`-responseveld, ondersteuning voor `acf`-writes, alle runtime-helper- en hookafhankelijkheden, plugininstallatie/licentiecode, en de map `acf-json/`. Oude writes krijgen een gerichte HTTP 400 met `fields` als vervanging.
 
+## [33.85.3] - 2026-08-01
+
+### Changed
+
+- De link "Je wachtwoord vergeten?" staat nu gecentreerd onder het inlogformulier.
+- Het "Nog geen account?"-blok verschijnt alleen nog op het hoofdinlogscherm, niet meer op het inloglink-formulier, de bevestiging daarvan of de wachtwoord-vergeten-pagina's.
+
+## [33.85.2] - 2026-08-01
+
+### Fixed
+
+- Het overbodige instructiebericht bovenaan het inloglink-formulier is verborgen; de bevestiging na verzenden blijft zichtbaar.
+
 ## [33.85.1] - 2026-08-01
 
 ### Fixed
