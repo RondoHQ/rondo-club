@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.85.4] - 2026-08-01
+
+### Changed
+
+- De knop "App installeren" staat niet meer in de desktop-sidebar; op mobiel blijft de installatie-optie beschikbaar.
+
+### Fixed
+
+- De naam onderaan de sidebar gebruikt nu de gekoppelde persoonsnaam, zodat een tussenvoegsel correct tussen voor- en achternaam staat.
+
 ## [33.85.3] - 2026-08-01
 
 ### Changed
