@@ -424,6 +424,19 @@ class UserSettings extends Base {
 				],
 			]
 		);
+
+		// Send the current user a one-time password reset link.
+		register_rest_route(
+			'rondo/v1',
+			'/user/password-reset',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'request_password_reset' ],
+				'permission_callback' => function () {
+					return is_user_logged_in();
+				},
+			]
+		);
 	}
 
 	/**
@@ -1224,6 +1237,52 @@ class UserSettings extends Base {
 			[
 				'success' => true,
 				'message' => 'Wachtwoord succesvol gewijzigd. Log opnieuw in.',
+			]
+		);
+	}
+
+	/**
+	 * Send the current user a one-time link for setting a password.
+	 *
+	 * The link is sent through WordPress core so its normal reset-key security and
+	 * expiry apply. ContactEmailRouter reroutes household placeholder addresses to
+	 * the user's real contact address.
+	 *
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function request_password_reset() {
+		$user_id = get_current_user_id();
+		$user    = get_userdata( $user_id );
+
+		if ( ! $user ) {
+			return new \WP_Error( 'user_not_found', 'Gebruiker niet gevonden.', [ 'status' => 404 ] );
+		}
+
+		if ( $user->user_login === 'demo' ) {
+			return new \WP_Error( 'demo_user', 'Wachtwoord wijzigen is niet beschikbaar in de demo.', [ 'status' => 403 ] );
+		}
+
+		if ( ! \Rondo\Users\UserProvisioning::contact_email( $user_id ) ) {
+			return new \WP_Error(
+				'no_contact_email',
+				'Er is geen bruikbaar e-mailadres aan dit account gekoppeld.',
+				[ 'status' => 422 ]
+			);
+		}
+
+		$result = retrieve_password( $user->user_login );
+		if ( is_wp_error( $result ) ) {
+			return new \WP_Error(
+				'password_reset_email_failed',
+				'De e-mail kon niet worden verstuurd. Probeer het later opnieuw.',
+				[ 'status' => 500 ]
+			);
+		}
+
+		return rest_ensure_response(
+			[
+				'success' => true,
+				'message' => 'Controleer je e-mail voor een link om je wachtwoord in te stellen.',
 			]
 		);
 	}

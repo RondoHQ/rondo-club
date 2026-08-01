@@ -33,3 +33,14 @@ export function useChangePassword() {
       prmApi.changePassword({ current_password: currentPassword, new_password: newPassword }),
   });
 }
+
+/**
+ * Hook for requesting a one-time password-set link by email.
+ *
+ * @returns {Object} TanStack Mutation result
+ */
+export function useRequestPasswordReset() {
+  return useMutation({
+    mutationFn: () => prmApi.requestPasswordReset(),
+  });
+}
