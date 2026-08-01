@@ -476,6 +476,10 @@ class MemberShifts extends Base {
 			$units      = $gezin_unit ? [ $gezin_unit ] : [];
 		}
 		$obligations = $units ? $calculator->decorate_units( $units, $season ) : [];
+		$obligations = array_map(
+			fn( array $obligation ): array => $this->add_unit_exemption( $obligation, $season ),
+			$obligations
+		);
 
 		$shifts = $this->query_shifts_for_person( $person_id );
 
@@ -1564,6 +1568,27 @@ class MemberShifts extends Base {
 			'reason'       => $reason,
 			'reason_label' => VolunteerExemptionResolver::reason_label( $reason ),
 		];
+	}
+
+	/**
+	 * Add the exemption shared by an obligation unit to its member response.
+	 */
+	private function add_unit_exemption( array $obligation, string $season ): array {
+		$match = VolunteerExemptionResolver::resolve_unit( $obligation, $season );
+		if ( $match === null ) {
+			$obligation['exemption'] = null;
+			return $obligation;
+		}
+
+		$person_id               = (int) $match['person_id'];
+		$obligation['exemption'] = [
+			'person_id'    => $person_id,
+			'person_name'  => $this->sanitize_text( get_the_title( $person_id ) ),
+			'reason'       => $match['reason'],
+			'reason_label' => VolunteerExemptionResolver::reason_label( $match['reason'] ),
+		];
+
+		return $obligation;
 	}
 
 	/**

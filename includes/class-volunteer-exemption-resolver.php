@@ -80,6 +80,45 @@ class VolunteerExemptionResolver {
 	}
 
 	/**
+	 * Resolve the exemption that applies to an obligation unit.
+	 *
+	 * A gezin obligation belongs to the responsible adults together. If one of
+	 * those adults is exempt, the shared gezin obligation is exempt as well. The
+	 * triggering children are only considered for orphan units, where no adult
+	 * could be resolved from relationships or the address fallback.
+	 *
+	 * @param array  $unit   Eligibility unit from VolunteerEligibilityService.
+	 * @param string $season KNVB season string ("2026-2027").
+	 * @return array{person_id:int,reason:string}|null Matching person and reason.
+	 */
+	public static function resolve_unit( array $unit, string $season ): ?array {
+		$person_ids = array_values( array_unique( array_filter( array_map( 'intval', (array) ( $unit['person_ids'] ?? [] ) ) ) ) );
+		if ( empty( $person_ids ) ) {
+			return null;
+		}
+
+		if ( ( $unit['kind'] ?? '' ) === VolunteerEligibilityService::UNIT_KIND_GEZIN ) {
+			$trigger_ids = array_map( 'intval', (array) ( $unit['trigger_person_ids'] ?? [] ) );
+			$adults      = array_values( array_diff( $person_ids, $trigger_ids ) );
+			if ( ! empty( $adults ) ) {
+				$person_ids = $adults;
+			}
+		}
+
+		foreach ( $person_ids as $person_id ) {
+			$reason = self::resolve( $person_id, $season );
+			if ( $reason !== null ) {
+				return [
+					'person_id' => $person_id,
+					'reason'    => $reason,
+				];
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Build a human-readable label for an exemption reason.
 	 *
 	 * @param string $reason One of self::REASON_*.
