@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.85.7] - 2026-08-01
+
+### Added
+
+- Gebruikers die met een inloglink werken of hun huidige wachtwoord niet kennen, kunnen vanuit hun profiel een beveiligde eenmalige link aanvragen om een wachtwoord in te stellen.
+
 ## [33.85.6] - 2026-08-01
 
 ### Changed

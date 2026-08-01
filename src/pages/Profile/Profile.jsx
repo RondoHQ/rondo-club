@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { User, Lock, Briefcase, Bell, Sun, Moon, Monitor, FileCheck, Wine, ChevronRight } from 'lucide-react';
-import { useCurrentUser, useChangePassword } from '@/hooks/useCurrentUser';
+import { useCurrentUser, useChangePassword, useRequestPasswordReset } from '@/hooks/useCurrentUser';
 import { prmApi } from '@/api/client';
 import { useTheme } from '@/hooks/useTheme';
 
 export default function Profile() {
   const { data: user, isLoading } = useCurrentUser();
   const changePassword = useChangePassword();
+  const requestPasswordReset = useRequestPasswordReset();
   const { colorScheme, setColorScheme, effectiveColorScheme } = useTheme();
 
   const [currentPassword, setCurrentPassword] = useState('');
@@ -15,6 +16,8 @@ export default function Profile() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [resetEmailMessage, setResetEmailMessage] = useState('');
+  const [resetEmailError, setResetEmailError] = useState('');
   const [notificationChannels, setNotificationChannels] = useState([]);
   const [notificationTime, setNotificationTime] = useState('09:00');
   const [mentionNotifications, setMentionNotifications] = useState('digest');
@@ -136,6 +139,20 @@ export default function Profile() {
     } catch (err) {
       setErrorMessage(
         err.response?.data?.message || 'Er is een fout opgetreden. Probeer het opnieuw.'
+      );
+    }
+  };
+
+  const handlePasswordResetRequest = async () => {
+    setResetEmailMessage('');
+    setResetEmailError('');
+
+    try {
+      const response = await requestPasswordReset.mutateAsync();
+      setResetEmailMessage(response.data.message);
+    } catch (err) {
+      setResetEmailError(
+        err.response?.data?.message || 'De e-mail kon niet worden verstuurd. Probeer het later opnieuw.'
       );
     }
   };
@@ -432,6 +449,31 @@ export default function Profile() {
               Wachtwoord wijzigen
             </button>
           </form>
+
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              Geen huidig wachtwoord?
+            </h3>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              Log je in met een inloglink of ben je je wachtwoord vergeten? Laat dan een beveiligde link naar je e-mailadres sturen.
+            </p>
+
+            {resetEmailMessage && (
+              <p className="mt-3 text-sm text-green-600 dark:text-green-400">{resetEmailMessage}</p>
+            )}
+            {resetEmailError && (
+              <p className="mt-3 text-sm text-red-600 dark:text-red-400">{resetEmailError}</p>
+            )}
+
+            <button
+              type="button"
+              onClick={handlePasswordResetRequest}
+              disabled={requestPasswordReset.isPending || requestPasswordReset.isSuccess}
+              className="btn-secondary mt-4"
+            >
+              {requestPasswordReset.isPending ? 'E-mail versturen…' : 'Mail mij een wachtwoordlink'}
+            </button>
+          </div>
         </div>
       )}
     </div>
