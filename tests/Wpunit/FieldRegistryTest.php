@@ -61,11 +61,8 @@ class FieldRegistryTest extends RondoTestCase {
 		$this->assertSame( 'Jan Jansen', $canonical['relationships'][0]['person_name'] );
 	}
 
-	public function test_read_only_relationship_enrichment_is_rejected_on_write(): void {
-		$this->expectException( InvalidArgumentException::class );
-		$this->expectExceptionMessage( 'fields.relationships.0.person_name is read-only' );
-
-		Registry::to_storage(
+	public function test_read_only_relationship_enrichment_is_dropped_on_write(): void {
+		$storage = Registry::to_storage(
 			'person',
 			[
 				'relationships' => [
@@ -76,6 +73,8 @@ class FieldRegistryTest extends RondoTestCase {
 				],
 			]
 		);
+
+		$this->assertSame( [ [ 'related_person' => 42 ] ], $storage['relationships'] );
 	}
 
 	public function test_unknown_write_identifies_the_canonical_field_path(): void {

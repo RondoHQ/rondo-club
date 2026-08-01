@@ -34,6 +34,15 @@ final class Fields {
 		return NativeFieldStorage::read_post( $post_id, $definition );
 	}
 
+	/** Return null for a deleted or unsupported post instead of throwing. */
+	public static function try_get_for_post( int $post_id, string $canonical_name ) {
+		try {
+			return self::get_for_post( $post_id, $canonical_name );
+		} catch ( \InvalidArgumentException $error ) {
+			return null;
+		}
+	}
+
 	/** @param mixed $value */
 	public static function update_for_post( int $post_id, string $canonical_name, $value ): bool {
 		return self::update_many_for_post( $post_id, [ $canonical_name => $value ] ) === true;
@@ -55,7 +64,10 @@ final class Fields {
 			if ( is_wp_error( $new_value ) ) {
 				return $new_value;
 			}
-			if ( maybe_serialize( $old_value ) === maybe_serialize( $new_value ) ) {
+			$new_value      = NativeFieldStorage::normalize_for_storage( $definition, $new_value );
+			$comparable_old = NativeFieldStorage::normalize_for_comparison( $definition, $old_value );
+			$comparable_new = NativeFieldStorage::normalize_for_comparison( $definition, $new_value );
+			if ( maybe_serialize( $comparable_old ) === maybe_serialize( $comparable_new ) ) {
 				continue;
 			}
 			$changes[] = [ $definition, $old_value, $new_value ];

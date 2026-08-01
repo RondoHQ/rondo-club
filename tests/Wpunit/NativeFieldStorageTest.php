@@ -20,6 +20,13 @@ class NativeFieldStorageTest extends RondoTestCase {
 		$this->assertFalse( metadata_exists( 'post', $person_id, '_knvb-id' ) );
 	}
 
+	public function test_try_get_returns_null_for_deleted_posts(): void {
+		$person_id = $this->createPerson();
+		wp_delete_post( $person_id, true );
+
+		$this->assertNull( Fields::try_get_for_post( $person_id, 'first_name' ) );
+	}
+
 	public function test_repeater_grows_shrinks_and_removes_stale_numbered_rows(): void {
 		$person_id = $this->createPerson();
 		$rows      = [
@@ -88,6 +95,35 @@ class NativeFieldStorageTest extends RondoTestCase {
 		$this->assertTrue( $result );
 		$this->assertSame( 1, $saves );
 		$this->assertSame( [ 'first_name', 'last_name' ], $updates );
+	}
+
+	public function test_semantically_unchanged_boolean_does_not_fire_update_actions(): void {
+		$person_id = $this->createPerson();
+		update_post_meta( $person_id, 'former_member', '1' );
+		$updates  = 0;
+		$listener = static function ( int $saved_post_id ) use ( $person_id, &$updates ): void {
+			if ( $saved_post_id === $person_id ) {
+				++$updates;
+			}
+		};
+		add_action( 'rondo_fields_updated', $listener, 99, 1 );
+
+		$result = Fields::update_for_post( $person_id, 'former_member', 1 );
+
+		remove_action( 'rondo_fields_updated', $listener, 99 );
+		$this->assertTrue( $result );
+		$this->assertSame( 0, $updates );
+	}
+
+	public function test_internal_date_and_false_writes_keep_acf_storage_shape(): void {
+		$person_id = $this->createPerson();
+
+		$this->assertTrue( Fields::update_for_post( $person_id, 'datum_iva', '2026-08-01' ) );
+		$this->assertTrue( Fields::update_for_post( $person_id, 'former_member', true ) );
+		$this->assertTrue( Fields::update_for_post( $person_id, 'former_member', false ) );
+
+		$this->assertSame( '20260801', get_post_meta( $person_id, 'datum-iva', true ) );
+		$this->assertSame( '0', get_post_meta( $person_id, 'former_member', true ) );
 	}
 
 	public function test_term_and_multiple_object_values_keep_native_shapes(): void {

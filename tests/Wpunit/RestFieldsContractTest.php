@@ -3,6 +3,7 @@
 namespace Tests\Wpunit;
 
 use Rondo\CustomFields\Manager;
+use Rondo\Fields\Fields;
 use Rondo\Fields\Formatter;
 use Rondo\Fields\RestFields;
 use Tests\Support\RondoTestCase;
@@ -126,7 +127,7 @@ class RestFieldsContractTest extends RondoTestCase {
 		$this->assertSame( 'Jan', \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) );
 	}
 
-	public function test_unknown_and_read_only_relationship_fields_return_field_specific_errors(): void {
+	public function test_unknown_fields_are_rejected_and_relationship_enrichment_is_ignored(): void {
 		$person_id = $this->createPerson();
 
 		$unknown = new \WP_REST_Request( 'POST', '/wp/v2/people/' . $person_id );
@@ -151,9 +152,13 @@ class RestFieldsContractTest extends RondoTestCase {
 		);
 		$read_only_response = rest_do_request( $read_only );
 
-		$this->assertSame( 400, $read_only_response->get_status() );
-		$this->assertSame( 'fields.relationships.0.person_name', $read_only_response->get_data()['data']['field'] );
-		$this->assertStringContainsString( 'fields.relationships.0.person_name', $read_only_response->get_data()['data']['detail'] );
+		$this->assertSame( 200, $read_only_response->get_status(), wp_json_encode( $read_only_response->get_data() ) );
+		$this->assertSame( 22, Fields::get_for_post( $person_id, 'relationships' )[0]['related_person'] );
+	}
+
+	public function test_empty_optional_date_and_post_object_values_clear_storage(): void {
+		$this->assertSame( '', Formatter::for_storage( 'person', [ 'lid_tot' => '' ] )['lid_tot'] );
+		$this->assertSame( '', Formatter::for_storage( 'discipline_case', [ 'home_team' => '' ] )['home_team'] );
 	}
 
 	public function test_datetime_wire_format_preserves_dst_offset_and_round_trips_to_storage(): void {

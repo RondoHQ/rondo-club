@@ -830,7 +830,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					'post_title'  => $todo_content,
 					'post_author' => $todo->user_id,
 					'post_date'   => $todo->comment_date,
-					'post_status' => 'publish',
+					'post_status' => ! empty( $is_completed ) ? 'rondo_completed' : 'rondo_open',
 				];
 
 				$new_post_id = wp_insert_post( $post_data, true );
@@ -847,8 +847,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				}
 
 				// Set canonical fields
-				\Rondo\Fields\Fields::update_for_post( $new_post_id, 'related_person', $person_id );
-				\Rondo\Fields\Fields::update_for_post( $new_post_id, 'is_completed', ! empty( $is_completed ) );
+				\Rondo\Fields\Fields::update_for_post( $new_post_id, 'related_persons', [ $person_id ] );
 
 				if ( ! empty( $due_date ) ) {
 					\Rondo\Fields\Fields::update_for_post( $new_post_id, 'due_date', $due_date );
@@ -1451,7 +1450,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				if ( $needs_update ) {
 					if ( ! $dry_run ) {
 						// Use the field API so the compatible reference row is preserved.
-						\Rondo\Fields\Fields::update_for_post( $person_id, 'field_custom_person_huidig-vrijwilliger', $new_value );
+						\Rondo\Fields\Fields::update_for_post( $person_id, 'huidig_vrijwilliger', $new_value );
 					}
 					++$updated;
 

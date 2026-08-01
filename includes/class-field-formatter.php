@@ -169,6 +169,16 @@ final class Formatter {
 		if ( $value === null ) {
 			return in_array( $type, [ 'repeater', 'relationship', 'gallery', 'checkbox' ], true ) ? [] : '';
 		}
+		if (
+			$value === ''
+			&& in_array( $type, [ 'date_picker', 'date_time_picker', 'time_picker', 'post_object', 'taxonomy', 'file', 'image' ], true )
+			&& empty( $definition['multiple'] )
+		) {
+			return '';
+		}
+		if ( $value === '' && in_array( $type, [ 'select', 'radio' ], true ) && empty( $definition['required'] ) ) {
+			return '';
+		}
 
 		if ( $type === 'repeater' ) {
 			if ( ! is_array( $value ) || ! array_is_list( $value ) ) {
@@ -182,7 +192,12 @@ final class Formatter {
 				}
 				$normalized_row = [];
 				foreach ( $row as $name => $child_value ) {
-					$child                   = Registry::resolve_sub_field( $definition, (string) $name );
+					$child = Registry::resolve_sub_field( $definition, (string) $name );
+					// Derived enrichment is part of the read wire shape. Clients may
+					// naturally round-trip it, but it must never reach storage.
+					if ( ! empty( $child['read_only'] ) && $child['storage_name'] === null ) {
+						continue;
+					}
 					$normalized_row[ $name ] = self::sanitize_value( $child, $child_value, "{$path}.{$index}.{$child['canonical_name']}" );
 				}
 				$rows[] = $normalized_row;

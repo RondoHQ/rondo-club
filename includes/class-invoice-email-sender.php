@@ -236,8 +236,8 @@ class InvoiceEmailSender {
 
 				if ( ! empty( $item['discipline_case'] ) ) {
 					$case_id          = $item['discipline_case'];
-					$match_date       = \Rondo\Fields\Fields::get_for_post( $case_id, 'match_date' );
-					$match_desc       = esc_html( \Rondo\Fields\Fields::get_for_post( $case_id, 'match_description' ) ?: '-' );
+					$match_date       = \Rondo\Fields\Fields::try_get_for_post( $case_id, 'match_date' );
+					$match_desc       = esc_html( \Rondo\Fields\Fields::try_get_for_post( $case_id, 'match_description' ) ?: '-' );
 					$amount           = (float) ( $item['amount'] ?? 0 );
 					$formatted_amount = '&euro; ' . number_format( $amount, 2, ',', '.' );
 
@@ -251,12 +251,12 @@ class InvoiceEmailSender {
 					}
 
 					// Derive card type from charge_codes field
-					$charge_codes = \Rondo\Fields\Fields::get_for_post( $case_id, 'charge_codes' );
+					$charge_codes = \Rondo\Fields\Fields::try_get_for_post( $case_id, 'charge_codes' );
 					$card_text    = '-';
 					if ( ! empty( $charge_codes ) ) {
 						$card_text = str_ends_with( $charge_codes, '-1' ) ? 'Geel' : 'Rood';
 						// Append schorsing for uitsluiting sanctions
-						$sanction_desc = \Rondo\Fields\Fields::get_for_post( $case_id, 'sanction_description' );
+						$sanction_desc = \Rondo\Fields\Fields::try_get_for_post( $case_id, 'sanction_description' );
 						if ( ! empty( $sanction_desc ) && strcasecmp( $sanction_desc, 'uitsluiting' ) === 0 ) {
 							$card_text .= ' en schorsing';
 						}

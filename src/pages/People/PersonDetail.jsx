@@ -1869,7 +1869,7 @@ export default function PersonDetail() {
               onUpdateField={(fieldName, value) => {
                 updatePerson.mutateAsync({
                   id,
-                  data: { meta: { [fieldName]: value } },
+                  data: { fields: { [fieldName]: value || null } },
                 });
               }}
               isUpdating={updatePerson.isPending}

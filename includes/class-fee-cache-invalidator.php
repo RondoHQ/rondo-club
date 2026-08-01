@@ -78,7 +78,7 @@ class FeeCacheInvalidator {
 
 	public function invalidate_native_field( int $post_id, string $canonical_name, $value, $old_value, array $field ): void {
 		if ( $canonical_name === 'addresses' ) {
-			$this->invalidate_family_cache( $value, $post_id, $field );
+			$this->invalidate_family_cache( $value, $post_id, $field, $old_value );
 		} elseif ( $canonical_name === 'former_member' ) {
 			$this->invalidate_family_membership_cache( $value, $post_id, $field );
 		} elseif ( in_array( $canonical_name, [ 'leeftijdsgroep', 'work_history', 'lid_sinds' ], true ) ) {
@@ -174,7 +174,7 @@ class FeeCacheInvalidator {
 	 * @param array $field   The canonical field array.
 	 * @return mixed The unmodified value (filter passthrough).
 	 */
-	public function invalidate_family_cache( $value, $post_id, $field ) {
+	public function invalidate_family_cache( $value, $post_id, $field, $old_value = null ) {
 		$post_id = $this->resolve_person_post_id( $post_id );
 
 		if ( $post_id === null ) {
@@ -184,8 +184,14 @@ class FeeCacheInvalidator {
 		// Clear this person's cache first
 		$this->clear_person_family_cache( $post_id );
 
-		// Native field actions run after persistence, so this is the new address.
-		$family_key = $this->family_grouping->get_family_key( $post_id );
+		// Native field actions run after persistence. Rebuild both the household
+		// the person left and the household they joined.
+		$old_family_key = $this->family_grouping->get_family_key_from_addresses( $old_value );
+		$family_key     = $this->family_grouping->get_family_key( $post_id );
+
+		if ( $old_family_key !== null && $old_family_key !== $family_key ) {
+			$this->invalidate_and_recalculate_family( $old_family_key, $post_id );
+		}
 
 		// If person was in a family, invalidate all members and recalculate positions in one pass
 		if ( $family_key !== null ) {

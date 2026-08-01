@@ -47,6 +47,81 @@ final class NativeFieldStorage {
 		return self::delete( 'term', $term_id, $definition );
 	}
 
+	/** Normalize a candidate value to the same typed shape returned by reads. */
+	public static function normalize_for_comparison( array $definition, $value ) {
+		if ( $definition['type'] === 'repeater' && is_array( $value ) ) {
+			$rows = [];
+			foreach ( $value as $row ) {
+				if ( ! is_array( $row ) ) {
+					$rows[] = $row;
+					continue;
+				}
+				$normalized_row = [];
+				foreach ( $row as $name => $child_value ) {
+					try {
+						$child = Registry::resolve_sub_field( $definition, (string) $name );
+					} catch ( \InvalidArgumentException $error ) {
+						$normalized_row[ $name ] = $child_value;
+						continue;
+					}
+					$normalized_row[ $name ] = self::normalize_for_comparison( $child, $child_value );
+				}
+				$rows[] = $normalized_row;
+			}
+			return $rows;
+		}
+
+		return self::normalize_read_value( $definition, $value );
+	}
+
+	/** Normalize internal API values to the legacy ACF-compatible storage shape. */
+	public static function normalize_for_storage( array $definition, $value ) {
+		if ( $definition['type'] === 'repeater' && is_array( $value ) ) {
+			$rows = [];
+			foreach ( $value as $row ) {
+				if ( ! is_array( $row ) ) {
+					continue;
+				}
+				$normalized_row = [];
+				foreach ( $row as $name => $child_value ) {
+					try {
+						$child = Registry::resolve_sub_field( $definition, (string) $name );
+					} catch ( \InvalidArgumentException $error ) {
+						continue;
+					}
+					if ( $child['storage_name'] === null ) {
+						continue;
+					}
+					$normalized_row[ $child['storage_name'] ] = self::normalize_for_storage( $child, $child_value );
+				}
+				$rows[] = $normalized_row;
+			}
+			return $rows;
+		}
+
+		if ( $value === null ) {
+			return in_array( $definition['type'], [ 'repeater', 'relationship', 'gallery', 'checkbox' ], true ) ? [] : '';
+		}
+
+		switch ( $definition['type'] ) {
+			case 'date_picker':
+				if ( is_string( $value ) && preg_match( '/^(\d{4})-?(\d{2})-?(\d{2})$/', $value, $matches ) ) {
+					return $matches[1] . $matches[2] . $matches[3];
+				}
+				return $value;
+			case 'true_false':
+				return $value ? 1 : 0;
+			case 'number':
+				if ( $value === '' || ! is_numeric( $value ) ) {
+					return $value;
+				}
+				$number = (float) $value;
+				return $number === (float) (int) $number ? (int) $number : $number;
+			default:
+				return $value;
+		}
+	}
+
 	/** @return mixed */
 	private static function read( string $kind, int $object_id, array $definition ) {
 		$name = (string) $definition['storage_name'];

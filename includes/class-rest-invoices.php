@@ -974,7 +974,7 @@ class Invoices extends Base {
 		$line_items = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'line_items' );
 		if ( $line_items && is_array( $line_items ) ) {
 			foreach ( $line_items as $item ) {
-				if ( ! empty( $item['discipline_case'] ) ) {
+				if ( ! empty( $item['discipline_case'] ) && get_post_type( (int) $item['discipline_case'] ) === 'discipline_case' ) {
 					\Rondo\Fields\Fields::update_for_post( (int) $item['discipline_case'], 'is_charged', '' );
 				}
 			}
@@ -1524,7 +1524,7 @@ class Invoices extends Base {
 		$line_items = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'line_items' );
 		if ( $line_items && is_array( $line_items ) ) {
 			foreach ( $line_items as $item ) {
-				if ( ! empty( $item['discipline_case'] ) ) {
+				if ( ! empty( $item['discipline_case'] ) && get_post_type( (int) $item['discipline_case'] ) === 'discipline_case' ) {
 					\Rondo\Fields\Fields::update_for_post( (int) $item['discipline_case'], 'is_charged', 'rondo' );
 				}
 			}
@@ -2168,7 +2168,7 @@ class Invoices extends Base {
 		$line_items = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'line_items' );
 		if ( $line_items && is_array( $line_items ) ) {
 			foreach ( $line_items as $item ) {
-				if ( ! empty( $item['discipline_case'] ) ) {
+				if ( ! empty( $item['discipline_case'] ) && get_post_type( (int) $item['discipline_case'] ) === 'discipline_case' ) {
 					\Rondo\Fields\Fields::update_for_post( (int) $item['discipline_case'], 'is_charged', '' );
 				}
 			}
