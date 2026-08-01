@@ -32,6 +32,11 @@ function dayStateTextClass(state) {
   return 'text-red-700 dark:text-red-300';
 }
 
+function signupPeriodStart(date) {
+  const [year, month] = date.split('-').map(Number);
+  return parseISO(`${year}-${month <= 6 ? '01' : '07'}-01`);
+}
+
 function Month({ month, from, to, daysByDate, selectedDate, onSelectDate }) {
   const monthStart = startOfMonth(month);
   const monthEnd = endOfMonth(month);
@@ -159,7 +164,19 @@ export default function ShiftCoverageCalendar({
     () => new Map((data?.days || []).map((day) => [day.date, day])),
     [data]
   );
-  const months = eachMonthOfInterval({ start: startOfMonth(from), end: startOfMonth(to) });
+  const hiddenSignupPeriodStart = useMemo(() => {
+    if (data?.view !== 'signup') return null;
+    const firstLockedDay = (data?.days || []).find((day) => day.state === 'locked');
+    return firstLockedDay ? signupPeriodStart(firstLockedDay.date) : null;
+  }, [data]);
+  const months = eachMonthOfInterval({ start: startOfMonth(from), end: startOfMonth(to) })
+    .filter((month) => !hiddenSignupPeriodStart || isBefore(month, hiddenSignupPeriodStart));
+  const visibleDays = useMemo(
+    () => (data?.days || []).filter(
+      (day) => !hiddenSignupPeriodStart || isBefore(parseISO(day.date), hiddenSignupPeriodStart)
+    ),
+    [data, hiddenSignupPeriodStart]
+  );
   const selectedDate = selection?.date || '';
   const selectedDay = selectedDate ? daysByDate.get(selectedDate) : null;
 
@@ -226,7 +243,7 @@ export default function ShiftCoverageCalendar({
             ))}
           </div>
 
-          {(data?.days || []).length === 0 && (
+          {visibleDays.length === 0 && (
             <p className="rounded-md bg-gray-50 p-4 text-center text-sm text-gray-500 dark:bg-gray-800 dark:text-gray-400">
               Geen inschrijftaken gepland in deze periode.
             </p>

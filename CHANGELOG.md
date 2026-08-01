@@ -28,6 +28,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Het publieke `acf`-responseveld, ondersteuning voor `acf`-writes, alle runtime-helper- en hookafhankelijkheden, plugininstallatie/licentiecode, en de map `acf-json/`. Oude writes krijgen een gerichte HTTP 400 met `fields` als vervanging.
 
+## [33.82.5] - 2026-07-31
+
+### Changed
+
+- De IVA-upload vraagt leden voortaan bij voorkeur het originele PDF-bestand te gebruiken en legt uit dat foto's, screenshots en certificaten Sociale Hygiëne handmatig worden beoordeeld.
+
+### Fixed
+
+- Automatische IVA-goedkeuring herkent naast de bestaande NOC*NSF- en "Voor elkaar"-PDF's nu ook het nieuwe TCPDF-certificaatformaat van VrijwilligerswerkNL, inclusief de bekende onvolledige naamtekst van dat formaat.
+
+## [33.82.4] - 2026-07-31
+
+### Fixed
+
+- Het dashboard werkt de takenwidget en het aantal open taken direct bij nadat een taak is afgerond, heropend of gewijzigd, ook wanneer de server een persistente WordPress-objectcache gebruikt.
+
+## [33.82.3] - 2026-07-31
+
+### Changed
+
+- De vrijwilligerskalender toont maanden uit een nog gesloten inschrijfperiode pas zodra leden zich voor die periode kunnen aanmelden. Vrijwilligerscoördinatoren blijven in de beheerkalender het volledige seizoen vooruitzien.
+
+## [33.82.2] - 2026-07-31
+
+### Fixed
+
+- **Oud-leden tellen niet meer mee voor gezinskorting.** Alleen actieve jeugdleden op hetzelfde adres bepalen voortaan de kortingsvolgorde. Als iemand oud-lid wordt, worden ook de contributiecaches en kortingsposities van de overige gezinsleden ongeldig gemaakt; achtergebleven korting op het oud-lid zelf wordt genegeerd en opgeruimd.
+
 ## [33.82.1] - 2026-07-31
 
 ### Changed

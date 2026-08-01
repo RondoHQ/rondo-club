@@ -389,17 +389,6 @@ export default function Vrijwillig() {
     staleTime: 60 * 1000,
   });
 
-  // The soonest date on which something currently visible becomes claimable, so
-  // the page can say "opens 1 november" instead of leaving grey days unexplained.
-  const nextOpeningLabel = useMemo(() => {
-    const dates = (calendarData?.days || [])
-      .flatMap((day) => day.shifts || [])
-      .map((shift) => shift.signup_opens_at)
-      .filter(Boolean)
-      .sort();
-    return dates.length > 0 ? formatOpensAt(dates[0]) : '';
-  }, [calendarData]);
-
   const signupMutation = useMutation({
     mutationFn: ({ shiftId, forceOverlap = false }) => prmApi.signupForShift(shiftId, { force_overlap: forceOverlap }),
     onMutate: () => {
@@ -618,11 +607,7 @@ export default function Vrijwillig() {
               selectedDienstType={selectedDienstType}
               onDienstTypeChange={handleDienstTypeChange}
               title="Wanneer kun je helpen?"
-              description={
-                nextOpeningLabel
-                  ? `Rood betekent dat er nog iemand nodig is. Klik op een datum om je aan te melden. Grijze dagen zijn inschrijftaken van januari tot en met juni: die gaan open op ${nextOpeningLabel}.`
-                  : 'Rood betekent dat er nog iemand nodig is. Klik op een datum om je aan te melden.'
-              }
+              description="Rood betekent dat er nog iemand nodig is. Klik op een datum om je aan te melden."
               detailsVariant="popover"
               renderShift={(shift) => (
                 <ul key={shift.id}>
