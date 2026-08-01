@@ -44,7 +44,41 @@ function obligationTitle(obligation, hasBoth) {
   return children > 1 ? `Jullie gezinsplicht (${children} kinderen)` : 'Jullie gezinsplicht';
 }
 
+function ExemptionCard({ exemption, family = false }) {
+  const hasActiveRole = ['commissie', 'staff'].includes(exemption.reason);
+
+  return (
+    <div className="card p-5 border-l-4 border-purple-400">
+      <div className="flex items-start gap-3">
+        <CheckCircle2 className="w-5 h-5 text-purple-500 mt-0.5 shrink-0" />
+        <div>
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100">
+            {family ? 'Jullie gezin is vrijgesteld' : 'Je bent vrijgesteld'}
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            {family ? (
+              hasActiveRole ? (
+                <><strong>{exemption.person_name || 'Een ouder/verzorger'}</strong> heeft al een actieve vrijwilligersrol binnen de club. Jullie gezin hoeft daarom dit seizoen geen inschrijftaken in te plannen, maar jullie <em>mogen</em> natuurlijk wel meedoen.</>
+              ) : (
+                <><strong>{exemption.person_name || 'Een ouder/verzorger'}</strong> heeft een vrijstelling ({exemption.reason_label}). Jullie gezin hoeft daarom dit seizoen geen inschrijftaken te plannen, maar jullie mogen natuurlijk wel meedoen.</>
+              )
+            ) : hasActiveRole ? (
+              <>Je hebt al een actieve vrijwilligersrol binnen de club. Je hoeft daarom dit seizoen geen inschrijftaken in te plannen, maar je <em>mag</em> natuurlijk wel meedoen.</>
+            ) : (
+              <>{exemption.reason_label}. Je hoeft dit seizoen geen inschrijftaken te plannen, maar je mag natuurlijk wel meedoen.</>
+            )}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ObligationCard({ obligation, hasBoth }) {
+  if (obligation.exemption) {
+    return <ExemptionCard exemption={obligation.exemption} family={obligation.kind === 'gezin'} />;
+  }
+
   const required = obligation.required_count || 0;
   const completed = obligation.completed_count || 0;
   const pending = obligation.pending_count || 0;
@@ -85,23 +119,7 @@ function ObligationCard({ obligation, hasBoth }) {
 
 function ObligationList({ obligations, exemption, identity }) {
   if (exemption) {
-    return (
-      <div className="card p-5 border-l-4 border-purple-400">
-        <div className="flex items-start gap-3">
-          <CheckCircle2 className="w-5 h-5 text-purple-500 mt-0.5 shrink-0" />
-          <div>
-            <h2 className="font-semibold text-gray-900 dark:text-gray-100">Je bent vrijgesteld</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              {exemption.reason === 'commissie' ? (
-                <>Je hebt al een actieve vrijwilligersrol binnen de club. Je hoeft daarom dit seizoen geen inschrijftaken in te plannen, maar je <em>mag</em> natuurlijk wel meedoen.</>
-              ) : (
-                <>{exemption.reason_label}. Je hoeft dit seizoen geen inschrijftaken te plannen, maar je mag natuurlijk wel meedoen.</>
-              )}
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+    return <ExemptionCard exemption={exemption} />;
   }
 
   if (!obligations || obligations.length === 0) {

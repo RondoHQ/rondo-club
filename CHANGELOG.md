@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.85.5] - 2026-08-01
+
+### Fixed
+
+- De vrijwilligerspagina neemt bij een gezinsplicht nu de vrijstelling van alle verantwoordelijke ouders/verzorgers mee, ook wanneer een ouder tijdelijk via het account van een kind is aangemeld.
+
 ## [33.85.4] - 2026-08-01
 
 ### Changed
