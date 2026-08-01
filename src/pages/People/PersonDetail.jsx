@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Trash2, Mail, Phone,
   MapPin, Building2, Plus, Pencil, MessageCircle, X, Camera, Download,
-  CheckSquare2, TrendingUp, StickyNote, ExternalLink, Gavel, RefreshCw, CreditCard,
+  CheckSquare2, StickyNote, ExternalLink, Gavel, RefreshCw, CreditCard,
   CalendarClock
 } from 'lucide-react';
 import { usePerson, usePersonTimeline, useDeleteNote, useDeletePerson, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
@@ -137,16 +137,6 @@ export default function PersonDetail() {
       queryClient.invalidateQueries({ queryKey: ['people', id, 'shifts'] }),
     ]);
   };
-
-  // Fetch teams where this person is an investor
-  const { data: investments = [] } = useQuery({
-    queryKey: ['investments', id],
-    queryFn: async () => {
-      const response = await prmApi.getInvestments(id);
-      return response.data;
-    },
-    enabled: !!id,
-  });
 
   // Fetch current user for capability check
   const { data: currentUser } = useCurrentUser();
@@ -2055,46 +2045,6 @@ export default function PersonDetail() {
             )}
           </div>
           
-          {/* Investments */}
-          {investments.length > 0 && (
-            <div className="card p-6 break-inside-avoid mb-6">
-              <h2 className="font-semibold text-brand-gradient mb-4 flex items-center">
-                <TrendingUp className="w-5 h-5 mr-2" />
-                Investments
-              </h2>
-              <div className="space-y-3">
-                {investments.map((investment) => {
-                  const isCommissie = investment.type === 'commissie';
-                  const linkPath = isCommissie
-                    ? `/commissies/${investment.id}`
-                    : `/teams/${investment.id}`;
-                  return (
-                    <Link
-                      key={investment.id}
-                      to={linkPath}
-                      className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
-                    >
-                      {investment.thumbnail ? (
-                        <img
-                          src={investment.thumbnail}
-                          alt={investment.name}
-                          className="w-12 h-12 rounded-lg object-contain border border-gray-200"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center border border-gray-200">
-                          <Building2 className="w-6 h-6 text-gray-400" />
-                        </div>
-                      )}
-                      <div className="ml-3">
-                        <p className="text-sm font-medium group-hover:text-electric-cyan">{investment.name}</p>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           </div>
         )}
 

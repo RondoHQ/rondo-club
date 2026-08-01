@@ -458,24 +458,6 @@ class Api extends Base {
 			]
 		);
 
-		// Get teams where a person or company is an investor
-		register_rest_route(
-			'rondo/v1',
-			'/investments/(?P<investor_id>\d+)',
-			[
-				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_investments' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
-				'args'                => [
-					'investor_id' => [
-						'validate_callback' => function ( $param ) {
-							return is_numeric( $param );
-						},
-					],
-				],
-			]
-		);
-
 		// Restore default relationship type configurations
 		register_rest_route(
 			'rondo/v1',
@@ -1710,83 +1692,6 @@ class Api extends Base {
 
 		return $recently_contacted;
 	}
-	/**
-	 * Get teams and commissies where a person or company is listed as an investor
-	 */
-	public function get_investments( $request ) {
-		$investor_id = (int) $request->get_param( 'investor_id' );
-
-		// Query both teams and commissies where this ID appears in the investors field
-		// Access control applied automatically via WP_Query filters (all approved users see all data)
-		$entities = get_posts(
-			[
-				'post_type'      => [ 'team', 'commissie' ],
-				'posts_per_page' => -1,
-				'post_status'    => 'publish',
-				'meta_query'     => [
-					[
-						'key'     => 'investors',
-						'value'   => sprintf( '"%d"', $investor_id ),
-						'compare' => 'LIKE',
-					],
-				],
-			]
-		);
-
-		// Also check with serialized format (native field stores as serialized array)
-		$entities_serialized = get_posts(
-			[
-				'post_type'      => [ 'team', 'commissie' ],
-				'posts_per_page' => -1,
-				'post_status'    => 'publish',
-				'meta_query'     => [
-					[
-						'key'     => 'investors',
-						'value'   => serialize( strval( $investor_id ) ),
-						'compare' => 'LIKE',
-					],
-				],
-			]
-		);
-
-		// Merge and dedupe
-		$all_entities    = array_merge( $entities, $entities_serialized );
-		$seen_ids        = [];
-		$unique_entities = [];
-		foreach ( $all_entities as $entity ) {
-			if ( ! in_array( $entity->ID, $seen_ids, true ) ) {
-				$seen_ids[]        = $entity->ID;
-				$unique_entities[] = $entity;
-			}
-		}
-
-		// Format response
-		$investments = [];
-		foreach ( $unique_entities as $entity ) {
-			$thumbnail_id  = get_post_thumbnail_id( $entity->ID );
-			$thumbnail_url = $thumbnail_id ? wp_get_attachment_image_url( $thumbnail_id, 'thumbnail' ) : '';
-
-			$investments[] = [
-				'id'        => $entity->ID,
-				'type'      => $entity->post_type,
-				'name'      => $this->sanitize_text( $entity->post_title ),
-				'website'   => $this->sanitize_url( \Rondo\Fields\Fields::get_for_post( $entity->ID, 'website' ) ),
-				'thumbnail' => $this->sanitize_url( $thumbnail_url ),
-			];
-		}
-
-		// Sort alphabetically by name
-		usort(
-			$investments,
-			function ( $a, $b ) {
-				return strcasecmp( $a['name'], $b['name'] );
-			}
-		);
-
-		return rest_ensure_response( $investments );
-	}
-
-
 	/**
 	 * Get club configuration settings
 	 *

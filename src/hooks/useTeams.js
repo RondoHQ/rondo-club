@@ -20,7 +20,6 @@ export function useCreateTeam({ onSuccess } = {}) {
         parent: data.parentId || 0,
         fields: {
           website: data.website,
-          investors: data.investors || [],
         },
       };
 

@@ -232,8 +232,7 @@ Old fragment:
     "contact_info": [],
     "publicteamid": "TM123",
     "activiteit": "Veld - Zaterdag",
-    "gender": "male",
-    "investors": [1, 2]
+    "gender": "male"
   },
   "player_count": 12,
   "staff_count": 4
@@ -250,8 +249,7 @@ New fragment:
     "contact_info": [],
     "publicteamid": "TM123",
     "activiteit": "Veld - Zaterdag",
-    "gender": "male",
-    "investors": [1, 2]
+    "gender": "male"
   },
   "player_count": 12,
   "staff_count": 4
@@ -267,8 +265,7 @@ Old request:
   "title": "JO17-1",
   "status": "publish",
   "acf": {
-    "website": "https://example.org",
-    "investors": [1, 2]
+    "website": "https://example.org"
   }
 }
 ```
@@ -280,8 +277,7 @@ New request:
   "title": "JO17-1",
   "status": "publish",
   "fields": {
-    "website": "https://example.org",
-    "investors": [1, 2]
+    "website": "https://example.org"
   }
 }
 ```

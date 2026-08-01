@@ -192,8 +192,6 @@ export const prmApi = {
   getAllTodos: (status = 'open') =>
     api.get('/rondo/v1/todos', { params: { status } }),
   
-  // Investments (teams where entity is an investor)
-  getInvestments: (investorId) => api.get(`/rondo/v1/investments/${investorId}`),
   getPersonTodos: (personId) => api.get(`/rondo/v1/people/${personId}/todos`),
   createTodo: (personId, data) => 
     api.post(`/rondo/v1/people/${personId}/todos`, data),
