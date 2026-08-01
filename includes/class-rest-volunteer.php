@@ -132,17 +132,45 @@ class Volunteer extends Base {
 			'rondo/v1',
 			'/volunteer-exemption/(?P<person_id>\d+)',
 			[
-				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_exemption' ],
-				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
-				'args'                => [
-					'person_id' => [
-						'required'          => true,
-						'sanitize_callback' => 'absint',
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_exemption' ],
+					'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
+					'args'                => [
+						'person_id' => [
+							'required'          => true,
+							'sanitize_callback' => 'absint',
+						],
+						'season'    => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
 					],
-					'season'    => [
-						'required'          => false,
-						'sanitize_callback' => 'sanitize_text_field',
+				],
+				[
+					'methods'             => \WP_REST_Server::EDITABLE,
+					'callback'            => [ $this, 'update_manual_exemption' ],
+					'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
+					'args'                => [
+						'person_id' => [
+							'required'          => true,
+							'sanitize_callback' => 'absint',
+						],
+						'enabled'   => [
+							'required'          => true,
+							'sanitize_callback' => 'rest_sanitize_boolean',
+						],
+						'reason'    => [
+							'required'          => false,
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_textarea_field',
+						],
+						'season'    => [
+							'required'          => false,
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+							'validate_callback' => [ $this, 'validate_optional_season' ],
+						],
 					],
 				],
 			]
@@ -1045,20 +1073,77 @@ class Volunteer extends Base {
 		$season    = $request->get_param( 'season' ) ?: SeasonKey::current();
 
 		if ( $person_id <= 0 || get_post_type( $person_id ) !== 'person' ) {
-			return new \WP_Error( 'invalid_person', 'Invalid person ID.', [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_person', 'Persoon niet gevonden.', [ 'status' => 404 ] );
 		}
 
+		return rest_ensure_response( $this->prepare_exemption_response( $person_id, $season ) );
+	}
+
+	/**
+	 * POST/PUT/PATCH /rondo/v1/volunteer-exemption/{person_id}
+	 *
+	 * Stores the narrowly scoped manual exemption fields. This intentionally
+	 * bypasses general person-edit permissions: the `vrijwilligers` capability
+	 * owns this policy decision, but does not gain access to unrelated ACF data.
+	 */
+	public function update_manual_exemption( \WP_REST_Request $request ) {
+		$person_id = (int) $request->get_param( 'person_id' );
+
+		if ( $person_id <= 0 || get_post_type( $person_id ) !== 'person' ) {
+			return new \WP_Error( 'invalid_person', 'Persoon niet gevonden.', [ 'status' => 404 ] );
+		}
+
+		$enabled = (bool) $request->get_param( 'enabled' );
+		$reason  = $enabled ? (string) $request->get_param( 'reason' ) : '';
+		$season  = $enabled ? trim( (string) $request->get_param( 'season' ) ) : '';
+
+		update_field( 'field_vrijgesteld_handmatig', $enabled ? 1 : 0, $person_id );
+		update_field( 'field_vrijstelling_reden', $reason, $person_id );
+		update_field( 'field_vrijstelling_seizoen', $season, $person_id );
+
+		VolunteerEligibilityService::invalidate_cache();
+		RelationshipQualityChecker::invalidate_cache();
+		VolunteerObligationCalculator::invalidate_cache();
+
+		return rest_ensure_response( $this->prepare_exemption_response( $person_id, SeasonKey::current() ) );
+	}
+
+	/**
+	 * Accept an empty season for an ongoing exemption, or a consecutive
+	 * YYYY-YYYY sports season.
+	 */
+	public function validate_optional_season( $value ): bool {
+		$season = trim( (string) $value );
+		if ( $season === '' ) {
+			return true;
+		}
+
+		if ( ! preg_match( '/^(\d{4})-(\d{4})$/', $season, $matches ) ) {
+			return false;
+		}
+
+		return (int) $matches[2] === (int) $matches[1] + 1;
+	}
+
+	/**
+	 * Build the shared read/write response for one person's exemption state.
+	 */
+	private function prepare_exemption_response( int $person_id, string $season ): array {
 		$reason = VolunteerExemptionResolver::resolve( $person_id, $season );
 
-		return rest_ensure_response(
-			[
-				'person_id'    => $person_id,
-				'season'       => $season,
-				'is_exempt'    => $reason !== null,
-				'reason'       => $reason,
-				'reason_label' => $reason ? VolunteerExemptionResolver::reason_label( $reason ) : null,
-			]
-		);
+		return [
+			'person_id'    => $person_id,
+			'person_name'  => get_the_title( $person_id ),
+			'season'       => $season,
+			'is_exempt'    => $reason !== null,
+			'reason'       => $reason,
+			'reason_label' => $reason ? VolunteerExemptionResolver::reason_label( $reason ) : null,
+			'manual'       => [
+				'enabled' => rest_sanitize_boolean( get_post_meta( $person_id, 'vrijgesteld_handmatig', true ) ),
+				'reason'  => (string) get_post_meta( $person_id, 'vrijstelling_reden', true ),
+				'season'  => (string) get_post_meta( $person_id, 'vrijstelling_seizoen', true ),
+			],
+		];
 	}
 
 	/**

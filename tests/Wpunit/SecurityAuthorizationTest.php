@@ -67,6 +67,14 @@ class SecurityAuthorizationTest extends RondoTestCase {
 		$this->assertSame( 403, $this->request( 'GET', '/rondo/v1/relationship-quality' )->get_status() );
 		$this->assertSame( 403, $this->request( 'GET', '/rondo/v1/volunteer-data-quality/orphan' )->get_status() );
 		$this->assertSame( 403, $this->request( 'GET', '/rondo/v1/volunteer-exemption/123' )->get_status() );
+		$this->assertSame(
+			403,
+			$this->request(
+				'PUT',
+				'/rondo/v1/volunteer-exemption/123',
+				[ 'enabled' => true ]
+			)->get_status()
+		);
 		$this->assertSame( 403, $this->request( 'GET', '/rondo/v1/iva/123/status' )->get_status() );
 		$this->assertSame( 403, $this->request( 'GET', '/rondo/v1/shifts/recent-signups' )->get_status() );
 	}

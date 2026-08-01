@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.86.0] - 2026-08-01
+
+### Added
+
+- Vrijwilligersbeheerders kunnen op de pagina Vrijstellingen een persoon zoeken en een handmatige vrijstelling toevoegen, wijzigen of intrekken, inclusief reden en optioneel seizoen.
+
 ## [33.85.8] - 2026-08-01
 
 ### Changed
