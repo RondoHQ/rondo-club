@@ -1562,28 +1562,28 @@ add_action( 'login_head', 'rondo_login_favicon' );
  * @return string
  */
 function rondo_magic_login_dutch( $translation, $text, $domain ) {
-	if ( 'magic-login' !== $domain || ! str_starts_with( determine_locale(), 'nl' ) ) {
+	if ( $domain !== 'magic-login' || ! str_starts_with( determine_locale(), 'nl' ) ) {
 		return $translation;
 	}
 
 	$strings = [
-		'Log In'                       => 'Inloggen',
-		'Log in'                       => 'Inloggen',
-		'or'                           => 'of',
-		'Send me the login link'       => 'Stuur mij de inloglink',
-		'Username or Email Address'    => 'Gebruikersnaam of e-mailadres',
-		'Username'                     => 'Gebruikersnaam',
+		'Log In'                                      => 'Inloggen',
+		'Log in'                                      => 'Inloggen',
+		'or'                                          => 'of',
+		'Send me the login link'                      => 'Stuur mij de inloglink',
+		'Username or Email Address'                   => 'Gebruikersnaam of e-mailadres',
+		'Username'                                    => 'Gebruikersnaam',
 		'Please enter your username. You will receive an email message to log in.' => 'Vul je gebruikersnaam of e-mailadres in. Je ontvangt een e-mail met een inloglink.',
 		'Please check your inbox for the login link. If you did not receive a login email, check your spam folder too.' => 'Controleer je inbox voor de inloglink. Geen e-mail ontvangen? Kijk dan ook in je spammap.',
 		'If an account matches your request, please check your inbox for the login link. If you did not receive a login email, check your spam folder too.' => 'Als er een account bestaat voor deze gegevens, ontvang je een e-mail met de inloglink. Geen e-mail ontvangen? Kijk dan ook in je spammap.',
 		'We have already sent several login emails recently. Please check your inbox and spam folder before requesting another link.' => 'We hebben recent al meerdere inlogmails gestuurd. Controleer je inbox en spammap voordat je een nieuwe link aanvraagt.',
 		'There is no account with that username or email address.' => 'Er is geen account met die gebruikersnaam of dat e-mailadres.',
-		'There is no account with that username.' => 'Er is geen account met die gebruikersnaam.',
-		'Invalid login code.'          => 'Ongeldige inlogcode.',
+		'There is no account with that username.'     => 'Er is geen account met die gebruikersnaam.',
+		'Invalid login code.'                         => 'Ongeldige inlogcode.',
 		'Invalid magic login token. <a href="%s">Try signing in instead</a>?' => 'Ongeldige of verlopen inloglink. <a href="%s">Probeer opnieuw in te loggen</a>.',
 		'Unable to process your request. Please try again.' => 'We konden je verzoek niet verwerken. Probeer het opnieuw.',
-		'Login link will expire in %1$s %2$s.' => 'De inloglink verloopt over %1$s %2$s.',
-		'Please enter the code sent to your email.' => 'Vul de code in die naar je e-mail is gestuurd.',
+		'Login link will expire in %1$s %2$s.'        => 'De inloglink verloopt over %1$s %2$s.',
+		'Please enter the code sent to your email.'   => 'Vul de code in die naar je e-mail is gestuurd.',
 		'Please check your phone for the login link.' => 'Controleer je telefoon voor de inloglink.',
 	];
 
