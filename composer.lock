@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "70c6320d7e3cc09d4ab65520499797d1",
+    "content-hash": "ec9bb45298065ab7c668fbbcf20fb4f3",
     "packages": [
         {
             "name": "chillerlan/php-qrcode",
@@ -814,16 +814,16 @@
         },
         {
             "name": "lettermint/lettermint-php",
-            "version": "1.5.1",
+            "version": "2.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/lettermint/lettermint-php.git",
-                "reference": "36c438298c379e6a07d629fc1063aef1d27a6472"
+                "reference": "79e7dfcedfce4898c440b08a31fe1da64950ae33"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/lettermint/lettermint-php/zipball/36c438298c379e6a07d629fc1063aef1d27a6472",
-                "reference": "36c438298c379e6a07d629fc1063aef1d27a6472",
+                "url": "https://api.github.com/repos/lettermint/lettermint-php/zipball/79e7dfcedfce4898c440b08a31fe1da64950ae33",
+                "reference": "79e7dfcedfce4898c440b08a31fe1da64950ae33",
                 "shasum": ""
             },
             "require": {
@@ -868,9 +868,9 @@
             ],
             "support": {
                 "issues": "https://github.com/lettermint/lettermint-php/issues",
-                "source": "https://github.com/lettermint/lettermint-php/tree/1.5.1"
+                "source": "https://github.com/lettermint/lettermint-php/tree/2.2.0"
             },
-            "time": "2025-12-23T18:25:05+00:00"
+            "time": "2026-07-07T20:57:01+00:00"
         },
         {
             "name": "mollie/mollie-api-php",
