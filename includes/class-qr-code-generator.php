@@ -12,7 +12,7 @@ use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use chillerlan\QRCode\Data\QRMatrix;
 use chillerlan\QRCode\Common\EccLevel;
-use chillerlan\QRCode\Output\QROutputInterface;
+use chillerlan\QRCode\Output\QRGdImagePNG;
 use Rondo\Config\FinanceConfig;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -86,7 +86,7 @@ class QrCodeGenerator {
 
 			// Build QR options.
 			$options                   = new QROptions();
-			$options->outputType       = QROutputInterface::GDIMAGE_PNG;
+			$options->outputInterface  = QRGdImagePNG::class;
 			$options->outputBase64     = false;
 			$options->returnResource   = true; // Return GdImage for logo overlay.
 			$options->scale            = 10;   // 10px per module → ~330×330px output.
