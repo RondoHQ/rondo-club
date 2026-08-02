@@ -156,15 +156,117 @@ class BirthdayRemindersTest extends RondoTestCase {
 
 	/**
 	 * Unparseable birthdate values must not blow up or leak into the results.
+	 *
+	 * The impossible calendar dates matter specifically: 29 February falls back to 1 March, and
+	 * that fallback must not swallow other invalid month/day pairs and turn them into birthdays.
 	 */
 	public function test_upcoming_reminders_ignores_malformed_birthdates(): void {
-		$empty_id   = $this->createPersonWithRawBirthdate( 'No Birthdate', '' );
-		$garbage_id = $this->createPersonWithRawBirthdate( 'Garbage Birthdate', 'not-a-date' );
+		$ignored = [
+			'No Birthdate'      => '',
+			'Garbage Birthdate' => 'not-a-date',
+			'Thirtieth Of Feb'  => '20080230',
+			'Thirteenth Month'  => '20081332',
+		];
 
-		$ids = $this->idsIn( $this->reminders->get_upcoming_reminders( 14 ) );
+		$expected_absent = [];
+		foreach ( $ignored as $title => $birthdate ) {
+			$expected_absent[ $title ] = $this->createPersonWithRawBirthdate( $title, $birthdate );
+		}
 
-		$this->assertNotContains( $empty_id, $ids );
-		$this->assertNotContains( $garbage_id, $ids );
+		$ids = $this->idsIn( $this->reminders->get_upcoming_reminders( 400 ) );
+
+		foreach ( $expected_absent as $title => $person_id ) {
+			$this->assertNotContains( $person_id, $ids, "{$title} must not appear as a birthday" );
+		}
+	}
+
+	/**
+	 * The next occurrence of a 29 February birthday, resolved independently of the query.
+	 *
+	 * Leap years keep 29 February; common years fall back to 1 March. The first of this year and
+	 * next year that has not yet passed is the next occurrence.
+	 *
+	 * @return string
+	 */
+	private function expectedLeapDayOccurrence(): string {
+		$today        = new \DateTime( 'today', wp_timezone() );
+		$current_year = (int) $today->format( 'Y' );
+
+		foreach ( [ $current_year, $current_year + 1 ] as $year ) {
+			$is_leap    = (bool) ( new \DateTime( "{$year}-01-01", wp_timezone() ) )->format( 'L' );
+			$occurrence = new \DateTime( $is_leap ? "{$year}-02-29" : "{$year}-03-01", wp_timezone() );
+
+			if ( $occurrence >= $today ) {
+				return $occurrence->format( 'Y-m-d' );
+			}
+		}
+
+		$this->fail( 'A 29 February birthday must occur within the next two years' );
+	}
+
+	/**
+	 * A 29 February birthday must surface, falling back to 1 March in common years.
+	 *
+	 * Previously it resolved to NULL in every common year and vanished from the dashboard
+	 * entirely, three years out of four.
+	 */
+	public function test_upcoming_reminders_resolves_leap_day_birthdays(): void {
+		$person_id = $this->createPersonWithRawBirthdate( 'Leap Day Person', '20080229' );
+
+		// A 400-day window always contains the next occurrence, whichever year it lands in.
+		$reminders = $this->reminders->get_upcoming_reminders( 400 );
+		$match     = null;
+		foreach ( $reminders as $reminder ) {
+			if ( (int) $reminder['id'] === $person_id ) {
+				$match = $reminder;
+				break;
+			}
+		}
+
+		$this->assertNotNull( $match, 'A 29 February birthday must appear in the reminder list' );
+		$this->assertSame(
+			$this->expectedLeapDayOccurrence(),
+			$match['next_occurrence'],
+			'A 29 February birthday resolves to 29 February in leap years and 1 March otherwise'
+		);
+	}
+
+	/**
+	 * The PHP occurrence helper, which backs the weekly digest, agrees with the SQL query.
+	 *
+	 * Both surfaces must place a leap-day birthday on the same date; a disagreement would show the
+	 * person on the dashboard and in the digest on different days.
+	 */
+	public function test_calculate_next_occurrence_matches_query_for_leap_day(): void {
+		$next = $this->reminders->calculate_next_occurrence( '20080229', true );
+
+		$this->assertNotNull( $next, 'A 29 February birthdate must resolve to a concrete date' );
+		$this->assertSame( $this->expectedLeapDayOccurrence(), $next->format( 'Y-m-d' ) );
+	}
+
+	/**
+	 * Rolling a passed birthday into next year must keep the original month and day.
+	 *
+	 * Uses yesterday's month/day, so the "already passed this year" branch is exercised on every
+	 * day of the year except when yesterday fell in the previous calendar year.
+	 */
+	public function test_calculate_next_occurrence_preserves_month_and_day_on_rollover(): void {
+		$today     = new \DateTime( 'today', wp_timezone() );
+		$yesterday = ( clone $today )->modify( '-1 day' );
+
+		$next = $this->reminders->calculate_next_occurrence( $yesterday->format( 'Ymd' ), true );
+
+		$this->assertNotNull( $next );
+		$this->assertSame(
+			$yesterday->format( 'm-d' ),
+			$next->format( 'm-d' ),
+			'Rolling over to next year must not shift the month or day'
+		);
+		$this->assertGreaterThanOrEqual(
+			$today->format( 'Y-m-d' ),
+			$next->format( 'Y-m-d' ),
+			'The next occurrence must never be in the past'
+		);
 	}
 
 	/**
