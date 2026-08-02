@@ -1806,6 +1806,8 @@ export default function PersonDetail() {
               isUpdating={updatePerson.isPending}
               excludeLabelPrefixes={['Nikki']}
             />
+
+            <PersonShiftOverview overview={shiftOverview} isLoading={isShiftOverviewLoading} />
             </div>
 
             {/* Column 2: Sportlink, Account, Relaties, VOG */}
@@ -1906,8 +1908,6 @@ export default function PersonDetail() {
               isUpdating={updatePerson.isPending}
             />
             </div>
-
-            <PersonShiftOverview overview={shiftOverview} isLoading={isShiftOverviewLoading} />
           </div>
         )}
 
