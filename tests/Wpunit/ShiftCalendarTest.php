@@ -299,4 +299,32 @@ class ShiftCalendarTest extends RondoTestCase {
 		$this->assertTrue( $forced_response->get_data()['signed_up'] );
 		$this->assertSame( [ $person_id ], get_post_meta( $candidate_id, 'assigned_persons', true ) );
 	}
+
+	/**
+	 * A missing or empty-string `assigned_persons` meta row must count as zero
+	 * signups. `(array) ''` is [''] — the raw cast made empty shifts claim one
+	 * phantom assignee and present themselves as "Ingevuld" without any names.
+	 */
+	public function test_shifts_without_assigned_meta_count_zero_signups(): void {
+		$manager_id = $this->createRondoUser( [ 'role' => 'rondo_vrijwilligers' ] );
+		wp_set_current_user( $manager_id );
+
+		$type_id      = $this->dienst_type( 'Lege dienst' );
+		$missing_meta = $this->shift( $type_id, 1, [] );
+		delete_post_meta( $missing_meta, 'assigned_persons' );
+		$empty_string = $this->shift( $type_id, 1, [], 'vol', '14:00:00' );
+		update_post_meta( $empty_string, 'assigned_persons', '' );
+
+		$data = $this->controller->get_shift_calendar( $this->calendar_request( 'manage' ) )->get_data();
+		$day  = $data['days'][0];
+
+		$this->assertSame( 'open', $day['state'] );
+		$this->assertSame( 0, $day['assigned_count'] );
+		$this->assertSame( 2, $day['spots_remaining'] );
+		foreach ( $day['shifts'] as $shift ) {
+			$this->assertFalse( $shift['is_filled'] );
+			$this->assertSame( 0, $shift['assigned_count'] );
+			$this->assertSame( [], $shift['assigned_persons'] );
+		}
+	}
 }

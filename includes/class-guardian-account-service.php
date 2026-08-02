@@ -7,6 +7,7 @@
 
 namespace Rondo\Users;
 
+use Rondo\Volunteer\ShiftAssignments;
 use Rondo\Volunteer\ShiftEmailScheduler;
 use Rondo\Volunteer\VolunteerEligibilityService;
 use Rondo\Volunteer\VolunteerObligationCalculator;
@@ -402,7 +403,7 @@ class GuardianAccountService {
 		$migrated    = 0;
 		$queue_shift = 0;
 		foreach ( $shift_ids as $shift_id ) {
-			$assigned = array_values( array_unique( array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) ) ) );
+			$assigned = ShiftAssignments::person_ids( $shift_id );
 			if ( ! in_array( $source_person_id, $assigned, true ) ) {
 				continue;
 			}

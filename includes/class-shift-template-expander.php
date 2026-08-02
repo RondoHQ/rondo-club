@@ -207,7 +207,7 @@ class ShiftTemplateExpander {
 				++$kept;
 				continue;
 			}
-			$assigned = array_filter( array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) ) );
+			$assigned = ShiftAssignments::person_ids( $shift_id );
 			if ( ! empty( $assigned ) ) {
 				++$kept_signups;
 				continue;

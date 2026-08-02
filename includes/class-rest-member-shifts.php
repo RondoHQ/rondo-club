@@ -25,6 +25,7 @@ namespace Rondo\REST;
 use Rondo\Fees\SeasonKey;
 use Rondo\Users\GuardianAccountService;
 use Rondo\Volunteer\IvaStatus;
+use Rondo\Volunteer\ShiftAssignments;
 use Rondo\Volunteer\ShiftCancellationService;
 use Rondo\Volunteer\ShiftSignupWindow;
 use Rondo\Volunteer\ShiftEmailScheduler;
@@ -143,7 +144,7 @@ class MemberShifts extends Base {
 		}
 
 		$data     = $response->get_data();
-		$assigned = array_map( 'intval', (array) get_post_meta( $post->ID, 'assigned_persons', true ) );
+		$assigned = ShiftAssignments::person_ids( $post->ID );
 		$names    = [];
 		foreach ( $assigned as $person_id ) {
 			$names[ $person_id ] = GuardianAccountService::display_name_for_person( $person_id );
@@ -615,7 +616,7 @@ class MemberShifts extends Base {
 			}
 			$seen_shift_ids[ $shift->ID ] = true;
 
-			$assigned = array_map( 'intval', (array) get_post_meta( $shift->ID, 'assigned_persons', true ) );
+			$assigned = ShiftAssignments::person_ids( $shift->ID );
 			$signups  = [];
 			foreach ( $assigned as $person_id ) {
 				$timestamp = (int) get_post_meta( $shift->ID, '_shift_signup_at_' . $person_id, true );
@@ -1079,7 +1080,7 @@ class MemberShifts extends Base {
 					return new \WP_Error( 'shift_closed', 'Deze inschrijftaak staat niet meer open.', [ 'status' => 409 ] );
 				}
 
-				$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
+				$assigned = ShiftAssignments::person_ids( $shift_id );
 				if ( in_array( $person_id, $assigned, true ) ) {
 					return rest_ensure_response(
 						[
@@ -1145,7 +1146,7 @@ class MemberShifts extends Base {
 					);
 				}
 
-				$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
+				$assigned = ShiftAssignments::person_ids( $shift_id );
 				$filtered = array_values( array_diff( $assigned, [ $person_id ] ) );
 
 				update_post_meta( $shift_id, 'assigned_persons', $filtered );
@@ -1269,7 +1270,7 @@ class MemberShifts extends Base {
 					return new \WP_Error( 'shift_closed', 'Deze inschrijftaak staat niet meer open.', [ 'status' => 409 ] );
 				}
 
-				$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
+				$assigned = ShiftAssignments::person_ids( $shift_id );
 				$capacity = (int) get_post_meta( $shift_id, 'capacity', true );
 
 				if ( in_array( $person_id, $assigned, true ) ) {
@@ -1352,7 +1353,7 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'invalid_shift', 'Inschrijftaak bestaat niet.', [ 'status' => 404 ] );
 		}
 
-		$assigned   = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
+		$assigned   = ShiftAssignments::person_ids( $shift_id );
 		$candidates = $this->search_person_ids( $search );
 
 		$people = [];
@@ -1466,7 +1467,7 @@ class MemberShifts extends Base {
 					return new \WP_Error( 'shift_closed', 'Aanmeldingen van een geannuleerde of voltooide inschrijftaak kunnen niet meer worden gewijzigd.', [ 'status' => 409 ] );
 				}
 
-				$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
+				$assigned = ShiftAssignments::person_ids( $shift_id );
 				if ( ! in_array( $person_id, $assigned, true ) ) {
 					return new \WP_Error( 'assignee_not_found', 'Deze persoon is niet voor de inschrijftaak aangemeld.', [ 'status' => 404 ] );
 				}
@@ -1716,7 +1717,7 @@ class MemberShifts extends Base {
 		$start          = (string) get_post_meta( $shift->ID, 'start_datetime', true );
 		$end            = (string) get_post_meta( $shift->ID, 'end_datetime', true );
 		$capacity       = (int) get_post_meta( $shift->ID, 'capacity', true );
-		$assigned       = array_map( 'intval', (array) get_post_meta( $shift->ID, 'assigned_persons', true ) );
+		$assigned       = ShiftAssignments::person_ids( $shift->ID );
 		$status         = (string) get_post_meta( $shift->ID, 'status', true );
 
 		if ( $start === '' || $end === '' ) {
@@ -1767,7 +1768,7 @@ class MemberShifts extends Base {
 
 		$out = [];
 		foreach ( $query->posts as $shift ) {
-			$assigned = array_map( 'intval', (array) get_post_meta( $shift->ID, 'assigned_persons', true ) );
+			$assigned = ShiftAssignments::person_ids( $shift->ID );
 			if ( ! in_array( $person_id, $assigned, true ) ) {
 				continue; // LIKE match was a false positive on serialized data.
 			}
