@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.1.0] - 2026-08-02
+
+### Added
+
+- De inschrijftakenkalender op Vrijwilligers → Inschrijftaken toont per dienst wie er is ingeschreven, met een klikbare link naar elk profiel.
+
 ## [34.0.2] - 2026-08-01
 
 ### Changed
