@@ -297,28 +297,56 @@ class Reminders {
 
 		// Use SQL date math to filter birthdays within the window, avoiding full table scan.
 		// Calculates next birthday occurrence (this year or next) and filters in the DB.
+		//
+		// Birthdates are stored in two shapes: the canonical compact 'Ymd' the field registry
+		// writes, and legacy dashed 'Y-m-d' rows. Strip the separators before slicing off the
+		// month/day so both shapes resolve to the same MMDD.
+		//
+		// A 29 February birthday has no 29 February to land on in a common year. It falls back to
+		// 1 March, matching what calculate_next_occurrence() already does in PHP, where setDate()
+		// overflows 29 February into 1 March. The fallback is deliberately scoped to '0229' only,
+		// so a genuinely malformed MMDD stays NULL and drops out instead of becoming a 1 March
+		// birthday.
 		$people_with_birthdays = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT p.ID, p.post_title, pm.meta_value as birthdate,
-					CASE
-						WHEN DATE(CONCAT(%d, '-', SUBSTRING(pm.meta_value, 6))) >= %s
-						THEN DATE(CONCAT(%d, '-', SUBSTRING(pm.meta_value, 6)))
-						ELSE DATE(CONCAT(%d, '-', SUBSTRING(pm.meta_value, 6)))
-					END AS next_occurrence
-				FROM {$wpdb->posts} p
-				INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
-				LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'
-				WHERE p.post_type = 'person'
-				AND p.post_status = 'publish'
-				AND pm.meta_key = 'birthdate'
-				AND pm.meta_value != ''
-				AND pm.meta_value REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
-				AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')
+				"SELECT ID, post_title, birthdate,
+					CASE WHEN this_year >= %s THEN this_year ELSE next_year END AS next_occurrence
+				FROM (
+					SELECT ID, post_title, birthdate,
+						COALESCE(
+							STR_TO_DATE(CONCAT(%d, mmdd), '%%Y%%m%%d'),
+							STR_TO_DATE(CONCAT(%d, mmdd_fallback), '%%Y%%m%%d')
+						) AS this_year,
+						COALESCE(
+							STR_TO_DATE(CONCAT(%d, mmdd), '%%Y%%m%%d'),
+							STR_TO_DATE(CONCAT(%d, mmdd_fallback), '%%Y%%m%%d')
+						) AS next_year
+					FROM (
+						SELECT p.ID, p.post_title, pm.meta_value AS birthdate,
+							RIGHT(REPLACE(pm.meta_value, '-', ''), 4) AS mmdd,
+							CASE
+								WHEN RIGHT(REPLACE(pm.meta_value, '-', ''), 4) = '0229' THEN '0301'
+								ELSE RIGHT(REPLACE(pm.meta_value, '-', ''), 4)
+							END AS mmdd_fallback
+						FROM {$wpdb->posts} p
+						INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+						LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'
+						WHERE p.post_type = 'person'
+						AND p.post_status = 'publish'
+						AND pm.meta_key = 'birthdate'
+						AND (
+							pm.meta_value REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+							OR pm.meta_value REGEXP '^[0-9]{8}$'
+						)
+						AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')
+					) AS parsed
+				) AS birthdays
 				HAVING next_occurrence BETWEEN %s AND %s
 				ORDER BY next_occurrence ASC",
-				$current_year,
 				$today_str,
 				$current_year,
+				$current_year,
+				$current_year + 1,
 				$current_year + 1,
 				$today_str,
 				$end_date_str
@@ -380,19 +408,23 @@ class Reminders {
 				return $date >= $today ? $date : null;
 			}
 
-			// Recurring: find next occurrence (same month/day, this year or next)
-			$this_year = ( clone $date )->setDate(
-				(int) $today->format( 'Y' ),
-				(int) $date->format( 'm' ),
-				(int) $date->format( 'd' )
-			);
+			// Recurring: find next occurrence (same month/day, this year or next).
+			// A 29 February date overflows into 1 March in a common year, which is the intended
+			// fallback and matches the birthday query.
+			$month = (int) $date->format( 'm' );
+			$day   = (int) $date->format( 'd' );
+			$year  = (int) $today->format( 'Y' );
+
+			$this_year = ( clone $date )->setDate( $year, $month, $day );
 
 			if ( $this_year >= $today ) {
 				return $this_year;
 			}
 
-			// Already passed this year, return next year
-			return $this_year->modify( '+1 year' );
+			// Already passed this year. Recompute next year's occurrence from the original month
+			// and day rather than adding a year to $this_year: for 29 February the latter would
+			// add a year to the overflowed 1 March and miss the leap day when next year has one.
+			return ( clone $date )->setDate( $year + 1, $month, $day );
 
 		} catch ( Exception $e ) {
 			return null;
@@ -460,12 +492,9 @@ class Reminders {
 				continue;
 			}
 
-			$birthdate = \DateTime::createFromFormat( 'Y-m-d', $person->birthdate, wp_timezone() );
-			if ( ! $birthdate ) {
-				continue;
-			}
-
-			// Calculate next occurrence (always recurring for birthdays)
+			// Calculate next occurrence (always recurring for birthdays).
+			// This also validates the stored value: it accepts both the canonical compact 'Ymd'
+			// and legacy dashed 'Y-m-d' shapes, and returns null for anything unparseable.
 			$next_occurrence = $this->calculate_next_occurrence( $person->birthdate, true );
 
 			if ( ! $next_occurrence ) {
