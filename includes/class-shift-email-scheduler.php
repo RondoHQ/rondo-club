@@ -464,13 +464,7 @@ class ShiftEmailScheduler {
 
 	/** @return int[] Existing person post IDs assigned to a shift. */
 	private function valid_assigned_person_ids( int $shift_id ): array {
-		$person_ids = array_values(
-			array_unique(
-				array_filter(
-					array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) )
-				)
-			)
-		);
+		$person_ids = ShiftAssignments::person_ids( $shift_id );
 
 		return array_values(
 			array_filter(
@@ -517,7 +511,7 @@ class ShiftEmailScheduler {
 		foreach ( $query->posts as $shift_id ) {
 			$shift_id = (int) $shift_id;
 			$status   = (string) get_post_meta( $shift_id, 'status', true );
-			$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
+			$assigned = ShiftAssignments::person_ids( $shift_id );
 			$start    = $this->parse_datetime( (string) get_post_meta( $shift_id, 'start_datetime', true ) );
 			$end      = $this->parse_datetime( (string) get_post_meta( $shift_id, 'end_datetime', true ) );
 			$type_id  = (int) get_post_meta( $shift_id, 'dienst_type_id', true );

@@ -118,7 +118,7 @@ class ShiftCancellationService {
 			return $delete;
 		}
 
-		$assigned = array_filter( array_map( 'intval', (array) get_post_meta( $post->ID, 'assigned_persons', true ) ) );
+		$assigned = ShiftAssignments::person_ids( $post->ID );
 		if ( ! empty( $assigned ) || self::details( $post->ID ) !== null ) {
 			return false;
 		}

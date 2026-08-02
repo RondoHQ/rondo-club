@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.1.2] - 2026-08-02
+
+### Fixed
+
+- Diensten zonder aanmeldingen konden als "Ingevuld" verschijnen met een spookaanmelding: een ontbrekende of lege `assigned_persons`-metarij telde als één deelnemer. Alle lezers gebruiken nu één gedeelde helper die alleen echte, unieke persoon-ids telt, waardoor deze plekken weer correct als open worden getoond en weer beschikbaar zijn voor inschrijving.
+
 ## [34.1.1] - 2026-08-02
 
 ### Fixed

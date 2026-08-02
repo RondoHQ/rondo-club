@@ -18,6 +18,7 @@ use Rondo\Volunteer\IvaCertificateParser;
 use Rondo\Volunteer\IvaReviewNotificationEmailSender;
 use Rondo\Volunteer\IvaStatus;
 use Rondo\Volunteer\RelationshipQualityChecker;
+use Rondo\Volunteer\ShiftAssignments;
 use Rondo\Volunteer\VolunteerCacheInvalidator;
 use Rondo\Volunteer\VolunteerEligibilityService;
 use Rondo\Volunteer\VolunteerExemptionResolver;
@@ -1053,10 +1054,7 @@ class Volunteer extends Base {
 				continue;
 			}
 
-			$assigned                 = array_filter(
-				array_unique( array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) ) ),
-				fn( int $person_id ) => $person_id > 0
-			);
+			$assigned                 = ShiftAssignments::person_ids( $shift_id );
 			$stats['total_slots']    += max( 1, (int) get_post_meta( $shift_id, 'capacity', true ) );
 			$stats['assigned_slots'] += count( $assigned );
 		}

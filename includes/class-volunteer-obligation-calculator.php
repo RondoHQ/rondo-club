@@ -177,8 +177,7 @@ class VolunteerObligationCalculator {
 			);
 		}
 
-		$assigned = get_post_meta( $shift_id, 'assigned_persons', true );
-		if ( ! is_array( $assigned ) || ! in_array( $person_id, array_map( 'intval', $assigned ), true ) ) {
+		if ( ! in_array( $person_id, ShiftAssignments::person_ids( $shift_id ), true ) ) {
 			return new \WP_Error(
 				'person_not_assigned',
 				'Deze persoon is niet voor de inschrijftaak aangemeld.',
@@ -334,8 +333,7 @@ class VolunteerObligationCalculator {
 		$now_ts = time();
 
 		foreach ( $query->posts as $shift_id ) {
-			$assigned = (array) get_post_meta( $shift_id, 'assigned_persons', true );
-			$assigned = array_map( 'intval', $assigned );
+			$assigned = ShiftAssignments::person_ids( $shift_id );
 
 			$overlap = array_intersect( $assigned, $person_ids );
 			if ( empty( $overlap ) ) {
