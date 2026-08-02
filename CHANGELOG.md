@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.1.1] - 2026-08-02
+
+### Fixed
+
+- Het dashboard crashte met "Invalid time value" zodra een verjaardagsherinnering een compact opgeslagen geboortedatum (`20110802`) bevatte. Herinneringen leveren geboortedata nu altijd canoniek (`2011-08-02`) aan, en het dashboard rendert een onleesbare datum voortaan als lege tekst in plaats van de hele app te breken.
+
 ## [34.1.0] - 2026-08-02
 
 ### Added

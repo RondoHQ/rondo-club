@@ -367,7 +367,7 @@ class Reminders {
 			$upcoming[] = [
 				'id'              => $person->ID,
 				'title'           => $name,
-				'date_value'      => $person->birthdate,
+				'date_value'      => $this->canonical_date_value( $person->birthdate ),
 				'next_occurrence' => $person->next_occurrence,
 				'days_until'      => (int) $today->diff( $next_occ )->days,
 				'is_recurring'    => true,
@@ -383,6 +383,18 @@ class Reminders {
 		}
 
 		return $upcoming;
+	}
+
+	/**
+	 * Consumers receive canonical Y-m-d dates; only storage keeps the compact
+	 * Ymd shape. `new Date('20110802')` is an invalid date in the browser, so a
+	 * compact value leaking into a reminder payload crashes the dashboard.
+	 */
+	private function canonical_date_value( string $date_value ): string {
+		if ( preg_match( '/^\d{8}$/', $date_value ) ) {
+			return substr( $date_value, 0, 4 ) . '-' . substr( $date_value, 4, 2 ) . '-' . substr( $date_value, 6, 2 );
+		}
+		return $date_value;
 	}
 
 	/**
@@ -509,7 +521,7 @@ class Reminders {
 			$date_item = [
 				'id'              => $person->ID,
 				'title'           => html_entity_decode( $person->post_title, ENT_QUOTES, 'UTF-8' ) . ' - Verjaardag',
-				'date_value'      => $person->birthdate,
+				'date_value'      => $this->canonical_date_value( $person->birthdate ),
 				'next_occurrence' => $next_occurrence->format( 'Y-m-d' ),
 				'days_until'      => (int) $today->diff( $next_occurrence )->days,
 				'is_recurring'    => true,
