@@ -5,6 +5,12 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    groups:
+      # Tiptap packages pin exact @tiptap/core peer versions and must be
+      # bumped in lockstep — single-package bumps can never resolve.
+      tiptap:
+        patterns:
+          - "@tiptap/*"
   - package-ecosystem: composer
     directory: "/"
     schedule:
