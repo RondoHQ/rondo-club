@@ -297,26 +297,32 @@ class Reminders {
 
 		// Use SQL date math to filter birthdays within the window, avoiding full table scan.
 		// Calculates next birthday occurrence (this year or next) and filters in the DB.
+		//
+		// Birthdates are stored in two shapes: the canonical compact 'Ymd' the field registry
+		// writes, and legacy dashed 'Y-m-d' rows. Strip the separators before slicing off the
+		// month/day so both shapes resolve to the same MMDD.
 		$people_with_birthdays = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT p.ID, p.post_title, pm.meta_value as birthdate,
-					CASE
-						WHEN DATE(CONCAT(%d, '-', SUBSTRING(pm.meta_value, 6))) >= %s
-						THEN DATE(CONCAT(%d, '-', SUBSTRING(pm.meta_value, 6)))
-						ELSE DATE(CONCAT(%d, '-', SUBSTRING(pm.meta_value, 6)))
-					END AS next_occurrence
-				FROM {$wpdb->posts} p
-				INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
-				LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'
-				WHERE p.post_type = 'person'
-				AND p.post_status = 'publish'
-				AND pm.meta_key = 'birthdate'
-				AND pm.meta_value != ''
-				AND pm.meta_value REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
-				AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')
+				"SELECT ID, post_title, birthdate,
+					CASE WHEN this_year >= %s THEN this_year ELSE next_year END AS next_occurrence
+				FROM (
+					SELECT p.ID, p.post_title, pm.meta_value AS birthdate,
+						STR_TO_DATE(CONCAT(%d, RIGHT(REPLACE(pm.meta_value, '-', ''), 4)), '%%Y%%m%%d') AS this_year,
+						STR_TO_DATE(CONCAT(%d, RIGHT(REPLACE(pm.meta_value, '-', ''), 4)), '%%Y%%m%%d') AS next_year
+					FROM {$wpdb->posts} p
+					INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+					LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'
+					WHERE p.post_type = 'person'
+					AND p.post_status = 'publish'
+					AND pm.meta_key = 'birthdate'
+					AND (
+						pm.meta_value REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+						OR pm.meta_value REGEXP '^[0-9]{8}$'
+					)
+					AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')
+				) AS birthdays
 				HAVING next_occurrence BETWEEN %s AND %s
 				ORDER BY next_occurrence ASC",
-				$current_year,
 				$today_str,
 				$current_year,
 				$current_year + 1,
@@ -460,12 +466,9 @@ class Reminders {
 				continue;
 			}
 
-			$birthdate = \DateTime::createFromFormat( 'Y-m-d', $person->birthdate, wp_timezone() );
-			if ( ! $birthdate ) {
-				continue;
-			}
-
-			// Calculate next occurrence (always recurring for birthdays)
+			// Calculate next occurrence (always recurring for birthdays).
+			// This also validates the stored value: it accepts both the canonical compact 'Ymd'
+			// and legacy dashed 'Y-m-d' shapes, and returns null for anything unparseable.
 			$next_occurrence = $this->calculate_next_occurrence( $person->birthdate, true );
 
 			if ( ! $next_occurrence ) {
