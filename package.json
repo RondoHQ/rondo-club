@@ -26,7 +26,7 @@
     "@tiptap/extension-placeholder": "^3.29.2",
     "@tiptap/react": "^3.29.2",
     "@tiptap/starter-kit": "^3.29.2",
-    "@uiw/react-color-sketch": "^2.9.6",
+    "@uiw/react-color-sketch": "^2.10.3",
     "axios": "^1.6.0",
     "clsx": "^2.1.0",
     "date-fns": "^3.2.0",
