@@ -370,6 +370,21 @@ export default function VrijwilligersDiensten() {
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {format(shift.start_datetime, 'HH:mm')}–{format(shift.end_datetime, 'HH:mm')} · {shift.assigned_count} van {Math.max(1, shift.capacity)} plekken bezet
               </p>
+              {Array.isArray(shift.assigned_persons) && shift.assigned_persons.length > 0 && (
+                <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
+                  {shift.assigned_persons.map((person, index) => (
+                    <span key={person.person_id}>
+                      {index > 0 ? ', ' : ''}
+                      <Link
+                        to={`/people/${person.person_id}`}
+                        className="text-bright-cobalt hover:underline dark:text-electric-cyan"
+                      >
+                        {person.name}
+                      </Link>
+                    </span>
+                  ))}
+                </p>
+              )}
             </div>
             <span className={`text-xs font-medium ${shift.is_filled ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
               {shift.is_filled ? 'Ingevuld' : `${Math.max(0, Math.max(1, shift.capacity) - shift.assigned_count)} open`}

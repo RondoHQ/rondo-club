@@ -857,6 +857,9 @@ class MemberShifts extends Base {
 			$assigned_ids         = $summary['assigned_person_ids'];
 			$is_filled            = $summary['capacity'] > 0 && $summary['assigned_count'] >= $summary['capacity'];
 			$summary['is_filled'] = $is_filled;
+			if ( $view === 'manage' ) {
+				$summary['assigned_persons'] = $this->format_assigned_persons( $assigned_ids );
+			}
 			if ( $view === 'signup' ) {
 				$fellow_volunteers                      = $this->format_fellow_volunteer_contacts( $assigned_ids, $person_id );
 				$summary['is_signed_up']                = in_array( $person_id, $assigned_ids, true );
@@ -1650,6 +1653,35 @@ class MemberShifts extends Base {
 		}
 
 		return $contacts;
+	}
+
+	/**
+	 * Names and profile ids for everyone assigned to a shift. Manager view only:
+	 * the member-facing signup view must keep exposing names without person ids.
+	 */
+	private function format_assigned_persons( array $assigned_person_ids ): array {
+		$persons = [];
+		foreach ( $assigned_person_ids as $assigned_person_id ) {
+			$assigned_person_id = (int) $assigned_person_id;
+			if ( $assigned_person_id <= 0 ) {
+				continue;
+			}
+
+			$person = get_post( $assigned_person_id );
+			if ( ! $person || $person->post_type !== 'person' || $person->post_status !== 'publish' ) {
+				continue;
+			}
+
+			$name = $this->sanitize_text( GuardianAccountService::display_name_for_person( $assigned_person_id ) );
+			if ( $name !== '' ) {
+				$persons[] = [
+					'person_id' => $assigned_person_id,
+					'name'      => $name,
+				];
+			}
+		}
+
+		return $persons;
 	}
 
 	/**

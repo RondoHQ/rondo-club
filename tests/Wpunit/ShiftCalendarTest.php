@@ -86,6 +86,24 @@ class ShiftCalendarTest extends RondoTestCase {
 		$this->assertSame( 1, $data['days'][0]['spots_remaining'] );
 		$this->assertCount( 2, $data['dienst_types'] );
 
+		$shifts_by_type = array_column( $data['days'][0]['shifts'], null, 'dienst_type_id' );
+		$this->assertSame(
+			[
+				[
+					'person_id' => $person_a,
+					'name'      => 'A',
+				],
+				[
+					'person_id' => $person_b,
+					'name'      => 'B',
+				],
+			],
+			$shifts_by_type[ $full_type ]['assigned_persons'],
+			'De beheerkalender toont wie er is ingeschreven, met profiel-id.'
+		);
+		$this->assertSame( [], $shifts_by_type[ $open_type ]['assigned_persons'] );
+		$this->assertArrayNotHasKey( 'assigned_person_ids', $shifts_by_type[ $full_type ] );
+
 		$filtered = $this->controller->get_shift_calendar( $this->calendar_request( 'manage', $full_type ) )->get_data();
 		$this->assertSame( 'full', $filtered['days'][0]['state'] );
 		$this->assertSame( 0, $filtered['days'][0]['spots_remaining'] );
@@ -121,6 +139,7 @@ class ShiftCalendarTest extends RondoTestCase {
 		$this->assertTrue( $shift['is_filled'] );
 		$this->assertFalse( $shift['can_signup'] );
 		$this->assertArrayNotHasKey( 'assigned_person_ids', $shift );
+		$this->assertArrayNotHasKey( 'assigned_persons', $shift, 'Leden krijgen geen profiel-ids van mede-vrijwilligers.' );
 		$this->assertSame( [ 'Collega' ], $shift['fellow_volunteers'] );
 		$this->assertContains( 'vog', $data['block_reasons'] );
 		$this->assertContains(
