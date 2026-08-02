@@ -13,7 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - De inschrijftakenkalender op Vrijwilligers → Inschrijftaken toont per dienst wie er is ingeschreven, met een klikbare link naar elk profiel.
 
-## [34.0.2] - 2026-08-01
+## [34.0.3] - 2026-08-02
+
+### Fixed
+
+- Verjaardagen verschijnen weer op het dashboard en in de wekelijkse samenvatting. De verjaardagsquery accepteerde alleen geboortedata met streepjes (`2011-08-02`), terwijl Rondo ze zelf compact opslaat (`20110802`). Daardoor viel vrijwel elk actief lid stil weg: op een willekeurige dag toonde het blok Verjaardagen 1 van de 57 leden met een verjaardag in de komende twee weken.
+- Leden die op 29 februari jarig zijn verschijnen nu ook in niet-schrikkeljaren, met 1 maart als vervangende datum. Voorheen verdwenen ze drie jaar op de vier volledig uit de verjaardagslijst. Dashboard en samenvatting kiezen daarbij gegarandeerd dezelfde dag.
 
 ### Changed
 
