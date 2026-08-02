@@ -21,7 +21,7 @@ import {
   DEFAULT_DASHBOARD_CARDS,
 } from '@/hooks/useDashboard.js';
 import { useTodoCompletion } from '@/hooks/useTodoCompletion.js';
-import { format } from '@/utils/dateFormat.js';
+import { format, parseYmd, isValid } from '@/utils/dateFormat.js';
 import { APP_NAME } from '@/constants/app.js';
 import {
   isTodoOverdue,
@@ -92,7 +92,9 @@ function ReminderCard({ reminder }) {
   const occYear = parseInt(reminder.next_occurrence?.substring(0, 4), 10);
   const birthYear = reminder.date_value ? parseInt(reminder.date_value.substring(0, 4), 10) : null;
   const isBirthday = reminder.is_recurring && !reminder.year_unknown && birthYear && birthYear < occYear;
-  const displayDate = isBirthday ? reminder.date_value : reminder.next_occurrence;
+  // parseYmd accepts both the canonical dashed shape and the compact storage
+  // shape, so a stray compact date renders instead of crashing the dashboard.
+  const displayDate = parseYmd(isBirthday ? reminder.date_value : reminder.next_occurrence);
   const ageSuffix = isBirthday ? ` (wordt ${occYear - birthYear})` : '';
 
   const cardContent = (
@@ -103,7 +105,7 @@ function ReminderCard({ reminder }) {
       <div className="ml-3 flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 dark:text-gray-50">{reminder.title}</p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          {format(new Date(displayDate), 'd MMMM yyyy')}{ageSuffix}
+          {isValid(displayDate) ? format(displayDate, 'd MMMM yyyy') : ''}{ageSuffix}
         </p>
       </div>
       {hasRelatedPeople && (

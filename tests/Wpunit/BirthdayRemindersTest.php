@@ -127,6 +127,11 @@ class BirthdayRemindersTest extends RondoTestCase {
 			'A birthday falling today should resolve to today, not next year'
 		);
 		$this->assertSame( 0, $match['days_until'] );
+		$this->assertSame(
+			$this->birthdateFor( 0, 'Y-m-d' ),
+			$match['date_value'],
+			'date_value is a REST-facing date and must be canonical Y-m-d even when stored compact — new Date("20110802") crashes the dashboard'
+		);
 	}
 
 	/**
@@ -285,6 +290,14 @@ class BirthdayRemindersTest extends RondoTestCase {
 			'A canonically stored birthdate must reach the weekly digest'
 		);
 		$this->assertContains( $dashed_id, $ids, 'A legacy dashed birthdate must keep reaching the weekly digest' );
+
+		foreach ( $digest['today'] as $item ) {
+			$this->assertSame(
+				$this->birthdateFor( 0, 'Y-m-d' ),
+				$item['date_value'],
+				'Digest date_value must be canonical Y-m-d regardless of the stored shape'
+			);
+		}
 	}
 
 	/**
