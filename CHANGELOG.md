@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.1.3] - 2026-08-02
+
+### Fixed
+
+- De kaart "Inschrijftaken" op de profielpagina stond los onder alle andere blokken, met een groot gat boven zich. De kaart was een derde direct kind van de twee-koloms grid en viel daardoor in een eigen rij; hij staat nu in de linkerkolom onder de adressen en extra velden.
+
 ## [34.1.2] - 2026-08-02
 
 ### Fixed
