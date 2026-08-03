@@ -25,7 +25,7 @@ import FinancesCard from '@/components/FinancesCard';
 import VOGCard from '@/components/VOGCard';
 import SportlinkCard from '@/components/SportlinkCard';
 import AccountCard from '@/components/AccountCard';
-import { format, parseYmd, differenceInYears } from '@/utils/dateFormat';
+import { format, formatStoredDateTime, parseYmd, differenceInYears } from '@/utils/dateFormat';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -54,8 +54,8 @@ function PersonShiftItem({ shift }) {
             {shift.dienst_type_name || shift.title}
           </p>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {format(shift.start_datetime, 'EEEE d MMMM yyyy, HH:mm')}
-            {shift.end_datetime ? ` – ${format(shift.end_datetime, 'HH:mm')}` : ''}
+            {formatStoredDateTime(shift.start_datetime, 'EEEE d MMMM yyyy, HH:mm')}
+            {shift.end_datetime ? ` – ${formatStoredDateTime(shift.end_datetime, 'HH:mm')}` : ''}
           </p>
         </div>
         <span className={`shrink-0 rounded px-2 py-0.5 text-xs font-medium ${status.classes}`}>
