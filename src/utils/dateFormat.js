@@ -93,6 +93,38 @@ export function parseYmd(dateStr) {
 }
 
 /**
+ * Parse a stored datetime string (e.g. '2026-09-05 09:00:00') into a Date object.
+ *
+ * Shift metadata arrives in MySQL DATETIME format with a space separator, which
+ * Safari's Date constructor rejects ("Invalid time value"). Normalize to ISO 8601
+ * before parsing instead of passing the raw string to date-fns format().
+ *
+ * @param {string|Date|null|undefined} value - Stored datetime or date string.
+ * @returns {Date|null} Parsed date, or null when missing or invalid.
+ */
+export function parseStoredDateTime(value) {
+  if (value instanceof Date) return isValid(value) ? value : null;
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = parseISO(trimmed.replace(' ', 'T'));
+  return isValid(parsed) ? parsed : null;
+}
+
+/**
+ * Format a stored datetime string with Dutch locale, falling back when unparsable.
+ *
+ * @param {string|Date|null|undefined} value - Stored datetime or date string.
+ * @param {string} formatStr - The format string (date-fns format).
+ * @param {string} fallback - Returned when the value cannot be parsed.
+ * @returns {string} Formatted date string or the fallback.
+ */
+export function formatStoredDateTime(value, formatStr, fallback = '—') {
+  const parsed = parseStoredDateTime(value);
+  return parsed ? format(parsed, formatStr) : fallback;
+}
+
+/**
  * Re-export non-locale functions for convenience
  * These functions don't require locale configuration
  */

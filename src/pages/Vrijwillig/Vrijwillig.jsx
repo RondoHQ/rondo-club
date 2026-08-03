@@ -5,7 +5,7 @@ import { HeartHandshake, AlertTriangle, CheckCircle2, XCircle, Calendar, ShieldA
 import { SiWhatsapp } from '@icons-pack/react-simple-icons';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { format } from '@/utils/dateFormat';
+import { formatStoredDateTime } from '@/utils/dateFormat';
 import { openHtmlLinksInNewTab } from '@/utils/richTextUtils';
 import { shiftCalendarKeys } from '@/utils/shiftQueryCache';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
@@ -14,11 +14,7 @@ import ShiftCoverageCalendar from '@/components/volunteers/ShiftCoverageCalendar
 // Diensten in the second half of the season are visible before they open, so
 // members can see what is coming instead of wondering where spring went.
 function formatOpensAt(value) {
-  try {
-    return format(value, 'd MMMM');
-  } catch {
-    return value;
-  }
+  return formatStoredDateTime(value, 'd MMMM', value);
 }
 
 function StatusBadge({ kind, children }) {
@@ -325,7 +321,7 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 inline-flex items-center gap-1">
           <Calendar className="w-3.5 h-3.5" />
-          {start ? format(start, 'EEEE d MMMM, HH:mm') : '—'} – {end ? format(end, 'HH:mm') : ''}
+          {formatStoredDateTime(start, 'EEEE d MMMM, HH:mm')} – {formatStoredDateTime(end, 'HH:mm', '')}
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-start gap-1">
           <Users className="w-3.5 h-3.5 mt-0.5 shrink-0" />
