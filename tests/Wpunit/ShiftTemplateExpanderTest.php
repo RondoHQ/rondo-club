@@ -18,7 +18,7 @@ class ShiftTemplateExpanderTest extends RondoTestCase {
 		$this->expander = new ShiftTemplateExpander();
 	}
 
-	private function create_template( string $active_from ): int {
+	private function create_template( string $active_from, string $start_time = '10:00', string $end_time = '12:00' ): int {
 		$type_id     = self::factory()->post->create(
 			[
 				'post_type'   => 'dienst_type',
@@ -36,8 +36,8 @@ class ShiftTemplateExpanderTest extends RondoTestCase {
 
 		update_post_meta( $template_id, 'dienst_type_id', $type_id );
 		update_post_meta( $template_id, 'day_of_week', (int) gmdate( 'N', strtotime( $active_from ) ) );
-		update_post_meta( $template_id, 'start_time', '10:00' );
-		update_post_meta( $template_id, 'end_time', '12:00' );
+		update_post_meta( $template_id, 'start_time', $start_time );
+		update_post_meta( $template_id, 'end_time', $end_time );
 		update_post_meta( $template_id, 'capacity', 2 );
 		update_post_meta( $template_id, 'active_from', $active_from );
 
@@ -204,6 +204,20 @@ class ShiftTemplateExpanderTest extends RondoTestCase {
 
 	private function template_shift_ids( int $template_id ): array {
 		return get_posts(
+=======
+	 * Templates saved through wp-admin carry `start_time` as `HH:MM:SS`. The
+	 * expander appends its own `:00`, so those used to expand into
+	 * `2027-03-06 14:00:00:00` — unparseable, which rendered every such shift as
+	 * "01-01-1970 00:00" in the calendar.
+	 */
+	public function test_expansion_accepts_template_times_with_seconds(): void {
+		$until       = current_datetime()->modify( '+7 days' )->format( 'Y-m-d' );
+		$template_id = $this->create_template( $until, '14:00:00', '17:00:00' );
+
+		ShiftTemplateExpander::expand_range( current_datetime()->format( 'Y-m-d' ), $until );
+
+		$shift_ids = get_posts(
+>>>>>>> Stashed changes
 			[
 				'post_type'      => 'dienst_shift',
 				'posts_per_page' => -1,
@@ -212,6 +226,14 @@ class ShiftTemplateExpanderTest extends RondoTestCase {
 				'meta_value'     => $template_id,
 			]
 		);
+<<<<<<< Updated upstream
+=======
+
+		$this->assertCount( 1, $shift_ids );
+		$this->assertSame( $until . ' 14:00:00', get_post_meta( $shift_ids[0], 'start_datetime', true ) );
+		$this->assertSame( $until . ' 17:00:00', get_post_meta( $shift_ids[0], 'end_datetime', true ) );
+		$this->assertStringNotContainsString( '1970', get_the_title( $shift_ids[0] ) );
+>>>>>>> Stashed changes
 	}
 
 	/** Expanding the same range twice must not duplicate anything. */

@@ -654,14 +654,19 @@ class ShiftTemplateExpander {
 	}
 
 	/**
-	 * Normalize HH:MM input to HH:MM (handles "9:00" → "09:00", "9" → "09:00", etc.).
+	 * Normalize a time input to HH:MM (handles "9:00" → "09:00", "9" → "09:00", etc.).
+	 *
+	 * Seconds are dropped, not kept: templates saved through wp-admin store
+	 * `start_time` as `HH:MM:SS`, and the callers append their own `:00`. Passing
+	 * those through produced `2027-03-06 14:00:00:00`, which `strtotime()` rejects
+	 * — so every shift from such a template got a "01-01-1970 00:00" title.
 	 */
 	private static function normalize_time( string $time ): string {
 		$time = trim( $time );
 		if ( $time === '' ) {
 			return '00:00';
 		}
-		if ( preg_match( '/^(\d{1,2}):(\d{2})$/', $time, $m ) ) {
+		if ( preg_match( '/^(\d{1,2}):(\d{2})(?::\d{2})?$/', $time, $m ) ) {
 			return str_pad( $m[1], 2, '0', STR_PAD_LEFT ) . ':' . $m[2];
 		}
 		if ( preg_match( '/^(\d{1,2})$/', $time, $m ) ) {

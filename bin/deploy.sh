@@ -174,6 +174,12 @@ SSH_OPTIONS=(
     -p "$DEPLOY_SSH_PORT"
     -o BatchMode=yes
     -o StrictHostKeyChecking=yes
+    # SiteGround drops SSH connections now and then. Fail fast on a dead
+    # connection instead of hanging for the TCP default, so retry_remote can
+    # get to its next attempt while the run is still useful.
+    -o ConnectTimeout=20
+    -o ServerAliveInterval=15
+    -o ServerAliveCountMax=4
 )
 
 if [ -n "${DEPLOY_SSH_IDENTITY_FILE:-}" ]; then
@@ -187,6 +193,39 @@ fi
 SSH_CMD=(ssh "${SSH_OPTIONS[@]}")
 printf -v RSYNC_SSH '%q ' "${SSH_CMD[@]}"
 REMOTE_TARGET="$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST"
+
+DEPLOY_RETRIES="${DEPLOY_RETRIES:-3}"
+DEPLOY_RETRY_DELAY="${DEPLOY_RETRY_DELAY:-15}"
+
+# Run a remote command, retrying transient SSH/rsync failures.
+#
+# The host regularly refuses or drops connections ("connect to host ... port
+# 18765: Connection timed out"), which fails an otherwise healthy deploy. Both
+# rsync and the WP-CLI calls are idempotent, so a rerun is always safe.
+retry_remote() {
+    local attempt=1
+    local delay="$DEPLOY_RETRY_DELAY"
+    local status=0
+
+    while true; do
+        status=0
+        "$@" || status=$?
+
+        if [ "$status" -eq 0 ]; then
+            return 0
+        fi
+
+        if [ "$attempt" -ge "$DEPLOY_RETRIES" ]; then
+            echo -e "${RED}  Failed after ${attempt} attempt(s) (exit ${status}).${NC}" >&2
+            return "$status"
+        fi
+
+        echo -e "${YELLOW}  Attempt ${attempt} failed (exit ${status}); retrying in ${delay}s...${NC}" >&2
+        sleep "$delay"
+        attempt=$((attempt + 1))
+        delay=$((delay * 2))
+    done
+}
 
 echo -e "${GREEN}=== Rondo Club Deployment ===${NC}"
 echo "Target: $REMOTE_TARGET"
@@ -216,7 +255,7 @@ if [ ! -f "$SOURCE_DIR/vendor/autoload.php" ]; then
 fi
 
 echo -e "${YELLOW}Step 2: Syncing dist/ folder...${NC}"
-rsync -avz --delete \
+retry_remote rsync -avz --delete \
     -e "$RSYNC_SSH" \
     "$SOURCE_DIR/dist/" \
     "$REMOTE_TARGET:$DEPLOY_REMOTE_THEME_PATH/dist/"
@@ -243,7 +282,7 @@ else
     echo "(Including node_modules)"
 fi
 
-rsync -avz \
+retry_remote rsync -avz \
     "${RSYNC_EXCLUDES[@]}" \
     -e "$RSYNC_SSH" \
     "$SOURCE_DIR/" \
@@ -258,7 +297,7 @@ if [ "$PRUNE_DELETED" = true ]; then
         fi
 
         echo "  ${dir}/"
-        rsync -az --delete \
+        retry_remote rsync -az --delete \
             -e "$RSYNC_SSH" \
             "$SOURCE_DIR/$dir/" \
             "$REMOTE_TARGET:$DEPLOY_REMOTE_THEME_PATH/$dir/"
@@ -267,13 +306,13 @@ fi
 
 if [ "$SKIP_CACHE_CLEAR" = false ]; then
     echo -e "${YELLOW}Step 4: Clearing caches...${NC}"
-    "${SSH_CMD[@]}" "$REMOTE_TARGET" \
+    retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
         "cd $DEPLOY_REMOTE_WP_PATH && wp cache flush && wp sg purge"
 fi
 
 if [ -n "${DEPLOY_COMMIT_SHA:-}" ]; then
     echo -e "${YELLOW}Step 5: Recording deployed commit...${NC}"
-    "${SSH_CMD[@]}" "$REMOTE_TARGET" \
+    retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
         "cd $DEPLOY_REMOTE_WP_PATH && wp option update rondo_deployed_commit $DEPLOY_COMMIT_SHA --quiet"
 fi
 
@@ -283,7 +322,7 @@ if [ "$SKIP_HEALTH_CHECK" = false ]; then
     EXPECTED_VERSION="$(awk -F': ' '/^Version:/ { print $2; exit }' "$SOURCE_DIR/style.css" | tr -d '\r')"
     THEME_SLUG="${DEPLOY_REMOTE_THEME_PATH%/}"
     THEME_SLUG="${THEME_SLUG##*/}"
-    REMOTE_VERSION="$("${SSH_CMD[@]}" "$REMOTE_TARGET" \
+    REMOTE_VERSION="$(retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
         "cd $DEPLOY_REMOTE_WP_PATH && wp theme get $THEME_SLUG --field=version" | tail -n 1 | tr -d '\r')"
 
     if [ -z "$EXPECTED_VERSION" ] || [ "$REMOTE_VERSION" != "$EXPECTED_VERSION" ]; then
