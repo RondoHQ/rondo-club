@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.2.2] - 2026-08-03
+
+### Fixed
+
+- De tijd van een inschrijftaaksjabloon wijzigen verplaatst nu de uitgerolde inschrijftaken in plaats van ze te verdubbelen. Voorheen bleef de oude reeks staan naast de nieuwe — een sjabloon van 07:45 naar 08:00 verzetten leverde elke zaterdag van het seizoen twee taken op. Taken met inschrijvingen, handmatig aangepaste en geannuleerde taken blijven zoals altijd behouden.
+- "Opnieuw uitrollen" en het opslaan van een sjabloon lopen nu tot het einde van het seizoen, net als de nachtelijke cron. Met het oude venster van 93 dagen bleef de verouderde staart van een gewijzigd sjabloon achter buiten dat bereik.
+- Sjablonen met een tijd inclusief seconden (`14:00:00`, zoals wp-admin die opslaat) leverden onbruikbare datums op (`2027-03-06 14:00:00:00`). Elke daaruit uitgerolde inschrijftaak kreeg daardoor de titel "01-01-1970 00:00".
+
 ## [34.2.0] - 2026-08-03
 
 ### Changed

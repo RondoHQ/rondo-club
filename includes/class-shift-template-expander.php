@@ -143,8 +143,11 @@ class ShiftTemplateExpander {
 			return new \WP_Error( 'rondo_invalid_template', 'Sjabloon niet gevonden.', [ 'status' => 404 ] );
 		}
 
+		// Season end, not a rolling 93 days: the nightly cron expands that far, so
+		// a shorter re-rollout window left the stale tail of a changed sjabloon
+		// standing beyond it — exactly the duplicates the button is meant to clear.
 		$from   = gmdate( 'Y-m-d' );
-		$to     = gmdate( 'Y-m-d', strtotime( '+' . self::WINDOW_DAYS . ' days' ) );
+		$to     = self::default_window_end( $from );
 		$result = self::rerun_template( $template_id, $from, $to );
 
 		return rest_ensure_response(
@@ -418,9 +421,15 @@ class ShiftTemplateExpander {
 	}
 
 	/**
-	 * Expand the saved template immediately so the user sees concrete shifts
-	 * for the next three months without waiting for the daily cron. Idempotent —
-	 * relies on `find_existing_shift()` to skip already-rolled-out dates.
+	 * Re-roll the saved template immediately so the user sees concrete shifts
+	 * without waiting for the daily cron.
+	 *
+	 * Re-roll, not expand: `find_existing_shift()` de-dups on
+	 * (`template_id`, `start_datetime`), so after a time change the old shifts
+	 * no longer match and plain expansion left them standing next to the new
+	 * ones. Moving a sjabloon from 07:45 to 08:00 doubled the calendar instead
+	 * of shifting it. Re-rollout clears the template's future shifts first and
+	 * keeps the protections (signups, manual edits, cancellations) intact.
 	 *
 	 * @param int|string $post_id native field save_post payload (post ID or "options").
 	 */
@@ -431,7 +440,8 @@ class ShiftTemplateExpander {
 		if ( get_post_type( (int) $post_id ) !== 'shift_template' ) {
 			return;
 		}
-		self::expand_template( (int) $post_id, gmdate( 'Y-m-d' ), gmdate( 'Y-m-d', strtotime( '+' . self::WINDOW_DAYS . ' days' ) ) );
+		$from = gmdate( 'Y-m-d' );
+		self::rerun_template( (int) $post_id, $from, self::default_window_end( $from ) );
 	}
 
 	public function register_cron() {
@@ -654,14 +664,19 @@ class ShiftTemplateExpander {
 	}
 
 	/**
-	 * Normalize HH:MM input to HH:MM (handles "9:00" → "09:00", "9" → "09:00", etc.).
+	 * Normalize a time input to HH:MM (handles "9:00" → "09:00", "9" → "09:00", etc.).
+	 *
+	 * Seconds are dropped, not kept: templates saved through wp-admin store
+	 * `start_time` as `HH:MM:SS`, and the callers append their own `:00`. Passing
+	 * those through produced `2027-03-06 14:00:00:00`, which `strtotime()` rejects
+	 * — so every shift from such a template got a "01-01-1970 00:00" title.
 	 */
 	private static function normalize_time( string $time ): string {
 		$time = trim( $time );
 		if ( $time === '' ) {
 			return '00:00';
 		}
-		if ( preg_match( '/^(\d{1,2}):(\d{2})$/', $time, $m ) ) {
+		if ( preg_match( '/^(\d{1,2}):(\d{2})(?::\d{2})?$/', $time, $m ) ) {
 			return str_pad( $m[1], 2, '0', STR_PAD_LEFT ) . ':' . $m[2];
 		}
 		if ( preg_match( '/^(\d{1,2})$/', $time, $m ) ) {
