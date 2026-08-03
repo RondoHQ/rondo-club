@@ -18,7 +18,7 @@ class ShiftTemplateExpanderTest extends RondoTestCase {
 		$this->expander = new ShiftTemplateExpander();
 	}
 
-	private function create_template( string $active_from ): int {
+	private function create_template( string $active_from, string $start_time = '10:00', string $end_time = '12:00' ): int {
 		$type_id     = self::factory()->post->create(
 			[
 				'post_type'   => 'dienst_type',
@@ -36,8 +36,8 @@ class ShiftTemplateExpanderTest extends RondoTestCase {
 
 		update_post_meta( $template_id, 'dienst_type_id', $type_id );
 		update_post_meta( $template_id, 'day_of_week', (int) gmdate( 'N', strtotime( $active_from ) ) );
-		update_post_meta( $template_id, 'start_time', '10:00' );
-		update_post_meta( $template_id, 'end_time', '12:00' );
+		update_post_meta( $template_id, 'start_time', $start_time );
+		update_post_meta( $template_id, 'end_time', $end_time );
 		update_post_meta( $template_id, 'capacity', 2 );
 		update_post_meta( $template_id, 'active_from', $active_from );
 
@@ -211,6 +211,79 @@ class ShiftTemplateExpanderTest extends RondoTestCase {
 				'meta_key'       => 'template_id',
 				'meta_value'     => $template_id,
 			]
+		);
+	}
+
+	/**
+	 * Templates saved through wp-admin carry `start_time` as `HH:MM:SS`. The
+	 * expander appends its own `:00`, so those used to expand into
+	 * `2027-03-06 14:00:00:00` — unparseable, which rendered every such shift as
+	 * "01-01-1970 00:00" in the calendar.
+	 */
+	public function test_expansion_accepts_template_times_with_seconds(): void {
+		$until       = current_datetime()->modify( '+7 days' )->format( 'Y-m-d' );
+		$template_id = $this->create_template( $until, '14:00:00', '17:00:00' );
+
+		ShiftTemplateExpander::expand_range( current_datetime()->format( 'Y-m-d' ), $until );
+
+		$shift_ids = $this->template_shift_ids( $template_id );
+
+		$this->assertCount( 1, $shift_ids );
+		$this->assertSame( $until . ' 14:00:00', get_post_meta( $shift_ids[0], 'start_datetime', true ) );
+		$this->assertSame( $until . ' 17:00:00', get_post_meta( $shift_ids[0], 'end_datetime', true ) );
+		$this->assertStringNotContainsString( '1970', get_the_title( $shift_ids[0] ) );
+	}
+
+	/**
+	 * Changing a sjabloon's time must move its shifts, not clone them. De-dup
+	 * keys on (`template_id`, `start_datetime`), so a plain expansion after a
+	 * time change left the old series standing beside the new one — 07:45 and
+	 * 08:00 both in the calendar, every Saturday of the season.
+	 */
+	public function test_changing_a_template_time_moves_shifts_instead_of_duplicating(): void {
+		$start       = current_datetime()->modify( '+7 days' )->format( 'Y-m-d' );
+		$template_id = $this->create_template( $start );
+
+		$this->expander->expand_on_template_save( $template_id );
+		$before = count( $this->template_shift_ids( $template_id ) );
+		$this->assertGreaterThan( 0, $before, 'precondition: the template rolled out a series at 10:00' );
+
+		update_post_meta( $template_id, 'start_time', '11:00' );
+		update_post_meta( $template_id, 'end_time', '13:00' );
+		$this->expander->expand_on_template_save( $template_id );
+
+		$times = $this->shift_times( $template_id );
+		$this->assertSame( [ '11:00' ], array_values( array_unique( $times ) ), 'nothing is left behind at 10:00' );
+		$this->assertCount( $before, $times, 'the series moved, it did not double' );
+	}
+
+	/** A shift someone signed up for survives a template time change. */
+	public function test_changing_a_template_time_keeps_shifts_with_signups(): void {
+		$start       = current_datetime()->modify( '+7 days' )->format( 'Y-m-d' );
+		$template_id = $this->create_template( $start );
+
+		$this->expander->expand_on_template_save( $template_id );
+		$before   = count( $this->template_shift_ids( $template_id ) );
+		$original = (int) $this->template_shift_ids( $template_id )[0];
+		update_post_meta( $original, 'assigned_persons', [ self::factory()->post->create( [ 'post_type' => 'person' ] ) ] );
+
+		update_post_meta( $template_id, 'start_time', '11:00' );
+		$this->expander->expand_on_template_save( $template_id );
+
+		$this->assertNotNull( get_post( $original ), 'the shift with a signup is preserved' );
+		$this->assertSame(
+			[ '10:00' ],
+			array_values( array_unique( array_diff( $this->shift_times( $template_id ), [ '11:00' ] ) ) ),
+			'only the preserved shift stayed on the old time'
+		);
+		$this->assertCount( $before + 1, $this->shift_times( $template_id ), 'the preserved shift plus its replacement' );
+	}
+
+	/** Start times (HH:MM) of every shift currently rolled out for a template. */
+	private function shift_times( int $template_id ): array {
+		return array_map(
+			static fn( $id ) => substr( (string) get_post_meta( $id, 'start_datetime', true ), 11, 5 ),
+			$this->template_shift_ids( $template_id )
 		);
 	}
 
