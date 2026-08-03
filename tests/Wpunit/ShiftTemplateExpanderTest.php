@@ -118,6 +118,102 @@ class ShiftTemplateExpanderTest extends RondoTestCase {
 		);
 	}
 
+	/**
+	 * Deleting a sjabloon must take its future, untouched rolled-out shifts
+	 * with it — otherwise the calendar stays full of taken nobody manages.
+	 */
+	public function test_deleting_a_template_deletes_its_future_unprotected_shifts(): void {
+		$start       = current_datetime()->modify( '+7 days' )->format( 'Y-m-d' );
+		$template_id = $this->create_template( $start );
+
+		ShiftTemplateExpander::expand_template( $template_id, $start, $start );
+		$shift_ids = $this->template_shift_ids( $template_id );
+		$this->assertCount( 1, $shift_ids, 'precondition: the template rolled out one shift' );
+
+		wp_delete_post( $template_id, true );
+
+		$this->assertNull( get_post( $shift_ids[0] ), 'the rolled-out shift is deleted with its template' );
+	}
+
+	/**
+	 * Shifts with signups, customized shifts and past shifts survive a template
+	 * delete, but lose their dangling template reference.
+	 */
+	public function test_deleting_a_template_detaches_protected_and_past_shifts(): void {
+		$start       = current_datetime()->modify( '+7 days' )->format( 'Y-m-d' );
+		$template_id = $this->create_template( $start );
+
+		ShiftTemplateExpander::expand_template( $template_id, $start, $start );
+		$shift_ids = $this->template_shift_ids( $template_id );
+		$this->assertCount( 1, $shift_ids, 'precondition: the template rolled out one shift' );
+
+		$signup_shift = (int) $shift_ids[0];
+		$person_id    = self::factory()->post->create( [ 'post_type' => 'person' ] );
+		update_post_meta( $signup_shift, 'assigned_persons', [ $person_id ] );
+
+		$past_shift = self::factory()->post->create(
+			[
+				'post_type'   => 'dienst_shift',
+				'post_status' => 'publish',
+				'post_title'  => 'Verleden dienst',
+			]
+		);
+		update_post_meta( $past_shift, 'template_id', $template_id );
+		update_post_meta( $past_shift, 'start_datetime', current_datetime()->modify( '-7 days' )->format( 'Y-m-d' ) . ' 10:00:00' );
+
+		wp_delete_post( $template_id, true );
+
+		$this->assertNotNull( get_post( $signup_shift ), 'a shift with signups survives' );
+		$this->assertNotNull( get_post( $past_shift ), 'a past shift survives for history' );
+		$this->assertSame( '', get_post_meta( $signup_shift, 'template_id', true ), 'the survivor is detached' );
+		$this->assertSame( '', get_post_meta( $past_shift, 'template_id', true ), 'the past shift is detached' );
+	}
+
+	/**
+	 * Templates deleted before cascade-cleanup existed left orphaned shifts
+	 * behind. The nightly sweep removes future untouched orphans, detaches the
+	 * rest, and leaves shifts of a living template alone.
+	 */
+	public function test_orphan_sweep_cleans_up_shifts_of_already_deleted_templates(): void {
+		$start       = current_datetime()->modify( '+7 days' )->format( 'Y-m-d' );
+		$template_id = $this->create_template( $start );
+		ShiftTemplateExpander::expand_template( $template_id, $start, $start );
+		$healthy_ids = $this->template_shift_ids( $template_id );
+		$this->assertCount( 1, $healthy_ids, 'precondition: a healthy template rolled out one shift' );
+
+		$gone_template = 987654; // Never existed — simulates a pre-cleanup delete.
+
+		$future_orphan = self::factory()->post->create( [ 'post_type' => 'dienst_shift' ] );
+		update_post_meta( $future_orphan, 'template_id', $gone_template );
+		update_post_meta( $future_orphan, 'start_datetime', $start . ' 10:00:00' );
+
+		$past_orphan = self::factory()->post->create( [ 'post_type' => 'dienst_shift' ] );
+		update_post_meta( $past_orphan, 'template_id', $gone_template );
+		update_post_meta( $past_orphan, 'start_datetime', current_datetime()->modify( '-7 days' )->format( 'Y-m-d' ) . ' 10:00:00' );
+
+		$result = ShiftTemplateExpander::cleanup_orphaned_shifts();
+
+		$this->assertSame( 1, $result['deleted'] );
+		$this->assertSame( 1, $result['detached'] );
+		$this->assertNull( get_post( $future_orphan ), 'a future untouched orphan is deleted' );
+		$this->assertNotNull( get_post( $past_orphan ), 'a past orphan survives for history' );
+		$this->assertSame( '', get_post_meta( $past_orphan, 'template_id', true ), 'the past orphan is detached' );
+		$this->assertNotNull( get_post( $healthy_ids[0] ), 'shifts of a living template are untouched' );
+		$this->assertSame( (string) $template_id, get_post_meta( $healthy_ids[0], 'template_id', true ) );
+	}
+
+	private function template_shift_ids( int $template_id ): array {
+		return get_posts(
+			[
+				'post_type'      => 'dienst_shift',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'meta_key'       => 'template_id',
+				'meta_value'     => $template_id,
+			]
+		);
+	}
+
 	/** Expanding the same range twice must not duplicate anything. */
 	public function test_expansion_is_idempotent_over_a_season(): void {
 		// The other tests in this class create their own template; this one needs
