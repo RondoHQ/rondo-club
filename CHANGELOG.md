@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Een inschrijftaaksjabloon verwijderen ruimt nu ook de uitgerolde inschrijftaken op. Toekomstige, onaangepaste taken zonder inschrijvingen worden mee verwijderd; taken met inschrijvingen, handmatig aangepaste of geannuleerde taken en taken in het verleden blijven bestaan en worden losgekoppeld van het (verdwenen) sjabloon. Voorheen bleven alle uitgerolde taken als wezen achter met een verwijzing naar een sjabloon dat niet meer bestond.
 - De nachtelijke uitrol-cron ruimt voortaan eerst wees-taken op: uitgerolde inschrijftaken waarvan het sjabloon al (vóór deze release) verwijderd was, worden volgens dezelfde regels verwijderd of losgekoppeld. Het aantal wordt in de log vermeld.
 
+## [34.1.4] - 2026-08-03
+
+### Fixed
+
+- De dienstenkalender crashte in Safari met "Invalid time value" bij het aanklikken van een dag met inschrijftaken: de opgeslagen tijden (`2026-09-05 09:00:00`) werden rechtstreeks aan date-fns doorgegeven en Safari kan dat formaat niet parsen. Alle dienst-tijden lopen nu door een browser-onafhankelijke parser die ongeldige of ontbrekende waarden als "—" toont in plaats van de pagina te breken.
+
 ## [34.1.3] - 2026-08-02
 
 ### Fixed

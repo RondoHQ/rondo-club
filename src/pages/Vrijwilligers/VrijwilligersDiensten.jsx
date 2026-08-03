@@ -4,7 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { CalendarClock, Copy, ListChecks, Plus, Settings, Pencil, X } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { format } from '@/utils/dateFormat';
+import { format, formatStoredDateTime } from '@/utils/dateFormat';
 import { refreshShiftCalendars, shiftCalendarKeys } from '@/utils/shiftQueryCache';
 import AnchoredPopover from '@/components/AnchoredPopover';
 import ShiftCoverageCalendar from '@/components/volunteers/ShiftCoverageCalendar';
@@ -160,7 +160,7 @@ function CopyDayModal({ day, error, isLoading, onClose, onSubmit }) {
                     {shift.dienst_type_name || shift.title}
                   </span>
                   <span className="shrink-0 text-xs text-gray-500 dark:text-gray-400">
-                    {format(shift.start_datetime, 'HH:mm')}–{format(shift.end_datetime, 'HH:mm')} · {Math.max(1, Number(shift.capacity) || 1)}
+                    {formatStoredDateTime(shift.start_datetime, 'HH:mm')}–{formatStoredDateTime(shift.end_datetime, 'HH:mm')} · {Math.max(1, Number(shift.capacity) || 1)}
                   </span>
                 </div>
               ))}
@@ -368,7 +368,7 @@ export default function VrijwilligersDiensten() {
                 {shift.dienst_type_name || shift.title}
               </Link>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {format(shift.start_datetime, 'HH:mm')}–{format(shift.end_datetime, 'HH:mm')} · {shift.assigned_count} van {Math.max(1, shift.capacity)} plekken bezet
+                {formatStoredDateTime(shift.start_datetime, 'HH:mm')}–{formatStoredDateTime(shift.end_datetime, 'HH:mm')} · {shift.assigned_count} van {Math.max(1, shift.capacity)} plekken bezet
               </p>
               {Array.isArray(shift.assigned_persons) && shift.assigned_persons.length > 0 && (
                 <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
@@ -431,7 +431,7 @@ export default function VrijwilligersDiensten() {
                       </Link>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">
-                      {format(shift.start_datetime, 'EEE d MMM yyyy, HH:mm')}–{format(shift.end_datetime, 'HH:mm')}
+                      {formatStoredDateTime(shift.start_datetime, 'EEE d MMM yyyy, HH:mm')}–{formatStoredDateTime(shift.end_datetime, 'HH:mm')}
                     </td>
                     <td className="px-4 py-3">
                       {shift.signups.map((signup, index) => (
@@ -447,7 +447,7 @@ export default function VrijwilligersDiensten() {
                       ))}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-500 dark:text-gray-400">
-                      {format(shift.latest_signup_at, 'dd-MM-yyyy HH:mm')}
+                      {formatStoredDateTime(shift.latest_signup_at, 'dd-MM-yyyy HH:mm')}
                     </td>
                     <td className="px-4 py-3">
                       <Link to={`/vrijwilligers/diensten/${shift.id}`} className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200" title="Openen">
