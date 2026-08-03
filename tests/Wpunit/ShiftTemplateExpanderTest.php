@@ -245,15 +245,16 @@ class ShiftTemplateExpanderTest extends RondoTestCase {
 		$template_id = $this->create_template( $start );
 
 		$this->expander->expand_on_template_save( $template_id );
-		$this->assertCount( 1, $this->template_shift_ids( $template_id ), 'precondition: one shift at 10:00' );
+		$before = count( $this->template_shift_ids( $template_id ) );
+		$this->assertGreaterThan( 0, $before, 'precondition: the template rolled out a series at 10:00' );
 
 		update_post_meta( $template_id, 'start_time', '11:00' );
 		update_post_meta( $template_id, 'end_time', '13:00' );
 		$this->expander->expand_on_template_save( $template_id );
 
-		$shift_ids = $this->template_shift_ids( $template_id );
-		$this->assertCount( 1, $shift_ids, 'the old 10:00 shift is gone, not kept alongside 11:00' );
-		$this->assertSame( $start . ' 11:00:00', get_post_meta( $shift_ids[0], 'start_datetime', true ) );
+		$times = $this->shift_times( $template_id );
+		$this->assertSame( [ '11:00' ], array_values( array_unique( $times ) ), 'nothing is left behind at 10:00' );
+		$this->assertCount( $before, $times, 'the series moved, it did not double' );
 	}
 
 	/** A shift someone signed up for survives a template time change. */
@@ -262,6 +263,7 @@ class ShiftTemplateExpanderTest extends RondoTestCase {
 		$template_id = $this->create_template( $start );
 
 		$this->expander->expand_on_template_save( $template_id );
+		$before   = count( $this->template_shift_ids( $template_id ) );
 		$original = (int) $this->template_shift_ids( $template_id )[0];
 		update_post_meta( $original, 'assigned_persons', [ self::factory()->post->create( [ 'post_type' => 'person' ] ) ] );
 
@@ -269,7 +271,20 @@ class ShiftTemplateExpanderTest extends RondoTestCase {
 		$this->expander->expand_on_template_save( $template_id );
 
 		$this->assertNotNull( get_post( $original ), 'the shift with a signup is preserved' );
-		$this->assertCount( 2, $this->template_shift_ids( $template_id ), 'preserved shift plus the new one' );
+		$this->assertSame(
+			[ '10:00' ],
+			array_values( array_unique( array_diff( $this->shift_times( $template_id ), [ '11:00' ] ) ) ),
+			'only the preserved shift stayed on the old time'
+		);
+		$this->assertCount( $before + 1, $this->shift_times( $template_id ), 'the preserved shift plus its replacement' );
+	}
+
+	/** Start times (HH:MM) of every shift currently rolled out for a template. */
+	private function shift_times( int $template_id ): array {
+		return array_map(
+			static fn( $id ) => substr( (string) get_post_meta( $id, 'start_datetime', true ), 11, 5 ),
+			$this->template_shift_ids( $template_id )
+		);
 	}
 
 	/** Expanding the same range twice must not duplicate anything. */
