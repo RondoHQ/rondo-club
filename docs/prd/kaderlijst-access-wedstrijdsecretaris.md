@@ -126,6 +126,42 @@ person visibility across the club. Broader than the request.
 **Recommendation: Option A.** It matches the ask literally ("see the Kaderlijst"), and it is a
 setting away from Option B if the teamless-kader gap turns out to matter in practice.
 
+### Option C — a "Wedstrijdzaken" commissie — do not use (it flaps)
+
+There *is* a second grant path: `CommissieCapabilityMap` maps a commissie post ID → roles, and
+`CapabilitySync::sync_user()` unions those with the functie-derived roles. So creating a
+Wedstrijdzaken commissie, adding the wedstrijdsecretarissen to it, and mapping that commissie to a
+role looks like it should work. It does not — because the two sync entry points disagree about
+whether commissies exist:
+
+| Entry point | Commissie roles computed? |
+|---|---|
+| `POST /rondo/v1/capability-sync` (per member) — what the **scheduled** `pipelines/sync-functions.js` calls | **No.** `sync_user_by_knvb_id()` ([`class-capability-sync.php:291`](../../includes/class-capability-sync.php)) calls `sync_user( $user_id, $functies )` and lets `$commissie_ids` default to `[]` |
+| `POST /rondo/v1/capability-sync/all` — the manual "Sync now" button | Yes, via `derive_from_work_history()` |
+| Per-person "Sync rollen" ([`class-rest-api.php:2082`](../../includes/class-rest-api.php)) | Yes |
+
+`sync_user()` is a reconciler: `to_revoke = current_roles − target_roles`. On the scheduled path the
+commissie contributes nothing to `target_roles`, so the commissie-granted role is **revoked**. Press
+"Sync now" and it comes back. The user would lose the Kaderlijst on every scheduled functions sync
+(weekly full run per `rondo-sync/docs/operations.md`) and regain it whenever an admin syncs manually.
+Intermittent access is worse than none — it generates support tickets that look like login bugs.
+
+Two things that are *not* the problem, for the record: commissie membership itself is durable
+(`submit-rondo-club-commissie-work-history.js:156` leaves manually-added, non-sync-created
+work_history rows alone), and a commissie still needs the same age-group setting as Option A — so
+it is not a shortcut around section 2's trap either.
+
+The escape hatch that would normally cover this — `_rondo_cap_manual_grants`, which `sync_user()`
+honours across runs — is **read-only in practice: nothing in the codebase ever writes those two
+meta keys.** They can only be set by hand via WP-CLI.
+
+Fixing Option C properly is a one-line change with a real blast radius: have
+`sync_user_by_knvb_id()` derive commissie IDs the way `sync_user_by_person_id()` already does, so
+all three entry points agree. That would retroactively activate every existing
+`rondo_commissie_capability_map` entry on the scheduled path — which may be exactly right, or may
+grant roles nobody has audited since the map was filled in. It deserves its own PR and a look at the
+live option value first. Until then, Option A is the only path that survives a sync run.
+
 ---
 
 ## 5. Edge cases
