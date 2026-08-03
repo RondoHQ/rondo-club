@@ -31,6 +31,7 @@ class ShiftTemplateExpander {
 		add_action( 'rondo_fields_saved_post', [ $this, 'expand_on_template_save' ], 20 );
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 		add_action( 'rest_after_insert_dienst_shift', [ $this, 'detach_on_manual_edit' ], 10, 3 );
+		add_action( 'before_delete_post', [ $this, 'cleanup_on_template_delete' ], 10, 2 );
 	}
 
 	/**
@@ -158,6 +159,154 @@ class ShiftTemplateExpander {
 	}
 
 	/**
+	 * Permanently deleting a sjabloon takes its rolled-out future shifts with
+	 * it, so the calendar does not stay full of taken nobody manages anymore.
+	 * Same preservation rules as re-rollout: customized shifts, shifts with
+	 * signups and cancelled shifts stay, as does everything in the past. What
+	 * stays is detached from the (now gone) template so nothing dangles.
+	 *
+	 * The frontend deletes with `force=true`, so this fires immediately; a
+	 * wp-admin trash only triggers it once the trash is emptied.
+	 *
+	 * @param int           $post_id Post being deleted.
+	 * @param \WP_Post|null $post    The post object (WP ≥ 5.5 passes it along).
+	 */
+	public function cleanup_on_template_delete( $post_id, $post = null ): void {
+		$post = $post instanceof \WP_Post ? $post : get_post( $post_id );
+		if ( ! $post instanceof \WP_Post || $post->post_type !== 'shift_template' ) {
+			return;
+		}
+		self::cleanup_template_shifts( (int) $post_id );
+	}
+
+	/**
+	 * Delete the deletable future shifts of a template and detach the rest.
+	 *
+	 * @param int $template_id Template post ID (may already be mid-deletion).
+	 * @return array{deleted:int, detached:int}
+	 */
+	public static function cleanup_template_shifts( int $template_id ): array {
+		$shift_ids = get_posts(
+			[
+				'post_type'        => 'dienst_shift',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+				'post_status'      => [ 'publish', 'draft' ],
+				'meta_query'       => [
+					[
+						'key'   => 'template_id',
+						'value' => $template_id,
+					],
+				],
+			]
+		);
+
+		$totals = [
+			'deleted'  => 0,
+			'detached' => 0,
+		];
+		foreach ( $shift_ids as $shift_id ) {
+			++$totals[ self::delete_or_detach( (int) $shift_id ) ];
+		}
+
+		return $totals;
+	}
+
+	/**
+	 * Sweep shifts whose sjabloon no longer exists. Templates deleted before
+	 * cascade-cleanup existed (or removed straight from the database) left
+	 * their rolled-out shifts orphaned with a dangling `template_id`; this
+	 * cleans those up with the same rules as a live template delete. Runs
+	 * nightly before expansion so production heals itself.
+	 *
+	 * @return array{deleted:int, detached:int}
+	 */
+	public static function cleanup_orphaned_shifts(): array {
+		$shift_ids = get_posts(
+			[
+				'post_type'        => 'dienst_shift',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+				'post_status'      => [ 'publish', 'draft' ],
+				'meta_query'       => [
+					[
+						'key'     => 'template_id',
+						'compare' => 'EXISTS',
+					],
+				],
+			]
+		);
+
+		$totals          = [
+			'deleted'  => 0,
+			'detached' => 0,
+		];
+		$template_exists = [];
+
+		foreach ( $shift_ids as $shift_id ) {
+			$shift_id    = (int) $shift_id;
+			$template_id = (int) get_post_meta( $shift_id, 'template_id', true );
+			if ( $template_id <= 0 ) {
+				continue;
+			}
+			if ( ! isset( $template_exists[ $template_id ] ) ) {
+				$template_exists[ $template_id ] = get_post_type( $template_id ) === 'shift_template';
+			}
+			if ( $template_exists[ $template_id ] ) {
+				continue;
+			}
+			++$totals[ self::delete_or_detach( $shift_id ) ];
+		}
+
+		return $totals;
+	}
+
+	/**
+	 * Apply the template-gone rules to one shift: future, untouched shifts are
+	 * deleted; anything protected or in the past stays but loses its dangling
+	 * sjabloonverwijzing and continues as a standalone shift.
+	 *
+	 * @return string 'deleted' or 'detached'.
+	 */
+	private static function delete_or_detach( int $shift_id ): string {
+		$today = gmdate( 'Y-m-d' ) . ' 00:00:00';
+		$start = (string) get_post_meta( $shift_id, 'start_datetime', true );
+
+		if ( $start >= $today && self::preserve_reason( $shift_id ) === null && wp_delete_post( $shift_id, true ) ) {
+			return 'deleted';
+		}
+
+		delete_post_meta( $shift_id, 'template_id' );
+		delete_post_meta( $shift_id, '_shift_customized' );
+		return 'detached';
+	}
+
+	/**
+	 * Why a template-managed shift must survive a re-rollout or template
+	 * delete: manual customization, an explicit cancellation kept for history,
+	 * or members already signed up.
+	 *
+	 * @return string|null 'customized' | 'cancelled' | 'signups', or null when
+	 *                     the shift is safe to delete.
+	 */
+	private static function preserve_reason( int $shift_id ): ?string {
+		if ( (int) get_post_meta( $shift_id, '_shift_customized', true ) === 1 ) {
+			return 'customized';
+		}
+		if ( (string) get_post_meta( $shift_id, 'status', true ) === 'geannuleerd' ) {
+			return 'cancelled';
+		}
+		if ( ! empty( ShiftAssignments::person_ids( $shift_id ) ) ) {
+			return 'signups';
+		}
+		return null;
+	}
+
+	/**
 	 * Delete every future template-managed shift for one template, then expand
 	 * the template afresh over the same window. Preserves customized shifts,
 	 * shifts with signups and cancelled shifts (kept for history).
@@ -198,18 +347,14 @@ class ShiftTemplateExpander {
 
 		foreach ( $shift_ids as $shift_id ) {
 			$shift_id = (int) $shift_id;
+			$reason   = self::preserve_reason( $shift_id );
 
-			if ( (int) get_post_meta( $shift_id, '_shift_customized', true ) === 1 ) {
-				++$kept;
-				continue;
-			}
-			if ( (string) get_post_meta( $shift_id, 'status', true ) === 'geannuleerd' ) {
-				++$kept;
-				continue;
-			}
-			$assigned = ShiftAssignments::person_ids( $shift_id );
-			if ( ! empty( $assigned ) ) {
+			if ( $reason === 'signups' ) {
 				++$kept_signups;
+				continue;
+			}
+			if ( $reason !== null ) {
+				++$kept;
 				continue;
 			}
 
@@ -312,6 +457,18 @@ class ShiftTemplateExpander {
 	 * nothing.
 	 */
 	public function expand_default_window(): int {
+		$orphans = self::cleanup_orphaned_shifts();
+		if ( $orphans['deleted'] > 0 || $orphans['detached'] > 0 ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log(
+				sprintf(
+					'[Rondo Volunteer] Orphaned shift sweep: %d deleted, %d detached.',
+					$orphans['deleted'],
+					$orphans['detached']
+				)
+			);
+		}
+
 		$from = gmdate( 'Y-m-d' );
 		return self::expand_range( $from, self::default_window_end( $from ) );
 	}

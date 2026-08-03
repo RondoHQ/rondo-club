@@ -332,7 +332,7 @@ export default function VrijwilligersSjabloonForm() {
             <button
               type="button"
               onClick={() => {
-                if (window.confirm('Sjabloon verwijderen? Reeds uitgerolde inschrijftaken blijven bestaan.')) {
+                if (window.confirm('Sjabloon verwijderen? Toekomstige uitgerolde inschrijftaken worden ook verwijderd. Taken met inschrijvingen, aangepaste of geannuleerde taken en taken in het verleden blijven bestaan.')) {
                   deleteMutation.mutate();
                 }
               }}
