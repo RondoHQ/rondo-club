@@ -709,11 +709,7 @@ class MemberShifts extends Base {
 						'compare' => 'BETWEEN',
 						'type'    => 'DATETIME',
 					],
-					[
-						'key'     => 'status',
-						'value'   => 'open',
-						'compare' => '=',
-					],
+					$this->active_shift_status_meta_query( false ),
 				],
 				'orderby'          => 'meta_value',
 				'meta_key'         => 'start_datetime',
@@ -811,11 +807,7 @@ class MemberShifts extends Base {
 						'compare' => 'BETWEEN',
 						'type'    => 'DATETIME',
 					],
-					[
-						'key'     => 'status',
-						'value'   => [ 'open', 'vol' ],
-						'compare' => 'IN',
-					],
+					$this->active_shift_status_meta_query( true ),
 				],
 				'orderby'          => 'meta_value',
 				'meta_key'         => 'start_datetime',
@@ -1738,6 +1730,28 @@ class MemberShifts extends Base {
 			'spots_remaining'     => $capacity > 0 ? max( 0, $capacity - count( $assigned ) ) : -1,
 			'status'              => $status ?: 'open',
 			'cancellation'        => ShiftCancellationService::details( $shift->ID ),
+		];
+	}
+
+	/**
+	 * Match active shifts while honoring the registered `open` default.
+	 *
+	 * Older manually created shifts can lack a physical status row. Treating
+	 * that absence as open mirrors Fields::get_for_post() and keeps those shifts
+	 * visible while newly submitted defaults are materialized by the field API.
+	 */
+	private function active_shift_status_meta_query( bool $include_full ): array {
+		return [
+			'relation' => 'OR',
+			[
+				'key'     => 'status',
+				'value'   => $include_full ? [ 'open', 'vol' ] : 'open',
+				'compare' => $include_full ? 'IN' : '=',
+			],
+			[
+				'key'     => 'status',
+				'compare' => 'NOT EXISTS',
+			],
 		];
 	}
 

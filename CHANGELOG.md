@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.2.5] - 2026-08-05
+
+### Fixed
+
+- Handmatig aangemaakte inschrijftaken met de standaardstatus "open" verdwijnen niet langer uit zowel de leden- als beheerkalender. De expliciet gekozen standaardstatus wordt nu echt opgeslagen; bestaande taken zonder statusregel worden overeenkomstig die standaard als open behandeld.
+
 ## [34.2.4] - 2026-08-05
 
 ### Changed

@@ -38,7 +38,7 @@ class ShiftCalendarTest extends RondoTestCase {
 		return $type_id;
 	}
 
-	private function shift( int $type_id, int $capacity, array $assigned, string $status = 'open', string $time = '10:00:00' ): int {
+	private function shift( int $type_id, int $capacity, array $assigned, ?string $status = 'open', string $time = '10:00:00' ): int {
 		$shift_id = self::factory()->post->create(
 			[
 				'post_type'   => 'dienst_shift',
@@ -51,7 +51,9 @@ class ShiftCalendarTest extends RondoTestCase {
 		update_post_meta( $shift_id, 'end_datetime', $this->shift_date . ' 12:00:00' );
 		update_post_meta( $shift_id, 'capacity', $capacity );
 		update_post_meta( $shift_id, 'assigned_persons', $assigned );
-		update_post_meta( $shift_id, 'status', $status );
+		if ( $status !== null ) {
+			update_post_meta( $shift_id, 'status', $status );
+		}
 		return $shift_id;
 	}
 
@@ -167,6 +169,23 @@ class ShiftCalendarTest extends RondoTestCase {
 		$this->assertCount( 1, $data['days'][0]['shifts'] );
 		$this->assertSame( $vog_type, $data['days'][0]['shifts'][0]['dienst_type_id'] );
 		$this->assertTrue( $data['days'][0]['shifts'][0]['can_signup'] );
+	}
+
+	public function test_signup_surfaces_treat_missing_status_meta_as_open(): void {
+		$user_id   = $this->createRondoUser();
+		$person_id = $this->createPerson( [ 'post_title' => 'Kalenderlid' ] );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+		wp_set_current_user( $user_id );
+
+		$type_id  = $this->dienst_type( 'Taak met standaardstatus' );
+		$shift_id = $this->shift( $type_id, 1, [], null );
+
+		$calendar  = $this->controller->get_shift_calendar( $this->calendar_request( 'signup' ) )->get_data();
+		$available = $this->controller->get_available_shifts( new WP_REST_Request( 'GET', '/rondo/v1/shifts/available' ) )->get_data();
+
+		$this->assertFalse( metadata_exists( 'post', $shift_id, 'status' ) );
+		$this->assertSame( $shift_id, $calendar['days'][0]['shifts'][0]['id'] );
+		$this->assertSame( $shift_id, $available['shifts'][0]['id'] );
 	}
 
 	public function test_plain_member_cannot_open_manager_calendar_and_large_ranges_are_rejected(): void {

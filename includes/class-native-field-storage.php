@@ -34,6 +34,11 @@ final class NativeFieldStorage {
 		return self::write( 'post', $post_id, $definition, $value );
 	}
 
+	/** Whether the field has a physical post-meta value rather than only a registry default. */
+	public static function post_value_exists( int $post_id, array $definition ): bool {
+		return self::exists( 'post', $post_id, (string) $definition['storage_name'] );
+	}
+
 	/** @param mixed $value */
 	public static function write_term( int $term_id, array $definition, $value ): bool {
 		return self::write( 'term', $term_id, $definition, $value );

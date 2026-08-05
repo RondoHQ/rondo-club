@@ -245,6 +245,28 @@ class CptCrudTest extends RondoTestCase {
 		$this->assertSame( 200, $this->request( 'DELETE', '/wp/v2/dienst-types/' . $post_id, [ 'force' => true ] )->get_status() );
 	}
 
+	public function test_volunteer_manager_create_materializes_default_shift_status(): void {
+		$user_id = $this->user( 'rondo_vrijwilligers' );
+		wp_set_current_user( $user_id );
+
+		$create = $this->request(
+			'POST',
+			'/wp/v2/dienst-shifts',
+			[
+				'title'  => 'Nieuwe inschrijftaak',
+				'status' => 'publish',
+				'fields' => [
+					'status' => 'open',
+				],
+			]
+		);
+
+		$this->assertSame( 201, $create->get_status() );
+		$shift_id = (int) $create->get_data()['id'];
+		$this->assertTrue( metadata_exists( 'post', $shift_id, 'status' ) );
+		$this->assertSame( 'open', get_post_meta( $shift_id, 'status', true ) );
+	}
+
 	public function test_membership_administrator_can_edit_people(): void {
 		$person_id = $this->createPerson( [ 'post_title' => 'Member record' ] );
 		$user_id   = $this->user( 'rondo_ledenadministratie' );
