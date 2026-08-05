@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.2.3] - 2026-08-05
+
+### Fixed
+
+- De keuzelijst "Vereiste commissie" bij een inschrijftaak toont weer alle commissies. Het formulier riep de commissie-opvraag aan via de verkeerde API-helper en verborg de fout, waardoor alleen "\u2014 geen \u2014" zichtbaar bleef. Laden, fouten en een werkelijk lege lijst hebben nu ieder een duidelijke status.
+
 ## [34.2.2] - 2026-08-03
 
 ### Fixed

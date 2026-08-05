@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ClipboardList, Save, Trash2 } from 'lucide-react';
-import { prmApi } from '@/api/client';
+import { prmApi, wpApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 
@@ -36,9 +36,18 @@ export default function VrijwilligersDienstTypeForm() {
   const [form, setForm] = useState(EMPTY);
   const [feedback, setFeedback] = useState(null);
 
-  const { data: commissies = [] } = useQuery({
+  const {
+    data: commissies = [],
+    isLoading: commissiesLoading,
+    isError: commissiesError,
+  } = useQuery({
     queryKey: ['commissies', 'list'],
-    queryFn: async () => (await prmApi.getCommissies({ per_page: 100 })).data || [],
+    queryFn: async () => (await wpApi.getCommissies({
+      per_page: 100,
+      orderby: 'title',
+      order: 'asc',
+      _fields: 'id,title',
+    })).data || [],
     staleTime: 5 * 60 * 1000,
   });
 
@@ -335,13 +344,19 @@ export default function VrijwilligersDienstTypeForm() {
               className="block h-9 w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 px-1 py-1"
             />
           </Field>
-          <Field label="Vereiste poule" hint="Optioneel: alleen leden van deze poule">
+          <Field label="Vereiste commissie" hint="Optioneel: alleen actuele leden van deze commissie zien de inschrijftaak">
             <select
               value={form.required_pool}
               onChange={(e) => setForm({ ...form, required_pool: e.target.value })}
+              disabled={commissiesLoading || commissiesError}
               className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
             >
               <option value={0}>— geen —</option>
+              {commissiesLoading && <option disabled>Commissies laden…</option>}
+              {commissiesError && <option disabled>Commissies konden niet worden geladen</option>}
+              {!commissiesLoading && !commissiesError && commissies.length === 0 && (
+                <option disabled>Geen commissies beschikbaar</option>
+              )}
               {commissies.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.title?.rendered || c.title}
