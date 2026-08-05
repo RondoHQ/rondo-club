@@ -54,8 +54,9 @@ final class Fields {
 	 * @return true|\WP_Error
 	 */
 	public static function update_many_for_post( int $post_id, array $values ) {
-		$context = self::post_context( $post_id );
-		$changes = [];
+		$context          = self::post_context( $post_id );
+		$changes          = [];
+		$materializations = [];
 		foreach ( $values as $identifier => $value ) {
 			$definition            = Registry::resolve( $context, (string) $identifier );
 			$definition['context'] = $context;
@@ -68,9 +69,19 @@ final class Fields {
 			$comparable_old = NativeFieldStorage::normalize_for_comparison( $definition, $old_value );
 			$comparable_new = NativeFieldStorage::normalize_for_comparison( $definition, $new_value );
 			if ( maybe_serialize( $comparable_old ) === maybe_serialize( $comparable_new ) ) {
+				// Registry defaults are logical values, but WP_Query can only filter
+				// physical metadata. Persist an explicitly submitted scalar default
+				// without announcing a domain change that did not logically happen.
+				if ( $definition['type'] !== 'repeater' && ! NativeFieldStorage::post_value_exists( $post_id, $definition ) ) {
+					$materializations[] = [ $definition, $new_value ];
+				}
 				continue;
 			}
 			$changes[] = [ $definition, $old_value, $new_value ];
+		}
+
+		foreach ( $materializations as [ $definition, $new_value ] ) {
+			NativeFieldStorage::write_post( $post_id, $definition, $new_value );
 		}
 
 		foreach ( $changes as [ $definition, $old_value, $new_value ] ) {
