@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.2.4] - 2026-08-05
+
+### Changed
+
+- De Kaderlijst wordt per identieke zichtbaarheidsscope een dag server-side gecachet en automatisch ververst bij wijzigingen aan personen of teams. Leeftijdsgroepcoördinatoren en huishoudens delen nooit gegevens buiten hun eigen scope; aflopende functies krijgen door de dagelijkse cachesleutel vanzelf een verse lijst. De handmatige verversknop omzeilt alleen de eigen scopecache.
+- Een koude Kaderlijst-opbouw leest voortaan uitsluitend de tien velden die de tabel werkelijk gebruikt, in plaats van alle geregistreerde persoonsvelden en repeaters te serialiseren.
+
 ## [34.2.3] - 2026-08-05
 
 ### Fixed

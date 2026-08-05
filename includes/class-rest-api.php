@@ -19,6 +19,17 @@ class Api extends Base {
 	private const DASHBOARD_CACHE_GENERATION_OPTION = 'rondo_dashboard_cache_generation';
 
 	/**
+	 * Option containing the current Kaderlijst cache generation.
+	 *
+	 * A generation key keeps invalidation compatible with both database-backed
+	 * transients and persistent object caches. Old entries expire naturally.
+	 */
+	private const KADERLIJST_CACHE_GENERATION_OPTION = 'rondo_kaderlijst_cache_generation';
+
+	/** Kaderlijst responses are stable until data invalidation or the next day. */
+	private const KADERLIJST_CACHE_TTL = DAY_IN_SECONDS;
+
+	/**
 	 * Canonical fields the Kaderlijst renders. The endpoint returns nothing else — a
 	 * scoped viewer never sees a kaderlid's financial flags or private meta.
 	 */
@@ -62,27 +73,91 @@ class Api extends Base {
 	 */
 	public function get_kaderlijst_people( $request ) {
 		$permitted = \Rondo\Core\AccessControl::get_permitted_age_groups();
+		$refresh   = rest_sanitize_boolean( $request->get_param( 'refresh' ) );
 
 		// Scoped member: only their own household, and only if they are kader.
 		if ( is_array( $permitted ) && empty( $permitted ) ) {
 			$visible = \Rondo\Core\AccessControl::get_visible_person_ids();
+			$visible = array_values( array_unique( array_map( 'intval', $visible ) ) );
+			sort( $visible );
 
-			return rest_ensure_response(
-				[ 'people' => empty( $visible ) ? [] : $this->build_kaderlijst_people( $visible ) ]
+			return $this->cached_kaderlijst_response(
+				[
+					'type'       => 'household',
+					'person_ids' => $visible,
+				],
+				fn() => empty( $visible ) ? [] : $this->build_kaderlijst_people( $visible ),
+				$refresh
 			);
 		}
 
-		$candidate_ids = $this->kaderlijst_candidate_ids();
-
 		// Coordinator: keep only kaderleden attached to a team they coordinate.
 		if ( is_array( $permitted ) && ! empty( $permitted ) ) {
-			$scoped_teams  = $this->teams_for_age_groups( $permitted );
-			$candidate_ids = $this->filter_candidates_by_teams( $candidate_ids, $scoped_teams );
+			$permitted = array_values( array_unique( $permitted ) );
+			sort( $permitted, SORT_NATURAL );
+
+			return $this->cached_kaderlijst_response(
+				[
+					'type'       => 'age_groups',
+					'age_groups' => $permitted,
+				],
+				function () use ( $permitted ) {
+					$candidate_ids = $this->kaderlijst_candidate_ids();
+					$scoped_teams  = $this->teams_for_age_groups( $permitted );
+					$candidate_ids = $this->filter_candidates_by_teams( $candidate_ids, $scoped_teams );
+
+					return $this->build_kaderlijst_people( $candidate_ids );
+				},
+				$refresh
+			);
 		}
 
-		return rest_ensure_response(
-			[ 'people' => $this->build_kaderlijst_people( $candidate_ids ) ]
+		return $this->cached_kaderlijst_response(
+			[ 'type' => 'all' ],
+			fn() => $this->build_kaderlijst_people( $this->kaderlijst_candidate_ids() ),
+			$refresh
 		);
+	}
+
+	/**
+	 * Return a cached Kaderlijst response for one exact visibility scope.
+	 *
+	 * The scope contains no names or contact data and is hashed before becoming a
+	 * transient key. Management users share one full-club cache, coordinators only
+	 * share when their permitted age-group sets are identical, and households only
+	 * share when their visible person IDs are identical.
+	 *
+	 * The current date is part of the key because a work-history end date can make
+	 * a row expire without any save hook firing. The player-role signature likewise
+	 * prevents a classification setting change from reusing an incompatible cache.
+	 *
+	 * @param array    $scope         Visibility scope descriptor.
+	 * @param callable $build_people Builds the permitted people payload on a miss.
+	 * @param bool     $refresh       Whether to bypass and replace the cached value.
+	 * @return \WP_REST_Response
+	 */
+	private function cached_kaderlijst_response( array $scope, callable $build_people, bool $refresh = false ) {
+		$generation       = (string) get_option( self::KADERLIJST_CACHE_GENERATION_OPTION, '1' );
+		$player_roles     = \Rondo\Core\VolunteerStatus::get_player_roles();
+		$cache_dimensions = [
+			'generation'   => $generation,
+			'date'         => current_time( 'Ymd' ),
+			'player_roles' => array_values( $player_roles ),
+			'scope'        => $scope,
+		];
+		$cache_key        = 'rondo_kaderlijst_' . hash( 'sha256', wp_json_encode( $cache_dimensions ) );
+
+		if ( ! $refresh ) {
+			$cached = get_transient( $cache_key );
+			if ( is_array( $cached ) && isset( $cached['people'] ) && is_array( $cached['people'] ) ) {
+				return rest_ensure_response( $cached );
+			}
+		}
+
+		$response = [ 'people' => $build_people() ];
+		set_transient( $cache_key, $response, self::KADERLIJST_CACHE_TTL );
+
+		return rest_ensure_response( $response );
 	}
 
 	/**
@@ -297,21 +372,48 @@ class Api extends Base {
 				continue;
 			}
 
-			$canonical_names = [];
-			foreach ( self::KADERLIJST_FIELDS as $legacy_name ) {
-				$canonical_names[] = \Rondo\Fields\Registry::resolve( 'person', $legacy_name )['canonical_name'];
-			}
-
 			$people[] = [
 				'id'     => $person_id,
-				'fields' => array_intersect_key(
-					\Rondo\Fields\RestFields::for_post( 'person', $person_id ),
-					array_flip( $canonical_names )
-				),
+				'fields' => $this->kaderlijst_fields_for_person( $person_id ),
 			];
 		}
 
 		return $people;
+	}
+
+	/**
+	 * Read and format only the fields rendered by the Kaderlijst.
+	 *
+	 * RestFields::for_post() intentionally serializes every registered person
+	 * field. That is useful for generic endpoints but needlessly reads dozens of
+	 * unrelated scalar and repeater fields for every kaderlid. This keeps the same
+	 * canonicalization and permission filters while limiting storage reads to the
+	 * endpoint's explicit allowlist.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return array<string, mixed>
+	 */
+	private function kaderlijst_fields_for_person( int $person_id ): array {
+		$stored = [];
+
+		foreach ( self::KADERLIJST_FIELDS as $field_name ) {
+			$definition = \Rondo\Fields\Registry::resolve( 'person', $field_name );
+			if ( $definition['storage_name'] === null ) {
+				continue;
+			}
+
+			$stored[ $definition['storage_name'] ] = \Rondo\Fields\Fields::get_for_post( $person_id, $field_name );
+		}
+
+		if ( \Rondo\Core\AccessControl::is_scoped_member() ) {
+			$stored = \Rondo\Core\AccessControl::filter_member_visible_fields( $stored );
+		}
+		$stored = \Rondo\Core\AccessControl::filter_sensitive_fields( $stored );
+
+		return \Rondo\Fields\Formatter::for_wire(
+			'person',
+			\Rondo\Fields\Registry::canonicalize( 'person', $stored )
+		);
 	}
 
 	public function __construct() {
@@ -326,6 +428,29 @@ class Api extends Base {
 		}
 		add_action( 'wp_insert_comment', [ $this, 'maybe_invalidate_dashboard_on_comment' ], 10, 2 );
 		add_action( 'edit_comment', [ $this, 'maybe_invalidate_dashboard_on_comment' ], 10, 2 );
+
+		// Kaderlijst cache invalidation. The native field hook covers sync and
+		// service writes that update metadata without saving the parent post.
+		add_action( 'save_post_person', [ $this, 'invalidate_kaderlijst_cache' ] );
+		add_action( 'save_post_team', [ $this, 'invalidate_kaderlijst_cache' ] );
+		add_action( 'rondo_fields_saved_post', [ $this, 'maybe_invalidate_kaderlijst_cache_for_post' ], 10, 1 );
+		add_action( 'before_delete_post', [ $this, 'maybe_invalidate_kaderlijst_cache_for_post' ], 10, 1 );
+	}
+
+	/** Invalidate every scope-specific Kaderlijst transient. */
+	public function invalidate_kaderlijst_cache(): void {
+		update_option( self::KADERLIJST_CACHE_GENERATION_OPTION, wp_generate_uuid4(), false );
+	}
+
+	/**
+	 * Invalidate Kaderlijst caches when a person or team changes outside save_post.
+	 *
+	 * @param int $post_id Updated or deleted post ID.
+	 */
+	public function maybe_invalidate_kaderlijst_cache_for_post( $post_id ): void {
+		if ( in_array( get_post_type( $post_id ), [ 'person', 'team' ], true ) ) {
+			$this->invalidate_kaderlijst_cache();
+		}
 	}
 
 	/**
@@ -444,6 +569,13 @@ class Api extends Base {
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_kaderlijst_people' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'refresh' => [
+						'required'          => false,
+						'default'           => false,
+						'sanitize_callback' => 'rest_sanitize_boolean',
+					],
+				],
 			]
 		);
 
