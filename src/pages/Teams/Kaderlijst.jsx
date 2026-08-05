@@ -235,16 +235,16 @@ async function fetchAllTeams() {
   }));
 }
 
-async function fetchKaderPeople() {
+async function fetchKaderPeople(refresh = false) {
   // Scoped, kader-only person list. The server enforces visibility (management
   // sees all kader, a coordinator sees the kader of the teams they coordinate,
   // a member sees their own household) and returns only the rendered fields.
-  const response = await prmApi.getKaderlijstPeople();
+  const response = await prmApi.getKaderlijstPeople(refresh ? { refresh: true } : {});
   return Array.isArray(response.data?.people) ? response.data.people : [];
 }
 
-async function buildKaderlijst() {
-  const [teams, people] = await Promise.all([fetchAllTeams(), fetchKaderPeople()]);
+async function buildKaderlijst(refresh = false) {
+  const [teams, people] = await Promise.all([fetchAllTeams(), fetchKaderPeople(refresh)]);
   const teamsById = new Map(teams.map((team) => [team.id, team]));
 
   const rows = [];
@@ -523,7 +523,7 @@ export default function Kaderlijst() {
             onClick={async () => {
               setIsRefreshing(true);
               try {
-                const rebuilt = await buildKaderlijst();
+                const rebuilt = await buildKaderlijst(true);
                 queryClient.setQueryData(['kaderlijst'], rebuilt);
               } finally {
                 setIsRefreshing(false);
