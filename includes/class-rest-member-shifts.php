@@ -1704,8 +1704,21 @@ class MemberShifts extends Base {
 
 	/**
 	 * Format a shift post for both `get_my_shifts` and `get_available_shifts`.
+	 *
+	 * Accepts null because `WP_Query` resolves its result IDs with `get_post()`
+	 * after the ID query has run. A shift deleted in between leaves a null in
+	 * `$query->posts`, and every caller already skips a null summary — before
+	 * this hint was widened, the null fataled here instead:
+	 *
+	 *   PHP Fatal error: Uncaught TypeError:
+	 *   Rondo\REST\MemberShifts::format_shift_summary(): Argument #1 ($shift)
+	 *   must be of type WP_Post, null given
 	 */
-	private function format_shift_summary( \WP_Post $shift ): ?array {
+	private function format_shift_summary( ?\WP_Post $shift ): ?array {
+		if ( $shift === null ) {
+			return null;
+		}
+
 		$dienst_type_id = (int) get_post_meta( $shift->ID, 'dienst_type_id', true );
 		$start          = (string) get_post_meta( $shift->ID, 'start_datetime', true );
 		$end            = (string) get_post_meta( $shift->ID, 'end_datetime', true );
