@@ -1426,8 +1426,14 @@ class People extends Base {
 			return null;
 		}
 
-		$identifier     = substr( $param, 6 + ( $is_legacy ? 1 : 0 ) );
-		$sortable_types = [ 'text', 'textarea', 'number', 'date', 'date_picker', 'select', 'email', 'url', 'true_false' ];
+		$identifier = substr( $param, 6 + ( $is_legacy ? 1 : 0 ) );
+
+		// `date_time_picker` stores `Y-m-d H:i:s`, so the default text ORDER BY
+		// below already sorts it chronologically — the same reason `date_picker`
+		// (stored as `Ymd`) needs no branch of its own. Leaving it out made every
+		// VOG list sort a hard 400: the "1e email", "Justis" and "Herinnering"
+		// columns are all `date_time_picker`.
+		$sortable_types = [ 'text', 'textarea', 'number', 'date', 'date_picker', 'date_time_picker', 'select', 'email', 'url', 'true_false' ];
 
 		try {
 			$definition = Registry::resolve( 'person', $identifier );
