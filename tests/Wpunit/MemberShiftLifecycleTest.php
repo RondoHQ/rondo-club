@@ -371,6 +371,41 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertEmpty( get_post_meta( $shift_id, '_shift_email_reminder_14_sent_999999', true ) );
 	}
 
+	/**
+	 * The sweep is the only delivery path for reminders, so an exception that
+	 * escapes it costs every later shift in the batch its email — silently. That
+	 * happened on 2026-08-01 via an assignee id of 0. Keep failures per-shift.
+	 */
+	public function test_one_failing_shift_does_not_abort_the_sweep(): void {
+		$now       = new \DateTimeImmutable( '2026-09-01 10:00:00', wp_timezone() );
+		$type_id   = $this->dienst_type();
+		$person_id = $this->mail_person( 'Anne', 'anne-sweep-resilience@example.com' );
+
+		$broken_id  = $this->dated_shift( $type_id, [ $person_id ], $now->modify( '+14 days' ) );
+		$healthy_id = $this->dated_shift( $type_id, [ $person_id ], $now->modify( '+14 days' ) );
+
+		$thrower = static function ( $value, $object_id, $meta_key ) use ( $broken_id ) {
+			if ( (int) $object_id === $broken_id && $meta_key === 'status' ) {
+				throw new \RuntimeException( 'Simulated failure inside process_shift.' );
+			}
+			return $value;
+		};
+		add_filter( 'get_post_metadata', $thrower, 10, 3 );
+
+		try {
+			$sent = ( new ShiftEmailScheduler() )->run_sweep( $now );
+		} finally {
+			remove_filter( 'get_post_metadata', $thrower, 10 );
+		}
+
+		$this->assertSame( 1, $sent, 'De gezonde dienst wordt nog steeds verwerkt.' );
+		$this->assertNotEmpty(
+			get_post_meta( $healthy_id, '_shift_email_reminder_14_sent_' . $person_id, true ),
+			'De dienst na de kapotte moet zijn herinnering alsnog krijgen.'
+		);
+		$this->assertEmpty( get_post_meta( $broken_id, '_shift_email_reminder_14_sent_' . $person_id, true ) );
+	}
+
 	public function test_survey_is_sent_one_day_later_with_google_forms_link(): void {
 		$now       = new \DateTimeImmutable( '2026-09-16 12:00:00', wp_timezone() );
 		$type_id   = $this->dienst_type();

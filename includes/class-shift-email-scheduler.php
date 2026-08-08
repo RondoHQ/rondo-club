@@ -224,7 +224,22 @@ class ShiftEmailScheduler {
 
 		$sent = 0;
 		foreach ( $query->posts as $shift_id ) {
-			$sent += $this->process_shift( (int) $shift_id, $now );
+			// One malformed shift must not cost the rest of the batch its reminders.
+			// On 2026-08-01 an assignee id of 0 threw out of process_shift(), the
+			// exception escaped this loop, and every later shift was skipped without
+			// a trace — the volunteers involved simply never heard anything. The id
+			// itself is filtered now; this keeps the next surprise local to its shift.
+			try {
+				$sent += $this->process_shift( (int) $shift_id, $now );
+			} catch ( \Throwable $error ) {
+				error_log(
+					sprintf(
+						'[ShiftEmailScheduler] Shift %d: exception during sweep — %s',
+						(int) $shift_id,
+						$error->getMessage()
+					)
+				);
+			}
 		}
 
 		return $sent;
