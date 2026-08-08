@@ -8,6 +8,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { formatStoredDateTime } from '@/utils/dateFormat';
 import { openHtmlLinksInNewTab } from '@/utils/richTextUtils';
 import { shiftCalendarKeys } from '@/utils/shiftQueryCache';
+import { decodeHtml } from '@/utils/formatters';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import ShiftCoverageCalendar from '@/components/volunteers/ShiftCoverageCalendar';
 
@@ -310,7 +311,7 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
     <li className="card p-4">
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100">{shift.dienst_type_name || shift.title}</h3>
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">{decodeHtml(shift.dienst_type_name || shift.title)}</h3>
           <div className="shrink-0">
             {shift.no_show ? (
               <span className="text-xs font-medium text-red-700 dark:text-red-300 inline-flex items-center gap-1">

@@ -7,6 +7,8 @@
 
 namespace Rondo\Volunteer;
 
+use Rondo\Core\PostTitle;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -254,7 +256,9 @@ class ShiftDayCopier {
 			'capacity'       => max( 1, (int) get_post_meta( $source_shift->ID, 'capacity', true ) ),
 			'iva_waived'     => (bool) get_post_meta( $source_shift->ID, 'iva_waived', true ),
 			'notes'          => (string) get_post_meta( $source_shift->ID, 'notes', true ),
-			'title'          => trim( get_the_title( $dienst_type_id ) . ' — ' . $target_day->format( 'd-m-Y' ) . ' ' . substr( $target_start, 11, 5 ) ),
+			// Raw title, not `get_the_title()`: the filtered form texturizes a spaced
+			// hyphen into `&#8211;`, which would be stored in `post_title` verbatim.
+			'title'          => trim( PostTitle::plain( $dienst_type_id, 'Dienst' ) . ' — ' . $target_day->format( 'd-m-Y' ) . ' ' . substr( $target_start, 11, 5 ) ),
 		];
 	}
 

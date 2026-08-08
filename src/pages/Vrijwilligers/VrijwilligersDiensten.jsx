@@ -6,6 +6,7 @@ import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, formatStoredDateTime } from '@/utils/dateFormat';
 import { refreshShiftCalendars, shiftCalendarKeys } from '@/utils/shiftQueryCache';
+import { decodeHtml } from '@/utils/formatters';
 import AnchoredPopover from '@/components/AnchoredPopover';
 import ShiftCoverageCalendar from '@/components/volunteers/ShiftCoverageCalendar';
 
@@ -70,7 +71,7 @@ function DienstTypesPopover({ anchor, isLoading, onClose, types }) {
                   <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full" style={{ background: color }} />
                   <div className="min-w-0 flex-1">
                     <div className="font-medium text-gray-900 dark:text-gray-100">
-                      {type.title?.rendered || type.title}
+                      {decodeHtml(type.title?.rendered || type.title)}
                     </div>
                     {fields.description && (
                       <p className="mt-1 line-clamp-2 text-xs text-gray-500 dark:text-gray-400">
@@ -157,7 +158,7 @@ function CopyDayModal({ day, error, isLoading, onClose, onSubmit }) {
               {day.shifts.map((shift) => (
                 <div key={shift.id} className="flex items-center justify-between gap-3 text-sm">
                   <span className="min-w-0 truncate text-gray-800 dark:text-gray-200">
-                    {shift.dienst_type_name || shift.title}
+                    {decodeHtml(shift.dienst_type_name || shift.title)}
                   </span>
                   <span className="shrink-0 text-xs text-gray-500 dark:text-gray-400">
                     {formatStoredDateTime(shift.start_datetime, 'HH:mm')}–{formatStoredDateTime(shift.end_datetime, 'HH:mm')} · {Math.max(1, Number(shift.capacity) || 1)}
@@ -365,7 +366,7 @@ export default function VrijwilligersDiensten() {
                 to={`/vrijwilligers/diensten/${shift.id}`}
                 className="font-medium text-bright-cobalt hover:underline dark:text-electric-cyan"
               >
-                {shift.dienst_type_name || shift.title}
+                {decodeHtml(shift.dienst_type_name || shift.title)}
               </Link>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {formatStoredDateTime(shift.start_datetime, 'HH:mm')}–{formatStoredDateTime(shift.end_datetime, 'HH:mm')} · {shift.assigned_count} van {Math.max(1, shift.capacity)} plekken bezet
@@ -427,7 +428,7 @@ export default function VrijwilligersDiensten() {
                   <tr key={shift.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
                       <Link to={`/vrijwilligers/diensten/${shift.id}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline">
-                        {shift.dienst_type_name || shift.title || `Inschrijftaak ${shift.id}`}
+                        {decodeHtml(shift.dienst_type_name || shift.title) || `Inschrijftaak ${shift.id}`}
                       </Link>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">

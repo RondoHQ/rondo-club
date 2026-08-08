@@ -9,6 +9,7 @@ import {
 } from '@/hooks/useTaakuitleg';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
+import { decodeHtml } from '@/utils/formatters';
 import RichTextEditor from '@/components/RichTextEditor';
 import QrPrintModal from './QrPrintModal';
 
@@ -157,7 +158,7 @@ export default function TaakuitlegForm() {
                         : 'bg-white text-gray-700 border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600'
                     }`}
                   >
-                    {t.title?.rendered || t.title}
+                    {decodeHtml(t.title?.rendered || t.title)}
                   </button>
                 );
               })}

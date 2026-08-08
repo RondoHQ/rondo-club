@@ -5,6 +5,7 @@ import { ArrowLeft, ClipboardList, Save, Trash2 } from 'lucide-react';
 import { prmApi, wpApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
+import { decodeHtml } from '@/utils/formatters';
 
 const EMPTY = {
   title: '',
@@ -359,7 +360,7 @@ export default function VrijwilligersDienstTypeForm() {
               )}
               {commissies.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.title?.rendered || c.title}
+                  {decodeHtml(c.title?.rendered || c.title)}
                 </option>
               ))}
             </select>

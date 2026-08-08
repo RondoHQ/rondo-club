@@ -7,6 +7,7 @@
 
 namespace Rondo\Volunteer;
 
+use Rondo\Core\PostTitle;
 use Rondo\Notifications\EmailTemplate;
 use Rondo\Users\GuardianAccountService;
 
@@ -437,7 +438,7 @@ class ShiftEmailScheduler {
 
 		return [
 			'naam'              => $name,
-			'dienst'            => get_the_title( $type_id ),
+			'dienst'            => PostTitle::plain( $type_id ),
 			'datum'             => $this->format_dutch_date( $start ),
 			'tijd'              => wp_date( 'H:i', $start->getTimestamp(), wp_timezone() ),
 			'eindtijd'          => wp_date( 'H:i', $end->getTimestamp(), wp_timezone() ),
@@ -523,7 +524,7 @@ class ShiftEmailScheduler {
 
 			$shifts[] = [
 				'id'    => $shift_id,
-				'title' => get_the_title( $type_id ),
+				'title' => PostTitle::plain( $type_id ),
 				'start' => $start,
 				'end'   => $end,
 			];

@@ -5,6 +5,7 @@ import { ArrowLeft, CalendarClock, RefreshCw, Save, Trash2, X } from 'lucide-rea
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
+import { decodeHtml } from '@/utils/formatters';
 import { refreshShiftCalendars } from '@/utils/shiftQueryCache';
 
 const DAYS = [
@@ -63,7 +64,7 @@ export default function VrijwilligersSjabloonForm() {
     if (!existing) return;
     const fields = existing.fields || {};
     setForm({
-      title: existing.title?.rendered || existing.title || '',
+      title: existing.title?.raw ?? decodeHtml(existing.title?.rendered || existing.title || ''),
       dienst_type_id: Number(fields.dienst_type_id) || 0,
       day_of_week: Number(fields.day_of_week) || 6,
       start_time: fields.start_time || '09:00',
@@ -87,7 +88,7 @@ export default function VrijwilligersSjabloonForm() {
     const type = types.find((t) => t.id === Number(form.dienst_type_id));
     const day  = DAYS.find((d) => d.value === Number(form.day_of_week));
     if (type && day) {
-      return `${type.title?.rendered || type.title} — ${day.label} ${form.start_time}`;
+      return `${decodeHtml(type.title?.rendered || type.title)} — ${day.label} ${form.start_time}`;
     }
     return '';
   }, [form, types]);
@@ -203,7 +204,7 @@ export default function VrijwilligersSjabloonForm() {
             <option value={0}>— kies —</option>
             {types.map((t) => (
               <option key={t.id} value={t.id}>
-                {t.title?.rendered || t.title}
+                {decodeHtml(t.title?.rendered || t.title)}
               </option>
             ))}
           </select>
