@@ -346,4 +346,26 @@ class ShiftCalendarTest extends RondoTestCase {
 			$this->assertSame( [], $shift['assigned_persons'] );
 		}
 	}
+
+	/**
+	 * `WP_Query` resolves its result IDs through `get_post()`, so a shift deleted
+	 * between the ID query and that resolution leaves a null in `$query->posts`.
+	 * Every caller skips a null summary; the formatter has to survive long enough
+	 * to return one instead of fataling on its parameter type.
+	 */
+	public function test_format_shift_summary_returns_null_for_a_vanished_shift(): void {
+		$method = new \ReflectionMethod( MemberShifts::class, 'format_shift_summary' );
+		$method->setAccessible( true );
+
+		$this->assertNull( $method->invoke( $this->controller, null ) );
+	}
+
+	public function test_format_shift_summary_accepts_a_nullable_post(): void {
+		$parameter = ( new \ReflectionMethod( MemberShifts::class, 'format_shift_summary' ) )->getParameters()[0];
+
+		$this->assertTrue(
+			$parameter->getType()->allowsNull(),
+			'A deleted shift arrives as null and must not fatal the calendar endpoint.'
+		);
+	}
 }
