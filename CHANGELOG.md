@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.2.6] - 2026-08-08
+
+### Fixed
+
+- Dienstnamen met een streepje of apostrof toonden de HTML-code in plaats van het teken: "Gastheer/gastvrouw &#8211; Bestuurslid van dienst" in plaats van "Gastheer/gastvrouw – Bestuurslid van dienst". WordPress' `wptexturize()` zet een los streepje om in `&#8211;`, en die code werd zowel in de titel van uitgerolde inschrijftaken opgeslagen als ongedecodeerd naar het scherm gestuurd. Titels die worden opgeslagen, gemaild of als platte tekst naar de client gaan gebruiken nu de onbewerkte titel; de dienstenschermen decoderen wat er alsnog binnenkomt.
+
 ## [34.2.5] - 2026-08-05
 
 ### Fixed
@@ -25,7 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - De keuzelijst "Vereiste commissie" bij een inschrijftaak toont weer alle commissies. Het formulier riep de commissie-opvraag aan via de verkeerde API-helper en verborg de fout, waardoor alleen "\u2014 geen \u2014" zichtbaar bleef. Laden, fouten en een werkelijk lege lijst hebben nu ieder een duidelijke status.
-
 ## [34.2.2] - 2026-08-03
 
 ### Fixed

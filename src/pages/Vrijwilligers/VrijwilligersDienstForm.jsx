@@ -7,6 +7,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { format } from '@/utils/dateFormat';
 import { refreshShiftCalendars } from '@/utils/shiftQueryCache';
+import { decodeHtml } from '@/utils/formatters';
 
 const EMPTY = {
   title: '',
@@ -325,7 +326,7 @@ export default function VrijwilligersDienstForm() {
               <span>
                 Losgekoppeld van het sjabloon{' '}
                 <Link to={`/vrijwilligers/sjablonen/${templateLink.id}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline">
-                  {templateLink.title}
+                  {decodeHtml(templateLink.title)}
                 </Link>{' '}
                 omdat deze inschrijftaak handmatig is aangepast. Opnieuw uitrollen van het sjabloon laat deze taak ongemoeid.
               </span>
@@ -336,7 +337,7 @@ export default function VrijwilligersDienstForm() {
               <span>
                 Uitgerold vanuit het sjabloon{' '}
                 <Link to={`/vrijwilligers/sjablonen/${templateLink.id}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline">
-                  {templateLink.title}
+                  {decodeHtml(templateLink.title)}
                 </Link>. Zodra je hier iets wijzigt en opslaat, wordt deze inschrijftaak losgekoppeld en niet meer overschreven bij opnieuw uitrollen.
               </span>
             </div>
@@ -353,7 +354,7 @@ export default function VrijwilligersDienstForm() {
             <option value={0}>— kies —</option>
             {types.map((t) => (
               <option key={t.id} value={t.id}>
-                {t.title?.rendered || t.title}
+                {decodeHtml(t.title?.rendered || t.title)}
               </option>
             ))}
           </select>
