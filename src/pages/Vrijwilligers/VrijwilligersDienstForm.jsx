@@ -83,7 +83,7 @@ export default function VrijwilligersDienstForm() {
     const start = splitDateTime(fields.start_datetime || '');
     const end = splitDateTime(fields.end_datetime || '');
     setForm({
-      title: existing.title?.rendered || existing.title || '',
+      title: existing.title?.raw ?? decodeHtml(existing.title?.rendered || existing.title || ''),
       dienst_type_id: Number(fields.dienst_type_id) || 0,
       date: start.date || end.date,
       start_time: start.time,
@@ -105,7 +105,7 @@ export default function VrijwilligersDienstForm() {
     if (form.title) return form.title;
     const type = types.find((t) => t.id === Number(form.dienst_type_id));
     if (type && form.date && form.start_time) {
-      const typeName = type.title?.rendered || type.title;
+      const typeName = decodeHtml(type.title?.rendered || type.title);
       try {
         return `${typeName} — ${format(`${form.date}T${form.start_time}`, 'dd-MM-yyyy HH:mm')}`;
       } catch {

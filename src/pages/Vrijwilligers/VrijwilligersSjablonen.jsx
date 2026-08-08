@@ -6,6 +6,7 @@ import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { refreshShiftCalendars } from '@/utils/shiftQueryCache';
+import { decodeHtml } from '@/utils/formatters';
 
 const DAYS = ['', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
 const DUTCH_DATE_FORMATTER = new Intl.DateTimeFormat('nl-NL', {
@@ -144,7 +145,7 @@ export default function VrijwilligersSjablonen() {
 
   const typeMap = useMemo(() => {
     const map = new Map();
-    for (const t of types) map.set(t.id, t.title?.rendered || t.title);
+    for (const t of types) map.set(t.id, decodeHtml(t.title?.rendered || t.title));
     return map;
   }, [types]);
 
