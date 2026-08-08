@@ -16,6 +16,8 @@
 
 namespace Rondo\Volunteer;
 
+use Rondo\Core\PostTitle;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -92,7 +94,7 @@ class ShiftTemplateExpander {
 					}
 					return [
 						'id'         => $template_id,
-						'title'      => get_the_title( $template_id ),
+						'title'      => PostTitle::plain( $template_id ),
 						'customized' => (int) get_post_meta( $shift_id, '_shift_customized', true ) === 1,
 					];
 				},
@@ -685,8 +687,15 @@ class ShiftTemplateExpander {
 		return $time;
 	}
 
+	/**
+	 * Build the stored title for a generated shift.
+	 *
+	 * Uses the raw dienst type title on purpose: `get_the_title()` texturizes, so
+	 * a type named "Gastheer - Bestuurslid" came back as "Gastheer &#8211;
+	 * Bestuurslid" and that entity got written into `post_title` verbatim.
+	 */
 	private static function shift_title( int $dienst_type_id, string $start_datetime ): string {
-		$type = $dienst_type_id > 0 ? get_the_title( $dienst_type_id ) : 'Dienst';
+		$type = PostTitle::plain( $dienst_type_id, 'Dienst' );
 		$date = $start_datetime !== '' ? gmdate( 'd-m-Y H:i', strtotime( $start_datetime ) ) : '';
 		return trim( $type . ' — ' . $date );
 	}

@@ -51,7 +51,7 @@ function PersonShiftItem({ shift }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-            {shift.dienst_type_name || shift.title}
+            {decodeHtml(shift.dienst_type_name || shift.title)}
           </p>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             {formatStoredDateTime(shift.start_datetime, 'EEEE d MMMM yyyy, HH:mm')}

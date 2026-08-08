@@ -22,6 +22,7 @@
 
 namespace Rondo\REST;
 
+use Rondo\Core\PostTitle;
 use Rondo\Fees\SeasonKey;
 use Rondo\Users\GuardianAccountService;
 use Rondo\Volunteer\IvaStatus;
@@ -1720,7 +1721,9 @@ class MemberShifts extends Base {
 			'id'                  => $shift->ID,
 			'title'               => $this->sanitize_text( $shift->post_title ),
 			'dienst_type_id'      => $dienst_type_id,
-			'dienst_type_name'    => $dienst_type_id > 0 ? get_the_title( $dienst_type_id ) : '',
+			// Plain text, not markup: the client renders this as a text node, so a
+			// texturized `&#8211;` would show up on screen as literal entity text.
+			'dienst_type_name'    => PostTitle::plain( $dienst_type_id ),
 			'dienst_type_color'   => $dienst_type_id > 0 ? (string) get_post_meta( $dienst_type_id, 'color', true ) : '',
 			'start_datetime'      => $start,
 			'end_datetime'        => $end,
