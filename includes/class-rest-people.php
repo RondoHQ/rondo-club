@@ -57,6 +57,74 @@ class People extends Base {
 	 * Register custom REST routes for people domain
 	 */
 	public function register_routes() {
+		// Guided, admin-only person merge. Preview and execution use the same
+		// service plan so the confirmation screen cannot drift from the write.
+		register_rest_route(
+			'rondo/v1',
+			'/people/(?P<primary_id>\d+)/merge-preview',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'preview_person_merge' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'primary_id'   => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'duplicate_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/people/(?P<primary_id>\d+)/merge',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'merge_people' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'primary_id'   => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'duplicate_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'resolutions'  => [
+						'default' => [],
+						'type'    => 'object',
+					],
+					'confirmed'    => [
+						'required' => true,
+						'type'     => 'boolean',
+					],
+				],
+			]
+		);
+
+		// Allows trusted integrations to repair their local WordPress ID mapping
+		// after an administrator merges away the post they previously tracked.
+		register_rest_route(
+			'rondo/v1',
+			'/people/(?P<person_id>\d+)/merge-target',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_person_merge_target' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'person_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+				],
+			]
+		);
+
 		// Personal household scope, independent of broader management privileges.
 		register_rest_route(
 			'rondo/v1',
@@ -529,6 +597,75 @@ class People extends Base {
 				'callback'            => [ $this, 'get_filter_options' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
+		);
+	}
+
+	/** Preview a recoverable person merge. */
+	public function preview_person_merge( $request ) {
+		$service = new \Rondo\Data\PersonMergeService();
+		$result  = $service->preview( (int) $request['primary_id'], (int) $request['duplicate_id'] );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	/** Execute a previously reviewed person merge. */
+	public function merge_people( $request ) {
+		if ( $request->get_param( 'confirmed' ) !== true ) {
+			return new \WP_Error(
+				'rondo_person_merge_confirmation_required',
+				__( 'Bevestig dat je de samenvoeging hebt gecontroleerd.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$resolutions = $request->get_param( 'resolutions' );
+		if ( ! is_array( $resolutions ) ) {
+			$resolutions = [];
+		}
+		$resolutions = array_map( 'sanitize_key', $resolutions );
+
+		$service = new \Rondo\Data\PersonMergeService();
+		$result  = $service->merge(
+			(int) $request['primary_id'],
+			(int) $request['duplicate_id'],
+			$resolutions,
+			get_current_user_id()
+		);
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	/** Resolve a trashed merge source to its current published survivor. */
+	public function get_person_merge_target( $request ) {
+		$source_id = (int) $request['person_id'];
+		$current   = $source_id;
+		$visited   = [];
+
+		for ( $depth = 0; $depth < 20; $depth++ ) {
+			if ( isset( $visited[ $current ] ) ) {
+				break;
+			}
+			$visited[ $current ] = true;
+			$target_id           = (int) get_post_meta( $current, '_rondo_merged_into_person_id', true );
+			if ( $target_id <= 0 ) {
+				break;
+			}
+
+			$target = get_post( $target_id );
+			if ( $target && $target->post_type === 'person' && $target->post_status === 'publish' ) {
+				return rest_ensure_response(
+					[
+						'person_id'             => $source_id,
+						'merged_into_person_id' => $target_id,
+					]
+				);
+			}
+
+			$current = $target_id;
+		}
+
+		return new \WP_Error(
+			'rondo_person_merge_target_not_found',
+			__( 'Voor deze persoon is geen actief samengevoegd profiel gevonden.', 'rondo' ),
+			[ 'status' => 404 ]
 		);
 	}
 

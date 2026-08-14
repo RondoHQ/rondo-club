@@ -1,12 +1,12 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { lazy, Suspense, useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Trash2, Mail, Phone,
   MapPin, Building2, Plus, Pencil, MessageCircle, X, Camera, Download,
   CheckSquare2, StickyNote, ExternalLink, Gavel, RefreshCw, CreditCard,
-  CalendarClock
+  CalendarClock, GitMerge
 } from 'lucide-react';
-import { usePerson, usePersonTimeline, useDeleteNote, useDeletePerson, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
+import { peopleKeys, usePerson, usePersonTimeline, useDeleteNote, useDeletePerson, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
 import TimelineView from '@/components/Timeline/TimelineView';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
@@ -36,6 +36,8 @@ import { getSocialIcon, getSocialIconColor, sortSocialLinks } from '@/utils/soci
 import TodoItem from '@/components/TodoItem.jsx';
 import TabButton from '@/components/TabButton.jsx';
 import { useClothingPersonProfile } from '@/hooks/useClothing';
+
+const PersonMergeModal = lazy(() => import('@/components/PersonMergeModal'));
 
 function PersonShiftItem({ shift }) {
   const status = shift.no_show
@@ -187,6 +189,7 @@ export default function PersonDetail() {
   const canEditFinancieel = currentUser?.can_edit_financieel ?? false;
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
   const canAccessToegangscontrole = currentUser?.can_access_toegangscontrole ?? false;
+  const isAdmin = currentUser?.is_admin ?? window.rondoConfig?.isAdmin ?? false;
   const canEditAllPeople = currentUser?.can_edit_people ?? false;
   const canAccessPersonNotes = currentUser?.can_access_person_notes ?? false;
   const canManageSponsors = currentUser?.can_manage_sponsors ?? false;
@@ -197,7 +200,7 @@ export default function PersonDetail() {
   // but nothing else — the server enforces the same field boundary.
   let canEditContact = canEditPeople || (currentUser?.can_edit_person_contact ?? false);
   let canEditSponsorFields = canEditAllPeople || (canManageSponsors && isSponsorPerson);
-  const canSyncFromSportlink = (currentUser?.is_admin ?? window.rondoConfig?.isAdmin ?? false) || canAccessToegangscontrole;
+  const canSyncFromSportlink = isAdmin || canAccessToegangscontrole;
 
   const { data: clothingProfile } = useClothingPersonProfile(id, {
     enabled: canAccessClothing && !!id,
@@ -252,6 +255,7 @@ export default function PersonDetail() {
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
   const [editingAddressIndex, setEditingAddressIndex] = useState(null);
+  const [showMergeModal, setShowMergeModal] = useState(false);
 
   // Complete todo flow states
   const [todoToComplete, setTodoToComplete] = useState(null);
@@ -1328,6 +1332,12 @@ export default function PersonDetail() {
             <Download className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Exporteer vCard</span>
           </button>
+          {isAdmin ? (
+            <button onClick={() => setShowMergeModal(true)} className="btn-tertiary" aria-label="Persoon samenvoegen">
+              <GitMerge className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Samenvoegen</span>
+            </button>
+          ) : null}
           {isSponsorPerson && !isDualRoleSponsor && canEditPeople && (
             <button
               onClick={handleDeleteSponsor}
@@ -2363,6 +2373,25 @@ export default function PersonDetail() {
               address={editingAddress}
             />
           )}
+
+          {showMergeModal ? (
+            <Suspense fallback={null}>
+              <PersonMergeModal
+                currentPerson={person}
+                people={allPeople || []}
+                isPeopleLoading={isPeopleLoading}
+                onClose={() => setShowMergeModal(false)}
+                onMerged={async (personId) => {
+                  setShowMergeModal(false);
+                  if (Number(personId) !== Number(id)) {
+                    navigate(`/people/${personId}`, { replace: true });
+                    return;
+                  }
+                  await queryClient.invalidateQueries({ queryKey: peopleKeys.detail(id) });
+                }}
+              />
+            </Suspense>
+          ) : null}
 
       </div>
     </PullToRefreshWrapper>
