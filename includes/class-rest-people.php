@@ -341,6 +341,23 @@ class People extends Base {
 							return in_array( $value, [ '', '1', '0' ], true );
 						},
 					],
+					'knvb_bekend'               => [
+						'description'       => 'Filter by KNVB registration (1=known, 0=not known, empty=all)',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1', '0' ], true );
+						},
+					],
+					'is_parent'                 => [
+						'description'       => 'Filter for people with a current child relationship (1=parent/guardian, empty=all)',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
 					'is_businessclub_member'    => [
 						'description'       => 'Filter by active Businessclub membership (1=yes, 0=no, empty=all)',
 						'type'              => 'string',
@@ -1504,6 +1521,8 @@ class People extends Base {
 		$type_lid                  = $request->get_param( 'type_lid' );
 		$person_type               = $request->get_param( 'person_type' );
 		$is_sponsor                = $request->get_param( 'is_sponsor' );
+		$knvb_bekend               = $request->get_param( 'knvb_bekend' );
+		$is_parent                 = $request->get_param( 'is_parent' );
 		$is_businessclub_member    = $request->get_param( 'is_businessclub_member' );
 		$foto_missing              = $request->get_param( 'foto_missing' );
 		$vog_missing               = $request->get_param( 'vog_missing' );
@@ -1718,6 +1737,26 @@ class People extends Base {
 			$where_clauses[] = $is_sponsor === '1'
 				? "(sp.meta_value = '1')"
 				: "(sp.meta_value IS NULL OR sp.meta_value = '' OR sp.meta_value = '0')";
+		}
+
+		// KNVB registration is present when the canonical KNVB ID has a value.
+		if ( $knvb_bekend !== null && $knvb_bekend !== '' ) {
+			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} kb ON p.ID = kb.post_id AND kb.meta_key = 'knvb-id'";
+			$where_clauses[] = $knvb_bekend === '1'
+				? "(kb.meta_value IS NOT NULL AND kb.meta_value != '')"
+				: "(kb.meta_value IS NULL OR kb.meta_value = '')";
+		}
+
+		// Parent/guardian is a relationship-derived role, not a stored person flag.
+		if ( $is_parent === '1' ) {
+			$parent_ids = $this->get_current_parent_ids();
+			if ( empty( $parent_ids ) ) {
+				$where_clauses[] = '1 = 0';
+			} else {
+				$id_placeholders = implode( ', ', array_fill( 0, count( $parent_ids ), '%d' ) );
+				$where_clauses[] = "p.ID IN ($id_placeholders)";
+				$prepare_values  = array_merge( $prepare_values, $parent_ids );
+			}
 		}
 
 		// Businessclub membership is the active sponsor role with the Businessclub pass variant.
@@ -2123,7 +2162,8 @@ class People extends Base {
 				'thumbnail'     => $this->sanitize_url( get_the_post_thumbnail_url( $row->ID, 'thumbnail' ) ),
 			];
 
-			$person['fields'] = \Rondo\Fields\RestFields::for_post( 'person', (int) $row->ID );
+			$person['fields']          = \Rondo\Fields\RestFields::for_post( 'person', (int) $row->ID );
+			$person['characteristics'] = $this->get_person_characteristics( (int) $row->ID, $person['fields'] );
 
 			$people[] = $person;
 		}
@@ -2136,6 +2176,56 @@ class People extends Base {
 				'total_pages' => (int) ceil( $total / $per_page ),
 			]
 		);
+	}
+
+	/**
+	 * Find current parents/guardians through their child relationships.
+	 *
+	 * @return int[] Person post IDs.
+	 */
+	private function get_current_parent_ids(): array {
+		$candidate_ids = get_posts(
+			[
+				'post_type'      => 'person',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'meta_query'     => [
+					[
+						'key'     => 'relationships',
+						'compare' => 'EXISTS',
+					],
+				],
+			]
+		);
+
+		return array_values(
+			array_filter(
+				array_map( 'intval', $candidate_ids ),
+				fn( int $person_id ): bool => $this->has_current_child_relationship( $person_id )
+			)
+		);
+	}
+
+	/**
+	 * Build the independent roles and statuses shown in the People list.
+	 *
+	 * @param int   $person_id Person post ID.
+	 * @param array $fields    REST-formatted native fields.
+	 * @return array<string,bool>
+	 */
+	private function get_person_characteristics( int $person_id, array $fields ): array {
+		$spelactiviteit = trim( (string) ( $fields['spelactiviteit'] ?? '' ) );
+
+		return [
+			'playing_member' => $spelactiviteit !== '' && $spelactiviteit !== '-',
+			'knvb_known'     => trim( (string) ( $fields['knvb_id'] ?? '' ) ) !== '',
+			'parent'         => $this->has_current_child_relationship( $person_id ),
+			'volunteer'      => (bool) ( $fields['huidig_vrijwilliger'] ?? false ),
+			'sponsor'        => (bool) ( $fields['is_sponsor'] ?? false ),
+			'contact'        => ( $fields['person_type'] ?? '' ) === 'contact',
+		];
 	}
 
 	/**
