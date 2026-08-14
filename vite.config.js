@@ -19,9 +19,10 @@ export default defineConfig({
       // can follow the site title per deployment. See rondo_render_manifest().
       manifest: false,
 
-      // The worker lives in the theme's dist/ directory, so its default scope
-      // would be that directory and it could never control the app at /. The
-      // theme's .htaccess sends `Service-Worker-Allowed: /` to permit this.
+      // WordPress serves the generated worker at /sw.js. Keeping the PWA base
+      // separate from Vite's asset base makes the virtual registration module
+      // use that root URL, which may control the complete application.
+      base: '/',
       scope: '/',
 
       workbox: {
@@ -32,6 +33,13 @@ export default defineConfig({
         // navigation from cache. The navigation route is defined under
         // runtimeCaching below instead.
         navigateFallback: undefined,
+        // The generated file still lives in dist/, but WordPress exposes it at
+        // /sw.js. Inline Workbox so relative imports do not incorrectly resolve
+        // at the site root, and keep precache URLs pointing at dist assets.
+        inlineWorkboxRuntime: true,
+        modifyURLPrefix: {
+          '': '/wp-content/themes/rondo-club/dist/',
+        },
         // Keep the install burst small: only precache the app shell. Lazy page
         // chunks are cached when they are actually visited instead of making
         // every new user download the complete application up front.
@@ -39,6 +47,8 @@ export default defineConfig({
           'assets/montserrat-latin-{600,700}-normal-*.woff2',
           'assets/main-*.css',
           'assets/{main,vendor,utils,rolldown-runtime,createLucideIcon}-*.js',
+          'offline.html',
+          'icons/**/*',
         ],
         cleanupOutdatedCaches: true,
         runtimeCaching: [
@@ -90,8 +100,9 @@ export default defineConfig({
           },
         ],
       },
-      // Include offline.html in build
-      includeAssets: ['offline.html', 'icons/**/*'],
+      // Public assets are included through globPatterns so modifyURLPrefix is
+      // applied consistently when the worker is served from /sw.js.
+      includeAssets: [],
     }),
   ],
 

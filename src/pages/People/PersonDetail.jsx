@@ -2378,8 +2378,6 @@ export default function PersonDetail() {
             <Suspense fallback={null}>
               <PersonMergeModal
                 currentPerson={person}
-                people={allPeople || []}
-                isPeopleLoading={isPeopleLoading}
                 onClose={() => setShowMergeModal(false)}
                 onMerged={async (personId) => {
                   setShowMergeModal(false);
