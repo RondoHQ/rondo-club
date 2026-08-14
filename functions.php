@@ -810,6 +810,36 @@ function rondo_render_manifest() {
 add_action( 'template_redirect', 'rondo_render_manifest', 0 );
 
 /**
+ * Serve the generated service worker from the site root.
+ *
+ * Browsers only allow a worker to control paths below its own directory unless
+ * the static response carries Service-Worker-Allowed. SiteGround did not apply
+ * the theme-level header reliably, so /sw.js is routed through WordPress and
+ * receives root scope naturally.
+ */
+function rondo_render_service_worker() {
+	if ( ! get_query_var( 'rondo_service_worker' ) ) {
+		return;
+	}
+
+	$worker_path = RONDO_THEME_DIR . '/dist/sw.js';
+	if ( ! is_readable( $worker_path ) ) {
+		status_header( 404 );
+		exit;
+	}
+
+	header( 'Content-Type: application/javascript; charset=utf-8' );
+	header( 'Cache-Control: no-cache, max-age=0, must-revalidate' );
+	header( 'Service-Worker-Allowed: /' );
+	header( 'X-Content-Type-Options: nosniff' );
+
+	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local generated build artifact.
+	echo file_get_contents( $worker_path ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JavaScript response body.
+	exit;
+}
+add_action( 'template_redirect', 'rondo_render_service_worker', 0 );
+
+/**
  * Build the manifest document.
  *
  * Separate from the route so it can be asserted on without exiting the request.
@@ -1043,6 +1073,9 @@ function rondo_theme_rewrite_rules() {
 
 	// Web app manifest — served by rondo_render_manifest().
 	add_rewrite_rule( '^manifest\.webmanifest$', 'index.php?rondo_manifest=1', 'top' );
+
+	// Root-scoped service worker — served by rondo_render_service_worker().
+	add_rewrite_rule( '^sw\.js$', 'index.php?rondo_service_worker=1', 'top' );
 }
 add_action( 'init', 'rondo_theme_rewrite_rules' );
 
@@ -1054,6 +1087,7 @@ add_action( 'init', 'rondo_theme_rewrite_rules' );
  */
 function rondo_pwa_query_vars( $vars ) {
 	$vars[] = 'rondo_manifest';
+	$vars[] = 'rondo_service_worker';
 
 	return $vars;
 }
@@ -1071,7 +1105,7 @@ add_filter( 'query_vars', 'rondo_pwa_query_vars' );
  * Runs late on `init` so every add_rewrite_rule() call has already registered.
  */
 function rondo_maybe_flush_rewrite_rules() {
-	$rewrite_version = '3'; // Bump when adding/changing a rewrite rule.
+	$rewrite_version = '4'; // Bump when adding/changing a rewrite rule.
 	if ( get_option( 'rondo_rewrite_rules_version' ) === $rewrite_version ) {
 		return;
 	}

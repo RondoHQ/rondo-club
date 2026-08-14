@@ -1,7 +1,9 @@
 # Making Rondo easy to save as an app icon / bookmark
 
-**Status:** ✅ implemented in **33.81.0**, 2026-07-30. Audit below kept as the record of what was
-wrong and why each fix looks the way it does. **Not yet verified on production** — see §7.
+**Status:** ✅ implemented in **33.81.0**, 2026-07-30. The service-worker delivery was made
+host-independent in **34.4.1**, 2026-08-14, after production proved that SiteGround did not apply
+the theme-level scope header. Audit below is kept as the record of what was wrong and why each fix
+looks the way it does.
 **Theme version audited:** 33.80.2
 **Question:** what does it take for a member to end up with a proper Rondo icon on their phone home screen or desktop?
 
@@ -13,7 +15,7 @@ wrong and why each fix looks the way it does. **Not yet verified on production**
 | Manifest served from PHP, name from the site title, `start_url: '/'`, `id`, correct MIME type | [functions.php](../../functions.php) `rondo_render_manifest()` / `rondo_build_manifest()` |
 | Static manifest removed from the build | [vite.config.js](../../vite.config.js) `manifest: false` |
 | Service worker actually registered | [src/App.jsx](../../src/App.jsx) mounts `<ReloadPrompt />` |
-| Service worker scope widened to `/` | [.htaccess](../../.htaccess) + `scope: '/'` in vite config |
+| Service worker scope widened to `/` | [functions.php](../../functions.php) serves `/sw.js`; PWA `base` and `scope` are `/` in [vite.config.js](../../vite.config.js) |
 | **Navigation route rewritten** so the offline page can no longer replace the app | [vite.config.js](../../vite.config.js) runtimeCaching |
 | Permanent "App installeren" button + per-platform instructions | [InstallAppButton.jsx](../../src/components/InstallAppButton.jsx), [InstallInstructions.jsx](../../src/components/InstallInstructions.jsx) |
 | Engagement gate counts route changes, not document loads | [useEngagementTracking.js](../../src/hooks/useEngagementTracking.js) |
@@ -477,30 +479,26 @@ import { ReloadPrompt } from '@/components/ReloadPrompt';
 <ReloadPrompt />
 ```
 
-**(b) Widen the scope.** Recommended — one header plus one config line:
-
-```apache
-# theme .htaccess
-<Files "sw.js">
-  Header set Service-Worker-Allowed "/"
-  Header set Cache-Control "no-cache"
-</Files>
-```
+**(b) Widen the scope.** The initial implementation used a theme-level
+`Service-Worker-Allowed` header. SiteGround served the static file without that header, so 34.4.1
+switched to the host-independent fallback: WordPress serves the generated worker at `/sw.js`.
 
 ```js
 // vite.config.js
 VitePWA({
-  scope: '/',              // registration scope; requires the header above
+  base: '/',
+  scope: '/',
+  workbox: {
+    inlineWorkboxRuntime: true,
+    modifyURLPrefix: { '': '/wp-content/themes/rondo-club/dist/' },
+  },
   // …
 })
 ```
 
-*Fallback if SiteGround does not honour the header:* serve the worker from the site root through a
-WordPress rewrite (`^sw\.js$` → a `template_redirect` handler that `readfile()`s the built worker
-with `Content-Type: application/javascript`). If you take that route, also set
-`workbox: { inlineWorkboxRuntime: true }` — the generated worker currently loads
-`workbox-57649e2b.js` **relative to its own URL**, so a root-served `sw.js` would 404 on the runtime
-chunk. Inlining removes the extra file.
+`functions.php` maps `^sw\.js$` to a `template_redirect` handler with the correct JavaScript content
+type and no-cache policy. Workbox is inlined because a runtime import would otherwise resolve from
+the site root. `modifyURLPrefix` keeps precached files pointed at the theme's `dist/` directory.
 
 **(c) Stop nuking the cache on update.** Replace the unregister-everything path in
 [useVersionCheck.reload()](../../src/hooks/useVersionCheck.js) with `updateServiceWorker(true)` from
@@ -555,24 +553,21 @@ SPA session actually accumulates page views. Same for the `pwa-page-views >= 3` 
 - `composer test` — **398 tests, 0 failures** (was 389; the 9 new ones cover the manifest).
 - Built worker inspected: no `NavigationRoute`/`createHandlerBoundToURL`, one `NetworkOnly` +
   `PrecacheFallbackPlugin` navigation route, registration compiled as
-  `new Workbox("…/dist/sw.js", {scope: "/"})`, and `dist/manifest.webmanifest` no longer emitted.
+  `new Workbox("/sw.js", {scope: "/"})`, Workbox is inlined, every precache URL points at
+  `/wp-content/themes/rondo-club/dist/`, and `dist/manifest.webmanifest` is no longer emitted.
 - All four icons verified opaque (PNG colour type 2, not 4/6) and rendered at 48/60/192 px to check
   the crest survives the Android circular mask.
 
 ### The first thing to check after deploy
 
-The service worker scope depends on an `.htaccess` header, and SiteGround may serve theme statics
-through Nginx, which would ignore it:
+The worker is served from the site root through WordPress, so verify that route directly:
 
 ```bash
-curl -sI https://rondo.svawc.nl/wp-content/themes/rondo-club/dist/sw.js | grep -i 'service-worker-allowed\|cache-control'
+curl -sI https://rondo.svawc.nl/sw.js | grep -i 'content-type\|service-worker-allowed\|cache-control'
 ```
 
-If `Service-Worker-Allowed: /` is absent, registration fails with a `SecurityError` (visible in the
-console as "SW registration error") and we are back to no worker — the icons and the manifest still
-work, but the Chrome install prompt does not. Fallback in that case: serve the worker from the site
-root via a WordPress rewrite and set `workbox: { inlineWorkboxRuntime: true }`, because the built
-worker resolves its `workbox-*.js` chunk relative to its own URL.
+Expect JavaScript content, `Cache-Control: no-cache`, and `Service-Worker-Allowed: /`. Then confirm
+in DevTools that the registered script URL is `/sw.js`, its scope is `/`, and the page is controlled.
 
 Then confirm the manifest:
 

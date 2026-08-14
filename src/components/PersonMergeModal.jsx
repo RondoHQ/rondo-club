@@ -1,8 +1,9 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Check, GitMerge, Search, ShieldAlert, X } from 'lucide-react';
-import { prmApi } from '@/api/client';
+import { prmApi, wpApi } from '@/api/client';
 import { peopleKeys } from '@/hooks/usePeople';
+import { decodeHtml } from '@/utils/formatters';
 
 const REFERENCE_LABELS = {
   relationships: 'relaties',
@@ -80,7 +81,19 @@ function CandidateResult({ person, onSelect }) {
   );
 }
 
-export default function PersonMergeModal({ currentPerson, people, isPeopleLoading, onClose, onMerged }) {
+function normalizeDirectPerson(person) {
+  const thumbnail = person._embedded?.['wp:featuredmedia']?.[0]?.source_url
+    || person._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.thumbnail?.source_url
+    || null;
+
+  return {
+    ...person,
+    name: decodeHtml(person.title?.rendered || '') || `Persoon #${person.id}`,
+    thumbnail,
+  };
+}
+
+export default function PersonMergeModal({ currentPerson, onClose, onMerged }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [candidate, setCandidate] = useState(null);
@@ -97,6 +110,36 @@ export default function PersonMergeModal({ currentPerson, people, isPeopleLoadin
     queryKey: ['person-merge-preview', primaryId, duplicateId],
     queryFn: async () => (await prmApi.getPersonMergePreview(primaryId, duplicateId)).data,
     enabled: primaryId > 0 && duplicateId > 0,
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+
+  const candidateQuery = useQuery({
+    queryKey: ['person-merge-candidates', deferredSearch],
+    queryFn: async () => {
+      const directId = /^\d+$/.test(deferredSearch) ? Number(deferredSearch) : 0;
+      const [searchResponse, directPerson] = await Promise.all([
+        prmApi.search(deferredSearch),
+        directId > 0
+          ? wpApi.getPerson(directId, { _embed: true })
+              .then((response) => normalizeDirectPerson(response.data))
+              .catch((error) => {
+                if (error.response?.status === 404) return null;
+                throw error;
+              })
+          : Promise.resolve(null),
+      ]);
+
+      const candidatesById = new Map();
+      if (directPerson) candidatesById.set(Number(directPerson.id), directPerson);
+      for (const person of searchResponse.data?.people || []) {
+        candidatesById.set(Number(person.id), person);
+      }
+      candidatesById.delete(Number(currentPerson.id));
+
+      return Array.from(candidatesById.values()).slice(0, 8);
+    },
+    enabled: deferredSearch.length >= 2,
     staleTime: 30 * 1000,
     retry: false,
   });
@@ -134,17 +177,6 @@ export default function PersonMergeModal({ currentPerson, people, isPeopleLoadin
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [mergeMutation.isPending, onClose]);
-
-  const candidates = useMemo(() => {
-    if (deferredSearch.length < 2) return [];
-    return (people || [])
-      .filter((person) => {
-        if (Number(person.id) === Number(currentPerson.id)) return false;
-        const haystack = `${person.name || ''} ${person.fields?.email_1 || ''} ${person.fields?.email_2 || ''} ${person.fields?.knvb_id || ''} ${person.id}`.toLowerCase();
-        return haystack.includes(deferredSearch);
-      })
-      .slice(0, 8);
-  }, [currentPerson.id, deferredSearch, people]);
 
   const selectCandidate = (person) => {
     setCandidate(person);
@@ -206,21 +238,26 @@ export default function PersonMergeModal({ currentPerson, people, isPeopleLoadin
                     type="search"
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    className="input pl-9"
+                    className="input"
+                    style={{ paddingLeft: '2.5rem' }}
                     placeholder="Naam, e-mailadres, KNVB-ID of profielnummer"
                     autoFocus
                   />
                 </div>
               </div>
-              {isPeopleLoading ? (
+              {candidateQuery.isFetching ? (
                 <div className="space-y-2" aria-label="Personen laden">
-                  {[1, 2, 3].map((item) => <div key={item} className="h-14 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-700" />)}
+                  {[1, 2].map((item) => <div key={item} className="h-14 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-700" />)}
                 </div>
               ) : deferredSearch.length < 2 ? (
                 <p className="text-sm text-gray-500 dark:text-gray-400">Typ minimaal twee tekens.</p>
-              ) : candidates.length ? (
+              ) : candidateQuery.isError ? (
+                <p className="rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
+                  Zoeken is niet gelukt. Probeer het opnieuw.
+                </p>
+              ) : candidateQuery.data?.length ? (
                 <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-                  {candidates.map((person) => <CandidateResult key={person.id} person={person} onSelect={() => selectCandidate(person)} />)}
+                  {candidateQuery.data.map((person) => <CandidateResult key={person.id} person={person} onSelect={() => selectCandidate(person)} />)}
                 </div>
               ) : (
                 <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-600 dark:bg-gray-900 dark:text-gray-300">Geen andere persoon gevonden.</p>

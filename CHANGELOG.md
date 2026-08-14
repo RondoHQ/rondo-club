@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.4.1] - 2026-08-14
+
+### Fixed
+
+- De samenvoegdialoog zoekt personen nu direct op de server en kan ook een exact profielnummer openen. De dialoog hoeft daardoor niet langer eerst duizenden personen te laden en de zoekstatus blijft niet meer als grijze laadblokken staan. Het zoekicoon overlapt de invoertekst niet meer.
+- De service worker wordt via WordPress op `/sw.js` aangeboden. Daardoor kan hij de volledige applicatie beheren zonder afhankelijk te zijn van een `Service-Worker-Allowed`-header die SiteGround niet op het statische themabestand toepaste.
+
 ## [34.4.0] - 2026-08-14
 
 ### Added
