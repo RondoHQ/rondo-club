@@ -112,7 +112,7 @@ const COLUMN_SORT_FIELDS = {
   freescout_id: 'field_freescout_id',
 };
 
-const UNSORTABLE_CORE_COLUMNS = new Set(['email', 'phone', 'address', 'postal_code', 'city', 'country']);
+const UNSORTABLE_CORE_COLUMNS = new Set(['characteristics', 'email', 'phone', 'address', 'postal_code', 'city', 'country']);
 const SORTABLE_CUSTOM_TYPES = new Set(['text', 'textarea', 'number', 'date', 'select', 'email', 'url', 'true_false']);
 
 function getColumnSortField(colId, column) {
@@ -127,6 +127,49 @@ function getColumnSortField(colId, column) {
   }
 
   return null;
+}
+
+const CHARACTERISTIC_BADGES = {
+  playing: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
+  notPlaying: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+  knvb: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  noKnvb: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
+  parent: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+  volunteer: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
+  sponsor: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300',
+  contact: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+};
+
+function CharacteristicBadge({ label, tone }) {
+  return (
+    <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${CHARACTERISTIC_BADGES[tone]}`}>
+      {label}
+    </span>
+  );
+}
+
+function PersonCharacteristics({ characteristics }) {
+  if (!characteristics) return '-';
+
+  return (
+    <div className="flex min-w-[18rem] flex-wrap gap-1">
+      {characteristics.contact ? (
+        <CharacteristicBadge label="Contact" tone="contact" />
+      ) : (
+        <CharacteristicBadge
+          label={characteristics.playing_member ? 'Spelend lid' : 'Niet-spelend lid'}
+          tone={characteristics.playing_member ? 'playing' : 'notPlaying'}
+        />
+      )}
+      <CharacteristicBadge
+        label={characteristics.knvb_known ? 'KNVB bekend' : 'KNVB onbekend'}
+        tone={characteristics.knvb_known ? 'knvb' : 'noKnvb'}
+      />
+      {characteristics.parent && <CharacteristicBadge label="Ouder/verzorger" tone="parent" />}
+      {characteristics.volunteer && <CharacteristicBadge label="Vrijwilliger" tone="volunteer" />}
+      {characteristics.sponsor && <CharacteristicBadge label="Sponsor" tone="sponsor" />}
+    </div>
+  );
 }
 
 function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidths, customFieldsMap, isSelected, onToggleSelection, isOdd }) {
@@ -176,16 +219,6 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
               Oud-lid
             </span>
           )}
-          {person.fields?.person_type === 'contact' && (
-            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
-              Contact
-            </span>
-          )}
-          {hasSponsorRole(person.fields) && (
-            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300">
-              Sponsor
-            </span>
-          )}
           {person.fields?.wacht_op_overschrijving && (
             <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
               Wacht op overschrijving
@@ -213,6 +246,14 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
               style={style}
             >
               {getMembershipTypeLabel(person)}
+            </td>
+          );
+        }
+
+        if (colId === 'characteristics') {
+          return (
+            <td key={colId} className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400" style={style}>
+              <PersonCharacteristics characteristics={person.characteristics} />
             </td>
           );
         }
@@ -482,7 +523,7 @@ function PersonListView({
                   colId={colId}
                   column={column}
                   label={column.label}
-                  width={columnWidths[colId] || 150}
+                  width={columnWidths[colId] || (colId === 'characteristics' ? 320 : 150)}
                   sortField={sortField}
                   sortOrder={sortOrder}
                   onSort={onSort}
@@ -661,6 +702,8 @@ export default function PeopleList() {
   const lidSindsSeason = searchParams.get('lidSindsSeizoen') || '';
   const spelactiviteitNoTeam = searchParams.get('spelactiviteitZonderTeam') || '';
   const spelendLid = searchParams.get('spelendLid') || '';
+  const knvbBekend = searchParams.get('knvbBekend') || '';
+  const isParent = searchParams.get('ouder') || '';
   const wachtOverschrijving = searchParams.get('wachtOverschrijving') || '';
 
   // Helper to update URL params
@@ -758,6 +801,14 @@ export default function PeopleList() {
     updateSearchParams({ spelendLid: value });
   }, [updateSearchParams]);
 
+  const setKnvbBekend = useCallback((value) => {
+    updateSearchParams({ knvbBekend: value });
+  }, [updateSearchParams]);
+
+  const setIsParent = useCallback((value) => {
+    updateSearchParams({ ouder: value });
+  }, [updateSearchParams]);
+
   const setWachtOverschrijving = useCallback((value) => {
     updateSearchParams({ wachtOverschrijving: value });
   }, [updateSearchParams]);
@@ -823,6 +874,8 @@ export default function PeopleList() {
     lidSindsSeason: lidSindsSeason || null,
     spelactiviteitNoTeam: spelactiviteitNoTeam || null,
     spelendLid: spelendLid || null,
+    knvbBekend: knvbBekend || null,
+    isParent: isParent || null,
     wachtOverschrijving: wachtOverschrijving || null,
   });
 
@@ -950,35 +1003,32 @@ export default function PeopleList() {
   }, []);
 
   const filterColumns = useMemo(() => [
+    // Kenmerken overlap independently; selecting several combines them with AND.
+    createColumn({
+      id: 'spelend_lid', header: 'Lidstatus', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [{ value: '1', label: 'Spelend' }, { value: '0', label: 'Niet-spelend' }],
+      getFilterLabel: (val) => val === '1' ? 'Spelend lid' : 'Niet-spelend lid',
+      filterSection: 'Kenmerken',
+    }),
+    createColumn({
+      id: 'knvb_bekend', header: 'KNVB-status', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [{ value: '1', label: 'Bekend' }, { value: '0', label: 'Niet bekend' }],
+      getFilterLabel: (val) => `KNVB: ${val === '1' ? 'Bekend' : 'Niet bekend'}`,
+      filterSection: 'Kenmerken',
+    }),
+    createColumn({ id: 'is_parent', header: 'Ouder/verzorger', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Kenmerken' }),
+    createColumn({ id: 'vrijwilliger', header: 'Vrijwilliger', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Kenmerken' }),
+    createColumn({ id: 'is_sponsor', header: 'Sponsor', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Kenmerken' }),
+    createColumn({ id: 'is_contact', header: 'Contact', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Kenmerken' }),
+
     // Lidmaatschap — who counts as a member right now / cancellations
     createColumn({ id: 'include_former', header: 'Toon oud-leden', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
     createColumn({ id: 'lid_tot_future', header: 'Afmelding in de toekomst', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
     createColumn({ id: 'lid_tot_season', header: 'Afgemeld dit seizoen', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Afgemeld dit seizoen', filterSection: 'Lidmaatschap' }),
     createColumn({ id: 'lid_sinds_season', header: 'Nieuw lid dit seizoen', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Nieuw lid dit seizoen', filterSection: 'Lidmaatschap' }),
     createColumn({ id: 'spelactiviteit_no_team', header: 'Spelactiviteit zonder team', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
-    createColumn({
-      id: 'spelend_lid', header: 'Spelend lid', filterType: FILTER_TYPES.SELECT,
-      filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
-      getFilterLabel: (val) => `Spelend lid: ${val === '1' ? 'Ja' : 'Nee'}`,
-      filterSection: 'Lidmaatschap',
-    }),
     createColumn({ id: 'wacht_overschrijving', header: 'Wacht op overschrijving', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Wacht op overschrijving', filterSection: 'Lidmaatschap' }),
 
-    createColumn({
-      id: 'person_type', header: 'Persoonstype', filterType: FILTER_TYPES.SELECT,
-      filterOptions: [
-        { value: 'member', label: 'Leden en ouders' },
-        { value: 'contact', label: 'Contacten' },
-      ],
-      getFilterLabel: (val) => val === 'contact' ? 'Persoonstype: Contact' : 'Persoonstype: Lid / ouder',
-      filterSection: 'Persoon',
-    }),
-    createColumn({
-      id: 'is_sponsor', header: 'Sponsor', filterType: FILTER_TYPES.SELECT,
-      filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
-      getFilterLabel: (val) => `Sponsor: ${val === '1' ? 'Ja' : 'Nee'}`,
-      filterSection: 'Persoon',
-    }),
     createColumn({
       id: 'is_businessclub_member', header: 'BC-lid', filterType: FILTER_TYPES.SELECT,
       filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
@@ -1047,12 +1097,6 @@ export default function PeopleList() {
 
     // Vrijwilliger & VOG
     createColumn({
-      id: 'vrijwilliger', header: 'Huidig vrijwilliger', filterType: FILTER_TYPES.SELECT,
-      filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
-      getFilterLabel: (val) => `Vrijwilliger: ${val === '1' ? 'Ja' : 'Nee'}`,
-      filterSection: 'Vrijwilliger & VOG',
-    }),
-    createColumn({
       id: 'vog_datum', header: 'VOG datum', filterType: FILTER_TYPES.SELECT,
       filterOptions: [
         { value: 'missing', label: 'Ontbreekt' },
@@ -1105,6 +1149,9 @@ export default function PeopleList() {
     lid_sinds_season: lidSindsSeason,
     spelactiviteit_no_team: spelactiviteitNoTeam,
     spelend_lid: spelendLid,
+    knvb_bekend: knvbBekend,
+    is_parent: isParent,
+    is_contact: personType === 'contact' ? '1' : '',
     wacht_overschrijving: wachtOverschrijving,
     birth_year: selectedBirthYear,
     birthday_month: selectedBirthMonth,
@@ -1112,7 +1159,6 @@ export default function PeopleList() {
     vrijwilliger: huidigeVrijwilliger,
     blokkade: financieleBlokkade,
     type_lid: typeLid,
-    person_type: personType,
     is_sponsor: sponsorOnly,
     is_businessclub_member: businessclubMember,
     leeftijdsgroep,
@@ -1174,6 +1220,9 @@ export default function PeopleList() {
       case 'lid_sinds_season': setLidSindsSeason(value); break;
       case 'spelactiviteit_no_team': setSpelactiviteitNoTeam(value); break;
       case 'spelend_lid': setSpelendLid(value); break;
+      case 'knvb_bekend': setKnvbBekend(value); break;
+      case 'is_parent': setIsParent(value); break;
+      case 'is_contact': setPersonType(value === '1' ? 'contact' : ''); break;
       case 'wacht_overschrijving': setWachtOverschrijving(value); break;
       case 'birth_year': setSelectedBirthYear(value); break;
       case 'birthday_month': setSelectedBirthMonth(value); break;
@@ -1181,7 +1230,6 @@ export default function PeopleList() {
       case 'vrijwilliger': setHuidigeVrijwilliger(value); break;
       case 'blokkade': setFinancieleBlokkade(value); break;
       case 'type_lid': setTypeLid(value); break;
-      case 'person_type': setPersonType(value); break;
       case 'is_sponsor': setSponsorOnly(value); break;
       case 'is_businessclub_member': setBusinessclubMember(value); break;
       case 'leeftijdsgroep': setLeeftijdsgroep(value); break;
@@ -1193,7 +1241,7 @@ export default function PeopleList() {
         break;
       default: break;
     }
-  }, [setIncludeFormer, setLidTotFuture, setLidTotSeason, setLidSindsSeason, setSpelactiviteitNoTeam, setSpelendLid, setWachtOverschrijving, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setPersonType, setSponsorOnly, setBusinessclubMember, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
+  }, [setIncludeFormer, setLidTotFuture, setLidTotSeason, setLidSindsSeason, setSpelactiviteitNoTeam, setSpelendLid, setKnvbBekend, setIsParent, setWachtOverschrijving, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setPersonType, setSponsorOnly, setBusinessclubMember, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
 
   // Selection helper functions
   const toggleSelection = (personId) => {
@@ -1226,7 +1274,7 @@ export default function PeopleList() {
   // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, personType, sponsorOnly, businessclubMember, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, spelendLid, wachtOverschrijving, page, people]);
+  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, personType, sponsorOnly, businessclubMember, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, spelendLid, knvbBekend, isParent, wachtOverschrijving, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
@@ -1316,6 +1364,8 @@ export default function PeopleList() {
         lidSindsSeason: lidSindsSeason || null,
         spelactiviteitNoTeam: spelactiviteitNoTeam || null,
         spelendLid: spelendLid || null,
+        knvbBekend: knvbBekend || null,
+        isParent: isParent || null,
         wachtOverschrijving: wachtOverschrijving || null,
       });
 

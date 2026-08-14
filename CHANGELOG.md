@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.3.0] - 2026-08-14
+
+### Added
+
+- De personenlijst bundelt lidstatus, KNVB-status en de overlappende rollen ouder/verzorger, vrijwilliger, sponsor en contact in één filtergroep **Kenmerken**. Meerdere rollen zijn tegelijk selecteerbaar en worden gecombineerd; de ouderrol wordt afgeleid uit actuele ouder/verzorger-relaties. Een standaard zichtbare kolom toont dezelfde kenmerken als compacte labels.
+
 ## [34.2.6] - 2026-08-08
 
 ### Fixed

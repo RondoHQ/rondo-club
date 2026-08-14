@@ -18,17 +18,22 @@ class UserSettings extends Base {
 	 * Default visible columns for People list.
 	 * Name column is always visible and first — not included here.
 	 */
-	private const DEFAULT_LIST_COLUMNS = [ 'team', 'birthdate', 'modified' ];
+	private const DEFAULT_LIST_COLUMNS = [ 'characteristics', 'team', 'birthdate', 'modified' ];
 
 	/**
 	 * List preferences schema version. Bump when new default columns are added.
 	 */
-	private const LIST_PREFERENCES_VERSION = 3;
+	private const LIST_PREFERENCES_VERSION = 4;
 
 	/**
 	 * Core columns (non-custom-field columns).
 	 */
 	private const CORE_LIST_COLUMNS = [
+		[
+			'id'    => 'characteristics',
+			'label' => 'Kenmerken',
+			'type'  => 'core',
+		],
 		[
 			'id'    => 'email',
 			'label' => 'E-mail',
@@ -763,8 +768,11 @@ class UserSettings extends Base {
 		if ( $preferences_version < self::LIST_PREFERENCES_VERSION ) {
 			if ( in_array( 'birthdate', $valid_column_ids, true ) && ! in_array( 'birthdate', $visible_columns, true ) ) {
 				$visible_columns[] = 'birthdate';
-				update_user_meta( $user_id, 'rondo_people_list_preferences', $visible_columns );
 			}
+			if ( in_array( 'characteristics', $valid_column_ids, true ) && ! in_array( 'characteristics', $visible_columns, true ) ) {
+				array_unshift( $visible_columns, 'characteristics' );
+			}
+			update_user_meta( $user_id, 'rondo_people_list_preferences', $visible_columns );
 			update_user_meta( $user_id, 'rondo_people_list_pref_version', self::LIST_PREFERENCES_VERSION );
 		}
 
