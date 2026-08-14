@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.4.0] - 2026-08-14
+
+### Added
+
+- Beheerders kunnen dubbele personen vanaf de persoonspagina gecontroleerd samenvoegen. De dialoog laat kiezen welk profiel blijft bestaan, combineert lege velden, contactgegevens, adressen, rollen en lijstvelden, en vraagt per afwijkende waarde welke versie bewaard moet blijven. Verschillende stabiele externe IDs of twee gekoppelde accounts blokkeren de actie. Relaties, inschrijftaken, todos, tuchtzaken, facturen, kledinguitgiftes, tijdlijnreacties, bijlagen en het gekoppelde account verhuizen mee; het dubbele profiel gaat met een auditverwijzing naar de prullenbak. Integraties kunnen die verwijzing gebruiken om opgeslagen persoon-ID's naar het hoofdprofiel om te zetten zonder het dubbele profiel opnieuw aan te maken.
+
 ## [34.3.0] - 2026-08-14
 
 ### Added

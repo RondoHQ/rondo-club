@@ -127,6 +127,11 @@ export const prmApi = {
   // Filtered people with server-side pagination/filtering/sorting
   getFilteredPeople: (params = {}) => api.get('/rondo/v1/people/filtered', { params }),
 
+  // Guided person merge (administrator only)
+  getPersonMergePreview: (primaryId, duplicateId) =>
+    api.get(`/rondo/v1/people/${primaryId}/merge-preview`, { params: { duplicate_id: duplicateId } }),
+  mergePeople: (primaryId, data) => api.post(`/rondo/v1/people/${primaryId}/merge`, data),
+
   // Filter options for dynamic dropdowns
   getFilterOptions: () => api.get('/rondo/v1/people/filter-options'),
 
