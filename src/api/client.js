@@ -334,6 +334,9 @@ export const prmApi = {
 
   // Narrowcasting (admin only)
   getNarrowcastingDisplays: () => api.get('/rondo/v1/narrowcasting/displays'),
+  getNarrowcastingSettings: () => api.get('/rondo/v1/narrowcasting/settings'),
+  updateNarrowcastingSettings: (data) => api.post('/rondo/v1/narrowcasting/settings', data),
+  refreshNarrowcastingMatchday: () => api.post('/rondo/v1/narrowcasting/refresh'),
   claimNarrowcastingDisplay: (data) => api.post('/rondo/v1/narrowcasting/displays/claim', data),
   queueNarrowcastingCommand: (displayId, command) => api.post(`/rondo/v1/narrowcasting/displays/${displayId}/commands`, { command }),
   revokeNarrowcastingDisplay: (displayId) => api.post(`/rondo/v1/narrowcasting/displays/${displayId}/revoke`),

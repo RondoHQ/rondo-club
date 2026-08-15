@@ -1,12 +1,23 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Wifi, WifiOff } from 'lucide-react';
+import NarrowcastingScene from './NarrowcastingScenes';
+import { buildMatchdayScenes } from './matchdayScenes';
 
 const TOKEN_KEY = 'rondoPlayerToken';
 const CONFIG_KEY = 'rondoPlayerConfig';
+const FEED_KEY = 'rondoPlayerMatchdayFeed';
 
 function readStoredConfig() {
   try {
     return JSON.parse(localStorage.getItem(CONFIG_KEY) || 'null');
+  } catch {
+    return null;
+  }
+}
+
+function readStoredFeed() {
+  try {
+    return JSON.parse(localStorage.getItem(FEED_KEY) || 'null');
   } catch {
     return null;
   }
@@ -31,10 +42,12 @@ function apiUrl(path) {
 export default function NarrowcastingDisplay() {
   const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
   const [config, setConfig] = useState(() => (isPreview ? null : readStoredConfig()));
+  const [feed, setFeed] = useState(() => (isPreview ? null : readStoredFeed()));
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(isPreview);
   const [loadError, setLoadError] = useState('');
   const [now, setNow] = useState(new Date());
+  const [sceneIndex, setSceneIndex] = useState(0);
   const token = useMemo(() => (isPreview ? '' : resolveToken()), [isPreview]);
 
   useEffect(() => {
@@ -65,6 +78,17 @@ export default function NarrowcastingDisplay() {
         setConnected(true);
         setLoadError('');
         if (!isPreview) localStorage.setItem(CONFIG_KEY, JSON.stringify(nextConfig));
+
+        const feedResponse = await fetch(apiUrl('/rondo/v1/narrowcasting/feeds/matchday'), {
+          headers,
+          cache: 'no-store',
+        });
+        if (feedResponse.ok) {
+          const nextFeed = await feedResponse.json();
+          if (!active) return;
+          setFeed(nextFeed);
+          if (!isPreview) localStorage.setItem(FEED_KEY, JSON.stringify(nextFeed));
+        }
       } catch {
         if (active) {
           setConnected(false);
@@ -83,6 +107,20 @@ export default function NarrowcastingDisplay() {
     };
   }, [isPreview, token]);
 
+  const scenes = useMemo(
+    () => buildMatchdayScenes(feed, config?.pilot_message),
+    [config?.pilot_message, feed],
+  );
+
+  useEffect(() => {
+    setSceneIndex(0);
+    if (scenes.length < 2) return undefined;
+    const timer = window.setInterval(() => {
+      setSceneIndex((current) => (current + 1) % scenes.length);
+    }, 12000);
+    return () => window.clearInterval(timer);
+  }, [scenes]);
+
   const timezone = config?.timezone || 'Europe/Amsterdam';
   const time = new Intl.DateTimeFormat('nl-NL', {
     timeZone: timezone,
@@ -97,6 +135,16 @@ export default function NarrowcastingDisplay() {
     day: 'numeric',
     month: 'long',
   }).format(now);
+  const sourceTime = feed?.source?.fetched_at
+    ? new Intl.DateTimeFormat('nl-NL', {
+      timeZone: timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(feed.source.fetched_at))
+    : null;
+  const feedIsStale = feed?.source?.fresh_until
+    ? new Date(feed.source.fresh_until).getTime() < now.getTime()
+    : false;
 
   if (isPreview && loading && !config) {
     return (
@@ -145,17 +193,16 @@ export default function NarrowcastingDisplay() {
           </div>
         </header>
 
-        <section>
-          <p className="max-w-[70vw] text-[4.5vw] font-semibold leading-[1.08] tracking-tight">
-            {config?.pilot_message || 'Rondo Player is verbonden'}
-          </p>
-          <p className="mt-[2vw] text-[2vw] text-slate-300">
-            {config?.name}{config?.location ? ` · ${config.location}` : ''}
-          </p>
-        </section>
+        <NarrowcastingScene scene={scenes[sceneIndex] || scenes[0]} />
 
         <footer className="flex items-end justify-between">
-          <p className="text-[1.5vw] capitalize text-slate-300">{date}</p>
+          <div>
+            <p className="text-[1.5vw] capitalize text-slate-300">{date}</p>
+            <p className={`mt-[0.35vw] text-[0.9vw] ${feedIsStale ? 'text-amber-300' : 'text-slate-500'}`}>
+              {config?.name}{config?.location ? ` · ${config.location}` : ''}
+              {sourceTime ? ` · Sportlink bijgewerkt om ${sourceTime}${feedIsStale ? ' · verouderd' : ''}` : ''}
+            </p>
+          </div>
           <time className="font-mono text-[5vw] font-medium tabular-nums tracking-tight">{time}</time>
         </footer>
       </div>

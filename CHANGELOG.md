@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.7.0] - 2026-08-15
+
+### Added
+
+- Club TV haalt programma, velden, kleedkamers, afgelastingen en recente uitslagen voortaan via een server-side Sportlink Club.Data-adapter op. Beheerders kunnen de gemaskeerde koppeling beheren en handmatig verversen; players en browserpreviews ontvangen uitsluitend genormaliseerde openbare wedstrijddata.
+- Het tv-scherm roteert automatisch tussen wedstrijden van vandaag, veld- en kleedkamerindelingen, afgelastingen en recente uitslagen. De laatst geldige feed blijft lokaal en in Rondo beschikbaar tijdens een storing, met een zichtbare verouderingsmelding en een neutrale fallback na 24 uur.
+
 ## [34.6.0] - 2026-08-15
 
 ### Added
