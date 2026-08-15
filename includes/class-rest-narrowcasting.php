@@ -119,6 +119,16 @@ class Narrowcasting extends Base {
 
 		register_rest_route(
 			'rondo/v1',
+			'/narrowcasting/preview',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_preview_config' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
 			'/narrowcasting/displays/claim',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -460,6 +470,25 @@ class Narrowcasting extends Base {
 		);
 	}
 
+	/** Return a credential-free sample configuration for an administrator preview. */
+	public function get_preview_config() {
+		return rest_ensure_response(
+			$this->configuration_envelope(
+				[
+					'id'            => 0,
+					'name'          => __( 'Voorbeeldscherm', 'rondo' ),
+					'location'      => __( 'Browserpreview', 'rondo' ),
+					'timezone'      => wp_timezone_string() ?: 'Europe/Amsterdam',
+					'wake_time'     => '08:00',
+					'sleep_time'    => '23:00',
+					'cec_enabled'   => false,
+					'pilot_message' => __( 'Rondo Club TV is klaar voor de pilot', 'rondo' ),
+					'preview'       => true,
+				]
+			)
+		);
+	}
+
 	/** Queue one safe command for a paired display. */
 	public function queue_display_command( $request ) {
 		$display_id = absint( $request->get_param( 'id' ) );
@@ -531,21 +560,33 @@ class Narrowcasting extends Base {
 			]
 		);
 
-		return [
-			'id'                         => $display_id,
-			'name'                       => get_the_title( $display_id ),
-			'club_name'                  => ClubConfig::get_club_name() ?: get_bloginfo( 'name' ),
-			'location'                   => $fields['location'],
-			'timezone'                   => $fields['display_timezone'],
-			'wake_time'                  => $fields['wake_time'],
-			'sleep_time'                 => $fields['sleep_time'],
-			'cec_enabled'                => $fields['cec_enabled'],
-			'pilot_message'              => $fields['pilot_message'],
-			'display_url'                => home_url( '/display' ),
-			'heartbeat_interval_seconds' => 60,
-			'command_interval_seconds'   => 15,
-			'server_time'                => gmdate( DATE_RFC3339 ),
-		];
+		return $this->configuration_envelope(
+			[
+				'id'            => $display_id,
+				'name'          => get_the_title( $display_id ),
+				'location'      => $fields['location'],
+				'timezone'      => $fields['display_timezone'],
+				'wake_time'     => $fields['wake_time'],
+				'sleep_time'    => $fields['sleep_time'],
+				'cec_enabled'   => $fields['cec_enabled'],
+				'pilot_message' => $fields['pilot_message'],
+				'preview'       => false,
+			]
+		);
+	}
+
+	/** Add shared club and polling metadata to a display configuration. */
+	private function configuration_envelope( array $configuration ): array {
+		return array_merge(
+			$configuration,
+			[
+				'club_name'                  => ClubConfig::get_club_name() ?: get_bloginfo( 'name' ),
+				'display_url'                => home_url( '/display' ),
+				'heartbeat_interval_seconds' => 60,
+				'command_interval_seconds'   => 15,
+				'server_time'                => gmdate( DATE_RFC3339 ),
+			]
+		);
 	}
 
 	/** Build an administrator-safe display representation. */

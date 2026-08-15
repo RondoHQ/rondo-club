@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.6.0] - 2026-08-15
+
+### Added
+
+- Beheerders kunnen het echte Club TV-scherm vanuit Rondo in een nieuw browsertabblad voorvertonen zonder eerst een Raspberry Pi of playercredential te koppelen. De voorbeeldconfiguratie gebruikt de live clubnaam, maar is alleen beschikbaar binnen een aangemelde beheerderssessie.
+
 ## [34.5.0] - 2026-08-15
 
 ### Added
