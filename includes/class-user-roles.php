@@ -33,7 +33,7 @@ class UserRoles {
 	 * installs must also receive; add_role() does not touch existing roles.
 	 */
 	const ROLES_VERSION_OPTION = 'rondo_roles_version';
-	const ROLES_VERSION        = 5;
+	const ROLES_VERSION        = 6;
 
 	/** Generic WordPress write capabilities removed from non-admin Rondo roles. */
 	private const LEGACY_GENERIC_WRITE_CAPS = [
@@ -279,6 +279,7 @@ class UserRoles {
 	 * Version 3: generic post/media access is replaced by dedicated CPT caps.
 	 * Version 4: the Sponsorbeheerder role and `sponsorbeheer` capability are added.
 	 * Version 5: `vrijwilligers` roles gain person edit primitives for contact fields.
+	 * Version 6: administrators gain primitives for the private narrowcasting display CPT.
 	 */
 	public function maybe_upgrade_roles() {
 		$installed_version = (int) get_option( self::ROLES_VERSION_OPTION, 0 );

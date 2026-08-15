@@ -30,7 +30,8 @@ import {
   Wine,
   CalendarClock,
   BookOpen,
-  ChevronRight
+  ChevronRight,
+  MonitorPlay
 } from 'lucide-react';
 
 // Wordmark URLs from theme directory.
@@ -72,6 +73,7 @@ const navigation = [
   { name: 'Lidpas Scanner', href: '/lidpas-scanner', icon: QrCode, requiresToegangscontrole: true, mobileOnly: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare, requiresKader: true },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare, requiresKader: true },
+  { name: 'Club TV', href: '/narrowcasting', icon: MonitorPlay, adminOnly: true },
   { name: 'Instellingen', href: '/settings', icon: Settings, requiresKader: true },
   { name: 'Profiel', href: '/profile', icon: User },
 ];

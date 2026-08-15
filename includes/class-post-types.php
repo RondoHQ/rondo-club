@@ -29,6 +29,7 @@ class PostTypes {
 		'rondo_feedback'      => [ 'feedback_item', 'feedback_items' ],
 		'discipline_case'     => [ 'discipline_case', 'discipline_cases' ],
 		'rondo_invoice'       => [ 'invoice', 'invoices' ],
+		'rondo_display'       => [ 'display', 'displays' ],
 		'dienst_type'         => [ 'dienst_type', 'dienst_types' ],
 		'shift_template'      => [ 'shift_template', 'shift_templates' ],
 		'dienst_shift'        => [ 'dienst_shift', 'dienst_shifts' ],
@@ -100,10 +101,45 @@ class PostTypes {
 		$this->register_discipline_case_post_type();
 		$this->register_invoice_statuses();
 		$this->register_invoice_post_type();
+		$this->register_display_post_type();
 		$this->register_dienst_type_post_type();
 		$this->register_shift_template_post_type();
 		$this->register_dienst_shift_post_type();
 		$this->register_taakuitleg_post_type();
+	}
+
+	/**
+	 * Register the private narrowcasting display CPT.
+	 *
+	 * Player credentials and operational state are stored as native fields on
+	 * these posts. The records are intentionally available only through Rondo's
+	 * dedicated REST controller: exposing the generic wp/v2 endpoint would make
+	 * it too easy to leak internal device metadata.
+	 */
+	private function register_display_post_type() {
+		$labels = [
+			'name'          => __( 'Narrowcasting displays', 'rondo' ),
+			'singular_name' => __( 'Narrowcasting display', 'rondo' ),
+		];
+
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => false,
+				'show_in_menu'       => false,
+				'show_in_rest'       => false,
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'rondo_display' )
+		);
+
+		register_post_type( 'rondo_display', $args );
 	}
 
 	/**

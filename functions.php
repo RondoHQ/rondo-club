@@ -138,6 +138,7 @@ use Rondo\REST\Fees as RESTFees;
 use Rondo\REST\Lettermint as RESTLettermint;
 use Rondo\REST\Capabilities as RESTCapabilities;
 use Rondo\REST\FinanceSettings as RESTFinanceSettings;
+use Rondo\REST\Narrowcasting as RESTNarrowcasting;
 use Rondo\VOG\VOGEmail;
 use Rondo\Fees\FeeCacheInvalidator;
 use Rondo\Config\ClubConfig;
@@ -334,6 +335,7 @@ function rondo_init() {
 		new RESTLettermint();
 		new RESTCapabilities();
 		new RESTFinanceSettings();
+		new RESTNarrowcasting();
 		new RabobankOAuth();
 		new RabobankPayment();
 		new MollieWebhook();
@@ -1032,6 +1034,8 @@ function rondo_theme_template_redirect() {
 		'commissies',
 		'dates',
 		'settings',
+		'narrowcasting',
+		'display',
 		'login',
 	];
 

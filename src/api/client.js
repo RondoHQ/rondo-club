@@ -332,6 +332,12 @@ export const prmApi = {
   sendLettermintTestEmail: (recipient) => api.post('/rondo/v1/lettermint/test-email', { recipient }),
   sendLettermintVerificationEmail: (todoId, recipient = '') => api.post('/rondo/v1/lettermint/verify-email', { todo_id: todoId, recipient }),
 
+  // Narrowcasting (admin only)
+  getNarrowcastingDisplays: () => api.get('/rondo/v1/narrowcasting/displays'),
+  claimNarrowcastingDisplay: (data) => api.post('/rondo/v1/narrowcasting/displays/claim', data),
+  queueNarrowcastingCommand: (displayId, command) => api.post(`/rondo/v1/narrowcasting/displays/${displayId}/commands`, { command }),
+  revokeNarrowcastingDisplay: (displayId) => api.post(`/rondo/v1/narrowcasting/displays/${displayId}/revoke`),
+
   // Finance settings (admin only)
   getFinanceSettings: () => api.get('/rondo/v1/finance/settings'),
   updateFinanceSettings: (data) => api.post('/rondo/v1/finance/settings', data),

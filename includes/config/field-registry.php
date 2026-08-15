@@ -1958,6 +1958,217 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
       ),
       'kind' => 'term',
     ),
+    'rondo_display' =>
+    array (
+      'fields' =>
+      array (
+        'cec_enabled' =>
+        array (
+          'canonical_name' => 'cec_enabled',
+          'default_value' => 1,
+          'key' => 'field_display_cec_enabled',
+          'label' => 'HDMI-CEC ingeschakeld',
+          'name' => 'cec_enabled',
+          'storage_name' => 'cec_enabled',
+          'type' => 'true_false',
+        ),
+        'device_id' =>
+        array (
+          'canonical_name' => 'device_id',
+          'key' => 'field_display_device_id',
+          'label' => 'Device ID',
+          'name' => 'device_id',
+          'read_only' => 1,
+          'storage_name' => 'device_id',
+          'type' => 'text',
+        ),
+        'device_secret_hash' =>
+        array (
+          'canonical_name' => 'device_secret_hash',
+          'key' => 'field_display_device_secret_hash',
+          'label' => 'Device secret hash',
+          'name' => 'device_secret_hash',
+          'read_only' => 1,
+          'storage_name' => 'device_secret_hash',
+          'type' => 'text',
+        ),
+        'display_timezone' =>
+        array (
+          'canonical_name' => 'display_timezone',
+          'default_value' => 'Europe/Amsterdam',
+          'key' => 'field_display_timezone',
+          'label' => 'Tijdzone',
+          'name' => 'display_timezone',
+          'storage_name' => 'display_timezone',
+          'type' => 'text',
+        ),
+        'last_error' =>
+        array (
+          'canonical_name' => 'last_error',
+          'key' => 'field_display_last_error',
+          'label' => 'Laatste fout',
+          'name' => 'last_error',
+          'read_only' => 1,
+          'storage_name' => 'last_error',
+          'type' => 'text',
+        ),
+        'last_playback_state' =>
+        array (
+          'canonical_name' => 'last_playback_state',
+          'key' => 'field_display_last_playback_state',
+          'label' => 'Afspeelstatus',
+          'name' => 'last_playback_state',
+          'read_only' => 1,
+          'storage_name' => 'last_playback_state',
+          'type' => 'text',
+        ),
+        'last_seen_at' =>
+        array (
+          'canonical_name' => 'last_seen_at',
+          'display_format' => 'd-m-Y H:i',
+          'key' => 'field_display_last_seen_at',
+          'label' => 'Laatst gezien',
+          'name' => 'last_seen_at',
+          'read_only' => 1,
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'last_seen_at',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+        'location' =>
+        array (
+          'canonical_name' => 'location',
+          'key' => 'field_display_location',
+          'label' => 'Locatie',
+          'name' => 'location',
+          'storage_name' => 'location',
+          'type' => 'text',
+        ),
+        'paired_at' =>
+        array (
+          'canonical_name' => 'paired_at',
+          'display_format' => 'd-m-Y H:i',
+          'key' => 'field_display_paired_at',
+          'label' => 'Gekoppeld op',
+          'name' => 'paired_at',
+          'read_only' => 1,
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'paired_at',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+        'pairing_status' =>
+        array (
+          'canonical_name' => 'pairing_status',
+          'choices' =>
+          array (
+            'approved' => 'Goedgekeurd',
+            'paired' => 'Gekoppeld',
+            'revoked' => 'Ingetrokken',
+          ),
+          'default_value' => 'approved',
+          'key' => 'field_display_pairing_status',
+          'label' => 'Koppelstatus',
+          'name' => 'pairing_status',
+          'read_only' => 1,
+          'storage_name' => 'pairing_status',
+          'type' => 'select',
+        ),
+        'pending_command' =>
+        array (
+          'allow_null' => 1,
+          'canonical_name' => 'pending_command',
+          'choices' =>
+          array (
+            'cec_detect' => 'CEC testen',
+            'reload' => 'Scherm herladen',
+            'restart_browser' => 'Browser herstarten',
+            'reboot' => 'Player herstarten',
+            'sleep_tv' => 'TV in standby',
+            'wake_tv' => 'TV inschakelen',
+          ),
+          'key' => 'field_display_pending_command',
+          'label' => 'Wachtend commando',
+          'name' => 'pending_command',
+          'read_only' => 1,
+          'storage_name' => 'pending_command',
+          'type' => 'select',
+        ),
+        'pending_command_id' =>
+        array (
+          'canonical_name' => 'pending_command_id',
+          'key' => 'field_display_pending_command_id',
+          'label' => 'Commando ID',
+          'name' => 'pending_command_id',
+          'read_only' => 1,
+          'storage_name' => 'pending_command_id',
+          'type' => 'text',
+        ),
+        'pending_command_issued_at' =>
+        array (
+          'canonical_name' => 'pending_command_issued_at',
+          'display_format' => 'd-m-Y H:i',
+          'key' => 'field_display_pending_command_issued_at',
+          'label' => 'Commando uitgegeven op',
+          'name' => 'pending_command_issued_at',
+          'read_only' => 1,
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'pending_command_issued_at',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+        'pilot_message' =>
+        array (
+          'canonical_name' => 'pilot_message',
+          'default_value' => 'Rondo Player is verbonden',
+          'key' => 'field_display_pilot_message',
+          'label' => 'Pilotmelding',
+          'name' => 'pilot_message',
+          'storage_name' => 'pilot_message',
+          'type' => 'text',
+        ),
+        'player_version' =>
+        array (
+          'canonical_name' => 'player_version',
+          'key' => 'field_display_player_version',
+          'label' => 'Player-versie',
+          'name' => 'player_version',
+          'read_only' => 1,
+          'storage_name' => 'player_version',
+          'type' => 'text',
+        ),
+        'sleep_time' =>
+        array (
+          'canonical_name' => 'sleep_time',
+          'default_value' => '23:00',
+          'display_format' => 'H:i',
+          'key' => 'field_display_sleep_time',
+          'label' => 'TV uit',
+          'name' => 'sleep_time',
+          'storage_format' => 'H:i:s',
+          'storage_name' => 'sleep_time',
+          'type' => 'time_picker',
+          'wire_format' => 'H:i',
+        ),
+        'wake_time' =>
+        array (
+          'canonical_name' => 'wake_time',
+          'default_value' => '08:00',
+          'display_format' => 'H:i',
+          'key' => 'field_display_wake_time',
+          'label' => 'TV aan',
+          'name' => 'wake_time',
+          'storage_format' => 'H:i:s',
+          'storage_name' => 'wake_time',
+          'type' => 'time_picker',
+          'wire_format' => 'H:i',
+        ),
+      ),
+      'kind' => 'post',
+    ),
     'rondo_feedback' => 
     array (
       'fields' => 
