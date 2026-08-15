@@ -3,7 +3,7 @@
 > Replace Sportlink Club.TV with a subscription-free narrowcasting system managed from Rondo and
 > displayed by a Raspberry Pi 5 attached to each television.
 
-**Status:** Approved for pilot planning  
+**Status:** Pilot Milestone 1 implemented
 **Components:** Rondo Club, Rondo Player, Sportlink Club.Data  
 **Date:** 2026-08-15  
 **Owner:** Club administrators and sponsor management  
@@ -888,4 +888,3 @@ These do not block ordering the pilot hardware, but Milestone 0 must close them:
 - [Raspberry Pi display configuration](https://www.raspberrypi.com/documentation/computers/configuration.html).
 - [Using libCEC on Raspberry Pi](https://support.pulse-eight.com/support/solutions/articles/30000053003-cec-adapter-%E2%80%94-using-libcec-with-a-raspberry-pi).
 - [Sportlink Club.TV FAQ](https://sportlink-help.freshdesk.com/nl/support/solutions/articles/9000096242-veelgestelde-vragen-club-tv).
-

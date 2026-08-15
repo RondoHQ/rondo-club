@@ -26,6 +26,7 @@ import {
   VrijwilligersDienstForm, VrijwilligersDienstTypeForm, VrijwilligersSjablonen, VrijwilligersSjabloonForm,
   VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig, Household,
   TaakuitlegList, TaakuitlegForm,
+  Narrowcasting, NarrowcastingDisplay,
 } from './lazyPages';
 
 // Page loader for Suspense fallback
@@ -150,6 +151,14 @@ function VrijwilligersRoute({ children }) {
   );
 }
 
+function AdminRoute({ children }) {
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.is_admin}>
+      {children}
+    </CapabilityRoute>
+  );
+}
+
 /**
  * Kader = iedereen met een staf-rol. Plain leden zonder expliciete rechten
  * krijgen geen "Geen toegang"-scherm maar worden meteen doorgestuurd naar hun
@@ -199,6 +208,14 @@ function ProtectedLayout() {
 
 // Router configuration at MODULE SCOPE - critical for preventing remounts
 const router = createBrowserRouter([
+  {
+    path: '/display',
+    element: (
+      <Suspense fallback={<PageLoadingSpinner />}>
+        <NarrowcastingDisplay />
+      </Suspense>
+    ),
+  },
   {
     path: '/',
     element: <App />,
@@ -509,6 +526,16 @@ const router = createBrowserRouter([
           // Feedback routes — kader only
           { path: 'feedback', element: <KaderOrVrijwilligRedirect><FeedbackList /></KaderOrVrijwilligRedirect> },
           { path: 'feedback/:id', element: <KaderOrVrijwilligRedirect><FeedbackDetail /></KaderOrVrijwilligRedirect> },
+
+          // Narrowcasting player management — administrators only.
+          {
+            path: 'narrowcasting',
+            element: (
+              <AdminRoute>
+                <Narrowcasting />
+              </AdminRoute>
+            ),
+          },
 
           // Settings routes — kader only
           { path: 'settings/notifications', element: <Navigate to="/profile" replace /> },

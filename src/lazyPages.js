@@ -45,3 +45,5 @@ export const Vrijwillig = lazy(() => import('@/pages/Vrijwillig/Vrijwillig'));
 export const Household = lazy(() => import('@/pages/Household/Household'));
 export const TaakuitlegList = lazy(() => import('@/pages/Taakuitleg/TaakuitlegList'));
 export const TaakuitlegForm = lazy(() => import('@/pages/Taakuitleg/TaakuitlegForm'));
+export const Narrowcasting = lazy(() => import('@/pages/Narrowcasting/Narrowcasting'));
+export const NarrowcastingDisplay = lazy(() => import('@/pages/Narrowcasting/NarrowcastingDisplay'));

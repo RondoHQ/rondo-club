@@ -17,6 +17,7 @@ class FieldRegistryTest extends RondoTestCase {
 				'discipline_case',
 				'person',
 				'relationship_type',
+				'rondo_display',
 				'rondo_feedback',
 				'rondo_invoice',
 				'rondo_todo',

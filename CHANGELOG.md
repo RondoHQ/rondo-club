@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.5.0] - 2026-08-15
+
+### Added
+
+- Beheerders kunnen Raspberry Pi-players voor Club TV met een tijdelijke activatiecode koppelen, hun online status en player-versie volgen, de tv via veilige HDMI-CEC-commando's aan- of uitzetten, het beeld of de player herstarten en een toegang direct intrekken. De openbare tv-weergave bewaart het laatst bekende pilotbeeld lokaal wanneer de verbinding wegvalt; device tokens worden alleen gehasht in Rondo opgeslagen.
+
 ## [34.4.2] - 2026-08-15
 
 ### Fixed
