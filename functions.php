@@ -279,6 +279,7 @@ function rondo_init() {
 
 	// Classes needed for content creation/editing (admin, REST, or cron)
 	if ( $is_admin || $is_rest || $is_cron ) {
+		new \Rondo\Narrowcasting\SportlinkMatchday();
 		new AutoTitle();
 		new PhoneNormalizer();
 		new VolunteerStatus();

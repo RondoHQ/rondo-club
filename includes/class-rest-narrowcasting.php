@@ -12,6 +12,7 @@ use InvalidArgumentException;
 use Rondo\Config\ClubConfig;
 use Rondo\Fields\Fields;
 use Rondo\Fields\Formatter;
+use Rondo\Narrowcasting\SportlinkMatchday;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -30,6 +31,8 @@ class Narrowcasting extends Base {
 	private const COMMAND_TTL                  = 600;
 	private const REGISTRATION_RATE_PER_MINUTE = 10;
 
+	private SportlinkMatchday $matchday;
+
 	/** Commands the player service is allowed to execute. */
 	private const ALLOWED_COMMANDS = [
 		'reload',
@@ -42,6 +45,7 @@ class Narrowcasting extends Base {
 
 	public function __construct() {
 		parent::__construct();
+		$this->matchday = new SportlinkMatchday( false );
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 
@@ -124,6 +128,43 @@ class Narrowcasting extends Base {
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_preview_config' ],
 				'permission_callback' => [ $this, 'check_admin_permission' ],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/narrowcasting/settings',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_matchday_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_matchday_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/narrowcasting/refresh',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'refresh_matchday_feed' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/narrowcasting/feeds/matchday',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_matchday_feed' ],
+				'permission_callback' => '__return_true',
 			]
 		);
 
@@ -487,6 +528,41 @@ class Narrowcasting extends Base {
 				]
 			)
 		);
+	}
+
+	/** Return masked Sportlink settings and feed health to administrators. */
+	public function get_matchday_settings() {
+		return rest_ensure_response( $this->matchday->settings_summary() );
+	}
+
+	/** Store the server-only Sportlink credential and club relation code. */
+	public function update_matchday_settings( $request ) {
+		$result = $this->matchday->update_settings(
+			[
+				'client_id'          => $request->get_param( 'client_id' ),
+				'club_relation_code' => $request->get_param( 'club_relation_code' ),
+			]
+		);
+
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	/** Force a rate-limited refresh for administrator diagnostics. */
+	public function refresh_matchday_feed() {
+		$result = $this->matchday->manual_refresh();
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	/** Return normalized public match data to a paired player or administrator preview. */
+	public function get_matchday_feed( $request ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			$display_id = $this->authenticate_device( $request );
+			if ( is_wp_error( $display_id ) ) {
+				return $display_id;
+			}
+		}
+
+		return rest_ensure_response( $this->matchday->get_feed() );
 	}
 
 	/** Queue one safe command for a paired display. */

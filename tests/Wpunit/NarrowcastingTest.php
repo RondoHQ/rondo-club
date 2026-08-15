@@ -20,6 +20,15 @@ class NarrowcastingTest extends RondoTestCase {
 		$this->server           = $this->bootRestControllers( [ Narrowcasting::class ] );
 	}
 
+	protected function tear_down(): void {
+		delete_option( 'rondo_narrowcasting_sportlink_client_id' );
+		delete_option( 'rondo_narrowcasting_sportlink_club_code' );
+		delete_option( 'rondo_narrowcasting_matchday_cache' );
+		delete_transient( 'rondo_narrowcasting_matchday_refresh_lock' );
+		delete_transient( 'rondo_narrowcasting_manual_refresh_lock' );
+		parent::tear_down();
+	}
+
 	public function test_pairing_heartbeat_command_and_revocation_flow(): void {
 		$device_id = 'rondo-pi-test-001';
 		$register  = $this->dispatch(
@@ -77,6 +86,15 @@ class NarrowcastingTest extends RondoTestCase {
 		$this->assertSame( 200, $config->get_status() );
 		$this->assertSame( 'Scherm kantine', $config->get_data()['name'] );
 		$this->assertSame( '07:30', $config->get_data()['wake_time'] );
+
+		$matchday = $this->dispatch(
+			'GET',
+			'/rondo/v1/narrowcasting/feeds/matchday',
+			[],
+			[ 'X-Rondo-Device-Token' => $token ]
+		);
+		$this->assertSame( 200, $matchday->get_status() );
+		$this->assertArrayNotHasKey( 'client_id', $matchday->get_data() );
 
 		$heartbeat = $this->dispatch(
 			'POST',
@@ -144,6 +162,8 @@ class NarrowcastingTest extends RondoTestCase {
 		$this->assertSame( 401, $unauthorized->get_status() );
 		$unauthorized_preview = $this->dispatch( 'GET', '/rondo/v1/narrowcasting/preview' );
 		$this->assertSame( 401, $unauthorized_preview->get_status() );
+		$unauthorized_matchday = $this->dispatch( 'GET', '/rondo/v1/narrowcasting/feeds/matchday' );
+		$this->assertSame( 401, $unauthorized_matchday->get_status() );
 
 		$register = $this->dispatch(
 			'POST',
@@ -159,6 +179,19 @@ class NarrowcastingTest extends RondoTestCase {
 		$this->assertTrue( $preview->get_data()['preview'] );
 		$this->assertSame( 'Voorbeeldscherm', $preview->get_data()['name'] );
 		$this->assertArrayNotHasKey( 'device_secret_hash', $preview->get_data() );
+
+		$settings = $this->dispatch(
+			'POST',
+			'/rondo/v1/narrowcasting/settings',
+			[
+				'client_id'          => 'RouteSecret123',
+				'club_relation_code' => 'BBKX38Z',
+			]
+		);
+		$this->assertSame( 200, $settings->get_status() );
+		$this->assertTrue( $settings->get_data()['client_id_configured'] );
+		$this->assertSame( '••••••••', $settings->get_data()['client_id_masked'] );
+		$this->assertStringNotContainsString( 'RouteSecret123', wp_json_encode( $settings->get_data() ) );
 
 		$approve    = $this->dispatch(
 			'POST',

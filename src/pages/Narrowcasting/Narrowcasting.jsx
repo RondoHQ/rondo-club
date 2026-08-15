@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   CircleAlert,
@@ -51,6 +51,7 @@ export default function Narrowcasting() {
   useRouteTitle('Club TV');
   const queryClient = useQueryClient();
   const [form, setForm] = useState(defaultForm);
+  const [sportlinkForm, setSportlinkForm] = useState({ client_id: '', club_relation_code: '' });
   const [notice, setNotice] = useState('');
 
   const displaysQuery = useQuery({
@@ -58,6 +59,19 @@ export default function Narrowcasting() {
     queryFn: async () => (await prmApi.getNarrowcastingDisplays()).data,
     refetchInterval: 30000,
   });
+
+  const settingsQuery = useQuery({
+    queryKey: ['narrowcasting', 'settings'],
+    queryFn: async () => (await prmApi.getNarrowcastingSettings()).data,
+  });
+
+  useEffect(() => {
+    if (!settingsQuery.data) return;
+    setSportlinkForm((current) => ({
+      ...current,
+      club_relation_code: current.club_relation_code || settingsQuery.data.club_relation_code || '',
+    }));
+  }, [settingsQuery.data]);
 
   const refreshDisplays = () => queryClient.invalidateQueries({ queryKey: ['narrowcasting', 'displays'] });
 
@@ -86,6 +100,23 @@ export default function Narrowcasting() {
     },
   });
 
+  const settingsMutation = useMutation({
+    mutationFn: (data) => prmApi.updateNarrowcastingSettings(data),
+    onSuccess: () => {
+      setNotice('De Sportlink-koppeling is opgeslagen.');
+      setSportlinkForm((current) => ({ ...current, client_id: '' }));
+      queryClient.invalidateQueries({ queryKey: ['narrowcasting', 'settings'] });
+    },
+  });
+
+  const matchdayRefreshMutation = useMutation({
+    mutationFn: () => prmApi.refreshNarrowcastingMatchday(),
+    onSuccess: () => {
+      setNotice('De wedstrijdinformatie is bijgewerkt.');
+      queryClient.invalidateQueries({ queryKey: ['narrowcasting', 'settings'] });
+    },
+  });
+
   const submitClaim = (event) => {
     event.preventDefault();
     setNotice('');
@@ -103,8 +134,19 @@ export default function Narrowcasting() {
     revokeMutation.mutate(display.id);
   };
 
+  const submitSportlink = (event) => {
+    event.preventDefault();
+    setNotice('');
+    settingsMutation.mutate(sportlinkForm);
+  };
+
   const displays = displaysQuery.data || [];
-  const mutationError = claimMutation.error || commandMutation.error || revokeMutation.error;
+  const mutationError = claimMutation.error
+    || commandMutation.error
+    || revokeMutation.error
+    || settingsMutation.error
+    || matchdayRefreshMutation.error;
+  const sportlink = settingsQuery.data;
 
   return (
     <div className="space-y-6">
@@ -134,6 +176,74 @@ export default function Narrowcasting() {
           <span>{errorMessage(mutationError)}</span>
         </div>
       )}
+
+      <section className="card p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Wedstrijdinformatie</h2>
+              {sportlink && (
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${sportlink.client_id_configured ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200'}`}>
+                  {sportlink.client_id_configured ? 'Sportlink gekoppeld' : 'Nog niet gekoppeld'}
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              Rondo haalt programma, kleedkamers, velden, afgelastingen en uitslagen server-side op.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="btn-tertiary text-sm"
+            onClick={() => matchdayRefreshMutation.mutate()}
+            disabled={!sportlink?.client_id_configured || matchdayRefreshMutation.isPending}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${matchdayRefreshMutation.isPending ? 'animate-spin' : ''}`} />
+            Nu verversen
+          </button>
+        </div>
+
+        <form onSubmit={submitSportlink} className="mt-5 grid gap-4 md:grid-cols-2">
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Sportlink client-ID</span>
+            <input
+              type="password"
+              className="input w-full"
+              value={sportlinkForm.client_id}
+              onChange={(event) => setSportlinkForm({ ...sportlinkForm, client_id: event.target.value })}
+              placeholder={sportlink?.client_id_configured ? '•••••••• (ongewijzigd)' : 'Client-ID'}
+              autoComplete="new-password"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Clubrelatiecode</span>
+            <input
+              className="input w-full uppercase"
+              value={sportlinkForm.club_relation_code}
+              onChange={(event) => setSportlinkForm({ ...sportlinkForm, club_relation_code: event.target.value.toUpperCase() })}
+              placeholder="Bijvoorbeeld BBKX38Z"
+              required
+            />
+          </label>
+          <div className="md:col-span-2 flex flex-wrap items-center gap-4">
+            <button type="submit" className="btn-primary" disabled={settingsMutation.isPending}>
+              {settingsMutation.isPending ? 'Opslaan…' : 'Koppeling opslaan'}
+            </button>
+            {sportlink?.status?.last_success_at && (
+              <p className={`text-sm ${sportlink.status.stale ? 'text-amber-700 dark:text-amber-300' : 'text-gray-600 dark:text-gray-400'}`}>
+                Laatst bijgewerkt: {formatDateTime(sportlink.status.last_success_at)}
+                {' · '}{sportlink.counts.matches} wedstrijden, {sportlink.counts.cancellations} afgelastingen, {sportlink.counts.results} uitslagen
+              </p>
+            )}
+          </div>
+        </form>
+
+        {sportlink?.status?.last_error && (
+          <p className="mt-4 rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+            Laatste Sportlink-fout: {sportlink.status.last_error} Eerder opgehaalde gegevens blijven beschikbaar.
+          </p>
+        )}
+      </section>
 
       <section className="card p-6">
         <div className="flex items-start gap-3">
