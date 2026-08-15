@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   CircleAlert,
   CircleCheck,
+  ExternalLink,
   MonitorPlay,
   Moon,
   Power,
@@ -107,11 +108,17 @@ export default function Narrowcasting() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Club TV</h1>
-        <p className="mt-1 text-gray-600 dark:text-gray-400">
-          Koppel en beheer de Raspberry Pi-players achter de schermen in het clubhuis.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Club TV</h1>
+          <p className="mt-1 text-gray-600 dark:text-gray-400">
+            Koppel en beheer de Raspberry Pi-players achter de schermen in het clubhuis.
+          </p>
+        </div>
+        <a href="/display?preview=1" target="_blank" rel="noreferrer" className="btn-primary">
+          <ExternalLink className="mr-2 h-4 w-4" />
+          Voorbeeld openen
+        </a>
       </div>
 
       {notice && (

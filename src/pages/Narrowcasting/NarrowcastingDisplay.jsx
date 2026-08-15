@@ -29,10 +29,13 @@ function apiUrl(path) {
 }
 
 export default function NarrowcastingDisplay() {
-  const [config, setConfig] = useState(readStoredConfig);
+  const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
+  const [config, setConfig] = useState(() => (isPreview ? null : readStoredConfig()));
   const [connected, setConnected] = useState(false);
+  const [loading, setLoading] = useState(isPreview);
+  const [loadError, setLoadError] = useState('');
   const [now, setNow] = useState(new Date());
-  const token = useMemo(resolveToken, []);
+  const token = useMemo(() => (isPreview ? '' : resolveToken()), [isPreview]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 1000);
@@ -40,13 +43,19 @@ export default function NarrowcastingDisplay() {
   }, []);
 
   useEffect(() => {
-    if (!token) return undefined;
+    if (!token && !isPreview) return undefined;
     let active = true;
 
     const loadConfig = async () => {
       try {
-        const response = await fetch(apiUrl('/rondo/v1/narrowcasting/devices/me/config'), {
-          headers: { 'X-Rondo-Device-Token': token },
+        const path = isPreview
+          ? '/rondo/v1/narrowcasting/preview'
+          : '/rondo/v1/narrowcasting/devices/me/config';
+        const headers = isPreview
+          ? { 'X-WP-Nonce': window.rondoConfig?.nonce || '' }
+          : { 'X-Rondo-Device-Token': token };
+        const response = await fetch(apiUrl(path), {
+          headers,
           cache: 'no-store',
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -54,19 +63,25 @@ export default function NarrowcastingDisplay() {
         if (!active) return;
         setConfig(nextConfig);
         setConnected(true);
-        localStorage.setItem(CONFIG_KEY, JSON.stringify(nextConfig));
+        setLoadError('');
+        if (!isPreview) localStorage.setItem(CONFIG_KEY, JSON.stringify(nextConfig));
       } catch {
-        if (active) setConnected(false);
+        if (active) {
+          setConnected(false);
+          if (isPreview) setLoadError('Log in als beheerder om het Club TV-voorbeeld te bekijken.');
+        }
+      } finally {
+        if (active) setLoading(false);
       }
     };
 
     loadConfig();
-    const timer = window.setInterval(loadConfig, 60000);
+    const timer = isPreview ? null : window.setInterval(loadConfig, 60000);
     return () => {
       active = false;
-      window.clearInterval(timer);
+      if (timer) window.clearInterval(timer);
     };
-  }, [token]);
+  }, [isPreview, token]);
 
   const timezone = config?.timezone || 'Europe/Amsterdam';
   const time = new Intl.DateTimeFormat('nl-NL', {
@@ -83,7 +98,27 @@ export default function NarrowcastingDisplay() {
     month: 'long',
   }).format(now);
 
-  if (!token && !config) {
+  if (isPreview && loading && !config) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 p-8 text-white">
+        <p className="text-xl text-slate-300">Voorbeeld laden…</p>
+      </main>
+    );
+  }
+
+  if (isPreview && loadError && !config) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 p-8 text-white">
+        <div className="max-w-xl text-center">
+          <MonitorSetupIcon />
+          <h1 className="mt-6 text-4xl font-semibold">Voorbeeld niet beschikbaar</h1>
+          <p className="mt-3 text-xl text-slate-300">{loadError}</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!isPreview && !token && !config) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-950 p-8 text-white">
         <div className="max-w-xl text-center">
@@ -106,7 +141,7 @@ export default function NarrowcastingDisplay() {
           </div>
           <div className={`flex items-center gap-[0.7vw] rounded-full border px-[1.3vw] py-[0.7vw] text-[1.1vw] ${connected ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-200' : 'border-slate-400/30 bg-slate-400/10 text-slate-300'}`}>
             {connected ? <Wifi className="h-[1.4vw] w-[1.4vw]" /> : <WifiOff className="h-[1.4vw] w-[1.4vw]" />}
-            {connected ? 'Verbonden' : 'Offline · lokaal beeld'}
+            {isPreview ? 'Browserpreview' : connected ? 'Verbonden' : 'Offline · lokaal beeld'}
           </div>
         </header>
 

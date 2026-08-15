@@ -142,6 +142,8 @@ class NarrowcastingTest extends RondoTestCase {
 	public function test_admin_routes_and_device_identity_are_protected(): void {
 		$unauthorized = $this->dispatch( 'GET', '/rondo/v1/narrowcasting/displays' );
 		$this->assertSame( 401, $unauthorized->get_status() );
+		$unauthorized_preview = $this->dispatch( 'GET', '/rondo/v1/narrowcasting/preview' );
+		$this->assertSame( 401, $unauthorized_preview->get_status() );
 
 		$register = $this->dispatch(
 			'POST',
@@ -152,6 +154,12 @@ class NarrowcastingTest extends RondoTestCase {
 
 		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		wp_set_current_user( $admin_id );
+		$preview = $this->dispatch( 'GET', '/rondo/v1/narrowcasting/preview' );
+		$this->assertSame( 200, $preview->get_status() );
+		$this->assertTrue( $preview->get_data()['preview'] );
+		$this->assertSame( 'Voorbeeldscherm', $preview->get_data()['name'] );
+		$this->assertArrayNotHasKey( 'device_secret_hash', $preview->get_data() );
+
 		$approve    = $this->dispatch(
 			'POST',
 			'/rondo/v1/narrowcasting/displays/claim',
