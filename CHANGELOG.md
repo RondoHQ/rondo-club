@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.4.2] - 2026-08-15
+
+### Fixed
+
+- De uitleg bij het oplossen of afwijzen van feedback wordt niet langer ten onrechte als rode validatiefout getoond, waardoor de statuswijziging weer kan worden opgeslagen.
+
 ## [34.4.1] - 2026-08-14
 
 ### Fixed
