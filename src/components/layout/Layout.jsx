@@ -50,8 +50,8 @@ import { useDisciplineCasesCount } from '@/hooks/useDisciplineCases';
 import { prmApi } from '@/api/client';
 
 const navigation = [
-  { name: 'Mijn inschrijftaken', href: '/vrijwillig', icon: HeartHandshake },
-  { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, memberOnly: true },
+  { name: 'Mijn inschrijftaken', href: '/vrijwillig', icon: HeartHandshake, personal: true },
+  { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, memberOnly: true, personal: true },
   { name: 'Dashboard', href: '/', icon: Home, requiresKader: true },
   { name: 'Relaties', href: '/people', icon: Users, requiresKader: true },
   { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
@@ -64,7 +64,7 @@ const navigation = [
   { name: 'Vrijwilligers', href: '/vrijwilligers', icon: HeartHandshake, requiresVrijwilligers: true },
   { name: 'VOG', href: '/vrijwilligers/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'IVA', href: '/vrijwilligers/iva', icon: Wine, indent: true, requiresVrijwilligers: true },
-  { name: 'Inschrijftaken', href: '/vrijwilligers/diensten', icon: CalendarClock, indent: true, requiresVrijwilligers: true },
+  { name: 'Beheer inschrijftaken', href: '/vrijwilligers/diensten', icon: CalendarClock, indent: true, requiresVrijwilligers: true },
   { name: 'Taakuitleg', href: '/vrijwilligers/taakuitleg', icon: BookOpen, indent: true, requiresVrijwilligers: true },
   { name: 'Vrijstellingen', href: '/vrijwilligers/vrijstellingen', icon: UsersRound, indent: true, requiresVrijwilligers: true },
   { name: 'Financiën', href: '/financien', icon: Wallet, requiresFinancieel: true },
@@ -75,7 +75,6 @@ const navigation = [
   { name: 'Feedback', href: '/feedback', icon: MessageSquare, requiresKader: true },
   { name: 'Club TV', href: '/narrowcasting', icon: MonitorPlay, requiresNarrowcasting: true },
   { name: 'Instellingen', href: '/settings', icon: Settings, requiresKader: true },
-  { name: 'Profiel', href: '/profile', icon: User },
 ];
 
 function Sidebar({ mobile = false, onClose, stats }) {
@@ -209,8 +208,11 @@ function Sidebar({ mobile = false, onClose, stats }) {
     return true;
   });
 
+  const personalNav = visibleNav.filter((item) => item.personal);
+  const clubNav = visibleNav.filter((item) => !item.personal);
+
   const navGroups = [];
-  for (const item of visibleNav) {
+  for (const item of clubNav) {
     if (item.indent && navGroups.length > 0) {
       navGroups[navGroups.length - 1].children.push(item);
     } else {
@@ -284,6 +286,16 @@ function Sidebar({ mobile = false, onClose, stats }) {
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+        {personalNav.length > 0 && (
+          <div className="pb-4 mb-3 space-y-1 border-b border-gray-200 dark:border-gray-700">
+            <div className="px-3 pb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
+              Persoonlijk
+            </div>
+            {personalNav.map((item) => (
+              <div key={item.href || item.name}>{renderItem(item)}</div>
+            ))}
+          </div>
+        )}
         {navGroups.map(({ parent, children }) => {
           // Top-level item with no sub-items: render as-is.
           if (children.length === 0) {
@@ -339,7 +351,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
             )}
           </div>
         ) : (
-          <Link to="/profile" className="flex items-center gap-3 px-1 mb-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+          <Link to="/profile" className="flex items-center gap-3 px-1 py-1 mb-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             {currentUser?.linked_person_photo ? (
               <img
                 src={currentUser.linked_person_photo}
@@ -352,8 +364,11 @@ function Sidebar({ mobile = false, onClose, stats }) {
               </div>
             )}
             {sidebarUserName && (
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                {sidebarUserName}
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                  {sidebarUserName}
+                </span>
+                <span className="block text-xs text-gray-500 dark:text-gray-400">Profiel</span>
               </span>
             )}
           </Link>
