@@ -271,6 +271,8 @@ function rondo_init() {
 	new \Rondo\Users\ContactEmailRouter();
 	// Lets members sign in with their KNVB-ID or real email instead of a generated username.
 	new \Rondo\Users\LoginResolver();
+	// Turns the Magic Login email form into the single login/activation entry point.
+	new \Rondo\Users\MagicLoginActivation();
 
 	// Skip loading heavy classes for non-relevant requests
 	$is_admin = is_admin();
