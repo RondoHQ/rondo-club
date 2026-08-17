@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.8.1] - 2026-08-17
+
+### Changed
+
+- De zijbalk scheidt persoonlijke links nu visueel van clubbeheer. De beheerpagina heet voortaan "Beheer inschrijftaken" en Profiel is alleen nog via de naam onderaan de zijbalk bereikbaar.
+
 ## [34.8.0] - 2026-08-17
 
 ### Added
