@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.13.0] - 2026-08-17
+
+### Added
+
+- De Magic Login-formulier is nu ook het startpunt voor accountactivatie. Als één e-mailadres ondubbelzinnig bij één volwassen persoon zonder account hoort, maakt Rondo het account automatisch aan en stuurt direct een eenmalige inloglink.
+- Gedeelde gezinsadressen met zowel bestaande als nog te activeren accounts ontvangen één e-mail met benoemde inlogknoppen en een aparte knop naar de identiteitskeuze.
+
+### Changed
+
+- Magic Login toont voor bekende, onbekende en gelimiteerde e-mailadressen dezelfde neutrale bevestiging en verstuurt e-mail pas nadat het browserantwoord is afgerond. Jeugdleden en adressen met meerdere mogelijke personen blijven via de bestaande veilige activatie- en ouderkeuze lopen.
+
 ## [34.12.0] - 2026-08-17
 
 ### Added

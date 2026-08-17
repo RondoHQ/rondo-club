@@ -4,6 +4,7 @@ namespace Tests\Wpunit;
 
 use Rondo\Users\ActivationService;
 use Rondo\Users\GuardianAccountService;
+use Rondo\Users\MagicLoginActivation;
 use Rondo\Users\UserProvisioning;
 use Tests\Support\RondoTestCase;
 
@@ -204,6 +205,218 @@ class ActivationServiceTest extends RondoTestCase {
 		$this->assertStringContainsString( 'Inloggen als Bram Jansen', $mail['message'] );
 		$this->assertStringContainsString( 'https://example.com/magic-anne', $mail['message'] );
 		$this->assertStringContainsString( 'https://example.com/magic-bram', $mail['message'] );
+	}
+
+	public function test_magic_login_request_provisions_one_unambiguous_adult(): void {
+		$person_id = $this->person( 'Anne Jansen', 'anne@example.com' );
+		add_filter( 'rondo_activation_magic_login_url', fn() => 'https://example.com/new-account-login' );
+
+		$mail = null;
+		add_filter(
+			'pre_wp_mail',
+			function ( $short, $atts ) use ( &$mail ) {
+				$mail = $atts;
+				return true;
+			},
+			5,
+			2
+		);
+
+		ActivationService::send_for_magic_login_request( 'anne@example.com' );
+
+		$this->assertTrue( ActivationService::has_account( $person_id ) );
+		$this->assertIsArray( $mail );
+		$this->assertStringContainsString( 'https://example.com/new-account-login', $mail['message'] );
+	}
+
+	public function test_magic_login_request_keeps_youth_on_the_guardian_picker(): void {
+		$person_id = $this->person( 'Rens van Haren', 'bas@example.com' );
+		update_post_meta( $person_id, 'leeftijdsgroep', 'Onder 12' );
+
+		$mail = null;
+		add_filter(
+			'pre_wp_mail',
+			function ( $short, $atts ) use ( &$mail ) {
+				$mail = $atts;
+				return true;
+			},
+			5,
+			2
+		);
+
+		ActivationService::send_for_magic_login_request( 'bas@example.com' );
+
+		$this->assertFalse( ActivationService::has_account( $person_id ) );
+		$this->assertIsArray( $mail );
+		$this->assertStringStartsWith( 'Activeer je account bij ', $mail['subject'] );
+		$this->assertStringContainsString( '/activeren/', $mail['message'] );
+	}
+
+	public function test_magic_login_request_keeps_a_household_on_the_identity_picker(): void {
+		$anne = $this->person( 'Anne Jansen', 'gezin@example.com' );
+		$bram = $this->person( 'Bram Jansen', 'gezin@example.com' );
+
+		$mail = null;
+		add_filter(
+			'pre_wp_mail',
+			function ( $short, $atts ) use ( &$mail ) {
+				$mail = $atts;
+				return true;
+			},
+			5,
+			2
+		);
+
+		ActivationService::send_for_magic_login_request( 'gezin@example.com' );
+
+		$this->assertFalse( ActivationService::has_account( $anne ) );
+		$this->assertFalse( ActivationService::has_account( $bram ) );
+		$this->assertIsArray( $mail );
+		$this->assertStringStartsWith( 'Activeer je account bij ', $mail['subject'] );
+	}
+
+	public function test_magic_login_request_combines_existing_login_and_household_activation(): void {
+		$anne    = $this->person( 'Anne Jansen', 'gezin@example.com' );
+		$bram    = $this->person( 'Bram Jansen', 'gezin@example.com' );
+		$user_id = self::factory()->user->create(
+			[
+				'user_login' => 'anne',
+				'user_email' => 'gezin@example.com',
+			]
+		);
+		update_post_meta( $anne, UserProvisioning::META_USER_ID, $user_id );
+		add_filter( 'rondo_activation_magic_login_url', fn() => 'https://example.com/magic-anne' );
+
+		$sent = [];
+		add_filter(
+			'pre_wp_mail',
+			function ( $short, $atts ) use ( &$sent ) {
+				$sent[] = $atts;
+				return true;
+			},
+			5,
+			2
+		);
+
+		ActivationService::send_for_magic_login_request( 'gezin@example.com' );
+
+		$this->assertCount( 1, $sent );
+		$this->assertFalse( ActivationService::has_account( $bram ) );
+		$this->assertStringContainsString( 'https://example.com/magic-anne', $sent[0]['message'] );
+		$this->assertStringContainsString( 'Inloggen als Anne Jansen', $sent[0]['message'] );
+		$this->assertStringContainsString( '/activeren/', $sent[0]['message'] );
+		$this->assertStringContainsString( 'Account activeren', $sent[0]['message'] );
+	}
+
+	public function test_magic_login_request_sends_nothing_for_an_unknown_address(): void {
+		$sent = [];
+		add_filter(
+			'pre_wp_mail',
+			function ( $short, $atts ) use ( &$sent ) {
+				$sent[] = $atts;
+				return true;
+			},
+			5,
+			2
+		);
+
+		ActivationService::send_for_magic_login_request( 'niemand@example.com' );
+
+		$this->assertSame( [], $sent );
+	}
+
+	public function test_magic_login_bridge_hides_account_state_and_dispatches_afterward(): void {
+		$person_id = $this->person( 'Anne Jansen', 'anne@example.com' );
+		add_filter( 'rondo_activation_magic_login_url', fn() => 'https://example.com/deferred-login' );
+
+		$mail = null;
+		add_filter(
+			'pre_wp_mail',
+			function ( $short, $atts ) use ( &$mail ) {
+				$mail = $atts;
+				return true;
+			},
+			5,
+			2
+		);
+
+		$bridge       = new MagicLoginActivation();
+		$_POST['log'] = 'anne@example.com';
+		$this->assertTrue( $bridge->intercept_send( null, false ) );
+
+		$response = $bridge->normalize_result(
+			[
+				'errors'    => new \WP_Error( 'missing_user', 'Account bestaat niet.' ),
+				'info'      => '',
+				'show_form' => true,
+			],
+			[]
+		);
+		unset( $_POST['log'] );
+
+		$this->assertInstanceOf( \WP_Error::class, $response['errors'] );
+		$this->assertFalse( $response['errors']->has_errors() );
+		$this->assertFalse( $response['show_form'] );
+		$this->assertStringContainsString( 'Als er een account bestaat', $response['info'] );
+		$this->assertFalse( ActivationService::has_account( $person_id ), 'Provisioning must wait until after the response' );
+
+		$bridge->dispatch_queued_request( false );
+
+		$this->assertTrue( ActivationService::has_account( $person_id ) );
+		$this->assertIsArray( $mail );
+		$this->assertStringContainsString( 'https://example.com/deferred-login', $mail['message'] );
+	}
+
+	public function test_magic_login_bridge_preserves_an_earlier_plugin_failure(): void {
+		$bridge       = new MagicLoginActivation();
+		$blocked      = new \WP_Error( 'captcha_failed', 'Controle mislukt.' );
+		$_POST['log'] = 'anne@example.com';
+
+		$this->assertSame( $blocked, $bridge->intercept_send( $blocked, false ) );
+		$response = [
+			'errors'    => $blocked,
+			'info'      => '',
+			'show_form' => true,
+		];
+		$this->assertSame( $response, $bridge->normalize_result( $response, [] ) );
+
+		unset( $_POST['log'] );
+	}
+
+	public function test_magic_login_bridge_silently_throttles_activation_requests(): void {
+		$person_id = $this->person( 'Anne Jansen', 'anne@example.com' );
+		$ip        = '203.0.113.77';
+		for ( $attempt = 0; $attempt < ActivationService::RATE_EMAIL_MAX; $attempt++ ) {
+			ActivationService::record_attempt( 'anne@example.com', $ip );
+		}
+
+		$sent = [];
+		add_filter(
+			'pre_wp_mail',
+			function ( $short, $atts ) use ( &$sent ) {
+				$sent[] = $atts;
+				return true;
+			},
+			5,
+			2
+		);
+
+		$previous_ip            = $_SERVER['REMOTE_ADDR'] ?? null;
+		$_SERVER['REMOTE_ADDR'] = $ip;
+		$_POST['log']           = 'anne@example.com';
+		$bridge                 = new MagicLoginActivation();
+		$this->assertTrue( $bridge->intercept_send( null, false ) );
+		unset( $_POST['log'] );
+		if ( $previous_ip === null ) {
+			unset( $_SERVER['REMOTE_ADDR'] );
+		} else {
+			$_SERVER['REMOTE_ADDR'] = $previous_ip;
+		}
+
+		$bridge->dispatch_queued_request( false );
+
+		$this->assertFalse( ActivationService::has_account( $person_id ) );
+		$this->assertSame( [], $sent );
 	}
 
 	public function test_a_garbage_token_resolves_to_nothing(): void {
