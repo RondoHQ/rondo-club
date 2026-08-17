@@ -3,7 +3,7 @@
 > Replace Sportlink Club.TV with a subscription-free narrowcasting system managed from Rondo and
 > displayed by a Raspberry Pi 5 attached to each television.
 
-**Status:** Pilot Milestone 1 implemented
+**Status:** Pilot Milestones 1–3 implemented
 **Components:** Rondo Club, Rondo Player, Sportlink Club.Data  
 **Date:** 2026-08-15  
 **Owner:** Club administrators and sponsor management  
@@ -274,7 +274,7 @@ Common metadata:
 Sponsor records remain `person` posts with `is_sponsor=true`. Signage assets are separate items so
 one sponsor can have several campaigns without mixing advertising files into contact data.
 
-### `rondo_signage_playlist` custom post type
+### `rondo_signage_list` custom post type
 
 Represents an ordered or weighted collection of signage items.
 

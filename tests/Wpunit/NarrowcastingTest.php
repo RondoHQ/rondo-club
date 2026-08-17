@@ -24,6 +24,7 @@ class NarrowcastingTest extends RondoTestCase {
 		delete_option( 'rondo_narrowcasting_sportlink_client_id' );
 		delete_option( 'rondo_narrowcasting_sportlink_club_code' );
 		delete_option( 'rondo_narrowcasting_matchday_cache' );
+		delete_option( 'rondo_narrowcasting_default_playlist_id' );
 		delete_transient( 'rondo_narrowcasting_matchday_refresh_lock' );
 		delete_transient( 'rondo_narrowcasting_manual_refresh_lock' );
 		parent::tear_down();

@@ -24,6 +24,7 @@ class UserRoles {
 	const CLOTHING_CAPABILITY           = 'manage_clothing';
 	const LEDENADMINISTRATIE_CAPABILITY = 'ledenadministratie';
 	const SPONSORBEHEER_CAPABILITY      = 'sponsorbeheer';
+	const NARROWCASTING_CAPABILITY      = 'narrowcasting';
 	const VRIJWILLIGERS_CAPABILITY      = 'vrijwilligers';
 	const IVA_APPROVE_CAPABILITY        = 'rondo_iva_approve';
 
@@ -33,7 +34,7 @@ class UserRoles {
 	 * installs must also receive; add_role() does not touch existing roles.
 	 */
 	const ROLES_VERSION_OPTION = 'rondo_roles_version';
-	const ROLES_VERSION        = 6;
+	const ROLES_VERSION        = 7;
 
 	/** Generic WordPress write capabilities removed from non-admin Rondo roles. */
 	private const LEGACY_GENERIC_WRITE_CAPS = [
@@ -280,6 +281,7 @@ class UserRoles {
 	 * Version 4: the Sponsorbeheerder role and `sponsorbeheer` capability are added.
 	 * Version 5: `vrijwilligers` roles gain person edit primitives for contact fields.
 	 * Version 6: administrators gain primitives for the private narrowcasting display CPT.
+	 * Version 7: narrowcasting content, playlist and editor capabilities are introduced.
 	 */
 	public function maybe_upgrade_roles() {
 		$installed_version = (int) get_option( self::ROLES_VERSION_OPTION, 0 );
@@ -303,6 +305,10 @@ class UserRoles {
 			if ( $installed_version < 4
 				&& in_array( $slug, [ 'rondo_sponsorbeheerder', 'rondo_bestuur', 'administrator' ], true ) ) {
 				$role->add_cap( self::SPONSORBEHEER_CAPABILITY );
+			}
+
+			if ( $installed_version < 7 && $slug === 'administrator' ) {
+				$role->add_cap( self::NARROWCASTING_CAPABILITY );
 			}
 
 			self::sync_role_capabilities( $slug );
@@ -337,6 +343,7 @@ class UserRoles {
 			$admin_role->add_cap( self::CLOTHING_CAPABILITY );
 			$admin_role->add_cap( self::LEDENADMINISTRATIE_CAPABILITY );
 			$admin_role->add_cap( self::SPONSORBEHEER_CAPABILITY );
+			$admin_role->add_cap( self::NARROWCASTING_CAPABILITY );
 			$admin_role->add_cap( self::VRIJWILLIGERS_CAPABILITY );
 			$admin_role->add_cap( self::IVA_APPROVE_CAPABILITY );
 			self::sync_role_capabilities( 'administrator' );
@@ -399,7 +406,19 @@ class UserRoles {
 			}
 
 			if ( $role->has_cap( self::SPONSORBEHEER_CAPABILITY ) ) {
-				$desired = array_merge( $desired, self::cpt_capabilities( 'person', 'manage' ) );
+				$desired = array_merge(
+					$desired,
+					self::cpt_capabilities( 'person', 'manage' ),
+					self::cpt_capabilities( 'rondo_signage_item', 'manage' )
+				);
+			}
+
+			if ( $role->has_cap( self::NARROWCASTING_CAPABILITY ) ) {
+				$desired = array_merge(
+					$desired,
+					self::cpt_capabilities( 'rondo_signage_item', 'manage' ),
+					self::cpt_capabilities( 'rondo_signage_list', 'manage' )
+				);
 			}
 
 			if ( $role->has_cap( self::FINANCIEEL_CAPABILITY ) ) {
@@ -444,6 +463,7 @@ class UserRoles {
 				|| $role->has_cap( self::CLOTHING_CAPABILITY )
 				|| $role->has_cap( self::LEDENADMINISTRATIE_CAPABILITY )
 				|| $role->has_cap( self::SPONSORBEHEER_CAPABILITY )
+				|| $role->has_cap( self::NARROWCASTING_CAPABILITY )
 				|| $role->has_cap( self::VRIJWILLIGERS_CAPABILITY )
 			) {
 				$desired[] = 'upload_files';
@@ -525,6 +545,7 @@ class UserRoles {
 			$admin_role->remove_cap( self::CLOTHING_CAPABILITY );
 			$admin_role->remove_cap( self::LEDENADMINISTRATIE_CAPABILITY );
 			$admin_role->remove_cap( self::SPONSORBEHEER_CAPABILITY );
+			$admin_role->remove_cap( self::NARROWCASTING_CAPABILITY );
 			$admin_role->remove_cap( self::VRIJWILLIGERS_CAPABILITY );
 			$admin_role->remove_cap( self::IVA_APPROVE_CAPABILITY );
 		}

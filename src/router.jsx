@@ -101,6 +101,14 @@ function VOGRoute({ children }) {
   );
 }
 
+function NarrowcastingRoute({ children }) {
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.can_access_narrowcasting}>
+      {children}
+    </CapabilityRoute>
+  );
+}
+
 // Viewing finance screens: satisfied by financieel_read or financieel.
 function FinancieelRoute({ children }) {
   return (
@@ -146,14 +154,6 @@ function LedenadministratieRoute({ children }) {
 function VrijwilligersRoute({ children }) {
   return (
     <CapabilityRoute checkAccess={(user) => user?.can_access_vrijwilligers}>
-      {children}
-    </CapabilityRoute>
-  );
-}
-
-function AdminRoute({ children }) {
-  return (
-    <CapabilityRoute checkAccess={(user) => user?.is_admin}>
       {children}
     </CapabilityRoute>
   );
@@ -527,13 +527,13 @@ const router = createBrowserRouter([
           { path: 'feedback', element: <KaderOrVrijwilligRedirect><FeedbackList /></KaderOrVrijwilligRedirect> },
           { path: 'feedback/:id', element: <KaderOrVrijwilligRedirect><FeedbackDetail /></KaderOrVrijwilligRedirect> },
 
-          // Narrowcasting player management — administrators only.
+          // Club TV content is available to narrowcasting and sponsor managers.
           {
             path: 'narrowcasting',
             element: (
-              <AdminRoute>
+              <NarrowcastingRoute>
                 <Narrowcasting />
-              </AdminRoute>
+              </NarrowcastingRoute>
             ),
           },
 

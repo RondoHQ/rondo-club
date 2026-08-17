@@ -60,6 +60,7 @@ class AccessControl {
 		'manage_clothing',
 		'ledenadministratie',
 		'sponsorbeheer',
+		'narrowcasting',
 		'vrijwilligers',
 	];
 

@@ -30,6 +30,8 @@ class PostTypes {
 		'discipline_case'     => [ 'discipline_case', 'discipline_cases' ],
 		'rondo_invoice'       => [ 'invoice', 'invoices' ],
 		'rondo_display'       => [ 'display', 'displays' ],
+		'rondo_signage_item'  => [ 'signage_item', 'signage_items' ],
+		'rondo_signage_list'  => [ 'signage_playlist', 'signage_playlists' ],
 		'dienst_type'         => [ 'dienst_type', 'dienst_types' ],
 		'shift_template'      => [ 'shift_template', 'shift_templates' ],
 		'dienst_shift'        => [ 'dienst_shift', 'dienst_shifts' ],
@@ -102,6 +104,8 @@ class PostTypes {
 		$this->register_invoice_statuses();
 		$this->register_invoice_post_type();
 		$this->register_display_post_type();
+		$this->register_signage_item_post_type();
+		$this->register_signage_playlist_post_type();
 		$this->register_dienst_type_post_type();
 		$this->register_shift_template_post_type();
 		$this->register_dienst_shift_post_type();
@@ -140,6 +144,56 @@ class PostTypes {
 		);
 
 		register_post_type( 'rondo_display', $args );
+	}
+
+	/** Register private playable narrowcasting scenes. */
+	private function register_signage_item_post_type() {
+		$args = array_merge(
+			[
+				'labels'             => [
+					'name'          => __( 'Club TV-content', 'rondo' ),
+					'singular_name' => __( 'Club TV-item', 'rondo' ),
+				],
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => false,
+				'show_in_menu'       => false,
+				'show_in_rest'       => false,
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'rondo_signage_item' )
+		);
+
+		register_post_type( 'rondo_signage_item', $args );
+	}
+
+	/** Register private ordered narrowcasting playlists. */
+	private function register_signage_playlist_post_type() {
+		$args = array_merge(
+			[
+				'labels'             => [
+					'name'          => __( 'Club TV-playlists', 'rondo' ),
+					'singular_name' => __( 'Club TV-playlist', 'rondo' ),
+				],
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => false,
+				'show_in_menu'       => false,
+				'show_in_rest'       => false,
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'rondo_signage_list' )
+		);
+
+		register_post_type( 'rondo_signage_list', $args );
 	}
 
 	/**

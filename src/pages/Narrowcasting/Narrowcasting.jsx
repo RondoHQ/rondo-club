@@ -14,6 +14,9 @@ import {
 } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import NarrowcastingContent from './NarrowcastingContent';
+import NarrowcastingPlaylists from './NarrowcastingPlaylists';
 
 const defaultForm = {
   code: '',
@@ -50,6 +53,10 @@ function errorMessage(error) {
 export default function Narrowcasting() {
   useRouteTitle('Club TV');
   const queryClient = useQueryClient();
+  const { data: currentUser } = useCurrentUser();
+  const isAdmin = currentUser?.is_admin ?? false;
+  const canManage = currentUser?.can_manage_narrowcasting ?? false;
+  const [activeTab, setActiveTab] = useState('content');
   const [form, setForm] = useState(defaultForm);
   const [sportlinkForm, setSportlinkForm] = useState({ client_id: '', club_relation_code: '' });
   const [notice, setNotice] = useState('');
@@ -58,11 +65,19 @@ export default function Narrowcasting() {
     queryKey: ['narrowcasting', 'displays'],
     queryFn: async () => (await prmApi.getNarrowcastingDisplays()).data,
     refetchInterval: 30000,
+    enabled: isAdmin,
   });
 
   const settingsQuery = useQuery({
     queryKey: ['narrowcasting', 'settings'],
     queryFn: async () => (await prmApi.getNarrowcastingSettings()).data,
+    enabled: isAdmin,
+  });
+
+  const playlistsQuery = useQuery({
+    queryKey: ['narrowcasting', 'playlists'],
+    queryFn: async () => (await prmApi.getNarrowcastingPlaylists()).data,
+    enabled: isAdmin,
   });
 
   useEffect(() => {
@@ -96,6 +111,14 @@ export default function Narrowcasting() {
     mutationFn: (displayId) => prmApi.revokeNarrowcastingDisplay(displayId),
     onSuccess: () => {
       setNotice('De toegang van de player is ingetrokken.');
+      refreshDisplays();
+    },
+  });
+
+  const assignPlaylistMutation = useMutation({
+    mutationFn: ({ displayId, playlistId }) => prmApi.assignNarrowcastingPlaylist(displayId, playlistId),
+    onSuccess: () => {
+      setNotice('De afspeellijst voor het scherm is opgeslagen.');
       refreshDisplays();
     },
   });
@@ -144,6 +167,7 @@ export default function Narrowcasting() {
   const mutationError = claimMutation.error
     || commandMutation.error
     || revokeMutation.error
+    || assignPlaylistMutation.error
     || settingsMutation.error
     || matchdayRefreshMutation.error;
   const sportlink = settingsQuery.data;
@@ -176,6 +200,18 @@ export default function Narrowcasting() {
           <span>{errorMessage(mutationError)}</span>
         </div>
       )}
+
+      <nav className="flex flex-wrap gap-2 border-b border-gray-200 pb-3 dark:border-gray-700" aria-label="Club TV-onderdelen">
+        <button type="button" className={activeTab === 'content' ? 'btn-primary' : 'btn-tertiary'} onClick={() => setActiveTab('content')}>Content</button>
+        {canManage && <button type="button" className={activeTab === 'playlists' ? 'btn-primary' : 'btn-tertiary'} onClick={() => setActiveTab('playlists')}>Afspeellijsten</button>}
+        {isAdmin && <button type="button" className={activeTab === 'technical' ? 'btn-primary' : 'btn-tertiary'} onClick={() => setActiveTab('technical')}>Players & koppelingen</button>}
+      </nav>
+
+      {activeTab === 'content' && <NarrowcastingContent sponsorOnly={!canManage} />}
+      {activeTab === 'playlists' && canManage && <NarrowcastingPlaylists />}
+
+      {activeTab === 'technical' && isAdmin && (
+        <>
 
       <section className="card p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -382,6 +418,19 @@ export default function Narrowcasting() {
                 </div>
               </dl>
 
+              <label className="mt-4 block text-sm">
+                <span className="mb-1 block font-medium text-gray-700 dark:text-gray-300">Afspeellijst</span>
+                <select
+                  className="input w-full"
+                  value={display.assigned_playlist_id || ''}
+                  onChange={(event) => assignPlaylistMutation.mutate({ displayId: display.id, playlistId: Number(event.target.value) || 0 })}
+                  disabled={assignPlaylistMutation.isPending}
+                >
+                  <option value="">Standaard afspeellijst</option>
+                  {(playlistsQuery.data || []).map((playlist) => <option key={playlist.id} value={playlist.id}>{playlist.title}</option>)}
+                </select>
+              </label>
+
               {display.last_error && (
                 <p className="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-200">{display.last_error}</p>
               )}
@@ -412,6 +461,8 @@ export default function Narrowcasting() {
           ))}
         </div>
       </section>
+        </>
+      )}
     </div>
   );
 }

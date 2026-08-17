@@ -3,8 +3,44 @@ export default function NarrowcastingScene({ scene }) {
   if (scene.type === 'rooms') return <RoomsScene items={scene.items} />;
   if (scene.type === 'cancellations') return <CancellationsScene items={scene.items} />;
   if (scene.type === 'results') return <ResultsScene items={scene.items} />;
+  if (scene.type === 'announcement' || scene.type === 'fallback') return <AnnouncementScene scene={scene} />;
+  if (scene.type === 'sponsor') return <SponsorScene scene={scene} />;
+  if (scene.type === 'image') return <ImageScene scene={scene} />;
+  if (scene.type === 'video') return <VideoScene scene={scene} />;
   if (scene.type === 'unavailable') return <UnavailableScene />;
   return <WelcomeScene message={scene.message} />;
+}
+
+function AnnouncementScene({ scene }) {
+  return (
+    <section className="max-w-[78vw]">
+      {scene.title && <p className="text-[1.3vw] font-semibold uppercase tracking-[0.22em]" style={{ color: scene.colors?.accent }}>{scene.title}</p>}
+      <h2 className="mt-[1vw] whitespace-pre-line text-[4.2vw] font-semibold leading-[1.08] tracking-tight">{scene.body || scene.message || scene.title}</h2>
+      {scene.cta_text && <p className="mt-[1.6vw] text-[1.7vw] opacity-80">{scene.cta_text}</p>}
+    </section>
+  );
+}
+
+function SponsorScene({ scene }) {
+  const logo = scene.media?.url || scene.sponsor?.logo_url;
+  return (
+    <section className="flex items-center justify-center gap-[6vw] text-center">
+      {logo && <img src={logo} alt={scene.media?.alt || scene.sponsor?.name || ''} className="max-h-[45vh] max-w-[42vw] object-contain" />}
+      <div className="max-w-[42vw]">
+        <p className="text-[1.3vw] font-semibold uppercase tracking-[0.22em]" style={{ color: scene.colors?.accent }}>Met dank aan</p>
+        <h2 className="mt-[1vw] text-[4vw] font-semibold leading-tight">{scene.sponsor?.name || scene.title}</h2>
+        {scene.body && <p className="mt-[1.2vw] text-[1.7vw] opacity-85">{scene.body}</p>}
+      </div>
+    </section>
+  );
+}
+
+function ImageScene({ scene }) {
+  return <section className="flex items-center justify-center"><img src={scene.media?.url} alt={scene.media?.alt || scene.title || ''} className="max-h-[58vh] max-w-[88vw] object-contain" /></section>;
+}
+
+function VideoScene({ scene }) {
+  return <section className="flex items-center justify-center"><video key={scene.media?.url} src={scene.media?.url} className="max-h-[60vh] max-w-[90vw]" autoPlay muted playsInline /></section>;
 }
 
 function SceneHeading({ eyebrow, title }) {

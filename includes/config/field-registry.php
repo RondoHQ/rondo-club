@@ -2140,6 +2140,21 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'storage_name' => 'player_version',
           'type' => 'text',
         ),
+        'assigned_playlist_id' =>
+        array (
+          'allow_null' => 1,
+          'canonical_name' => 'assigned_playlist_id',
+          'key' => 'field_display_assigned_playlist',
+          'label' => 'Playlist',
+          'name' => 'assigned_playlist_id',
+          'post_type' =>
+          array (
+            0 => 'rondo_signage_list',
+          ),
+          'return_format' => 'id',
+          'storage_name' => 'assigned_playlist_id',
+          'type' => 'post_object',
+        ),
         'sleep_time' =>
         array (
           'canonical_name' => 'sleep_time',
@@ -2165,6 +2180,350 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'storage_name' => 'wake_time',
           'type' => 'time_picker',
           'wire_format' => 'H:i',
+        ),
+      ),
+      'kind' => 'post',
+    ),
+    'rondo_signage_item' =>
+    array (
+      'fields' =>
+      array (
+        'accent_color' =>
+        array (
+          'canonical_name' => 'accent_color',
+          'default_value' => '#22d3ee',
+          'key' => 'field_signage_item_accent_color',
+          'label' => 'Accentkleur',
+          'name' => 'accent_color',
+          'storage_name' => 'accent_color',
+          'type' => 'color_picker',
+        ),
+        'background_color' =>
+        array (
+          'canonical_name' => 'background_color',
+          'default_value' => '#0f172a',
+          'key' => 'field_signage_item_background_color',
+          'label' => 'Achtergrondkleur',
+          'name' => 'background_color',
+          'storage_name' => 'background_color',
+          'type' => 'color_picker',
+        ),
+        'body' =>
+        array (
+          'canonical_name' => 'body',
+          'key' => 'field_signage_item_body',
+          'label' => 'Tekst',
+          'name' => 'body',
+          'storage_name' => 'body',
+          'type' => 'textarea',
+        ),
+        'content_type' =>
+        array (
+          'canonical_name' => 'content_type',
+          'choices' =>
+          array (
+            'announcement' => 'Clubbericht',
+            'cancellations' => 'Afgelastingen',
+            'fallback' => 'Welkomstscherm',
+            'image' => 'Afbeelding',
+            'matches' => 'Wedstrijden vandaag',
+            'results' => 'Uitslagen',
+            'rooms' => 'Velden en kleedkamers',
+            'sponsor' => 'Sponsor',
+            'video' => 'Video',
+          ),
+          'default_value' => 'announcement',
+          'key' => 'field_signage_item_content_type',
+          'label' => 'Type',
+          'name' => 'content_type',
+          'storage_name' => 'content_type',
+          'type' => 'select',
+        ),
+        'cta_text' =>
+        array (
+          'canonical_name' => 'cta_text',
+          'key' => 'field_signage_item_cta_text',
+          'label' => 'Onderschrift',
+          'name' => 'cta_text',
+          'storage_name' => 'cta_text',
+          'type' => 'text',
+        ),
+        'duration_seconds' =>
+        array (
+          'canonical_name' => 'duration_seconds',
+          'default_value' => 12,
+          'key' => 'field_signage_item_duration',
+          'label' => 'Duur in seconden',
+          'max' => 120,
+          'min' => 5,
+          'name' => 'duration_seconds',
+          'storage_name' => 'duration_seconds',
+          'type' => 'number',
+        ),
+        'enabled' =>
+        array (
+          'canonical_name' => 'enabled',
+          'default_value' => 1,
+          'key' => 'field_signage_item_enabled',
+          'label' => 'Actief',
+          'name' => 'enabled',
+          'storage_name' => 'enabled',
+          'type' => 'true_false',
+        ),
+        'is_override' =>
+        array (
+          'canonical_name' => 'is_override',
+          'default_value' => 0,
+          'key' => 'field_signage_item_is_override',
+          'label' => 'Tijdelijke overname',
+          'name' => 'is_override',
+          'storage_name' => 'is_override',
+          'type' => 'true_false',
+        ),
+        'media_attachment_id' =>
+        array (
+          'allow_null' => 1,
+          'canonical_name' => 'media_attachment_id',
+          'key' => 'field_signage_item_media_attachment',
+          'label' => 'Media',
+          'name' => 'media_attachment_id',
+          'post_type' =>
+          array (
+            0 => 'attachment',
+          ),
+          'return_format' => 'id',
+          'storage_name' => 'media_attachment_id',
+          'type' => 'post_object',
+        ),
+        'override_display_ids' =>
+        array (
+          'canonical_name' => 'override_display_ids',
+          'key' => 'field_signage_item_override_displays',
+          'label' => 'Overnemen op schermen',
+          'name' => 'override_display_ids',
+          'post_type' =>
+          array (
+            0 => 'rondo_display',
+          ),
+          'return_format' => 'id',
+          'storage_name' => 'override_display_ids',
+          'type' => 'relationship',
+        ),
+        'priority' =>
+        array (
+          'canonical_name' => 'priority',
+          'default_value' => 0,
+          'key' => 'field_signage_item_priority',
+          'label' => 'Prioriteit',
+          'max' => 100,
+          'min' => 0,
+          'name' => 'priority',
+          'storage_name' => 'priority',
+          'type' => 'number',
+        ),
+        'sponsor_person_id' =>
+        array (
+          'allow_null' => 1,
+          'canonical_name' => 'sponsor_person_id',
+          'key' => 'field_signage_item_sponsor',
+          'label' => 'Sponsor',
+          'name' => 'sponsor_person_id',
+          'post_type' =>
+          array (
+            0 => 'person',
+          ),
+          'return_format' => 'id',
+          'storage_name' => 'sponsor_person_id',
+          'type' => 'post_object',
+        ),
+        'text_color' =>
+        array (
+          'canonical_name' => 'text_color',
+          'default_value' => '#ffffff',
+          'key' => 'field_signage_item_text_color',
+          'label' => 'Tekstkleur',
+          'name' => 'text_color',
+          'storage_name' => 'text_color',
+          'type' => 'color_picker',
+        ),
+        'valid_from' =>
+        array (
+          'canonical_name' => 'valid_from',
+          'display_format' => 'd-m-Y H:i',
+          'key' => 'field_signage_item_valid_from',
+          'label' => 'Geldig vanaf',
+          'name' => 'valid_from',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'valid_from',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+        'valid_until' =>
+        array (
+          'canonical_name' => 'valid_until',
+          'display_format' => 'd-m-Y H:i',
+          'key' => 'field_signage_item_valid_until',
+          'label' => 'Geldig tot',
+          'name' => 'valid_until',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'valid_until',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+      ),
+      'kind' => 'post',
+    ),
+    'rondo_signage_list' =>
+    array (
+      'fields' =>
+      array (
+        'days_of_week' =>
+        array (
+          'canonical_name' => 'days_of_week',
+          'choices' =>
+          array (
+            'mon' => 'Maandag',
+            'tue' => 'Dinsdag',
+            'wed' => 'Woensdag',
+            'thu' => 'Donderdag',
+            'fri' => 'Vrijdag',
+            'sat' => 'Zaterdag',
+            'sun' => 'Zondag',
+          ),
+          'key' => 'field_signage_playlist_days',
+          'label' => 'Dagen',
+          'multiple' => 1,
+          'name' => 'days_of_week',
+          'storage_name' => 'days_of_week',
+          'type' => 'select',
+        ),
+        'enabled' =>
+        array (
+          'canonical_name' => 'enabled',
+          'default_value' => 1,
+          'key' => 'field_signage_playlist_enabled',
+          'label' => 'Actief',
+          'name' => 'enabled',
+          'storage_name' => 'enabled',
+          'type' => 'true_false',
+        ),
+        'end_time' =>
+        array (
+          'canonical_name' => 'end_time',
+          'display_format' => 'H:i',
+          'key' => 'field_signage_playlist_end_time',
+          'label' => 'Tot tijd',
+          'name' => 'end_time',
+          'storage_format' => 'H:i:s',
+          'storage_name' => 'end_time',
+          'type' => 'time_picker',
+          'wire_format' => 'H:i',
+        ),
+        'fallback_item_id' =>
+        array (
+          'allow_null' => 1,
+          'canonical_name' => 'fallback_item_id',
+          'key' => 'field_signage_playlist_fallback',
+          'label' => 'Fallback-item',
+          'name' => 'fallback_item_id',
+          'post_type' =>
+          array (
+            0 => 'rondo_signage_item',
+          ),
+          'return_format' => 'id',
+          'storage_name' => 'fallback_item_id',
+          'type' => 'post_object',
+        ),
+        'items' =>
+        array (
+          'button_label' => 'Item toevoegen',
+          'canonical_name' => 'items',
+          'key' => 'field_signage_playlist_items',
+          'label' => 'Items',
+          'layout' => 'table',
+          'name' => 'items',
+          'storage_name' => 'items',
+          'sub_fields' =>
+          array (
+            'duration_seconds' =>
+            array (
+              'canonical_name' => 'duration_seconds',
+              'default_value' => 0,
+              'key' => 'field_signage_playlist_item_duration',
+              'label' => 'Duur',
+              'min' => 0,
+              'name' => 'duration_seconds',
+              'storage_name' => 'duration_seconds',
+              'type' => 'number',
+            ),
+            'item_id' =>
+            array (
+              'canonical_name' => 'item_id',
+              'key' => 'field_signage_playlist_item_id',
+              'label' => 'Item',
+              'name' => 'item_id',
+              'post_type' =>
+              array (
+                0 => 'rondo_signage_item',
+              ),
+              'return_format' => 'id',
+              'storage_name' => 'item_id',
+              'type' => 'post_object',
+            ),
+            'weight' =>
+            array (
+              'canonical_name' => 'weight',
+              'default_value' => 1,
+              'key' => 'field_signage_playlist_item_weight',
+              'label' => 'Gewicht',
+              'max' => 10,
+              'min' => 1,
+              'name' => 'weight',
+              'storage_name' => 'weight',
+              'type' => 'number',
+            ),
+          ),
+          'type' => 'repeater',
+        ),
+        'start_time' =>
+        array (
+          'canonical_name' => 'start_time',
+          'display_format' => 'H:i',
+          'key' => 'field_signage_playlist_start_time',
+          'label' => 'Vanaf tijd',
+          'name' => 'start_time',
+          'storage_format' => 'H:i:s',
+          'storage_name' => 'start_time',
+          'type' => 'time_picker',
+          'wire_format' => 'H:i',
+        ),
+        'valid_from' =>
+        array (
+          'canonical_name' => 'valid_from',
+          'display_format' => 'd-m-Y H:i',
+          'key' => 'field_signage_playlist_valid_from',
+          'label' => 'Geldig vanaf',
+          'name' => 'valid_from',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'valid_from',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+        'valid_until' =>
+        array (
+          'canonical_name' => 'valid_until',
+          'display_format' => 'd-m-Y H:i',
+          'key' => 'field_signage_playlist_valid_until',
+          'label' => 'Geldig tot',
+          'name' => 'valid_until',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'valid_until',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
         ),
       ),
       'kind' => 'post',
