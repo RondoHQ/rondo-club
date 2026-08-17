@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.8.0] - 2026-08-17
+
+### Added
+
+- Club TV-beheerders kunnen mededelingen, sponsoruitingen, afbeeldingen, stille MP4-video's en dynamische wedstrijdscènes maken. Afspeellijsten ondersteunen volgorde, eigen speelduur, gewichten, datum-, dag- en tijdschema's, reservebeelden, schermtoewijzing en een browserpreview.
+- Tijdelijke overrides kunnen de normale afspeellijst op alle of geselecteerde schermen vervangen. Players ontvangen een server-side opgelost en lokaal gecachet manifest zonder privégegevens van sponsorrelaties.
+- De nieuwe machtiging `narrowcasting` geeft toegang tot content en afspeellijsten. Sponsorbeheerders kunnen uitsluitend sponsoritems beheren; player- en Sportlinkbeheer blijven voor administrators.
+
 ## [34.7.1] - 2026-08-17
 
 ### Fixed

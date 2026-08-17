@@ -1138,6 +1138,7 @@ class UserSettings extends Base {
 			|| current_user_can( 'manage_clothing' )
 			|| current_user_can( 'ledenadministratie' )
 			|| current_user_can( 'sponsorbeheer' )
+			|| current_user_can( 'narrowcasting' )
 			|| current_user_can( 'vrijwilligers' );
 
 		$person_id           = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
@@ -1174,6 +1175,8 @@ class UserSettings extends Base {
 			'can_edit_people'               => \Rondo\Core\AccessControl::can_edit_people(),
 			'can_edit_person_contact'       => \Rondo\Core\AccessControl::can_edit_person_contact(),
 			'can_manage_sponsors'           => \Rondo\Core\AccessControl::can_manage_sponsors(),
+			'can_access_narrowcasting'      => current_user_can( 'narrowcasting' ) || current_user_can( 'sponsorbeheer' ) || $is_admin,
+			'can_manage_narrowcasting'      => current_user_can( 'narrowcasting' ) || $is_admin,
 			'can_access_fairplay'           => current_user_can( 'fairplay' ),
 			'can_access_vog'                => current_user_can( 'vog' ),
 			'can_access_financieel'         => \Rondo\Core\UserRoles::can_view_finances(),

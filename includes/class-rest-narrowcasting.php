@@ -7,11 +7,13 @@
 
 namespace Rondo\REST;
 
+use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
 use Rondo\Config\ClubConfig;
 use Rondo\Fields\Fields;
 use Rondo\Fields\Formatter;
+use Rondo\Narrowcasting\Content;
 use Rondo\Narrowcasting\SportlinkMatchday;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -32,6 +34,7 @@ class Narrowcasting extends Base {
 	private const REGISTRATION_RATE_PER_MINUTE = 10;
 
 	private SportlinkMatchday $matchday;
+	private Content $content;
 
 	/** Commands the player service is allowed to execute. */
 	private const ALLOWED_COMMANDS = [
@@ -46,6 +49,7 @@ class Narrowcasting extends Base {
 	public function __construct() {
 		parent::__construct();
 		$this->matchday = new SportlinkMatchday( false );
+		$this->content  = new Content();
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 
@@ -77,6 +81,16 @@ class Narrowcasting extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_device_config' ],
+				'permission_callback' => '__return_true',
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/narrowcasting/devices/me/playlist',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_device_playlist' ],
 				'permission_callback' => '__return_true',
 			]
 		);
@@ -127,9 +141,11 @@ class Narrowcasting extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_preview_config' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_content_permission' ],
 			]
 		);
+
+		$this->register_content_routes();
 
 		register_rest_route(
 			'rondo/v1',
@@ -205,6 +221,131 @@ class Narrowcasting extends Base {
 						'sanitize_callback' => 'absint',
 					],
 				],
+			]
+		);
+	}
+
+	/** Register authenticated content and public player playlist routes. */
+	private function register_content_routes(): void {
+		register_rest_route(
+			'rondo/v1',
+			'/narrowcasting/items',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_content_items' ],
+					'permission_callback' => [ $this, 'check_content_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'create_content_item' ],
+					'permission_callback' => [ $this, 'check_content_permission' ],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/narrowcasting/items/(?P<id>\d+)',
+			[
+				[
+					'methods'             => \WP_REST_Server::EDITABLE,
+					'callback'            => [ $this, 'update_content_item' ],
+					'permission_callback' => [ $this, 'check_content_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => [ $this, 'delete_content_item' ],
+					'permission_callback' => [ $this, 'check_content_permission' ],
+				],
+				'args' => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/narrowcasting/playlists',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_playlists' ],
+					'permission_callback' => [ $this, 'check_playlist_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'create_playlist' ],
+					'permission_callback' => [ $this, 'check_playlist_permission' ],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/narrowcasting/playlists/(?P<id>\d+)',
+			[
+				[
+					'methods'             => \WP_REST_Server::EDITABLE,
+					'callback'            => [ $this, 'update_playlist' ],
+					'permission_callback' => [ $this, 'check_playlist_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => [ $this, 'delete_playlist' ],
+					'permission_callback' => [ $this, 'check_playlist_permission' ],
+				],
+				'args' => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/narrowcasting/playlists/(?P<id>\d+)/default',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'set_default_playlist' ],
+				'permission_callback' => [ $this, 'check_playlist_permission' ],
+				'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/narrowcasting/preview/playlist',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_preview_playlist' ],
+				'permission_callback' => [ $this, 'check_content_permission' ],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/narrowcasting/content/sponsors',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_sponsor_choices' ],
+				'permission_callback' => [ $this, 'check_content_permission' ],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/narrowcasting/content/displays',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_display_choices' ],
+				'permission_callback' => [ $this, 'check_playlist_permission' ],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/narrowcasting/displays/(?P<id>\d+)/playlist',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'assign_display_playlist' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
 			]
 		);
 	}
@@ -407,6 +548,88 @@ class Narrowcasting extends Base {
 		return rest_ensure_response( $this->device_config( $display_id ) );
 	}
 
+	/** Return the resolved, player-safe playlist for one paired display. */
+	public function get_device_playlist( $request ) {
+		$display_id = $this->authenticate_device( $request );
+		if ( is_wp_error( $display_id ) ) {
+			return $display_id;
+		}
+		return rest_ensure_response( $this->content->resolve_manifest( $display_id ) );
+	}
+
+	/** List content in the current user's allowed scope. */
+	public function get_content_items() {
+		return rest_ensure_response( $this->content->list_items( $this->is_sponsor_only_user() ) );
+	}
+
+	/** Create a validated content item. */
+	public function create_content_item( $request ) {
+		$result = $this->content->create_item( $request->get_json_params() ?: [], $this->is_sponsor_only_user() );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	/** Update a validated content item. */
+	public function update_content_item( $request ) {
+		$result = $this->content->update_item( absint( $request->get_param( 'id' ) ), $request->get_json_params() ?: [], $this->is_sponsor_only_user() );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	/** Trash a content item. */
+	public function delete_content_item( $request ) {
+		$result = $this->content->delete_item( absint( $request->get_param( 'id' ) ), $this->is_sponsor_only_user() );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( [ 'deleted' => true ] );
+	}
+
+	public function get_playlists() {
+		return rest_ensure_response( $this->content->list_playlists() );
+	}
+
+	public function create_playlist( $request ) {
+		$result = $this->content->create_playlist( $request->get_json_params() ?: [] );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	public function update_playlist( $request ) {
+		$result = $this->content->update_playlist( absint( $request->get_param( 'id' ) ), $request->get_json_params() ?: [] );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	public function delete_playlist( $request ) {
+		$result = $this->content->delete_playlist( absint( $request->get_param( 'id' ) ) );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( [ 'deleted' => true ] );
+	}
+
+	public function set_default_playlist( $request ) {
+		$result = $this->content->set_default_playlist( absint( $request->get_param( 'id' ) ) );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	/** Preview scheduling at the current or a supplied point in time. */
+	public function get_preview_playlist( $request ) {
+		$at = null;
+		if ( $request->get_param( 'at' ) ) {
+			try {
+				$at = new DateTimeImmutable( sanitize_text_field( (string) $request->get_param( 'at' ) ) );
+			} catch ( \Exception $error ) {
+				return new \WP_Error( 'rondo_signage_preview_time_invalid', __( 'De previewtijd is ongeldig.', 'rondo' ), [ 'status' => 400 ] );
+			}
+		}
+		return rest_ensure_response( $this->content->resolve_manifest( absint( $request->get_param( 'display_id' ) ), absint( $request->get_param( 'playlist_id' ) ), $at, true ) );
+	}
+
+	public function get_sponsor_choices() {
+		return rest_ensure_response( $this->content->sponsor_choices() );
+	}
+
+	public function get_display_choices() {
+		return rest_ensure_response( $this->content->display_choices() );
+	}
+
+	public function assign_display_playlist( $request ) {
+		$result = $this->content->assign_display_playlist( absint( $request->get_param( 'id' ) ), absint( $request->get_param( 'playlist_id' ) ) );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
 	/** Store bounded health information from a paired player. */
 	public function record_heartbeat( $request ) {
 		$display_id = $this->authenticate_device( $request );
@@ -555,7 +778,7 @@ class Narrowcasting extends Base {
 
 	/** Return normalized public match data to a paired player or administrator preview. */
 	public function get_matchday_feed( $request ) {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! $this->check_content_permission() ) {
 			$display_id = $this->authenticate_device( $request );
 			if ( is_wp_error( $display_id ) ) {
 				return $display_id;
@@ -633,6 +856,7 @@ class Narrowcasting extends Base {
 				'sleep_time',
 				'cec_enabled',
 				'pilot_message',
+				'assigned_playlist_id',
 			]
 		);
 
@@ -646,6 +870,7 @@ class Narrowcasting extends Base {
 				'sleep_time'    => $fields['sleep_time'],
 				'cec_enabled'   => $fields['cec_enabled'],
 				'pilot_message' => $fields['pilot_message'],
+				'playlist_id'   => $fields['assigned_playlist_id'] ?: null,
 				'preview'       => false,
 			]
 		);
@@ -660,6 +885,8 @@ class Narrowcasting extends Base {
 				'display_url'                => home_url( '/display' ),
 				'heartbeat_interval_seconds' => 60,
 				'command_interval_seconds'   => 15,
+				'content_interval_seconds'   => 60,
+				'playlist_url'               => home_url( '/wp-json/rondo/v1/narrowcasting/devices/me/playlist' ),
 				'server_time'                => gmdate( DATE_RFC3339 ),
 			]
 		);
@@ -683,6 +910,7 @@ class Narrowcasting extends Base {
 				'last_playback_state',
 				'last_error',
 				'pilot_message',
+				'assigned_playlist_id',
 			]
 		);
 
@@ -695,6 +923,20 @@ class Narrowcasting extends Base {
 			],
 			$fields
 		);
+	}
+
+	/** Allow dedicated content managers and sponsor managers into Club TV. */
+	public function check_content_permission(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( 'narrowcasting' ) || current_user_can( 'sponsorbeheer' );
+	}
+
+	/** Playlist structure and overrides are outside the sponsor-only role. */
+	public function check_playlist_permission(): bool {
+		return current_user_can( 'manage_options' ) || current_user_can( 'narrowcasting' );
+	}
+
+	private function is_sponsor_only_user(): bool {
+		return current_user_can( 'sponsorbeheer' ) && ! current_user_can( 'narrowcasting' ) && ! current_user_can( 'manage_options' );
 	}
 
 	/** Return a pending command unless it has expired. */

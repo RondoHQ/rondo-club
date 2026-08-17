@@ -332,7 +332,20 @@ export const prmApi = {
   sendLettermintTestEmail: (recipient) => api.post('/rondo/v1/lettermint/test-email', { recipient }),
   sendLettermintVerificationEmail: (todoId, recipient = '') => api.post('/rondo/v1/lettermint/verify-email', { todo_id: todoId, recipient }),
 
-  // Narrowcasting (admin only)
+  // Club TV content and player management
+  getNarrowcastingItems: () => api.get('/rondo/v1/narrowcasting/items'),
+  createNarrowcastingItem: (data) => api.post('/rondo/v1/narrowcasting/items', data),
+  updateNarrowcastingItem: (id, data) => api.post(`/rondo/v1/narrowcasting/items/${id}`, data),
+  deleteNarrowcastingItem: (id) => api.delete(`/rondo/v1/narrowcasting/items/${id}`),
+  getNarrowcastingPlaylists: () => api.get('/rondo/v1/narrowcasting/playlists'),
+  createNarrowcastingPlaylist: (data) => api.post('/rondo/v1/narrowcasting/playlists', data),
+  updateNarrowcastingPlaylist: (id, data) => api.post(`/rondo/v1/narrowcasting/playlists/${id}`, data),
+  deleteNarrowcastingPlaylist: (id) => api.delete(`/rondo/v1/narrowcasting/playlists/${id}`),
+  setDefaultNarrowcastingPlaylist: (id) => api.post(`/rondo/v1/narrowcasting/playlists/${id}/default`),
+  previewNarrowcastingPlaylist: (params = {}) => api.get('/rondo/v1/narrowcasting/preview/playlist', { params }),
+  getNarrowcastingSponsors: () => api.get('/rondo/v1/narrowcasting/content/sponsors'),
+  getNarrowcastingDisplayChoices: () => api.get('/rondo/v1/narrowcasting/content/displays'),
+  assignNarrowcastingPlaylist: (displayId, playlistId) => api.post(`/rondo/v1/narrowcasting/displays/${displayId}/playlist`, { playlist_id: playlistId }),
   getNarrowcastingDisplays: () => api.get('/rondo/v1/narrowcasting/displays'),
   getNarrowcastingSettings: () => api.get('/rondo/v1/narrowcasting/settings'),
   updateNarrowcastingSettings: (data) => api.post('/rondo/v1/narrowcasting/settings', data),

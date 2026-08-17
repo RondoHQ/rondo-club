@@ -73,7 +73,7 @@ const navigation = [
   { name: 'Lidpas Scanner', href: '/lidpas-scanner', icon: QrCode, requiresToegangscontrole: true, mobileOnly: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare, requiresKader: true },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare, requiresKader: true },
-  { name: 'Club TV', href: '/narrowcasting', icon: MonitorPlay, adminOnly: true },
+  { name: 'Club TV', href: '/narrowcasting', icon: MonitorPlay, requiresNarrowcasting: true },
   { name: 'Instellingen', href: '/settings', icon: Settings, requiresKader: true },
   { name: 'Profiel', href: '/profile', icon: User },
 ];
@@ -93,6 +93,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
   const canAccessLedenadministratie = currentUser?.can_access_ledenadministratie ?? false;
   const canAccessVrijwilligers = currentUser?.can_access_vrijwilligers ?? false;
+  const canAccessNarrowcasting = currentUser?.can_access_narrowcasting ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
   const sidebarUserName = currentUser?.linked_person_name || currentUser?.name || '';
 
@@ -201,6 +202,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresClothing && !canAccessClothing) return false;
     if (item.requiresLedenadministratie && !canAccessLedenadministratie) return false;
     if (item.requiresVrijwilligers && !canAccessVrijwilligers) return false;
+    if (item.requiresNarrowcasting && !canAccessNarrowcasting) return false;
     if (item.requiresKader && !isKader) return false;
     // Kader normally does not need the member-facing household page.
     if (item.memberOnly && isKader) return false;

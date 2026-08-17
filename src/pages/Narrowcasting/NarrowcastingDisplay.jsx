@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Wifi, WifiOff } from 'lucide-react';
 import NarrowcastingScene from './NarrowcastingScenes';
-import { buildMatchdayScenes } from './matchdayScenes';
+import { buildPlaylistScenes } from './playlistScenes';
 
 const TOKEN_KEY = 'rondoPlayerToken';
 const CONFIG_KEY = 'rondoPlayerConfig';
 const FEED_KEY = 'rondoPlayerMatchdayFeed';
+const PLAYLIST_KEY = 'rondoPlayerPlaylist';
 
 function readStoredConfig() {
   try {
@@ -18,6 +19,14 @@ function readStoredConfig() {
 function readStoredFeed() {
   try {
     return JSON.parse(localStorage.getItem(FEED_KEY) || 'null');
+  } catch {
+    return null;
+  }
+}
+
+function readStoredPlaylist() {
+  try {
+    return JSON.parse(localStorage.getItem(PLAYLIST_KEY) || 'null');
   } catch {
     return null;
   }
@@ -43,6 +52,7 @@ export default function NarrowcastingDisplay() {
   const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
   const [config, setConfig] = useState(() => (isPreview ? null : readStoredConfig()));
   const [feed, setFeed] = useState(() => (isPreview ? null : readStoredFeed()));
+  const [playlist, setPlaylist] = useState(() => (isPreview ? null : readStoredPlaylist()));
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(isPreview);
   const [loadError, setLoadError] = useState('');
@@ -79,6 +89,18 @@ export default function NarrowcastingDisplay() {
         setLoadError('');
         if (!isPreview) localStorage.setItem(CONFIG_KEY, JSON.stringify(nextConfig));
 
+        const selectedPlaylist = new URLSearchParams(window.location.search).get('playlist');
+        const playlistPath = isPreview
+          ? `/rondo/v1/narrowcasting/preview/playlist${selectedPlaylist ? `?playlist_id=${encodeURIComponent(selectedPlaylist)}` : ''}`
+          : '/rondo/v1/narrowcasting/devices/me/playlist';
+        const playlistResponse = await fetch(apiUrl(playlistPath), { headers, cache: 'no-store' });
+        if (playlistResponse.ok) {
+          const nextPlaylist = await playlistResponse.json();
+          if (!active) return;
+          setPlaylist(nextPlaylist);
+          if (!isPreview) localStorage.setItem(PLAYLIST_KEY, JSON.stringify(nextPlaylist));
+        }
+
         const feedResponse = await fetch(apiUrl('/rondo/v1/narrowcasting/feeds/matchday'), {
           headers,
           cache: 'no-store',
@@ -108,18 +130,26 @@ export default function NarrowcastingDisplay() {
   }, [isPreview, token]);
 
   const scenes = useMemo(
-    () => buildMatchdayScenes(feed, config?.pilot_message),
-    [config?.pilot_message, feed],
+    () => buildPlaylistScenes(playlist, feed, config?.pilot_message),
+    [config?.pilot_message, feed, playlist],
   );
 
   useEffect(() => {
-    setSceneIndex(0);
-    if (scenes.length < 2) return undefined;
-    const timer = window.setInterval(() => {
+    if (!scenes.length) return undefined;
+    const duration = Math.max(5, Math.min(120, Number(scenes[sceneIndex]?.duration_seconds) || 12));
+    const timer = window.setTimeout(() => {
       setSceneIndex((current) => (current + 1) % scenes.length);
-    }, 12000);
-    return () => window.clearInterval(timer);
-  }, [scenes]);
+    }, duration * 1000);
+    return () => window.clearTimeout(timer);
+  }, [sceneIndex, scenes]);
+
+  useEffect(() => {
+    setSceneIndex(0);
+  }, [config?.pilot_message, feed?.source?.fetched_at, playlist?.content_version]);
+
+  useEffect(() => {
+    if (sceneIndex >= scenes.length) setSceneIndex(0);
+  }, [sceneIndex, scenes.length]);
 
   const timezone = config?.timezone || 'Europe/Amsterdam';
   const time = new Intl.DateTimeFormat('nl-NL', {
@@ -178,8 +208,11 @@ export default function NarrowcastingDisplay() {
     );
   }
 
+  const scene = scenes[sceneIndex] || scenes[0];
+  const sceneStyle = scene?.colors ? { backgroundColor: scene.colors.background, color: scene.colors.text } : undefined;
+
   return (
-    <main className="relative flex min-h-screen overflow-hidden bg-slate-950 text-white">
+    <main className="relative flex min-h-screen overflow-hidden bg-slate-950 text-white transition-colors duration-700" style={sceneStyle}>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(6,182,212,0.24),transparent_45%),radial-gradient(circle_at_bottom_left,rgba(37,99,235,0.26),transparent_48%)]" />
       <div className="relative flex min-h-screen w-full flex-col justify-between p-[4vw]">
         <header className="flex items-start justify-between gap-8">
@@ -193,7 +226,7 @@ export default function NarrowcastingDisplay() {
           </div>
         </header>
 
-        <NarrowcastingScene scene={scenes[sceneIndex] || scenes[0]} />
+        <div key={scene?.id || `${scene?.type}-${sceneIndex}`} className="animate-[fadeIn_500ms_ease-out]"><NarrowcastingScene scene={scene} /></div>
 
         <footer className="flex items-end justify-between">
           <div>
