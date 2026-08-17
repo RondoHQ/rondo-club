@@ -16,19 +16,34 @@ class UserSettings extends Base {
 
 	/**
 	 * Default visible columns for People list.
-	 * Name column is always visible and first — not included here.
+	 * Person name parts are regular columns so users can select and order them.
 	 */
-	private const DEFAULT_LIST_COLUMNS = [ 'characteristics', 'team', 'birthdate', 'modified' ];
+	private const DEFAULT_LIST_COLUMNS = [ 'first_name', 'last_name', 'company_name', 'characteristics', 'team', 'birthdate', 'modified' ];
 
 	/**
 	 * List preferences schema version. Bump when new default columns are added.
 	 */
-	private const LIST_PREFERENCES_VERSION = 4;
+	private const LIST_PREFERENCES_VERSION = 5;
 
 	/**
 	 * Core columns (non-custom-field columns).
 	 */
 	private const CORE_LIST_COLUMNS = [
+		[
+			'id'    => 'first_name',
+			'label' => 'Voornaam',
+			'type'  => 'core',
+		],
+		[
+			'id'    => 'last_name',
+			'label' => 'Achternaam',
+			'type'  => 'core',
+		],
+		[
+			'id'    => 'company_name',
+			'label' => 'Organisatie',
+			'type'  => 'core',
+		],
 		[
 			'id'    => 'characteristics',
 			'label' => 'Kenmerken',
@@ -771,6 +786,26 @@ class UserSettings extends Base {
 			}
 			if ( in_array( 'characteristics', $valid_column_ids, true ) && ! in_array( 'characteristics', $visible_columns, true ) ) {
 				array_unshift( $visible_columns, 'characteristics' );
+			}
+			if ( $preferences_version < 5 ) {
+				$visible_columns = array_values( array_diff( $visible_columns, [ 'name' ] ) );
+				$column_order    = array_values( array_diff( $column_order, [ 'name', 'first_name', 'last_name', 'company_name' ] ) );
+				foreach ( array_reverse( [ 'first_name', 'last_name', 'company_name' ] ) as $name_column ) {
+					if ( in_array( $name_column, $valid_column_ids, true ) && ! in_array( $name_column, $visible_columns, true ) ) {
+						array_unshift( $visible_columns, $name_column );
+					}
+					if ( in_array( $name_column, $valid_column_ids, true ) ) {
+						array_unshift( $column_order, $name_column );
+					}
+				}
+				if ( is_array( $column_widths ) && isset( $column_widths['name'] ) ) {
+					$name_width                    = (int) $column_widths['name'];
+					$column_widths['first_name'] ??= max( 120, (int) floor( $name_width * 0.45 ) );
+					$column_widths['last_name']  ??= max( 150, (int) ceil( $name_width * 0.55 ) );
+					unset( $column_widths['name'] );
+					update_user_meta( $user_id, 'rondo_people_list_column_widths', $column_widths );
+				}
+				update_user_meta( $user_id, 'rondo_people_list_column_order', $column_order );
 			}
 			update_user_meta( $user_id, 'rondo_people_list_preferences', $visible_columns );
 			update_user_meta( $user_id, 'rondo_people_list_pref_version', self::LIST_PREFERENCES_VERSION );

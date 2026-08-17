@@ -8,7 +8,7 @@ import { wpApi, prmApi } from '@/api/client';
 import { buildCsv, downloadCsv } from '@/utils/csvExport';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
-import { getTeamName, formatPhoneForTel, formatPhoneForDisplay, hasSponsorRole } from '@/utils/formatters';
+import { formatPersonSurname, getTeamName, formatPhoneForTel, formatPhoneForDisplay, hasSponsorRole } from '@/utils/formatters';
 import { format, parseYmd, isValid } from '@/utils/dateFormat';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import Pagination from '@/components/Pagination';
@@ -91,9 +91,9 @@ function getCurrentTeamId(person) {
 
 // Map column IDs to sort field names
 const COLUMN_SORT_FIELDS = {
-  name: 'first_name',
   first_name: 'first_name',
   last_name: 'last_name',
+  company_name: 'field_company_name',
   team: 'organization',
   birthdate: 'birthdate',
   modified: 'modified',
@@ -201,31 +201,6 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
           />
         </Link>
       </td>
-      {/* Name */}
-      <td
-        className="px-4 py-3 whitespace-nowrap"
-        style={{
-          width: columnWidths['name'] ? `${columnWidths['name']}px` : '200px',
-          minWidth: columnWidths['name'] ? `${columnWidths['name']}px` : '200px',
-        }}
-      >
-        <Link to={`/people/${person.id}`} className="flex items-center">
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-50">
-            {person.name || [person.first_name, person.infix, person.last_name].filter(Boolean).join(' ') || person.company_name}
-            {person.is_deceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
-          </span>
-          {person.former_member && (
-            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300">
-              Oud-lid
-            </span>
-          )}
-          {person.fields?.wacht_op_overschrijving && (
-            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-              Wacht op overschrijving
-            </span>
-          )}
-        </Link>
-      </td>
       {/* Dynamic columns based on visible_columns order */}
       {visibleColumns.map(colId => {
         const column = columnMap[colId];
@@ -237,6 +212,43 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
           minWidth: `${width}px`,
           maxWidth: `${width}px`,
         } : {};
+
+        if (colId === 'first_name') {
+          return (
+            <td key={colId} className="px-4 py-3 whitespace-nowrap" style={style}>
+              <Link to={`/people/${person.id}`} className="flex items-center">
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-50">
+                  {person.first_name || '-'}
+                </span>
+                {person.former_member && (
+                  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300">Oud-lid</span>
+                )}
+                {person.fields?.wacht_op_overschrijving && (
+                  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">Wacht op overschrijving</span>
+                )}
+              </Link>
+            </td>
+          );
+        }
+
+        if (colId === 'last_name') {
+          return (
+            <td key={colId} className="px-4 py-3 whitespace-nowrap" style={style}>
+              <Link to={`/people/${person.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-50">
+                {formatPersonSurname(person.infix, person.last_name) || '-'}
+                {person.is_deceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
+              </Link>
+            </td>
+          );
+        }
+
+        if (colId === 'company_name') {
+          return (
+            <td key={colId} className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" style={style}>
+              {person.fields?.company_name || '-'}
+            </td>
+          );
+        }
 
         if (colId === 'type_lid') {
           return (
@@ -501,17 +513,6 @@ function PersonListView({
               className="w-10 px-2 bg-gray-50 dark:bg-gray-800"
               style={{ minWidth: '40px' }}
             ></th>
-            {/* Name column */}
-            <ResizableHeader
-              colId="name"
-              column={{ id: 'name', type: 'core', custom: false }}
-              label="Naam"
-              width={columnWidths['name'] || 200}
-              sortField={sortField}
-              sortOrder={sortOrder}
-              onSort={onSort}
-              onWidthChange={onColumnWidthChange}
-            />
             {/* Dynamic columns based on visible_columns order */}
             {visibleColumns.map(colId => {
               const column = columnMap[colId];
@@ -941,7 +942,7 @@ export default function PeopleList() {
     return map;
   }, [preferences?.available_columns]);
 
-  // Get visible columns (excluding 'name' which is always shown in a fixed position).
+  // Get visible columns in the user's chosen order.
   // When a season-based membership filter is active, force the relevant date columns
   // to appear first so the matching reason is visible without fiddling with Column
   // Settings. User's stored preferences are unchanged.
@@ -954,13 +955,14 @@ export default function PeopleList() {
 
     if (!preferences?.visible_columns || !preferences?.column_order) {
       // Fallback to default columns if preferences not loaded
-      return forced.length > 0 ? [...forced, 'team'] : ['team'];
+      const fallback = ['first_name', 'last_name', 'company_name', 'team'];
+      return forced.length > 0 ? [...forced, ...fallback] : fallback;
     }
 
-    // Filter column_order to only visible columns, excluding 'name'
+    // Filter column_order to only visible columns.
     const visibleSet = new Set(preferences.visible_columns);
     const cols = preferences.column_order.filter(colId =>
-      colId !== 'name' && visibleSet.has(colId)
+      visibleSet.has(colId)
     );
 
     if (forced.length > 0) {
@@ -1379,16 +1381,14 @@ export default function PeopleList() {
         });
       }
 
-      const headers = ['Naam', 'Bedrijfsnaam', 'Voornaam', 'Tussenvoegsel', 'Achternaam', 'Email', 'Telefoon', 'Team', 'Adres', 'Postcode', 'Plaats', 'Land'];
+      const headers = ['Voornaam', 'Achternaam', 'Organisatie', 'Email', 'Telefoon', 'Team', 'Adres', 'Postcode', 'Plaats', 'Land'];
       const rows = allPeople.map(person => {
         const teamId = getCurrentTeamId(person);
         const address = getPrimaryAddress(person);
         return [
-          person.name || [person.first_name, person.infix, person.last_name].filter(Boolean).join(' ') || person.company_name || '',
-          person.fields?.company_name || person.company_name || '',
           person.first_name || '',
-          person.infix || '',
-          person.last_name || '',
+          formatPersonSurname(person.infix, person.last_name),
+          person.fields?.company_name || person.company_name || '',
           getFirstEmail(person) || '',
           getFirstPhone(person) || '',
           (teamId && exportTeamMap[teamId]) || '',

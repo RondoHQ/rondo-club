@@ -4,7 +4,7 @@ import { RefreshCw, Coins, FileText, Loader2 } from 'lucide-react';
 import { useFeeList, feeKeys } from '@/hooks/useFees';
 import { useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
-import { formatCurrency, formatPercentage, getCategoryColor } from '@/utils/formatters';
+import { comparePersonNames, formatCurrency, formatPercentage, formatPersonSurname, getCategoryColor } from '@/utils/formatters';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { DataTable, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
@@ -182,7 +182,7 @@ export function NogTeFactureren() {
               onChange={() => handleToggleMember(member.id)}
               disabled={!isEligible || bulkCreating}
               className="w-4 h-4 text-electric-cyan border-gray-300 rounded focus:ring-electric-cyan disabled:opacity-40 cursor-pointer"
-              aria-label={`Selecteer ${member.first_name} ${member.last_name}`}
+              aria-label={`Selecteer ${member.first_name} ${formatPersonSurname(member.infix, member.last_name)}`}
             />
           );
         },
@@ -214,10 +214,14 @@ export function NogTeFactureren() {
             to={`/people/${row.original.id}`}
             className="text-sm text-gray-700 dark:text-gray-300 hover:text-electric-cyan dark:hover:text-electric-cyan"
           >
-            {row.original.last_name}
+            {formatPersonSurname(row.original.infix, row.original.last_name)}
           </Link>
         ),
         filterType: FILTER_TYPES.TEXT,
+        filterFn: (row, _columnId, value) => formatPersonSurname(row.original.infix, row.original.last_name)
+          .toLocaleLowerCase('nl')
+          .includes(String(value || '').toLocaleLowerCase('nl')),
+        sortingFn: (rowA, rowB) => comparePersonNames(rowA.original, rowB.original, 'last_name'),
       }),
       createColumn({
         id: 'category',
