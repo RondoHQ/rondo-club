@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.8.2] - 2026-08-17
+
+### Changed
+
+- Het Club TV-scherm gebruikt voortaan het centraal ingestelde clublogo en de clubkleur in een herkenbare, rustige tv-layout. Programma, kleedkamers en uitslagen zijn typografisch aangescherpt voor leesbaarheid op afstand; sponsor- en scènekleuren blijven configureerbaar.
+
 ## [34.8.1] - 2026-08-17
 
 ### Changed

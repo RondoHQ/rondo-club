@@ -15,6 +15,7 @@ use Rondo\Fields\Fields;
 use Rondo\Fields\Formatter;
 use Rondo\Narrowcasting\Content;
 use Rondo\Narrowcasting\SportlinkMatchday;
+use Rondo\Pages\PublicPageChrome;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -878,10 +879,19 @@ class Narrowcasting extends Base {
 
 	/** Add shared club and polling metadata to a display configuration. */
 	private function configuration_envelope( array $configuration ): array {
+		$branding         = PublicPageChrome::branding();
+		$accent_color     = sanitize_hex_color( $branding['accent_color'] ) ?: PublicPageChrome::DEFAULT_ACCENT;
+		$background_color = sanitize_hex_color( $branding['accent_background_color'] ) ?: PublicPageChrome::DEFAULT_BACKGROUND;
+
 		return array_merge(
 			$configuration,
 			[
 				'club_name'                  => ClubConfig::get_club_name() ?: get_bloginfo( 'name' ),
+				'branding'                   => [
+					'logo_url'         => esc_url_raw( $branding['logo_url'] ),
+					'accent_color'     => $accent_color,
+					'background_color' => $background_color,
+				],
 				'display_url'                => home_url( '/display' ),
 				'heartbeat_interval_seconds' => 60,
 				'command_interval_seconds'   => 15,
