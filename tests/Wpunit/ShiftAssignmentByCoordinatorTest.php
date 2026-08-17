@@ -105,6 +105,38 @@ class ShiftAssignmentByCoordinatorTest extends RondoTestCase {
 		$this->assertSame( 403, $this->add_assignee( $this->shift_id, $this->person_id )->get_status() );
 	}
 
+	/** A volunteer coordinator can edit times on a shift created by another user. */
+	public function test_coordinator_can_update_another_authors_shift_times(): void {
+		update_option( 'timezone_string', 'Europe/Amsterdam' );
+
+		$other_author = self::factory()->user->create( [ 'role' => 'rondo_user' ] );
+		wp_update_post(
+			[
+				'ID'          => $this->shift_id,
+				'post_author' => $other_author,
+			]
+		);
+
+		$this->as_coordinator();
+		$this->assertTrue( current_user_can( 'edit_post', $this->shift_id ) );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/dienst-shifts/' . $this->shift_id );
+		$request->set_param(
+			'fields',
+			[
+				'start_datetime' => '2026-08-30T08:45:00+02:00',
+				'end_datetime'   => '2026-08-30T11:45:00+02:00',
+			]
+		);
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertSame( '2026-08-30 08:45:00', get_post_meta( $this->shift_id, 'start_datetime', true ) );
+		$this->assertSame( '2026-08-30 11:45:00', get_post_meta( $this->shift_id, 'end_datetime', true ) );
+		$this->assertSame( '2026-08-30T08:45:00+02:00', $response->get_data()['fields']['start_datetime'] );
+		$this->assertSame( '2026-08-30T11:45:00+02:00', $response->get_data()['fields']['end_datetime'] );
+	}
+
 	public function test_assigning_twice_is_idempotent(): void {
 		$this->as_coordinator();
 

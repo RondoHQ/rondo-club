@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.7.1] - 2026-08-17
+
+### Fixed
+
+- Gewijzigde tijden van inschrijftaken worden voor vrijwilligersbeheerders direct zichtbaar; bij elke opslag wordt ook de gegenereerde titel met de nieuwe begintijd bijgewerkt.
+
 ## [34.7.0] - 2026-08-15
 
 ### Added
