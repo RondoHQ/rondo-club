@@ -1,6 +1,6 @@
 # Ouder/verzorger toevoegen vanuit Rondo
 
-**Status:** voorstel
+**Status:** fase 0 afgerond; implementatie nog niet gestart
 
 **Datum:** 2026-08-17
 
@@ -257,6 +257,39 @@ Dit gedrag bestaat grotendeels al, maar krijgt expliciete regressietests voor ee
 - Stop en herontwerp als Sportlink geen betrouwbare parent-write via de UI toelaat.
 
 **Gate:** selectorcontract is bewezen; er is nog niets voor gebruikers zichtbaar.
+
+#### Resultaat fase 0 — 2026-08-17
+
+De gate is geslaagd op de productie-rondo-syncserver met de bestaande `SportlinkSession`. De selectie en browsernavigatie bleven op die server; er zijn geen identificerende jeugdgegevens naar de ontwikkelsessie geëxporteerd.
+
+Read-only inspectie is uitgevoerd op jeugdrecords met nul, één en twee gevulde ouder-slots. In alle drie gevallen bleek:
+
+- de actuele data beschikbaar via de response `/member/MemberParentalInfo?`;
+- de oudereditor de vijfde gewone `Wijzig`-actie te zijn (index 4 wanneer `Wijzig lidsoort` index 0 is);
+- de editor een zichtbare en actieve knop `Sla op` te hebben;
+- dezelfde zes inputs bewerkbaar te zijn:
+  - `NameParent1` (`text`)
+  - `EmailAddressParent1` (`email`)
+  - `TelephoneParent1` (`telephone`)
+  - `NameParent2` (`text`)
+  - `EmailAddressParent2` (`email`)
+  - `TelephoneParent2` (`telephone`)
+- `ContactThroughParents` in de oudersectie aanwezig te kunnen zijn en daarom bij writes ongewijzigd behouden te moeten blijven.
+
+Het savecontract is vervolgens veilig end-to-end bewezen. Een bestaand veld is alleen in de browser tijdelijk aangepast om de SPA dirty te maken. De uitgaande payload is in Playwright vóór verzending teruggeschreven naar alle zes oorspronkelijke ouderwaarden. Sportlink verwerkte daarna de echte request:
+
+| Eigenschap | Bewezen waarde |
+|---|---|
+| Methode | `PUT` |
+| Endpoint | `/navajo/entity/common/clubweb/member/MemberParentalInfo` |
+| Content-Type | `text/plain;charset=UTF-8` |
+| Body | JSON-object met de zes oudervelden |
+| Response | HTTP `200` |
+| Verificatie | alle zes velden na een verse read exact gelijk aan vóór de test |
+
+Er is dus geen zichtbare of blijvende productie-inhoud veranderd. De conclusie is dat rondo-sync deze velden via de ingelogde Sportlink-SPA kan terugschrijven.
+
+Implementatie mag de numerieke knopindex alleen als voorkeursroute gebruiken. Net als de bestaande reverse-sync moet de writer bij UI-variatie alle resterende `Wijzig`-knoppen proberen en de juiste sectie herkennen aan `input[name="NameParent1"]`. De write moet door de pagina zelf worden opgewekt; directe requests naar de Navajo-endpoint missen de in-page authenticatie.
 
 ### Fase 1 — Rondo Club domein en API
 
