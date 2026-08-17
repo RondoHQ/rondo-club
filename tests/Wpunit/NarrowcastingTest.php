@@ -187,6 +187,11 @@ class NarrowcastingTest extends RondoTestCase {
 		$this->assertSame( '#fff7f7', $preview->get_data()['branding']['background_color'] );
 		$this->assertArrayHasKey( 'logo_url', $preview->get_data()['branding'] );
 		$this->assertArrayNotHasKey( 'device_secret_hash', $preview->get_data() );
+		$preview_request = new WP_REST_Request( 'GET', '/rondo/v1/narrowcasting/feeds/matchday' );
+		$preview_request->set_query_params( [ 'preview' => '1' ] );
+		$preview_matchday = $this->server->dispatch( $preview_request );
+		$this->assertSame( 200, $preview_matchday->get_status() );
+		$this->assertSame( '6', wp_date( 'N', strtotime( $preview_matchday->get_data()['target_date'] ), wp_timezone() ) );
 
 		$settings = $this->dispatch(
 			'POST',

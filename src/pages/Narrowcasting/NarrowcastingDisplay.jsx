@@ -67,6 +67,12 @@ function mixHex(value, target, weight) {
   return `#${mixed.map((component) => component.toString(16).padStart(2, '0')).join('')}`;
 }
 
+function isDarkHex(value) {
+  const [red, green, blue] = hexRgb(value).map((component) => component / 255);
+  const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+  return luminance < 0.52;
+}
+
 export default function NarrowcastingDisplay() {
   const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
   const [config, setConfig] = useState(() => (isPreview ? null : readStoredConfig()));
@@ -120,7 +126,8 @@ export default function NarrowcastingDisplay() {
           if (!isPreview) localStorage.setItem(PLAYLIST_KEY, JSON.stringify(nextPlaylist));
         }
 
-        const feedResponse = await fetch(apiUrl('/rondo/v1/narrowcasting/feeds/matchday'), {
+        const feedPath = `/rondo/v1/narrowcasting/feeds/matchday${isPreview ? '?preview=1' : ''}`;
+        const feedResponse = await fetch(apiUrl(feedPath), {
           headers,
           cache: 'no-store',
         });
@@ -197,19 +204,19 @@ export default function NarrowcastingDisplay() {
 
   if (isPreview && loading && !config) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-950 p-8 text-white">
-        <p className="text-xl text-slate-300">Voorbeeld laden…</p>
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 p-8 text-slate-950">
+        <p className="text-xl text-slate-600">Voorbeeld laden…</p>
       </main>
     );
   }
 
   if (isPreview && loadError && !config) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-950 p-8 text-white">
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 p-8 text-slate-950">
         <div className="max-w-xl text-center">
           <MonitorSetupIcon />
           <h1 className="mt-6 text-4xl font-semibold">Voorbeeld niet beschikbaar</h1>
-          <p className="mt-3 text-xl text-slate-300">{loadError}</p>
+          <p className="mt-3 text-xl text-slate-600">{loadError}</p>
         </div>
       </main>
     );
@@ -217,11 +224,11 @@ export default function NarrowcastingDisplay() {
 
   if (!isPreview && !token && !config) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-950 p-8 text-white">
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 p-8 text-slate-950">
         <div className="max-w-xl text-center">
           <MonitorSetupIcon />
           <h1 className="mt-6 text-4xl font-semibold">Rondo Player</h1>
-          <p className="mt-3 text-xl text-slate-300">Deze browser is nog niet door een player gekoppeld.</p>
+          <p className="mt-3 text-xl text-slate-600">Deze browser is nog niet door een player gekoppeld.</p>
         </div>
       </main>
     );
@@ -230,35 +237,45 @@ export default function NarrowcastingDisplay() {
   const scene = scenes[sceneIndex] || scenes[0];
   const clubAccent = normalizedHex(config?.branding?.accent_color, '#0891b2');
   const clubBackground = normalizedHex(config?.branding?.background_color, '#ffffff');
-  const accentRgb = hexRgb(clubAccent).join(', ');
-  const clubAccentSoft = mixHex(clubAccent, '#ffffff', 0.48);
-  const clubAccentDark = mixHex(clubAccent, '#000000', 0.35);
+  const sceneBackground = normalizedHex(scene?.colors?.background, clubBackground);
+  const darkScene = isDarkHex(sceneBackground);
+  const sceneText = normalizedHex(scene?.colors?.text, darkScene ? '#ffffff' : '#142219');
+  const sceneAccent = normalizedHex(scene?.colors?.accent, clubAccent);
+  const sceneAccentRgb = hexRgb(sceneAccent).join(', ');
+  const sceneAccentReadable = darkScene ? mixHex(sceneAccent, '#ffffff', 0.42) : mixHex(sceneAccent, '#000000', 0.05);
   const sceneStyle = {
     '--club-accent': clubAccent,
-    '--club-accent-rgb': accentRgb,
-    '--club-accent-soft': clubAccentSoft,
-    '--club-accent-dark': clubAccentDark,
     '--club-background': clubBackground,
-    backgroundColor: scene?.colors?.background || '#09090b',
-    color: scene?.colors?.text || '#ffffff',
+    '--scene-accent': sceneAccent,
+    '--scene-accent-readable': sceneAccentReadable,
+    '--display-text': sceneText,
+    '--display-muted': darkScene ? 'rgba(255,255,255,.62)' : 'rgba(20,34,25,.62)',
+    '--display-border': darkScene ? 'rgba(255,255,255,.15)' : 'rgba(0,105,53,.18)',
+    '--display-surface': darkScene ? 'rgba(0,0,0,.2)' : 'rgba(255,255,255,.78)',
+    '--display-surface-strong': darkScene ? 'rgba(255,255,255,.1)' : 'rgba(0,105,53,.08)',
+    '--display-danger-bg': darkScene ? 'rgba(239,68,68,.16)' : 'rgba(254,226,226,.78)',
+    '--display-danger-border': darkScene ? 'rgba(252,165,165,.28)' : 'rgba(220,38,38,.22)',
+    '--display-danger-text': darkScene ? '#fecaca' : '#b91c1c',
+    '--display-warning-text': darkScene ? '#fde68a' : '#a16207',
+    backgroundColor: sceneBackground,
+    color: sceneText,
   };
   const clubLogo = config?.branding?.logo_url;
 
   return (
-    <main className="relative flex min-h-screen overflow-hidden bg-slate-950 text-white transition-colors duration-700" style={sceneStyle}>
+    <main className="relative flex min-h-screen overflow-hidden transition-colors duration-700" style={sceneStyle}>
       <div
         className="absolute inset-0"
         style={{
-          background: `radial-gradient(circle at 8% 2%, rgba(${accentRgb}, .34), transparent 34%), radial-gradient(circle at 94% 100%, rgba(${accentRgb}, .18), transparent 38%), linear-gradient(120deg, rgba(255,255,255,.035), transparent 38%)`,
+          background: `radial-gradient(circle at 8% 2%, rgba(${sceneAccentRgb}, ${darkScene ? '.28' : '.13'}), transparent 38%), radial-gradient(circle at 94% 100%, rgba(${sceneAccentRgb}, ${darkScene ? '.16' : '.08'}), transparent 42%)`,
         }}
       />
-      <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(rgba(255,255,255,.16)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.16)_1px,transparent_1px)] [background-size:4vw_4vw]" />
       {clubLogo && (
         <img
           src={clubLogo}
           alt=""
           aria-hidden="true"
-          className="pointer-events-none absolute right-[-2vw] top-1/2 h-[72vh] w-[48vw] -translate-y-1/2 object-contain opacity-[0.055]"
+          className="pointer-events-none absolute right-[-2vw] top-1/2 h-[72vh] w-[48vw] -translate-y-1/2 object-contain opacity-[0.065]"
         />
       )}
       <div className="absolute inset-y-0 left-0 w-[0.7vw] bg-[var(--club-accent)]" />
@@ -266,7 +283,7 @@ export default function NarrowcastingDisplay() {
         <header className="flex items-center justify-between gap-8">
           <div className="flex items-center gap-[1.5vw]">
             {clubLogo ? (
-              <div className="flex h-[6vw] w-[6vw] items-center justify-center rounded-[1vw] bg-[var(--club-background)] p-[0.55vw] shadow-[0_1vw_3vw_rgba(0,0,0,.28)]">
+              <div className="flex h-[6vw] w-[6vw] items-center justify-center rounded-[1vw] border border-[var(--display-border)] bg-[var(--club-background)] p-[0.55vw] shadow-[0_1vw_3vw_rgba(0,0,0,.14)]">
                 <img src={clubLogo} alt={`Logo ${config?.club_name || 'club'}`} className="h-full w-full object-contain" />
               </div>
             ) : (
@@ -275,11 +292,11 @@ export default function NarrowcastingDisplay() {
               </div>
             )}
             <div>
-              <p className="text-[1.05vw] font-bold uppercase tracking-[0.3em] text-[var(--club-accent-soft)]">Club TV</p>
+              <p className="text-[1.05vw] font-bold uppercase tracking-[0.3em] text-[var(--scene-accent-readable)]">Club TV</p>
               <h1 className="mt-[0.45vw] text-[3.1vw] font-bold leading-none tracking-tight">{config?.club_name || 'Rondo'}</h1>
             </div>
           </div>
-          <div className={`flex items-center gap-[0.65vw] rounded-full border px-[1.15vw] py-[0.62vw] text-[0.95vw] font-medium backdrop-blur-sm ${connected ? 'border-white/15 bg-white/8 text-white/75' : 'border-amber-300/25 bg-amber-300/10 text-amber-100'}`}>
+          <div className={`flex items-center gap-[0.65vw] rounded-full border px-[1.15vw] py-[0.62vw] text-[0.95vw] font-medium backdrop-blur-sm ${connected ? 'border-[var(--display-border)] bg-[var(--display-surface)] text-[var(--display-muted)]' : 'border-amber-500/25 bg-amber-300/10 text-[var(--display-warning-text)]'}`}>
             {connected ? <Wifi className="h-[1.15vw] w-[1.15vw]" /> : <WifiOff className="h-[1.15vw] w-[1.15vw]" />}
             {isPreview ? 'Browserpreview' : connected ? 'Verbonden' : 'Offline · lokaal beeld'}
           </div>
@@ -287,10 +304,10 @@ export default function NarrowcastingDisplay() {
 
         <div key={scene?.id || `${scene?.type}-${sceneIndex}`} className="animate-[fadeIn_500ms_ease-out] py-[1.5vw]"><NarrowcastingScene scene={scene} /></div>
 
-        <footer className="flex items-end justify-between border-t border-white/12 pt-[1.4vw]">
+        <footer className="flex items-end justify-between border-t border-[var(--display-border)] pt-[1.4vw]">
           <div>
-            <p className="text-[1.35vw] font-medium capitalize text-white/80">{date}</p>
-            <p className={`mt-[0.35vw] text-[0.82vw] ${feedIsStale ? 'text-amber-300' : 'text-white/40'}`}>
+            <p className="text-[1.35vw] font-medium capitalize text-[var(--display-text)] opacity-80">{date}</p>
+            <p className={`mt-[0.35vw] text-[0.82vw] ${feedIsStale ? 'text-[var(--display-warning-text)]' : 'text-[var(--display-muted)]'}`}>
               {config?.name}{config?.location ? ` · ${config.location}` : ''}
               {sourceTime ? ` · Sportlink bijgewerkt om ${sourceTime}${feedIsStale ? ' · verouderd' : ''}` : ''}
             </p>
@@ -305,7 +322,7 @@ export default function NarrowcastingDisplay() {
 
 function MonitorSetupIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 64 64" className="mx-auto h-20 w-20 text-cyan-300" fill="none" stroke="currentColor" strokeWidth="3">
+    <svg aria-hidden="true" viewBox="0 0 64 64" className="mx-auto h-20 w-20 text-emerald-700" fill="none" stroke="currentColor" strokeWidth="3">
       <rect x="7" y="9" width="50" height="36" rx="4" />
       <path d="M23 55h18M32 45v10" />
       <path d="m25 27 5 5 10-11" />

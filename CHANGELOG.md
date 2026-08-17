@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.8.3] - 2026-08-17
+
+### Changed
+
+- De Club TV-browserpreview toont voortaan het programma van de eerstvolgende zaterdag, terwijl gekoppelde players de actuele speeldag blijven gebruiken.
+- Club TV-content gebruikt standaard het centrale clubgroen en de lichte clubachtergrond. Eigen achtergrond-, tekst- en accentkleuren zijn alleen actief wanneer een beheerder de nieuwe optie "Clubkleuren gebruiken" uitzet.
+
+### Fixed
+
+- Het ingebouwde welkomstbeeld gebruikt niet langer de oude cyaanblauwe accentkleur en donkerblauwe achtergrond.
+
 ## [34.8.2] - 2026-08-17
 
 ### Changed

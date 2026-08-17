@@ -141,14 +141,22 @@ class SportlinkMatchday {
 	/**
 	 * Return a credential-free feed, optionally refreshing expired data first.
 	 */
-	public function get_feed( bool $refresh_if_stale = true ): array {
+	public function get_feed( bool $refresh_if_stale = true, ?string $target_date = null ): array {
 		$cache = $this->cache();
 		if ( $refresh_if_stale && $this->client_id() !== '' && $this->cache_needs_refresh( $cache ) ) {
 			$this->refresh( false );
 			$cache = $this->cache();
 		}
 
-		return $this->public_feed( $cache );
+		return $this->public_feed( $cache, $target_date );
+	}
+
+	/** Return the matchday feed for the nearest Saturday, including today when today is Saturday. */
+	public function get_upcoming_saturday_feed( bool $refresh_if_stale = true ): array {
+		$today  = new DateTimeImmutable( 'today', wp_timezone() );
+		$target = (int) $today->format( 'N' ) === 6 ? $today : $today->modify( 'next saturday' );
+
+		return $this->get_feed( $refresh_if_stale, $target->format( 'Y-m-d' ) );
 	}
 
 	/**
@@ -226,7 +234,7 @@ class SportlinkMatchday {
 				'params'   => array_merge(
 					$common,
 					[
-						'aantaldagen'      => 3,
+						'aantaldagen'      => 7,
 						'aantalregels'     => 100,
 						'weekoffset'       => 0,
 						'eigenwedstrijden' => 'JA',
@@ -315,10 +323,6 @@ class SportlinkMatchday {
 
 			$item = $this->normalize_fixture( $row, $name === 'results' );
 			if ( $item === null ) {
-				continue;
-			}
-
-			if ( $name !== 'results' && $item['date'] !== wp_date( 'Y-m-d', null, wp_timezone() ) ) {
 				continue;
 			}
 
@@ -418,11 +422,17 @@ class SportlinkMatchday {
 		return substr( sanitize_text_field( is_scalar( $value ) ? (string) $value : '' ), 0, 200 );
 	}
 
-	/** Merge cancellations into today's matches and expose freshness metadata. */
-	private function public_feed( array $cache ): array {
+	/** Select one matchday, merge cancellations, and expose freshness metadata. */
+	private function public_feed( array $cache, ?string $target_date = null ): array {
+		if ( ! $target_date || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $target_date ) ) {
+			$target_date = wp_date( 'Y-m-d', null, wp_timezone() );
+		}
+
 		$matches       = $cache['feeds']['matches']['items'] ?? [];
 		$cancellations = $cache['feeds']['cancellations']['items'] ?? [];
 		$results       = $cache['feeds']['results']['items'] ?? [];
+		$matches       = array_values( array_filter( $matches, static fn( array $match ): bool => ( $match['date'] ?? '' ) === $target_date ) );
+		$cancellations = array_values( array_filter( $cancellations, static fn( array $match ): bool => ( $match['date'] ?? '' ) === $target_date ) );
 		$cancelled_ids = array_fill_keys( array_column( $cancellations, 'id' ), true );
 
 		foreach ( $matches as &$match ) {
@@ -451,6 +461,7 @@ class SportlinkMatchday {
 		return [
 			'configured'    => $this->client_id() !== '' && $this->club_code() !== '',
 			'generated_at'  => gmdate( DATE_RFC3339 ),
+			'target_date'   => $target_date,
 			'matches'       => array_values( $matches ),
 			'cancellations' => array_values( $cancellations ),
 			'results'       => array_values( $results ),
