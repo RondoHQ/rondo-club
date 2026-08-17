@@ -225,6 +225,7 @@ export const prmApi = {
 
   // Commissie-specific
   getCommissiePeople: (commissieId) => api.get(`/rondo/v1/commissies/${commissieId}/people`),
+  updateCommissieInfo: (commissieId, fields) => api.post(`/rondo/v1/commissies/${commissieId}/info`, { fields }),
   setCommissieLogo: (commissieId, mediaId) => api.post(`/rondo/v1/commissies/${commissieId}/logo`, { media_id: mediaId }),
 
   // Photo uploads with proper naming

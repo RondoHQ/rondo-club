@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Alleen wanneer een ouder niet veilig automatisch kan worden gekoppeld, bijvoorbeeld omdat beide oudervelden bezet zijn, gebruikt de activatie nog de tijdelijke accountkoppeling met het kind.
 
+## [34.12.1] - 2026-08-17
+
+### Fixed
+
+- Bestuursleden kunnen de Rondo-lokale informatie van commissies weer opslaan. De aparte schrijfroute accepteert uitsluitend omschrijving, taakomschrijving, tijdsinvestering, flexibiliteit en ledenlimieten; Sportlink-gegevens blijven beschermd.
+- Bewerkknoppen voor commissie-informatie en aangepaste velden worden alleen getoond wanneer de gebruiker die gegevens daadwerkelijk mag wijzigen, en een mislukte opslag geeft voortaan een zichtbare foutmelding.
+
 ## [34.11.1] - 2026-08-17
 
 ### Fixed
