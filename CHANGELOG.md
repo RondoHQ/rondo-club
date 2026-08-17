@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.11.1] - 2026-08-17
+
+### Fixed
+
+- De detailpagina van feedback toont voortaan de toelichting bij opgeloste en afgewezen feedback, inclusief de datum van afhandeling.
+
 ## [34.11.0] - 2026-08-17
 
 ### Added

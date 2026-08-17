@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Bug, Lightbulb, Clock, User, Monitor, Link as LinkIcon, Pencil, ExternalLink, MessageCircle, Bot, Send } from 'lucide-react';
+import { ArrowLeft, Bug, Lightbulb, Clock, User, Monitor, Link as LinkIcon, Pencil, ExternalLink, MessageCircle, Bot, Send, CircleCheck, CircleX } from 'lucide-react';
 import { useFeedback, useUpdateFeedback, useFeedbackComments, useCreateFeedbackComment } from '@/hooks/useFeedback';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -54,6 +54,56 @@ const projectColors = {
   'rondo-sync': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
   'website': 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
 };
+
+const outcomeConfig = {
+  resolved: {
+    title: 'Resolution',
+    dateLabel: 'Resolved on',
+    summaryKey: 'resolution_summary',
+    dateKey: 'resolved_at',
+    icon: CircleCheck,
+    cardClass: 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20',
+    iconClass: 'text-green-600 dark:text-green-400',
+  },
+  declined: {
+    title: 'Reason for declining',
+    dateLabel: 'Declined on',
+    summaryKey: 'decline_reason',
+    dateKey: 'declined_at',
+    icon: CircleX,
+    cardClass: 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50',
+    iconClass: 'text-gray-500 dark:text-gray-400',
+  },
+};
+
+function FeedbackOutcome({ meta }) {
+  const config = outcomeConfig[meta.status];
+  const summary = config ? meta[config.summaryKey] : '';
+
+  if (!config || !summary) {
+    return null;
+  }
+
+  const Icon = config.icon;
+  const outcomeDate = meta[config.dateKey];
+
+  return (
+    <div className={`rounded-lg border p-6 ${config.cardClass}`}>
+      <div className="flex items-start gap-3">
+        <Icon className={`mt-0.5 h-5 w-5 flex-shrink-0 ${config.iconClass}`} />
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{config.title}</h2>
+          {outcomeDate ? (
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {config.dateLabel} {format(new Date(outcomeDate), 'MMM d, yyyy')}
+            </p>
+          ) : null}
+          <p className="mt-3 whitespace-pre-wrap text-gray-700 dark:text-gray-300">{summary}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function FeedbackDetail() {
   const { id } = useParams();
@@ -189,6 +239,8 @@ export default function FeedbackDetail() {
           )}
         </div>
       </div>
+
+      <FeedbackOutcome meta={feedback.meta} />
 
       {/* PR Link */}
       {feedback.meta.pr_url && (
