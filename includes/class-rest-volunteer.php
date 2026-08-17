@@ -387,6 +387,9 @@ class Volunteer extends Base {
 			$people[] = [
 				'id'              => $post->ID,
 				'name'            => $this->sanitize_text( $post->post_title ),
+				'first_name'      => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $post->ID, 'first_name' ) ),
+				'infix'           => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $post->ID, 'infix' ) ),
+				'last_name'       => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $post->ID, 'last_name' ) ),
 				'thumbnail'       => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
 				'datum_iva'       => \Rondo\Fields\Formatter::for_wire( 'person', [ 'datum_iva' => \Rondo\Fields\Fields::get_for_post( $post->ID, 'datum_iva' ) ] )['datum_iva'],
 				'iva_certificaat' => $cert_url ? $this->sanitize_url( $cert_url ) : '',
@@ -1211,6 +1214,9 @@ class Volunteer extends Base {
 			$persons[] = [
 				'id'                  => (int) $pid,
 				'name'                => $this->sanitize_text( $post->post_title ),
+				'first_name'          => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $pid, 'first_name' ) ),
+				'infix'               => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $pid, 'infix' ) ),
+				'last_name'           => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $pid, 'last_name' ) ),
 				'thumbnail'           => $this->sanitize_url( get_the_post_thumbnail_url( $pid, 'thumbnail' ) ),
 				'knvb_id'             => (string) get_post_meta( $pid, 'knvb-id', true ),
 				'leeftijdsgroep'      => $age_group,
@@ -1225,8 +1231,14 @@ class Volunteer extends Base {
 			];
 		}
 
-		// Sort by name for a stable display.
-		usort( $persons, fn( $a, $b ) => strcasecmp( $a['name'], $b['name'] ) );
+		// Sort by surname, then first name, for a stable Dutch member list.
+		usort(
+			$persons,
+			static function ( array $a, array $b ): int {
+				$last_name_compare = strcasecmp( $a['last_name'], $b['last_name'] );
+				return $last_name_compare !== 0 ? $last_name_compare : strcasecmp( $a['first_name'], $b['first_name'] );
+			}
+		);
 
 		return rest_ensure_response(
 			[
@@ -1374,6 +1386,9 @@ class Volunteer extends Base {
 			$persons[] = [
 				'id'           => (int) $pid,
 				'name'         => $this->sanitize_text( $post->post_title ),
+				'first_name'   => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $pid, 'first_name' ) ),
+				'infix'        => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $pid, 'infix' ) ),
+				'last_name'    => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $pid, 'last_name' ) ),
 				'thumbnail'    => $this->sanitize_url( get_the_post_thumbnail_url( $pid, 'thumbnail' ) ),
 				'is_trigger'   => in_array( (int) $pid, $unit['trigger_person_ids'], true ),
 				'is_exempt'    => $reason !== null,

@@ -6,6 +6,8 @@ import { prmApi } from '@/api/client';
 import IvaCertificateLink from '@/components/IvaCertificateLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
+import SortableHeader from '@/components/SortableHeader';
+import { comparePersonNames, formatPersonSurname } from '@/utils/formatters';
 
 const TABS = [
   { id: 'pending', label: 'Wacht op goedkeuring' },
@@ -29,6 +31,8 @@ export default function VrijwilligersIva() {
   useDocumentTitle('IVA — Vrijwilligers');
   const queryClient = useQueryClient();
   const [tab, setTab] = useState('pending');
+  const [sortField, setSortField] = useState('last_name');
+  const [sortOrder, setSortOrder] = useState('asc');
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { data: people = [], isLoading, error } = useQuery({
@@ -67,7 +71,18 @@ export default function VrijwilligersIva() {
       ? 'expired'
       : 'pending';
   const activeTab = reviewPerson ? reviewTab : tab;
-  const active = reviewPerson ? [reviewPerson] : (buckets[activeTab] || []);
+  const active = useMemo(() => {
+    const selected = reviewPerson ? [reviewPerson] : (buckets[activeTab] || []);
+    return [...selected].sort((a, b) => {
+      const comparison = comparePersonNames(a, b, sortField);
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  }, [reviewPerson, buckets, activeTab, sortField, sortOrder]);
+
+  const handleSort = (field, order) => {
+    setSortField(field);
+    setSortOrder(order);
+  };
 
   const showFullList = (nextTab = activeTab) => {
     setSearchParams({});
@@ -130,7 +145,8 @@ export default function VrijwilligersIva() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-700 text-left text-xs uppercase text-gray-500 dark:text-gray-300">
             <tr>
-              <th className="px-4 py-2">Naam</th>
+              <SortableHeader label="Voornaam" columnId="first_name" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} className="!px-4 !py-2" />
+              <SortableHeader label="Achternaam" columnId="last_name" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} className="!px-4 !py-2" />
               <th className="px-4 py-2">Datum IVA</th>
               <th className="px-4 py-2">Verloopt</th>
               <th className="px-4 py-2">Certificaat</th>
@@ -140,9 +156,9 @@ export default function VrijwilligersIva() {
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
             {isLoading ? (
-              <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">Laden…</td></tr>
+              <tr><td colSpan={7} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">Laden…</td></tr>
             ) : active.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+              <tr><td colSpan={7} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                 {tab === 'pending' && 'Geen IVA-certificaten wachten op goedkeuring.'}
                 {tab === 'valid' && 'Nog niemand heeft een geldig IVA-certificaat.'}
                 {tab === 'expired' && 'Geen verlopen IVA-certificaten.'}
@@ -159,7 +175,12 @@ export default function VrijwilligersIva() {
                   <tr key={person.id} className={reviewPerson ? 'bg-cyan-50/60 dark:bg-cyan-950/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'}>
                     <td className="px-4 py-2">
                       <Link to={`/people/${person.id}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline">
-                        {person.name || `Persoon ${person.id}`}
+                        {person.first_name || '—'}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-2">
+                      <Link to={`/people/${person.id}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline">
+                        {formatPersonSurname(person.infix, person.last_name) || '—'}
                       </Link>
                     </td>
                     <td className="px-4 py-2 text-gray-700 dark:text-gray-300">

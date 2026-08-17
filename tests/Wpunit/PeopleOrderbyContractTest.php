@@ -106,4 +106,65 @@ class PeopleOrderbyContractTest extends RondoTestCase {
 			'The earlier vog_email_sent_date must sort before the later one.'
 		);
 	}
+
+	public function test_last_name_sort_ignores_infix_and_uses_first_name_as_tie_breaker(): void {
+		$valk_b_id = $this->createPerson(
+			[ 'post_title' => 'Bram de Valk' ],
+			[
+				'first_name' => 'Bram',
+				'infix'      => 'de',
+				'last_name'  => 'Valk',
+			]
+		);
+		$akker_id  = $this->createPerson(
+			[ 'post_title' => 'Zara van den Akker' ],
+			[
+				'first_name' => 'Zara',
+				'infix'      => 'van den',
+				'last_name'  => 'Akker',
+			]
+		);
+		$valk_a_id = $this->createPerson(
+			[ 'post_title' => 'Anne Valk' ],
+			[
+				'first_name' => 'Anne',
+				'last_name'  => 'Valk',
+			]
+		);
+
+		$ordered = $this->ordered_ids( 'last_name' );
+
+		$this->assertLessThan( array_search( $valk_a_id, $ordered, true ), array_search( $akker_id, $ordered, true ) );
+		$this->assertLessThan( array_search( $valk_b_id, $ordered, true ), array_search( $valk_a_id, $ordered, true ) );
+	}
+
+	public function test_first_and_displayed_surname_filters_are_applied_server_side(): void {
+		$match_id = $this->createPerson(
+			[ 'post_title' => 'Joost de Valk' ],
+			[
+				'first_name' => 'Joost',
+				'infix'      => 'de',
+				'last_name'  => 'Valk',
+			]
+		);
+		$this->createPerson(
+			[ 'post_title' => 'Joost Jansen' ],
+			[
+				'first_name' => 'Joost',
+				'last_name'  => 'Jansen',
+			]
+		);
+
+		$request = new \WP_REST_Request( 'GET' );
+		$request->set_param( 'page', 1 );
+		$request->set_param( 'per_page', 100 );
+		$request->set_param( 'ownership', 'all' );
+		$request->set_param( 'orderby', 'last_name' );
+		$request->set_param( 'order', 'asc' );
+		$request->set_param( 'first_name', 'Joo' );
+		$request->set_param( 'last_name', 'de Valk' );
+
+		$data = $this->controller->get_filtered_people( $request )->get_data();
+		$this->assertSame( [ $match_id ], array_map( 'intval', array_column( $data['people'], 'id' ) ) );
+	}
 }

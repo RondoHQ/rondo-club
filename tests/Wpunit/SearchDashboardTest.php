@@ -116,6 +116,28 @@ class SearchDashboardTest extends RondoTestCase {
 		$this->assertNotContains( $jane_id, $result_ids, 'Search should NOT return Jane Smith' );
 	}
 
+	public function test_search_person_summary_keeps_full_name_and_exposes_all_name_parts(): void {
+		$user_id = self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] );
+		wp_set_current_user( $user_id );
+		$person_id = $this->createPerson(
+			[ 'post_title' => 'Joost de Valk' ],
+			[
+				'first_name' => 'Joost',
+				'infix'      => 'de',
+				'last_name'  => 'Valk',
+			]
+		);
+
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/search', [ 'q' => 'Joost' ] );
+		$people   = array_values( array_filter( $response->get_data()['people'], static fn( $person ) => (int) $person['id'] === $person_id ) );
+
+		$this->assertCount( 1, $people );
+		$this->assertSame( 'Joost de Valk', $people[0]['name'] );
+		$this->assertSame( 'Joost', $people[0]['first_name'] );
+		$this->assertSame( 'de', $people[0]['infix'] );
+		$this->assertSame( 'Valk', $people[0]['last_name'] );
+	}
+
 	/**
 	 * Search is scoped to what the caller may see.
 	 *

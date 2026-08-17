@@ -6,6 +6,8 @@ import PersonAvatar from '@/components/PersonAvatar';
 import TabButton from '@/components/TabButton';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
+import SortableHeader from '@/components/SortableHeader';
+import { formatPersonSurname } from '@/utils/formatters';
 
 const TAB_LID = 'leden';
 const TAB_VRIJWILLIGER = 'vrijwilligers';
@@ -49,11 +51,13 @@ export default function PeopleOnboarding() {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [selected, setSelected] = useState(new Set());
   const [resultBanner, setResultBanner] = useState(null);
+  const [sortField, setSortField] = useState('last_name');
+  const [sortOrder, setSortOrder] = useState('asc');
 
   const filterKey = activeTab === TAB_VRIJWILLIGER ? 'onboardingNewVolunteers' : 'onboardingNewMembers';
   const filters = useMemo(
-    () => ({ [filterKey]: '1', perPage: 100, orderby: 'first_name', order: 'asc' }),
-    [filterKey]
+    () => ({ [filterKey]: '1', perPage: 100, orderby: sortField, order: sortOrder }),
+    [filterKey, sortField, sortOrder]
   );
 
   const { data, isLoading, isFetching, error } = useFilteredPeople(filters, {
@@ -91,6 +95,11 @@ export default function PeopleOnboarding() {
   const allSelected = eligibleIds.length > 0 && eligibleIds.every((id) => selected.has(id));
   const toggleAll = () => {
     setSelected(allSelected ? new Set() : new Set(eligibleIds));
+  };
+
+  const handleSort = (field, order) => {
+    setSortField(field);
+    setSortOrder(order);
   };
 
   const runSend = async (personIds) => {
@@ -201,7 +210,8 @@ export default function PeopleOnboarding() {
               <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-900/40 dark:text-gray-400">
                 <tr>
                   <th className="w-10 px-4 py-2"></th>
-                  <th className="px-4 py-2 font-medium">Naam</th>
+                  <SortableHeader label="Voornaam" columnId="first_name" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} className="!px-4 !py-2" />
+                  <SortableHeader label="Achternaam" columnId="last_name" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} className="!px-4 !py-2" />
                   <th className="px-4 py-2 font-medium">{dateColumnLabel}</th>
                   <th className="px-4 py-2 font-medium">E-mail</th>
                   <th className="px-4 py-2 font-medium text-right">Actie</th>
@@ -233,7 +243,12 @@ export default function PeopleOnboarding() {
                             firstName={person.first_name}
                             size="sm"
                           />
-                          <span className="font-medium text-gray-900 truncate dark:text-gray-100">{displayName}</span>
+                          <span className="font-medium text-gray-900 truncate dark:text-gray-100">{person.first_name || '—'}</span>
+                        </Link>
+                      </td>
+                      <td className="px-4 py-2">
+                        <Link to={`/people/${person.id}`} className="font-medium text-gray-900 dark:text-gray-100 hover:text-electric-cyan">
+                          {formatPersonSurname(person.infix, person.last_name) || '—'}
                         </Link>
                       </td>
                       <td className="px-4 py-2 text-gray-600 dark:text-gray-300">

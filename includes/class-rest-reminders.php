@@ -587,8 +587,9 @@ class Reminders extends Base {
 		return [
 			'id'                  => $person_id,
 			'name'                => $this->sanitize_text( $person->post_title ),
-			'first_name'          => $this->sanitize_text( (string) get_post_meta( $person_id, 'first_name', true ) ),
-			'last_name'           => $this->sanitize_text( (string) get_post_meta( $person_id, 'last_name', true ) ),
+			'first_name'          => $this->sanitize_text( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ),
+			'infix'               => $this->sanitize_text( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'infix' ) ),
+			'last_name'           => $this->sanitize_text( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ),
 			'thumbnail'           => $this->sanitize_url( get_the_post_thumbnail_url( $person_id, 'thumbnail' ) ),
 			'former_member'       => ! empty( get_post_meta( $person_id, 'former_member', true ) ),
 			'huidig_vrijwilliger' => ! empty( get_post_meta( $person_id, 'huidig-vrijwilliger', true ) ),

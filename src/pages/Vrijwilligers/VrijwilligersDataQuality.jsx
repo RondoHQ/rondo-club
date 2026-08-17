@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, ArrowLeft, ExternalLink, Download } from 'lucide-react';
@@ -7,6 +7,8 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { buildCsv, downloadCsv } from '@/utils/csvExport';
+import SortableHeader from '@/components/SortableHeader';
+import { comparePersonNames, formatPersonSurname } from '@/utils/formatters';
 
 const CATEGORIES = {
   orphan: {
@@ -71,7 +73,8 @@ export default function VrijwilligersDataQuality() {
   const handleExportCsv = () => {
     const showKnvbId = !!cfg?.showKnvbId;
     const headers = [
-      'Naam',
+      'Voornaam',
+      'Achternaam',
       ...(showKnvbId ? ['KNVB-ID'] : []),
       'Leeftijdsgroep',
       'Adres',
@@ -80,7 +83,8 @@ export default function VrijwilligersDataQuality() {
       ...(showKnvbId ? [] : ['# relaties']),
     ];
     const rows = persons.map((person) => [
-      person.name,
+      person.first_name || '',
+      formatPersonSurname(person.infix, person.last_name),
       ...(showKnvbId ? [person.knvb_id || ''] : []),
       person.leeftijdsgroep || '',
       person.address || '',
@@ -177,11 +181,24 @@ export default function VrijwilligersDataQuality() {
 }
 
 function PersonsTable({ persons, showKnvbId = false }) {
+  const [sortField, setSortField] = useState('last_name');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const sortedPersons = useMemo(() => [...persons].sort((a, b) => {
+    const comparison = comparePersonNames(a, b, sortField);
+    return sortOrder === 'asc' ? comparison : -comparison;
+  }), [persons, sortField, sortOrder]);
+
+  const handleSort = (field, order) => {
+    setSortField(field);
+    setSortOrder(order);
+  };
+
   return (
     <table className="w-full text-sm">
       <thead className="bg-gray-50 dark:bg-gray-700 text-left text-xs uppercase text-gray-500 dark:text-gray-300">
         <tr>
-          <th className="px-4 py-2">Naam</th>
+          <SortableHeader label="Voornaam" columnId="first_name" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} className="!px-4 !py-2" />
+          <SortableHeader label="Achternaam" columnId="last_name" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} className="!px-4 !py-2" />
           {showKnvbId && <th className="px-4 py-2">KNVB-ID</th>}
           <th className="px-4 py-2">Leeftijdsgroep</th>
           <th className="px-4 py-2">Adres</th>
@@ -190,14 +207,19 @@ function PersonsTable({ persons, showKnvbId = false }) {
         </tr>
       </thead>
       <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-        {persons.map((person) => (
+        {sortedPersons.map((person) => (
           <tr key={person.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
             <td className="px-4 py-2">
               <Link
                 to={`/people/${person.id}`}
                 className="text-bright-cobalt dark:text-electric-cyan hover:underline"
               >
-                {person.name}
+                {person.first_name || '—'}
+              </Link>
+            </td>
+            <td className="px-4 py-2">
+              <Link to={`/people/${person.id}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline">
+                {formatPersonSurname(person.infix, person.last_name) || '—'}
               </Link>
             </td>
             {showKnvbId && (

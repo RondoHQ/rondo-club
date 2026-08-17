@@ -7,6 +7,7 @@ import PersonAvatar from '@/components/PersonAvatar';
 import { DataTable, createColumn, FILTER_TYPES } from '@/components/DataTable';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
+import { comparePersonNames, formatPersonSurname } from '@/utils/formatters';
 
 const PERIOD_OPTIONS = [
   { value: 'future-3', label: 'Komende 3 maanden', daysAhead: 90, daysBack: 0 },
@@ -21,9 +22,9 @@ const DEFAULT_PERIOD = 'future-6';
 
 const COLUMNS = [
   createColumn({
-    id: 'person_name',
-    header: 'Naam',
-    accessorFn: (row) => row.person?.name || '',
+    id: 'first_name',
+    header: 'Voornaam',
+    accessorFn: (row) => row.person?.first_name || '',
     cell: ({ row }) => (
       <Link to={`/people/${row.original.person.id}`} className="flex items-center gap-3 min-w-0">
         <PersonAvatar
@@ -32,12 +33,28 @@ const COLUMNS = [
           firstName={row.original.person.first_name}
           size="md"
         />
-        <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{row.original.person.name}</span>
+        <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{row.original.person.first_name || '—'}</span>
       </Link>
     ),
     filterType: FILTER_TYPES.TEXT,
-    filterLabel: 'Naam',
-    size: 280,
+    sortingFn: (rowA, rowB) => comparePersonNames(rowA.original.person, rowB.original.person, 'first_name'),
+    size: 190,
+  }),
+  createColumn({
+    id: 'last_name',
+    header: 'Achternaam',
+    accessorFn: (row) => row.person?.last_name || '',
+    cell: ({ row }) => (
+      <Link to={`/people/${row.original.person.id}`} className="font-medium text-gray-900 dark:text-gray-100 hover:text-electric-cyan">
+        {formatPersonSurname(row.original.person.infix, row.original.person.last_name) || '—'}
+      </Link>
+    ),
+    filterType: FILTER_TYPES.TEXT,
+    filterFn: (row, _columnId, value) => formatPersonSurname(row.original.person.infix, row.original.person.last_name)
+      .toLocaleLowerCase('nl')
+      .includes(String(value || '').toLocaleLowerCase('nl')),
+    sortingFn: (rowA, rowB) => comparePersonNames(rowA.original.person, rowB.original.person, 'last_name'),
+    size: 190,
   }),
   createColumn({
     id: 'type',
@@ -90,7 +107,8 @@ export default function PeopleAnniversaries() {
   useDocumentTitle('Jubilarissen');
   const [searchParams, setSearchParams] = useSearchParams();
   const typeFilter = searchParams.get('type') || '';
-  const nameFilter = searchParams.get('person_name') || '';
+  const firstNameFilter = searchParams.get('first_name') || '';
+  const lastNameFilter = searchParams.get('last_name') || searchParams.get('person_name') || '';
   const milestoneFilter = searchParams.get('milestone_label') || '';
   const periodParam = searchParams.get('period') || DEFAULT_PERIOD;
   const periodOption = PERIOD_OPTIONS.find((option) => option.value === periodParam) || PERIOD_OPTIONS.find((option) => option.value === DEFAULT_PERIOD);
@@ -122,9 +140,10 @@ export default function PeopleAnniversaries() {
 
   const filters = useMemo(() => ({
     type: typeFilter,
-    person_name: nameFilter,
+    first_name: firstNameFilter,
+    last_name: lastNameFilter,
     milestone_label: milestoneFilter,
-  }), [typeFilter, nameFilter, milestoneFilter]);
+  }), [typeFilter, firstNameFilter, lastNameFilter, milestoneFilter]);
 
   const handleFilterChange = useCallback((colId, value) => {
     updateSearch({ [colId]: value });
@@ -132,7 +151,7 @@ export default function PeopleAnniversaries() {
 
   const handleClearFilters = useCallback(() => {
     const next = new URLSearchParams(searchParams);
-    ['type', 'person_name', 'milestone_label'].forEach((key) => next.delete(key));
+    ['type', 'person_name', 'first_name', 'last_name', 'milestone_label'].forEach((key) => next.delete(key));
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams]);
 

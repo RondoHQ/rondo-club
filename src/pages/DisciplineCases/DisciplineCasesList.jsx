@@ -16,6 +16,7 @@ import { buildCsv, downloadCsv } from '@/utils/csvExport';
 import { format, parseYmd } from '@/utils/dateFormat';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { DataTableToolbar, ColumnSettingsPanel, useColumnVisibility, createColumn, FILTER_TYPES } from '@/components/DataTable';
+import { formatPersonSurname } from '@/utils/formatters';
 
 function getSpeeldag(activiteit) {
   if (!activiteit) return '';
@@ -44,7 +45,8 @@ export default function DisciplineCasesList() {
 
   const [doorbelastFilter, setDoorbelastFilter] = useState('');
   const [sanctieFilter, setSanctieFilter] = useState('');
-  const [persoonFilter, setPersoonFilter] = useState('');
+  const [firstNameFilter, setFirstNameFilter] = useState('');
+  const [lastNameFilter, setLastNameFilter] = useState('');
   const [kaartFilter, setKaartFilter] = useState('');
   const [boeteFilter, setBoeteFilter] = useState('');
   const [teamFilter, setTeamFilter] = useState('');
@@ -54,6 +56,8 @@ export default function DisciplineCasesList() {
   const { isVisible, toggle } = useColumnVisibility('tuchtzaken');
 
   const colVisColumns = [
+    { id: 'first_name', label: 'Voornaam', isVisible: isVisible('first_name') },
+    { id: 'last_name', label: 'Achternaam', isVisible: isVisible('last_name') },
     { id: 'team', label: 'Team', isVisible: isVisible('team') },
     { id: 'wedstrijd', label: 'Wedstrijd', isVisible: isVisible('wedstrijd') },
     { id: 'sanctie', label: 'Sanctie', isVisible: isVisible('sanctie') },
@@ -118,6 +122,8 @@ export default function DisciplineCasesList() {
         map.set(person.id, {
           id: person.id,
           first_name: firstName,
+          infix,
+          last_name: lastName,
           name: fullName,
           thumbnail,
         });
@@ -179,8 +185,13 @@ export default function DisciplineCasesList() {
   // Dynamic filter column definitions (depends on teamFilterOptions)
   const filterColumns = useMemo(() => [
     createColumn({
-      id: 'persoon',
-      header: 'Persoon',
+      id: 'first_name',
+      header: 'Voornaam',
+      filterType: FILTER_TYPES.TEXT,
+    }),
+    createColumn({
+      id: 'last_name',
+      header: 'Achternaam',
       filterType: FILTER_TYPES.TEXT,
     }),
     createColumn({
@@ -248,10 +259,15 @@ export default function DisciplineCasesList() {
     return cases.filter(dc => {
       const fields = dc.fields || {};
 
-      if (persoonFilter.trim() !== '') {
+      if (firstNameFilter.trim() !== '') {
         const person = personMap.get(fields.person);
-        const personName = (person ? (person.name || '') : '').toLowerCase();
-        if (!personName.includes(persoonFilter.toLowerCase().trim())) return false;
+        if (!(person?.first_name || '').toLowerCase().includes(firstNameFilter.toLowerCase().trim())) return false;
+      }
+
+      if (lastNameFilter.trim() !== '') {
+        const person = personMap.get(fields.person);
+        const surname = formatPersonSurname(person?.infix, person?.last_name).toLowerCase();
+        if (!surname.includes(lastNameFilter.toLowerCase().trim())) return false;
       }
 
       if (teamFilter !== '') {
@@ -294,13 +310,14 @@ export default function DisciplineCasesList() {
 
       return true;
     });
-  }, [cases, persoonFilter, teamFilter, excludeTeamFilter, doorbelastFilter, sanctieFilter, kaartFilter, boeteFilter, personMap]);
+  }, [cases, firstNameFilter, lastNameFilter, teamFilter, excludeTeamFilter, doorbelastFilter, sanctieFilter, kaartFilter, boeteFilter, personMap]);
 
-  const hasActiveFilters = !!(persoonFilter || teamFilter || excludeTeamFilter || doorbelastFilter || sanctieFilter || kaartFilter || boeteFilter);
-  const activeFilterCount = [persoonFilter, teamFilter, excludeTeamFilter, doorbelastFilter, sanctieFilter, kaartFilter, boeteFilter].filter(Boolean).length;
+  const hasActiveFilters = !!(firstNameFilter || lastNameFilter || teamFilter || excludeTeamFilter || doorbelastFilter || sanctieFilter || kaartFilter || boeteFilter);
+  const activeFilterCount = [firstNameFilter, lastNameFilter, teamFilter, excludeTeamFilter, doorbelastFilter, sanctieFilter, kaartFilter, boeteFilter].filter(Boolean).length;
 
   const clearFilters = () => {
-    setPersoonFilter('');
+    setFirstNameFilter('');
+    setLastNameFilter('');
     setTeamFilter('');
     setExcludeTeamFilter('');
     setDoorbelastFilter('');
@@ -310,7 +327,8 @@ export default function DisciplineCasesList() {
   };
 
   const setFilter = (colId, value) => {
-    if (colId === 'persoon') setPersoonFilter(value || '');
+    if (colId === 'first_name') setFirstNameFilter(value || '');
+    else if (colId === 'last_name') setLastNameFilter(value || '');
     else if (colId === 'team') setTeamFilter(value || '');
     else if (colId === 'excludeTeam') setExcludeTeamFilter(value || '');
     else if (colId === 'doorbelast') setDoorbelastFilter(value || '');
@@ -345,7 +363,8 @@ export default function DisciplineCasesList() {
   const handleExportCsv = () => {
     const headers = [
       'Dossier',
-      'Persoon',
+      'Voornaam',
+      'Achternaam',
       'Wedstrijd',
       'Wedstrijddatum',
       'Team',
@@ -362,7 +381,8 @@ export default function DisciplineCasesList() {
       const person = personMap.get(fields.person);
       return [
         fields.dossier_id || '',
-        person?.name || '',
+        person?.first_name || '',
+        formatPersonSurname(person?.infix, person?.last_name),
         fields.match_description || '',
         fields.match_date ? format(parseYmd(fields.match_date), 'dd-MM-yyyy') : '',
         formatTeamName(fields),
@@ -387,7 +407,7 @@ export default function DisciplineCasesList() {
         {/* Client-side filter toolbar */}
         <DataTableToolbar
           columns={filterColumns}
-          filters={{ persoon: persoonFilter, team: teamFilter, excludeTeam: excludeTeamFilter, doorbelast: doorbelastFilter, sanctie: sanctieFilter, kaart: kaartFilter, boete: boeteFilter }}
+          filters={{ first_name: firstNameFilter, last_name: lastNameFilter, team: teamFilter, excludeTeam: excludeTeamFilter, doorbelast: doorbelastFilter, sanctie: sanctieFilter, kaart: kaartFilter, boete: boeteFilter }}
           onFilterChange={setFilter}
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
@@ -461,7 +481,7 @@ export default function DisciplineCasesList() {
               Geen tuchtzaken gevonden
             </h2>
             <p className="text-gray-600 dark:text-gray-400">
-              {selectedSeasonId || persoonFilter || teamFilter || excludeTeamFilter || doorbelastFilter || sanctieFilter || kaartFilter || boeteFilter
+              {selectedSeasonId || firstNameFilter || lastNameFilter || teamFilter || excludeTeamFilter || doorbelastFilter || sanctieFilter || kaartFilter || boeteFilter
                 ? 'Pas de filters aan om meer resultaten te zien.'
                 : 'Er zijn momenteel geen tuchtzaken.'}
             </p>
