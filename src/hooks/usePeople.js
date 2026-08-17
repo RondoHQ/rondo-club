@@ -224,7 +224,7 @@ export function useFilterOptions(options = {}) {
   });
 }
 
-export function usePerson(id) {
+export function usePerson(id, options = {}) {
   return useQuery({
     queryKey: peopleKeys.detail(id),
     queryFn: async () => {
@@ -232,6 +232,21 @@ export function usePerson(id) {
       return transformPerson(response.data);
     },
     enabled: !!id,
+    ...options,
+  });
+}
+
+export function useAddParentRelationship(childId) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data) => prmApi.addParentRelationship(childId, data),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: peopleKeys.detail(childId) });
+      queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
+      const parentId = response.data?.parent_id;
+      if (parentId) queryClient.invalidateQueries({ queryKey: peopleKeys.detail(parentId) });
+    },
   });
 }
 

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.10.0] - 2026-08-17
+
+### Added
+
+- Ledenadministratie kan vanuit de relatiekaart van een Sportlink-lid kiezen tussen een bestaande persoon en een nieuwe ouder/verzorger. Bij een nieuwe ouder worden naam, e-mailadres en optioneel telefoonnummer opgeslagen en wordt de inverse kindrelatie automatisch toegevoegd.
+- Ouderrelaties tonen of de gegevens op synchronisatie wachten, in Sportlink-ouderveld 1 of 2 staan, of niet konden worden gesynchroniseerd. Rondo ververst een open persoonsdetail automatisch zolang een ouder op synchronisatie wacht.
+
+### Changed
+
+- Nieuwe Sportlink-ouderrelaties zijn beperkt tot twee per kind, vereisen een geldige naam en e-mailadres en voorkomen dubbele personen op e-mailadres.
+
 ## [34.9.0] - 2026-08-17
 
 ### Added

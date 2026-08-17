@@ -117,6 +117,7 @@ export const prmApi = {
   // Kaderlijst — scoped kader people, visibility enforced server-side.
   getKaderlijstPeople: (params = {}) => api.get('/rondo/v1/kaderlijst/people', { params }),
   getHousehold: () => api.get('/rondo/v1/people/household'),
+  addParentRelationship: (personId, data) => api.post(`/rondo/v1/people/${personId}/parents`, data),
   
   // Bulk operations
   bulkUpdatePeople: (ids, updates) => api.post('/rondo/v1/people/bulk-update', { ids, updates }),
