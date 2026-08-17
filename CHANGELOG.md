@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.8.4] - 2026-08-17
+
+### Changed
+
+- Club TV combineert het wedstrijdprogramma, de veldindeling en de kleedkamerindeling voortaan in één overzicht. Iedere wedstrijd toont tijd, beide teams, hun kleedkamers en het veld bij elkaar.
+
 ## [34.8.3] - 2026-08-17
 
 ### Changed

@@ -1,6 +1,5 @@
 export default function NarrowcastingScene({ scene }) {
   if (scene.type === 'matches') return <MatchesScene items={scene.items} dateLabel={scene.dateLabel} />;
-  if (scene.type === 'rooms') return <RoomsScene items={scene.items} dateLabel={scene.dateLabel} />;
   if (scene.type === 'cancellations') return <CancellationsScene items={scene.items} dateLabel={scene.dateLabel} />;
   if (scene.type === 'results') return <ResultsScene items={scene.items} />;
   if (scene.type === 'announcement' || scene.type === 'fallback') return <AnnouncementScene scene={scene} />;
@@ -61,43 +60,23 @@ function Team({ name, align = 'left' }) {
 function MatchesScene({ items, dateLabel }) {
   return (
     <section>
-      <SceneHeading eyebrow="Programma" title={`Wedstrijden ${dateLabel || 'vandaag'}`} />
-      <div className="overflow-hidden rounded-[1.1vw] border border-[var(--display-border)] bg-[var(--display-surface)] shadow-[0_1vw_3vw_rgba(0,0,0,.10)] backdrop-blur-sm">
+      <SceneHeading eyebrow={dateLabel || 'Vandaag'} title="Wedstrijden, velden en kleedkamers" />
+      <div className="space-y-[0.7vw]">
         {items.map((match) => (
-          <div key={match.id} className="grid grid-cols-[7vw_1fr_10vw] items-center gap-[1.5vw] border-b border-[var(--display-border)] px-[2vw] py-[0.85vw] last:border-b-0">
-            <time className="font-mono text-[1.85vw] font-bold tabular-nums text-[var(--scene-accent-readable)]">{match.time}</time>
-            <p className={`grid min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-[0.9vw] text-[1.45vw] font-semibold ${match.cancelled ? 'text-[var(--display-danger-text)] line-through' : ''}`}>
-              <Team name={match.home_team} align="right" />
-              <span className="rounded-full bg-[var(--display-surface-strong)] px-[0.65vw] py-[0.18vw] text-[0.85vw] font-bold text-[var(--display-muted)]">VS</span>
-              <Team name={match.away_team} />
-            </p>
+          <article key={match.id} className={`grid grid-cols-[6.5vw_minmax(0,1fr)_minmax(0,1fr)_10vw] items-center gap-[1.2vw] rounded-[0.9vw] border px-[1.7vw] py-[0.8vw] backdrop-blur-sm ${match.cancelled ? 'border-[var(--display-danger-border)] bg-[var(--display-danger-bg)]' : 'border-[var(--display-border)] bg-[var(--display-surface)]'}`}>
+            <time className="font-mono text-[1.75vw] font-bold tabular-nums text-[var(--scene-accent-readable)]">{match.time}</time>
+            <TeamAssignment team={match.home_team} room={match.dressing_rooms?.home} cancelled={match.cancelled} />
+            <TeamAssignment team={match.away_team} room={match.dressing_rooms?.away} cancelled={match.cancelled} />
             <div className="text-right">
               {match.cancelled ? (
-                <span className="rounded-full bg-[var(--display-danger-bg)] px-[1vw] py-[0.45vw] text-[1.1vw] font-semibold uppercase tracking-wide text-[var(--display-danger-text)]">Afgelast</span>
+                <span className="rounded-full bg-white/70 px-[0.8vw] py-[0.4vw] text-[1vw] font-semibold uppercase tracking-wide text-[var(--display-danger-text)]">Afgelast</span>
               ) : (
-                <span className="text-[1.3vw] font-bold text-[var(--display-text)] opacity-85">{match.pitch || 'Veld volgt'}</span>
+                <>
+                  <p className="text-[0.85vw] font-semibold uppercase tracking-[0.12em] text-[var(--display-muted)]">Veld</p>
+                  <p className="text-[1.45vw] font-bold text-[var(--display-text)]">{match.pitch || 'volgt'}</p>
+                  {match.dressing_rooms?.referee && <p className="mt-[0.15vw] text-[0.8vw] text-[var(--display-muted)]">Scheids. kk {match.dressing_rooms.referee}</p>}
+                </>
               )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function RoomsScene({ items, dateLabel }) {
-  return (
-    <section>
-      <SceneHeading eyebrow={dateLabel || 'Ontvangst'} title="Velden en kleedkamers" />
-      <div className="space-y-[0.8vw]">
-        {items.map((match) => (
-          <article key={match.id} className="grid grid-cols-[6vw_1fr_1fr_8vw] items-center gap-[1.2vw] rounded-[0.9vw] border border-[var(--display-border)] bg-[var(--display-surface)] px-[1.7vw] py-[0.9vw] backdrop-blur-sm">
-            <time className="font-mono text-[1.7vw] font-bold text-[var(--scene-accent-readable)]">{match.time}</time>
-            <Room team={match.home_team} room={match.dressing_rooms?.home} />
-            <Room team={match.away_team} room={match.dressing_rooms?.away} />
-            <div className="text-right">
-              <p className="text-[1vw] uppercase tracking-wide text-[var(--display-muted)]">Veld</p>
-              <p className="text-[1.55vw] font-semibold">{match.pitch || '—'}</p>
             </div>
           </article>
         ))}
@@ -106,11 +85,11 @@ function RoomsScene({ items, dateLabel }) {
   );
 }
 
-function Room({ team, room }) {
+function TeamAssignment({ team, room, cancelled }) {
   return (
     <div className="min-w-0">
-      <p className="text-[1.25vw] font-semibold"><Team name={team} /></p>
-      <p className="mt-[0.25vw] text-[1vw] text-[var(--display-muted)]">Kleedkamer <strong className="text-[var(--display-text)]">{room || 'volgt'}</strong></p>
+      <p className={`text-[1.25vw] font-semibold ${cancelled ? 'text-[var(--display-danger-text)] line-through' : ''}`}><Team name={team} /></p>
+      {!cancelled && <p className="mt-[0.2vw] text-[0.9vw] text-[var(--display-muted)]">Kleedkamer <strong className="text-[var(--display-text)]">{room || 'volgt'}</strong></p>}
     </div>
   );
 }

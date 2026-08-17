@@ -35,7 +35,7 @@ final class Content {
 		'video',
 	];
 
-	private const DYNAMIC_TYPES = [ 'matches', 'rooms', 'cancellations', 'results' ];
+	private const DYNAMIC_TYPES = [ 'matches', 'cancellations', 'results' ];
 	private const IMAGE_MIMES   = [ 'image/jpeg', 'image/png', 'image/webp' ];
 	private const VIDEO_MIMES   = [ 'video/mp4' ];
 

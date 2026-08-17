@@ -8,8 +8,8 @@ const typeLabels = {
   sponsor: 'Sponsor',
   image: 'Afbeelding',
   video: 'Video',
-  matches: 'Wedstrijden',
-  rooms: 'Kleedkamers',
+  matches: 'Wedstrijden, velden en kleedkamers',
+  rooms: 'Wedstrijden, velden en kleedkamers',
   cancellations: 'Afgelastingen',
   results: 'Uitslagen',
   fallback: 'Welkomstbeeld',
@@ -36,6 +36,7 @@ function fromItem(item) {
     ...emptyForm,
     ...item.fields,
     title: item.title,
+    content_type: item.fields.content_type === 'rooms' ? 'matches' : item.fields.content_type,
     sponsor_person_id: item.fields.sponsor_person_id || '',
     media_attachment_id: item.fields.media_attachment_id || '',
     valid_from: toInputDate(item.fields.valid_from),
@@ -142,7 +143,7 @@ export default function NarrowcastingContent({ sponsorOnly = false }) {
         {save.error && <p className="mt-4 flex gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200"><CircleAlert className="h-5 w-5 shrink-0" />{message(save.error)}</p>}
         <form onSubmit={submit} className="mt-5 space-y-4">
           <label className="block"><span className="mb-1 block text-sm font-medium">Titel</span><input className="input w-full" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></label>
-          {!sponsorOnly && <label className="block"><span className="mb-1 block text-sm font-medium">Type</span><select className="input w-full" value={form.content_type} onChange={(e) => setForm({ ...form, content_type: e.target.value, media_attachment_id: '' })}>{Object.entries(typeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>}
+          {!sponsorOnly && <label className="block"><span className="mb-1 block text-sm font-medium">Type</span><select className="input w-full" value={form.content_type} onChange={(e) => setForm({ ...form, content_type: e.target.value, media_attachment_id: '' })}>{Object.entries(typeLabels).filter(([value]) => value !== 'rooms').map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>}
           {form.content_type === 'sponsor' && <label className="block"><span className="mb-1 block text-sm font-medium">Sponsorrelatie</span><select className="input w-full" value={form.sponsor_person_id} onChange={(e) => setForm({ ...form, sponsor_person_id: e.target.value })} required><option value="">Kies sponsor</option>{(sponsorsQuery.data || []).map((sponsor) => <option key={sponsor.id} value={sponsor.id}>{sponsor.name}</option>)}</select></label>}
           {showText && <label className="block"><span className="mb-1 block text-sm font-medium">Tekst</span><textarea className="input min-h-24 w-full" value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} /></label>}
           {showMedia && <div><span className="mb-1 block text-sm font-medium">{form.content_type === 'video' ? 'MP4-video' : 'Afbeelding'}</span><label className="btn-tertiary inline-flex cursor-pointer"><ImagePlus className="mr-2 h-4 w-4" />{uploading ? 'Uploaden…' : 'Bestand kiezen'}<input type="file" className="sr-only" accept={form.content_type === 'video' ? 'video/mp4' : 'image/jpeg,image/png,image/webp'} onChange={upload} disabled={uploading} /></label>{form.media_attachment_id && <span className="ml-3 text-sm text-green-700 dark:text-green-300">Bestand gekoppeld</span>}</div>}
