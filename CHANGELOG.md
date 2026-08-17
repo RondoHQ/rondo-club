@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.14.0] - 2026-08-17
+
+### Added
+
+- Sponsorbedrijven zijn een zelfstandig, afgeschermd contenttype met bedrijfsadres, logo, sponsorrol, Sponsit-ID en één of meer contactpersonen.
+- Sponsorbeheer kan bedrijven aanmaken, wijzigen en archiveren, bestaande personen koppelen en nieuwe externe contactpersonen direct vanuit het bedrijf toevoegen.
+- De herhaalbare sponsor-migratie geeft standaard een dry-runrapport en slaat twijfelgevallen over totdat daarvoor expliciete overrides zijn aangeleverd.
+- Club TV kan zes actieve sponsorlogo's per scène rouleren: twee boven en vier onder.
+
+### Changed
+
+- Sponsorrol en sponsorpasrecht worden afgeleid van de relatie tussen persoon en sponsorbedrijf; bestaande legacy sponsorvelden blijven tijdelijk als terugval beschikbaar.
+- Personen tonen hun sponsorbedrijven als relaties. Sponsorbeheerders ontkoppelen een persoon in plaats van het persoonsrecord te verwijderen.
+- Club TV gebruikt de actuele scènetitel bovenaan, toont de wedstrijddatum rechtsonder en laat technische preview- en synchronisatiestatus weg.
+
+### Removed
+
+- Het toevoegen van een sponsor als los persoonsrecord en het bewerken van `Sponsorrol` op een persoon zijn uit de gebruikersinterface verwijderd.
+
 ## [34.13.0] - 2026-08-17
 
 ### Added

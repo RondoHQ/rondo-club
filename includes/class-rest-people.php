@@ -12,6 +12,7 @@ use Rondo\Core\SponsorStatus;
 use Rondo\Fields\Registry;
 use Rondo\Passes\PublicMembershipPassPage;
 use Rondo\People\ParentRelationshipService;
+use Rondo\Sponsors\Relations as SponsorRelations;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -1227,16 +1228,9 @@ class People extends Base {
 		$post_id = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : 0;
 
 		if ( $post_id === 0 ) {
-			// Creation: only sponsor managers may mint a record, and only an
-			// explicit contact+sponsor one. Contact editors never create people.
-			if ( $may_manage_sponsors ) {
-				$requested_type       = sanitize_key( (string) ( $fields['person_type'] ?? '' ) );
-				$requested_is_sponsor = SponsorStatus::value_is_true( $fields['is_sponsor'] ?? false );
-				if ( $requested_type === 'contact' && $requested_is_sponsor ) {
-					return $prepared_post;
-				}
-			}
-
+			// Sponsor contacts are created through /rondo/v1/sponsors/{id}/contacts,
+			// which creates the person and relationship together. Partial people
+			// editors never mint standalone person records through wp/v2.
 			return $this->person_field_scope_error();
 		}
 
@@ -1966,12 +1960,20 @@ class People extends Base {
 			}
 		}
 
-		// Sponsorship is an independent role and can overlap either person type.
+		// Sponsor contact status is relationship-derived and can overlap either person type.
 		if ( $is_sponsor !== null && $is_sponsor !== '' ) {
-			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} sp ON p.ID = sp.post_id AND sp.meta_key = 'is_sponsor'";
-			$where_clauses[] = $is_sponsor === '1'
-				? "(sp.meta_value = '1')"
-				: "(sp.meta_value IS NULL OR sp.meta_value = '' OR sp.meta_value = '0')";
+			$sponsor_person_ids = SponsorRelations::active_person_ids();
+			if ( empty( $sponsor_person_ids ) ) {
+				if ( $is_sponsor === '1' ) {
+					$where_clauses[] = '1 = 0';
+				}
+			} else {
+				$id_placeholders = implode( ', ', array_fill( 0, count( $sponsor_person_ids ), '%d' ) );
+				$where_clauses[] = $is_sponsor === '1'
+					? "p.ID IN ($id_placeholders)"
+					: "p.ID NOT IN ($id_placeholders)";
+				$prepare_values  = array_merge( $prepare_values, $sponsor_person_ids );
+			}
 		}
 
 		// KNVB registration is present when the canonical KNVB ID has a value.
@@ -1994,14 +1996,20 @@ class People extends Base {
 			}
 		}
 
-		// Businessclub membership is the active sponsor role with the Businessclub pass variant.
+		// Businessclub membership follows the active sponsor company's role.
 		if ( $is_businessclub_member !== null && $is_businessclub_member !== '' ) {
-			$join_clauses[]         = "LEFT JOIN {$wpdb->postmeta} bcsp ON p.ID = bcsp.post_id AND bcsp.meta_key = 'is_sponsor'";
-			$join_clauses[]         = "LEFT JOIN {$wpdb->postmeta} bcpv ON p.ID = bcpv.post_id AND bcpv.meta_key = 'sponsor_pass_variant'";
-			$businessclub_condition = "(COALESCE(bcsp.meta_value, '') = '1' AND COALESCE(bcpv.meta_value, '') = 'businessclub')";
-			$where_clauses[]        = $is_businessclub_member === '1'
-				? $businessclub_condition
-				: "NOT {$businessclub_condition}";
+			$businessclub_person_ids = SponsorRelations::active_person_ids( 'businessclub' );
+			if ( empty( $businessclub_person_ids ) ) {
+				if ( $is_businessclub_member === '1' ) {
+					$where_clauses[] = '1 = 0';
+				}
+			} else {
+				$id_placeholders = implode( ', ', array_fill( 0, count( $businessclub_person_ids ), '%d' ) );
+				$where_clauses[] = $is_businessclub_member === '1'
+					? "p.ID IN ($id_placeholders)"
+					: "p.ID NOT IN ($id_placeholders)";
+				$prepare_values  = array_merge( $prepare_values, $businessclub_person_ids );
+			}
 		}
 
 		// Leeftijdsgroep (age group) - select filter
@@ -2458,7 +2466,7 @@ class People extends Base {
 			'knvb_known'     => trim( (string) ( $fields['knvb_id'] ?? '' ) ) !== '',
 			'parent'         => $this->has_current_child_relationship( $person_id ),
 			'volunteer'      => (bool) ( $fields['huidig_vrijwilliger'] ?? false ),
-			'sponsor'        => (bool) ( $fields['is_sponsor'] ?? false ),
+			'sponsor'        => SponsorStatus::is_sponsor( $person_id ),
 			'contact'        => ( $fields['person_type'] ?? '' ) === 'contact',
 		];
 	}

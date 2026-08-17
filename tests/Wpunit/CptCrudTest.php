@@ -5,6 +5,7 @@ namespace Tests\Wpunit;
 use Rondo\Core\AccessControl;
 use Rondo\Core\UserRoles;
 use Rondo\REST\People;
+use Rondo\REST\Sponsors;
 use Tests\Support\RondoTestCase;
 use WP_REST_Request;
 use WP_REST_Server;
@@ -23,7 +24,7 @@ class CptCrudTest extends RondoTestCase {
 	protected function set_up(): void {
 		parent::set_up();
 
-		$this->server = $this->bootRestControllers( [ People::class ] );
+		$this->server = $this->bootRestControllers( [ People::class, Sponsors::class ] );
 
 		AccessControl::flush_visible_person_ids_cache();
 		delete_option( 'rondo_age_group_access' );
@@ -278,7 +279,7 @@ class CptCrudTest extends RondoTestCase {
 		$this->assertSame( 'Updated member record', get_post( $person_id )->post_title );
 	}
 
-	public function test_sponsor_manager_can_only_crud_sponsors(): void {
+	public function test_sponsor_manager_uses_companies_instead_of_standalone_sponsor_people(): void {
 		$member_id = $this->createPerson(
 			[ 'post_title' => 'Protected member' ],
 			[ 'first_name' => 'Protected' ]
@@ -300,7 +301,7 @@ class CptCrudTest extends RondoTestCase {
 		);
 		$this->assertDenied( $forged_contact );
 
-		$missing_variant = $this->request(
+		$legacy_sponsor = $this->request(
 			'POST',
 			'/wp/v2/people',
 			[
@@ -313,21 +314,16 @@ class CptCrudTest extends RondoTestCase {
 				],
 			]
 		);
-		$this->assertSame( 400, $missing_variant->get_status() );
-		$this->assertSame( 'rondo_sponsor_pass_variant_required', $missing_variant->get_data()['code'] );
+		$this->assertDenied( $legacy_sponsor );
 
 		$create = $this->request(
 			'POST',
-			'/wp/v2/people',
+			'/rondo/v1/sponsors',
 			[
-				'title'  => 'Businessclublid',
+				'title'  => 'Sponsor BV',
 				'status' => 'publish',
 				'fields' => [
-					'first_name'           => 'Businessclub',
-					'last_name'            => 'Lid',
-					'person_type'          => 'contact',
-					'is_sponsor'           => true,
-					'sponsor_pass_variant' => 'businessclub',
+					'sponsor_role' => 'businessclub',
 				],
 			]
 		);
@@ -336,13 +332,13 @@ class CptCrudTest extends RondoTestCase {
 
 		$this->assertSame(
 			200,
-			$this->request( 'PATCH', '/wp/v2/people/' . $sponsor_id, [ 'fields' => [ 'company_name' => 'Sponsor BV' ] ] )->get_status()
+			$this->request( 'PATCH', '/rondo/v1/sponsors/' . $sponsor_id, [ 'title' => 'Gewijzigd Sponsor BV' ] )->get_status()
 		);
 		$this->assertDenied( $this->request( 'PATCH', '/wp/v2/people/' . $member_id, [ 'title' => 'Compromised' ] ) );
 		$this->assertDenied( $this->request( 'DELETE', '/wp/v2/people/' . $member_id, [ 'force' => true ] ) );
-		$this->assertSame( 200, $this->request( 'DELETE', '/wp/v2/people/' . $sponsor_id, [ 'force' => true ] )->get_status() );
+		$this->assertSame( 200, $this->request( 'DELETE', '/rondo/v1/sponsors/' . $sponsor_id )->get_status() );
 		$this->assertNotNull( get_post( $member_id ) );
-		$this->assertNull( get_post( $sponsor_id ) );
+		$this->assertSame( 'draft', get_post_status( $sponsor_id ) );
 	}
 
 	public function test_sponsor_manager_cannot_change_sponsor_person_type(): void {

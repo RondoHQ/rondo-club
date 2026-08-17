@@ -22,6 +22,7 @@ class FieldRegistryTest extends RondoTestCase {
 				'rondo_signage_list',
 				'rondo_feedback',
 				'rondo_invoice',
+				'rondo_sponsor',
 				'rondo_todo',
 				'shift_template',
 				'taakuitleg',

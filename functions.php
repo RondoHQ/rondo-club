@@ -108,6 +108,7 @@ use Rondo\Core\UserRoles;
 use Rondo\REST\Api;
 use Rondo\REST\People;
 use Rondo\REST\Teams;
+use Rondo\REST\Sponsors as RESTSponsors;
 use Rondo\REST\Commissies;
 use Rondo\REST\Todos;
 use Rondo\REST\Feedback as RESTFeedback;
@@ -320,6 +321,7 @@ function rondo_init() {
 		new Api();
 		new People();
 		new Teams();
+		new RESTSponsors();
 		new Commissies();
 		new Todos();
 		new RESTCustomFields();
@@ -525,6 +527,7 @@ add_action( 'rest_api_init', 'rondo_migrate_options' );
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	require_once RONDO_PLUGIN_DIR . '/class-wp-cli.php';
 	\WP_CLI::add_command( 'rondo fields', \Rondo\Fields\FieldsCli::class );
+	\WP_CLI::add_command( 'rondo sponsors migrate', \Rondo\Sponsors\MigrationCli::class );
 	new TodoMigration();
 
 	// Class alias for backward compatibility

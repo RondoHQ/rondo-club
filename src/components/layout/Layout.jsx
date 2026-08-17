@@ -55,6 +55,7 @@ const navigation = [
   { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, memberOnly: true, personal: true },
   { name: 'Dashboard', href: '/', icon: Home, requiresKader: true },
   { name: 'Relaties', href: '/people', icon: Users, requiresKader: true },
+  { name: 'Sponsorbedrijven', href: '/sponsors', icon: Building2, requiresSponsors: true },
   { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
   { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true, requiresKader: true },
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
@@ -95,6 +96,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessLedenadministratie = currentUser?.can_access_ledenadministratie ?? false;
   const canAccessVrijwilligers = currentUser?.can_access_vrijwilligers ?? false;
   const canAccessNarrowcasting = currentUser?.can_access_narrowcasting ?? false;
+  const canManageSponsors = currentUser?.can_manage_sponsors ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
   const sidebarUserName = currentUser?.linked_person_name || currentUser?.name || '';
 
@@ -204,6 +206,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresLedenadministratie && !canAccessLedenadministratie) return false;
     if (item.requiresVrijwilligers && !canAccessVrijwilligers) return false;
     if (item.requiresNarrowcasting && !canAccessNarrowcasting) return false;
+    if (item.requiresSponsors && !canManageSponsors) return false;
     if (item.requiresKader && !isKader) return false;
     // Kader normally does not need the member-facing household page.
     if (item.memberOnly && isKader) return false;
@@ -696,6 +699,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
     if (path.startsWith('/people/jubilarissen')) return 'Jubilarissen';
     if (path.startsWith('/people/onboarding')) return 'Onboarding';
     if (path.startsWith('/people')) return 'Relaties';
+    if (path.startsWith('/sponsors')) return 'Sponsorbedrijven';
     if (path === '/financien' || path === '/financien/') return 'Financiën';
     if (path.startsWith('/financien/contributie')) return 'Contributie';
     if (path.startsWith('/financien/facturen')) return 'Facturen';

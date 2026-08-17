@@ -245,6 +245,11 @@ class PublicMembershipPassPage {
 	 * @return string Valid variant or an empty string when none is selected.
 	 */
 	public static function get_sponsor_pass_variant( int $person_id ): string {
+		$relationship_variant = \Rondo\Sponsors\Relations::pass_variant_for_person( $person_id );
+		if ( $relationship_variant !== '' ) {
+			return $relationship_variant;
+		}
+
 		$variant = sanitize_key( (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'sponsor_pass_variant' ) ?: get_post_meta( $person_id, 'sponsor_pass_variant', true ) ) );
 		$allowed = [
 			self::SPONSOR_PASS_VARIANT_BUSINESSCLUB,
@@ -252,6 +257,16 @@ class PublicMembershipPassPage {
 		];
 
 		return in_array( $variant, $allowed, true ) ? $variant : '';
+	}
+
+	/** Return the company belonging to the selected sponsor-pass relationship. */
+	public static function get_sponsor_company_name( int $person_id ): string {
+		$relationship = \Rondo\Sponsors\Relations::pass_relationship_for_person( $person_id );
+		if ( $relationship ) {
+			return (string) $relationship['sponsor_name'];
+		}
+
+		return trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
 	}
 
 	/**

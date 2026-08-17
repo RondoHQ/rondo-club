@@ -155,13 +155,27 @@ class NarrowcastingContentTest extends RondoTestCase {
 	}
 
 	public function test_sponsor_manager_is_limited_to_safe_sponsor_items(): void {
-		$sponsor_id = $this->createPerson(
-			[ 'post_title' => 'Veilige Sponsor' ],
+		$person_id  = $this->createPerson(
+			[ 'post_title' => 'Privé contactpersoon' ],
+			[ 'email_1' => 'private@example.test' ]
+		);
+		$sponsor_id = self::factory()->post->create(
 			[
-				'is_sponsor' => true,
-				'email_1'    => 'private@example.test',
+				'post_type'   => 'rondo_sponsor',
+				'post_status' => 'publish',
+				'post_title'  => 'Veilige Sponsor BV',
 			]
 		);
+		Fields::update_for_post( $sponsor_id, 'sponsor_role', 'awc_sponsor' );
+		\Rondo\Sponsors\Relations::set_contacts(
+			$sponsor_id,
+			[
+				[
+					'person_id'     => $person_id,
+					'receives_pass' => true,
+				],
+			]
+			);
 		$this->login_with_capability( 'sponsorbeheer' );
 
 		$forbidden = $this->json_request(
@@ -178,9 +192,9 @@ class NarrowcastingContentTest extends RondoTestCase {
 			'POST',
 			'/rondo/v1/narrowcasting/items',
 			[
-				'title'             => 'Sponsorbeeld',
-				'content_type'      => 'sponsor',
-				'sponsor_person_id' => $sponsor_id,
+				'title'        => 'Sponsorbeeld',
+				'content_type' => 'sponsor',
+				'sponsor_id'   => $sponsor_id,
 			]
 		);
 		$this->assertSame( 200, $created->get_status() );
@@ -201,7 +215,7 @@ class NarrowcastingContentTest extends RondoTestCase {
 			]
 		);
 		$manifest         = $this->content->resolve_manifest( 0, $sponsor_playlist['id'] );
-		$this->assertSame( 'Veilige Sponsor', $manifest['scenes'][0]['sponsor']['name'] );
+		$this->assertSame( 'Veilige Sponsor BV', $manifest['scenes'][0]['sponsor']['name'] );
 		$this->assertStringNotContainsString( 'private@example.test', wp_json_encode( $manifest ) );
 	}
 

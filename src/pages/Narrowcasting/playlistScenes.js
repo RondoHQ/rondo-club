@@ -1,4 +1,4 @@
-import { buildMatchdayScenes } from './matchdayScenes';
+import { buildMatchdayScenes, rotateSponsors } from './matchdayScenes';
 
 const dynamicTypes = new Set(['matches', 'rooms', 'cancellations', 'results']);
 
@@ -20,7 +20,11 @@ export function buildPlaylistScenes(manifest, feed, fallbackMessage) {
   });
 
   const useful = scenes.filter((scene) => scene.type !== 'fallback' || scene.item_id);
-  if (useful.length) return useful;
-  if (scenes.length) return scenes;
+  const withSponsors = (items) => items.map((scene, index) => ({
+    ...scene,
+    sponsorLogos: scene.sponsorLogos || rotateSponsors(feed?.sponsors || [], index),
+  }));
+  if (useful.length) return withSponsors(useful);
+  if (scenes.length) return withSponsors(scenes);
   return [{ type: 'welcome', message: fallbackMessage || 'Vandaag is er geen actuele Club TV-informatie', duration_seconds: 12 }];
 }

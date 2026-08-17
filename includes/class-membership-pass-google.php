@@ -90,7 +90,9 @@ class MembershipPassGoogle {
 		$details              = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
 		$team_name            = $details['teams'] !== '' ? $details['teams'] : '-';
 		$functions            = $details['functions'] !== '' ? $details['functions'] : '-';
-		$company_name         = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
+		$company_name         = $member_tier === 'sponsor'
+			? PublicMembershipPassPage::get_sponsor_company_name( $person_id )
+			: trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
 		$sponsor_pass_variant = $member_tier === 'sponsor' ? PublicMembershipPassPage::get_sponsor_pass_variant( $person_id ) : '';
 		$card_title           = $this->get_card_title( $issuer_name, $member_tier, $sponsor_pass_variant );
 		$object_id            = $issuer_id . '.member_' . $person_id;

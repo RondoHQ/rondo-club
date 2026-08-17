@@ -95,6 +95,15 @@ export const prmApi = {
 
   // Current season helper
   getCurrentSeason: () => api.get('/rondo/v1/current-season'),
+
+  // Sponsor companies
+  getSponsors: (params = {}) => api.get('/rondo/v1/sponsors', { params }),
+  getSponsor: (id) => api.get(`/rondo/v1/sponsors/${id}`),
+  createSponsor: (data) => api.post('/rondo/v1/sponsors', data),
+  updateSponsor: (id, data) => api.patch(`/rondo/v1/sponsors/${id}`, data),
+  archiveSponsor: (id) => api.delete(`/rondo/v1/sponsors/${id}`),
+  createSponsorContact: (id, data) => api.post(`/rondo/v1/sponsors/${id}/contacts`, data),
+  searchSponsorPeople: (search) => api.get('/rondo/v1/sponsor-person-options', { params: { search } }),
   
   // Dashboard — uses preloaded fetch from wp_head if available
   getDashboard: async () => {

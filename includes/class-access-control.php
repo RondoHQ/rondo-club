@@ -26,6 +26,7 @@ class AccessControl {
 		'rondo_clothing_txn',
 		'discipline_case',
 		'rondo_invoice',
+		'rondo_sponsor',
 		'dienst_type',
 		'shift_template',
 		'dienst_shift',
@@ -301,10 +302,9 @@ class AccessControl {
 			return true;
 		}
 
-		return self::can_manage_sponsors( $user_id )
-			&& get_post_type( $person_id ) === 'person'
-			&& SponsorStatus::is_sponsor( (int) $person_id )
-			&& get_post_meta( $person_id, 'person_type', true ) === 'contact';
+		// Sponsor managers unlink contacts from companies; deleting the shared
+		// person identity remains a people-administration responsibility.
+		return false;
 	}
 
 	/**

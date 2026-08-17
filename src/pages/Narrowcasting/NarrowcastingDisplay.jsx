@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Wifi, WifiOff } from 'lucide-react';
 import NarrowcastingScene from './NarrowcastingScenes';
 import { buildPlaylistScenes } from './playlistScenes';
 
@@ -78,7 +77,6 @@ export default function NarrowcastingDisplay() {
   const [config, setConfig] = useState(() => (isPreview ? null : readStoredConfig()));
   const [feed, setFeed] = useState(() => (isPreview ? null : readStoredFeed()));
   const [playlist, setPlaylist] = useState(() => (isPreview ? null : readStoredPlaylist()));
-  const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(isPreview);
   const [loadError, setLoadError] = useState('');
   const [now, setNow] = useState(new Date());
@@ -110,7 +108,6 @@ export default function NarrowcastingDisplay() {
         const nextConfig = await response.json();
         if (!active) return;
         setConfig(nextConfig);
-        setConnected(true);
         setLoadError('');
         if (!isPreview) localStorage.setItem(CONFIG_KEY, JSON.stringify(nextConfig));
 
@@ -139,7 +136,6 @@ export default function NarrowcastingDisplay() {
         }
       } catch {
         if (active) {
-          setConnected(false);
           if (isPreview) setLoadError('Log in als beheerder om het Club TV-voorbeeld te bekijken.');
         }
       } finally {
@@ -191,17 +187,6 @@ export default function NarrowcastingDisplay() {
     day: 'numeric',
     month: 'long',
   }).format(now);
-  const sourceTime = feed?.source?.fetched_at
-    ? new Intl.DateTimeFormat('nl-NL', {
-      timeZone: timezone,
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(feed.source.fetched_at))
-    : null;
-  const feedIsStale = feed?.source?.fresh_until
-    ? new Date(feed.source.fresh_until).getTime() < now.getTime()
-    : false;
-
   if (isPreview && loading && !config) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50 p-8 text-slate-950">
@@ -261,6 +246,9 @@ export default function NarrowcastingDisplay() {
     color: sceneText,
   };
   const clubLogo = config?.branding?.logo_url;
+  const slideTitle = sceneTitle(scene);
+  const sponsorLogos = scene?.sponsorLogos || [];
+  const footerDate = scene?.dateLabel || date;
 
   return (
     <main className="relative flex min-h-screen overflow-hidden transition-colors duration-700" style={sceneStyle}>
@@ -283,40 +271,54 @@ export default function NarrowcastingDisplay() {
         <header className="flex items-center justify-between gap-8">
           <div className="flex items-center gap-[1.5vw]">
             {clubLogo ? (
-              <div className="flex h-[6vw] w-[6vw] items-center justify-center rounded-[1vw] border border-[var(--display-border)] bg-[var(--club-background)] p-[0.55vw] shadow-[0_1vw_3vw_rgba(0,0,0,.14)]">
-                <img src={clubLogo} alt={`Logo ${config?.club_name || 'club'}`} className="h-full w-full object-contain" />
-              </div>
+              <img src={clubLogo} alt={`Logo ${config?.club_name || 'club'}`} className="h-[7.6vw] w-[7.6vw] object-contain" />
             ) : (
-              <div className="flex h-[6vw] w-[6vw] items-center justify-center rounded-[1vw] bg-[var(--club-accent)] text-[2.1vw] font-black uppercase tracking-tight text-white">
+              <div className="flex h-[7.6vw] w-[7.6vw] items-center justify-center text-[2.1vw] font-black uppercase tracking-tight text-[var(--scene-accent-readable)]">
                 {(config?.club_name || 'Rondo').slice(0, 3)}
               </div>
             )}
-            <div>
-              <p className="text-[1.05vw] font-bold uppercase tracking-[0.3em] text-[var(--scene-accent-readable)]">Club TV</p>
-              <h1 className="mt-[0.45vw] text-[3.1vw] font-bold leading-none tracking-tight">{config?.club_name || 'Rondo'}</h1>
-            </div>
+            <h1 className="max-w-[62vw] text-[3.1vw] font-bold leading-[1.04] tracking-tight">{slideTitle}</h1>
           </div>
-          <div className={`flex items-center gap-[0.65vw] rounded-full border px-[1.15vw] py-[0.62vw] text-[0.95vw] font-medium backdrop-blur-sm ${connected ? 'border-[var(--display-border)] bg-[var(--display-surface)] text-[var(--display-muted)]' : 'border-amber-500/25 bg-amber-300/10 text-[var(--display-warning-text)]'}`}>
-            {connected ? <Wifi className="h-[1.15vw] w-[1.15vw]" /> : <WifiOff className="h-[1.15vw] w-[1.15vw]" />}
-            {isPreview ? 'Browserpreview' : connected ? 'Verbonden' : 'Offline · lokaal beeld'}
-          </div>
+          <SponsorLogoRow sponsors={sponsorLogos.slice(0, 2)} size="top" />
         </header>
 
         <div key={scene?.id || `${scene?.type}-${sceneIndex}`} className="animate-[fadeIn_500ms_ease-out] py-[1.5vw]"><NarrowcastingScene scene={scene} /></div>
 
         <footer className="flex items-end justify-between border-t border-[var(--display-border)] pt-[1.4vw]">
-          <div>
-            <p className="text-[1.35vw] font-medium capitalize text-[var(--display-text)] opacity-80">{date}</p>
-            <p className={`mt-[0.35vw] text-[0.82vw] ${feedIsStale ? 'text-[var(--display-warning-text)]' : 'text-[var(--display-muted)]'}`}>
-              {config?.name}{config?.location ? ` · ${config.location}` : ''}
-              {sourceTime ? ` · Sportlink bijgewerkt om ${sourceTime}${feedIsStale ? ' · verouderd' : ''}` : ''}
-            </p>
+          <SponsorLogoRow sponsors={sponsorLogos.slice(2, 6)} size="bottom" />
+          <div className="text-right">
+            <p className="mb-[0.2vw] text-[1.35vw] font-medium capitalize text-[var(--display-text)] opacity-80">{footerDate}</p>
+            <time className="font-mono text-[4.5vw] font-semibold tabular-nums tracking-[-0.06em]">{time}</time>
           </div>
-          <time className="font-mono text-[4.5vw] font-semibold tabular-nums tracking-[-0.06em]">{time}</time>
         </footer>
       </div>
       <div className="absolute inset-x-0 bottom-0 h-[0.55vw] bg-[var(--club-accent)]" />
     </main>
+  );
+}
+
+function sceneTitle(scene) {
+  const titles = {
+    matches: 'Wedstrijden, velden en kleedkamers',
+    cancellations: 'Afgelaste wedstrijden',
+    results: 'Recente uitslagen',
+    unavailable: 'Wedstrijdinformatie',
+    welcome: 'Welkom',
+  };
+  return scene?.title || scene?.sponsor?.name || titles[scene?.type] || 'Clubinformatie';
+}
+
+function SponsorLogoRow({ sponsors, size }) {
+  const dimensions = size === 'top' ? 'h-[4.8vw] w-[8.5vw]' : 'h-[4.2vw] w-[7.5vw]';
+  if (!sponsors.length) return <div aria-hidden="true" />;
+  return (
+    <div className="flex items-center gap-[0.8vw]">
+      {sponsors.map((sponsor) => (
+        <div key={sponsor.id} className={`flex ${dimensions} items-center justify-center rounded-[0.65vw] bg-white/90 p-[0.55vw] shadow-sm`}>
+          <img src={sponsor.logo_url} alt={sponsor.name} className="h-full w-full object-contain" />
+        </div>
+      ))}
+    </div>
   );
 }
 
