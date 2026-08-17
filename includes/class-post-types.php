@@ -32,6 +32,7 @@ class PostTypes {
 		'rondo_display'       => [ 'display', 'displays' ],
 		'rondo_signage_item'  => [ 'signage_item', 'signage_items' ],
 		'rondo_signage_list'  => [ 'signage_playlist', 'signage_playlists' ],
+		'rondo_sponsor'       => [ 'sponsor', 'sponsors' ],
 		'dienst_type'         => [ 'dienst_type', 'dienst_types' ],
 		'shift_template'      => [ 'shift_template', 'shift_templates' ],
 		'dienst_shift'        => [ 'dienst_shift', 'dienst_shifts' ],
@@ -106,10 +107,36 @@ class PostTypes {
 		$this->register_display_post_type();
 		$this->register_signage_item_post_type();
 		$this->register_signage_playlist_post_type();
+		$this->register_sponsor_post_type();
 		$this->register_dienst_type_post_type();
 		$this->register_shift_template_post_type();
 		$this->register_dienst_shift_post_type();
 		$this->register_taakuitleg_post_type();
+	}
+
+	/** Register private sponsor companies managed through Rondo's REST API. */
+	private function register_sponsor_post_type() {
+		$args = array_merge(
+			[
+				'labels'             => [
+					'name'          => __( 'Sponsorbedrijven', 'rondo' ),
+					'singular_name' => __( 'Sponsorbedrijf', 'rondo' ),
+				],
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => false,
+				'show_in_menu'       => false,
+				'show_in_rest'       => false,
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'supports'           => [ 'title', 'author', 'thumbnail' ],
+			],
+			self::capability_args( 'rondo_sponsor' )
+		);
+
+		register_post_type( 'rondo_sponsor', $args );
 	}
 
 	/**

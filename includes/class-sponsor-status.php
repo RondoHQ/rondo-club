@@ -9,6 +9,8 @@
 
 namespace Rondo\Core;
 
+use Rondo\Sponsors\Relations;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -22,7 +24,8 @@ class SponsorStatus {
 	 * @return bool
 	 */
 	public static function is_sponsor( int $person_id ): bool {
-		return self::value_is_true( get_post_meta( $person_id, 'is_sponsor', true ) );
+		return Relations::is_sponsor_contact( $person_id )
+			|| self::value_is_true( get_post_meta( $person_id, 'is_sponsor', true ) );
 	}
 
 	/**

@@ -2321,6 +2321,21 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'storage_name' => 'priority',
           'type' => 'number',
         ),
+        'sponsor_id' =>
+        array (
+          'allow_null' => 1,
+          'canonical_name' => 'sponsor_id',
+          'key' => 'field_signage_item_sponsor_company',
+          'label' => 'Sponsorbedrijf',
+          'name' => 'sponsor_id',
+          'post_type' =>
+          array (
+            0 => 'rondo_sponsor',
+          ),
+          'return_format' => 'id',
+          'storage_name' => 'sponsor_id',
+          'type' => 'post_object',
+        ),
         'sponsor_person_id' =>
         array (
           'allow_null' => 1,
@@ -2956,6 +2971,197 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'step' => 0.01,
           'storage_name' => 'total_amount',
           'type' => 'number',
+        ),
+      ),
+      'kind' => 'post',
+    ),
+    'rondo_sponsor' =>
+    array (
+      'fields' =>
+      array (
+        'address_city' =>
+        array (
+          'canonical_name' => 'address_city',
+          'key' => 'field_sponsor_address_city',
+          'label' => 'Plaats',
+          'name' => 'address_city',
+          'storage_name' => 'address_city',
+          'type' => 'text',
+        ),
+        'address_country' =>
+        array (
+          'canonical_name' => 'address_country',
+          'default_value' => 'Nederland',
+          'key' => 'field_sponsor_address_country',
+          'label' => 'Land',
+          'name' => 'address_country',
+          'storage_name' => 'address_country',
+          'type' => 'text',
+        ),
+        'address_country_code' =>
+        array (
+          'canonical_name' => 'address_country_code',
+          'default_value' => 'NL',
+          'key' => 'field_sponsor_address_country_code',
+          'label' => 'Landcode',
+          'maxlength' => 3,
+          'name' => 'address_country_code',
+          'storage_name' => 'address_country_code',
+          'type' => 'text',
+        ),
+        'address_house_number' =>
+        array (
+          'canonical_name' => 'address_house_number',
+          'key' => 'field_sponsor_address_house_number',
+          'label' => 'Huisnummer',
+          'name' => 'address_house_number',
+          'storage_name' => 'address_house_number',
+          'type' => 'text',
+        ),
+        'address_house_number_addition' =>
+        array (
+          'canonical_name' => 'address_house_number_addition',
+          'key' => 'field_sponsor_address_house_number_addition',
+          'label' => 'Toevoeging',
+          'name' => 'address_house_number_addition',
+          'storage_name' => 'address_house_number_addition',
+          'type' => 'text',
+        ),
+        'address_postal_code' =>
+        array (
+          'canonical_name' => 'address_postal_code',
+          'key' => 'field_sponsor_address_postal_code',
+          'label' => 'Postcode',
+          'name' => 'address_postal_code',
+          'storage_name' => 'address_postal_code',
+          'type' => 'text',
+        ),
+        'address_street_name' =>
+        array (
+          'canonical_name' => 'address_street_name',
+          'key' => 'field_sponsor_address_street_name',
+          'label' => 'Straatnaam',
+          'name' => 'address_street_name',
+          'storage_name' => 'address_street_name',
+          'type' => 'text',
+        ),
+        'contacts' =>
+        array (
+          'button_label' => 'Contactpersoon toevoegen',
+          'canonical_name' => 'contacts',
+          'key' => 'field_sponsor_contacts',
+          'label' => 'Contactpersonen',
+          'layout' => 'table',
+          'name' => 'contacts',
+          'storage_name' => 'contacts',
+          'sub_fields' =>
+          array (
+            'contact_role' =>
+            array (
+              'canonical_name' => 'contact_role',
+              'default_value' => 'Contactpersoon',
+              'key' => 'field_sponsor_contact_role',
+              'label' => 'Contactrol',
+              'name' => 'contact_role',
+              'storage_name' => 'contact_role',
+              'type' => 'text',
+            ),
+            'is_primary' =>
+            array (
+              'canonical_name' => 'is_primary',
+              'default_value' => 0,
+              'key' => 'field_sponsor_contact_is_primary',
+              'label' => 'Primair contact',
+              'name' => 'is_primary',
+              'storage_name' => 'is_primary',
+              'type' => 'true_false',
+            ),
+            'is_primary_pass' =>
+            array (
+              'canonical_name' => 'is_primary_pass',
+              'default_value' => 0,
+              'key' => 'field_sponsor_contact_is_primary_pass',
+              'label' => 'Primaire pasrelatie',
+              'name' => 'is_primary_pass',
+              'storage_name' => 'is_primary_pass',
+              'type' => 'true_false',
+            ),
+            'person_id' =>
+            array (
+              'canonical_name' => 'person_id',
+              'key' => 'field_sponsor_contact_person',
+              'label' => 'Persoon',
+              'name' => 'person_id',
+              'post_type' =>
+              array (
+                0 => 'person',
+              ),
+              'return_format' => 'id',
+              'storage_name' => 'person_id',
+              'type' => 'post_object',
+            ),
+            'receives_pass' =>
+            array (
+              'canonical_name' => 'receives_pass',
+              'default_value' => 1,
+              'key' => 'field_sponsor_contact_receives_pass',
+              'label' => 'Krijgt sponsorpas',
+              'name' => 'receives_pass',
+              'storage_name' => 'receives_pass',
+              'type' => 'true_false',
+            ),
+            'sponsit_person_id' =>
+            array (
+              'canonical_name' => 'sponsit_person_id',
+              'key' => 'field_sponsor_contact_sponsit_person_id',
+              'label' => 'Sponsit persoon-ID',
+              'name' => 'sponsit_person_id',
+              'storage_name' => 'sponsit_person_id',
+              'type' => 'text',
+            ),
+          ),
+          'type' => 'repeater',
+        ),
+        'legacy_person_ids' =>
+        array (
+          'canonical_name' => 'legacy_person_ids',
+          'key' => 'field_sponsor_legacy_person_ids',
+          'label' => 'Legacy sponsorpersonen',
+          'name' => 'legacy_person_ids',
+          'post_type' =>
+          array (
+            0 => 'person',
+          ),
+          'return_format' => 'id',
+          'storage_name' => 'legacy_person_ids',
+          'type' => 'relationship',
+        ),
+        'sponsor_role' =>
+        array (
+          'allow_null' => 0,
+          'canonical_name' => 'sponsor_role',
+          'choices' =>
+          array (
+            'awc_sponsor' => 'AWC Sponsor',
+            'businessclub' => 'Businessclub AWC',
+          ),
+          'key' => 'field_sponsor_role',
+          'label' => 'Sponsorrol',
+          'name' => 'sponsor_role',
+          'required' => 1,
+          'return_format' => 'value',
+          'storage_name' => 'sponsor_role',
+          'type' => 'select',
+        ),
+        'sponsit_contact_id' =>
+        array (
+          'canonical_name' => 'sponsit_contact_id',
+          'instructions' => 'Stabiele bedrijfs-ID voor de Sponsit-sync.',
+          'key' => 'field_sponsor_sponsit_contact_id',
+          'label' => 'Sponsit bedrijfs-ID',
+          'name' => 'sponsit_contact_id',
+          'storage_name' => 'sponsit_contact_id',
+          'type' => 'text',
         ),
       ),
       'kind' => 'post',

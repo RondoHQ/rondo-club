@@ -13,7 +13,7 @@ import Dashboard from '@/pages/Dashboard';
 
 // Lazy-loaded page components (separate file for fast refresh compatibility)
 import {
-  PeopleList, PeopleAnniversaries, PeopleOnboarding, PersonDetail, TeamsList, TeamDetail,
+  PeopleList, PeopleAnniversaries, PeopleOnboarding, PersonDetail, SponsorList, SponsorDetail, TeamsList, TeamDetail,
   Kaderlijst,
   CommissiesList, CommissieDetail, TodosList,
   FeedbackList, FeedbackDetail, Settings, VOG,
@@ -104,6 +104,14 @@ function VOGRoute({ children }) {
 function NarrowcastingRoute({ children }) {
   return (
     <CapabilityRoute checkAccess={(user) => user?.can_access_narrowcasting}>
+      {children}
+    </CapabilityRoute>
+  );
+}
+
+function SponsorRoute({ children }) {
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.can_manage_sponsors}>
       {children}
     </CapabilityRoute>
   );
@@ -248,6 +256,9 @@ const router = createBrowserRouter([
             ),
           },
           { path: 'people/:id', element: <KaderOrVrijwilligRedirect><PersonDetail /></KaderOrVrijwilligRedirect> },
+          { path: 'sponsors', element: <SponsorRoute><SponsorList /></SponsorRoute> },
+          { path: 'sponsors/new', element: <SponsorRoute><SponsorDetail /></SponsorRoute> },
+          { path: 'sponsors/:id', element: <SponsorRoute><SponsorDetail /></SponsorRoute> },
 
           // VOG routes - requires VOG capability
           // Canonical lives under /vrijwilligers/vog; legacy /vog kept for back-compat.

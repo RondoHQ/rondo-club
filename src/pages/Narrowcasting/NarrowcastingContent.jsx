@@ -17,7 +17,7 @@ const typeLabels = {
 
 const emptyForm = {
   title: '', content_type: 'announcement', body: '', cta_text: '', duration_seconds: 12,
-  enabled: true, valid_from: '', valid_until: '', sponsor_person_id: '', media_attachment_id: '',
+  enabled: true, valid_from: '', valid_until: '', sponsor_id: '', media_attachment_id: '',
   background_color: '#0f172a', text_color: '#ffffff', accent_color: '#22d3ee',
   use_club_colors: true,
   is_override: false, override_display_ids: [], priority: 50,
@@ -37,7 +37,7 @@ function fromItem(item) {
     ...item.fields,
     title: item.title,
     content_type: item.fields.content_type === 'rooms' ? 'matches' : item.fields.content_type,
-    sponsor_person_id: item.fields.sponsor_person_id || '',
+    sponsor_id: item.fields.sponsor_id || item.fields.sponsor_person_id || '',
     media_attachment_id: item.fields.media_attachment_id || '',
     valid_from: toInputDate(item.fields.valid_from),
     valid_until: toInputDate(item.fields.valid_until),
@@ -81,7 +81,7 @@ export default function NarrowcastingContent({ sponsorOnly = false }) {
     event.preventDefault();
     save.mutate({
       ...form,
-      sponsor_person_id: Number(form.sponsor_person_id) || 0,
+      sponsor_id: Number(form.sponsor_id) || 0,
       media_attachment_id: Number(form.media_attachment_id) || 0,
       valid_from: form.valid_from ? new Date(form.valid_from).toISOString() : '',
       valid_until: form.valid_until ? new Date(form.valid_until).toISOString() : '',
@@ -144,7 +144,7 @@ export default function NarrowcastingContent({ sponsorOnly = false }) {
         <form onSubmit={submit} className="mt-5 space-y-4">
           <label className="block"><span className="mb-1 block text-sm font-medium">Titel</span><input className="input w-full" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></label>
           {!sponsorOnly && <label className="block"><span className="mb-1 block text-sm font-medium">Type</span><select className="input w-full" value={form.content_type} onChange={(e) => setForm({ ...form, content_type: e.target.value, media_attachment_id: '' })}>{Object.entries(typeLabels).filter(([value]) => value !== 'rooms').map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>}
-          {form.content_type === 'sponsor' && <label className="block"><span className="mb-1 block text-sm font-medium">Sponsorrelatie</span><select className="input w-full" value={form.sponsor_person_id} onChange={(e) => setForm({ ...form, sponsor_person_id: e.target.value })} required><option value="">Kies sponsor</option>{(sponsorsQuery.data || []).map((sponsor) => <option key={sponsor.id} value={sponsor.id}>{sponsor.name}</option>)}</select></label>}
+          {form.content_type === 'sponsor' && <label className="block"><span className="mb-1 block text-sm font-medium">Sponsorbedrijf</span><select className="input w-full" value={form.sponsor_id} onChange={(e) => setForm({ ...form, sponsor_id: e.target.value })} required><option value="">Kies sponsorbedrijf</option>{(sponsorsQuery.data || []).map((sponsor) => <option key={sponsor.id} value={sponsor.id}>{sponsor.name}{sponsor.legacy ? ' · nog te migreren' : ''}</option>)}</select></label>}
           {showText && <label className="block"><span className="mb-1 block text-sm font-medium">Tekst</span><textarea className="input min-h-24 w-full" value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} /></label>}
           {showMedia && <div><span className="mb-1 block text-sm font-medium">{form.content_type === 'video' ? 'MP4-video' : 'Afbeelding'}</span><label className="btn-tertiary inline-flex cursor-pointer"><ImagePlus className="mr-2 h-4 w-4" />{uploading ? 'Uploaden…' : 'Bestand kiezen'}<input type="file" className="sr-only" accept={form.content_type === 'video' ? 'video/mp4' : 'image/jpeg,image/png,image/webp'} onChange={upload} disabled={uploading} /></label>{form.media_attachment_id && <span className="ml-3 text-sm text-green-700 dark:text-green-300">Bestand gekoppeld</span>}</div>}
           <div className="grid grid-cols-2 gap-4"><label><span className="mb-1 block text-sm font-medium">Duur (sec.)</span><input type="number" min="5" max="120" className="input w-full" value={form.duration_seconds} onChange={(e) => setForm({ ...form, duration_seconds: Number(e.target.value) })} /></label><label className="flex items-end gap-2 pb-2"><input type="checkbox" checked={form.enabled} onChange={(e) => setForm({ ...form, enabled: e.target.checked })} /> Actief</label></div>

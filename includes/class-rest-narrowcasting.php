@@ -787,8 +787,14 @@ class Narrowcasting extends Base {
 			}
 		}
 
-		$is_preview = $can_preview && rest_sanitize_boolean( $request->get_param( 'preview' ) );
-		$feed       = $is_preview ? $this->matchday->get_upcoming_saturday_feed() : $this->matchday->get_feed();
+		$is_preview       = $can_preview && rest_sanitize_boolean( $request->get_param( 'preview' ) );
+		$feed             = $is_preview ? $this->matchday->get_upcoming_saturday_feed() : $this->matchday->get_feed();
+		$feed['sponsors'] = array_values(
+			array_filter(
+				$this->content->sponsor_choices(),
+				static fn( array $sponsor ): bool => empty( $sponsor['legacy'] ) && ! empty( $sponsor['logo_url'] )
+			)
+		);
 
 		return rest_ensure_response( $feed );
 	}

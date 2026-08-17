@@ -180,7 +180,28 @@ final class Content {
 
 	/** Public sponsor choices containing no contact fields. */
 	public function sponsor_choices(): array {
-		$posts = get_posts(
+		$posts   = get_posts(
+			[
+				'post_type'        => 'rondo_sponsor',
+				'post_status'      => 'publish',
+				'posts_per_page'   => -1,
+				'orderby'          => 'title',
+				'order'            => 'ASC',
+				'suppress_filters' => true,
+			]
+		);
+		$choices = array_map(
+			static fn( $post ) => [
+				'id'       => (int) $post->ID,
+				'name'     => get_the_title( $post ),
+				'logo_url' => get_the_post_thumbnail_url( $post, 'medium' ) ?: null,
+				'legacy'   => false,
+			],
+			$posts
+		);
+
+		// Keep legacy sponsor-person records selectable during the cutover.
+		$legacy_posts = get_posts(
 			[
 				'post_type'        => 'person',
 				'post_status'      => 'publish',
@@ -192,14 +213,16 @@ final class Content {
 				'suppress_filters' => true,
 			]
 		);
-		return array_map(
-			static fn( $post ) => [
+		foreach ( $legacy_posts as $post ) {
+			$choices[] = [
 				'id'       => (int) $post->ID,
 				'name'     => get_the_title( $post ),
 				'logo_url' => get_the_post_thumbnail_url( $post, 'medium' ) ?: null,
-			],
-			$posts
-		);
+				'legacy'   => true,
+			];
+		}
+
+		return $choices;
 	}
 
 	/**
@@ -276,8 +299,12 @@ final class Content {
 			return new \WP_Error( 'rondo_signage_title_required', __( 'Geef het Club TV-item een titel.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
-		$sponsor_id = absint( $payload['sponsor_person_id'] ?? $current['sponsor_person_id'] ?? 0 );
-		if ( $type === 'sponsor' && ( ! $sponsor_id || ! SponsorStatus::is_sponsor( $sponsor_id ) ) ) {
+		$selected_sponsor_id = absint( $payload['sponsor_id'] ?? $payload['sponsor_person_id'] ?? $current['sponsor_id'] ?? $current['sponsor_person_id'] ?? 0 );
+		$sponsor_id          = get_post_type( $selected_sponsor_id ) === 'rondo_sponsor' ? $selected_sponsor_id : 0;
+		$legacy_sponsor_id   = get_post_type( $selected_sponsor_id ) === 'person' ? $selected_sponsor_id : 0;
+		$company_is_active   = $sponsor_id && get_post_status( $sponsor_id ) === 'publish';
+		$legacy_is_active    = $legacy_sponsor_id && SponsorStatus::is_sponsor( $legacy_sponsor_id );
+		if ( $type === 'sponsor' && ! $company_is_active && ! $legacy_is_active ) {
 			return new \WP_Error( 'rondo_signage_sponsor_required', __( 'Kies een bestaande sponsorrelatie.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
@@ -294,7 +321,8 @@ final class Content {
 			'valid_from'           => $payload['valid_from'] ?? $this->wire_value( self::ITEM_POST_TYPE, $current, 'valid_from' ),
 			'valid_until'          => $payload['valid_until'] ?? $this->wire_value( self::ITEM_POST_TYPE, $current, 'valid_until' ),
 			'priority'             => $sponsor_only ? 0 : (int) ( $payload['priority'] ?? $current['priority'] ?? 0 ),
-			'sponsor_person_id'    => $sponsor_id,
+			'sponsor_id'           => $sponsor_id,
+			'sponsor_person_id'    => $legacy_sponsor_id,
 			'media_attachment_id'  => $media_id,
 			'body'                 => substr( sanitize_textarea_field( (string) ( $payload['body'] ?? $current['body'] ?? '' ) ), 0, 500 ),
 			'cta_text'             => substr( sanitize_text_field( (string) ( $payload['cta_text'] ?? $current['cta_text'] ?? '' ) ), 0, 100 ),
@@ -520,15 +548,26 @@ final class Content {
 
 		$sponsor = null;
 		if ( $type === 'sponsor' ) {
-			$sponsor_id = (int) ( $item['fields']['sponsor_person_id'] ?? 0 );
-			if ( ! $sponsor_id || ! SponsorStatus::is_sponsor( $sponsor_id ) ) {
+			$sponsor_id = (int) ( $item['fields']['sponsor_id'] ?? 0 );
+			if ( $sponsor_id && get_post_type( $sponsor_id ) === 'rondo_sponsor' && get_post_status( $sponsor_id ) === 'publish' ) {
+				$sponsor = [
+					'id'       => $sponsor_id,
+					'name'     => get_the_title( $sponsor_id ),
+					'logo_url' => get_the_post_thumbnail_url( $sponsor_id, 'large' ) ?: null,
+				];
+			} else {
+				$sponsor_id = (int) ( $item['fields']['sponsor_person_id'] ?? 0 );
+			}
+			if ( $sponsor === null && ( ! $sponsor_id || ! SponsorStatus::is_sponsor( $sponsor_id ) ) ) {
 				return new \WP_Error( 'sponsor_missing', __( 'Sponsorrelatie ontbreekt.', 'rondo' ) );
 			}
-			$sponsor = [
-				'id'       => $sponsor_id,
-				'name'     => get_the_title( $sponsor_id ),
-				'logo_url' => get_the_post_thumbnail_url( $sponsor_id, 'large' ) ?: null,
-			];
+			if ( $sponsor === null ) {
+				$sponsor = [
+					'id'       => $sponsor_id,
+					'name'     => get_the_title( $sponsor_id ),
+					'logo_url' => get_the_post_thumbnail_url( $sponsor_id, 'large' ) ?: null,
+				];
+			}
 		}
 		$use_club_colors = ! array_key_exists( 'use_club_colors', $item['fields'] ) || ! empty( $item['fields']['use_club_colors'] );
 

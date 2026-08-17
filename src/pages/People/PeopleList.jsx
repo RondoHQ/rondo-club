@@ -51,7 +51,7 @@ function formatBirthdateDisplay(birthdate) {
 
 function getMembershipTypeLabel(person) {
   const fields = person.fields || {};
-  const sponsorSuffix = hasSponsorRole(fields) ? ' + sponsor' : '';
+  const sponsorSuffix = (person.characteristics?.sponsor || hasSponsorRole(fields)) ? ' + sponsorcontact' : '';
 
   if (fields.person_type === 'contact') return `Contact${sponsorSuffix}`;
 
@@ -167,7 +167,7 @@ function PersonCharacteristics({ characteristics }) {
       />
       {characteristics.parent && <CharacteristicBadge label="Ouder/verzorger" tone="parent" />}
       {characteristics.volunteer && <CharacteristicBadge label="Vrijwilliger" tone="volunteer" />}
-      {characteristics.sponsor && <CharacteristicBadge label="Sponsor" tone="sponsor" />}
+      {characteristics.sponsor && <CharacteristicBadge label="Sponsorcontact" tone="sponsor" />}
     </div>
   );
 }
@@ -1020,7 +1020,7 @@ export default function PeopleList() {
     }),
     createColumn({ id: 'is_parent', header: 'Ouder/verzorger', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Kenmerken' }),
     createColumn({ id: 'vrijwilliger', header: 'Vrijwilliger', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Kenmerken' }),
-    createColumn({ id: 'is_sponsor', header: 'Sponsor', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Kenmerken' }),
+    createColumn({ id: 'is_sponsor', header: 'Sponsorcontact', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Kenmerken' }),
     createColumn({ id: 'is_contact', header: 'Contact', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Kenmerken' }),
 
     // Lidmaatschap — who counts as a member right now / cancellations
@@ -1425,12 +1425,6 @@ export default function PeopleList() {
                   <span className="hidden md:inline">Contact toevoegen</span>
                 </button>
               )}
-              {(currentUser?.can_edit_people || currentUser?.can_manage_sponsors) && (
-                <button onClick={() => setNewPersonMode('sponsor')} className="btn-primary">
-                  <Plus className="w-4 h-4 md:mr-2" />
-                  <span className="hidden md:inline">Sponsor toevoegen</span>
-                </button>
-              )}
               <button
                 onClick={handleExportCsv}
                 className="btn-tertiary"
@@ -1591,7 +1585,6 @@ export default function PeopleList() {
         onSubmit={(data) => createPersonMutation.mutate(data)}
         isLoading={createPersonMutation.isPending}
         initialPersonType="contact"
-        initialSponsor={newPersonMode === 'sponsor'}
       />
 
       {/* Bulk Organization Modal */}

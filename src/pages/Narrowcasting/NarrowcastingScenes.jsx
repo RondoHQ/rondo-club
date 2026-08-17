@@ -42,15 +42,6 @@ function VideoScene({ scene }) {
   return <section className="flex items-center justify-center"><video key={scene.media?.url} src={scene.media?.url} className="max-h-[60vh] max-w-[90vw]" autoPlay muted playsInline /></section>;
 }
 
-function SceneHeading({ eyebrow, title }) {
-  return (
-    <div className="mb-[2vw]">
-      <p className="text-[1.05vw] font-bold uppercase tracking-[0.26em] text-[var(--scene-accent-readable)]">{eyebrow}</p>
-      <h2 className="mt-[0.5vw] text-[3.2vw] font-bold leading-none tracking-tight">{title}</h2>
-    </div>
-  );
-}
-
 function Team({ name, align = 'left' }) {
   return (
     <span className={`block min-w-0 truncate ${align === 'right' ? 'text-right' : ''}`}>{name}</span>
@@ -59,8 +50,7 @@ function Team({ name, align = 'left' }) {
 
 function MatchesScene({ items, dateLabel }) {
   return (
-    <section>
-      <SceneHeading eyebrow={dateLabel || 'Vandaag'} title="Wedstrijden, velden en kleedkamers" />
+    <section aria-label={dateLabel || 'Vandaag'}>
       <div className="space-y-[0.7vw]">
         {items.map((match) => (
           <article key={match.id} className={`grid grid-cols-[6.5vw_minmax(0,1fr)_minmax(0,1fr)_10vw] items-center gap-[1.2vw] rounded-[0.9vw] border px-[1.7vw] py-[0.8vw] backdrop-blur-sm ${match.cancelled ? 'border-[var(--display-danger-border)] bg-[var(--display-danger-bg)]' : 'border-[var(--display-border)] bg-[var(--display-surface)]'}`}>
@@ -96,8 +86,7 @@ function TeamAssignment({ team, room, cancelled }) {
 
 function CancellationsScene({ items, dateLabel }) {
   return (
-    <section>
-      <SceneHeading eyebrow={dateLabel || 'Let op'} title="Afgelaste wedstrijden" />
+    <section aria-label={dateLabel || 'Let op'}>
       <div className="space-y-[0.9vw]">
         {items.map((match) => (
           <article key={match.id} className="grid grid-cols-[8vw_1fr] items-center gap-[1.5vw] rounded-[0.9vw] border border-[var(--display-danger-border)] bg-[var(--display-danger-bg)] px-[2vw] py-[1.05vw] backdrop-blur-sm">
@@ -116,7 +105,6 @@ function CancellationsScene({ items, dateLabel }) {
 function ResultsScene({ items }) {
   return (
     <section>
-      <SceneHeading eyebrow="Terugblik" title="Recente uitslagen" />
       <div className="overflow-hidden rounded-[1vw] border border-[var(--display-border)] bg-[var(--display-surface)] backdrop-blur-sm">
         {items.map((match) => (
           <div key={match.id} className="grid grid-cols-[1fr_9vw] items-center gap-[1.5vw] border-b border-[var(--display-border)] px-[2vw] py-[1.05vw] last:border-b-0">

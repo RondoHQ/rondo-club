@@ -299,8 +299,6 @@ export function useCreatePerson({ onSuccess } = {}) {
           nickname: data.nickname,
           company_name: data.company_name || '',
           person_type: data.person_type || 'contact',
-          is_sponsor: Boolean(data.is_sponsor),
-          ...(data.is_sponsor ? { sponsor_pass_variant: data.sponsor_pass_variant } : {}),
           gender: data.gender || null,
           pronouns: data.pronouns || null,
           email_1: data.email || '',

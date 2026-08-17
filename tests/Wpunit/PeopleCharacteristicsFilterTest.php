@@ -138,4 +138,33 @@ class PeopleCharacteristicsFilterTest extends RondoTestCase {
 		$this->assertContains( $unknown_id, $unknown_ids );
 		$this->assertNotContains( $known_id, $unknown_ids );
 	}
+
+	public function test_sponsor_filters_follow_company_relationships(): void {
+		$person_id  = $this->createPerson( [ 'post_title' => 'Nieuw sponsorcontact' ] );
+		$sponsor_id = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_sponsor',
+				'post_status' => 'publish',
+				'post_title'  => 'Relatie BV',
+			]
+		);
+		\Rondo\Fields\Fields::update_for_post( $sponsor_id, 'sponsor_role', 'businessclub' );
+		\Rondo\Sponsors\Relations::set_contacts(
+			$sponsor_id,
+			[
+				[
+					'person_id'     => $person_id,
+					'receives_pass' => true,
+				],
+			]
+			);
+
+		$sponsor_data      = $this->filtered_data( [ 'is_sponsor' => '1' ] );
+		$businessclub_data = $this->filtered_data( [ 'is_businessclub_member' => '1' ] );
+
+		$this->assertContains( $person_id, array_column( $sponsor_data['people'], 'id' ) );
+		$this->assertContains( $person_id, array_column( $businessclub_data['people'], 'id' ) );
+		$person = current( array_filter( $sponsor_data['people'], static fn( array $item ): bool => $item['id'] === $person_id ) );
+		$this->assertTrue( $person['characteristics']['sponsor'] );
+	}
 }

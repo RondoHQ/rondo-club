@@ -45,5 +45,15 @@ export function buildMatchdayScenes(feed, fallbackMessage) {
     scenes.push({ type: 'welcome', message });
   }
 
-  return scenes;
+  return scenes.map((scene, index) => ({
+    ...scene,
+    sponsorLogos: rotateSponsors(feed.sponsors || [], index),
+  }));
+}
+
+export function rotateSponsors(sponsors, sceneIndex, slots = 6) {
+  if (!sponsors.length) return [];
+  const count = Math.min(slots, sponsors.length);
+  const offset = (sceneIndex * slots) % sponsors.length;
+  return Array.from({ length: count }, (_, index) => sponsors[(offset + index) % sponsors.length]);
 }
