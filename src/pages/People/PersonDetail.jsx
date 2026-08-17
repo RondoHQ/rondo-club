@@ -6,7 +6,7 @@ import {
   CheckSquare2, StickyNote, ExternalLink, Gavel, RefreshCw, CreditCard,
   CalendarClock, GitMerge
 } from 'lucide-react';
-import { peopleKeys, usePerson, usePersonTimeline, useDeleteNote, useDeletePerson, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
+import { peopleKeys, usePerson, usePersonTimeline, useDeleteNote, useDeletePerson, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople, useAddParentRelationship } from '@/hooks/usePeople';
 import TimelineView from '@/components/Timeline/TimelineView';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
@@ -19,6 +19,7 @@ import TodoModal from '@/components/Timeline/TodoModal';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
 import ContactEditModal from '@/components/ContactEditModal';
 import RelationshipEditModal from '@/components/RelationshipEditModal';
+import ParentRelationshipModal from '@/components/ParentRelationshipModal';
 import AddressEditModal from '@/components/AddressEditModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import FinancesCard from '@/components/FinancesCard';
@@ -38,6 +39,21 @@ import TabButton from '@/components/TabButton.jsx';
 import { useClothingPersonProfile } from '@/hooks/useClothing';
 
 const PersonMergeModal = lazy(() => import('@/components/PersonMergeModal'));
+
+function ParentSyncBadge({ status }) {
+  if (!status) return null;
+  const presentation = status.state === 'synced'
+    ? { label: status.slot ? `Sportlink veld ${status.slot}` : 'In Sportlink', classes: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' }
+    : status.state === 'error'
+      ? { label: 'Sportlink-sync mislukt', classes: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' }
+      : { label: 'Wacht op Sportlink', classes: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' };
+
+  return (
+    <span className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[11px] font-medium ${presentation.classes}`} title={status.message || undefined}>
+      {presentation.label}
+    </span>
+  );
+}
 
 function PersonShiftItem({ shift }) {
   const status = shift.no_show
@@ -159,7 +175,9 @@ export default function PersonDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: person, isLoading, error } = usePerson(id);
+  const { data: person, isLoading, error } = usePerson(id, {
+    refetchInterval: (query) => query.state.data?.parent_sync_statuses?.some(status => status.state === 'pending') ? 10000 : false,
+  });
   const { data: timeline } = usePersonTimeline(id);
   const deleteNote = useDeleteNote();
   const deletePerson = useDeletePerson();
@@ -171,6 +189,7 @@ export default function PersonDetail() {
   const updateTodo = useUpdateTodo();
   const deleteActivity = useDeleteActivity();
   const deleteTodo = useDeleteTodo();
+  const addParentRelationship = useAddParentRelationship(id);
   const { data: allPeople, isLoading: isPeopleLoading } = usePeople();
 
   const handleRefresh = async () => {
@@ -242,6 +261,7 @@ export default function PersonDetail() {
   const [showTodoModal, setShowTodoModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showRelationshipModal, setShowRelationshipModal] = useState(false);
+  const [showParentRelationshipModal, setShowParentRelationshipModal] = useState(false);
   const [isSavingContacts, setIsSavingContacts] = useState(false);
   const [isSavingRelationship, setIsSavingRelationship] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
@@ -422,6 +442,11 @@ export default function PersonDetail() {
     } finally {
       setIsSavingRelationship(false);
     }
+  };
+
+  const handleAddParentRelationship = async (data) => {
+    await addParentRelationship.mutateAsync(data);
+    setShowParentRelationshipModal(false);
   };
 
   // Handle deleting a relationship
@@ -991,6 +1016,10 @@ export default function PersonDetail() {
       return ageB - ageA;
     });
   }, [person?.fields?.relationships, personAgeMap]);
+
+  const parentSyncStatusMap = useMemo(() => new Map(
+    (person?.parent_sync_statuses || []).map(status => [Number(status.parent_id), status])
+  ), [person?.parent_sync_statuses]);
 
   // Create a map of entity ID to entity data (name, logo, type)
   const entityMap = {};
@@ -1836,7 +1865,11 @@ export default function PersonDetail() {
                       onClick={() => {
                         setEditingRelationship(null);
                         setEditingRelationshipIndex(null);
-                        setShowRelationshipModal(true);
+                        if (currentUser?.can_access_ledenadministratie && person?.fields?.knvb_id) {
+                          setShowParentRelationshipModal(true);
+                        } else {
+                          setShowRelationshipModal(true);
+                        }
                       }}
                       className="btn-tertiary text-sm"
                       title="Relatie toevoegen"
@@ -1873,6 +1906,7 @@ export default function PersonDetail() {
                             )}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">{decodeHtml(rel.relationship_name || rel.relationship_label)}</p>
+                          <ParentSyncBadge status={parentSyncStatusMap.get(Number(rel.related_person_id))} />
                         </div>
                       </Link>
                       {canEditPeople && (
@@ -2340,6 +2374,18 @@ export default function PersonDetail() {
               mobile2={fields.mobile_2 || ''}
               telephone1={fields.telephone_1 || ''}
               telephone2={fields.telephone_2 || ''}
+            />
+          )}
+
+          {canEditPeople && (
+            <ParentRelationshipModal
+              isOpen={showParentRelationshipModal}
+              onClose={() => setShowParentRelationshipModal(false)}
+              onSubmit={handleAddParentRelationship}
+              isLoading={addParentRelationship.isPending}
+              personId={id}
+              allPeople={allPeople || []}
+              isPeopleLoading={isPeopleLoading}
             />
           )}
 

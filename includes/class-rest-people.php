@@ -11,6 +11,7 @@ use Rondo\CustomFields\Manager;
 use Rondo\Core\SponsorStatus;
 use Rondo\Fields\Registry;
 use Rondo\Passes\PublicMembershipPassPage;
+use Rondo\People\ParentRelationshipService;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -57,6 +58,50 @@ class People extends Base {
 	 * Register custom REST routes for people domain
 	 */
 	public function register_routes() {
+		register_rest_route(
+			'rondo/v1',
+			'/people/(?P<person_id>\d+)/parents',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'add_parent' ],
+				'permission_callback' => [ $this, 'check_ledenadministratie_permission' ],
+				'args'                => [
+					'person_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'mode'      => [
+						'required'          => true,
+						'sanitize_callback' => 'sanitize_key',
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/people/(?P<person_id>\d+)/parent-sync-status',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'update_parent_sync_status' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'person_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'parent_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'state'     => [
+						'required' => true,
+						'enum'     => [ 'pending', 'synced', 'error' ],
+					],
+				],
+			]
+		);
+
 		// Guided, admin-only person merge. Preview and execution use the same
 		// service plan so the confirmation screen cannot drift from the write.
 		register_rest_route(
@@ -815,6 +860,39 @@ class People extends Base {
 	 * @param WP_REST_Request $request The REST request object.
 	 * @return WP_REST_Response Modified response with computed fields.
 	 */
+	/** Add an existing or new parent/guardian to a Sportlink-backed child. */
+	public function add_parent( $request ) {
+		$service = new ParentRelationshipService();
+		$result  = $service->add_parent( (int) $request->get_param( 'person_id' ), $request->get_params() );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		return new \WP_REST_Response( $result, 201 );
+	}
+
+	/** Receive the verified Sportlink slot status from rondo-sync. */
+	public function update_parent_sync_status( $request ) {
+		$child_id  = (int) $request->get_param( 'person_id' );
+		$parent_id = (int) $request->get_param( 'parent_id' );
+		if ( get_post_type( $child_id ) !== 'person' || get_post_type( $parent_id ) !== 'person' ) {
+			return new \WP_Error( 'rondo_parent_status_not_found', __( 'Kind of ouder/verzorger is niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+		}
+
+		$slot  = $request->get_param( 'slot' );
+		$slot  = $slot === null ? null : absint( $slot );
+		$saved = ( new ParentRelationshipService() )->set_sync_status(
+			$child_id,
+			$parent_id,
+			sanitize_key( (string) $request->get_param( 'state' ) ),
+			$slot,
+			(string) $request->get_param( 'message' )
+		);
+		if ( ! $saved ) {
+			return new \WP_Error( 'rondo_parent_status_invalid', __( 'De synchronisatiestatus kon niet worden opgeslagen.', 'rondo' ), [ 'status' => 400 ] );
+		}
+		return rest_ensure_response( [ 'updated' => true ] );
+	}
+
 	public function add_person_computed_fields( $response, $post, $request ) {
 		// Return early if response is an error (e.g., unauthorized access)
 		if ( is_wp_error( $response ) ) {
@@ -872,6 +950,7 @@ class People extends Base {
 
 		$data['linked_user_id']        = $linked_user_id ?: null;
 		$data['welcome_email_sent_at'] = get_post_meta( $post->ID, '_welcome_email_sent_at', true ) ?: null;
+		$data['parent_sync_statuses']  = ( new ParentRelationshipService() )->get_sync_statuses( (int) $post->ID );
 
 		// Expose linked user roles for admin AccountCard.
 		if ( $data['linked_user_id'] && current_user_can( 'manage_options' ) ) {
