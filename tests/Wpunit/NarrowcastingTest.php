@@ -25,6 +25,8 @@ class NarrowcastingTest extends RondoTestCase {
 		delete_option( 'rondo_narrowcasting_sportlink_club_code' );
 		delete_option( 'rondo_narrowcasting_matchday_cache' );
 		delete_option( 'rondo_narrowcasting_default_playlist_id' );
+		delete_option( 'rondo_finance_accent_color' );
+		delete_option( 'rondo_finance_accent_background_color' );
 		delete_transient( 'rondo_narrowcasting_matchday_refresh_lock' );
 		delete_transient( 'rondo_narrowcasting_manual_refresh_lock' );
 		parent::tear_down();
@@ -175,10 +177,15 @@ class NarrowcastingTest extends RondoTestCase {
 
 		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		wp_set_current_user( $admin_id );
+		update_option( 'rondo_finance_accent_color', '#c8102e' );
+		update_option( 'rondo_finance_accent_background_color', '#fff7f7' );
 		$preview = $this->dispatch( 'GET', '/rondo/v1/narrowcasting/preview' );
 		$this->assertSame( 200, $preview->get_status() );
 		$this->assertTrue( $preview->get_data()['preview'] );
 		$this->assertSame( 'Voorbeeldscherm', $preview->get_data()['name'] );
+		$this->assertSame( '#c8102e', $preview->get_data()['branding']['accent_color'] );
+		$this->assertSame( '#fff7f7', $preview->get_data()['branding']['background_color'] );
+		$this->assertArrayHasKey( 'logo_url', $preview->get_data()['branding'] );
 		$this->assertArrayNotHasKey( 'device_secret_hash', $preview->get_data() );
 
 		$settings = $this->dispatch(

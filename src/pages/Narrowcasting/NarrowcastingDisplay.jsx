@@ -48,6 +48,25 @@ function apiUrl(path) {
   return `${root}${path}`;
 }
 
+function normalizedHex(value, fallback) {
+  const match = String(value || '').trim().match(/^#([\da-f]{3}|[\da-f]{6})$/i);
+  if (!match) return fallback;
+  if (match[1].length === 6) return `#${match[1].toLowerCase()}`;
+  return `#${match[1].split('').map((character) => character.repeat(2)).join('').toLowerCase()}`;
+}
+
+function hexRgb(value) {
+  const hex = normalizedHex(value, '#0891b2').slice(1);
+  return [0, 2, 4].map((index) => Number.parseInt(hex.slice(index, index + 2), 16));
+}
+
+function mixHex(value, target, weight) {
+  const sourceRgb = hexRgb(value);
+  const targetRgb = hexRgb(target);
+  const mixed = sourceRgb.map((component, index) => Math.round(component * (1 - weight) + targetRgb[index] * weight));
+  return `#${mixed.map((component) => component.toString(16).padStart(2, '0')).join('')}`;
+}
+
 export default function NarrowcastingDisplay() {
   const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
   const [config, setConfig] = useState(() => (isPreview ? null : readStoredConfig()));
@@ -209,36 +228,77 @@ export default function NarrowcastingDisplay() {
   }
 
   const scene = scenes[sceneIndex] || scenes[0];
-  const sceneStyle = scene?.colors ? { backgroundColor: scene.colors.background, color: scene.colors.text } : undefined;
+  const clubAccent = normalizedHex(config?.branding?.accent_color, '#0891b2');
+  const clubBackground = normalizedHex(config?.branding?.background_color, '#ffffff');
+  const accentRgb = hexRgb(clubAccent).join(', ');
+  const clubAccentSoft = mixHex(clubAccent, '#ffffff', 0.48);
+  const clubAccentDark = mixHex(clubAccent, '#000000', 0.35);
+  const sceneStyle = {
+    '--club-accent': clubAccent,
+    '--club-accent-rgb': accentRgb,
+    '--club-accent-soft': clubAccentSoft,
+    '--club-accent-dark': clubAccentDark,
+    '--club-background': clubBackground,
+    backgroundColor: scene?.colors?.background || '#09090b',
+    color: scene?.colors?.text || '#ffffff',
+  };
+  const clubLogo = config?.branding?.logo_url;
 
   return (
     <main className="relative flex min-h-screen overflow-hidden bg-slate-950 text-white transition-colors duration-700" style={sceneStyle}>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(6,182,212,0.24),transparent_45%),radial-gradient(circle_at_bottom_left,rgba(37,99,235,0.26),transparent_48%)]" />
-      <div className="relative flex min-h-screen w-full flex-col justify-between p-[4vw]">
-        <header className="flex items-start justify-between gap-8">
-          <div>
-            <p className="text-[1.5vw] font-medium uppercase tracking-[0.24em] text-cyan-300">Club TV</p>
-            <h1 className="mt-[1vw] text-[4vw] font-semibold leading-none">{config?.club_name || 'Rondo'}</h1>
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `radial-gradient(circle at 8% 2%, rgba(${accentRgb}, .34), transparent 34%), radial-gradient(circle at 94% 100%, rgba(${accentRgb}, .18), transparent 38%), linear-gradient(120deg, rgba(255,255,255,.035), transparent 38%)`,
+        }}
+      />
+      <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(rgba(255,255,255,.16)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.16)_1px,transparent_1px)] [background-size:4vw_4vw]" />
+      {clubLogo && (
+        <img
+          src={clubLogo}
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute right-[-2vw] top-1/2 h-[72vh] w-[48vw] -translate-y-1/2 object-contain opacity-[0.055]"
+        />
+      )}
+      <div className="absolute inset-y-0 left-0 w-[0.7vw] bg-[var(--club-accent)]" />
+      <div className="relative flex min-h-screen w-full flex-col justify-between px-[4.4vw] pb-[3vw] pt-[3.2vw]">
+        <header className="flex items-center justify-between gap-8">
+          <div className="flex items-center gap-[1.5vw]">
+            {clubLogo ? (
+              <div className="flex h-[6vw] w-[6vw] items-center justify-center rounded-[1vw] bg-[var(--club-background)] p-[0.55vw] shadow-[0_1vw_3vw_rgba(0,0,0,.28)]">
+                <img src={clubLogo} alt={`Logo ${config?.club_name || 'club'}`} className="h-full w-full object-contain" />
+              </div>
+            ) : (
+              <div className="flex h-[6vw] w-[6vw] items-center justify-center rounded-[1vw] bg-[var(--club-accent)] text-[2.1vw] font-black uppercase tracking-tight text-white">
+                {(config?.club_name || 'Rondo').slice(0, 3)}
+              </div>
+            )}
+            <div>
+              <p className="text-[1.05vw] font-bold uppercase tracking-[0.3em] text-[var(--club-accent-soft)]">Club TV</p>
+              <h1 className="mt-[0.45vw] text-[3.1vw] font-bold leading-none tracking-tight">{config?.club_name || 'Rondo'}</h1>
+            </div>
           </div>
-          <div className={`flex items-center gap-[0.7vw] rounded-full border px-[1.3vw] py-[0.7vw] text-[1.1vw] ${connected ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-200' : 'border-slate-400/30 bg-slate-400/10 text-slate-300'}`}>
-            {connected ? <Wifi className="h-[1.4vw] w-[1.4vw]" /> : <WifiOff className="h-[1.4vw] w-[1.4vw]" />}
+          <div className={`flex items-center gap-[0.65vw] rounded-full border px-[1.15vw] py-[0.62vw] text-[0.95vw] font-medium backdrop-blur-sm ${connected ? 'border-white/15 bg-white/8 text-white/75' : 'border-amber-300/25 bg-amber-300/10 text-amber-100'}`}>
+            {connected ? <Wifi className="h-[1.15vw] w-[1.15vw]" /> : <WifiOff className="h-[1.15vw] w-[1.15vw]" />}
             {isPreview ? 'Browserpreview' : connected ? 'Verbonden' : 'Offline · lokaal beeld'}
           </div>
         </header>
 
-        <div key={scene?.id || `${scene?.type}-${sceneIndex}`} className="animate-[fadeIn_500ms_ease-out]"><NarrowcastingScene scene={scene} /></div>
+        <div key={scene?.id || `${scene?.type}-${sceneIndex}`} className="animate-[fadeIn_500ms_ease-out] py-[1.5vw]"><NarrowcastingScene scene={scene} /></div>
 
-        <footer className="flex items-end justify-between">
+        <footer className="flex items-end justify-between border-t border-white/12 pt-[1.4vw]">
           <div>
-            <p className="text-[1.5vw] capitalize text-slate-300">{date}</p>
-            <p className={`mt-[0.35vw] text-[0.9vw] ${feedIsStale ? 'text-amber-300' : 'text-slate-500'}`}>
+            <p className="text-[1.35vw] font-medium capitalize text-white/80">{date}</p>
+            <p className={`mt-[0.35vw] text-[0.82vw] ${feedIsStale ? 'text-amber-300' : 'text-white/40'}`}>
               {config?.name}{config?.location ? ` · ${config.location}` : ''}
               {sourceTime ? ` · Sportlink bijgewerkt om ${sourceTime}${feedIsStale ? ' · verouderd' : ''}` : ''}
             </p>
           </div>
-          <time className="font-mono text-[5vw] font-medium tabular-nums tracking-tight">{time}</time>
+          <time className="font-mono text-[4.5vw] font-semibold tabular-nums tracking-[-0.06em]">{time}</time>
         </footer>
       </div>
+      <div className="absolute inset-x-0 bottom-0 h-[0.55vw] bg-[var(--club-accent)]" />
     </main>
   );
 }
