@@ -446,21 +446,28 @@ export default function Kaderlijst() {
       ),
       filterType: FILTER_TYPES.TEXT,
       filterLabel: 'Voornaam',
-      sortable: false,
+      sortingFn: (rowA, rowB) => {
+        const firstNameCompare = collator.compare(rowA.original.firstName, rowB.original.firstName);
+        return firstNameCompare !== 0 ? firstNameCompare : collator.compare(rowA.original.lastName, rowB.original.lastName);
+      },
       size: 140,
     }),
     createColumn({
       id: 'surname',
       header: 'Achternaam',
-      accessorFn: (row) => row.surname,
+      accessorFn: (row) => row.lastName,
       cell: ({ row }) => (
         <Link to={`/people/${row.original.personId}`} className="font-medium text-gray-900 dark:text-gray-100 hover:text-electric-cyan dark:hover:text-electric-cyan">
           {row.original.surname}
         </Link>
       ),
       filterType: FILTER_TYPES.TEXT,
+      filterFn: (row, _columnId, value) => row.original.surname.toLocaleLowerCase('nl').includes(String(value || '').toLocaleLowerCase('nl')),
       filterLabel: 'Achternaam',
-      sortable: false,
+      sortingFn: (rowA, rowB) => {
+        const surnameCompare = collator.compare(rowA.original.lastName, rowB.original.lastName);
+        return surnameCompare !== 0 ? surnameCompare : collator.compare(rowA.original.firstName, rowB.original.firstName);
+      },
       size: 180,
     }),
     createColumn({

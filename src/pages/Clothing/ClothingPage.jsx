@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Download, Plus, Shirt, RotateCcw, X, Undo2 } from 'lucide-react';
-import { useParams, useNavigate, Navigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate, Link } from 'react-router-dom';
 import { useQueries } from '@tanstack/react-query';
 import TabButton from '@/components/TabButton';
 import { usePerson } from '@/hooks/usePeople';
@@ -17,6 +17,8 @@ import {
 } from '@/hooks/useClothing';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import SortableHeader from '@/components/SortableHeader';
+import { comparePersonNames, formatPersonSurname } from '@/utils/formatters';
 
 const CLOTHING_TABS = [
   { id: 'overview', label: 'Overzicht' },
@@ -57,6 +59,8 @@ export default function ClothingPage() {
   const [isPersonOpen, setIsPersonOpen] = useState(false);
   const [showIssueForm, setShowIssueForm] = useState(false);
   const [issueForm, setIssueForm] = useState({ item_id: '', size: '' });
+  const [transactionSortField, setTransactionSortField] = useState('date');
+  const [transactionSortOrder, setTransactionSortOrder] = useState('desc');
 
   const personInputRef = useRef(null);
   const personDropdownRef = useRef(null);
@@ -66,6 +70,21 @@ export default function ClothingPage() {
     items.forEach((item) => map.set(item.id, item));
     return map;
   }, [items]);
+
+  const sortedAssignments = useMemo(() => [...assignments].sort((a, b) => {
+    let comparison;
+    if (transactionSortField === 'first_name' || transactionSortField === 'last_name') {
+      comparison = comparePersonNames(a, b, transactionSortField);
+    } else {
+      comparison = String(a?.[transactionSortField] || '').localeCompare(String(b?.[transactionSortField] || ''), 'nl');
+    }
+    return transactionSortOrder === 'asc' ? comparison : -comparison;
+  }), [assignments, transactionSortField, transactionSortOrder]);
+
+  const handleTransactionSort = (field, order) => {
+    setTransactionSortField(field);
+    setTransactionSortOrder(order);
+  };
 
   const searchTerm = personSearch.trim();
   const effectiveSearchTerm = searchTerm.length >= 3 ? searchTerm : '';
@@ -585,8 +604,9 @@ export default function ClothingPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left border-b border-gray-200 dark:border-gray-700">
-                    <th className="py-2">Datum</th>
-                    <th className="py-2">Lid</th>
+                    <SortableHeader label="Datum" columnId="date" sortField={transactionSortField} sortOrder={transactionSortOrder} onSort={handleTransactionSort} className="!px-0 !py-2" />
+                    <SortableHeader label="Voornaam" columnId="first_name" sortField={transactionSortField} sortOrder={transactionSortOrder} onSort={handleTransactionSort} className="!px-0 !py-2" />
+                    <SortableHeader label="Achternaam" columnId="last_name" sortField={transactionSortField} sortOrder={transactionSortOrder} onSort={handleTransactionSort} className="!px-0 !py-2" />
                     <th className="py-2">Item</th>
                     <th className="py-2">Maat</th>
                     <th className="py-2">Type</th>
@@ -595,10 +615,15 @@ export default function ClothingPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {assignments.map((row) => (
+                  {sortedAssignments.map((row) => (
                     <tr key={row.id} className="border-b border-gray-100 dark:border-gray-800">
                       <td className="py-2">{row.date}</td>
-                      <td className="py-2">{row.person_name}</td>
+                      <td className="py-2">
+                        <Link to={`/people/${row.person_id}`} className="hover:text-electric-cyan">{row.first_name || '—'}</Link>
+                      </td>
+                      <td className="py-2">
+                        <Link to={`/people/${row.person_id}`} className="hover:text-electric-cyan">{formatPersonSurname(row.infix, row.last_name) || '—'}</Link>
+                      </td>
                       <td className="py-2">{row.item_name || itemMap.get(row.item_id)?.name || row.item_id}</td>
                       <td className="py-2">{row.size}</td>
                       <td className="py-2">{row.in_or_out}</td>

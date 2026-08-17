@@ -285,6 +285,7 @@ abstract class Base {
 			'id'                  => $post->ID,
 			'name'                => $this->sanitize_text( $post->post_title ),
 			'first_name'          => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $post->ID, 'first_name' ) ),
+			'infix'               => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $post->ID, 'infix' ) ),
 			'last_name'           => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $post->ID, 'last_name' ) ),
 			'thumbnail'           => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
 			'former_member'       => ( \Rondo\Fields\Fields::get_for_post( $post->ID, 'former_member' ) === true ),

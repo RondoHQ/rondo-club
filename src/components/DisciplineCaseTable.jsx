@@ -2,7 +2,7 @@ import { useState, useMemo, Fragment, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp, FileText, Loader2 } from 'lucide-react';
 import PersonAvatar from '@/components/PersonAvatar';
-import { formatCurrency, getPersonName } from '@/utils/formatters';
+import { comparePersonNames, formatCurrency, formatPersonSurname, getPersonName } from '@/utils/formatters';
 import { format } from '@/utils/dateFormat';
 import SortableHeader from '@/components/SortableHeader';
 import { getDoorbelastLabel, isDoorbelastException, isDoorbelastNVT } from '@/utils/disciplineCases';
@@ -166,12 +166,11 @@ export default function DisciplineCaseTable({
       const fieldsB = b.fields || {};
 
       switch (sortField) {
-        case 'person': {
+        case 'first_name':
+        case 'last_name': {
           const personA = personMap.get(fieldsA.person);
           const personB = personMap.get(fieldsB.person);
-          const nameA = personA ? getPersonName(personA) : '';
-          const nameB = personB ? getPersonName(personB) : '';
-          cmp = nameA.localeCompare(nameB);
+          cmp = comparePersonNames(personA, personB, sortField);
           break;
         }
         case 'match_date': {
@@ -286,10 +285,20 @@ export default function DisciplineCaseTable({
                 />
               </th>
             )}
-            {showPersonColumn && (
+            {showPersonColumn && isColVisible('first_name') && (
               <SortableHeader
-                label="Persoon"
-                columnId="person"
+                label="Voornaam"
+                columnId="first_name"
+                sortField={sortField}
+                sortOrder={sortOrder}
+                onSort={handleSort}
+                className="text-left"
+              />
+            )}
+            {showPersonColumn && isColVisible('last_name') && (
+              <SortableHeader
+                label="Achternaam"
+                columnId="last_name"
                 sortField={sortField}
                 sortOrder={sortOrder}
                 onSort={handleSort}
@@ -398,7 +407,7 @@ export default function DisciplineCaseTable({
                       )}
                     </td>
                   )}
-                  {showPersonColumn && (
+                  {showPersonColumn && isColVisible('first_name') && (
                     <td className="px-4 py-3 whitespace-nowrap">
                       {person ? (
                         <Link
@@ -413,7 +422,7 @@ export default function DisciplineCaseTable({
                             size="sm"
                           />
                           <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {getPersonName(person)}
+                            {person.first_name || '-'}
                           </span>
                         </Link>
                       ) : (
@@ -421,6 +430,19 @@ export default function DisciplineCaseTable({
                           -
                         </span>
                       )}
+                    </td>
+                  )}
+                  {showPersonColumn && isColVisible('last_name') && (
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {person ? (
+                        <Link
+                          to={`/people/${dc.fields?.person}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-sm font-medium text-gray-900 hover:text-electric-cyan dark:text-gray-100"
+                        >
+                          {formatPersonSurname(person.infix, person.last_name) || '-'}
+                        </Link>
+                      ) : '-'}
                     </td>
                   )}
                   {isColVisible('wedstrijd') && (
@@ -485,7 +507,8 @@ export default function DisciplineCaseTable({
                     <td
                       colSpan={
                         (canCreateInvoice ? 1 : 0) +
-                        (showPersonColumn ? 1 : 0) +
+                        (showPersonColumn && isColVisible('first_name') ? 1 : 0) +
+                        (showPersonColumn && isColVisible('last_name') ? 1 : 0) +
                         (isColVisible('wedstrijd') ? 1 : 0) +
                         (isColVisible('team') ? 1 : 0) +
                         (isColVisible('sanctie') ? 1 : 0) +

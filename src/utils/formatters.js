@@ -129,6 +129,38 @@ export function formatPersonName(firstName, infix, lastName) {
 }
 
 /**
+ * Format the surname exactly as it should be displayed in Dutch lists.
+ * Sorting must still use last_name itself, so an infix such as "de" does not
+ * move De Valk to the letter D.
+ *
+ * @param {string} infix
+ * @param {string} lastName
+ * @returns {string} Formatted surname
+ */
+export function formatPersonSurname(infix, lastName) {
+  return [infix, lastName].filter(Boolean).join(' ');
+}
+
+/**
+ * Compare person-shaped records by a canonical name field with a stable
+ * secondary name. The visible surname may contain an infix; the comparison
+ * deliberately uses last_name only.
+ */
+export function comparePersonNames(a, b, field = 'last_name') {
+  const primaryA = String(a?.[field] || '').trim();
+  const primaryB = String(b?.[field] || '').trim();
+  const primary = primaryA.localeCompare(primaryB, 'nl', { sensitivity: 'base' });
+  if (primary !== 0) return primary;
+
+  const secondaryField = field === 'last_name' ? 'first_name' : 'last_name';
+  return String(a?.[secondaryField] || '').trim().localeCompare(
+    String(b?.[secondaryField] || '').trim(),
+    'nl',
+    { sensitivity: 'base' },
+  );
+}
+
+/**
  * Get the first initial of a person's name for avatars
  * 
  * @param {Object} person - Person object

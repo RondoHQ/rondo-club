@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.9.0] - 2026-08-17
+
+### Added
+
+- Personenlijsten tonen voornaam en achternaam voortaan als afzonderlijke, filterbare en sorteerbare kolommen. Nederlandse tussenvoegsels blijven bij de zichtbare achternaam, maar tellen niet mee voor de alfabetische sortering.
+- De kolominstellingen van de algemene personenlijst ondersteunen nu ook Voornaam, Achternaam en Organisatie. Bestaande voorkeuren en de breedte van de oude kolom Naam worden automatisch gemigreerd.
+
+### Changed
+
+- CSV-exports van personen, VOG, tuchtzaken, contributie en kledinguitgiftes leveren voornaam en achternaam in afzonderlijke kolommen.
+- Persoonssamenvattingen in de REST API bevatten nu consequent `first_name`, `infix` en `last_name`, zodat alle lijsten dezelfde naamweergave kunnen gebruiken.
+
 ## [34.8.4] - 2026-08-17
 
 ### Changed

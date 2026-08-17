@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ExternalLink, Pencil, Plus, Search, UsersRound, X } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import SortableHeader from '@/components/SortableHeader';
+import { comparePersonNames, formatPersonSurname } from '@/utils/formatters';
 
 const REASON_LABELS = {
   commissie: 'Commissielid',
@@ -262,6 +264,8 @@ export default function VrijwilligersExemptions() {
   const queryClient = useQueryClient();
   const [filterReason, setFilterReason] = useState('all');
   const [editorPerson, setEditorPerson] = useState(undefined);
+  const [sortField, setSortField] = useState('last_name');
+  const [sortOrder, setSortOrder] = useState('asc');
 
   const { data: eligibility, isLoading } = useQuery({
     queryKey: ['volunteer', 'eligibility', 'with-persons'],
@@ -294,6 +298,16 @@ export default function VrijwilligersExemptions() {
     if (filterReason === 'all') return exemptPersons;
     return exemptPersons.filter((person) => person.reason === filterReason);
   }, [exemptPersons, filterReason]);
+
+  const sortedFiltered = useMemo(() => [...filtered].sort((a, b) => {
+    const comparison = comparePersonNames(a, b, sortField);
+    return sortOrder === 'asc' ? comparison : -comparison;
+  }), [filtered, sortField, sortOrder]);
+
+  const handleSort = (field, order) => {
+    setSortField(field);
+    setSortOrder(order);
+  };
 
   const counts = useMemo(() => {
     const nextCounts = { all: exemptPersons.length };
@@ -364,7 +378,8 @@ export default function VrijwilligersExemptions() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-gray-700 dark:text-gray-300">
             <tr>
-              <th className="px-4 py-2">Naam</th>
+              <SortableHeader label="Voornaam" columnId="first_name" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} className="!px-4 !py-2" />
+              <SortableHeader label="Achternaam" columnId="last_name" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} className="!px-4 !py-2" />
               <th className="px-4 py-2">Reden vrijstelling</th>
               <th className="px-4 py-2">Eenheid</th>
               <th className="w-20 px-4 py-2"></th>
@@ -373,20 +388,25 @@ export default function VrijwilligersExemptions() {
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
             {isLoading ? (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">Laden…</td>
+                <td colSpan={5} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">Laden…</td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={5} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                   Geen vrijgestelde personen in deze categorie.
                 </td>
               </tr>
             ) : (
-              filtered.map((person) => (
+              sortedFiltered.map((person) => (
                 <tr key={person.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td className="px-4 py-2">
                     <Link to={`/people/${person.id}`} className="text-bright-cobalt hover:underline dark:text-electric-cyan">
-                      {person.name}
+                      {person.first_name || '—'}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-2">
+                    <Link to={`/people/${person.id}`} className="text-bright-cobalt hover:underline dark:text-electric-cyan">
+                      {formatPersonSurname(person.infix, person.last_name) || '—'}
                     </Link>
                   </td>
                   <td className="px-4 py-2">

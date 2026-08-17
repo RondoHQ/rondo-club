@@ -19,6 +19,7 @@ export const FILTER_TYPES = {
  * @param {string} [config.filterType] - One of FILTER_TYPES values, or null/undefined for no filter
  * @param {Array<{value: string, label: string}>} [config.filterOptions] - Options for SELECT filter
  * @param {function} [config.filterFn] - Custom TanStack filter function (overrides default)
+ * @param {function} [config.sortingFn] - Custom TanStack sorting function
  * @param {function} [config.getFilterLabel] - Returns display label for active filter chip: (value) => string
  * @param {string} [config.filterLabel] - Override column header in filter dropdown/chip
  * @param {string} [config.filterSection] - Optional section heading to group this filter under in the FilterDropdown. Filters without a section land in an "Overige" group.
@@ -38,6 +39,7 @@ export function createColumn({
   filterType = null,
   filterOptions = [],
   filterFn: customFilterFn,
+  sortingFn,
   getFilterLabel,
   filterLabel,
   filterSection = null,
@@ -69,6 +71,7 @@ export function createColumn({
   if (accessorKey !== undefined) def.accessorKey = accessorKey;
   if (accessorFn !== undefined) def.accessorFn = accessorFn;
   if (cell !== undefined) def.cell = cell;
+  if (sortingFn !== undefined) def.sortingFn = sortingFn;
   if (size !== undefined) def.size = size;
 
   // Apply filter function
