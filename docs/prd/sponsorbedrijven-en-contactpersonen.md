@@ -3,7 +3,7 @@
 **Status:** Voorstel  
 **Datum:** 2026-08-17  
 **Eigenaar:** Sponsorbeheer  
-**Raakt:** Personen, toegangspassen, Club TV, Sponsit-sync
+**Raakt:** Rondo Club, Rondo Sync, personen, toegangspassen, Club TV, Sponsit en Laposta
 
 ## 1. Samenvatting
 
@@ -192,7 +192,46 @@ Bij migratie krijgt iedere huidige sponsorpersoon standaard pasrecht, zodat geen
 onbedoeld vervalt. Daarna kan sponsorbeheer het per contact corrigeren. Bestaande tokens en
 Wallet-links blijven op het persoonrecord staan; alleen de berekening van de variant verandert.
 
-## 10. Gevolgen voor Club TV
+## 10. Aanpassingen in Rondo Sync
+
+Rondo Sync importeert Sponsit nu wekelijks naar personen. Per Sponsit-contactpersoon schrijft de
+pipeline `is_sponsor`, `company_name`, `sponsor_pass_variant`, `sponsit_contact_id` en
+`sponsit_person_id` naar een `person`. Bij een verdwenen Sponsit-record verwijdert de pipeline de
+sponsorrol weer van die persoon. Deze logica moet tegelijk met het nieuwe model veranderen.
+
+De nieuwe mapping wordt:
+
+- één Sponsit **contact/company** wordt één `rondo_sponsor`, gekoppeld op `sponsit_contact_id`;
+- de Sponsit bedrijfsnaam, sponsorstatus, sponsorrol en bedrijfsadressen gaan naar dat bedrijf;
+- iedere Sponsit **person** wordt gekoppeld aan een bestaande of nieuwe Rondo-persoon op
+  `sponsit_person_id`, met e-mail plus identiteit alleen als gecontroleerde fallback;
+- de koppeling wordt een sponsorcontactrelatie met standaardrol `Contactpersoon` en pasrecht;
+- een bedrijf zonder personen blijft een geldig sponsorbedrijf, maar krijgt geen fictieve persoon;
+- een inactief Sponsit-bedrijf wordt gearchiveerd en zijn pasrelaties worden inactief; de personen
+  zelf blijven bestaan;
+- handmatig in Rondo gemaakte sponsorbedrijven zonder Sponsit bedrijfs-ID worden nooit door de
+  sync gearchiveerd of overschreven.
+
+De sync gebruikt na de cutover de nieuwe `/rondo/v1/sponsors`-API naast de bestaande personen-API.
+De dry-run toont afzonderlijk bedrijven, personen, relaties, archiveringen en quarantaines. De
+Laposta-stap blijft gevoed vanuit Sponsit, maar bepaalt `islid` en de gekozen pasrelatie via het
+nieuwe Rondo-model in plaats van `is_sponsor` op de persoon.
+
+### Veilige omschakelvolgorde
+
+1. Rondo Club uitrollen met het nieuwe model en tijdelijk ondersteuning voor het oude model.
+2. Rondo Sync gereedmaken en testen tegen fixtures en een read-only productie-preview.
+3. De wekelijkse Sponsit apply-run tijdens de daadwerkelijke migratie tijdelijk pauzeren.
+4. Bedrijven en relaties migreren en aantallen/bron-ID's controleren.
+5. Rondo Sync naar de nieuwe endpoints omschakelen en eerst een dry-run uitvoeren.
+6. Eén gecontroleerde apply-run uitvoeren en daarna pas de wekelijkse planning hervatten.
+7. Na een stabiele overgangsperiode de oude persoonsvelden en writes verwijderen.
+
+Een langdurige dual-write naar zowel bedrijven als legacy persoonsvelden wordt vermeden: twee
+schrijfbronnen maken conflicten waarschijnlijk. De compatibiliteitsperiode is daarom vooral
+**dual-read** in Rondo Club, met één kort en gecontroleerd omschakelmoment voor Rondo Sync.
+
+## 11. Gevolgen voor Club TV
 
 Club TV verwijst voortaan naar een `rondo_sponsor` in plaats van naar een sponsorpersoon. De
 sponsorkeuzelijst toont alleen actieve bedrijven en geeft alleen naam en logo aan de speler door.
@@ -208,9 +247,9 @@ Voor de eerder ontworpen wedstrijden-slide geldt als vervolgstap:
 De huidige Club TV-velden en bestaande content met `sponsor_person_id` worden tijdens de cutover
 omgezet naar `sponsor_id`. Tot de migratie is afgerond kan de manifestresolver beide velden lezen.
 
-## 11. Migratie
+## 12. Migratie
 
-### 11.1 Eerst een dry-runrapport
+### 12.1 Eerst een dry-runrapport
 
 Een herhaalbare WP-CLI-migratie maakt eerst uitsluitend een rapport met vier groepen:
 
@@ -223,7 +262,7 @@ Een herhaalbare WP-CLI-migratie maakt eerst uitsluitend een rapport met vier gro
 Het rapport bevat de voorgestelde bedrijfsnaam, contactpersonen, rol, adres, logo en bron-ID's. De
 sponsorbeheerder kan overrides vastleggen, waaronder `Sterre - Arend B.V.` naar `Arend BV`.
 
-### 11.2 Uitvoering
+### 12.2 Uitvoering
 
 Na goedkeuring:
 
@@ -240,18 +279,19 @@ Pseudo-personen worden eerst gearchiveerd en pas in een latere, afzonderlijk goe
 verwijderd. Echte leden, ouders en externe contactpersonen worden nooit door deze migratie
 verwijderd.
 
-### 11.3 Herhaalbaarheid en herstel
+### 12.3 Herhaalbaarheid en herstel
 
 De migratie is idempotent: opnieuw uitvoeren maakt geen dubbele bedrijven of relaties. Elk bedrijf
 onthoudt zijn legacy person-ID's en Sponsit-ID. Voor de cutover wordt een JSON/CSV-rapport bewaard,
 zodat iedere omzetting controleerbaar en zo nodig gericht terug te draaien is.
 
-## 12. Fasering
+## 13. Fasering
 
 ### Fase 0 — beslissingen en data-opschoning
 
 - onderstaande open keuzes bevestigen;
 - dry-runrapport bouwen en samenvoegingen beoordelen;
+- Rondo Sync-mapping en verwachte bedrijf-/persoon-/relatie-aantallen vastleggen;
 - vaststellen welke bestaande afbeeldingen echt logo's zijn.
 
 **Resultaat:** goedgekeurde migratiemapping zonder productiewijzigingen.
@@ -275,10 +315,12 @@ zodat iedere omzetting controleerbaar en zo nodig gericht terug te draaien is.
 
 ### Fase 3 — migratie en passen
 
+- Rondo Sync apply-run tijdelijk pauzeren;
 - goedgekeurde mapping uitvoeren;
 - sponsorpasberekening omzetten;
 - aantallen en alle bestaande passvarianten controleren;
-- legacy velden gedurende de overgang blijven lezen.
+- Rondo Sync eerst in preview en daarna gecontroleerd tegen de nieuwe API uitvoeren;
+- legacy velden gedurende de overgang blijven lezen en daarna de sync hervatten.
 
 **Resultaat:** sponsorbedrijven zijn de bron; bestaande sponsorcontacten verliezen geen toegang.
 
@@ -303,7 +345,7 @@ zodat iedere omzetting controleerbaar en zo nodig gericht terug te draaien is.
 Iedere implementatiefase krijgt eigen tests, versie- en changelogwijziging, commit en productie-
 controle. De data-migratie krijgt daarnaast een aparte read-only verificatie na uitvoering.
 
-## 13. Test- en acceptatiecriteria
+## 14. Test- en acceptatiecriteria
 
 - [ ] Sponsorbeheer kan een bedrijf met naam, adres, logo en sponsorrol maken en wijzigen.
 - [ ] Sponsorbeheer kan een bestaand persoon koppelen zonder diens lidgegevens te kunnen wijzigen.
@@ -317,11 +359,16 @@ controle. De data-migratie krijgt daarnaast een aparte read-only verificatie na 
 - [ ] Club TV ontvangt alleen sponsor-ID, naam en logo.
 - [ ] Oude sponsorcontent blijft tijdens de overgang afspeelbaar.
 - [ ] De migratie kan tweemaal worden uitgevoerd zonder dubbele bedrijven of relaties.
+- [ ] Een Rondo Sync dry-run toont bedrijven, personen, relaties en archiveringen afzonderlijk.
+- [ ] Een tweede Rondo Sync apply-run maakt geen duplicaten en rapporteert alles als ongewijzigd.
+- [ ] Een inactieve Sponsit-sponsor archiveert het bedrijf en verwijdert geen persoon.
+- [ ] Een handmatig sponsorbedrijf zonder Sponsit-ID blijft onaangeraakt door Rondo Sync.
+- [ ] Laposta behoudt bedrijfsnaam, sponsorvariant, bron-ID's en correcte `islid`-waarde.
 - [ ] Archiveren verbreekt geen historische koppelingen; hard verwijderen met verwijzingen wordt
       geweigerd.
 - [ ] PHP-tests, frontendtests, lint en productiebuild zijn groen.
 
-## 14. Beslissingen nodig vóór implementatie
+## 15. Beslissingen nodig vóór implementatie
 
 1. **Pasrecht per contact — aanbevolen:** voeg `Krijgt sponsorpas` toe aan iedere relatie en zet dit
    tijdens migratie voor alle huidige sponsorpersonen aan. Alternatief is iedere contactpersoon
