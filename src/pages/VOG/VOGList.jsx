@@ -8,7 +8,7 @@ import { buildCsv, downloadCsv } from '@/utils/csvExport';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import { format } from '@/utils/dateFormat';
-import { formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
+import { formatPersonSurname, formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
 import SortableHeader from '@/components/SortableHeader';
 import { DataTableToolbar, ColumnSettingsPanel, useColumnVisibility, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
@@ -89,17 +89,24 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection,
           )}
         </button>
       </td>
-      <td className="px-4 py-3 whitespace-nowrap">
-        <Link to={`/people/${person.id}`} className="flex items-center gap-2">
-          <span className={`text-sm font-medium ${
-            isSelected ? 'text-gray-900 dark:text-white' : 'text-gray-900 dark:text-gray-50'
-          }`}>
-            {[person.first_name, person.infix, person.last_name].filter(Boolean).join(' ')}
-          </span>
-          <VOGBadge person={person} />
-          <VOGEmailIndicator person={person} />
-        </Link>
-      </td>
+      {isColVisible('first_name') && (
+        <td className="px-4 py-3 whitespace-nowrap">
+          <Link to={`/people/${person.id}`} className="flex items-center gap-2">
+            <span className={`text-sm font-medium ${isSelected ? 'text-gray-900 dark:text-white' : 'text-gray-900 dark:text-gray-50'}`}>
+              {person.first_name || '-'}
+            </span>
+            <VOGBadge person={person} />
+            <VOGEmailIndicator person={person} />
+          </Link>
+        </td>
+      )}
+      {isColVisible('last_name') && (
+        <td className="px-4 py-3 whitespace-nowrap">
+          <Link to={`/people/${person.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-50">
+            {formatPersonSurname(person.infix, person.last_name) || '-'}
+          </Link>
+        </td>
+      )}
 
       {isColVisible('knvb_id') && (
         <td className={`px-4 py-3 text-sm ${isSelected ? 'text-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
@@ -176,7 +183,8 @@ export default function VOGList() {
   const [vogTypeFilter, setVogTypeFilter] = useState('');
   const [justisStatusFilter, setJustisStatusFilter] = useState('');
   const [reminderStatusFilter, setReminderStatusFilter] = useState('');
-  const [nameFilter, setNameFilter] = useState('');
+  const [firstNameFilter, setFirstNameFilter] = useState('');
+  const [lastNameFilter, setLastNameFilter] = useState('');
   const [knvbIdFilter, setKnvbIdFilter] = useState('');
   const [emailPresenceFilter, setEmailPresenceFilter] = useState('');
   const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
@@ -205,6 +213,8 @@ export default function VOGList() {
     vogType: vogTypeFilter,
     vogJustisStatus: justisStatusFilter,
     vogReminderStatus: reminderStatusFilter,
+    firstName: firstNameFilter,
+    lastName: lastNameFilter,
     orderby,
     order,
   });
@@ -222,21 +232,16 @@ export default function VOGList() {
   const allServerPeople = useMemo(() => data?.people || [], [data?.people]);
   const totalPeople = data?.total || 0;
 
-  // Client-side filtering for columns not covered by server-side filters
+  // Presence filters are based on the complete response page; name filters are
+  // server-side so sorting and filtering apply before pagination.
   const people = useMemo(() => {
     let result = allServerPeople;
-    if (nameFilter) {
-      const search = nameFilter.toLowerCase();
-      result = result.filter(p =>
-        [p.first_name, p.infix, p.last_name].filter(Boolean).join(' ').toLowerCase().includes(search)
-      );
-    }
     if (knvbIdFilter === 'heeft') result = result.filter(p => p.fields?.['knvb_id']);
     else if (knvbIdFilter === 'geen') result = result.filter(p => !p.fields?.['knvb_id']);
     if (emailPresenceFilter === 'heeft') result = result.filter(p => getFirstEmail(p));
     else if (emailPresenceFilter === 'geen') result = result.filter(p => !getFirstEmail(p));
     return result;
-  }, [allServerPeople, nameFilter, knvbIdFilter, emailPresenceFilter]);
+  }, [allServerPeople, knvbIdFilter, emailPresenceFilter]);
 
   const emailCounts = useMemo(() => {
     const allPeople = allData?.people || [];
@@ -290,8 +295,13 @@ export default function VOGList() {
   // Filter columns for DataTableToolbar — labels include live counts from allData
   const filterColumns = useMemo(() => [
     createColumn({
-      id: 'naam',
-      header: 'Naam',
+      id: 'first_name',
+      header: 'Voornaam',
+      filterType: FILTER_TYPES.TEXT,
+    }),
+    createColumn({
+      id: 'last_name',
+      header: 'Achternaam',
       filterType: FILTER_TYPES.TEXT,
     }),
     createColumn({
@@ -360,15 +370,16 @@ export default function VOGList() {
     }),
   ], [emailCounts, vogTypeCounts, justisCounts, knvbIdCounts, emailPresenceCounts]);
 
-  const hasActiveFilters = !!(emailStatusFilter || vogTypeFilter || justisStatusFilter || reminderStatusFilter || nameFilter || knvbIdFilter || emailPresenceFilter);
-  const activeFilterCount = [emailStatusFilter, vogTypeFilter, justisStatusFilter, reminderStatusFilter, nameFilter, knvbIdFilter, emailPresenceFilter].filter(Boolean).length;
+  const hasActiveFilters = !!(emailStatusFilter || vogTypeFilter || justisStatusFilter || reminderStatusFilter || firstNameFilter || lastNameFilter || knvbIdFilter || emailPresenceFilter);
+  const activeFilterCount = [emailStatusFilter, vogTypeFilter, justisStatusFilter, reminderStatusFilter, firstNameFilter, lastNameFilter, knvbIdFilter, emailPresenceFilter].filter(Boolean).length;
 
   const clearFilters = () => {
     setEmailStatusFilter('');
     setVogTypeFilter('');
     setJustisStatusFilter('');
     setReminderStatusFilter('');
-    setNameFilter('');
+    setFirstNameFilter('');
+    setLastNameFilter('');
     setKnvbIdFilter('');
     setEmailPresenceFilter('');
   };
@@ -378,12 +389,15 @@ export default function VOGList() {
     else if (colId === 'vog_type') setVogTypeFilter(value || '');
     else if (colId === 'justis_status') setJustisStatusFilter(value || '');
     else if (colId === 'reminder_status') setReminderStatusFilter(value || '');
-    else if (colId === 'naam') setNameFilter(value || '');
+    else if (colId === 'first_name') setFirstNameFilter(value || '');
+    else if (colId === 'last_name') setLastNameFilter(value || '');
     else if (colId === 'knvb_id_filter') setKnvbIdFilter(value || '');
     else if (colId === 'email_presence') setEmailPresenceFilter(value || '');
   };
 
   const colVisColumns = [
+    { id: 'first_name', label: 'Voornaam', isVisible: isVisible('first_name') },
+    { id: 'last_name', label: 'Achternaam', isVisible: isVisible('last_name') },
     { id: 'knvb_id', label: 'KNVB ID', isVisible: isVisible('knvb_id') },
     { id: 'email', label: 'Email', isVisible: isVisible('email') },
     { id: 'phone', label: 'Telefoon', isVisible: isVisible('phone') },
@@ -495,10 +509,11 @@ export default function VOGList() {
   };
 
   const handleExportCsv = () => {
-    const headers = ['Naam', 'KNVB ID', 'Email', 'Telefoon', 'Datum VOG', 'Type', '1e email', 'Justis', 'Herinnering'];
+    const headers = ['Voornaam', 'Achternaam', 'KNVB ID', 'Email', 'Telefoon', 'Datum VOG', 'Type', '1e email', 'Justis', 'Herinnering'];
     const formatDate = (d) => d ? format(new Date(d), 'yyyy-MM-dd') : '';
     const rows = people.map(person => [
-      [person.first_name, person.infix, person.last_name].filter(Boolean).join(' '),
+      person.first_name || '',
+      formatPersonSurname(person.infix, person.last_name),
       person.fields?.['knvb_id'] || '',
       getFirstEmail(person) || '',
       getFirstPhone(person) || '',
@@ -615,7 +630,7 @@ export default function VOGList() {
         {/* Filter toolbar + CSV export */}
         <DataTableToolbar
           columns={filterColumns}
-          filters={{ naam: nameFilter, knvb_id_filter: knvbIdFilter, email_presence: emailPresenceFilter, vog_type: vogTypeFilter, email_status: emailStatusFilter, justis_status: justisStatusFilter, reminder_status: reminderStatusFilter }}
+          filters={{ first_name: firstNameFilter, last_name: lastNameFilter, knvb_id_filter: knvbIdFilter, email_presence: emailPresenceFilter, vog_type: vogTypeFilter, email_status: emailStatusFilter, justis_status: justisStatusFilter, reminder_status: reminderStatusFilter }}
           onFilterChange={setFilter}
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
@@ -656,7 +671,12 @@ export default function VOGList() {
                     )}
                   </button>
                 </th>
-                <SortableHeader label="Naam" columnId="first_name" sortField={orderby} sortOrder={order} onSort={handleSort} />
+                {isVisible('first_name') && (
+                  <SortableHeader label="Voornaam" columnId="first_name" sortField={orderby} sortOrder={order} onSort={handleSort} />
+                )}
+                {isVisible('last_name') && (
+                  <SortableHeader label="Achternaam" columnId="last_name" sortField={orderby} sortOrder={order} onSort={handleSort} />
+                )}
                 {isVisible('knvb_id') && (
                   <SortableHeader label="KNVB ID" columnId="knvb_id" sortField={orderby} sortOrder={order} onSort={handleSort} sortable={false} />
                 )}

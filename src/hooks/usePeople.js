@@ -102,6 +102,8 @@ export function usePeople(params = {}, options = {}) {
  * @param {number} filters.birthMonth - Filter by birth month (1-12)
  * @param {string} filters.orderby - 'first_name', 'last_name', or 'modified' (default: 'first_name')
  * @param {string} filters.order - 'asc' or 'desc' (default: 'asc')
+ * @param {string} filters.firstName - Filter by first name
+ * @param {string} filters.lastName - Filter by displayed surname (including infix)
  * @param {string} filters.huidigeVrijwilliger - '1' for yes, '0' for no, '' for all
  * @param {string} filters.financieleBlokkade - '1' for yes, '0' for no, '' for all
  * @param {string} filters.typeLid - Filter by member type value
@@ -134,6 +136,8 @@ export function buildFilteredPeopleParams(filters = {}) {
     birth_month: filters.birthMonth || null,
     orderby: filters.orderby || 'first_name',
     order: filters.order || 'asc',
+    first_name: filters.firstName || null,
+    last_name: filters.lastName || null,
     huidig_vrijwilliger: filters.huidigeVrijwilliger || null,
     financiele_blokkade: filters.financieleBlokkade || null,
     type_lid: filters.typeLid || null,

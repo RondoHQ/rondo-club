@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { format } from '@/utils/dateFormat';
 import SortableHeader from '@/components/SortableHeader';
+import { formatPersonSurname } from '@/utils/formatters';
 
 // Helper function to get first email from fixed fields
 function getFirstEmail(person) {
@@ -52,12 +53,17 @@ function VOGUpcomingRow({ person, isOdd }) {
     <tr className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${
       isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'
     }`}>
-      {/* Name */}
+      {/* First name */}
       <td className="px-4 py-3 whitespace-nowrap">
-        <Link to={`/people/${person.id}`} className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-50">
-            {[person.first_name, person.infix, person.last_name].filter(Boolean).join(' ')}
-          </span>
+        <Link to={`/people/${person.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-50">
+          {person.first_name || '-'}
+        </Link>
+      </td>
+
+      {/* Surname */}
+      <td className="px-4 py-3 whitespace-nowrap">
+        <Link to={`/people/${person.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-50">
+          {formatPersonSurname(person.infix, person.last_name) || '-'}
         </Link>
       </td>
 
@@ -171,8 +177,15 @@ export default function VOGUpcoming() {
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
                 <SortableHeader
-                  label="Naam"
+                  label="Voornaam"
                   columnId="first_name"
+                  sortField={orderby}
+                  sortOrder={order}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="Achternaam"
+                  columnId="last_name"
                   sortField={orderby}
                   sortOrder={order}
                   onSort={handleSort}

@@ -347,6 +347,14 @@ class People extends Base {
 							return strtolower( $param );
 						},
 					],
+					'first_name'                => [
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+					'last_name'                 => [
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					],
 					'birth_year_from'           => [
 						'description'       => 'Filter by birth year (minimum year, inclusive)',
 						'type'              => 'integer',
@@ -1649,8 +1657,10 @@ class People extends Base {
 		if ( $order_definition === null ) {
 			$order_definition = $this->resolve_orderby_definition( 'first_name' );
 		}
-		$orderby = $order_definition['identifier'];
-		$order   = strtoupper( $request->get_param( 'order' ) );
+		$orderby           = $order_definition['identifier'];
+		$order             = strtoupper( $request->get_param( 'order' ) );
+		$first_name_filter = trim( (string) $request->get_param( 'first_name' ) );
+		$last_name_filter  = trim( (string) $request->get_param( 'last_name' ) );
 
 		// Custom field filter parameters
 		$huidig_vrijwilliger       = $request->get_param( 'huidig_vrijwilliger' );
@@ -1743,6 +1753,15 @@ class People extends Base {
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} tm ON p.ID = tm.post_id AND tm.meta_key = 'team'";
 		$select_fields .= ', fn.meta_value AS first_name, ix.meta_value AS infix, ln.meta_value AS last_name';
 		$select_fields .= ', tm.meta_value AS team_id';
+
+		if ( $first_name_filter !== '' ) {
+			$where_clauses[]  = 'fn.meta_value LIKE %s';
+			$prepare_values[] = '%' . $wpdb->esc_like( $first_name_filter ) . '%';
+		}
+		if ( $last_name_filter !== '' ) {
+			$where_clauses[]  = "CONCAT_WS(' ', NULLIF(ix.meta_value, ''), ln.meta_value) LIKE %s";
+			$prepare_values[] = '%' . $wpdb->esc_like( $last_name_filter ) . '%';
+		}
 
 		$has_birthdate_join    = false;
 		$birthdate_value_sql   = "CASE
