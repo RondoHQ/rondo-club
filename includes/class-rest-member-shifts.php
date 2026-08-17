@@ -9,7 +9,8 @@
  * Endpoints:
  *   GET  /rondo/v1/my-shifts              — current user's assigned + completed shifts plus their counter
  *   GET  /rondo/v1/people/{id}/shifts      — person's active future shifts plus their two most recent past shifts
- *   GET  /rondo/v1/shifts/recent-signups   — 50 shifts with the most recent current signups
+ *   GET  /rondo/v1/shifts/recent-signups   — 10 shifts with the most recent current signups
+ *   GET  /rondo/v1/shifts/signups          — all shifts with current assignees
  *   GET  /rondo/v1/shifts/available       — open shifts the current user can sign up for
  *   POST /rondo/v1/shifts/{id}/signup     — add current user to a shift
  *   POST /rondo/v1/shifts/{id}/cancel     — remove current user from a shift (afmelden mag altijd)
@@ -287,6 +288,16 @@ class MemberShifts extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_recent_signups' ],
+				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/shifts/signups',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_signups' ],
 				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
 			]
 		);
@@ -583,27 +594,24 @@ class MemberShifts extends Base {
 	}
 
 	/**
-	 * Return at most 50 shifts ordered by their latest current signup.
+	 * Build shift summaries for current assignments.
 	 *
-	 * A signup remains current only while the person is still present in the
-	 * shift's `assigned_persons` value. Manager-added assignees without a signup
-	 * timestamp are deliberately omitted: this overview tracks self-service
-	 * registrations, not every assignment edit.
+	 * @param bool $include_without_timestamp Include legacy assignments without signup metadata.
+	 * @return array<int, array<string, mixed>>
 	 */
-	public function get_recent_signups() {
+	private function get_signup_shift_summaries( bool $include_without_timestamp ): array {
 		$query = new \WP_Query(
 			[
 				'post_type'        => 'dienst_shift',
-				// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- dynamic per-person signup keys must be inspected before the top 50 can be selected.
+				// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- assignments must be inspected before the overview can be sorted.
 				'posts_per_page'   => -1,
 				'no_found_rows'    => true,
 				'suppress_filters' => true,
 				'post_status'      => [ 'publish' ],
 				'meta_query'       => [
 					[
-						'key'         => '_shift_signup_at_',
-						'compare_key' => 'LIKE',
-						'compare'     => 'EXISTS',
+						'key'     => 'assigned_persons',
+						'compare' => 'EXISTS',
 					],
 				],
 			]
@@ -621,7 +629,7 @@ class MemberShifts extends Base {
 			$signups  = [];
 			foreach ( $assigned as $person_id ) {
 				$timestamp = (int) get_post_meta( $shift->ID, '_shift_signup_at_' . $person_id, true );
-				if ( $timestamp <= 0 ) {
+				if ( $timestamp <= 0 && ! $include_without_timestamp ) {
 					continue;
 				}
 
@@ -633,7 +641,7 @@ class MemberShifts extends Base {
 				$signups[] = [
 					'person_id'    => $person_id,
 					'name'         => $name,
-					'signed_up_at' => wp_date( 'c', $timestamp ),
+					'signed_up_at' => $timestamp > 0 ? wp_date( 'c', $timestamp ) : null,
 					'timestamp'    => $timestamp,
 				];
 			}
@@ -642,7 +650,13 @@ class MemberShifts extends Base {
 				continue;
 			}
 
-			usort( $signups, fn( array $a, array $b ): int => $b['timestamp'] <=> $a['timestamp'] );
+			usort(
+				$signups,
+				static function ( array $a, array $b ): int {
+					$timestamp_order = $b['timestamp'] <=> $a['timestamp'];
+					return $timestamp_order !== 0 ? $timestamp_order : strcasecmp( $a['name'], $b['name'] );
+				}
+			);
 			$summary = $this->format_shift_summary( $shift );
 			if ( $summary === null ) {
 				continue;
@@ -650,25 +664,78 @@ class MemberShifts extends Base {
 
 			$latest_timestamp = $signups[0]['timestamp'];
 			unset( $summary['assigned_person_ids'] );
-			foreach ( $signups as &$signup ) {
-				unset( $signup['timestamp'] );
-			}
-			unset( $signup );
-
 			$summary['latest_signup_at'] = $signups[0]['signed_up_at'];
 			$summary['latest_timestamp'] = $latest_timestamp;
+			$summary['start_timestamp']  = $this->shift_start_timestamp( (int) $shift->ID ) ?? 0;
 			$summary['signups']          = $signups;
 			$shifts[]                    = $summary;
 		}
 
-		usort( $shifts, fn( array $a, array $b ): int => $b['latest_timestamp'] <=> $a['latest_timestamp'] );
-		$shifts = array_slice( $shifts, 0, 50 );
+		return $shifts;
+	}
+
+	/**
+	 * Remove values used only for server-side sorting.
+	 *
+	 * @param array<int, array<string, mixed>> $shifts Shift summaries.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function prepare_signup_shift_response( array $shifts ): array {
 		foreach ( $shifts as &$shift ) {
-			unset( $shift['latest_timestamp'] );
+			unset( $shift['latest_timestamp'], $shift['start_timestamp'] );
+			foreach ( $shift['signups'] as &$signup ) {
+				unset( $signup['timestamp'] );
+			}
+			unset( $signup );
 		}
 		unset( $shift );
 
+		return $shifts;
+	}
+
+	/**
+	 * Return at most 10 shifts ordered by their latest current signup.
+	 *
+	 * A signup remains current only while the person is still present in the
+	 * shift's `assigned_persons` value. Assignments without a signup timestamp
+	 * are deliberately omitted from this recent-activity overview.
+	 */
+	public function get_recent_signups() {
+		$shifts = $this->get_signup_shift_summaries( false );
+
+		usort( $shifts, fn( array $a, array $b ): int => $b['latest_timestamp'] <=> $a['latest_timestamp'] );
+		$shifts = $this->prepare_signup_shift_response( array_slice( $shifts, 0, 10 ) );
+
 		return rest_ensure_response( [ 'shifts' => $shifts ] );
+	}
+
+	/**
+	 * Return every shift with current assignees, nearest upcoming shift first.
+	 *
+	 * Past shifts follow the future shifts, with the most recent past shift first.
+	 * Legacy assignments without signup timestamps remain visible here because
+	 * this is a state overview rather than a recent-activity feed.
+	 */
+	public function get_signups() {
+		$shifts = $this->get_signup_shift_summaries( true );
+		$now    = current_datetime()->getTimestamp();
+
+		usort(
+			$shifts,
+			static function ( array $a, array $b ) use ( $now ): int {
+				$a_is_upcoming = $a['start_timestamp'] >= $now;
+				$b_is_upcoming = $b['start_timestamp'] >= $now;
+				if ( $a_is_upcoming !== $b_is_upcoming ) {
+					return $a_is_upcoming ? -1 : 1;
+				}
+
+				return $a_is_upcoming
+					? $a['start_timestamp'] <=> $b['start_timestamp']
+					: $b['start_timestamp'] <=> $a['start_timestamp'];
+			}
+		);
+
+		return rest_ensure_response( [ 'shifts' => $this->prepare_signup_shift_response( $shifts ) ] );
 	}
 
 	public function get_available_shifts( \WP_REST_Request $request ) {

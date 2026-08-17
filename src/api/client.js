@@ -449,6 +449,7 @@ export const prmApi = {
   getPersonShifts: (personId) => api.get(`/rondo/v1/people/${personId}/shifts`),
   getAvailableShifts: () => api.get('/rondo/v1/shifts/available'),
   getRecentShiftSignups: () => api.get('/rondo/v1/shifts/recent-signups'),
+  getShiftSignups: () => api.get('/rondo/v1/shifts/signups'),
   getShiftCalendar: (params = {}) => api.get('/rondo/v1/shifts/calendar', { params }),
   signupForShift: (shiftId, opts = {}) => api.post(`/rondo/v1/shifts/${shiftId}/signup`, opts),
   cancelShift: (shiftId) => api.post(`/rondo/v1/shifts/${shiftId}/cancel`),
