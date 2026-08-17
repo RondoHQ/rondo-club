@@ -301,6 +301,7 @@ final class Content {
 			'background_color'     => $this->sanitize_color( $payload['background_color'] ?? $current['background_color'] ?? '#0f172a', '#0f172a' ),
 			'text_color'           => $this->sanitize_color( $payload['text_color'] ?? $current['text_color'] ?? '#ffffff', '#ffffff' ),
 			'accent_color'         => $this->sanitize_color( $payload['accent_color'] ?? $current['accent_color'] ?? '#22d3ee', '#22d3ee' ),
+			'use_club_colors'      => rest_sanitize_boolean( $payload['use_club_colors'] ?? $current['use_club_colors'] ?? true ),
 			'is_override'          => $sponsor_only ? false : rest_sanitize_boolean( $payload['is_override'] ?? $current['is_override'] ?? false ),
 			'override_display_ids' => $sponsor_only ? [] : array_values( array_filter( array_map( 'absint', (array) ( $payload['override_display_ids'] ?? $current['override_display_ids'] ?? [] ) ) ) ),
 		];
@@ -428,6 +429,7 @@ final class Content {
 	/** Format complete item data for authenticated editors. */
 	private function format_item_admin( int $item_id ): array {
 		$fields = Formatter::for_wire( self::ITEM_POST_TYPE, Fields::all_for_post( $item_id ) );
+
 		return [
 			'id'         => $item_id,
 			'title'      => get_the_title( $item_id ),
@@ -528,6 +530,7 @@ final class Content {
 				'logo_url' => get_the_post_thumbnail_url( $sponsor_id, 'large' ) ?: null,
 			];
 		}
+		$use_club_colors = ! array_key_exists( 'use_club_colors', $item['fields'] ) || ! empty( $item['fields']['use_club_colors'] );
 
 		return [
 			'id'               => 'item-' . $item_id,
@@ -538,9 +541,9 @@ final class Content {
 			'body'             => substr( (string) $item['fields']['body'], 0, 500 ),
 			'cta_text'         => substr( (string) $item['fields']['cta_text'], 0, 100 ),
 			'colors'           => [
-				'background' => $this->sanitize_color( $item['fields']['background_color'], '#0f172a' ),
-				'text'       => $this->sanitize_color( $item['fields']['text_color'], '#ffffff' ),
-				'accent'     => $this->sanitize_color( $item['fields']['accent_color'], '#22d3ee' ),
+				'background' => $use_club_colors ? null : $this->sanitize_color( $item['fields']['background_color'], '#0f172a' ),
+				'text'       => $use_club_colors ? null : $this->sanitize_color( $item['fields']['text_color'], '#ffffff' ),
+				'accent'     => $use_club_colors ? null : $this->sanitize_color( $item['fields']['accent_color'], '#22d3ee' ),
 			],
 			'media'            => $item['media'],
 			'sponsor'          => $sponsor,
@@ -606,9 +609,9 @@ final class Content {
 				'body'             => '',
 				'cta_text'         => '',
 				'colors'           => [
-					'background' => '#0f172a',
-					'text'       => '#ffffff',
-					'accent'     => '#22d3ee',
+					'background' => null,
+					'text'       => null,
+					'accent'     => null,
 				],
 				'media'            => null,
 				'sponsor'          => null,
@@ -623,9 +626,9 @@ final class Content {
 			'body'             => '',
 			'cta_text'         => '',
 			'colors'           => [
-				'background' => '#0f172a',
-				'text'       => '#ffffff',
-				'accent'     => '#22d3ee',
+				'background' => null,
+				'text'       => null,
+				'accent'     => null,
 			],
 			'media'            => null,
 			'sponsor'          => null,

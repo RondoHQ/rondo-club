@@ -2,6 +2,7 @@
 
 namespace Tests\Wpunit;
 
+use DateTimeImmutable;
 use Rondo\Narrowcasting\SportlinkMatchday;
 use Tests\Support\RondoTestCase;
 
@@ -137,6 +138,49 @@ class NarrowcastingSportlinkTest extends RondoTestCase {
 		$this->assertSame( 'retained-match', $second['matches'][0]['id'] );
 		$this->assertStringContainsString( 'geen geldige JSON-feed', $second['source']['last_error'] );
 		$this->assertStringNotContainsString( self::CLIENT_ID, $second['source']['last_error'] );
+	}
+
+	public function test_upcoming_saturday_feed_selects_that_matchday(): void {
+		$service = new SportlinkMatchday( false );
+		$service->update_settings(
+			[
+				'client_id'          => self::CLIENT_ID,
+				'club_relation_code' => self::CLUB_CODE,
+			]
+		);
+
+		$today    = new DateTimeImmutable( 'today', wp_timezone() );
+		$saturday = (int) $today->format( 'N' ) === 6 ? $today : $today->modify( 'next saturday' );
+		$other    = $saturday->modify( '+1 day' );
+		$this->mock_sportlink(
+			[
+				[
+					'wedstrijdcode'            => 'saturday-match',
+					'wedstrijddatum'           => $saturday->format( 'Y-m-d' ) . 'T12:30:00+0200',
+					'thuisteam'                => 'AWC JO13-1',
+					'thuisteamclubrelatiecode' => self::CLUB_CODE,
+					'uitteam'                  => 'Bezoekers JO13-1',
+					'uitteamclubrelatiecode'   => 'OTHER1',
+				],
+				[
+					'wedstrijdcode'            => 'other-match',
+					'wedstrijddatum'           => $other->format( 'Y-m-d' ) . 'T12:30:00+0200',
+					'thuisteam'                => 'AWC JO14-1',
+					'thuisteamclubrelatiecode' => self::CLUB_CODE,
+					'uitteam'                  => 'Bezoekers JO14-1',
+					'uitteamclubrelatiecode'   => 'OTHER2',
+				],
+			],
+			[],
+			[]
+		);
+		$service->refresh( true );
+
+		$feed = $service->get_upcoming_saturday_feed( false );
+
+		$this->assertSame( $saturday->format( 'Y-m-d' ), $feed['target_date'] );
+		$this->assertCount( 1, $feed['matches'] );
+		$this->assertSame( 'saturday-match', $feed['matches'][0]['id'] );
 	}
 
 	/** Install a deterministic pre_http_request response for each Club.Data endpoint. */

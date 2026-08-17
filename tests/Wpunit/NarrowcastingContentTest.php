@@ -69,10 +69,44 @@ class NarrowcastingContentTest extends RondoTestCase {
 		$this->assertCount( 3, $manifest['scenes'] );
 		$this->assertSame( [ 'item-' . $news['id'], 'item-' . $match['id'], 'item-' . $news['id'] ], array_column( $manifest['scenes'], 'id' ) );
 		$this->assertSame( 10, $manifest['scenes'][0]['duration_seconds'] );
+		$this->assertTrue( $news['fields']['use_club_colors'] );
+		$this->assertNull( $manifest['scenes'][0]['colors']['background'] );
+		$this->assertNull( $manifest['scenes'][0]['colors']['accent'] );
 
 		$inactive = $this->content->resolve_manifest( 0, $playlist['id'], new DateTimeImmutable( '2026-08-16T12:00:00+02:00' ), true );
 		$this->assertSame( 'builtin-matches', $inactive['scenes'][0]['id'] );
 		$this->assertSame( 'Niet gepland op deze dag.', $inactive['excluded'][0]['reason'] );
+	}
+
+	public function test_item_can_explicitly_override_club_colors(): void {
+		$this->login_with_capability( 'narrowcasting' );
+		$item     = $this->content->create_item(
+			[
+				'title'            => 'Eigen kleuren',
+				'content_type'     => 'announcement',
+				'use_club_colors'  => false,
+				'background_color' => '#123456',
+				'text_color'       => '#ffffff',
+				'accent_color'     => '#fedcba',
+			]
+		);
+		$playlist = $this->content->create_playlist(
+			[
+				'title' => 'Maatwerk',
+				'items' => [
+					[
+						'item_id' => $item['id'],
+						'weight'  => 1,
+					],
+				],
+			]
+		);
+
+		$manifest = $this->content->resolve_manifest( 0, $playlist['id'] );
+
+		$this->assertFalse( $item['fields']['use_club_colors'] );
+		$this->assertSame( '#123456', $manifest['scenes'][0]['colors']['background'] );
+		$this->assertSame( '#fedcba', $manifest['scenes'][0]['colors']['accent'] );
 	}
 
 	public function test_active_override_replaces_a_display_playlist(): void {

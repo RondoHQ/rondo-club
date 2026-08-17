@@ -2346,6 +2346,18 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'storage_name' => 'text_color',
           'type' => 'color_picker',
         ),
+        'use_club_colors' =>
+        array (
+          'canonical_name' => 'use_club_colors',
+          'default_value' => 1,
+          'instructions' => 'Gebruik standaard het clublogo en de centraal ingestelde clubkleuren.',
+          'key' => 'field_signage_item_use_club_colors',
+          'label' => 'Clubkleuren gebruiken',
+          'name' => 'use_club_colors',
+          'storage_name' => 'use_club_colors',
+          'type' => 'true_false',
+          'ui' => 1,
+        ),
         'valid_from' =>
         array (
           'canonical_name' => 'valid_from',

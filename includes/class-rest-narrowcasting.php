@@ -779,14 +779,18 @@ class Narrowcasting extends Base {
 
 	/** Return normalized public match data to a paired player or administrator preview. */
 	public function get_matchday_feed( $request ) {
-		if ( ! $this->check_content_permission() ) {
+		$can_preview = $this->check_content_permission();
+		if ( ! $can_preview ) {
 			$display_id = $this->authenticate_device( $request );
 			if ( is_wp_error( $display_id ) ) {
 				return $display_id;
 			}
 		}
 
-		return rest_ensure_response( $this->matchday->get_feed() );
+		$is_preview = $can_preview && rest_sanitize_boolean( $request->get_param( 'preview' ) );
+		$feed       = $is_preview ? $this->matchday->get_upcoming_saturday_feed() : $this->matchday->get_feed();
+
+		return rest_ensure_response( $feed );
 	}
 
 	/** Queue one safe command for a paired display. */
