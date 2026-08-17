@@ -29,6 +29,7 @@ import {
   HeartHandshake,
   Wine,
   CalendarClock,
+  ClipboardList,
   BookOpen,
   ChevronRight,
   MonitorPlay
@@ -65,6 +66,7 @@ const navigation = [
   { name: 'VOG', href: '/vrijwilligers/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'IVA', href: '/vrijwilligers/iva', icon: Wine, indent: true, requiresVrijwilligers: true },
   { name: 'Beheer inschrijftaken', href: '/vrijwilligers/diensten', icon: CalendarClock, indent: true, requiresVrijwilligers: true },
+  { name: 'Aanmeldingen', href: '/vrijwilligers/aanmeldingen', icon: ClipboardList, indent: true, requiresVrijwilligers: true },
   { name: 'Taakuitleg', href: '/vrijwilligers/taakuitleg', icon: BookOpen, indent: true, requiresVrijwilligers: true },
   { name: 'Vrijstellingen', href: '/vrijwilligers/vrijstellingen', icon: UsersRound, indent: true, requiresVrijwilligers: true },
   { name: 'Financiën', href: '/financien', icon: Wallet, requiresFinancieel: true },

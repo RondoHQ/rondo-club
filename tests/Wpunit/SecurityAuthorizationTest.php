@@ -77,6 +77,7 @@ class SecurityAuthorizationTest extends RondoTestCase {
 		);
 		$this->assertSame( 403, $this->request( 'GET', '/rondo/v1/iva/123/status' )->get_status() );
 		$this->assertSame( 403, $this->request( 'GET', '/rondo/v1/shifts/recent-signups' )->get_status() );
+		$this->assertSame( 403, $this->request( 'GET', '/rondo/v1/shifts/signups' )->get_status() );
 	}
 
 	public function test_plain_member_cannot_use_email_enumeration_endpoint(): void {

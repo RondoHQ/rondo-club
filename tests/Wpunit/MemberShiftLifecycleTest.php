@@ -148,7 +148,7 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertSame( 3, $data['obligations'][0]['required_count'] );
 	}
 
-	public function test_recent_signups_returns_at_most_fifty_shifts_with_names_in_signup_order(): void {
+	public function test_recent_signups_returns_at_most_ten_shifts_with_names_in_signup_order(): void {
 		$manager_id = $this->createRondoUser(
 			[
 				'role'       => 'rondo_vrijwilligers',
@@ -176,11 +176,41 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertSame( 200, $response->get_status() );
 		$data = $response->get_data();
 
-		$this->assertCount( 50, $data['shifts'] );
+		$this->assertCount( 10, $data['shifts'] );
 		$this->assertSame( $latest_shift_id, $data['shifts'][0]['id'] );
 		$this->assertSame( [ 'Bob Recent', 'Anne Recent' ], array_column( $data['shifts'][0]['signups'], 'name' ) );
 		$this->assertSame( [ $bob_id, $anne_id ], array_column( $data['shifts'][0]['signups'], 'person_id' ) );
 		$this->assertNotContains( $ids[0], array_column( $data['shifts'], 'id' ) );
+	}
+
+	public function test_signup_overview_returns_all_assignments_with_upcoming_shifts_first(): void {
+		$manager_id = $this->createRondoUser(
+			[
+				'role'       => 'rondo_vrijwilligers',
+				'user_login' => 'signup_overview_manager',
+			]
+		);
+		wp_set_current_user( $manager_id );
+
+		$person_id      = $this->createPerson( [ 'post_title' => 'Overview Volunteer' ] );
+		$future_later   = $this->shift( [ $person_id ], 8 );
+		$past_oldest    = $this->shift( [ $person_id ], -10 );
+		$future_nearest = $this->shift( [ $person_id ], 3 );
+		$past_nearest   = $this->shift( [ $person_id ], -1 );
+		foreach ( [ $future_later, $past_oldest, $past_nearest ] as $index => $shift_id ) {
+			update_post_meta( $shift_id, '_shift_signup_at_' . $person_id, time() - $index );
+		}
+
+		$response = $this->server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/shifts/signups' ) );
+		$this->assertSame( 200, $response->get_status() );
+		$data = $response->get_data();
+
+		$this->assertSame(
+			[ $future_nearest, $future_later, $past_nearest, $past_oldest ],
+			array_column( $data['shifts'], 'id' )
+		);
+		$this->assertNull( $data['shifts'][0]['latest_signup_at'] );
+		$this->assertSame( [ $person_id ], array_column( $data['shifts'][0]['signups'], 'person_id' ) );
 	}
 
 	private function cancel( int $shift_id ) {

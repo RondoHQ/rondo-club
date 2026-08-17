@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.11.0] - 2026-08-17
+
+### Added
+
+- Vrijwilligersbeheerders hebben op `/vrijwilligers/aanmeldingen` een volledig overzicht van alle huidige taakinschrijvingen. De eerstvolgende taken staan standaard bovenaan en de lijst kan op inschrijftaak of dienstmoment worden gesorteerd.
+
+### Changed
+
+- Het blok **Recente aanmeldingen** onder **Vrijwilligers → Inschrijftaken** toont voortaan maximaal 10 in plaats van 50 taken en verwijst naar het volledige aanmeldingenoverzicht.
+
 ## [34.10.0] - 2026-08-17
 
 ### Added
