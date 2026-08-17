@@ -31,6 +31,17 @@ class ActivationServiceTest extends RondoTestCase {
 		return $person_id;
 	}
 
+	private function parent_relationship_type(): int {
+		$term = get_term_by( 'slug', 'parent', 'relationship_type' );
+		if ( $term && ! is_wp_error( $term ) ) {
+			return (int) $term->term_id;
+		}
+
+		$created = wp_insert_term( 'Ouder', 'relationship_type', [ 'slug' => 'parent' ] );
+		$this->assertIsArray( $created );
+		return (int) $created['term_id'];
+	}
+
 	protected function set_up(): void {
 		parent::set_up();
 		// Never send during tests.
@@ -232,6 +243,146 @@ class ActivationServiceTest extends RondoTestCase {
 		$this->assertGreaterThan( 0, $user_id );
 		$this->assertSame( 'Bas van Haren', GuardianAccountService::pending_for_user( $user_id )['name'] );
 		$this->assertSame( $child_id, (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) );
+	}
+
+	public function test_a_matching_parent_record_receives_the_account_immediately(): void {
+		$parent_type = $this->parent_relationship_type();
+		$child_id    = $this->person( 'Rens van Haren', 'bas@example.com' );
+		$parent_id   = $this->person( 'Bas van Haren', 'bas@example.com' );
+		update_post_meta( $child_id, 'leeftijdsgroep', 'Onder 12' );
+		\Rondo\Fields\Fields::update_for_post(
+			$child_id,
+			'relationships',
+			[
+				[
+					'related_person'    => $parent_id,
+					'relationship_type' => $parent_type,
+				],
+			]
+		);
+
+		$url = ActivationService::activate_guardian(
+			ActivationService::create_token( 'bas@example.com' ),
+			$child_id,
+			'Bas van Haren'
+		);
+
+		$user_id = (int) get_post_meta( $parent_id, UserProvisioning::META_USER_ID, true );
+		$this->assertIsString( $url );
+		$this->assertStringContainsString( 'action=rp', $url );
+		$this->assertGreaterThan( 0, $user_id );
+		$this->assertFalse( ActivationService::has_account( $child_id ) );
+		$this->assertSame( $parent_id, (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) );
+		$this->assertNull( GuardianAccountService::pending_for_user( $user_id ) );
+	}
+
+	public function test_a_matching_unlinked_parent_is_linked_before_activation(): void {
+		$parent_type = $this->parent_relationship_type();
+		$child_id    = $this->person( 'Rens van Haren', 'bas@example.com' );
+		$parent_id   = $this->person( 'Bas van Haren', 'bas@example.com' );
+		update_post_meta( $child_id, 'leeftijdsgroep', 'Onder 12' );
+		\Rondo\Fields\Fields::update_for_post( $child_id, 'knvb_id', 'TEST-ACTIVATION-0' );
+
+		$url = ActivationService::activate_guardian(
+			ActivationService::create_token( 'bas@example.com' ),
+			$child_id,
+			'  BAS   VAN HAREN '
+		);
+
+		$relationships = \Rondo\Fields\Fields::get_for_post( $child_id, 'relationships' );
+		$this->assertIsString( $url );
+		$this->assertCount( 1, $relationships );
+		$this->assertSame( $parent_id, (int) $relationships[0]['related_person'] );
+		$this->assertSame( $parent_type, (int) $relationships[0]['relationship_type'] );
+		$this->assertTrue( ActivationService::has_account( $parent_id ) );
+		$this->assertFalse( ActivationService::has_account( $child_id ) );
+	}
+
+	public function test_an_unmatched_parent_is_created_linked_and_given_the_account(): void {
+		$parent_type = $this->parent_relationship_type();
+		$child_id    = $this->person( 'Rens van Haren', 'bas@example.com' );
+		update_post_meta( $child_id, 'leeftijdsgroep', 'Onder 12' );
+		\Rondo\Fields\Fields::update_for_post( $child_id, 'knvb_id', 'TEST-ACTIVATION-1' );
+
+		$url = ActivationService::activate_guardian(
+			ActivationService::create_token( 'bas@example.com' ),
+			$child_id,
+			'Bas van Haren'
+		);
+
+		$relationships = \Rondo\Fields\Fields::get_for_post( $child_id, 'relationships' );
+		$this->assertIsString( $url );
+		$this->assertCount( 1, $relationships );
+		$this->assertSame( $parent_type, (int) $relationships[0]['relationship_type'] );
+		$parent_id = (int) $relationships[0]['related_person'];
+		$user_id   = (int) get_post_meta( $parent_id, UserProvisioning::META_USER_ID, true );
+		$this->assertSame( 'Bas van Haren', get_the_title( $parent_id ) );
+		$this->assertSame( 'bas@example.com', \Rondo\Fields\Fields::get_for_post( $parent_id, 'email_1' ) );
+		$this->assertGreaterThan( 0, $user_id );
+		$this->assertFalse( ActivationService::has_account( $child_id ) );
+		$this->assertSame( $parent_id, (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) );
+		$this->assertNull( GuardianAccountService::pending_for_user( $user_id ) );
+	}
+
+	public function test_an_existing_parent_account_is_opened_with_magic_login(): void {
+		$parent_type = $this->parent_relationship_type();
+		$child_id    = $this->person( 'Rens van Haren', 'bas@example.com' );
+		$parent_id   = $this->person( 'Bas van Haren', 'bas@example.com' );
+		update_post_meta( $child_id, 'leeftijdsgroep', 'Onder 12' );
+		\Rondo\Fields\Fields::update_for_post(
+			$child_id,
+			'relationships',
+			[
+				[
+					'related_person'    => $parent_id,
+					'relationship_type' => $parent_type,
+				],
+			]
+		);
+		$user_id = self::factory()->user->create(
+			[
+				'user_login' => 'bas-ouder',
+				'user_email' => 'bas@example.com',
+			]
+		);
+		update_post_meta( $parent_id, UserProvisioning::META_USER_ID, $user_id );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $parent_id );
+		add_filter( 'rondo_activation_magic_login_url', fn() => 'https://example.com/magic-parent' );
+		$token = ActivationService::create_token( 'bas@example.com' );
+
+		$url = ActivationService::activate_guardian( $token, $child_id, 'Bas van Haren' );
+
+		$this->assertSame( 'https://example.com/magic-parent', $url );
+		$this->assertNull( ActivationService::email_for_token( $token ) );
+		$this->assertFalse( ActivationService::has_account( $child_id ) );
+	}
+
+	public function test_a_full_parent_household_uses_the_temporary_child_fallback(): void {
+		$parent_type   = $this->parent_relationship_type();
+		$child_id      = $this->person( 'Rens van Haren', 'nieuwe.ouder@example.com' );
+		$relationships = [];
+		update_post_meta( $child_id, 'leeftijdsgroep', 'Onder 12' );
+		\Rondo\Fields\Fields::update_for_post( $child_id, 'knvb_id', 'TEST-ACTIVATION-2' );
+		foreach ( [ 'Eerste Ouder', 'Tweede Ouder' ] as $index => $name ) {
+			$parent_id       = $this->person( $name, 'ouder' . $index . '@example.com' );
+			$relationships[] = [
+				'related_person'    => $parent_id,
+				'relationship_type' => $parent_type,
+			];
+		}
+		\Rondo\Fields\Fields::update_for_post( $child_id, 'relationships', $relationships );
+
+		$url = ActivationService::activate_guardian(
+			ActivationService::create_token( 'nieuwe.ouder@example.com' ),
+			$child_id,
+			'Derde Ouder'
+		);
+
+		$user_id = (int) get_post_meta( $child_id, UserProvisioning::META_USER_ID, true );
+		$this->assertIsString( $url );
+		$this->assertGreaterThan( 0, $user_id );
+		$this->assertSame( 'Derde Ouder', GuardianAccountService::pending_for_user( $user_id )['name'] );
+		$this->assertCount( 2, \Rondo\Fields\Fields::get_for_post( $child_id, 'relationships' ) );
 	}
 
 	/**
