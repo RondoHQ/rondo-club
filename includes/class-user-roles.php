@@ -111,6 +111,31 @@ class UserRoles {
 		return user_can( $user_id, self::FINANCIEEL_CAPABILITY );
 	}
 
+	/**
+	 * May the user edit Rondo-local commissie information?
+	 *
+	 * Commissie identity and hierarchy remain owned by Sportlink. The separate
+	 * local information card is maintained by administrators and the board.
+	 *
+	 * @param int|null $user_id User ID, defaults to the current user.
+	 * @return bool True if the user may edit local commissie information.
+	 */
+	public static function can_manage_commissie_info( $user_id = null ): bool {
+		$user_id = $user_id ?? get_current_user_id();
+
+		if ( ! $user_id ) {
+			return false;
+		}
+
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return true;
+		}
+
+		$user = get_user_by( 'id', $user_id );
+
+		return $user && in_array( 'rondo_bestuur', (array) $user->roles, true );
+	}
+
 	public function __construct() {
 		// Register role on theme activation
 		add_action( 'after_switch_theme', [ $this, 'register_role' ] );
