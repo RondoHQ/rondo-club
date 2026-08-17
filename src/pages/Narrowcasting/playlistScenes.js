@@ -10,7 +10,8 @@ export function buildPlaylistScenes(manifest, feed, fallbackMessage) {
 
   manifest.scenes.forEach((item) => {
     if (dynamicTypes.has(item.type)) {
-      matchday.filter((scene) => scene.type === item.type).forEach((scene, page) => {
+      const sceneType = item.type === 'rooms' ? 'matches' : item.type;
+      matchday.filter((scene) => scene.type === sceneType).forEach((scene, page) => {
         scenes.push({ ...scene, id: `${item.id}-${page}`, duration_seconds: item.duration_seconds, colors: item.colors });
       });
       return;

@@ -31,16 +31,10 @@ export function buildMatchdayScenes(feed, fallbackMessage) {
   const scenes = [];
   const dateLabel = matchdayLabel(feed.target_date);
   const matches = (feed.matches || []).filter((match) => match.club_side !== 'away');
-  const roomMatches = matches.filter((match) => (
-    match.dressing_rooms?.home
-    || match.dressing_rooms?.away
-    || match.dressing_rooms?.referee
-  ));
   const cancellations = feed.cancellations || [];
   const results = (feed.results || []).filter((result) => result.result);
 
-  chunks(matches, 6).forEach((items, page) => scenes.push({ type: 'matches', items, page, dateLabel }));
-  chunks(roomMatches, 5).forEach((items, page) => scenes.push({ type: 'rooms', items, page, dateLabel }));
+  chunks(matches, 5).forEach((items, page) => scenes.push({ type: 'matches', items, page, dateLabel }));
   chunks(cancellations, 6).forEach((items, page) => scenes.push({ type: 'cancellations', items, page, dateLabel }));
   chunks(results, 6).forEach((items, page) => scenes.push({ type: 'results', items, page }));
 

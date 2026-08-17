@@ -75,6 +75,7 @@ class NarrowcastingContentTest extends RondoTestCase {
 
 		$inactive = $this->content->resolve_manifest( 0, $playlist['id'], new DateTimeImmutable( '2026-08-16T12:00:00+02:00' ), true );
 		$this->assertSame( 'builtin-matches', $inactive['scenes'][0]['id'] );
+		$this->assertNotContains( 'builtin-rooms', array_column( $inactive['scenes'], 'id' ) );
 		$this->assertSame( 'Niet gepland op deze dag.', $inactive['excluded'][0]['reason'] );
 	}
 
