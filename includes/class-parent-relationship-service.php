@@ -18,11 +18,12 @@ final class ParentRelationshipService {
 	/**
 	 * Add an existing or newly created parent to a child.
 	 *
-	 * @param int   $child_id Child person post ID.
-	 * @param array $payload  Validated request payload.
+	 * @param int   $child_id                        Child person post ID.
+	 * @param array $payload                         Validated request payload.
+	 * @param int[] $email_duplicate_exception_ids  People allowed to share the new parent's email.
 	 * @return array|\WP_Error
 	 */
-	public function add_parent( int $child_id, array $payload ) {
+	public function add_parent( int $child_id, array $payload, array $email_duplicate_exception_ids = [] ) {
 		$child = get_post( $child_id );
 		if ( ! $child || $child->post_type !== 'person' ) {
 			return new \WP_Error( 'rondo_parent_child_not_found', __( 'Het kind is niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
@@ -56,7 +57,7 @@ final class ParentRelationshipService {
 				return $validation;
 			}
 		} elseif ( $mode === 'new' ) {
-			$created = $this->create_parent( $payload );
+			$created = $this->create_parent( $payload, $email_duplicate_exception_ids );
 			if ( is_wp_error( $created ) ) {
 				return $created;
 			}
@@ -103,6 +104,92 @@ final class ParentRelationshipService {
 			'created'   => (bool) $created_parent_id,
 			'status'    => 'pending',
 		];
+	}
+
+	/**
+	 * Resolve the parent identity selected during public account activation.
+	 *
+	 * The activation token proves access to the shared mailbox. Prefer a parent
+	 * already linked to the child, then an exact name match on that mailbox. If
+	 * neither exists, create and link a new parent while allowing the youth
+	 * people behind the token to share the address.
+	 *
+	 * @param int    $child_id       Child person post ID.
+	 * @param string $email          Address proven by the activation token.
+	 * @param string $guardian_name  Full name entered by the parent.
+	 * @param int[]  $household_ids  Youth people already known on the address.
+	 * @return array|\WP_Error
+	 */
+	public function prepare_for_activation( int $child_id, string $email, string $guardian_name, array $household_ids ) {
+		$email         = strtolower( trim( sanitize_email( $email ) ) );
+		$guardian_name = trim( preg_replace( '/\s+/', ' ', sanitize_text_field( $guardian_name ) ) );
+		if ( ! is_email( $email ) || $guardian_name === '' ) {
+			return new \WP_Error( 'rondo_parent_activation_invalid', __( 'De gegevens van de ouder/verzorger zijn ongeldig.', 'rondo' ), [ 'status' => 400 ] );
+		}
+
+		$parent_term = get_term_by( 'slug', 'parent', 'relationship_type' );
+		if ( ! $parent_term || is_wp_error( $parent_term ) ) {
+			return new \WP_Error( 'rondo_parent_type_missing', __( 'Het relatietype ouder/verzorger ontbreekt.', 'rondo' ), [ 'status' => 500 ] );
+		}
+
+		$relationships = Fields::get_for_post( $child_id, 'relationships' ) ?: [];
+		$parent_rows   = $this->parent_rows( $relationships, (int) $parent_term->term_id );
+		$parent_ids    = array_values( array_filter( array_map( [ $this, 'relationship_person_id' ], $parent_rows ) ) );
+		$email_matches = array_values(
+			array_filter(
+				$this->find_people_by_email( $email ),
+				static fn( int $person_id ): bool => $person_id !== $child_id
+			)
+		);
+
+		$linked_matches = array_values( array_intersect( $email_matches, $parent_ids ) );
+		$linked_parent  = $this->select_activation_match( $linked_matches, $guardian_name );
+		if ( is_wp_error( $linked_parent ) ) {
+			return $linked_parent;
+		}
+		if ( $linked_parent > 0 ) {
+			return [
+				'child_id'  => $child_id,
+				'parent_id' => $linked_parent,
+				'created'   => false,
+				'linked'    => true,
+			];
+		}
+
+		$named_matches = array_values(
+			array_filter(
+				$email_matches,
+				fn( int $person_id ): bool => $this->names_match( $guardian_name, $person_id )
+			)
+		);
+		$named_parent  = $this->select_activation_match( $named_matches, $guardian_name );
+		if ( is_wp_error( $named_parent ) ) {
+			return $named_parent;
+		}
+		if ( $named_parent > 0 ) {
+			$result = $this->add_parent(
+				$child_id,
+				[
+					'mode'      => 'existing',
+					'parent_id' => $named_parent,
+				]
+			);
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+			$result['linked'] = false;
+			return $result;
+		}
+
+		return $this->add_parent(
+			$child_id,
+			[
+				'mode'  => 'new',
+				'name'  => $guardian_name,
+				'email' => $email,
+			],
+			array_values( array_unique( array_map( 'absint', $household_ids ) ) )
+		);
 	}
 
 	/**
@@ -160,7 +247,7 @@ final class ParentRelationshipService {
 		return true;
 	}
 
-	private function create_parent( array $payload ) {
+	private function create_parent( array $payload, array $email_duplicate_exception_ids = [] ) {
 		$name  = trim( preg_replace( '/\s+/', ' ', sanitize_text_field( (string) ( $payload['name'] ?? '' ) ) ) );
 		$email = sanitize_email( (string) ( $payload['email'] ?? '' ) );
 		$phone = sanitize_text_field( (string) ( $payload['phone'] ?? '' ) );
@@ -171,7 +258,7 @@ final class ParentRelationshipService {
 			return new \WP_Error( 'rondo_parent_email_required', __( 'Vul een geldig e-mailadres in.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
-		$existing_id = $this->find_person_by_email( $email );
+		$existing_id = $this->find_person_by_email( $email, $email_duplicate_exception_ids );
 		if ( $existing_id ) {
 			return new \WP_Error(
 				'rondo_parent_email_exists',
@@ -264,7 +351,54 @@ final class ParentRelationshipService {
 		return strtolower( trim( (string) $email ) );
 	}
 
-	private function find_person_by_email( string $email ): int {
+	/**
+	 * Pick one activation candidate, using the entered name only when the
+	 * mailbox maps to more than one possible parent.
+	 *
+	 * @param int[]  $person_ids     Candidate person IDs.
+	 * @param string $guardian_name  Full name entered during activation.
+	 * @return int|\WP_Error
+	 */
+	private function select_activation_match( array $person_ids, string $guardian_name ) {
+		if ( count( $person_ids ) === 1 ) {
+			return (int) $person_ids[0];
+		}
+		if ( empty( $person_ids ) ) {
+			return 0;
+		}
+
+		$name_matches = array_values(
+			array_filter(
+				$person_ids,
+				fn( int $person_id ): bool => $this->names_match( $guardian_name, $person_id )
+			)
+		);
+		if ( count( $name_matches ) === 1 ) {
+			return (int) $name_matches[0];
+		}
+
+		return new \WP_Error(
+			'rondo_parent_activation_ambiguous',
+			__( 'We kunnen niet veilig bepalen welk ouderprofiel bij je hoort.', 'rondo' ),
+			[ 'status' => 409 ]
+		);
+	}
+
+	private function names_match( string $guardian_name, int $person_id ): bool {
+		$stored_name = $this->person_name( $person_id );
+		if ( $stored_name === '' ) {
+			$stored_name = get_the_title( $person_id );
+		}
+		return $this->normalize_name( $guardian_name ) === $this->normalize_name( $stored_name );
+	}
+
+	private function normalize_name( string $name ): string {
+		$name = remove_accents( trim( preg_replace( '/\s+/', ' ', $name ) ) );
+		return function_exists( 'mb_strtolower' ) ? mb_strtolower( $name ) : strtolower( $name );
+	}
+
+	/** @return int[] */
+	private function find_people_by_email( string $email ): array {
 		$person_ids = get_posts(
 			[
 				'post_type'      => 'person',
@@ -275,9 +409,20 @@ final class ParentRelationshipService {
 			]
 		);
 		$needle     = strtolower( trim( $email ) );
+		$matches    = [];
 		foreach ( $person_ids as $person_id ) {
 			if ( $this->person_email( (int) $person_id ) === $needle ) {
-				return (int) $person_id;
+				$matches[] = (int) $person_id;
+			}
+		}
+		return $matches;
+	}
+
+	private function find_person_by_email( string $email, array $exception_ids = [] ): int {
+		$exception_ids = array_map( 'absint', $exception_ids );
+		foreach ( $this->find_people_by_email( $email ) as $person_id ) {
+			if ( ! in_array( $person_id, $exception_ids, true ) ) {
+				return $person_id;
 			}
 		}
 		return 0;

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.12.0] - 2026-08-17
+
+### Added
+
+- Ouders die via het e-mailadres van een jeugdlid activeren, worden nu direct gekoppeld aan hun bestaande ouderprofiel. Is er nog geen match en heeft het kind een vrij Sportlink-ouderveld, dan maakt Rondo het ouderprofiel en de relatie automatisch aan en koppelt het nieuwe account daar meteen aan.
+- Heeft het gevonden ouderprofiel al een Rondo-account, dan opent de activatielink dat account via een eenmalige Magic Login-link.
+
+### Changed
+
+- Alleen wanneer een ouder niet veilig automatisch kan worden gekoppeld, bijvoorbeeld omdat beide oudervelden bezet zijn, gebruikt de activatie nog de tijdelijke accountkoppeling met het kind.
+
 ## [34.11.1] - 2026-08-17
 
 ### Fixed
