@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.18.2] - 2026-08-18
+
+### Fixed
+
+- Zodra iemand oud-lid wordt, sluit Rondo alle nog actuele team-, commissie- en verenigingsfuncties af op de einddatum van het lidmaatschap; latere synchronisaties kunnen die functies niet opnieuw activeren zolang de persoon oud-lid blijft.
+
 ## [34.18.1] - 2026-08-18
 
 ### Fixed
