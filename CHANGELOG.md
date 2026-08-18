@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.17.3] - 2026-08-18
+
+### Changed
+
+- Het menu-item Teams gebruikt voortaan een schildicoon, zodat het beter herkenbaar is en zich onderscheidt van Sponsoren.
+
 ## [34.17.2] - 2026-08-18
 
 ### Changed
