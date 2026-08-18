@@ -219,6 +219,8 @@ export default function PersonDetail() {
   // Volunteer coordinators may correct contact details and photos on any person,
   // but nothing else — the server enforces the same field boundary.
   let canEditContact = canEditPeople || (currentUser?.can_edit_person_contact ?? false);
+  let canEditPhoto = canEditContact;
+  let canEditAddress = canEditContact;
   const canSyncFromSportlink = isAdmin || canAccessToegangscontrole;
 
   const { data: clothingProfile } = useClothingPersonProfile(id, {
@@ -324,6 +326,16 @@ export default function PersonDetail() {
   const handleSaveContacts = async (contactFields) => {
     setIsSavingContacts(true);
     try {
+      if (Object.hasOwn(contactFields, 'parent_phone')) {
+        const currentFields = person.fields || {};
+        const phoneField = ['mobile_1', 'telephone_1', 'mobile_2', 'telephone_2']
+          .find((field) => currentFields[field]) || 'telephone_1';
+        contactFields = {
+          email_1: contactFields.email_1,
+          [phoneField]: contactFields.parent_phone,
+        };
+      }
+
       const fieldData = sanitizePersonFields(person.fields, contactFields);
 
       await updatePerson.mutateAsync({
@@ -1213,15 +1225,20 @@ export default function PersonDetail() {
   const isFormerMember = fields.former_member === true;
   const isCurrentParent = person.is_current_parent === true;
 
-  // Former members are read-only — Sportlink rejects writes for their
-  // lidsoort ("Oud bondslid" / "Oud verenigingslid") so any UI edit
-  // would just generate doomed reverse-sync work. Backend enforces the
-  // same rule (rest_pre_insert_person filter); hiding edit affordances
-  // here just keeps users from trying.
+  // A former member's historical profile stays read-only because Sportlink
+  // rejects member-profile writes for former-member lidsoorten. A current
+  // parent is the exception for e-mail and phone: those values have their own
+  // reverse-sync path through the active child's parent/guardian slot.
   if (isFormerMember) {
     canEditPeople = false;
-    canEditContact = false;
+    canEditContact = isCurrentParent && canEditContact;
+    canEditPhoto = false;
+    canEditAddress = false;
   }
+
+  const parentSyncPhone = isFormerMember && isCurrentParent
+    ? fields.mobile_1 || fields.telephone_1 || fields.mobile_2 || fields.telephone_2 || ''
+    : '';
 
   // Build contact display items from fixed fields
   const contactItems = [
@@ -1324,10 +1341,10 @@ export default function PersonDetail() {
       {isFormerMember && (
         <div className="mb-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
           <span className="font-medium">
-            {isCurrentParent ? 'Oud-lid én actuele ouder/verzorger — alleen-lezen.' : 'Oud-lid — alleen-lezen.'}
+            {isCurrentParent ? 'Oud-lid én actuele ouder/verzorger.' : 'Oud-lid — alleen-lezen.'}
           </span>{' '}
           {isCurrentParent
-            ? 'De historische lidmaatschapsgegevens blijven bewaard. Actuele contact- en adresgegevens worden bijgehouden via de oudergegevens van het kind in Sportlink.'
+            ? 'De historische lidmaatschapsgegevens blijven alleen-lezen. De primaire e-mail en telefoon kun je hier wijzigen; deze worden teruggesynchroniseerd naar de oudergegevens van het huidige kind of de huidige kinderen in Sportlink. Het adres wijzig je bij het kind.'
             : 'Sportlink staat geen contact- of profielwijzigingen toe voor de lidsoort van deze persoon (Oud bondslid / Oud verenigingslid), dus elke aanpassing zou alsnog door de sync afgewezen worden. Vraag een beheerder om eerst de oud-lid-status uit te zetten als je deze gegevens wilt aanpassen.'}
         </div>
       )}
@@ -1351,7 +1368,7 @@ export default function PersonDetail() {
               </div>
             )}
             {/* Upload overlay */}
-            {canEditContact && (
+            {canEditPhoto && (
               <>
                 <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center cursor-pointer"
                      onClick={() => fileInputRef.current?.click()}
@@ -1657,7 +1674,7 @@ export default function PersonDetail() {
               <div className="card p-6">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="font-semibold text-brand-gradient">Adressen</h2>
-                  {canEditContact && (
+                  {canEditAddress && (
                     <button
                       onClick={() => {
                         setEditingAddress(null);
@@ -1700,7 +1717,7 @@ export default function PersonDetail() {
                               ))}
                             </a>
                           </div>
-                          {canEditContact && (
+                          {canEditAddress && (
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                               <button
                                 onClick={() => {
@@ -1728,7 +1745,7 @@ export default function PersonDetail() {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500 text-center py-4">
-                    Nog geen adressen.{canEditContact && <> <button onClick={() => { setEditingAddress(null); setEditingAddressIndex(null); setShowAddressModal(true); }} className="text-electric-cyan hover:underline">Toevoegen</button></>}
+                    Nog geen adressen.{canEditAddress && <> <button onClick={() => { setEditingAddress(null); setEditingAddressIndex(null); setShowAddressModal(true); }} className="text-electric-cyan hover:underline">Toevoegen</button></>}
                   </p>
                 )}
               </div>
@@ -2263,7 +2280,7 @@ export default function PersonDetail() {
             todo={editingTodo}
           />
           
-          {canEditPeople && (
+          {canEditContact && (
             <ContactEditModal
               isOpen={showContactModal}
               onClose={() => setShowContactModal(false)}
@@ -2275,6 +2292,8 @@ export default function PersonDetail() {
               mobile2={fields.mobile_2 || ''}
               telephone1={fields.telephone_1 || ''}
               telephone2={fields.telephone_2 || ''}
+              parentSlotMode={isFormerMember && isCurrentParent}
+              parentPhone={parentSyncPhone}
             />
           )}
 
@@ -2324,7 +2343,7 @@ export default function PersonDetail() {
             />
           )}
 
-          {canEditPeople && (
+          {canEditAddress && (
             <AddressEditModal
               isOpen={showAddressModal}
               onClose={() => {

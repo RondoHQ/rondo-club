@@ -218,6 +218,24 @@ class AccessControl {
 	];
 
 	/**
+	 * Contact fields that can feed a Sportlink parent/guardian slot.
+	 *
+	 * Parent slots expose one e-mail address and one telephone number. The
+	 * reverse-sync resolver selects the first populated value from these fixed
+	 * fields, so all six may contain the active source value. Addresses are
+	 * deliberately absent: Sportlink derives a parent's address from the child
+	 * record and has no separate writable parent-address slot.
+	 */
+	public const PARENT_SLOT_CONTACT_WRITE_FIELDS = [
+		'email_1',
+		'email_2',
+		'mobile_1',
+		'mobile_2',
+		'telephone_1',
+		'telephone_2',
+	];
+
+	/**
 	 * May this user correct contact details on a person?
 	 *
 	 * Deliberately not folded into can_edit_people(): that method means "full
