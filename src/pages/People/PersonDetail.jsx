@@ -1769,13 +1769,7 @@ export default function PersonDetail() {
                       onClick={() => {
                         setEditingRelationship(null);
                         setEditingRelationshipIndex(null);
-                        if (canEditPeople && currentUser?.can_access_ledenadministratie && person?.fields?.knvb_id) {
-                          setShowParentRelationshipModal(true);
-                        } else if (canEditPeople) {
-                          setShowRelationshipModal(true);
-                        } else {
-                          setShowSponsorRelationshipModal(true);
-                        }
+                        setShowParentRelationshipModal(true);
                       }}
                       className="btn-tertiary text-sm"
                       title="Relatie toevoegen"
@@ -2284,15 +2278,20 @@ export default function PersonDetail() {
             />
           )}
 
-          {canEditPeople && (
+          {(canEditPeople || canManageSponsors) && (
             <ParentRelationshipModal
               isOpen={showParentRelationshipModal}
               onClose={() => setShowParentRelationshipModal(false)}
               onSubmit={handleAddParentRelationship}
+              onAddPerson={canEditPeople ? () => {
+                setShowParentRelationshipModal(false);
+                setShowRelationshipModal(true);
+              } : undefined}
               onAddSponsor={canManageSponsors ? () => {
                 setShowParentRelationshipModal(false);
                 setShowSponsorRelationshipModal(true);
               } : undefined}
+              canAddParent={Boolean(canEditPeople && currentUser?.can_access_ledenadministratie && person?.fields?.knvb_id)}
               isLoading={addParentRelationship.isPending}
               personId={id}
               allPeople={allPeople || []}

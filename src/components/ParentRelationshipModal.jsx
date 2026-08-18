@@ -5,7 +5,18 @@ import { SearchablePersonSelector } from '@/components/RelationshipEditModal';
 
 const EMPTY_FORM = { name: '', email: '', phone: '' };
 
-export default function ParentRelationshipModal({ isOpen, onClose, onSubmit, onAddSponsor, isLoading, personId, allPeople, isPeopleLoading }) {
+export default function ParentRelationshipModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  onAddPerson,
+  onAddSponsor,
+  canAddParent = false,
+  isLoading,
+  personId,
+  allPeople,
+  isPeopleLoading,
+}) {
   const [screen, setScreen] = useState('choice');
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState('');
@@ -69,30 +80,40 @@ export default function ParentRelationshipModal({ isOpen, onClose, onSubmit, onA
         {screen === 'choice' ? (
           <div className="space-y-3 p-4">
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Bestaat de persoon al in Rondo, of wil je een nieuwe ouder/verzorger toevoegen?
+              {canAddParent
+                ? 'Bestaat de persoon al in Rondo, of wil je een nieuwe ouder/verzorger toevoegen?'
+                : 'Kies welk soort relatie je wilt toevoegen.'}
             </p>
-            <button
-              type="button"
-              onClick={() => setScreen('existing')}
-              className="flex w-full items-start gap-3 rounded-lg border border-gray-200 p-4 text-left hover:border-electric-cyan hover:bg-cyan-50 dark:border-gray-700 dark:hover:bg-gray-700"
-            >
-              <UsersRound className="mt-0.5 h-5 w-5 shrink-0 text-electric-cyan" />
-              <span>
-                <span className="block font-medium text-gray-900 dark:text-gray-50">Bestaande persoon</span>
-                <span className="mt-1 block text-sm text-gray-500 dark:text-gray-400">Zoek iemand die al in Rondo staat en kies het relatietype.</span>
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setScreen('new')}
-              className="flex w-full items-start gap-3 rounded-lg border border-gray-200 p-4 text-left hover:border-electric-cyan hover:bg-cyan-50 dark:border-gray-700 dark:hover:bg-gray-700"
-            >
-              <UserRoundPlus className="mt-0.5 h-5 w-5 shrink-0 text-electric-cyan" />
-              <span>
-                <span className="block font-medium text-gray-900 dark:text-gray-50">Nieuwe ouder/verzorger</span>
-                <span className="mt-1 block text-sm text-gray-500 dark:text-gray-400">Maak de persoon aan en stuur de gegevens naar een vrij Sportlink-ouderveld.</span>
-              </span>
-            </button>
+            {(canAddParent || onAddPerson) && (
+              <button
+                type="button"
+                onClick={canAddParent ? () => setScreen('existing') : onAddPerson}
+                className="flex w-full items-start gap-3 rounded-lg border border-gray-200 p-4 text-left hover:border-electric-cyan hover:bg-cyan-50 dark:border-gray-700 dark:hover:bg-gray-700"
+              >
+                <UsersRound className="mt-0.5 h-5 w-5 shrink-0 text-electric-cyan" />
+                <span>
+                  <span className="block font-medium text-gray-900 dark:text-gray-50">Bestaande persoon</span>
+                  <span className="mt-1 block text-sm text-gray-500 dark:text-gray-400">
+                    {canAddParent
+                      ? 'Koppel een bestaande ouder/verzorger en stuur de relatie naar Sportlink.'
+                      : 'Zoek iemand die al in Rondo staat en kies het relatietype.'}
+                  </span>
+                </span>
+              </button>
+            )}
+            {canAddParent && (
+              <button
+                type="button"
+                onClick={() => setScreen('new')}
+                className="flex w-full items-start gap-3 rounded-lg border border-gray-200 p-4 text-left hover:border-electric-cyan hover:bg-cyan-50 dark:border-gray-700 dark:hover:bg-gray-700"
+              >
+                <UserRoundPlus className="mt-0.5 h-5 w-5 shrink-0 text-electric-cyan" />
+                <span>
+                  <span className="block font-medium text-gray-900 dark:text-gray-50">Nieuwe ouder/verzorger</span>
+                  <span className="mt-1 block text-sm text-gray-500 dark:text-gray-400">Maak de persoon aan en stuur de gegevens naar een vrij Sportlink-ouderveld.</span>
+                </span>
+              </button>
+            )}
             {onAddSponsor && (
               <button
                 type="button"
