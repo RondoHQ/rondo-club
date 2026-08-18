@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.17.7] - 2026-08-18
+
+### Fixed
+
+- Geannuleerde inschrijftaken blijven met hun aanmeldingen bewaard, maar zijn standaard verborgen in het aanmeldingsoverzicht, worden niet meegeteld en blijven via het statusfilter terugvindbaar.
+
 ## [34.17.6] - 2026-08-18
 
 ### Fixed

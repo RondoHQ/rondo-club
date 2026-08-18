@@ -171,6 +171,9 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$latest_shift_id = $ids[50];
 		update_post_meta( $latest_shift_id, 'assigned_persons', [ $anne_id, $bob_id ] );
 		update_post_meta( $latest_shift_id, '_shift_signup_at_' . $bob_id, $base + 100 );
+		$cancelled_shift_id = $this->shift( [ $bob_id ], 2 );
+		update_post_meta( $cancelled_shift_id, 'status', 'geannuleerd' );
+		update_post_meta( $cancelled_shift_id, '_shift_signup_at_' . $bob_id, $base + 200 );
 
 		$response = $this->server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/shifts/recent-signups' ) );
 		$this->assertSame( 200, $response->get_status() );
@@ -181,6 +184,7 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertSame( [ 'Bob Recent', 'Anne Recent' ], array_column( $data['shifts'][0]['signups'], 'name' ) );
 		$this->assertSame( [ $bob_id, $anne_id ], array_column( $data['shifts'][0]['signups'], 'person_id' ) );
 		$this->assertNotContains( $ids[0], array_column( $data['shifts'], 'id' ) );
+		$this->assertNotContains( $cancelled_shift_id, array_column( $data['shifts'], 'id' ) );
 	}
 
 	public function test_signup_overview_returns_all_assignments_with_upcoming_shifts_first(): void {
@@ -197,7 +201,9 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$past_oldest    = $this->shift( [ $person_id ], -10 );
 		$future_nearest = $this->shift( [ $person_id ], 3 );
 		$past_nearest   = $this->shift( [ $person_id ], -1 );
-		foreach ( [ $future_later, $past_oldest, $past_nearest ] as $index => $shift_id ) {
+		$cancelled      = $this->shift( [ $person_id ], 2 );
+		update_post_meta( $cancelled, 'status', 'geannuleerd' );
+		foreach ( [ $future_later, $past_oldest, $past_nearest, $cancelled ] as $index => $shift_id ) {
 			update_post_meta( $shift_id, '_shift_signup_at_' . $person_id, time() - $index );
 		}
 
@@ -211,6 +217,18 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		);
 		$this->assertNull( $data['shifts'][0]['latest_signup_at'] );
 		$this->assertSame( [ $person_id ], array_column( $data['shifts'][0]['signups'], 'person_id' ) );
+		$this->assertNotContains( $cancelled, array_column( $data['shifts'], 'id' ) );
+
+		$cancelled_request = new WP_REST_Request( 'GET', '/rondo/v1/shifts/signups' );
+		$cancelled_request->set_param( 'status', 'cancelled' );
+		$cancelled_data = $this->server->dispatch( $cancelled_request )->get_data();
+		$this->assertSame( [ $cancelled ], array_column( $cancelled_data['shifts'], 'id' ) );
+		$this->assertSame( 'geannuleerd', $cancelled_data['shifts'][0]['status'] );
+
+		$all_request = new WP_REST_Request( 'GET', '/rondo/v1/shifts/signups' );
+		$all_request->set_param( 'status', 'all' );
+		$all_data = $this->server->dispatch( $all_request )->get_data();
+		$this->assertContains( $cancelled, array_column( $all_data['shifts'], 'id' ) );
 	}
 
 	private function cancel( int $shift_id ) {
