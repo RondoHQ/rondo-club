@@ -3181,6 +3181,26 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'storage_name' => 'sponsit_contact_id',
           'type' => 'text',
         ),
+        'sponsit_logo_id' =>
+        array (
+          'canonical_name' => 'sponsit_logo_id',
+          'instructions' => 'Stabiele bestands-ID voor het door Sponsit geïmporteerde logo.',
+          'key' => 'field_sponsor_sponsit_logo_id',
+          'label' => 'Sponsit logo-ID',
+          'name' => 'sponsit_logo_id',
+          'readonly' => 1,
+          'storage_name' => 'sponsit_logo_id',
+          'type' => 'text',
+        ),
+        'website' =>
+        array (
+          'canonical_name' => 'website',
+          'key' => 'field_sponsor_website',
+          'label' => 'Website',
+          'name' => 'website',
+          'storage_name' => 'website',
+          'type' => 'url',
+        ),
       ),
       'kind' => 'post',
     ),
