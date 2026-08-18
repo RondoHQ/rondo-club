@@ -299,6 +299,14 @@ class MemberShifts extends Base {
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_signups' ],
 				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
+				'args'                => [
+					'status' => [
+						'required'          => false,
+						'default'           => 'active',
+						'sanitize_callback' => 'sanitize_key',
+						'validate_callback' => static fn( $value ): bool => in_array( $value, [ 'active', 'cancelled', 'all' ], true ),
+					],
+				],
 			]
 		);
 
@@ -596,10 +604,11 @@ class MemberShifts extends Base {
 	/**
 	 * Build shift summaries for current assignments.
 	 *
-	 * @param bool $include_without_timestamp Include legacy assignments without signup metadata.
+	 * @param bool   $include_without_timestamp Include legacy assignments without signup metadata.
+	 * @param string $status_filter             active, cancelled or all.
 	 * @return array<int, array<string, mixed>>
 	 */
-	private function get_signup_shift_summaries( bool $include_without_timestamp ): array {
+	private function get_signup_shift_summaries( bool $include_without_timestamp, string $status_filter = 'active' ): array {
 		$query = new \WP_Query(
 			[
 				'post_type'        => 'dienst_shift',
@@ -624,6 +633,12 @@ class MemberShifts extends Base {
 				continue;
 			}
 			$seen_shift_ids[ $shift->ID ] = true;
+
+			$status       = (string) get_post_meta( $shift->ID, 'status', true );
+			$is_cancelled = $status === 'geannuleerd';
+			if ( ( $status_filter === 'active' && $is_cancelled ) || ( $status_filter === 'cancelled' && ! $is_cancelled ) ) {
+				continue;
+			}
 
 			$assigned = ShiftAssignments::person_ids( $shift->ID );
 			$signups  = [];
@@ -716,9 +731,10 @@ class MemberShifts extends Base {
 	 * Legacy assignments without signup timestamps remain visible here because
 	 * this is a state overview rather than a recent-activity feed.
 	 */
-	public function get_signups() {
-		$shifts = $this->get_signup_shift_summaries( true );
-		$now    = current_datetime()->getTimestamp();
+	public function get_signups( \WP_REST_Request $request ) {
+		$status_filter = (string) $request->get_param( 'status' );
+		$shifts        = $this->get_signup_shift_summaries( true, $status_filter ?: 'active' );
+		$now           = current_datetime()->getTimestamp();
 
 		usort(
 			$shifts,

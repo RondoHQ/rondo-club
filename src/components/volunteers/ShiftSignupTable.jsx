@@ -94,11 +94,16 @@ export default function ShiftSignupTable({ shifts, sortable = false }) {
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
           {sortedShifts.map((shift) => (
-            <tr key={shift.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+            <tr key={shift.id} className={shift.status === 'geannuleerd' ? 'bg-gray-50/70 text-gray-500 hover:bg-gray-100 dark:bg-gray-800/40 dark:text-gray-400 dark:hover:bg-gray-700/60' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'}>
               <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
                 <Link to={`/vrijwilligers/diensten/${shift.id}`} className="text-bright-cobalt hover:underline dark:text-electric-cyan">
                   {shiftName(shift)}
                 </Link>
+                {shift.status === 'geannuleerd' ? (
+                  <span className="ml-2 inline-flex rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+                    Geannuleerd
+                  </span>
+                ) : null}
               </td>
               <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">
                 {formatStoredDateTime(shift.start_datetime, 'EEE d MMM yyyy, HH:mm')}–{formatStoredDateTime(shift.end_datetime, 'HH:mm')}
