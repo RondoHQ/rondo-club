@@ -62,6 +62,78 @@ class SponsorCompaniesTest extends RondoTestCase {
 		$this->assertSame( 'Voorbeeld BV', PublicMembershipPassPage::get_sponsor_company_name( $person_id ) );
 	}
 
+	public function test_manager_creates_personal_sponsor_with_one_linked_person(): void {
+		$person_id = $this->createPerson(
+			[ 'post_title' => 'Piet Sponsor' ],
+			[
+				'person_type' => 'contact',
+				'first_name'  => 'Piet',
+				'last_name'   => 'Sponsor',
+			]
+		);
+		$response  = $this->json_request(
+			'POST',
+			'/rondo/v1/sponsors',
+			[
+				'title'  => 'Piet Sponsor',
+				'fields' => [
+					'sponsor_type'       => 'person',
+					'sponsor_role'       => 'awc_sponsor',
+					'sponsit_contact_id' => 'personal-400',
+					'contacts'           => [
+						[
+							'person_id'         => $person_id,
+							'contact_role'      => 'Sponsor',
+							'is_primary'        => true,
+							'receives_pass'     => true,
+							'is_primary_pass'   => true,
+							'sponsit_person_id' => 'contact:400',
+						],
+					],
+				],
+			]
+		);
+
+		$this->assertSame( 201, $response->get_status() );
+		$this->assertSame( 'person', $response->get_data()['fields']['sponsor_type'] );
+		$this->assertSame( 'Sponsor', $response->get_data()['fields']['contacts'][0]['contact_role'] );
+		$this->assertTrue( Relations::is_sponsor_contact( $person_id ) );
+	}
+
+	public function test_personal_sponsor_contact_endpoint_creates_person_and_relation_together(): void {
+		$sponsor  = $this->json_request(
+			'POST',
+			'/rondo/v1/sponsors',
+			[
+				'title'  => 'Nieuwe Sponsor',
+				'fields' => [
+					'sponsor_type' => 'person',
+					'sponsor_role' => 'awc_sponsor',
+				],
+			]
+		);
+		$response = $this->json_request(
+			'POST',
+			'/rondo/v1/sponsors/' . $sponsor->get_data()['id'] . '/contacts',
+			[
+				'first_name'        => 'Nieuwe',
+				'last_name'         => 'Sponsor',
+				'email'             => 'nieuw@example.test',
+				'birthdate'         => '1980-01-02',
+				'contact_role'      => 'Sponsor',
+				'is_primary'        => true,
+				'receives_pass'     => true,
+				'is_primary_pass'   => true,
+				'sponsit_person_id' => 'contact:401',
+			]
+		);
+
+		$this->assertSame( 201, $response->get_status() );
+		$contact = $response->get_data()['fields']['contacts'][0];
+		$this->assertSame( 'contact:401', $contact['sponsit_person_id'] );
+		$this->assertSame( '19800102', Fields::get_for_post( $contact['person_id'], 'birthdate' ) );
+	}
+
 	public function test_company_source_id_and_primary_contact_are_unique(): void {
 		$person_one = $this->createPerson( [ 'post_title' => 'Een' ] );
 		$person_two = $this->createPerson( [ 'post_title' => 'Twee' ] );

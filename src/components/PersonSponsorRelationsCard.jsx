@@ -20,16 +20,17 @@ export default function PersonSponsorRelationsCard({ person, canManage }) {
     setError('');
     try {
       const contacts = sponsor.fields?.contacts || [];
+      const isPersonalSponsor = sponsor.fields?.sponsor_type === 'person';
       await updateSponsor.mutateAsync({
         id: sponsor.id,
         data: {
           fields: {
             contacts: [...contacts, {
               person_id: person.id,
-              contact_role: 'Contactpersoon',
-              is_primary: contacts.length === 0,
+              contact_role: isPersonalSponsor ? 'Sponsor' : 'Contactpersoon',
+              is_primary: isPersonalSponsor || contacts.length === 0,
               receives_pass: true,
-              is_primary_pass: false,
+              is_primary_pass: isPersonalSponsor,
               sponsit_person_id: '',
             }],
           },
@@ -37,7 +38,7 @@ export default function PersonSponsorRelationsCard({ person, canManage }) {
       });
       setSearch('');
     } catch (requestError) {
-      setError(requestError.response?.data?.message || 'Sponsorbedrijf kon niet worden gekoppeld.');
+      setError(requestError.response?.data?.message || 'Sponsor kon niet worden gekoppeld.');
     }
   };
 
@@ -64,12 +65,12 @@ export default function PersonSponsorRelationsCard({ person, canManage }) {
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Building2 className="h-5 w-5 text-gray-500" />
-          <h2 className="font-semibold text-brand-gradient">Sponsorcontact voor</h2>
+          <h2 className="font-semibold text-brand-gradient">Sponsorrelaties</h2>
         </div>
-        {canManage && <Link to="/sponsors/new" className="btn-tertiary p-2" title="Sponsorbedrijf toevoegen"><Plus className="h-4 w-4" /></Link>}
+        {canManage && <Link to="/sponsors/new" className="btn-tertiary p-2" title="Sponsor toevoegen"><Plus className="h-4 w-4" /></Link>}
       </div>
 
-      {relationships.length === 0 ? <p className="text-sm text-gray-500">Nog niet aan een sponsorbedrijf gekoppeld.</p> : (
+      {relationships.length === 0 ? <p className="text-sm text-gray-500">Nog niet aan een sponsor gekoppeld.</p> : (
         <div className="space-y-2">
           {relationships.map((relationship) => (
             <div key={relationship.sponsor_id} className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
@@ -83,7 +84,7 @@ export default function PersonSponsorRelationsCard({ person, canManage }) {
         </div>
       )}
 
-      {canManage && <div className="relative mt-4"><Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input className="input w-full pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Koppel aan sponsorbedrijf" />{search.trim().length >= 2 && <div className="absolute z-20 mt-1 max-h-52 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">{(data?.items || []).map((sponsor) => <button key={sponsor.id} type="button" className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => linkSponsor(sponsor)}>{sponsor.title}</button>)}</div>}</div>}
+      {canManage && <div className="relative mt-4"><Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input className="input w-full pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Koppel aan sponsor" />{search.trim().length >= 2 && <div className="absolute z-20 mt-1 max-h-52 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">{(data?.items || []).filter((sponsor) => sponsor.fields?.sponsor_type !== 'person' || (sponsor.fields?.contacts || []).length === 0).map((sponsor) => <button key={sponsor.id} type="button" className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => linkSponsor(sponsor)}>{sponsor.title}</button>)}</div>}</div>}
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
     </section>
   );

@@ -161,7 +161,7 @@ final class Relations {
 				return new \WP_Error( 'rondo_sponsor_person_not_found', sprintf( 'Persoon in contactregel %d bestaat niet.', $index + 1 ), [ 'status' => 400 ] );
 			}
 			if ( isset( $seen[ $person_id ] ) ) {
-				return new \WP_Error( 'rondo_sponsor_contact_duplicate', 'Een persoon kan maar één keer aan hetzelfde sponsorbedrijf zijn gekoppeld.', [ 'status' => 400 ] );
+				return new \WP_Error( 'rondo_sponsor_contact_duplicate', 'Een persoon kan maar één keer aan dezelfde sponsor zijn gekoppeld.', [ 'status' => 400 ] );
 			}
 			$seen[ $person_id ] = true;
 
@@ -170,7 +170,7 @@ final class Relations {
 				++$primary_count;
 			}
 			if ( $primary_count > 1 ) {
-				return new \WP_Error( 'rondo_sponsor_primary_contact_duplicate', 'Een sponsorbedrijf kan maar één primair contact hebben.', [ 'status' => 400 ] );
+				return new \WP_Error( 'rondo_sponsor_primary_contact_duplicate', 'Een sponsor kan maar één primair contact hebben.', [ 'status' => 400 ] );
 			}
 
 			$receives_pass   = ! empty( $row['receives_pass'] );
