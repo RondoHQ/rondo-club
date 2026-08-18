@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.17.5] - 2026-08-18
+
+### Fixed
+
+- Oud-leden met een actuele ouder/verzorgerrol kunnen hun primaire e-mail en telefoon in Rondo wijzigen; de bestaande ouder-sync schrijft deze gegevens terug naar hun huidige kind of kinderen in Sportlink. Historische lidgegevens en het van het kind afgeleide adres blijven alleen-lezen.
+
 ## [34.17.4] - 2026-08-18
 
 ### Fixed

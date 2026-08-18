@@ -52,6 +52,27 @@ class PersonContactScopeTest extends RondoTestCase {
 		return $user_id;
 	}
 
+	private function add_current_child_relationship(): void {
+		$term = term_exists( 'child', 'relationship_type' );
+		if ( ! $term ) {
+			$term = wp_insert_term( 'Child', 'relationship_type', [ 'slug' => 'child' ] );
+		}
+
+		$child_relationship_type = (int) ( is_array( $term ) ? $term['term_id'] : $term );
+		$child_id                = $this->createPerson( [ 'post_title' => 'Current child' ] );
+
+		\Rondo\Fields\Fields::update_for_post(
+			$this->person_id,
+			'relationships',
+			[
+				[
+					'related_person'    => $child_id,
+					'relationship_type' => $child_relationship_type,
+				],
+			]
+		);
+	}
+
 	public function test_coordinator_may_correct_contact_details(): void {
 		$this->as_role( 'rondo_vrijwilligers' );
 
@@ -196,6 +217,53 @@ class PersonContactScopeTest extends RondoTestCase {
 
 		$this->assertSame( 403, $response->get_status() );
 		$this->assertSame( 'rondo_former_member_readonly', $response->as_error()->get_error_code() );
+	}
+
+	public function test_current_parent_former_member_may_update_parent_slot_contact_fields(): void {
+		\Rondo\Fields\Fields::update_for_post( $this->person_id, 'former_member', true );
+		$this->add_current_child_relationship();
+		$this->as_role( 'rondo_vrijwilligers' );
+
+		$response = $this->update_person(
+			[
+				'fields' => [
+					'email_1'     => 'ouder@example.com',
+					'telephone_1' => '0241234567',
+				],
+			]
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'ouder@example.com', \Rondo\Fields\Fields::get_for_post( $this->person_id, 'email_1' ) );
+		$this->assertSame( '0241234567', \Rondo\Fields\Fields::get_for_post( $this->person_id, 'telephone_1' ) );
+	}
+
+	public function test_current_parent_former_member_cannot_update_address_or_historical_profile(): void {
+		\Rondo\Fields\Fields::update_for_post( $this->person_id, 'former_member', true );
+		$this->add_current_child_relationship();
+		$this->as_role( 'rondo_vrijwilligers' );
+
+		$address_response = $this->update_person(
+			[
+				'fields' => [
+					'addresses' => [
+						[
+							'address_label' => 'Home',
+							'street_name'   => 'Dorpsstraat',
+							'house_number'  => '1',
+							'city'          => 'Wijchen',
+						],
+					],
+				],
+			]
+		);
+		$profile_response = $this->update_person( [ 'fields' => [ 'type_lid' => 'Erelid' ] ] );
+
+		$this->assertSame( 403, $address_response->get_status() );
+		$this->assertSame( 'rondo_former_member_readonly', $address_response->as_error()->get_error_code() );
+		$this->assertContains( 'addresses', $address_response->as_error()->get_error_data()['blocked_fields'] );
+		$this->assertSame( 403, $profile_response->get_status() );
+		$this->assertSame( 'rondo_former_member_readonly', $profile_response->as_error()->get_error_code() );
 	}
 
 	/**

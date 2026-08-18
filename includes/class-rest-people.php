@@ -37,12 +37,10 @@ class People extends Base {
 		add_filter( 'rest_prepare_person', [ $this, 'add_person_computed_fields' ], 20, 3 );
 
 		// Reject native field edits on persons marked former_member=true. Sportlink
-		// rejects writes for these members' lidsoort ("Oud bondslid" /
-		// "Oud verenigingslid"), so anything we accept here just generates
-		// reverse-sync work that can never land. Admins (incl. the sync
-		// service user) are exempt so the sync itself can still touch
-		// former-member records. The only allowed non-admin write is the
-		// former_member toggle itself — flip it off first, then edit.
+		// rejects writes to their historical member profile, but a former member
+		// who is still a current parent may update the contact fields backed by the
+		// child's Sportlink parent slot. Admins (incl. the sync service user) remain
+		// exempt so forward sync can refresh former-member parent records.
 		add_filter( 'rest_pre_insert_person', [ $this, 'block_former_member_edits' ], 10, 2 );
 		add_filter( 'rest_pre_insert_person', [ $this, 'enforce_person_field_scope' ], 15, 2 );
 		add_filter( 'rest_pre_insert_person', [ $this, 'validate_sponsor_pass_variant' ], 18, 2 );
@@ -980,9 +978,11 @@ class People extends Base {
 
 	/**
 	 * Block native field edits on persons marked former_member=true, except for the
-	 * former_member toggle itself. Admins (including the rondo-sync service
-	 * user, which authenticates with manage_options) bypass the check so
-	 * the sync can still write to former-member records.
+	 * former_member toggle itself. A former member with a current child may also
+	 * change the contact fields represented by that child's Sportlink parent slot.
+	 * Admins (including the rondo-sync service user, which authenticates with
+	 * manage_options) bypass the check so the sync can still write to
+	 * former-member records.
 	 *
 	 * Filter signature: rest_pre_insert_{$post_type}. Runs before WordPress
 	 * persists a REST insert/update; returning WP_Error aborts the write.
@@ -1028,8 +1028,15 @@ class People extends Base {
 			}
 		}
 
-		// Only allowed change: flipping former_member itself.
-		$other_changes = array_diff( $changed_keys, [ 'former_member' ] );
+		$allowed_changes = [ 'former_member' ];
+		if ( $this->has_current_child_relationship( (int) $prepared_post->ID ) ) {
+			$allowed_changes = array_merge(
+				$allowed_changes,
+				\Rondo\Core\AccessControl::PARENT_SLOT_CONTACT_WRITE_FIELDS
+			);
+		}
+
+		$other_changes = array_diff( $changed_keys, $allowed_changes );
 		if ( empty( $other_changes ) ) {
 			return $prepared_post;
 		}
