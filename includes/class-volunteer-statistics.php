@@ -301,21 +301,10 @@ final class VolunteerStatistics {
 	 * @return array<string, int>
 	 */
 	private function obligation_progress( string $season ): array {
-		$units  = ( new VolunteerEligibilityService() )->get_eligible_units( $season );
-		$active = [];
-		$exempt = 0;
-		foreach ( $units as $unit ) {
-			$unit = $this->sanitize_unit_person_ids( $unit );
-			if ( $unit === null ) {
-				continue;
-			}
-
-			if ( VolunteerExemptionResolver::resolve_unit( $unit, $season ) !== null ) {
-				++$exempt;
-				continue;
-			}
-			$active[] = $unit;
-		}
+		$units     = ( new VolunteerEligibilityService() )->get_eligible_units( $season );
+		$partition = VolunteerExemptionResolver::partition_units( $units, $season );
+		$active    = $partition['active'];
+		$exempt    = count( $partition['exempt'] );
 
 		$calculator = new VolunteerObligationCalculator();
 		$aggregate  = $calculator->aggregate( $calculator->decorate_units( $active, $season ) );
@@ -351,29 +340,6 @@ final class VolunteerStatistics {
 				static fn( int $person_id ): bool => $person_id > 0 && get_post_type( $person_id ) === 'person' && get_post_status( $person_id ) !== 'trash'
 			)
 		);
-	}
-
-	/**
-	 * Remove stale person references from an eligibility unit.
-	 *
-	 * @param array<string, mixed> $unit Eligibility unit.
-	 * @return array<string, mixed>|null
-	 */
-	private function sanitize_unit_person_ids( array $unit ): ?array {
-		$person_ids = $this->valid_person_ids( (array) ( $unit['person_ids'] ?? [] ) );
-		if ( empty( $person_ids ) ) {
-			return null;
-		}
-
-		$unit['person_ids']         = $person_ids;
-		$unit['trigger_person_ids'] = array_values(
-			array_intersect(
-				$person_ids,
-				array_map( 'intval', (array) ( $unit['trigger_person_ids'] ?? [] ) )
-			)
-		);
-
-		return $unit;
 	}
 
 	/**

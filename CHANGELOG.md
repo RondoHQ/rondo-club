@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.18.3] - 2026-08-18
+
+### Fixed
+
+- De tegel `Inschrijftaken vereist` op het vrijwilligersdashboard toont voortaan het netto aantal taken na commissie-, staf-, betaalde en handmatige vrijstellingen; beëindigde vrijwilligersrollen verhogen het aantal direct na verversen.
+
 ## [34.18.2] - 2026-08-18
 
 ### Fixed

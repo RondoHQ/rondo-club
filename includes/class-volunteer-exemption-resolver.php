@@ -36,6 +36,75 @@ class VolunteerExemptionResolver {
 	const REASON_MANUAL    = 'handmatig';
 
 	/**
+	 * Partition obligation units into active and exempt groups.
+	 *
+	 * Keeping this policy here gives the dashboard and statistics the same net
+	 * workload without duplicating the family-wide exemption rules.
+	 *
+	 * @param array<int, array<string, mixed>> $units  Eligibility units.
+	 * @param string                           $season Sports season.
+	 * @return array{
+	 *   active: array<int, array<string, mixed>>,
+	 *   exempt: array<int, array<string, mixed>>,
+	 *   required_count: int
+	 * }
+	 */
+	public static function partition_units( array $units, string $season ): array {
+		$active         = [];
+		$exempt         = [];
+		$required_count = 0;
+
+		foreach ( $units as $unit ) {
+			$unit = self::sanitize_unit_person_ids( $unit );
+			if ( $unit === null ) {
+				continue;
+			}
+
+			if ( self::resolve_unit( $unit, $season ) !== null ) {
+				$exempt[] = $unit;
+				continue;
+			}
+
+			$active[]        = $unit;
+			$required_count += max( 0, (int) ( $unit['required_count'] ?? 0 ) );
+		}
+
+		return [
+			'active'         => $active,
+			'exempt'         => $exempt,
+			'required_count' => $required_count,
+		];
+	}
+
+	/**
+	 * Remove stale person references from a cached eligibility unit.
+	 *
+	 * @param array<string, mixed> $unit Eligibility unit.
+	 * @return array<string, mixed>|null
+	 */
+	private static function sanitize_unit_person_ids( array $unit ): ?array {
+		$person_ids = array_values(
+			array_filter(
+				array_map( 'intval', (array) ( $unit['person_ids'] ?? [] ) ),
+				static fn( int $person_id ): bool => $person_id > 0 && get_post_type( $person_id ) === 'person' && get_post_status( $person_id ) !== 'trash'
+			)
+		);
+		if ( empty( $person_ids ) ) {
+			return null;
+		}
+
+		$unit['person_ids']         = $person_ids;
+		$unit['trigger_person_ids'] = array_values(
+			array_intersect(
+				$person_ids,
+				array_map( 'intval', (array) ( $unit['trigger_person_ids'] ?? [] ) )
+			)
+		);
+
+		return $unit;
+	}
+
+	/**
 	 * Determine whether a person is exempt from the 2-diensten-plicht for a given season.
 	 *
 	 * @param int    $person_id Person post ID.

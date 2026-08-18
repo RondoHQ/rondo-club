@@ -46,6 +46,9 @@ export default function VrijwilligersDashboard() {
 
   const totalRequired = useMemo(() => {
     if (!eligibility?.units) return 0;
+    if (eligibility?.obligation_summary?.required_count != null) {
+      return Number(eligibility.obligation_summary.required_count) || 0;
+    }
     return eligibility.units.reduce((total, unit) => total + (Number(unit.required_count) || 0), 0);
   }, [eligibility]);
 
