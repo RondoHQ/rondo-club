@@ -94,7 +94,10 @@ function TaskTypeDonut({ taskTypes, total }) {
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-[180px_1fr] sm:items-center">
+    <div
+      className="grid gap-6 items-center"
+      style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 22rem), 1fr))' }}
+    >
       <div className="relative w-44 h-44 mx-auto">
         <svg viewBox="0 0 120 120" className="w-full h-full" role="img" aria-label="Verdeling van inschrijvingen per taaksoort">
           <circle cx="60" cy="60" r="45" fill="none" stroke="currentColor" strokeWidth="17" className="text-gray-100 dark:text-gray-700" />
@@ -121,13 +124,13 @@ function TaskTypeDonut({ taskTypes, total }) {
           <span className="text-xs text-gray-500 dark:text-gray-400">inschrijvingen</span>
         </div>
       </div>
-      <ul className="space-y-2.5">
+      <ul className="min-w-0 space-y-2.5">
         {segments.map((segment) => (
-          <li key={segment.id} className="flex items-center gap-2 text-sm">
+          <li key={segment.id} className="flex min-w-0 items-center gap-2 text-sm">
             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: segment.color }} />
             <span className="flex-1 min-w-0 truncate text-gray-700 dark:text-gray-300" title={segment.name}>{segment.name}</span>
-            <span className="font-medium tabular-nums text-gray-900 dark:text-gray-100">{numberFormat.format(segment.assignments)}</span>
-            <span className="w-12 text-right tabular-nums text-gray-500 dark:text-gray-400">{decimalFormat.format(segment.share)}%</span>
+            <span className="shrink-0 font-medium tabular-nums text-gray-900 dark:text-gray-100">{numberFormat.format(segment.assignments)}</span>
+            <span className="w-14 shrink-0 text-right tabular-nums text-gray-500 dark:text-gray-400">{decimalFormat.format(segment.share)}%</span>
           </li>
         ))}
       </ul>
@@ -162,25 +165,48 @@ function CoverageBars({ taskTypes }) {
   );
 }
 
-function SignupTrend({ points, undatedAssignments }) {
+function SignupTrend({ points, undatedAssignments, generatedAt }) {
+  const todayDate = generatedAt?.slice(0, 10) || '';
+  const todayCount = points.find((point) => point.date === todayDate)?.count || 0;
+
   const chart = useMemo(() => {
     if (points.length === 0) return null;
+    const chartPoints = [...points];
+    const finalPoint = chartPoints.at(-1);
+    if (todayDate && finalPoint.date < todayDate) {
+      chartPoints.push({ date: todayDate, count: 0, cumulative: finalPoint.cumulative });
+    }
+
     const width = 640;
-    const height = 220;
-    const padding = 24;
-    const max = Math.max(...points.map((point) => point.cumulative), 1);
-    const coordinates = points.map((point, index) => ({
+    const height = 240;
+    const margins = { top: 16, right: 16, bottom: 28, left: 48 };
+    const plotWidth = width - margins.left - margins.right;
+    const plotHeight = height - margins.top - margins.bottom;
+    const max = Math.max(...chartPoints.map((point) => point.cumulative), 1);
+    const coordinates = chartPoints.map((point, index) => ({
       ...point,
-      x: points.length === 1 ? width / 2 : padding + (index / (points.length - 1)) * (width - (2 * padding)),
-      y: height - padding - (point.cumulative / max) * (height - (2 * padding)),
+      x: chartPoints.length === 1 ? margins.left + (plotWidth / 2) : margins.left + (index / (chartPoints.length - 1)) * plotWidth,
+      y: margins.top + ((max - point.cumulative) / max) * plotHeight,
     }));
     const line = coordinates.map((point) => `${point.x},${point.y}`).join(' ');
-    const area = `${padding},${height - padding} ${line} ${coordinates.at(-1).x},${height - padding}`;
-    return { width, height, padding, max, coordinates, line, area };
-  }, [points]);
+    const baseline = height - margins.bottom;
+    const area = `${coordinates[0].x},${baseline} ${line} ${coordinates.at(-1).x},${baseline}`;
+    const yTicks = [...new Set([max, Math.ceil(max / 2), 0])].map((value) => ({
+      value,
+      y: margins.top + ((max - value) / max) * plotHeight,
+    }));
+    return { width, height, margins, max, coordinates, line, area, yTicks, baseline };
+  }, [points, todayDate]);
 
   if (!chart) {
-    return <EmptyState message="Er zijn nog geen inschrijfmomenten vastgelegd." />;
+    return (
+      <div>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          Vandaag: <strong className="text-gray-900 dark:text-gray-100">0 inschrijvingen</strong>
+        </p>
+        <EmptyState message="Er zijn nog geen inschrijfmomenten vastgelegd." />
+      </div>
+    );
   }
 
   const first = chart.coordinates[0];
@@ -188,28 +214,40 @@ function SignupTrend({ points, undatedAssignments }) {
 
   return (
     <div>
-      <div className="h-56">
-        <svg viewBox={`0 0 ${chart.width} ${chart.height}`} className="w-full h-full" role="img" aria-label="Cumulatieve ontwikkeling van inschrijvingen">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 text-sm">
+        <p className="text-gray-600 dark:text-gray-300">
+          Vandaag: <strong className="text-gray-900 dark:text-gray-100">{numberFormat.format(todayCount)} {todayCount === 1 ? 'inschrijving' : 'inschrijvingen'}</strong>
+        </p>
+        <p className="text-gray-500 dark:text-gray-400">
+          In grafiek: <strong className="font-medium text-gray-700 dark:text-gray-200">{numberFormat.format(last.cumulative)}</strong>
+        </p>
+      </div>
+      <div className="h-60">
+        <svg viewBox={`0 0 ${chart.width} ${chart.height}`} className="w-full h-full" role="img" aria-label={`Cumulatieve ontwikkeling van inschrijvingen. Vandaag ${todayCount}.`}>
           <defs>
             <linearGradient id="signup-area" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#0047FF" stopOpacity="0.25" />
               <stop offset="100%" stopColor="#0047FF" stopOpacity="0" />
             </linearGradient>
           </defs>
-          {[0, 0.5, 1].map((ratio) => {
-            const y = chart.padding + ratio * (chart.height - (2 * chart.padding));
-            return <line key={ratio} x1={chart.padding} y1={y} x2={chart.width - chart.padding} y2={y} stroke="currentColor" className="text-gray-200 dark:text-gray-700" strokeDasharray="4 5" />;
-          })}
+          {chart.yTicks.map((tick) => (
+            <g key={tick.value}>
+              <line x1={chart.margins.left} y1={tick.y} x2={chart.width - chart.margins.right} y2={tick.y} stroke="currentColor" className="text-gray-200 dark:text-gray-700" strokeDasharray="4 5" />
+              <text x={chart.margins.left - 9} y={tick.y + 4} textAnchor="end" className="fill-gray-500 dark:fill-gray-400 text-[12px]">{numberFormat.format(tick.value)}</text>
+            </g>
+          ))}
+          <line x1={chart.margins.left} y1={chart.margins.top} x2={chart.margins.left} y2={chart.baseline} stroke="currentColor" className="text-gray-300 dark:text-gray-600" />
+          <line x1={chart.margins.left} y1={chart.baseline} x2={chart.width - chart.margins.right} y2={chart.baseline} stroke="currentColor" className="text-gray-300 dark:text-gray-600" />
           <polygon points={chart.area} fill="url(#signup-area)" />
           <polyline points={chart.line} fill="none" stroke="#0047FF" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" />
           {chart.coordinates.map((point) => (
-            <circle key={point.date} cx={point.x} cy={point.y} r="4" fill="#0047FF">
+            <circle key={point.date} cx={point.x} cy={point.y} r={point.date === todayDate ? 5 : 4} fill="#0047FF">
               <title>{`${formatDate(point.date)}: ${numberFormat.format(point.count)} erbij, ${numberFormat.format(point.cumulative)} totaal`}</title>
             </circle>
           ))}
-          <text x={chart.padding} y="17" className="fill-gray-500 dark:fill-gray-400 text-[12px]">{numberFormat.format(chart.max)}</text>
-          <text x={first.x} y={chart.height - 3} textAnchor="start" className="fill-gray-500 dark:fill-gray-400 text-[12px]">{formatDate(first.date)}</text>
-          <text x={last.x} y={chart.height - 3} textAnchor="end" className="fill-gray-500 dark:fill-gray-400 text-[12px]">{formatDate(last.date)}</text>
+          <text x="13" y={chart.height / 2} textAnchor="middle" transform={`rotate(-90 13 ${chart.height / 2})`} className="fill-gray-500 dark:fill-gray-400 text-[12px]">Aantal</text>
+          <text x={first.x} y={chart.height - 6} textAnchor={first.x === last.x ? 'middle' : 'start'} className="fill-gray-500 dark:fill-gray-400 text-[12px]">{formatDate(first.date)}</text>
+          {first.x !== last.x && <text x={last.x} y={chart.height - 6} textAnchor="end" className="fill-gray-500 dark:fill-gray-400 text-[12px]">{last.date === todayDate ? 'Vandaag' : formatDate(last.date)}</text>}
         </svg>
       </div>
       {undatedAssignments > 0 && (
@@ -418,7 +456,7 @@ export default function VrijwilligersStatistieken() {
       </div>
 
       <Panel title="Ontwikkeling van de inschrijvingen" description="Cumulatief aantal huidige inschrijvingen op basis van het vastgelegde inschrijfmoment.">
-        <SignupTrend points={data.signup_trend} undatedAssignments={data.undated_assignments} />
+        <SignupTrend points={data.signup_trend} undatedAssignments={data.undated_assignments} generatedAt={data.generated_at} />
       </Panel>
 
       <div className="grid gap-6 xl:grid-cols-2">
