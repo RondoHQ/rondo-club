@@ -22,7 +22,7 @@ import {
   CustomFields, Login, Profile, ProfileIva, ProfileVog,
   MembershipPassScanner,
   ClothingPage,
-  VrijwilligersDashboard, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten, VrijwilligersAanmeldingen,
+  VrijwilligersDashboard, VrijwilligersStatistieken, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten, VrijwilligersAanmeldingen,
   VrijwilligersDienstForm, VrijwilligersDienstTypeForm, VrijwilligersSjablonen, VrijwilligersSjabloonForm,
   VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig, Household,
   TaakuitlegList, TaakuitlegForm,
@@ -289,6 +289,14 @@ const router = createBrowserRouter([
             element: (
               <VrijwilligersRoute>
                 <VrijwilligersDashboard />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/statistieken',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersStatistieken />
               </VrijwilligersRoute>
             ),
           },

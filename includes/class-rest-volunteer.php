@@ -24,6 +24,7 @@ use Rondo\Volunteer\VolunteerEligibilityService;
 use Rondo\Volunteer\VolunteerExemptionResolver;
 use Rondo\Volunteer\VolunteerObligationCalculator;
 use Rondo\Volunteer\VolunteerSeeder;
+use Rondo\Volunteer\VolunteerStatistics;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -59,6 +60,23 @@ class Volunteer extends Base {
 					'person_id'    => [
 						'required'          => false,
 						'sanitize_callback' => 'absint',
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/volunteer-statistics',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_statistics' ],
+				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
+				'args'                => [
+					'season' => [
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => [ $this, 'validate_optional_season' ],
 					],
 				],
 			]
@@ -861,6 +879,18 @@ class Volunteer extends Base {
 				'aggregate' => $aggregate,
 			]
 		);
+	}
+
+	/**
+	 * GET /rondo/v1/volunteer-statistics
+	 *
+	 * Returns one privacy-safe aggregate payload for the statistics page. The
+	 * browser receives counts and shift summaries, never person identifiers.
+	 */
+	public function get_statistics( \WP_REST_Request $request ) {
+		$season = $request->get_param( 'season' ) ?: SeasonKey::current();
+
+		return rest_ensure_response( ( new VolunteerStatistics() )->for_season( $season ) );
 	}
 
 	/**

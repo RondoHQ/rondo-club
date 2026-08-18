@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.17.0] - 2026-08-18
+
+### Added
+
+- De Vrijwilligers-sectie heeft een statistiekenpagina met seizoenfilter, kerncijfers, taaksoortverdeling, bezettingsgraad, inschrijftrend, spreiding, voortgang van de vrijwilligersplicht en doorklikbare komende tekorten.
+- Een afgeschermd statistieken-endpoint berekent actuele, privacyvriendelijke seizoensaggregaties uit gepubliceerde inschrijftaken en sluit geannuleerde taken uit.
+
 ## [34.16.3] - 2026-08-18
 
 ### Fixed
