@@ -123,6 +123,7 @@ use Rondo\Collaboration\MentionNotifications;
 use Rondo\Collaboration\Reminders;
 use Rondo\Export\VCard as VCardExport;
 use Rondo\Data\InverseRelationships;
+use Rondo\Data\FormerMemberWorkHistory;
 use Rondo\Data\PersonDeletionGuard;
 use Rondo\Data\TodoMigration;
 use Rondo\CustomFields\Manager as CustomFieldsManager;
@@ -262,6 +263,7 @@ function rondo_init() {
 	new PostTypes();
 	new Taxonomies();
 	new \Rondo\Fields\FieldSchema();
+	new FormerMemberWorkHistory();
 	new AccessControl();
 	new PersonDeletionGuard();
 	new UserRoles();
