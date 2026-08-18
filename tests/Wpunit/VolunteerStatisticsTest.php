@@ -138,4 +138,31 @@ class VolunteerStatisticsTest extends RondoTestCase {
 		$this->assertArrayHasKey( 'obligation_progress', $data );
 		$this->assertArrayNotHasKey( 'people', $data );
 	}
+
+	public function test_statistics_ignore_stale_person_ids_in_cached_eligibility(): void {
+		$missing_person_id = 999999;
+		$cache_key         = VolunteerEligibilityService::CACHE_PREFIX . md5( $this->season );
+		set_transient(
+			$cache_key,
+			[
+				'units'       => [
+					[
+						'unit_id'            => 'stale-person',
+						'kind'               => VolunteerEligibilityService::UNIT_KIND_SPELER,
+						'person_ids'         => [ $missing_person_id ],
+						'trigger_person_ids' => [ $missing_person_id ],
+						'required_count'     => 2,
+						'address_key'        => null,
+					],
+				],
+				'diagnostics' => [],
+			],
+			MINUTE_IN_SECONDS
+		);
+
+		$data = ( new VolunteerStatistics() )->for_season( $this->season );
+
+		$this->assertSame( 0, $data['obligation_progress']['total_units'] );
+		$this->assertSame( 0, $data['obligation_progress']['total_required'] );
+	}
 }

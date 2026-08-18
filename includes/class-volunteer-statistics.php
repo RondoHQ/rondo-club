@@ -59,7 +59,7 @@ final class VolunteerStatistics {
 
 			$type_id  = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
 			$capacity = max( 1, (int) get_post_meta( $shift_id, 'capacity', true ) );
-			$assigned = ShiftAssignments::person_ids( $shift_id );
+			$assigned = $this->valid_person_ids( ShiftAssignments::person_ids( $shift_id ) );
 			$start    = $this->parse_datetime( (string) get_post_meta( $shift_id, 'start_datetime', true ) );
 
 			if ( ! isset( $type_rows[ $type_id ] ) ) {
@@ -305,6 +305,11 @@ final class VolunteerStatistics {
 		$active = [];
 		$exempt = 0;
 		foreach ( $units as $unit ) {
+			$unit = $this->sanitize_unit_person_ids( $unit );
+			if ( $unit === null ) {
+				continue;
+			}
+
 			if ( VolunteerExemptionResolver::resolve_unit( $unit, $season ) !== null ) {
 				++$exempt;
 				continue;
@@ -316,7 +321,7 @@ final class VolunteerStatistics {
 		$aggregate  = $calculator->aggregate( $calculator->decorate_units( $active, $season ) );
 
 		return [
-			'total_units'     => count( $units ),
+			'total_units'     => count( $active ) + $exempt,
 			'exempt'          => $exempt,
 			'completed'       => (int) $aggregate['units_voldaan'],
 			'fully_scheduled' => (int) $aggregate['units_op_weg'],
@@ -327,6 +332,48 @@ final class VolunteerStatistics {
 			'total_completed' => (int) $aggregate['total_completed'],
 			'total_no_show'   => (int) $aggregate['total_no_show'],
 		];
+	}
+
+	/**
+	 * Keep only existing person posts in a list of relationship IDs.
+	 *
+	 * Eligibility and assignment transients can briefly retain a deleted person
+	 * until their five-minute cache expires. Those IDs are not current links and
+	 * must not break or inflate the statistics response.
+	 *
+	 * @param int[] $person_ids Candidate person IDs.
+	 * @return int[]
+	 */
+	private function valid_person_ids( array $person_ids ): array {
+		return array_values(
+			array_filter(
+				array_map( 'intval', $person_ids ),
+				static fn( int $person_id ): bool => $person_id > 0 && get_post_type( $person_id ) === 'person' && get_post_status( $person_id ) !== 'trash'
+			)
+		);
+	}
+
+	/**
+	 * Remove stale person references from an eligibility unit.
+	 *
+	 * @param array<string, mixed> $unit Eligibility unit.
+	 * @return array<string, mixed>|null
+	 */
+	private function sanitize_unit_person_ids( array $unit ): ?array {
+		$person_ids = $this->valid_person_ids( (array) ( $unit['person_ids'] ?? [] ) );
+		if ( empty( $person_ids ) ) {
+			return null;
+		}
+
+		$unit['person_ids']         = $person_ids;
+		$unit['trigger_person_ids'] = array_values(
+			array_intersect(
+				$person_ids,
+				array_map( 'intval', (array) ( $unit['trigger_person_ids'] ?? [] ) )
+			)
+		);
+
+		return $unit;
 	}
 
 	/**
