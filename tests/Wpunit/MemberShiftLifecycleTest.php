@@ -348,6 +348,38 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertCount( 1, $this->sent_mail );
 	}
 
+	public function test_member_can_download_calendar_with_all_non_cancelled_assignments(): void {
+		[, $person_id] = $this->member( 'shift_calendar_download_member' );
+		$type_id       = $this->dienst_type();
+		$active_id     = $this->dated_shift( $type_id, [ $person_id ], new \DateTimeImmutable( '2026-12-04 09:00:00', wp_timezone() ) );
+		$completed_id  = $this->dated_shift( $type_id, [ $person_id ], new \DateTimeImmutable( '2026-06-05 10:00:00', wp_timezone() ) );
+		$cancelled_id  = $this->dated_shift( $type_id, [ $person_id ], new \DateTimeImmutable( '2026-12-06 11:00:00', wp_timezone() ) );
+		update_post_meta( $completed_id, 'status', 'voltooid' );
+		update_post_meta( $cancelled_id, 'status', 'geannuleerd' );
+
+		$response = $this->server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/my-shifts/calendar' ) );
+
+		$this->assertSame( 200, $response->get_status() );
+		$calendar = $response->get_data();
+		$this->assertIsString( $calendar );
+		$this->assertSame( 2, substr_count( $calendar, 'BEGIN:VEVENT' ) );
+		$this->assertStringContainsString( 'UID:rondo-shift-' . $active_id . '-' . $person_id, $calendar );
+		$this->assertStringContainsString( 'UID:rondo-shift-' . $completed_id . '-' . $person_id, $calendar );
+		$this->assertStringNotContainsString( 'UID:rondo-shift-' . $cancelled_id . '-' . $person_id, $calendar );
+		$this->assertStringContainsString( 'DESCRIPTION:Bekijk je inschrijftaken in Rondo:', $calendar );
+		$this->assertStringContainsString( 'URL:' . home_url( '/vrijwillig' ), $calendar );
+		$this->assertStringContainsString( 'DTSTART;TZID=Europe/Amsterdam:20261204T090000', $calendar );
+	}
+
+	public function test_calendar_download_requires_a_linked_person(): void {
+		wp_set_current_user( $this->createRondoUser( [ 'user_login' => 'calendar_member_without_person' ] ) );
+
+		$response = $this->server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/my-shifts/calendar' ) );
+
+		$this->assertSame( 404, $response->get_status() );
+		$this->assertSame( 'no_person', $response->get_data()['code'] );
+	}
+
 	public function test_cancelling_during_confirmation_delay_suppresses_the_email(): void {
 		[, $person_id] = $this->member( 'cancelled_shift_confirmation_member' );
 		\Rondo\Fields\Fields::update_for_post( $person_id, 'email_1', 'cancelled@example.com' );

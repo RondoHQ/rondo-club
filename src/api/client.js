@@ -457,6 +457,7 @@ export const prmApi = {
 
   // Member-facing shift signup (/vrijwillig)
   getMyShifts: (params = {}) => api.get('/rondo/v1/my-shifts', { params }),
+  getMyShiftsCalendarUrl: () => `${window.rondoConfig?.apiUrl || '/wp-json/'}rondo/v1/my-shifts/calendar?_wpnonce=${encodeURIComponent(window.rondoConfig?.nonce || '')}`,
   getPersonShifts: (personId) => api.get(`/rondo/v1/people/${personId}/shifts`),
   getAvailableShifts: () => api.get('/rondo/v1/shifts/available'),
   getRecentShiftSignups: () => api.get('/rondo/v1/shifts/recent-signups'),

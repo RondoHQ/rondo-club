@@ -563,7 +563,7 @@ class ShiftEmailScheduler {
 	 * @param array<int, array{id: int, title: string, start: \DateTimeImmutable, end: \DateTimeImmutable}> $shifts Shift data.
 	 */
 	private function create_signup_calendar_attachment( int $person_id, array $shifts ): ?string {
-		$calendar = $this->build_signup_calendar( $person_id, $shifts );
+		$calendar = self::build_signup_calendar( $person_id, $shifts );
 		$dir      = trailingslashit( get_temp_dir() ) . 'rondo-shift-confirmations';
 		if ( ! wp_mkdir_p( $dir ) ) {
 			return null;
@@ -581,7 +581,7 @@ class ShiftEmailScheduler {
 	/**
 	 * @param array<int, array{id: int, title: string, start: \DateTimeImmutable, end: \DateTimeImmutable}> $shifts Shift data.
 	 */
-	private function build_signup_calendar( int $person_id, array $shifts ): string {
+	public static function build_signup_calendar( int $person_id, array $shifts ): string {
 		$host  = (string) wp_parse_url( home_url(), PHP_URL_HOST );
 		$host  = $host !== '' ? $host : 'rondo.club';
 		$lines = [
@@ -590,7 +590,7 @@ class ShiftEmailScheduler {
 			'PRODID:-//Rondo Club//Vrijwilligerstaken//NL',
 			'CALSCALE:GREGORIAN',
 			'METHOD:PUBLISH',
-			'X-WR-CALNAME:' . $this->escape_ical_text( get_bloginfo( 'name' ) . ' inschrijftaken' ),
+			'X-WR-CALNAME:' . self::escape_ical_text( get_bloginfo( 'name' ) . ' inschrijftaken' ),
 			'X-WR-TIMEZONE:' . self::CALENDAR_TIMEZONE,
 			'BEGIN:VTIMEZONE',
 			'TZID:' . self::CALENDAR_TIMEZONE,
@@ -619,8 +619,8 @@ class ShiftEmailScheduler {
 			$lines[] = 'DTSTAMP:' . gmdate( 'Ymd\THis\Z' );
 			$lines[] = 'DTSTART;TZID=' . self::CALENDAR_TIMEZONE . ':' . $shift['start']->format( 'Ymd\THis' );
 			$lines[] = 'DTEND;TZID=' . self::CALENDAR_TIMEZONE . ':' . $shift['end']->format( 'Ymd\THis' );
-			$lines[] = 'SUMMARY:' . $this->escape_ical_text( $shift['title'] );
-			$lines[] = 'DESCRIPTION:' . $this->escape_ical_text( 'Bekijk je inschrijftaken in Rondo: ' . $url );
+			$lines[] = 'SUMMARY:' . self::escape_ical_text( $shift['title'] );
+			$lines[] = 'DESCRIPTION:' . self::escape_ical_text( 'Bekijk je inschrijftaken in Rondo: ' . $url );
 			$lines[] = 'URL:' . $url;
 			$lines[] = 'STATUS:CONFIRMED';
 			$lines[] = 'TRANSP:OPAQUE';
@@ -628,10 +628,10 @@ class ShiftEmailScheduler {
 		}
 
 		$lines[] = 'END:VCALENDAR';
-		return implode( "\r\n", array_map( [ $this, 'fold_ical_line' ], $lines ) ) . "\r\n";
+		return implode( "\r\n", array_map( [ self::class, 'fold_ical_line' ], $lines ) ) . "\r\n";
 	}
 
-	private function escape_ical_text( string $value ): string {
+	private static function escape_ical_text( string $value ): string {
 		return str_replace(
 			[ '\\', "\r\n", "\r", "\n", ',', ';' ],
 			[ '\\\\', '\\n', '\\n', '\\n', '\\,', '\\;' ],
@@ -650,7 +650,7 @@ class ShiftEmailScheduler {
 		return implode( ' ', $parts );
 	}
 
-	private function fold_ical_line( string $line ): string {
+	private static function fold_ical_line( string $line ): string {
 		if ( strlen( $line ) <= 75 ) {
 			return $line;
 		}
