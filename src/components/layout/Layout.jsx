@@ -32,7 +32,8 @@ import {
   ClipboardList,
   BookOpen,
   ChevronRight,
-  MonitorPlay
+  MonitorPlay,
+  ChartPie
 } from 'lucide-react';
 
 // Wordmark URLs from theme directory.
@@ -64,6 +65,7 @@ const navigation = [
   { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true },
   { name: 'Commissies', href: '/commissies', icon: UsersRound, requiresKader: true },
   { name: 'Vrijwilligers', href: '/vrijwilligers', icon: HeartHandshake, requiresVrijwilligers: true },
+  { name: 'Statistieken', href: '/vrijwilligers/statistieken', icon: ChartPie, indent: true, requiresVrijwilligers: true },
   { name: 'VOG', href: '/vrijwilligers/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'IVA', href: '/vrijwilligers/iva', icon: Wine, indent: true, requiresVrijwilligers: true },
   { name: 'Beheer inschrijftaken', href: '/vrijwilligers/diensten', icon: CalendarClock, indent: true, requiresVrijwilligers: true },

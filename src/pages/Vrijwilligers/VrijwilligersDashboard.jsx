@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { HeartHandshake, FileCheck, Wine, CalendarClock, UsersRound, Users, UserRoundCheck, AlertTriangle, RefreshCw } from 'lucide-react';
+import { HeartHandshake, FileCheck, Wine, CalendarClock, UsersRound, Users, UserRoundCheck, AlertTriangle, RefreshCw, ChartPie } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
@@ -206,7 +206,8 @@ export default function VrijwilligersDashboard() {
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider mb-3">
           Snelle navigatie
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <StatCard label="Statistieken" value="Bekijk" sub="Bezetting en voortgang" icon={ChartPie} href="/vrijwilligers/statistieken" />
           <StatCard label="VOG" value="Beheer" sub="Verklaring Omtrent Gedrag" icon={FileCheck} href="/vrijwilligers/vog" />
           <StatCard label="IVA" value="Beheer" sub="Alcoholcertificaat kantine" icon={Wine} href="/vrijwilligers/iva" />
           <StatCard label="Inschrijftaken" value="Planner" sub="Inschrijftaken en aanmeldingen" icon={CalendarClock} href="/vrijwilligers/diensten" />

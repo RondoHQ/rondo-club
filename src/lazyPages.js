@@ -34,6 +34,7 @@ export const ProfileVog = lazy(() => import('@/pages/Profile/ProfileVog'));
 export const MembershipPassScanner = lazy(() => import('@/pages/MembershipPassScanner'));
 export const ClothingPage = lazy(() => import('@/pages/Clothing/ClothingPage'));
 export const VrijwilligersDashboard = lazy(() => import('@/pages/Vrijwilligers/VrijwilligersDashboard'));
+export const VrijwilligersStatistieken = lazy(() => import('@/pages/Vrijwilligers/VrijwilligersStatistieken'));
 export const VrijwilligersExemptions = lazy(() => import('@/pages/Vrijwilligers/VrijwilligersExemptions'));
 export const VrijwilligersIva = lazy(() => import('@/pages/Vrijwilligers/VrijwilligersIva'));
 export const VrijwilligersDiensten = lazy(() => import('@/pages/Vrijwilligers/VrijwilligersDiensten'));
