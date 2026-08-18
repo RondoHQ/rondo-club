@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.17.1] - 2026-08-18
+
+### Fixed
+
+- De vrijwilligersstatistieken negeren kortstondig gecachte koppelingen naar inmiddels verwijderde personen, zodat de pagina blijft laden en alleen huidige persoonskoppelingen telt.
+
 ## [34.17.0] - 2026-08-18
 
 ### Added
