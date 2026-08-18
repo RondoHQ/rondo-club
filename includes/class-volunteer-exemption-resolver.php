@@ -153,10 +153,8 @@ class VolunteerExemptionResolver {
 			return false;
 		}
 
-		$today = gmdate( 'Y-m-d', strtotime( '+1 day' ) );
-
 		foreach ( $work_history as $position ) {
-			if ( ! self::is_position_current( $position, $today ) ) {
+			if ( ! VolunteerStatus::is_position_current( $position ) ) {
 				continue;
 			}
 
@@ -193,10 +191,8 @@ class VolunteerExemptionResolver {
 			return false;
 		}
 
-		$today = gmdate( 'Y-m-d', strtotime( '+1 day' ) );
-
 		foreach ( $work_history as $position ) {
-			if ( ! self::is_position_current( $position, $today ) ) {
+			if ( ! VolunteerStatus::is_position_current( $position ) ) {
 				continue;
 			}
 
@@ -250,24 +246,6 @@ class VolunteerExemptionResolver {
 		}
 
 		return $stored === $season;
-	}
-
-	/**
-	 * Mirror of VolunteerStatus::is_position_current() — duplicated locally so
-	 * this resolver has no friend-method dependency. Kept in sync by convention.
-	 */
-	private static function is_position_current( array $position, string $today ): bool {
-		if ( ! empty( $position['is_current'] ) ) {
-			return true;
-		}
-
-		$end_date = (string) ( $position['end_date'] ?? '' );
-
-		if ( $end_date === '' ) {
-			return ! empty( $position['start_date'] ) || ! empty( $position['team'] );
-		}
-
-		return $end_date >= $today;
 	}
 
 	/**

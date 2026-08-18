@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.18.1] - 2026-08-18
+
+### Fixed
+
+- Verlopen commissie- en stafrollen geven geen onterechte vrijstelling van de vrijwilligersplicht meer wanneer werkhistoriedatums compact als `YYYYMMDD` zijn opgeslagen.
+
 ## [34.18.0] - 2026-08-18
 
 ### Added

@@ -25,6 +25,7 @@
 namespace Rondo\REST;
 
 use Rondo\Core\PostTitle;
+use Rondo\Core\VolunteerStatus;
 use Rondo\Fees\SeasonKey;
 use Rondo\Users\GuardianAccountService;
 use Rondo\Volunteer\IvaStatus;
@@ -2015,15 +2016,12 @@ class MemberShifts extends Base {
 			return false;
 		}
 
-		$today = gmdate( 'Y-m-d', strtotime( '+1 day' ) );
 		foreach ( $work_history as $position ) {
 			$team_id = (int) ( $position['team'] ?? 0 );
 			if ( $team_id !== $commissie_id ) {
 				continue;
 			}
-			$is_current = ! empty( $position['is_current'] );
-			$end_date   = (string) ( $position['end_date'] ?? '' );
-			if ( $is_current || $end_date === '' || $end_date >= $today ) {
+			if ( VolunteerStatus::is_position_current( $position ) ) {
 				return true;
 			}
 		}
