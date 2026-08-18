@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.17.2] - 2026-08-18
+
+### Changed
+
+- Statistieken staat voortaan als laatste menu-item binnen de sectie Vrijwilligers.
+
 ## [34.17.1] - 2026-08-18
 
 ### Fixed
