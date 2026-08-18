@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.16.3] - 2026-08-18
+
+### Fixed
+
+- Het plusmenu bij Relaties biedt de sponsorkeuze nu ook bij ouders en andere personen zonder KNVB-ID.
+
 ## [34.16.2] - 2026-08-18
 
 ### Changed
