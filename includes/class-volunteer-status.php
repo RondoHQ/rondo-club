@@ -222,12 +222,9 @@ class VolunteerStatus {
 			return false;
 		}
 
-		// Use tomorrow's date so positions ending today are no longer considered current
-		$today = gmdate( 'Y-m-d', strtotime( '+1 day' ) );
-
 		foreach ( $work_history as $position ) {
 			// Check if position is current
-			if ( ! $this->is_position_current( $position, $today ) ) {
+			if ( ! self::is_position_current( $position ) ) {
 				continue;
 			}
 
@@ -248,18 +245,20 @@ class VolunteerStatus {
 	 * - end_date is empty/null, OR
 	 * - end_date is in the future (positions ending today are NOT considered current)
 	 *
-	 * @param array  $position The position data.
-	 * @param string $today    The cutoff date in Y-m-d format (tomorrow, so end_date=today is not current).
+	 * Accepts both the compact Ymd storage format and the canonical Y-m-d wire
+	 * format used by work_history dates.
+	 *
+	 * @param array $position The position data.
 	 * @return bool True if the position is current.
 	 */
-	private function is_position_current( $position, $today ) {
+	public static function is_position_current( array $position ): bool {
 		// Check is_current flag first
 		if ( ! empty( $position['is_current'] ) ) {
 			return true;
 		}
 
 		// Check end_date
-		$end_date = $position['end_date'] ?? '';
+		$end_date = trim( (string) ( $position['end_date'] ?? '' ) );
 
 		// No end date means position is still active
 		if ( empty( $end_date ) ) {
@@ -267,8 +266,34 @@ class VolunteerStatus {
 			return ! empty( $position['start_date'] ) || ! empty( $position['team'] );
 		}
 
-		// End date in future or today means still active
-		return $end_date >= $today;
+		$normalized_end_date = self::normalize_work_history_date( $end_date );
+		if ( $normalized_end_date === null ) {
+			return false;
+		}
+
+		// Use tomorrow's date so positions ending today are no longer current.
+		$cutoff = current_datetime()->modify( '+1 day' )->format( 'Ymd' );
+		return $normalized_end_date >= $cutoff;
+	}
+
+	/**
+	 * Normalize a work-history date for safe lexical comparison.
+	 *
+	 * @param string $value Date in Ymd or Y-m-d format.
+	 * @return string|null Date in Ymd format, or null for an invalid value.
+	 */
+	private static function normalize_work_history_date( string $value ): ?string {
+		$compact = str_replace( '-', '', trim( $value ) );
+		if ( preg_match( '/^\d{8}$/', $compact ) !== 1 ) {
+			return null;
+		}
+
+		$date = \DateTimeImmutable::createFromFormat( '!Ymd', $compact, wp_timezone() );
+		if ( $date === false || $date->format( 'Ymd' ) !== $compact ) {
+			return null;
+		}
+
+		return $compact;
 	}
 
 	/**
