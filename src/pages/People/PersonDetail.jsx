@@ -1756,10 +1756,8 @@ export default function PersonDetail() {
             {/* Sportlink Card */}
             <SportlinkCard fieldData={person?.fields} metaData={person?.meta} primaryTeam={sportlinkPrimaryTeam} />
 
-            <PersonSponsorRelationsCard person={person} canManage={canManageSponsors} />
-
             {/* Keep the card available for editable people so the first relationship can be added. */}
-            {(canEditPeople || sortedRelationships?.length > 0) && (
+            {(canEditPeople || canManageSponsors || sortedRelationships?.length > 0 || person?.sponsor_relationships?.length > 0) && (
             <div className="card p-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold text-brand-gradient">Relaties</h2>
@@ -1839,6 +1837,7 @@ export default function PersonDetail() {
                     </div>
                   );
                 })}
+                <PersonSponsorRelationsCard person={person} canManage={canManageSponsors} />
               </div>
             </div>
             )}

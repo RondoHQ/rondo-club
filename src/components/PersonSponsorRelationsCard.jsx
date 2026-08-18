@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Building2, Plus, Search, Trash2 } from 'lucide-react';
+import { Building2, Search, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { prmApi } from '@/api/client';
 import { useSponsors, useUpdateSponsor } from '@/hooks/useSponsors';
@@ -60,32 +60,70 @@ export default function PersonSponsorRelationsCard({ person, canManage }) {
     }
   };
 
-  return (
-    <section className="card p-6">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Building2 className="h-5 w-5 text-gray-500" />
-          <h2 className="font-semibold text-brand-gradient">Sponsorrelaties</h2>
-        </div>
-        {canManage && <Link to="/sponsors/new" className="btn-tertiary p-2" title="Sponsor toevoegen"><Plus className="h-4 w-4" /></Link>}
-      </div>
+  const relationshipDetails = (relationship) => [
+    relationship.contact_role,
+    relationship.is_primary ? 'primair' : '',
+    roleLabels[relationship.sponsor_role] || relationship.sponsor_role,
+    relationship.receives_pass ? 'sponsorpas' : '',
+  ].filter(Boolean).join(' · ');
 
-      {relationships.length === 0 ? <p className="text-sm text-gray-500">Nog niet aan een sponsor gekoppeld.</p> : (
-        <div className="space-y-2">
-          {relationships.map((relationship) => (
-            <div key={relationship.sponsor_id} className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-              <div>
-                <Link to={`/sponsors/${relationship.sponsor_id}`} className="font-medium text-electric-cyan hover:underline">{relationship.sponsor_name}</Link>
-                <p className="mt-0.5 text-xs text-gray-500">{relationship.contact_role} · {roleLabels[relationship.sponsor_role] || relationship.sponsor_role}{relationship.receives_pass ? ' · sponsorpas' : ''}</p>
-              </div>
-              {canManage && <button type="button" className="p-1.5 text-red-600" onClick={() => unlinkSponsor(relationship)} aria-label="Ontkoppelen"><Trash2 className="h-4 w-4" /></button>}
+  return (
+    <>
+      {relationships.map((relationship) => (
+        <div key={`sponsor-${relationship.sponsor_id}`} className="group flex items-center rounded p-2 hover:bg-gray-50 dark:hover:bg-gray-700">
+          <Link to={`/sponsors/${relationship.sponsor_id}`} className="flex min-w-0 flex-1 items-center">
+            <span className="mr-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300">
+              <Building2 className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">{relationship.sponsor_name}</p>
+              <p className="truncate text-xs text-gray-500 dark:text-gray-400">{relationshipDetails(relationship)}</p>
             </div>
-          ))}
+          </Link>
+          {canManage && (
+            <button
+              type="button"
+              className="ml-2 rounded p-1 opacity-0 transition-opacity hover:bg-red-50 group-hover:opacity-100 focus:opacity-100"
+              onClick={() => unlinkSponsor(relationship)}
+              title="Relatie verwijderen"
+              aria-label={`Relatie met ${relationship.sponsor_name} verwijderen`}
+            >
+              <Trash2 className="h-4 w-4 text-gray-400 hover:text-red-600" />
+            </button>
+          )}
+        </div>
+      ))}
+
+      {canManage && (
+        <div className="relative pt-2">
+          <Search className="pointer-events-none absolute left-3 top-4.5 h-4 w-4 text-gray-400" />
+          <input
+            className="input w-full pl-9"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Sponsorrelatie toevoegen"
+            aria-label="Sponsorrelatie toevoegen"
+          />
+          {search.trim().length >= 2 && (
+            <div className="absolute z-20 mt-1 max-h-52 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+              {(data?.items || [])
+                .filter((sponsor) => !relationships.some((relationship) => Number(relationship.sponsor_id) === Number(sponsor.id)))
+                .filter((sponsor) => sponsor.fields?.sponsor_type !== 'person' || (sponsor.fields?.contacts || []).length === 0)
+                .map((sponsor) => (
+                  <button
+                    key={sponsor.id}
+                    type="button"
+                    className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                    onClick={() => linkSponsor(sponsor)}
+                  >
+                    {sponsor.title}
+                  </button>
+                ))}
+            </div>
+          )}
         </div>
       )}
-
-      {canManage && <div className="relative mt-4"><Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input className="input w-full pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Koppel aan sponsor" />{search.trim().length >= 2 && <div className="absolute z-20 mt-1 max-h-52 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">{(data?.items || []).filter((sponsor) => sponsor.fields?.sponsor_type !== 'person' || (sponsor.fields?.contacts || []).length === 0).map((sponsor) => <button key={sponsor.id} type="button" className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => linkSponsor(sponsor)}>{sponsor.title}</button>)}</div>}</div>}
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-    </section>
+    </>
   );
 }
