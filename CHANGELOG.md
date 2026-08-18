@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.16.1] - 2026-08-18
+
+### Changed
+
+- Sponsorcontacten staan op een persoon voortaan als gewone relaties in de kaart Relaties; de losse kaart Sponsorrelaties is verwijderd.
+
 ## [34.16.0] - 2026-08-18
 
 ### Added
