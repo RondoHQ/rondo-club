@@ -987,8 +987,9 @@ class Volunteer extends Base {
 			);
 		}
 
-		$view  = $service->get_eligibility_view( $season );
-		$units = $view['units'];
+		$view                 = $service->get_eligibility_view( $season );
+		$units                = $view['units'];
+		$obligation_partition = VolunteerExemptionResolver::partition_units( $units, $season );
 
 		if ( $with_persons ) {
 			$units = array_map(
@@ -1018,6 +1019,11 @@ class Volunteer extends Base {
 				'season'              => $season,
 				'units'               => $units,
 				'total_units'         => count( $units ),
+				'obligation_summary'  => [
+					'total_units'    => count( $obligation_partition['active'] ) + count( $obligation_partition['exempt'] ),
+					'exempt_units'   => count( $obligation_partition['exempt'] ),
+					'required_count' => $obligation_partition['required_count'],
+				],
 				'rondo_account_count' => $this->get_rondo_account_count(),
 				'diagnostics'         => $diagnostics,
 				'shift_capacity'      => $this->get_shift_capacity_stats( $season ),
