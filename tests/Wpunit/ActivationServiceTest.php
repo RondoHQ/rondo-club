@@ -43,6 +43,17 @@ class ActivationServiceTest extends RondoTestCase {
 		return (int) $created['term_id'];
 	}
 
+	private function child_relationship_type(): int {
+		$term = get_term_by( 'slug', 'child', 'relationship_type' );
+		if ( $term && ! is_wp_error( $term ) ) {
+			return (int) $term->term_id;
+		}
+
+		$created = wp_insert_term( 'Kind', 'relationship_type', [ 'slug' => 'child' ] );
+		$this->assertIsArray( $created );
+		return (int) $created['term_id'];
+	}
+
 	protected function set_up(): void {
 		parent::set_up();
 		// Never send during tests.
@@ -69,10 +80,51 @@ class ActivationServiceTest extends RondoTestCase {
 		$this->assertSame( $expected, $found );
 	}
 
-	public function test_former_members_are_never_activatable(): void {
+	public function test_former_members_without_a_current_parent_role_are_not_activatable(): void {
 		$this->person( 'Oud Lid', 'oud@example.com', true );
 
 		$this->assertSame( [], ActivationService::persons_for_email( 'oud@example.com' ) );
+	}
+
+	public function test_a_former_member_with_a_current_child_can_activate_as_parent(): void {
+		$parent_id = $this->person( 'Oud Lid Ouder', 'ouder@example.com', true );
+		$child_id  = $this->person( 'Actief Kind', 'kind@example.com' );
+
+		\Rondo\Fields\Fields::update_for_post(
+			$parent_id,
+			'relationships',
+			[
+				[
+					'related_person'    => $child_id,
+					'relationship_type' => $this->child_relationship_type(),
+				],
+			]
+		);
+
+		$this->assertSame( [ $parent_id ], ActivationService::persons_for_email( 'ouder@example.com' ) );
+
+		$result = ActivationService::activate( ActivationService::create_token( 'ouder@example.com' ), $parent_id );
+
+		$this->assertIsString( $result );
+		$this->assertTrue( ActivationService::has_account( $parent_id ) );
+	}
+
+	public function test_a_former_member_with_only_a_former_child_is_not_activatable(): void {
+		$parent_id = $this->person( 'Oud Lid Ouder', 'ouder@example.com', true );
+		$child_id  = $this->person( 'Oud Kind', 'kind@example.com', true );
+
+		\Rondo\Fields\Fields::update_for_post(
+			$parent_id,
+			'relationships',
+			[
+				[
+					'related_person'    => $child_id,
+					'relationship_type' => $this->child_relationship_type(),
+				],
+			]
+		);
+
+		$this->assertSame( [], ActivationService::persons_for_email( 'ouder@example.com' ) );
 	}
 
 	public function test_an_unknown_address_finds_nobody(): void {

@@ -55,9 +55,10 @@ class ActivationService {
 	/**
 	 * Every active person reachable at this address.
 	 *
-	 * Former members are excluded — they are read-only end to end and have nothing to
-	 * log in to. Includes people who already have an account, so the token page can say
-	 * "you already have one" rather than silently hiding them.
+	 * Former members are excluded unless they still have a current parent role. Those
+	 * parents need an account for their active child's club obligations even though
+	 * their own membership record stays read-only. Includes people who already have an
+	 * account, so the token page can say "you already have one" rather than hiding them.
 	 *
 	 * @param string $email Address to match against email_1 and email_2.
 	 * @return int[] Person post IDs.
@@ -90,10 +91,13 @@ class ActivationService {
 			]
 		);
 
+		$parent_relationships = new ParentRelationshipService();
+
 		return array_values(
 			array_filter(
 				array_map( 'intval', $matches ),
-				fn( $person_id ) => get_post_meta( $person_id, 'former_member', true ) !== '1'
+				static fn( int $person_id ): bool => get_post_meta( $person_id, 'former_member', true ) !== '1'
+					|| $parent_relationships->has_current_child( $person_id )
 			)
 		);
 	}
@@ -369,8 +373,9 @@ class ActivationService {
 	 * keep using the activation picker because Rondo must not guess which member or
 	 * guardian needs the account.
 	 *
-	 * Unknown and former-member addresses deliberately do nothing. The HTTP response
-	 * has already been made generic by MagicLoginActivation before this method runs.
+	 * Unknown addresses and former members without a current parent role deliberately
+	 * do nothing. The HTTP response has already been made generic by
+	 * MagicLoginActivation before this method runs.
 	 *
 	 * @param string $email Submitted email address.
 	 */
