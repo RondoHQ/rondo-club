@@ -904,7 +904,7 @@ class People extends Base {
 
 		// Deceased status field (reserved for future use)
 		$data['is_deceased']       = false;
-		$is_former_member          = ! empty( $data['fields']['former_member'] );
+		$is_former_member          = (bool) \Rondo\Fields\Fields::get_for_post( $post->ID, 'former_member' );
 		$data['is_current_parent'] = $is_former_member && $this->has_current_child_relationship( $post->ID );
 
 		// Get birth year from birthdate field on person
@@ -972,65 +972,10 @@ class People extends Base {
 	}
 
 	/**
-	 * Whether this person currently has a parent role for a published,
-	 * non-former person. This role is independent from their own membership
-	 * status: a former member can still be an active parent or guardian.
-	 *
-	 * @param int $person_id Person post ID.
-	 * @return bool
+	 * Delegate current-parent eligibility to the shared relationship service.
 	 */
 	private function has_current_child_relationship( int $person_id ): bool {
-		$child_term = get_term_by( 'slug', 'child', 'relationship_type' );
-		if ( ! $child_term || is_wp_error( $child_term ) ) {
-			return false;
-		}
-
-		$relationships = \Rondo\Fields\Fields::get_for_post( $person_id, 'relationships' ) ?: [];
-		foreach ( $relationships as $relationship ) {
-			$type_values = $relationship['relationship_type'] ?? [];
-			$type_values = is_array( $type_values ) ? $type_values : [ $type_values ];
-			$is_child    = false;
-
-			foreach ( $type_values as $type_value ) {
-				$type_id = 0;
-				if ( $type_value instanceof \WP_Term ) {
-					$type_id = (int) $type_value->term_id;
-				} elseif ( is_array( $type_value ) ) {
-					$type_id = (int) ( $type_value['term_id'] ?? 0 );
-				} elseif ( is_numeric( $type_value ) ) {
-					$type_id = (int) $type_value;
-				}
-
-				if ( $type_id === (int) $child_term->term_id ) {
-					$is_child = true;
-					break;
-				}
-			}
-
-			if ( ! $is_child ) {
-				continue;
-			}
-
-			$related    = $relationship['related_person'] ?? 0;
-			$related_id = 0;
-			if ( $related instanceof \WP_Post ) {
-				$related_id = (int) $related->ID;
-			} elseif ( is_array( $related ) ) {
-				$related_id = (int) ( $related['ID'] ?? 0 );
-			} elseif ( is_numeric( $related ) ) {
-				$related_id = (int) $related;
-			}
-
-			if (
-				$related_id > 0 &&
-				get_post_status( $related_id ) === 'publish' &&
-				! (bool) \Rondo\Fields\Fields::get_for_post( $related_id, 'former_member' )
-			) {
-				return true;
-			}
-		}
-
-		return false;
+		return ( new ParentRelationshipService() )->has_current_child( $person_id );
 	}
 
 	/**

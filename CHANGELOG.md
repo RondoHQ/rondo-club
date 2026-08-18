@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.17.4] - 2026-08-18
+
+### Fixed
+
+- Oud-leden met een actuele ouder/verzorgerrelatie kunnen via hun eigen bekende e-mailadres een account activeren voor hun huidige ouderrol.
+
 ## [34.17.3] - 2026-08-18
 
 ### Changed

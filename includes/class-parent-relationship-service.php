@@ -16,6 +16,50 @@ final class ParentRelationshipService {
 	private const STATUS_META_KEY = '_rondo_parent_sync_statuses';
 
 	/**
+	 * Whether a person currently has a parent role for a published,
+	 * non-former child. The role is independent from the person's own
+	 * membership status.
+	 */
+	public function has_current_child( int $person_id ): bool {
+		$child_term = get_term_by( 'slug', 'child', 'relationship_type' );
+		if ( ! $child_term || is_wp_error( $child_term ) ) {
+			return false;
+		}
+
+		$relationships = Fields::get_for_post( $person_id, 'relationships' ) ?: [];
+		foreach ( $relationships as $relationship ) {
+			$type_values = $relationship['relationship_type'] ?? [];
+			$type_values = is_array( $type_values ) ? $type_values : [ $type_values ];
+
+			foreach ( $type_values as $type_value ) {
+				$type_id = 0;
+				if ( $type_value instanceof \WP_Term ) {
+					$type_id = (int) $type_value->term_id;
+				} elseif ( is_array( $type_value ) ) {
+					$type_id = (int) ( $type_value['term_id'] ?? 0 );
+				} elseif ( is_numeric( $type_value ) ) {
+					$type_id = (int) $type_value;
+				}
+
+				if ( $type_id !== (int) $child_term->term_id ) {
+					continue;
+				}
+
+				$child_id = $this->relationship_person_id( $relationship );
+				if (
+					$child_id > 0 &&
+					get_post_status( $child_id ) === 'publish' &&
+					! (bool) Fields::get_for_post( $child_id, 'former_member' )
+				) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Add an existing or newly created parent to a child.
 	 *
 	 * @param int   $child_id                        Child person post ID.
@@ -323,6 +367,8 @@ final class ParentRelationshipService {
 		$value = $row['related_person'] ?? $row['related_person_id'] ?? 0;
 		if ( is_object( $value ) && isset( $value->ID ) ) {
 			$value = $value->ID;
+		} elseif ( is_array( $value ) ) {
+			$value = $value['ID'] ?? $value['id'] ?? 0;
 		}
 		return absint( $value );
 	}
