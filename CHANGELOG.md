@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.18.0] - 2026-08-18
+
+### Added
+
+- De tab Mijn inschrijftaken biedt een iCalendar-download met alle niet-geannuleerde inschrijvingen, inclusief tijdzonecorrecte tijden en een beschrijvende link terug naar Rondo in elke afspraak.
+
 ## [34.17.7] - 2026-08-18
 
 ### Fixed

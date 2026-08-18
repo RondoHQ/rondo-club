@@ -8,6 +8,7 @@
  *
  * Endpoints:
  *   GET  /rondo/v1/my-shifts              — current user's assigned + completed shifts plus their counter
+ *   GET  /rondo/v1/my-shifts/calendar     — downloadable iCalendar file for the current user's shifts
  *   GET  /rondo/v1/people/{id}/shifts      — person's active future shifts plus their two most recent past shifts
  *   GET  /rondo/v1/shifts/recent-signups   — 10 shifts with the most recent current signups
  *   GET  /rondo/v1/shifts/signups          — all shifts with current assignees
@@ -81,6 +82,7 @@ class MemberShifts extends Base {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 		add_filter( 'rest_prepare_dienst_shift', [ $this, 'add_assignee_display_names' ], 10, 2 );
 		add_filter( 'rest_pre_insert_dienst_shift', [ $this, 'prevent_direct_assignee_writes' ], 10, 2 );
+		add_filter( 'rest_pre_serve_request', [ $this, 'serve_my_shifts_calendar' ], 10, 4 );
 	}
 
 	/**
@@ -253,6 +255,16 @@ class MemberShifts extends Base {
 						'sanitize_callback' => 'sanitize_text_field',
 					],
 				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/my-shifts/calendar',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_my_shifts_calendar' ],
+				'permission_callback' => 'is_user_logged_in',
 			]
 		);
 
@@ -520,6 +532,69 @@ class MemberShifts extends Base {
 				],
 			]
 		);
+	}
+
+	/**
+	 * Build an iCalendar download for every non-cancelled shift assigned to the caller.
+	 */
+	public function get_my_shifts_calendar( \WP_REST_Request $request ) {
+		$person_id = $this->current_person_id();
+		if ( $person_id <= 0 ) {
+			return new \WP_Error( 'no_person', 'Geen gekoppelde persoon gevonden voor dit account.', [ 'status' => 404 ] );
+		}
+
+		$shifts = [];
+		foreach ( $this->query_shifts_for_person( $person_id, false, -1 ) as $shift ) {
+			if ( $shift['status'] === 'geannuleerd' ) {
+				continue;
+			}
+
+			try {
+				$start = new \DateTimeImmutable( $shift['start_datetime'], wp_timezone() );
+				$end   = new \DateTimeImmutable( $shift['end_datetime'], wp_timezone() );
+			} catch ( \Exception $exception ) {
+				continue;
+			}
+
+			$shifts[] = [
+				'id'    => (int) $shift['id'],
+				'title' => (string) ( $shift['dienst_type_name'] ?: $shift['title'] ),
+				'start' => $start,
+				'end'   => $end,
+			];
+		}
+
+		$calendar = ShiftEmailScheduler::build_signup_calendar( $person_id, $shifts );
+		return new \WP_REST_Response( $calendar, 200 );
+	}
+
+	/**
+	 * Serve the calendar response without WordPress JSON encoding it.
+	 *
+	 * @param bool              $served  Whether the response was already served.
+	 * @param \WP_REST_Response $result  REST response.
+	 * @param \WP_REST_Request  $request REST request.
+	 * @param \WP_REST_Server   $server  REST server.
+	 */
+	public function serve_my_shifts_calendar( $served, $result, $request, $server ): bool {
+		if (
+			$request->get_route() !== '/rondo/v1/my-shifts/calendar'
+			|| ! $result instanceof \WP_REST_Response
+			|| $result->get_status() !== 200
+			|| ! is_string( $result->get_data() )
+		) {
+			return $served;
+		}
+
+		$calendar = $result->get_data();
+		header( 'Content-Type: text/calendar; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="mijn-inschrijftaken.ics"' );
+		header( 'Content-Length: ' . strlen( $calendar ) );
+		header( 'X-Content-Type-Options: nosniff' );
+		header( 'Cache-Control: private, no-store, max-age=0' );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- generated iCalendar text is escaped by ShiftEmailScheduler.
+		echo $calendar;
+		return true;
 	}
 
 	/**
