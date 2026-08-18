@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.16.2] - 2026-08-18
+
+### Changed
+
+- Het plusmenu van Relaties bevat nu Sponsor als derde keuze; het losse zoekveld voor sponsorrelaties is verwijderd.
+
 ## [34.16.1] - 2026-08-18
 
 ### Changed
