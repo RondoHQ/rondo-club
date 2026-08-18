@@ -13,9 +13,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/** Manage sponsor companies without exposing their private CPT through wp/v2. */
+/** Manage sponsors without exposing their private CPT through wp/v2. */
 final class Sponsors {
 	private const ROLES = [ 'businessclub', 'awc_sponsor' ];
+	private const TYPES = [ 'organization', 'person' ];
 
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
@@ -115,6 +116,25 @@ final class Sponsors {
 				'value' => sanitize_text_field( (string) $request->get_param( 'sponsit_contact_id' ) ),
 			];
 		}
+		$sponsor_type = sanitize_key( (string) $request->get_param( 'sponsor_type' ) );
+		if ( in_array( $sponsor_type, self::TYPES, true ) ) {
+			$meta_query[] = $sponsor_type === 'organization'
+				? [
+					'relation' => 'OR',
+					[
+						'key'   => 'sponsor_type',
+						'value' => 'organization',
+					],
+					[
+						'key'     => 'sponsor_type',
+						'compare' => 'NOT EXISTS',
+					],
+				]
+				: [
+					'key'   => 'sponsor_type',
+					'value' => 'person',
+				];
+		}
 		$logo = sanitize_key( (string) $request->get_param( 'logo' ) );
 		if ( in_array( $logo, [ 'present', 'missing' ], true ) ) {
 			$meta_query[] = [
@@ -166,7 +186,7 @@ final class Sponsors {
 		$payload = $request->get_json_params() ?: $request->get_params();
 		$title   = sanitize_text_field( (string) ( $payload['title'] ?? '' ) );
 		if ( $title === '' ) {
-			return new \WP_Error( 'rondo_sponsor_name_required', 'Vul een bedrijfsnaam in.', [ 'status' => 400 ] );
+			return new \WP_Error( 'rondo_sponsor_name_required', 'Vul een sponsornaam in.', [ 'status' => 400 ] );
 		}
 
 		$fields = $this->sanitize_fields( (array) ( $payload['fields'] ?? [] ), 0, true );
@@ -229,7 +249,7 @@ final class Sponsors {
 		if ( array_key_exists( 'title', $payload ) ) {
 			$title = sanitize_text_field( (string) $payload['title'] );
 			if ( $title === '' ) {
-				return new \WP_Error( 'rondo_sponsor_name_required', 'Vul een bedrijfsnaam in.', [ 'status' => 400 ] );
+				return new \WP_Error( 'rondo_sponsor_name_required', 'Vul een sponsornaam in.', [ 'status' => 400 ] );
 			}
 			$updates['post_title'] = $title;
 		}
@@ -293,6 +313,12 @@ final class Sponsors {
 		if ( $title === '' ) {
 			return new \WP_Error( 'rondo_sponsor_contact_name_required', 'Vul de naam van de contactpersoon in.', [ 'status' => 400 ] );
 		}
+		$contacts     = Fields::get_for_post( $sponsor->ID, 'contacts' );
+		$contacts     = is_array( $contacts ) ? $contacts : [];
+		$sponsor_type = (string) ( Fields::get_for_post( $sponsor->ID, 'sponsor_type' ) ?: 'organization' );
+		if ( $sponsor_type === 'person' && $contacts !== [] ) {
+			return new \WP_Error( 'rondo_person_sponsor_contact_exists', 'Een persoonlijke sponsor kan aan één persoon zijn gekoppeld.', [ 'status' => 409 ] );
+		}
 
 		$person_id = wp_insert_post(
 			[
@@ -316,14 +342,20 @@ final class Sponsors {
 			'mobile_1'    => sanitize_text_field( (string) ( $payload['mobile'] ?? '' ) ),
 			'telephone_1' => sanitize_text_field( (string) ( $payload['telephone'] ?? '' ) ),
 		];
-		$result        = Fields::update_many_for_post( (int) $person_id, $person_fields );
+		foreach ( [ 'telephone_2', 'gender', 'birthdate' ] as $field_name ) {
+			if ( array_key_exists( $field_name, $payload ) ) {
+				$person_fields[ $field_name ] = sanitize_text_field( (string) $payload[ $field_name ] );
+			}
+		}
+		if ( array_key_exists( 'email_2', $payload ) ) {
+			$person_fields['email_2'] = sanitize_email( (string) $payload['email_2'] );
+		}
+		$result = Fields::update_many_for_post( (int) $person_id, $person_fields );
 		if ( is_wp_error( $result ) ) {
 			wp_delete_post( (int) $person_id, true );
 			return $result;
 		}
 
-		$contacts   = Fields::get_for_post( $sponsor->ID, 'contacts' );
-		$contacts   = is_array( $contacts ) ? $contacts : [];
 		$is_primary = array_key_exists( 'is_primary', $payload ) ? ! empty( $payload['is_primary'] ) : empty( $contacts );
 		$gets_pass  = array_key_exists( 'receives_pass', $payload ) ? ! empty( $payload['receives_pass'] ) : true;
 		$contacts[] = [
@@ -427,7 +459,7 @@ final class Sponsors {
 	private function sponsor_post( int $id ) {
 		$post = get_post( $id );
 		if ( ! $post || $post->post_type !== 'rondo_sponsor' || ! in_array( $post->post_status, [ 'publish', 'draft' ], true ) ) {
-			return new \WP_Error( 'rondo_sponsor_not_found', 'Sponsorbedrijf niet gevonden.', [ 'status' => 404 ] );
+			return new \WP_Error( 'rondo_sponsor_not_found', 'Sponsor niet gevonden.', [ 'status' => 404 ] );
 		}
 		return $post;
 	}
@@ -435,6 +467,7 @@ final class Sponsors {
 	/** @return array<string,mixed>|\WP_Error */
 	private function sanitize_fields( array $input, int $sponsor_id, bool $creating ) {
 		$allowed = [
+			'sponsor_type',
 			'sponsor_role',
 			'address_street_name',
 			'address_house_number',
@@ -452,14 +485,18 @@ final class Sponsors {
 		}
 
 		$current = $sponsor_id ? Fields::all_for_post( $sponsor_id ) : [];
+		$type    = array_key_exists( 'sponsor_type', $input ) ? sanitize_key( (string) $input['sponsor_type'] ) : (string) ( $current['sponsor_type'] ?? 'organization' );
 		$role    = array_key_exists( 'sponsor_role', $input ) ? sanitize_key( (string) $input['sponsor_role'] ) : (string) ( $current['sponsor_role'] ?? '' );
+		if ( ( $creating || array_key_exists( 'sponsor_type', $input ) ) && ! in_array( $type, self::TYPES, true ) ) {
+			return new \WP_Error( 'rondo_sponsor_type_required', 'Kies organisatie of persoon als sponsortype.', [ 'status' => 400 ] );
+		}
 		if ( ( $creating || array_key_exists( 'sponsor_role', $input ) ) && ! in_array( $role, self::ROLES, true ) ) {
 			return new \WP_Error( 'rondo_sponsor_role_required', 'Kies Businessclub AWC of AWC Sponsor.', [ 'status' => 400 ] );
 		}
 		if ( array_key_exists( 'sponsit_contact_id', $input ) ) {
 			$source_id = sanitize_text_field( (string) $input['sponsit_contact_id'] );
 			if ( $source_id !== '' && $this->sponsit_id_exists( $source_id, $sponsor_id ) ) {
-				return new \WP_Error( 'rondo_sponsor_sponsit_id_exists', 'Deze Sponsit bedrijfs-ID is al gekoppeld.', [ 'status' => 409 ] );
+				return new \WP_Error( 'rondo_sponsor_sponsit_id_exists', 'Deze Sponsit contact-ID is al gekoppeld.', [ 'status' => 409 ] );
 			}
 		}
 
@@ -470,7 +507,12 @@ final class Sponsors {
 				if ( is_wp_error( $contacts ) ) {
 					return $contacts;
 				}
+				if ( $type === 'person' && count( $contacts ) > 1 ) {
+					return new \WP_Error( 'rondo_person_sponsor_contact_limit', 'Een persoonlijke sponsor kan aan één persoon zijn gekoppeld.', [ 'status' => 400 ] );
+				}
 				$output[ $key ] = $contacts;
+			} elseif ( $key === 'sponsor_type' ) {
+				$output[ $key ] = $type;
 			} elseif ( $key === 'sponsor_role' ) {
 				$output[ $key ] = $role;
 			} else {
@@ -562,7 +604,8 @@ final class Sponsors {
 				]
 			);
 		}
-		$fields['contacts'] = $contacts;
+		$fields['contacts']     = $contacts;
+		$fields['sponsor_type'] = (string) ( $fields['sponsor_type'] ?? 'organization' );
 
 		return [
 			'id'                 => $post->ID,

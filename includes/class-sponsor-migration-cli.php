@@ -39,7 +39,7 @@ final class MigrationCli {
 			if ( ! empty( $result['errors'] ) ) {
 				\WP_CLI::error( 'De migratie is met fouten afgerond.' );
 			}
-			\WP_CLI::success( 'Sponsorbedrijven zijn gemigreerd; reviewgroepen zijn overgeslagen.' );
+			\WP_CLI::success( 'Sponsoren zijn gemigreerd; reviewgroepen zijn overgeslagen.' );
 			return;
 		}
 

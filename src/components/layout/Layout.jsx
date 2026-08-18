@@ -55,10 +55,10 @@ const navigation = [
   { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, memberOnly: true, personal: true },
   { name: 'Dashboard', href: '/', icon: Home, requiresKader: true },
   { name: 'Relaties', href: '/people', icon: Users, requiresKader: true },
-  { name: 'Sponsorbedrijven', href: '/sponsors', icon: Building2, requiresSponsors: true },
   { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
   { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true, requiresKader: true },
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
+  { name: 'Sponsoren', href: '/sponsors', icon: Building2, requiresSponsors: true },
   { name: 'Teams', href: '/teams', icon: Building2, requiresKader: true },
   { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true, requiresKader: true },
   { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true },
@@ -699,7 +699,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
     if (path.startsWith('/people/jubilarissen')) return 'Jubilarissen';
     if (path.startsWith('/people/onboarding')) return 'Onboarding';
     if (path.startsWith('/people')) return 'Relaties';
-    if (path.startsWith('/sponsors')) return 'Sponsorbedrijven';
+    if (path.startsWith('/sponsors')) return 'Sponsoren';
     if (path === '/financien' || path === '/financien/') return 'Financiën';
     if (path.startsWith('/financien/contributie')) return 'Contributie';
     if (path.startsWith('/financien/facturen')) return 'Facturen';

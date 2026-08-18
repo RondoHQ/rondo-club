@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.15.0] - 2026-08-18
+
+### Added
+
+- Sponsoren kunnen organisaties of personen zijn. Een persoonlijke sponsor heeft één gekoppeld persoonsprofiel en hoeft niet langer als fictief bedrijf te worden opgeslagen.
+- De sponsorlijst kan op sponsortype worden gefilterd en toont het type per sponsor.
+
+### Changed
+
+- Sponsorbedrijven heet voortaan overal Sponsoren; formulieren en meldingen gebruiken type-afhankelijke namen en adreslabels.
+- Onboarding, Jubilarissen en Tuchtzaken blijven in het inklapbare menu onder Relaties; Sponsoren is weer een zelfstandig hoofditem.
+- Nieuwe externe sponsorpersonen worden samen met hun sponsorrelatie aangemaakt, zodat geen los sponsorcontact kan ontstaan.
+
 ## [34.14.0] - 2026-08-17
 
 ### Added

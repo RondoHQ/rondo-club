@@ -129,6 +129,7 @@ final class Migration {
 			$company_fields = array_merge(
 				$group['address'],
 				[
+					'sponsor_type'       => 'organization',
 					'sponsor_role'       => $group['sponsor_role'],
 					'sponsit_contact_id' => $group['sponsit_contact_id'],
 					'legacy_person_ids'  => $group['person_ids'],

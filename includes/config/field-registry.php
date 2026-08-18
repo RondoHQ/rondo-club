@@ -2326,7 +2326,7 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'allow_null' => 1,
           'canonical_name' => 'sponsor_id',
           'key' => 'field_signage_item_sponsor_company',
-          'label' => 'Sponsorbedrijf',
+		  'label' => 'Sponsor',
           'name' => 'sponsor_id',
           'post_type' =>
           array (
@@ -3153,12 +3153,30 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'storage_name' => 'sponsor_role',
           'type' => 'select',
         ),
+		'sponsor_type' =>
+		array (
+		  'allow_null' => 0,
+		  'canonical_name' => 'sponsor_type',
+		  'choices' =>
+		  array (
+			'organization' => 'Organisatie',
+			'person' => 'Persoon',
+		  ),
+		  'default_value' => 'organization',
+		  'key' => 'field_sponsor_type',
+		  'label' => 'Sponsortype',
+		  'name' => 'sponsor_type',
+		  'required' => 1,
+		  'return_format' => 'value',
+		  'storage_name' => 'sponsor_type',
+		  'type' => 'select',
+		),
         'sponsit_contact_id' =>
         array (
           'canonical_name' => 'sponsit_contact_id',
-          'instructions' => 'Stabiele bedrijfs-ID voor de Sponsit-sync.',
+		  'instructions' => 'Stabiele contact-ID voor de Sponsit-sync.',
           'key' => 'field_sponsor_sponsit_contact_id',
-          'label' => 'Sponsit bedrijfs-ID',
+		  'label' => 'Sponsit contact-ID',
           'name' => 'sponsit_contact_id',
           'storage_name' => 'sponsit_contact_id',
           'type' => 'text',

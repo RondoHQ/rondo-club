@@ -114,13 +114,13 @@ class PostTypes {
 		$this->register_taakuitleg_post_type();
 	}
 
-	/** Register private sponsor companies managed through Rondo's REST API. */
+	/** Register private sponsors managed through Rondo's REST API. */
 	private function register_sponsor_post_type() {
 		$args = array_merge(
 			[
 				'labels'             => [
-					'name'          => __( 'Sponsorbedrijven', 'rondo' ),
-					'singular_name' => __( 'Sponsorbedrijf', 'rondo' ),
+					'name'          => __( 'Sponsoren', 'rondo' ),
+					'singular_name' => __( 'Sponsor', 'rondo' ),
 				],
 				'public'             => false,
 				'publicly_queryable' => false,
