@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.16.0] - 2026-08-18
+
+### Added
+
+- Sponsoren hebben een websiteveld dat handmatig kan worden beheerd en vanuit Sponsit wordt gevuld.
+- Rondo Sync kan beveiligde sponsorlogo's uit Sponsit ophalen en als WordPress-media aan de sponsor koppelen.
+
+### Changed
+
+- De sponsorlogo-import hergebruikt stabiele Sponsit bestands-ID's, slaat ongewijzigde logo's over en respecteert bestaande handmatig geplaatste logo's.
+
 ## [34.15.0] - 2026-08-18
 
 ### Added

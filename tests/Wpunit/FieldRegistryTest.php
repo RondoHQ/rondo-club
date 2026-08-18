@@ -41,6 +41,8 @@ class FieldRegistryTest extends RondoTestCase {
 	public function test_duplicate_names_are_scoped_by_context(): void {
 		$this->assertSame( 'website', Registry::resolve( 'team', 'website' )['canonical_name'] );
 		$this->assertSame( 'website', Registry::resolve( 'commissie', 'website' )['canonical_name'] );
+		$this->assertSame( 'website', Registry::resolve( 'rondo_sponsor', 'website' )['canonical_name'] );
+		$this->assertSame( 1, Registry::resolve( 'rondo_sponsor', 'sponsit_logo_id' )['readonly'] );
 		$this->assertSame( 'status', Registry::resolve( 'rondo_feedback', 'status' )['canonical_name'] );
 		$this->assertSame( 'status', Registry::resolve( 'rondo_invoice', 'status' )['canonical_name'] );
 	}

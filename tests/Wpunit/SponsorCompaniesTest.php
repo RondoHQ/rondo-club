@@ -41,6 +41,7 @@ class SponsorCompaniesTest extends RondoTestCase {
 				'fields' => [
 					'sponsor_role'       => 'businessclub',
 					'sponsit_contact_id' => '400',
+					'website'            => 'https://www.example.test/sponsors',
 					'contacts'           => [
 						[
 							'person_id'         => $person_id,
@@ -60,6 +61,18 @@ class SponsorCompaniesTest extends RondoTestCase {
 		$this->assertTrue( Relations::is_sponsor_contact( $person_id ) );
 		$this->assertSame( 'businessclub', PublicMembershipPassPage::get_sponsor_pass_variant( $person_id ) );
 		$this->assertSame( 'Voorbeeld BV', PublicMembershipPassPage::get_sponsor_company_name( $person_id ) );
+		$this->assertSame( 'https://www.example.test/sponsors', $response->get_data()['fields']['website'] );
+	}
+
+	public function test_logo_upload_rejects_invalid_sponsit_source_id_before_writing_media(): void {
+		$sponsor_id = $this->createSponsor( 'Logo BV', 'awc_sponsor', [] );
+		$request    = new WP_REST_Request( 'POST', '/rondo/v1/sponsors/' . $sponsor_id . '/logo/upload' );
+		$request->set_param( 'sponsit_logo_id', 'logo-123' );
+		$response = $this->server->dispatch( $request );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'rondo_sponsor_logo_source_invalid', $response->get_data()['code'] );
+		$this->assertSame( 0, get_post_thumbnail_id( $sponsor_id ) );
 	}
 
 	public function test_manager_creates_personal_sponsor_with_one_linked_person(): void {

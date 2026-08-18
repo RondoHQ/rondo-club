@@ -14,6 +14,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 const emptyForm = {
   title: '', status: 'publish', sponsor_type: 'organization', sponsor_role: 'awc_sponsor', sponsit_contact_id: '',
+  website: '',
   address_street_name: '', address_house_number: '', address_house_number_addition: '',
   address_postal_code: '', address_city: '', address_country: 'Nederland', address_country_code: 'NL',
   contacts: [], logo_attachment_id: 0, logo_url: null,
@@ -28,6 +29,7 @@ function sponsorToForm(sponsor) {
     sponsor_type: fields.sponsor_type || 'organization',
     sponsor_role: fields.sponsor_role || 'awc_sponsor',
     sponsit_contact_id: fields.sponsit_contact_id || '',
+    website: fields.website || '',
     address_street_name: fields.address_street_name || '',
     address_house_number: fields.address_house_number || '',
     address_house_number_addition: fields.address_house_number_addition || '',
@@ -85,6 +87,7 @@ export default function SponsorDetail() {
       sponsor_type: form.sponsor_type,
       sponsor_role: form.sponsor_role,
       sponsit_contact_id: form.sponsit_contact_id.trim(),
+      website: form.website.trim(),
       address_street_name: form.address_street_name.trim(),
       address_house_number: form.address_house_number.trim(),
       address_house_number_addition: form.address_house_number_addition.trim(),
@@ -210,6 +213,7 @@ export default function SponsorDetail() {
             <label><span className="label">Sponsorrol</span><select className="input w-full" value={form.sponsor_role} onChange={(event) => updateField('sponsor_role', event.target.value)}><option value="businessclub">Businessclub AWC</option><option value="awc_sponsor">AWC Sponsor</option></select></label>
             <label><span className="label">Status</span><select className="input w-full" value={form.status} onChange={(event) => updateField('status', event.target.value)}><option value="publish">Actief</option><option value="draft">Gearchiveerd</option></select></label>
           </div>
+          <label className="block"><span className="label">Website</span><input className="input w-full" type="url" value={form.website} onChange={(event) => updateField('website', event.target.value)} placeholder="https://www.voorbeeld.nl" /></label>
           <label className="block"><span className="label">Sponsit contact-ID</span><input className="input w-full" value={form.sponsit_contact_id} onChange={(event) => updateField('sponsit_contact_id', event.target.value)} placeholder="Wordt normaal door Rondo Sync ingevuld" /></label>
 
           <div className="border-t border-gray-200 pt-5 dark:border-gray-700">

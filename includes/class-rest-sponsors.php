@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /** Manage sponsors without exposing their private CPT through wp/v2. */
-final class Sponsors {
+final class Sponsors extends Base {
 	private const ROLES = [ 'businessclub', 'awc_sponsor' ];
 	private const TYPES = [ 'organization', 'person' ];
 
@@ -71,6 +71,16 @@ final class Sponsors {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'create_contact' ],
+				'permission_callback' => $manage,
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/sponsors/(?P<id>\d+)/logo/upload',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'upload_logo' ],
 				'permission_callback' => $manage,
 			]
 		);
@@ -299,6 +309,45 @@ final class Sponsors {
 		return rest_ensure_response( $this->format_sponsor( get_post( $post->ID ) ) );
 	}
 
+	/** Upload and attach a sponsor logo, optionally recording its Sponsit source ID. */
+	public function upload_logo( \WP_REST_Request $request ) {
+		$sponsor = $this->sponsor_post( absint( $request['id'] ) );
+		if ( is_wp_error( $sponsor ) ) {
+			return $sponsor;
+		}
+
+		$source_logo_id = sanitize_text_field( (string) $request->get_param( 'sponsit_logo_id' ) );
+		if ( $source_logo_id !== '' && ! ctype_digit( $source_logo_id ) ) {
+			return new \WP_Error( 'rondo_sponsor_logo_source_invalid', 'De Sponsit logo-ID is ongeldig.', [ 'status' => 400 ] );
+		}
+
+		$old_attachment_id = (int) get_post_thumbnail_id( $sponsor->ID );
+		$response          = $this->upload_entity_logo( $request, 'sponsor' );
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		$data          = $response->get_data();
+		$attachment_id = absint( $data['attachment_id'] ?? 0 );
+		if ( ! $attachment_id || ! set_post_thumbnail( $sponsor->ID, $attachment_id ) ) {
+			if ( $attachment_id ) {
+				wp_delete_attachment( $attachment_id, true );
+			}
+			return new \WP_Error( 'rondo_sponsor_logo_save_failed', 'Het sponsorlogo kon niet worden opgeslagen.', [ 'status' => 500 ] );
+		}
+
+		if ( $source_logo_id !== '' ) {
+			$result = Fields::update_many_for_post( $sponsor->ID, [ 'sponsit_logo_id' => $source_logo_id ] );
+			if ( is_wp_error( $result ) ) {
+				$old_attachment_id ? set_post_thumbnail( $sponsor->ID, $old_attachment_id ) : delete_post_thumbnail( $sponsor->ID );
+				wp_delete_attachment( $attachment_id, true );
+				return $result;
+			}
+		}
+
+		return rest_ensure_response( $this->format_sponsor( get_post( $sponsor->ID ) ) );
+	}
+
 	/** Create an external person and append it as a sponsor contact atomically enough to recover. */
 	public function create_contact( \WP_REST_Request $request ) {
 		$sponsor = $this->sponsor_post( absint( $request['id'] ) );
@@ -469,6 +518,7 @@ final class Sponsors {
 		$allowed = [
 			'sponsor_type',
 			'sponsor_role',
+			'website',
 			'address_street_name',
 			'address_house_number',
 			'address_house_number_addition',
@@ -515,6 +565,8 @@ final class Sponsors {
 				$output[ $key ] = $type;
 			} elseif ( $key === 'sponsor_role' ) {
 				$output[ $key ] = $role;
+			} elseif ( $key === 'website' ) {
+				$output[ $key ] = esc_url_raw( (string) $value );
 			} else {
 				$output[ $key ] = sanitize_text_field( (string) $value );
 			}
