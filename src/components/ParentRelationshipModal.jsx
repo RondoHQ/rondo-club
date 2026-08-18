@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { UserRoundPlus, UsersRound, X } from 'lucide-react';
+import { Building2, UserRoundPlus, UsersRound, X } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { SearchablePersonSelector } from '@/components/RelationshipEditModal';
 
 const EMPTY_FORM = { name: '', email: '', phone: '' };
 
-export default function ParentRelationshipModal({ isOpen, onClose, onSubmit, isLoading, personId, allPeople, isPeopleLoading }) {
+export default function ParentRelationshipModal({ isOpen, onClose, onSubmit, onAddSponsor, isLoading, personId, allPeople, isPeopleLoading }) {
   const [screen, setScreen] = useState('choice');
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState('');
@@ -93,6 +93,19 @@ export default function ParentRelationshipModal({ isOpen, onClose, onSubmit, isL
                 <span className="mt-1 block text-sm text-gray-500 dark:text-gray-400">Maak de persoon aan en stuur de gegevens naar een vrij Sportlink-ouderveld.</span>
               </span>
             </button>
+            {onAddSponsor && (
+              <button
+                type="button"
+                onClick={onAddSponsor}
+                className="flex w-full items-start gap-3 rounded-lg border border-gray-200 p-4 text-left hover:border-electric-cyan hover:bg-cyan-50 dark:border-gray-700 dark:hover:bg-gray-700"
+              >
+                <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-electric-cyan" />
+                <span>
+                  <span className="block font-medium text-gray-900 dark:text-gray-50">Sponsor</span>
+                  <span className="mt-1 block text-sm text-gray-500 dark:text-gray-400">Zoek een sponsor en koppel deze persoon als contact.</span>
+                </span>
+              </button>
+            )}
           </div>
         ) : screen === 'existing' ? (
           <form onSubmit={handleExistingSubmit}>

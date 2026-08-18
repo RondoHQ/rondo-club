@@ -27,6 +27,7 @@ import VOGCard from '@/components/VOGCard';
 import SportlinkCard from '@/components/SportlinkCard';
 import AccountCard from '@/components/AccountCard';
 import PersonSponsorRelationsCard from '@/components/PersonSponsorRelationsCard';
+import SponsorRelationshipModal from '@/components/SponsorRelationshipModal';
 import { format, formatStoredDateTime, parseYmd, differenceInYears } from '@/utils/dateFormat';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -261,6 +262,7 @@ export default function PersonDetail() {
   const [showContactModal, setShowContactModal] = useState(false);
   const [showRelationshipModal, setShowRelationshipModal] = useState(false);
   const [showParentRelationshipModal, setShowParentRelationshipModal] = useState(false);
+  const [showSponsorRelationshipModal, setShowSponsorRelationshipModal] = useState(false);
   const [isSavingContacts, setIsSavingContacts] = useState(false);
   const [isSavingRelationship, setIsSavingRelationship] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
@@ -1761,16 +1763,18 @@ export default function PersonDetail() {
             <div className="card p-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold text-brand-gradient">Relaties</h2>
-                {canEditPeople && (
+                {(canEditPeople || canManageSponsors) && (
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => {
                         setEditingRelationship(null);
                         setEditingRelationshipIndex(null);
-                        if (currentUser?.can_access_ledenadministratie && person?.fields?.knvb_id) {
+                        if (canEditPeople && currentUser?.can_access_ledenadministratie && person?.fields?.knvb_id) {
                           setShowParentRelationshipModal(true);
-                        } else {
+                        } else if (canEditPeople) {
                           setShowRelationshipModal(true);
+                        } else {
+                          setShowSponsorRelationshipModal(true);
                         }
                       }}
                       className="btn-tertiary text-sm"
@@ -2285,10 +2289,22 @@ export default function PersonDetail() {
               isOpen={showParentRelationshipModal}
               onClose={() => setShowParentRelationshipModal(false)}
               onSubmit={handleAddParentRelationship}
+              onAddSponsor={canManageSponsors ? () => {
+                setShowParentRelationshipModal(false);
+                setShowSponsorRelationshipModal(true);
+              } : undefined}
               isLoading={addParentRelationship.isPending}
               personId={id}
               allPeople={allPeople || []}
               isPeopleLoading={isPeopleLoading}
+            />
+          )}
+
+          {canManageSponsors && (
+            <SponsorRelationshipModal
+              isOpen={showSponsorRelationshipModal}
+              onClose={() => setShowSponsorRelationshipModal(false)}
+              person={person}
             />
           )}
 
