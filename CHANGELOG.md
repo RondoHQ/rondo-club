@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Zodra iemand oud-lid wordt, sluit Rondo alle nog actuele team-, commissie- en verenigingsfuncties af op de einddatum van het lidmaatschap; latere synchronisaties kunnen die functies niet opnieuw activeren zolang de persoon oud-lid blijft.
+- De sponsormigratie verwerkt personen voortaan in een vaste volgorde, zodat de primaire contactpersoon niet willekeurig wisselt wanneer records dezelfde aanmaaktijd hebben.
 
 ## [34.18.1] - 2026-08-18
 

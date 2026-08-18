@@ -23,6 +23,8 @@ final class Migration {
 				'fields'           => 'ids',
 				'meta_key'         => 'is_sponsor',
 				'meta_value'       => '1',
+				'orderby'          => 'ID',
+				'order'            => 'ASC',
 				'suppress_filters' => true,
 			]
 		);
