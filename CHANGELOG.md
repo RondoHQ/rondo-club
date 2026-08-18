@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.17.6] - 2026-08-18
+
+### Fixed
+
+- De ontwikkeling van inschrijvingen toont nu een aantallen-as, een expliciet aantal inschrijvingen van vandaag en een doorlopende lijn tot vandaag.
+- De legenda bij inschrijvingen per taaksoort klapt op smallere panelen onder de taartgrafiek en kapt lange taaknamen netjes af.
+
 ## [34.17.5] - 2026-08-18
 
 ### Fixed
