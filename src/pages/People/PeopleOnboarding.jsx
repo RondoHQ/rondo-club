@@ -17,6 +17,11 @@ const TYPE_PARAM_BY_TAB = {
   [TAB_VRIJWILLIGER]: 'vrijwilliger',
 };
 
+const DATE_SORT_FIELD_BY_TAB = {
+  [TAB_LID]: 'field_lid_sinds',
+  [TAB_VRIJWILLIGER]: 'field_vrijwilliger_sinds',
+};
+
 const STATUS_LABELS = {
   sent: 'Verstuurd',
   already_sent: 'Was al verstuurd',
@@ -71,6 +76,9 @@ export default function PeopleOnboarding() {
 
   const switchTab = (next) => {
     if (next === activeTab) return;
+    if (sortField === DATE_SORT_FIELD_BY_TAB[activeTab]) {
+      setSortField(DATE_SORT_FIELD_BY_TAB[next]);
+    }
     setActiveTab(next);
     setSelected(new Set());
     setResultBanner(null);
@@ -134,6 +142,7 @@ export default function PeopleOnboarding() {
   const sendSelected = () => runSend(Array.from(selected));
 
   const dateColumnLabel = activeTab === TAB_VRIJWILLIGER ? 'Vrijwilliger sinds' : 'Lid sinds';
+  const dateSortField = DATE_SORT_FIELD_BY_TAB[activeTab];
   const periodLabel = activeTab === TAB_VRIJWILLIGER
     ? 'Nieuwe vrijwilligers van de afgelopen 60 dagen die nog geen onboarding-mail hebben ontvangen.'
     : 'Nieuwe leden van de afgelopen 30 dagen die nog geen onboarding-mail hebben ontvangen.';
@@ -212,7 +221,15 @@ export default function PeopleOnboarding() {
                   <th className="w-10 px-4 py-2"></th>
                   <SortableHeader label="Voornaam" columnId="first_name" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} className="!px-4 !py-2" />
                   <SortableHeader label="Achternaam" columnId="last_name" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} className="!px-4 !py-2" />
-                  <th className="px-4 py-2 font-medium">{dateColumnLabel}</th>
+                  <SortableHeader
+                    label={dateColumnLabel}
+                    columnId={dateSortField}
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                    defaultOrder="desc"
+                    className="!px-4 !py-2"
+                  />
                   <th className="px-4 py-2 font-medium">E-mail</th>
                   <th className="px-4 py-2 font-medium text-right">Actie</th>
                 </tr>

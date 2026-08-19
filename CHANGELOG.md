@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.20.4] - 2026-08-19
+
+### Changed
+
+- In Onboarding zijn de kolommen `Lid sinds` en `Vrijwilliger sinds` nu sorteerbaar; de eerste klik toont de nieuwste datum bovenaan.
+
 ## [34.20.3] - 2026-08-19
 
 ### Fixed
