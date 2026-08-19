@@ -203,10 +203,64 @@ class VolunteerStatus {
 	 * @param int $post_id The person post ID.
 	 */
 	public function calculate_and_update_status( $post_id ) {
-		$is_volunteer = $this->is_current_volunteer( $post_id );
+		$was_volunteer = (bool) \Rondo\Fields\Fields::get_for_post( $post_id, 'huidig_vrijwilliger' );
+		$is_volunteer  = $this->is_current_volunteer( $post_id );
+		$updates       = [ self::VOLUNTEER_FIELD_KEY => $is_volunteer ];
 
-		// Update the custom field using native field's update_field for proper reference handling
-		\Rondo\Fields\Fields::update_for_post( $post_id, self::VOLUNTEER_FIELD_KEY, $is_volunteer );
+		// Sportlink does not expose a separate reliable volunteer-start field.
+		// When work history first makes someone a volunteer, derive the date from
+		// the earliest active volunteer position. Team-roster responses do not
+		// include a start date, so a genuine false-to-true transition falls back
+		// to today. Existing volunteers without a date are not treated as new.
+		// Existing dates always win.
+		$volunteer_since = \Rondo\Fields\Fields::get_for_post( $post_id, 'vrijwilliger_sinds' );
+		if ( $is_volunteer && empty( $volunteer_since ) ) {
+			$derived_start_date = $this->get_volunteer_start_date( $post_id );
+			if ( $derived_start_date === null && ! $was_volunteer ) {
+				$derived_start_date = current_datetime()->format( 'Y-m-d' );
+			}
+			if ( $derived_start_date !== null ) {
+				$updates['vrijwilliger_sinds'] = $derived_start_date;
+			}
+		}
+
+		\Rondo\Fields\Fields::update_many_for_post( $post_id, $updates );
+	}
+
+	/**
+	 * Derive the earliest start date among active volunteer positions.
+	 *
+	 * @param int $post_id The person post ID.
+	 * @return string|null Date in Y-m-d format, or null when no valid date exists.
+	 */
+	private function get_volunteer_start_date( int $post_id ): ?string {
+		$work_history = \Rondo\Fields\Fields::get_for_post( $post_id, 'work_history' );
+		if ( empty( $work_history ) || ! is_array( $work_history ) ) {
+			return null;
+		}
+
+		$earliest = null;
+		foreach ( $work_history as $position ) {
+			if (
+				! is_array( $position )
+				|| ! self::is_position_current( $position )
+				|| ! $this->is_volunteer_position( $position )
+			) {
+				continue;
+			}
+
+			$start_date = self::normalize_work_history_date( (string) ( $position['start_date'] ?? '' ) );
+			if ( $start_date !== null && ( $earliest === null || $start_date < $earliest ) ) {
+				$earliest = $start_date;
+			}
+		}
+
+		if ( $earliest === null ) {
+			return null;
+		}
+
+		$date = \DateTimeImmutable::createFromFormat( '!Ymd', $earliest, wp_timezone() );
+		return $date === false ? null : $date->format( 'Y-m-d' );
 	}
 
 	/**
@@ -222,12 +276,9 @@ class VolunteerStatus {
 			return false;
 		}
 
-		// Use tomorrow's date so positions ending today are no longer considered current
-		$today = gmdate( 'Y-m-d', strtotime( '+1 day' ) );
-
 		foreach ( $work_history as $position ) {
 			// Check if position is current
-			if ( ! $this->is_position_current( $position, $today ) ) {
+			if ( ! self::is_position_current( $position ) ) {
 				continue;
 			}
 
@@ -248,18 +299,20 @@ class VolunteerStatus {
 	 * - end_date is empty/null, OR
 	 * - end_date is in the future (positions ending today are NOT considered current)
 	 *
-	 * @param array  $position The position data.
-	 * @param string $today    The cutoff date in Y-m-d format (tomorrow, so end_date=today is not current).
+	 * Accepts both the compact Ymd storage format and the canonical Y-m-d wire
+	 * format used by work_history dates.
+	 *
+	 * @param array $position The position data.
 	 * @return bool True if the position is current.
 	 */
-	private function is_position_current( $position, $today ) {
+	public static function is_position_current( array $position ): bool {
 		// Check is_current flag first
 		if ( ! empty( $position['is_current'] ) ) {
 			return true;
 		}
 
 		// Check end_date
-		$end_date = $position['end_date'] ?? '';
+		$end_date = trim( (string) ( $position['end_date'] ?? '' ) );
 
 		// No end date means position is still active
 		if ( empty( $end_date ) ) {
@@ -267,8 +320,34 @@ class VolunteerStatus {
 			return ! empty( $position['start_date'] ) || ! empty( $position['team'] );
 		}
 
-		// End date in future or today means still active
-		return $end_date >= $today;
+		$normalized_end_date = self::normalize_work_history_date( $end_date );
+		if ( $normalized_end_date === null ) {
+			return false;
+		}
+
+		// Use tomorrow's date so positions ending today are no longer current.
+		$cutoff = current_datetime()->modify( '+1 day' )->format( 'Ymd' );
+		return $normalized_end_date >= $cutoff;
+	}
+
+	/**
+	 * Normalize a work-history date for safe lexical comparison.
+	 *
+	 * @param string $value Date in Ymd or Y-m-d format.
+	 * @return string|null Date in Ymd format, or null for an invalid value.
+	 */
+	private static function normalize_work_history_date( string $value ): ?string {
+		$compact = str_replace( '-', '', trim( $value ) );
+		if ( preg_match( '/^\d{8}$/', $compact ) !== 1 ) {
+			return null;
+		}
+
+		$date = \DateTimeImmutable::createFromFormat( '!Ymd', $compact, wp_timezone() );
+		if ( $date === false || $date->format( 'Ymd' ) !== $compact ) {
+			return null;
+		}
+
+		return $compact;
 	}
 
 	/**

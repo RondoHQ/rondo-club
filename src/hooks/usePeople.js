@@ -102,14 +102,19 @@ export function usePeople(params = {}, options = {}) {
  * @param {number} filters.birthMonth - Filter by birth month (1-12)
  * @param {string} filters.orderby - 'first_name', 'last_name', or 'modified' (default: 'first_name')
  * @param {string} filters.order - 'asc' or 'desc' (default: 'asc')
+ * @param {string} filters.firstName - Filter by first name
+ * @param {string} filters.lastName - Filter by displayed surname (including infix)
  * @param {string} filters.huidigeVrijwilliger - '1' for yes, '0' for no, '' for all
  * @param {string} filters.financieleBlokkade - '1' for yes, '0' for no, '' for all
  * @param {string} filters.typeLid - Filter by member type value
  * @param {string} filters.personType - Filter by Rondo person type (`member` or `contact`)
  * @param {string} filters.isSponsor - Filter by independent sponsor role (`1` or `0`)
+ * @param {string} filters.knvbBekend - Filter by KNVB registration (`1` or `0`)
+ * @param {string} filters.isParent - `1` for people with a current child relationship
  * @param {string} filters.isBusinessclubMember - Filter by active Businessclub membership (`1` or `0`)
  * @param {string} filters.fotoMissing - '1' to show only people without photo date
  * @param {string} filters.vogMissing - '1' to show only people without VOG date
+ * @param {string} filters.vogRequired - '1' to show only volunteers with an active role that requires a VOG
  * @param {number} filters.vogOlderThanYears - Filter for VOG older than N years
  * @param {string} filters.vogEmailStatus - 'sent' or 'not_sent' to filter by email status
  * @param {string} filters.vogType - 'nieuw', 'vernieuwing', or '' for all
@@ -132,14 +137,19 @@ export function buildFilteredPeopleParams(filters = {}) {
     birth_month: filters.birthMonth || null,
     orderby: filters.orderby || 'first_name',
     order: filters.order || 'asc',
+    first_name: filters.firstName || null,
+    last_name: filters.lastName || null,
     huidig_vrijwilliger: filters.huidigeVrijwilliger || null,
     financiele_blokkade: filters.financieleBlokkade || null,
     type_lid: filters.typeLid || null,
     person_type: filters.personType || null,
     is_sponsor: filters.isSponsor || null,
+    knvb_bekend: filters.knvbBekend || null,
+    is_parent: filters.isParent || null,
     is_businessclub_member: filters.isBusinessclubMember || null,
     foto_missing: filters.fotoMissing || null,
     vog_missing: filters.vogMissing || null,
+    vog_required: filters.vogRequired || null,
     vog_older_than_years: filters.vogOlderThanYears || null,
     vog_expiring_within_days: filters.vogExpiringWithinDays || null,
     vog_email_status: filters.vogEmailStatus || null,
@@ -216,7 +226,7 @@ export function useFilterOptions(options = {}) {
   });
 }
 
-export function usePerson(id) {
+export function usePerson(id, options = {}) {
   return useQuery({
     queryKey: peopleKeys.detail(id),
     queryFn: async () => {
@@ -224,6 +234,21 @@ export function usePerson(id) {
       return transformPerson(response.data);
     },
     enabled: !!id,
+    ...options,
+  });
+}
+
+export function useAddParentRelationship(childId) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data) => prmApi.addParentRelationship(childId, data),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: peopleKeys.detail(childId) });
+      queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
+      const parentId = response.data?.parent_id;
+      if (parentId) queryClient.invalidateQueries({ queryKey: peopleKeys.detail(parentId) });
+    },
   });
 }
 
@@ -276,8 +301,6 @@ export function useCreatePerson({ onSuccess } = {}) {
           nickname: data.nickname,
           company_name: data.company_name || '',
           person_type: data.person_type || 'contact',
-          is_sponsor: Boolean(data.is_sponsor),
-          ...(data.is_sponsor ? { sponsor_pass_variant: data.sponsor_pass_variant } : {}),
           gender: data.gender || null,
           pronouns: data.pronouns || null,
           email_1: data.email || '',

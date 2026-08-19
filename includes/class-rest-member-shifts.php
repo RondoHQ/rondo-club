@@ -8,8 +8,10 @@
  *
  * Endpoints:
  *   GET  /rondo/v1/my-shifts              — current user's assigned + completed shifts plus their counter
+ *   GET  /rondo/v1/my-shifts/calendar     — downloadable iCalendar file for the current user's shifts
  *   GET  /rondo/v1/people/{id}/shifts      — person's active future shifts plus their two most recent past shifts
- *   GET  /rondo/v1/shifts/recent-signups   — 50 shifts with the most recent current signups
+ *   GET  /rondo/v1/shifts/recent-signups   — 10 shifts with the most recent current signups
+ *   GET  /rondo/v1/shifts/signups          — all shifts with current assignees
  *   GET  /rondo/v1/shifts/available       — open shifts the current user can sign up for
  *   POST /rondo/v1/shifts/{id}/signup     — add current user to a shift
  *   POST /rondo/v1/shifts/{id}/cancel     — remove current user from a shift (afmelden mag altijd)
@@ -22,6 +24,8 @@
 
 namespace Rondo\REST;
 
+use Rondo\Core\PostTitle;
+use Rondo\Core\VolunteerStatus;
 use Rondo\Fees\SeasonKey;
 use Rondo\Users\GuardianAccountService;
 use Rondo\Volunteer\IvaStatus;
@@ -79,6 +83,7 @@ class MemberShifts extends Base {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 		add_filter( 'rest_prepare_dienst_shift', [ $this, 'add_assignee_display_names' ], 10, 2 );
 		add_filter( 'rest_pre_insert_dienst_shift', [ $this, 'prevent_direct_assignee_writes' ], 10, 2 );
+		add_filter( 'rest_pre_serve_request', [ $this, 'serve_my_shifts_calendar' ], 10, 4 );
 	}
 
 	/**
@@ -256,6 +261,16 @@ class MemberShifts extends Base {
 
 		register_rest_route(
 			'rondo/v1',
+			'/my-shifts/calendar',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_my_shifts_calendar' ],
+				'permission_callback' => 'is_user_logged_in',
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
 			'/people/(?P<person_id>\d+)/shifts',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -287,6 +302,24 @@ class MemberShifts extends Base {
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_recent_signups' ],
 				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/shifts/signups',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_signups' ],
+				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
+				'args'                => [
+					'status' => [
+						'required'          => false,
+						'default'           => 'active',
+						'sanitize_callback' => 'sanitize_key',
+						'validate_callback' => static fn( $value ): bool => in_array( $value, [ 'active', 'cancelled', 'all' ], true ),
+					],
+				],
 			]
 		);
 
@@ -503,6 +536,69 @@ class MemberShifts extends Base {
 	}
 
 	/**
+	 * Build an iCalendar download for every non-cancelled shift assigned to the caller.
+	 */
+	public function get_my_shifts_calendar( \WP_REST_Request $request ) {
+		$person_id = $this->current_person_id();
+		if ( $person_id <= 0 ) {
+			return new \WP_Error( 'no_person', 'Geen gekoppelde persoon gevonden voor dit account.', [ 'status' => 404 ] );
+		}
+
+		$shifts = [];
+		foreach ( $this->query_shifts_for_person( $person_id, false, -1 ) as $shift ) {
+			if ( $shift['status'] === 'geannuleerd' ) {
+				continue;
+			}
+
+			try {
+				$start = new \DateTimeImmutable( $shift['start_datetime'], wp_timezone() );
+				$end   = new \DateTimeImmutable( $shift['end_datetime'], wp_timezone() );
+			} catch ( \Exception $exception ) {
+				continue;
+			}
+
+			$shifts[] = [
+				'id'    => (int) $shift['id'],
+				'title' => (string) ( $shift['dienst_type_name'] ?: $shift['title'] ),
+				'start' => $start,
+				'end'   => $end,
+			];
+		}
+
+		$calendar = ShiftEmailScheduler::build_signup_calendar( $person_id, $shifts );
+		return new \WP_REST_Response( $calendar, 200 );
+	}
+
+	/**
+	 * Serve the calendar response without WordPress JSON encoding it.
+	 *
+	 * @param bool              $served  Whether the response was already served.
+	 * @param \WP_REST_Response $result  REST response.
+	 * @param \WP_REST_Request  $request REST request.
+	 * @param \WP_REST_Server   $server  REST server.
+	 */
+	public function serve_my_shifts_calendar( $served, $result, $request, $server ): bool {
+		if (
+			$request->get_route() !== '/rondo/v1/my-shifts/calendar'
+			|| ! $result instanceof \WP_REST_Response
+			|| $result->get_status() !== 200
+			|| ! is_string( $result->get_data() )
+		) {
+			return $served;
+		}
+
+		$calendar = $result->get_data();
+		header( 'Content-Type: text/calendar; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="mijn-inschrijftaken.ics"' );
+		header( 'Content-Length: ' . strlen( $calendar ) );
+		header( 'X-Content-Type-Options: nosniff' );
+		header( 'Cache-Control: private, no-store, max-age=0' );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- generated iCalendar text is escaped by ShiftEmailScheduler.
+		echo $calendar;
+		return true;
+	}
+
+	/**
 	 * Return the active future shifts and two most recent past shifts for a person.
 	 *
 	 * This read-only profile response deliberately omits fellow-volunteer contact
@@ -582,27 +678,25 @@ class MemberShifts extends Base {
 	}
 
 	/**
-	 * Return at most 50 shifts ordered by their latest current signup.
+	 * Build shift summaries for current assignments.
 	 *
-	 * A signup remains current only while the person is still present in the
-	 * shift's `assigned_persons` value. Manager-added assignees without a signup
-	 * timestamp are deliberately omitted: this overview tracks self-service
-	 * registrations, not every assignment edit.
+	 * @param bool   $include_without_timestamp Include legacy assignments without signup metadata.
+	 * @param string $status_filter             active, cancelled or all.
+	 * @return array<int, array<string, mixed>>
 	 */
-	public function get_recent_signups() {
+	private function get_signup_shift_summaries( bool $include_without_timestamp, string $status_filter = 'active' ): array {
 		$query = new \WP_Query(
 			[
 				'post_type'        => 'dienst_shift',
-				// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- dynamic per-person signup keys must be inspected before the top 50 can be selected.
+				// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- assignments must be inspected before the overview can be sorted.
 				'posts_per_page'   => -1,
 				'no_found_rows'    => true,
 				'suppress_filters' => true,
 				'post_status'      => [ 'publish' ],
 				'meta_query'       => [
 					[
-						'key'         => '_shift_signup_at_',
-						'compare_key' => 'LIKE',
-						'compare'     => 'EXISTS',
+						'key'     => 'assigned_persons',
+						'compare' => 'EXISTS',
 					],
 				],
 			]
@@ -616,11 +710,17 @@ class MemberShifts extends Base {
 			}
 			$seen_shift_ids[ $shift->ID ] = true;
 
+			$status       = (string) get_post_meta( $shift->ID, 'status', true );
+			$is_cancelled = $status === 'geannuleerd';
+			if ( ( $status_filter === 'active' && $is_cancelled ) || ( $status_filter === 'cancelled' && ! $is_cancelled ) ) {
+				continue;
+			}
+
 			$assigned = ShiftAssignments::person_ids( $shift->ID );
 			$signups  = [];
 			foreach ( $assigned as $person_id ) {
 				$timestamp = (int) get_post_meta( $shift->ID, '_shift_signup_at_' . $person_id, true );
-				if ( $timestamp <= 0 ) {
+				if ( $timestamp <= 0 && ! $include_without_timestamp ) {
 					continue;
 				}
 
@@ -632,7 +732,7 @@ class MemberShifts extends Base {
 				$signups[] = [
 					'person_id'    => $person_id,
 					'name'         => $name,
-					'signed_up_at' => wp_date( 'c', $timestamp ),
+					'signed_up_at' => $timestamp > 0 ? wp_date( 'c', $timestamp ) : null,
 					'timestamp'    => $timestamp,
 				];
 			}
@@ -641,7 +741,13 @@ class MemberShifts extends Base {
 				continue;
 			}
 
-			usort( $signups, fn( array $a, array $b ): int => $b['timestamp'] <=> $a['timestamp'] );
+			usort(
+				$signups,
+				static function ( array $a, array $b ): int {
+					$timestamp_order = $b['timestamp'] <=> $a['timestamp'];
+					return $timestamp_order !== 0 ? $timestamp_order : strcasecmp( $a['name'], $b['name'] );
+				}
+			);
 			$summary = $this->format_shift_summary( $shift );
 			if ( $summary === null ) {
 				continue;
@@ -649,25 +755,79 @@ class MemberShifts extends Base {
 
 			$latest_timestamp = $signups[0]['timestamp'];
 			unset( $summary['assigned_person_ids'] );
-			foreach ( $signups as &$signup ) {
-				unset( $signup['timestamp'] );
-			}
-			unset( $signup );
-
 			$summary['latest_signup_at'] = $signups[0]['signed_up_at'];
 			$summary['latest_timestamp'] = $latest_timestamp;
+			$summary['start_timestamp']  = $this->shift_start_timestamp( (int) $shift->ID ) ?? 0;
 			$summary['signups']          = $signups;
 			$shifts[]                    = $summary;
 		}
 
-		usort( $shifts, fn( array $a, array $b ): int => $b['latest_timestamp'] <=> $a['latest_timestamp'] );
-		$shifts = array_slice( $shifts, 0, 50 );
+		return $shifts;
+	}
+
+	/**
+	 * Remove values used only for server-side sorting.
+	 *
+	 * @param array<int, array<string, mixed>> $shifts Shift summaries.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function prepare_signup_shift_response( array $shifts ): array {
 		foreach ( $shifts as &$shift ) {
-			unset( $shift['latest_timestamp'] );
+			unset( $shift['latest_timestamp'], $shift['start_timestamp'] );
+			foreach ( $shift['signups'] as &$signup ) {
+				unset( $signup['timestamp'] );
+			}
+			unset( $signup );
 		}
 		unset( $shift );
 
+		return $shifts;
+	}
+
+	/**
+	 * Return at most 10 shifts ordered by their latest current signup.
+	 *
+	 * A signup remains current only while the person is still present in the
+	 * shift's `assigned_persons` value. Assignments without a signup timestamp
+	 * are deliberately omitted from this recent-activity overview.
+	 */
+	public function get_recent_signups() {
+		$shifts = $this->get_signup_shift_summaries( false );
+
+		usort( $shifts, fn( array $a, array $b ): int => $b['latest_timestamp'] <=> $a['latest_timestamp'] );
+		$shifts = $this->prepare_signup_shift_response( array_slice( $shifts, 0, 10 ) );
+
 		return rest_ensure_response( [ 'shifts' => $shifts ] );
+	}
+
+	/**
+	 * Return every shift with current assignees, nearest upcoming shift first.
+	 *
+	 * Past shifts follow the future shifts, with the most recent past shift first.
+	 * Legacy assignments without signup timestamps remain visible here because
+	 * this is a state overview rather than a recent-activity feed.
+	 */
+	public function get_signups( \WP_REST_Request $request ) {
+		$status_filter = (string) $request->get_param( 'status' );
+		$shifts        = $this->get_signup_shift_summaries( true, $status_filter ?: 'active' );
+		$now           = current_datetime()->getTimestamp();
+
+		usort(
+			$shifts,
+			static function ( array $a, array $b ) use ( $now ): int {
+				$a_is_upcoming = $a['start_timestamp'] >= $now;
+				$b_is_upcoming = $b['start_timestamp'] >= $now;
+				if ( $a_is_upcoming !== $b_is_upcoming ) {
+					return $a_is_upcoming ? -1 : 1;
+				}
+
+				return $a_is_upcoming
+					? $a['start_timestamp'] <=> $b['start_timestamp']
+					: $b['start_timestamp'] <=> $a['start_timestamp'];
+			}
+		);
+
+		return rest_ensure_response( [ 'shifts' => $this->prepare_signup_shift_response( $shifts ) ] );
 	}
 
 	public function get_available_shifts( \WP_REST_Request $request ) {
@@ -676,15 +836,16 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'no_person', 'Geen gekoppelde persoon gevonden voor dit account.', [ 'status' => 404 ] );
 		}
 
-		// Owing an obligation is not a precondition for helping out. Anyone still on the
-		// books may claim a shift; only oud-leden are turned away.
+		// Owing an obligation is not a precondition for helping out. Every linked,
+		// published person may claim a shift, including a former member who still
+		// carries a current parent role.
 		if ( ! ( new VolunteerEligibilityService() )->may_volunteer( $person_id ) ) {
 			return rest_ensure_response(
 				[
 					'person_id'    => $person_id,
 					'eligible'     => false,
 					'shifts'       => [],
-					'block_reason' => 'Je bent geen actief lid meer.',
+					'block_reason' => 'Geen geldig persoonsprofiel gevonden.',
 				]
 			);
 		}
@@ -709,11 +870,7 @@ class MemberShifts extends Base {
 						'compare' => 'BETWEEN',
 						'type'    => 'DATETIME',
 					],
-					[
-						'key'     => 'status',
-						'value'   => 'open',
-						'compare' => '=',
-					],
+					$this->active_shift_status_meta_query( false ),
 				],
 				'orderby'          => 'meta_value',
 				'meta_key'         => 'start_datetime',
@@ -811,11 +968,7 @@ class MemberShifts extends Base {
 						'compare' => 'BETWEEN',
 						'type'    => 'DATETIME',
 					],
-					[
-						'key'     => 'status',
-						'value'   => [ 'open', 'vol' ],
-						'compare' => 'IN',
-					],
+					$this->active_shift_status_meta_query( true ),
 				],
 				'orderby'          => 'meta_value',
 				'meta_key'         => 'start_datetime',
@@ -1024,7 +1177,7 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'no_person', 'Geen gekoppelde persoon.', [ 'status' => 404 ] );
 		}
 		if ( ! ( new VolunteerEligibilityService() )->may_volunteer( $person_id ) ) {
-			return new \WP_Error( 'not_eligible', 'Je bent geen actief lid meer.', [ 'status' => 403 ] );
+			return new \WP_Error( 'not_eligible', 'Geen geldig persoonsprofiel gevonden.', [ 'status' => 403 ] );
 		}
 
 		$shift = get_post( $shift_id );
@@ -1238,7 +1391,7 @@ class MemberShifts extends Base {
 		}
 
 		if ( ! ( new VolunteerEligibilityService() )->may_volunteer( $person_id ) ) {
-			return new \WP_Error( 'not_eligible', 'Deze persoon is geen actief lid meer.', [ 'status' => 403 ] );
+			return new \WP_Error( 'not_eligible', 'Geen geldig persoonsprofiel gevonden.', [ 'status' => 403 ] );
 		}
 
 		$blocked = $this->assert_person_may_take_shift( $person_id, $shift_id );
@@ -1358,10 +1511,6 @@ class MemberShifts extends Base {
 
 		$people = [];
 		foreach ( $candidates as $person_id ) {
-			if ( (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' ) ) {
-				continue;
-			}
-
 			$name = $this->sanitize_text( GuardianAccountService::display_name_for_person( $person_id ) );
 			if ( $name === '' ) {
 				continue;
@@ -1711,8 +1860,21 @@ class MemberShifts extends Base {
 
 	/**
 	 * Format a shift post for both `get_my_shifts` and `get_available_shifts`.
+	 *
+	 * Accepts null because `WP_Query` resolves its result IDs with `get_post()`
+	 * after the ID query has run. A shift deleted in between leaves a null in
+	 * `$query->posts`, and every caller already skips a null summary — before
+	 * this hint was widened, the null fataled here instead:
+	 *
+	 *   PHP Fatal error: Uncaught TypeError:
+	 *   Rondo\REST\MemberShifts::format_shift_summary(): Argument #1 ($shift)
+	 *   must be of type WP_Post, null given
 	 */
-	private function format_shift_summary( \WP_Post $shift ): ?array {
+	private function format_shift_summary( ?\WP_Post $shift ): ?array {
+		if ( $shift === null ) {
+			return null;
+		}
+
 		$dienst_type_id = (int) get_post_meta( $shift->ID, 'dienst_type_id', true );
 		$start          = (string) get_post_meta( $shift->ID, 'start_datetime', true );
 		$end            = (string) get_post_meta( $shift->ID, 'end_datetime', true );
@@ -1728,7 +1890,9 @@ class MemberShifts extends Base {
 			'id'                  => $shift->ID,
 			'title'               => $this->sanitize_text( $shift->post_title ),
 			'dienst_type_id'      => $dienst_type_id,
-			'dienst_type_name'    => $dienst_type_id > 0 ? get_the_title( $dienst_type_id ) : '',
+			// Plain text, not markup: the client renders this as a text node, so a
+			// texturized `&#8211;` would show up on screen as literal entity text.
+			'dienst_type_name'    => PostTitle::plain( $dienst_type_id ),
 			'dienst_type_color'   => $dienst_type_id > 0 ? (string) get_post_meta( $dienst_type_id, 'color', true ) : '',
 			'start_datetime'      => $start,
 			'end_datetime'        => $end,
@@ -1738,6 +1902,28 @@ class MemberShifts extends Base {
 			'spots_remaining'     => $capacity > 0 ? max( 0, $capacity - count( $assigned ) ) : -1,
 			'status'              => $status ?: 'open',
 			'cancellation'        => ShiftCancellationService::details( $shift->ID ),
+		];
+	}
+
+	/**
+	 * Match active shifts while honoring the registered `open` default.
+	 *
+	 * Older manually created shifts can lack a physical status row. Treating
+	 * that absence as open mirrors Fields::get_for_post() and keeps those shifts
+	 * visible while newly submitted defaults are materialized by the field API.
+	 */
+	private function active_shift_status_meta_query( bool $include_full ): array {
+		return [
+			'relation' => 'OR',
+			[
+				'key'     => 'status',
+				'value'   => $include_full ? [ 'open', 'vol' ] : 'open',
+				'compare' => $include_full ? 'IN' : '=',
+			],
+			[
+				'key'     => 'status',
+				'compare' => 'NOT EXISTS',
+			],
 		];
 	}
 
@@ -1827,15 +2013,12 @@ class MemberShifts extends Base {
 			return false;
 		}
 
-		$today = gmdate( 'Y-m-d', strtotime( '+1 day' ) );
 		foreach ( $work_history as $position ) {
 			$team_id = (int) ( $position['team'] ?? 0 );
 			if ( $team_id !== $commissie_id ) {
 				continue;
 			}
-			$is_current = ! empty( $position['is_current'] );
-			$end_date   = (string) ( $position['end_date'] ?? '' );
-			if ( $is_current || $end_date === '' || $end_date >= $today ) {
+			if ( VolunteerStatus::is_position_current( $position ) ) {
 				return true;
 			}
 		}

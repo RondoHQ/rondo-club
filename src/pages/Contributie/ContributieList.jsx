@@ -6,7 +6,7 @@ import { useInvoices } from '@/hooks/useInvoices';
 import { useQueryClient } from '@tanstack/react-query';
 import { buildCsv, downloadCsv } from '@/utils/csvExport';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
-import { formatCurrency, formatPercentage, getCategoryColor } from '@/utils/formatters';
+import { formatCurrency, formatPercentage, formatPersonSurname, getCategoryColor } from '@/utils/formatters';
 import SeasonSelector from './SeasonSelector';
 import SortableHeader from '@/components/SortableHeader';
 import { DataTableToolbar, ColumnSettingsPanel, useColumnVisibility, createColumn, FILTER_TYPES } from '@/components/DataTable';
@@ -41,7 +41,7 @@ function FeeRow({ member, isOdd, showNikkiColumns, categories, isColVisible }) {
             to={`/people/${member.id}`}
             className="text-sm text-gray-700 dark:text-gray-300 hover:text-electric-cyan dark:hover:text-electric-cyan"
           >
-            {member.last_name}
+            {formatPersonSurname(member.infix, member.last_name)}
           </Link>
         </td>
       )}
@@ -339,7 +339,7 @@ export function ContributieList({ onlyMismatch = false }) {
       const contributiePlusTuchtzaken = (parseFloat(m.final_fee) || 0) + (parseFloat(m.discipline_invoiced) || 0);
       if (onlyMismatch && !(m.nikki_total !== null && Math.abs(m.nikki_total - contributiePlusTuchtzaken) >= 1)) return false;
       if (firstNameFilter && !(m.first_name || '').toLowerCase().includes(firstNameFilter.toLowerCase())) return false;
-      if (lastNameFilter && !(m.last_name || '').toLowerCase().includes(lastNameFilter.toLowerCase())) return false;
+      if (lastNameFilter && !formatPersonSurname(m.infix, m.last_name).toLowerCase().includes(lastNameFilter.toLowerCase())) return false;
       if (categoryFilter && m.category !== categoryFilter) return false;
       if (leeftijdsgroepFilter && m.leeftijdsgroep !== leeftijdsgroepFilter) return false;
       if (familyDiscountFilter === 'heeft' && !(m.family_discount_rate > 0)) return false;
@@ -397,7 +397,7 @@ export function ContributieList({ onlyMismatch = false }) {
     const rows = sortedMembers.map(member => {
       const row = [
         member.first_name || '',
-        member.last_name || '',
+        formatPersonSurname(member.infix, member.last_name),
         data?.categories?.[member.category]?.label ?? member.category,
         member.leeftijdsgroep || '',
         member.base_fee,

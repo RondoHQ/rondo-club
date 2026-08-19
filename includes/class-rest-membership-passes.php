@@ -184,7 +184,9 @@ class MembershipPasses extends Base {
 
 		$knvb_id      = (string) ( \Rondo\Fields\Fields::get_for_post( $post->ID, 'knvb_id' ) ?: get_post_meta( $post->ID, 'knvb-id', true ) ?: '' );
 		$person_type  = (string) ( \Rondo\Fields\Fields::get_for_post( $post->ID, 'person_type' ) ?: get_post_meta( $post->ID, 'person_type', true ) ?: '' );
-		$company_name = (string) ( \Rondo\Fields\Fields::get_for_post( $post->ID, 'company_name' ) ?: get_post_meta( $post->ID, 'company_name', true ) ?: '' );
+		$company_name = PublicMembershipPassPage::get_person_member_tier( $post->ID ) === 'sponsor'
+			? PublicMembershipPassPage::get_sponsor_company_name( $post->ID )
+			: (string) ( \Rondo\Fields\Fields::get_for_post( $post->ID, 'company_name' ) ?: get_post_meta( $post->ID, 'company_name', true ) ?: '' );
 
 		$person['knvb_id']         = $knvb_id;
 		$person['knvb-id']         = $knvb_id;

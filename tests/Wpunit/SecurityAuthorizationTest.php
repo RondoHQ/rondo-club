@@ -64,6 +64,7 @@ class SecurityAuthorizationTest extends RondoTestCase {
 
 		$this->assertSame( 403, $this->request( 'GET', '/rondo/v1/volunteer-eligibility' )->get_status() );
 		$this->assertSame( 403, $this->request( 'GET', '/rondo/v1/volunteer-obligations' )->get_status() );
+		$this->assertSame( 403, $this->request( 'GET', '/rondo/v1/volunteer-statistics' )->get_status() );
 		$this->assertSame( 403, $this->request( 'GET', '/rondo/v1/relationship-quality' )->get_status() );
 		$this->assertSame( 403, $this->request( 'GET', '/rondo/v1/volunteer-data-quality/orphan' )->get_status() );
 		$this->assertSame( 403, $this->request( 'GET', '/rondo/v1/volunteer-exemption/123' )->get_status() );
@@ -77,6 +78,7 @@ class SecurityAuthorizationTest extends RondoTestCase {
 		);
 		$this->assertSame( 403, $this->request( 'GET', '/rondo/v1/iva/123/status' )->get_status() );
 		$this->assertSame( 403, $this->request( 'GET', '/rondo/v1/shifts/recent-signups' )->get_status() );
+		$this->assertSame( 403, $this->request( 'GET', '/rondo/v1/shifts/signups' )->get_status() );
 	}
 
 	public function test_plain_member_cannot_use_email_enumeration_endpoint(): void {

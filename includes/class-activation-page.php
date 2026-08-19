@@ -248,7 +248,7 @@ class ActivationPage {
 		?>
 	<div class="card">
 		<h2>Wie ben je?</h2>
-		<p>Kies wie dit account gaat gebruiken. Ben je de ouder of verzorger van een jeugdlid en sta je zelf nog niet in Rondo? Dan kun je alvast via het account van je kind doorgaan.</p>
+		<p>Kies wie dit account gaat gebruiken. Ben je de ouder of verzorger van een jeugdlid? Dan koppelen we het account waar mogelijk meteen aan jouw eigen gegevens.</p>
 		<form method="post" action="<?php echo esc_url( ActivationService::activation_url( $token ) ); ?>">
 			<?php wp_nonce_field( self::NONCE_ACTION ); ?>
 			<?php foreach ( $available as $index => $person_id ) : ?>

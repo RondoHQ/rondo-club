@@ -4,6 +4,7 @@ namespace Tests\Wpunit;
 
 use Rondo\Fields\Fields;
 use Rondo\REST\Volunteer;
+use Rondo\Volunteer\VolunteerEligibilityService;
 use Rondo\Volunteer\VolunteerExemptionResolver;
 use Tests\Support\RondoTestCase;
 use WP_REST_Request;
@@ -105,5 +106,35 @@ class VolunteerExemptionApiTest extends RondoTestCase {
 
 		$this->assertSame( 404, $response->get_status() );
 		$this->assertSame( 'invalid_person', $response->get_data()['code'] );
+	}
+
+	public function test_stale_person_reference_is_not_treated_as_an_exemption(): void {
+		$this->assertNull( VolunteerExemptionResolver::resolve( 999999, '2026-2027' ) );
+	}
+
+	public function test_obligations_expose_unit_exemption_for_sync_consumers(): void {
+		$season    = '2026-2027';
+		$active_id = $this->createPerson( [ 'post_title' => 'Actieve speler' ] );
+		$exempt_id = $this->createPerson( [ 'post_title' => 'Vrijgestelde speler' ] );
+		update_post_meta( $active_id, 'leeftijdsgroep', 'Senioren' );
+		update_post_meta( $exempt_id, 'leeftijdsgroep', 'Senioren' );
+		Fields::update_for_post( $exempt_id, 'vrijgesteld_handmatig', 1 );
+		Fields::update_for_post( $exempt_id, 'vrijstelling_seizoen', $season );
+		VolunteerEligibilityService::invalidate_cache();
+
+		$request = new WP_REST_Request( 'GET', '/rondo/v1/volunteer-obligations' );
+		$request->set_param( 'season', $season );
+		$data = ( new Volunteer() )->get_obligations( $request )->get_data();
+
+		$units_by_person = [];
+		foreach ( $data['units'] as $unit ) {
+			$units_by_person[ (int) $unit['person_ids'][0] ] = $unit;
+		}
+
+		$this->assertFalse( $units_by_person[ $active_id ]['is_exempt'] );
+		$this->assertNull( $units_by_person[ $active_id ]['exemption'] );
+		$this->assertTrue( $units_by_person[ $exempt_id ]['is_exempt'] );
+		$this->assertSame( 'handmatig', $units_by_person[ $exempt_id ]['exemption']['reason'] );
+		$this->assertSame( $exempt_id, $units_by_person[ $exempt_id ]['exemption']['person_id'] );
 	}
 }

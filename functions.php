@@ -108,6 +108,7 @@ use Rondo\Core\UserRoles;
 use Rondo\REST\Api;
 use Rondo\REST\People;
 use Rondo\REST\Teams;
+use Rondo\REST\Sponsors as RESTSponsors;
 use Rondo\REST\Commissies;
 use Rondo\REST\Todos;
 use Rondo\REST\Feedback as RESTFeedback;
@@ -122,6 +123,7 @@ use Rondo\Collaboration\MentionNotifications;
 use Rondo\Collaboration\Reminders;
 use Rondo\Export\VCard as VCardExport;
 use Rondo\Data\InverseRelationships;
+use Rondo\Data\FormerMemberWorkHistory;
 use Rondo\Data\PersonDeletionGuard;
 use Rondo\Data\TodoMigration;
 use Rondo\CustomFields\Manager as CustomFieldsManager;
@@ -138,6 +140,7 @@ use Rondo\REST\Fees as RESTFees;
 use Rondo\REST\Lettermint as RESTLettermint;
 use Rondo\REST\Capabilities as RESTCapabilities;
 use Rondo\REST\FinanceSettings as RESTFinanceSettings;
+use Rondo\REST\Narrowcasting as RESTNarrowcasting;
 use Rondo\VOG\VOGEmail;
 use Rondo\Fees\FeeCacheInvalidator;
 use Rondo\Config\ClubConfig;
@@ -260,6 +263,7 @@ function rondo_init() {
 	new PostTypes();
 	new Taxonomies();
 	new \Rondo\Fields\FieldSchema();
+	new FormerMemberWorkHistory();
 	new AccessControl();
 	new PersonDeletionGuard();
 	new UserRoles();
@@ -270,6 +274,8 @@ function rondo_init() {
 	new \Rondo\Users\ContactEmailRouter();
 	// Lets members sign in with their KNVB-ID or real email instead of a generated username.
 	new \Rondo\Users\LoginResolver();
+	// Turns the Magic Login email form into the single login/activation entry point.
+	new \Rondo\Users\MagicLoginActivation();
 
 	// Skip loading heavy classes for non-relevant requests
 	$is_admin = is_admin();
@@ -278,6 +284,7 @@ function rondo_init() {
 
 	// Classes needed for content creation/editing (admin, REST, or cron)
 	if ( $is_admin || $is_rest || $is_cron ) {
+		new \Rondo\Narrowcasting\SportlinkMatchday();
 		new AutoTitle();
 		new PhoneNormalizer();
 		new VolunteerStatus();
@@ -316,6 +323,7 @@ function rondo_init() {
 		new Api();
 		new People();
 		new Teams();
+		new RESTSponsors();
 		new Commissies();
 		new Todos();
 		new RESTCustomFields();
@@ -334,6 +342,7 @@ function rondo_init() {
 		new RESTLettermint();
 		new RESTCapabilities();
 		new RESTFinanceSettings();
+		new RESTNarrowcasting();
 		new RabobankOAuth();
 		new RabobankPayment();
 		new MollieWebhook();
@@ -520,6 +529,7 @@ add_action( 'rest_api_init', 'rondo_migrate_options' );
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	require_once RONDO_PLUGIN_DIR . '/class-wp-cli.php';
 	\WP_CLI::add_command( 'rondo fields', \Rondo\Fields\FieldsCli::class );
+	\WP_CLI::add_command( 'rondo sponsors migrate', \Rondo\Sponsors\MigrationCli::class );
 	new TodoMigration();
 
 	// Class alias for backward compatibility
@@ -810,6 +820,36 @@ function rondo_render_manifest() {
 add_action( 'template_redirect', 'rondo_render_manifest', 0 );
 
 /**
+ * Serve the generated service worker from the site root.
+ *
+ * Browsers only allow a worker to control paths below its own directory unless
+ * the static response carries Service-Worker-Allowed. SiteGround did not apply
+ * the theme-level header reliably, so /sw.js is routed through WordPress and
+ * receives root scope naturally.
+ */
+function rondo_render_service_worker() {
+	if ( ! get_query_var( 'rondo_service_worker' ) ) {
+		return;
+	}
+
+	$worker_path = RONDO_THEME_DIR . '/dist/sw.js';
+	if ( ! is_readable( $worker_path ) ) {
+		status_header( 404 );
+		exit;
+	}
+
+	header( 'Content-Type: application/javascript; charset=utf-8' );
+	header( 'Cache-Control: no-cache, max-age=0, must-revalidate' );
+	header( 'Service-Worker-Allowed: /' );
+	header( 'X-Content-Type-Options: nosniff' );
+
+	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local generated build artifact.
+	echo file_get_contents( $worker_path ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JavaScript response body.
+	exit;
+}
+add_action( 'template_redirect', 'rondo_render_service_worker', 0 );
+
+/**
  * Build the manifest document.
  *
  * Separate from the route so it can be asserted on without exiting the request.
@@ -1002,6 +1042,8 @@ function rondo_theme_template_redirect() {
 		'commissies',
 		'dates',
 		'settings',
+		'narrowcasting',
+		'display',
 		'login',
 	];
 
@@ -1043,6 +1085,9 @@ function rondo_theme_rewrite_rules() {
 
 	// Web app manifest — served by rondo_render_manifest().
 	add_rewrite_rule( '^manifest\.webmanifest$', 'index.php?rondo_manifest=1', 'top' );
+
+	// Root-scoped service worker — served by rondo_render_service_worker().
+	add_rewrite_rule( '^sw\.js$', 'index.php?rondo_service_worker=1', 'top' );
 }
 add_action( 'init', 'rondo_theme_rewrite_rules' );
 
@@ -1054,6 +1099,7 @@ add_action( 'init', 'rondo_theme_rewrite_rules' );
  */
 function rondo_pwa_query_vars( $vars ) {
 	$vars[] = 'rondo_manifest';
+	$vars[] = 'rondo_service_worker';
 
 	return $vars;
 }
@@ -1071,7 +1117,7 @@ add_filter( 'query_vars', 'rondo_pwa_query_vars' );
  * Runs late on `init` so every add_rewrite_rule() call has already registered.
  */
 function rondo_maybe_flush_rewrite_rules() {
-	$rewrite_version = '3'; // Bump when adding/changing a rewrite rule.
+	$rewrite_version = '4'; // Bump when adding/changing a rewrite rule.
 	if ( get_option( 'rondo_rewrite_rules_version' ) === $rewrite_version ) {
 		return;
 	}

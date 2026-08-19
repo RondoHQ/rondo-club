@@ -1,12 +1,12 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { lazy, Suspense, useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Trash2, Mail, Phone,
   MapPin, Building2, Plus, Pencil, MessageCircle, X, Camera, Download,
   CheckSquare2, StickyNote, ExternalLink, Gavel, RefreshCw, CreditCard,
-  CalendarClock
+  CalendarClock, GitMerge
 } from 'lucide-react';
-import { usePerson, usePersonTimeline, useDeleteNote, useDeletePerson, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
+import { peopleKeys, usePerson, usePersonTimeline, useDeleteNote, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople, useAddParentRelationship } from '@/hooks/usePeople';
 import TimelineView from '@/components/Timeline/TimelineView';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
@@ -19,12 +19,15 @@ import TodoModal from '@/components/Timeline/TodoModal';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
 import ContactEditModal from '@/components/ContactEditModal';
 import RelationshipEditModal from '@/components/RelationshipEditModal';
+import ParentRelationshipModal from '@/components/ParentRelationshipModal';
 import AddressEditModal from '@/components/AddressEditModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import FinancesCard from '@/components/FinancesCard';
 import VOGCard from '@/components/VOGCard';
 import SportlinkCard from '@/components/SportlinkCard';
 import AccountCard from '@/components/AccountCard';
+import PersonSponsorRelationsCard from '@/components/PersonSponsorRelationsCard';
+import SponsorRelationshipModal from '@/components/SponsorRelationshipModal';
 import { format, formatStoredDateTime, parseYmd, differenceInYears } from '@/utils/dateFormat';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -36,6 +39,23 @@ import { getSocialIcon, getSocialIconColor, sortSocialLinks } from '@/utils/soci
 import TodoItem from '@/components/TodoItem.jsx';
 import TabButton from '@/components/TabButton.jsx';
 import { useClothingPersonProfile } from '@/hooks/useClothing';
+
+const PersonMergeModal = lazy(() => import('@/components/PersonMergeModal'));
+
+function ParentSyncBadge({ status }) {
+  if (!status) return null;
+  const presentation = status.state === 'synced'
+    ? { label: status.slot ? `Sportlink veld ${status.slot}` : 'In Sportlink', classes: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' }
+    : status.state === 'error'
+      ? { label: 'Sportlink-sync mislukt', classes: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' }
+      : { label: 'Wacht op Sportlink', classes: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' };
+
+  return (
+    <span className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[11px] font-medium ${presentation.classes}`} title={status.message || undefined}>
+      {presentation.label}
+    </span>
+  );
+}
 
 function PersonShiftItem({ shift }) {
   const status = shift.no_show
@@ -51,7 +71,7 @@ function PersonShiftItem({ shift }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-            {shift.dienst_type_name || shift.title}
+            {decodeHtml(shift.dienst_type_name || shift.title)}
           </p>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             {formatStoredDateTime(shift.start_datetime, 'EEEE d MMMM yyyy, HH:mm')}
@@ -157,10 +177,11 @@ export default function PersonDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: person, isLoading, error } = usePerson(id);
+  const { data: person, isLoading, error } = usePerson(id, {
+    refetchInterval: (query) => query.state.data?.parent_sync_statuses?.some(status => status.state === 'pending') ? 10000 : false,
+  });
   const { data: timeline } = usePersonTimeline(id);
   const deleteNote = useDeleteNote();
-  const deletePerson = useDeletePerson();
   const updatePerson = useUpdatePerson();
   const createNote = useCreateNote();
   const createActivity = useCreateActivity();
@@ -169,6 +190,7 @@ export default function PersonDetail() {
   const updateTodo = useUpdateTodo();
   const deleteActivity = useDeleteActivity();
   const deleteTodo = useDeleteTodo();
+  const addParentRelationship = useAddParentRelationship(id);
   const { data: allPeople, isLoading: isPeopleLoading } = usePeople();
 
   const handleRefresh = async () => {
@@ -187,17 +209,19 @@ export default function PersonDetail() {
   const canEditFinancieel = currentUser?.can_edit_financieel ?? false;
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
   const canAccessToegangscontrole = currentUser?.can_access_toegangscontrole ?? false;
+  const isAdmin = currentUser?.is_admin ?? window.rondoConfig?.isAdmin ?? false;
   const canEditAllPeople = currentUser?.can_edit_people ?? false;
   const canAccessPersonNotes = currentUser?.can_access_person_notes ?? false;
   const canManageSponsors = currentUser?.can_manage_sponsors ?? false;
-  const isSponsorPerson = hasSponsorRole(person?.fields);
+  const isSponsorPerson = person?.is_sponsor_contact || hasSponsorRole(person?.fields);
   const isDualRoleSponsor = isSponsorPerson && (person?.fields?.person_type || 'member') !== 'contact';
   let canEditPeople = canEditAllPeople || (canManageSponsors && isSponsorPerson && !isDualRoleSponsor);
   // Volunteer coordinators may correct contact details and photos on any person,
   // but nothing else — the server enforces the same field boundary.
   let canEditContact = canEditPeople || (currentUser?.can_edit_person_contact ?? false);
-  let canEditSponsorFields = canEditAllPeople || (canManageSponsors && isSponsorPerson);
-  const canSyncFromSportlink = (currentUser?.is_admin ?? window.rondoConfig?.isAdmin ?? false) || canAccessToegangscontrole;
+  let canEditPhoto = canEditContact;
+  let canEditAddress = canEditContact;
+  const canSyncFromSportlink = isAdmin || canAccessToegangscontrole;
 
   const { data: clothingProfile } = useClothingPersonProfile(id, {
     enabled: canAccessClothing && !!id,
@@ -239,6 +263,8 @@ export default function PersonDetail() {
   const [showTodoModal, setShowTodoModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showRelationshipModal, setShowRelationshipModal] = useState(false);
+  const [showParentRelationshipModal, setShowParentRelationshipModal] = useState(false);
+  const [showSponsorRelationshipModal, setShowSponsorRelationshipModal] = useState(false);
   const [isSavingContacts, setIsSavingContacts] = useState(false);
   const [isSavingRelationship, setIsSavingRelationship] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
@@ -247,11 +273,10 @@ export default function PersonDetail() {
   const [editingRelationshipIndex, setEditingRelationshipIndex] = useState(null);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [isSavingPersonType, setIsSavingPersonType] = useState(false);
-  const [isSavingSponsorPassVariant, setIsSavingSponsorPassVariant] = useState(false);
-  const [companyNameDraft, setCompanyNameDraft] = useState('');
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
   const [editingAddressIndex, setEditingAddressIndex] = useState(null);
+  const [showMergeModal, setShowMergeModal] = useState(false);
 
   // Complete todo flow states
   const [todoToComplete, setTodoToComplete] = useState(null);
@@ -261,10 +286,6 @@ export default function PersonDetail() {
 
   // Mobile todos panel state
   const [showMobileTodos, setShowMobileTodos] = useState(false);
-
-  useEffect(() => {
-    setCompanyNameDraft(person?.fields?.company_name || '');
-  }, [person?.fields?.company_name]);
 
   // Update document title with person's name - MUST be called before early returns
   // to ensure consistent hook calls on every render
@@ -305,6 +326,16 @@ export default function PersonDetail() {
   const handleSaveContacts = async (contactFields) => {
     setIsSavingContacts(true);
     try {
+      if (Object.hasOwn(contactFields, 'parent_phone')) {
+        const currentFields = person.fields || {};
+        const phoneField = ['mobile_1', 'telephone_1', 'mobile_2', 'telephone_2']
+          .find((field) => currentFields[field]) || 'telephone_1';
+        contactFields = {
+          email_1: contactFields.email_1,
+          [phoneField]: contactFields.parent_phone,
+        };
+      }
+
       const fieldData = sanitizePersonFields(person.fields, contactFields);
 
       await updatePerson.mutateAsync({
@@ -331,52 +362,6 @@ export default function PersonDetail() {
       alert('Persoonstype kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSavingPersonType(false);
-    }
-  };
-
-  const handleSponsorRoleChange = async (sponsorPassVariant) => {
-    setIsSavingSponsorPassVariant(true);
-    try {
-      const sponsorFields = sponsorPassVariant
-        ? { is_sponsor: true, sponsor_pass_variant: sponsorPassVariant }
-        : { is_sponsor: false, sponsor_pass_variant: null };
-      const fieldData = canEditAllPeople
-        ? sanitizePersonFields(person.fields, sponsorFields)
-        : sponsorFields;
-      await updatePerson.mutateAsync({ id, data: { fields: fieldData } });
-      window.location.reload();
-    } catch {
-      alert('Sponsorrol kon niet worden opgeslagen. Probeer het opnieuw.');
-    } finally {
-      setIsSavingSponsorPassVariant(false);
-    }
-  };
-
-  const handleDeleteSponsor = async () => {
-    if (!isSponsorPerson || isDualRoleSponsor || !confirm(`Weet je zeker dat je ${person?.name || 'deze sponsor'} definitief wilt verwijderen?`)) return;
-
-    try {
-      await deletePerson.mutateAsync(Number(id));
-      navigate('/people');
-    } catch (error) {
-      alert(error?.response?.data?.message || 'Sponsor kon niet worden verwijderd. Probeer het opnieuw.');
-    }
-  };
-
-  const handleCompanyNameSave = async () => {
-    const companyName = companyNameDraft.trim();
-    if (companyName === (person.fields?.company_name || '')) return;
-    if (!companyName && !person.fields?.first_name) {
-      alert('Vul een bedrijfsnaam of voornaam in.');
-      setCompanyNameDraft(person.fields?.company_name || '');
-      return;
-    }
-
-    try {
-      await updatePerson.mutateAsync({ id, data: { fields: { company_name: companyName } } });
-    } catch {
-      alert('Bedrijfsnaam kon niet worden opgeslagen. Probeer het opnieuw.');
-      setCompanyNameDraft(person.fields?.company_name || '');
     }
   };
 
@@ -418,6 +403,11 @@ export default function PersonDetail() {
     } finally {
       setIsSavingRelationship(false);
     }
+  };
+
+  const handleAddParentRelationship = async (data) => {
+    await addParentRelationship.mutateAsync(data);
+    setShowParentRelationshipModal(false);
   };
 
   // Handle deleting a relationship
@@ -988,6 +978,10 @@ export default function PersonDetail() {
     });
   }, [person?.fields?.relationships, personAgeMap]);
 
+  const parentSyncStatusMap = useMemo(() => new Map(
+    (person?.parent_sync_statuses || []).map(status => [Number(status.parent_id), status])
+  ), [person?.parent_sync_statuses]);
+
   // Create a map of entity ID to entity data (name, logo, type)
   const entityMap = {};
   entityQueries.forEach((query, index) => {
@@ -1231,16 +1225,20 @@ export default function PersonDetail() {
   const isFormerMember = fields.former_member === true;
   const isCurrentParent = person.is_current_parent === true;
 
-  // Former members are read-only — Sportlink rejects writes for their
-  // lidsoort ("Oud bondslid" / "Oud verenigingslid") so any UI edit
-  // would just generate doomed reverse-sync work. Backend enforces the
-  // same rule (rest_pre_insert_person filter); hiding edit affordances
-  // here just keeps users from trying.
+  // A former member's historical profile stays read-only because Sportlink
+  // rejects member-profile writes for former-member lidsoorten. A current
+  // parent is the exception for e-mail and phone: those values have their own
+  // reverse-sync path through the active child's parent/guardian slot.
   if (isFormerMember) {
     canEditPeople = false;
-    canEditContact = false;
-    canEditSponsorFields = false;
+    canEditContact = isCurrentParent && canEditContact;
+    canEditPhoto = false;
+    canEditAddress = false;
   }
+
+  const parentSyncPhone = isFormerMember && isCurrentParent
+    ? fields.mobile_1 || fields.telephone_1 || fields.mobile_2 || fields.telephone_2 || ''
+    : '';
 
   // Build contact display items from fixed fields
   const contactItems = [
@@ -1328,16 +1326,12 @@ export default function PersonDetail() {
             <Download className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Exporteer vCard</span>
           </button>
-          {isSponsorPerson && !isDualRoleSponsor && canEditPeople && (
-            <button
-              onClick={handleDeleteSponsor}
-              disabled={deletePerson.isPending}
-              className="btn-tertiary text-red-600 hover:text-red-700 dark:text-red-400"
-            >
-              <Trash2 className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">Sponsor verwijderen</span>
+          {isAdmin ? (
+            <button onClick={() => setShowMergeModal(true)} className="btn-tertiary" aria-label="Persoon samenvoegen">
+              <GitMerge className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Samenvoegen</span>
             </button>
-          )}
+          ) : null}
         </div>
       </div>
       {syncErrorMessage && (
@@ -1347,10 +1341,10 @@ export default function PersonDetail() {
       {isFormerMember && (
         <div className="mb-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
           <span className="font-medium">
-            {isCurrentParent ? 'Oud-lid én actuele ouder/verzorger — alleen-lezen.' : 'Oud-lid — alleen-lezen.'}
+            {isCurrentParent ? 'Oud-lid én actuele ouder/verzorger.' : 'Oud-lid — alleen-lezen.'}
           </span>{' '}
           {isCurrentParent
-            ? 'De historische lidmaatschapsgegevens blijven bewaard. Actuele contact- en adresgegevens worden bijgehouden via de oudergegevens van het kind in Sportlink.'
+            ? 'De historische lidmaatschapsgegevens blijven alleen-lezen. De primaire e-mail en telefoon kun je hier wijzigen; deze worden teruggesynchroniseerd naar de oudergegevens van het huidige kind of de huidige kinderen in Sportlink. Het adres wijzig je bij het kind.'
             : 'Sportlink staat geen contact- of profielwijzigingen toe voor de lidsoort van deze persoon (Oud bondslid / Oud verenigingslid), dus elke aanpassing zou alsnog door de sync afgewezen worden. Vraag een beheerder om eerst de oud-lid-status uit te zetten als je deze gegevens wilt aanpassen.'}
         </div>
       )}
@@ -1374,7 +1368,7 @@ export default function PersonDetail() {
               </div>
             )}
             {/* Upload overlay */}
-            {canEditContact && (
+            {canEditPhoto && (
               <>
                 <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center cursor-pointer"
                      onClick={() => fileInputRef.current?.click()}
@@ -1415,7 +1409,7 @@ export default function PersonDetail() {
               )}
               {isSponsorPerson && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300">
-                  Sponsor
+                  Sponsorcontact
                 </span>
               )}
               {!fields.former_member && hasValidLidTot && new Date(fields['lid_tot']) > new Date() && (
@@ -1437,55 +1431,21 @@ export default function PersonDetail() {
             {fields.company_name && personalName && (
               <p className="text-base text-gray-600 dark:text-gray-300">{fields.company_name}</p>
             )}
-            {(canEditAllPeople || canEditSponsorFields) && (
+            {canEditAllPeople && (
               <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-                {canEditAllPeople && (
-                  <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                    <span>Persoonstype</span>
-                    <select
-                      value={fields.person_type || 'member'}
-                      onChange={(event) => handlePersonTypeChange(event.target.value)}
-                      className="input py-1 text-sm w-auto"
-                      disabled={isSavingPersonType}
-                    >
-                      <option value="member">Lid / ouder</option>
-                      <option value="contact">Contact</option>
-                    </select>
-                  </label>
-                )}
-                {(canEditAllPeople || canEditSponsorFields) && (
-                  <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                    <span>Sponsorrol</span>
-                    <select
-                      value={isSponsorPerson ? (fields.sponsor_pass_variant || '') : ''}
-                      onChange={(event) => handleSponsorRoleChange(event.target.value)}
-                      className="input py-1 text-sm w-auto"
-                      disabled={isSavingSponsorPassVariant}
-                    >
-                      {canEditAllPeople && <option value="">Geen sponsor</option>}
-                      <option value="businessclub">Businessclub AWC</option>
-                      <option value="awc_sponsor">AWC Sponsor</option>
-                    </select>
-                  </label>
-                )}
+                <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                  <span>Persoonstype</span>
+                  <select
+                    value={fields.person_type || 'member'}
+                    onChange={(event) => handlePersonTypeChange(event.target.value)}
+                    className="input py-1 text-sm w-auto"
+                    disabled={isSavingPersonType}
+                  >
+                    <option value="member">Lid / ouder</option>
+                    <option value="contact">Contact</option>
+                  </select>
+                </label>
               </div>
-            )}
-            {isSponsorPerson && canEditSponsorFields && (
-              <label className="block max-w-sm text-sm text-gray-500 dark:text-gray-400">
-                <span className="mb-1 block">Bedrijfsnaam</span>
-                <input
-                  type="text"
-                  value={companyNameDraft}
-                  onChange={(event) => setCompanyNameDraft(event.target.value)}
-                  onBlur={handleCompanyNameSave}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') event.currentTarget.blur();
-                  }}
-                  className="input py-1 text-sm"
-                  placeholder="Voorbeeld BV"
-                  disabled={updatePerson.isPending}
-                />
-              </label>
             )}
             {groupedPositions.length > 0 && (
               <p className="text-base text-gray-600 dark:text-gray-300">
@@ -1714,7 +1674,7 @@ export default function PersonDetail() {
               <div className="card p-6">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="font-semibold text-brand-gradient">Adressen</h2>
-                  {canEditContact && (
+                  {canEditAddress && (
                     <button
                       onClick={() => {
                         setEditingAddress(null);
@@ -1757,7 +1717,7 @@ export default function PersonDetail() {
                               ))}
                             </a>
                           </div>
-                          {canEditContact && (
+                          {canEditAddress && (
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                               <button
                                 onClick={() => {
@@ -1785,7 +1745,7 @@ export default function PersonDetail() {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500 text-center py-4">
-                    Nog geen adressen.{canEditContact && <> <button onClick={() => { setEditingAddress(null); setEditingAddressIndex(null); setShowAddressModal(true); }} className="text-electric-cyan hover:underline">Toevoegen</button></>}
+                    Nog geen adressen.{canEditAddress && <> <button onClick={() => { setEditingAddress(null); setEditingAddressIndex(null); setShowAddressModal(true); }} className="text-electric-cyan hover:underline">Toevoegen</button></>}
                   </p>
                 )}
               </div>
@@ -1816,17 +1776,17 @@ export default function PersonDetail() {
             <SportlinkCard fieldData={person?.fields} metaData={person?.meta} primaryTeam={sportlinkPrimaryTeam} />
 
             {/* Keep the card available for editable people so the first relationship can be added. */}
-            {(canEditPeople || sortedRelationships?.length > 0) && (
+            {(canEditPeople || canManageSponsors || sortedRelationships?.length > 0 || person?.sponsor_relationships?.length > 0) && (
             <div className="card p-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold text-brand-gradient">Relaties</h2>
-                {canEditPeople && (
+                {(canEditPeople || canManageSponsors) && (
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => {
                         setEditingRelationship(null);
                         setEditingRelationshipIndex(null);
-                        setShowRelationshipModal(true);
+                        setShowParentRelationshipModal(true);
                       }}
                       className="btn-tertiary text-sm"
                       title="Relatie toevoegen"
@@ -1863,6 +1823,7 @@ export default function PersonDetail() {
                             )}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">{decodeHtml(rel.relationship_name || rel.relationship_label)}</p>
+                          <ParentSyncBadge status={parentSyncStatusMap.get(Number(rel.related_person_id))} />
                         </div>
                       </Link>
                       {canEditPeople && (
@@ -1891,6 +1852,7 @@ export default function PersonDetail() {
                     </div>
                   );
                 })}
+                <PersonSponsorRelationsCard person={person} canManage={canManageSponsors} />
               </div>
             </div>
             )}
@@ -2318,7 +2280,7 @@ export default function PersonDetail() {
             todo={editingTodo}
           />
           
-          {canEditPeople && (
+          {canEditContact && (
             <ContactEditModal
               isOpen={showContactModal}
               onClose={() => setShowContactModal(false)}
@@ -2330,6 +2292,37 @@ export default function PersonDetail() {
               mobile2={fields.mobile_2 || ''}
               telephone1={fields.telephone_1 || ''}
               telephone2={fields.telephone_2 || ''}
+              parentSlotMode={isFormerMember && isCurrentParent}
+              parentPhone={parentSyncPhone}
+            />
+          )}
+
+          {(canEditPeople || canManageSponsors) && (
+            <ParentRelationshipModal
+              isOpen={showParentRelationshipModal}
+              onClose={() => setShowParentRelationshipModal(false)}
+              onSubmit={handleAddParentRelationship}
+              onAddPerson={canEditPeople ? () => {
+                setShowParentRelationshipModal(false);
+                setShowRelationshipModal(true);
+              } : undefined}
+              onAddSponsor={canManageSponsors ? () => {
+                setShowParentRelationshipModal(false);
+                setShowSponsorRelationshipModal(true);
+              } : undefined}
+              canAddParent={Boolean(canEditPeople && currentUser?.can_access_ledenadministratie && person?.fields?.knvb_id)}
+              isLoading={addParentRelationship.isPending}
+              personId={id}
+              allPeople={allPeople || []}
+              isPeopleLoading={isPeopleLoading}
+            />
+          )}
+
+          {canManageSponsors && (
+            <SponsorRelationshipModal
+              isOpen={showSponsorRelationshipModal}
+              onClose={() => setShowSponsorRelationshipModal(false)}
+              person={person}
             />
           )}
 
@@ -2350,7 +2343,7 @@ export default function PersonDetail() {
             />
           )}
 
-          {canEditPeople && (
+          {canEditAddress && (
             <AddressEditModal
               isOpen={showAddressModal}
               onClose={() => {
@@ -2363,6 +2356,23 @@ export default function PersonDetail() {
               address={editingAddress}
             />
           )}
+
+          {showMergeModal ? (
+            <Suspense fallback={null}>
+              <PersonMergeModal
+                currentPerson={person}
+                onClose={() => setShowMergeModal(false)}
+                onMerged={async (personId) => {
+                  setShowMergeModal(false);
+                  if (Number(personId) !== Number(id)) {
+                    navigate(`/people/${personId}`, { replace: true });
+                    return;
+                  }
+                  await queryClient.invalidateQueries({ queryKey: peopleKeys.detail(id) });
+                }}
+              />
+            </Suspense>
+          ) : null}
 
       </div>
     </PullToRefreshWrapper>

@@ -76,7 +76,9 @@ class MembershipPassApple {
 		$details           = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
 		$team_name         = $details['teams'] !== '' ? $details['teams'] : '-';
 		$functions         = $details['functions'] !== '' ? $details['functions'] : '-';
-		$company_name      = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
+		$company_name      = $is_sponsor
+			? PublicMembershipPassPage::get_sponsor_company_name( $person_id )
+			: trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
 		$organization_name = $this->get_organization_name();
 		$card_title        = $this->get_card_title( $organization_name, $member_tier, $sponsor_pass_variant );
 		$card_fields       = $this->get_card_fields( $member_tier, $team_name, $functions, $company_name, $knvb_id, $season );

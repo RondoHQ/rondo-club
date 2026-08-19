@@ -235,16 +235,16 @@ async function fetchAllTeams() {
   }));
 }
 
-async function fetchKaderPeople() {
+async function fetchKaderPeople(refresh = false) {
   // Scoped, kader-only person list. The server enforces visibility (management
   // sees all kader, a coordinator sees the kader of the teams they coordinate,
   // a member sees their own household) and returns only the rendered fields.
-  const response = await prmApi.getKaderlijstPeople();
+  const response = await prmApi.getKaderlijstPeople(refresh ? { refresh: true } : {});
   return Array.isArray(response.data?.people) ? response.data.people : [];
 }
 
-async function buildKaderlijst() {
-  const [teams, people] = await Promise.all([fetchAllTeams(), fetchKaderPeople()]);
+async function buildKaderlijst(refresh = false) {
+  const [teams, people] = await Promise.all([fetchAllTeams(), fetchKaderPeople(refresh)]);
   const teamsById = new Map(teams.map((team) => [team.id, team]));
 
   const rows = [];
@@ -446,21 +446,28 @@ export default function Kaderlijst() {
       ),
       filterType: FILTER_TYPES.TEXT,
       filterLabel: 'Voornaam',
-      sortable: false,
+      sortingFn: (rowA, rowB) => {
+        const firstNameCompare = collator.compare(rowA.original.firstName, rowB.original.firstName);
+        return firstNameCompare !== 0 ? firstNameCompare : collator.compare(rowA.original.lastName, rowB.original.lastName);
+      },
       size: 140,
     }),
     createColumn({
       id: 'surname',
       header: 'Achternaam',
-      accessorFn: (row) => row.surname,
+      accessorFn: (row) => row.lastName,
       cell: ({ row }) => (
         <Link to={`/people/${row.original.personId}`} className="font-medium text-gray-900 dark:text-gray-100 hover:text-electric-cyan dark:hover:text-electric-cyan">
           {row.original.surname}
         </Link>
       ),
       filterType: FILTER_TYPES.TEXT,
+      filterFn: (row, _columnId, value) => row.original.surname.toLocaleLowerCase('nl').includes(String(value || '').toLocaleLowerCase('nl')),
       filterLabel: 'Achternaam',
-      sortable: false,
+      sortingFn: (rowA, rowB) => {
+        const surnameCompare = collator.compare(rowA.original.lastName, rowB.original.lastName);
+        return surnameCompare !== 0 ? surnameCompare : collator.compare(rowA.original.firstName, rowB.original.firstName);
+      },
       size: 180,
     }),
     createColumn({
@@ -523,7 +530,7 @@ export default function Kaderlijst() {
             onClick={async () => {
               setIsRefreshing(true);
               try {
-                const rebuilt = await buildKaderlijst();
+                const rebuilt = await buildKaderlijst(true);
                 queryClient.setQueryData(['kaderlijst'], rebuilt);
               } finally {
                 setIsRefreshing(false);

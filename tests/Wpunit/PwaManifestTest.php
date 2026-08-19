@@ -79,6 +79,13 @@ class PwaManifestTest extends RondoTestCase {
 		$this->assertSame( '/', $manifest['id'] );
 	}
 
+	public function test_public_pwa_routes_have_query_vars(): void {
+		$vars = rondo_pwa_query_vars( [] );
+
+		$this->assertContains( 'rondo_manifest', $vars );
+		$this->assertContains( 'rondo_service_worker', $vars );
+	}
+
 	public function test_declares_the_icon_sizes_chrome_requires(): void {
 		$manifest = $this->render_manifest();
 

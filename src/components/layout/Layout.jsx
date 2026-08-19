@@ -5,6 +5,7 @@ import {
   Users,
   Award,
   Building2,
+  Shield,
   Settings,
   Menu,
   X,
@@ -29,8 +30,11 @@ import {
   HeartHandshake,
   Wine,
   CalendarClock,
+  ClipboardList,
   BookOpen,
-  ChevronRight
+  ChevronRight,
+  MonitorPlay,
+  ChartPie
 } from 'lucide-react';
 
 // Wordmark URLs from theme directory.
@@ -49,31 +53,34 @@ import { useDisciplineCasesCount } from '@/hooks/useDisciplineCases';
 import { prmApi } from '@/api/client';
 
 const navigation = [
-  { name: 'Mijn inschrijftaken', href: '/vrijwillig', icon: HeartHandshake },
-  { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, memberOnly: true },
+  { name: 'Mijn inschrijftaken', href: '/vrijwillig', icon: HeartHandshake, personal: true },
+  { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, memberOnly: true, personal: true },
   { name: 'Dashboard', href: '/', icon: Home, requiresKader: true },
   { name: 'Relaties', href: '/people', icon: Users, requiresKader: true },
   { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
   { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true, requiresKader: true },
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
-  { name: 'Teams', href: '/teams', icon: Building2, requiresKader: true },
+  { name: 'Sponsoren', href: '/sponsors', icon: Building2, requiresSponsors: true },
+  { name: 'Teams', href: '/teams', icon: Shield, requiresKader: true },
   { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true, requiresKader: true },
   { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true },
   { name: 'Commissies', href: '/commissies', icon: UsersRound, requiresKader: true },
   { name: 'Vrijwilligers', href: '/vrijwilligers', icon: HeartHandshake, requiresVrijwilligers: true },
   { name: 'VOG', href: '/vrijwilligers/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'IVA', href: '/vrijwilligers/iva', icon: Wine, indent: true, requiresVrijwilligers: true },
-  { name: 'Inschrijftaken', href: '/vrijwilligers/diensten', icon: CalendarClock, indent: true, requiresVrijwilligers: true },
+  { name: 'Beheer inschrijftaken', href: '/vrijwilligers/diensten', icon: CalendarClock, indent: true, requiresVrijwilligers: true },
+  { name: 'Aanmeldingen', href: '/vrijwilligers/aanmeldingen', icon: ClipboardList, indent: true, requiresVrijwilligers: true },
   { name: 'Taakuitleg', href: '/vrijwilligers/taakuitleg', icon: BookOpen, indent: true, requiresVrijwilligers: true },
   { name: 'Vrijstellingen', href: '/vrijwilligers/vrijstellingen', icon: UsersRound, indent: true, requiresVrijwilligers: true },
+  { name: 'Statistieken', href: '/vrijwilligers/statistieken', icon: ChartPie, indent: true, requiresVrijwilligers: true },
   { name: 'Financiën', href: '/financien', icon: Wallet, requiresFinancieel: true },
   { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true },
   { name: 'Lidpas Scanner', href: '/lidpas-scanner', icon: QrCode, requiresToegangscontrole: true, mobileOnly: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare, requiresKader: true },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare, requiresKader: true },
+  { name: 'Club TV', href: '/narrowcasting', icon: MonitorPlay, requiresNarrowcasting: true },
   { name: 'Instellingen', href: '/settings', icon: Settings, requiresKader: true },
-  { name: 'Profiel', href: '/profile', icon: User },
 ];
 
 function Sidebar({ mobile = false, onClose, stats }) {
@@ -91,6 +98,8 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
   const canAccessLedenadministratie = currentUser?.can_access_ledenadministratie ?? false;
   const canAccessVrijwilligers = currentUser?.can_access_vrijwilligers ?? false;
+  const canAccessNarrowcasting = currentUser?.can_access_narrowcasting ?? false;
+  const canManageSponsors = currentUser?.can_manage_sponsors ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
   const sidebarUserName = currentUser?.linked_person_name || currentUser?.name || '';
 
@@ -199,14 +208,19 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresClothing && !canAccessClothing) return false;
     if (item.requiresLedenadministratie && !canAccessLedenadministratie) return false;
     if (item.requiresVrijwilligers && !canAccessVrijwilligers) return false;
+    if (item.requiresNarrowcasting && !canAccessNarrowcasting) return false;
+    if (item.requiresSponsors && !canManageSponsors) return false;
     if (item.requiresKader && !isKader) return false;
     // Kader normally does not need the member-facing household page.
     if (item.memberOnly && isKader) return false;
     return true;
   });
 
+  const personalNav = visibleNav.filter((item) => item.personal);
+  const clubNav = visibleNav.filter((item) => !item.personal);
+
   const navGroups = [];
-  for (const item of visibleNav) {
+  for (const item of clubNav) {
     if (item.indent && navGroups.length > 0) {
       navGroups[navGroups.length - 1].children.push(item);
     } else {
@@ -280,6 +294,16 @@ function Sidebar({ mobile = false, onClose, stats }) {
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+        {personalNav.length > 0 && (
+          <div className="pb-4 mb-3 space-y-1 border-b border-gray-200 dark:border-gray-700">
+            <div className="px-3 pb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
+              Persoonlijk
+            </div>
+            {personalNav.map((item) => (
+              <div key={item.href || item.name}>{renderItem(item)}</div>
+            ))}
+          </div>
+        )}
         {navGroups.map(({ parent, children }) => {
           // Top-level item with no sub-items: render as-is.
           if (children.length === 0) {
@@ -335,7 +359,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
             )}
           </div>
         ) : (
-          <Link to="/profile" className="flex items-center gap-3 px-1 mb-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+          <Link to="/profile" className="flex items-center gap-3 px-1 py-1 mb-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             {currentUser?.linked_person_photo ? (
               <img
                 src={currentUser.linked_person_photo}
@@ -348,8 +372,11 @@ function Sidebar({ mobile = false, onClose, stats }) {
               </div>
             )}
             {sidebarUserName && (
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                {sidebarUserName}
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                  {sidebarUserName}
+                </span>
+                <span className="block text-xs text-gray-500 dark:text-gray-400">Profiel</span>
               </span>
             )}
           </Link>
@@ -675,6 +702,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
     if (path.startsWith('/people/jubilarissen')) return 'Jubilarissen';
     if (path.startsWith('/people/onboarding')) return 'Onboarding';
     if (path.startsWith('/people')) return 'Relaties';
+    if (path.startsWith('/sponsors')) return 'Sponsoren';
     if (path === '/financien' || path === '/financien/') return 'Financiën';
     if (path.startsWith('/financien/contributie')) return 'Contributie';
     if (path.startsWith('/financien/facturen')) return 'Facturen';

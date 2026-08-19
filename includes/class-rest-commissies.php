@@ -7,11 +7,28 @@
 
 namespace Rondo\REST;
 
+use InvalidArgumentException;
+use Rondo\Core\UserRoles;
+use Rondo\Fields\Fields;
+use Rondo\Fields\Formatter;
+use Rondo\Fields\RestFields;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 class Commissies extends Base {
+
+	/** Rondo-local fields that the board may maintain independently of Sportlink. */
+	private const LOCAL_INFO_FIELDS = [
+		'lange_omschrijving',
+		'taakomschrijving',
+		'uren_aantal',
+		'uren_periode',
+		'dagen_flexibel',
+		'max_leden',
+		'max_wachtlijst',
+	];
 
 	/**
 	 * Post type for sharing permission checks.
@@ -32,6 +49,22 @@ class Commissies extends Base {
 	 * Register custom REST routes for commissies domain
 	 */
 	public function register_routes() {
+		// Rondo-local commissie information. Core identity remains read-only.
+		register_rest_route(
+			'rondo/v1',
+			'/commissies/(?P<commissie_id>\d+)/info',
+			[
+				'methods'             => \WP_REST_Server::EDITABLE,
+				'callback'            => [ $this, 'update_commissie_info' ],
+				'permission_callback' => [ $this, 'check_commissie_info_edit_permission' ],
+				'args'                => [
+					'commissie_id' => [
+						'validate_callback' => static fn( $param ) => is_numeric( $param ),
+					],
+				],
+			]
+		);
+
 		// People by commissie
 		register_rest_route(
 			'rondo/v1',
@@ -117,6 +150,80 @@ class Commissies extends Base {
 				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => [ $this, 'remove_share' ],
 				'permission_callback' => [ $this, 'check_post_owner' ],
+			]
+		);
+	}
+
+	/**
+	 * Check whether the current user may edit local commissie information.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return bool
+	 */
+	public function check_commissie_info_edit_permission( $request ): bool {
+		$commissie = get_post( (int) $request->get_param( 'commissie_id' ) );
+
+		return $commissie
+			&& $commissie->post_type === 'commissie'
+			&& UserRoles::can_manage_commissie_info();
+	}
+
+	/**
+	 * Update only the Rondo-local information fields of a commissie.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function update_commissie_info( $request ) {
+		$commissie_id = (int) $request->get_param( 'commissie_id' );
+		$fields       = $request->get_param( 'fields' );
+
+		if ( ! is_array( $fields ) ) {
+			return new \WP_Error(
+				'rondo_invalid_commissie_info',
+				__( 'The fields payload must be an object.', 'rondo' ),
+				[
+					'status' => 400,
+					'field'  => 'fields',
+				]
+			);
+		}
+
+		foreach ( array_keys( $fields ) as $field_name ) {
+			if ( ! in_array( $field_name, self::LOCAL_INFO_FIELDS, true ) ) {
+				return new \WP_Error(
+					'rondo_invalid_commissie_info',
+					__( 'Only Rondo-local commissie information can be changed here.', 'rondo' ),
+					[
+						'status' => 400,
+						'field'  => 'fields.' . $field_name,
+					]
+				);
+			}
+		}
+
+		try {
+			$normalized = Formatter::for_storage( 'commissie', $fields );
+		} catch ( InvalidArgumentException $error ) {
+			return new \WP_Error(
+				'rondo_invalid_commissie_info',
+				__( 'Invalid commissie information.', 'rondo' ),
+				[
+					'status' => 400,
+					'detail' => $error->getMessage(),
+				]
+			);
+		}
+
+		$result = Fields::update_many_for_post( $commissie_id, $normalized );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return rest_ensure_response(
+			[
+				'id'     => $commissie_id,
+				'fields' => RestFields::for_post( 'commissie', $commissie_id ),
 			]
 		);
 	}

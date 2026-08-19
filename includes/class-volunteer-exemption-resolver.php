@@ -36,6 +36,75 @@ class VolunteerExemptionResolver {
 	const REASON_MANUAL    = 'handmatig';
 
 	/**
+	 * Partition obligation units into active and exempt groups.
+	 *
+	 * Keeping this policy here gives the dashboard and statistics the same net
+	 * workload without duplicating the family-wide exemption rules.
+	 *
+	 * @param array<int, array<string, mixed>> $units  Eligibility units.
+	 * @param string                           $season Sports season.
+	 * @return array{
+	 *   active: array<int, array<string, mixed>>,
+	 *   exempt: array<int, array<string, mixed>>,
+	 *   required_count: int
+	 * }
+	 */
+	public static function partition_units( array $units, string $season ): array {
+		$active         = [];
+		$exempt         = [];
+		$required_count = 0;
+
+		foreach ( $units as $unit ) {
+			$unit = self::sanitize_unit_person_ids( $unit );
+			if ( $unit === null ) {
+				continue;
+			}
+
+			if ( self::resolve_unit( $unit, $season ) !== null ) {
+				$exempt[] = $unit;
+				continue;
+			}
+
+			$active[]        = $unit;
+			$required_count += max( 0, (int) ( $unit['required_count'] ?? 0 ) );
+		}
+
+		return [
+			'active'         => $active,
+			'exempt'         => $exempt,
+			'required_count' => $required_count,
+		];
+	}
+
+	/**
+	 * Remove stale person references from a cached eligibility unit.
+	 *
+	 * @param array<string, mixed> $unit Eligibility unit.
+	 * @return array<string, mixed>|null
+	 */
+	private static function sanitize_unit_person_ids( array $unit ): ?array {
+		$person_ids = array_values(
+			array_filter(
+				array_map( 'intval', (array) ( $unit['person_ids'] ?? [] ) ),
+				static fn( int $person_id ): bool => $person_id > 0 && get_post_type( $person_id ) === 'person' && get_post_status( $person_id ) !== 'trash'
+			)
+		);
+		if ( empty( $person_ids ) ) {
+			return null;
+		}
+
+		$unit['person_ids']         = $person_ids;
+		$unit['trigger_person_ids'] = array_values(
+			array_intersect(
+				$person_ids,
+				array_map( 'intval', (array) ( $unit['trigger_person_ids'] ?? [] ) )
+			)
+		);
+
+		return $unit;
+	}
+
+	/**
 	 * Determine whether a person is exempt from the 2-diensten-plicht for a given season.
 	 *
 	 * @param int    $person_id Person post ID.
@@ -56,7 +125,11 @@ class VolunteerExemptionResolver {
 	 * @return string|null One of self::REASON_* or null when the person owes diensten.
 	 */
 	public static function resolve( int $person_id, string $season ): ?string {
-		if ( $person_id <= 0 ) {
+		if (
+			$person_id <= 0
+			|| get_post_type( $person_id ) !== 'person'
+			|| get_post_status( $person_id ) === 'trash'
+		) {
 			return null;
 		}
 
@@ -153,10 +226,8 @@ class VolunteerExemptionResolver {
 			return false;
 		}
 
-		$today = gmdate( 'Y-m-d', strtotime( '+1 day' ) );
-
 		foreach ( $work_history as $position ) {
-			if ( ! self::is_position_current( $position, $today ) ) {
+			if ( ! VolunteerStatus::is_position_current( $position ) ) {
 				continue;
 			}
 
@@ -193,10 +264,8 @@ class VolunteerExemptionResolver {
 			return false;
 		}
 
-		$today = gmdate( 'Y-m-d', strtotime( '+1 day' ) );
-
 		foreach ( $work_history as $position ) {
-			if ( ! self::is_position_current( $position, $today ) ) {
+			if ( ! VolunteerStatus::is_position_current( $position ) ) {
 				continue;
 			}
 
@@ -250,24 +319,6 @@ class VolunteerExemptionResolver {
 		}
 
 		return $stored === $season;
-	}
-
-	/**
-	 * Mirror of VolunteerStatus::is_position_current() — duplicated locally so
-	 * this resolver has no friend-method dependency. Kept in sync by convention.
-	 */
-	private static function is_position_current( array $position, string $today ): bool {
-		if ( ! empty( $position['is_current'] ) ) {
-			return true;
-		}
-
-		$end_date = (string) ( $position['end_date'] ?? '' );
-
-		if ( $end_date === '' ) {
-			return ! empty( $position['start_date'] ) || ! empty( $position['team'] );
-		}
-
-		return $end_date >= $today;
 	}
 
 	/**

@@ -115,6 +115,30 @@ class NativeFieldStorageTest extends RondoTestCase {
 		$this->assertSame( 0, $updates );
 	}
 
+	public function test_explicit_scalar_default_is_materialized_without_firing_update_actions(): void {
+		$shift_id = self::factory()->post->create(
+			[
+				'post_type'   => 'dienst_shift',
+				'post_status' => 'publish',
+			]
+		);
+		$updates  = 0;
+		$listener = static function ( int $saved_post_id ) use ( $shift_id, &$updates ): void {
+			if ( $saved_post_id === $shift_id ) {
+				++$updates;
+			}
+		};
+		add_action( 'rondo_fields_updated', $listener, 99, 1 );
+
+		$result = Fields::update_for_post( $shift_id, 'status', 'open' );
+
+		remove_action( 'rondo_fields_updated', $listener, 99 );
+		$this->assertTrue( $result );
+		$this->assertTrue( metadata_exists( 'post', $shift_id, 'status' ) );
+		$this->assertSame( 'open', get_post_meta( $shift_id, 'status', true ) );
+		$this->assertSame( 0, $updates );
+	}
+
 	public function test_internal_date_and_false_writes_keep_acf_storage_shape(): void {
 		$person_id = $this->createPerson();
 

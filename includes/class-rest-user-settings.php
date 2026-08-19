@@ -16,19 +16,39 @@ class UserSettings extends Base {
 
 	/**
 	 * Default visible columns for People list.
-	 * Name column is always visible and first — not included here.
+	 * Person name parts are regular columns so users can select and order them.
 	 */
-	private const DEFAULT_LIST_COLUMNS = [ 'team', 'birthdate', 'modified' ];
+	private const DEFAULT_LIST_COLUMNS = [ 'first_name', 'last_name', 'company_name', 'characteristics', 'team', 'birthdate', 'modified' ];
 
 	/**
 	 * List preferences schema version. Bump when new default columns are added.
 	 */
-	private const LIST_PREFERENCES_VERSION = 3;
+	private const LIST_PREFERENCES_VERSION = 5;
 
 	/**
 	 * Core columns (non-custom-field columns).
 	 */
 	private const CORE_LIST_COLUMNS = [
+		[
+			'id'    => 'first_name',
+			'label' => 'Voornaam',
+			'type'  => 'core',
+		],
+		[
+			'id'    => 'last_name',
+			'label' => 'Achternaam',
+			'type'  => 'core',
+		],
+		[
+			'id'    => 'company_name',
+			'label' => 'Organisatie',
+			'type'  => 'core',
+		],
+		[
+			'id'    => 'characteristics',
+			'label' => 'Kenmerken',
+			'type'  => 'core',
+		],
 		[
 			'id'    => 'email',
 			'label' => 'E-mail',
@@ -763,8 +783,31 @@ class UserSettings extends Base {
 		if ( $preferences_version < self::LIST_PREFERENCES_VERSION ) {
 			if ( in_array( 'birthdate', $valid_column_ids, true ) && ! in_array( 'birthdate', $visible_columns, true ) ) {
 				$visible_columns[] = 'birthdate';
-				update_user_meta( $user_id, 'rondo_people_list_preferences', $visible_columns );
 			}
+			if ( in_array( 'characteristics', $valid_column_ids, true ) && ! in_array( 'characteristics', $visible_columns, true ) ) {
+				array_unshift( $visible_columns, 'characteristics' );
+			}
+			if ( $preferences_version < 5 ) {
+				$visible_columns = array_values( array_diff( $visible_columns, [ 'name' ] ) );
+				$column_order    = array_values( array_diff( $column_order, [ 'name', 'first_name', 'last_name', 'company_name' ] ) );
+				foreach ( array_reverse( [ 'first_name', 'last_name', 'company_name' ] ) as $name_column ) {
+					if ( in_array( $name_column, $valid_column_ids, true ) && ! in_array( $name_column, $visible_columns, true ) ) {
+						array_unshift( $visible_columns, $name_column );
+					}
+					if ( in_array( $name_column, $valid_column_ids, true ) ) {
+						array_unshift( $column_order, $name_column );
+					}
+				}
+				if ( is_array( $column_widths ) && isset( $column_widths['name'] ) ) {
+					$name_width                    = (int) $column_widths['name'];
+					$column_widths['first_name'] ??= max( 120, (int) floor( $name_width * 0.45 ) );
+					$column_widths['last_name']  ??= max( 150, (int) ceil( $name_width * 0.55 ) );
+					unset( $column_widths['name'] );
+					update_user_meta( $user_id, 'rondo_people_list_column_widths', $column_widths );
+				}
+				update_user_meta( $user_id, 'rondo_people_list_column_order', $column_order );
+			}
+			update_user_meta( $user_id, 'rondo_people_list_preferences', $visible_columns );
 			update_user_meta( $user_id, 'rondo_people_list_pref_version', self::LIST_PREFERENCES_VERSION );
 		}
 
@@ -1130,6 +1173,7 @@ class UserSettings extends Base {
 			|| current_user_can( 'manage_clothing' )
 			|| current_user_can( 'ledenadministratie' )
 			|| current_user_can( 'sponsorbeheer' )
+			|| current_user_can( 'narrowcasting' )
 			|| current_user_can( 'vrijwilligers' );
 
 		$person_id           = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
@@ -1166,10 +1210,13 @@ class UserSettings extends Base {
 			'can_edit_people'               => \Rondo\Core\AccessControl::can_edit_people(),
 			'can_edit_person_contact'       => \Rondo\Core\AccessControl::can_edit_person_contact(),
 			'can_manage_sponsors'           => \Rondo\Core\AccessControl::can_manage_sponsors(),
+			'can_access_narrowcasting'      => current_user_can( 'narrowcasting' ) || current_user_can( 'sponsorbeheer' ) || $is_admin,
+			'can_manage_narrowcasting'      => current_user_can( 'narrowcasting' ) || $is_admin,
 			'can_access_fairplay'           => current_user_can( 'fairplay' ),
 			'can_access_vog'                => current_user_can( 'vog' ),
 			'can_access_financieel'         => \Rondo\Core\UserRoles::can_view_finances(),
 			'can_edit_financieel'           => \Rondo\Core\UserRoles::can_manage_finances(),
+			'can_edit_commissie_info'       => \Rondo\Core\UserRoles::can_manage_commissie_info(),
 			'can_access_toegangscontrole'   => current_user_can( 'toegangscontrole' ),
 			'can_access_clothing'           => current_user_can( 'manage_clothing' ) || current_user_can( 'manage_options' ),
 			'can_access_ledenadministratie' => current_user_can( 'ledenadministratie' ) || current_user_can( 'manage_options' ),

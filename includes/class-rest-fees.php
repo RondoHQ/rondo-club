@@ -574,8 +574,9 @@ class Fees extends Base {
 
 			$result = [
 				'id'                     => $person_id,
-				'first_name'             => get_post_meta( $person_id, 'first_name', true ) ?: '',
-				'last_name'              => get_post_meta( $person_id, 'last_name', true ) ?: '',
+				'first_name'             => \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '',
+				'infix'                  => \Rondo\Fields\Fields::get_for_post( $person_id, 'infix' ) ?: '',
+				'last_name'              => \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '',
 				'category'               => $fee_data['category'],
 				'leeftijdsgroep'         => $fee_data['leeftijdsgroep'] ?? null,
 				'base_fee'               => $fee_data['base_fee'],
@@ -624,8 +625,9 @@ class Fees extends Base {
 
 			$result = [
 				'id'                     => $person_id,
-				'first_name'             => get_post_meta( $person_id, 'first_name', true ) ?: '',
-				'last_name'              => get_post_meta( $person_id, 'last_name', true ) ?: '',
+				'first_name'             => \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '',
+				'infix'                  => \Rondo\Fields\Fields::get_for_post( $person_id, 'infix' ) ?: '',
+				'last_name'              => \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '',
 				'category'               => $fee_data['category'],
 				'leeftijdsgroep'         => $fee_data['leeftijdsgroep'] ?? null,
 				'base_fee'               => $fee_data['base_fee'],

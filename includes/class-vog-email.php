@@ -46,6 +46,11 @@ class VOGEmail {
 	const OPTION_EXEMPT_COMMISSIES = 'rondo_vog_exempt_commissies';
 
 	/**
+	 * Option key for volunteer roles that do not require a VOG.
+	 */
+	const OPTION_EXEMPT_ROLES = 'rondo_vog_exempt_roles';
+
+	/**
 	 * Option key for teams exempt from discipline case charging
 	 */
 	const OPTION_EXEMPT_DISCIPLINE_TEAMS = 'rondo_vog_exempt_discipline_teams';
@@ -140,7 +145,35 @@ class VOGEmail {
 	 */
 	public function update_exempt_commissies( array $ids ): bool {
 		$sanitized = array_map( 'intval', array_filter( $ids, 'is_numeric' ) );
-		return update_option( self::OPTION_EXEMPT_COMMISSIES, $sanitized );
+		$updated   = update_option( self::OPTION_EXEMPT_COMMISSIES, $sanitized );
+		VOGRequirement::invalidate_cache();
+		return $updated;
+	}
+
+	/**
+	 * Get volunteer roles that do not require a VOG.
+	 *
+	 * @return string[] Role names.
+	 */
+	public static function get_exempt_roles(): array {
+		$roles = get_option( self::OPTION_EXEMPT_ROLES, [] );
+		if ( ! is_array( $roles ) ) {
+			return [];
+		}
+
+		return array_values( array_map( 'strval', $roles ) );
+	}
+
+	/**
+	 * Update volunteer roles that do not require a VOG.
+	 *
+	 * @param array $roles Role names.
+	 */
+	public function update_exempt_roles( array $roles ): bool {
+		$sanitized = array_values( array_unique( array_filter( array_map( 'sanitize_text_field', $roles ) ) ) );
+		$updated   = update_option( self::OPTION_EXEMPT_ROLES, $sanitized );
+		VOGRequirement::invalidate_cache();
+		return $updated;
 	}
 
 	/**
@@ -196,7 +229,7 @@ class VOGEmail {
 	/**
 	 * Get all VOG settings
 	 *
-	 * @return array Settings array with from_email, from_name, template_new, template_renewal, exempt_commissies
+	 * @return array Settings array with email templates and VOG exemptions.
 	 */
 	public function get_all_settings(): array {
 		return [
@@ -207,6 +240,7 @@ class VOGEmail {
 			'reminder_template_new'     => $this->get_reminder_template_new(),
 			'reminder_template_renewal' => $this->get_reminder_template_renewal(),
 			'exempt_commissies'         => $this->get_exempt_commissies(),
+			'exempt_roles'              => self::get_exempt_roles(),
 			'exempt_discipline_teams'   => $this->get_exempt_discipline_teams(),
 		];
 	}

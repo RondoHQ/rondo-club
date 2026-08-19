@@ -6,7 +6,7 @@ import { useInvoices, useSendInvoice, useDeleteInvoice, useScheduleInvoice } fro
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, parseYmd } from '@/utils/dateFormat';
-import { formatCurrency } from '@/utils/formatters';
+import { comparePersonNames, formatCurrency, formatPersonSurname } from '@/utils/formatters';
 import { buildCsv, downloadCsv } from '@/utils/csvExport';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { DataTable, createColumn, FILTER_TYPES } from '@/components/DataTable';
@@ -162,7 +162,9 @@ export default function Facturen() {
     })(),
     invoice_type: searchParams.get('invoice_type') || '',
     plan: searchParams.get('plan') || '',
-    person_name: searchParams.get('person_name') || '',
+    first_name: searchParams.get('first_name') || '',
+    last_name: searchParams.get('last_name') || searchParams.get('person_name') || '',
+    customer_name: searchParams.get('customer_name') || '',
     invoice_number: searchParams.get('invoice_number') || '',
     sent_by: searchParams.get('sent_by') || '',
   }), [searchParams]);
@@ -188,7 +190,7 @@ export default function Facturen() {
   const handleClearFilters = useCallback(() => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      ['status', 'invoice_type', 'plan', 'person_name', 'invoice_number', 'sent_by'].forEach((k) => next.delete(k));
+      ['status', 'invoice_type', 'plan', 'person_name', 'first_name', 'last_name', 'customer_name', 'invoice_number', 'sent_by'].forEach((k) => next.delete(k));
       next.set('status', STATUS_FILTER_ALL);
       return next;
     }, { replace: true });
@@ -357,31 +359,53 @@ export default function Facturen() {
         size: 160,
       }),
       createColumn({
-        id: 'person_name',
-        header: 'Naam',
-        accessorFn: (row) => row.person?.name || row.customer_name || '',
-        cell: ({ row }) =>
-          row.original.person?.name ? (
-            <div>
+        id: 'first_name',
+        header: 'Voornaam',
+        accessorFn: (row) => row.person?.first_name || '',
+        cell: ({ row }) => row.original.person ? (
             <Link
               to={`/people/${row.original.person.id}`}
               className="text-gray-900 dark:text-gray-100 hover:text-electric-cyan dark:hover:text-electric-cyan"
             >
-              {row.original.person.name}
+              {row.original.person.first_name || '-'}
             </Link>
-              {row.original.person.contact_name && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Contactpersoon: {row.original.person.contact_name}
-                </p>
-              )}
-            </div>
-          ) : row.original.customer_name ? (
-            <span className="text-gray-900 dark:text-gray-100">{row.original.customer_name}</span>
-          ) : (
-            <span className="text-gray-400">-</span>
-          ),
+          ) : <span className="text-gray-400">-</span>,
         filterType: FILTER_TYPES.TEXT,
-        filterLabel: 'Naam',
+        sortingFn: (rowA, rowB) => comparePersonNames(rowA.original.person, rowB.original.person, 'first_name'),
+        size: 150,
+      }),
+      createColumn({
+        id: 'last_name',
+        header: 'Achternaam',
+        accessorFn: (row) => row.person?.last_name || '',
+        cell: ({ row }) => row.original.person ? (
+          <Link
+            to={`/people/${row.original.person.id}`}
+            className="text-gray-900 dark:text-gray-100 hover:text-electric-cyan dark:hover:text-electric-cyan"
+          >
+            {formatPersonSurname(row.original.person.infix, row.original.person.last_name) || '-'}
+          </Link>
+        ) : <span className="text-gray-400">-</span>,
+        filterType: FILTER_TYPES.TEXT,
+        filterFn: (row, _columnId, value) => formatPersonSurname(row.original.person?.infix, row.original.person?.last_name)
+          .toLocaleLowerCase('nl')
+          .includes(String(value || '').toLocaleLowerCase('nl')),
+        sortingFn: (rowA, rowB) => comparePersonNames(rowA.original.person, rowB.original.person, 'last_name'),
+        size: 180,
+      }),
+      createColumn({
+        id: 'customer_name',
+        header: 'Organisatie/klant',
+        accessorFn: (row) => row.person?.company_name || (!row.person ? row.customer_name : '') || '',
+        cell: ({ row }) => {
+          const customerName = row.original.person?.company_name || (!row.original.person ? row.original.customer_name : '');
+          return customerName
+            ? <span className="text-gray-900 dark:text-gray-100">{customerName}</span>
+            : <span className="text-gray-400">-</span>;
+        },
+        filterType: FILTER_TYPES.TEXT,
+        filterLabel: 'Organisatie/klant',
+        size: 200,
       }),
       createColumn({
         id: 'total_amount',
@@ -545,8 +569,9 @@ export default function Facturen() {
   const handleExportCsv = useCallback((filteredInvoices) => {
     const headers = [
       'Factuurnummer',
-      'Naam',
-      'Contactpersoon',
+      'Voornaam',
+      'Achternaam',
+      'Organisatie/klant',
       'Bedrag',
       'Type',
       'Status',
@@ -560,8 +585,9 @@ export default function Facturen() {
       const effectiveType = invoice.invoice_kind === 'credit' ? 'credit' : invoice.invoice_type;
       return [
         invoice.invoice_number || '',
-        invoice.person?.name || invoice.customer_name || '',
-        invoice.person?.contact_name || '',
+        invoice.person?.first_name || '',
+        formatPersonSurname(invoice.person?.infix, invoice.person?.last_name),
+        invoice.person?.company_name || (!invoice.person ? invoice.customer_name : '') || '',
         parseFloat(invoice.total_amount) || 0,
         typeLabels[effectiveType] || effectiveType || '',
         getInvoiceStatusLabel(invoice),
