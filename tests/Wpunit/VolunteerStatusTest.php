@@ -13,6 +13,99 @@ use Tests\Support\RondoTestCase;
 class VolunteerStatusTest extends RondoTestCase {
 
 	/**
+	 * A first active staff role records the date used by volunteer onboarding.
+	 */
+	public function test_first_active_staff_role_sets_volunteer_since(): void {
+		$person_id = $this->createPerson( [ 'post_title' => 'Nieuwe Trainer' ] );
+		$team_id   = self::factory()->post->create(
+			[
+				'post_type'   => 'team',
+				'post_status' => 'publish',
+				'post_title'  => 'AWC O11-1',
+			]
+		);
+
+		Fields::update_for_post(
+			$person_id,
+			'work_history',
+			[
+				[
+					'team'        => $team_id,
+					'entity_type' => 'team',
+					'job_title'   => 'Trainer',
+					'start_date'  => '2026-08-18',
+					'end_date'    => '',
+					'is_current'  => true,
+				],
+			]
+		);
+		( new VolunteerStatus() )->calculate_and_update_status( $person_id );
+
+		$this->assertTrue( Fields::get_for_post( $person_id, 'huidig_vrijwilliger' ) );
+		$this->assertSame( '20260818', Fields::get_for_post( $person_id, 'vrijwilliger_sinds' ) );
+	}
+
+	/**
+	 * An existing source date is historical truth and must never be overwritten.
+	 */
+	public function test_existing_volunteer_since_is_preserved(): void {
+		$person_id = $this->createPerson( [ 'post_title' => 'Bestaande Vrijwilliger' ] );
+		$team_id   = self::factory()->post->create(
+			[
+				'post_type'   => 'team',
+				'post_status' => 'publish',
+				'post_title'  => 'AWC O13-1',
+			]
+		);
+
+		Fields::update_for_post( $person_id, 'vrijwilliger_sinds', '2020-07-01' );
+		Fields::update_for_post(
+			$person_id,
+			'work_history',
+			[
+				[
+					'team'        => $team_id,
+					'entity_type' => 'team',
+					'job_title'   => 'Teammanager',
+					'start_date'  => '2026-08-18',
+					'end_date'    => '',
+					'is_current'  => true,
+				],
+			]
+		);
+		( new VolunteerStatus() )->calculate_and_update_status( $person_id );
+
+		$this->assertSame( '20200701', Fields::get_for_post( $person_id, 'vrijwilliger_sinds' ) );
+	}
+
+	/**
+	 * Recalculation repairs an active volunteer whose start field is still empty.
+	 */
+	public function test_recalculation_backfills_missing_volunteer_since(): void {
+		$person_id    = $this->createPerson( [ 'post_title' => 'Te Herstellen Vrijwilliger' ] );
+		$committee_id = self::factory()->post->create(
+			[
+				'post_type'   => 'commissie',
+				'post_status' => 'publish',
+				'post_title'  => 'Jeugdcommissie',
+			]
+		);
+
+		update_post_meta( $person_id, 'huidig-vrijwilliger', '1' );
+		update_post_meta( $person_id, 'work_history', 1 );
+		update_post_meta( $person_id, 'work_history_0_team', $committee_id );
+		update_post_meta( $person_id, 'work_history_0_entity_type', 'commissie' );
+		update_post_meta( $person_id, 'work_history_0_job_title', 'Commissielid' );
+		update_post_meta( $person_id, 'work_history_0_start_date', '20260810' );
+		update_post_meta( $person_id, 'work_history_0_end_date', '' );
+		update_post_meta( $person_id, 'work_history_0_is_current', '1' );
+
+		( new VolunteerStatus() )->calculate_and_update_status( $person_id );
+
+		$this->assertSame( '20260810', Fields::get_for_post( $person_id, 'vrijwilliger_sinds' ) );
+	}
+
+	/**
 	 * Both supported work-history date representations must compare identically.
 	 */
 	public function test_current_position_comparison_supports_storage_and_wire_date_formats(): void {

@@ -204,9 +204,56 @@ class VolunteerStatus {
 	 */
 	public function calculate_and_update_status( $post_id ) {
 		$is_volunteer = $this->is_current_volunteer( $post_id );
+		$updates      = [ self::VOLUNTEER_FIELD_KEY => $is_volunteer ];
 
-		// Update the custom field using native field's update_field for proper reference handling
-		\Rondo\Fields\Fields::update_for_post( $post_id, self::VOLUNTEER_FIELD_KEY, $is_volunteer );
+		// Sportlink does not expose a separate reliable volunteer-start field.
+		// When work history first makes someone a volunteer, derive the date from
+		// the earliest active volunteer position. Existing dates always win.
+		$volunteer_since = \Rondo\Fields\Fields::get_for_post( $post_id, 'vrijwilliger_sinds' );
+		if ( $is_volunteer && empty( $volunteer_since ) ) {
+			$derived_start_date = $this->get_volunteer_start_date( $post_id );
+			if ( $derived_start_date !== null ) {
+				$updates['vrijwilliger_sinds'] = $derived_start_date;
+			}
+		}
+
+		\Rondo\Fields\Fields::update_many_for_post( $post_id, $updates );
+	}
+
+	/**
+	 * Derive the earliest start date among active volunteer positions.
+	 *
+	 * @param int $post_id The person post ID.
+	 * @return string|null Date in Y-m-d format, or null when no valid date exists.
+	 */
+	private function get_volunteer_start_date( int $post_id ): ?string {
+		$work_history = \Rondo\Fields\Fields::get_for_post( $post_id, 'work_history' );
+		if ( empty( $work_history ) || ! is_array( $work_history ) ) {
+			return null;
+		}
+
+		$earliest = null;
+		foreach ( $work_history as $position ) {
+			if (
+				! is_array( $position )
+				|| ! self::is_position_current( $position )
+				|| ! $this->is_volunteer_position( $position )
+			) {
+				continue;
+			}
+
+			$start_date = self::normalize_work_history_date( (string) ( $position['start_date'] ?? '' ) );
+			if ( $start_date !== null && ( $earliest === null || $start_date < $earliest ) ) {
+				$earliest = $start_date;
+			}
+		}
+
+		if ( $earliest === null ) {
+			return null;
+		}
+
+		$date = \DateTimeImmutable::createFromFormat( '!Ymd', $earliest, wp_timezone() );
+		return $date === false ? null : $date->format( 'Y-m-d' );
 	}
 
 	/**

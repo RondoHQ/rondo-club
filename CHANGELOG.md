@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.18.4] - 2026-08-19
+
+### Fixed
+
+- Een eerste actieve staf- of commissierol vult voortaan automatisch `Vrijwilliger sinds` vanuit de vroegste actuele functiestart, zodat nieuwe vrijwilligers in Onboarding verschijnen; bestaande historische startdatums blijven behouden.
+
 ## [34.18.3] - 2026-08-18
 
 ### Fixed
