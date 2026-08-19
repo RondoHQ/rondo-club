@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.18.5] - 2026-08-19
+
+### Fixed
+
+- Iedereen met een gekoppeld persoonsprofiel ziet voortaan de beschikbare inschrijftaken, ook zonder eigen vrijwilligersplicht of met een oud-lidstatus; Gerwin Eefting en andere actuele ouders met gezinsplicht kunnen zich daardoor weer inschrijven.
+
 ## [34.18.4] - 2026-08-19
 
 ### Fixed

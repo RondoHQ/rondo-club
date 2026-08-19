@@ -153,10 +153,13 @@ class VolunteerObligationUnitsTest extends RondoTestCase {
 		);
 	}
 
-	public function test_former_member_may_not_volunteer(): void {
+	public function test_former_member_may_volunteer(): void {
 		$person_id = $this->person( 'Senioren', 'Oud-lid' );
 		update_post_meta( $person_id, 'former_member', '1' );
 
-		$this->assertFalse( $this->service->may_volunteer( $person_id ) );
+		$this->assertTrue(
+			$this->service->may_volunteer( $person_id ),
+			'Former-member status must not hide tasks from a current parent or willing helper'
+		);
 	}
 }
