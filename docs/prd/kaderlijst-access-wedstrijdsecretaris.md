@@ -108,8 +108,11 @@ Which role to hang it on is the open question.
 3. **Instellingen → Beheer → Capabilities** — under age-group access, give `rondo_wedstrijdzaken`
    every leeftijdsgroep.
 
-Result: `is_kader` true via `$has_extra_roles`, no management capability, read-only Kaderlijst
-scoped to all age groups. Nothing else in the sidebar opens.
+Result: `is_kader` true via `$has_extra_roles`, no management capability, and a read-only
+Kaderlijst scoped to all age groups. The shared `is_kader` gate also exposes the standard kader
+navigation (Dashboard, Relaties, Jubilarissen, Teams, Commissies, Taken, Feedback and Instellingen),
+but it does not grant capability-gated modules such as Vrijwilligers or Financiën. Server-side
+age-group scoping still limits visible people, and edit capabilities remain false.
 
 **Known limitation:** a coordinator-scoped viewer only sees kader attached to a team
 (`filter_candidates_by_teams()`). Teamless kader — bestuursfuncties, verenigingsbrede rollen —
