@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.20.6] - 2026-08-19
+
+### Fixed
+
+- Sorteren op `Lid sinds` en `Vrijwilliger sinds` gebruikt nu het werkelijke compacte datumformaat, zodat oplopend echt van oud naar nieuw en aflopend van nieuw naar oud sorteert in plaats van onbedoeld op voornaam.
+
 ## [34.20.5] - 2026-08-19
 
 ### Fixed
