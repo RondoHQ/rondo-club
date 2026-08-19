@@ -859,7 +859,8 @@ class Volunteer extends Base {
 	 * GET /rondo/v1/volunteer-obligations
 	 *
 	 * Returns every eligible unit for the season, augmented with
-	 * `completed_count`, `pending_count`, `no_show_count`, and a `status` bucket.
+	 * `completed_count`, `pending_count`, `no_show_count`, a `status` bucket,
+	 * and unit-level exemption data for downstream consumers such as Rondo Sync.
 	 * Used by the Vrijwilligers dashboard and (later) the member-facing surface.
 	 */
 	public function get_obligations( \WP_REST_Request $request ) {
@@ -870,6 +871,15 @@ class Volunteer extends Base {
 
 		$units     = $eligibility->get_eligible_units( $season );
 		$decorated = $calculator->decorate_units( $units, $season );
+		$decorated = array_map(
+			static function ( array $unit ) use ( $season ): array {
+				$exemption         = VolunteerExemptionResolver::resolve_unit( $unit, $season );
+				$unit['is_exempt'] = $exemption !== null;
+				$unit['exemption'] = $exemption;
+				return $unit;
+			},
+			$decorated
+		);
 		$aggregate = $calculator->aggregate( $decorated );
 
 		return rest_ensure_response(
