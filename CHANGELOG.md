@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.20.5] - 2026-08-19
+
+### Fixed
+
+- Nieuwe vrijwilligers worden niet meer tegelijk onder `Nieuwe leden` getoond, zodat zij maar één onboardingmail ontvangen. De vrijwilligersmail heeft voorrang; nieuwe leden die al langer vrijwilliger zijn blijven wel in de ledenlijst.
+- De 30- en 60-dagenvensters van Onboarding vergelijken nu met het compacte datumformaat waarin deze velden worden opgeslagen.
+
 ## [34.20.4] - 2026-08-19
 
 ### Changed
