@@ -59,6 +59,13 @@ class PeopleOnboardingFilterTest extends RondoTestCase {
 				'vrijwilliger_sinds'  => $old_volunteer_date,
 			]
 		);
+		$undated_volunteer_id     = $this->createPerson(
+			[ 'post_title' => 'New member undated volunteer' ],
+			[
+				'lid_sinds'           => $recent_member_date,
+				'huidig_vrijwilliger' => true,
+			]
+		);
 
 		$member_ids    = $this->onboarding_ids( 'onboarding_new_members' );
 		$volunteer_ids = $this->onboarding_ids( 'onboarding_new_volunteers' );
@@ -66,8 +73,10 @@ class PeopleOnboardingFilterTest extends RondoTestCase {
 		$this->assertContains( $member_only_id, $member_ids );
 		$this->assertNotContains( $new_volunteer_id, $member_ids );
 		$this->assertContains( $new_volunteer_id, $volunteer_ids );
-		$this->assertContains( $established_volunteer_id, $member_ids );
+		$this->assertNotContains( $established_volunteer_id, $member_ids );
 		$this->assertNotContains( $established_volunteer_id, $volunteer_ids );
+		$this->assertNotContains( $undated_volunteer_id, $member_ids );
+		$this->assertNotContains( $undated_volunteer_id, $volunteer_ids );
 	}
 
 	public function test_sent_new_volunteer_does_not_fall_back_to_member_onboarding(): void {
