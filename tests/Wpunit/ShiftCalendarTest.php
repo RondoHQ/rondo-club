@@ -231,24 +231,34 @@ class ShiftCalendarTest extends RondoTestCase {
 		$this->assertSame( $season_end, $member_data['to'] );
 	}
 
-	public function test_direct_signup_rejects_former_members_and_missing_pool_membership(): void {
+	public function test_former_member_can_see_and_claim_shifts_but_still_needs_pool_membership(): void {
 		$user_id   = $this->createRondoUser();
-		$person_id = $this->createPerson( [ 'post_title' => 'Niet gerechtigd' ] );
+		$person_id = $this->createPerson( [ 'post_title' => 'Oud-lid met ouderplicht' ] );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+		update_post_meta( $person_id, 'former_member', 1 );
 		wp_set_current_user( $user_id );
 
-		$type_id  = $this->dienst_type( 'Pooldienst' );
-		$shift_id = $this->shift( $type_id, 1, [] );
-		$request  = new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $shift_id . '/signup' );
+		$type_id   = $this->dienst_type( 'Algemene inschrijftaak' );
+		$shift_id  = $this->shift( $type_id, 1, [] );
+		$calendar  = $this->controller->get_shift_calendar( $this->calendar_request( 'signup' ) )->get_data();
+		$available = $this->controller->get_available_shifts( new WP_REST_Request( 'GET', '/rondo/v1/shifts/available' ) )->get_data();
+
+		$this->assertSame( $shift_id, $calendar['days'][0]['shifts'][0]['id'] );
+		$this->assertSame( $shift_id, $available['shifts'][0]['id'] );
+		$this->assertTrue( $available['eligible'] );
+
+		$request = new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $shift_id . '/signup' );
 		$request->set_param( 'id', $shift_id );
+		$this->assertSame( 200, $this->controller->signup( $request )->get_status() );
+		$this->assertSame( [ $person_id ], get_post_meta( $shift_id, 'assigned_persons', true ) );
 
-		update_post_meta( $person_id, 'former_member', 1 );
-		$this->assertSame( 'not_eligible', $this->controller->signup( $request )->get_error_code() );
+		$pool_type_id  = $this->dienst_type( 'Pooldienst', [ 'required_pool' => 99999 ] );
+		$pool_shift_id = $this->shift( $pool_type_id, 1, [], 'open', '13:00:00' );
+		$pool_request  = new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $pool_shift_id . '/signup' );
+		$pool_request->set_param( 'id', $pool_shift_id );
 
-		update_post_meta( $person_id, 'former_member', 0 );
-		update_post_meta( $type_id, 'required_pool', 99999 );
-		$this->assertSame( 'pool_membership_required', $this->controller->signup( $request )->get_error_code() );
-		$this->assertSame( [], get_post_meta( $shift_id, 'assigned_persons', true ) );
+		$this->assertSame( 'pool_membership_required', $this->controller->signup( $pool_request )->get_error_code() );
+		$this->assertSame( [], get_post_meta( $pool_shift_id, 'assigned_persons', true ) );
 	}
 
 	public function test_direct_signup_still_rejects_missing_vog(): void {

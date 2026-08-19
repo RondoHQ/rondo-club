@@ -836,15 +836,16 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'no_person', 'Geen gekoppelde persoon gevonden voor dit account.', [ 'status' => 404 ] );
 		}
 
-		// Owing an obligation is not a precondition for helping out. Anyone still on the
-		// books may claim a shift; only oud-leden are turned away.
+		// Owing an obligation is not a precondition for helping out. Every linked,
+		// published person may claim a shift, including a former member who still
+		// carries a current parent role.
 		if ( ! ( new VolunteerEligibilityService() )->may_volunteer( $person_id ) ) {
 			return rest_ensure_response(
 				[
 					'person_id'    => $person_id,
 					'eligible'     => false,
 					'shifts'       => [],
-					'block_reason' => 'Je bent geen actief lid meer.',
+					'block_reason' => 'Geen geldig persoonsprofiel gevonden.',
 				]
 			);
 		}
@@ -1176,7 +1177,7 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'no_person', 'Geen gekoppelde persoon.', [ 'status' => 404 ] );
 		}
 		if ( ! ( new VolunteerEligibilityService() )->may_volunteer( $person_id ) ) {
-			return new \WP_Error( 'not_eligible', 'Je bent geen actief lid meer.', [ 'status' => 403 ] );
+			return new \WP_Error( 'not_eligible', 'Geen geldig persoonsprofiel gevonden.', [ 'status' => 403 ] );
 		}
 
 		$shift = get_post( $shift_id );
@@ -1390,7 +1391,7 @@ class MemberShifts extends Base {
 		}
 
 		if ( ! ( new VolunteerEligibilityService() )->may_volunteer( $person_id ) ) {
-			return new \WP_Error( 'not_eligible', 'Deze persoon is geen actief lid meer.', [ 'status' => 403 ] );
+			return new \WP_Error( 'not_eligible', 'Geen geldig persoonsprofiel gevonden.', [ 'status' => 403 ] );
 		}
 
 		$blocked = $this->assert_person_may_take_shift( $person_id, $shift_id );
@@ -1510,10 +1511,6 @@ class MemberShifts extends Base {
 
 		$people = [];
 		foreach ( $candidates as $person_id ) {
-			if ( (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' ) ) {
-				continue;
-			}
-
 			$name = $this->sanitize_text( GuardianAccountService::display_name_for_person( $person_id ) );
 			if ( $name === '' ) {
 				continue;
