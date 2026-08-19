@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.20.0] - 2026-08-19
+
+### Added
+
+- VOG-beheerders kunnen afzonderlijke vrijwilligersfuncties vrijstellen van de VOG-plicht zonder dat deze functies hun vrijwilligersstatus verliezen; een andere actieve VOG-plichtige functie houdt de persoon zichtbaar in het VOG-overzicht.
+
 ## [34.19.1] - 2026-08-19
 
 ### Fixed

@@ -502,6 +502,14 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
+					'vog_required'              => [
+						'description'       => 'Filter for current volunteers with at least one active role that requires a VOG',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
 					'vog_older_than_years'      => [
 						'description'       => 'Filter for VOG older than N years',
 						'type'              => 'integer',
@@ -1698,6 +1706,7 @@ class People extends Base {
 		$is_businessclub_member    = $request->get_param( 'is_businessclub_member' );
 		$foto_missing              = $request->get_param( 'foto_missing' );
 		$vog_missing               = $request->get_param( 'vog_missing' );
+		$vog_required              = $request->get_param( 'vog_required' );
 		$vog_older_than_years      = $request->get_param( 'vog_older_than_years' );
 		$vog_expiring_within_days  = $request->get_param( 'vog_expiring_within_days' );
 		$vog_email_status          = $request->get_param( 'vog_email_status' );
@@ -1884,6 +1893,19 @@ class People extends Base {
 			$where_clauses[] = $huidig_vrijwilliger === '1'
 				? "(hv.meta_value = '1')"
 				: "(hv.meta_value IS NULL OR hv.meta_value = '' OR hv.meta_value = '0')";
+		}
+
+		// VOG overviews include only volunteers with at least one active,
+		// non-exempt role. This remains separate from volunteer status itself.
+		if ( $vog_required === '1' ) {
+			$required_person_ids = \Rondo\VOG\VOGRequirement::get_required_person_ids();
+			if ( empty( $required_person_ids ) ) {
+				$where_clauses[] = '1 = 0';
+			} else {
+				$id_placeholders = implode( ', ', array_fill( 0, count( $required_person_ids ), '%d' ) );
+				$where_clauses[] = "p.ID IN ($id_placeholders)";
+				$prepare_values  = array_merge( $prepare_values, $required_person_ids );
+			}
 		}
 
 		// Financiele blokkade (financial block) - boolean filter

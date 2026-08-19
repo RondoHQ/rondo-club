@@ -287,6 +287,8 @@ class Capabilities extends Base {
 			update_option( \Rondo\Core\VolunteerStatus::OPTION_STAFF_ROLES, $staff_roles );
 		}
 
+		\Rondo\VOG\VOGRequirement::invalidate_cache();
+
 		// Trigger volunteer status recalculation for all people.
 		$people_recalculated = $this->trigger_vog_recalculation();
 

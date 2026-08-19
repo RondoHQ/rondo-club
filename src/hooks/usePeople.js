@@ -114,6 +114,7 @@ export function usePeople(params = {}, options = {}) {
  * @param {string} filters.isBusinessclubMember - Filter by active Businessclub membership (`1` or `0`)
  * @param {string} filters.fotoMissing - '1' to show only people without photo date
  * @param {string} filters.vogMissing - '1' to show only people without VOG date
+ * @param {string} filters.vogRequired - '1' to show only volunteers with an active role that requires a VOG
  * @param {number} filters.vogOlderThanYears - Filter for VOG older than N years
  * @param {string} filters.vogEmailStatus - 'sent' or 'not_sent' to filter by email status
  * @param {string} filters.vogType - 'nieuw', 'vernieuwing', or '' for all
@@ -148,6 +149,7 @@ export function buildFilteredPeopleParams(filters = {}) {
     is_businessclub_member: filters.isBusinessclubMember || null,
     foto_missing: filters.fotoMissing || null,
     vog_missing: filters.vogMissing || null,
+    vog_required: filters.vogRequired || null,
     vog_older_than_years: filters.vogOlderThanYears || null,
     vog_expiring_within_days: filters.vogExpiringWithinDays || null,
     vog_email_status: filters.vogEmailStatus || null,
