@@ -78,6 +78,40 @@ class PeopleOrderbyContractTest extends RondoTestCase {
 		$this->assertTrue( $this->controller->validate_orderby_param( 'field_vog_reminder_sent_date' ) );
 	}
 
+	public function test_onboarding_date_sort_identifiers_are_accepted(): void {
+		$this->assertTrue( $this->controller->validate_orderby_param( 'field_lid_sinds' ) );
+		$this->assertTrue( $this->controller->validate_orderby_param( 'field_vrijwilliger_sinds' ) );
+	}
+
+	public function test_onboarding_dates_sort_chronologically(): void {
+		$later_id   = $this->createPerson(
+			[ 'post_title' => 'Later' ],
+			[
+				'first_name'         => 'Later',
+				'lid-sinds'          => '2026-08-01',
+				'vrijwilliger-sinds' => '2026-07-15',
+			]
+		);
+		$earlier_id = $this->createPerson(
+			[ 'post_title' => 'Earlier' ],
+			[
+				'first_name'         => 'Earlier',
+				'lid-sinds'          => '2026-07-01',
+				'vrijwilliger-sinds' => '2026-06-15',
+			]
+		);
+
+		foreach ( [ 'field_lid_sinds', 'field_vrijwilliger_sinds' ] as $orderby ) {
+			$ordered = $this->ordered_ids( $orderby );
+
+			$this->assertLessThan(
+				array_search( $later_id, $ordered, true ),
+				array_search( $earlier_id, $ordered, true ),
+				"The earlier onboarding date must sort first for {$orderby}."
+			);
+		}
+	}
+
 	public function test_datetime_sort_orders_chronologically(): void {
 		$later_id   = $this->createPerson(
 			[ 'post_title' => 'Later' ],
