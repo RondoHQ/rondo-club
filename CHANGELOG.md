@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.20.3] - 2026-08-19
+
+### Fixed
+
+- De geplande Sportlink-rollensync verwerkt naast functies ook actuele commissielidmaatschappen, zodat commissierollen niet meer verdwijnen en pas na een handmatige sync terugkomen.
+
 ## [34.20.2] - 2026-08-19
 
 ### Fixed
