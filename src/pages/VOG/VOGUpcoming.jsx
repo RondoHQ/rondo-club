@@ -110,6 +110,7 @@ export default function VOGUpcoming() {
     page: 1,
     perPage: 100,
     huidigeVrijwilliger: '1',
+    vogRequired: '1',
     vogExpiringWithinDays: 30,
     orderby,
     order,
