@@ -23,13 +23,13 @@ class PeopleOrderbyContractTest extends RondoTestCase {
 	 *
 	 * @return int[]
 	 */
-	private function ordered_ids( string $orderby ): array {
+	private function ordered_ids( string $orderby, string $order = 'asc' ): array {
 		$request = new \WP_REST_Request( 'GET' );
 		$request->set_param( 'page', 1 );
 		$request->set_param( 'per_page', 100 );
 		$request->set_param( 'ownership', 'all' );
 		$request->set_param( 'orderby', $orderby );
-		$request->set_param( 'order', 'asc' );
+		$request->set_param( 'order', $order );
 
 		$data = $this->controller->get_filtered_people( $request )->get_data();
 		return array_map( 'intval', array_column( $data['people'], 'id' ) );
@@ -85,29 +85,35 @@ class PeopleOrderbyContractTest extends RondoTestCase {
 
 	public function test_onboarding_dates_sort_chronologically(): void {
 		$later_id   = $this->createPerson(
-			[ 'post_title' => 'Later' ],
+			[ 'post_title' => 'Alpha Later' ],
 			[
-				'first_name'         => 'Later',
+				'first_name'         => 'Alpha',
 				'lid-sinds'          => '2026-08-01',
 				'vrijwilliger-sinds' => '2026-07-15',
 			]
 		);
 		$earlier_id = $this->createPerson(
-			[ 'post_title' => 'Earlier' ],
+			[ 'post_title' => 'Zulu Earlier' ],
 			[
-				'first_name'         => 'Earlier',
+				'first_name'         => 'Zulu',
 				'lid-sinds'          => '2026-07-01',
 				'vrijwilliger-sinds' => '2026-06-15',
 			]
 		);
 
 		foreach ( [ 'field_lid_sinds', 'field_vrijwilliger_sinds' ] as $orderby ) {
-			$ordered = $this->ordered_ids( $orderby );
+			$ascending  = $this->ordered_ids( $orderby );
+			$descending = $this->ordered_ids( $orderby, 'desc' );
 
 			$this->assertLessThan(
-				array_search( $later_id, $ordered, true ),
-				array_search( $earlier_id, $ordered, true ),
+				array_search( $later_id, $ascending, true ),
+				array_search( $earlier_id, $ascending, true ),
 				"The earlier onboarding date must sort first for {$orderby}."
+			);
+			$this->assertLessThan(
+				array_search( $earlier_id, $descending, true ),
+				array_search( $later_id, $descending, true ),
+				"The later onboarding date must sort first descending for {$orderby}."
 			);
 		}
 	}

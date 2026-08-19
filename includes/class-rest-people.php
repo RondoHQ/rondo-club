@@ -2244,7 +2244,7 @@ class People extends Base {
 					"LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = %s",
 					$field_name
 				);
-				$order_clause   = "ORDER BY STR_TO_DATE(cf.meta_value, '%%Y-%%m-%%d') $order, fn.meta_value ASC";
+				$order_clause   = "ORDER BY STR_TO_DATE(REPLACE(cf.meta_value, '-', ''), '%%Y%%m%%d') $order, fn.meta_value ASC";
 				break;
 			case 'field_isparent':
 			case 'field_huidig_vrijwilliger':
