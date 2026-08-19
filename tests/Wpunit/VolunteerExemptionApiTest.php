@@ -108,6 +108,10 @@ class VolunteerExemptionApiTest extends RondoTestCase {
 		$this->assertSame( 'invalid_person', $response->get_data()['code'] );
 	}
 
+	public function test_stale_person_reference_is_not_treated_as_an_exemption(): void {
+		$this->assertNull( VolunteerExemptionResolver::resolve( 999999, '2026-2027' ) );
+	}
+
 	public function test_obligations_expose_unit_exemption_for_sync_consumers(): void {
 		$season    = '2026-2027';
 		$active_id = $this->createPerson( [ 'post_title' => 'Actieve speler' ] );
