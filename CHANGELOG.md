@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.19.0] - 2026-08-19
+
+### Added
+
+- De vrijwilligersplicht kan naar Laposta worden gesynchroniseerd als numerieke segmentatiewaarde: leeg voor niet van toepassing, `-1` voor volledig vrijgesteld, `0` voor afgerond en een positief getal voor het aantal resterende inschrijftaken.
+
 ## [34.18.5] - 2026-08-19
 
 ### Fixed
