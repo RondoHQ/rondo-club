@@ -203,15 +203,22 @@ class VolunteerStatus {
 	 * @param int $post_id The person post ID.
 	 */
 	public function calculate_and_update_status( $post_id ) {
-		$is_volunteer = $this->is_current_volunteer( $post_id );
-		$updates      = [ self::VOLUNTEER_FIELD_KEY => $is_volunteer ];
+		$was_volunteer = (bool) \Rondo\Fields\Fields::get_for_post( $post_id, 'huidig_vrijwilliger' );
+		$is_volunteer  = $this->is_current_volunteer( $post_id );
+		$updates       = [ self::VOLUNTEER_FIELD_KEY => $is_volunteer ];
 
 		// Sportlink does not expose a separate reliable volunteer-start field.
 		// When work history first makes someone a volunteer, derive the date from
-		// the earliest active volunteer position. Existing dates always win.
+		// the earliest active volunteer position. Team-roster responses do not
+		// include a start date, so a genuine false-to-true transition falls back
+		// to today. Existing volunteers without a date are not treated as new.
+		// Existing dates always win.
 		$volunteer_since = \Rondo\Fields\Fields::get_for_post( $post_id, 'vrijwilliger_sinds' );
 		if ( $is_volunteer && empty( $volunteer_since ) ) {
 			$derived_start_date = $this->get_volunteer_start_date( $post_id );
+			if ( $derived_start_date === null && ! $was_volunteer ) {
+				$derived_start_date = current_datetime()->format( 'Y-m-d' );
+			}
 			if ( $derived_start_date !== null ) {
 				$updates['vrijwilliger_sinds'] = $derived_start_date;
 			}

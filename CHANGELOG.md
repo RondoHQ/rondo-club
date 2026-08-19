@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.20.1] - 2026-08-19
+
+### Fixed
+
+- Een nieuwe vrijwilliger uit een Sportlink-teamrooster zonder ingangsdatum krijgt de synchronisatiedatum als `Vrijwilliger sinds`, terwijl bestaande vrijwilligers zonder brondatum niet onterecht opnieuw in Onboarding verschijnen.
+
 ## [34.20.0] - 2026-08-19
 
 ### Added
