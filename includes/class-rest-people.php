@@ -2155,13 +2155,29 @@ class People extends Base {
 
 		// Onboarding: new members.
 		// lid-sinds within the last 30 days AND no onboarding-email-lid-sent timestamp.
+		// New volunteers are owned by the volunteer onboarding flow, so exclude them
+		// even when their volunteer welcome email was already sent.
 		if ( $onboarding_new_members === '1' ) {
 			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} ols ON p.ID = ols.post_id AND ols.meta_key = 'lid-sinds'";
 			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} oles ON p.ID = oles.post_id AND oles.meta_key = 'onboarding-email-lid-sent'";
-			$cutoff           = gmdate( 'Y-m-d', strtotime( '-30 days' ) );
+			$cutoff           = current_datetime()->modify( '-30 days' )->format( 'Ymd' );
+			$volunteer_cutoff = current_datetime()->modify( '-60 days' )->format( 'Ymd' );
 			$where_clauses[]  = '(ols.meta_value IS NOT NULL AND ols.meta_value != \'\' AND ols.meta_value >= %s)';
 			$where_clauses[]  = '(oles.meta_value IS NULL OR oles.meta_value = \'\')';
+			$where_clauses[]  = "NOT EXISTS (
+				SELECT 1
+				FROM {$wpdb->postmeta} member_ovs
+				INNER JOIN {$wpdb->postmeta} member_ohv
+					ON member_ohv.post_id = member_ovs.post_id
+					AND member_ohv.meta_key = 'huidig-vrijwilliger'
+					AND member_ohv.meta_value = '1'
+				WHERE member_ovs.post_id = p.ID
+					AND member_ovs.meta_key = 'vrijwilliger-sinds'
+					AND member_ovs.meta_value != ''
+					AND member_ovs.meta_value >= %s
+			)";
 			$prepare_values[] = $cutoff;
+			$prepare_values[] = $volunteer_cutoff;
 		}
 
 		// Onboarding: new volunteers.
@@ -2170,7 +2186,7 @@ class People extends Base {
 			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} ovs ON p.ID = ovs.post_id AND ovs.meta_key = 'vrijwilliger-sinds'";
 			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} ohv ON p.ID = ohv.post_id AND ohv.meta_key = 'huidig-vrijwilliger'";
 			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} oves ON p.ID = oves.post_id AND oves.meta_key = 'onboarding-email-vrijwilliger-sent'";
-			$cutoff           = gmdate( 'Y-m-d', strtotime( '-60 days' ) );
+			$cutoff           = current_datetime()->modify( '-60 days' )->format( 'Ymd' );
 			$where_clauses[]  = '(ovs.meta_value IS NOT NULL AND ovs.meta_value != \'\' AND ovs.meta_value >= %s)';
 			$where_clauses[]  = "(ohv.meta_value = '1')";
 			$where_clauses[]  = '(oves.meta_value IS NULL OR oves.meta_value = \'\')';
