@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.20.2] - 2026-08-19
+
+### Fixed
+
+- De productie-deploy hervat nu na een tijdelijke SSH-storing bij de hostingpartij. Elke rsync- en WP-CLI-stap wordt tot drie keer geprobeerd met oplopende wachttijd, en SSH wacht niet langer minutenlang op een dode verbinding (`ConnectTimeout`/keepalive). Voorheen brak één `connect to host ...: Connection timed out` de hele deploy af, ook al was de release verder in orde.
+
 ## [34.20.1] - 2026-08-19
 
 ### Fixed
