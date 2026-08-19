@@ -125,7 +125,11 @@ class VolunteerExemptionResolver {
 	 * @return string|null One of self::REASON_* or null when the person owes diensten.
 	 */
 	public static function resolve( int $person_id, string $season ): ?string {
-		if ( $person_id <= 0 ) {
+		if (
+			$person_id <= 0
+			|| get_post_type( $person_id ) !== 'person'
+			|| get_post_status( $person_id ) === 'trash'
+		) {
 			return null;
 		}
 

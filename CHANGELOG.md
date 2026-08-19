@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.19.1] - 2026-08-19
+
+### Fixed
+
+- De vrijwilligersplicht-API slaat achtergebleven verwijzingen naar verwijderde personen veilig over, zodat de Laposta-sync niet door zo'n historisch ID kan vastlopen.
+
 ## [34.19.0] - 2026-08-19
 
 ### Added
