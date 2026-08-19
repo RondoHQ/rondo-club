@@ -2182,8 +2182,8 @@ class Api extends Base {
 	/**
 	 * Sync capabilities for all provisioned users (admin only).
 	 *
-	 * Body-less endpoint: the server derives functies from each user's linked
-	 * person's work_history canonical field (is_current entries). Used by the
+	 * Body-less endpoint: the server derives functies and commissie memberships
+	 * from each user's linked person's current work_history entries. Used by the
 	 * on-demand "Sync now" button in the Settings Functies tab.
 	 *
 	 * @param \WP_REST_Request $request The REST request object.
@@ -2199,10 +2199,10 @@ class Api extends Base {
 	/**
 	 * Sync capabilities for the WordPress user linked to a single person (admin only).
 	 *
-	 * Derives functies from the person's current work_history canonical field and
-	 * applies the FunctieCapabilityMap. Used by the per-person "Sync rollen"
-	 * button in AccountCard. Returns { status: 'no_user' } if the person has
-	 * no linked WordPress account.
+	 * Derives functies and commissie memberships from the person's current
+	 * work_history canonical field and applies both role maps. Used by the
+	 * per-person "Sync rollen" button in AccountCard. Returns
+	 * { status: 'no_user' } if the person has no linked WordPress account.
 	 *
 	 * @param \WP_REST_Request $request The REST request object.
 	 * @return \WP_REST_Response|\WP_Error Sync result or WP_Error.

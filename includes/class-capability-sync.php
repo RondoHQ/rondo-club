@@ -2,10 +2,10 @@
 /**
  * Capability Sync Service
  *
- * Reconciles WordPress user roles against Sportlink Functies by granting and
- * revoking roles based on the admin-configured FunctieCapabilityMap. Supports
- * manual override tracking so admin-granted or admin-revoked roles survive
- * automatic sync runs.
+ * Reconciles WordPress user roles against Sportlink Functies and current
+ * commissie memberships by granting and revoking roles from the corresponding
+ * admin-configured maps. Supports manual override tracking so admin-granted or
+ * admin-revoked roles survive automatic sync runs.
  *
  * @package Rondo\Users
  */
@@ -263,6 +263,10 @@ class CapabilitySync {
 	/**
 	 * Sync capabilities for a single user identified by KNVB ID.
 	 *
+	 * Uses the supplied Sportlink functies and derives current commissie IDs from
+	 * the linked person's work history so scheduled and on-demand syncs reconcile
+	 * the same role sources.
+	 *
 	 * Returns a no_user result (not a WP_Error) if no WordPress user has
 	 * the given KNVB ID — this is expected for members without an account.
 	 *
@@ -288,7 +292,15 @@ class CapabilitySync {
 			];
 		}
 
-		return $this->sync_user( $users[0]->ID, $functies );
+		$user_id = (int) $users[0]->ID;
+
+		// Sportlink is authoritative for functies on this scheduled path. Commissie
+		// membership is stored separately in the linked person's current work
+		// history, so derive only those IDs locally. Passing both sources keeps this
+		// entry point consistent with sync_all() and sync_user_by_person_id().
+		$derived = $this->derive_from_work_history( $user_id );
+
+		return $this->sync_user( $user_id, $functies, $derived['commissie_ids'] );
 	}
 
 	/**
