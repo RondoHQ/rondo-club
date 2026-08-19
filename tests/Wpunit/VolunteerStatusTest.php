@@ -46,6 +46,39 @@ class VolunteerStatusTest extends RondoTestCase {
 	}
 
 	/**
+	 * A new team-roster volunteer falls back to today when Sportlink has no start date.
+	 */
+	public function test_first_active_staff_role_without_date_uses_today(): void {
+		$person_id = $this->createPerson( [ 'post_title' => 'Nieuwe Teammanager' ] );
+		$team_id   = self::factory()->post->create(
+			[
+				'post_type'   => 'team',
+				'post_status' => 'publish',
+				'post_title'  => 'AWC O12-1',
+			]
+		);
+
+		Fields::update_for_post(
+			$person_id,
+			'work_history',
+			[
+				[
+					'team'        => $team_id,
+					'entity_type' => 'team',
+					'job_title'   => 'Teammanager',
+					'start_date'  => '',
+					'end_date'    => '',
+					'is_current'  => true,
+				],
+			]
+		);
+		( new VolunteerStatus() )->calculate_and_update_status( $person_id );
+
+		$this->assertTrue( Fields::get_for_post( $person_id, 'huidig_vrijwilliger' ) );
+		$this->assertSame( current_datetime()->format( 'Ymd' ), Fields::get_for_post( $person_id, 'vrijwilliger_sinds' ) );
+	}
+
+	/**
 	 * An existing source date is historical truth and must never be overwritten.
 	 */
 	public function test_existing_volunteer_since_is_preserved(): void {
@@ -103,6 +136,39 @@ class VolunteerStatusTest extends RondoTestCase {
 		( new VolunteerStatus() )->calculate_and_update_status( $person_id );
 
 		$this->assertSame( '20260810', Fields::get_for_post( $person_id, 'vrijwilliger_sinds' ) );
+	}
+
+	/**
+	 * An existing undated volunteer must not be presented as newly onboarded.
+	 */
+	public function test_existing_volunteer_without_source_date_stays_undated(): void {
+		$person_id = $this->createPerson( [ 'post_title' => 'Bestaande Teammanager' ] );
+		$team_id   = self::factory()->post->create(
+			[
+				'post_type'   => 'team',
+				'post_status' => 'publish',
+				'post_title'  => 'AWC O14-1',
+			]
+		);
+
+		update_post_meta( $person_id, 'huidig-vrijwilliger', '1' );
+		Fields::update_for_post(
+			$person_id,
+			'work_history',
+			[
+				[
+					'team'        => $team_id,
+					'entity_type' => 'team',
+					'job_title'   => 'Teammanager',
+					'start_date'  => '',
+					'end_date'    => '',
+					'is_current'  => true,
+				],
+			]
+		);
+		( new VolunteerStatus() )->calculate_and_update_status( $person_id );
+
+		$this->assertSame( '', Fields::get_for_post( $person_id, 'vrijwilliger_sinds' ) );
 	}
 
 	/**
