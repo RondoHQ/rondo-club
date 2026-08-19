@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.20.7] - 2026-08-19
+
+### Fixed
+
+- Alle huidige vrijwilligers worden voortaan uitgesloten van `Nieuwe leden`, ook als zij al langer vrijwilliger zijn en onlangs opnieuw lid werden.
+
 ## [34.20.6] - 2026-08-19
 
 ### Fixed
