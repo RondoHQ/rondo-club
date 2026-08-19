@@ -410,6 +410,9 @@ class Clothing extends Base {
 			'id'               => $assignment_id,
 			'person_id'        => $person_id,
 			'person_name'      => $person ? $this->sanitize_text( $person->post_title ) : '',
+			'first_name'       => $person ? $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ) : '',
+			'infix'            => $person ? $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $person_id, 'infix' ) ) : '',
+			'last_name'        => $person ? $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ) : '',
 			'item_id'          => $item_id,
 			'item_name'        => $item ? $this->sanitize_text( $item->post_title ) : '',
 			'size'             => sanitize_text_field( (string) get_post_meta( $assignment_id, '_clothing_size', true ) ),
@@ -808,14 +811,15 @@ class Clothing extends Base {
 		);
 
 		$fp = fopen( 'php://temp', 'r+' );
-		fputcsv( $fp, [ 'Datum', 'Lid', 'Item', 'Maat', 'Type', 'Conditie', 'Seizoen' ] );
+		fputcsv( $fp, [ 'Datum', 'Voornaam', 'Achternaam', 'Item', 'Maat', 'Type', 'Conditie', 'Seizoen' ] );
 		foreach ( $rows as $row ) {
 			$assignment = $this->format_assignment( $row->ID );
 			fputcsv(
 				$fp,
 				[
 					$assignment['date'],
-					$assignment['person_name'],
+					$assignment['first_name'],
+					trim( $assignment['infix'] . ' ' . $assignment['last_name'] ),
 					$assignment['item_name'],
 					$assignment['size'],
 					$assignment['in_or_out'],

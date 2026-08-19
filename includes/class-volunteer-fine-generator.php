@@ -23,6 +23,7 @@
 
 namespace Rondo\Volunteer;
 
+use Rondo\Core\PostTitle;
 use Rondo\Data\InverseRelationships;
 use Rondo\Finance\InvoiceNumbering;
 
@@ -68,8 +69,10 @@ class VolunteerFineGenerator {
 			);
 		}
 
-		$dienst_type_id   = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
-		$dienst_type_name = $dienst_type_id > 0 ? get_the_title( $dienst_type_id ) : 'Inschrijftaak';
+		$dienst_type_id = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
+		// Raw title: this description is stored on the invoice, so a texturized
+		// `&#8211;` would be persisted as literal entity text.
+		$dienst_type_name = PostTitle::plain( $dienst_type_id, 'Inschrijftaak' );
 		$start_datetime   = (string) get_post_meta( $shift_id, 'start_datetime', true );
 		$shift_date_label = $start_datetime !== '' ? gmdate( 'd-m-Y', strtotime( $start_datetime ) ) : '';
 

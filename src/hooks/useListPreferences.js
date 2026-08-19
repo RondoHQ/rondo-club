@@ -38,9 +38,15 @@ function migrateColumnWidths(widths, availableColumns) {
       .filter((column) => column.legacy_id && column.legacy_id !== column.id)
       .map((column) => [column.legacy_id, column.id])
   );
-  return Object.fromEntries(
+  const migrated = Object.fromEntries(
     Object.entries(widths || {}).map(([identifier, width]) => [aliases[identifier] || identifier, width])
   );
+  if (migrated.name && !migrated.first_name && !migrated.last_name) {
+    migrated.first_name = Math.max(120, Math.floor(migrated.name * 0.45));
+    migrated.last_name = Math.max(150, Math.ceil(migrated.name * 0.55));
+    delete migrated.name;
+  }
+  return migrated;
 }
 
 /**
@@ -114,7 +120,7 @@ export function useListPreferences() {
           return {
             ...old,
             visible_columns: old.available_columns
-              ? ['team', 'birthdate', 'modified'] // Default columns
+              ? ['first_name', 'last_name', 'company_name', 'characteristics', 'team', 'birthdate', 'modified']
               : [],
             column_order: old.available_columns
               ? old.available_columns.map((c) => c.id)

@@ -6,7 +6,7 @@ import { wpApi } from '@/api/client';
 import { getPersonName } from '@/utils/formatters';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
-function SearchablePersonSelector({ value, onChange, people, isLoading, excludePersonId }) {
+export function SearchablePersonSelector({ value, onChange, people, isLoading, excludePersonId }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const inputRef = useRef(null);

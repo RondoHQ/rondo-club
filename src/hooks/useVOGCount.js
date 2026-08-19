@@ -17,6 +17,7 @@ export function useVOGCount() {
       page: 1,
       perPage: 1,
       huidigeVrijwilliger: '1',
+      vogRequired: '1',
       vogMissing: '1',
       vogOlderThanYears: 3,
       vogJustisStatus: 'not_submitted',
@@ -32,6 +33,7 @@ export function useVOGCount() {
       page: 1,
       perPage: 1,
       huidigeVrijwilliger: '1',
+      vogRequired: '1',
       vogMissing: '1',
       vogOlderThanYears: 3,
       vogJustisStatus: 'submitted',
@@ -47,6 +49,7 @@ export function useVOGCount() {
       page: 1,
       perPage: 1,
       huidigeVrijwilliger: '1',
+      vogRequired: '1',
       vogExpiringWithinDays: 30,
     },
     {

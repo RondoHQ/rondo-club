@@ -26,6 +26,7 @@ class AccessControl {
 		'rondo_clothing_txn',
 		'discipline_case',
 		'rondo_invoice',
+		'rondo_sponsor',
 		'dienst_type',
 		'shift_template',
 		'dienst_shift',
@@ -60,6 +61,7 @@ class AccessControl {
 		'manage_clothing',
 		'ledenadministratie',
 		'sponsorbeheer',
+		'narrowcasting',
 		'vrijwilligers',
 	];
 
@@ -216,6 +218,24 @@ class AccessControl {
 	];
 
 	/**
+	 * Contact fields that can feed a Sportlink parent/guardian slot.
+	 *
+	 * Parent slots expose one e-mail address and one telephone number. The
+	 * reverse-sync resolver selects the first populated value from these fixed
+	 * fields, so all six may contain the active source value. Addresses are
+	 * deliberately absent: Sportlink derives a parent's address from the child
+	 * record and has no separate writable parent-address slot.
+	 */
+	public const PARENT_SLOT_CONTACT_WRITE_FIELDS = [
+		'email_1',
+		'email_2',
+		'mobile_1',
+		'mobile_2',
+		'telephone_1',
+		'telephone_2',
+	];
+
+	/**
 	 * May this user correct contact details on a person?
 	 *
 	 * Deliberately not folded into can_edit_people(): that method means "full
@@ -300,10 +320,9 @@ class AccessControl {
 			return true;
 		}
 
-		return self::can_manage_sponsors( $user_id )
-			&& get_post_type( $person_id ) === 'person'
-			&& SponsorStatus::is_sponsor( (int) $person_id )
-			&& get_post_meta( $person_id, 'person_type', true ) === 'contact';
+		// Sponsor managers unlink contacts from companies; deleting the shared
+		// person identity remains a people-administration responsibility.
+		return false;
 	}
 
 	/**

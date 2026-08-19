@@ -21,6 +21,10 @@ const priorityOptions = [
   { value: 'critical', label: 'Kritiek' },
 ];
 
+const validateRequiredText = (required, message) => (value) => (
+  !required || Boolean(value?.trim()) || message
+);
+
 export default function FeedbackEditModal({
   isOpen,
   onClose,
@@ -226,7 +230,10 @@ export default function FeedbackEditModal({
                 <label className="label">Zo hebben we het opgelost {requiresResolutionSummary ? '*' : ''}</label>
                 <textarea
                   {...register('resolution_summary', {
-                    validate: (value) => !requiresResolutionSummary || value?.trim() || 'Leg in het Nederlands uit hoe de feedback is opgelost',
+                    validate: validateRequiredText(
+                      requiresResolutionSummary,
+                      'Leg in het Nederlands uit hoe de feedback is opgelost',
+                    ),
                   })}
                   className="input"
                   rows={4}
@@ -247,7 +254,10 @@ export default function FeedbackEditModal({
                 <label className="label">Waarom we dit niet doen {requiresDeclineReason ? '*' : ''}</label>
                 <textarea
                   {...register('decline_reason', {
-                    validate: (value) => !requiresDeclineReason || value?.trim() || 'Leg in het Nederlands uit waarom de feedback wordt afgewezen',
+                    validate: validateRequiredText(
+                      requiresDeclineReason,
+                      'Leg in het Nederlands uit waarom de feedback wordt afgewezen',
+                    ),
                   })}
                   className="input"
                   rows={4}

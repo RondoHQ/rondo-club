@@ -4,6 +4,7 @@ namespace Tests\Wpunit;
 
 use Rondo\Users\ActivationService;
 use Rondo\Users\GuardianAccountService;
+use Rondo\Users\MagicLoginActivation;
 use Rondo\Users\UserProvisioning;
 use Tests\Support\RondoTestCase;
 
@@ -29,6 +30,28 @@ class ActivationServiceTest extends RondoTestCase {
 			update_post_meta( $person_id, 'former_member', '1' );
 		}
 		return $person_id;
+	}
+
+	private function parent_relationship_type(): int {
+		$term = get_term_by( 'slug', 'parent', 'relationship_type' );
+		if ( $term && ! is_wp_error( $term ) ) {
+			return (int) $term->term_id;
+		}
+
+		$created = wp_insert_term( 'Ouder', 'relationship_type', [ 'slug' => 'parent' ] );
+		$this->assertIsArray( $created );
+		return (int) $created['term_id'];
+	}
+
+	private function child_relationship_type(): int {
+		$term = get_term_by( 'slug', 'child', 'relationship_type' );
+		if ( $term && ! is_wp_error( $term ) ) {
+			return (int) $term->term_id;
+		}
+
+		$created = wp_insert_term( 'Kind', 'relationship_type', [ 'slug' => 'child' ] );
+		$this->assertIsArray( $created );
+		return (int) $created['term_id'];
 	}
 
 	protected function set_up(): void {
@@ -57,10 +80,51 @@ class ActivationServiceTest extends RondoTestCase {
 		$this->assertSame( $expected, $found );
 	}
 
-	public function test_former_members_are_never_activatable(): void {
+	public function test_former_members_without_a_current_parent_role_are_not_activatable(): void {
 		$this->person( 'Oud Lid', 'oud@example.com', true );
 
 		$this->assertSame( [], ActivationService::persons_for_email( 'oud@example.com' ) );
+	}
+
+	public function test_a_former_member_with_a_current_child_can_activate_as_parent(): void {
+		$parent_id = $this->person( 'Oud Lid Ouder', 'ouder@example.com', true );
+		$child_id  = $this->person( 'Actief Kind', 'kind@example.com' );
+
+		\Rondo\Fields\Fields::update_for_post(
+			$parent_id,
+			'relationships',
+			[
+				[
+					'related_person'    => $child_id,
+					'relationship_type' => $this->child_relationship_type(),
+				],
+			]
+		);
+
+		$this->assertSame( [ $parent_id ], ActivationService::persons_for_email( 'ouder@example.com' ) );
+
+		$result = ActivationService::activate( ActivationService::create_token( 'ouder@example.com' ), $parent_id );
+
+		$this->assertIsString( $result );
+		$this->assertTrue( ActivationService::has_account( $parent_id ) );
+	}
+
+	public function test_a_former_member_with_only_a_former_child_is_not_activatable(): void {
+		$parent_id = $this->person( 'Oud Lid Ouder', 'ouder@example.com', true );
+		$child_id  = $this->person( 'Oud Kind', 'kind@example.com', true );
+
+		\Rondo\Fields\Fields::update_for_post(
+			$parent_id,
+			'relationships',
+			[
+				[
+					'related_person'    => $child_id,
+					'relationship_type' => $this->child_relationship_type(),
+				],
+			]
+		);
+
+		$this->assertSame( [], ActivationService::persons_for_email( 'ouder@example.com' ) );
 	}
 
 	public function test_an_unknown_address_finds_nobody(): void {
@@ -195,6 +259,218 @@ class ActivationServiceTest extends RondoTestCase {
 		$this->assertStringContainsString( 'https://example.com/magic-bram', $mail['message'] );
 	}
 
+	public function test_magic_login_request_provisions_one_unambiguous_adult(): void {
+		$person_id = $this->person( 'Anne Jansen', 'anne@example.com' );
+		add_filter( 'rondo_activation_magic_login_url', fn() => 'https://example.com/new-account-login' );
+
+		$mail = null;
+		add_filter(
+			'pre_wp_mail',
+			function ( $short, $atts ) use ( &$mail ) {
+				$mail = $atts;
+				return true;
+			},
+			5,
+			2
+		);
+
+		ActivationService::send_for_magic_login_request( 'anne@example.com' );
+
+		$this->assertTrue( ActivationService::has_account( $person_id ) );
+		$this->assertIsArray( $mail );
+		$this->assertStringContainsString( 'https://example.com/new-account-login', $mail['message'] );
+	}
+
+	public function test_magic_login_request_keeps_youth_on_the_guardian_picker(): void {
+		$person_id = $this->person( 'Rens van Haren', 'bas@example.com' );
+		update_post_meta( $person_id, 'leeftijdsgroep', 'Onder 12' );
+
+		$mail = null;
+		add_filter(
+			'pre_wp_mail',
+			function ( $short, $atts ) use ( &$mail ) {
+				$mail = $atts;
+				return true;
+			},
+			5,
+			2
+		);
+
+		ActivationService::send_for_magic_login_request( 'bas@example.com' );
+
+		$this->assertFalse( ActivationService::has_account( $person_id ) );
+		$this->assertIsArray( $mail );
+		$this->assertStringStartsWith( 'Activeer je account bij ', $mail['subject'] );
+		$this->assertStringContainsString( '/activeren/', $mail['message'] );
+	}
+
+	public function test_magic_login_request_keeps_a_household_on_the_identity_picker(): void {
+		$anne = $this->person( 'Anne Jansen', 'gezin@example.com' );
+		$bram = $this->person( 'Bram Jansen', 'gezin@example.com' );
+
+		$mail = null;
+		add_filter(
+			'pre_wp_mail',
+			function ( $short, $atts ) use ( &$mail ) {
+				$mail = $atts;
+				return true;
+			},
+			5,
+			2
+		);
+
+		ActivationService::send_for_magic_login_request( 'gezin@example.com' );
+
+		$this->assertFalse( ActivationService::has_account( $anne ) );
+		$this->assertFalse( ActivationService::has_account( $bram ) );
+		$this->assertIsArray( $mail );
+		$this->assertStringStartsWith( 'Activeer je account bij ', $mail['subject'] );
+	}
+
+	public function test_magic_login_request_combines_existing_login_and_household_activation(): void {
+		$anne    = $this->person( 'Anne Jansen', 'gezin@example.com' );
+		$bram    = $this->person( 'Bram Jansen', 'gezin@example.com' );
+		$user_id = self::factory()->user->create(
+			[
+				'user_login' => 'anne',
+				'user_email' => 'gezin@example.com',
+			]
+		);
+		update_post_meta( $anne, UserProvisioning::META_USER_ID, $user_id );
+		add_filter( 'rondo_activation_magic_login_url', fn() => 'https://example.com/magic-anne' );
+
+		$sent = [];
+		add_filter(
+			'pre_wp_mail',
+			function ( $short, $atts ) use ( &$sent ) {
+				$sent[] = $atts;
+				return true;
+			},
+			5,
+			2
+		);
+
+		ActivationService::send_for_magic_login_request( 'gezin@example.com' );
+
+		$this->assertCount( 1, $sent );
+		$this->assertFalse( ActivationService::has_account( $bram ) );
+		$this->assertStringContainsString( 'https://example.com/magic-anne', $sent[0]['message'] );
+		$this->assertStringContainsString( 'Inloggen als Anne Jansen', $sent[0]['message'] );
+		$this->assertStringContainsString( '/activeren/', $sent[0]['message'] );
+		$this->assertStringContainsString( 'Account activeren', $sent[0]['message'] );
+	}
+
+	public function test_magic_login_request_sends_nothing_for_an_unknown_address(): void {
+		$sent = [];
+		add_filter(
+			'pre_wp_mail',
+			function ( $short, $atts ) use ( &$sent ) {
+				$sent[] = $atts;
+				return true;
+			},
+			5,
+			2
+		);
+
+		ActivationService::send_for_magic_login_request( 'niemand@example.com' );
+
+		$this->assertSame( [], $sent );
+	}
+
+	public function test_magic_login_bridge_hides_account_state_and_dispatches_afterward(): void {
+		$person_id = $this->person( 'Anne Jansen', 'anne@example.com' );
+		add_filter( 'rondo_activation_magic_login_url', fn() => 'https://example.com/deferred-login' );
+
+		$mail = null;
+		add_filter(
+			'pre_wp_mail',
+			function ( $short, $atts ) use ( &$mail ) {
+				$mail = $atts;
+				return true;
+			},
+			5,
+			2
+		);
+
+		$bridge       = new MagicLoginActivation();
+		$_POST['log'] = 'anne@example.com';
+		$this->assertTrue( $bridge->intercept_send( null, false ) );
+
+		$response = $bridge->normalize_result(
+			[
+				'errors'    => new \WP_Error( 'missing_user', 'Account bestaat niet.' ),
+				'info'      => '',
+				'show_form' => true,
+			],
+			[]
+		);
+		unset( $_POST['log'] );
+
+		$this->assertInstanceOf( \WP_Error::class, $response['errors'] );
+		$this->assertFalse( $response['errors']->has_errors() );
+		$this->assertFalse( $response['show_form'] );
+		$this->assertStringContainsString( 'Als er een account bestaat', $response['info'] );
+		$this->assertFalse( ActivationService::has_account( $person_id ), 'Provisioning must wait until after the response' );
+
+		$bridge->dispatch_queued_request( false );
+
+		$this->assertTrue( ActivationService::has_account( $person_id ) );
+		$this->assertIsArray( $mail );
+		$this->assertStringContainsString( 'https://example.com/deferred-login', $mail['message'] );
+	}
+
+	public function test_magic_login_bridge_preserves_an_earlier_plugin_failure(): void {
+		$bridge       = new MagicLoginActivation();
+		$blocked      = new \WP_Error( 'captcha_failed', 'Controle mislukt.' );
+		$_POST['log'] = 'anne@example.com';
+
+		$this->assertSame( $blocked, $bridge->intercept_send( $blocked, false ) );
+		$response = [
+			'errors'    => $blocked,
+			'info'      => '',
+			'show_form' => true,
+		];
+		$this->assertSame( $response, $bridge->normalize_result( $response, [] ) );
+
+		unset( $_POST['log'] );
+	}
+
+	public function test_magic_login_bridge_silently_throttles_activation_requests(): void {
+		$person_id = $this->person( 'Anne Jansen', 'anne@example.com' );
+		$ip        = '203.0.113.77';
+		for ( $attempt = 0; $attempt < ActivationService::RATE_EMAIL_MAX; $attempt++ ) {
+			ActivationService::record_attempt( 'anne@example.com', $ip );
+		}
+
+		$sent = [];
+		add_filter(
+			'pre_wp_mail',
+			function ( $short, $atts ) use ( &$sent ) {
+				$sent[] = $atts;
+				return true;
+			},
+			5,
+			2
+		);
+
+		$previous_ip            = $_SERVER['REMOTE_ADDR'] ?? null;
+		$_SERVER['REMOTE_ADDR'] = $ip;
+		$_POST['log']           = 'anne@example.com';
+		$bridge                 = new MagicLoginActivation();
+		$this->assertTrue( $bridge->intercept_send( null, false ) );
+		unset( $_POST['log'] );
+		if ( $previous_ip === null ) {
+			unset( $_SERVER['REMOTE_ADDR'] );
+		} else {
+			$_SERVER['REMOTE_ADDR'] = $previous_ip;
+		}
+
+		$bridge->dispatch_queued_request( false );
+
+		$this->assertFalse( ActivationService::has_account( $person_id ) );
+		$this->assertSame( [], $sent );
+	}
+
 	public function test_a_garbage_token_resolves_to_nothing(): void {
 		$this->assertNull( ActivationService::email_for_token( 'nope' ) );
 		$this->assertNull( ActivationService::email_for_token( str_repeat( 'a', 64 ) ) );
@@ -232,6 +508,146 @@ class ActivationServiceTest extends RondoTestCase {
 		$this->assertGreaterThan( 0, $user_id );
 		$this->assertSame( 'Bas van Haren', GuardianAccountService::pending_for_user( $user_id )['name'] );
 		$this->assertSame( $child_id, (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) );
+	}
+
+	public function test_a_matching_parent_record_receives_the_account_immediately(): void {
+		$parent_type = $this->parent_relationship_type();
+		$child_id    = $this->person( 'Rens van Haren', 'bas@example.com' );
+		$parent_id   = $this->person( 'Bas van Haren', 'bas@example.com' );
+		update_post_meta( $child_id, 'leeftijdsgroep', 'Onder 12' );
+		\Rondo\Fields\Fields::update_for_post(
+			$child_id,
+			'relationships',
+			[
+				[
+					'related_person'    => $parent_id,
+					'relationship_type' => $parent_type,
+				],
+			]
+		);
+
+		$url = ActivationService::activate_guardian(
+			ActivationService::create_token( 'bas@example.com' ),
+			$child_id,
+			'Bas van Haren'
+		);
+
+		$user_id = (int) get_post_meta( $parent_id, UserProvisioning::META_USER_ID, true );
+		$this->assertIsString( $url );
+		$this->assertStringContainsString( 'action=rp', $url );
+		$this->assertGreaterThan( 0, $user_id );
+		$this->assertFalse( ActivationService::has_account( $child_id ) );
+		$this->assertSame( $parent_id, (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) );
+		$this->assertNull( GuardianAccountService::pending_for_user( $user_id ) );
+	}
+
+	public function test_a_matching_unlinked_parent_is_linked_before_activation(): void {
+		$parent_type = $this->parent_relationship_type();
+		$child_id    = $this->person( 'Rens van Haren', 'bas@example.com' );
+		$parent_id   = $this->person( 'Bas van Haren', 'bas@example.com' );
+		update_post_meta( $child_id, 'leeftijdsgroep', 'Onder 12' );
+		\Rondo\Fields\Fields::update_for_post( $child_id, 'knvb_id', 'TEST-ACTIVATION-0' );
+
+		$url = ActivationService::activate_guardian(
+			ActivationService::create_token( 'bas@example.com' ),
+			$child_id,
+			'  BAS   VAN HAREN '
+		);
+
+		$relationships = \Rondo\Fields\Fields::get_for_post( $child_id, 'relationships' );
+		$this->assertIsString( $url );
+		$this->assertCount( 1, $relationships );
+		$this->assertSame( $parent_id, (int) $relationships[0]['related_person'] );
+		$this->assertSame( $parent_type, (int) $relationships[0]['relationship_type'] );
+		$this->assertTrue( ActivationService::has_account( $parent_id ) );
+		$this->assertFalse( ActivationService::has_account( $child_id ) );
+	}
+
+	public function test_an_unmatched_parent_is_created_linked_and_given_the_account(): void {
+		$parent_type = $this->parent_relationship_type();
+		$child_id    = $this->person( 'Rens van Haren', 'bas@example.com' );
+		update_post_meta( $child_id, 'leeftijdsgroep', 'Onder 12' );
+		\Rondo\Fields\Fields::update_for_post( $child_id, 'knvb_id', 'TEST-ACTIVATION-1' );
+
+		$url = ActivationService::activate_guardian(
+			ActivationService::create_token( 'bas@example.com' ),
+			$child_id,
+			'Bas van Haren'
+		);
+
+		$relationships = \Rondo\Fields\Fields::get_for_post( $child_id, 'relationships' );
+		$this->assertIsString( $url );
+		$this->assertCount( 1, $relationships );
+		$this->assertSame( $parent_type, (int) $relationships[0]['relationship_type'] );
+		$parent_id = (int) $relationships[0]['related_person'];
+		$user_id   = (int) get_post_meta( $parent_id, UserProvisioning::META_USER_ID, true );
+		$this->assertSame( 'Bas van Haren', get_the_title( $parent_id ) );
+		$this->assertSame( 'bas@example.com', \Rondo\Fields\Fields::get_for_post( $parent_id, 'email_1' ) );
+		$this->assertGreaterThan( 0, $user_id );
+		$this->assertFalse( ActivationService::has_account( $child_id ) );
+		$this->assertSame( $parent_id, (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) );
+		$this->assertNull( GuardianAccountService::pending_for_user( $user_id ) );
+	}
+
+	public function test_an_existing_parent_account_is_opened_with_magic_login(): void {
+		$parent_type = $this->parent_relationship_type();
+		$child_id    = $this->person( 'Rens van Haren', 'bas@example.com' );
+		$parent_id   = $this->person( 'Bas van Haren', 'bas@example.com' );
+		update_post_meta( $child_id, 'leeftijdsgroep', 'Onder 12' );
+		\Rondo\Fields\Fields::update_for_post(
+			$child_id,
+			'relationships',
+			[
+				[
+					'related_person'    => $parent_id,
+					'relationship_type' => $parent_type,
+				],
+			]
+		);
+		$user_id = self::factory()->user->create(
+			[
+				'user_login' => 'bas-ouder',
+				'user_email' => 'bas@example.com',
+			]
+		);
+		update_post_meta( $parent_id, UserProvisioning::META_USER_ID, $user_id );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $parent_id );
+		add_filter( 'rondo_activation_magic_login_url', fn() => 'https://example.com/magic-parent' );
+		$token = ActivationService::create_token( 'bas@example.com' );
+
+		$url = ActivationService::activate_guardian( $token, $child_id, 'Bas van Haren' );
+
+		$this->assertSame( 'https://example.com/magic-parent', $url );
+		$this->assertNull( ActivationService::email_for_token( $token ) );
+		$this->assertFalse( ActivationService::has_account( $child_id ) );
+	}
+
+	public function test_a_full_parent_household_uses_the_temporary_child_fallback(): void {
+		$parent_type   = $this->parent_relationship_type();
+		$child_id      = $this->person( 'Rens van Haren', 'nieuwe.ouder@example.com' );
+		$relationships = [];
+		update_post_meta( $child_id, 'leeftijdsgroep', 'Onder 12' );
+		\Rondo\Fields\Fields::update_for_post( $child_id, 'knvb_id', 'TEST-ACTIVATION-2' );
+		foreach ( [ 'Eerste Ouder', 'Tweede Ouder' ] as $index => $name ) {
+			$parent_id       = $this->person( $name, 'ouder' . $index . '@example.com' );
+			$relationships[] = [
+				'related_person'    => $parent_id,
+				'relationship_type' => $parent_type,
+			];
+		}
+		\Rondo\Fields\Fields::update_for_post( $child_id, 'relationships', $relationships );
+
+		$url = ActivationService::activate_guardian(
+			ActivationService::create_token( 'nieuwe.ouder@example.com' ),
+			$child_id,
+			'Derde Ouder'
+		);
+
+		$user_id = (int) get_post_meta( $child_id, UserProvisioning::META_USER_ID, true );
+		$this->assertIsString( $url );
+		$this->assertGreaterThan( 0, $user_id );
+		$this->assertSame( 'Derde Ouder', GuardianAccountService::pending_for_user( $user_id )['name'] );
+		$this->assertCount( 2, \Rondo\Fields\Fields::get_for_post( $child_id, 'relationships' ) );
 	}
 
 	/**

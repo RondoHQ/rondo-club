@@ -88,7 +88,7 @@ function SortableColumnItem({ column, isVisible, onToggleVisibility, isCustomFie
  * - Checkbox toggles for column visibility
  * - Instant apply (no save button)
  * - Reset to defaults functionality
- * - Name column is always first and not in sortable list
+ * - All data columns, including name parts, can be selected and reordered
  *
  * @param {Object} props
  * @param {boolean} props.isOpen - Whether the modal is open
@@ -104,15 +104,13 @@ export default function ColumnSettingsModal({ isOpen, onClose }) {
   useEffect(() => {
     if (preferences?.available_columns?.length > 0) {
       const availableIds = new Set(
-        preferences.available_columns
-          .map(col => col.id)
-          .filter(id => id !== 'name')
+        preferences.available_columns.map(col => col.id)
       );
 
       if (preferences?.column_order?.length > 0) {
-        // Start with saved order (excluding 'name' and any columns that no longer exist)
+        // Start with saved order, excluding columns that no longer exist.
         const savedOrder = preferences.column_order.filter(
-          id => id !== 'name' && availableIds.has(id)
+          id => availableIds.has(id)
         );
 
         // Find any new columns not in saved order and append them
@@ -161,8 +159,7 @@ export default function ColumnSettingsModal({ isOpen, onClose }) {
 
       setLocalOrder(newOrder);
 
-      // Update preferences with new order (name always first, then the reordered columns)
-      updatePreferences({ column_order: ['name', ...newOrder] });
+      updatePreferences({ column_order: newOrder });
     }
   }, [localOrder, updatePreferences]);
 
@@ -202,7 +199,7 @@ export default function ColumnSettingsModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  // Get columns to display in sortable list (everything except 'name')
+  // Every data column, including both name parts, can be selected and ordered.
   const sortableColumns = localOrder
     .map(id => columnMap[id])
     .filter(Boolean);
@@ -240,29 +237,6 @@ export default function ColumnSettingsModal({ isOpen, onClose }) {
               <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                 Sleep om te herordenen, vink aan om te tonen.
               </p>
-
-              {/* Name column - always visible, not sortable */}
-              <div className="mb-4">
-                <div className="flex items-center gap-3 p-3 rounded-lg border-2 border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                  <div className="p-1 text-gray-300 dark:text-gray-600">
-                    <GripVertical className="w-4 h-4" />
-                  </div>
-                  <label className="flex items-center flex-1 cursor-not-allowed">
-                    <input
-                      type="checkbox"
-                      checked={true}
-                      disabled
-                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-electric-cyan bg-gray-100 dark:bg-gray-600 cursor-not-allowed"
-                    />
-                    <span className="ml-3 text-sm font-medium text-gray-500 dark:text-gray-400">
-                      {columnMap['name']?.label || 'Naam'}
-                    </span>
-                    <span className="ml-2 text-xs text-gray-400 dark:text-gray-500">
-                      (altijd zichtbaar)
-                    </span>
-                  </label>
-                </div>
-              </div>
 
               {/* Sortable columns */}
               <DndContext

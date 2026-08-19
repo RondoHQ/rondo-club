@@ -6,8 +6,10 @@ import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, formatStoredDateTime } from '@/utils/dateFormat';
 import { refreshShiftCalendars, shiftCalendarKeys } from '@/utils/shiftQueryCache';
+import { decodeHtml } from '@/utils/formatters';
 import AnchoredPopover from '@/components/AnchoredPopover';
 import ShiftCoverageCalendar from '@/components/volunteers/ShiftCoverageCalendar';
+import ShiftSignupTable from '@/components/volunteers/ShiftSignupTable';
 
 function DienstTypesPopover({ anchor, isLoading, onClose, types }) {
   const closeButtonRef = useRef(null);
@@ -70,7 +72,7 @@ function DienstTypesPopover({ anchor, isLoading, onClose, types }) {
                   <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full" style={{ background: color }} />
                   <div className="min-w-0 flex-1">
                     <div className="font-medium text-gray-900 dark:text-gray-100">
-                      {type.title?.rendered || type.title}
+                      {decodeHtml(type.title?.rendered || type.title)}
                     </div>
                     {fields.description && (
                       <p className="mt-1 line-clamp-2 text-xs text-gray-500 dark:text-gray-400">
@@ -157,7 +159,7 @@ function CopyDayModal({ day, error, isLoading, onClose, onSubmit }) {
               {day.shifts.map((shift) => (
                 <div key={shift.id} className="flex items-center justify-between gap-3 text-sm">
                   <span className="min-w-0 truncate text-gray-800 dark:text-gray-200">
-                    {shift.dienst_type_name || shift.title}
+                    {decodeHtml(shift.dienst_type_name || shift.title)}
                   </span>
                   <span className="shrink-0 text-xs text-gray-500 dark:text-gray-400">
                     {formatStoredDateTime(shift.start_datetime, 'HH:mm')}–{formatStoredDateTime(shift.end_datetime, 'HH:mm')} · {Math.max(1, Number(shift.capacity) || 1)}
@@ -365,7 +367,7 @@ export default function VrijwilligersDiensten() {
                 to={`/vrijwilligers/diensten/${shift.id}`}
                 className="font-medium text-bright-cobalt hover:underline dark:text-electric-cyan"
               >
-                {shift.dienst_type_name || shift.title}
+                {decodeHtml(shift.dienst_type_name || shift.title)}
               </Link>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {formatStoredDateTime(shift.start_datetime, 'HH:mm')}–{formatStoredDateTime(shift.end_datetime, 'HH:mm')} · {shift.assigned_count} van {Math.max(1, shift.capacity)} plekken bezet
@@ -401,9 +403,14 @@ export default function VrijwilligersDiensten() {
       />
 
       <section>
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider mb-3">
-          Recente aanmeldingen ({recentSignupShifts.length})
-        </h2>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-200">
+            Recente aanmeldingen ({recentSignupShifts.length})
+          </h2>
+          <Link to="/vrijwilligers/aanmeldingen" className="btn-tertiary text-xs">
+            Alle aanmeldingen
+          </Link>
+        </div>
         {recentSignupsLoading ? (
           <div className="card p-6 text-center text-gray-500 dark:text-gray-400">Laden…</div>
         ) : recentSignupShifts.length === 0 ? (
@@ -411,54 +418,7 @@ export default function VrijwilligersDiensten() {
             <div className="text-gray-500 dark:text-gray-400">Nog geen recente aanmeldingen.</div>
           </div>
         ) : (
-          <div className="card overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 dark:bg-gray-700 text-left text-xs uppercase text-gray-500 dark:text-gray-300">
-                <tr>
-                  <th className="px-4 py-2">Inschrijftaak</th>
-                  <th className="px-4 py-2">Dienstmoment</th>
-                  <th className="px-4 py-2">Ingeschreven</th>
-                  <th className="px-4 py-2">Laatste aanmelding</th>
-                  <th className="px-4 py-2 w-12"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {recentSignupShifts.map((shift) => (
-                  <tr key={shift.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
-                      <Link to={`/vrijwilligers/diensten/${shift.id}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline">
-                        {shift.dienst_type_name || shift.title || `Inschrijftaak ${shift.id}`}
-                      </Link>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">
-                      {formatStoredDateTime(shift.start_datetime, 'EEE d MMM yyyy, HH:mm')}–{formatStoredDateTime(shift.end_datetime, 'HH:mm')}
-                    </td>
-                    <td className="px-4 py-3">
-                      {shift.signups.map((signup, index) => (
-                        <span key={signup.person_id}>
-                          {index > 0 ? ', ' : ''}
-                          <Link
-                            to={`/people/${signup.person_id}`}
-                            className="text-bright-cobalt hover:underline dark:text-electric-cyan"
-                          >
-                            {signup.name}
-                          </Link>
-                        </span>
-                      ))}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-gray-500 dark:text-gray-400">
-                      {formatStoredDateTime(shift.latest_signup_at, 'dd-MM-yyyy HH:mm')}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link to={`/vrijwilligers/diensten/${shift.id}`} className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200" title="Openen">
-                        <Pencil className="w-4 h-4" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ShiftSignupTable shifts={recentSignupShifts} />
         )}
       </section>
 

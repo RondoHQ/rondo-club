@@ -4,6 +4,7 @@ import { ArrowLeft, Building2, Globe, Users, GitBranch, Share2, Info, Pencil, Ch
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { getCommissieName, sanitizeCommissieFields } from '@/utils/formatters';
 import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
@@ -20,13 +21,15 @@ const PERIOD_LABELS = {
  * (long description, task description, time investment, member limits).
  *
  * These fields are stored as native field meta on the commissie post and round-trip
- * through wp/v2/commissie. The card has a view mode and an inline edit form.
+ * through the dedicated local-info endpoint. The card has a view mode and an inline edit form.
  */
-function CommissieInfoCard({ fields, onSave, isSaving }) {
+function CommissieInfoCard({ fields, canEdit, onSave, isSaving }) {
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({});
+  const [saveError, setSaveError] = useState('');
 
   const startEdit = () => {
+    setSaveError('');
     setForm({
       lange_omschrijving: fields.lange_omschrijving ?? '',
       taakomschrijving: fields.taakomschrijving ?? '',
@@ -42,8 +45,13 @@ function CommissieInfoCard({ fields, onSave, isSaving }) {
   const setField = (name, value) => setForm((prev) => ({ ...prev, [name]: value }));
 
   const handleSave = async () => {
-    await onSave(form);
-    setIsEditing(false);
+    try {
+      setSaveError('');
+      await onSave(form);
+      setIsEditing(false);
+    } catch (error) {
+      setSaveError(error?.response?.data?.message || 'Opslaan is niet gelukt. Probeer het opnieuw.');
+    }
   };
 
   const hours = fields.uren_aantal !== '' && fields.uren_aantal !== null && fields.uren_aantal !== undefined
@@ -66,7 +74,7 @@ function CommissieInfoCard({ fields, onSave, isSaving }) {
           <Info className="w-5 h-5 mr-2" />
           Commissie-informatie
         </h2>
-        {!isEditing && (
+        {canEdit && !isEditing && (
           <button onClick={startEdit} className="btn-tertiary" title="Bewerken">
             <Pencil className="w-4 h-4 mr-2" />
             Bewerken
@@ -192,12 +200,17 @@ function CommissieInfoCard({ fields, onSave, isSaving }) {
               Annuleren
             </button>
           </div>
+          {saveError && (
+            <p className="text-sm text-red-600 dark:text-red-400" role="alert">{saveError}</p>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
           {!hasAnyValue && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Nog geen informatie ingevuld. Klik op &lsquo;Bewerken&rsquo; om dit aan te vullen.
+              {canEdit
+                ? <>Nog geen informatie ingevuld. Klik op &lsquo;Bewerken&rsquo; om dit aan te vullen.</>
+                : 'Nog geen informatie ingevuld.'}
             </p>
           )}
 
@@ -252,6 +265,7 @@ export default function CommissieDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showShareModal, setShowShareModal] = useState(false);
+  const { data: currentUser } = useCurrentUser();
   
   const { data: commissie, isLoading, error } = useQuery({
     queryKey: ['commissie', id],
@@ -294,6 +308,16 @@ export default function CommissieDetail() {
       queryClient.invalidateQueries({ queryKey: ['commissie', id] });
       queryClient.invalidateQueries({ queryKey: ['commissies'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+
+  const updateCommissieInfo = useMutation({
+    mutationFn: (fields) => prmApi.updateCommissieInfo(id, fields),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['commissie', id] }),
+        queryClient.invalidateQueries({ queryKey: ['commissies'] }),
+      ]);
     },
   });
 
@@ -394,10 +418,11 @@ export default function CommissieDetail() {
       {/* Rondo-local commissie information */}
       <CommissieInfoCard
         fields={fields}
-        isSaving={updateCommissie.isPending}
+        canEdit={currentUser?.can_edit_commissie_info ?? false}
+        isSaving={updateCommissieInfo.isPending}
         onSave={(values) => {
           const fieldData = sanitizeCommissieFields(commissie?.fields, values);
-          return updateCommissie.mutateAsync({ fields: fieldData });
+          return updateCommissieInfo.mutateAsync(fieldData);
         }}
       />
 
@@ -503,10 +528,10 @@ export default function CommissieDetail() {
         postType="commissie"
         postId={parseInt(id)}
         fieldData={commissie?.fields}
-        onUpdate={(newFieldValues) => {
+        onUpdate={currentUser?.is_admin ? (newFieldValues) => {
           const fieldData = sanitizeCommissieFields(commissie?.fields, newFieldValues);
           updateCommissie.mutateAsync({ fields: fieldData });
-        }}
+        } : undefined}
         isUpdating={updateCommissie.isPending}
       />
 

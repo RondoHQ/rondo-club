@@ -11,6 +11,8 @@ use Rondo\CustomFields\Manager;
 use Rondo\Core\SponsorStatus;
 use Rondo\Fields\Registry;
 use Rondo\Passes\PublicMembershipPassPage;
+use Rondo\People\ParentRelationshipService;
+use Rondo\Sponsors\Relations as SponsorRelations;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -35,12 +37,10 @@ class People extends Base {
 		add_filter( 'rest_prepare_person', [ $this, 'add_person_computed_fields' ], 20, 3 );
 
 		// Reject native field edits on persons marked former_member=true. Sportlink
-		// rejects writes for these members' lidsoort ("Oud bondslid" /
-		// "Oud verenigingslid"), so anything we accept here just generates
-		// reverse-sync work that can never land. Admins (incl. the sync
-		// service user) are exempt so the sync itself can still touch
-		// former-member records. The only allowed non-admin write is the
-		// former_member toggle itself — flip it off first, then edit.
+		// rejects writes to their historical member profile, but a former member
+		// who is still a current parent may update the contact fields backed by the
+		// child's Sportlink parent slot. Admins (incl. the sync service user) remain
+		// exempt so forward sync can refresh former-member parent records.
 		add_filter( 'rest_pre_insert_person', [ $this, 'block_former_member_edits' ], 10, 2 );
 		add_filter( 'rest_pre_insert_person', [ $this, 'enforce_person_field_scope' ], 15, 2 );
 		add_filter( 'rest_pre_insert_person', [ $this, 'validate_sponsor_pass_variant' ], 18, 2 );
@@ -57,6 +57,118 @@ class People extends Base {
 	 * Register custom REST routes for people domain
 	 */
 	public function register_routes() {
+		register_rest_route(
+			'rondo/v1',
+			'/people/(?P<person_id>\d+)/parents',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'add_parent' ],
+				'permission_callback' => [ $this, 'check_ledenadministratie_permission' ],
+				'args'                => [
+					'person_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'mode'      => [
+						'required'          => true,
+						'sanitize_callback' => 'sanitize_key',
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/people/(?P<person_id>\d+)/parent-sync-status',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'update_parent_sync_status' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'person_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'parent_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'state'     => [
+						'required' => true,
+						'enum'     => [ 'pending', 'synced', 'error' ],
+					],
+				],
+			]
+		);
+
+		// Guided, admin-only person merge. Preview and execution use the same
+		// service plan so the confirmation screen cannot drift from the write.
+		register_rest_route(
+			'rondo/v1',
+			'/people/(?P<primary_id>\d+)/merge-preview',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'preview_person_merge' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'primary_id'   => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'duplicate_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/people/(?P<primary_id>\d+)/merge',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'merge_people' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'primary_id'   => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'duplicate_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'resolutions'  => [
+						'default' => [],
+						'type'    => 'object',
+					],
+					'confirmed'    => [
+						'required' => true,
+						'type'     => 'boolean',
+					],
+				],
+			]
+		);
+
+		// Allows trusted integrations to repair their local WordPress ID mapping
+		// after an administrator merges away the post they previously tracked.
+		register_rest_route(
+			'rondo/v1',
+			'/people/(?P<person_id>\d+)/merge-target',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_person_merge_target' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'person_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+				],
+			]
+		);
+
 		// Personal household scope, independent of broader management privileges.
 		register_rest_route(
 			'rondo/v1',
@@ -279,6 +391,14 @@ class People extends Base {
 							return strtolower( $param );
 						},
 					],
+					'first_name'                => [
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+					'last_name'                 => [
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					],
 					'birth_year_from'           => [
 						'description'       => 'Filter by birth year (minimum year, inclusive)',
 						'type'              => 'integer',
@@ -341,6 +461,23 @@ class People extends Base {
 							return in_array( $value, [ '', '1', '0' ], true );
 						},
 					],
+					'knvb_bekend'               => [
+						'description'       => 'Filter by KNVB registration (1=known, 0=not known, empty=all)',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1', '0' ], true );
+						},
+					],
+					'is_parent'                 => [
+						'description'       => 'Filter for people with a current child relationship (1=parent/guardian, empty=all)',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
 					'is_businessclub_member'    => [
 						'description'       => 'Filter by active Businessclub membership (1=yes, 0=no, empty=all)',
 						'type'              => 'string',
@@ -359,6 +496,14 @@ class People extends Base {
 					],
 					'vog_missing'               => [
 						'description'       => 'Filter for people without VOG date (1=missing, empty=all)',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
+					'vog_required'              => [
+						'description'       => 'Filter for current volunteers with at least one active role that requires a VOG',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 						'validate_callback' => function ( $value ) {
@@ -515,6 +660,75 @@ class People extends Base {
 		);
 	}
 
+	/** Preview a recoverable person merge. */
+	public function preview_person_merge( $request ) {
+		$service = new \Rondo\Data\PersonMergeService();
+		$result  = $service->preview( (int) $request['primary_id'], (int) $request['duplicate_id'] );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	/** Execute a previously reviewed person merge. */
+	public function merge_people( $request ) {
+		if ( $request->get_param( 'confirmed' ) !== true ) {
+			return new \WP_Error(
+				'rondo_person_merge_confirmation_required',
+				__( 'Bevestig dat je de samenvoeging hebt gecontroleerd.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$resolutions = $request->get_param( 'resolutions' );
+		if ( ! is_array( $resolutions ) ) {
+			$resolutions = [];
+		}
+		$resolutions = array_map( 'sanitize_key', $resolutions );
+
+		$service = new \Rondo\Data\PersonMergeService();
+		$result  = $service->merge(
+			(int) $request['primary_id'],
+			(int) $request['duplicate_id'],
+			$resolutions,
+			get_current_user_id()
+		);
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	/** Resolve a trashed merge source to its current published survivor. */
+	public function get_person_merge_target( $request ) {
+		$source_id = (int) $request['person_id'];
+		$current   = $source_id;
+		$visited   = [];
+
+		for ( $depth = 0; $depth < 20; $depth++ ) {
+			if ( isset( $visited[ $current ] ) ) {
+				break;
+			}
+			$visited[ $current ] = true;
+			$target_id           = (int) get_post_meta( $current, '_rondo_merged_into_person_id', true );
+			if ( $target_id <= 0 ) {
+				break;
+			}
+
+			$target = get_post( $target_id );
+			if ( $target && $target->post_type === 'person' && $target->post_status === 'publish' ) {
+				return rest_ensure_response(
+					[
+						'person_id'             => $source_id,
+						'merged_into_person_id' => $target_id,
+					]
+				);
+			}
+
+			$current = $target_id;
+		}
+
+		return new \WP_Error(
+			'rondo_person_merge_target_not_found',
+			__( 'Voor deze persoon is geen actief samengevoegd profiel gevonden.', 'rondo' ),
+			[ 'status' => 404 ]
+		);
+	}
+
 	/** Return only the linked person and their minor children. */
 	public function get_household() {
 		$ids = \Rondo\Core\AccessControl::get_visible_person_ids();
@@ -653,6 +867,39 @@ class People extends Base {
 	 * @param WP_REST_Request $request The REST request object.
 	 * @return WP_REST_Response Modified response with computed fields.
 	 */
+	/** Add an existing or new parent/guardian to a Sportlink-backed child. */
+	public function add_parent( $request ) {
+		$service = new ParentRelationshipService();
+		$result  = $service->add_parent( (int) $request->get_param( 'person_id' ), $request->get_params() );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		return new \WP_REST_Response( $result, 201 );
+	}
+
+	/** Receive the verified Sportlink slot status from rondo-sync. */
+	public function update_parent_sync_status( $request ) {
+		$child_id  = (int) $request->get_param( 'person_id' );
+		$parent_id = (int) $request->get_param( 'parent_id' );
+		if ( get_post_type( $child_id ) !== 'person' || get_post_type( $parent_id ) !== 'person' ) {
+			return new \WP_Error( 'rondo_parent_status_not_found', __( 'Kind of ouder/verzorger is niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+		}
+
+		$slot  = $request->get_param( 'slot' );
+		$slot  = $slot === null ? null : absint( $slot );
+		$saved = ( new ParentRelationshipService() )->set_sync_status(
+			$child_id,
+			$parent_id,
+			sanitize_key( (string) $request->get_param( 'state' ) ),
+			$slot,
+			(string) $request->get_param( 'message' )
+		);
+		if ( ! $saved ) {
+			return new \WP_Error( 'rondo_parent_status_invalid', __( 'De synchronisatiestatus kon niet worden opgeslagen.', 'rondo' ), [ 'status' => 400 ] );
+		}
+		return rest_ensure_response( [ 'updated' => true ] );
+	}
+
 	public function add_person_computed_fields( $response, $post, $request ) {
 		// Return early if response is an error (e.g., unauthorized access)
 		if ( is_wp_error( $response ) ) {
@@ -663,7 +910,7 @@ class People extends Base {
 
 		// Deceased status field (reserved for future use)
 		$data['is_deceased']       = false;
-		$is_former_member          = ! empty( $data['fields']['former_member'] );
+		$is_former_member          = (bool) \Rondo\Fields\Fields::get_for_post( $post->ID, 'former_member' );
 		$data['is_current_parent'] = $is_former_member && $this->has_current_child_relationship( $post->ID );
 
 		// Get birth year from birthdate field on person
@@ -710,6 +957,7 @@ class People extends Base {
 
 		$data['linked_user_id']        = $linked_user_id ?: null;
 		$data['welcome_email_sent_at'] = get_post_meta( $post->ID, '_welcome_email_sent_at', true ) ?: null;
+		$data['parent_sync_statuses']  = ( new ParentRelationshipService() )->get_sync_statuses( (int) $post->ID );
 
 		// Expose linked user roles for admin AccountCard.
 		if ( $data['linked_user_id'] && current_user_can( 'manage_options' ) ) {
@@ -730,72 +978,19 @@ class People extends Base {
 	}
 
 	/**
-	 * Whether this person currently has a parent role for a published,
-	 * non-former person. This role is independent from their own membership
-	 * status: a former member can still be an active parent or guardian.
-	 *
-	 * @param int $person_id Person post ID.
-	 * @return bool
+	 * Delegate current-parent eligibility to the shared relationship service.
 	 */
 	private function has_current_child_relationship( int $person_id ): bool {
-		$child_term = get_term_by( 'slug', 'child', 'relationship_type' );
-		if ( ! $child_term || is_wp_error( $child_term ) ) {
-			return false;
-		}
-
-		$relationships = \Rondo\Fields\Fields::get_for_post( $person_id, 'relationships' ) ?: [];
-		foreach ( $relationships as $relationship ) {
-			$type_values = $relationship['relationship_type'] ?? [];
-			$type_values = is_array( $type_values ) ? $type_values : [ $type_values ];
-			$is_child    = false;
-
-			foreach ( $type_values as $type_value ) {
-				$type_id = 0;
-				if ( $type_value instanceof \WP_Term ) {
-					$type_id = (int) $type_value->term_id;
-				} elseif ( is_array( $type_value ) ) {
-					$type_id = (int) ( $type_value['term_id'] ?? 0 );
-				} elseif ( is_numeric( $type_value ) ) {
-					$type_id = (int) $type_value;
-				}
-
-				if ( $type_id === (int) $child_term->term_id ) {
-					$is_child = true;
-					break;
-				}
-			}
-
-			if ( ! $is_child ) {
-				continue;
-			}
-
-			$related    = $relationship['related_person'] ?? 0;
-			$related_id = 0;
-			if ( $related instanceof \WP_Post ) {
-				$related_id = (int) $related->ID;
-			} elseif ( is_array( $related ) ) {
-				$related_id = (int) ( $related['ID'] ?? 0 );
-			} elseif ( is_numeric( $related ) ) {
-				$related_id = (int) $related;
-			}
-
-			if (
-				$related_id > 0 &&
-				get_post_status( $related_id ) === 'publish' &&
-				! (bool) \Rondo\Fields\Fields::get_for_post( $related_id, 'former_member' )
-			) {
-				return true;
-			}
-		}
-
-		return false;
+		return ( new ParentRelationshipService() )->has_current_child( $person_id );
 	}
 
 	/**
 	 * Block native field edits on persons marked former_member=true, except for the
-	 * former_member toggle itself. Admins (including the rondo-sync service
-	 * user, which authenticates with manage_options) bypass the check so
-	 * the sync can still write to former-member records.
+	 * former_member toggle itself. A former member with a current child may also
+	 * change the contact fields represented by that child's Sportlink parent slot.
+	 * Admins (including the rondo-sync service user, which authenticates with
+	 * manage_options) bypass the check so the sync can still write to
+	 * former-member records.
 	 *
 	 * Filter signature: rest_pre_insert_{$post_type}. Runs before WordPress
 	 * persists a REST insert/update; returning WP_Error aborts the write.
@@ -841,8 +1036,15 @@ class People extends Base {
 			}
 		}
 
-		// Only allowed change: flipping former_member itself.
-		$other_changes = array_diff( $changed_keys, [ 'former_member' ] );
+		$allowed_changes = [ 'former_member' ];
+		if ( $this->has_current_child_relationship( (int) $prepared_post->ID ) ) {
+			$allowed_changes = array_merge(
+				$allowed_changes,
+				\Rondo\Core\AccessControl::PARENT_SLOT_CONTACT_WRITE_FIELDS
+			);
+		}
+
+		$other_changes = array_diff( $changed_keys, $allowed_changes );
 		if ( empty( $other_changes ) ) {
 			return $prepared_post;
 		}
@@ -986,16 +1188,9 @@ class People extends Base {
 		$post_id = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : 0;
 
 		if ( $post_id === 0 ) {
-			// Creation: only sponsor managers may mint a record, and only an
-			// explicit contact+sponsor one. Contact editors never create people.
-			if ( $may_manage_sponsors ) {
-				$requested_type       = sanitize_key( (string) ( $fields['person_type'] ?? '' ) );
-				$requested_is_sponsor = SponsorStatus::value_is_true( $fields['is_sponsor'] ?? false );
-				if ( $requested_type === 'contact' && $requested_is_sponsor ) {
-					return $prepared_post;
-				}
-			}
-
+			// Sponsor contacts are created through /rondo/v1/sponsors/{id}/contacts,
+			// which creates the person and relationship together. Partial people
+			// editors never mint standalone person records through wp/v2.
 			return $this->person_field_scope_error();
 		}
 
@@ -1426,8 +1621,14 @@ class People extends Base {
 			return null;
 		}
 
-		$identifier     = substr( $param, 6 + ( $is_legacy ? 1 : 0 ) );
-		$sortable_types = [ 'text', 'textarea', 'number', 'date', 'date_picker', 'select', 'email', 'url', 'true_false' ];
+		$identifier = substr( $param, 6 + ( $is_legacy ? 1 : 0 ) );
+
+		// `date_time_picker` stores `Y-m-d H:i:s`, so the default text ORDER BY
+		// below already sorts it chronologically — the same reason `date_picker`
+		// (stored as `Ymd`) needs no branch of its own. Leaving it out made every
+		// VOG list sort a hard 400: the "1e email", "Justis" and "Herinnering"
+		// columns are all `date_time_picker`.
+		$sortable_types = [ 'text', 'textarea', 'number', 'date', 'date_picker', 'date_time_picker', 'select', 'email', 'url', 'true_false' ];
 
 		try {
 			$definition = Registry::resolve( 'person', $identifier );
@@ -1489,8 +1690,10 @@ class People extends Base {
 		if ( $order_definition === null ) {
 			$order_definition = $this->resolve_orderby_definition( 'first_name' );
 		}
-		$orderby = $order_definition['identifier'];
-		$order   = strtoupper( $request->get_param( 'order' ) );
+		$orderby           = $order_definition['identifier'];
+		$order             = strtoupper( $request->get_param( 'order' ) );
+		$first_name_filter = trim( (string) $request->get_param( 'first_name' ) );
+		$last_name_filter  = trim( (string) $request->get_param( 'last_name' ) );
 
 		// Custom field filter parameters
 		$huidig_vrijwilliger       = $request->get_param( 'huidig_vrijwilliger' );
@@ -1498,9 +1701,12 @@ class People extends Base {
 		$type_lid                  = $request->get_param( 'type_lid' );
 		$person_type               = $request->get_param( 'person_type' );
 		$is_sponsor                = $request->get_param( 'is_sponsor' );
+		$knvb_bekend               = $request->get_param( 'knvb_bekend' );
+		$is_parent                 = $request->get_param( 'is_parent' );
 		$is_businessclub_member    = $request->get_param( 'is_businessclub_member' );
 		$foto_missing              = $request->get_param( 'foto_missing' );
 		$vog_missing               = $request->get_param( 'vog_missing' );
+		$vog_required              = $request->get_param( 'vog_required' );
 		$vog_older_than_years      = $request->get_param( 'vog_older_than_years' );
 		$vog_expiring_within_days  = $request->get_param( 'vog_expiring_within_days' );
 		$vog_email_status          = $request->get_param( 'vog_email_status' );
@@ -1581,6 +1787,15 @@ class People extends Base {
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} tm ON p.ID = tm.post_id AND tm.meta_key = 'team'";
 		$select_fields .= ', fn.meta_value AS first_name, ix.meta_value AS infix, ln.meta_value AS last_name';
 		$select_fields .= ', tm.meta_value AS team_id';
+
+		if ( $first_name_filter !== '' ) {
+			$where_clauses[]  = 'fn.meta_value LIKE %s';
+			$prepare_values[] = '%' . $wpdb->esc_like( $first_name_filter ) . '%';
+		}
+		if ( $last_name_filter !== '' ) {
+			$where_clauses[]  = "CONCAT_WS(' ', NULLIF(ix.meta_value, ''), ln.meta_value) LIKE %s";
+			$prepare_values[] = '%' . $wpdb->esc_like( $last_name_filter ) . '%';
+		}
 
 		$has_birthdate_join    = false;
 		$birthdate_value_sql   = "CASE
@@ -1680,6 +1895,19 @@ class People extends Base {
 				: "(hv.meta_value IS NULL OR hv.meta_value = '' OR hv.meta_value = '0')";
 		}
 
+		// VOG overviews include only volunteers with at least one active,
+		// non-exempt role. This remains separate from volunteer status itself.
+		if ( $vog_required === '1' ) {
+			$required_person_ids = \Rondo\VOG\VOGRequirement::get_required_person_ids();
+			if ( empty( $required_person_ids ) ) {
+				$where_clauses[] = '1 = 0';
+			} else {
+				$id_placeholders = implode( ', ', array_fill( 0, count( $required_person_ids ), '%d' ) );
+				$where_clauses[] = "p.ID IN ($id_placeholders)";
+				$prepare_values  = array_merge( $prepare_values, $required_person_ids );
+			}
+		}
+
 		// Financiele blokkade (financial block) - boolean filter
 		if ( $financiele_blokkade !== null && $financiele_blokkade !== '' ) {
 			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} fb ON p.ID = fb.post_id AND fb.meta_key = 'financiele-blokkade'";
@@ -1706,22 +1934,56 @@ class People extends Base {
 			}
 		}
 
-		// Sponsorship is an independent role and can overlap either person type.
+		// Sponsor contact status is relationship-derived and can overlap either person type.
 		if ( $is_sponsor !== null && $is_sponsor !== '' ) {
-			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} sp ON p.ID = sp.post_id AND sp.meta_key = 'is_sponsor'";
-			$where_clauses[] = $is_sponsor === '1'
-				? "(sp.meta_value = '1')"
-				: "(sp.meta_value IS NULL OR sp.meta_value = '' OR sp.meta_value = '0')";
+			$sponsor_person_ids = SponsorRelations::active_person_ids();
+			if ( empty( $sponsor_person_ids ) ) {
+				if ( $is_sponsor === '1' ) {
+					$where_clauses[] = '1 = 0';
+				}
+			} else {
+				$id_placeholders = implode( ', ', array_fill( 0, count( $sponsor_person_ids ), '%d' ) );
+				$where_clauses[] = $is_sponsor === '1'
+					? "p.ID IN ($id_placeholders)"
+					: "p.ID NOT IN ($id_placeholders)";
+				$prepare_values  = array_merge( $prepare_values, $sponsor_person_ids );
+			}
 		}
 
-		// Businessclub membership is the active sponsor role with the Businessclub pass variant.
+		// KNVB registration is present when the canonical KNVB ID has a value.
+		if ( $knvb_bekend !== null && $knvb_bekend !== '' ) {
+			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} kb ON p.ID = kb.post_id AND kb.meta_key = 'knvb-id'";
+			$where_clauses[] = $knvb_bekend === '1'
+				? "(kb.meta_value IS NOT NULL AND kb.meta_value != '')"
+				: "(kb.meta_value IS NULL OR kb.meta_value = '')";
+		}
+
+		// Parent/guardian is a relationship-derived role, not a stored person flag.
+		if ( $is_parent === '1' ) {
+			$parent_ids = $this->get_current_parent_ids();
+			if ( empty( $parent_ids ) ) {
+				$where_clauses[] = '1 = 0';
+			} else {
+				$id_placeholders = implode( ', ', array_fill( 0, count( $parent_ids ), '%d' ) );
+				$where_clauses[] = "p.ID IN ($id_placeholders)";
+				$prepare_values  = array_merge( $prepare_values, $parent_ids );
+			}
+		}
+
+		// Businessclub membership follows the active sponsor company's role.
 		if ( $is_businessclub_member !== null && $is_businessclub_member !== '' ) {
-			$join_clauses[]         = "LEFT JOIN {$wpdb->postmeta} bcsp ON p.ID = bcsp.post_id AND bcsp.meta_key = 'is_sponsor'";
-			$join_clauses[]         = "LEFT JOIN {$wpdb->postmeta} bcpv ON p.ID = bcpv.post_id AND bcpv.meta_key = 'sponsor_pass_variant'";
-			$businessclub_condition = "(COALESCE(bcsp.meta_value, '') = '1' AND COALESCE(bcpv.meta_value, '') = 'businessclub')";
-			$where_clauses[]        = $is_businessclub_member === '1'
-				? $businessclub_condition
-				: "NOT {$businessclub_condition}";
+			$businessclub_person_ids = SponsorRelations::active_person_ids( 'businessclub' );
+			if ( empty( $businessclub_person_ids ) ) {
+				if ( $is_businessclub_member === '1' ) {
+					$where_clauses[] = '1 = 0';
+				}
+			} else {
+				$id_placeholders = implode( ', ', array_fill( 0, count( $businessclub_person_ids ), '%d' ) );
+				$where_clauses[] = $is_businessclub_member === '1'
+					? "p.ID IN ($id_placeholders)"
+					: "p.ID NOT IN ($id_placeholders)";
+				$prepare_values  = array_merge( $prepare_values, $businessclub_person_ids );
+			}
 		}
 
 		// Leeftijdsgroep (age group) - select filter
@@ -2117,7 +2379,8 @@ class People extends Base {
 				'thumbnail'     => $this->sanitize_url( get_the_post_thumbnail_url( $row->ID, 'thumbnail' ) ),
 			];
 
-			$person['fields'] = \Rondo\Fields\RestFields::for_post( 'person', (int) $row->ID );
+			$person['fields']          = \Rondo\Fields\RestFields::for_post( 'person', (int) $row->ID );
+			$person['characteristics'] = $this->get_person_characteristics( (int) $row->ID, $person['fields'] );
 
 			$people[] = $person;
 		}
@@ -2130,6 +2393,56 @@ class People extends Base {
 				'total_pages' => (int) ceil( $total / $per_page ),
 			]
 		);
+	}
+
+	/**
+	 * Find current parents/guardians through their child relationships.
+	 *
+	 * @return int[] Person post IDs.
+	 */
+	private function get_current_parent_ids(): array {
+		$candidate_ids = get_posts(
+			[
+				'post_type'      => 'person',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'meta_query'     => [
+					[
+						'key'     => 'relationships',
+						'compare' => 'EXISTS',
+					],
+				],
+			]
+		);
+
+		return array_values(
+			array_filter(
+				array_map( 'intval', $candidate_ids ),
+				fn( int $person_id ): bool => $this->has_current_child_relationship( $person_id )
+			)
+		);
+	}
+
+	/**
+	 * Build the independent roles and statuses shown in the People list.
+	 *
+	 * @param int   $person_id Person post ID.
+	 * @param array $fields    REST-formatted native fields.
+	 * @return array<string,bool>
+	 */
+	private function get_person_characteristics( int $person_id, array $fields ): array {
+		$spelactiviteit = trim( (string) ( $fields['spelactiviteit'] ?? '' ) );
+
+		return [
+			'playing_member' => $spelactiviteit !== '' && $spelactiviteit !== '-',
+			'knvb_known'     => trim( (string) ( $fields['knvb_id'] ?? '' ) ) !== '',
+			'parent'         => $this->has_current_child_relationship( $person_id ),
+			'volunteer'      => (bool) ( $fields['huidig_vrijwilliger'] ?? false ),
+			'sponsor'        => SponsorStatus::is_sponsor( $person_id ),
+			'contact'        => ( $fields['person_type'] ?? '' ) === 'contact',
+		];
 	}
 
 	/**

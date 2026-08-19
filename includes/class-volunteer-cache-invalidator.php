@@ -30,6 +30,7 @@ class VolunteerCacheInvalidator {
 	public function invalidate() {
 		VolunteerEligibilityService::invalidate_cache();
 		RelationshipQualityChecker::invalidate_cache();
+		\Rondo\VOG\VOGRequirement::invalidate_cache();
 	}
 
 	public function invalidate_rest( $post, $request ) {

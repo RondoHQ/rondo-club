@@ -21,6 +21,7 @@
 namespace Rondo\Volunteer;
 
 use Rondo\Config\ClubConfig;
+use Rondo\Core\PostTitle;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -142,7 +143,9 @@ class PublicTaakuitlegPage {
 	 * @param \WP_Post $post The taakuitleg post.
 	 */
 	private function render_page( \WP_Post $post ) {
-		$title        = get_the_title( $post );
+		// Raw title: the markup below escapes it, so a texturized `&#8211;` would
+		// be double-escaped and shown as literal entity text.
+		$title        = PostTitle::plain( (int) $post->ID );
 		$body_html    = $this->prepare_body( $post->post_content );
 		$dienst_types = $this->get_dienst_type_names( $post->ID );
 		$modified     = get_the_modified_date( 'j F Y', $post );
@@ -221,7 +224,7 @@ class PublicTaakuitlegPage {
 
 		$names = [];
 		foreach ( $ids as $id ) {
-			$name = get_the_title( (int) $id );
+			$name = PostTitle::plain( (int) $id );
 			if ( $name !== '' ) {
 				$names[] = $name;
 			}

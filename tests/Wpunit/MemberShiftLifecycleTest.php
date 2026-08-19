@@ -148,7 +148,7 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertSame( 3, $data['obligations'][0]['required_count'] );
 	}
 
-	public function test_recent_signups_returns_at_most_fifty_shifts_with_names_in_signup_order(): void {
+	public function test_recent_signups_returns_at_most_ten_shifts_with_names_in_signup_order(): void {
 		$manager_id = $this->createRondoUser(
 			[
 				'role'       => 'rondo_vrijwilligers',
@@ -171,16 +171,64 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$latest_shift_id = $ids[50];
 		update_post_meta( $latest_shift_id, 'assigned_persons', [ $anne_id, $bob_id ] );
 		update_post_meta( $latest_shift_id, '_shift_signup_at_' . $bob_id, $base + 100 );
+		$cancelled_shift_id = $this->shift( [ $bob_id ], 2 );
+		update_post_meta( $cancelled_shift_id, 'status', 'geannuleerd' );
+		update_post_meta( $cancelled_shift_id, '_shift_signup_at_' . $bob_id, $base + 200 );
 
 		$response = $this->server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/shifts/recent-signups' ) );
 		$this->assertSame( 200, $response->get_status() );
 		$data = $response->get_data();
 
-		$this->assertCount( 50, $data['shifts'] );
+		$this->assertCount( 10, $data['shifts'] );
 		$this->assertSame( $latest_shift_id, $data['shifts'][0]['id'] );
 		$this->assertSame( [ 'Bob Recent', 'Anne Recent' ], array_column( $data['shifts'][0]['signups'], 'name' ) );
 		$this->assertSame( [ $bob_id, $anne_id ], array_column( $data['shifts'][0]['signups'], 'person_id' ) );
 		$this->assertNotContains( $ids[0], array_column( $data['shifts'], 'id' ) );
+		$this->assertNotContains( $cancelled_shift_id, array_column( $data['shifts'], 'id' ) );
+	}
+
+	public function test_signup_overview_returns_all_assignments_with_upcoming_shifts_first(): void {
+		$manager_id = $this->createRondoUser(
+			[
+				'role'       => 'rondo_vrijwilligers',
+				'user_login' => 'signup_overview_manager',
+			]
+		);
+		wp_set_current_user( $manager_id );
+
+		$person_id      = $this->createPerson( [ 'post_title' => 'Overview Volunteer' ] );
+		$future_later   = $this->shift( [ $person_id ], 8 );
+		$past_oldest    = $this->shift( [ $person_id ], -10 );
+		$future_nearest = $this->shift( [ $person_id ], 3 );
+		$past_nearest   = $this->shift( [ $person_id ], -1 );
+		$cancelled      = $this->shift( [ $person_id ], 2 );
+		update_post_meta( $cancelled, 'status', 'geannuleerd' );
+		foreach ( [ $future_later, $past_oldest, $past_nearest, $cancelled ] as $index => $shift_id ) {
+			update_post_meta( $shift_id, '_shift_signup_at_' . $person_id, time() - $index );
+		}
+
+		$response = $this->server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/shifts/signups' ) );
+		$this->assertSame( 200, $response->get_status() );
+		$data = $response->get_data();
+
+		$this->assertSame(
+			[ $future_nearest, $future_later, $past_nearest, $past_oldest ],
+			array_column( $data['shifts'], 'id' )
+		);
+		$this->assertNull( $data['shifts'][0]['latest_signup_at'] );
+		$this->assertSame( [ $person_id ], array_column( $data['shifts'][0]['signups'], 'person_id' ) );
+		$this->assertNotContains( $cancelled, array_column( $data['shifts'], 'id' ) );
+
+		$cancelled_request = new WP_REST_Request( 'GET', '/rondo/v1/shifts/signups' );
+		$cancelled_request->set_param( 'status', 'cancelled' );
+		$cancelled_data = $this->server->dispatch( $cancelled_request )->get_data();
+		$this->assertSame( [ $cancelled ], array_column( $cancelled_data['shifts'], 'id' ) );
+		$this->assertSame( 'geannuleerd', $cancelled_data['shifts'][0]['status'] );
+
+		$all_request = new WP_REST_Request( 'GET', '/rondo/v1/shifts/signups' );
+		$all_request->set_param( 'status', 'all' );
+		$all_data = $this->server->dispatch( $all_request )->get_data();
+		$this->assertContains( $cancelled, array_column( $all_data['shifts'], 'id' ) );
 	}
 
 	private function cancel( int $shift_id ) {
@@ -300,6 +348,38 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertCount( 1, $this->sent_mail );
 	}
 
+	public function test_member_can_download_calendar_with_all_non_cancelled_assignments(): void {
+		[, $person_id] = $this->member( 'shift_calendar_download_member' );
+		$type_id       = $this->dienst_type();
+		$active_id     = $this->dated_shift( $type_id, [ $person_id ], new \DateTimeImmutable( '2026-12-04 09:00:00', wp_timezone() ) );
+		$completed_id  = $this->dated_shift( $type_id, [ $person_id ], new \DateTimeImmutable( '2026-06-05 10:00:00', wp_timezone() ) );
+		$cancelled_id  = $this->dated_shift( $type_id, [ $person_id ], new \DateTimeImmutable( '2026-12-06 11:00:00', wp_timezone() ) );
+		update_post_meta( $completed_id, 'status', 'voltooid' );
+		update_post_meta( $cancelled_id, 'status', 'geannuleerd' );
+
+		$response = $this->server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/my-shifts/calendar' ) );
+
+		$this->assertSame( 200, $response->get_status() );
+		$calendar = $response->get_data();
+		$this->assertIsString( $calendar );
+		$this->assertSame( 2, substr_count( $calendar, 'BEGIN:VEVENT' ) );
+		$this->assertStringContainsString( 'UID:rondo-shift-' . $active_id . '-' . $person_id, $calendar );
+		$this->assertStringContainsString( 'UID:rondo-shift-' . $completed_id . '-' . $person_id, $calendar );
+		$this->assertStringNotContainsString( 'UID:rondo-shift-' . $cancelled_id . '-' . $person_id, $calendar );
+		$this->assertStringContainsString( 'DESCRIPTION:Bekijk je inschrijftaken in Rondo:', $calendar );
+		$this->assertStringContainsString( 'URL:' . home_url( '/vrijwillig' ), $calendar );
+		$this->assertStringContainsString( 'DTSTART;TZID=Europe/Amsterdam:20261204T090000', $calendar );
+	}
+
+	public function test_calendar_download_requires_a_linked_person(): void {
+		wp_set_current_user( $this->createRondoUser( [ 'user_login' => 'calendar_member_without_person' ] ) );
+
+		$response = $this->server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/my-shifts/calendar' ) );
+
+		$this->assertSame( 404, $response->get_status() );
+		$this->assertSame( 'no_person', $response->get_data()['code'] );
+	}
+
 	public function test_cancelling_during_confirmation_delay_suppresses_the_email(): void {
 		[, $person_id] = $this->member( 'cancelled_shift_confirmation_member' );
 		\Rondo\Fields\Fields::update_for_post( $person_id, 'email_1', 'cancelled@example.com' );
@@ -369,6 +449,41 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertNotEmpty( get_post_meta( $shift_id, '_shift_email_reminder_14_sent_' . $person_id, true ) );
 		$this->assertEmpty( get_post_meta( $shift_id, '_shift_email_reminder_14_sent_0', true ) );
 		$this->assertEmpty( get_post_meta( $shift_id, '_shift_email_reminder_14_sent_999999', true ) );
+	}
+
+	/**
+	 * The sweep is the only delivery path for reminders, so an exception that
+	 * escapes it costs every later shift in the batch its email — silently. That
+	 * happened on 2026-08-01 via an assignee id of 0. Keep failures per-shift.
+	 */
+	public function test_one_failing_shift_does_not_abort_the_sweep(): void {
+		$now       = new \DateTimeImmutable( '2026-09-01 10:00:00', wp_timezone() );
+		$type_id   = $this->dienst_type();
+		$person_id = $this->mail_person( 'Anne', 'anne-sweep-resilience@example.com' );
+
+		$broken_id  = $this->dated_shift( $type_id, [ $person_id ], $now->modify( '+14 days' ) );
+		$healthy_id = $this->dated_shift( $type_id, [ $person_id ], $now->modify( '+14 days' ) );
+
+		$thrower = static function ( $value, $object_id, $meta_key ) use ( $broken_id ) {
+			if ( (int) $object_id === $broken_id && $meta_key === 'status' ) {
+				throw new \RuntimeException( 'Simulated failure inside process_shift.' );
+			}
+			return $value;
+		};
+		add_filter( 'get_post_metadata', $thrower, 10, 3 );
+
+		try {
+			$sent = ( new ShiftEmailScheduler() )->run_sweep( $now );
+		} finally {
+			remove_filter( 'get_post_metadata', $thrower, 10 );
+		}
+
+		$this->assertSame( 1, $sent, 'De gezonde dienst wordt nog steeds verwerkt.' );
+		$this->assertNotEmpty(
+			get_post_meta( $healthy_id, '_shift_email_reminder_14_sent_' . $person_id, true ),
+			'De dienst na de kapotte moet zijn herinnering alsnog krijgen.'
+		);
+		$this->assertEmpty( get_post_meta( $broken_id, '_shift_email_reminder_14_sent_' . $person_id, true ) );
 	}
 
 	public function test_survey_is_sent_one_day_later_with_google_forms_link(): void {

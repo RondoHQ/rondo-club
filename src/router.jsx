@@ -13,7 +13,7 @@ import Dashboard from '@/pages/Dashboard';
 
 // Lazy-loaded page components (separate file for fast refresh compatibility)
 import {
-  PeopleList, PeopleAnniversaries, PeopleOnboarding, PersonDetail, TeamsList, TeamDetail,
+  PeopleList, PeopleAnniversaries, PeopleOnboarding, PersonDetail, SponsorList, SponsorDetail, TeamsList, TeamDetail,
   Kaderlijst,
   CommissiesList, CommissieDetail, TodosList,
   FeedbackList, FeedbackDetail, Settings, VOG,
@@ -22,10 +22,11 @@ import {
   CustomFields, Login, Profile, ProfileIva, ProfileVog,
   MembershipPassScanner,
   ClothingPage,
-  VrijwilligersDashboard, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten,
+  VrijwilligersDashboard, VrijwilligersStatistieken, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten, VrijwilligersAanmeldingen,
   VrijwilligersDienstForm, VrijwilligersDienstTypeForm, VrijwilligersSjablonen, VrijwilligersSjabloonForm,
   VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig, Household,
   TaakuitlegList, TaakuitlegForm,
+  Narrowcasting, NarrowcastingDisplay,
 } from './lazyPages';
 
 // Page loader for Suspense fallback
@@ -95,6 +96,22 @@ function FairplayRoute({ children }) {
 function VOGRoute({ children }) {
   return (
     <CapabilityRoute checkAccess={(user) => user?.can_access_vog}>
+      {children}
+    </CapabilityRoute>
+  );
+}
+
+function NarrowcastingRoute({ children }) {
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.can_access_narrowcasting}>
+      {children}
+    </CapabilityRoute>
+  );
+}
+
+function SponsorRoute({ children }) {
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.can_manage_sponsors}>
       {children}
     </CapabilityRoute>
   );
@@ -200,6 +217,14 @@ function ProtectedLayout() {
 // Router configuration at MODULE SCOPE - critical for preventing remounts
 const router = createBrowserRouter([
   {
+    path: '/display',
+    element: (
+      <Suspense fallback={<PageLoadingSpinner />}>
+        <NarrowcastingDisplay />
+      </Suspense>
+    ),
+  },
+  {
     path: '/',
     element: <App />,
     children: [
@@ -231,6 +256,9 @@ const router = createBrowserRouter([
             ),
           },
           { path: 'people/:id', element: <KaderOrVrijwilligRedirect><PersonDetail /></KaderOrVrijwilligRedirect> },
+          { path: 'sponsors', element: <SponsorRoute><SponsorList /></SponsorRoute> },
+          { path: 'sponsors/new', element: <SponsorRoute><SponsorDetail /></SponsorRoute> },
+          { path: 'sponsors/:id', element: <SponsorRoute><SponsorDetail /></SponsorRoute> },
 
           // VOG routes - requires VOG capability
           // Canonical lives under /vrijwilligers/vog; legacy /vog kept for back-compat.
@@ -265,6 +293,14 @@ const router = createBrowserRouter([
             ),
           },
           {
+            path: 'vrijwilligers/statistieken',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersStatistieken />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
             path: 'vrijwilligers/vog',
             element: (
               <VOGRoute>
@@ -293,6 +329,14 @@ const router = createBrowserRouter([
             element: (
               <VrijwilligersRoute>
                 <VrijwilligersDiensten />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/aanmeldingen',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersAanmeldingen />
               </VrijwilligersRoute>
             ),
           },
@@ -509,6 +553,16 @@ const router = createBrowserRouter([
           // Feedback routes — kader only
           { path: 'feedback', element: <KaderOrVrijwilligRedirect><FeedbackList /></KaderOrVrijwilligRedirect> },
           { path: 'feedback/:id', element: <KaderOrVrijwilligRedirect><FeedbackDetail /></KaderOrVrijwilligRedirect> },
+
+          // Club TV content is available to narrowcasting and sponsor managers.
+          {
+            path: 'narrowcasting',
+            element: (
+              <NarrowcastingRoute>
+                <Narrowcasting />
+              </NarrowcastingRoute>
+            ),
+          },
 
           // Settings routes — kader only
           { path: 'settings/notifications', element: <Navigate to="/profile" replace /> },

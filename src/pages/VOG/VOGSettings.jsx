@@ -13,22 +13,26 @@ export default function VOGSettings() {
     reminder_template_new: '',
     reminder_template_renewal: '',
     exempt_commissies: [],
+    exempt_roles: [],
   });
   const [vogLoading, setVogLoading] = useState(true);
   const [vogSaving, setVogSaving] = useState(false);
   const [vogMessage, setVogMessage] = useState('');
   const [commissies, setCommissies] = useState([]);
+  const [availableRoles, setAvailableRoles] = useState([]);
 
   // Fetch VOG settings and commissies on mount
   useEffect(() => {
     const fetchVogSettings = async () => {
       try {
-        const [settingsResponse, commissiesResponse] = await Promise.all([
+        const [settingsResponse, commissiesResponse, rolesResponse] = await Promise.all([
           prmApi.getVOGSettings(),
           wpApi.getCommissies({ per_page: 100, _fields: 'id,title' }),
+          prmApi.getAvailableRoles(),
         ]);
-        setVogSettings(settingsResponse.data);
+        setVogSettings(prev => ({ ...prev, ...settingsResponse.data }));
         setCommissies(commissiesResponse.data || []);
+        setAvailableRoles(rolesResponse.data || []);
       } catch {
         // VOG settings fetch failed silently
       } finally {
@@ -200,6 +204,23 @@ export default function VOGSettings() {
               onChange={(newIds) => setVogSettings(prev => ({ ...prev, exempt_commissies: newIds }))}
               placeholder="Commissie zoeken..."
               emptyMessage="Geen commissies gevonden"
+            />
+          </div>
+
+          {/* Exempt roles */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Vrijgestelde functies
+            </label>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 mb-2">
+              Selecteer vrijwilligersfuncties waarvoor geen VOG nodig is. De functie blijft meetellen als vrijwilligerswerk; iemand met daarnaast een andere VOG-plichtige functie blijft in de VOG-lijst staan.
+            </p>
+            <SearchableMultiSelect
+              options={availableRoles.map(role => ({ id: role, label: role }))}
+              selectedIds={vogSettings.exempt_roles || []}
+              onChange={(newRoles) => setVogSettings(prev => ({ ...prev, exempt_roles: newRoles }))}
+              placeholder="Functie zoeken..."
+              emptyMessage="Geen functies gevonden"
             />
           </div>
 

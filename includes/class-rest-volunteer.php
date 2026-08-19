@@ -24,6 +24,7 @@ use Rondo\Volunteer\VolunteerEligibilityService;
 use Rondo\Volunteer\VolunteerExemptionResolver;
 use Rondo\Volunteer\VolunteerObligationCalculator;
 use Rondo\Volunteer\VolunteerSeeder;
+use Rondo\Volunteer\VolunteerStatistics;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -59,6 +60,23 @@ class Volunteer extends Base {
 					'person_id'    => [
 						'required'          => false,
 						'sanitize_callback' => 'absint',
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/volunteer-statistics',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_statistics' ],
+				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
+				'args'                => [
+					'season' => [
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => [ $this, 'validate_optional_season' ],
 					],
 				],
 			]
@@ -387,6 +405,9 @@ class Volunteer extends Base {
 			$people[] = [
 				'id'              => $post->ID,
 				'name'            => $this->sanitize_text( $post->post_title ),
+				'first_name'      => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $post->ID, 'first_name' ) ),
+				'infix'           => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $post->ID, 'infix' ) ),
+				'last_name'       => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $post->ID, 'last_name' ) ),
 				'thumbnail'       => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
 				'datum_iva'       => \Rondo\Fields\Formatter::for_wire( 'person', [ 'datum_iva' => \Rondo\Fields\Fields::get_for_post( $post->ID, 'datum_iva' ) ] )['datum_iva'],
 				'iva_certificaat' => $cert_url ? $this->sanitize_url( $cert_url ) : '',
@@ -838,7 +859,8 @@ class Volunteer extends Base {
 	 * GET /rondo/v1/volunteer-obligations
 	 *
 	 * Returns every eligible unit for the season, augmented with
-	 * `completed_count`, `pending_count`, `no_show_count`, and a `status` bucket.
+	 * `completed_count`, `pending_count`, `no_show_count`, a `status` bucket,
+	 * and unit-level exemption data for downstream consumers such as Rondo Sync.
 	 * Used by the Vrijwilligers dashboard and (later) the member-facing surface.
 	 */
 	public function get_obligations( \WP_REST_Request $request ) {
@@ -849,6 +871,15 @@ class Volunteer extends Base {
 
 		$units     = $eligibility->get_eligible_units( $season );
 		$decorated = $calculator->decorate_units( $units, $season );
+		$decorated = array_map(
+			static function ( array $unit ) use ( $season ): array {
+				$exemption         = VolunteerExemptionResolver::resolve_unit( $unit, $season );
+				$unit['is_exempt'] = $exemption !== null;
+				$unit['exemption'] = $exemption;
+				return $unit;
+			},
+			$decorated
+		);
 		$aggregate = $calculator->aggregate( $decorated );
 
 		return rest_ensure_response(
@@ -858,6 +889,18 @@ class Volunteer extends Base {
 				'aggregate' => $aggregate,
 			]
 		);
+	}
+
+	/**
+	 * GET /rondo/v1/volunteer-statistics
+	 *
+	 * Returns one privacy-safe aggregate payload for the statistics page. The
+	 * browser receives counts and shift summaries, never person identifiers.
+	 */
+	public function get_statistics( \WP_REST_Request $request ) {
+		$season = $request->get_param( 'season' ) ?: SeasonKey::current();
+
+		return rest_ensure_response( ( new VolunteerStatistics() )->for_season( $season ) );
 	}
 
 	/**
@@ -954,8 +997,9 @@ class Volunteer extends Base {
 			);
 		}
 
-		$view  = $service->get_eligibility_view( $season );
-		$units = $view['units'];
+		$view                 = $service->get_eligibility_view( $season );
+		$units                = $view['units'];
+		$obligation_partition = VolunteerExemptionResolver::partition_units( $units, $season );
 
 		if ( $with_persons ) {
 			$units = array_map(
@@ -985,6 +1029,11 @@ class Volunteer extends Base {
 				'season'              => $season,
 				'units'               => $units,
 				'total_units'         => count( $units ),
+				'obligation_summary'  => [
+					'total_units'    => count( $obligation_partition['active'] ) + count( $obligation_partition['exempt'] ),
+					'exempt_units'   => count( $obligation_partition['exempt'] ),
+					'required_count' => $obligation_partition['required_count'],
+				],
 				'rondo_account_count' => $this->get_rondo_account_count(),
 				'diagnostics'         => $diagnostics,
 				'shift_capacity'      => $this->get_shift_capacity_stats( $season ),
@@ -1211,6 +1260,9 @@ class Volunteer extends Base {
 			$persons[] = [
 				'id'                  => (int) $pid,
 				'name'                => $this->sanitize_text( $post->post_title ),
+				'first_name'          => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $pid, 'first_name' ) ),
+				'infix'               => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $pid, 'infix' ) ),
+				'last_name'           => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $pid, 'last_name' ) ),
 				'thumbnail'           => $this->sanitize_url( get_the_post_thumbnail_url( $pid, 'thumbnail' ) ),
 				'knvb_id'             => (string) get_post_meta( $pid, 'knvb-id', true ),
 				'leeftijdsgroep'      => $age_group,
@@ -1225,8 +1277,14 @@ class Volunteer extends Base {
 			];
 		}
 
-		// Sort by name for a stable display.
-		usort( $persons, fn( $a, $b ) => strcasecmp( $a['name'], $b['name'] ) );
+		// Sort by surname, then first name, for a stable Dutch member list.
+		usort(
+			$persons,
+			static function ( array $a, array $b ): int {
+				$last_name_compare = strcasecmp( $a['last_name'], $b['last_name'] );
+				return $last_name_compare !== 0 ? $last_name_compare : strcasecmp( $a['first_name'], $b['first_name'] );
+			}
+		);
 
 		return rest_ensure_response(
 			[
@@ -1374,6 +1432,9 @@ class Volunteer extends Base {
 			$persons[] = [
 				'id'           => (int) $pid,
 				'name'         => $this->sanitize_text( $post->post_title ),
+				'first_name'   => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $pid, 'first_name' ) ),
+				'infix'        => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $pid, 'infix' ) ),
+				'last_name'    => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $pid, 'last_name' ) ),
 				'thumbnail'    => $this->sanitize_url( get_the_post_thumbnail_url( $pid, 'thumbnail' ) ),
 				'is_trigger'   => in_array( (int) $pid, $unit['trigger_person_ids'], true ),
 				'is_exempt'    => $reason !== null,

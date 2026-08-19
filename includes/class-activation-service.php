@@ -21,6 +21,7 @@ namespace Rondo\Users;
 
 use Rondo\Notifications\EmailTemplate;
 use Rondo\Pages\PublicPageChrome;
+use Rondo\People\ParentRelationshipService;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -54,9 +55,10 @@ class ActivationService {
 	/**
 	 * Every active person reachable at this address.
 	 *
-	 * Former members are excluded — they are read-only end to end and have nothing to
-	 * log in to. Includes people who already have an account, so the token page can say
-	 * "you already have one" rather than silently hiding them.
+	 * Former members are excluded unless they still have a current parent role. Those
+	 * parents need an account for their active child's club obligations even though
+	 * their own membership record stays read-only. Includes people who already have an
+	 * account, so the token page can say "you already have one" rather than hiding them.
 	 *
 	 * @param string $email Address to match against email_1 and email_2.
 	 * @return int[] Person post IDs.
@@ -89,10 +91,13 @@ class ActivationService {
 			]
 		);
 
+		$parent_relationships = new ParentRelationshipService();
+
 		return array_values(
 			array_filter(
 				array_map( 'intval', $matches ),
-				fn( $person_id ) => get_post_meta( $person_id, 'former_member', true ) !== '1'
+				static fn( int $person_id ): bool => get_post_meta( $person_id, 'former_member', true ) !== '1'
+					|| $parent_relationships->has_current_child( $person_id )
 			)
 		);
 	}
@@ -251,34 +256,7 @@ class ActivationService {
 	 */
 	public static function send_magic_login_email( string $email, array $person_ids ): bool {
 		$branding    = PublicPageChrome::branding();
-		$login_links = [];
-
-		foreach ( $person_ids as $person_id ) {
-			$user_id = (int) get_post_meta( (int) $person_id, UserProvisioning::META_USER_ID, true );
-			$user    = $user_id > 0 ? get_userdata( $user_id ) : false;
-			if ( ! $user instanceof \WP_User ) {
-				continue;
-			}
-
-			// Respect Magic Login's own per-user failsafe before minting a token.
-			if ( apply_filters( 'magic_login_pre_send_login_link', null, $user ) !== null ) {
-				continue;
-			}
-
-			$login_url = (string) apply_filters( 'rondo_activation_magic_login_url', '', $user );
-			if ( $login_url === '' && function_exists( '\\MagicLogin\\Utils\\create_login_link' ) ) {
-				$login_url = (string) \MagicLogin\Utils\create_login_link( $user, 'email', home_url( '/' ) );
-			}
-			if ( $login_url === '' ) {
-				continue;
-			}
-
-			do_action( 'magic_login_send_login_link', $user );
-			$login_links[] = [
-				'name' => get_the_title( (int) $person_id ),
-				'url'  => $login_url,
-			];
-		}
+		$login_links = self::magic_login_links( $person_ids );
 
 		if ( empty( $login_links ) ) {
 			return false;
@@ -310,6 +288,143 @@ class ActivationService {
 		);
 
 		return (bool) wp_mail( $email, $subject, $html, self::email_headers( $branding['name'] ) );
+	}
+
+	/**
+	 * Send one household email containing existing logins and an activation choice.
+	 *
+	 * @param string $email               Address on file.
+	 * @param int[]  $existing_person_ids People who already have accounts.
+	 * @param string $activation_token    Identity-picker token.
+	 * @return bool Whether wp_mail() accepted the message.
+	 */
+	private static function send_household_access_email( string $email, array $existing_person_ids, string $activation_token ): bool {
+		$branding       = PublicPageChrome::branding();
+		$login_links    = self::magic_login_links( $existing_person_ids );
+		$activation_url = self::activation_url( $activation_token );
+		if ( empty( $login_links ) ) {
+			return self::send_activation_email( $email, $activation_token );
+		}
+
+		$subject = sprintf( 'Log in of activeer je account bij %s', $branding['name'] );
+		$body    = '<p>Voor dit e-mailadres bestaan al één of meer accounts. Kies hieronder met welk account je wilt inloggen.</p>';
+		foreach ( $login_links as $login_link ) {
+			$body .= EmailTemplate::render_cta_button(
+				$login_link['url'],
+				'Inloggen als ' . $login_link['name'],
+				$branding['accent_color']
+			);
+		}
+		$body .= '<p style="margin:24px 0 12px;">Wil je een account activeren voor iemand anders op dit e-mailadres? Kies dan eerst de juiste persoon.</p>';
+		$body .= EmailTemplate::render_cta_button( $activation_url, 'Account activeren', $branding['accent_color'] );
+		$body .= '<p style="margin:24px 0 0;">Heb je dit niet zelf aangevraagd? Dan hoef je niets te doen.</p>';
+
+		$html = EmailTemplate::render(
+			[
+				'brand_name'    => $branding['name'],
+				'preheader'     => $subject,
+				'eyebrow'       => 'Account',
+				'heading'       => $subject,
+				'body_html'     => $body,
+				'accent_color'  => $branding['accent_color'],
+				'support_email' => self::ACTIVATION_FROM_EMAIL,
+			]
+		);
+
+		return (bool) wp_mail( $email, $subject, $html, self::email_headers( $branding['name'] ) );
+	}
+
+	/**
+	 * Build named Magic Login links for valid person-account pairs.
+	 *
+	 * @param int[] $person_ids Person IDs.
+	 * @return array<int,array{name:string,url:string}>
+	 */
+	private static function magic_login_links( array $person_ids ): array {
+		$login_links = [];
+
+		foreach ( $person_ids as $person_id ) {
+			$user_id = (int) get_post_meta( (int) $person_id, UserProvisioning::META_USER_ID, true );
+			$user    = $user_id > 0 ? get_userdata( $user_id ) : false;
+			if ( ! $user instanceof \WP_User ) {
+				continue;
+			}
+
+			$login_url = self::magic_login_url_for_user( $user );
+			if ( $login_url === '' ) {
+				continue;
+			}
+
+			$login_links[] = [
+				'name' => get_the_title( (int) $person_id ),
+				'url'  => $login_url,
+			];
+		}
+
+		return $login_links;
+	}
+
+	/**
+	 * Send the appropriate email after a Magic Login form submission.
+	 *
+	 * A single adult identity can be provisioned without an extra choice: mailbox
+	 * possession is still the credential, and the newly created account is only
+	 * reachable through the link sent to that mailbox. Youth and household addresses
+	 * keep using the activation picker because Rondo must not guess which member or
+	 * guardian needs the account.
+	 *
+	 * Unknown addresses and former members without a current parent role deliberately
+	 * do nothing. The HTTP response has already been made generic by
+	 * MagicLoginActivation before this method runs.
+	 *
+	 * @param string $email Submitted email address.
+	 */
+	public static function send_for_magic_login_request( string $email ): void {
+		$persons = self::persons_for_email( $email );
+		if ( empty( $persons ) ) {
+			return;
+		}
+
+		$available = array_values(
+			array_filter(
+				$persons,
+				static fn( int $person_id ): bool => ! self::has_account( $person_id )
+			)
+		);
+
+		if ( empty( $available ) ) {
+			self::send_magic_login_email( $email, $persons );
+			return;
+		}
+
+		$can_provision_directly = count( $persons ) === 1
+			&& count( $available ) === 1
+			&& ! GuardianAccountService::is_youth_person( $available[0] );
+
+		if ( ! $can_provision_directly ) {
+			$token               = self::create_token( $email );
+			$existing_person_ids = array_values( array_diff( $persons, $available ) );
+			if ( empty( $existing_person_ids ) ) {
+				self::send_activation_email( $email, $token );
+			} else {
+				self::send_household_access_email( $email, $existing_person_ids, $token );
+			}
+			return;
+		}
+
+		$result = ( new UserProvisioning() )->provision( $available[0], false );
+		if ( is_wp_error( $result ) ) {
+			error_log(
+				sprintf(
+					'[Rondo] Magic Login activation failed for person %d: %s',
+					$available[0],
+					$result->get_error_message()
+				)
+			);
+			return;
+		}
+
+		self::send_magic_login_email( $email, $persons );
 	}
 
 	/**
@@ -347,34 +462,16 @@ class ActivationService {
 			return new \WP_Error( 'person_mismatch', 'Deze persoon hoort niet bij dit e-mailadres.' );
 		}
 
-		if ( self::has_account( $person_id ) ) {
-			return new \WP_Error( 'already_active', 'Voor deze persoon bestaat al een account.' );
-		}
-
-		$result = ( new UserProvisioning() )->provision( $person_id, false );
-
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
-
-		if ( empty( $result['reset_key'] ) ) {
-			return new \WP_Error( 'no_reset_key', 'Account aangemaakt, maar er kon geen wachtwoordlink gemaakt worden.' );
-		}
-
-		// One link, one account. Burn it.
-		self::consume_token( $token );
-
-		$user = get_userdata( (int) $result['user_id'] );
-
-		return UserProvisioning::set_password_url( $user, (string) $result['reset_key'] );
+		return self::activate_person( $token, $person_id, false );
 	}
 
 	/**
-	 * Activate a youth-linked account for a parent who is not yet in Sportlink.
+	 * Activate a parent through the address stored on a youth person.
 	 *
-	 * The account remains linked to the child until membership administration
-	 * relinks it to the synced parent. The temporary guardian identity is stored
-	 * on the user and announced by email.
+	 * An existing parent record is used immediately. If none matches and a
+	 * Sportlink parent slot is available, a parent person and relationship are
+	 * created before provisioning the account. The former temporary child-linked
+	 * identity remains the fallback when the parent cannot be linked safely.
 	 *
 	 * @return string|\WP_Error Set-password URL or an error.
 	 */
@@ -385,6 +482,37 @@ class ActivationService {
 		}
 		if ( ! GuardianAccountService::is_youth_person( $child_id ) ) {
 			return new \WP_Error( 'invalid_guardian_child', 'Deze persoon is geen jeugdlid.' );
+		}
+
+		$email = self::email_for_token( $token );
+		if ( $email === null ) {
+			return new \WP_Error( 'invalid_token', 'Deze activatielink is verlopen of ongeldig.' );
+		}
+		$household_ids = self::persons_for_email( $email );
+		if ( ! in_array( $child_id, $household_ids, true ) ) {
+			return new \WP_Error( 'person_mismatch', 'Deze persoon hoort niet bij dit e-mailadres.' );
+		}
+		$youth_household_ids = array_values(
+			array_filter(
+				$household_ids,
+				static fn( int $person_id ): bool => GuardianAccountService::is_youth_person( $person_id )
+			)
+		);
+
+		$parent = ( new ParentRelationshipService() )->prepare_for_activation( $child_id, $email, $guardian_name, $youth_household_ids );
+		if ( ! is_wp_error( $parent ) ) {
+			return self::activate_person( $token, (int) $parent['parent_id'], true );
+		}
+
+		$fallback_errors = [
+			'rondo_parent_child_without_knvb_id',
+			'rondo_parent_type_missing',
+			'rondo_parent_slots_full',
+			'rondo_parent_activation_ambiguous',
+			'rondo_parent_email_exists',
+		];
+		if ( ! in_array( $parent->get_error_code(), $fallback_errors, true ) ) {
+			return $parent;
 		}
 
 		$url = self::activate( $token, $child_id );
@@ -399,5 +527,72 @@ class ActivationService {
 		}
 
 		return $url;
+	}
+
+	/**
+	 * Provision a prevalidated person or open its existing account.
+	 *
+	 * @param bool $allow_existing Whether an existing account may be opened with Magic Login.
+	 * @return string|\WP_Error
+	 */
+	private static function activate_person( string $token, int $person_id, bool $allow_existing ) {
+		if ( self::has_account( $person_id ) ) {
+			if ( ! $allow_existing ) {
+				return new \WP_Error( 'already_active', 'Voor deze persoon bestaat al een account.' );
+			}
+			return self::existing_account_url( $token, $person_id );
+		}
+
+		$result = ( new UserProvisioning() )->provision( $person_id, false );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		if ( ( $result['status'] ?? '' ) === 'already_exists' && $allow_existing ) {
+			return self::existing_account_url( $token, $person_id );
+		}
+		if ( empty( $result['reset_key'] ) ) {
+			return new \WP_Error( 'no_reset_key', 'Account aangemaakt, maar er kon geen wachtwoordlink gemaakt worden.' );
+		}
+
+		self::consume_token( $token );
+		$user = get_userdata( (int) $result['user_id'] );
+		if ( ! $user instanceof \WP_User ) {
+			return new \WP_Error( 'invalid_user', 'Het aangemaakte account kon niet worden geopend.' );
+		}
+
+		return UserProvisioning::set_password_url( $user, (string) $result['reset_key'] );
+	}
+
+	/** Return a one-time login URL for an already provisioned parent account. */
+	private static function existing_account_url( string $token, int $person_id ) {
+		$user_id = (int) get_post_meta( $person_id, UserProvisioning::META_USER_ID, true );
+		$user    = $user_id > 0 ? get_userdata( $user_id ) : false;
+		if ( ! $user instanceof \WP_User ) {
+			return new \WP_Error( 'invalid_user', 'Het bestaande ouderaccount kon niet worden geopend.' );
+		}
+
+		$login_url = self::magic_login_url_for_user( $user );
+		if ( $login_url === '' ) {
+			return new \WP_Error( 'magic_login_unavailable', 'Voor deze ouder/verzorger bestaat al een account. Vraag een nieuwe inloglink aan.' );
+		}
+
+		self::consume_token( $token );
+		return $login_url;
+	}
+
+	/** Create a Magic Login URL while respecting the plugin's failsafe hooks. */
+	private static function magic_login_url_for_user( \WP_User $user ): string {
+		if ( apply_filters( 'magic_login_pre_send_login_link', null, $user ) !== null ) {
+			return '';
+		}
+
+		$login_url = (string) apply_filters( 'rondo_activation_magic_login_url', '', $user );
+		if ( $login_url === '' && function_exists( '\\MagicLogin\\Utils\\create_login_link' ) ) {
+			$login_url = (string) \MagicLogin\Utils\create_login_link( $user, 'email', home_url( '/' ) );
+		}
+		if ( $login_url !== '' ) {
+			do_action( 'magic_login_send_login_link', $user );
+		}
+		return $login_url;
 	}
 }

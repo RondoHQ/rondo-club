@@ -65,6 +65,15 @@ class Vog extends Base {
 								return is_array( $param );
 							},
 						],
+						'exempt_roles'              => [
+							'required'          => false,
+							'validate_callback' => function ( $param ) {
+								return is_array( $param );
+							},
+							'sanitize_callback' => function ( $param ) {
+								return array_values( array_unique( array_filter( array_map( 'sanitize_text_field', $param ) ) ) );
+							},
+						],
 						'exempt_discipline_teams'   => [
 							'required'          => false,
 							'validate_callback' => function ( $param ) {
@@ -172,6 +181,7 @@ class Vog extends Base {
 		$reminder_template_new     = $request->get_param( 'reminder_template_new' );
 		$reminder_template_renewal = $request->get_param( 'reminder_template_renewal' );
 		$exempt_commissies         = $request->get_param( 'exempt_commissies' );
+		$exempt_roles              = $request->get_param( 'exempt_roles' );
 		$exempt_discipline_teams   = $request->get_param( 'exempt_discipline_teams' );
 
 		// Update provided settings
@@ -214,6 +224,10 @@ class Vog extends Base {
 
 		if ( $exempt_discipline_teams !== null ) {
 			$vog_email->update_exempt_discipline_teams( $exempt_discipline_teams );
+		}
+
+		if ( $exempt_roles !== null ) {
+			$vog_email->update_exempt_roles( $exempt_roles );
 		}
 
 		// Return updated settings

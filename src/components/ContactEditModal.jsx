@@ -4,7 +4,20 @@ import { X } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { formatPhoneForDisplay } from '@/utils/formatters';
 
-export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading, email1 = '', email2 = '', mobile1 = '', mobile2 = '', telephone1 = '', telephone2 = '' }) {
+export default function ContactEditModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  isLoading,
+  email1 = '',
+  email2 = '',
+  mobile1 = '',
+  mobile2 = '',
+  telephone1 = '',
+  telephone2 = '',
+  parentSlotMode = false,
+  parentPhone = '',
+}) {
   const isOnline = useOnlineStatus();
   const { register, handleSubmit, reset } = useForm({
     defaultValues: {
@@ -14,6 +27,7 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
       mobile_2: formatPhoneForDisplay(mobile2),
       telephone_1: formatPhoneForDisplay(telephone1),
       telephone_2: formatPhoneForDisplay(telephone2),
+      parent_phone: formatPhoneForDisplay(parentPhone),
     },
   });
 
@@ -27,13 +41,22 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
         mobile_2: formatPhoneForDisplay(mobile2),
         telephone_1: formatPhoneForDisplay(telephone1),
         telephone_2: formatPhoneForDisplay(telephone2),
+        parent_phone: formatPhoneForDisplay(parentPhone),
       });
     }
-  }, [isOpen, email1, email2, mobile1, mobile2, telephone1, telephone2, reset]);
+  }, [isOpen, email1, email2, mobile1, mobile2, telephone1, telephone2, parentPhone, reset]);
 
   if (!isOpen) return null;
 
   const handleFormSubmit = (data) => {
+    if (parentSlotMode) {
+      onSubmit({
+        email_1: data.email_1?.trim() || '',
+        parent_phone: data.parent_phone?.trim() || '',
+      });
+      return;
+    }
+
     onSubmit({
       email_1: data.email_1?.trim() || '',
       email_2: data.email_2?.trim() || '',
@@ -48,7 +71,9 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Contactgegevens bewerken</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+            {parentSlotMode ? 'Oudergegevens bewerken' : 'Contactgegevens bewerken'}
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -60,6 +85,34 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
 
         <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {parentSlotMode ? (
+              <>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Deze primaire gegevens worden teruggesynchroniseerd naar de oudergegevens van het huidige kind of de huidige kinderen in Sportlink.
+                </p>
+                <div>
+                  <label className="label">E-mail ouder/verzorger</label>
+                  <input
+                    {...register('email_1')}
+                    type="email"
+                    placeholder="naam@voorbeeld.nl"
+                    className="input"
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <label className="label">Telefoon ouder/verzorger</label>
+                  <input
+                    {...register('parent_phone')}
+                    type="tel"
+                    placeholder="06-12345678"
+                    className="input"
+                    disabled={isLoading}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
             {/* Email fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -134,6 +187,8 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
                 />
               </div>
             </div>
+              </>
+            )}
           </div>
 
           {/* Footer */}

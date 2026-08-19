@@ -20,8 +20,8 @@
  * of a JO16- player owes both duties. Shifts fill the speler duty first and spill
  * into the gezin duty afterwards.
  *
- * Owing an obligation is separate from being ALLOWED to volunteer: any active person
- * may claim shifts (see may_volunteer()); the unit only decides what is required.
+ * Owing an obligation is separate from being ALLOWED to volunteer: any published
+ * person may claim shifts (see may_volunteer()); the unit only decides what is required.
  *
  * Multi-child scaling (bestuursbesluit 2026-05-26): per kind tellend met
  * contributie-korting voor opvolgende kinderen. Kid 1 = 2, kid 2 = 1.5 (75%),
@@ -404,16 +404,19 @@ class VolunteerEligibilityService {
 	/**
 	 * Whether a person is allowed to claim shifts at all.
 	 *
-	 * Deliberately broader than "owes an obligation". A sponsor, a grandparent, or a
-	 * parent whose children have all aged out owes nothing yet may still want to help,
-	 * and the club has no reason to refuse them. Exempt members were already allowed
-	 * through on the same reasoning.
+	 * Deliberately broader than "owes an obligation". A sponsor, a grandparent, an
+	 * exempt member, or a former member who remains an active parent may all still
+	 * want or need to help. The obligation decides what is required; it never hides
+	 * the task calendar. Only a missing or unpublished person record is invalid.
 	 *
 	 * @param int $person_id Person post ID.
 	 * @return bool Whether this person may sign up for diensten.
 	 */
 	public function may_volunteer( int $person_id ): bool {
-		return self::is_active_member( $person_id );
+		$person = get_post( $person_id );
+		return $person instanceof \WP_Post
+			&& $person->post_type === 'person'
+			&& $person->post_status === 'publish';
 	}
 
 	/**

@@ -95,6 +95,15 @@ export const prmApi = {
 
   // Current season helper
   getCurrentSeason: () => api.get('/rondo/v1/current-season'),
+
+  // Sponsor companies
+  getSponsors: (params = {}) => api.get('/rondo/v1/sponsors', { params }),
+  getSponsor: (id) => api.get(`/rondo/v1/sponsors/${id}`),
+  createSponsor: (data) => api.post('/rondo/v1/sponsors', data),
+  updateSponsor: (id, data) => api.patch(`/rondo/v1/sponsors/${id}`, data),
+  archiveSponsor: (id) => api.delete(`/rondo/v1/sponsors/${id}`),
+  createSponsorContact: (id, data) => api.post(`/rondo/v1/sponsors/${id}/contacts`, data),
+  searchSponsorPeople: (search) => api.get('/rondo/v1/sponsor-person-options', { params: { search } }),
   
   // Dashboard — uses preloaded fetch from wp_head if available
   getDashboard: async () => {
@@ -115,8 +124,9 @@ export const prmApi = {
   },
 
   // Kaderlijst — scoped kader people, visibility enforced server-side.
-  getKaderlijstPeople: () => api.get('/rondo/v1/kaderlijst/people'),
+  getKaderlijstPeople: (params = {}) => api.get('/rondo/v1/kaderlijst/people', { params }),
   getHousehold: () => api.get('/rondo/v1/people/household'),
+  addParentRelationship: (personId, data) => api.post(`/rondo/v1/people/${personId}/parents`, data),
   
   // Bulk operations
   bulkUpdatePeople: (ids, updates) => api.post('/rondo/v1/people/bulk-update', { ids, updates }),
@@ -126,6 +136,11 @@ export const prmApi = {
 
   // Filtered people with server-side pagination/filtering/sorting
   getFilteredPeople: (params = {}) => api.get('/rondo/v1/people/filtered', { params }),
+
+  // Guided person merge (administrator only)
+  getPersonMergePreview: (primaryId, duplicateId) =>
+    api.get(`/rondo/v1/people/${primaryId}/merge-preview`, { params: { duplicate_id: duplicateId } }),
+  mergePeople: (primaryId, data) => api.post(`/rondo/v1/people/${primaryId}/merge`, data),
 
   // Filter options for dynamic dropdowns
   getFilterOptions: () => api.get('/rondo/v1/people/filter-options'),
@@ -219,6 +234,7 @@ export const prmApi = {
 
   // Commissie-specific
   getCommissiePeople: (commissieId) => api.get(`/rondo/v1/commissies/${commissieId}/people`),
+  updateCommissieInfo: (commissieId, fields) => api.post(`/rondo/v1/commissies/${commissieId}/info`, { fields }),
   setCommissieLogo: (commissieId, mediaId) => api.post(`/rondo/v1/commissies/${commissieId}/logo`, { media_id: mediaId }),
 
   // Photo uploads with proper naming
@@ -327,6 +343,28 @@ export const prmApi = {
   sendLettermintTestEmail: (recipient) => api.post('/rondo/v1/lettermint/test-email', { recipient }),
   sendLettermintVerificationEmail: (todoId, recipient = '') => api.post('/rondo/v1/lettermint/verify-email', { todo_id: todoId, recipient }),
 
+  // Club TV content and player management
+  getNarrowcastingItems: () => api.get('/rondo/v1/narrowcasting/items'),
+  createNarrowcastingItem: (data) => api.post('/rondo/v1/narrowcasting/items', data),
+  updateNarrowcastingItem: (id, data) => api.post(`/rondo/v1/narrowcasting/items/${id}`, data),
+  deleteNarrowcastingItem: (id) => api.delete(`/rondo/v1/narrowcasting/items/${id}`),
+  getNarrowcastingPlaylists: () => api.get('/rondo/v1/narrowcasting/playlists'),
+  createNarrowcastingPlaylist: (data) => api.post('/rondo/v1/narrowcasting/playlists', data),
+  updateNarrowcastingPlaylist: (id, data) => api.post(`/rondo/v1/narrowcasting/playlists/${id}`, data),
+  deleteNarrowcastingPlaylist: (id) => api.delete(`/rondo/v1/narrowcasting/playlists/${id}`),
+  setDefaultNarrowcastingPlaylist: (id) => api.post(`/rondo/v1/narrowcasting/playlists/${id}/default`),
+  previewNarrowcastingPlaylist: (params = {}) => api.get('/rondo/v1/narrowcasting/preview/playlist', { params }),
+  getNarrowcastingSponsors: () => api.get('/rondo/v1/narrowcasting/content/sponsors'),
+  getNarrowcastingDisplayChoices: () => api.get('/rondo/v1/narrowcasting/content/displays'),
+  assignNarrowcastingPlaylist: (displayId, playlistId) => api.post(`/rondo/v1/narrowcasting/displays/${displayId}/playlist`, { playlist_id: playlistId }),
+  getNarrowcastingDisplays: () => api.get('/rondo/v1/narrowcasting/displays'),
+  getNarrowcastingSettings: () => api.get('/rondo/v1/narrowcasting/settings'),
+  updateNarrowcastingSettings: (data) => api.post('/rondo/v1/narrowcasting/settings', data),
+  refreshNarrowcastingMatchday: () => api.post('/rondo/v1/narrowcasting/refresh'),
+  claimNarrowcastingDisplay: (data) => api.post('/rondo/v1/narrowcasting/displays/claim', data),
+  queueNarrowcastingCommand: (displayId, command) => api.post(`/rondo/v1/narrowcasting/displays/${displayId}/commands`, { command }),
+  revokeNarrowcastingDisplay: (displayId) => api.post(`/rondo/v1/narrowcasting/displays/${displayId}/revoke`),
+
   // Finance settings (admin only)
   getFinanceSettings: () => api.get('/rondo/v1/finance/settings'),
   updateFinanceSettings: (data) => api.post('/rondo/v1/finance/settings', data),
@@ -393,6 +431,7 @@ export const prmApi = {
 
   // Volunteer Policy
   getVolunteerEligibility: (params = {}) => api.get('/rondo/v1/volunteer-eligibility', { params }),
+  getVolunteerStatistics: (params = {}) => api.get('/rondo/v1/volunteer-statistics', { params }),
   getVolunteerExemption: (personId, params = {}) => api.get(`/rondo/v1/volunteer-exemption/${personId}`, { params }),
   updateVolunteerExemption: (personId, data) => api.put(`/rondo/v1/volunteer-exemption/${personId}`, data),
   getVolunteerDataQuality: (category, params = {}) => api.get(`/rondo/v1/volunteer-data-quality/${category}`, { params }),
@@ -418,9 +457,11 @@ export const prmApi = {
 
   // Member-facing shift signup (/vrijwillig)
   getMyShifts: (params = {}) => api.get('/rondo/v1/my-shifts', { params }),
+  getMyShiftsCalendarUrl: () => `${window.rondoConfig?.apiUrl || '/wp-json/'}rondo/v1/my-shifts/calendar?_wpnonce=${encodeURIComponent(window.rondoConfig?.nonce || '')}`,
   getPersonShifts: (personId) => api.get(`/rondo/v1/people/${personId}/shifts`),
   getAvailableShifts: () => api.get('/rondo/v1/shifts/available'),
   getRecentShiftSignups: () => api.get('/rondo/v1/shifts/recent-signups'),
+  getShiftSignups: (params = {}) => api.get('/rondo/v1/shifts/signups', { params }),
   getShiftCalendar: (params = {}) => api.get('/rondo/v1/shifts/calendar', { params }),
   signupForShift: (shiftId, opts = {}) => api.post(`/rondo/v1/shifts/${shiftId}/signup`, opts),
   cancelShift: (shiftId) => api.post(`/rondo/v1/shifts/${shiftId}/cancel`),

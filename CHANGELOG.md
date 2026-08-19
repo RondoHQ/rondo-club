@@ -7,11 +7,370 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [34.2.1] - 2026-08-03
+## [34.20.2] - 2026-08-19
 
 ### Fixed
 
 - De productie-deploy hervat nu na een tijdelijke SSH-storing bij de hostingpartij. Elke rsync- en WP-CLI-stap wordt tot drie keer geprobeerd met oplopende wachttijd, en SSH wacht niet langer minutenlang op een dode verbinding (`ConnectTimeout`/keepalive). Voorheen brak één `connect to host ...: Connection timed out` de hele deploy af, ook al was de release verder in orde.
+
+## [34.20.1] - 2026-08-19
+
+### Fixed
+
+- Een nieuwe vrijwilliger uit een Sportlink-teamrooster zonder ingangsdatum krijgt de synchronisatiedatum als `Vrijwilliger sinds`, terwijl bestaande vrijwilligers zonder brondatum niet onterecht opnieuw in Onboarding verschijnen.
+
+## [34.20.0] - 2026-08-19
+
+### Added
+
+- VOG-beheerders kunnen afzonderlijke vrijwilligersfuncties vrijstellen van de VOG-plicht zonder dat deze functies hun vrijwilligersstatus verliezen; een andere actieve VOG-plichtige functie houdt de persoon zichtbaar in het VOG-overzicht.
+
+## [34.19.1] - 2026-08-19
+
+### Fixed
+
+- De vrijwilligersplicht-API slaat achtergebleven verwijzingen naar verwijderde personen veilig over, zodat de Laposta-sync niet door zo'n historisch ID kan vastlopen.
+
+## [34.19.0] - 2026-08-19
+
+### Added
+
+- De vrijwilligersplicht kan naar Laposta worden gesynchroniseerd als numerieke segmentatiewaarde: leeg voor niet van toepassing, `-1` voor volledig vrijgesteld, `0` voor afgerond en een positief getal voor het aantal resterende inschrijftaken.
+
+## [34.18.5] - 2026-08-19
+
+### Fixed
+
+- Iedereen met een gekoppeld persoonsprofiel ziet voortaan de beschikbare inschrijftaken, ook zonder eigen vrijwilligersplicht of met een oud-lidstatus; Gerwin Eefting en andere actuele ouders met gezinsplicht kunnen zich daardoor weer inschrijven.
+
+## [34.18.4] - 2026-08-19
+
+### Fixed
+
+- Een eerste actieve staf- of commissierol vult voortaan automatisch `Vrijwilliger sinds` vanuit de vroegste actuele functiestart, zodat nieuwe vrijwilligers in Onboarding verschijnen; bestaande historische startdatums blijven behouden.
+
+## [34.18.3] - 2026-08-18
+
+### Fixed
+
+- De tegel `Inschrijftaken vereist` op het vrijwilligersdashboard toont voortaan het netto aantal taken na commissie-, staf-, betaalde en handmatige vrijstellingen; beëindigde vrijwilligersrollen verhogen het aantal direct na verversen.
+
+## [34.18.2] - 2026-08-18
+
+### Fixed
+
+- Zodra iemand oud-lid wordt, sluit Rondo alle nog actuele team-, commissie- en verenigingsfuncties af op de einddatum van het lidmaatschap; latere synchronisaties kunnen die functies niet opnieuw activeren zolang de persoon oud-lid blijft.
+- De sponsormigratie verwerkt personen voortaan in een vaste volgorde, zodat de primaire contactpersoon niet willekeurig wisselt wanneer records dezelfde aanmaaktijd hebben.
+
+## [34.18.1] - 2026-08-18
+
+### Fixed
+
+- Verlopen commissie- en stafrollen geven geen onterechte vrijstelling van de vrijwilligersplicht meer wanneer werkhistoriedatums compact als `YYYYMMDD` zijn opgeslagen.
+
+## [34.18.0] - 2026-08-18
+
+### Added
+
+- De tab Mijn inschrijftaken biedt een iCalendar-download met alle niet-geannuleerde inschrijvingen, inclusief tijdzonecorrecte tijden en een beschrijvende link terug naar Rondo in elke afspraak.
+
+## [34.17.7] - 2026-08-18
+
+### Fixed
+
+- Geannuleerde inschrijftaken blijven met hun aanmeldingen bewaard, maar zijn standaard verborgen in het aanmeldingsoverzicht, worden niet meegeteld en blijven via het statusfilter terugvindbaar.
+
+## [34.17.6] - 2026-08-18
+
+### Fixed
+
+- De ontwikkeling van inschrijvingen toont nu een aantallen-as, een expliciet aantal inschrijvingen van vandaag en een doorlopende lijn tot vandaag.
+- De legenda bij inschrijvingen per taaksoort klapt op smallere panelen onder de taartgrafiek en kapt lange taaknamen netjes af.
+
+## [34.17.5] - 2026-08-18
+
+### Fixed
+
+- Oud-leden met een actuele ouder/verzorgerrol kunnen hun primaire e-mail en telefoon in Rondo wijzigen; de bestaande ouder-sync schrijft deze gegevens terug naar hun huidige kind of kinderen in Sportlink. Historische lidgegevens en het van het kind afgeleide adres blijven alleen-lezen.
+
+## [34.17.4] - 2026-08-18
+
+### Fixed
+
+- Oud-leden met een actuele ouder/verzorgerrelatie kunnen via hun eigen bekende e-mailadres een account activeren voor hun huidige ouderrol.
+
+## [34.17.3] - 2026-08-18
+
+### Changed
+
+- Het menu-item Teams gebruikt voortaan een schildicoon, zodat het beter herkenbaar is en zich onderscheidt van Sponsoren.
+
+## [34.17.2] - 2026-08-18
+
+### Changed
+
+- Statistieken staat voortaan als laatste menu-item binnen de sectie Vrijwilligers.
+
+## [34.17.1] - 2026-08-18
+
+### Fixed
+
+- De vrijwilligersstatistieken negeren kortstondig gecachte koppelingen naar inmiddels verwijderde personen, zodat de pagina blijft laden en alleen huidige persoonskoppelingen telt.
+
+## [34.17.0] - 2026-08-18
+
+### Added
+
+- De Vrijwilligers-sectie heeft een statistiekenpagina met seizoenfilter, kerncijfers, taaksoortverdeling, bezettingsgraad, inschrijftrend, spreiding, voortgang van de vrijwilligersplicht en doorklikbare komende tekorten.
+- Een afgeschermd statistieken-endpoint berekent actuele, privacyvriendelijke seizoensaggregaties uit gepubliceerde inschrijftaken en sluit geannuleerde taken uit.
+
+## [34.16.3] - 2026-08-18
+
+### Fixed
+
+- Het plusmenu bij Relaties biedt de sponsorkeuze nu ook bij ouders en andere personen zonder KNVB-ID.
+
+## [34.16.2] - 2026-08-18
+
+### Changed
+
+- Het plusmenu van Relaties bevat nu Sponsor als derde keuze; het losse zoekveld voor sponsorrelaties is verwijderd.
+
+## [34.16.1] - 2026-08-18
+
+### Changed
+
+- Sponsorcontacten staan op een persoon voortaan als gewone relaties in de kaart Relaties; de losse kaart Sponsorrelaties is verwijderd.
+
+## [34.16.0] - 2026-08-18
+
+### Added
+
+- Sponsoren hebben een websiteveld dat handmatig kan worden beheerd en vanuit Sponsit wordt gevuld.
+- Rondo Sync kan beveiligde sponsorlogo's uit Sponsit ophalen en als WordPress-media aan de sponsor koppelen.
+
+### Changed
+
+- De sponsorlogo-import hergebruikt stabiele Sponsit bestands-ID's, slaat ongewijzigde logo's over en respecteert bestaande handmatig geplaatste logo's.
+
+## [34.15.0] - 2026-08-18
+
+### Added
+
+- Sponsoren kunnen organisaties of personen zijn. Een persoonlijke sponsor heeft één gekoppeld persoonsprofiel en hoeft niet langer als fictief bedrijf te worden opgeslagen.
+- De sponsorlijst kan op sponsortype worden gefilterd en toont het type per sponsor.
+
+### Changed
+
+- Sponsorbedrijven heet voortaan overal Sponsoren; formulieren en meldingen gebruiken type-afhankelijke namen en adreslabels.
+- Onboarding, Jubilarissen en Tuchtzaken blijven in het inklapbare menu onder Relaties; Sponsoren is weer een zelfstandig hoofditem.
+- Nieuwe externe sponsorpersonen worden samen met hun sponsorrelatie aangemaakt, zodat geen los sponsorcontact kan ontstaan.
+
+## [34.14.0] - 2026-08-17
+
+### Added
+
+- Sponsorbedrijven zijn een zelfstandig, afgeschermd contenttype met bedrijfsadres, logo, sponsorrol, Sponsit-ID en één of meer contactpersonen.
+- Sponsorbeheer kan bedrijven aanmaken, wijzigen en archiveren, bestaande personen koppelen en nieuwe externe contactpersonen direct vanuit het bedrijf toevoegen.
+- De herhaalbare sponsor-migratie geeft standaard een dry-runrapport en slaat twijfelgevallen over totdat daarvoor expliciete overrides zijn aangeleverd.
+- Club TV kan zes actieve sponsorlogo's per scène rouleren: twee boven en vier onder.
+
+### Changed
+
+- Sponsorrol en sponsorpasrecht worden afgeleid van de relatie tussen persoon en sponsorbedrijf; bestaande legacy sponsorvelden blijven tijdelijk als terugval beschikbaar.
+- Personen tonen hun sponsorbedrijven als relaties. Sponsorbeheerders ontkoppelen een persoon in plaats van het persoonsrecord te verwijderen.
+- Club TV gebruikt de actuele scènetitel bovenaan, toont de wedstrijddatum rechtsonder en laat technische preview- en synchronisatiestatus weg.
+
+### Removed
+
+- Het toevoegen van een sponsor als los persoonsrecord en het bewerken van `Sponsorrol` op een persoon zijn uit de gebruikersinterface verwijderd.
+
+## [34.13.0] - 2026-08-17
+
+### Added
+
+- De Magic Login-formulier is nu ook het startpunt voor accountactivatie. Als één e-mailadres ondubbelzinnig bij één volwassen persoon zonder account hoort, maakt Rondo het account automatisch aan en stuurt direct een eenmalige inloglink.
+- Gedeelde gezinsadressen met zowel bestaande als nog te activeren accounts ontvangen één e-mail met benoemde inlogknoppen en een aparte knop naar de identiteitskeuze.
+
+### Changed
+
+- Magic Login toont voor bekende, onbekende en gelimiteerde e-mailadressen dezelfde neutrale bevestiging en verstuurt e-mail pas nadat het browserantwoord is afgerond. Jeugdleden en adressen met meerdere mogelijke personen blijven via de bestaande veilige activatie- en ouderkeuze lopen.
+
+## [34.12.0] - 2026-08-17
+
+### Added
+
+- Ouders die via het e-mailadres van een jeugdlid activeren, worden nu direct gekoppeld aan hun bestaande ouderprofiel. Is er nog geen match en heeft het kind een vrij Sportlink-ouderveld, dan maakt Rondo het ouderprofiel en de relatie automatisch aan en koppelt het nieuwe account daar meteen aan.
+- Heeft het gevonden ouderprofiel al een Rondo-account, dan opent de activatielink dat account via een eenmalige Magic Login-link.
+
+### Changed
+
+- Alleen wanneer een ouder niet veilig automatisch kan worden gekoppeld, bijvoorbeeld omdat beide oudervelden bezet zijn, gebruikt de activatie nog de tijdelijke accountkoppeling met het kind.
+
+## [34.12.1] - 2026-08-17
+
+### Fixed
+
+- Bestuursleden kunnen de Rondo-lokale informatie van commissies weer opslaan. De aparte schrijfroute accepteert uitsluitend omschrijving, taakomschrijving, tijdsinvestering, flexibiliteit en ledenlimieten; Sportlink-gegevens blijven beschermd.
+- Bewerkknoppen voor commissie-informatie en aangepaste velden worden alleen getoond wanneer de gebruiker die gegevens daadwerkelijk mag wijzigen, en een mislukte opslag geeft voortaan een zichtbare foutmelding.
+
+## [34.11.1] - 2026-08-17
+
+### Fixed
+
+- De detailpagina van feedback toont voortaan de toelichting bij opgeloste en afgewezen feedback, inclusief de datum van afhandeling.
+
+## [34.11.0] - 2026-08-17
+
+### Added
+
+- Vrijwilligersbeheerders hebben op `/vrijwilligers/aanmeldingen` een volledig overzicht van alle huidige taakinschrijvingen. De eerstvolgende taken staan standaard bovenaan en de lijst kan op inschrijftaak of dienstmoment worden gesorteerd.
+
+### Changed
+
+- Het blok **Recente aanmeldingen** onder **Vrijwilligers → Inschrijftaken** toont voortaan maximaal 10 in plaats van 50 taken en verwijst naar het volledige aanmeldingenoverzicht.
+
+## [34.10.0] - 2026-08-17
+
+### Added
+
+- Ledenadministratie kan vanuit de relatiekaart van een Sportlink-lid kiezen tussen een bestaande persoon en een nieuwe ouder/verzorger. Bij een nieuwe ouder worden naam, e-mailadres en optioneel telefoonnummer opgeslagen en wordt de inverse kindrelatie automatisch toegevoegd.
+- Ouderrelaties tonen of de gegevens op synchronisatie wachten, in Sportlink-ouderveld 1 of 2 staan, of niet konden worden gesynchroniseerd. Rondo ververst een open persoonsdetail automatisch zolang een ouder op synchronisatie wacht.
+
+### Changed
+
+- Nieuwe Sportlink-ouderrelaties zijn beperkt tot twee per kind, vereisen een geldige naam en e-mailadres en voorkomen dubbele personen op e-mailadres.
+
+## [34.9.0] - 2026-08-17
+
+### Added
+
+- Personenlijsten tonen voornaam en achternaam voortaan als afzonderlijke, filterbare en sorteerbare kolommen. Nederlandse tussenvoegsels blijven bij de zichtbare achternaam, maar tellen niet mee voor de alfabetische sortering.
+- De kolominstellingen van de algemene personenlijst ondersteunen nu ook Voornaam, Achternaam en Organisatie. Bestaande voorkeuren en de breedte van de oude kolom Naam worden automatisch gemigreerd.
+
+### Changed
+
+- CSV-exports van personen, VOG, tuchtzaken, contributie en kledinguitgiftes leveren voornaam en achternaam in afzonderlijke kolommen.
+- Persoonssamenvattingen in de REST API bevatten nu consequent `first_name`, `infix` en `last_name`, zodat alle lijsten dezelfde naamweergave kunnen gebruiken.
+
+## [34.8.4] - 2026-08-17
+
+### Changed
+
+- Club TV combineert het wedstrijdprogramma, de veldindeling en de kleedkamerindeling voortaan in één overzicht. Iedere wedstrijd toont tijd, beide teams, hun kleedkamers en het veld bij elkaar.
+
+## [34.8.3] - 2026-08-17
+
+### Changed
+
+- De Club TV-browserpreview toont voortaan het programma van de eerstvolgende zaterdag, terwijl gekoppelde players de actuele speeldag blijven gebruiken.
+- Club TV-content gebruikt standaard het centrale clubgroen en de lichte clubachtergrond. Eigen achtergrond-, tekst- en accentkleuren zijn alleen actief wanneer een beheerder de nieuwe optie "Clubkleuren gebruiken" uitzet.
+
+### Fixed
+
+- Het ingebouwde welkomstbeeld gebruikt niet langer de oude cyaanblauwe accentkleur en donkerblauwe achtergrond.
+
+## [34.8.2] - 2026-08-17
+
+### Changed
+
+- Het Club TV-scherm gebruikt voortaan het centraal ingestelde clublogo en de clubkleur in een herkenbare, rustige tv-layout. Programma, kleedkamers en uitslagen zijn typografisch aangescherpt voor leesbaarheid op afstand; sponsor- en scènekleuren blijven configureerbaar.
+
+## [34.8.1] - 2026-08-17
+
+### Changed
+
+- De zijbalk scheidt persoonlijke links nu visueel van clubbeheer. De beheerpagina heet voortaan "Beheer inschrijftaken" en Profiel is alleen nog via de naam onderaan de zijbalk bereikbaar.
+
+## [34.8.0] - 2026-08-17
+
+### Added
+
+- Club TV-beheerders kunnen mededelingen, sponsoruitingen, afbeeldingen, stille MP4-video's en dynamische wedstrijdscènes maken. Afspeellijsten ondersteunen volgorde, eigen speelduur, gewichten, datum-, dag- en tijdschema's, reservebeelden, schermtoewijzing en een browserpreview.
+- Tijdelijke overrides kunnen de normale afspeellijst op alle of geselecteerde schermen vervangen. Players ontvangen een server-side opgelost en lokaal gecachet manifest zonder privégegevens van sponsorrelaties.
+- De nieuwe machtiging `narrowcasting` geeft toegang tot content en afspeellijsten. Sponsorbeheerders kunnen uitsluitend sponsoritems beheren; player- en Sportlinkbeheer blijven voor administrators.
+
+## [34.7.1] - 2026-08-17
+
+### Fixed
+
+- Gewijzigde tijden van inschrijftaken worden voor vrijwilligersbeheerders direct zichtbaar; bij elke opslag wordt ook de gegenereerde titel met de nieuwe begintijd bijgewerkt.
+
+## [34.7.0] - 2026-08-15
+
+### Added
+
+- Club TV haalt programma, velden, kleedkamers, afgelastingen en recente uitslagen voortaan via een server-side Sportlink Club.Data-adapter op. Beheerders kunnen de gemaskeerde koppeling beheren en handmatig verversen; players en browserpreviews ontvangen uitsluitend genormaliseerde openbare wedstrijddata.
+- Het tv-scherm roteert automatisch tussen wedstrijden van vandaag, veld- en kleedkamerindelingen, afgelastingen en recente uitslagen. De laatst geldige feed blijft lokaal en in Rondo beschikbaar tijdens een storing, met een zichtbare verouderingsmelding en een neutrale fallback na 24 uur.
+
+## [34.6.0] - 2026-08-15
+
+### Added
+
+- Beheerders kunnen het echte Club TV-scherm vanuit Rondo in een nieuw browsertabblad voorvertonen zonder eerst een Raspberry Pi of playercredential te koppelen. De voorbeeldconfiguratie gebruikt de live clubnaam, maar is alleen beschikbaar binnen een aangemelde beheerderssessie.
+
+## [34.5.0] - 2026-08-15
+
+### Added
+
+- Beheerders kunnen Raspberry Pi-players voor Club TV met een tijdelijke activatiecode koppelen, hun online status en player-versie volgen, de tv via veilige HDMI-CEC-commando's aan- of uitzetten, het beeld of de player herstarten en een toegang direct intrekken. De openbare tv-weergave bewaart het laatst bekende pilotbeeld lokaal wanneer de verbinding wegvalt; device tokens worden alleen gehasht in Rondo opgeslagen.
+
+## [34.4.2] - 2026-08-15
+
+### Fixed
+
+- De uitleg bij het oplossen of afwijzen van feedback wordt niet langer ten onrechte als rode validatiefout getoond, waardoor de statuswijziging weer kan worden opgeslagen.
+
+## [34.4.1] - 2026-08-14
+
+### Fixed
+
+- De samenvoegdialoog zoekt personen nu direct op de server en kan ook een exact profielnummer openen. De dialoog hoeft daardoor niet langer eerst duizenden personen te laden en de zoekstatus blijft niet meer als grijze laadblokken staan. Het zoekicoon overlapt de invoertekst niet meer.
+- De service worker wordt via WordPress op `/sw.js` aangeboden. Daardoor kan hij de volledige applicatie beheren zonder afhankelijk te zijn van een `Service-Worker-Allowed`-header die SiteGround niet op het statische themabestand toepaste.
+
+## [34.4.0] - 2026-08-14
+
+### Added
+
+- Beheerders kunnen dubbele personen vanaf de persoonspagina gecontroleerd samenvoegen. De dialoog laat kiezen welk profiel blijft bestaan, combineert lege velden, contactgegevens, adressen, rollen en lijstvelden, en vraagt per afwijkende waarde welke versie bewaard moet blijven. Verschillende stabiele externe IDs of twee gekoppelde accounts blokkeren de actie. Relaties, inschrijftaken, todos, tuchtzaken, facturen, kledinguitgiftes, tijdlijnreacties, bijlagen en het gekoppelde account verhuizen mee; het dubbele profiel gaat met een auditverwijzing naar de prullenbak. Integraties kunnen die verwijzing gebruiken om opgeslagen persoon-ID's naar het hoofdprofiel om te zetten zonder het dubbele profiel opnieuw aan te maken.
+
+## [34.3.0] - 2026-08-14
+
+### Added
+
+- De personenlijst bundelt lidstatus, KNVB-status en de overlappende rollen ouder/verzorger, vrijwilliger, sponsor en contact in één filtergroep **Kenmerken**. Meerdere rollen zijn tegelijk selecteerbaar en worden gecombineerd; de ouderrol wordt afgeleid uit actuele ouder/verzorger-relaties. Een standaard zichtbare kolom toont dezelfde kenmerken als compacte labels.
+
+## [34.2.6] - 2026-08-08
+
+### Fixed
+
+- Dienstnamen met een streepje of apostrof toonden de HTML-code in plaats van het teken: "Gastheer/gastvrouw &#8211; Bestuurslid van dienst" in plaats van "Gastheer/gastvrouw – Bestuurslid van dienst". WordPress' `wptexturize()` zet een los streepje om in `&#8211;`, en die code werd zowel in de titel van uitgerolde inschrijftaken opgeslagen als ongedecodeerd naar het scherm gestuurd. Titels die worden opgeslagen, gemaild of als platte tekst naar de client gaan gebruiken nu de onbewerkte titel; de dienstenschermen decoderen wat er alsnog binnenkomt.
+
+## [34.2.5] - 2026-08-05
+
+### Fixed
+
+- Handmatig aangemaakte inschrijftaken met de standaardstatus "open" verdwijnen niet langer uit zowel de leden- als beheerkalender. De expliciet gekozen standaardstatus wordt nu echt opgeslagen; bestaande taken zonder statusregel worden overeenkomstig die standaard als open behandeld.
+
+## [34.2.4] - 2026-08-05
+
+### Changed
+
+- De Kaderlijst wordt per identieke zichtbaarheidsscope een dag server-side gecachet en automatisch ververst bij wijzigingen aan personen of teams. Leeftijdsgroepcoördinatoren en huishoudens delen nooit gegevens buiten hun eigen scope; aflopende functies krijgen door de dagelijkse cachesleutel vanzelf een verse lijst. De handmatige verversknop omzeilt alleen de eigen scopecache.
+- Een koude Kaderlijst-opbouw leest voortaan uitsluitend de tien velden die de tabel werkelijk gebruikt, in plaats van alle geregistreerde persoonsvelden en repeaters te serialiseren.
+
+## [34.2.3] - 2026-08-05
+
+### Fixed
+
+- De keuzelijst "Vereiste commissie" bij een inschrijftaak toont weer alle commissies. Het formulier riep de commissie-opvraag aan via de verkeerde API-helper en verborg de fout, waardoor alleen "\u2014 geen \u2014" zichtbaar bleef. Laden, fouten en een werkelijk lege lijst hebben nu ieder een duidelijke status.
+## [34.2.2] - 2026-08-03
+
+### Fixed
+
+- De tijd van een inschrijftaaksjabloon wijzigen verplaatst nu de uitgerolde inschrijftaken in plaats van ze te verdubbelen. Voorheen bleef de oude reeks staan naast de nieuwe — een sjabloon van 07:45 naar 08:00 verzetten leverde elke zaterdag van het seizoen twee taken op. Taken met inschrijvingen, handmatig aangepaste en geannuleerde taken blijven zoals altijd behouden.
+- "Opnieuw uitrollen" en het opslaan van een sjabloon lopen nu tot het einde van het seizoen, net als de nachtelijke cron. Met het oude venster van 93 dagen bleef de verouderde staart van een gewijzigd sjabloon achter buiten dat bereik.
+- Sjablonen met een tijd inclusief seconden (`14:00:00`, zoals wp-admin die opslaat) leverden onbruikbare datums op (`2027-03-06 14:00:00:00`). Elke daaruit uitgerolde inschrijftaak kreeg daardoor de titel "01-01-1970 00:00".
 
 ## [34.2.0] - 2026-08-03
 

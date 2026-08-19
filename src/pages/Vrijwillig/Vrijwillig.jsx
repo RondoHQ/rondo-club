@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
-import { HeartHandshake, AlertTriangle, CheckCircle2, XCircle, Calendar, ShieldAlert, Users } from 'lucide-react';
+import { HeartHandshake, AlertTriangle, CheckCircle2, XCircle, Calendar, CalendarPlus, ShieldAlert, Users } from 'lucide-react';
 import { SiWhatsapp } from '@icons-pack/react-simple-icons';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { formatStoredDateTime } from '@/utils/dateFormat';
 import { openHtmlLinksInNewTab } from '@/utils/richTextUtils';
 import { shiftCalendarKeys } from '@/utils/shiftQueryCache';
+import { decodeHtml } from '@/utils/formatters';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import ShiftCoverageCalendar from '@/components/volunteers/ShiftCoverageCalendar';
 
@@ -310,7 +311,7 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
     <li className="card p-4">
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100">{shift.dienst_type_name || shift.title}</h3>
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">{decodeHtml(shift.dienst_type_name || shift.title)}</h3>
           <div className="shrink-0">
             {shift.no_show ? (
               <span className="text-xs font-medium text-red-700 dark:text-red-300 inline-flex items-center gap-1">
@@ -638,6 +639,21 @@ export default function Vrijwillig() {
 
           {tab === 'mine' && (
             <section className="space-y-4">
+              <div className="card p-4 flex items-start gap-3">
+                <CalendarPlus className="w-5 h-5 mt-0.5 shrink-0 text-bright-cobalt dark:text-electric-cyan" aria-hidden="true" />
+                <div>
+                  <a
+                    href={prmApi.getMyShiftsCalendarUrl()}
+                    download="mijn-inschrijftaken.ics"
+                    className="text-sm font-medium text-bright-cobalt hover:underline dark:text-electric-cyan"
+                  >
+                    Download mijn inschrijftaken als agenda (.ics)
+                  </a>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Voeg al je niet-geannuleerde inschrijftaken in één keer toe aan je eigen agenda. Elke afspraak bevat een link terug naar Rondo.
+                  </p>
+                </div>
+              </div>
               <div>
                 <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider mb-2">
                   Komende inschrijftaken
