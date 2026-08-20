@@ -87,8 +87,27 @@ The connector exposes three adapter tools:
 1. `mcp-adapter-discover-abilities` — list the available WordPress abilities and site guidance.
 2. `mcp-adapter-get-ability-info` — load the input/output schema and safety instructions for an
    ability before first use.
-3. `mcp-adapter-execute-ability` — execute an ability. For native data inspection and tightly
-   scoped repairs, use `novamira/execute-php` and WordPress/ACF functions.
+3. `mcp-adapter-execute-ability` — execute an ability.
+
+### Read workflow: use the typed Rondo abilities first
+
+For production data queries, always use the MCP connector and prefer Rondo's typed, read-only
+abilities over `novamira/execute-php`, REST helpers, SSH, or WP-CLI:
+
+| Ability | Use it for |
+|---------|------------|
+| `rondo/search-records` | Find accessible people, teams, and committees and resolve exact IDs |
+| `rondo/get-record` | Read one accessible record with canonical, permission-filtered fields |
+| `rondo/get-field-schema` | Discover canonical field names and client-safe field contracts |
+
+Discover the connector abilities first, load an ability's schema before its first use, and then
+execute it through `mcp-adapter-execute-ability`. A normal lookup should search first, verify the
+exact record identity, and then fetch only the fields needed. These abilities reuse Rondo's row-
+and field-level access controls; never work around a missing or hidden result.
+
+Use `novamira/execute-php` only when the typed abilities cannot answer a necessary read or when a
+tightly scoped repair is required. For those cases, use WordPress and the native Rondo field APIs,
+keep the operation as narrow as possible, and preserve the same access and verification rules.
 
 Production-write rules:
 
@@ -121,7 +140,7 @@ Production-write rules:
 Entry point: `functions.php`
 
 **Initialization flow (`rondo_init()`):**
-- Registers the native field schema and storage services
+- Registers the native field schema, storage services, and read-only WordPress abilities
 - Loads classes from `includes/` conditionally on `after_setup_theme` and `plugins_loaded`
 - Core classes (PostTypes, Taxonomies, AccessControl, UserRoles, DemoProtection) load on every request
 - REST API classes load only for REST requests; Reminders only for admin/cron
@@ -130,6 +149,7 @@ Entry point: `functions.php`
 
 **Key class groups:**
 - **Core:** PostTypes, Taxonomies, AccessControl, UserRoles, AutoTitle, VolunteerStatus
+- **Abilities:** Registrar (typed, authenticated record search, reads, and field-schema discovery)
 - **REST controllers:** Api (dashboard/search/timeline), People, Teams, Commissies, Todos, Feedback, Calendar, GoogleContacts, GoogleSheets, CustomFields, ImportExport
 - **Collaboration:** CommentTypes (notes/activities), Mentions, MentionNotifications
 - **Integrations:** GoogleOAuth, ICalFeed
