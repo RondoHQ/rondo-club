@@ -19,7 +19,7 @@ Two things, neither in the repository, both pointed at by `tests/.env`
 ```bash
 mkdir -p ~/Code/rondo/wp-test
 cd ~/Code/rondo/wp-test
-wp core download --version=7.0.2 --skip-content
+wp core download --version=7.1 --skip-content
 mkdir -p wp-content/plugins wp-content/themes
 ln -sfn ~/Code/rondo/rondo-club wp-content/themes/rondo-club
 ```

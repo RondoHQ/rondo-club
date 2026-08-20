@@ -105,6 +105,7 @@ use Rondo\Core\PhoneNormalizer;
 use Rondo\Core\VolunteerStatus;
 use Rondo\Core\AccessControl;
 use Rondo\Core\UserRoles;
+use Rondo\Abilities\Registrar as AbilityRegistrar;
 use Rondo\REST\Api;
 use Rondo\REST\People;
 use Rondo\REST\Teams;
@@ -263,6 +264,7 @@ function rondo_init() {
 	new PostTypes();
 	new Taxonomies();
 	new \Rondo\Fields\FieldSchema();
+	new AbilityRegistrar();
 	new FormerMemberWorkHistory();
 	new AccessControl();
 	new PersonDeletionGuard();

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.21.0] - 2026-08-20
+
+### Added
+
+- Rondo biedt nu drie getypeerde, alleen-lezen WordPress Abilities voor REST-, MCP- en AI-clients: zoeken in toegankelijke personen, teams en commissies, één record met zichtbare canonieke velden ophalen en het cliëntveilige veldcontract opvragen. Alle abilities hergebruiken de bestaande rij- en veldrechten.
+
+### Changed
+
+- WordPress 7.1 is nu de minimale en in CI geteste WordPress-versie, zodat Rondo de publieke Abilities API-exposure en draagbare JSON-schema's van 7.1 veilig kan gebruiken.
+
 ## [34.20.7] - 2026-08-19
 
 ### Fixed

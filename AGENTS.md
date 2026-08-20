@@ -10,9 +10,9 @@ Prefer Read over `cat`, Grep over `grep/rg` in Bash, and Glob over `find` in Bas
 **Rondo Club** is a React-powered WordPress theme for sports team management. This theme provides a modern, single-page application interface for managing people, teams, and club operations.
 
 **Tech Stack:**
-- Backend: WordPress 6.0+, PHP 8.0+, native post/term metadata
-- Frontend: React 18, React Router 6, TanStack Query, Tailwind CSS v4
-- Build: Vite 5.0
+- Backend: WordPress 7.1+, PHP 8.0+, native post/term metadata
+- Frontend: React 19, React Router 6, TanStack Query, Tailwind CSS v4
+- Build: Vite 8
 
 ## Development Commands
 
