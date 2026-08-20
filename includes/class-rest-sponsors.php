@@ -629,6 +629,9 @@ final class Sponsors extends Base {
 			delete_post_thumbnail( $sponsor_id );
 			return true;
 		}
+		if ( (int) get_post_thumbnail_id( $sponsor_id ) === $attachment_id ) {
+			return true;
+		}
 		if ( ! set_post_thumbnail( $sponsor_id, $attachment_id ) ) {
 			return new \WP_Error( 'rondo_sponsor_logo_save_failed', 'Het sponsorlogo kon niet worden opgeslagen.', [ 'status' => 500 ] );
 		}

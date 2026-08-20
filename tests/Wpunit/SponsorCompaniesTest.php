@@ -110,6 +110,26 @@ class SponsorCompaniesTest extends RondoTestCase {
 		$this->assertSame( 0, get_post_thumbnail_id( $sponsor_id ) );
 	}
 
+	public function test_saving_an_unchanged_logo_is_idempotent(): void {
+		$sponsor_id    = $this->createSponsor( 'Logo behouden BV', 'awc_sponsor', [] );
+		$image         = wp_upload_bits( 'bestaand-logo.gif', null, base64_decode( 'R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==' ) );
+		$attachment_id = self::factory()->attachment->create_upload_object( $image['file'], $sponsor_id );
+		update_post_meta( $sponsor_id, '_thumbnail_id', $attachment_id );
+
+		$response = $this->json_request(
+			'PATCH',
+			'/rondo/v1/sponsors/' . $sponsor_id,
+			[
+				'logo_attachment_id' => $attachment_id,
+				'fields'             => [ 'club_tv_priority' => 1 ],
+			]
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( $attachment_id, get_post_thumbnail_id( $sponsor_id ) );
+		$this->assertSame( 1, (int) Fields::get_for_post( $sponsor_id, 'club_tv_priority' ) );
+	}
+
 	public function test_manager_creates_personal_sponsor_with_one_linked_person(): void {
 		$person_id = $this->createPerson(
 			[ 'post_title' => 'Piet Sponsor' ],
