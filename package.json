@@ -1,6 +1,6 @@
 {
   "name": "rondo-club-theme",
-  "version": "34.21.2",
+  "version": "34.22.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,6 +9,7 @@
     "icons": "node scripts/generate-pwa-icons.js",
     "preview": "vite preview",
     "lint": "eslint src --report-unused-disable-directives --max-warnings 0",
+    "test:js": "node --test tests/js/*.test.mjs",
     "prepare": "husky"
   },
   "dependencies": {

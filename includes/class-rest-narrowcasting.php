@@ -792,7 +792,9 @@ class Narrowcasting extends Base {
 		$feed['sponsors'] = array_values(
 			array_filter(
 				$this->content->sponsor_choices(),
-				static fn( array $sponsor ): bool => empty( $sponsor['legacy'] ) && ! empty( $sponsor['logo_url'] )
+				static fn( array $sponsor ): bool => empty( $sponsor['legacy'] )
+					&& ! empty( $sponsor['logo_url'] )
+					&& (int) ( $sponsor['club_tv_priority'] ?? 0 ) > 0
 			)
 		);
 

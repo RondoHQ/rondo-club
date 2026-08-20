@@ -43,6 +43,7 @@ class FieldRegistryTest extends RondoTestCase {
 		$this->assertSame( 'website', Registry::resolve( 'commissie', 'website' )['canonical_name'] );
 		$this->assertSame( 'website', Registry::resolve( 'rondo_sponsor', 'website' )['canonical_name'] );
 		$this->assertSame( 1, Registry::resolve( 'rondo_sponsor', 'sponsit_logo_id' )['readonly'] );
+		$this->assertSame( 0, Registry::resolve( 'rondo_sponsor', 'club_tv_priority' )['default_value'] );
 		$this->assertSame( 'status', Registry::resolve( 'rondo_feedback', 'status' )['canonical_name'] );
 		$this->assertSame( 'status', Registry::resolve( 'rondo_invoice', 'status' )['canonical_name'] );
 	}

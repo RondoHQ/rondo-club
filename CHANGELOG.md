@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.22.0] - 2026-08-20
+
+### Added
+
+- Sponsoren hebben nu een Club TV-prioriteit: niet tonen, soms, vaak of altijd. Vaak telt driemaal mee in de rotatie; maximaal zes actieve sponsoren met logo kunnen op altijd staan.
+
+### Changed
+
+- De Club TV-feed bevat alleen actieve sponsoren met logo die expliciet voor weergave zijn ingeschakeld. De logoverdeling roteert ook door wanneer de playlist opnieuw begint.
+
 ## [34.21.2] - 2026-08-20
 
 ### Fixed

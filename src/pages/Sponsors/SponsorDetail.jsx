@@ -14,6 +14,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 const emptyForm = {
   title: '', status: 'publish', sponsor_type: 'organization', sponsor_role: 'awc_sponsor', sponsit_contact_id: '',
+  club_tv_priority: 0,
   website: '',
   address_street_name: '', address_house_number: '', address_house_number_addition: '',
   address_postal_code: '', address_city: '', address_country: 'Nederland', address_country_code: 'NL',
@@ -28,6 +29,7 @@ function sponsorToForm(sponsor) {
     status: sponsor?.status || 'publish',
     sponsor_type: fields.sponsor_type || 'organization',
     sponsor_role: fields.sponsor_role || 'awc_sponsor',
+    club_tv_priority: Number(fields.club_tv_priority) || 0,
     sponsit_contact_id: fields.sponsit_contact_id || '',
     website: fields.website || '',
     address_street_name: fields.address_street_name || '',
@@ -86,6 +88,7 @@ export default function SponsorDetail() {
     fields: {
       sponsor_type: form.sponsor_type,
       sponsor_role: form.sponsor_role,
+      club_tv_priority: Number(form.club_tv_priority),
       sponsit_contact_id: form.sponsit_contact_id.trim(),
       website: form.website.trim(),
       address_street_name: form.address_street_name.trim(),
@@ -237,6 +240,23 @@ export default function SponsorDetail() {
           </button>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(event) => uploadLogo(event.target.files?.[0])} />
           {form.logo_url && <button type="button" className="mt-3 text-sm text-red-600" onClick={() => { updateField('logo_attachment_id', 0); updateField('logo_url', null); }}>Logo verwijderen</button>}
+          <div className="mt-5 border-t border-gray-200 pt-5 dark:border-gray-700">
+            <label>
+              <span className="label">Club TV-weergave</span>
+              <select className="input w-full" value={form.club_tv_priority} onChange={(event) => updateField('club_tv_priority', Number(event.target.value))}>
+                <option value={0}>Niet tonen</option>
+                <option value={1}>Soms tonen</option>
+                <option value={2}>Vaak tonen</option>
+                <option value={3}>Altijd tonen</option>
+              </select>
+            </label>
+            <p className="mt-2 text-xs text-gray-500">
+              Vaak verschijnt ongeveer drie keer zo vaak als Soms. Maximaal zes sponsoren kunnen op Altijd staan.
+            </p>
+            {form.club_tv_priority > 0 && !form.logo_url ? (
+              <p className="mt-2 text-xs font-medium text-amber-700 dark:text-amber-300">Deze sponsor verschijnt pas op Club TV nadat een logo is toegevoegd.</p>
+            ) : null}
+          </div>
         </section>
       </div>
 

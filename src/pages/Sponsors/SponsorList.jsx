@@ -9,6 +9,12 @@ const roleLabels = {
   awc_sponsor: 'AWC Sponsor',
 };
 
+const clubTvLabels = {
+  1: 'Soms',
+  2: 'Vaak',
+  3: 'Altijd',
+};
+
 export default function SponsorList() {
   useDocumentTitle('Sponsoren');
   const [search, setSearch] = useState('');
@@ -103,6 +109,9 @@ export default function SponsorList() {
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-gray-900 dark:text-gray-100">{sponsor.title}</p>
                       <p className="mt-0.5 text-sm text-gray-500 md:hidden">{roleLabels[sponsor.fields?.sponsor_role] || 'Geen sponsorrol'}</p>
+                      {Number(sponsor.fields?.club_tv_priority) > 0 ? (
+                        <p className="mt-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">Club TV: {clubTvLabels[sponsor.fields.club_tv_priority]}</p>
+                      ) : null}
                     </div>
                     <span className="hidden items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300 md:flex">
                       {sponsorType === 'person' ? <User className="h-4 w-4" /> : <Building2 className="h-4 w-4" />}
