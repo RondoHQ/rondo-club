@@ -28,8 +28,8 @@ final class Registrar {
 
 	private const SEARCH_FIELDS = [
 		'person'    => [ 'first_name', 'infix', 'last_name', 'knvb_id', 'email_1', 'email_2' ],
-		'team'      => [ 'name' ],
-		'commissie' => [ 'name' ],
+		'team'      => [],
+		'commissie' => [],
 	];
 
 	public function __construct() {

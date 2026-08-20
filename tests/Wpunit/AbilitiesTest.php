@@ -79,6 +79,36 @@ class AbilitiesTest extends RondoTestCase {
 		$this->assertSame( [ 'person' ], array_values( array_unique( array_column( $result['records'], 'type' ) ) ) );
 	}
 
+	public function test_searches_team_and_committee_titles_without_unregistered_meta_fields(): void {
+		$user_id = self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] );
+		wp_set_current_user( $user_id );
+
+		$team_id      = self::factory()->post->create(
+			[
+				'post_type'   => 'team',
+				'post_status' => 'publish',
+				'post_title'  => 'Ability Search Team',
+			]
+		);
+		$committee_id = self::factory()->post->create(
+			[
+				'post_type'   => 'commissie',
+				'post_status' => 'publish',
+				'post_title'  => 'Ability Search Committee',
+			]
+		);
+
+		$result = wp_get_ability( 'rondo/search-records' )->execute(
+			[
+				'query'    => 'Ability Search',
+				'contexts' => [ 'team', 'commissie' ],
+			]
+		);
+
+		$this->assertNotWPError( $result );
+		$this->assertSame( [ $committee_id, $team_id ], array_column( $result['records'], 'id' ) );
+	}
+
 	public function test_get_record_uses_canonical_field_visibility_and_selection(): void {
 		$user_id = $this->createRondoUser();
 		wp_set_current_user( $user_id );
