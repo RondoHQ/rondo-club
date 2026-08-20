@@ -21,6 +21,7 @@ class AbilitiesTest extends RondoTestCase {
 			$this->assertSame( 'rondo-records', $ability->get_category() );
 			$this->assertTrue( $ability->get_meta_item( 'public' ) );
 			$this->assertTrue( $ability->get_meta_item( 'show_in_rest' ) );
+			$this->assertSame( [ 'public' => true ], $ability->get_meta_item( 'mcp' ) );
 			$this->assertSame(
 				[
 					'readonly'    => true,
@@ -39,6 +40,15 @@ class AbilitiesTest extends RondoTestCase {
 
 		$this->assertWPError( $result );
 		$this->assertSame( 'ability_invalid_permissions', $result->get_error_code() );
+
+		$server             = rest_get_server();
+		$discovery_response = $server->dispatch( new WP_REST_Request( 'GET', '/wp-abilities/v1/abilities' ) );
+		$this->assertSame( 401, $discovery_response->get_status() );
+
+		$run = new WP_REST_Request( 'GET', '/wp-abilities/v1/abilities/rondo/search-records/run' );
+		$run->set_query_params( [ 'input' => [ 'query' => 'Ajax' ] ] );
+		$run_response = $server->dispatch( $run );
+		$this->assertSame( 401, $run_response->get_status() );
 	}
 
 	public function test_search_respects_person_visibility_and_context_filter(): void {

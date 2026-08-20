@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.21.1] - 2026-08-20
+
+### Fixed
+
+- De alleen-lezen Rondo Abilities zijn nu expliciet zichtbaar voor de geauthenticeerde MCP-adapter. REST-discovery en uitvoering blijven, net als MCP-uitvoering, afgeschermd door WordPress-authenticatie en de bestaande Rondo-rechten.
+
 ## [34.21.0] - 2026-08-20
 
 ### Added
