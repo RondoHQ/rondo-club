@@ -52,8 +52,32 @@ export function buildMatchdayScenes(feed, fallbackMessage) {
 }
 
 export function rotateSponsors(sponsors, sceneIndex, slots = 6) {
-  if (!sponsors.length) return [];
-  const count = Math.min(slots, sponsors.length);
-  const offset = (sceneIndex * slots) % sponsors.length;
-  return Array.from({ length: count }, (_, index) => sponsors[(offset + index) % sponsors.length]);
+  const capacity = Math.max(0, Number(slots) || 0);
+  if (!sponsors.length || capacity === 0) return [];
+
+  const eligible = sponsors.filter((sponsor) => sponsor.logo_url && Number(sponsor.club_tv_priority) > 0);
+  const always = eligible.filter((sponsor) => Number(sponsor.club_tv_priority) === 3).slice(0, capacity);
+  const remainingSlots = capacity - always.length;
+  if (remainingSlots === 0) return always;
+
+  const rotating = eligible.filter((sponsor) => {
+    const priority = Number(sponsor.club_tv_priority);
+    return priority === 1 || priority === 2;
+  });
+  const tickets = rotating.flatMap((sponsor) => (
+    Array.from({ length: Number(sponsor.club_tv_priority) === 2 ? 3 : 1 }, () => sponsor)
+  ));
+  if (!tickets.length) return always;
+
+  const selected = [];
+  const selectedIds = new Set(always.map((sponsor) => sponsor.id));
+  const offset = Math.max(0, Number(sceneIndex) || 0) % tickets.length;
+  for (let step = 0; step < tickets.length && selected.length < remainingSlots; step += 1) {
+    const sponsor = tickets[(offset + step) % tickets.length];
+    if (selectedIds.has(sponsor.id)) continue;
+    selectedIds.add(sponsor.id);
+    selected.push(sponsor);
+  }
+
+  return [...always, ...selected];
 }

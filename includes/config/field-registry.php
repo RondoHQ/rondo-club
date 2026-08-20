@@ -3045,6 +3045,19 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'storage_name' => 'address_street_name',
           'type' => 'text',
         ),
+        'club_tv_priority' =>
+        array (
+          'canonical_name' => 'club_tv_priority',
+          'default_value' => 0,
+          'instructions' => '0 = niet tonen, 1 = soms, 2 = vaak, 3 = altijd.',
+          'key' => 'field_sponsor_club_tv_priority',
+          'label' => 'Club TV-weergave',
+          'max' => 3,
+          'min' => 0,
+          'name' => 'club_tv_priority',
+          'storage_name' => 'club_tv_priority',
+          'type' => 'number',
+        ),
         'contacts' =>
         array (
           'button_label' => 'Contactpersoon toevoegen',

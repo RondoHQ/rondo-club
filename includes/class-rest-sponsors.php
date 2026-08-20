@@ -15,8 +15,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** Manage sponsors without exposing their private CPT through wp/v2. */
 final class Sponsors extends Base {
-	private const ROLES = [ 'businessclub', 'awc_sponsor' ];
-	private const TYPES = [ 'organization', 'person' ];
+	private const ROLES                = [ 'businessclub', 'awc_sponsor' ];
+	private const TYPES                = [ 'organization', 'person' ];
+	private const CLUB_TV_PRIORITIES   = [ 0, 1, 2, 3 ];
+	private const CLUB_TV_ALWAYS_LIMIT = 6;
 
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
@@ -207,12 +209,17 @@ final class Sponsors extends Base {
 		if ( is_wp_error( $logo_validation ) ) {
 			return $logo_validation;
 		}
+		$status            = $this->sanitize_status( $payload['status'] ?? 'publish' );
+		$always_validation = $this->validate_club_tv_always_limit( 0, $fields, $status, absint( $payload['logo_attachment_id'] ?? 0 ) );
+		if ( is_wp_error( $always_validation ) ) {
+			return $always_validation;
+		}
 
 		$post_id = wp_insert_post(
 			[
 				'post_type'   => 'rondo_sponsor',
 				'post_title'  => $title,
-				'post_status' => $this->sanitize_status( $payload['status'] ?? 'publish' ),
+				'post_status' => $status,
 				'post_author' => get_current_user_id(),
 			],
 			true
@@ -254,6 +261,13 @@ final class Sponsors extends Base {
 			if ( is_wp_error( $logo_validation ) ) {
 				return $logo_validation;
 			}
+		}
+		$desired_fields    = array_merge( Fields::all_for_post( $post->ID ), $fields ?? [] );
+		$desired_status    = array_key_exists( 'status', $payload ) ? $this->sanitize_status( $payload['status'] ) : $post->post_status;
+		$desired_logo      = array_key_exists( 'logo_attachment_id', $payload ) ? absint( $payload['logo_attachment_id'] ) : (int) get_post_thumbnail_id( $post->ID );
+		$always_validation = $this->validate_club_tv_always_limit( $post->ID, $desired_fields, $desired_status, $desired_logo );
+		if ( is_wp_error( $always_validation ) ) {
+			return $always_validation;
 		}
 		$updates = [ 'ID' => $post->ID ];
 		if ( array_key_exists( 'title', $payload ) ) {
@@ -327,8 +341,20 @@ final class Sponsors extends Base {
 			return $response;
 		}
 
-		$data          = $response->get_data();
-		$attachment_id = absint( $data['attachment_id'] ?? 0 );
+		$data              = $response->get_data();
+		$attachment_id     = absint( $data['attachment_id'] ?? 0 );
+		$always_validation = $this->validate_club_tv_always_limit(
+			$sponsor->ID,
+			Fields::all_for_post( $sponsor->ID ),
+			$sponsor->post_status,
+			$attachment_id
+		);
+		if ( is_wp_error( $always_validation ) ) {
+			if ( $attachment_id ) {
+				wp_delete_attachment( $attachment_id, true );
+			}
+			return $always_validation;
+		}
 		if ( ! $attachment_id || ! set_post_thumbnail( $sponsor->ID, $attachment_id ) ) {
 			if ( $attachment_id ) {
 				wp_delete_attachment( $attachment_id, true );
@@ -518,6 +544,7 @@ final class Sponsors extends Base {
 		$allowed = [
 			'sponsor_type',
 			'sponsor_role',
+			'club_tv_priority',
 			'website',
 			'address_street_name',
 			'address_house_number',
@@ -565,6 +592,11 @@ final class Sponsors extends Base {
 				$output[ $key ] = $type;
 			} elseif ( $key === 'sponsor_role' ) {
 				$output[ $key ] = $role;
+			} elseif ( $key === 'club_tv_priority' ) {
+				if ( filter_var( $value, FILTER_VALIDATE_INT ) === false || ! in_array( (int) $value, self::CLUB_TV_PRIORITIES, true ) ) {
+					return new \WP_Error( 'rondo_sponsor_club_tv_priority_invalid', 'Kies een geldige Club TV-weergave.', [ 'status' => 400 ] );
+				}
+				$output[ $key ] = (int) $value;
 			} elseif ( $key === 'website' ) {
 				$output[ $key ] = esc_url_raw( (string) $value );
 			} else {
@@ -612,6 +644,47 @@ final class Sponsors extends Base {
 		if ( get_post_type( $attachment_id ) !== 'attachment' || ! wp_attachment_is_image( $attachment_id ) ) {
 			return new \WP_Error( 'rondo_sponsor_logo_invalid', 'Kies een geldige afbeelding als logo.', [ 'status' => 400 ] );
 		}
+		return true;
+	}
+
+	/** @return true|\WP_Error */
+	private function validate_club_tv_always_limit( int $sponsor_id, array $fields, string $status, int $logo_attachment_id ) {
+		$priority = (int) ( $fields['club_tv_priority'] ?? 0 );
+		if ( $priority !== 3 || $status !== 'publish' || $logo_attachment_id === 0 ) {
+			return true;
+		}
+
+		if ( $sponsor_id ) {
+			$current_priority  = (int) Fields::get_for_post( $sponsor_id, 'club_tv_priority' );
+			$current_is_always = $current_priority === 3
+				&& get_post_status( $sponsor_id ) === 'publish'
+				&& (int) get_post_thumbnail_id( $sponsor_id ) > 0;
+			if ( $current_is_always ) {
+				return true;
+			}
+		}
+
+		$always_ids     = get_posts(
+			[
+				'post_type'        => 'rondo_sponsor',
+				'post_status'      => 'publish',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'post__not_in'     => $sponsor_id ? [ $sponsor_id ] : [],
+				'meta_key'         => 'club_tv_priority',
+				'meta_value'       => '3',
+				'suppress_filters' => true,
+			]
+		);
+		$visible_always = array_filter( $always_ids, static fn( int $id ): bool => (int) get_post_thumbnail_id( $id ) > 0 );
+		if ( count( $visible_always ) >= self::CLUB_TV_ALWAYS_LIMIT ) {
+			return new \WP_Error(
+				'rondo_sponsor_club_tv_always_limit',
+				'Er kunnen maximaal zes sponsoren op Altijd tonen staan.',
+				[ 'status' => 400 ]
+			);
+		}
+
 		return true;
 	}
 

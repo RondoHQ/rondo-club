@@ -244,6 +244,18 @@ Voor de eerder ontworpen wedstrijden-slide geldt als vervolgstap:
 - eerlijke rotatie over tijd;
 - een ontbrekend of afgekeurd logo laat een positie leeg en veroorzaakt nooit een kapot beeld.
 
+Iedere sponsor heeft daarnaast een Rondo-eigen veld `club_tv_priority`:
+
+| Waarde | Label | Gedrag |
+|---:|---|---|
+| 0 | Niet tonen | Standaard; de sponsor komt niet in de Club TV-feed |
+| 1 | Soms tonen | Eén aandeel in de gewogen rotatie |
+| 2 | Vaak tonen | Drie aandelen in de gewogen rotatie |
+| 3 | Altijd tonen | Staat op iedere slide en vult als eerste een logopositie |
+
+Maximaal zes actieve sponsoren met logo mogen tegelijk op `Altijd tonen` staan. De instelling wordt
+in Rondo beheerd en nooit door Sponsit of Rondo Sync overschreven.
+
 De huidige Club TV-velden en bestaande content met `sponsor_person_id` worden tijdens de cutover
 omgezet naar `sponsor_id`. Tot de migratie is afgerond kan de manifestresolver beide velden lezen.
 
@@ -375,6 +387,5 @@ controle. De data-migratie krijgt daarnaast een aparte read-only verificatie na 
    automatisch een pas geven; dat is eenvoudiger maar minder beheersbaar.
 2. **Contactrol — aanbevolen:** start met vrij invoerbare rol met `Contactpersoon` als standaard.
    Alternatief is een vaste keuzelijst; die is consistenter maar zal snel uitzonderingen missen.
-3. **Club TV-deelname — aanbevolen:** ieder actief bedrijf met logo doet automatisch mee aan de
-   zes-logo-rotatie. Later kan advertentiegewicht of uitsluiting worden toegevoegd. Alternatief is
-   nu al een extra aan/uit-veld, wat meer beheer maar ook meer controle geeft.
+3. **Club TV-deelname — besloten:** alleen actieve sponsoren met logo en een `club_tv_priority`
+   hoger dan nul doen mee aan de zes-logo-rotatie.

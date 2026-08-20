@@ -191,12 +191,15 @@ final class Content {
 			]
 		);
 		$choices = array_map(
-			static fn( $post ) => [
-				'id'       => (int) $post->ID,
-				'name'     => get_the_title( $post ),
-				'logo_url' => get_the_post_thumbnail_url( $post, 'medium' ) ?: null,
-				'legacy'   => false,
-			],
+			static function ( $post ): array {
+				return [
+					'id'               => (int) $post->ID,
+					'name'             => get_the_title( $post ),
+					'logo_url'         => get_the_post_thumbnail_url( $post, 'medium' ) ?: null,
+					'club_tv_priority' => (int) Fields::get_for_post( (int) $post->ID, 'club_tv_priority' ),
+					'legacy'           => false,
+				];
+			},
 			$posts
 		);
 
@@ -215,10 +218,11 @@ final class Content {
 		);
 		foreach ( $legacy_posts as $post ) {
 			$choices[] = [
-				'id'       => (int) $post->ID,
-				'name'     => get_the_title( $post ),
-				'logo_url' => get_the_post_thumbnail_url( $post, 'medium' ) ?: null,
-				'legacy'   => true,
+				'id'               => (int) $post->ID,
+				'name'             => get_the_title( $post ),
+				'logo_url'         => get_the_post_thumbnail_url( $post, 'medium' ) ?: null,
+				'club_tv_priority' => 0,
+				'legacy'           => true,
 			];
 		}
 

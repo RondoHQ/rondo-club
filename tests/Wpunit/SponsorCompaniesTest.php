@@ -62,6 +62,41 @@ class SponsorCompaniesTest extends RondoTestCase {
 		$this->assertSame( 'businessclub', PublicMembershipPassPage::get_sponsor_pass_variant( $person_id ) );
 		$this->assertSame( 'Voorbeeld BV', PublicMembershipPassPage::get_sponsor_company_name( $person_id ) );
 		$this->assertSame( 'https://www.example.test/sponsors', $response->get_data()['fields']['website'] );
+		$this->assertSame( 0, (int) $response->get_data()['fields']['club_tv_priority'] );
+	}
+
+	public function test_club_tv_priority_is_validated_and_only_six_sponsors_can_always_show(): void {
+		$invalid = $this->json_request(
+			'POST',
+			'/rondo/v1/sponsors',
+			[
+				'title'  => 'Ongeldige prioriteit',
+				'fields' => [
+					'sponsor_role'     => 'awc_sponsor',
+					'club_tv_priority' => 4,
+				],
+			]
+		);
+		$this->assertSame( 400, $invalid->get_status() );
+		$this->assertSame( 'rondo_sponsor_club_tv_priority_invalid', $invalid->get_data()['code'] );
+
+		for ( $index = 1; $index <= 6; $index++ ) {
+			$sponsor_id = $this->createSponsor( 'Altijd ' . $index, 'awc_sponsor', [] );
+			Fields::update_for_post( $sponsor_id, 'club_tv_priority', 3 );
+			update_post_meta( $sponsor_id, '_thumbnail_id', 1000 + $index );
+		}
+
+		$seventh_id = $this->createSponsor( 'Altijd 7', 'awc_sponsor', [] );
+		update_post_meta( $seventh_id, '_thumbnail_id', 2000 );
+		$seventh = $this->json_request(
+			'PATCH',
+			'/rondo/v1/sponsors/' . $seventh_id,
+			[ 'fields' => [ 'club_tv_priority' => 3 ] ]
+		);
+
+		$this->assertSame( 400, $seventh->get_status() );
+		$this->assertSame( 'rondo_sponsor_club_tv_always_limit', $seventh->get_data()['code'] );
+		$this->assertSame( 0, (int) Fields::get_for_post( $seventh_id, 'club_tv_priority' ) );
 	}
 
 	public function test_logo_upload_rejects_invalid_sponsit_source_id_before_writing_media(): void {

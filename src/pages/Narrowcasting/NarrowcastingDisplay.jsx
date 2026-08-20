@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import NarrowcastingScene from './NarrowcastingScenes';
 import { buildPlaylistScenes } from './playlistScenes';
+import { rotateSponsors } from './matchdayScenes';
 
 const TOKEN_KEY = 'rondoPlayerToken';
 const CONFIG_KEY = 'rondoPlayerConfig';
@@ -81,6 +82,7 @@ export default function NarrowcastingDisplay() {
   const [loadError, setLoadError] = useState('');
   const [now, setNow] = useState(new Date());
   const [sceneIndex, setSceneIndex] = useState(0);
+  const [sponsorRotationIndex, setSponsorRotationIndex] = useState(0);
   const token = useMemo(() => (isPreview ? '' : resolveToken()), [isPreview]);
 
   useEffect(() => {
@@ -161,12 +163,14 @@ export default function NarrowcastingDisplay() {
     const duration = Math.max(5, Math.min(120, Number(scenes[sceneIndex]?.duration_seconds) || 12));
     const timer = window.setTimeout(() => {
       setSceneIndex((current) => (current + 1) % scenes.length);
+      setSponsorRotationIndex((current) => current + 1);
     }, duration * 1000);
     return () => window.clearTimeout(timer);
   }, [sceneIndex, scenes]);
 
   useEffect(() => {
     setSceneIndex(0);
+    setSponsorRotationIndex(0);
   }, [config?.pilot_message, feed?.source?.fetched_at, playlist?.content_version]);
 
   useEffect(() => {
@@ -247,7 +251,9 @@ export default function NarrowcastingDisplay() {
   };
   const clubLogo = config?.branding?.logo_url;
   const slideTitle = sceneTitle(scene);
-  const sponsorLogos = scene?.sponsorLogos || [];
+  const sponsorLogos = feed?.sponsors?.length
+    ? rotateSponsors(feed.sponsors, sponsorRotationIndex)
+    : (scene?.sponsorLogos || []);
   const footerDate = scene?.dateLabel || date;
 
   return (
