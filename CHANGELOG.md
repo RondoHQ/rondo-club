@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.21.2] - 2026-08-20
+
+### Fixed
+
+- Zoeken via de MCP- en REST-Ability doorzoekt team- en commissienamen nu correct via hun WordPress-titel, zonder niet-bestaande metavelden op te vragen.
+
 ## [34.21.1] - 2026-08-20
 
 ### Fixed
