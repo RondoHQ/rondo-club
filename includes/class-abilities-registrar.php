@@ -248,6 +248,9 @@ final class Registrar {
 				'destructive' => false,
 				'idempotent'  => true,
 			],
+			'mcp'         => [
+				'public' => true,
+			],
 			'public'      => true,
 		];
 	}
