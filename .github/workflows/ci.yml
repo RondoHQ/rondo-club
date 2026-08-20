@@ -62,7 +62,7 @@ jobs:
     env:
       # Keep in step with production; the suite runs the theme against the same
       # WordPress it is deployed on.
-      WP_VERSION: 7.0.2
+      WP_VERSION: 7.1
       WP_ROOT_FOLDER: ${{ github.workspace }}/../wp-test
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

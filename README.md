@@ -6,9 +6,9 @@
 
 [![CI](https://github.com/RondoHQ/rondo-club/actions/workflows/ci.yml/badge.svg)](https://github.com/RondoHQ/rondo-club/actions/workflows/ci.yml)
 [![License: GPL v2](https://img.shields.io/badge/License-GPLv2-blue.svg)](https://www.gnu.org/licenses/gpl-2.0)
-[![WordPress 6.0+](https://img.shields.io/badge/WordPress-6.0%2B-21759b.svg)](https://wordpress.org/)
+[![WordPress 7.1+](https://img.shields.io/badge/WordPress-7.1%2B-21759b.svg)](https://wordpress.org/)
 [![PHP 8.0+](https://img.shields.io/badge/PHP-8.0%2B-777bb4.svg)](https://www.php.net/)
-[![React 18](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)
+[![React 19](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
 
 **Member administration for sports clubs, built as a React-powered WordPress theme.**
 
@@ -39,9 +39,9 @@ Rondo Club replaces spreadsheets and scattered admin tools with a modern single-
 
 ## Requirements
 
-- WordPress 6.0+
+- WordPress 7.1+
 - PHP 8.0+
-- Node.js 18+ (for development only)
+- Node.js 20.19+ (for development only)
 
 ## Quick Start
 
@@ -66,9 +66,9 @@ For production, `npm run build` generates optimized assets in `dist/`.
 
 | Layer | Technology |
 |-------|-----------|
-| **Frontend** | React 18, React Router 6, TanStack Query, Tailwind CSS v4 |
+| **Frontend** | React 19, React Router 6, TanStack Query, Tailwind CSS v4 |
 | **Backend** | WordPress, PHP 8.0+, native post/term metadata |
-| **Build** | Vite 5.0 |
+| **Build** | Vite 8 |
 | **Payments** | Mollie (Payment Links API) |
 | **Sync** | [Rondo Sync](https://github.com/RondoHQ/rondo-sync) (Sportlink integration) |
 
