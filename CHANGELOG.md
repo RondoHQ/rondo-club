@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.22.1] - 2026-08-20
+
+### Fixed
+
+- Een sponsor met een al gekoppeld logo kan weer worden opgeslagen; een ongewijzigde logo-ID wordt niet langer ten onrechte als opslagfout behandeld.
+
 ## [34.22.0] - 2026-08-20
 
 ### Added
