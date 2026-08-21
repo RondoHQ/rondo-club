@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.24.0] - 2026-08-21
+
+### Added
+
+- Beheerders kunnen een gekoppelde Club TV-player op afstand volledig uitzetten. Een bevestiging waarschuwt dat de player daarna alleen via een korte stroomonderbreking opnieuw kan worden aangezet.
+
 ## [34.23.3] - 2026-08-21
 
 ### Fixed

@@ -2086,6 +2086,7 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
             'reload' => 'Scherm herladen',
             'restart_browser' => 'Browser herstarten',
             'reboot' => 'Player herstarten',
+            'shutdown' => 'Player uitzetten',
             'sleep_tv' => 'TV in standby',
             'wake_tv' => 'TV inschakelen',
           ),

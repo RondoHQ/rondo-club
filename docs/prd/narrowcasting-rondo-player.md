@@ -208,6 +208,7 @@ Rondo can queue only predefined commands:
 - reload display;
 - restart browser;
 - reboot player;
+- shut down player;
 - wake TV;
 - put TV in standby;
 - run CEC detection/test;
