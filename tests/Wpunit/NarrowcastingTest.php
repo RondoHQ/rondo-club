@@ -143,7 +143,7 @@ class NarrowcastingTest extends RondoTestCase {
 		$queued = $this->dispatch(
 			'POST',
 			"/rondo/v1/narrowcasting/displays/{$display_id}/commands",
-			[ 'command' => 'wake_tv' ]
+			[ 'command' => 'shutdown' ]
 		);
 		$this->assertSame( 200, $queued->get_status() );
 		$command_id = $queued->get_data()['command']['id'];
@@ -155,7 +155,7 @@ class NarrowcastingTest extends RondoTestCase {
 			[],
 			[ 'Authorization' => "Bearer {$token}" ]
 		);
-		$this->assertSame( 'wake_tv', $poll->get_data()['command']['name'] );
+		$this->assertSame( 'shutdown', $poll->get_data()['command']['name'] );
 		$this->assertStringContainsString( 'no-store', $poll->get_headers()['Cache-Control'] );
 
 		$ack = $this->dispatch(

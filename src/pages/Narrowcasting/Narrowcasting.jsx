@@ -8,6 +8,7 @@ import {
   Moon,
   Pencil,
   Power,
+  PowerOff,
   RefreshCw,
   RotateCcw,
   Sun,
@@ -35,6 +36,7 @@ const commandLabels = {
   reload: 'Beeld vernieuwen',
   restart_browser: 'Browser herstarten',
   reboot: 'Player herstarten',
+  shutdown: 'Player uitzetten',
   cec_detect: 'HDMI-CEC testen',
 };
 
@@ -209,6 +211,11 @@ export default function Narrowcasting() {
   const queueCommand = (displayId, command) => {
     setNotice('');
     commandMutation.mutate({ displayId, command });
+  };
+
+  const shutdown = (display) => {
+    if (!window.confirm(`Player “${display.name}” uitzetten? Daarna moet je de stroom kort onderbreken om hem weer aan te zetten.`)) return;
+    queueCommand(display.id, 'shutdown');
   };
 
   const revoke = (display) => {
@@ -537,6 +544,9 @@ export default function Narrowcasting() {
                 </button>
                 <button type="button" className="btn-tertiary text-sm" onClick={() => queueCommand(display.id, 'reboot')} disabled={display.pairing_status !== 'paired' || commandMutation.isPending}>
                   <Power className="mr-2 h-4 w-4" />Player herstarten
+                </button>
+                <button type="button" className="btn-tertiary text-sm text-red-700 dark:text-red-300" onClick={() => shutdown(display)} disabled={display.pairing_status !== 'paired' || commandMutation.isPending}>
+                  <PowerOff className="mr-2 h-4 w-4" />Player uitzetten
                 </button>
                 <button type="button" className="btn-tertiary text-sm text-red-700 dark:text-red-300" onClick={() => revoke(display)} disabled={display.pairing_status === 'revoked' || revokeMutation.isPending}>
                   <Unplug className="mr-2 h-4 w-4" />Intrekken

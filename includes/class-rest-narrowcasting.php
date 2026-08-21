@@ -42,6 +42,7 @@ class Narrowcasting extends Base {
 		'reload',
 		'restart_browser',
 		'reboot',
+		'shutdown',
 		'wake_tv',
 		'sleep_tv',
 		'cec_detect',
