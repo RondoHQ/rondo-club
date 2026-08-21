@@ -49,6 +49,17 @@ class Commissies extends Base {
 	 * Register custom REST routes for commissies domain
 	 */
 	public function register_routes() {
+		// Member counts load independently so they do not block the commissie list.
+		register_rest_route(
+			'rondo/v1',
+			'/commissies/member-counts',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_member_counts' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
+		);
+
 		// Rondo-local commissie information. Core identity remains read-only.
 		register_rest_route(
 			'rondo/v1',
@@ -248,20 +259,37 @@ class Commissies extends Base {
 			);
 		}
 
-		// Get all people and filter by work history containing this commissie
+		// Let WordPress select only people whose numbered work-history rows point
+		// at this commissie. Post meta is primed for the small result set, so the
+		// field formatter below does not create an N+1 query over every person.
 		$people = get_posts(
 			[
 				'post_type'      => 'person',
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
+				'no_found_rows'  => true,
+				'meta_query'     => [
+					[
+						'key'         => '^work_history_[0-9]+_team$',
+						'compare_key' => 'REGEXP',
+						'value'       => (string) $commissie_id,
+						'compare'     => '=',
+					],
+				],
 			]
 		);
 
 		$current = [];
 		$former  = [];
+		$seen    = [];
 
 		// Loop through all people and check their work history
 		foreach ( $people as $person ) {
+			if ( isset( $seen[ $person->ID ] ) ) {
+				continue;
+			}
+			$seen[ $person->ID ] = true;
+
 			$work_history = \Rondo\Fields\Fields::get_for_post( $person->ID, 'work_history' ) ?: [];
 
 			if ( empty( $work_history ) ) {
@@ -272,12 +300,6 @@ class Commissies extends Base {
 			foreach ( $work_history as $job ) {
 				// Check if this job references a commissie (using the 'team' field which now supports both)
 				$job_commissie_id = isset( $job['team'] ) ? (int) $job['team'] : 0;
-
-				// Verify the post is actually a commissie
-				$job_post = get_post( $job_commissie_id );
-				if ( ! $job_post || $job_post->post_type !== 'commissie' ) {
-					continue;
-				}
 
 				if ( $job_commissie_id === $commissie_id ) {
 					$person_data               = $this->format_person_summary( $person );
@@ -326,6 +348,34 @@ class Commissies extends Base {
 	}
 
 	/**
+	 * Get current member counts for all published commissies.
+	 *
+	 * The overview requests this independently from the core post collection, so
+	 * names and local fields can render without waiting for the aggregate query.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function get_member_counts() {
+		$commissie_ids = get_posts(
+			[
+				'post_type'      => 'commissie',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+			]
+		);
+		$all_counts    = Teams::get_all_member_counts();
+		$counts        = [];
+
+		foreach ( $commissie_ids as $commissie_id ) {
+			$counts[ (string) $commissie_id ] = $all_counts[ $commissie_id ]['total'] ?? 0;
+		}
+
+		return rest_ensure_response( $counts );
+	}
+
+	/**
 	 * Get the first valid email address for a commissie member.
 	 *
 	 * @param int $person_id Person post ID.
@@ -351,6 +401,10 @@ class Commissies extends Base {
 	 * @return \WP_REST_Response Modified response with member_count.
 	 */
 	public function add_member_count_to_response( $response, $post, $request ) {
+		if ( ! $this->request_includes_field( $request, 'member_count' ) ) {
+			return $response;
+		}
+
 		$counts = Teams::get_all_member_counts();
 		$data   = $response->get_data();
 		$entry  = $counts[ $post->ID ] ?? [ 'total' => 0 ];

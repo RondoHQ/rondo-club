@@ -7,6 +7,8 @@
 
 namespace Rondo\REST;
 
+use Rondo\Fields\Fields;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -377,11 +379,12 @@ class Teams extends Base {
 	];
 
 	/**
-	 * Get current member counts for all teams and commissies in a single query.
+	 * Get current member counts for all teams and commissies.
 	 *
-	 * Uses native field repeater meta key patterns (work_history_X_team) and joins
-	 * with corresponding end_date and job_title entries to determine current
-	 * membership and player/staff classification.
+	 * WordPress selects only active people with work history and primes their post
+	 * meta in one pass. Counting the native repeater rows in PHP avoids the costly
+	 * self-joins that previously made every team and commissie response wait on a
+	 * multi-second aggregate query.
 	 * Results are cached in a static variable for the duration of the request.
 	 *
 	 * @return array<int, array{total: int, players: int, staff: int}> Map of entity_id => counts.
@@ -393,52 +396,65 @@ class Teams extends Base {
 			return $counts;
 		}
 
-		global $wpdb;
-
-		$today = current_time( 'Y-m-d' );
-		$like  = $wpdb->esc_like( 'work_history_' ) . '%' . $wpdb->esc_like( '_team' );
-
-		// Build IN clause for player positions.
-		$position_placeholders = implode( ', ', array_fill( 0, count( self::PLAYER_POSITIONS ), '%s' ) );
-
-		// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT m_team.meta_value AS entity_id,
-					COUNT(DISTINCT p.ID) AS total_count,
-					COUNT(DISTINCT CASE WHEN m_title.meta_value IN ({$position_placeholders}) THEN p.ID END) AS player_count
-				FROM {$wpdb->posts} p
-				INNER JOIN {$wpdb->postmeta} m_team ON m_team.post_id = p.ID
-				LEFT JOIN {$wpdb->postmeta} m_end ON m_end.post_id = p.ID
-					AND m_end.meta_key = CONCAT(
-						'work_history_',
-						REPLACE(REPLACE(m_team.meta_key, 'work_history_', ''), '_team', ''),
-						'_end_date'
-					)
-				LEFT JOIN {$wpdb->postmeta} m_title ON m_title.post_id = p.ID
-					AND m_title.meta_key = CONCAT(
-						'work_history_',
-						REPLACE(REPLACE(m_team.meta_key, 'work_history_', ''), '_team', ''),
-						'_job_title'
-					)
-				LEFT JOIN {$wpdb->postmeta} m_former ON m_former.post_id = p.ID
-					AND m_former.meta_key = 'former_member'
-				WHERE p.post_type = 'person'
-					AND p.post_status = 'publish'
-					AND m_team.meta_key LIKE %s
-					AND (m_former.meta_value IS NULL OR m_former.meta_value = '0' OR m_former.meta_value = '')
-					AND (m_end.meta_value IS NULL OR m_end.meta_value = '' OR m_end.meta_value >= %s)
-				GROUP BY m_team.meta_value",
-				...array_merge( self::PLAYER_POSITIONS, [ $like, $today ] )
-			)
+		$people = get_posts(
+			[
+				'post_type'      => 'person',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'no_found_rows'  => true,
+				'meta_query'     => [
+					'relation' => 'AND',
+					[
+						'key'     => 'work_history',
+						'value'   => 0,
+						'compare' => '>',
+						'type'    => 'NUMERIC',
+					],
+					[
+						'relation' => 'OR',
+						[
+							'key'     => 'former_member',
+							'compare' => 'NOT EXISTS',
+						],
+						[
+							'key'     => 'former_member',
+							'value'   => '1',
+							'compare' => '!=',
+						],
+					],
+				],
+			]
 		);
 
-		$counts = [];
-		foreach ( $results as $row ) {
-			$total   = (int) $row->total_count;
-			$players = (int) $row->player_count;
+		$today             = current_time( 'Ymd' );
+		$members_by_entity = [];
 
-			$counts[ (int) $row->entity_id ] = [
+		foreach ( $people as $person ) {
+			$work_history = Fields::get_for_post( $person->ID, 'work_history' ) ?: [];
+
+			foreach ( $work_history as $job ) {
+				$entity_id = isset( $job['team'] ) ? (int) $job['team'] : 0;
+				$end_date  = preg_replace( '/\D/', '', (string) ( $job['end_date'] ?? '' ) );
+
+				if ( $entity_id <= 0 || ( $end_date !== '' && $end_date < $today ) ) {
+					continue;
+				}
+
+				$is_player = in_array( $job['job_title'] ?? '', self::PLAYER_POSITIONS, true );
+				if ( ! isset( $members_by_entity[ $entity_id ][ $person->ID ] ) ) {
+					$members_by_entity[ $entity_id ][ $person->ID ] = $is_player;
+				} elseif ( $is_player ) {
+					$members_by_entity[ $entity_id ][ $person->ID ] = true;
+				}
+			}
+		}
+
+		$counts = [];
+		foreach ( $members_by_entity as $entity_id => $members ) {
+			$total   = count( $members );
+			$players = count( array_filter( $members ) );
+
+			$counts[ $entity_id ] = [
 				'total'   => $total,
 				'players' => $players,
 				'staff'   => $total - $players,
@@ -457,6 +473,11 @@ class Teams extends Base {
 	 * @return \WP_REST_Response Modified response with player/staff counts.
 	 */
 	public function add_member_count_to_response( $response, $post, $request ) {
+		if ( ! $this->request_includes_field( $request, 'player_count' )
+			&& ! $this->request_includes_field( $request, 'staff_count' ) ) {
+			return $response;
+		}
+
 		$counts = self::get_all_member_counts();
 		$data   = $response->get_data();
 		$entry  = $counts[ $post->ID ] ?? [

@@ -41,6 +41,35 @@ abstract class Base {
 	}
 
 	/**
+	 * Check whether a REST request asks for a response field.
+	 *
+	 * WordPress applies `_fields` after `rest_prepare_*` filters. Expensive
+	 * computed fields therefore need to inspect the request themselves, or they
+	 * still do all their work before WordPress removes the unused value.
+	 *
+	 * @param \WP_REST_Request $request REST request.
+	 * @param string           $field   Top-level response field.
+	 * @return bool True when the field should be prepared.
+	 */
+	protected function request_includes_field( $request, string $field ): bool {
+		$requested_fields = $request->get_param( '_fields' );
+
+		if ( empty( $requested_fields ) ) {
+			return true;
+		}
+
+		if ( is_string( $requested_fields ) ) {
+			$requested_fields = wp_parse_list( $requested_fields );
+		}
+
+		if ( ! is_array( $requested_fields ) ) {
+			return true;
+		}
+
+		return in_array( $field, array_map( 'trim', $requested_fields ), true );
+	}
+
+	/**
 	 * Check if user is admin
 	 *
 	 * Permission callback for admin-only endpoints.

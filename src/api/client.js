@@ -56,6 +56,7 @@ export const wpApi = {
 
   // Commissies
   getCommissies: (params) => api.get('/wp/v2/commissies', { params }),
+  getCommissieMemberCounts: () => api.get('/rondo/v1/commissies/member-counts'),
   getCommissie: (id, params = {}) => api.get(`/wp/v2/commissies/${id}`, { params }),
   createCommissie: (data) => api.post('/wp/v2/commissies', data),
   updateCommissie: (id, data) => api.put(`/wp/v2/commissies/${id}`, data),

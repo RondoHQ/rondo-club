@@ -270,7 +270,9 @@ export default function CommissieDetail() {
   const { data: commissie, isLoading, error } = useQuery({
     queryKey: ['commissie', id],
     queryFn: async () => {
-      const response = await wpApi.getCommissie(id, { _embed: true });
+      const response = await wpApi.getCommissie(id, {
+        _fields: 'id,title,status,parent,fields',
+      });
       return response.data;
     },
   });
@@ -287,7 +289,7 @@ export default function CommissieDetail() {
   const { data: parentCommissie } = useQuery({
     queryKey: ['commissie', commissie?.parent],
     queryFn: async () => {
-      const response = await wpApi.getCommissie(commissie.parent, { _embed: true });
+      const response = await wpApi.getCommissie(commissie.parent, { _fields: 'id,title' });
       return response.data;
     },
     enabled: !!commissie?.parent,
@@ -297,7 +299,12 @@ export default function CommissieDetail() {
   const { data: childCommissies = [] } = useQuery({
     queryKey: ['commissie-children', id],
     queryFn: async () => {
-      const response = await wpApi.getCommissies({ parent: id, per_page: 100, _embed: true });
+      const response = await wpApi.getCommissies({
+        parent: id,
+        per_page: 100,
+        _embed: true,
+        _fields: 'id,title,featured_media,_links,_embedded',
+      });
       return response.data;
     },
   });
@@ -322,7 +329,11 @@ export default function CommissieDetail() {
   });
 
   const handleRefresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['commissies', parseInt(id, 10)] });
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['commissie', id] }),
+      queryClient.invalidateQueries({ queryKey: ['commissie-people', id] }),
+      queryClient.invalidateQueries({ queryKey: ['commissie-children', id] }),
+    ]);
   };
 
   // Update document title with commissie's name - MUST be called before early returns
