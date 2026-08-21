@@ -81,7 +81,7 @@ function OrganizationListRow({ commissie, listViewFields, isSelected, onToggleSe
       </td>
       {isColVisible('member_count') && (
         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap text-right">
-          {commissie.member_count ?? 0}
+          {commissie.member_count ?? '…'}
         </td>
       )}
       {listViewFields.map(field => (
@@ -254,9 +254,21 @@ export default function CommissiesList() {
   const { data: commissies, isLoading, error } = useQuery({
     queryKey: ['commissies'],
     queryFn: async () => {
-      const response = await wpApi.getCommissies({ per_page: 100 });
+      const response = await wpApi.getCommissies({
+        per_page: 100,
+        _fields: 'id,title,author,parent,fields',
+      });
       return response.data;
     },
+  });
+
+  const { data: memberCounts } = useQuery({
+    queryKey: ['commissies', 'member-counts'],
+    queryFn: async () => {
+      const response = await prmApi.getCommissieMemberCounts();
+      return response.data;
+    },
+    staleTime: 60 * 1000,
   });
 
   const { data: customFields = [] } = useQuery({
@@ -343,7 +355,10 @@ export default function CommissiesList() {
   const filteredCommissies = useMemo(() => {
     if (!commissies) return [];
 
-    let filtered = [...commissies];
+    let filtered = commissies.map((commissie) => ({
+      ...commissie,
+      member_count: memberCounts?.[commissie.id],
+    }));
 
     if (commissieFilter) {
       const needle = commissieFilter.toLowerCase();
@@ -351,11 +366,11 @@ export default function CommissiesList() {
     }
     if (ownershipFilter === 'mine') filtered = filtered.filter(c => c.author === currentUserId);
     else if (ownershipFilter === 'shared') filtered = filtered.filter(c => c.author !== currentUserId);
-    if (memberCountFilter === 'heeft') filtered = filtered.filter(c => (c.member_count ?? 0) > 0);
-    else if (memberCountFilter === 'geen') filtered = filtered.filter(c => (c.member_count ?? 0) === 0);
+    if (memberCounts && memberCountFilter === 'heeft') filtered = filtered.filter(c => c.member_count > 0);
+    else if (memberCounts && memberCountFilter === 'geen') filtered = filtered.filter(c => c.member_count === 0);
 
     return filtered;
-  }, [commissies, commissieFilter, ownershipFilter, memberCountFilter, currentUserId]);
+  }, [commissies, memberCounts, commissieFilter, ownershipFilter, memberCountFilter, currentUserId]);
 
   const sortedCommissies = useMemo(() => {
     if (!filteredCommissies) return [];
