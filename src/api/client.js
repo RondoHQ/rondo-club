@@ -358,6 +358,7 @@ export const prmApi = {
   getNarrowcastingDisplayChoices: () => api.get('/rondo/v1/narrowcasting/content/displays'),
   assignNarrowcastingPlaylist: (displayId, playlistId) => api.post(`/rondo/v1/narrowcasting/displays/${displayId}/playlist`, { playlist_id: playlistId }),
   getNarrowcastingDisplays: () => api.get('/rondo/v1/narrowcasting/displays'),
+  updateNarrowcastingDisplay: (displayId, data) => api.post(`/rondo/v1/narrowcasting/displays/${displayId}`, data),
   getNarrowcastingSettings: () => api.get('/rondo/v1/narrowcasting/settings'),
   updateNarrowcastingSettings: (data) => api.post('/rondo/v1/narrowcasting/settings', data),
   refreshNarrowcastingMatchday: () => api.post('/rondo/v1/narrowcasting/refresh'),

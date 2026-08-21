@@ -138,6 +138,21 @@ class Narrowcasting extends Base {
 
 		register_rest_route(
 			'rondo/v1',
+			'/narrowcasting/displays/(?P<id>\d+)',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'update_display' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'id' => [
+						'sanitize_callback' => 'absint',
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
 			'/narrowcasting/preview',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -733,6 +748,55 @@ class Narrowcasting extends Base {
 				$posts
 			)
 		);
+	}
+
+	/** Update the administrator-managed name, location and schedule of a display. */
+	public function update_display( $request ) {
+		$display_id = absint( $request->get_param( 'id' ) );
+		if ( ! $this->is_display( $display_id ) ) {
+			return new \WP_Error( 'rondo_display_not_found', __( 'Scherm niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+		}
+
+		$title = sanitize_text_field( (string) $request->get_param( 'title' ) );
+		if ( $title === '' ) {
+			return new \WP_Error( 'rondo_display_title_required', __( 'Geef het scherm een naam.', 'rondo' ), [ 'status' => 400 ] );
+		}
+
+		$current    = $this->wire_fields( $display_id, [ 'wake_time', 'sleep_time', 'display_timezone' ] );
+		$wake_time  = $this->sanitize_time( $request->get_param( 'wake_time' ), (string) $current['wake_time'] );
+		$sleep_time = $this->sanitize_time( $request->get_param( 'sleep_time' ), (string) $current['sleep_time'] );
+		$timezone   = $this->sanitize_timezone( $request->get_param( 'timezone' ) ?: $current['display_timezone'] );
+		if ( is_wp_error( $wake_time ) ) {
+			return $wake_time;
+		}
+		if ( is_wp_error( $sleep_time ) ) {
+			return $sleep_time;
+		}
+		if ( is_wp_error( $timezone ) ) {
+			return $timezone;
+		}
+
+		$updated = wp_update_post(
+			[
+				'ID'         => $display_id,
+				'post_title' => $title,
+			],
+			true
+		);
+		if ( is_wp_error( $updated ) ) {
+			return $updated;
+		}
+
+		$stored = Fields::update_many_for_post(
+			$display_id,
+			[
+				'location'         => sanitize_text_field( (string) $request->get_param( 'location' ) ),
+				'display_timezone' => $timezone,
+				'wake_time'        => $wake_time,
+				'sleep_time'       => $sleep_time,
+			]
+		);
+		return is_wp_error( $stored ) ? $stored : rest_ensure_response( $this->format_display( $display_id ) );
 	}
 
 	/** Return a credential-free sample configuration for an administrator preview. */

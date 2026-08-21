@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.23.0] - 2026-08-21
+
+### Added
+
+- Gekoppelde Club TV-players kunnen achteraf worden hernoemd en krijgen bewerkbare locatie-, aan/uit-tijd- en tijdzone-instellingen.
+
 ## [34.22.2] - 2026-08-21
 
 ### Fixed
