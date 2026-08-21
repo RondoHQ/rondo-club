@@ -42,7 +42,7 @@ class ClubConfigTest extends RondoTestCase {
 	}
 
 	public function test_iva_approval_email_uses_defaults_and_can_be_updated(): void {
-		$this->assertSame( 'Je IVA-certificaat is goedgekeurd', ClubConfig::get_iva_approval_email_subject() );
+		$this->assertSame( 'Je bewijs voor verantwoord alcohol schenken is goedgekeurd', ClubConfig::get_iva_approval_email_subject() );
 		$this->assertStringContainsString( '{first_name}', ClubConfig::get_iva_approval_email_body() );
 
 		ClubConfig::update_iva_approval_email_subject( 'IVA voor {full_name} <script>' );

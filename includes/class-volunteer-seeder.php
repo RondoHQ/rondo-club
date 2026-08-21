@@ -47,7 +47,7 @@ class VolunteerSeeder {
 		],
 		'kantine_bar'            => [
 			'title'            => 'Kantine — bar',
-			'description'      => 'Inschrijftaak achter de bar: schenken, kassa, opruimen. Vereist een geldig IVA-certificaat (alcohol).',
+			'description'      => 'Inschrijftaak achter de bar: schenken, kassa, opruimen. Vereist een goedgekeurd IVA-certificaat of diploma Sociale Hygiëne.',
 			'vog_required'     => true,
 			'iva_required'     => true,
 			'default_capacity' => 1,

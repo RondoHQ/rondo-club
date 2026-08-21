@@ -12,7 +12,6 @@ import { comparePersonNames, formatPersonSurname } from '@/utils/formatters';
 const TABS = [
   { id: 'pending', label: 'Wacht op goedkeuring' },
   { id: 'valid',   label: 'Geldig' },
-  { id: 'expired', label: 'Verlopen' },
 ];
 
 function loadIvaPeople() {
@@ -28,7 +27,7 @@ function approveIva(personId, approve) {
 }
 
 export default function VrijwilligersIva() {
-  useDocumentTitle('IVA — Vrijwilligers');
+  useDocumentTitle('IVA en Sociale Hygiëne — Vrijwilligers');
   const queryClient = useQueryClient();
   const [tab, setTab] = useState('pending');
   const [sortField, setSortField] = useState('last_name');
@@ -49,13 +48,12 @@ export default function VrijwilligersIva() {
   });
 
   // The server normalizes each person to a single `status` enum (missing /
-  // pending / valid / expired) using the same IvaStatus rules everywhere else.
+  // pending / valid) using the same IvaStatus rules everywhere else.
   // We just bucket by status — no client-side date math required.
   const buckets = useMemo(() => {
-    const out = { pending: [], valid: [], expired: [] };
+    const out = { pending: [], valid: [] };
     for (const person of people) {
       if (person.status === 'valid') out.valid.push(person);
-      else if (person.status === 'expired') out.expired.push(person);
       else out.pending.push(person);
     }
     return out;
@@ -65,11 +63,7 @@ export default function VrijwilligersIva() {
   const reviewPerson = Number.isInteger(reviewPersonId)
     ? people.find((person) => Number(person.id) === reviewPersonId)
     : null;
-  const reviewTab = reviewPerson?.status === 'valid'
-    ? 'valid'
-    : reviewPerson?.status === 'expired'
-      ? 'expired'
-      : 'pending';
+  const reviewTab = reviewPerson?.status === 'valid' ? 'valid' : 'pending';
   const activeTab = reviewPerson ? reviewTab : tab;
   const active = useMemo(() => {
     const selected = reviewPerson ? [reviewPerson] : (buckets[activeTab] || []);
@@ -96,9 +90,9 @@ export default function VrijwilligersIva() {
           <Wine className="w-6 h-6 text-bright-cobalt dark:text-electric-cyan" />
         </div>
         <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">IVA — Alcoholcertificaat</h1>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">IVA en Sociale Hygiëne</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Instructie Verantwoord Alcoholschenken — vereist voor wie achter de bar staat. 5 jaar geldig.
+            Bewijs voor verantwoord alcohol schenken — geldig voor onbepaalde tijd na goedkeuring.
           </p>
         </div>
       </header>
@@ -123,7 +117,7 @@ export default function VrijwilligersIva() {
         <div className="card flex flex-wrap items-center justify-between gap-3 border-cyan-200 bg-cyan-50 p-4 dark:border-cyan-900 dark:bg-cyan-950/30">
           <p className="text-sm text-cyan-900 dark:text-cyan-100">
             Directe review voor <strong>{reviewPerson.name || `Persoon ${reviewPerson.id}`}</strong>.
-            {' '}Bekijk hieronder het certificaat en keur het daarna goed.
+            {' '}Bekijk hieronder het bewijsstuk en keur het daarna goed.
           </p>
           <button
             type="button"
@@ -147,29 +141,25 @@ export default function VrijwilligersIva() {
             <tr>
               <SortableHeader label="Voornaam" columnId="first_name" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} className="!px-4 !py-2" />
               <SortableHeader label="Achternaam" columnId="last_name" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} className="!px-4 !py-2" />
-              <th className="px-4 py-2">Datum IVA</th>
-              <th className="px-4 py-2">Verloopt</th>
-              <th className="px-4 py-2">Certificaat</th>
+              <th className="px-4 py-2">Behaaldatum</th>
+              <th className="px-4 py-2">Bewijsstuk</th>
               <th className="px-4 py-2">Status</th>
               <th className="px-4 py-2 text-right">Acties</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
             {isLoading ? (
-              <tr><td colSpan={7} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">Laden…</td></tr>
+              <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">Laden…</td></tr>
             ) : active.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
-                {tab === 'pending' && 'Geen IVA-certificaten wachten op goedkeuring.'}
-                {tab === 'valid' && 'Nog niemand heeft een geldig IVA-certificaat.'}
-                {tab === 'expired' && 'Geen verlopen IVA-certificaten.'}
+              <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                {tab === 'pending' && 'Geen bewijsstukken wachten op goedkeuring.'}
+                {tab === 'valid' && 'Nog niemand heeft een geldig IVA-certificaat of diploma Sociale Hygiëne.'}
               </td></tr>
             ) : (
               active.map((person) => {
                 const datum    = person.datum_iva || '';
                 const certUrl  = person.iva_certificaat || '';
-                const expiry   = person.expires_at || null;
                 const approved = !!person.iva_approved;
-                const expired  = person.status === 'expired';
 
                 return (
                   <tr key={person.id} className={reviewPerson ? 'bg-cyan-50/60 dark:bg-cyan-950/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'}>
@@ -186,11 +176,6 @@ export default function VrijwilligersIva() {
                     <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
                       {datum ? format(datum, 'dd-MM-yyyy') : <span className="text-gray-400">—</span>}
                     </td>
-                    <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
-                      {expiry
-                        ? <span className={expired ? 'text-red-700 dark:text-red-300' : ''}>{format(expiry, 'dd-MM-yyyy')}</span>
-                        : <span className="text-gray-400">—</span>}
-                    </td>
                     <td className="px-4 py-2">
                       {certUrl ? (
                         <IvaCertificateLink personId={person.id}>Bekijk</IvaCertificateLink>
@@ -199,12 +184,9 @@ export default function VrijwilligersIva() {
                       )}
                     </td>
                     <td className="px-4 py-2">
-                      {expired
-                        ? <span className="text-red-700 dark:text-red-300 text-xs font-medium">Verlopen</span>
-                        : person.status === 'valid'
-                          ? <span className="text-emerald-700 dark:text-emerald-400 text-xs font-medium">Geldig</span>
-                          : <span className="text-amber-700 dark:text-amber-400 text-xs font-medium">Wacht op review</span>
-                      }
+                      {person.status === 'valid'
+                        ? <span className="text-emerald-700 dark:text-emerald-400 text-xs font-medium">Geldig</span>
+                        : <span className="text-amber-700 dark:text-amber-400 text-xs font-medium">Wacht op review</span>}
                     </td>
                     <td className="px-4 py-2 text-right">
                       <div className="inline-flex gap-1">
@@ -241,12 +223,11 @@ export default function VrijwilligersIva() {
       <div className="card p-4 text-xs text-gray-500 dark:text-gray-400 flex items-start gap-2">
         <Upload className="w-4 h-4 mt-0.5 shrink-0" />
         <div>
-          Vrijwilligers uploaden hun IVA-certificaat zelf via{' '}
+          Vrijwilligers uploaden hun IVA-certificaat of diploma Sociale Hygiëne zelf via{' '}
           <Link to="/profile/iva" className="text-bright-cobalt dark:text-electric-cyan hover:underline">
             /profile/iva
           </Link>
-          . Naast het IVA-certificaat van NOC*NSF is een certificaat Sociale Hygiëne ook geldig — keur die dus net zo goed. Certificaten zijn 5 jaar geldig na
-          <code className="mx-1 text-xs">datum-iva</code>; daarna verloopt de goedkeuring automatisch.
+          . Beide bewijssoorten blijven na goedkeuring geldig; controleer bij Sociale Hygiëne ook of het diploma recht geeft op registratie in het landelijke register.
         </div>
       </div>
     </div>

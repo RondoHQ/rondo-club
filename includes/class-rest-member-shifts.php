@@ -1708,7 +1708,7 @@ class MemberShifts extends Base {
 
 		$iva_waived = (bool) get_post_meta( $shift_id, 'iva_waived', true );
 		if ( ! $iva_waived && get_post_meta( $dienst_type_id, 'iva_required', true ) && in_array( 'iva', $blocks, true ) ) {
-			return new \WP_Error( 'iva_required', 'Voor deze inschrijftaak is een geldig IVA-certificaat vereist.', [ 'status' => 403 ] );
+			return new \WP_Error( 'iva_required', 'Voor deze inschrijftaak is een goedgekeurd IVA-certificaat of diploma Sociale Hygiëne vereist.', [ 'status' => 403 ] );
 		}
 
 		$required_pool = (int) get_post_meta( $dienst_type_id, 'required_pool', true );

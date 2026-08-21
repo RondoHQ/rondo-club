@@ -8,8 +8,8 @@
  * VrijwilligerswerkNL certificate are TCPDF-generated: the entire design is
  * a background image and only the personalized values exist as a text layer.
  *
- * Used by the member IVA upload to auto-approve a certificate when the
- * name on it matches the linked person and the behaaldatum is recent.
+ * Used by the member IVA upload to auto-approve an official IVA certificate
+ * when the name on it matches the linked person and the behaaldatum is recent.
  * Any parse failure returns null so the upload falls back to the manual
  * bestuurslid-kantine review — parsing is best-effort, never blocking.
  *
@@ -28,9 +28,8 @@ class IvaCertificateParser {
 	private const FORMAT_VRIJWILLIGERSWERK_NL = 'vrijwilligerswerknl';
 
 	/**
-	 * Certificates older than this are not auto-approved, even though the
-	 * formal validity (IvaStatus::VALIDITY_YEARS) is longer — older uploads
-	 * go through manual review.
+	 * Certificates older than this are not auto-approved. They remain valid
+	 * indefinitely after a manager has reviewed and approved them manually.
 	 */
 	const AUTO_APPROVE_MAX_AGE_YEARS = 2;
 

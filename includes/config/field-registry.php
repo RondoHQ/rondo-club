@@ -440,9 +440,9 @@ Deze annulering is minder dan 48 uur voor aanvang doorgegeven. De inschrijftaak 
         array (
           'canonical_name' => 'iva_required',
           'default_value' => 0,
-          'instructions' => 'Aanvinken als deze inschrijftaak een IVA-certificaat vereist (alcohol).',
+          'instructions' => 'Aanvinken als deze inschrijftaak een goedgekeurd IVA-certificaat of diploma Sociale Hygiëne vereist.',
           'key' => 'field_dienst_type_iva_required',
-          'label' => 'IVA vereist',
+          'label' => 'IVA / Sociale Hygiëne vereist',
           'name' => 'iva_required',
           'storage_name' => 'iva_required',
           'type' => 'true_false',
@@ -1040,9 +1040,9 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
         array (
           'canonical_name' => 'datum_iva',
           'display_format' => 'd F Y',
-          'instructions' => 'Datum waarop het IVA-certificaat (Instructie Verantwoord Alcoholschenken) is behaald. Vereist voor wie achter de bar staat.',
+          'instructions' => 'Datum waarop het IVA-certificaat of diploma Sociale Hygiëne is behaald. Vereist voor wie achter de bar staat.',
           'key' => 'field_datum_iva',
-          'label' => 'Datum IVA-certificaat',
+          'label' => 'Behaaldatum IVA / Sociale Hygiëne',
           'name' => 'datum-iva',
           'return_format' => 'Y-m-d',
           'storage_format' => 'Ymd',
@@ -1225,9 +1225,9 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
         array (
           'canonical_name' => 'iva_approved',
           'default_value' => 0,
-          'instructions' => 'Alleen aanvinken na controle van het certificaat door een admin/kantinebeheerder.',
+          'instructions' => 'Alleen aanvinken na controle van het IVA-certificaat of diploma Sociale Hygiëne door een admin/kantinebeheerder.',
           'key' => 'field_iva_approved',
-          'label' => 'IVA goedgekeurd',
+          'label' => 'IVA / Sociale Hygiëne goedgekeurd',
           'name' => 'iva-approved',
           'storage_name' => 'iva-approved',
           'type' => 'true_false',
@@ -1238,9 +1238,9 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
         'iva_certificaat' => 
         array (
           'canonical_name' => 'iva_certificaat',
-          'instructions' => 'Upload het IVA-certificaat als bewijsstuk.',
+          'instructions' => 'Upload het IVA-certificaat of diploma Sociale Hygiëne als bewijsstuk.',
           'key' => 'field_iva_certificaat',
-          'label' => 'IVA-certificaat (PDF)',
+          'label' => 'IVA / Sociale Hygiëne bewijsstuk',
           'library' => 'all',
           'mime_types' => 'pdf,jpg,jpeg,png',
           'name' => 'iva-certificaat',

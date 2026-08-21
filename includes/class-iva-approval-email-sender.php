@@ -1,6 +1,7 @@
 <?php
 /**
- * Sends the member notification after a valid IVA certificate is approved.
+ * Sends the member notification after an IVA certificate or Social Hygiene
+ * diploma is approved.
  *
  * @package Rondo\Volunteer
  */

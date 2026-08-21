@@ -212,7 +212,7 @@ export default function VrijwilligersDashboard() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <StatCard label="Statistieken" value="Bekijk" sub="Bezetting en voortgang" icon={ChartPie} href="/vrijwilligers/statistieken" />
           <StatCard label="VOG" value="Beheer" sub="Verklaring Omtrent Gedrag" icon={FileCheck} href="/vrijwilligers/vog" />
-          <StatCard label="IVA" value="Beheer" sub="Alcoholcertificaat kantine" icon={Wine} href="/vrijwilligers/iva" />
+          <StatCard label="IVA / Sociale Hygiëne" value="Beheer" sub="Bewijs verantwoord schenken" icon={Wine} href="/vrijwilligers/iva" />
           <StatCard label="Inschrijftaken" value="Planner" sub="Inschrijftaken en aanmeldingen" icon={CalendarClock} href="/vrijwilligers/diensten" />
           <StatCard label="Vrijstellingen" value="Beheer" sub="Handmatige + auto vrijstellingen" icon={UsersRound} href="/vrijwilligers/vrijstellingen" />
         </div>

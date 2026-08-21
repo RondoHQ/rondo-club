@@ -62,17 +62,17 @@ class IvaReviewNotificationEmailSender {
 			$person_name = sprintf( 'Persoon %d', $person_id );
 		}
 
-		$subject    = sprintf( 'Nieuw IVA-certificaat van %s', $person_name );
+		$subject    = sprintf( 'Nieuw bewijs verantwoord alcohol schenken van %s', $person_name );
 		$review_url = add_query_arg( 'review', $person_id, home_url( '/vrijwilligers/iva' ) );
 		$body_html  = sprintf(
-			'<p style="margin:0 0 16px;color:#0f172a;font-size:16px;line-height:1.7;"><strong>%1$s</strong> heeft een nieuw IVA-certificaat geüpload. Het certificaat wacht op beoordeling.</p><p style="margin:0;color:#0f172a;font-size:16px;line-height:1.7;">Open de review om het certificaat te bekijken en direct goed te keuren.</p>',
+			'<p style="margin:0 0 16px;color:#0f172a;font-size:16px;line-height:1.7;"><strong>%1$s</strong> heeft een IVA-certificaat of diploma Sociale Hygiëne geüpload. Het bewijsstuk wacht op beoordeling.</p><p style="margin:0;color:#0f172a;font-size:16px;line-height:1.7;">Open de review om het bewijsstuk te bekijken en direct goed te keuren.</p>',
 			esc_html( $person_name )
 		);
 		$html       = EmailTemplate::render(
 			[
 				'preheader' => $subject,
 				'eyebrow'   => 'Vrijwilligers',
-				'heading'   => 'IVA-certificaat wacht op goedkeuring',
+				'heading'   => 'Bewijs verantwoord alcohol schenken wacht op goedkeuring',
 				'body_html' => $body_html,
 				'cta_url'   => $review_url,
 				'cta_label' => 'Bekijk en keur goed',

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.23.3] - 2026-08-21
+
+### Fixed
+
+- Goedgekeurde IVA-certificaten en diploma's Sociale Hygiëne verlopen niet meer na vijf jaar. Bestaande oudere bewijsstukken worden daardoor direct weer als geldig behandeld; de interface benoemt beide bewijssoorten en toont geen fictieve verloopdatum meer.
+
 ## [34.23.2] - 2026-08-21
 
 ### Fixed

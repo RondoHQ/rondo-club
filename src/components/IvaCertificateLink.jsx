@@ -13,8 +13,8 @@ export default function IvaCertificateLink({ personId, children, className = '' 
     // The actual file must be fetched through Axios to include the REST nonce.
     const previewWindow = window.open('', '_blank');
     if (previewWindow) {
-      previewWindow.document.title = 'IVA-certificaat laden…';
-      previewWindow.document.body.textContent = 'IVA-certificaat laden…';
+      previewWindow.document.title = 'Bewijsstuk laden…';
+      previewWindow.document.body.textContent = 'Bewijsstuk laden…';
       previewWindow.opener = null;
     }
 
