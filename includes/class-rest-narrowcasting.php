@@ -546,7 +546,7 @@ class Narrowcasting extends Base {
 			return $display_id;
 		}
 
-		return rest_ensure_response( $this->device_config( $display_id ) );
+		return $this->no_store_response( $this->device_config( $display_id ) );
 	}
 
 	/** Return the resolved, player-safe playlist for one paired display. */
@@ -555,7 +555,7 @@ class Narrowcasting extends Base {
 		if ( is_wp_error( $display_id ) ) {
 			return $display_id;
 		}
-		return rest_ensure_response( $this->content->resolve_manifest( $display_id ) );
+		return $this->no_store_response( $this->content->resolve_manifest( $display_id ) );
 	}
 
 	/** List content in the current user's allowed scope. */
@@ -615,7 +615,7 @@ class Narrowcasting extends Base {
 				return new \WP_Error( 'rondo_signage_preview_time_invalid', __( 'De previewtijd is ongeldig.', 'rondo' ), [ 'status' => 400 ] );
 			}
 		}
-		return rest_ensure_response( $this->content->resolve_manifest( absint( $request->get_param( 'display_id' ) ), absint( $request->get_param( 'playlist_id' ) ), $at, true ) );
+		return $this->no_store_response( $this->content->resolve_manifest( absint( $request->get_param( 'display_id' ) ), absint( $request->get_param( 'playlist_id' ) ), $at, true ) );
 	}
 
 	public function get_sponsor_choices() {
@@ -677,7 +677,7 @@ class Narrowcasting extends Base {
 		}
 
 		$command = $this->pending_command( $display_id );
-		return rest_ensure_response( [ 'command' => $command ] );
+		return $this->no_store_response( [ 'command' => $command ] );
 	}
 
 	/** Clear a command after the player reports its result. */
@@ -737,7 +737,7 @@ class Narrowcasting extends Base {
 
 	/** Return a credential-free sample configuration for an administrator preview. */
 	public function get_preview_config() {
-		return rest_ensure_response(
+		return $this->no_store_response(
 			$this->configuration_envelope(
 				[
 					'id'            => 0,
@@ -798,7 +798,7 @@ class Narrowcasting extends Base {
 			)
 		);
 
-		return rest_ensure_response( $feed );
+		return $this->no_store_response( $feed );
 	}
 
 	/** Queue one safe command for a paired display. */
@@ -907,11 +907,20 @@ class Narrowcasting extends Base {
 				'display_url'                => home_url( '/display' ),
 				'heartbeat_interval_seconds' => 60,
 				'command_interval_seconds'   => 15,
-				'content_interval_seconds'   => 60,
+				'content_interval_seconds'   => 10,
 				'playlist_url'               => home_url( '/wp-json/rondo/v1/narrowcasting/devices/me/playlist' ),
 				'server_time'                => gmdate( DATE_RFC3339 ),
 			]
 		);
+	}
+
+	/** Prevent device-specific and time-sensitive responses from entering HTTP caches. */
+	private function no_store_response( $data ): \WP_REST_Response {
+		$response = rest_ensure_response( $data );
+		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
+		$response->header( 'Pragma', 'no-cache' );
+		$response->header( 'Expires', 'Wed, 11 Jan 1984 05:00:00 GMT' );
+		return $response;
 	}
 
 	/** Build an administrator-safe display representation. */
