@@ -6,11 +6,13 @@ import {
   ExternalLink,
   MonitorPlay,
   Moon,
+  Pencil,
   Power,
   RefreshCw,
   RotateCcw,
   Sun,
   Unplug,
+  X,
 } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
@@ -50,6 +52,54 @@ function errorMessage(error) {
   return error?.response?.data?.message || 'Er ging iets mis. Probeer het opnieuw.';
 }
 
+function DisplayEditForm({ display, isPending, onCancel, onSave }) {
+  const [values, setValues] = useState(() => ({
+    title: display.name,
+    location: display.location || '',
+    wake_time: display.wake_time,
+    sleep_time: display.sleep_time,
+    timezone: display.display_timezone || 'Europe/Amsterdam',
+  }));
+  const updateValue = (name, value) => setValues((current) => ({ ...current, [name]: value }));
+
+  return (
+    <form
+      className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSave(display.id, values);
+      }}
+    >
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block text-sm">
+          <span className="mb-1 block font-medium text-gray-700 dark:text-gray-300">Naam</span>
+          <input className="input w-full" value={values.title} onChange={(event) => updateValue('title', event.target.value)} required />
+        </label>
+        <label className="block text-sm">
+          <span className="mb-1 block font-medium text-gray-700 dark:text-gray-300">Locatie</span>
+          <input className="input w-full" value={values.location} onChange={(event) => updateValue('location', event.target.value)} />
+        </label>
+        <label className="block text-sm">
+          <span className="mb-1 block font-medium text-gray-700 dark:text-gray-300">Tv aan</span>
+          <input type="time" className="input w-full" value={values.wake_time} onChange={(event) => updateValue('wake_time', event.target.value)} required />
+        </label>
+        <label className="block text-sm">
+          <span className="mb-1 block font-medium text-gray-700 dark:text-gray-300">Tv uit</span>
+          <input type="time" className="input w-full" value={values.sleep_time} onChange={(event) => updateValue('sleep_time', event.target.value)} required />
+        </label>
+        <label className="block text-sm sm:col-span-2">
+          <span className="mb-1 block font-medium text-gray-700 dark:text-gray-300">Tijdzone</span>
+          <input className="input w-full" value={values.timezone} onChange={(event) => updateValue('timezone', event.target.value)} required />
+        </label>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button type="submit" className="btn-primary text-sm" disabled={isPending}>{isPending ? 'Opslaan…' : 'Wijzigingen opslaan'}</button>
+        <button type="button" className="btn-tertiary text-sm" onClick={onCancel} disabled={isPending}>Annuleren</button>
+      </div>
+    </form>
+  );
+}
+
 export default function Narrowcasting() {
   useRouteTitle('Club TV');
   const queryClient = useQueryClient();
@@ -60,6 +110,7 @@ export default function Narrowcasting() {
   const [form, setForm] = useState(defaultForm);
   const [sportlinkForm, setSportlinkForm] = useState({ client_id: '', club_relation_code: '' });
   const [notice, setNotice] = useState('');
+  const [editingDisplayId, setEditingDisplayId] = useState(null);
 
   const displaysQuery = useQuery({
     queryKey: ['narrowcasting', 'displays'],
@@ -123,6 +174,15 @@ export default function Narrowcasting() {
     },
   });
 
+  const updateDisplayMutation = useMutation({
+    mutationFn: ({ displayId, values }) => prmApi.updateNarrowcastingDisplay(displayId, values),
+    onSuccess: () => {
+      setNotice('De playerinstellingen zijn opgeslagen.');
+      setEditingDisplayId(null);
+      refreshDisplays();
+    },
+  });
+
   const settingsMutation = useMutation({
     mutationFn: (data) => prmApi.updateNarrowcastingSettings(data),
     onSuccess: () => {
@@ -168,6 +228,7 @@ export default function Narrowcasting() {
     || commandMutation.error
     || revokeMutation.error
     || assignPlaylistMutation.error
+    || updateDisplayMutation.error
     || settingsMutation.error
     || matchdayRefreshMutation.error;
   const sportlink = settingsQuery.data;
@@ -396,8 +457,32 @@ export default function Narrowcasting() {
                   </div>
                   <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{display.location || 'Geen locatie'} · {display.device_id}</p>
                 </div>
-                <MonitorPlay className="h-6 w-6 shrink-0 text-gray-400" />
+                <div className="flex shrink-0 items-center gap-1">
+                  {editingDisplayId === display.id ? (
+                    <button type="button" className="btn-tertiary p-2" onClick={() => setEditingDisplayId(null)} aria-label="Bewerken sluiten">
+                      <X className="h-4 w-4" />
+                    </button>
+                  ) : (
+                    <button type="button" className="btn-tertiary p-2" onClick={() => setEditingDisplayId(display.id)} disabled={display.pairing_status === 'revoked'} aria-label={`${display.name} bewerken`}>
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                  )}
+                  <MonitorPlay className="h-6 w-6 text-gray-400" />
+                </div>
               </div>
+
+              {editingDisplayId === display.id && (
+                <DisplayEditForm
+                  key={display.id}
+                  display={display}
+                  isPending={updateDisplayMutation.isPending}
+                  onCancel={() => setEditingDisplayId(null)}
+                  onSave={(displayId, values) => {
+                    setNotice('');
+                    updateDisplayMutation.mutate({ displayId, values });
+                  }}
+                />
+              )}
 
               <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
                 <div>

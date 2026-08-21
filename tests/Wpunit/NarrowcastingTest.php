@@ -80,6 +80,24 @@ class NarrowcastingTest extends RondoTestCase {
 		$this->assertSame( 'paired', Fields::get_for_post( $display_id, 'pairing_status' ) );
 		$this->assertNotSame( $token, Fields::get_for_post( $display_id, 'device_secret_hash' ) );
 
+		wp_set_current_user( $admin_id );
+		$updated = $this->dispatch(
+			'POST',
+			"/rondo/v1/narrowcasting/displays/{$display_id}",
+			[
+				'title'      => 'Scherm clubhuis',
+				'location'   => 'Bestuurskamer',
+				'wake_time'  => '08:15',
+				'sleep_time' => '22:45',
+				'timezone'   => 'Europe/Brussels',
+			]
+		);
+		$this->assertSame( 200, $updated->get_status() );
+		$this->assertSame( 'Scherm clubhuis', $updated->get_data()['name'] );
+		$this->assertSame( 'Bestuurskamer', $updated->get_data()['location'] );
+		$this->assertSame( 'Europe/Brussels', $updated->get_data()['display_timezone'] );
+
+		wp_set_current_user( 0 );
 		$config = $this->dispatch(
 			'GET',
 			'/rondo/v1/narrowcasting/devices/me/config',
@@ -87,8 +105,10 @@ class NarrowcastingTest extends RondoTestCase {
 			[ 'X-Rondo-Device-Token' => $token ]
 		);
 		$this->assertSame( 200, $config->get_status() );
-		$this->assertSame( 'Scherm kantine', $config->get_data()['name'] );
-		$this->assertSame( '07:30', $config->get_data()['wake_time'] );
+		$this->assertSame( 'Scherm clubhuis', $config->get_data()['name'] );
+		$this->assertSame( '08:15', $config->get_data()['wake_time'] );
+		$this->assertSame( '22:45', $config->get_data()['sleep_time'] );
+		$this->assertSame( 'Europe/Brussels', $config->get_data()['timezone'] );
 		$this->assertStringContainsString( 'no-store', $config->get_headers()['Cache-Control'] );
 		$this->assertSame( 10, $config->get_data()['content_interval_seconds'] );
 
