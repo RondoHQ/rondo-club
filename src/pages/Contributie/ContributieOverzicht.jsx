@@ -25,11 +25,23 @@ export function ContributieOverzicht() {
 
   // Mutation to start bulk invoice job
   const startBulkJob = useMutation({
-    mutationFn: () => prmApi.startBulkInvoiceJob({ season: data?.season }),
+    mutationFn: () => prmApi.startBulkInvoiceJob({ season: data?.season, confirmed: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: feeKeys.bulkJob });
     },
   });
+
+  const handleStartBulkJob = () => {
+    const memberCount = data?.total ?? 0;
+    const confirmed = window.confirm(
+      `Weet je zeker dat je de facturatie voor ${memberCount} leden in seizoen ${data?.season} wilt starten? ` +
+      'Rondo maakt voor alle leden die nog geen contributiefactuur hebben een conceptfactuur aan.'
+    );
+
+    if (confirmed) {
+      startBulkJob.mutate();
+    }
+  };
 
   if (isLoading) {
     return (
@@ -85,7 +97,7 @@ export function ContributieOverzicht() {
         {/* Bulk invoice creation button */}
         {isAdmin && billingMethod === 'rondo' && !isForecast && (
           <button
-            onClick={() => startBulkJob.mutate()}
+            onClick={handleStartBulkJob}
             disabled={jobStatus?.status === 'running' || startBulkJob.isPending}
             className="btn-primary gap-2"
           >

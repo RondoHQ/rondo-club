@@ -24,7 +24,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * - leeftijdsgroep: Affects fee category (mini/pupil/junior/senior)
  * - addresses: Affects family grouping and discount
  * - work_history: Affects team membership and recreant detection
- * - lid-sinds: Affects pro-rata calculation
+ * - lid-sinds: Affects pro-rata calculation and season eligibility
+ * - lid-tot: Affects former-member season eligibility
  */
 class FeeCacheInvalidator {
 
@@ -81,7 +82,7 @@ class FeeCacheInvalidator {
 			$this->invalidate_family_cache( $value, $post_id, $field, $old_value );
 		} elseif ( $canonical_name === 'former_member' ) {
 			$this->invalidate_family_membership_cache( $value, $post_id, $field );
-		} elseif ( in_array( $canonical_name, [ 'leeftijdsgroep', 'work_history', 'lid_sinds' ], true ) ) {
+		} elseif ( in_array( $canonical_name, [ 'leeftijdsgroep', 'work_history', 'lid_sinds', 'lid_tot' ], true ) ) {
 			$this->invalidate_person_cache( $value, $post_id, $field );
 		}
 	}

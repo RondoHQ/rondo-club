@@ -199,15 +199,10 @@ class PersonFeeContext {
 	/**
 	 * Check if a former member should be included in the season's fee list.
 	 *
-	 * A former member qualifies if their lid-sinds date is BEFORE the end
-	 * of the season (July 1 of the season's end year). This includes:
-	 * - Members who joined before season start and left during it (normal
-	 *   fee, no pro-rata)
-	 * - Members who joined mid-season and left during it (pro-rata based
-	 *   on lid-sinds)
-	 *
-	 * Former members whose lid-sinds is after the season end date are
-	 * excluded (they never participated in that season).
+	 * A former member qualifies only when their membership interval overlaps
+	 * the requested season. Both lid-sinds and lid-tot are required: without a
+	 * trustworthy end date, automatic invoicing would risk charging someone who
+	 * left before the season started.
 	 *
 	 * @param int         $person_id The person post ID.
 	 * @param string|null $season    Optional season key, defaults to current season.
@@ -220,25 +215,39 @@ class PersonFeeContext {
 			return false;
 		}
 
-		// Get lid-sinds date
-		$lid_sinds = \Rondo\Fields\Fields::get_for_post( $person_id, 'lid_sinds' );
-		if ( empty( $lid_sinds ) ) {
-			// Cannot determine eligibility without membership date
+		$lid_sinds = $this->parse_membership_date( \Rondo\Fields\Fields::get_for_post( $person_id, 'lid_sinds' ) );
+		$lid_tot   = $this->parse_membership_date( \Rondo\Fields\Fields::get_for_post( $person_id, 'lid_tot' ) );
+
+		if ( $lid_sinds === null || $lid_tot === null ) {
 			return false;
 		}
 
-		// Calculate season end date (July 1 of season's end year)
-		$season          = $season ?? SeasonKey::current();
-		$season_end_year = (int) substr( $season, 5, 4 );
-		$season_end_date = strtotime( $season_end_year . '-07-01' );
+		$season            = $season ?? SeasonKey::current();
+		$season_start_year = (int) substr( $season, 0, 4 );
+		$season_end_year   = (int) substr( $season, 5, 4 );
+		$season_start      = sprintf( '%04d-07-01', $season_start_year );
+		$season_end        = sprintf( '%04d-07-01', $season_end_year );
 
-		// Parse lid-sinds timestamp
-		$lid_sinds_ts = strtotime( $lid_sinds );
-		if ( $lid_sinds_ts === false ) {
-			return false;
+		return $lid_sinds < $season_end && $lid_tot >= $season_start;
+	}
+
+	/**
+	 * Normalize a canonical or compact membership date for comparisons.
+	 *
+	 * @param mixed $value Raw field value.
+	 * @return string|null Date in Y-m-d format, or null when unavailable/invalid.
+	 */
+	private function parse_membership_date( $value ): ?string {
+		$compact = str_replace( '-', '', trim( (string) $value ) );
+		if ( preg_match( '/^\d{8}$/', $compact ) !== 1 ) {
+			return null;
 		}
 
-		// Qualifies if joined before season end
-		return ( $lid_sinds_ts < $season_end_date );
+		$date = \DateTimeImmutable::createFromFormat( '!Ymd', $compact, wp_timezone() );
+		if ( $date === false || $date->format( 'Ymd' ) !== $compact ) {
+			return null;
+		}
+
+		return $date->format( 'Y-m-d' );
 	}
 }

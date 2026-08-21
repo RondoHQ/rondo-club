@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.23.1] - 2026-08-21
+
+### Changed
+
+- Een ouder/verzorger die zich via het account van een kind aanmeldt, veroorzaakt geen e-mail aan de ledenadministratie meer.
+
+### Fixed
+
+- Oud-leden worden alleen nog voor een seizoen meegenomen wanneer zowel `Lid sinds` als `Lid tot` aantonen dat het lidmaatschap met dat seizoen overlapte; een ontbrekende einddatum kan daardoor niet meer tot een automatische contributiefactuur leiden.
+- Contributiecaches worden opnieuw berekend zodra een einddatum uit de teamhistorie is verstreken, zodat beëindigde functies niet na middernacht in de contributielijst blijven staan.
+- De actie `Maak facturen` vraagt voortaan om expliciete bevestiging en de API weigert bulkfacturatie zonder die bevestiging.
+
 ## [34.23.0] - 2026-08-21
 
 ### Added
