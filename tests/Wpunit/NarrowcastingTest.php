@@ -89,6 +89,8 @@ class NarrowcastingTest extends RondoTestCase {
 		$this->assertSame( 200, $config->get_status() );
 		$this->assertSame( 'Scherm kantine', $config->get_data()['name'] );
 		$this->assertSame( '07:30', $config->get_data()['wake_time'] );
+		$this->assertStringContainsString( 'no-store', $config->get_headers()['Cache-Control'] );
+		$this->assertSame( 10, $config->get_data()['content_interval_seconds'] );
 
 		$matchday = $this->dispatch(
 			'GET',
@@ -98,6 +100,7 @@ class NarrowcastingTest extends RondoTestCase {
 		);
 		$this->assertSame( 200, $matchday->get_status() );
 		$this->assertArrayNotHasKey( 'client_id', $matchday->get_data() );
+		$this->assertStringContainsString( 'no-store', $matchday->get_headers()['Cache-Control'] );
 
 		$heartbeat = $this->dispatch(
 			'POST',
@@ -133,6 +136,7 @@ class NarrowcastingTest extends RondoTestCase {
 			[ 'Authorization' => "Bearer {$token}" ]
 		);
 		$this->assertSame( 'wake_tv', $poll->get_data()['command']['name'] );
+		$this->assertStringContainsString( 'no-store', $poll->get_headers()['Cache-Control'] );
 
 		$ack = $this->dispatch(
 			'POST',

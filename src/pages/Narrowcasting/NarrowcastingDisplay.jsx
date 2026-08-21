@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import NarrowcastingScene from './NarrowcastingScenes';
 import { buildPlaylistScenes } from './playlistScenes';
 import { rotateSponsors } from './matchdayScenes';
+import { cacheBustedPath, PLAYLIST_REFRESH_INTERVAL_MS, SUPPORTING_DATA_REFRESH_INTERVAL_MS } from './displayRefresh';
 
 const TOKEN_KEY = 'rondoPlayerToken';
 const CONFIG_KEY = 'rondoPlayerConfig';
@@ -93,49 +94,50 @@ export default function NarrowcastingDisplay() {
   useEffect(() => {
     if (!token && !isPreview) return undefined;
     let active = true;
+    const headers = isPreview
+      ? { 'X-WP-Nonce': window.rondoConfig?.nonce || '' }
+      : { 'X-Rondo-Device-Token': token };
+    const request = (path) => fetch(apiUrl(cacheBustedPath(path)), { headers, cache: 'no-store' });
 
     const loadConfig = async () => {
+      const path = isPreview
+        ? '/rondo/v1/narrowcasting/preview'
+        : '/rondo/v1/narrowcasting/devices/me/config';
+      const response = await request(path);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const nextConfig = await response.json();
+      if (!active) return;
+      setConfig(nextConfig);
+      if (!isPreview) localStorage.setItem(CONFIG_KEY, JSON.stringify(nextConfig));
+    };
+
+    const loadPlaylist = async () => {
+      const selectedPlaylist = new URLSearchParams(window.location.search).get('playlist');
+      const path = isPreview
+        ? `/rondo/v1/narrowcasting/preview/playlist${selectedPlaylist ? `?playlist_id=${encodeURIComponent(selectedPlaylist)}` : ''}`
+        : '/rondo/v1/narrowcasting/devices/me/playlist';
+      const response = await request(path);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const nextPlaylist = await response.json();
+      if (!active) return;
+      setPlaylist(nextPlaylist);
+      if (!isPreview) localStorage.setItem(PLAYLIST_KEY, JSON.stringify(nextPlaylist));
+    };
+
+    const loadFeed = async () => {
+      const path = `/rondo/v1/narrowcasting/feeds/matchday${isPreview ? '?preview=1' : ''}`;
+      const response = await request(path);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const nextFeed = await response.json();
+      if (!active) return;
+      setFeed(nextFeed);
+      if (!isPreview) localStorage.setItem(FEED_KEY, JSON.stringify(nextFeed));
+    };
+
+    const loadInitialData = async () => {
       try {
-        const path = isPreview
-          ? '/rondo/v1/narrowcasting/preview'
-          : '/rondo/v1/narrowcasting/devices/me/config';
-        const headers = isPreview
-          ? { 'X-WP-Nonce': window.rondoConfig?.nonce || '' }
-          : { 'X-Rondo-Device-Token': token };
-        const response = await fetch(apiUrl(path), {
-          headers,
-          cache: 'no-store',
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const nextConfig = await response.json();
-        if (!active) return;
-        setConfig(nextConfig);
-        setLoadError('');
-        if (!isPreview) localStorage.setItem(CONFIG_KEY, JSON.stringify(nextConfig));
-
-        const selectedPlaylist = new URLSearchParams(window.location.search).get('playlist');
-        const playlistPath = isPreview
-          ? `/rondo/v1/narrowcasting/preview/playlist${selectedPlaylist ? `?playlist_id=${encodeURIComponent(selectedPlaylist)}` : ''}`
-          : '/rondo/v1/narrowcasting/devices/me/playlist';
-        const playlistResponse = await fetch(apiUrl(playlistPath), { headers, cache: 'no-store' });
-        if (playlistResponse.ok) {
-          const nextPlaylist = await playlistResponse.json();
-          if (!active) return;
-          setPlaylist(nextPlaylist);
-          if (!isPreview) localStorage.setItem(PLAYLIST_KEY, JSON.stringify(nextPlaylist));
-        }
-
-        const feedPath = `/rondo/v1/narrowcasting/feeds/matchday${isPreview ? '?preview=1' : ''}`;
-        const feedResponse = await fetch(apiUrl(feedPath), {
-          headers,
-          cache: 'no-store',
-        });
-        if (feedResponse.ok) {
-          const nextFeed = await feedResponse.json();
-          if (!active) return;
-          setFeed(nextFeed);
-          if (!isPreview) localStorage.setItem(FEED_KEY, JSON.stringify(nextFeed));
-        }
+        await Promise.all([loadConfig(), loadPlaylist(), loadFeed()]);
+        if (active) setLoadError('');
       } catch {
         if (active) {
           if (isPreview) setLoadError('Log in als beheerder om het Club TV-voorbeeld te bekijken.');
@@ -145,11 +147,16 @@ export default function NarrowcastingDisplay() {
       }
     };
 
-    loadConfig();
-    const timer = isPreview ? null : window.setInterval(loadConfig, 60000);
+    const refreshPlaylist = () => loadPlaylist().catch(() => {});
+    const refreshSupportingData = () => Promise.all([loadConfig(), loadFeed()]).catch(() => {});
+
+    loadInitialData();
+    const playlistTimer = isPreview ? null : window.setInterval(refreshPlaylist, PLAYLIST_REFRESH_INTERVAL_MS);
+    const supportingDataTimer = isPreview ? null : window.setInterval(refreshSupportingData, SUPPORTING_DATA_REFRESH_INTERVAL_MS);
     return () => {
       active = false;
-      if (timer) window.clearInterval(timer);
+      if (playlistTimer) window.clearInterval(playlistTimer);
+      if (supportingDataTimer) window.clearInterval(supportingDataTimer);
     };
   }, [isPreview, token]);
 

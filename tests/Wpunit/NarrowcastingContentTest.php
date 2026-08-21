@@ -262,6 +262,7 @@ class NarrowcastingContentTest extends RondoTestCase {
 		$this->assertSame( $playlist['id'], $response->get_data()['playlist_id'] );
 		$this->assertSame( 'Fijne wedstrijd', $response->get_data()['scenes'][0]['body'] );
 		$this->assertArrayNotHasKey( 'fields', $response->get_data()['scenes'][0] );
+		$this->assertStringContainsString( 'no-store', $response->get_headers()['Cache-Control'] );
 	}
 
 	private function login_with_capability( string $capability ): int {

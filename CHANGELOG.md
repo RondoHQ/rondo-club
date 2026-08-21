@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.22.2] - 2026-08-21
+
+### Fixed
+
+- Club TV-schermen omzeilen nu de hostingcache en controleren iedere tien seconden op een nieuwe afspeellijst, zodat opgeslagen wijzigingen vrijwel direct zichtbaar worden.
+
 ## [34.22.1] - 2026-08-20
 
 ### Fixed
