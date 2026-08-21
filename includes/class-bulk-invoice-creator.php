@@ -168,27 +168,18 @@ class BulkInvoiceCreator {
 	 * @return string 'created', 'skipped', or 'error'.
 	 */
 	public function create_membership_invoice( int $person_id, string $season ): string {
+		// Former members are safe to invoice only when both membership dates
+		// prove that their membership overlapped the requested season.
+		$is_former = ( \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' ) === true );
+		if ( $is_former && ! FeeServices::person_context()->is_former_member_in_season( $person_id, $season ) ) {
+			return 'skipped';
+		}
 
 		// Get fee for this person.
 		$fee_data = FeeServices::fee_cache()->get_fee_for_person_cached( $person_id, $season );
 
 		if ( $fee_data === null ) {
 			return 'skipped';
-		}
-
-		// Check former member eligibility.
-		$is_former = ( \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' ) === true );
-		if ( $is_former ) {
-			$lid_sinds = \Rondo\Fields\Fields::get_for_post( $person_id, 'lid_sinds' );
-			if ( empty( $lid_sinds ) ) {
-				return 'skipped';
-			}
-			$season_end_year = (int) substr( $season, 5, 4 );
-			$season_end_ts   = strtotime( $season_end_year . '-07-01' );
-			$lid_sinds_ts    = strtotime( $lid_sinds );
-			if ( $lid_sinds_ts === false || $lid_sinds_ts >= $season_end_ts ) {
-				return 'skipped';
-			}
 		}
 
 		// Skip zero-fee members.

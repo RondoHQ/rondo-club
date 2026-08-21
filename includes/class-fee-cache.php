@@ -205,9 +205,13 @@ class FeeCache {
 		// Try cache first
 		$cached = get_post_meta( $person_id, $meta_key, true );
 
-		if ( ! empty( $cached ) && is_array( $cached ) ) {
+		if ( ! empty( $cached ) && is_array( $cached ) && ! $this->is_cache_stale( $person_id, $cached ) ) {
 			$cached['from_cache'] = true;
 			return $cached;
+		}
+
+		if ( ! empty( $cached ) ) {
+			delete_post_meta( $person_id, $meta_key );
 		}
 
 		// Cache miss - calculate fresh using lid-sinds (PRO-04 fix)
@@ -231,6 +235,53 @@ class FeeCache {
 		$result['season']        = $season;
 
 		return $result;
+	}
+
+	/**
+	 * Check whether a dated work-history transition has outlived the cache.
+	 *
+	 * Positions remain current through their end date. A fee calculated on that
+	 * date is therefore correct until midnight, but must be recalculated the next
+	 * day. Field-update invalidation alone cannot handle that passage of time.
+	 *
+	 * @param int   $person_id Person post ID.
+	 * @param array $cached    Cached fee payload.
+	 * @return bool True when the cached calculation must be replaced.
+	 */
+	private function is_cache_stale( int $person_id, array $cached ): bool {
+		$calculated_at = trim( (string) ( $cached['calculated_at'] ?? '' ) );
+		if ( preg_match( '/^(\d{4}-\d{2}-\d{2})/', $calculated_at, $matches ) !== 1 ) {
+			return true;
+		}
+
+		$calculated_date = $matches[1];
+		$today           = current_datetime()->format( 'Y-m-d' );
+		if ( $calculated_date >= $today ) {
+			return false;
+		}
+
+		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' );
+		if ( ! is_array( $work_history ) ) {
+			return false;
+		}
+
+		foreach ( $work_history as $position ) {
+			if ( ! is_array( $position ) ) {
+				continue;
+			}
+
+			$end_date = str_replace( '-', '', trim( (string) ( $position['end_date'] ?? '' ) ) );
+			if ( preg_match( '/^\d{8}$/', $end_date ) !== 1 ) {
+				continue;
+			}
+
+			$end_date = substr( $end_date, 0, 4 ) . '-' . substr( $end_date, 4, 2 ) . '-' . substr( $end_date, 6, 2 );
+			if ( $end_date >= $calculated_date && $end_date < $today ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

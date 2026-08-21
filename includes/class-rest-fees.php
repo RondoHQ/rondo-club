@@ -242,11 +242,15 @@ class Fees extends Base {
 				'callback'            => [ $this, 'start_bulk_invoice_job' ],
 				'permission_callback' => [ $this, 'check_financieel_permission' ],
 				'args'                => [
-					'season' => [
+					'season'    => [
 						'default'           => null,
 						'validate_callback' => function ( $param ) {
 							return $param === null || preg_match( '/^\d{4}-\d{4}$/', $param );
 						},
+					],
+					'confirmed' => [
+						'required' => true,
+						'type'     => 'boolean',
 					],
 				],
 			]
@@ -539,36 +543,30 @@ class Fees extends Base {
 		// fields => 'ids' skips automatic meta cache priming, so we do it explicitly.
 		update_meta_cache( 'post', $query->posts );
 
-		// Season end date for former-member eligibility check
-		$season_end_year = (int) substr( $season, 5, 4 );
-		$season_end_ts   = strtotime( $season_end_year . '-07-01' );
-
 		$results      = [];
 		$uncached_ids = [];
 
 		foreach ( $query->posts as $person_id ) {
 			$is_former = ! empty( get_post_meta( $person_id, 'former_member', true ) );
 
-			// Former members: check season eligibility inline
+			// Former members must have a verified membership interval that
+			// overlaps this season. Forecasts never include former members.
 			if ( $is_former ) {
-				if ( $forecast ) {
-					continue;
-				}
-				$lid_sinds = get_post_meta( $person_id, 'lid-sinds', true );
-				if ( empty( $lid_sinds ) ) {
-					continue;
-				}
-				$lid_sinds_ts = strtotime( $lid_sinds );
-				if ( $lid_sinds_ts === false || $lid_sinds_ts >= $season_end_ts ) {
+				if ( $forecast || ! FeeServices::person_context()->is_former_member_in_season( $person_id, $season ) ) {
 					continue;
 				}
 			}
 
-			// Read cached fee directly from meta (already in object cache)
-			$fee_data = get_post_meta( $person_id, $fee_cache_key, true );
+			// Current-season reads go through FeeCache so date-driven work-history
+			// expiry can invalidate a calculation even without another field write.
+			$fee_data = $forecast
+				? get_post_meta( $person_id, $fee_cache_key, true )
+				: FeeServices::fee_cache()->get_fee_for_person_cached( $person_id, $season );
 
 			if ( ! is_array( $fee_data ) || empty( $fee_data['category'] ) ) {
-				$uncached_ids[] = $person_id;
+				if ( $forecast ) {
+					$uncached_ids[] = $person_id;
+				}
 				continue;
 			}
 
@@ -589,7 +587,7 @@ class Fees extends Base {
 				'family_size'            => $fee_data['family_size'] ?? null,
 				'family_position'        => $fee_data['family_position'] ?? null,
 				'lid_sinds'              => $fee_data['registration_date'] ?? null,
-				'from_cache'             => true,
+				'from_cache'             => $fee_data['from_cache'] ?? true,
 				'calculated_at'          => $fee_data['calculated_at'] ?? null,
 				'is_former_member'       => $is_former,
 			];
@@ -747,9 +745,9 @@ class Fees extends Base {
 	/**
 	 * Get fee summary aggregated by category.
 	 *
-	 * Lightweight endpoint for the Overzicht tab — reads only the fee cache meta
-	 * key from postmeta in a single SQL query, aggregates in PHP. No full post
-	 * objects or meta cache priming needed.
+	 * Lightweight endpoint for the Overzicht tab — reads fee cache rows in one
+	 * query and aggregates in PHP. Current-season rows pass through the cache and
+	 * former-member validity checks so the summary cannot disagree with the list.
 	 *
 	 * @param \WP_REST_Request $request Request object.
 	 * @return \WP_REST_Response
@@ -781,7 +779,7 @@ class Fees extends Base {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT pm.meta_value
+					"SELECT pm.post_id, pm.meta_value
 					FROM {$wpdb->postmeta} pm
 					INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
 					LEFT JOIN {$wpdb->postmeta} lt ON lt.post_id = p.ID AND lt.meta_key = 'lid-tot'
@@ -797,7 +795,7 @@ class Fees extends Base {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT pm.meta_value
+					"SELECT pm.post_id, pm.meta_value
 					FROM {$wpdb->postmeta} pm
 					INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
 					WHERE pm.meta_key = %s
@@ -812,11 +810,25 @@ class Fees extends Base {
 		$aggregates    = [];
 		$total_members = 0;
 
+		if ( ! $forecast && ! empty( $rows ) ) {
+			update_meta_cache( 'post', array_map( 'intval', wp_list_pluck( $rows, 'post_id' ) ) );
+		}
+
 		// Pre-load youth slugs for forecast reclassification (only youth members age up)
 		$current_youth_slugs = $forecast ? FeeServices::settings()->get_youth_category_slugs( SeasonKey::current() ) : [];
 
 		foreach ( $rows as $row ) {
-			$fee_data = maybe_unserialize( $row->meta_value );
+			if ( $forecast ) {
+				$fee_data = maybe_unserialize( $row->meta_value );
+			} else {
+				$person_id = (int) $row->post_id;
+				$is_former = (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' );
+				if ( $is_former && ! FeeServices::person_context()->is_former_member_in_season( $person_id, $season ) ) {
+					continue;
+				}
+
+				$fee_data = FeeServices::fee_cache()->get_fee_for_person_cached( $person_id, $season );
+			}
 
 			if ( ! is_array( $fee_data ) || empty( $fee_data['category'] ) ) {
 				continue;
@@ -1181,7 +1193,15 @@ class Fees extends Base {
 	 * @return \WP_REST_Response|\WP_Error Job status or error if already running.
 	 */
 	public function start_bulk_invoice_job( $request ) {
-				$season = $request->get_param( 'season' );
+		if ( $request->get_param( 'confirmed' ) !== true ) {
+			return new \WP_Error(
+				'bulk_invoice_confirmation_required',
+				'Bevestig expliciet dat de contributiefacturen mogen worden aangemaakt.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		$season = $request->get_param( 'season' );
 
 		if ( $season === null ) {
 			$season = SeasonKey::current();

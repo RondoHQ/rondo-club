@@ -21,11 +21,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  * the account and all account-owned volunteer data to the synced parent.
  */
 class GuardianAccountService {
-	public const ADMIN_EMAIL            = 'ledenadministratie@svawc.nl';
 	public const META_NAME              = 'rondo_pending_guardian_name';
 	public const META_CHILD_ID          = 'rondo_pending_guardian_child_id';
 	public const META_CLAIMED_AT        = 'rondo_pending_guardian_claimed_at';
-	public const META_NOTIFIED_AT       = 'rondo_pending_guardian_notified_at';
 	public const SHIFT_USER_META_PREFIX = '_shift_signup_user_';
 	public const SHIFT_NAME_META_PREFIX = '_shift_signup_guardian_name_';
 
@@ -152,28 +150,11 @@ class GuardianAccountService {
 			]
 		);
 
-		$notification_sent = (bool) get_user_meta( $user_id, self::META_NOTIFIED_AT, true );
-		if ( ! $notification_sent ) {
-			$notification_sent = self::send_notification( $user_id );
-			if ( ! $notification_sent && wp_next_scheduled( 'rondo_retry_guardian_notification', [ $user_id ] ) === false ) {
-				wp_schedule_single_event( time() + ( 5 * MINUTE_IN_SECONDS ), 'rondo_retry_guardian_notification', [ $user_id ] );
-			}
-		}
-
 		return [
 			'success'           => true,
 			'pending_guardian'  => self::pending_for_user( $user_id ),
-			'notification_sent' => $notification_sent,
+			'notification_sent' => false,
 		];
-	}
-
-	/**
-	 * Retry a failed membership-administration notification.
-	 */
-	public static function retry_notification( int $user_id ): void {
-		if ( self::pending_for_user( $user_id ) && ! get_user_meta( $user_id, self::META_NOTIFIED_AT, true ) ) {
-			self::send_notification( $user_id );
-		}
 	}
 
 	/**
@@ -292,43 +273,12 @@ class GuardianAccountService {
 	}
 
 	/**
-	 * Send the requested notification to the membership administration.
-	 */
-	private static function send_notification( int $user_id ): bool {
-		$pending = self::pending_for_user( $user_id );
-		if ( ! $pending ) {
-			return false;
-		}
-
-		$message = sprintf(
-			'De ouder/verzorger %s van %s heeft zich via het account van het kind aangemeld voor Rondo.',
-			$pending['name'],
-			$pending['child_name']
-		);
-		$sent    = wp_mail(
-			self::ADMIN_EMAIL,
-			'Ouder/verzorger aangemeld voor Rondo',
-			$message,
-			[ 'Content-Type: text/plain; charset=UTF-8' ]
-		);
-		if ( $sent ) {
-			update_user_meta( $user_id, self::META_NOTIFIED_AT, current_time( 'mysql', true ) );
-		} else {
-			error_log( sprintf( '[Rondo] Guardian notification failed for user %d.', $user_id ) );
-		}
-
-		return (bool) $sent;
-	}
-
-	/**
 	 * Clear the temporary guardian identity after a successful relink.
 	 */
 	private static function clear_pending( int $user_id ): void {
 		delete_user_meta( $user_id, self::META_NAME );
 		delete_user_meta( $user_id, self::META_CHILD_ID );
 		delete_user_meta( $user_id, self::META_CLAIMED_AT );
-		delete_user_meta( $user_id, self::META_NOTIFIED_AT );
-		wp_clear_scheduled_hook( 'rondo_retry_guardian_notification', [ $user_id ] );
 	}
 
 	/**

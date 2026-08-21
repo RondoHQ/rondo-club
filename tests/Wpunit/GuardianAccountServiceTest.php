@@ -62,30 +62,25 @@ class GuardianAccountServiceTest extends RondoTestCase {
 		);
 	}
 
-	public function test_claim_sends_the_requested_notification_and_stores_the_guardian(): void {
-		$child_id = $this->person( 'Rens van Haren', 'Onder 12' );
-		$user_id  = $this->linked_user( $child_id );
-		$mail     = null;
+	public function test_claim_stores_the_guardian_without_sending_email(): void {
+		$child_id  = $this->person( 'Rens van Haren', 'Onder 12' );
+		$user_id   = $this->linked_user( $child_id );
+		$mail_sent = false;
 		add_filter(
 			'pre_wp_mail',
-			function ( $short_circuit, $attributes ) use ( &$mail ) {
-				$mail = $attributes;
+			function () use ( &$mail_sent ) {
+				$mail_sent = true;
 				return true;
-			},
-			10,
-			2
+			}
 		);
 
 		$result = GuardianAccountService::claim( $user_id, $child_id, 'Bas van Haren' );
 
 		$this->assertIsArray( $result );
 		$this->assertSame( 'Bas van Haren', $result['pending_guardian']['name'] );
+		$this->assertFalse( $result['notification_sent'] );
 		$this->assertSame( 'Bas van Haren', get_userdata( $user_id )->display_name );
-		$this->assertSame( [ GuardianAccountService::ADMIN_EMAIL ], $mail['to'] );
-		$this->assertSame(
-			'De ouder/verzorger Bas van Haren van Rens van Haren heeft zich via het account van het kind aangemeld voor Rondo.',
-			$mail['message']
-		);
+		$this->assertFalse( $mail_sent );
 	}
 
 	public function test_pending_guardian_sees_the_youths_family_obligation(): void {

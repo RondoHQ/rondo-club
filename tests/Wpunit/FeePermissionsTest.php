@@ -138,4 +138,23 @@ class FeePermissionsTest extends RondoTestCase {
 			'Same, via an inline closure'
 		);
 	}
+
+	public function test_bulk_invoice_job_requires_explicit_confirmation(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$server = $this->bootRestControllers( [ Fees::class ] );
+
+		$request = new \WP_REST_Request( 'POST', '/rondo/v1/fees/bulk-create-invoices' );
+		$request->set_param( 'season', '2026-2027' );
+		$response = $server->dispatch( $request );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'rest_missing_callback_param', $response->get_data()['code'] );
+
+		$request->set_param( 'confirmed', false );
+		$response = $server->dispatch( $request );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'bulk_invoice_confirmation_required', $response->get_data()['code'] );
+		$this->assertSame( [], get_option( \Rondo\Finance\BulkInvoiceCreator::JOB_OPTION, [] ) );
+	}
 }
