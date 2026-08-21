@@ -2,14 +2,13 @@
 /**
  * IvaStatus
  *
- * Helper for the IVA (Instructie Verantwoord Alcoholschenken) certificate
- * lifecycle. Bestuursbesluit 2026-05-26: IVA certificates are valid for
- * 5 jaar after the `datum-iva` date.
+ * Helper for proof of responsible alcohol service: either an IVA certificate
+ * (Instructie Verantwoord Alcoholschenken) or a Social Hygiene diploma.
+ * Neither proof expires after approval.
  *
  *   missing  : no datum-iva AND no certificaat uploaded
  *   pending  : something uploaded but not yet approved by bestuurslid kantine
- *   valid    : approved AND datum-iva within the 5-year window
- *   expired  : approved BUT datum-iva older than 5 jaar
+ *   valid    : approved AND datum-iva is present
  *
  * @package Rondo\Volunteer
  */
@@ -25,12 +24,14 @@ class IvaStatus {
 	const STATUS_MISSING = 'missing';
 	const STATUS_PENDING = 'pending';
 	const STATUS_VALID   = 'valid';
+	/** Legacy status value kept for consumers that still reference the constant. */
 	const STATUS_EXPIRED = 'expired';
 
 	/**
-	 * Validity term per the 2026-05-26 bestuursbesluit.
+	 * Kept in the REST contract for backwards compatibility. A null term means
+	 * that approved proof remains valid indefinitely.
 	 */
-	const VALIDITY_YEARS = 5;
+	const VALIDITY_YEARS = null;
 
 	/**
 	 * Reminder window — when to send the verlengingsherinnering.
@@ -62,58 +63,35 @@ class IvaStatus {
 			return self::STATUS_PENDING;
 		}
 
-		$expires_at = self::expires_at( $person_id );
-		if ( $expires_at === null ) {
-			return self::STATUS_VALID;
-		}
-
-		return $expires_at >= gmdate( 'Y-m-d' ) ? self::STATUS_VALID : self::STATUS_EXPIRED;
+		return self::STATUS_VALID;
 	}
 
 	/**
-	 * Convenience: is the IVA currently valid (approved + not expired)?
+	 * Convenience: is the alcohol-service proof currently approved?
 	 */
 	public static function is_valid( int $person_id ): bool {
 		return self::status( $person_id ) === self::STATUS_VALID;
 	}
 
 	/**
-	 * Expiration date for the IVA certificate, or null when datum-iva is missing.
-	 * Formula: datum-iva + VALIDITY_YEARS.
+	 * Expiration date for the proof.
+	 *
+	 * IVA certificates and Social Hygiene diplomas do not expire. The method is
+	 * retained so existing REST consumers keep receiving the same response shape.
 	 */
 	public static function expires_at( int $person_id ): ?string {
-		$datum = self::datum_iva( $person_id );
-		if ( empty( $datum ) ) {
-			return null;
-		}
-
-		$timestamp = strtotime( $datum . ' +' . self::VALIDITY_YEARS . ' years' );
-		if ( $timestamp === false ) {
-			return null;
-		}
-
-		return gmdate( 'Y-m-d', $timestamp );
+		unset( $person_id );
+		return null;
 	}
 
 	/**
-	 * Is the certificate within the reminder window (expires within REMINDER_MONTHS_BEFORE_EXPIRY)?
+	 * Approved proof never needs an expiry reminder.
+	 *
+	 * Retained for backwards-compatible REST responses.
 	 */
 	public static function needs_renewal_reminder( int $person_id ): bool {
-		$expires_at = self::expires_at( $person_id );
-		if ( $expires_at === null ) {
-			return false;
-		}
-
-		$now    = strtotime( gmdate( 'Y-m-d' ) );
-		$expiry = strtotime( $expires_at );
-		if ( $now === false || $expiry === false || $expiry < $now ) {
-			return false;
-		}
-
-		$diff_days = (int) floor( ( $expiry - $now ) / DAY_IN_SECONDS );
-		$threshold = self::REMINDER_MONTHS_BEFORE_EXPIRY * 30;
-
-		return $diff_days <= $threshold;
+		unset( $person_id );
+		return false;
 	}
 
 	/**

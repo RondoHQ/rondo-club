@@ -54,7 +54,7 @@ class IvaReviewNotificationTest extends RondoTestCase {
 		$this->assertSame( 'sent', $result['status'] );
 		$this->assertCount( 1, $manager_messages, 'Shared approver addresses must receive only one message.' );
 		$this->assertCount( 0, $regular_messages, 'Users without IVA approval rights must not be notified.' );
-		$this->assertSame( 'Nieuw IVA-certificaat van Xander Notté', $manager_messages[0]['subject'] );
+		$this->assertSame( 'Nieuw bewijs verantwoord alcohol schenken van Xander Notté', $manager_messages[0]['subject'] );
 		$this->assertStringContainsString( 'Bekijk en keur goed', $manager_messages[0]['message'] );
 		$this->assertStringContainsString(
 			esc_url( home_url( '/vrijwilligers/iva?review=' . $person_id ) ),

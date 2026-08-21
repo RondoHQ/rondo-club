@@ -374,8 +374,8 @@ class Volunteer extends Base {
 	/**
 	 * GET /rondo/v1/iva/people
 	 *
-	 * Returns every person with any IVA-relevant data: a datum-iva, an uploaded
-	 * certificaat, or an iva-approved flag. The set is naturally small (kantine
+	 * Returns every person with relevant proof data: a datum-iva, an uploaded
+	 * IVA certificate or Social Hygiene diploma, or an iva-approved flag. The set is naturally small (kantine
 	 * bar-vrijwilligers) so we return it all in one shot, no pagination.
 	 */
 	public function get_iva_people( \WP_REST_Request $request ) {
@@ -456,9 +456,10 @@ class Volunteer extends Base {
 	 * POST /rondo/v1/iva/upload
 	 *
 	 * Lid-zelf upload. Schrijft het bestand naar de attachment-library,
-	 * koppelt het aan het native field veld iva-certificaat van de gelinkte persoon,
+	 * koppelt het aan het native field iva-certificaat van de gelinkte persoon,
 	 * en reset iva-approved zodat de bestuurslid kantine het opnieuw beoordeelt.
-	 * Accepteert een optionele datum_iva (anders: vandaag).
+	 * Accepteert een IVA-certificaat of diploma Sociale Hygiëne en een optionele
+	 * datum_iva (anders: vandaag).
 	 */
 	public function upload_iva( \WP_REST_Request $request ) {
 		$user_id = get_current_user_id();
@@ -479,7 +480,7 @@ class Volunteer extends Base {
 		if ( empty( $files['certificaat'] ) ) {
 			return new \WP_Error(
 				'no_file',
-				'Geen bestand geüpload. Stuur het PDF-certificaat mee als veld "certificaat".',
+				'Geen bestand geüpload. Stuur het bewijsstuk mee als veld "certificaat".',
 				[ 'status' => 400 ]
 			);
 		}
@@ -524,6 +525,7 @@ class Volunteer extends Base {
 		// leesbare tekstlaag: naam + behaaldatum. Als de naam matcht met dit lid
 		// en de datum recent is, keuren we automatisch goed — anders valt de
 		// upload terug op de bestaande handmatige beoordeling.
+		// Diploma's Sociale Hygiëne worden altijd handmatig beoordeeld.
 		//
 		// Dit gebeurt bewust vóór de eerste schrijfactie: gaat het parsen stuk,
 		// dan is er nog niets om op te ruimen en ruimt PHP het tmp-bestand zelf op.
@@ -552,7 +554,7 @@ class Volunteer extends Base {
 		$attachment_id = wp_insert_attachment(
 			[
 				'post_mime_type' => $checked['type'],
-				'post_title'     => 'IVA-certificaat ' . $person_id,
+				'post_title'     => 'Bewijs verantwoord alcohol schenken ' . $person_id,
 				'post_status'    => 'private',
 				'post_parent'    => $person_id,
 				'guid'           => $this->iva_certificate_url( $person_id ),
@@ -627,7 +629,7 @@ class Volunteer extends Base {
 
 	/**
 	 * GET /rondo/v1/iva/me — zonder admin-cap, geeft het lid zélf de status terug
-	 * van zijn/haar eigen IVA-certificaat.
+	 * van zijn/haar eigen IVA-certificaat of diploma Sociale Hygiëne.
 	 */
 	public function get_my_iva( \WP_REST_Request $request ) {
 		$user_id   = get_current_user_id();
@@ -659,7 +661,7 @@ class Volunteer extends Base {
 		$path          = $attachment_id ? (string) get_post_meta( $attachment_id, self::PRIVATE_PATH_META, true ) : '';
 
 		if ( $path === '' || ! is_readable( $path ) ) {
-			return new \WP_Error( 'iva_certificate_not_found', 'IVA-certificaat niet gevonden.', [ 'status' => 404 ] );
+			return new \WP_Error( 'iva_certificate_not_found', 'Bewijsstuk niet gevonden.', [ 'status' => 404 ] );
 		}
 
 		return rest_ensure_response(

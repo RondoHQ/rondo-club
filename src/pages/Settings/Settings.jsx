@@ -3906,7 +3906,7 @@ function IvaApprovalEmailForm({ clubConfig, setClubConfig, loading }) {
   return (
     <div className="space-y-5">
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        Verstuurd zodra een geldig IVA-certificaat wordt goedgekeurd.
+        Verstuurd zodra een IVA-certificaat of diploma Sociale Hygiëne wordt goedgekeurd.
       </p>
 
       <div>

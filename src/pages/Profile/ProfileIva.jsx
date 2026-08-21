@@ -11,12 +11,11 @@ import { format } from '@/utils/dateFormat';
 const STATUS_CONFIG = {
   valid:   { label: 'Geldig',                color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300', icon: CheckCircle2 },
   pending: { label: 'Wacht op goedkeuring',  color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',         icon: Clock },
-  expired: { label: 'Verlopen',              color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',                 icon: AlertTriangle },
   missing: { label: 'Niet ingeleverd',       color: 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200',                icon: AlertTriangle },
 };
 
 export default function ProfileIva() {
-  useDocumentTitle('Mijn IVA-certificaat');
+  useDocumentTitle('IVA of Sociale Hygiëne');
   const queryClient = useQueryClient();
   const fileRef = useRef(null);
   const [file, setFile] = useState(null);
@@ -40,8 +39,8 @@ export default function ProfileIva() {
       setFeedback({
         kind: 'success',
         message: autoVerified
-          ? 'Certificaat geüpload en automatisch geverifieerd — je IVA is direct geldig.'
-          : 'Certificaat geüpload. De kantinebeheerder beoordeelt het binnenkort.',
+          ? 'IVA-certificaat geüpload en automatisch geverifieerd — je bewijs is direct geldig.'
+          : 'Bewijsstuk geüpload. De kantinebeheerder beoordeelt het binnenkort.',
       });
     },
     onError: (err) => {
@@ -82,9 +81,9 @@ export default function ProfileIva() {
             <Wine className="w-6 h-6 text-bright-cobalt dark:text-electric-cyan" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Mijn IVA-certificaat</h1>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">IVA of Sociale Hygiëne</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Verplicht voor inschrijftaken achter de bar. Gratis online behaalbaar via{' '}
+              Voor inschrijftaken achter de bar heb je een IVA-certificaat of diploma Sociale Hygiëne nodig. Een IVA is gratis online behaalbaar via{' '}
               <a
                 href="https://www.nocnsf.nl/over-nocnsf/sport-en-maatschappij/gezonde-sportomgeving/e-learning-verantwoord-alcohol-schenken"
                 target="_blank"
@@ -93,7 +92,7 @@ export default function ProfileIva() {
               >
                 NOC*NSF
               </a>
-              ; 5 jaar geldig. Heb je al een certificaat Sociale Hygiëne? Dat accepteren we ook.
+              . Beide bewijssoorten blijven na goedkeuring geldig.
             </p>
           </div>
         </div>
@@ -115,30 +114,15 @@ export default function ProfileIva() {
                     Behaald op {format(iva.datum_iva, 'd MMMM yyyy')}
                   </span>
                 )}
-                {iva?.expires_at && (
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    · Verloopt op {format(iva.expires_at, 'd MMMM yyyy')}
-                  </span>
-                )}
               </div>
               {iva?.iva_certificaat_url && (
                 <IvaCertificateLink personId={iva.person_id} className="mt-2 text-sm">
-                  Bekijk huidige certificaat
+                  Bekijk huidig bewijsstuk
                 </IvaCertificateLink>
               )}
               {status === 'pending' && (
                 <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                  De kantinebeheerder beoordeelt je certificaat binnenkort. Zodra het is goedgekeurd verschijnen inschrijftaken achter de bar in het rooster.
-                </p>
-              )}
-              {status === 'expired' && (
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                  Je certificaat is verlopen. Behaal een nieuwe via NOC*NSF en upload het hieronder.
-                </p>
-              )}
-              {iva?.needs_renewal_reminder && status === 'valid' && (
-                <p className="mt-2 text-sm text-amber-700 dark:text-amber-400">
-                  Je certificaat verloopt binnenkort — vernieuw het op tijd om inschrijftaken achter de bar te kunnen blijven doen.
+                  De kantinebeheerder beoordeelt je bewijsstuk binnenkort. Zodra het is goedgekeurd verschijnen inschrijftaken achter de bar in het rooster.
                 </p>
               )}
             </div>
@@ -147,9 +131,9 @@ export default function ProfileIva() {
       )}
 
       <section className="card p-5">
-        <h2 className="font-semibold text-gray-900 dark:text-gray-100">Upload nieuw certificaat</h2>
+        <h2 className="font-semibold text-gray-900 dark:text-gray-100">Upload een bewijsstuk</h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          PDF, JPG of PNG; max 10 MB. Upload bij voorkeur het originele PDF-bestand. Officiële NOC*NSF- en VrijwilligerswerkNL-PDF-certificaten worden automatisch gecontroleerd en direct goedgekeurd. Foto&apos;s, screenshots en certificaten Sociale Hygiëne beoordeelt de kantinebeheerder.
+          PDF, JPG of PNG; max 10 MB. Upload bij voorkeur het originele bestand. Officiële NOC*NSF- en VrijwilligerswerkNL-PDF-certificaten worden automatisch gecontroleerd en direct goedgekeurd. Foto&apos;s, screenshots en diploma&apos;s Sociale Hygiëne beoordeelt de kantinebeheerder.
         </p>
 
         <form
@@ -165,7 +149,7 @@ export default function ProfileIva() {
           className="mt-4 space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Datum certificaat</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Behaaldatum</label>
             <input
               type="date"
               value={datum}
@@ -207,7 +191,7 @@ export default function ProfileIva() {
             className="inline-flex items-center gap-2 btn-primary disabled:opacity-50"
           >
             <Upload className="w-4 h-4" />
-            {uploadMutation.isPending ? 'Bezig met uploaden…' : 'Certificaat uploaden'}
+            {uploadMutation.isPending ? 'Bezig met uploaden…' : 'Bewijsstuk uploaden'}
           </button>
         </form>
       </section>

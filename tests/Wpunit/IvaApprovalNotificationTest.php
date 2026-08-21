@@ -5,6 +5,7 @@ namespace Tests\Wpunit;
 use Rondo\Collaboration\CommentTypes;
 use Rondo\Config\ClubConfig;
 use Rondo\REST\Volunteer;
+use Rondo\Volunteer\IvaStatus;
 use Tests\Support\RondoTestCase;
 use WP_REST_Request;
 
@@ -54,7 +55,7 @@ class IvaApprovalNotificationTest extends RondoTestCase {
 		$this->assertSame( 'sent', $response->get_data()['notification']['status'] );
 		$this->assertCount( 1, $this->sent_mail );
 		$this->assertSame( [ 'xander@example.com' ], $this->sent_mail[0]['to'] );
-		$this->assertSame( 'Je IVA-certificaat is goedgekeurd', $this->sent_mail[0]['subject'] );
+		$this->assertSame( 'Je bewijs voor verantwoord alcohol schenken is goedgekeurd', $this->sent_mail[0]['subject'] );
 		$this->assertStringContainsString( 'Je kunt je nu ook inschrijven', $this->sent_mail[0]['message'] );
 		$this->assertStringContainsString( home_url( '/vrijwillig' ), $this->sent_mail[0]['message'] );
 
@@ -110,20 +111,34 @@ class IvaApprovalNotificationTest extends RondoTestCase {
 		$this->assertStringContainsString( home_url( '/vrijwillig' ), $this->sent_mail[0]['message'] );
 	}
 
-	public function test_expired_iva_does_not_send_eligibility_email(): void {
+	public function test_old_social_hygiene_diploma_remains_valid_after_manual_approval(): void {
 		$person_id = $this->createPerson(
-			[ 'post_title' => 'Expired IVA Member' ],
+			[ 'post_title' => 'Social Hygiene Diploma Holder' ],
 			[
-				'email_1'   => 'expired@example.com',
-				'datum-iva' => '2010-01-01',
+				'email_1'   => 'diploma@example.com',
+				'datum-iva' => '2005-11-22',
 			]
 		);
 
 		$response = $this->approve( $person_id, true );
 
-		$this->assertSame( 'expired', $response->get_data()['status'] );
-		$this->assertSame( 'not_applicable', $response->get_data()['notification']['status'] );
-		$this->assertCount( 0, $this->sent_mail );
+		$this->assertSame( 'valid', $response->get_data()['status'] );
+		$this->assertNull( $response->get_data()['expires_at'] );
+		$this->assertSame( 'sent', $response->get_data()['notification']['status'] );
+		$this->assertCount( 1, $this->sent_mail );
+	}
+
+	public function test_existing_approved_old_diploma_becomes_valid_without_reapproval(): void {
+		$person_id = $this->createPerson(
+			[ 'post_title' => 'Existing Social Hygiene Diploma Holder' ],
+			[
+				'datum-iva'    => '2005-11-22',
+				'iva-approved' => 1,
+			]
+		);
+
+		$this->assertSame( 'valid', IvaStatus::status( $person_id ) );
+		$this->assertNull( IvaStatus::expires_at( $person_id ) );
 	}
 
 	public function test_valid_iva_without_email_is_still_approved(): void {
