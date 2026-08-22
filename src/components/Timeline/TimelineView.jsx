@@ -35,7 +35,7 @@ export default function TimelineView({
   onEdit,
   onDelete,
   onToggleTodo,
-  allPeople = [],
+  people = [],
 }) {
   const formatTodoDueDate = (dueDate) => {
     if (!dueDate || !isValidDate(dueDate)) return null;
@@ -61,7 +61,7 @@ export default function TimelineView({
   }, [timeline]);
 
   const getPersonById = (id) => {
-    return allPeople.find(p => p.id.toString() === id.toString());
+    return people.find(p => p.id.toString() === id.toString());
   };
 
   const getIconForItem = (item) => {

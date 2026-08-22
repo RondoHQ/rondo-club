@@ -1,44 +1,35 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { X, Plus } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { wpApi } from '@/api/client';
 import { getPersonName } from '@/utils/formatters';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { usePersonSearch } from '@/hooks/usePeople';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
-export function SearchablePersonSelector({ value, onChange, people, isLoading, excludePersonId }) {
+export function SearchablePersonSelector({ value, onChange, excludePersonId, initialPerson = null }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedPerson, setSelectedPerson] = useState(initialPerson);
   const inputRef = useRef(null);
   const dropdownRef = useRef(null);
+  const trimmedSearchTerm = searchTerm.trim();
+  const debouncedSearchTerm = useDebouncedValue(trimmedSearchTerm);
+  const searchQuery = usePersonSearch(debouncedSearchTerm);
+  const isSearching = trimmedSearchTerm !== debouncedSearchTerm || searchQuery.isFetching;
 
-  const sortedAndFilteredPeople = useMemo(() => {
-    const filtered = people.filter(p => p.id !== excludePersonId);
-    return filtered.sort((a, b) => {
-      const firstNameA = (a.first_name || a.fields?.first_name || '').toLowerCase();
-      const firstNameB = (b.first_name || b.fields?.first_name || '').toLowerCase();
-      if (firstNameA < firstNameB) return -1;
-      if (firstNameA > firstNameB) return 1;
-      return 0;
-    });
-  }, [people, excludePersonId]);
+  const people = trimmedSearchTerm === debouncedSearchTerm
+    ? (searchQuery.data || []).filter(person => Number(person.id) !== Number(excludePersonId))
+    : [];
 
-  const filteredPeople = useMemo(() => {
-    if (!searchTerm) return sortedAndFilteredPeople.slice(0, 10);
-    
-    const term = searchTerm.toLowerCase();
-    return sortedAndFilteredPeople.filter(p => {
-      const name = getPersonName(p).toLowerCase();
-      const firstName = (p.first_name || p.fields?.first_name || '').toLowerCase();
-      const lastName = (p.last_name || p.fields?.last_name || '').toLowerCase();
-      
-      return name.includes(term) || firstName.includes(term) || lastName.includes(term);
-    }).slice(0, 10);
-  }, [sortedAndFilteredPeople, searchTerm]);
-
-  const selectedPerson = useMemo(() => {
-    return sortedAndFilteredPeople.find(p => p.id === value);
-  }, [sortedAndFilteredPeople, value]);
+  useEffect(() => {
+    if (!value) {
+      setSelectedPerson(null);
+    } else if (initialPerson && Number(initialPerson.id) === Number(value)) {
+      setSelectedPerson(initialPerson);
+    }
+  }, [initialPerson, value]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -56,13 +47,15 @@ export function SearchablePersonSelector({ value, onChange, people, isLoading, e
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSelect = (personId) => {
-    onChange(personId);
+  const handleSelect = (person) => {
+    setSelectedPerson(person);
+    onChange(person.id);
     setSearchTerm('');
     setIsOpen(false);
   };
 
   const handleClear = () => {
+    setSelectedPerson(null);
     onChange(null);
     setSearchTerm('');
     setIsOpen(false);
@@ -103,26 +96,30 @@ export function SearchablePersonSelector({ value, onChange, people, isLoading, e
             placeholder="Zoek naar een persoon..."
             className="input"
             autoFocus
-            aria-busy={isLoading}
+            aria-busy={isSearching}
           />
         )}
       </div>
 
-      {isOpen && (searchTerm || !selectedPerson) && (
+      {isOpen && (
         <div
           ref={dropdownRef}
           className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto"
         >
-          {isLoading ? (
-            <p className="px-4 py-2 text-gray-500 dark:text-gray-400 text-sm">Personen laden…</p>
-          ) : filteredPeople.length > 0 ? (
-            filteredPeople.map(person => (
+          {trimmedSearchTerm.length < 2 ? (
+            <p className="px-4 py-2 text-gray-500 dark:text-gray-400 text-sm">Typ minimaal 2 tekens</p>
+          ) : isSearching ? (
+            <p className="px-4 py-2 text-gray-500 dark:text-gray-400 text-sm">Zoeken…</p>
+          ) : searchQuery.isError ? (
+            <p className="px-4 py-2 text-red-600 dark:text-red-400 text-sm">Zoeken is niet gelukt</p>
+          ) : people.length > 0 ? (
+            people.map(person => (
               <button
                 key={person.id}
                 type="button"
-                onClick={() => handleSelect(person.id)}
+                onClick={() => handleSelect(person)}
                 className={`w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-50 ${
-                  value === person.id ? 'bg-cyan-50 dark:bg-deep-midnight' : ''
+                  Number(value) === Number(person.id) ? 'bg-cyan-50 dark:bg-deep-midnight' : ''
                 }`}
               >
                 {getPersonName(person)}
@@ -144,8 +141,6 @@ export default function RelationshipEditModal({
   isLoading,
   relationship = null,
   personId,
-  allPeople = [],
-  isPeopleLoading = false,
   onCreatePerson
 }) {
   const isEditing = !!relationship;
@@ -224,9 +219,11 @@ export default function RelationshipEditModal({
                   <SearchablePersonSelector
                     value={field.value}
                     onChange={field.onChange}
-                    people={allPeople}
-                    isLoading={isPeopleLoading}
                     excludePersonId={parseInt(personId, 10)}
+                    initialPerson={relationship?.related_person_id ? {
+                      id: relationship.related_person_id,
+                      name: relationship.person_name || '',
+                    } : null}
                   />
                 )}
               />

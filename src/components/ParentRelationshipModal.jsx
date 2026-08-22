@@ -14,8 +14,6 @@ export default function ParentRelationshipModal({
   canAddParent = false,
   isLoading,
   personId,
-  allPeople,
-  isPeopleLoading,
 }) {
   const [screen, setScreen] = useState('choice');
   const [form, setForm] = useState(EMPTY_FORM);
@@ -136,8 +134,6 @@ export default function ParentRelationshipModal({
                 <SearchablePersonSelector
                   value={existingParentId}
                   onChange={setExistingParentId}
-                  people={allPeople || []}
-                  isLoading={isPeopleLoading}
                   excludePersonId={Number(personId)}
                 />
               </div>

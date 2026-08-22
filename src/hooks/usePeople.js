@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { decodeHtml, formatPersonName, isDutchMobilePhone } from '@/utils/formatters';
 import { trackNoteAdded } from '@/hooks/useEngagementTracking';
@@ -14,6 +14,8 @@ export const peopleKeys = {
   detail: (id) => [...peopleKeys.details(), id],
   timeline: (id) => [...peopleKeys.detail(id), 'timeline'],
   todos: (id) => [...peopleKeys.detail(id), 'todos'],
+  search: (query) => [...peopleKeys.all, 'search', query],
+  reference: (id) => [...peopleKeys.all, 'reference', id],
 };
 
 // Transform person data to include thumbnail and other computed fields
@@ -84,6 +86,65 @@ export function usePeople(params = {}, options = {}) {
     },
     enabled,
   });
+}
+
+export function usePersonSearch(query, options = {}) {
+  const { enabled = true, ...queryOptions } = options;
+  const searchQuery = typeof query === 'string' ? query.trim() : '';
+
+  return useQuery({
+    queryKey: peopleKeys.search(searchQuery),
+    queryFn: async () => {
+      const response = await wpApi.getPeople({
+        search: searchQuery,
+        per_page: 10,
+        _embed: 'wp:featuredmedia',
+        _fields: 'id,title,_links,_embedded',
+      });
+
+      return response.data.map((person) => {
+        const thumbnail = person._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.thumbnail?.source_url
+          || person._embedded?.['wp:featuredmedia']?.[0]?.source_url
+          || null;
+
+        return {
+          id: Number(person.id),
+          name: decodeHtml(person.title?.rendered || ''),
+          thumbnail,
+        };
+      });
+    },
+    enabled: enabled && searchQuery.length >= 2,
+    staleTime: 60 * 1000,
+    ...queryOptions,
+  });
+}
+
+export function usePeopleByIds(personIds = [], options = {}) {
+  const { enabled = true } = options;
+  const uniqueIds = Array.from(new Set(personIds.map(Number).filter(id => id > 0)));
+  const queries = useQueries({
+    queries: uniqueIds.map(personId => ({
+      queryKey: peopleKeys.reference(personId),
+      queryFn: async () => {
+        const response = await wpApi.getPerson(personId, {
+          _fields: 'id,title,birth_year,is_deceased',
+        });
+        return response.data;
+      },
+      enabled,
+      retry: false,
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+
+  return queries.flatMap((query) => (
+    query.data ? [{
+      ...query.data,
+      id: Number(query.data.id),
+      name: decodeHtml(query.data.title?.rendered || ''),
+    }] : []
+  ));
 }
 
 /**
