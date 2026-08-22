@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.27.2] - 2026-08-22
+
+### Fixed
+
+- De accountkaart op een persoon toont alle ingebouwde en aangepaste Rondo-rollen met hun beheerlabels, waaronder de rol **Wedstrijdzaken**.
+
 ## [34.27.1] - 2026-08-22
 
 ### Fixed
