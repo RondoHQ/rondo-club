@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.28.5] - 2026-08-22
+
+### Fixed
+
+- Sponsoraccounts die ook ouder zijn landen weer op **Mijn inschrijftaken**; alleen sponsoren zonder ouderrol landen standaard op **Mijn gegevens**.
+
 ## [34.28.4] - 2026-08-22
 
 ### Changed

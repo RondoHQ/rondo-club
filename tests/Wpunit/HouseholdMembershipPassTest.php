@@ -118,6 +118,31 @@ class HouseholdMembershipPassTest extends RondoTestCase {
 			$person['sponsor_organization']
 		);
 		$this->assertTrue( $user['is_sponsor'] );
+		$this->assertFalse( $user['is_parent'] );
+		$this->assertFalse( $user['is_kader'] );
+	}
+
+	public function test_sponsor_parent_receives_parent_landing_flag(): void {
+		$person_id = $this->createPerson(
+			[ 'post_title' => 'Sponsor Ouder' ],
+			[
+				'person_type' => 'member',
+				'first_name'  => 'Sponsor',
+				'last_name'   => 'Ouder',
+			]
+		);
+		$child_id  = $this->minorPerson( 'Kind van Sponsor', [ 'type-lid' => 'Bondslid' ] );
+		$this->addChild( $person_id, $child_id );
+		$this->createSponsor( 'Ouderbedrijf BV', 'awc_sponsor', $person_id );
+
+		$user_id = $this->createRondoUser( [ 'user_login' => 'sponsor_parent_landing' ] );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+		wp_set_current_user( $user_id );
+
+		$user = ( new UserSettings() )->get_current_user_data( $user_id );
+
+		$this->assertTrue( $user['is_sponsor'] );
+		$this->assertTrue( $user['is_parent'] );
 		$this->assertFalse( $user['is_kader'] );
 	}
 

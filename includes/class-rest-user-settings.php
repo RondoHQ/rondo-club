@@ -8,6 +8,8 @@
 
 namespace Rondo\REST;
 
+use Rondo\People\ParentRelationshipService;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -1177,6 +1179,7 @@ class UserSettings extends Base {
 			|| current_user_can( 'vrijwilligers' );
 
 		$person_id           = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+		$is_parent           = $person_id ? ( new ParentRelationshipService() )->has_current_child( $person_id ) : false;
 		$pending_guardian    = \Rondo\Users\GuardianAccountService::pending_for_user( $user_id );
 		$linked_person_name  = null;
 		$linked_person_photo = null;
@@ -1208,6 +1211,7 @@ class UserSettings extends Base {
 			'has_extra_roles'               => $has_extra_roles,
 			'is_kader'                      => $is_kader,
 			'is_sponsor'                    => $person_id ? \Rondo\Core\SponsorStatus::is_sponsor( $person_id ) : false,
+			'is_parent'                     => $is_parent,
 			'can_edit_people'               => \Rondo\Core\AccessControl::can_edit_people(),
 			'can_edit_person_contact'       => \Rondo\Core\AccessControl::can_edit_person_contact(),
 			'can_manage_sponsors'           => \Rondo\Core\AccessControl::can_manage_sponsors(),
