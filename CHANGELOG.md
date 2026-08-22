@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.28.4] - 2026-08-22
+
+### Changed
+
+- De sponsorweergave in **Mijn gegevens** markeert het bedrijf als **Sponsor** en de gekoppelde persoon als **Contactpersoon**.
+
 ## [34.28.3] - 2026-08-22
 
 ### Removed
