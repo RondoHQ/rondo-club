@@ -45,6 +45,7 @@ export default function AccountCard({ personId, personData }) {
   const welcomeEmailSentAt = personData?.welcome_email_sent_at;
   const hasValidWelcomeEmailSentAt = !!(welcomeEmailSentAt && isValidDate(welcomeEmailSentAt));
   const linkedUserRoles = personData?.linked_user_roles;
+  const linkedUserRoleLabels = personData?.linked_user_role_labels || {};
 
   // Check if person has an email address
   const hasEmail = !!(personData?.fields?.email_1?.trim());
@@ -115,7 +116,7 @@ export default function AccountCard({ personId, personData }) {
                   key={role}
                   className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300"
                 >
-                  {ROLE_LABELS[role] || role}
+                  {linkedUserRoleLabels[role] || ROLE_LABELS[role] || role}
                 </span>
               ))}
             </div>

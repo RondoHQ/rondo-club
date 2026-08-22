@@ -972,12 +972,16 @@ class People extends Base {
 		if ( $data['linked_user_id'] && current_user_can( 'manage_options' ) ) {
 			$user = get_user_by( 'ID', $data['linked_user_id'] );
 			if ( $user ) {
-				$data['linked_user_roles'] = array_values(
-					array_intersect(
-						$user->roles,
-						[ 'rondo_user', 'rondo_fairplay', 'rondo_vog', 'rondo_financieel', 'rondo_financieel_lezen', 'rondo_toegangscontrole', 'rondo_ledenadministratie', 'rondo_sponsorbeheerder', 'rondo_bestuur', 'administrator' ]
-					)
+				$available_roles                  = \Rondo\Core\UserRoles::get_all_roles();
+				$available_roles['administrator'] = [ __( 'Admin', 'rondo' ), [] ];
+				$data['linked_user_roles']        = array_values(
+					array_intersect( (array) $user->roles, array_keys( $available_roles ) )
 				);
+				$data['linked_user_role_labels']  = [];
+
+				foreach ( $data['linked_user_roles'] as $role_slug ) {
+					$data['linked_user_role_labels'][ $role_slug ] = $available_roles[ $role_slug ][0];
+				}
 			}
 		}
 
