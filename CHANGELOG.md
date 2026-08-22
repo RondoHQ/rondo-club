@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.28.3] - 2026-08-22
+
+### Removed
+
+- De melding “Klaar voor offline gebruik” verschijnt niet meer nadat de appcache gereed is.
+
 ## [34.28.2] - 2026-08-22
 
 ### Fixed
