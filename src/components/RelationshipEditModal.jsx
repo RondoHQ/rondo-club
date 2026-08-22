@@ -102,7 +102,8 @@ export function SearchablePersonSelector({ value, onChange, people, isLoading, e
             onFocus={() => setIsOpen(true)}
             placeholder="Zoek naar een persoon..."
             className="input"
-            disabled={isLoading}
+            autoFocus
+            aria-busy={isLoading}
           />
         )}
       </div>
@@ -112,7 +113,9 @@ export function SearchablePersonSelector({ value, onChange, people, isLoading, e
           ref={dropdownRef}
           className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto"
         >
-          {filteredPeople.length > 0 ? (
+          {isLoading ? (
+            <p className="px-4 py-2 text-gray-500 dark:text-gray-400 text-sm">Personen laden…</p>
+          ) : filteredPeople.length > 0 ? (
             filteredPeople.map(person => (
               <button
                 key={person.id}

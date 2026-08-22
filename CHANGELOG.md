@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.28.9] - 2026-08-22
+
+### Fixed
+
+- Het zoekveld voor een bestaande persoon bij het toevoegen van een relatie is direct selecteerbaar en toont een laadstatus zolang de personenlijst wordt opgehaald.
+
 ## [34.28.8] - 2026-08-22
 
 ### Changed
