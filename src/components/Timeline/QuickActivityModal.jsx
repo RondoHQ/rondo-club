@@ -1,6 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { X, Phone, Mail, Users, Coffee, Utensils, FileText, MessageCircle, Video } from 'lucide-react';
-import { usePeople } from '@/hooks/usePeople';
+import { usePeopleByIds, usePersonSearch } from '@/hooks/usePeople';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { isRichTextEmpty } from '@/utils/richTextUtils';
 
 const RichTextEditor = lazy(() => import('@/components/RichTextEditor'));
@@ -17,16 +18,31 @@ const ACTIVITY_TYPES = [
   { id: 'note', label: 'Overig', icon: FileText },
 ];
 
-export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoading, personId, initialData = null, activity = null }) {
+export default function QuickActivityModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  isLoading,
+  personId,
+  initialData = null,
+  activity = null,
+}) {
   const [activityType, setActivityType] = useState('call');
   const [activityDate, setActivityDate] = useState('');
   const [activityTime, setActivityTime] = useState('');
   const [content, setContent] = useState('');
   const [selectedParticipants, setSelectedParticipants] = useState([]);
+  const [selectedPeople, setSelectedPeople] = useState([]);
   const [showParticipantSelect, setShowParticipantSelect] = useState(false);
   const [participantSearch, setParticipantSearch] = useState('');
-
-  const { data: allPeople } = usePeople({}, { enabled: isOpen });
+  const trimmedParticipantSearch = participantSearch.trim();
+  const debouncedParticipantSearch = useDebouncedValue(trimmedParticipantSearch);
+  const participantQuery = usePersonSearch(debouncedParticipantSearch, {
+    enabled: isOpen && showParticipantSelect,
+  });
+  const isSearchingParticipants = trimmedParticipantSearch !== debouncedParticipantSearch
+    || participantQuery.isFetching;
+  const referencedSelectedPeople = usePeopleByIds(selectedParticipants, { enabled: isOpen });
   
   // Determine if we're in edit mode
   const isEditing = !!activity;
@@ -40,24 +56,29 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
       
       // If editing an existing activity, use its data
       if (activity) {
+        const participantIds = (activity.participants || []).map(Number);
         setActivityDate(activity.activity_date || today);
         setActivityTime(activity.activity_time || '');
         setContent(activity.content || '');
-        setSelectedParticipants(activity.participants || []);
+        setSelectedParticipants(participantIds);
+        setSelectedPeople([]);
         setActivityType(activity.activity_type || 'note');
       }
       // If initial data is provided (e.g., from todo conversion), use it to prefill the form
       else if (initialData) {
+        const participantIds = (initialData.participants || []).map(Number);
         setActivityDate(initialData.activity_date || today);
         setActivityTime(initialData.activity_time || currentTime);
         setContent(initialData.content || '');
-        setSelectedParticipants(initialData.participants || []);
+        setSelectedParticipants(participantIds);
+        setSelectedPeople([]);
         setActivityType(initialData.activity_type || 'note');
       } else {
         setActivityDate(today);
         setActivityTime(currentTime);
         setContent('');
         setSelectedParticipants([]);
+        setSelectedPeople([]);
         setActivityType('call');
       }
     }
@@ -65,14 +86,15 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
 
   if (!isOpen) return null;
 
-  // Filter people for participant search (exclude current person)
-  const availablePeople = (allPeople || []).filter(
+  const availablePeople = (participantQuery.data || []).filter(
     person => person.id.toString() !== personId?.toString()
   );
-
-  const filteredPeople = availablePeople.filter(person =>
-    person.name?.toLowerCase().includes(participantSearch.toLowerCase())
+  const selectedPeopleById = new Map(
+    [...referencedSelectedPeople, ...selectedPeople].map(person => [Number(person.id), person])
   );
+  const selectedPeopleForDisplay = selectedParticipants
+    .map(participantId => selectedPeopleById.get(Number(participantId)))
+    .filter(Boolean);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -88,6 +110,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
     
     setContent('');
     setSelectedParticipants([]);
+    setSelectedPeople([]);
     setActivityDate(new Date().toISOString().split('T')[0]);
     setActivityTime(new Date().toTimeString().slice(0, 5));
   };
@@ -102,20 +125,23 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
     onClose();
   };
 
-  const toggleParticipant = (personId) => {
-    setSelectedParticipants(prev =>
-      prev.includes(personId)
-        ? prev.filter(id => id !== personId)
-        : [...prev, personId]
+  const toggleParticipant = (person) => {
+    const participantId = Number(person.id);
+    const isSelected = selectedParticipants.includes(participantId);
+
+    setSelectedParticipants(prev => isSelected
+      ? prev.filter(id => id !== participantId)
+      : [...prev, participantId]
+    );
+    setSelectedPeople(prev => isSelected
+      ? prev.filter(item => Number(item.id) !== participantId)
+      : [...prev.filter(item => Number(item.id) !== participantId), person]
     );
   };
 
   const removeParticipant = (personId) => {
     setSelectedParticipants(prev => prev.filter(id => id !== personId));
-  };
-
-  const getSelectedPeople = () => {
-    return availablePeople.filter(p => selectedParticipants.includes(p.id));
+    setSelectedPeople(prev => prev.filter(person => Number(person.id) !== Number(personId)));
   };
 
   const formatDateForInput = (dateString) => {
@@ -212,9 +238,9 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                 </label>
 
                 {/* Selected participants */}
-                {getSelectedPeople().length > 0 && (
+                {selectedPeopleForDisplay.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {getSelectedPeople().map((person) => (
+                    {selectedPeopleForDisplay.map((person) => (
                       <span
                         key={person.id}
                         className="inline-flex items-center gap-1 px-2 py-1 bg-cyan-100 dark:bg-deep-midnight text-bright-cobalt dark:text-electric-cyan-light rounded-full text-sm"
@@ -257,18 +283,30 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                         />
                       </div>
                       <div className="max-h-48 overflow-y-auto">
-                        {filteredPeople.length === 0 ? (
+                        {trimmedParticipantSearch.length < 2 ? (
+                          <div className="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+                            Typ minimaal 2 tekens
+                          </div>
+                        ) : isSearchingParticipants ? (
+                          <div className="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+                            Zoeken…
+                          </div>
+                        ) : participantQuery.isError ? (
+                          <div className="p-3 text-sm text-red-600 dark:text-red-400 text-center">
+                            Zoeken is niet gelukt
+                          </div>
+                        ) : availablePeople.length === 0 ? (
                           <div className="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">
                             Geen personen gevonden
                           </div>
                         ) : (
-                          filteredPeople.map((person) => {
+                          availablePeople.map((person) => {
                             const isSelected = selectedParticipants.includes(person.id);
                             return (
                               <button
                                 key={person.id}
                                 type="button"
-                                onClick={() => toggleParticipant(person.id)}
+                                onClick={() => toggleParticipant(person)}
                                 className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-900 dark:text-gray-50 ${
                                   isSelected ? 'bg-cyan-50 dark:bg-deep-midnight' : ''
                                 }`}

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.28.10] - 2026-08-22
+
+### Changed
+
+- Personen zoeken bij relaties en activiteitdeelnemers gebruikt nu een gedebouncete databasezoekopdracht met maximaal tien resultaten; de persoonsdetailpagina downloadt niet langer de volledige personenlijst.
+
 ## [34.28.9] - 2026-08-22
 
 ### Fixed

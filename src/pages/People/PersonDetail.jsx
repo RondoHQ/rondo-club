@@ -6,7 +6,7 @@ import {
   CheckSquare2, StickyNote, ExternalLink, Gavel, RefreshCw, CreditCard,
   CalendarClock, GitMerge
 } from 'lucide-react';
-import { peopleKeys, usePerson, usePersonTimeline, useDeleteNote, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople, useAddParentRelationship } from '@/hooks/usePeople';
+import { peopleKeys, usePerson, usePersonTimeline, useDeleteNote, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, useAddParentRelationship, usePeopleByIds } from '@/hooks/usePeople';
 import TimelineView from '@/components/Timeline/TimelineView';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
@@ -191,7 +191,6 @@ export default function PersonDetail() {
   const deleteActivity = useDeleteActivity();
   const deleteTodo = useDeleteTodo();
   const addParentRelationship = useAddParentRelationship(id);
-  const { data: allPeople, isLoading: isPeopleLoading } = usePeople();
 
   const handleRefresh = async () => {
     await Promise.all([
@@ -934,12 +933,28 @@ export default function PersonDetail() {
     })),
   });
 
-  // Create a map of person ID to age for sorting (using birth_year from allPeople)
+  const referencedPersonIds = useMemo(() => {
+    const ids = new Set();
+
+    (person?.fields?.relationships || []).forEach((relationship) => {
+      if (relationship.related_person_id) ids.add(Number(relationship.related_person_id));
+    });
+
+    (timeline || []).forEach((item) => {
+      (item.participants || []).forEach((participantId) => ids.add(Number(participantId)));
+    });
+
+    ids.delete(Number(id));
+    return Array.from(ids).filter(personId => personId > 0);
+  }, [id, person?.fields?.relationships, timeline]);
+
+  const referencedPeople = usePeopleByIds(referencedPersonIds);
+
+  // Create a map of person ID to age for sorting from only the linked people.
   const personAgeMap = useMemo(() => {
     const ageMap = {};
-    if (!allPeople) return ageMap;
 
-    allPeople.forEach(p => {
+    referencedPeople.forEach(p => {
       if (p.birth_year) {
         const currentYear = new Date().getFullYear();
         ageMap[p.id] = currentYear - p.birth_year;
@@ -948,18 +963,17 @@ export default function PersonDetail() {
       }
     });
     return ageMap;
-  }, [allPeople]);
+  }, [referencedPeople]);
 
-  // Create a map of person ID to deceased status (using is_deceased from allPeople)
+  // Create a map of person ID to deceased status from only the linked people.
   const personDeceasedMap = useMemo(() => {
     const map = {};
-    if (!allPeople) return map;
 
-    allPeople.forEach(p => {
+    referencedPeople.forEach(p => {
       map[p.id] = p.is_deceased || false;
     });
     return map;
-  }, [allPeople]);
+  }, [referencedPeople]);
 
   // Sort relationships by age (descending - oldest first)
   const sortedRelationships = useMemo(() => {
@@ -2000,8 +2014,7 @@ export default function PersonDetail() {
               onEdit={canEditPeople ? handleEditTimelineItem : undefined}
               onDelete={canEditPeople ? handleDeleteTimelineItem : undefined}
               onToggleTodo={handleToggleTodo}
-              personId={id}
-              allPeople={allPeople || []}
+              people={referencedPeople}
             />
           </div>
         )}
@@ -2333,8 +2346,6 @@ export default function PersonDetail() {
               canAddParent={Boolean(canEditPeople && currentUser?.can_access_ledenadministratie && person?.fields?.knvb_id)}
               isLoading={addParentRelationship.isPending}
               personId={id}
-              allPeople={allPeople || []}
-              isPeopleLoading={isPeopleLoading}
             />
           )}
 
@@ -2358,8 +2369,6 @@ export default function PersonDetail() {
               isLoading={isSavingRelationship}
               relationship={editingRelationship}
               personId={id}
-              allPeople={allPeople || []}
-              isPeopleLoading={isPeopleLoading}
             />
           )}
 
