@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.28.6] - 2026-08-22
+
+### Changed
+
+- Een sponsorcontact dat ook ouder is krijgt in **Mijn gegevens** het label **Contactpersoon en ouder**.
+
 ## [34.28.5] - 2026-08-22
 
 ### Fixed
