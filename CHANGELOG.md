@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.25.0] - 2026-08-22
+
+### Added
+
+- Beheerders kunnen een goedgekeurde stabiele en betaversie voor Rondo Player instellen en per scherm kiezen tussen stabiele updates, beta-updates of geen automatische updates.
+- Gekoppelde players ontvangen uitsluitend de gekozen, expliciet goedgekeurde doelversie; ondertekende installatie, health-check en automatische rollback worden door Rondo Player uitgevoerd.
+
 ## [34.24.0] - 2026-08-21
 
 ### Added
