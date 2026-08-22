@@ -309,6 +309,10 @@ button, [role="tab"], [role="button"], summary {
   @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-xs focus:outline-hidden focus:ring-[3px] focus:ring-cyan-300/50 focus:border-electric-cyan dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:focus:ring-cyan-500/30 dark:focus:border-electric-cyan-light;
 }
 
+.input-leading-icon {
+  @apply pl-9;
+}
+
 .label {
   @apply block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300;
 }

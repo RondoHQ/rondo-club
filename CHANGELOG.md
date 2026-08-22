@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.28.2] - 2026-08-22
+
+### Fixed
+
+- Zoekvelden binnen sponsoren houden voldoende ruimte tussen het zoekicoon en de invoertekst.
+
 ## [34.28.1] - 2026-08-22
 
 ### Fixed

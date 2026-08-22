@@ -269,7 +269,7 @@ export default function SponsorDetail() {
         {isNew ? <p className="rounded-lg bg-gray-50 p-3 text-sm text-gray-500 dark:bg-gray-800">Sla de sponsor eerst op om een persoon te koppelen.</p> : (
           <div className="relative max-w-xl">
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-            <input className="input w-full pl-9" value={personSearch} onChange={(event) => setPersonSearch(event.target.value)} placeholder="Zoek een bestaande persoon" disabled={form.sponsor_type === 'person' && form.contacts.length > 0} />
+            <input className="input input-leading-icon w-full" value={personSearch} onChange={(event) => setPersonSearch(event.target.value)} placeholder="Zoek een bestaande persoon" disabled={form.sponsor_type === 'person' && form.contacts.length > 0} />
             {personSearch.trim().length >= 2 && <div className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">{personOptions.map((person) => <button key={person.id} type="button" className="block w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => linkPerson(person)}><span className="font-medium">{person.name}</span><span className="ml-2 text-xs text-gray-500">{person.email}</span></button>)}</div>}
           </div>
         )}
