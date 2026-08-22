@@ -98,7 +98,7 @@ class HouseholdMembershipPassTest extends RondoTestCase {
 				'last_name'   => 'Contact',
 			]
 		);
-		$sponsor_id = $this->createSponsor( 'Voorbeeldbedrijf BV', 'awc_sponsor', $person_id );
+		$sponsor_id = $this->createSponsor( 'Voorbeeld & Partner BV', 'awc_sponsor', $person_id );
 		$user_id    = $this->createRondoUser( [ 'user_login' => 'sponsor_personal_landing' ] );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
 		AccessControl::flush_visible_person_ids_cache();
@@ -111,7 +111,7 @@ class HouseholdMembershipPassTest extends RondoTestCase {
 		$this->assertSame(
 			[
 				'id'            => $sponsor_id,
-				'name'          => 'Voorbeeldbedrijf BV',
+				'name'          => 'Voorbeeld & Partner BV',
 				'logo_url'      => null,
 				'can_edit_logo' => true,
 			],
