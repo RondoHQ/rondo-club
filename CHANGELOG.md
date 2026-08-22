@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.27.0] - 2026-08-22
+
+### Added
+
+- **Mijn gegevens** toont voor Bondslid-, Verenigingslid- en sponsorprofielen direct de juiste leden-, Businessclub- of sponsorpas, ook voor zichtbare kinderen onder 18.
+
+### Changed
+
+- Gebruikers met een gekoppeld persoonsprofiel houden **Mijn gegevens** in hun persoonlijke menu wanneer zij daarnaast een kader- of beheerrol hebben.
+
 ## [34.26.0] - 2026-08-22
 
 ### Added

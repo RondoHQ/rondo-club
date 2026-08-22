@@ -54,7 +54,7 @@ import { prmApi } from '@/api/client';
 
 const navigation = [
   { name: 'Mijn inschrijftaken', href: '/vrijwillig', icon: HeartHandshake, personal: true },
-  { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, memberOnly: true, personal: true },
+  { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, requiresLinkedPerson: true, personal: true },
   { name: 'Dashboard', href: '/', icon: Home, requiresKader: true },
   { name: 'Relaties', href: '/people', icon: Users, requiresKader: true },
   { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
@@ -199,6 +199,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const visibleNav = navigation.filter((item) => {
     // Enforce mobile-only items regardless of role.
     if (item.mobileOnly && !mobile) return false;
+    if (item.requiresLinkedPerson && !currentUser?.linked_person_id) return false;
     if (isAdmin) return true;
     if (item.adminOnly && !isAdmin) return false;
     if (item.requiresFairplay && !canAccessFairplay) return false;
@@ -211,8 +212,6 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresNarrowcasting && !canAccessNarrowcasting) return false;
     if (item.requiresSponsors && !canManageSponsors) return false;
     if (item.requiresKader && !isKader) return false;
-    // Kader normally does not need the member-facing household page.
-    if (item.memberOnly && isKader) return false;
     return true;
   });
 
