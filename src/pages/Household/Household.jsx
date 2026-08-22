@@ -149,7 +149,7 @@ function PersonCard({ person, isSelf, isParent }) {
       </div>
 
       {membershipPass ? (
-        <div className="mt-4 flex flex-col gap-3 rounded-lg border border-cyan-100 bg-cyan-50/60 p-4 dark:border-gray-700 dark:bg-gray-800/60 sm:flex-row sm:items-center">
+        <div className="mt-4 flex max-w-3xl flex-col gap-3 rounded-lg border border-cyan-100 bg-cyan-50/60 p-4 dark:border-gray-700 dark:bg-gray-800/60 sm:flex-row sm:items-center">
           <div className="flex min-w-0 flex-1 items-start gap-3">
             <IdCard className="mt-0.5 h-5 w-5 shrink-0 text-bright-cobalt dark:text-electric-cyan" aria-hidden="true" />
             <div className="min-w-0">
