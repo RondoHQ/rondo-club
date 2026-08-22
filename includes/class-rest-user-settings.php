@@ -1207,6 +1207,7 @@ class UserSettings extends Base {
 			'is_admin'                      => $is_admin,
 			'has_extra_roles'               => $has_extra_roles,
 			'is_kader'                      => $is_kader,
+			'is_sponsor'                    => $person_id ? \Rondo\Core\SponsorStatus::is_sponsor( $person_id ) : false,
 			'can_edit_people'               => \Rondo\Core\AccessControl::can_edit_people(),
 			'can_edit_person_contact'       => \Rondo\Core\AccessControl::can_edit_person_contact(),
 			'can_manage_sponsors'           => \Rondo\Core\AccessControl::can_manage_sponsors(),

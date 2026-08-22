@@ -102,6 +102,13 @@ export const prmApi = {
   getSponsor: (id) => api.get(`/rondo/v1/sponsors/${id}`),
   createSponsor: (data) => api.post('/rondo/v1/sponsors', data),
   updateSponsor: (id, data) => api.patch(`/rondo/v1/sponsors/${id}`, data),
+  uploadSponsorLogo: (id, file) => {
+    const formData = new FormData();
+    formData.append('logo', file);
+    return api.post(`/rondo/v1/sponsors/${id}/logo/upload`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
   archiveSponsor: (id) => api.delete(`/rondo/v1/sponsors/${id}`),
   createSponsorContact: (id, data) => api.post(`/rondo/v1/sponsors/${id}/contacts`, data),
   searchSponsorPeople: (search) => api.get('/rondo/v1/sponsor-person-options', { params: { search } }),

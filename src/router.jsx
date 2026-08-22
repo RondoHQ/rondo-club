@@ -168,9 +168,9 @@ function VrijwilligersRoute({ children }) {
 }
 
 /**
- * Kader = iedereen met een staf-rol. Plain leden zonder expliciete rechten
- * krijgen geen "Geen toegang"-scherm maar worden meteen doorgestuurd naar hun
- * eigen vrijwillig-aanmelding.
+ * Kader = iedereen met een staf-rol. Accounts zonder expliciete rechten krijgen
+ * geen "Geen toegang"-scherm: sponsoren gaan naar hun gegevens en andere leden
+ * naar hun eigen vrijwillig-aanmelding.
  *
  * `is_kader` wordt server-side bepaald. Leid het hier niet opnieuw af: de
  * zijbalk gebruikt hetzelfde veld, en twee definities lopen uiteen — dan landt
@@ -183,7 +183,9 @@ function isKaderUser(user) {
 function KaderOrVrijwilligRedirect({ children }) {
   const { data: user, isLoading } = useCurrentUser();
   if (isLoading) return <PageLoadingSpinner />;
-  if (!isKaderUser(user)) return <Navigate to="/vrijwillig" replace />;
+  if (!isKaderUser(user)) {
+    return <Navigate to={user?.is_sponsor ? '/mijn-gegevens' : '/vrijwillig'} replace />;
+  }
   return children;
 }
 
@@ -241,7 +243,7 @@ const router = createBrowserRouter([
       {
         element: <ProtectedLayout />,
         children: [
-          // Dashboard — plain leden zonder kader-rol redirecten naar /vrijwillig
+          // Persoonlijke landing voor accounts zonder kaderrol; kader ziet het dashboard.
           { index: true, element: <KaderOrVrijwilligRedirect><Dashboard /></KaderOrVrijwilligRedirect> },
 
           // People routes — kader only (plain leden zien hun eigen gegevens via /profile of /vrijwillig)

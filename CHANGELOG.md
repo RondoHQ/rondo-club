@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.28.0] - 2026-08-22
+
+### Added
+
+- Sponsoren kunnen bij **Mijn gegevens** het logo van de sponsororganisatie achter hun pas toevoegen of vervangen.
+
+### Changed
+
+- Sponsoraccounts zonder kaderrol landen na inloggen direct op **Mijn gegevens** in plaats van **Mijn inschrijftaken**.
+
 ## [34.27.2] - 2026-08-22
 
 ### Fixed

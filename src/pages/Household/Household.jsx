@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, ExternalLink } from 'lucide-react';
+import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, ExternalLink, Building2, ImagePlus, LoaderCircle } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useUploadSponsorLogo } from '@/hooks/useSponsors';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { formatPersonName, parseFieldDate } from '@/utils/formatters';
 import { format } from '@/utils/dateFormat';
@@ -45,10 +46,69 @@ function Detail({ icon: Icon, label, value }) {
   );
 }
 
+function SponsorLogoEditor({ organization }) {
+  const fileRef = useRef(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  const uploadLogo = useUploadSponsorLogo();
+
+  const handleLogoChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setErrorMessage('');
+    try {
+      await uploadLogo.mutateAsync({ id: organization.id, file });
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message || 'Het logo kon niet worden opgeslagen.');
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  return (
+    <div className="mt-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+      <div className="flex items-start gap-3">
+        <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" aria-hidden="true" />
+        <div>
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">{organization.name}</h3>
+          <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400">Sponsororganisatie</p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        className="mt-4 flex min-h-36 w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white p-4 transition-colors hover:border-bright-cobalt focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bright-cobalt disabled:cursor-wait disabled:opacity-70 dark:border-gray-600 dark:bg-gray-900"
+        onClick={() => fileRef.current?.click()}
+        disabled={uploadLogo.isPending}
+      >
+        {uploadLogo.isPending ? (
+          <span className="flex items-center gap-2 text-sm text-gray-500">
+            <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" />
+            Logo uploaden…
+          </span>
+        ) : organization.logo_url ? (
+          <img src={organization.logo_url} alt={`Logo van ${organization.name}`} className="max-h-32 max-w-full object-contain" />
+        ) : (
+          <span className="flex flex-col items-center gap-2 text-sm text-gray-500">
+            <ImagePlus className="h-8 w-8" aria-hidden="true" />
+            Bedrijfslogo toevoegen
+          </span>
+        )}
+      </button>
+      <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml" className="hidden" onChange={handleLogoChange} />
+      <p className="mt-2 text-xs text-gray-500">
+        Klik op het logo om het te vervangen. JPEG, PNG, GIF, WebP of SVG, maximaal 5 MB.
+      </p>
+      {errorMessage ? <p className="mt-2 text-sm text-red-600 dark:text-red-400">{errorMessage}</p> : null}
+    </div>
+  );
+}
+
 function PersonCard({ person, isSelf }) {
   const fields = person.fields || {};
   const name = formatPersonName(fields.first_name, fields.infix, fields.last_name) || 'Onbekend';
   const membershipPass = person.membership_pass;
+  const sponsorOrganization = person.sponsor_organization;
 
   return (
     <div className="card p-5">
@@ -92,6 +152,10 @@ function PersonCard({ person, isSelf }) {
             <ExternalLink className="h-4 w-4" aria-hidden="true" />
           </a>
         </div>
+      ) : null}
+
+      {isSelf && sponsorOrganization?.can_edit_logo ? (
+        <SponsorLogoEditor organization={sponsorOrganization} />
       ) : null}
     </div>
   );

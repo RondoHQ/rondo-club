@@ -272,6 +272,34 @@ class AccessControl {
 	}
 
 	/**
+	 * Check whether a user may replace one sponsor organization's logo.
+	 *
+	 * Sponsor managers retain their broad access. A regular account may only
+	 * update the active sponsor organization that supplies the pass belonging
+	 * to its own linked person.
+	 *
+	 * @param int      $sponsor_id Sponsor post ID.
+	 * @param int|null $user_id    User ID (optional, defaults to current user).
+	 * @return bool Whether the user may replace this logo.
+	 */
+	public static function can_edit_sponsor_logo( int $sponsor_id, $user_id = null ): bool {
+		$user_id = $user_id ?? get_current_user_id();
+		if ( ! $user_id ) {
+			return false;
+		}
+
+		if ( self::can_manage_sponsors( $user_id ) ) {
+			return true;
+		}
+
+		$person_id    = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+		$relationship = $person_id ? \Rondo\Sponsors\Relations::pass_relationship_for_person( $person_id ) : null;
+
+		return $relationship !== null
+			&& (int) ( $relationship['sponsor_id'] ?? 0 ) === $sponsor_id;
+	}
+
+	/**
 	 * Check if a user may edit a specific person record.
 	 *
 	 * Full people managers may edit every person. Sponsor managers may edit

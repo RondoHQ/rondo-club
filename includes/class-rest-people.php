@@ -773,8 +773,8 @@ class People extends Base {
 		$people = [];
 		foreach ( $posts as $post ) {
 			$people[] = [
-				'id'              => $post->ID,
-				'fields'          => array_intersect_key(
+				'id'                   => $post->ID,
+				'fields'               => array_intersect_key(
 					\Rondo\Fields\RestFields::for_post( 'person', $post->ID ),
 					array_flip(
 						array_map(
@@ -783,11 +783,38 @@ class People extends Base {
 						)
 					)
 				),
-				'membership_pass' => PublicMembershipPassPage::get_person_pass_summary( (int) $post->ID ),
+				'membership_pass'      => PublicMembershipPassPage::get_person_pass_summary( (int) $post->ID ),
+				'sponsor_organization' => $this->personal_sponsor_organization( (int) $post->ID ),
 			];
 		}
 
 		return rest_ensure_response( $people );
+	}
+
+	/** Return the active organization behind a person's sponsor pass. */
+	private function personal_sponsor_organization( int $person_id ): ?array {
+		$relationship = SponsorRelations::pass_relationship_for_person( $person_id );
+		$sponsor_id   = (int) ( $relationship['sponsor_id'] ?? 0 );
+		$sponsor      = $sponsor_id ? get_post( $sponsor_id ) : null;
+
+		if ( ! $sponsor || $sponsor->post_type !== 'rondo_sponsor' || $sponsor->post_status !== 'publish' ) {
+			return null;
+		}
+
+		$fields = \Rondo\Fields\Fields::all_for_post( $sponsor_id );
+		if ( (string) ( $fields['sponsor_type'] ?? 'organization' ) !== 'organization' ) {
+			return null;
+		}
+		if ( ! \Rondo\Core\AccessControl::can_edit_sponsor_logo( $sponsor_id ) ) {
+			return null;
+		}
+
+		return [
+			'id'            => $sponsor_id,
+			'name'          => get_the_title( $sponsor ),
+			'logo_url'      => get_the_post_thumbnail_url( $sponsor, 'medium_large' ) ?: null,
+			'can_edit_logo' => true,
+		];
 	}
 
 	/**
