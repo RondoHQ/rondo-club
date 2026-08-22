@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.27.1] - 2026-08-22
+
+### Fixed
+
+- De WordPress-testopstart in CI krijgt genoeg tijd op tragere gedeelde runners, zodat een geldige release niet vóór de eigenlijke tests wordt afgebroken.
+
 ## [34.27.0] - 2026-08-22
 
 ### Added
