@@ -2169,6 +2169,22 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'type' => 'time_picker',
           'wire_format' => 'H:i',
         ),
+        'update_channel' =>
+        array (
+          'canonical_name' => 'update_channel',
+          'choices' =>
+          array (
+            'beta' => 'Beta',
+            'off' => 'Uit',
+            'stable' => 'Stabiel',
+          ),
+          'default_value' => 'stable',
+          'key' => 'field_display_update_channel',
+          'label' => 'Updatekanaal',
+          'name' => 'update_channel',
+          'storage_name' => 'update_channel',
+          'type' => 'select',
+        ),
         'wake_time' =>
         array (
           'canonical_name' => 'wake_time',

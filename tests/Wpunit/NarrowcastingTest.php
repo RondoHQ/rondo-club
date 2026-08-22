@@ -25,6 +25,8 @@ class NarrowcastingTest extends RondoTestCase {
 		delete_option( 'rondo_narrowcasting_sportlink_club_code' );
 		delete_option( 'rondo_narrowcasting_matchday_cache' );
 		delete_option( 'rondo_narrowcasting_default_playlist_id' );
+		delete_option( 'rondo_player_stable_version' );
+		delete_option( 'rondo_player_beta_version' );
 		delete_option( 'rondo_finance_accent_color' );
 		delete_option( 'rondo_finance_accent_background_color' );
 		delete_transient( 'rondo_narrowcasting_matchday_refresh_lock' );
@@ -51,12 +53,13 @@ class NarrowcastingTest extends RondoTestCase {
 			'POST',
 			'/rondo/v1/narrowcasting/displays/claim',
 			[
-				'code'       => $code,
-				'title'      => 'Scherm kantine',
-				'location'   => 'Kantine',
-				'wake_time'  => '07:30',
-				'sleep_time' => '23:15',
-				'timezone'   => 'Europe/Amsterdam',
+				'code'           => $code,
+				'title'          => 'Scherm kantine',
+				'location'       => 'Kantine',
+				'wake_time'      => '07:30',
+				'sleep_time'     => '23:15',
+				'timezone'       => 'Europe/Amsterdam',
+				'update_channel' => 'stable',
 			]
 		);
 
@@ -85,11 +88,12 @@ class NarrowcastingTest extends RondoTestCase {
 			'POST',
 			"/rondo/v1/narrowcasting/displays/{$display_id}",
 			[
-				'title'      => 'Scherm clubhuis',
-				'location'   => 'Bestuurskamer',
-				'wake_time'  => '08:15',
-				'sleep_time' => '22:45',
-				'timezone'   => 'Europe/Brussels',
+				'title'          => 'Scherm clubhuis',
+				'location'       => 'Bestuurskamer',
+				'wake_time'      => '08:15',
+				'sleep_time'     => '22:45',
+				'timezone'       => 'Europe/Brussels',
+				'update_channel' => 'stable',
 			]
 		);
 		$this->assertSame( 200, $updated->get_status() );
@@ -109,6 +113,8 @@ class NarrowcastingTest extends RondoTestCase {
 		$this->assertSame( '08:15', $config->get_data()['wake_time'] );
 		$this->assertSame( '22:45', $config->get_data()['sleep_time'] );
 		$this->assertSame( 'Europe/Brussels', $config->get_data()['timezone'] );
+		$this->assertSame( 'stable', $config->get_data()['update']['channel'] );
+		$this->assertSame( '0.3.0', $config->get_data()['update']['target_version'] );
 		$this->assertStringContainsString( 'no-store', $config->get_headers()['Cache-Control'] );
 		$this->assertSame( 10, $config->get_data()['content_interval_seconds'] );
 
@@ -223,12 +229,16 @@ class NarrowcastingTest extends RondoTestCase {
 			[
 				'client_id'          => 'RouteSecret123',
 				'club_relation_code' => 'BBKX38Z',
+				'stable_version'     => '0.3.1',
+				'beta_version'       => '0.4.0',
 			]
 		);
 		$this->assertSame( 200, $settings->get_status() );
 		$this->assertTrue( $settings->get_data()['client_id_configured'] );
 		$this->assertSame( '••••••••', $settings->get_data()['client_id_masked'] );
 		$this->assertStringNotContainsString( 'RouteSecret123', wp_json_encode( $settings->get_data() ) );
+		$this->assertSame( '0.3.1', $settings->get_data()['player_updates']['stable_version'] );
+		$this->assertSame( '0.4.0', $settings->get_data()['player_updates']['beta_version'] );
 
 		$approve    = $this->dispatch(
 			'POST',
@@ -260,8 +270,37 @@ class NarrowcastingTest extends RondoTestCase {
 			]
 		);
 		$this->assertSame( 200, $claim->get_status() );
+		$token = $claim->get_data()['token'];
+
+		$config = $this->dispatch(
+			'GET',
+			'/rondo/v1/narrowcasting/devices/me/config',
+			[],
+			[ 'X-Rondo-Device-Token' => $token ]
+		);
+		$this->assertSame( 'stable', $config->get_data()['update']['channel'] );
+		$this->assertSame( '0.3.1', $config->get_data()['update']['target_version'] );
 
 		wp_set_current_user( $admin_id );
+		$beta = $this->dispatch(
+			'POST',
+			"/rondo/v1/narrowcasting/displays/{$display_id}",
+			[
+				'title'          => 'Bestuurskamer',
+				'update_channel' => 'beta',
+			]
+		);
+		$this->assertSame( 200, $beta->get_status() );
+		$this->assertSame( 'beta', $beta->get_data()['update_channel'] );
+		$this->assertSame( '0.4.0', $beta->get_data()['update_target_version'] );
+
+		$invalid_version = $this->dispatch(
+			'POST',
+			'/rondo/v1/narrowcasting/settings',
+			[ 'stable_version' => 'latest' ]
+		);
+		$this->assertSame( 400, $invalid_version->get_status() );
+
 		$invalid_command = $this->dispatch(
 			'POST',
 			"/rondo/v1/narrowcasting/displays/{$display_id}/commands",

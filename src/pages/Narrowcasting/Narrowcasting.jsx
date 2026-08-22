@@ -28,6 +28,13 @@ const defaultForm = {
   wake_time: '08:00',
   sleep_time: '23:00',
   timezone: 'Europe/Amsterdam',
+  update_channel: 'stable',
+};
+
+const updateChannelLabels = {
+  stable: 'Stabiel',
+  beta: 'Beta',
+  off: 'Uit',
 };
 
 const commandLabels = {
@@ -54,6 +61,14 @@ function errorMessage(error) {
   return error?.response?.data?.message || 'Er ging iets mis. Probeer het opnieuw.';
 }
 
+function versionNeedsUpdate(current, target) {
+  if (!current || !target) return false;
+  const parse = (value) => value.split('.').map(Number);
+  const left = parse(current);
+  const right = parse(target);
+  return right.some((part, index) => part > left[index] && right.slice(0, index).every((previous, previousIndex) => previous === left[previousIndex]));
+}
+
 function DisplayEditForm({ display, isPending, onCancel, onSave }) {
   const [values, setValues] = useState(() => ({
     title: display.name,
@@ -61,6 +76,7 @@ function DisplayEditForm({ display, isPending, onCancel, onSave }) {
     wake_time: display.wake_time,
     sleep_time: display.sleep_time,
     timezone: display.display_timezone || 'Europe/Amsterdam',
+    update_channel: display.update_channel || 'stable',
   }));
   const updateValue = (name, value) => setValues((current) => ({ ...current, [name]: value }));
 
@@ -93,6 +109,14 @@ function DisplayEditForm({ display, isPending, onCancel, onSave }) {
           <span className="mb-1 block font-medium text-gray-700 dark:text-gray-300">Tijdzone</span>
           <input className="input w-full" value={values.timezone} onChange={(event) => updateValue('timezone', event.target.value)} required />
         </label>
+        <label className="block text-sm sm:col-span-2">
+          <span className="mb-1 block font-medium text-gray-700 dark:text-gray-300">Automatische updates</span>
+          <select className="input w-full" value={values.update_channel} onChange={(event) => updateValue('update_channel', event.target.value)}>
+            <option value="stable">Stabiel — aanbevolen</option>
+            <option value="beta">Beta — nieuwe versies eerder testen</option>
+            <option value="off">Uit</option>
+          </select>
+        </label>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         <button type="submit" className="btn-primary text-sm" disabled={isPending}>{isPending ? 'Opslaan…' : 'Wijzigingen opslaan'}</button>
@@ -111,6 +135,7 @@ export default function Narrowcasting() {
   const [activeTab, setActiveTab] = useState('content');
   const [form, setForm] = useState(defaultForm);
   const [sportlinkForm, setSportlinkForm] = useState({ client_id: '', club_relation_code: '' });
+  const [updateForm, setUpdateForm] = useState({ stable_version: '0.3.0', beta_version: '' });
   const [notice, setNotice] = useState('');
   const [editingDisplayId, setEditingDisplayId] = useState(null);
 
@@ -139,6 +164,10 @@ export default function Narrowcasting() {
       ...current,
       club_relation_code: current.club_relation_code || settingsQuery.data.club_relation_code || '',
     }));
+    setUpdateForm({
+      stable_version: settingsQuery.data.player_updates?.stable_version || '0.3.0',
+      beta_version: settingsQuery.data.player_updates?.beta_version || '',
+    });
   }, [settingsQuery.data]);
 
   const refreshDisplays = () => queryClient.invalidateQueries({ queryKey: ['narrowcasting', 'displays'] });
@@ -194,6 +223,15 @@ export default function Narrowcasting() {
     },
   });
 
+  const updateSettingsMutation = useMutation({
+    mutationFn: (data) => prmApi.updateNarrowcastingSettings(data),
+    onSuccess: () => {
+      setNotice('De goedgekeurde player-versies zijn opgeslagen. Online players nemen de update vanzelf over.');
+      queryClient.invalidateQueries({ queryKey: ['narrowcasting', 'settings'] });
+      refreshDisplays();
+    },
+  });
+
   const matchdayRefreshMutation = useMutation({
     mutationFn: () => prmApi.refreshNarrowcastingMatchday(),
     onSuccess: () => {
@@ -230,6 +268,12 @@ export default function Narrowcasting() {
     settingsMutation.mutate(sportlinkForm);
   };
 
+  const submitUpdates = (event) => {
+    event.preventDefault();
+    setNotice('');
+    updateSettingsMutation.mutate(updateForm);
+  };
+
   const displays = displaysQuery.data || [];
   const mutationError = claimMutation.error
     || commandMutation.error
@@ -237,6 +281,7 @@ export default function Narrowcasting() {
     || assignPlaylistMutation.error
     || updateDisplayMutation.error
     || settingsMutation.error
+    || updateSettingsMutation.error
     || matchdayRefreshMutation.error;
   const sportlink = settingsQuery.data;
 
@@ -352,6 +397,48 @@ export default function Narrowcasting() {
       <section className="card p-6">
         <div className="flex items-start gap-3">
           <div className="rounded-lg bg-cyan-50 p-2 text-bright-cobalt dark:bg-gray-800 dark:text-electric-cyan">
+            <RefreshCw className="h-6 w-6" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Automatische player-updates</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Players installeren alleen ondertekende releases. Een update die niet gezond start wordt binnen twee minuten teruggedraaid.
+            </p>
+          </div>
+        </div>
+        <form onSubmit={submitUpdates} className="mt-5 grid gap-4 md:grid-cols-2">
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Stabiele versie</span>
+            <input
+              className="input w-full"
+              value={updateForm.stable_version}
+              onChange={(event) => setUpdateForm({ ...updateForm, stable_version: event.target.value })}
+              placeholder="0.3.0"
+              pattern="[0-9]+\\.[0-9]+\\.[0-9]+"
+              required
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Betaversie</span>
+            <input
+              className="input w-full"
+              value={updateForm.beta_version}
+              onChange={(event) => setUpdateForm({ ...updateForm, beta_version: event.target.value })}
+              placeholder="Leeg: geen beta-update"
+              pattern="[0-9]+\\.[0-9]+\\.[0-9]+"
+            />
+          </label>
+          <div className="md:col-span-2">
+            <button type="submit" className="btn-primary" disabled={updateSettingsMutation.isPending}>
+              {updateSettingsMutation.isPending ? 'Opslaan…' : 'Updateversies opslaan'}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className="card p-6">
+        <div className="flex items-start gap-3">
+          <div className="rounded-lg bg-cyan-50 p-2 text-bright-cobalt dark:bg-gray-800 dark:text-electric-cyan">
             <MonitorPlay className="h-6 w-6" />
           </div>
           <div>
@@ -373,6 +460,14 @@ export default function Narrowcasting() {
               required
               autoComplete="off"
             />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Automatische updates</span>
+            <select className="input w-full" value={form.update_channel} onChange={(event) => setForm({ ...form, update_channel: event.target.value })}>
+              <option value="stable">Stabiel — aanbevolen</option>
+              <option value="beta">Beta</option>
+              <option value="off">Uit</option>
+            </select>
           </label>
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Naam</span>
@@ -508,7 +603,17 @@ export default function Narrowcasting() {
                   <dt className="text-gray-500 dark:text-gray-400">Status</dt>
                   <dd className="font-medium text-gray-900 dark:text-gray-100">{display.last_playback_state || 'Nog niet gemeld'}</dd>
                 </div>
+                <div>
+                  <dt className="text-gray-500 dark:text-gray-400">Updates</dt>
+                  <dd className="font-medium text-gray-900 dark:text-gray-100">{updateChannelLabels[display.update_channel] || 'Stabiel'}</dd>
+                </div>
               </dl>
+
+              {versionNeedsUpdate(display.player_version, display.update_target_version) && (
+                <p className="mt-4 rounded-md bg-cyan-50 p-3 text-sm text-cyan-900 dark:bg-cyan-950 dark:text-cyan-100">
+                  Update naar {display.update_target_version} staat klaar en wordt automatisch geïnstalleerd.
+                </p>
+              )}
 
               <label className="mt-4 block text-sm">
                 <span className="mb-1 block font-medium text-gray-700 dark:text-gray-300">Afspeellijst</span>

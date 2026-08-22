@@ -3,7 +3,7 @@
 > Replace Sportlink Club.TV with a subscription-free narrowcasting system managed from Rondo and
 > displayed by a Raspberry Pi 5 attached to each television.
 
-**Status:** Pilot Milestones 1–3 implemented
+**Status:** Pilot Milestones 1–3 and signed player updates implemented
 **Components:** Rondo Club, Rondo Player, Sportlink Club.Data  
 **Date:** 2026-08-15  
 **Owner:** Club administrators and sponsor management  

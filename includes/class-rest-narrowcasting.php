@@ -33,6 +33,9 @@ class Narrowcasting extends Base {
 	private const DURABLE_HEARTBEAT_INTERVAL   = 300;
 	private const COMMAND_TTL                  = 600;
 	private const REGISTRATION_RATE_PER_MINUTE = 10;
+	private const OPTION_STABLE_VERSION        = 'rondo_player_stable_version';
+	private const OPTION_BETA_VERSION          = 'rondo_player_beta_version';
+	private const DEFAULT_STABLE_VERSION       = '0.3.0';
 
 	private SportlinkMatchday $matchday;
 	private Content $content;
@@ -442,6 +445,7 @@ class Narrowcasting extends Base {
 		$wake_time  = $this->sanitize_time( $request->get_param( 'wake_time' ), '08:00' );
 		$sleep_time = $this->sanitize_time( $request->get_param( 'sleep_time' ), '23:00' );
 		$timezone   = $this->sanitize_timezone( $request->get_param( 'timezone' ) );
+		$channel    = $this->sanitize_update_channel( $request->get_param( 'update_channel' ) ?: 'stable' );
 		if ( is_wp_error( $wake_time ) ) {
 			return $wake_time;
 		}
@@ -450,6 +454,9 @@ class Narrowcasting extends Base {
 		}
 		if ( is_wp_error( $timezone ) ) {
 			return $timezone;
+		}
+		if ( is_wp_error( $channel ) ) {
+			return $channel;
 		}
 
 		$existing_display = $this->find_display_by_device_id( $registration['device_id'] );
@@ -481,6 +488,7 @@ class Narrowcasting extends Base {
 				'cec_enabled'      => true,
 				'pairing_status'   => 'approved',
 				'pilot_message'    => __( 'Rondo Player is verbonden', 'rondo' ),
+				'update_channel'   => $channel,
 			]
 		);
 		if ( is_wp_error( $stored ) ) {
@@ -763,10 +771,11 @@ class Narrowcasting extends Base {
 			return new \WP_Error( 'rondo_display_title_required', __( 'Geef het scherm een naam.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
-		$current    = $this->wire_fields( $display_id, [ 'wake_time', 'sleep_time', 'display_timezone' ] );
+		$current    = $this->wire_fields( $display_id, [ 'wake_time', 'sleep_time', 'display_timezone', 'update_channel' ] );
 		$wake_time  = $this->sanitize_time( $request->get_param( 'wake_time' ), (string) $current['wake_time'] );
 		$sleep_time = $this->sanitize_time( $request->get_param( 'sleep_time' ), (string) $current['sleep_time'] );
 		$timezone   = $this->sanitize_timezone( $request->get_param( 'timezone' ) ?: $current['display_timezone'] );
+		$channel    = $this->sanitize_update_channel( $request->get_param( 'update_channel' ) ?: $current['update_channel'] );
 		if ( is_wp_error( $wake_time ) ) {
 			return $wake_time;
 		}
@@ -775,6 +784,9 @@ class Narrowcasting extends Base {
 		}
 		if ( is_wp_error( $timezone ) ) {
 			return $timezone;
+		}
+		if ( is_wp_error( $channel ) ) {
+			return $channel;
 		}
 
 		$updated = wp_update_post(
@@ -795,6 +807,7 @@ class Narrowcasting extends Base {
 				'display_timezone' => $timezone,
 				'wake_time'        => $wake_time,
 				'sleep_time'       => $sleep_time,
+				'update_channel'   => $channel,
 			]
 		);
 		return is_wp_error( $stored ) ? $stored : rest_ensure_response( $this->format_display( $display_id ) );
@@ -819,21 +832,40 @@ class Narrowcasting extends Base {
 		);
 	}
 
-	/** Return masked Sportlink settings and feed health to administrators. */
+	/** Return masked Sportlink settings, feed health and approved player releases. */
 	public function get_matchday_settings() {
-		return rest_ensure_response( $this->matchday->settings_summary() );
+		return rest_ensure_response( $this->settings_summary() );
 	}
 
-	/** Store the server-only Sportlink credential and club relation code. */
+	/** Store Sportlink configuration and approved player release versions. */
 	public function update_matchday_settings( $request ) {
-		$result = $this->matchday->update_settings(
-			[
-				'client_id'          => $request->get_param( 'client_id' ),
-				'club_relation_code' => $request->get_param( 'club_relation_code' ),
-			]
-		);
+		if ( $request->has_param( 'client_id' ) || $request->has_param( 'club_relation_code' ) ) {
+			$result = $this->matchday->update_settings(
+				[
+					'client_id'          => $request->get_param( 'client_id' ),
+					'club_relation_code' => $request->get_param( 'club_relation_code' ),
+				]
+			);
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+		}
 
-		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+		foreach ( [
+			'stable_version' => self::OPTION_STABLE_VERSION,
+			'beta_version'   => self::OPTION_BETA_VERSION,
+		] as $parameter => $option ) {
+			if ( ! $request->has_param( $parameter ) ) {
+				continue;
+			}
+			$version = trim( sanitize_text_field( (string) $request->get_param( $parameter ) ) );
+			if ( $version !== '' && ! preg_match( '/^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/', $version ) ) {
+				return new \WP_Error( 'rondo_player_version_invalid', __( 'Gebruik een player-versie zoals 0.3.0.', 'rondo' ), [ 'status' => 400 ] );
+			}
+			update_option( $option, $version, false );
+		}
+
+		return rest_ensure_response( $this->settings_summary() );
 	}
 
 	/** Force a rate-limited refresh for administrator diagnostics. */
@@ -935,10 +967,11 @@ class Narrowcasting extends Base {
 				'cec_enabled',
 				'pilot_message',
 				'assigned_playlist_id',
+				'update_channel',
 			]
 		);
 
-		return $this->configuration_envelope(
+		$configuration           = $this->configuration_envelope(
 			[
 				'id'            => $display_id,
 				'name'          => get_the_title( $display_id ),
@@ -952,6 +985,8 @@ class Narrowcasting extends Base {
 				'preview'       => false,
 			]
 		);
+		$configuration['update'] = $this->player_update_config( (string) $fields['update_channel'] );
+		return $configuration;
 	}
 
 	/** Add shared club and polling metadata to a display configuration. */
@@ -1007,10 +1042,11 @@ class Narrowcasting extends Base {
 				'last_error',
 				'pilot_message',
 				'assigned_playlist_id',
+				'update_channel',
 			]
 		);
 
-		return array_merge(
+		$display                          = array_merge(
 			[
 				'id'      => $display_id,
 				'name'    => get_the_title( $display_id ),
@@ -1019,6 +1055,50 @@ class Narrowcasting extends Base {
 			],
 			$fields
 		);
+		$display['update_target_version'] = $this->player_update_config( (string) $fields['update_channel'] )['target_version'];
+		return $display;
+	}
+
+	/** Combine the existing feed settings with player release controls. */
+	private function settings_summary(): array {
+		return array_merge(
+			$this->matchday->settings_summary(),
+			[
+				'player_updates' => [
+					'stable_version' => $this->player_version_option( self::OPTION_STABLE_VERSION, self::DEFAULT_STABLE_VERSION ),
+					'beta_version'   => $this->player_version_option( self::OPTION_BETA_VERSION, '' ),
+				],
+			]
+		);
+	}
+
+	/** Resolve the signed release target sent to one player. */
+	private function player_update_config( string $channel ): array {
+		$channel = in_array( $channel, [ 'stable', 'beta', 'off' ], true ) ? $channel : 'stable';
+		$target  = '';
+		if ( $channel === 'stable' ) {
+			$target = $this->player_version_option( self::OPTION_STABLE_VERSION, self::DEFAULT_STABLE_VERSION );
+		} elseif ( $channel === 'beta' ) {
+			$target = $this->player_version_option( self::OPTION_BETA_VERSION, '' );
+		}
+		return [
+			'channel'        => $channel,
+			'target_version' => $target,
+		];
+	}
+
+	private function player_version_option( string $option, string $default ): string {
+		$value = (string) get_option( $option, $default );
+		return preg_match( '/^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/', $value ) ? $value : $default;
+	}
+
+	/** Validate a player update channel. */
+	private function sanitize_update_channel( $value ) {
+		$channel = sanitize_key( (string) $value );
+		if ( ! in_array( $channel, [ 'stable', 'beta', 'off' ], true ) ) {
+			return new \WP_Error( 'rondo_player_update_channel_invalid', __( 'Kies stabiele updates, beta-updates of updates uit.', 'rondo' ), [ 'status' => 400 ] );
+		}
+		return $channel;
 	}
 
 	/** Allow dedicated content managers and sponsor managers into Club TV. */
