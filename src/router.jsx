@@ -169,8 +169,8 @@ function VrijwilligersRoute({ children }) {
 
 /**
  * Kader = iedereen met een staf-rol. Accounts zonder expliciete rechten krijgen
- * geen "Geen toegang"-scherm: sponsoren gaan naar hun gegevens en andere leden
- * naar hun eigen vrijwillig-aanmelding.
+ * geen "Geen toegang"-scherm: sponsoren zonder ouderrol gaan naar hun gegevens;
+ * ouders en andere leden gaan naar hun eigen vrijwillig-aanmelding.
  *
  * `is_kader` wordt server-side bepaald. Leid het hier niet opnieuw af: de
  * zijbalk gebruikt hetzelfde veld, en twee definities lopen uiteen — dan landt
@@ -184,7 +184,7 @@ function KaderOrVrijwilligRedirect({ children }) {
   const { data: user, isLoading } = useCurrentUser();
   if (isLoading) return <PageLoadingSpinner />;
   if (!isKaderUser(user)) {
-    return <Navigate to={user?.is_sponsor ? '/mijn-gegevens' : '/vrijwillig'} replace />;
+    return <Navigate to={user?.is_sponsor && !user?.is_parent ? '/mijn-gegevens' : '/vrijwillig'} replace />;
   }
   return children;
 }
