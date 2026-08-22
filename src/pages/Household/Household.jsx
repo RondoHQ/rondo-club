@@ -46,6 +46,14 @@ function Detail({ icon: Icon, label, value }) {
   );
 }
 
+function Eyebrow({ children }) {
+  return (
+    <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+      {children}
+    </div>
+  );
+}
+
 function SponsorLogoEditor({ organization }) {
   const fileRef = useRef(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -69,9 +77,11 @@ function SponsorLogoEditor({ organization }) {
     <div className="mt-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
       <div className="flex items-start gap-3">
         <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" aria-hidden="true" />
-        <div>
-          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">{organization.name}</h3>
-          <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400">Sponsororganisatie</p>
+        <div className="min-w-0">
+          <Eyebrow>Sponsor</Eyebrow>
+          <h3 className="mt-0.5 break-words text-sm font-medium text-gray-900 dark:text-gray-100">
+            {organization.name}
+          </h3>
         </div>
       </div>
 
@@ -113,7 +123,12 @@ function PersonCard({ person, isSelf }) {
   return (
     <div className="card p-5">
       <div className="flex items-center justify-between gap-3 mb-3">
-        <h2 className="font-semibold text-gray-900 dark:text-gray-100">{name}</h2>
+        <div className="min-w-0">
+          {isSelf && sponsorOrganization ? <Eyebrow>Contactpersoon</Eyebrow> : null}
+          <h2 className={`${isSelf && sponsorOrganization ? 'mt-0.5 ' : ''}break-words font-semibold text-gray-900 dark:text-gray-100`}>
+            {name}
+          </h2>
+        </div>
         <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
           {isSelf ? 'Jij' : 'Kind'}
         </span>
