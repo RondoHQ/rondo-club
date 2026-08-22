@@ -114,7 +114,7 @@ function SponsorLogoEditor({ organization }) {
   );
 }
 
-function PersonCard({ person, isSelf }) {
+function PersonCard({ person, isSelf, isParent }) {
   const fields = person.fields || {};
   const name = formatPersonName(fields.first_name, fields.infix, fields.last_name) || 'Onbekend';
   const membershipPass = person.membership_pass;
@@ -124,7 +124,9 @@ function PersonCard({ person, isSelf }) {
     <div className="card p-5">
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="min-w-0">
-          {isSelf && sponsorOrganization ? <Eyebrow>Contactpersoon</Eyebrow> : null}
+          {isSelf && sponsorOrganization ? (
+            <Eyebrow>{isParent ? 'Contactpersoon en ouder' : 'Contactpersoon'}</Eyebrow>
+          ) : null}
           <h2 className={`${isSelf && sponsorOrganization ? 'mt-0.5 ' : ''}break-words font-semibold text-gray-900 dark:text-gray-100`}>
             {name}
           </h2>
@@ -233,7 +235,12 @@ export default function Household() {
         </div>
       ) : (
         ordered.map((person) => (
-          <PersonCard key={person.id} person={person} isSelf={person.id === linkedPersonId} />
+          <PersonCard
+            key={person.id}
+            person={person}
+            isSelf={person.id === linkedPersonId}
+            isParent={currentUser?.is_parent === true}
+          />
         ))
       )}
     </div>
