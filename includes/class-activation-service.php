@@ -96,8 +96,11 @@ class ActivationService {
 		return array_values(
 			array_filter(
 				array_map( 'intval', $matches ),
-				static fn( int $person_id ): bool => get_post_meta( $person_id, 'former_member', true ) !== '1'
-					|| $parent_relationships->has_current_child( $person_id )
+				static fn( int $person_id ): bool => \Rondo\People\CommunicationPolicy::may_contact( $person_id )
+					&& (
+						get_post_meta( $person_id, 'former_member', true ) !== '1'
+						|| $parent_relationships->has_current_child( $person_id )
+					)
 			)
 		);
 	}

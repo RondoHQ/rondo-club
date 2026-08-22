@@ -572,6 +572,15 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
+					'include_deceased'          => [
+						'description'       => 'Include deceased people in results (1=include, empty=exclude). Also includes former members.',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
 					'lid_tot_future'            => [
 						'description'       => 'Filter for people with lid-tot date in the future (1=future only, empty=all)',
 						'type'              => 'string',
@@ -908,8 +917,7 @@ class People extends Base {
 
 		$data = $response->get_data();
 
-		// Deceased status field (reserved for future use)
-		$data['is_deceased']       = false;
+		$data['is_deceased']       = \Rondo\People\CommunicationPolicy::is_deceased( (int) $post->ID );
 		$is_former_member          = (bool) \Rondo\Fields\Fields::get_for_post( $post->ID, 'former_member' );
 		$data['is_current_parent'] = $is_former_member && $this->has_current_child_relationship( $post->ID );
 
@@ -1715,6 +1723,7 @@ class People extends Base {
 		$vog_justis_status         = $request->get_param( 'vog_justis_status' );
 		$vog_reminder_status       = $request->get_param( 'vog_reminder_status' );
 		$include_former            = $request->get_param( 'include_former' );
+		$include_deceased          = $request->get_param( 'include_deceased' );
 		$lid_tot_future            = $request->get_param( 'lid_tot_future' );
 		$lid_tot_season            = $request->get_param( 'lid_tot_season' );
 		$lid_sinds_season          = $request->get_param( 'lid_sinds_season' );
@@ -1729,6 +1738,12 @@ class People extends Base {
 		// default people query hides those. Auto-flip include_former so the user
 		// sees every cancellation in the season window, not just the not-yet-expired ones.
 		if ( $lid_tot_season === '1' ) {
+			$include_former = '1';
+		}
+
+		// Deceased people are normally former members. Selecting them should be
+		// sufficient on its own instead of requiring two coupled UI filters.
+		if ( $include_deceased === '1' ) {
 			$include_former = '1';
 		}
 
@@ -1779,6 +1794,14 @@ class People extends Base {
 			$where_clauses[] = "(fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')";
 		}
 		$select_fields .= ', fm.meta_value AS is_former_member';
+
+		// Deceased people stay available for historical lookup, but are excluded
+		// from normal lists and CSV exports unless explicitly requested.
+		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} deceased ON p.ID = deceased.post_id AND deceased.meta_key = 'datum-overlijden'";
+		if ( $include_deceased !== '1' ) {
+			$where_clauses[] = "(deceased.meta_value IS NULL OR deceased.meta_value = '')";
+		}
+		$select_fields .= ', deceased.meta_value AS date_of_death';
 
 		// Always JOIN meta for first_name, infix, and last_name (needed for display and sorting)
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} fn ON p.ID = fn.post_id AND fn.meta_key = 'first_name'";
@@ -2384,6 +2407,7 @@ class People extends Base {
 				'team_id'       => is_numeric( $row->team_id ) ? (int) $row->team_id : null,
 				'modified'      => $row->post_modified,
 				'former_member' => ( $row->is_former_member === '1' ),
+				'is_deceased'   => trim( (string) $row->date_of_death ) !== '',
 				// These are fetched post-query to avoid complex JOINs
 				'thumbnail'     => $this->sanitize_url( get_the_post_thumbnail_url( $row->ID, 'thumbnail' ) ),
 			];

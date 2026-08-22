@@ -469,13 +469,7 @@ class ShiftEmailScheduler {
 	}
 
 	private function get_person_email( int $person_id ): ?string {
-		foreach ( [ 'email_1', 'email_2' ] as $field_name ) {
-			$email = (string) \Rondo\Fields\Fields::try_get_for_post( $person_id, $field_name );
-			if ( is_email( $email ) ) {
-				return $email;
-			}
-		}
-		return null;
+		return \Rondo\People\CommunicationPolicy::primary_email( $person_id );
 	}
 
 	/** @return int[] Existing person post IDs assigned to a shift. */

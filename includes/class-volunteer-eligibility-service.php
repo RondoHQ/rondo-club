@@ -291,7 +291,8 @@ class VolunteerEligibilityService {
 		// definition tree, which is much slower in hot loops with thousands
 		// of persons.
 		$former = get_post_meta( $person_id, 'former_member', true );
-		return ! ( $former === '1' || $former === 1 || $former === true );
+		return ! ( $former === '1' || $former === 1 || $former === true )
+			&& \Rondo\People\CommunicationPolicy::may_contact( $person_id );
 	}
 
 	/**
@@ -416,7 +417,8 @@ class VolunteerEligibilityService {
 		$person = get_post( $person_id );
 		return $person instanceof \WP_Post
 			&& $person->post_type === 'person'
-			&& $person->post_status === 'publish';
+			&& $person->post_status === 'publish'
+			&& \Rondo\People\CommunicationPolicy::may_contact( $person_id );
 	}
 
 	/**

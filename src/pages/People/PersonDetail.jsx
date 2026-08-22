@@ -296,14 +296,15 @@ export default function PersonDetail() {
     ? new Date(person.fields.birthdate)
     : null;
 
-  // Deceased status (is_deceased always returns false now - death date feature removed)
-  const isDeceased = person?.is_deceased || false;
+  const deathDate = parseFieldDate(person?.fields?.datum_overlijden);
+  const isDeceased = person?.is_deceased === true || deathDate !== null;
 
-  // Calculate age - current age only (death date feature removed)
-  const age = birthDate ? differenceInYears(new Date(), birthDate) : null;
+  // For deceased people, age must stop at the date of death.
+  const age = birthDate ? differenceInYears(deathDate || new Date(), birthDate) : null;
 
   // Format birthdate for display: "6 feb 1982"
   const formattedBirthdate = birthDate ? format(birthDate, 'd MMM yyyy') : null;
+  const formattedDeathDate = deathDate ? format(deathDate, 'd MMM yyyy') : null;
   const parseSafeDate = (value) => {
     if (!value) return null;
     const raw = String(value).trim();
@@ -1236,6 +1237,15 @@ export default function PersonDetail() {
     canEditAddress = false;
   }
 
+  // Sportlink is authoritative for a recorded death. Keep historical contact
+  // data intact, but remove every edit affordance in Rondo.
+  if (isDeceased) {
+    canEditPeople = false;
+    canEditContact = false;
+    canEditPhoto = false;
+    canEditAddress = false;
+  }
+
   const parentSyncPhone = isFormerMember && isCurrentParent
     ? fields.mobile_1 || fields.telephone_1 || fields.mobile_2 || fields.telephone_2 || ''
     : '';
@@ -1255,7 +1265,7 @@ export default function PersonDetail() {
     const links = [];
 
     // Add WhatsApp if there's a mobile number
-    if (fields.mobile_1) {
+    if (!isDeceased && fields.mobile_1) {
       links.push({
         contact_type: 'whatsapp',
         contact_value: `https://wa.me/${formatPhoneForTel(fields.mobile_1)}`,
@@ -1346,6 +1356,13 @@ export default function PersonDetail() {
           {isCurrentParent
             ? 'De historische lidmaatschapsgegevens blijven alleen-lezen. De primaire e-mail en telefoon kun je hier wijzigen; deze worden teruggesynchroniseerd naar de oudergegevens van het huidige kind of de huidige kinderen in Sportlink. Het adres wijzig je bij het kind.'
             : 'Sportlink staat geen contact- of profielwijzigingen toe voor de lidsoort van deze persoon (Oud bondslid / Oud verenigingslid), dus elke aanpassing zou alsnog door de sync afgewezen worden. Vraag een beheerder om eerst de oud-lid-status uit te zetten als je deze gegevens wilt aanpassen.'}
+        </div>
+      )}
+
+      {isDeceased && (
+        <div className="mb-4 rounded-lg border border-gray-300 bg-gray-100 px-4 py-3 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+          <span className="font-medium">Overleden{formattedDeathDate ? ` op ${formattedDeathDate}` : ''}.</span>{' '}
+          Contactgegevens blijven bewaard als historische informatie, maar Rondo gebruikt ze niet meer voor automatische communicatie.
         </div>
       )}
 
@@ -1477,14 +1494,17 @@ export default function PersonDetail() {
             {fields.nickname && (
               <p className="text-gray-500 dark:text-gray-400">&quot;{fields.nickname}&quot;</p>
             )}
-            {(getGenderSymbol(fields.gender) || fields.pronouns || age !== null || fields['financiele_blokkade'] || fields['lid_tot']) && (
+            {(getGenderSymbol(fields.gender) || fields.pronouns || age !== null || formattedDeathDate || fields['financiele_blokkade'] || fields['lid_tot']) && (
               <p className="text-gray-500 dark:text-gray-400 text-sm inline-flex items-center flex-wrap">
                 {getGenderSymbol(fields.gender) && <span>{getGenderSymbol(fields.gender)}</span>}
                 {getGenderSymbol(fields.gender) && fields.pronouns && <span>&nbsp;—&nbsp;</span>}
                 {fields.pronouns && <span>{fields.pronouns}</span>}
                 {(getGenderSymbol(fields.gender) || fields.pronouns) && age !== null && <span>&nbsp;—&nbsp;</span>}
-                {age !== null && formattedBirthdate && <span>{age} jaar ({formattedBirthdate})</span>}
-                {age !== null && !formattedBirthdate && <span>{age} jaar</span>}
+                {isDeceased && formattedDeathDate && (
+                  <span>Overleden op {formattedDeathDate}{age !== null ? `, ${age} jaar` : ''}</span>
+                )}
+                {!isDeceased && age !== null && formattedBirthdate && <span>{age} jaar ({formattedBirthdate})</span>}
+                {!isDeceased && age !== null && !formattedBirthdate && <span>{age} jaar</span>}
                 {fields['financiele_blokkade'] && (
                   <>
                     {(getGenderSymbol(fields.gender) || fields.pronouns || age !== null) && <span>&nbsp;—&nbsp;</span>}

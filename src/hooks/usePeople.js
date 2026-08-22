@@ -158,6 +158,7 @@ export function buildFilteredPeopleParams(filters = {}) {
     vog_justis_status: filters.vogJustisStatus || null,
     vog_reminder_status: filters.vogReminderStatus || null,
     include_former: filters.includeFormer || null,
+    include_deceased: filters.includeDeceased || null,
     lid_tot_future: filters.lidTotFuture || null,
     lid_tot_season: filters.lidTotSeason || null,
     lid_sinds_season: filters.lidSindsSeason || null,

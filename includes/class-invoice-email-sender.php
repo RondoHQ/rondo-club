@@ -36,6 +36,10 @@ class InvoiceEmailSender {
 	 * @return array<int, string>
 	 */
 	public static function resolve_invoice_recipient_emails( int $person_id ): array {
+		if ( ! \Rondo\People\CommunicationPolicy::may_contact( $person_id ) ) {
+			return [];
+		}
+
 		$emails = self::get_person_email_addresses( $person_id );
 
 		if ( self::is_minor( $person_id ) ) {
@@ -56,19 +60,7 @@ class InvoiceEmailSender {
 	 * @return array<int, string>
 	 */
 	public static function get_person_email_addresses( int $person_id ): array {
-		$emails = [];
-
-		$email_1 = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'email_1' ) );
-		if ( is_email( $email_1 ) ) {
-			$emails[] = $email_1;
-		}
-
-		$email_2 = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'email_2' ) );
-		if ( is_email( $email_2 ) && $email_2 !== $email_1 ) {
-			$emails[] = $email_2;
-		}
-
-		return $emails;
+		return \Rondo\People\CommunicationPolicy::email_addresses( $person_id );
 	}
 
 	/**

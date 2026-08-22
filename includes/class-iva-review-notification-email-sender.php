@@ -40,6 +40,14 @@ class IvaReviewNotificationEmailSender {
 	 * @return array{status: string, sent: int, failed: int}
 	 */
 	public function send( int $person_id ): array {
+		if ( ! \Rondo\People\CommunicationPolicy::may_contact( $person_id ) ) {
+			return [
+				'status' => 'deceased',
+				'sent'   => 0,
+				'failed' => 0,
+			];
+		}
+
 		if ( $this->is_throttled( $person_id ) ) {
 			return [
 				'status' => 'throttled',

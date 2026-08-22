@@ -698,6 +698,7 @@ export default function PeopleList() {
   const vogMissing = searchParams.get('vogMissing') || '';
   const vogOlderThanYears = searchParams.get('vogOuder') ? parseInt(searchParams.get('vogOuder'), 10) : null;
   const includeFormer = searchParams.get('oudLeden') || '';
+  const includeDeceased = searchParams.get('overleden') || '';
   const lidTotFuture = searchParams.get('lidTot') || '';
   const lidTotSeason = searchParams.get('lidTotSeizoen') || '';
   const lidSindsSeason = searchParams.get('lidSindsSeizoen') || '';
@@ -780,6 +781,10 @@ export default function PeopleList() {
 
   const setIncludeFormer = useCallback((value) => {
     updateSearchParams({ oudLeden: value });
+  }, [updateSearchParams]);
+
+  const setIncludeDeceased = useCallback((value) => {
+    updateSearchParams({ overleden: value });
   }, [updateSearchParams]);
 
   const setLidTotFuture = useCallback((value) => {
@@ -870,6 +875,7 @@ export default function PeopleList() {
     vogMissing,
     vogOlderThanYears,
     includeFormer: includeFormer || null,
+    includeDeceased: includeDeceased || null,
     lidTotFuture: lidTotFuture || null,
     lidTotSeason: lidTotSeason || null,
     lidSindsSeason: lidSindsSeason || null,
@@ -1025,6 +1031,7 @@ export default function PeopleList() {
 
     // Lidmaatschap — who counts as a member right now / cancellations
     createColumn({ id: 'include_former', header: 'Toon oud-leden', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
+    createColumn({ id: 'include_deceased', header: 'Toon overleden personen', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
     createColumn({ id: 'lid_tot_future', header: 'Afmelding in de toekomst', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
     createColumn({ id: 'lid_tot_season', header: 'Afgemeld dit seizoen', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Afgemeld dit seizoen', filterSection: 'Lidmaatschap' }),
     createColumn({ id: 'lid_sinds_season', header: 'Nieuw lid dit seizoen', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Nieuw lid dit seizoen', filterSection: 'Lidmaatschap' }),
@@ -1146,6 +1153,7 @@ export default function PeopleList() {
 
   const filterValues = {
     include_former: includeFormer,
+    include_deceased: includeDeceased,
     lid_tot_future: lidTotFuture,
     lid_tot_season: lidTotSeason,
     lid_sinds_season: lidSindsSeason,
@@ -1217,6 +1225,7 @@ export default function PeopleList() {
   const setFilter = useCallback((colId, value) => {
     switch (colId) {
       case 'include_former': setIncludeFormer(value); break;
+      case 'include_deceased': setIncludeDeceased(value); break;
       case 'lid_tot_future': setLidTotFuture(value); break;
       case 'lid_tot_season': setLidTotSeason(value); break;
       case 'lid_sinds_season': setLidSindsSeason(value); break;
@@ -1243,7 +1252,7 @@ export default function PeopleList() {
         break;
       default: break;
     }
-  }, [setIncludeFormer, setLidTotFuture, setLidTotSeason, setLidSindsSeason, setSpelactiviteitNoTeam, setSpelendLid, setKnvbBekend, setIsParent, setWachtOverschrijving, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setPersonType, setSponsorOnly, setBusinessclubMember, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
+  }, [setIncludeFormer, setIncludeDeceased, setLidTotFuture, setLidTotSeason, setLidSindsSeason, setSpelactiviteitNoTeam, setSpelendLid, setKnvbBekend, setIsParent, setWachtOverschrijving, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setPersonType, setSponsorOnly, setBusinessclubMember, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
 
   // Selection helper functions
   const toggleSelection = (personId) => {
@@ -1276,7 +1285,7 @@ export default function PeopleList() {
   // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, personType, sponsorOnly, businessclubMember, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, spelendLid, knvbBekend, isParent, wachtOverschrijving, page, people]);
+  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, personType, sponsorOnly, businessclubMember, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, includeDeceased, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, spelendLid, knvbBekend, isParent, wachtOverschrijving, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
@@ -1361,6 +1370,7 @@ export default function PeopleList() {
         vogMissing,
         vogOlderThanYears,
         includeFormer: includeFormer || null,
+        includeDeceased: includeDeceased || null,
         lidTotFuture: lidTotFuture || null,
         lidTotSeason: lidTotSeason || null,
         lidSindsSeason: lidSindsSeason || null,

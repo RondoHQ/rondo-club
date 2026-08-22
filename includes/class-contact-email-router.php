@@ -77,6 +77,11 @@ class ContactEmailRouter {
 			return null;
 		}
 
+		$person_id = (int) get_user_meta( $user->ID, 'rondo_linked_person_id', true );
+		if ( $person_id > 0 && ! \Rondo\People\CommunicationPolicy::may_contact( $person_id ) ) {
+			return null;
+		}
+
 		return UserProvisioning::contact_email( $user->ID );
 	}
 }

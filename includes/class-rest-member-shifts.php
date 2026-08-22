@@ -1593,8 +1593,7 @@ class MemberShifts extends Base {
 
 	/** Does this person have somewhere to send the confirmation? */
 	private function person_has_email( int $person_id ): bool {
-		return trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'email_1' ) ) !== ''
-			|| trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'email_2' ) ) !== '';
+		return \Rondo\People\CommunicationPolicy::primary_email( $person_id ) !== null;
 	}
 
 	/**
