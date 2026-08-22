@@ -110,6 +110,10 @@ jobs:
           ENV
 
       - name: Run the test suite without field plugins
+        env:
+          # wp-browser caps its theme-activation subprocess at 30 seconds by
+          # default. Shared runners can exceed that before tests even start.
+          WPBROWSER_LOOP_DEBUG: 1
         run: composer test
 
   deploy:
