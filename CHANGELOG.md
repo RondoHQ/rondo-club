@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.28.8] - 2026-08-22
+
+### Changed
+
+- De volledige persoonskaart in **Mijn gegevens** gebruikt op brede schermen een compactere leesbreedte.
+
 ## [34.28.7] - 2026-08-22
 
 ### Changed
