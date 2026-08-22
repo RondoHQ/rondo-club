@@ -50,6 +50,17 @@ export function useUpdateSponsor() {
   });
 }
 
+export function useUploadSponsorLogo() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, file }) => prmApi.uploadSponsorLogo(id, file),
+    onSuccess: (_, { id }) => {
+      invalidateSponsorData(queryClient, id);
+      queryClient.invalidateQueries({ queryKey: ['household'] });
+    },
+  });
+}
+
 export function useArchiveSponsor() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -2,6 +2,7 @@
 
 namespace Tests\Wpunit;
 
+use Rondo\Core\AccessControl;
 use Rondo\Fields\Fields;
 use Rondo\Passes\PublicMembershipPassPage;
 use Rondo\REST\Sponsors;
@@ -108,6 +109,56 @@ class SponsorCompaniesTest extends RondoTestCase {
 		$this->assertSame( 400, $response->get_status() );
 		$this->assertSame( 'rondo_sponsor_logo_source_invalid', $response->get_data()['code'] );
 		$this->assertSame( 0, get_post_thumbnail_id( $sponsor_id ) );
+	}
+
+	public function test_sponsor_contact_can_only_reach_own_pass_company_logo_upload(): void {
+		$own_person_id    = $this->createPerson( [ 'post_title' => 'Eigen sponsorcontact' ] );
+		$other_person_id  = $this->createPerson( [ 'post_title' => 'Ander sponsorcontact' ] );
+		$own_sponsor_id   = $this->createSponsor(
+			'Eigen bedrijf',
+			'awc_sponsor',
+			[
+				[
+					'person_id'       => $own_person_id,
+					'receives_pass'   => true,
+					'is_primary_pass' => true,
+				],
+			]
+		);
+		$other_sponsor_id = $this->createSponsor(
+			'Ander bedrijf',
+			'awc_sponsor',
+			[
+				[
+					'person_id'       => $other_person_id,
+					'receives_pass'   => true,
+					'is_primary_pass' => true,
+				],
+			]
+		);
+
+		$user_id = $this->createRondoUser( [ 'user_login' => 'sponsor_logo_owner' ] );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $own_person_id );
+		wp_set_current_user( $user_id );
+
+		$this->assertTrue( AccessControl::can_edit_sponsor_logo( $own_sponsor_id ) );
+		$this->assertFalse( AccessControl::can_edit_sponsor_logo( $other_sponsor_id ) );
+
+		$own_response = $this->json_request( 'POST', '/rondo/v1/sponsors/' . $own_sponsor_id . '/logo/upload' );
+		$this->assertSame( 400, $own_response->get_status() );
+		$this->assertSame( 'no_file', $own_response->get_data()['code'] );
+
+		$other_response = $this->json_request( 'POST', '/rondo/v1/sponsors/' . $other_sponsor_id . '/logo/upload' );
+		$this->assertSame( 403, $other_response->get_status() );
+		$this->assertSame( 'rest_forbidden', $other_response->get_data()['code'] );
+
+		$update_response = $this->json_request(
+			'PATCH',
+			'/rondo/v1/sponsors/' . $own_sponsor_id,
+			[ 'title' => 'Niet toegestaan' ]
+		);
+		$this->assertSame( 403, $update_response->get_status() );
+		$this->assertSame( 'Eigen bedrijf', get_the_title( $own_sponsor_id ) );
 	}
 
 	public function test_saving_an_unchanged_logo_is_idempotent(): void {

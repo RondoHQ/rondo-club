@@ -5,6 +5,7 @@ namespace Tests\Wpunit;
 use Rondo\Core\AccessControl;
 use Rondo\Fields\Fields;
 use Rondo\REST\People;
+use Rondo\REST\UserSettings;
 use Rondo\Sponsors\Relations;
 use Tests\Support\RondoTestCase;
 
@@ -85,6 +86,39 @@ class HouseholdMembershipPassTest extends RondoTestCase {
 		$this->assertPass( $people[ $businessclub_sponsor ]['membership_pass'], 'businessclub', 'Businessclubpas' );
 		$this->assertPass( $people[ $dual_role_sponsor ]['membership_pass'], 'awc_sponsor', 'Sponsorpas' );
 		$this->assertNull( $people[ $ineligible ]['membership_pass'] );
+		$this->assertNull( $people[ $businessclub_sponsor ]['sponsor_organization'] );
+	}
+
+	public function test_sponsor_account_receives_its_organization_and_sponsor_landing_flag(): void {
+		$person_id  = $this->createPerson(
+			[ 'post_title' => 'Sponsor Contact' ],
+			[
+				'person_type' => 'contact',
+				'first_name'  => 'Sponsor',
+				'last_name'   => 'Contact',
+			]
+		);
+		$sponsor_id = $this->createSponsor( 'Voorbeeldbedrijf BV', 'awc_sponsor', $person_id );
+		$user_id    = $this->createRondoUser( [ 'user_login' => 'sponsor_personal_landing' ] );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+		AccessControl::flush_visible_person_ids_cache();
+		wp_set_current_user( $user_id );
+
+		$response = ( new People() )->get_household();
+		$person   = $response->get_data()[0];
+		$user     = ( new UserSettings() )->get_current_user_data( $user_id );
+
+		$this->assertSame(
+			[
+				'id'            => $sponsor_id,
+				'name'          => 'Voorbeeldbedrijf BV',
+				'logo_url'      => null,
+				'can_edit_logo' => true,
+			],
+			$person['sponsor_organization']
+		);
+		$this->assertTrue( $user['is_sponsor'] );
+		$this->assertFalse( $user['is_kader'] );
 	}
 
 	private function minorPerson( string $title, array $fields ): int {
@@ -102,7 +136,7 @@ class HouseholdMembershipPassTest extends RondoTestCase {
 		AccessControl::flush_visible_person_ids_cache();
 	}
 
-	private function createSponsor( string $title, string $role, int $person_id ): void {
+	private function createSponsor( string $title, string $role, int $person_id ): int {
 		$sponsor_id = self::factory()->post->create(
 			[
 				'post_type'   => 'rondo_sponsor',
@@ -121,6 +155,7 @@ class HouseholdMembershipPassTest extends RondoTestCase {
 				],
 			]
 		);
+		return $sponsor_id;
 	}
 
 	private function assertPass( array $pass, string $type, string $label ): void {

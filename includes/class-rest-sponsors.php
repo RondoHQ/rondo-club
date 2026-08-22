@@ -83,7 +83,7 @@ final class Sponsors extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'upload_logo' ],
-				'permission_callback' => $manage,
+				'permission_callback' => [ $this, 'can_upload_logo' ],
 			]
 		);
 
@@ -100,6 +100,11 @@ final class Sponsors extends Base {
 
 	public function can_manage(): bool {
 		return AccessControl::can_manage_sponsors();
+	}
+
+	/** Allow a sponsor contact to replace only their own pass company's logo. */
+	public function can_upload_logo( \WP_REST_Request $request ): bool {
+		return AccessControl::can_edit_sponsor_logo( absint( $request['id'] ) );
 	}
 
 	public function list_sponsors( \WP_REST_Request $request ) {
@@ -371,7 +376,17 @@ final class Sponsors extends Base {
 			}
 		}
 
-		return rest_ensure_response( $this->format_sponsor( get_post( $sponsor->ID ) ) );
+		Relations::flush_cache();
+		$formatted = $this->format_sponsor( get_post( $sponsor->ID ) );
+		if ( ! AccessControl::can_manage_sponsors() ) {
+			$formatted = [
+				'id'       => $formatted['id'],
+				'title'    => $formatted['title'],
+				'logo_url' => $formatted['logo_url'],
+			];
+		}
+
+		return rest_ensure_response( $formatted );
 	}
 
 	/** Create an external person and append it as a sponsor contact atomically enough to recover. */
