@@ -739,7 +739,7 @@ final class Sponsors extends Base {
 				$row,
 				[
 					'person_id'   => $person_id,
-					'person_name' => get_the_title( $person_id ),
+					'person_name' => $this->sanitize_text( get_the_title( $person_id ) ),
 					'person_type' => (string) ( $person_fields['person_type'] ?? 'member' ),
 					'email'       => (string) ( $person_fields['email_1'] ?? '' ),
 					'mobile'      => (string) ( $person_fields['mobile_1'] ?? '' ),
@@ -752,7 +752,7 @@ final class Sponsors extends Base {
 
 		return [
 			'id'                 => $post->ID,
-			'title'              => get_the_title( $post ),
+			'title'              => $this->sanitize_text( get_the_title( $post ) ),
 			'status'             => $post->post_status,
 			'fields'             => $fields,
 			'logo_attachment_id' => (int) get_post_thumbnail_id( $post->ID ),

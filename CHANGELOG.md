@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.28.1] - 2026-08-22
+
+### Fixed
+
+- Sponsornamen en namen van sponsorcontacten met een ampersand worden weer als gewone tekst getoond in plaats van als HTML-entity.
+
 ## [34.28.0] - 2026-08-22
 
 ### Added

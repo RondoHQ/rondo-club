@@ -66,6 +66,27 @@ class SponsorCompaniesTest extends RondoTestCase {
 		$this->assertSame( 0, (int) $response->get_data()['fields']['club_tv_priority'] );
 	}
 
+	public function test_sponsor_api_decodes_html_entities_in_names(): void {
+		$person_id  = $this->createPerson( [ 'post_title' => 'Jan & Piet' ] );
+		$sponsor_id = $this->createSponsor(
+			'Briggs & Stratton',
+			'awc_sponsor',
+			[
+				[
+					'person_id'  => $person_id,
+					'is_primary' => true,
+				],
+			]
+		);
+
+		$response = $this->json_request( 'GET', '/rondo/v1/sponsors/' . $sponsor_id );
+		$data     = $response->get_data();
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'Briggs & Stratton', $data['title'] );
+		$this->assertSame( 'Jan & Piet', $data['fields']['contacts'][0]['person_name'] );
+	}
+
 	public function test_club_tv_priority_is_validated_and_only_six_sponsors_can_always_show(): void {
 		$invalid = $this->json_request(
 			'POST',

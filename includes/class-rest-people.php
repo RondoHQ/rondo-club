@@ -811,7 +811,7 @@ class People extends Base {
 
 		return [
 			'id'            => $sponsor_id,
-			'name'          => get_the_title( $sponsor ),
+			'name'          => $this->sanitize_text( get_the_title( $sponsor ) ),
 			'logo_url'      => get_the_post_thumbnail_url( $sponsor, 'medium_large' ) ?: null,
 			'can_edit_logo' => true,
 		];
