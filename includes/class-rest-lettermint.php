@@ -607,6 +607,14 @@ class Lettermint extends Base {
 			}
 		}
 
+		if ( $person_id > 0 && ! \Rondo\People\CommunicationPolicy::may_contact( $person_id ) ) {
+			return new \WP_Error(
+				'rondo_deceased_communication_blocked',
+				'Deze persoon is als overleden geregistreerd. Rondo verstuurt daarom geen e-mail.',
+				[ 'status' => 409 ]
+			);
+		}
+
 		if ( ! is_email( $recipient ) ) {
 			return new \WP_Error(
 				'lettermint_invalid_recipient',
@@ -1017,17 +1025,7 @@ class Lettermint extends Base {
 	 * @return string
 	 */
 	private function get_person_email_address( int $person_id ): string {
-		$email = sanitize_email( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'email_1' ) );
-		if ( is_email( $email ) ) {
-			return $email;
-		}
-
-		$email = sanitize_email( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'email_2' ) );
-		if ( is_email( $email ) ) {
-			return $email;
-		}
-
-		return '';
+		return \Rondo\People\CommunicationPolicy::primary_email( $person_id ) ?? '';
 	}
 
 	/**

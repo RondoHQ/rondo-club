@@ -643,13 +643,8 @@ class Todos extends Base {
 	 */
 	private function find_first_email_from_persons( array $person_ids ): string {
 		foreach ( $person_ids as $person_id ) {
-			$email = sanitize_email( (string) \Rondo\Fields\Fields::get_for_post( (int) $person_id, 'email_1' ) );
-			if ( is_email( $email ) ) {
-				return $email;
-			}
-
-			$email = sanitize_email( (string) \Rondo\Fields\Fields::get_for_post( (int) $person_id, 'email_2' ) );
-			if ( is_email( $email ) ) {
+			$email = \Rondo\People\CommunicationPolicy::primary_email( (int) $person_id );
+			if ( $email !== null ) {
 				return $email;
 			}
 		}

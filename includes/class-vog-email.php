@@ -518,17 +518,7 @@ class VOGEmail {
 	 * @return string|null Email address or null if not found.
 	 */
 	private function get_person_email( int $person_id ): ?string {
-		$email = \Rondo\Fields\Fields::get_for_post( $person_id, 'email_1' );
-		if ( is_email( $email ) ) {
-			return $email;
-		}
-
-		$email = \Rondo\Fields\Fields::get_for_post( $person_id, 'email_2' );
-		if ( is_email( $email ) ) {
-			return $email;
-		}
-
-		return null;
+		return \Rondo\People\CommunicationPolicy::primary_email( $person_id );
 	}
 
 	/**

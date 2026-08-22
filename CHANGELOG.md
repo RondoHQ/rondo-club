@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.26.0] - 2026-08-22
+
+### Added
+
+- Overlijdensdata uit Sportlink maken personen zichtbaar als overleden en voegen een expliciete filter toe om deze historische records desgewenst in personenlijsten en exports op te nemen.
+
+### Changed
+
+- Overleden personen blijven met hun historische contactgegevens bewaard, maar zijn alleen-lezen, tellen niet meer als vrijwilliger en worden centraal uitgesloten van automatische communicatie.
+- De ledensynchronisatie meldt hun eigen e-mailadressen veilig af bij Laposta, behalve wanneer hetzelfde adres nog bij een levende relatie hoort.
+
 ## [34.25.0] - 2026-08-22
 
 ### Added

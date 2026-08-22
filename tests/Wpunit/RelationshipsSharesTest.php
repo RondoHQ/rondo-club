@@ -285,13 +285,13 @@ class RelationshipsSharesTest extends RondoTestCase {
 	}
 
 	/**
-	 * Test is_deceased is always false (death date feature removed).
+	 * Test is_deceased is computed from the canonical date of death.
 	 */
-	public function test_person_is_deceased_always_false(): void {
+	public function test_person_is_deceased_tracks_date_of_death(): void {
 		$alice_id = self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] );
 		wp_set_current_user( $alice_id );
 
-		// Create person
+		// Create living person.
 		$person_id = $this->createPerson(
 			[
 				'post_author' => $alice_id,
@@ -306,7 +306,11 @@ class RelationshipsSharesTest extends RondoTestCase {
 
 		$data = $response->get_data();
 		$this->assertArrayHasKey( 'is_deceased', $data, 'Response should have is_deceased field' );
-		$this->assertFalse( $data['is_deceased'], 'is_deceased should always be false (feature removed)' );
+		$this->assertFalse( $data['is_deceased'], 'A person without a date of death should be living.' );
+
+		\Rondo\Fields\Fields::update_for_post( $person_id, 'datum_overlijden', '2026-08-20' );
+		$response = $this->restRequest( 'GET', '/wp/v2/people/' . $person_id );
+		$this->assertTrue( $response->get_data()['is_deceased'], 'A recorded date of death should set is_deceased.' );
 	}
 
 	// =========================================================================
