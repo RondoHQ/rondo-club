@@ -211,6 +211,45 @@ class PublicMembershipPassPage {
 	}
 
 	/**
+	 * Return the client-safe membership pass summary for one person.
+	 *
+	 * Eligibility and Sponsor precedence stay centralized in this class. Callers
+	 * receive only the public landing URL and presentation metadata; sponsor
+	 * relationships and other private fields remain hidden.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return array{url:string,type:string,label:string}|null
+	 */
+	public static function get_person_pass_summary( int $person_id ): ?array {
+		$member_tier = self::get_person_member_tier( $person_id );
+		if ( $member_tier === '' ) {
+			return null;
+		}
+
+		$type  = $member_tier;
+		$label = 'Ledenpas';
+
+		if ( $member_tier === 'sponsor' ) {
+			$type = self::get_sponsor_pass_variant( $person_id );
+			if ( $type === '' ) {
+				return null;
+			}
+			$label = $type === self::SPONSOR_PASS_VARIANT_BUSINESSCLUB ? 'Businessclubpas' : 'Sponsorpas';
+		}
+
+		$url = self::ensure_person_pass_url( $person_id );
+		if ( $url === '' ) {
+			return null;
+		}
+
+		return [
+			'url'   => $url,
+			'type'  => $type,
+			'label' => $label,
+		];
+	}
+
+	/**
 	 * Resolve pass eligibility tier for one person.
 	 *
 	 * - `bondslid`: Type lid is Bondslid.

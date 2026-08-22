@@ -773,8 +773,8 @@ class People extends Base {
 		$people = [];
 		foreach ( $posts as $post ) {
 			$people[] = [
-				'id'     => $post->ID,
-				'fields' => array_intersect_key(
+				'id'              => $post->ID,
+				'fields'          => array_intersect_key(
 					\Rondo\Fields\RestFields::for_post( 'person', $post->ID ),
 					array_flip(
 						array_map(
@@ -783,6 +783,7 @@ class People extends Base {
 						)
 					)
 				),
+				'membership_pass' => PublicMembershipPassPage::get_person_pass_summary( (int) $post->ID ),
 			];
 		}
 

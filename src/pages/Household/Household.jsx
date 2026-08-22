@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck } from 'lucide-react';
+import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, ExternalLink } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -48,6 +48,7 @@ function Detail({ icon: Icon, label, value }) {
 function PersonCard({ person, isSelf }) {
   const fields = person.fields || {};
   const name = formatPersonName(fields.first_name, fields.infix, fields.last_name) || 'Onbekend';
+  const membershipPass = person.membership_pass;
 
   return (
     <div className="card p-5">
@@ -69,6 +70,29 @@ function PersonCard({ person, isSelf }) {
         <Detail icon={Calendar} label="Lid sinds" value={formatFieldDate(fields['lid_sinds'])} />
         <Detail icon={ShieldCheck} label="VOG afgegeven" value={formatFieldDate(fields['datum_vog'])} />
       </div>
+
+      {membershipPass ? (
+        <div className="mt-4 flex flex-col gap-3 rounded-lg border border-cyan-100 bg-cyan-50/60 p-4 dark:border-gray-700 dark:bg-gray-800/60 sm:flex-row sm:items-center">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <IdCard className="mt-0.5 h-5 w-5 shrink-0 text-bright-cobalt dark:text-electric-cyan" aria-hidden="true" />
+            <div className="min-w-0">
+              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{membershipPass.label}</div>
+              <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400">
+                Open de pas om hem aan Apple Wallet of Google Wallet toe te voegen.
+              </p>
+            </div>
+          </div>
+          <a
+            href={membershipPass.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-secondary justify-center gap-2 whitespace-nowrap text-sm"
+          >
+            {membershipPass.label} openen
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
+          </a>
+        </div>
+      ) : null}
     </div>
   );
 }
