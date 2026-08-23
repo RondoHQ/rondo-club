@@ -110,6 +110,14 @@ function NarrowcastingRoute({ children }) {
   );
 }
 
+function RoomsFeatureRoute({ children }) {
+  if (!window.rondoConfig?.features?.rooms) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
+
 function SponsorRoute({ children }) {
   return (
     <CapabilityRoute checkAccess={(user) => user?.can_manage_sponsors}>
@@ -575,7 +583,7 @@ const router = createBrowserRouter([
             ),
           },
           { path: 'presenteren', element: <PresentationSender /> },
-          { path: 'rooms', element: <Rooms /> },
+          { path: 'rooms', element: <RoomsFeatureRoute><Rooms /></RoomsFeatureRoute> },
 
           // Settings routes — kader only
           { path: 'settings/notifications', element: <Navigate to="/profile" replace /> },

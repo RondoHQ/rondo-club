@@ -644,10 +644,12 @@ class Narrowcasting extends Base {
 			return new \WP_Error( 'rondo_presentation_disabled', __( 'Browserpresentaties zijn niet ingeschakeld voor dit scherm.', 'rondo' ), [ 'status' => 403 ] );
 		}
 
-		$booking_service = new BookingService();
-		$entitlement     = $booking_service->presentation_entitlement_for_display( $display_id );
-		if ( is_array( $entitlement ) && ! $entitlement['allowed'] ) {
-			return new \WP_Error( 'rondo_presentation_outside_booking', __( 'Dit scherm is nu niet beschikbaar voor een presentatie.', 'rondo' ), [ 'status' => 403 ] );
+		$entitlement = null;
+		if ( \rondo_rooms_enabled() ) {
+			$entitlement = ( new BookingService() )->presentation_entitlement_for_display( $display_id );
+			if ( is_array( $entitlement ) && ! $entitlement['allowed'] ) {
+				return new \WP_Error( 'rondo_presentation_outside_booking', __( 'Dit scherm is nu niet beschikbaar voor een presentatie.', 'rondo' ), [ 'status' => 403 ] );
+			}
 		}
 
 		$previous_session_id = get_transient( $this->presentation_display_key( $display_id ) );
@@ -726,9 +728,13 @@ class Narrowcasting extends Base {
 			return new \WP_Error( 'rondo_presentation_unavailable', __( 'Dit scherm is niet beschikbaar voor browserpresentaties.', 'rondo' ), [ 'status' => 409 ] );
 		}
 
-		$booking_service = new BookingService();
-		$entitlement     = null;
-		if ( (int) ( $session['booking_id'] ?? 0 ) > 0 || $booking_service->display_is_reservation_controlled( (int) $session['display_id'] ) ) {
+		$entitlement = null;
+		if ( ! \rondo_rooms_enabled() && (int) ( $session['booking_id'] ?? 0 ) > 0 ) {
+			$this->delete_presentation_session( $session['id'] );
+			return new \WP_Error( 'rondo_presentation_expired', __( 'Deze presentatiesessie is verlopen.', 'rondo' ), [ 'status' => 410 ] );
+		}
+		$booking_service = \rondo_rooms_enabled() ? new BookingService() : null;
+		if ( $booking_service && ( (int) ( $session['booking_id'] ?? 0 ) > 0 || $booking_service->display_is_reservation_controlled( (int) $session['display_id'] ) ) ) {
 			$entitlement = $booking_service->presentation_entitlement_for_display( (int) $session['display_id'], get_current_user_id() );
 			if ( ! is_array( $entitlement ) || ! $entitlement['allowed'] || (int) ( $entitlement['booking_id'] ?? 0 ) !== (int) ( $session['booking_id'] ?? 0 ) ) {
 				return new \WP_Error( 'rondo_presentation_not_authorized', __( 'Je hebt nu geen toegang tot dit scherm.', 'rondo' ), [ 'status' => 403 ] );
@@ -1213,11 +1219,11 @@ class Narrowcasting extends Base {
 			]
 		);
 		$configuration['update']            = $this->player_update_config( (string) $fields['update_channel'] );
-		$room_service                       = new BookingService();
-		$room_id                            = $room_service->room_id_for_display( $display_id );
-		$entitlement                        = $room_service->presentation_entitlement_for_display( $display_id );
+		$room_service                       = \rondo_rooms_enabled() ? new BookingService() : null;
+		$room_id                            = $room_service ? $room_service->room_id_for_display( $display_id ) : 0;
+		$entitlement                        = $room_service ? $room_service->presentation_entitlement_for_display( $display_id ) : null;
 		$configuration['room_presentation'] = [
-			'controlled' => $room_id > 0 && $room_service->display_is_reservation_controlled( $display_id ),
+			'controlled' => $room_service && $room_id > 0 && $room_service->display_is_reservation_controlled( $display_id ),
 			'room_id'    => $room_id ?: null,
 			'room_name'  => (string) ( $entitlement['room_name'] ?? '' ),
 			'active'     => is_array( $entitlement ) && ! empty( $entitlement['allowed'] ),
@@ -1574,6 +1580,10 @@ class Narrowcasting extends Base {
 		}
 
 		if ( (int) ( $session['booking_id'] ?? 0 ) > 0 ) {
+			if ( ! \rondo_rooms_enabled() ) {
+				$this->delete_presentation_session( $session_id );
+				return new \WP_Error( 'rondo_presentation_expired', __( 'Deze presentatiesessie is verlopen.', 'rondo' ), [ 'status' => 410 ] );
+			}
 			$entitlement = ( new BookingService() )->presentation_entitlement_for_display(
 				(int) $session['display_id'],
 				(int) ( $session['user_id'] ?? 0 )

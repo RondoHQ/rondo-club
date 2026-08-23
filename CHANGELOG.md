@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.3.1] - 2026-08-23
+
+### Changed
+
+- Ruimtereserveringen staan achter de sitebrede feature flag `rondo_rooms_enabled`, die standaard uit staat en navigatie, pagina, REST-routes en reserveringsgestuurde Club TV-presentaties gezamenlijk uitschakelt.
+
 ## [35.3.0] - 2026-08-23
 
 ### Added
