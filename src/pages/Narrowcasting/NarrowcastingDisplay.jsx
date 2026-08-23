@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import NarrowcastingScene from './NarrowcastingScenes';
-import { buildPlaylistScenes } from './playlistScenes';
+import { buildPlaylistScenes, showsDateTimeForScene } from './playlistScenes';
 import { rotateSponsors } from './matchdayScenes';
-import { cacheBustedPath, PLAYLIST_REFRESH_INTERVAL_MS, SUPPORTING_DATA_REFRESH_INTERVAL_MS } from './displayRefresh';
+import {
+  cacheBustedPath,
+  PLAYLIST_REFRESH_INTERVAL_MS,
+  retainUnchangedPlaylist,
+  SUPPORTING_DATA_REFRESH_INTERVAL_MS,
+} from './displayRefresh';
 import PresentationReceiver from './PresentationReceiver';
 
 const TOKEN_KEY = 'rondoPlayerToken';
@@ -82,15 +87,9 @@ export default function NarrowcastingDisplay() {
   const [playlist, setPlaylist] = useState(() => (isPreview ? null : readStoredPlaylist()));
   const [loading, setLoading] = useState(isPreview);
   const [loadError, setLoadError] = useState('');
-  const [now, setNow] = useState(new Date());
   const [sceneIndex, setSceneIndex] = useState(0);
   const [sponsorRotationIndex, setSponsorRotationIndex] = useState(0);
   const token = useMemo(() => (isPreview ? '' : resolveToken()), [isPreview]);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 1000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     if (!token && !isPreview) return undefined;
@@ -121,7 +120,7 @@ export default function NarrowcastingDisplay() {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const nextPlaylist = await response.json();
       if (!active) return;
-      setPlaylist(nextPlaylist);
+      setPlaylist((current) => retainUnchangedPlaylist(current, nextPlaylist));
       if (!isPreview) localStorage.setItem(PLAYLIST_KEY, JSON.stringify(nextPlaylist));
     };
 
@@ -165,40 +164,28 @@ export default function NarrowcastingDisplay() {
     () => buildPlaylistScenes(playlist, feed, config?.pilot_message),
     [config?.pilot_message, feed, playlist],
   );
+  const sceneDurationSeconds = Math.max(5, Math.min(120, Number(scenes[sceneIndex]?.duration_seconds) || 12));
+  const sceneSequenceVersion = `${playlist?.content_version || ''}:${feed?.source?.fetched_at || ''}:${config?.pilot_message || ''}`;
 
   useEffect(() => {
     if (!scenes.length) return undefined;
-    const duration = Math.max(5, Math.min(120, Number(scenes[sceneIndex]?.duration_seconds) || 12));
     const timer = window.setTimeout(() => {
       setSceneIndex((current) => (current + 1) % scenes.length);
       setSponsorRotationIndex((current) => current + 1);
-    }, duration * 1000);
+    }, sceneDurationSeconds * 1000);
     return () => window.clearTimeout(timer);
-  }, [sceneIndex, scenes]);
+  }, [sceneDurationSeconds, sceneIndex, sceneSequenceVersion, scenes.length]);
 
   useEffect(() => {
     setSceneIndex(0);
     setSponsorRotationIndex(0);
-  }, [config?.pilot_message, feed?.source?.fetched_at, playlist?.content_version]);
+  }, [sceneSequenceVersion]);
 
   useEffect(() => {
     if (sceneIndex >= scenes.length) setSceneIndex(0);
   }, [sceneIndex, scenes.length]);
 
   const timezone = config?.timezone || 'Europe/Amsterdam';
-  const time = new Intl.DateTimeFormat('nl-NL', {
-    timeZone: timezone,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  }).format(now);
-  const date = new Intl.DateTimeFormat('nl-NL', {
-    timeZone: timezone,
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  }).format(now);
   if (isPreview && loading && !config) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50 p-8 text-slate-950">
@@ -262,7 +249,7 @@ export default function NarrowcastingDisplay() {
   const sponsorLogos = feed?.sponsors?.length
     ? rotateSponsors(feed.sponsors, sponsorRotationIndex)
     : (scene?.sponsorLogos || []);
-  const footerDate = scene?.dateLabel || date;
+  const showDateTime = showsDateTimeForScene(scene);
 
   return (
     <main className="relative flex min-h-screen overflow-hidden transition-colors duration-700" style={sceneStyle}>
@@ -300,10 +287,7 @@ export default function NarrowcastingDisplay() {
 
         <footer className="flex items-end justify-between border-t border-[var(--display-border)] pt-[1.4vw]">
           <SponsorLogoRow sponsors={sponsorLogos.slice(2, 6)} size="bottom" />
-          <div className="text-right">
-            <p className="mb-[0.2vw] text-[1.35vw] font-medium capitalize text-[var(--display-text)] opacity-80">{footerDate}</p>
-            <time className="font-mono text-[4.5vw] font-semibold tabular-nums tracking-[-0.06em]">{time}</time>
-          </div>
+          {showDateTime ? <DateTimeFooter timezone={timezone} dateLabel={scene?.dateLabel} /> : <div aria-hidden="true" />}
         </footer>
       </div>
       <div className="absolute inset-x-0 bottom-0 h-[0.55vw] bg-[var(--club-accent)]" />
@@ -315,6 +299,36 @@ export default function NarrowcastingDisplay() {
         />
       )}
     </main>
+  );
+}
+
+function DateTimeFooter({ timezone, dateLabel }) {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const time = new Intl.DateTimeFormat('nl-NL', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).format(now);
+  const date = dateLabel || new Intl.DateTimeFormat('nl-NL', {
+    timeZone: timezone,
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  }).format(now);
+
+  return (
+    <div className="text-right">
+      <p className="mb-[0.2vw] text-[1.35vw] font-medium capitalize text-[var(--display-text)] opacity-80">{date}</p>
+      <time className="font-mono text-[4.5vw] font-semibold tabular-nums tracking-[-0.06em]">{time}</time>
+    </div>
   );
 }
 

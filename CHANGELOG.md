@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.2.2] - 2026-08-23
+
+### Changed
+
+- Handmatige Club TV-slides tonen geen datum en klok meer; wedstrijd-, afgelasting- en uitslagenslides behouden deze tijdscontext.
+
+### Fixed
+
+- Club TV-playlists roteren weer volgens de ingestelde slidduur; de tiensecondenpoll voor playlistwijzigingen start de rotatietimer niet langer telkens opnieuw.
+
 ## [35.2.1] - 2026-08-23
 
 ### Changed
