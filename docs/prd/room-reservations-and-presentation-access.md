@@ -22,8 +22,9 @@ reservation and ends when the booking ends. If nobody has the room afterwards, t
 can extend the reservation in small increments.
 
 Accommodation managers get a dedicated day and week overview. They can see who reserved each room
-and can add, edit or cancel any reservation. Every management action is attributed and retained in
-an audit trail. The affected reservation holder receives a notification.
+and can create a reservation on behalf of an eligible holder, edit or cancel any reservation, or
+create a management room block without a holder. Every management action is attributed and retained
+in an audit trail. The affected reservation holder receives a notification.
 
 The module uses WordPress-native custom post types and post meta. The existing `calendar_event` post
 type is not reused: it is an external-calendar cache, while a room reservation is authoritative
@@ -45,12 +46,9 @@ The following decisions come from product review and are fixed for the first imp
    a team belonging to that year group; a player role does not qualify.
 10. A year group is derived from the current player roster of the team attached to the volunteer
     role, rather than introduced as a separately managed entity.
-
-### Open product decision
-
-- Decide whether an accommodation manager may bypass the creator-membership rule for operational
-  support, or may only create a booking on behalf of an otherwise eligible holder. Management room
-  blocks remain possible regardless of this decision.
+11. An accommodation manager may create a member reservation only on behalf of a holder who is
+    eligible for the selected commissie or year group. Management room blocks without a holder are
+    exempt from this membership rule.
 
 ## 3. Goals
 
@@ -110,7 +108,8 @@ capability matrix.
 An accommodation manager may:
 
 - see every reservation and reservation holder;
-- add a reservation for any approved Rondo user;
+- add a reservation for an approved Rondo user who qualifies for the selected commissie or year
+  group;
 - edit any reservation, including its room and time;
 - cancel any reservation with a required reason;
 - extend or end an active booking;
@@ -189,11 +188,12 @@ Core fields:
 | `room_id` | Required relation to one `rondo_room` |
 | `start_datetime` | Required timezone-aware start |
 | `end_datetime` | Required timezone-aware end |
+| `booking_type` | Required: `member_reservation` or `management_block` |
 | `purpose` | Short visible purpose for holder and managers |
 | `private_notes` | Optional, visible only to holder and accommodation managers |
-| `holder_user_id` | Rondo account that owns the reservation |
-| `holder_person_id` | Linked person record for identity and contact display |
-| `booking_context_type` | Required: `commissie` or `age_group` |
+| `holder_user_id` | Rondo account that owns the reservation; empty only for a management room block |
+| `holder_person_id` | Linked person record for identity and contact display; empty only for a management room block |
+| `booking_context_type` | Required for a member reservation: `commissie` or `age_group`; empty for a management room block |
 | `commissie_id` | Required exact `commissie` relation when the context type is `commissie` |
 | `age_group_key` | Required normalized year-group key such as `O12` when the context type is `age_group` |
 | `context_label_snapshot` | Human-readable group name retained for historical display |
@@ -254,6 +254,19 @@ The create form receives only the user's eligible booking contexts. Creation per
 check again inside the server-side write flow. Changing a booking's commissie or year group repeats
 the check. A later role change does not automatically cancel an already confirmed reservation, but
 the former volunteer cannot create another reservation for that group.
+
+### Manager-created reservations
+
+For a member reservation created by an accommodation manager, Rondo resolves eligibility against
+the selected holder's linked person record, not against the manager. The manager first selects an
+approved holder and then receives only that holder's eligible commissies and year groups. Creation,
+changing the holder or changing the booking context repeats the holder-eligibility check on the
+server. The manager capability does not bypass a failed eligibility check.
+
+A manager may still change the room or time, cancel or operationally extend an existing reservation
+after the holder's qualifying role has ended. Reassigning that reservation to another holder or
+booking context requires the new combination to be eligible. A management room block has no holder
+or booking context and is exempt from group eligibility.
 
 ## 8. Availability and conflict rules
 
@@ -466,7 +479,8 @@ All routes live under `/rondo/v1/rooms` and use canonical field names.
 | `POST /rooms/bookings/{id}/cancel` | Holder or manager | Cancel with attribution |
 | `POST /rooms/bookings/{id}/extend` | Holder or manager | Extend after a locked availability check |
 | `GET /rooms/manage/bookings` | Accommodation manager | Full operational day/week dataset |
-| `POST /rooms/manage/bookings` | Accommodation manager | Create a reservation or room block for another person |
+| `GET /rooms/manage/booking-contexts?holder_user_id={id}` | Accommodation manager | List only the selected holder's eligible commissies and year groups |
+| `POST /rooms/manage/bookings` | Accommodation manager | Create a qualifying-holder reservation or a holderless room block |
 | `GET`, `POST /rooms/manage/{id}` | Administrator | Read or update room configuration |
 | `GET /rooms/bookings/{id}/activity` | Accommodation manager | Read immutable booking activity |
 
@@ -501,6 +515,7 @@ the existing narrowcasting namespace.
 | Next booking is cancelled | Current holder may request an extension after availability refresh |
 | Manager cancels an active booking | Stop entitlement and stream, then resume Club TV |
 | Holder's account is disabled | Booking remains visible to managers; presentation entitlement is denied |
+| Manager selects an ineligible holder and booking-context combination | Reject it; manager capability does not bypass eligibility |
 | User has only a player position in the selected team | Do not offer or accept that year group |
 | Team has players from more than one normalized year group | Return every derived year group and retain the exact selected key |
 | Volunteer role ends after a future booking was confirmed | Keep the booking, but deny new bookings or context changes for that group |
@@ -526,7 +541,12 @@ the existing narrowcasting namespace.
 ### Accommodation management
 
 - A user with `accommodatiebeheer` sees day and week overviews with holder names.
-- The manager can add, edit and cancel any reservation.
+- A manager can create a member reservation only for a holder who qualifies for the selected
+  commissie or year group.
+- A manager cannot use their capability to create an ordinary member reservation for an ineligible
+  holder.
+- A manager can always create a management room block without a holder or booking context.
+- The manager can edit, operationally extend and cancel any existing reservation.
 - A manager cancellation requires a reason.
 - Each action records actor, time and changed fields.
 - The affected holder receives an email or a visible no-email warning is returned.
