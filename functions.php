@@ -944,22 +944,38 @@ add_action( 'after_setup_theme', 'rondo_theme_remove_admin_bar' );
  * Block non-admin users from accessing wp-admin.
  *
  * Redirects users without manage_options capability to the app home page.
- * Exempts AJAX requests, WP-CLI, and cron to avoid breaking functionality.
+ * Exempts frontend action requests, AJAX requests, WP-CLI, and cron to avoid
+ * breaking functionality that intentionally enters through wp-admin.
  */
-function rondo_block_wp_admin() {
+function rondo_should_block_wp_admin() {
+	global $pagenow;
+
+	if ( $pagenow === 'admin-post.php' ) {
+		return false;
+	}
+
 	if ( wp_doing_ajax() ) {
-		return;
+		return false;
 	}
 
 	if ( defined( 'WP_CLI' ) && WP_CLI ) {
-		return;
+		return false;
 	}
 
 	if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
-		return;
+		return false;
 	}
 
 	if ( current_user_can( 'manage_options' ) ) {
+		return false;
+	}
+
+	return true;
+}
+
+/** Block non-admin users from backend screens. */
+function rondo_block_wp_admin() {
+	if ( ! rondo_should_block_wp_admin() ) {
 		return;
 	}
 
