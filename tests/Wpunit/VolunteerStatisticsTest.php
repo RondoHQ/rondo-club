@@ -141,7 +141,7 @@ class VolunteerStatisticsTest extends RondoTestCase {
 
 	public function test_statistics_ignore_stale_person_ids_in_cached_eligibility(): void {
 		$missing_person_id = 999999;
-		$cache_key         = VolunteerEligibilityService::CACHE_PREFIX . md5( $this->season );
+		$cache_key         = VolunteerEligibilityService::cache_key( $this->season );
 		set_transient(
 			$cache_key,
 			[

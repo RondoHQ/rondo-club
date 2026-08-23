@@ -13,6 +13,31 @@ use Tests\Support\RondoTestCase;
 class VolunteerStatusTest extends RondoTestCase {
 
 	/**
+	 * Sportlink's combined trainer title grants the same exemption as Trainer.
+	 */
+	public function test_trainer_coach_role_grants_staff_exemption(): void {
+		$person_id = $this->createPerson( [ 'post_title' => 'Trainer Coach' ] );
+
+		Fields::update_for_post(
+			$person_id,
+			'work_history',
+			[
+				[
+					'team'        => 123,
+					'entity_type' => 'team',
+					'job_title'   => 'Trainer/coach',
+					'start_date'  => '2026-07-20',
+					'end_date'    => '',
+					'is_current'  => true,
+				],
+			]
+		);
+
+		$this->assertTrue( VolunteerExemptionResolver::has_active_staff_role( $person_id ) );
+		$this->assertSame( VolunteerExemptionResolver::REASON_STAFF, VolunteerExemptionResolver::resolve( $person_id, '2026-2027' ) );
+	}
+
+	/**
 	 * A first active staff role records the date used by volunteer onboarding.
 	 */
 	public function test_first_active_staff_role_sets_volunteer_since(): void {

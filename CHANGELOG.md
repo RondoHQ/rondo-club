@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.28.11] - 2026-08-23
+
+### Fixed
+
+- De stafrol `Trainer/coach` stelt het volledige gezin vrij van verplichte inschrijftaken en wijzigingen in ouderrelaties verversen de gezinsverplichting direct, ook met een persistente objectcache.
+
 ## [34.28.10] - 2026-08-22
 
 ### Changed

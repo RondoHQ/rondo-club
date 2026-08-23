@@ -125,7 +125,7 @@ class VolunteerShiftCapacityTest extends RondoTestCase {
 		$person_id = $this->createPerson( [ 'post_title' => 'Actieve speler' ] );
 		$stale_id  = 999999;
 		set_transient(
-			VolunteerEligibilityService::CACHE_PREFIX . md5( $season ),
+			VolunteerEligibilityService::cache_key( $season ),
 			[
 				'units'       => [
 					[

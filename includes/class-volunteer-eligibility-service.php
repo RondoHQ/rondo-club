@@ -58,8 +58,9 @@ class VolunteerEligibilityService {
 	 * so a dashboard refresh costs one O(1) transient read instead of an
 	 * O(N²) full scan with thousands of native field calls.
 	 */
-	const CACHE_PREFIX      = 'rondo_eligibility_view_';
-	const CACHE_TTL_SECONDS = 5 * MINUTE_IN_SECONDS;
+	const CACHE_PREFIX            = 'rondo_eligibility_view_';
+	const CACHE_GENERATION_OPTION = 'rondo_eligibility_cache_generation';
+	const CACHE_TTL_SECONDS       = 5 * MINUTE_IN_SECONDS;
 
 	/**
 	 * In-memory cache for the address→adults map, used during a single
@@ -132,7 +133,7 @@ class VolunteerEligibilityService {
 	 */
 	public function get_eligibility_view( ?string $season = null ): array {
 		$season    = $season ?: SeasonKey::current();
-		$cache_key = self::CACHE_PREFIX . md5( $season );
+		$cache_key = self::cache_key( $season );
 
 		$cached = get_transient( $cache_key );
 		if ( is_array( $cached ) ) {
@@ -145,21 +146,22 @@ class VolunteerEligibilityService {
 	}
 
 	/**
-	 * Wipe every cached eligibility view + every cached drill-down. Hooked on
-	 * person save (and accessible to other classes that mutate person data).
+	 * Advance the cache generation so every cached eligibility view is bypassed.
+	 *
+	 * Old generations expire through their normal five-minute TTL. A generation
+	 * option works with both database transients and persistent object caches,
+	 * whereas deleting transient rows directly leaves Memcached values alive.
 	 */
 	public static function invalidate_cache(): void {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
-		$wpdb->query(
-			$wpdb->prepare(
-				"DELETE FROM {$wpdb->options}
-				 WHERE option_name LIKE %s
-				    OR option_name LIKE %s",
-				'_transient_' . self::CACHE_PREFIX . '%',
-				'_transient_timeout_' . self::CACHE_PREFIX . '%'
-			)
-		);
+		update_option( self::CACHE_GENERATION_OPTION, wp_generate_uuid4(), false );
+	}
+
+	/**
+	 * Build the current generation's transient key for a season.
+	 */
+	public static function cache_key( string $season ): string {
+		$generation = (string) get_option( self::CACHE_GENERATION_OPTION, '1' );
+		return self::CACHE_PREFIX . md5( $season . '|' . $generation );
 	}
 
 	/**
