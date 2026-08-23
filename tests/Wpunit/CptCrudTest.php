@@ -410,4 +410,33 @@ class CptCrudTest extends RondoTestCase {
 		$this->assertContains( $self, $ids );
 		$this->assertNotContains( $stranger, $ids );
 	}
+
+	public function test_household_endpoint_returns_both_contact_numbers(): void {
+		$self    = $this->createPerson(
+			[ 'post_title' => 'Member with secondary contact details' ],
+			[
+				'email_1'     => 'primary@example.com',
+				'email_2'     => 'secondary@example.com',
+				'mobile_1'    => '0611111111',
+				'mobile_2'    => '0622222222',
+				'telephone_1' => '0241111111',
+				'telephone_2' => '0242222222',
+			]
+		);
+		$user_id = $this->user();
+		update_user_meta( $user_id, 'rondo_linked_person_id', $self );
+		AccessControl::flush_visible_person_ids_cache();
+		wp_set_current_user( $user_id );
+
+		$response = ( new People() )->get_household();
+		$fields   = $response->get_data()[0]['fields'];
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'primary@example.com', $fields['email_1'] );
+		$this->assertSame( 'secondary@example.com', $fields['email_2'] );
+		$this->assertSame( '0611111111', $fields['mobile_1'] );
+		$this->assertSame( '0622222222', $fields['mobile_2'] );
+		$this->assertSame( '0241111111', $fields['telephone_1'] );
+		$this->assertSame( '0242222222', $fields['telephone_2'] );
+	}
 }

@@ -270,8 +270,11 @@ function PersonCard({ person, isSelf, isParent }) {
 
       <div className="grid gap-x-8 sm:grid-cols-2">
         <Detail icon={Mail} label="E-mail" value={fields.email_1} />
+        <Detail icon={Mail} label="E-mail (2e)" value={fields.email_2} />
         <Detail icon={Smartphone} label="Mobiel" value={fields.mobile_1} />
+        <Detail icon={Smartphone} label="Mobiel (2e)" value={fields.mobile_2} />
         <Detail icon={Phone} label="Telefoon" value={fields.telephone_1} />
+        <Detail icon={Phone} label="Telefoon (2e)" value={fields.telephone_2} />
         <Detail icon={MapPin} label="Adres" value={firstAddress(fields.addresses)} />
         <Detail icon={Calendar} label="Geboortedatum" value={formatFieldDate(fields.birthdate)} />
         <Detail icon={Users} label="Leeftijdsgroep" value={fields.leeftijdsgroep} />
