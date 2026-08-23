@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.0.5] - 2026-08-23
+
+### Fixed
+
+- **Mijn gegevens** toont nu ook het tweede e-mailadres, mobiele nummer en telefoonnummer wanneer die bij een persoon zijn opgeslagen.
+
 ## [35.0.4] - 2026-08-23
 
 ### Fixed
