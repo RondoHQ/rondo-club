@@ -16,6 +16,7 @@ class MembershipPassService {
 
 	const ACTION                            = 'rondo_membership_pass_wallet';
 	const NONCE_ACTION_PREFIX               = 'rondo_membership_pass_wallet';
+	const TOKEN_QUERY_ARG                   = '_wallet_token';
 	const LEGACY_TOKEN_META_KEY             = '_membership_pass_token';
 	const LEGACY_URL_META_KEY               = '_membership_pass_url';
 	const LEGACY_BACKFILL_OPTION            = 'rondo_membership_pass_backfill_v2_done';
@@ -132,17 +133,22 @@ class MembershipPassService {
 		return trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
 	}
 
-	/** Handle a nonce-protected Apple download or Google redirect. */
+	/** Handle a session-bound Apple download or Google redirect. */
 	public function handle_wallet_action() {
 		$person_id = isset( $_GET['person_id'] ) ? absint( wp_unslash( $_GET['person_id'] ) ) : 0;
 		$wallet    = isset( $_GET['wallet'] ) ? sanitize_key( wp_unslash( $_GET['wallet'] ) ) : '';
 		$role      = isset( $_GET['role'] ) ? sanitize_text_field( wp_unslash( $_GET['role'] ) ) : '';
+		$token     = isset( $_GET[ self::TOKEN_QUERY_ARG ] ) ? sanitize_text_field( wp_unslash( $_GET[ self::TOKEN_QUERY_ARG ] ) ) : '';
 
 		if ( $person_id <= 0 || ! in_array( $wallet, [ 'apple', 'google' ], true ) ) {
 			wp_die( esc_html__( 'Ongeldige walletactie.', 'rondo' ), '', [ 'response' => 400 ] );
 		}
 
-		check_admin_referer( self::nonce_action( $person_id, $wallet ) );
+		$legacy_nonce_valid = isset( $_GET['_wpnonce'] )
+			&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), self::nonce_action( $person_id, $wallet ) );
+		if ( ! self::verify_wallet_token( $person_id, $wallet, $token ) && ! $legacy_nonce_valid ) {
+			wp_die( esc_html__( 'Deze walletlink is niet meer geldig. Ververs Mijn gegevens en probeer opnieuw.', 'rondo' ), '', [ 'response' => 403 ] );
+		}
 
 		$access_control = new AccessControl();
 		if ( ! $access_control->user_can_access_post( $person_id ) ) {
@@ -211,14 +217,40 @@ class MembershipPassService {
 	private static function get_wallet_action_url( int $person_id, string $wallet ): string {
 		$url = add_query_arg(
 			[
-				'action'    => self::ACTION,
-				'person_id' => $person_id,
-				'wallet'    => $wallet,
+				'action'              => self::ACTION,
+				'person_id'           => $person_id,
+				'wallet'              => $wallet,
+				self::TOKEN_QUERY_ARG => self::create_wallet_token( $person_id, $wallet ),
 			],
 			admin_url( 'admin-post.php' )
 		);
 
-		return add_query_arg( '_wpnonce', wp_create_nonce( self::nonce_action( $person_id, $wallet ) ), $url );
+		return $url;
+	}
+
+	/** Create a wallet token bound to the current user and login session. */
+	private static function create_wallet_token( int $person_id, string $wallet ): string {
+		$user_id = get_current_user_id();
+		if ( $user_id <= 0 ) {
+			return '';
+		}
+
+		$payload = implode(
+			'|',
+			[
+				(string) $user_id,
+				wp_get_session_token(),
+				(string) $person_id,
+				$wallet,
+			]
+		);
+
+		return hash_hmac( 'sha256', $payload, wp_salt( 'nonce' ) );
+	}
+
+	/** Verify a wallet token for the current user and login session. */
+	private static function verify_wallet_token( int $person_id, string $wallet, string $token ): bool {
+		return $token !== '' && hash_equals( self::create_wallet_token( $person_id, $wallet ), $token );
 	}
 
 	private static function nonce_action( int $person_id, string $wallet ): string {
