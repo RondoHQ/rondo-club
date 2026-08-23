@@ -5,3 +5,13 @@ export function cacheBustedPath(path, nonce = Date.now()) {
   const separator = path.includes('?') ? '&' : '?';
   return `${path}${separator}rondo_cache_buster=${encodeURIComponent(String(nonce))}`;
 }
+
+export function retainUnchangedPlaylist(current, refreshed) {
+  if (!current || !refreshed) return refreshed;
+
+  const unchanged = current.playlist_id === refreshed.playlist_id
+    && current.content_version === refreshed.content_version
+    && Boolean(current.override) === Boolean(refreshed.override);
+
+  return unchanged ? current : refreshed;
+}

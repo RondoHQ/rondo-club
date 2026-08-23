@@ -1,6 +1,11 @@
-import { buildMatchdayScenes, rotateSponsors } from './matchdayScenes';
+import { buildMatchdayScenes, rotateSponsors } from './matchdayScenes.js';
 
 const dynamicTypes = new Set(['matches', 'rooms', 'cancellations', 'results']);
+const dateTimeTypes = new Set(['matches', 'cancellations', 'results']);
+
+export function showsDateTimeForScene(scene) {
+  return dateTimeTypes.has(scene?.type);
+}
 
 export function buildPlaylistScenes(manifest, feed, fallbackMessage) {
   if (!manifest?.scenes?.length) return buildMatchdayScenes(feed, fallbackMessage);
