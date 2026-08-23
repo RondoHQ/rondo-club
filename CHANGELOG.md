@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.2.1] - 2026-08-23
+
+### Changed
+
+- De bestaande persoonskaarten onder **Mijn gegevens** hebben op de eigen kaart één knop **Wijzigen**, die de e-mail-, telefoon- en adresinstellingen in een popover opent.
+
+### Fixed
+
+- Verbeterde het contrast van acties, veldlabels en e-mailwaarschuwingen in **Mijn gegevens** in donkere modus.
+
 ## [35.2.0] - 2026-08-23
 
 ### Added

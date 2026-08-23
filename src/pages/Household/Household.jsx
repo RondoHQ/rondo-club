@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, Building2, ImagePlus, LoaderCircle } from 'lucide-react';
+import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, Building2, ImagePlus, LoaderCircle, Pencil, X } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useUploadSponsorLogo } from '@/hooks/useSponsors';
@@ -247,7 +247,10 @@ function SponsorLogoEditor({ organization }) {
   );
 }
 
-function PersonCard({ person, isSelf, isParent }) {
+function PersonCard({ person, isSelf, isParent, householdPeople, linkedPersonId }) {
+  const [profileEditorAnchor, setProfileEditorAnchor] = useState(null);
+  const closeProfileEditor = useCallback(() => setProfileEditorAnchor(null), []);
+  const profileEditorCloseRef = useRef(null);
   const fields = person.fields || {};
   const name = formatPersonName(fields.first_name, fields.infix, fields.last_name) || 'Onbekend';
   const membershipPass = person.membership_pass;
@@ -255,7 +258,7 @@ function PersonCard({ person, isSelf, isParent }) {
 
   return (
     <div className="card max-w-3xl p-5">
-      <div className="flex items-center justify-between gap-3 mb-3">
+      <div className="mb-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
           {isSelf && sponsorOrganization ? (
             <Eyebrow>{isParent ? 'Contactpersoon en ouder' : 'Contactpersoon'}</Eyebrow>
@@ -264,9 +267,24 @@ function PersonCard({ person, isSelf, isParent }) {
             {name}
           </h2>
         </div>
-        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
-          {isSelf ? 'Jij' : 'Kind'}
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="inline-block rounded bg-cyan-100 px-2 py-0.5 text-xs font-medium text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
+            {isSelf ? 'Jij' : 'Kind'}
+          </span>
+          {isSelf ? (
+            <button
+              type="button"
+              className="btn-secondary gap-2 px-3 py-1.5 text-sm"
+              aria-haspopup="dialog"
+              aria-expanded={Boolean(profileEditorAnchor)}
+              aria-controls={`member-profile-editor-${person.id}`}
+              onClick={(event) => setProfileEditorAnchor(profileEditorAnchor ? null : event.currentTarget)}
+            >
+              <Pencil className="h-4 w-4" aria-hidden="true" />
+              Wijzigen
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="grid gap-x-8 sm:grid-cols-2">
@@ -288,6 +306,30 @@ function PersonCard({ person, isSelf, isParent }) {
 
       {isSelf && sponsorOrganization?.can_edit_logo ? (
         <SponsorLogoEditor organization={sponsorOrganization} />
+      ) : null}
+
+      {profileEditorAnchor ? (
+        <AnchoredPopover
+          anchor={profileEditorAnchor}
+          id={`member-profile-editor-${person.id}`}
+          initialFocusRef={profileEditorCloseRef}
+          labelledBy={`member-profile-editor-title-${person.id}`}
+          maxWidth={720}
+          onClose={closeProfileEditor}
+          preferredHeight={640}
+        >
+          <div className="p-4 sm:p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 id={`member-profile-editor-title-${person.id}`} className="font-semibold text-gray-900 dark:text-gray-100">
+                Gegevens wijzigen
+              </h2>
+              <button ref={profileEditorCloseRef} type="button" className="btn-tertiary px-2 py-2" aria-label="Sluiten" onClick={closeProfileEditor}>
+                <X className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </div>
+            <MemberProfileEditors people={householdPeople} linkedPersonId={linkedPersonId} embedded />
+          </div>
+        </AnchoredPopover>
       ) : null}
     </div>
   );
@@ -313,7 +355,6 @@ export default function Household() {
   });
 
   const linkedPersonId = currentUser?.linked_person_id ?? null;
-
   const ordered = useMemo(() => {
     const self = people.filter((person) => person.id === linkedPersonId);
     const others = people.filter((person) => person.id !== linkedPersonId);
@@ -350,13 +391,14 @@ export default function Household() {
         </div>
       ) : (
         <>
-          <MemberProfileEditors people={ordered} linkedPersonId={linkedPersonId} />
           {ordered.map((person) => (
             <PersonCard
               key={person.id}
               person={person}
               isSelf={person.id === linkedPersonId}
               isParent={currentUser?.is_parent === true}
+              householdPeople={ordered}
+              linkedPersonId={linkedPersonId}
             />
           ))}
         </>
