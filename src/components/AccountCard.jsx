@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { UserPlus, Check, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { UserPlus, Check, Loader2, AlertCircle, RefreshCw, LogIn } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 import { format } from '@/utils/dateFormat';
@@ -46,6 +46,7 @@ export default function AccountCard({ personId, personData }) {
   const hasValidWelcomeEmailSentAt = !!(welcomeEmailSentAt && isValidDate(welcomeEmailSentAt));
   const linkedUserRoles = personData?.linked_user_roles;
   const linkedUserRoleLabels = personData?.linked_user_role_labels || {};
+  const linkedUserSwitchUrl = personData?.linked_user_switch_url;
 
   // Check if person has an email address
   const hasEmail = !!(personData?.fields?.email_1?.trim());
@@ -122,6 +123,15 @@ export default function AccountCard({ personId, personData }) {
             </div>
           )}
           <div className="flex items-center gap-3 pl-7 pt-2">
+            {linkedUserSwitchUrl && (
+              <a
+                href={linkedUserSwitchUrl}
+                className="inline-flex items-center gap-1.5 text-xs text-electric-cyan hover:underline"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Wissel naar gebruiker</span>
+              </a>
+            )}
             <button
               onClick={handleSyncRoles}
               disabled={syncingRoles}
