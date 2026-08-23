@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.2.0] - 2026-08-23
+
+### Added
+
+- Leden kunnen in **Mijn gegevens** hun e-mailadressen, telefoonnummers en het woonadres van hun gezin aanpassen; nieuwe en gewisselde e-mailadressen worden eerst via een eenmalige link geverifieerd.
+- De ledenadministratie kan 24 maanden aan zelfservicewijzigingen en de bijbehorende Sportlink-status bekijken in **Wijzigingslog**.
+
+### Changed
+
+- Een primair e-mailadres wordt na verificatie ook doorgevoerd naar het Rondo-account en naar minderjarige kinderen die nog hetzelfde gezinsadres gebruiken.
+- Het woonadres wordt als één gezinswijziging toegepast op het eigen actieve ledenprofiel en gekoppelde minderjarige kinderen, met behoud van andere adresregels.
+- `Telefoon 2` blijft alleen in Rondo, omdat Sportlink dit veld niet ondersteunt; expliciet verwijderde overige contactgegevens worden wel naar Sportlink teruggesynchroniseerd.
+
 ## [35.1.0] - 2026-08-23
 
 ### Added

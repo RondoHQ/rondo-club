@@ -23,14 +23,22 @@ class PhoneNormalizer {
 		'telephone_2',
 	];
 
-	public function __construct() {
-		add_filter( 'rondo_fields_validate_value', [ $this, 'normalize_native_field' ], 10, 4 );
-	}
-
 	public function normalize_native_field( $value, $post_id, array $field, $old_value ) {
 		return in_array( $field['canonical_name'], self::PHONE_FIELDS, true )
-			? $this->normalize_phone_number( $value, $post_id, $field, $old_value )
+			? self::normalize( $value )
 			: $value;
+	}
+
+	/** Normalize a standalone value for forms that do not write through core REST. */
+	public static function normalize( $value ) {
+		return ( new self( false ) )->normalize_phone_number( $value, 0, [], null );
+	}
+
+	/** Optionally skip hook registration for standalone normalization. */
+	public function __construct( bool $register_hook = true ) {
+		if ( $register_hook ) {
+			add_filter( 'rondo_fields_validate_value', [ $this, 'normalize_native_field' ], 10, 4 );
+		}
 	}
 
 	/**

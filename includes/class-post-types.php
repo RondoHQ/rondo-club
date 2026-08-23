@@ -19,24 +19,25 @@ class PostTypes {
 	 * REST-exposed Rondo record, including invoices and discipline cases.
 	 */
 	public const CAPABILITY_DOMAINS = [
-		'person'              => [ 'person', 'people' ],
-		'team'                => [ 'team', 'teams' ],
-		'commissie'           => [ 'commissie', 'commissies' ],
-		'rondo_clothing_item' => [ 'clothing_item', 'clothing_items' ],
-		'rondo_clothing_txn'  => [ 'clothing_transaction', 'clothing_transactions' ],
-		'rondo_todo'          => [ 'todo', 'todos' ],
-		'calendar_event'      => [ 'calendar_event', 'calendar_events' ],
-		'rondo_feedback'      => [ 'feedback_item', 'feedback_items' ],
-		'discipline_case'     => [ 'discipline_case', 'discipline_cases' ],
-		'rondo_invoice'       => [ 'invoice', 'invoices' ],
-		'rondo_display'       => [ 'display', 'displays' ],
-		'rondo_signage_item'  => [ 'signage_item', 'signage_items' ],
-		'rondo_signage_list'  => [ 'signage_playlist', 'signage_playlists' ],
-		'rondo_sponsor'       => [ 'sponsor', 'sponsors' ],
-		'dienst_type'         => [ 'dienst_type', 'dienst_types' ],
-		'shift_template'      => [ 'shift_template', 'shift_templates' ],
-		'dienst_shift'        => [ 'dienst_shift', 'dienst_shifts' ],
-		'taakuitleg'          => [ 'taakuitleg', 'taakuitleg_items' ],
+		'person'               => [ 'person', 'people' ],
+		'team'                 => [ 'team', 'teams' ],
+		'commissie'            => [ 'commissie', 'commissies' ],
+		'rondo_clothing_item'  => [ 'clothing_item', 'clothing_items' ],
+		'rondo_clothing_txn'   => [ 'clothing_transaction', 'clothing_transactions' ],
+		'rondo_todo'           => [ 'todo', 'todos' ],
+		'calendar_event'       => [ 'calendar_event', 'calendar_events' ],
+		'rondo_feedback'       => [ 'feedback_item', 'feedback_items' ],
+		'discipline_case'      => [ 'discipline_case', 'discipline_cases' ],
+		'rondo_invoice'        => [ 'invoice', 'invoices' ],
+		'rondo_display'        => [ 'display', 'displays' ],
+		'rondo_signage_item'   => [ 'signage_item', 'signage_items' ],
+		'rondo_signage_list'   => [ 'signage_playlist', 'signage_playlists' ],
+		'rondo_sponsor'        => [ 'sponsor', 'sponsors' ],
+		'dienst_type'          => [ 'dienst_type', 'dienst_types' ],
+		'shift_template'       => [ 'shift_template', 'shift_templates' ],
+		'dienst_shift'         => [ 'dienst_shift', 'dienst_shifts' ],
+		'taakuitleg'           => [ 'taakuitleg', 'taakuitleg_items' ],
+		'rondo_profile_change' => [ 'profile_change', 'profile_changes' ],
 	];
 
 	/**
@@ -112,6 +113,32 @@ class PostTypes {
 		$this->register_shift_template_post_type();
 		$this->register_dienst_shift_post_type();
 		$this->register_taakuitleg_post_type();
+		$this->register_profile_change_post_type();
+	}
+
+	/** Register the private, immutable member self-service audit log. */
+	private function register_profile_change_post_type() {
+		$args = array_merge(
+			[
+				'labels'             => [
+					'name'          => __( 'Profielwijzigingen', 'rondo' ),
+					'singular_name' => __( 'Profielwijziging', 'rondo' ),
+				],
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => false,
+				'show_in_menu'       => false,
+				'show_in_rest'       => false,
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'rondo_profile_change' )
+		);
+
+		register_post_type( 'rondo_profile_change', $args );
 	}
 
 	/** Register private sponsors managed through Rondo's REST API. */

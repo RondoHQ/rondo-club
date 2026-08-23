@@ -13,7 +13,7 @@ import Dashboard from '@/pages/Dashboard';
 
 // Lazy-loaded page components (separate file for fast refresh compatibility)
 import {
-  PeopleList, PeopleAnniversaries, PeopleOnboarding, PersonDetail, SponsorList, SponsorDetail, TeamsList, TeamDetail,
+  PeopleList, PeopleAnniversaries, PeopleOnboarding, ProfileChangeLog, PersonDetail, SponsorList, SponsorDetail, TeamsList, TeamDetail,
   Kaderlijst,
   CommissiesList, CommissieDetail, TodosList,
   FeedbackList, FeedbackDetail, Settings, VOG,
@@ -254,6 +254,14 @@ const router = createBrowserRouter([
             element: (
               <LedenadministratieRoute>
                 <PeopleOnboarding />
+              </LedenadministratieRoute>
+            ),
+          },
+          {
+            path: 'people/wijzigingslog',
+            element: (
+              <LedenadministratieRoute>
+                <ProfileChangeLog />
               </LedenadministratieRoute>
             ),
           },

@@ -278,6 +278,8 @@ function rondo_init() {
 	new \Rondo\Users\LoginResolver();
 	// Turns the Magic Login email form into the single login/activation entry point.
 	new \Rondo\Users\MagicLoginActivation();
+	// Immutable member self-service audit trail and its 24-month retention job.
+	new \Rondo\Users\ProfileChangeLog();
 
 	// Skip loading heavy classes for non-relevant requests
 	$is_admin = is_admin();
@@ -345,6 +347,7 @@ function rondo_init() {
 		new RESTCapabilities();
 		new RESTFinanceSettings();
 		new RESTNarrowcasting();
+		new \Rondo\REST\MemberProfile();
 		new RabobankOAuth();
 		new RabobankPayment();
 		new MollieWebhook();
@@ -388,6 +391,8 @@ function rondo_init() {
 
 	// Public self-service account activation - /activeren
 	new \Rondo\Users\ActivationPage();
+	// Public one-time verification page for member email changes.
+	new \Rondo\Users\EmailChangePage();
 
 	// Public taakuitleg landing page - /uitleg/{slug} (QR target, no auth)
 	new PublicTaakuitlegPage();
@@ -1135,7 +1140,7 @@ add_filter( 'query_vars', 'rondo_pwa_query_vars' );
  * Runs late on `init` so every add_rewrite_rule() call has already registered.
  */
 function rondo_maybe_flush_rewrite_rules() {
-	$rewrite_version = '4'; // Bump when adding/changing a rewrite rule.
+	$rewrite_version = '5'; // Bump when adding/changing a rewrite rule.
 	if ( get_option( 'rondo_rewrite_rules_version' ) === $rewrite_version ) {
 		return;
 	}
@@ -1160,9 +1165,6 @@ function rondo_theme_activation() {
 	// Register custom user role (class constructor handles registration via hook)
 	new UserRoles();
 
-	// Flush rewrite rules
-	flush_rewrite_rules();
-
 	// Schedule per-user reminder cron jobs
 	$reminders = new Reminders();
 	$reminders->schedule_all_user_reminders();
@@ -1173,6 +1175,12 @@ function rondo_theme_activation() {
 	// Register public payment page rewrite rules
 	$payment_page = new PublicPaymentPage();
 	$payment_page->register_rewrite_rules();
+
+	$email_change_page = new \Rondo\Users\EmailChangePage();
+	$email_change_page->register_rewrite_rules();
+
+	// Flush only after every public route has been registered.
+	flush_rewrite_rules();
 
 	// Add custom postmeta indexes for dashboard performance.
 	rondo_maybe_add_postmeta_indexes();
@@ -1227,6 +1235,7 @@ function rondo_theme_deactivation() {
 
 	// Clear legacy scheduled hook (for backward compatibility)
 	wp_clear_scheduled_hook( 'rondo_daily_reminder_check' );
+	wp_clear_scheduled_hook( 'rondo_profile_change_cleanup' );
 
 	// Clear volunteer shift lifecycle hooks.
 	\Rondo\Volunteer\ShiftScheduler::unregister_cron();
