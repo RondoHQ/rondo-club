@@ -157,6 +157,13 @@ export const prmApi = {
   getCurrentUser: () => api.get('/rondo/v1/user/me'),
   changePassword: (data) => api.post('/rondo/v1/user/password', data),
   requestPasswordReset: () => api.post('/rondo/v1/user/password-reset'),
+  getPendingProfileEmail: () => api.get('/rondo/v1/user/profile-email/pending'),
+  requestProfileEmailChange: (data) => api.post('/rondo/v1/user/profile-email/request', data),
+  cancelProfileEmailChange: () => api.delete('/rondo/v1/user/profile-email/pending'),
+  removeSecondaryProfileEmail: () => api.delete('/rondo/v1/user/profile-email/secondary'),
+  updateProfilePhones: (data) => api.patch('/rondo/v1/user/profile-phones', data),
+  updateHouseholdAddress: (data) => api.patch('/rondo/v1/user/household-address', data),
+  getProfileChangeLog: (params = {}) => api.get('/rondo/v1/profile-change-log', { params }),
   
   // User management (admin only)
   getUsers: () => api.get('/rondo/v1/users'),

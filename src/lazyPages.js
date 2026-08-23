@@ -4,6 +4,7 @@ import { lazy } from 'react';
 export const PeopleList = lazy(() => import('@/pages/People/PeopleList'));
 export const PeopleAnniversaries = lazy(() => import('@/pages/People/PeopleAnniversaries'));
 export const PeopleOnboarding = lazy(() => import('@/pages/People/PeopleOnboarding'));
+export const ProfileChangeLog = lazy(() => import('@/pages/People/ProfileChangeLog'));
 export const PersonDetail = lazy(() => import('@/pages/People/PersonDetail'));
 export const SponsorList = lazy(() => import('@/pages/Sponsors/SponsorList'));
 export const SponsorDetail = lazy(() => import('@/pages/Sponsors/SponsorDetail'));

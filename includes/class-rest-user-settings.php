@@ -1205,7 +1205,7 @@ class UserSettings extends Base {
 		return [
 			'id'                            => $user_id,
 			'name'                          => $user->display_name,
-			'email'                         => $user->user_email,
+			'email'                         => \Rondo\Users\UserProvisioning::contact_email( $user_id ) ?: $user->user_email,
 			'avatar_url'                    => $avatar_url,
 			'is_admin'                      => $is_admin,
 			'has_extra_roles'               => $has_extra_roles,

@@ -34,7 +34,8 @@ import {
   BookOpen,
   ChevronRight,
   MonitorPlay,
-  ChartPie
+  ChartPie,
+  History
 } from 'lucide-react';
 
 // Wordmark URLs from theme directory.
@@ -58,6 +59,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: Home, requiresKader: true },
   { name: 'Relaties', href: '/people', icon: Users, requiresKader: true },
   { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
+  { name: 'Wijzigingslog', href: '/people/wijzigingslog', icon: History, indent: true, requiresLedenadministratie: true },
   { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true, requiresKader: true },
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
   { name: 'Sponsoren', href: '/sponsors', icon: Building2, requiresSponsors: true },
@@ -700,6 +702,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
     if (path === '/') return 'Dashboard';
     if (path.startsWith('/people/jubilarissen')) return 'Jubilarissen';
     if (path.startsWith('/people/onboarding')) return 'Onboarding';
+    if (path.startsWith('/people/wijzigingslog')) return 'Wijzigingslog';
     if (path.startsWith('/people')) return 'Relaties';
     if (path.startsWith('/sponsors')) return 'Sponsoren';
     if (path === '/financien' || path === '/financien/') return 'Financiën';

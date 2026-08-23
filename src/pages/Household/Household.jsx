@@ -9,6 +9,7 @@ import { formatPersonName, parseFieldDate } from '@/utils/formatters';
 import { format } from '@/utils/dateFormat';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import AnchoredPopover from '@/components/AnchoredPopover';
+import MemberProfileEditors from './MemberProfileEditors';
 
 const WALLET_TYPES = ['apple', 'google'];
 
@@ -337,7 +338,7 @@ export default function Household() {
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Mijn gegevens</h1>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
           Je eigen gegevens en die van je kinderen onder de 18, zoals ze bij de club bekend zijn.
-          Klopt er iets niet? Geef het door aan de ledenadministratie.
+          Je kunt je contactgegevens en het woonadres van je gezin hier aanpassen.
         </p>
       </div>
 
@@ -348,14 +349,17 @@ export default function Household() {
           </p>
         </div>
       ) : (
-        ordered.map((person) => (
-          <PersonCard
-            key={person.id}
-            person={person}
-            isSelf={person.id === linkedPersonId}
-            isParent={currentUser?.is_parent === true}
-          />
-        ))
+        <>
+          <MemberProfileEditors people={ordered} linkedPersonId={linkedPersonId} />
+          {ordered.map((person) => (
+            <PersonCard
+              key={person.id}
+              person={person}
+              isSelf={person.id === linkedPersonId}
+              isParent={currentUser?.is_parent === true}
+            />
+          ))}
+        </>
       )}
     </div>
   );
