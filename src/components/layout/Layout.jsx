@@ -35,7 +35,8 @@ import {
   ChevronRight,
   MonitorPlay,
   ChartPie,
-  History
+  History,
+  CalendarDays
 } from 'lucide-react';
 
 // Wordmark URLs from theme directory.
@@ -56,6 +57,7 @@ import { prmApi } from '@/api/client';
 const navigation = [
   { name: 'Mijn inschrijftaken', href: '/vrijwillig', icon: HeartHandshake, personal: true },
   { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, requiresLinkedPerson: true, personal: true },
+  { name: 'Ruimtes', href: '/rooms', icon: CalendarDays, personal: true },
   { name: 'Dashboard', href: '/', icon: Home, requiresKader: true },
   { name: 'Relaties', href: '/people', icon: Users, requiresKader: true },
   { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },

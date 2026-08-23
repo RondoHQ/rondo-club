@@ -29,6 +29,8 @@ class PostTypes {
 		'rondo_feedback'       => [ 'feedback_item', 'feedback_items' ],
 		'discipline_case'      => [ 'discipline_case', 'discipline_cases' ],
 		'rondo_invoice'        => [ 'invoice', 'invoices' ],
+		'rondo_room'           => [ 'room', 'rooms' ],
+		'rondo_room_booking'   => [ 'room_booking', 'room_bookings' ],
 		'rondo_display'        => [ 'display', 'displays' ],
 		'rondo_signage_item'   => [ 'signage_item', 'signage_items' ],
 		'rondo_signage_list'   => [ 'signage_playlist', 'signage_playlists' ],
@@ -105,6 +107,8 @@ class PostTypes {
 		$this->register_discipline_case_post_type();
 		$this->register_invoice_statuses();
 		$this->register_invoice_post_type();
+		$this->register_room_post_type();
+		$this->register_room_booking_post_type();
 		$this->register_display_post_type();
 		$this->register_signage_item_post_type();
 		$this->register_signage_playlist_post_type();
@@ -114,6 +118,56 @@ class PostTypes {
 		$this->register_dienst_shift_post_type();
 		$this->register_taakuitleg_post_type();
 		$this->register_profile_change_post_type();
+	}
+
+	/** Register private reservable rooms. */
+	private function register_room_post_type() {
+		$args = array_merge(
+			[
+				'labels'             => [
+					'name'          => __( 'Ruimtes', 'rondo' ),
+					'singular_name' => __( 'Ruimte', 'rondo' ),
+				],
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => false,
+				'show_in_menu'       => false,
+				'show_in_rest'       => false,
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'rondo_room' )
+		);
+
+		register_post_type( 'rondo_room', $args );
+	}
+
+	/** Register private authoritative room bookings. */
+	private function register_room_booking_post_type() {
+		$args = array_merge(
+			[
+				'labels'             => [
+					'name'          => __( 'Ruimtereserveringen', 'rondo' ),
+					'singular_name' => __( 'Ruimtereservering', 'rondo' ),
+				],
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => false,
+				'show_in_menu'       => false,
+				'show_in_rest'       => false,
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'rondo_room_booking' )
+		);
+
+		register_post_type( 'rondo_room_booking', $args );
 	}
 
 	/** Register the private, immutable member self-service audit log. */

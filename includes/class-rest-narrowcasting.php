@@ -16,6 +16,7 @@ use Rondo\Fields\Formatter;
 use Rondo\Narrowcasting\Content;
 use Rondo\Narrowcasting\SportlinkMatchday;
 use Rondo\Pages\PublicPageChrome;
+use Rondo\Rooms\BookingService;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -59,6 +60,7 @@ class Narrowcasting extends Base {
 		$this->matchday = new SportlinkMatchday( false );
 		$this->content  = new Content();
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+		add_action( 'rondo_room_presentation_stop', [ $this, 'stop_display_presentation' ] );
 	}
 
 	/** Register pilot routes. */
@@ -642,6 +644,12 @@ class Narrowcasting extends Base {
 			return new \WP_Error( 'rondo_presentation_disabled', __( 'Browserpresentaties zijn niet ingeschakeld voor dit scherm.', 'rondo' ), [ 'status' => 403 ] );
 		}
 
+		$booking_service = new BookingService();
+		$entitlement     = $booking_service->presentation_entitlement_for_display( $display_id );
+		if ( is_array( $entitlement ) && ! $entitlement['allowed'] ) {
+			return new \WP_Error( 'rondo_presentation_outside_booking', __( 'Dit scherm is nu niet beschikbaar voor een presentatie.', 'rondo' ), [ 'status' => 403 ] );
+		}
+
 		$previous_session_id = get_transient( $this->presentation_display_key( $display_id ) );
 		if ( is_string( $previous_session_id ) && $previous_session_id !== '' ) {
 			$this->delete_presentation_session( $previous_session_id );
@@ -652,23 +660,31 @@ class Narrowcasting extends Base {
 			return $code;
 		}
 
-		$session_id     = wp_generate_uuid4();
-		$receiver_token = $this->generate_device_token();
-		$created_at     = time();
-		$session        = [
+		$session_id      = wp_generate_uuid4();
+		$receiver_token  = $this->generate_device_token();
+		$created_at      = time();
+		$entitlement_end = is_array( $entitlement ) && ! empty( $entitlement['ends_at'] )
+			? ( new DateTimeImmutable( $entitlement['ends_at'] ) )->getTimestamp()
+			: $created_at + self::PRESENTATION_SESSION_TTL;
+		$session_end     = min( $created_at + self::PRESENTATION_SESSION_TTL, $entitlement_end );
+		$code_end        = min( $created_at + self::PRESENTATION_CODE_TTL, $session_end );
+		$session         = [
 			'id'                  => $session_id,
 			'display_id'          => $display_id,
 			'code'                => $code,
-			'code_expires_at'     => $created_at + self::PRESENTATION_CODE_TTL,
-			'expires_at'          => $created_at + self::PRESENTATION_SESSION_TTL,
+			'code_expires_at'     => $code_end,
+			'expires_at'          => $session_end,
 			'receiver_token_hash' => $this->hash_device_token( $receiver_token ),
 			'sender_token_hash'   => '',
 			'user_id'             => 0,
+			'booking_id'          => (int) ( $entitlement['booking_id'] ?? 0 ),
 		];
 
-		set_transient( $this->presentation_session_key( $session_id ), $session, self::PRESENTATION_SESSION_TTL );
-		set_transient( $this->presentation_code_key( $code ), $session_id, self::PRESENTATION_CODE_TTL );
-		set_transient( $this->presentation_display_key( $display_id ), $session_id, self::PRESENTATION_SESSION_TTL );
+		$session_ttl = max( 1, $session_end - $created_at );
+		$code_ttl    = max( 1, $code_end - $created_at );
+		set_transient( $this->presentation_session_key( $session_id ), $session, $session_ttl );
+		set_transient( $this->presentation_code_key( $code ), $session_id, $code_ttl );
+		set_transient( $this->presentation_display_key( $display_id ), $session_id, $session_ttl );
 
 		return $this->no_store_response(
 			[
@@ -676,6 +692,11 @@ class Narrowcasting extends Base {
 				'code'                  => $code,
 				'token'                 => $receiver_token,
 				'code_expires_at'       => gmdate( DATE_RFC3339, $session['code_expires_at'] ),
+				'entitlement_ends_at'   => gmdate( DATE_RFC3339, $session['expires_at'] ),
+				'booking_id'            => (int) $session['booking_id'],
+				'room_name'             => (string) ( $entitlement['room_name'] ?? '' ),
+				'booking_starts_at'     => (string) ( $entitlement['starts_at'] ?? '' ),
+				'booking_ends_at'       => (string) ( $entitlement['ends_at'] ?? '' ),
 				'poll_interval_seconds' => 1,
 			]
 		);
@@ -705,11 +726,26 @@ class Narrowcasting extends Base {
 			return new \WP_Error( 'rondo_presentation_unavailable', __( 'Dit scherm is niet beschikbaar voor browserpresentaties.', 'rondo' ), [ 'status' => 409 ] );
 		}
 
+		$booking_service = new BookingService();
+		$entitlement     = null;
+		if ( (int) ( $session['booking_id'] ?? 0 ) > 0 || $booking_service->display_is_reservation_controlled( (int) $session['display_id'] ) ) {
+			$entitlement = $booking_service->presentation_entitlement_for_display( (int) $session['display_id'], get_current_user_id() );
+			if ( ! is_array( $entitlement ) || ! $entitlement['allowed'] || (int) ( $entitlement['booking_id'] ?? 0 ) !== (int) ( $session['booking_id'] ?? 0 ) ) {
+				return new \WP_Error( 'rondo_presentation_not_authorized', __( 'Je hebt nu geen toegang tot dit scherm.', 'rondo' ), [ 'status' => 403 ] );
+			}
+			$session['expires_at'] = min(
+				time() + self::PRESENTATION_SESSION_TTL,
+				( new DateTimeImmutable( $entitlement['ends_at'] ) )->getTimestamp()
+			);
+		}
+
 		$sender_token                 = $this->generate_device_token();
 		$session['sender_token_hash'] = $this->hash_device_token( $sender_token );
 		$session['user_id']           = get_current_user_id();
-		$session['expires_at']        = time() + self::PRESENTATION_SESSION_TTL;
-		set_transient( $this->presentation_session_key( $session['id'] ), $session, self::PRESENTATION_SESSION_TTL );
+		if ( empty( $session['booking_id'] ) ) {
+			$session['expires_at'] = time() + self::PRESENTATION_SESSION_TTL;
+		}
+		set_transient( $this->presentation_session_key( $session['id'] ), $session, max( 1, (int) $session['expires_at'] - time() ) );
 		delete_transient( $this->presentation_code_key( $code ) );
 
 		return $this->no_store_response(
@@ -717,6 +753,9 @@ class Narrowcasting extends Base {
 				'session_id'            => $session['id'],
 				'token'                 => $sender_token,
 				'display_name'          => get_the_title( (int) $session['display_id'] ),
+				'entitlement_ends_at'   => gmdate( DATE_RFC3339, (int) $session['expires_at'] ),
+				'booking_id'            => (int) ( $session['booking_id'] ?? 0 ),
+				'room_name'             => (string) ( $entitlement['room_name'] ?? '' ),
 				'poll_interval_seconds' => 1,
 			]
 		);
@@ -733,7 +772,12 @@ class Narrowcasting extends Base {
 		$signal     = get_transient( $this->presentation_signal_key( $identity['session']['id'], $other_role ) );
 		$this->refresh_presentation_session( $identity['session'] );
 
-		return $this->no_store_response( [ 'signal' => is_array( $signal ) ? $signal : null ] );
+		return $this->no_store_response(
+			[
+				'signal'              => is_array( $signal ) ? $signal : null,
+				'entitlement_ends_at' => gmdate( DATE_RFC3339, (int) $identity['session']['expires_at'] ),
+			]
+		);
 	}
 
 	/** Store one participant's complete signaling snapshot. */
@@ -1153,7 +1197,7 @@ class Narrowcasting extends Base {
 			]
 		);
 
-		$configuration           = $this->configuration_envelope(
+		$configuration                      = $this->configuration_envelope(
 			[
 				'id'                   => $display_id,
 				'name'                 => get_the_title( $display_id ),
@@ -1168,7 +1212,19 @@ class Narrowcasting extends Base {
 				'preview'              => false,
 			]
 		);
-		$configuration['update'] = $this->player_update_config( (string) $fields['update_channel'] );
+		$configuration['update']            = $this->player_update_config( (string) $fields['update_channel'] );
+		$room_service                       = new BookingService();
+		$room_id                            = $room_service->room_id_for_display( $display_id );
+		$entitlement                        = $room_service->presentation_entitlement_for_display( $display_id );
+		$configuration['room_presentation'] = [
+			'controlled' => $room_id > 0 && $room_service->display_is_reservation_controlled( $display_id ),
+			'room_id'    => $room_id ?: null,
+			'room_name'  => (string) ( $entitlement['room_name'] ?? '' ),
+			'active'     => is_array( $entitlement ) && ! empty( $entitlement['allowed'] ),
+			'booking_id' => (int) ( $entitlement['booking_id'] ?? 0 ) ?: null,
+			'starts_at'  => (string) ( $entitlement['starts_at'] ?? '' ) ?: null,
+			'ends_at'    => (string) ( $entitlement['ends_at'] ?? '' ) ?: null,
+		];
 		return $configuration;
 	}
 
@@ -1513,7 +1569,26 @@ class Narrowcasting extends Base {
 		}
 
 		$session = get_transient( $this->presentation_session_key( $session_id ) );
-		if ( ! is_array( $session ) || (int) $session['expires_at'] < time() ) {
+		if ( ! is_array( $session ) ) {
+			return new \WP_Error( 'rondo_presentation_expired', __( 'Deze presentatiesessie is verlopen.', 'rondo' ), [ 'status' => 410 ] );
+		}
+
+		if ( (int) ( $session['booking_id'] ?? 0 ) > 0 ) {
+			$entitlement = ( new BookingService() )->presentation_entitlement_for_display(
+				(int) $session['display_id'],
+				(int) ( $session['user_id'] ?? 0 )
+			);
+			if ( ! is_array( $entitlement ) || ! $entitlement['allowed'] || (int) ( $entitlement['booking_id'] ?? 0 ) !== (int) $session['booking_id'] ) {
+				$this->delete_presentation_session( $session_id );
+				return new \WP_Error( 'rondo_presentation_expired', __( 'Deze presentatiesessie is verlopen.', 'rondo' ), [ 'status' => 410 ] );
+			}
+			$session['expires_at'] = min(
+				time() + self::PRESENTATION_SESSION_TTL,
+				( new DateTimeImmutable( $entitlement['ends_at'] ) )->getTimestamp()
+			);
+		}
+		if ( (int) $session['expires_at'] < time() ) {
+			$this->delete_presentation_session( $session_id );
 			return new \WP_Error( 'rondo_presentation_expired', __( 'Deze presentatiesessie is verlopen.', 'rondo' ), [ 'status' => 410 ] );
 		}
 
@@ -1585,9 +1660,20 @@ class Narrowcasting extends Base {
 	}
 
 	private function refresh_presentation_session( array $session ): void {
-		$session['expires_at'] = time() + self::PRESENTATION_SESSION_TTL;
-		set_transient( $this->presentation_session_key( $session['id'] ), $session, self::PRESENTATION_SESSION_TTL );
-		set_transient( $this->presentation_display_key( (int) $session['display_id'] ), $session['id'], self::PRESENTATION_SESSION_TTL );
+		if ( empty( $session['booking_id'] ) ) {
+			$session['expires_at'] = time() + self::PRESENTATION_SESSION_TTL;
+		}
+		$ttl = max( 1, min( self::PRESENTATION_SESSION_TTL, (int) $session['expires_at'] - time() ) );
+		set_transient( $this->presentation_session_key( $session['id'] ), $session, $ttl );
+		set_transient( $this->presentation_display_key( (int) $session['display_id'] ), $session['id'], $ttl );
+	}
+
+	/** Stop any current WebRTC session when a booking is cancelled or blocked. */
+	public function stop_display_presentation( int $display_id ): void {
+		$session_id = get_transient( $this->presentation_display_key( $display_id ) );
+		if ( is_string( $session_id ) && $session_id !== '' ) {
+			$this->delete_presentation_session( $session_id );
+		}
 	}
 
 	private function delete_presentation_session( string $session_id ): void {

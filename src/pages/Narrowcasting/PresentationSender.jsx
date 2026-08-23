@@ -31,6 +31,8 @@ export default function PresentationSender() {
   const [displayName, setDisplayName] = useState('');
   const [status, setStatus] = useState('code');
   const [error, setError] = useState('');
+  const [entitlementEndsAt, setEntitlementEndsAt] = useState('');
+  const [minutesRemaining, setMinutesRemaining] = useState(null);
 
   const clearMedia = useCallback(() => {
     window.clearTimeout(pollTimerRef.current);
@@ -76,6 +78,7 @@ export default function PresentationSender() {
     clearMedia();
     sessionRef.current = null;
     setDisplayName('');
+    setEntitlementEndsAt('');
     setStatus('code');
     setError('');
   }, [clearMedia]);
@@ -90,6 +93,7 @@ export default function PresentationSender() {
       const session = await joinPresentationSession(code);
       sessionRef.current = session;
       setDisplayName(session.display_name);
+      setEntitlementEndsAt(session.entitlement_ends_at || '');
       setStatus('ready');
     } catch (joinError) {
       setStatus('code');
@@ -97,12 +101,24 @@ export default function PresentationSender() {
     }
   };
 
+  useEffect(() => {
+    if (!entitlementEndsAt) {
+      setMinutesRemaining(null);
+      return undefined;
+    }
+    const updateRemaining = () => setMinutesRemaining(Math.max(0, Math.ceil((new Date(entitlementEndsAt).getTime() - Date.now()) / 60000)));
+    updateRemaining();
+    const timer = window.setInterval(updateRemaining, 30000);
+    return () => window.clearInterval(timer);
+  }, [entitlementEndsAt]);
+
   const pollReceiver = useCallback(async () => {
     const session = sessionRef.current;
     const peer = peerRef.current;
     if (!session || !peer) return;
     try {
       const response = await getPresentationSignal(session.session_id, session.token);
+      if (response.entitlement_ends_at) setEntitlementEndsAt(response.entitlement_ends_at);
       const signal = response.signal;
       if (signal?.hangup) {
         await stopSharing(false);
@@ -225,6 +241,11 @@ export default function PresentationSender() {
               {status === 'presenting' ? `Je presenteert op ${displayName}` : `Verbinding maken met ${displayName}…`}
             </p>
             <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Sluit deze pagina niet zolang je presenteert.</p>
+            {minutesRemaining !== null && minutesRemaining <= 5 && (
+              <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                Je presentatietoegang eindigt over {minutesRemaining} {minutesRemaining === 1 ? 'minuut' : 'minuten'}.
+              </p>
+            )}
             <button type="button" className="btn-danger mt-4" onClick={() => stopSharing()}>
               <Square className="mr-2 h-4 w-4" />
               Stoppen met presenteren

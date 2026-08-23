@@ -296,6 +296,7 @@ export default function NarrowcastingDisplay() {
           enabled={Boolean(config?.presentation_enabled)}
           deviceToken={token}
           displayName={config?.name || 'Club TV'}
+          roomPresentation={config?.room_presentation}
         />
       )}
     </main>

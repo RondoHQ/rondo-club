@@ -25,6 +25,7 @@ class UserRoles {
 	const LEDENADMINISTRATIE_CAPABILITY = 'ledenadministratie';
 	const SPONSORBEHEER_CAPABILITY      = 'sponsorbeheer';
 	const NARROWCASTING_CAPABILITY      = 'narrowcasting';
+	const ACCOMMODATIE_CAPABILITY       = 'accommodatiebeheer';
 	const VRIJWILLIGERS_CAPABILITY      = 'vrijwilligers';
 	const IVA_APPROVE_CAPABILITY        = 'rondo_iva_approve';
 
@@ -34,7 +35,7 @@ class UserRoles {
 	 * installs must also receive; add_role() does not touch existing roles.
 	 */
 	const ROLES_VERSION_OPTION = 'rondo_roles_version';
-	const ROLES_VERSION        = 8;
+	const ROLES_VERSION        = 9;
 
 	/** Generic WordPress write capabilities removed from non-admin Rondo roles. */
 	private const LEGACY_GENERIC_WRITE_CAPS = [
@@ -58,21 +59,22 @@ class UserRoles {
 	 * Custom roles are stored separately in the rondo_custom_roles wp_option.
 	 */
 	const BASE_ROLES = [
-		'rondo_user'               => [ 'Rondo User', [] ],
-		'rondo_fairplay'           => [ 'Rondo FairPlay', [ 'fairplay' ] ],
-		'rondo_vog'                => [ 'Rondo VOG', [ 'vog' ] ],
-		'rondo_financieel'         => [ 'Rondo Financieel', [ 'financieel', 'financieel_read' ] ],
-		'rondo_financieel_lezen'   => [ 'Rondo Financieel Lezen', [ 'financieel_read' ] ],
-		'rondo_toegangscontrole'   => [ 'Rondo Toegangscontrole', [ 'toegangscontrole' ] ],
-		'rondo_clothing_manager'   => [ 'Rondo Kledingbeheer', [ 'manage_clothing' ] ],
-		'rondo_ledenadministratie' => [ 'Rondo Ledenadministratie', [ 'ledenadministratie' ] ],
-		'rondo_sponsorbeheerder'   => [ 'Rondo Sponsorbeheerder', [ 'sponsorbeheer' ] ],
-		'rondo_vrijwilligers'      => [ 'Rondo Vrijwilligers', [ 'vrijwilligers' ] ],
-		'rondo_iva_approver'       => [ 'Rondo IVA Goedkeurder (Bestuurslid Kantine)', [ 'rondo_iva_approve', 'vrijwilligers' ] ],
-		'rondo_pool_schoonmaak'    => [ 'Rondo Schoonmaakpoule', [] ],
-		'rondo_pool_activiteiten'  => [ 'Rondo Activiteitenpoule', [] ],
-		'rondo_pool_werkploeg'     => [ 'Rondo Werkploeg terreinonderhoud', [] ],
-		'rondo_bestuur'            => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'vrijwilligers', 'rondo_iva_approve' ] ],
+		'rondo_user'                  => [ 'Rondo User', [] ],
+		'rondo_fairplay'              => [ 'Rondo FairPlay', [ 'fairplay' ] ],
+		'rondo_vog'                   => [ 'Rondo VOG', [ 'vog' ] ],
+		'rondo_financieel'            => [ 'Rondo Financieel', [ 'financieel', 'financieel_read' ] ],
+		'rondo_financieel_lezen'      => [ 'Rondo Financieel Lezen', [ 'financieel_read' ] ],
+		'rondo_toegangscontrole'      => [ 'Rondo Toegangscontrole', [ 'toegangscontrole' ] ],
+		'rondo_clothing_manager'      => [ 'Rondo Kledingbeheer', [ 'manage_clothing' ] ],
+		'rondo_ledenadministratie'    => [ 'Rondo Ledenadministratie', [ 'ledenadministratie' ] ],
+		'rondo_sponsorbeheerder'      => [ 'Rondo Sponsorbeheerder', [ 'sponsorbeheer' ] ],
+		'rondo_accommodatiebeheerder' => [ 'Rondo Accommodatiebeheerder', [ 'accommodatiebeheer' ] ],
+		'rondo_vrijwilligers'         => [ 'Rondo Vrijwilligers', [ 'vrijwilligers' ] ],
+		'rondo_iva_approver'          => [ 'Rondo IVA Goedkeurder (Bestuurslid Kantine)', [ 'rondo_iva_approve', 'vrijwilligers' ] ],
+		'rondo_pool_schoonmaak'       => [ 'Rondo Schoonmaakpoule', [] ],
+		'rondo_pool_activiteiten'     => [ 'Rondo Activiteitenpoule', [] ],
+		'rondo_pool_werkploeg'        => [ 'Rondo Werkploeg terreinonderhoud', [] ],
+		'rondo_bestuur'               => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'accommodatiebeheer', 'vrijwilligers', 'rondo_iva_approve' ] ],
 	];
 
 	/**
@@ -308,6 +310,7 @@ class UserRoles {
 	 * Version 6: administrators gain primitives for the private narrowcasting display CPT.
 	 * Version 7: narrowcasting content, playlist and editor capabilities are introduced.
 	 * Version 8: sponsor managers gain dedicated sponsor-company CPT capabilities.
+	 * Version 9: accommodation managers and room-domain capabilities are introduced.
 	 */
 	public function maybe_upgrade_roles() {
 		$installed_version = (int) get_option( self::ROLES_VERSION_OPTION, 0 );
@@ -335,6 +338,11 @@ class UserRoles {
 
 			if ( $installed_version < 7 && $slug === 'administrator' ) {
 				$role->add_cap( self::NARROWCASTING_CAPABILITY );
+			}
+
+			if ( $installed_version < 9
+				&& in_array( $slug, [ 'rondo_accommodatiebeheerder', 'rondo_bestuur', 'administrator' ], true ) ) {
+				$role->add_cap( self::ACCOMMODATIE_CAPABILITY );
 			}
 
 			self::sync_role_capabilities( $slug );
@@ -370,6 +378,7 @@ class UserRoles {
 			$admin_role->add_cap( self::LEDENADMINISTRATIE_CAPABILITY );
 			$admin_role->add_cap( self::SPONSORBEHEER_CAPABILITY );
 			$admin_role->add_cap( self::NARROWCASTING_CAPABILITY );
+			$admin_role->add_cap( self::ACCOMMODATIE_CAPABILITY );
 			$admin_role->add_cap( self::VRIJWILLIGERS_CAPABILITY );
 			$admin_role->add_cap( self::IVA_APPROVE_CAPABILITY );
 			self::sync_role_capabilities( 'administrator' );
@@ -445,6 +454,14 @@ class UserRoles {
 					$desired,
 					self::cpt_capabilities( 'rondo_signage_item', 'manage' ),
 					self::cpt_capabilities( 'rondo_signage_list', 'manage' )
+				);
+			}
+
+			if ( $role->has_cap( self::ACCOMMODATIE_CAPABILITY ) ) {
+				$desired = array_merge(
+					$desired,
+					self::cpt_capabilities( 'rondo_room', 'read' ),
+					self::cpt_capabilities( 'rondo_room_booking', 'edit' )
 				);
 			}
 
@@ -573,6 +590,7 @@ class UserRoles {
 			$admin_role->remove_cap( self::LEDENADMINISTRATIE_CAPABILITY );
 			$admin_role->remove_cap( self::SPONSORBEHEER_CAPABILITY );
 			$admin_role->remove_cap( self::NARROWCASTING_CAPABILITY );
+			$admin_role->remove_cap( self::ACCOMMODATIE_CAPABILITY );
 			$admin_role->remove_cap( self::VRIJWILLIGERS_CAPABILITY );
 			$admin_role->remove_cap( self::IVA_APPROVE_CAPABILITY );
 		}

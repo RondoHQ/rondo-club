@@ -3002,6 +3002,510 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
       ),
       'kind' => 'post',
     ),
+    'rondo_room' =>
+    array (
+      'fields' =>
+      array (
+        'access_before_minutes' =>
+        array (
+          'canonical_name' => 'access_before_minutes',
+          'default_value' => 5,
+          'key' => 'field_room_access_before_minutes',
+          'label' => 'Presentatietoegang vooraf',
+          'min' => 0,
+          'name' => 'access_before_minutes',
+          'storage_name' => 'access_before_minutes',
+          'type' => 'number',
+        ),
+        'archived' =>
+        array (
+          'canonical_name' => 'archived',
+          'default_value' => 0,
+          'key' => 'field_room_archived',
+          'label' => 'Gearchiveerd',
+          'name' => 'archived',
+          'storage_name' => 'archived',
+          'type' => 'true_false',
+        ),
+        'booking_enabled' =>
+        array (
+          'canonical_name' => 'booking_enabled',
+          'default_value' => 1,
+          'key' => 'field_room_booking_enabled',
+          'label' => 'Reserveerbaar',
+          'name' => 'booking_enabled',
+          'storage_name' => 'booking_enabled',
+          'type' => 'true_false',
+        ),
+        'booking_interval_minutes' =>
+        array (
+          'canonical_name' => 'booking_interval_minutes',
+          'default_value' => 15,
+          'key' => 'field_room_booking_interval_minutes',
+          'label' => 'Boekingsinterval',
+          'min' => 5,
+          'name' => 'booking_interval_minutes',
+          'storage_name' => 'booking_interval_minutes',
+          'type' => 'number',
+        ),
+        'capacity' =>
+        array (
+          'canonical_name' => 'capacity',
+          'default_value' => 0,
+          'key' => 'field_room_capacity',
+          'label' => 'Capaciteit',
+          'min' => 0,
+          'name' => 'capacity',
+          'storage_name' => 'capacity',
+          'type' => 'number',
+        ),
+        'changeover_buffer_minutes' =>
+        array (
+          'canonical_name' => 'changeover_buffer_minutes',
+          'default_value' => 0,
+          'key' => 'field_room_changeover_buffer_minutes',
+          'label' => 'Wisseltijd',
+          'min' => 0,
+          'name' => 'changeover_buffer_minutes',
+          'storage_name' => 'changeover_buffer_minutes',
+          'type' => 'number',
+        ),
+        'description' =>
+        array (
+          'canonical_name' => 'description',
+          'key' => 'field_room_description',
+          'label' => 'Omschrijving',
+          'name' => 'description',
+          'storage_name' => 'description',
+          'type' => 'textarea',
+        ),
+        'display_id' =>
+        array (
+          'allow_null' => 1,
+          'canonical_name' => 'display_id',
+          'key' => 'field_room_display_id',
+          'label' => 'Club TV-scherm',
+          'name' => 'display_id',
+          'post_type' =>
+          array (
+            0 => 'rondo_display',
+          ),
+          'return_format' => 'id',
+          'storage_name' => 'display_id',
+          'type' => 'post_object',
+        ),
+        'extension_increment_minutes' =>
+        array (
+          'canonical_name' => 'extension_increment_minutes',
+          'default_value' => 15,
+          'key' => 'field_room_extension_increment_minutes',
+          'label' => 'Verlengstap',
+          'min' => 5,
+          'name' => 'extension_increment_minutes',
+          'storage_name' => 'extension_increment_minutes',
+          'type' => 'number',
+        ),
+        'facilities' =>
+        array (
+          'canonical_name' => 'facilities',
+          'key' => 'field_room_facilities',
+          'label' => 'Faciliteiten',
+          'name' => 'facilities',
+          'storage_name' => 'facilities',
+          'sub_fields' =>
+          array (
+            'name' =>
+            array (
+              'canonical_name' => 'name',
+              'key' => 'field_room_facility_name',
+              'label' => 'Faciliteit',
+              'name' => 'name',
+              'storage_name' => 'name',
+              'type' => 'text',
+            ),
+          ),
+          'type' => 'repeater',
+        ),
+        'location' =>
+        array (
+          'canonical_name' => 'location',
+          'key' => 'field_room_location',
+          'label' => 'Locatie',
+          'name' => 'location',
+          'storage_name' => 'location',
+          'type' => 'text',
+        ),
+        'maximum_advance_days' =>
+        array (
+          'canonical_name' => 'maximum_advance_days',
+          'default_value' => 90,
+          'key' => 'field_room_maximum_advance_days',
+          'label' => 'Maximaal vooruit boeken',
+          'min' => 1,
+          'name' => 'maximum_advance_days',
+          'storage_name' => 'maximum_advance_days',
+          'type' => 'number',
+        ),
+        'maximum_duration_minutes' =>
+        array (
+          'canonical_name' => 'maximum_duration_minutes',
+          'default_value' => 240,
+          'key' => 'field_room_maximum_duration_minutes',
+          'label' => 'Maximale duur',
+          'min' => 15,
+          'name' => 'maximum_duration_minutes',
+          'storage_name' => 'maximum_duration_minutes',
+          'type' => 'number',
+        ),
+        'member_instructions' =>
+        array (
+          'canonical_name' => 'member_instructions',
+          'key' => 'field_room_member_instructions',
+          'label' => 'Instructies voor gebruikers',
+          'name' => 'member_instructions',
+          'storage_name' => 'member_instructions',
+          'type' => 'textarea',
+        ),
+        'minimum_duration_minutes' =>
+        array (
+          'canonical_name' => 'minimum_duration_minutes',
+          'default_value' => 30,
+          'key' => 'field_room_minimum_duration_minutes',
+          'label' => 'Minimale duur',
+          'min' => 5,
+          'name' => 'minimum_duration_minutes',
+          'storage_name' => 'minimum_duration_minutes',
+          'type' => 'number',
+        ),
+        'minimum_notice_minutes' =>
+        array (
+          'canonical_name' => 'minimum_notice_minutes',
+          'default_value' => 0,
+          'key' => 'field_room_minimum_notice_minutes',
+          'label' => 'Minimale voorbereidingstijd',
+          'min' => 0,
+          'name' => 'minimum_notice_minutes',
+          'storage_name' => 'minimum_notice_minutes',
+          'type' => 'number',
+        ),
+        'opening_hours' =>
+        array (
+          'canonical_name' => 'opening_hours',
+          'key' => 'field_room_opening_hours',
+          'label' => 'Openingstijden',
+          'name' => 'opening_hours',
+          'storage_name' => 'opening_hours',
+          'sub_fields' =>
+          array (
+            'day' =>
+            array (
+              'canonical_name' => 'day',
+              'key' => 'field_room_opening_day',
+              'label' => 'Weekdag',
+              'name' => 'day',
+              'storage_name' => 'day',
+              'type' => 'number',
+            ),
+            'start_time' =>
+            array (
+              'canonical_name' => 'start_time',
+              'key' => 'field_room_opening_start',
+              'label' => 'Vanaf',
+              'name' => 'start_time',
+              'storage_name' => 'start_time',
+              'type' => 'text',
+            ),
+            'end_time' =>
+            array (
+              'canonical_name' => 'end_time',
+              'key' => 'field_room_opening_end',
+              'label' => 'Tot',
+              'name' => 'end_time',
+              'storage_name' => 'end_time',
+              'type' => 'text',
+            ),
+          ),
+          'type' => 'repeater',
+        ),
+        'presentation_controlled' =>
+        array (
+          'canonical_name' => 'presentation_controlled',
+          'default_value' => 0,
+          'key' => 'field_room_presentation_controlled',
+          'label' => 'Presentatie via reservering',
+          'name' => 'presentation_controlled',
+          'storage_name' => 'presentation_controlled',
+          'type' => 'true_false',
+        ),
+        'sort_order' =>
+        array (
+          'canonical_name' => 'sort_order',
+          'default_value' => 0,
+          'key' => 'field_room_sort_order',
+          'label' => 'Volgorde',
+          'name' => 'sort_order',
+          'storage_name' => 'sort_order',
+          'type' => 'number',
+        ),
+      ),
+      'kind' => 'post',
+    ),
+    'rondo_room_booking' =>
+    array (
+      'fields' =>
+      array (
+        'age_group_key' =>
+        array (
+          'canonical_name' => 'age_group_key',
+          'key' => 'field_room_booking_age_group_key',
+          'label' => 'Jaarlaag',
+          'name' => 'age_group_key',
+          'storage_name' => 'age_group_key',
+          'type' => 'text',
+        ),
+        'authorized_presenter_user_ids' =>
+        array (
+          'canonical_name' => 'authorized_presenter_user_ids',
+          'key' => 'field_room_booking_presenter_users',
+          'label' => 'Presentatoren',
+          'name' => 'authorized_presenter_user_ids',
+          'storage_name' => 'authorized_presenter_user_ids',
+          'type' => 'relationship',
+        ),
+        'booking_context_type' =>
+        array (
+          'canonical_name' => 'booking_context_type',
+          'key' => 'field_room_booking_context_type',
+          'label' => 'Groepstype',
+          'name' => 'booking_context_type',
+          'storage_name' => 'booking_context_type',
+          'type' => 'select',
+        ),
+        'booking_type' =>
+        array (
+          'canonical_name' => 'booking_type',
+          'default_value' => 'member_reservation',
+          'key' => 'field_room_booking_type',
+          'label' => 'Reserveringstype',
+          'name' => 'booking_type',
+          'storage_name' => 'booking_type',
+          'type' => 'select',
+        ),
+        'cancellation_reason' =>
+        array (
+          'canonical_name' => 'cancellation_reason',
+          'key' => 'field_room_booking_cancellation_reason',
+          'label' => 'Annuleringsreden',
+          'name' => 'cancellation_reason',
+          'storage_name' => 'cancellation_reason',
+          'type' => 'textarea',
+        ),
+        'cancelled_at' =>
+        array (
+          'canonical_name' => 'cancelled_at',
+          'key' => 'field_room_booking_cancelled_at',
+          'label' => 'Geannuleerd op',
+          'name' => 'cancelled_at',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'cancelled_at',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+        'cancelled_by_user_id' =>
+        array (
+          'canonical_name' => 'cancelled_by_user_id',
+          'key' => 'field_room_booking_cancelled_by',
+          'label' => 'Geannuleerd door',
+          'name' => 'cancelled_by_user_id',
+          'storage_name' => 'cancelled_by_user_id',
+          'type' => 'number',
+        ),
+        'commissie_id' =>
+        array (
+          'allow_null' => 1,
+          'canonical_name' => 'commissie_id',
+          'key' => 'field_room_booking_commissie_id',
+          'label' => 'Commissie',
+          'name' => 'commissie_id',
+          'post_type' =>
+          array (
+            0 => 'commissie',
+          ),
+          'return_format' => 'id',
+          'storage_name' => 'commissie_id',
+          'type' => 'post_object',
+        ),
+        'context_label_snapshot' =>
+        array (
+          'canonical_name' => 'context_label_snapshot',
+          'key' => 'field_room_booking_context_label',
+          'label' => 'Groepsnaam',
+          'name' => 'context_label_snapshot',
+          'storage_name' => 'context_label_snapshot',
+          'type' => 'text',
+        ),
+        'created_by_user_id' =>
+        array (
+          'canonical_name' => 'created_by_user_id',
+          'key' => 'field_room_booking_created_by',
+          'label' => 'Aangemaakt door',
+          'name' => 'created_by_user_id',
+          'storage_name' => 'created_by_user_id',
+          'type' => 'number',
+        ),
+        'eligibility_team_id' =>
+        array (
+          'allow_null' => 1,
+          'canonical_name' => 'eligibility_team_id',
+          'key' => 'field_room_booking_eligibility_team',
+          'label' => 'Kwalificerend team',
+          'name' => 'eligibility_team_id',
+          'post_type' =>
+          array (
+            0 => 'team',
+          ),
+          'return_format' => 'id',
+          'storage_name' => 'eligibility_team_id',
+          'type' => 'post_object',
+        ),
+        'end_datetime' =>
+        array (
+          'canonical_name' => 'end_datetime',
+          'key' => 'field_room_booking_end_datetime',
+          'label' => 'Einde',
+          'name' => 'end_datetime',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'end_datetime',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+        'extended_until' =>
+        array (
+          'canonical_name' => 'extended_until',
+          'key' => 'field_room_booking_extended_until',
+          'label' => 'Verlengd tot',
+          'name' => 'extended_until',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'extended_until',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+        'holder_person_id' =>
+        array (
+          'allow_null' => 1,
+          'canonical_name' => 'holder_person_id',
+          'key' => 'field_room_booking_holder_person',
+          'label' => 'Houder',
+          'name' => 'holder_person_id',
+          'post_type' =>
+          array (
+            0 => 'person',
+          ),
+          'return_format' => 'id',
+          'storage_name' => 'holder_person_id',
+          'type' => 'post_object',
+        ),
+        'holder_user_id' =>
+        array (
+          'canonical_name' => 'holder_user_id',
+          'key' => 'field_room_booking_holder_user',
+          'label' => 'Houderaccount',
+          'name' => 'holder_user_id',
+          'storage_name' => 'holder_user_id',
+          'type' => 'number',
+        ),
+        'last_changed_by_user_id' =>
+        array (
+          'canonical_name' => 'last_changed_by_user_id',
+          'key' => 'field_room_booking_last_changed_by',
+          'label' => 'Laatst gewijzigd door',
+          'name' => 'last_changed_by_user_id',
+          'storage_name' => 'last_changed_by_user_id',
+          'type' => 'number',
+        ),
+        'original_end_datetime' =>
+        array (
+          'canonical_name' => 'original_end_datetime',
+          'key' => 'field_room_booking_original_end',
+          'label' => 'Oorspronkelijk einde',
+          'name' => 'original_end_datetime',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'original_end_datetime',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+        'presentation_override' =>
+        array (
+          'canonical_name' => 'presentation_override',
+          'default_value' => 'inherit',
+          'key' => 'field_room_booking_presentation_override',
+          'label' => 'Presentatie-override',
+          'name' => 'presentation_override',
+          'storage_name' => 'presentation_override',
+          'type' => 'select',
+        ),
+        'private_notes' =>
+        array (
+          'canonical_name' => 'private_notes',
+          'key' => 'field_room_booking_private_notes',
+          'label' => 'Privénotities',
+          'name' => 'private_notes',
+          'storage_name' => 'private_notes',
+          'type' => 'textarea',
+        ),
+        'purpose' =>
+        array (
+          'canonical_name' => 'purpose',
+          'key' => 'field_room_booking_purpose',
+          'label' => 'Doel',
+          'name' => 'purpose',
+          'storage_name' => 'purpose',
+          'type' => 'text',
+        ),
+        'room_id' =>
+        array (
+          'allow_null' => 0,
+          'canonical_name' => 'room_id',
+          'key' => 'field_room_booking_room_id',
+          'label' => 'Ruimte',
+          'name' => 'room_id',
+          'post_type' =>
+          array (
+            0 => 'rondo_room',
+          ),
+          'return_format' => 'id',
+          'storage_name' => 'room_id',
+          'type' => 'post_object',
+        ),
+        'start_datetime' =>
+        array (
+          'canonical_name' => 'start_datetime',
+          'key' => 'field_room_booking_start_datetime',
+          'label' => 'Start',
+          'name' => 'start_datetime',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'start_datetime',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+        'status' =>
+        array (
+          'canonical_name' => 'status',
+          'default_value' => 'confirmed',
+          'key' => 'field_room_booking_status',
+          'label' => 'Status',
+          'name' => 'status',
+          'storage_name' => 'status',
+          'type' => 'select',
+        ),
+      ),
+      'kind' => 'post',
+    ),
     'rondo_sponsor' =>
     array (
       'fields' =>
@@ -3629,6 +4133,10 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
       0 => 'status',
     ),
     'rondo_invoice' => 
+    array (
+      0 => 'status',
+    ),
+    'rondo_room_booking' =>
     array (
       0 => 'status',
     ),

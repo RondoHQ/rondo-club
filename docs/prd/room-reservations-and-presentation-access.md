@@ -3,7 +3,7 @@
 > Let members reserve club rooms in Rondo and make the room's Club TV screen available only to
 > the authorized reservation holders during their booking window.
 
-**Status:** Plan — awaiting review  
+**Status:** Implemented
 **Components:** Rondo Club, Club TV, Rondo Player  
 **Date:** 2026-08-23  
 **Owner:** Accommodation management  
@@ -481,7 +481,9 @@ All routes live under `/rondo/v1/rooms` and use canonical field names.
 | `GET /rooms/manage/bookings` | Accommodation manager | Full operational day/week dataset |
 | `GET /rooms/manage/booking-contexts?holder_user_id={id}` | Accommodation manager | List only the selected holder's eligible commissies and year groups |
 | `POST /rooms/manage/bookings` | Accommodation manager | Create a qualifying-holder reservation or a holderless room block |
-| `GET`, `POST /rooms/manage/{id}` | Administrator | Read or update room configuration |
+| `GET /rooms/manage/config` | Administrator | List Club TV displays available for room assignment |
+| `POST /rooms/manage/rooms` | Administrator | Create room configuration |
+| `POST /rooms/manage/rooms/{id}` | Administrator | Update room configuration |
 | `GET /rooms/bookings/{id}/activity` | Accommodation manager | Read immutable booking activity |
 
 The presentation join route gains booking-entitlement validation. Device-token routes remain under
@@ -596,6 +598,9 @@ the existing narrowcasting namespace.
 - timezone and concurrency tests;
 - accessibility and responsive verification;
 - manager and member UAT.
+
+The software work for milestones 1–3 is implemented. Milestone 4 contains the remaining operational
+pilot and UAT work that requires the production screens and club network.
 
 ### Later milestones
 

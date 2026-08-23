@@ -27,6 +27,7 @@ import {
   VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig, Household,
   TaakuitlegList, TaakuitlegForm,
   Narrowcasting, NarrowcastingDisplay, PresentationSender,
+  Rooms,
 } from './lazyPages';
 
 // Page loader for Suspense fallback
@@ -574,6 +575,7 @@ const router = createBrowserRouter([
             ),
           },
           { path: 'presenteren', element: <PresentationSender /> },
+          { path: 'rooms', element: <Rooms /> },
 
           // Settings routes — kader only
           { path: 'settings/notifications', element: <Navigate to="/profile" replace /> },
