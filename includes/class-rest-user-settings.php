@@ -1176,6 +1176,7 @@ class UserSettings extends Base {
 			|| current_user_can( 'ledenadministratie' )
 			|| current_user_can( 'sponsorbeheer' )
 			|| current_user_can( 'narrowcasting' )
+			|| current_user_can( 'accommodatiebeheer' )
 			|| current_user_can( 'vrijwilligers' );
 
 		$person_id           = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
@@ -1217,6 +1218,7 @@ class UserSettings extends Base {
 			'can_manage_sponsors'           => \Rondo\Core\AccessControl::can_manage_sponsors(),
 			'can_access_narrowcasting'      => current_user_can( 'narrowcasting' ) || current_user_can( 'sponsorbeheer' ) || $is_admin,
 			'can_manage_narrowcasting'      => current_user_can( 'narrowcasting' ) || $is_admin,
+			'can_manage_accommodatie'       => current_user_can( 'accommodatiebeheer' ) || $is_admin,
 			'can_access_fairplay'           => current_user_can( 'fairplay' ),
 			'can_access_vog'                => current_user_can( 'vog' ),
 			'can_access_financieel'         => \Rondo\Core\UserRoles::can_view_finances(),

@@ -379,6 +379,26 @@ export const prmApi = {
   queueNarrowcastingCommand: (displayId, command) => api.post(`/rondo/v1/narrowcasting/displays/${displayId}/commands`, { command }),
   revokeNarrowcastingDisplay: (displayId) => api.post(`/rondo/v1/narrowcasting/displays/${displayId}/revoke`),
 
+  // Rooms and reservations
+  getRooms: (params = {}) => api.get('/rondo/v1/rooms', { params }),
+  getRoomAvailability: (params) => api.get('/rondo/v1/rooms/availability', { params }),
+  getRoomBookingContexts: () => api.get('/rondo/v1/rooms/booking-contexts'),
+  getMyRoomBookings: () => api.get('/rondo/v1/rooms/bookings/mine'),
+  getRoomBooking: (id) => api.get(`/rondo/v1/rooms/bookings/${id}`),
+  createRoomBooking: (data) => api.post('/rondo/v1/rooms/bookings', data),
+  updateRoomBooking: (id, data) => api.post(`/rondo/v1/rooms/bookings/${id}`, data),
+  cancelRoomBooking: (id, reason = '') => api.post(`/rondo/v1/rooms/bookings/${id}/cancel`, { reason }),
+  extendRoomBooking: (id) => api.post(`/rondo/v1/rooms/bookings/${id}/extend`),
+  downloadRoomBookingCalendar: (id) => api.get(`/rondo/v1/rooms/bookings/${id}/calendar`, { responseType: 'blob' }),
+  getManagedRoomBookings: (params) => api.get('/rondo/v1/rooms/manage/bookings', { params }),
+  createManagedRoomBooking: (data) => api.post('/rondo/v1/rooms/manage/bookings', data),
+  getManagedRoomBookingContexts: (holderUserId) => api.get('/rondo/v1/rooms/manage/booking-contexts', { params: { holder_user_id: holderUserId } }),
+  getRoomBookingActivity: (id) => api.get(`/rondo/v1/rooms/bookings/${id}/activity`),
+  setRoomPresentationOverride: (id, action) => api.post(`/rondo/v1/rooms/manage/bookings/${id}/presentation`, { action }),
+  getRoomManagementConfig: () => api.get('/rondo/v1/rooms/manage/config'),
+  createRoom: (data) => api.post('/rondo/v1/rooms/manage/rooms', data),
+  updateRoom: (id, data) => api.post(`/rondo/v1/rooms/manage/rooms/${id}`, data),
+
   // Finance settings (admin only)
   getFinanceSettings: () => api.get('/rondo/v1/finance/settings'),
   updateFinanceSettings: (data) => api.post('/rondo/v1/finance/settings', data),

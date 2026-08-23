@@ -490,6 +490,7 @@ class Capabilities extends Base {
 			'ledenadministratie' => 'Ledenadministratie',
 			'sponsorbeheer'      => 'Sponsorbeheer',
 			'narrowcasting'      => 'Club TV-content',
+			'accommodatiebeheer' => 'Accommodatiebeheer',
 			'vrijwilligers'      => 'Vrijwilligersbeheer',
 			'rondo_iva_approve'  => 'IVA goedkeuren',
 		];
@@ -559,7 +560,7 @@ class Capabilities extends Base {
 			);
 		}
 
-		$allowed_caps  = [ 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'narrowcasting', 'vrijwilligers', 'rondo_iva_approve' ];
+		$allowed_caps  = [ 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'narrowcasting', 'accommodatiebeheer', 'vrijwilligers', 'rondo_iva_approve' ];
 		$valid_slugs   = array_keys( \Rondo\Core\UserRoles::get_all_roles() );
 		$valid_slugs[] = 'administrator';
 

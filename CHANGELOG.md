@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.3.0] - 2026-08-23
+
+### Added
+
+- Vrijwilligers kunnen clubruimtes reserveren voor hun eigen commissie of jaarlaagoverleg, met beschikbaarheid, eigen reserveringen, extra presentatoren en iCalendar-downloads.
+- Accommodatiebeheerders krijgen een dag- en weekoverzicht met houders, filters, beheerblokkades, wijzigingen, annuleringen, verlengingen, e-mailmeldingen en een auditgeschiedenis.
+- Beheerders kunnen ruimtes, openingstijden, boekingsregels en de koppeling met een Club TV-scherm instellen.
+- Reserveringsgestuurde browserpresentaties geven alleen de houder, extra presentatoren en accommodatiebeheerders toegang binnen het actuele boekingsvenster.
+
+### Security
+
+- Server-side vrijwilligerscontrole, kamerlocks en conflictvalidatie voorkomen onbevoegde of overlappende reserveringen; gewone beschikbaarheidsantwoorden bevatten geen persoonsgegevens.
+
 ## [35.2.3] - 2026-08-23
 
 ### Fixed

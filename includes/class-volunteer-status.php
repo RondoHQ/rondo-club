@@ -245,7 +245,7 @@ class VolunteerStatus {
 			if (
 				! is_array( $position )
 				|| ! self::is_position_current( $position )
-				|| ! $this->is_volunteer_position( $position )
+				|| ! self::is_volunteer_position( $position )
 			) {
 				continue;
 			}
@@ -284,7 +284,7 @@ class VolunteerStatus {
 			}
 
 			// Check if it's a volunteer position
-			if ( $this->is_volunteer_position( $position ) ) {
+			if ( self::is_volunteer_position( $position ) ) {
 				return true;
 			}
 		}
@@ -361,7 +361,7 @@ class VolunteerStatus {
 	 * @param array $position The position data.
 	 * @return bool True if this is a volunteer position.
 	 */
-	private function is_volunteer_position( $position ) {
+	public static function is_volunteer_position( $position ): bool {
 		$entity_type = $position['entity_type'] ?? '';
 		$job_title   = $position['job_title'] ?? '';
 

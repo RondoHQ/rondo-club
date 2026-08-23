@@ -16,11 +16,13 @@ function candidatePayload(candidate) {
   };
 }
 
-export default function PresentationReceiver({ enabled, deviceToken, displayName }) {
+export default function PresentationReceiver({ enabled, deviceToken, displayName, roomPresentation }) {
   const videoRef = useRef(null);
   const [code, setCode] = useState('');
   const [remoteStream, setRemoteStream] = useState(null);
   const [status, setStatus] = useState('starting');
+  const [bookingWindow, setBookingWindow] = useState(null);
+  const [controlledUnavailable, setControlledUnavailable] = useState(false);
 
   useEffect(() => {
     if (videoRef.current) videoRef.current.srcObject = remoteStream;
@@ -55,6 +57,7 @@ export default function PresentationReceiver({ enabled, deviceToken, displayName
         peer = null;
       }
       setRemoteStream(null);
+      setBookingWindow(null);
       remoteCandidateCount = 0;
       localSignal = emptySignal();
     };
@@ -151,13 +154,20 @@ export default function PresentationReceiver({ enabled, deviceToken, displayName
       try {
         session = await createPresentationSession(deviceToken);
         if (cancelled) return;
+        setControlledUnavailable(false);
         setCode(session.code);
+        setBookingWindow(session.booking_id ? {
+          roomName: session.room_name,
+          startsAt: session.booking_starts_at,
+          endsAt: session.booking_ends_at,
+        } : null);
         setStatus('waiting');
         const refreshDelay = Math.max(1000, new Date(session.code_expires_at).getTime() - Date.now() - 5000);
         refreshTimer = window.setTimeout(() => scheduleRestart(0), refreshDelay);
         poll();
-      } catch {
+      } catch (error) {
         if (!cancelled) {
+          setControlledUnavailable(error.status === 403);
           setStatus('error');
           restartTimer = window.setTimeout(() => {
             restarting = false;
@@ -177,6 +187,8 @@ export default function PresentationReceiver({ enabled, deviceToken, displayName
 
   if (!enabled) return null;
 
+  if (roomPresentation?.controlled && (!roomPresentation?.active || controlledUnavailable) && !code) return null;
+
   if (status === 'presenting' && remoteStream) {
     return (
       <div className="absolute inset-0 z-50 flex items-center justify-center bg-black">
@@ -195,11 +207,14 @@ export default function PresentationReceiver({ enabled, deviceToken, displayName
 
   return (
     <aside className="absolute bottom-[1.5vw] left-[1.8vw] z-40 rounded-[0.8vw] border border-white/20 bg-slate-950/90 px-[1.2vw] py-[0.9vw] text-white shadow-2xl backdrop-blur">
-      <p className="text-[0.85vw] font-medium uppercase tracking-[0.12em] text-white/65">Scherm delen</p>
+      <p className="text-[0.85vw] font-medium uppercase tracking-[0.12em] text-white/65">
+        {bookingWindow?.roomName ? `${bookingWindow.roomName} gereserveerd` : 'Scherm delen'}
+      </p>
       {code ? (
         <div className="mt-[0.3vw] flex items-baseline gap-[0.8vw]">
           <strong className="font-mono text-[2vw] tracking-[0.2em]">{code}</strong>
           <span className="text-[0.9vw] text-white/70">rondo.svawc.nl/presenteren</span>
+          {bookingWindow?.endsAt && <span className="text-[0.9vw] text-white/70">tot {new Intl.DateTimeFormat('nl-NL', { hour: '2-digit', minute: '2-digit' }).format(new Date(bookingWindow.endsAt))}</span>}
         </div>
       ) : (
         <p className="mt-[0.3vw] text-[1vw] text-white/70">
