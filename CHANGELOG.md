@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.0.3] - 2026-08-23
+
+### Fixed
+
+- Apple Wallet- en Google Wallet-acties werken nu ook voor gewone ledenaccounts; de frontendactie via `admin-post.php` wordt niet meer door de wp-admin-blokkade naar de homepage gestuurd.
+
 ## [35.0.2] - 2026-08-23
 
 ### Fixed

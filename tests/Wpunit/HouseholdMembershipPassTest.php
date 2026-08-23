@@ -187,6 +187,24 @@ class HouseholdMembershipPassTest extends RondoTestCase {
 		$this->assertFalse( $verify->invoke( null, $person_id, 'google', $args['_wallet_token'] ) );
 	}
 
+	public function test_wallet_admin_post_action_bypasses_the_backend_redirect(): void {
+		global $pagenow;
+
+		$original_pagenow = $pagenow;
+		$user_id          = $this->createRondoUser( [ 'user_login' => 'wallet_admin_post_member' ] );
+		wp_set_current_user( $user_id );
+
+		try {
+			$pagenow = 'admin-post.php';
+			$this->assertFalse( rondo_should_block_wp_admin() );
+
+			$pagenow = 'edit.php';
+			$this->assertTrue( rondo_should_block_wp_admin() );
+		} finally {
+			$pagenow = $original_pagenow;
+		}
+	}
+
 	public function test_legacy_public_pass_tokens_and_urls_are_removed(): void {
 		$person_id = $this->createPerson( [ 'post_title' => 'Oud publiek token' ] );
 		update_post_meta( $person_id, MembershipPassService::LEGACY_TOKEN_META_KEY, str_repeat( 'a', 64 ) );
