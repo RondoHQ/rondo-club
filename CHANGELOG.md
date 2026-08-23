@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.2.3] - 2026-08-23
+
+### Fixed
+
+- Club TV-afbeeldingsslides schalen voortaan groot op binnen de beschikbare schermruimte zonder de afbeelding bij te snijden.
+
 ## [35.2.2] - 2026-08-23
 
 ### Changed

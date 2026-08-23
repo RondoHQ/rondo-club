@@ -35,7 +35,7 @@ function SponsorScene({ scene }) {
 }
 
 function ImageScene({ scene }) {
-  return <section className="flex items-center justify-center"><img src={scene.media?.url} alt={scene.media?.alt || scene.title || ''} className="max-h-[58vh] max-w-[88vw] object-contain" /></section>;
+  return <section className="flex items-center justify-center"><img src={scene.media?.url} alt={scene.media?.alt || scene.title || ''} className="h-[58vh] w-[88vw] object-contain" /></section>;
 }
 
 function VideoScene({ scene }) {
