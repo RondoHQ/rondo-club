@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.0.4] - 2026-08-23
+
+### Fixed
+
+- Businessclubleden en sponsoren die ook Bondslid of Verenigingslid zijn en een actuele vrijwilligersfunctie hebben, kunnen bij **Mijn gegevens** kiezen tussen hun sponsorpas en een AWC-pas met die functie.
+
 ## [35.0.3] - 2026-08-23
 
 ### Fixed

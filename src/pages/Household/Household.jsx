@@ -165,7 +165,7 @@ function MembershipPassActions({ membershipPass, personId }) {
         >
           <div className="p-4">
             <h3 id={`membership-pass-role-picker-title-${personId}`} className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-              Welke rol wil je op de pas tonen?
+              Welke pas wil je toevoegen?
             </h3>
             <div className="mt-3 grid gap-2">
               {membershipPass.role_options.map((role, index) => (

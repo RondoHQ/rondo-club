@@ -51,6 +51,10 @@ class MembershipPassSponsorTest extends RondoTestCase {
 		);
 
 		$this->assertSame( 'sponsor', MembershipPassService::get_person_member_tier( $person_id ) );
+		$this->assertSame( 'bondslid', MembershipPassService::get_person_standard_member_tier( $person_id ) );
+		$this->assertSame( 'bondslid', MembershipPassService::resolve_person_member_tier( $person_id, 'bondslid' ) );
+		$this->assertSame( 'sponsor', MembershipPassService::resolve_person_member_tier( $person_id, 'sponsor' ) );
+		$this->assertSame( '', MembershipPassService::resolve_person_member_tier( $person_id, 'verenigingslid' ) );
 	}
 
 	public function test_sponsor_wallet_passes_use_a_white_background(): void {

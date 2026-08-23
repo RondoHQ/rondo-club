@@ -23,6 +23,7 @@ class MembershipPassService {
 	const LEGACY_CLEANUP_OPTION             = 'rondo_membership_pass_private_actions_v1_done';
 	const SPONSOR_PASS_VARIANT_BUSINESSCLUB = 'businessclub';
 	const SPONSOR_PASS_VARIANT_AWC_SPONSOR  = 'awc_sponsor';
+	const SPONSOR_PASS_SELECTION            = 'sponsor_pass';
 
 	public function __construct() {
 		add_action( 'admin_post_' . self::ACTION, [ $this, 'handle_wallet_action' ] );
@@ -59,6 +60,7 @@ class MembershipPassService {
 
 		$apple_service  = new MembershipPassApple();
 		$google_service = new MembershipPassGoogle();
+		$work_options   = $apple_service->get_work_options_for_person( $person_id );
 		$role_options   = array_map(
 			static function ( array $option ): array {
 				return [
@@ -66,8 +68,26 @@ class MembershipPassService {
 					'label' => (string) $option['label'],
 				];
 			},
-			$apple_service->get_work_options_for_person( $person_id )
+			$work_options
 		);
+
+		$standard_member_tier = self::get_person_standard_member_tier( $person_id );
+		if ( $member_tier === 'sponsor' && $standard_member_tier !== '' && $work_options !== [] ) {
+			$sponsor_label = $label;
+			$label         = 'Lidpassen';
+			$role_options  = [
+				[
+					'key'   => self::SPONSOR_PASS_SELECTION,
+					'label' => $sponsor_label,
+				],
+			];
+			foreach ( $work_options as $option ) {
+				$role_options[] = [
+					'key'   => (string) $option['key'],
+					'label' => 'AWC-pas — ' . (string) $option['label'],
+				];
+			}
+		}
 
 		$apple_available  = $apple_service->is_configured();
 		$google_available = $google_service->is_configured();
@@ -96,6 +116,11 @@ class MembershipPassService {
 			return self::get_sponsor_pass_variant( $person_id ) !== '' ? 'sponsor' : '';
 		}
 
+		return self::get_person_standard_member_tier( $person_id );
+	}
+
+	/** Resolve the regular membership tier without sponsor precedence. */
+	public static function get_person_standard_member_tier( int $person_id ): string {
 		$type_lid = strtolower( trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'type_lid' ) ) );
 		if ( $type_lid === 'bondslid' ) {
 			return 'bondslid';
@@ -105,6 +130,20 @@ class MembershipPassService {
 		}
 
 		return '';
+	}
+
+	/** Resolve and validate the tier requested by a wallet generator. */
+	public static function resolve_person_member_tier( int $person_id, string $requested_tier = '' ): string {
+		if ( $requested_tier === '' ) {
+			return self::get_person_member_tier( $person_id );
+		}
+
+		if ( $requested_tier === 'sponsor' ) {
+			return SponsorStatus::is_sponsor( $person_id ) && self::get_sponsor_pass_variant( $person_id ) !== '' ? 'sponsor' : '';
+		}
+
+		$standard_member_tier = self::get_person_standard_member_tier( $person_id );
+		return $requested_tier === $standard_member_tier ? $standard_member_tier : '';
 	}
 
 	/** Resolve the required wallet pass variant for a Sponsor. */
@@ -160,16 +199,16 @@ class MembershipPassService {
 		}
 
 		$apple_service = new MembershipPassApple();
-		$role          = self::resolve_selected_role( $role, $apple_service->get_work_options_for_person( $person_id ) );
-		if ( $role === null ) {
-			wp_die( esc_html__( 'Kies eerst precies één rol voor je ledenpas.', 'rondo' ), '', [ 'response' => 400 ] );
+		$selection     = self::resolve_selected_pass( $person_id, $role, $apple_service->get_work_options_for_person( $person_id ) );
+		if ( $selection === null ) {
+			wp_die( esc_html__( 'Kies eerst welke pas je wilt toevoegen.', 'rondo' ), '', [ 'response' => 400 ] );
 		}
 
 		if ( $wallet === 'apple' ) {
-			$this->output_apple_pass( $person_id, $role );
+			$this->output_apple_pass( $person_id, $selection['work'], $selection['member_tier'] );
 		}
 
-		$this->redirect_to_google_wallet( $person_id, $role );
+		$this->redirect_to_google_wallet( $person_id, $selection['work'], $selection['member_tier'] );
 	}
 
 	/** Reject direct unauthenticated requests without exposing pass data. */
@@ -276,9 +315,51 @@ class MembershipPassService {
 		return count( $role_options ) > 1 ? null : '';
 	}
 
-	private function output_apple_pass( int $person_id, string $selected_role ) {
+	/** Resolve the requested sponsor or regular AWC pass and its work role. */
+	private static function resolve_selected_pass( int $person_id, string $selected_role, array $work_options ): ?array {
+		$member_tier          = self::get_person_member_tier( $person_id );
+		$standard_member_tier = self::get_person_standard_member_tier( $person_id );
+
+		if ( $member_tier === 'sponsor' && $standard_member_tier !== '' && $work_options !== [] ) {
+			if ( $selected_role === self::SPONSOR_PASS_SELECTION ) {
+				return [
+					'member_tier' => 'sponsor',
+					'work'        => '',
+				];
+			}
+
+			foreach ( $work_options as $option ) {
+				if ( isset( $option['key'] ) && hash_equals( (string) $option['key'], $selected_role ) ) {
+					return [
+						'member_tier' => $standard_member_tier,
+						'work'        => (string) $option['key'],
+					];
+				}
+			}
+
+			return null;
+		}
+
+		$resolved_role = self::resolve_selected_role( $selected_role, $work_options );
+		if ( $resolved_role === null ) {
+			return null;
+		}
+
+		return [
+			'member_tier' => $member_tier,
+			'work'        => $resolved_role,
+		];
+	}
+
+	private function output_apple_pass( int $person_id, string $selected_role, string $member_tier ) {
 		$service = new MembershipPassApple();
-		$result  = $service->generate_for_person( $person_id, [ 'work' => $selected_role ] );
+		$result  = $service->generate_for_person(
+			$person_id,
+			[
+				'work'        => $selected_role,
+				'member_tier' => $member_tier,
+			]
+		);
 		if ( is_wp_error( $result ) ) {
 			wp_die( esc_html( $result->get_error_message() ), '', [ 'response' => 500 ] );
 		}
@@ -291,9 +372,15 @@ class MembershipPassService {
 		exit;
 	}
 
-	private function redirect_to_google_wallet( int $person_id, string $selected_role ) {
+	private function redirect_to_google_wallet( int $person_id, string $selected_role, string $member_tier ) {
 		$service = new MembershipPassGoogle();
-		$result  = $service->get_add_to_wallet_url_for_person( $person_id, [ 'work' => $selected_role ] );
+		$result  = $service->get_add_to_wallet_url_for_person(
+			$person_id,
+			[
+				'work'        => $selected_role,
+				'member_tier' => $member_tier,
+			]
+		);
 		if ( is_wp_error( $result ) ) {
 			wp_die( esc_html( $result->get_error_message() ), '', [ 'response' => 500 ] );
 		}
