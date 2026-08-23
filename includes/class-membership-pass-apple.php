@@ -93,7 +93,7 @@ class MembershipPassApple {
 			'serialNumber'       => $serial,
 			'teamIdentifier'     => $this->get_team_identifier(),
 			'organizationName'   => $card_title,
-			'description'        => $is_sponsor ? 'Rondo toegangspas' : 'Rondo lidmaatschapspas',
+			'description'        => $this->get_pass_description( $organization_name, $is_sponsor ),
 			'logoText'           => $card_title,
 			'foregroundColor'    => $is_sponsor ? 'rgb(17,24,39)' : 'rgb(255,255,255)',
 			'labelColor'         => $is_sponsor ? 'rgb(55,65,81)' : 'rgb(255,255,255)',
@@ -482,6 +482,17 @@ class MembershipPassApple {
 		return $sponsor_pass_variant === MembershipPassService::SPONSOR_PASS_VARIANT_AWC_SPONSOR
 			? $organization_name . ' Sponsor'
 			: 'Businessclub ' . $organization_name;
+	}
+
+	/**
+	 * Resolve the Apple Wallet pass description.
+	 *
+	 * @param string $organization_name Configured organization name.
+	 * @param bool   $is_sponsor Whether this is a sponsor pass.
+	 * @return string
+	 */
+	private function get_pass_description( string $organization_name, bool $is_sponsor ): string {
+		return $is_sponsor ? 'Rondo toegangspas' : $organization_name . ' lidmaatschapspas';
 	}
 
 	/**

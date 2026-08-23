@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.0.1] - 2026-08-23
+
+### Fixed
+
+- De beschrijving van een Apple Wallet-lidmaatschapspas gebruikt de ingestelde clubnaam, bijvoorbeeld `AWC lidmaatschapspas`, in plaats van `Rondo lidmaatschapspas`.
+
 ## [35.0.0] - 2026-08-23
 
 ### Added
