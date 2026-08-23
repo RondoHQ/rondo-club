@@ -1099,7 +1099,7 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
                   </button>
                 </div>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Deze kleur wordt gebruikt als achtergrond op de publieke pagina&apos;s /betaling en /lidpas.
+                  Deze kleur wordt gebruikt als achtergrond op de publieke betaalpagina /betaling.
                 </p>
               </div>
 

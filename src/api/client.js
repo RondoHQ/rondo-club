@@ -194,8 +194,6 @@ export const prmApi = {
   getPersonNotes: (personId) => api.get(`/rondo/v1/people/${personId}/notes`),
   issueMembershipPassQrToken: (personId, params = {}) =>
     api.get(`/rondo/v1/membership-passes/people/${personId}/qr-token`, { params }),
-  getMembershipPassLandingUrl: (personId) =>
-    api.get(`/rondo/v1/membership-passes/people/${personId}/landing-url`),
   verifyMembershipPassQrToken: (token) =>
     api.post('/rondo/v1/membership-passes/verify', { token }),
   createNote: (personId, content, visibility = 'private') =>

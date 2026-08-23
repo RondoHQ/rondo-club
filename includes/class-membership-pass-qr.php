@@ -175,7 +175,7 @@ class MembershipPassQr {
 		$infix      = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'infix' ) ?: '' );
 		$last_name  = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '' );
 		$full_name  = trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
-		$full_name  = $full_name !== '' ? $full_name : PublicMembershipPassPage::get_sponsor_company_name( $person_id );
+		$full_name  = $full_name !== '' ? $full_name : MembershipPassService::get_sponsor_company_name( $person_id );
 
 		$knvb_id = \Rondo\Fields\Fields::get_for_post( $person_id, 'knvb_id' );
 

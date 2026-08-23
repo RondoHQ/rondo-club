@@ -4,6 +4,7 @@ namespace Tests\Wpunit;
 
 use Rondo\Core\AccessControl;
 use Rondo\Fields\Fields;
+use Rondo\Passes\MembershipPassService;
 use Rondo\REST\People;
 use Rondo\REST\UserSettings;
 use Rondo\Sponsors\Relations;
@@ -81,10 +82,10 @@ class HouseholdMembershipPassTest extends RondoTestCase {
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertCount( 5, $people );
 		$this->assertArrayNotHasKey( $stranger, $people );
-		$this->assertPass( $people[ $parent ]['membership_pass'], 'bondslid', 'Ledenpas' );
-		$this->assertPass( $people[ $club_member ]['membership_pass'], 'verenigingslid', 'Ledenpas' );
-		$this->assertPass( $people[ $businessclub_sponsor ]['membership_pass'], 'businessclub', 'Businessclubpas' );
-		$this->assertPass( $people[ $dual_role_sponsor ]['membership_pass'], 'awc_sponsor', 'Sponsorpas' );
+		$this->assertPass( $people[ $parent ]['membership_pass'], $parent, 'bondslid', 'Ledenpas' );
+		$this->assertPass( $people[ $club_member ]['membership_pass'], $club_member, 'verenigingslid', 'Ledenpas' );
+		$this->assertPass( $people[ $businessclub_sponsor ]['membership_pass'], $businessclub_sponsor, 'businessclub', 'Businessclubpas' );
+		$this->assertPass( $people[ $dual_role_sponsor ]['membership_pass'], $dual_role_sponsor, 'awc_sponsor', 'Sponsorpas' );
 		$this->assertNull( $people[ $ineligible ]['membership_pass'] );
 		$this->assertNull( $people[ $businessclub_sponsor ]['sponsor_organization'] );
 	}
@@ -120,6 +121,64 @@ class HouseholdMembershipPassTest extends RondoTestCase {
 		$this->assertTrue( $user['is_sponsor'] );
 		$this->assertFalse( $user['is_parent'] );
 		$this->assertFalse( $user['is_kader'] );
+	}
+
+	public function test_household_requires_one_choice_for_multiple_current_roles(): void {
+		$person_id = $this->createPerson(
+			[ 'post_title' => 'Lid met twee rollen' ],
+			[ 'type-lid' => 'Bondslid' ]
+		);
+		$team_one  = self::factory()->post->create(
+			[
+				'post_type'   => 'team',
+				'post_status' => 'publish',
+				'post_title'  => 'AWC 1',
+			]
+		);
+		$team_two  = self::factory()->post->create(
+			[
+				'post_type'   => 'team',
+				'post_status' => 'publish',
+				'post_title'  => 'AWC 2',
+			]
+		);
+		Fields::update_for_post(
+			$person_id,
+			'work_history',
+			[
+				[
+					'team'       => $team_one,
+					'job_title'  => 'Trainer',
+					'is_current' => true,
+				],
+				[
+					'team'       => $team_two,
+					'job_title'  => 'Leider',
+					'is_current' => true,
+				],
+			]
+		);
+
+		$pass = MembershipPassService::get_person_pass_summary( $person_id );
+
+		$this->assertTrue( $pass['requires_role'] );
+		$this->assertSame( [ 'AWC 1 — Trainer', 'AWC 2 — Leider' ], array_column( $pass['role_options'], 'label' ) );
+		$this->assertCount( 2, array_unique( array_column( $pass['role_options'], 'key' ) ) );
+	}
+
+	public function test_legacy_public_pass_tokens_and_urls_are_removed(): void {
+		$person_id = $this->createPerson( [ 'post_title' => 'Oud publiek token' ] );
+		update_post_meta( $person_id, MembershipPassService::LEGACY_TOKEN_META_KEY, str_repeat( 'a', 64 ) );
+		update_post_meta( $person_id, MembershipPassService::LEGACY_URL_META_KEY, 'https://example.org/lidpas/oud' );
+		update_option( MembershipPassService::LEGACY_BACKFILL_OPTION, true );
+		delete_option( MembershipPassService::LEGACY_CLEANUP_OPTION );
+
+		( new MembershipPassService() )->maybe_remove_legacy_public_pass_data();
+
+		$this->assertSame( '', get_post_meta( $person_id, MembershipPassService::LEGACY_TOKEN_META_KEY, true ) );
+		$this->assertSame( '', get_post_meta( $person_id, MembershipPassService::LEGACY_URL_META_KEY, true ) );
+		$this->assertFalse( get_option( MembershipPassService::LEGACY_BACKFILL_OPTION, false ) );
+		$this->assertTrue( (bool) get_option( MembershipPassService::LEGACY_CLEANUP_OPTION, false ) );
 	}
 
 	public function test_sponsor_parent_receives_parent_landing_flag(): void {
@@ -183,10 +242,25 @@ class HouseholdMembershipPassTest extends RondoTestCase {
 		return $sponsor_id;
 	}
 
-	private function assertPass( array $pass, string $type, string $label ): void {
-		$this->assertSame( [ 'url', 'type', 'label' ], array_keys( $pass ) );
-		$this->assertStringContainsString( '/lidpas/', $pass['url'] );
+	private function assertPass( array $pass, int $person_id, string $type, string $label ): void {
+		$this->assertSame( [ 'type', 'label', 'wallets', 'role_options', 'requires_role' ], array_keys( $pass ) );
 		$this->assertSame( $type, $pass['type'] );
 		$this->assertSame( $label, $pass['label'] );
+		$this->assertSame( [], $pass['role_options'] );
+		$this->assertFalse( $pass['requires_role'] );
+
+		foreach ( [ 'apple', 'google' ] as $wallet ) {
+			$this->assertIsBool( $pass['wallets'][ $wallet ]['available'] );
+			$this->assertStringContainsString( '/wp-admin/admin-post.php', $pass['wallets'][ $wallet ]['url'] );
+			$query = wp_parse_url( $pass['wallets'][ $wallet ]['url'], PHP_URL_QUERY );
+			parse_str( $query, $args );
+			$this->assertSame( 'rondo_membership_pass_wallet', $args['action'] );
+			$this->assertSame( (string) $person_id, $args['person_id'] );
+			$this->assertSame( $wallet, $args['wallet'] );
+			$this->assertContains(
+				wp_verify_nonce( $args['_wpnonce'], 'rondo_membership_pass_wallet:' . $person_id . ':' . $wallet ),
+				[ 1, 2 ]
+			);
+		}
 	}
 }

@@ -50,7 +50,7 @@ class MembershipPassGoogle {
 			return new \WP_Error( 'membership_pass_person_not_found', 'Persoon niet gevonden.' );
 		}
 
-		$member_tier = PublicMembershipPassPage::get_person_member_tier( $person_id );
+		$member_tier = MembershipPassService::get_person_member_tier( $person_id );
 		if ( $member_tier === '' ) {
 			return new \WP_Error( 'membership_pass_ineligible_member', 'Dit lidtype komt niet in aanmerking voor een ledenpas.' );
 		}
@@ -91,9 +91,9 @@ class MembershipPassGoogle {
 		$team_name            = $details['teams'] !== '' ? $details['teams'] : '-';
 		$functions            = $details['functions'] !== '' ? $details['functions'] : '-';
 		$company_name         = $member_tier === 'sponsor'
-			? PublicMembershipPassPage::get_sponsor_company_name( $person_id )
+			? MembershipPassService::get_sponsor_company_name( $person_id )
 			: trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
-		$sponsor_pass_variant = $member_tier === 'sponsor' ? PublicMembershipPassPage::get_sponsor_pass_variant( $person_id ) : '';
+		$sponsor_pass_variant = $member_tier === 'sponsor' ? MembershipPassService::get_sponsor_pass_variant( $person_id ) : '';
 		$card_title           = $this->get_card_title( $issuer_name, $member_tier, $sponsor_pass_variant );
 		$object_id            = $issuer_id . '.member_' . $person_id;
 		if ( $details['selection'] !== '' ) {
@@ -476,7 +476,7 @@ class MembershipPassGoogle {
 	private function get_logo_image_url( string $member_tier = '', string $sponsor_pass_variant = '' ): string {
 		$config = new FinanceConfig();
 
-		if ( $member_tier === 'sponsor' && $sponsor_pass_variant === PublicMembershipPassPage::SPONSOR_PASS_VARIANT_BUSINESSCLUB ) {
+		if ( $member_tier === 'sponsor' && $sponsor_pass_variant === MembershipPassService::SPONSOR_PASS_VARIANT_BUSINESSCLUB ) {
 			$logo_id = $config->get_businessclub_logo_id();
 			if ( $logo_id > 0 ) {
 				$url = wp_get_attachment_url( $logo_id );
@@ -660,7 +660,7 @@ class MembershipPassGoogle {
 			return $issuer_name;
 		}
 
-		return $sponsor_pass_variant === PublicMembershipPassPage::SPONSOR_PASS_VARIANT_AWC_SPONSOR
+		return $sponsor_pass_variant === MembershipPassService::SPONSOR_PASS_VARIANT_AWC_SPONSOR
 			? $issuer_name . ' Sponsor'
 			: 'Businessclub ' . $issuer_name;
 	}

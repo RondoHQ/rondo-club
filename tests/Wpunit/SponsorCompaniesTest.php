@@ -4,7 +4,7 @@ namespace Tests\Wpunit;
 
 use Rondo\Core\AccessControl;
 use Rondo\Fields\Fields;
-use Rondo\Passes\PublicMembershipPassPage;
+use Rondo\Passes\MembershipPassService;
 use Rondo\REST\Sponsors;
 use Rondo\Sponsors\Migration;
 use Rondo\Sponsors\Relations;
@@ -60,8 +60,8 @@ class SponsorCompaniesTest extends RondoTestCase {
 		$this->assertSame( 201, $response->get_status() );
 		$this->assertSame( 'rondo_sponsor', get_post_type( $response->get_data()['id'] ) );
 		$this->assertTrue( Relations::is_sponsor_contact( $person_id ) );
-		$this->assertSame( 'businessclub', PublicMembershipPassPage::get_sponsor_pass_variant( $person_id ) );
-		$this->assertSame( 'Voorbeeld BV', PublicMembershipPassPage::get_sponsor_company_name( $person_id ) );
+		$this->assertSame( 'businessclub', MembershipPassService::get_sponsor_pass_variant( $person_id ) );
+		$this->assertSame( 'Voorbeeld BV', MembershipPassService::get_sponsor_company_name( $person_id ) );
 		$this->assertSame( 'https://www.example.test/sponsors', $response->get_data()['fields']['website'] );
 		$this->assertSame( 0, (int) $response->get_data()['fields']['club_tv_priority'] );
 	}
@@ -343,7 +343,7 @@ class SponsorCompaniesTest extends RondoTestCase {
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertSame( 'draft', get_post_status( $sponsor_id ) );
 		$this->assertNotNull( get_post( $person_id ) );
-		$this->assertSame( '', PublicMembershipPassPage::get_sponsor_pass_variant( $person_id ) );
+		$this->assertSame( '', MembershipPassService::get_sponsor_pass_variant( $person_id ) );
 	}
 
 	public function test_migration_groups_people_and_is_idempotent(): void {
