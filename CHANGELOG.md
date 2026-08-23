@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.0.2] - 2026-08-23
+
+### Fixed
+
+- Apple Wallet- en Google Wallet-links blijven op mobiel geldig zolang dezelfde Rondo-inlogsessie actief is, zodat een bewaarde pagina niet meer met een verlopen nonce op de homepage of een foutpagina eindigt.
+
 ## [35.0.1] - 2026-08-23
 
 ### Fixed

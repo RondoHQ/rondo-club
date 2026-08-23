@@ -166,6 +166,27 @@ class HouseholdMembershipPassTest extends RondoTestCase {
 		$this->assertCount( 2, array_unique( array_column( $pass['role_options'], 'key' ) ) );
 	}
 
+	public function test_wallet_action_token_is_bound_to_the_current_user_session(): void {
+		$person_id = $this->createPerson(
+			[ 'post_title' => 'Lid met wallettoken' ],
+			[ 'type-lid' => 'Bondslid' ]
+		);
+		$user_one  = $this->createRondoUser( [ 'user_login' => 'wallet_token_one' ] );
+		$user_two  = $this->createRondoUser( [ 'user_login' => 'wallet_token_two' ] );
+
+		wp_set_current_user( $user_one );
+		$pass  = MembershipPassService::get_person_pass_summary( $person_id );
+		$query = wp_parse_url( $pass['wallets']['google']['url'], PHP_URL_QUERY );
+		parse_str( $query, $args );
+
+		$verify = ( new \ReflectionClass( MembershipPassService::class ) )->getMethod( 'verify_wallet_token' );
+		$verify->setAccessible( true );
+		$this->assertTrue( $verify->invoke( null, $person_id, 'google', $args['_wallet_token'] ) );
+
+		wp_set_current_user( $user_two );
+		$this->assertFalse( $verify->invoke( null, $person_id, 'google', $args['_wallet_token'] ) );
+	}
+
 	public function test_legacy_public_pass_tokens_and_urls_are_removed(): void {
 		$person_id = $this->createPerson( [ 'post_title' => 'Oud publiek token' ] );
 		update_post_meta( $person_id, MembershipPassService::LEGACY_TOKEN_META_KEY, str_repeat( 'a', 64 ) );
@@ -257,10 +278,12 @@ class HouseholdMembershipPassTest extends RondoTestCase {
 			$this->assertSame( 'rondo_membership_pass_wallet', $args['action'] );
 			$this->assertSame( (string) $person_id, $args['person_id'] );
 			$this->assertSame( $wallet, $args['wallet'] );
-			$this->assertContains(
-				wp_verify_nonce( $args['_wpnonce'], 'rondo_membership_pass_wallet:' . $person_id . ':' . $wallet ),
-				[ 1, 2 ]
-			);
+			$this->assertArrayNotHasKey( '_wpnonce', $args );
+			$this->assertMatchesRegularExpression( '/^[a-f0-9]{64}$/', $args['_wallet_token'] );
+
+			$verify = ( new \ReflectionClass( MembershipPassService::class ) )->getMethod( 'verify_wallet_token' );
+			$verify->setAccessible( true );
+			$this->assertTrue( $verify->invoke( null, $person_id, $wallet, $args['_wallet_token'] ) );
 		}
 	}
 }
