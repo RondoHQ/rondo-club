@@ -1972,6 +1972,16 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'storage_name' => 'cec_enabled',
           'type' => 'true_false',
         ),
+        'presentation_enabled' =>
+        array (
+          'canonical_name' => 'presentation_enabled',
+          'default_value' => 0,
+          'key' => 'field_display_presentation_enabled',
+          'label' => 'Browserpresentaties ingeschakeld',
+          'name' => 'presentation_enabled',
+          'storage_name' => 'presentation_enabled',
+          'type' => 'true_false',
+        ),
         'device_id' =>
         array (
           'canonical_name' => 'device_id',

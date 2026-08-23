@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.1.0] - 2026-08-23
+
+### Added
+
+- Club TV-schermen kunnen per player een browserpresentatieproef inschakelen: een ingelogde gebruiker voert via `/presenteren` de tijdelijke tv-code in en deelt daarna vanuit Chrome of Edge een tabblad, venster of volledig scherm rechtstreeks via WebRTC.
+
 ## [35.0.5] - 2026-08-23
 
 ### Fixed

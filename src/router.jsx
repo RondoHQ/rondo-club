@@ -26,7 +26,7 @@ import {
   VrijwilligersDienstForm, VrijwilligersDienstTypeForm, VrijwilligersSjablonen, VrijwilligersSjabloonForm,
   VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig, Household,
   TaakuitlegList, TaakuitlegForm,
-  Narrowcasting, NarrowcastingDisplay,
+  Narrowcasting, NarrowcastingDisplay, PresentationSender,
 } from './lazyPages';
 
 // Page loader for Suspense fallback
@@ -565,6 +565,7 @@ const router = createBrowserRouter([
               </NarrowcastingRoute>
             ),
           },
+          { path: 'presenteren', element: <PresentationSender /> },
 
           // Settings routes — kader only
           { path: 'settings/notifications', element: <Navigate to="/profile" replace /> },
