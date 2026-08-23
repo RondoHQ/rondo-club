@@ -48,13 +48,13 @@ class MembershipPassApple {
 		}
 
 		$knvb_id     = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'knvb_id' );
-		$member_tier = PublicMembershipPassPage::get_person_member_tier( $person_id );
+		$member_tier = MembershipPassService::get_person_member_tier( $person_id );
 		if ( $member_tier === '' ) {
 			return new \WP_Error( 'membership_pass_ineligible_member', 'Dit lidtype komt niet in aanmerking voor een ledenpas.' );
 		}
 
 		$is_sponsor           = $member_tier === 'sponsor';
-		$sponsor_pass_variant = $is_sponsor ? PublicMembershipPassPage::get_sponsor_pass_variant( $person_id ) : '';
+		$sponsor_pass_variant = $is_sponsor ? MembershipPassService::get_sponsor_pass_variant( $person_id ) : '';
 		$member_label         = $is_sponsor
 			? 'Sponsor'
 			: ( $member_tier === 'verenigingslid' ? 'Verenigingslid' : 'Bondslid' );
@@ -77,7 +77,7 @@ class MembershipPassApple {
 		$team_name         = $details['teams'] !== '' ? $details['teams'] : '-';
 		$functions         = $details['functions'] !== '' ? $details['functions'] : '-';
 		$company_name      = $is_sponsor
-			? PublicMembershipPassPage::get_sponsor_company_name( $person_id )
+			? MembershipPassService::get_sponsor_company_name( $person_id )
 			: trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
 		$organization_name = $this->get_organization_name();
 		$card_title        = $this->get_card_title( $organization_name, $member_tier, $sponsor_pass_variant );
@@ -184,7 +184,7 @@ class MembershipPassApple {
 		$default   = $theme_dir . '/public/icons/apple-touch-icon-180x180.png';
 		$config    = new FinanceConfig();
 
-		if ( $member_tier === 'sponsor' && $sponsor_pass_variant === PublicMembershipPassPage::SPONSOR_PASS_VARIANT_BUSINESSCLUB ) {
+		if ( $member_tier === 'sponsor' && $sponsor_pass_variant === MembershipPassService::SPONSOR_PASS_VARIANT_BUSINESSCLUB ) {
 			$logo_id = $config->get_businessclub_logo_id();
 			if ( $logo_id > 0 ) {
 				$path = get_attached_file( $logo_id );
@@ -479,7 +479,7 @@ class MembershipPassApple {
 			return $organization_name;
 		}
 
-		return $sponsor_pass_variant === PublicMembershipPassPage::SPONSOR_PASS_VARIANT_AWC_SPONSOR
+		return $sponsor_pass_variant === MembershipPassService::SPONSOR_PASS_VARIANT_AWC_SPONSOR
 			? $organization_name . ' Sponsor'
 			: 'Businessclub ' . $organization_name;
 	}

@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, ExternalLink, Building2, ImagePlus, LoaderCircle } from 'lucide-react';
+import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, Building2, ImagePlus, LoaderCircle } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useUploadSponsorLogo } from '@/hooks/useSponsors';
@@ -8,6 +8,39 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { formatPersonName, parseFieldDate } from '@/utils/formatters';
 import { format } from '@/utils/dateFormat';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
+import AnchoredPopover from '@/components/AnchoredPopover';
+
+const WALLET_TYPES = ['apple', 'google'];
+
+function isWalletVisibleOnDevice(wallet) {
+  const userAgent = navigator.userAgent.toLowerCase();
+  const isAndroid = userAgent.includes('android');
+  const isIOS = /iphone|ipad|ipod/.test(userAgent)
+    || (userAgent.includes('macintosh') && userAgent.includes('mobile'));
+
+  return wallet === 'apple' ? !isAndroid : !isIOS;
+}
+
+function getWalletBadge(wallet) {
+  const themeUrl = window.rondoConfig?.themeUrl || '';
+  if (wallet === 'apple') {
+    return {
+      alt: 'Voeg toe aan Apple Wallet',
+      src: `${themeUrl}/public/icons/NL_Add_to_Apple_Wallet_RGB_101921.svg`,
+    };
+  }
+
+  return {
+    alt: 'Voeg toe aan Google Wallet',
+    src: `${themeUrl}/public/icons/nl_add_to_google_wallet_add-wallet-badge.svg`,
+  };
+}
+
+function addRoleToWalletUrl(url, role) {
+  const walletUrl = new URL(url, window.location.origin);
+  walletUrl.searchParams.set('role', role);
+  return walletUrl.toString();
+}
 
 /**
  * Format an native field date_picker value (stored as YYYYMMDD) for display.
@@ -50,6 +83,105 @@ function Eyebrow({ children }) {
   return (
     <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
       {children}
+    </div>
+  );
+}
+
+function MembershipPassActions({ membershipPass, personId }) {
+  const [rolePicker, setRolePicker] = useState(null);
+  const firstRoleRef = useRef(null);
+  const closeRolePicker = useCallback(() => setRolePicker(null), []);
+  const wallets = WALLET_TYPES.filter((wallet) => (
+    isWalletVisibleOnDevice(wallet)
+    && membershipPass.wallets?.[wallet]?.available
+    && membershipPass.wallets[wallet].url
+  ));
+
+  const openWallet = (event, wallet) => {
+    if (!membershipPass.requires_role) return;
+    event.preventDefault();
+    setRolePicker({
+      anchor: event.currentTarget,
+      wallet,
+    });
+  };
+
+  return (
+    <div className="mt-4 rounded-lg border border-cyan-100 bg-cyan-50/60 p-4 dark:border-gray-700 dark:bg-gray-800/60">
+      <div className="flex items-start gap-3">
+        <IdCard className="mt-0.5 h-5 w-5 shrink-0 text-bright-cobalt dark:text-electric-cyan" aria-hidden="true" />
+        <div className="min-w-0">
+          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{membershipPass.label}</div>
+          <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400">
+            Voeg deze pas direct toe aan je wallet.
+          </p>
+        </div>
+      </div>
+
+      {wallets.length > 0 ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {wallets.map((wallet) => {
+            const badge = getWalletBadge(wallet);
+            const walletData = membershipPass.wallets[wallet];
+            const commonProps = {
+              className: 'inline-flex rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bright-cobalt',
+              onClick: (event) => openWallet(event, wallet),
+            };
+            const badgeImage = <img src={badge.src} alt={badge.alt} className="h-12 w-auto" />;
+
+            return membershipPass.requires_role ? (
+              <button
+                key={wallet}
+                type="button"
+                {...commonProps}
+                aria-haspopup="dialog"
+                aria-expanded={rolePicker?.wallet === wallet}
+                aria-controls={`membership-pass-role-picker-${personId}`}
+              >
+                {badgeImage}
+              </button>
+            ) : (
+              <a key={wallet} href={walletData.url} {...commonProps}>
+                {badgeImage}
+              </a>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="mt-3 text-xs text-gray-600 dark:text-gray-400">
+          Er is op dit apparaat geen geconfigureerde wallet beschikbaar.
+        </p>
+      )}
+
+      {rolePicker ? (
+        <AnchoredPopover
+          anchor={rolePicker.anchor}
+          id={`membership-pass-role-picker-${personId}`}
+          initialFocusRef={firstRoleRef}
+          labelledBy={`membership-pass-role-picker-title-${personId}`}
+          maxWidth={384}
+          onClose={closeRolePicker}
+          preferredHeight={260}
+        >
+          <div className="p-4">
+            <h3 id={`membership-pass-role-picker-title-${personId}`} className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              Welke rol wil je op de pas tonen?
+            </h3>
+            <div className="mt-3 grid gap-2">
+              {membershipPass.role_options.map((role, index) => (
+                <a
+                  key={role.key}
+                  ref={index === 0 ? firstRoleRef : undefined}
+                  href={addRoleToWalletUrl(membershipPass.wallets[rolePicker.wallet].url, role.key)}
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 transition-colors hover:border-bright-cobalt hover:bg-cyan-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bright-cobalt dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800"
+                >
+                  {role.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </AnchoredPopover>
+      ) : null}
     </div>
   );
 }
@@ -148,28 +280,7 @@ function PersonCard({ person, isSelf, isParent }) {
         <Detail icon={ShieldCheck} label="VOG afgegeven" value={formatFieldDate(fields['datum_vog'])} />
       </div>
 
-      {membershipPass ? (
-        <div className="mt-4 flex flex-col gap-3 rounded-lg border border-cyan-100 bg-cyan-50/60 p-4 dark:border-gray-700 dark:bg-gray-800/60 sm:flex-row sm:items-center">
-          <div className="flex min-w-0 flex-1 items-start gap-3">
-            <IdCard className="mt-0.5 h-5 w-5 shrink-0 text-bright-cobalt dark:text-electric-cyan" aria-hidden="true" />
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{membershipPass.label}</div>
-              <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400">
-                Open de pas om hem aan Apple Wallet of Google Wallet toe te voegen.
-              </p>
-            </div>
-          </div>
-          <a
-            href={membershipPass.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-secondary justify-center gap-2 whitespace-nowrap text-sm"
-          >
-            {membershipPass.label} openen
-            <ExternalLink className="h-4 w-4" aria-hidden="true" />
-          </a>
-        </div>
-      ) : null}
+      {membershipPass ? <MembershipPassActions membershipPass={membershipPass} personId={person.id} /> : null}
 
       {isSelf && sponsorOrganization?.can_edit_logo ? (
         <SponsorLogoEditor organization={sponsorOrganization} />

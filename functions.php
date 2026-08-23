@@ -165,7 +165,7 @@ use Rondo\Demo\DemoExport;
 use Rondo\Demo\DemoAnonymizer;
 use Rondo\Demo\DemoImport;
 use Rondo\Demo\DemoProtection;
-use Rondo\Passes\PublicMembershipPassPage;
+use Rondo\Passes\MembershipPassService;
 use Rondo\Volunteer\PublicTaakuitlegPage;
 
 define( 'RONDO_THEME_DIR', get_template_directory() );
@@ -383,8 +383,8 @@ function rondo_init() {
 	// Public payment page - register rewrite rules and template_redirect handler
 	new PublicPaymentPage();
 
-	// Public membership pass landing page - /lidpas/{token}
-	new PublicMembershipPassPage();
+	// Authenticated Apple and Google Wallet actions for personal membership passes.
+	new MembershipPassService();
 
 	// Public self-service account activation - /activeren
 	new \Rondo\Users\ActivationPage();

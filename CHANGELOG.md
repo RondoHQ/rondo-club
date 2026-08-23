@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.0.0] - 2026-08-23
+
+### Added
+
+- **Mijn gegevens** toont direct de beschikbare Apple Wallet- en Google Wallet-knoppen; leden met meerdere actuele rollen kiezen de rol voor hun pas in een popover.
+
+### Changed
+
+- Walletacties lopen via ingelogde, nonce-beveiligde persoonsacties die opnieuw controleren of het account toegang tot de gekozen persoon heeft.
+
+### Removed
+
+- De publieke `/lidpas/{token}`-pagina, bijbehorende publieke tokens en URL-meta, het landing-URL-endpoint en het lidpasicoon op de beheerdersweergave van een persoon zijn verwijderd.
+
 ## [34.29.0] - 2026-08-23
 
 ### Added

@@ -7,7 +7,7 @@ use Rondo\Config\FinanceConfig;
 use Rondo\Passes\MembershipPassApple;
 use Rondo\Passes\MembershipPassGoogle;
 use Rondo\Passes\MembershipPassQr;
-use Rondo\Passes\PublicMembershipPassPage;
+use Rondo\Passes\MembershipPassService;
 use Rondo\REST\MembershipPasses;
 use Tests\Support\RondoTestCase;
 
@@ -23,7 +23,7 @@ class MembershipPassSponsorTest extends RondoTestCase {
 		$this->assertSame( '2026-06-30', $status['lid_tot'] );
 	}
 
-	public function test_sponsor_is_eligible_for_a_membership_pass_url(): void {
+	public function test_sponsor_is_eligible_for_a_membership_pass_summary(): void {
 		$sponsor_id = $this->createPerson(
 			[ 'post_title' => 'Sponsor BV' ],
 			[
@@ -34,8 +34,8 @@ class MembershipPassSponsorTest extends RondoTestCase {
 			]
 		);
 
-		$this->assertSame( 'sponsor', PublicMembershipPassPage::get_person_member_tier( $sponsor_id ) );
-		$this->assertStringContainsString( '/lidpas/', PublicMembershipPassPage::ensure_person_pass_url( $sponsor_id ) );
+		$this->assertSame( 'sponsor', MembershipPassService::get_person_member_tier( $sponsor_id ) );
+		$this->assertSame( 'businessclub', MembershipPassService::get_person_pass_summary( $sponsor_id )['type'] );
 	}
 
 	public function test_member_sponsor_uses_sponsor_pass_precedence(): void {
@@ -50,7 +50,7 @@ class MembershipPassSponsorTest extends RondoTestCase {
 			]
 		);
 
-		$this->assertSame( 'sponsor', PublicMembershipPassPage::get_person_member_tier( $person_id ) );
+		$this->assertSame( 'sponsor', MembershipPassService::get_person_member_tier( $person_id ) );
 	}
 
 	public function test_sponsor_wallet_passes_use_a_white_background(): void {
@@ -163,9 +163,9 @@ class MembershipPassSponsorTest extends RondoTestCase {
 			]
 		);
 
-		$this->assertSame( '', PublicMembershipPassPage::get_sponsor_pass_variant( $sponsor_id ) );
-		$this->assertSame( '', PublicMembershipPassPage::get_person_member_tier( $sponsor_id ) );
-		$this->assertSame( '', PublicMembershipPassPage::ensure_person_pass_url( $sponsor_id ) );
+		$this->assertSame( '', MembershipPassService::get_sponsor_pass_variant( $sponsor_id ) );
+		$this->assertSame( '', MembershipPassService::get_person_member_tier( $sponsor_id ) );
+		$this->assertNull( MembershipPassService::get_person_pass_summary( $sponsor_id ) );
 	}
 
 	public function test_scanner_summary_identifies_sponsor_and_company(): void {

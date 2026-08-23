@@ -22,7 +22,6 @@ export const SOCIAL_DISPLAY_ORDER = {
   whatsapp: 1,
   sportlink: 2,
   freescout: 3,
-  membership_pass: 4,
 };
 
 /**

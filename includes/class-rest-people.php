@@ -10,7 +10,7 @@ namespace Rondo\REST;
 use Rondo\CustomFields\Manager;
 use Rondo\Core\SponsorStatus;
 use Rondo\Fields\Registry;
-use Rondo\Passes\PublicMembershipPassPage;
+use Rondo\Passes\MembershipPassService;
 use Rondo\People\ParentRelationshipService;
 use Rondo\Sponsors\Relations as SponsorRelations;
 
@@ -783,7 +783,7 @@ class People extends Base {
 						)
 					)
 				),
-				'membership_pass'      => PublicMembershipPassPage::get_person_pass_summary( (int) $post->ID ),
+				'membership_pass'      => MembershipPassService::get_person_pass_summary( (int) $post->ID ),
 				'sponsor_organization' => $this->personal_sponsor_organization( (int) $post->ID ),
 			];
 		}
@@ -964,9 +964,6 @@ class People extends Base {
 		if ( \Rondo\Core\UserRoles::can_view_finances() ) {
 			$data['exclude_from_contributie'] = (bool) get_post_meta( $post->ID, '_exclude_from_contributie', true );
 		}
-
-		// Expose stable public membership pass URL for eligible members.
-		$data['membership_pass_url'] = PublicMembershipPassPage::ensure_person_pass_url( $post->ID ) ?: null;
 
 		// Expose provisioning status for admin AccountCard (Plan 205-02).
 		// Primary lookup: _rondo_wp_user_id post meta (set by UserProvisioning::provision()).
@@ -1172,15 +1169,15 @@ class People extends Base {
 		$has_variant          = array_key_exists( 'sponsor_pass_variant', $fields );
 		$variant              = $has_variant ? sanitize_key( (string) $fields['sponsor_pass_variant'] ) : '';
 		$allowed              = [
-			PublicMembershipPassPage::SPONSOR_PASS_VARIANT_BUSINESSCLUB,
-			PublicMembershipPassPage::SPONSOR_PASS_VARIANT_AWC_SPONSOR,
+			MembershipPassService::SPONSOR_PASS_VARIANT_BUSINESSCLUB,
+			MembershipPassService::SPONSOR_PASS_VARIANT_AWC_SPONSOR,
 		];
 
 		if ( $has_variant && $variant !== '' && ! in_array( $variant, $allowed, true ) ) {
 			return $this->sponsor_pass_variant_error();
 		}
 
-		$current_variant   = $post_id ? PublicMembershipPassPage::get_sponsor_pass_variant( $post_id ) : '';
+		$current_variant   = $post_id ? MembershipPassService::get_sponsor_pass_variant( $post_id ) : '';
 		$effective_variant = $has_variant ? $variant : $current_variant;
 		if ( $requested_is_sponsor && ! in_array( $effective_variant, $allowed, true ) ) {
 			return $this->sponsor_pass_variant_error();

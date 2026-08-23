@@ -2004,7 +2004,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
               </div>
 
               <div className="rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 text-xs text-gray-600 dark:text-gray-400">
-                Tip: sla eerst op, open daarna een ledenpas-link (<code>/lidpas/{'{token}'}</code>) en test beide knoppen.
+                Tip: sla eerst op en test daarna beide walletknoppen via <strong>Mijn gegevens</strong>.
               </div>
             </div>
           </div>
