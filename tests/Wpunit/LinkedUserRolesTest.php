@@ -51,5 +51,6 @@ class LinkedUserRolesTest extends RondoTestCase {
 			],
 			$data['linked_user_role_labels']
 		);
+		$this->assertArrayNotHasKey( 'linked_user_switch_url', $data );
 	}
 }

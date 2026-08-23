@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [34.29.0] - 2026-08-23
+
+### Added
+
+- Beheerders kunnen vanuit de accountkaart op een persoonspagina via de plugin User Switching naar het gekoppelde gebruikersaccount wisselen.
+
 ## [34.28.11] - 2026-08-23
 
 ### Fixed

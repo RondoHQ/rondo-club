@@ -1009,6 +1009,17 @@ class People extends Base {
 				foreach ( $data['linked_user_roles'] as $role_slug ) {
 					$data['linked_user_role_labels'][ $role_slug ] = $available_roles[ $role_slug ][0];
 				}
+
+				if ( class_exists( '\\user_switching' ) ) {
+					$switch_url = \user_switching::maybe_switch_url( $user );
+					if ( $switch_url ) {
+						$data['linked_user_switch_url'] = add_query_arg(
+							'redirect_to',
+							rawurlencode( home_url( '/' ) ),
+							wp_specialchars_decode( $switch_url )
+						);
+					}
+				}
 			}
 		}
 
