@@ -166,6 +166,59 @@ class HouseholdMembershipPassTest extends RondoTestCase {
 		$this->assertCount( 2, array_unique( array_column( $pass['role_options'], 'key' ) ) );
 	}
 
+	public function test_businessclub_member_with_current_work_can_choose_businessclub_or_awc_pass(): void {
+		$person_id = $this->createPerson(
+			[ 'post_title' => 'Businessclublid en vrijwilliger' ],
+			[ 'type-lid' => 'Bondslid' ]
+		);
+		$team_id   = self::factory()->post->create(
+			[
+				'post_type'   => 'team',
+				'post_status' => 'publish',
+				'post_title'  => 'AWC 1',
+			]
+		);
+		Fields::update_for_post(
+			$person_id,
+			'work_history',
+			[
+				[
+					'team'       => $team_id,
+					'job_title'  => 'Trainer',
+					'is_current' => true,
+				],
+			]
+		);
+		$this->createSponsor( 'Businessclubbedrijf', 'businessclub', $person_id );
+
+		$pass = MembershipPassService::get_person_pass_summary( $person_id );
+
+		$this->assertSame( 'businessclub', $pass['type'] );
+		$this->assertSame( 'Lidpassen', $pass['label'] );
+		$this->assertTrue( $pass['requires_role'] );
+		$this->assertSame( [ 'Businessclubpas', 'AWC-pas — AWC 1 — Trainer' ], array_column( $pass['role_options'], 'label' ) );
+		$this->assertSame( MembershipPassService::SPONSOR_PASS_SELECTION, $pass['role_options'][0]['key'] );
+
+		$resolve_selection = ( new \ReflectionClass( MembershipPassService::class ) )->getMethod( 'resolve_selected_pass' );
+		$resolve_selection->setAccessible( true );
+		$work_options = ( new \Rondo\Passes\MembershipPassApple() )->get_work_options_for_person( $person_id );
+
+		$this->assertSame(
+			[
+				'member_tier' => 'sponsor',
+				'work'        => '',
+			],
+			$resolve_selection->invoke( null, $person_id, MembershipPassService::SPONSOR_PASS_SELECTION, $work_options )
+		);
+		$this->assertSame(
+			[
+				'member_tier' => 'bondslid',
+				'work'        => $work_options[0]['key'],
+			],
+			$resolve_selection->invoke( null, $person_id, $work_options[0]['key'], $work_options )
+		);
+	}
+
 	public function test_wallet_action_token_is_bound_to_the_current_user_session(): void {
 		$person_id = $this->createPerson(
 			[ 'post_title' => 'Lid met wallettoken' ],

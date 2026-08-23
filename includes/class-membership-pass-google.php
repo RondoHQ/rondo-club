@@ -50,7 +50,8 @@ class MembershipPassGoogle {
 			return new \WP_Error( 'membership_pass_person_not_found', 'Persoon niet gevonden.' );
 		}
 
-		$member_tier = MembershipPassService::get_person_member_tier( $person_id );
+		$requested_tier = sanitize_key( (string) ( $options['member_tier'] ?? '' ) );
+		$member_tier    = MembershipPassService::resolve_person_member_tier( $person_id, $requested_tier );
 		if ( $member_tier === '' ) {
 			return new \WP_Error( 'membership_pass_ineligible_member', 'Dit lidtype komt niet in aanmerking voor een ledenpas.' );
 		}
