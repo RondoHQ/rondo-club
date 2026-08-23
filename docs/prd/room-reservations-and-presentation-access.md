@@ -14,8 +14,10 @@
 ## 1. Executive summary
 
 Rondo gets a room-reservation module connected to the existing browser-presentation pilot. Logged-in
-members can see room availability, reserve a room, manage their own future reservations and present
-to the Club TV screen assigned to that room. The presentation entitlement begins shortly before the
+members can see room availability, but may reserve only on behalf of a commissie or year group in
+which they currently hold a volunteer role. Year-group eligibility is derived from the team linked
+to that volunteer role. Eligible members can manage their own future reservations and present to the
+Club TV screen assigned to that room. The presentation entitlement begins shortly before the
 reservation and ends when the booking ends. If nobody has the room afterwards, the current holder
 can extend the reservation in small increments.
 
@@ -38,10 +40,22 @@ The following decisions come from product review and are fixed for the first imp
 5. Accommodation managers need a complete overview showing who reserved which room.
 6. Accommodation managers may view, add, edit and cancel reservations.
 7. Management changes are logged and affected users are notified.
+8. Every member reservation is made for exactly one commissie or year group.
+9. The member creating the reservation must have a current volunteer role in that commissie or in
+   a team belonging to that year group; a player role does not qualify.
+10. A year group is derived from the current player roster of the team attached to the volunteer
+    role, rather than introduced as a separately managed entity.
+
+### Open product decision
+
+- Decide whether an accommodation manager may bypass the creator-membership rule for operational
+  support, or may only create a booking on behalf of an otherwise eligible holder. Management room
+  blocks remain possible regardless of this decision.
 
 ## 3. Goals
 
-- Give members one clear place to find and reserve available club rooms.
+- Give eligible volunteers one clear place to find and reserve available club rooms for their
+  commissie or year group.
 - Prevent overlapping reservations, including concurrent submissions.
 - Give accommodation managers an operational day and week overview.
 - Connect a reservation to the correct physical Club TV screen.
@@ -68,10 +82,12 @@ An individual reservation can expose an iCalendar download without introducing c
 
 ### Member
 
-Every approved, logged-in Rondo user may:
+Every approved, logged-in Rondo user may see room availability. A user may create a reservation only
+when their linked person record contains a qualifying current volunteer role. An eligible user may:
 
 - see which rooms are available or occupied;
-- create a reservation for themselves within the configured rules;
+- create a reservation for one of the commissies or year groups returned by their own eligibility
+  check;
 - see the full details of their own reservations;
 - edit or cancel their own future reservations;
 - name other approved Rondo users as authorized presenters;
@@ -80,6 +96,10 @@ Every approved, logged-in Rondo user may:
 
 Members may not see who holds somebody else's reservation, its private notes or contact details.
 They see only an occupied time block.
+
+A member with no qualifying current volunteer role sees the availability overview but no reservation
+action. Rondo explains that room reservations are limited to active volunteers booking for their own
+commissie or year group.
 
 ### Accommodation manager
 
@@ -173,6 +193,11 @@ Core fields:
 | `private_notes` | Optional, visible only to holder and accommodation managers |
 | `holder_user_id` | Rondo account that owns the reservation |
 | `holder_person_id` | Linked person record for identity and contact display |
+| `booking_context_type` | Required: `commissie` or `age_group` |
+| `commissie_id` | Required exact `commissie` relation when the context type is `commissie` |
+| `age_group_key` | Required normalized year-group key such as `O12` when the context type is `age_group` |
+| `context_label_snapshot` | Human-readable group name retained for historical display |
+| `eligibility_team_id` | Team that established year-group eligibility at creation time, when applicable |
 | `authorized_presenter_user_ids` | Additional approved Rondo accounts allowed to present |
 | `status` | `confirmed`, `cancelled` or `completed` |
 | `cancelled_at` | Cancellation timestamp |
@@ -201,7 +226,36 @@ Passwords, presentation tokens, device secrets and full member payloads are neve
 cancelled reservation is retained with status `cancelled`; normal UI actions never permanently
 delete it.
 
-## 7. Availability and conflict rules
+## 7. Booking-context eligibility
+
+The server derives the groups for which the current user may reserve. A client submits the selected
+group, but the server never trusts that choice without repeating the eligibility check.
+
+### Commissie eligibility
+
+A commissie qualifies when the user's linked person has a current `work_history` position that:
+
+- is classified as a volunteer position by the existing `VolunteerStatus` rules;
+- links to that exact `commissie` post;
+- is current on the day the reservation is created.
+
+### Year-group eligibility
+
+A year group qualifies when the user's linked person has a current volunteer position linked to a
+team whose current player roster belongs to that year group. Rondo determines this from the players'
+canonical `leeftijdsgroep` values and does not parse team names. Sportlink labels with the same age
+number are normalized to one year-group key, for example `Onder 12` and `Onder 12 Meiden` become
+`O12`.
+
+Player positions never qualify. A trainer, leader, coach or other role qualifies only when the
+existing volunteer-role classification marks it as a volunteer position.
+
+The create form receives only the user's eligible booking contexts. Creation performs the same
+check again inside the server-side write flow. Changing a booking's commissie or year group repeats
+the check. A later role change does not automatically cancel an already confirmed reservation, but
+the former volunteer cannot create another reservation for that group.
+
+## 8. Availability and conflict rules
 
 ### Canonical interval rule
 
@@ -232,7 +286,7 @@ availability window and must never overwrite the first booking.
 Accommodation managers can block a room for maintenance or a private event by creating a booking
 without a member holder and marking it as a management block. Ordinary users see it as occupied.
 
-## 8. Member experience
+## 9. Member experience
 
 ### Find a room
 
@@ -248,13 +302,15 @@ Occupied blocks do not reveal another holder's identity or purpose.
 
 ### Create a reservation
 
-1. The member selects a room, date, start and end.
-2. Rondo validates availability immediately.
-3. The member enters a short purpose and optional private notes.
-4. The member may add approved Rondo users as authorized presenters.
-5. A final summary shows room, time, presentation availability and room instructions.
-6. On confirmation, Rondo performs a fresh locked conflict check and creates the booking.
-7. The member sees the confirmed reservation and receives a notification with an iCalendar link.
+1. The member selects the eligible commissie or year group for which they are reserving.
+2. The member selects a room, date, start and end.
+3. Rondo validates availability immediately.
+4. The member enters a short purpose and optional private notes.
+5. The member may add approved Rondo users as authorized presenters.
+6. A final summary shows group, room, time, presentation availability and room instructions.
+7. On confirmation, Rondo repeats the eligibility check, performs a fresh locked conflict check and
+   creates the booking.
+8. The member sees the confirmed reservation and receives a notification with an iCalendar link.
 
 ### My reservations
 
@@ -272,7 +328,7 @@ The member sees upcoming and past reservations. Upcoming items expose:
 Changing room or time repeats the locked conflict check. Cancelling asks for confirmation and keeps
 the record in history. A member cannot edit a completed or cancelled reservation.
 
-## 9. Accommodation-management overview
+## 10. Accommodation-management overview
 
 Add **Accommodatie** to the main navigation for users with `accommodatiebeheer`.
 
@@ -281,6 +337,7 @@ Add **Accommodatie** to the main navigation for users with `accommodatiebeheer`.
 The default view shows one horizontal timeline per room with:
 
 - reservation holder;
+- commissie or year group;
 - purpose;
 - start and end time;
 - status;
@@ -310,7 +367,7 @@ Managers can filter by date, room, holder, status and presentation state. From t
 Drag-and-drop rescheduling is excluded from v1 because an accidental move has operational impact.
 Editing uses an explicit form and confirmation summary.
 
-## 10. Reservation-controlled presentation
+## 11. Reservation-controlled presentation
 
 ### Room and display relationship
 
@@ -376,7 +433,7 @@ If Rondo is unreachable, Club TV keeps its existing offline behavior. A new pres
 authorized while entitlement cannot be verified. An already running presentation ends locally at
 the last verified entitlement boundary. The player then returns to its cached playlist.
 
-## 11. Notifications
+## 12. Notifications
 
 The holder receives a notification when:
 
@@ -393,7 +450,7 @@ sent.
 Adding other presenters notifies those presenters with room, time and a link back to the booking.
 Private notes and manager-only audit details are not included in email.
 
-## 12. Planned REST surface
+## 13. Planned REST surface
 
 All routes live under `/rondo/v1/rooms` and use canonical field names.
 
@@ -401,6 +458,7 @@ All routes live under `/rondo/v1/rooms` and use canonical field names.
 |---|---|---|
 | `GET /rooms` | Logged-in user | List rooms and safe member-facing configuration |
 | `GET /rooms/availability` | Logged-in user | Return occupied/free intervals without private holder data |
+| `GET /rooms/booking-contexts` | Logged-in user | List only the current user's eligible commissies and year groups |
 | `GET /rooms/bookings/mine` | Logged-in user | List the current user's full reservations |
 | `POST /rooms/bookings` | Logged-in user | Create an own reservation |
 | `GET /rooms/bookings/{id}` | Holder, presenter or manager | Read the allowed booking representation |
@@ -415,7 +473,7 @@ All routes live under `/rondo/v1/rooms` and use canonical field names.
 The presentation join route gains booking-entitlement validation. Device-token routes remain under
 the existing narrowcasting namespace.
 
-## 13. Privacy and security
+## 14. Privacy and security
 
 - Ordinary availability responses contain no holder name, contact details, purpose or notes.
 - A holder sees their own booking; an authorized presenter sees only the details needed to present.
@@ -423,12 +481,14 @@ the existing narrowcasting namespace.
   person fields.
 - All writes use nonces, capability checks and strict field validation.
 - Time, room and holder IDs are revalidated server-side; client-provided entitlement is ignored.
+- Booking-context eligibility is derived from the linked person and current `work_history`; a client-
+  supplied commissie, year group or team never grants permission by itself.
 - Presentation tokens are random, hashed at rest and bounded by the booking window.
 - Reservation and signaling endpoints are rate-limited per user or device as appropriate.
 - Cancelled bookings and activity records are not exposed through public WordPress REST routes.
 - Permanent deletion is restricted to administrators and is not offered in the normal UI.
 
-## 14. Edge cases
+## 15. Edge cases
 
 | Situation | Required behavior |
 |---|---|
@@ -441,14 +501,23 @@ the existing narrowcasting namespace.
 | Next booking is cancelled | Current holder may request an extension after availability refresh |
 | Manager cancels an active booking | Stop entitlement and stream, then resume Club TV |
 | Holder's account is disabled | Booking remains visible to managers; presentation entitlement is denied |
+| User has only a player position in the selected team | Do not offer or accept that year group |
+| Team has players from more than one normalized year group | Return every derived year group and retain the exact selected key |
+| Volunteer role ends after a future booking was confirmed | Keep the booking, but deny new bookings or context changes for that group |
+| Team has no current players with a usable `leeftijdsgroep` | Do not derive a year group; surface the missing roster classification to managers |
 | Daylight-saving transition | Use the configured site/room timezone and explicit RFC 3339 API values |
 | Network drops during presentation | Receiver follows the current WebRTC recovery behavior but still enforces the verified end time |
 
-## 15. Acceptance criteria
+## 16. Acceptance criteria
 
 ### Reservations
 
-- A logged-in member can find a free room and create a valid reservation.
+- A logged-in member can see availability but can reserve only for an eligible commissie or year
+  group.
+- A current volunteer in a commissie can reserve for that exact commissie.
+- A current volunteer attached to an O12 team can reserve for the normalized O12 year group.
+- A player without another qualifying volunteer role cannot create a reservation.
+- A submitted group that was not returned by the server-side eligibility resolver is rejected.
 - Another user cannot create an overlapping reservation, including under concurrent submission.
 - A member sees only availability for other people's bookings and full details for their own.
 - A member can edit or cancel their own future booking.
@@ -471,7 +540,7 @@ the existing narrowcasting namespace.
 - Extension is offered only when the room remains free and succeeds only after a new locked check.
 - A following reservation cannot be displaced by an extension or lingering connection.
 
-## 16. Delivery milestones
+## 17. Delivery milestones
 
 ### Milestone 1: Rooms, capability and manager overview
 
@@ -480,11 +549,13 @@ the existing narrowcasting namespace.
 - room administration;
 - manager day/week overview;
 - manager add, edit and cancel;
-- conflict locking, audit history and notifications.
+- conflict locking, audit history and notifications;
+- booking-context fields and manager-visible commissie/year-group labels.
 
 ### Milestone 2: Member self-service
 
 - room availability;
+- server-derived eligible commissie and year-group choices;
 - create, edit and cancel own bookings;
 - My reservations;
 - authorized presenters;
@@ -513,7 +584,7 @@ the existing narrowcasting namespace.
 - recurring bookings;
 - configurable approval workflows.
 
-## 17. Recommended implementation order
+## 18. Recommended implementation order
 
 Build the manager workflow before member self-service. It establishes room configuration, conflict
 rules and operational corrections before ordinary users create data. Connect presentation access
