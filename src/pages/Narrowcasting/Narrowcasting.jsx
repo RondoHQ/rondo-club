@@ -77,6 +77,7 @@ function DisplayEditForm({ display, isPending, onCancel, onSave }) {
     sleep_time: display.sleep_time,
     timezone: display.display_timezone || 'Europe/Amsterdam',
     update_channel: display.update_channel || 'stable',
+    presentation_enabled: Boolean(display.presentation_enabled),
   }));
   const updateValue = (name, value) => setValues((current) => ({ ...current, [name]: value }));
 
@@ -116,6 +117,18 @@ function DisplayEditForm({ display, isPending, onCancel, onSave }) {
             <option value="beta">Beta — nieuwe versies eerder testen</option>
             <option value="off">Uit</option>
           </select>
+        </label>
+        <label className="flex items-start gap-3 text-sm sm:col-span-2">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={values.presentation_enabled}
+            onChange={(event) => updateValue('presentation_enabled', event.target.checked)}
+          />
+          <span>
+            <span className="block font-medium text-gray-700 dark:text-gray-300">Browserpresentaties testen</span>
+            <span className="block text-gray-500 dark:text-gray-400">Toon een tijdelijke code waarmee ingelogde gebruikers hun scherm kunnen delen.</span>
+          </span>
         </label>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
@@ -294,10 +307,16 @@ export default function Narrowcasting() {
             Koppel en beheer de Raspberry Pi-players achter de schermen in het clubhuis.
           </p>
         </div>
-        <a href="/display?preview=1" target="_blank" rel="noreferrer" className="btn-primary">
-          <ExternalLink className="mr-2 h-4 w-4" />
-          Voorbeeld openen
-        </a>
+        <div className="flex flex-wrap gap-2">
+          <a href="/presenteren" className="btn-tertiary">
+            <MonitorPlay className="mr-2 h-4 w-4" />
+            Scherm delen
+          </a>
+          <a href="/display?preview=1" target="_blank" rel="noreferrer" className="btn-primary">
+            <ExternalLink className="mr-2 h-4 w-4" />
+            Voorbeeld openen
+          </a>
+        </div>
       </div>
 
       {notice && (

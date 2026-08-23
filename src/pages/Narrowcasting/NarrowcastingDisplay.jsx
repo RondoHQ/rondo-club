@@ -3,6 +3,7 @@ import NarrowcastingScene from './NarrowcastingScenes';
 import { buildPlaylistScenes } from './playlistScenes';
 import { rotateSponsors } from './matchdayScenes';
 import { cacheBustedPath, PLAYLIST_REFRESH_INTERVAL_MS, SUPPORTING_DATA_REFRESH_INTERVAL_MS } from './displayRefresh';
+import PresentationReceiver from './PresentationReceiver';
 
 const TOKEN_KEY = 'rondoPlayerToken';
 const CONFIG_KEY = 'rondoPlayerConfig';
@@ -306,6 +307,13 @@ export default function NarrowcastingDisplay() {
         </footer>
       </div>
       <div className="absolute inset-x-0 bottom-0 h-[0.55vw] bg-[var(--club-accent)]" />
+      {!isPreview && (
+        <PresentationReceiver
+          enabled={Boolean(config?.presentation_enabled)}
+          deviceToken={token}
+          displayName={config?.name || 'Club TV'}
+        />
+      )}
     </main>
   );
 }

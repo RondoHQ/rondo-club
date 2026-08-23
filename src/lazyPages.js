@@ -51,3 +51,4 @@ export const TaakuitlegList = lazy(() => import('@/pages/Taakuitleg/TaakuitlegLi
 export const TaakuitlegForm = lazy(() => import('@/pages/Taakuitleg/TaakuitlegForm'));
 export const Narrowcasting = lazy(() => import('@/pages/Narrowcasting/Narrowcasting'));
 export const NarrowcastingDisplay = lazy(() => import('@/pages/Narrowcasting/NarrowcastingDisplay'));
+export const PresentationSender = lazy(() => import('@/pages/Narrowcasting/PresentationSender'));

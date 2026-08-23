@@ -309,9 +309,136 @@ class NarrowcastingTest extends RondoTestCase {
 		$this->assertSame( 400, $invalid_command->get_status() );
 	}
 
+	public function test_browser_presentation_pairing_and_signaling_flow(): void {
+		$device_token = 'presentation-device-token';
+		$display_id   = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_display',
+				'post_status' => 'publish',
+				'post_title'  => 'Scherm bestuurskamer',
+			]
+		);
+		Fields::update_many_for_post(
+			$display_id,
+			[
+				'device_id'            => 'rondo-pi-presentation-001',
+				'device_secret_hash'   => hash_hmac( 'sha256', $device_token, wp_salt( 'auth' ) ),
+				'pairing_status'       => 'paired',
+				'presentation_enabled' => false,
+			]
+		);
+
+		$disabled = $this->dispatch(
+			'POST',
+			'/rondo/v1/narrowcasting/devices/me/presentation/session',
+			[],
+			[ 'X-Rondo-Device-Token' => $device_token ]
+		);
+		$this->assertSame( 403, $disabled->get_status() );
+
+		Fields::update_for_post( $display_id, 'presentation_enabled', true );
+		$created = $this->dispatch(
+			'POST',
+			'/rondo/v1/narrowcasting/devices/me/presentation/session',
+			[],
+			[ 'X-Rondo-Device-Token' => $device_token ]
+		);
+		$this->assertSame( 200, $created->get_status() );
+		$this->assertMatchesRegularExpression( '/^\d{6}$/', $created->get_data()['code'] );
+		$this->assertTrue( wp_is_uuid( $created->get_data()['session_id'] ) );
+		$this->assertStringContainsString( 'no-store', $created->get_headers()['Cache-Control'] );
+
+		$unauthorized_join = $this->dispatch(
+			'POST',
+			'/rondo/v1/narrowcasting/presentation/join',
+			[ 'code' => $created->get_data()['code'] ]
+		);
+		$this->assertSame( 401, $unauthorized_join->get_status() );
+
+		wp_set_current_user( $this->createRondoUser() );
+		$joined = $this->dispatch(
+			'POST',
+			'/rondo/v1/narrowcasting/presentation/join',
+			[ 'code' => $created->get_data()['code'] ]
+		);
+		$this->assertSame( 200, $joined->get_status() );
+		$this->assertSame( 'Scherm bestuurskamer', $joined->get_data()['display_name'] );
+		$this->assertNotSame( $created->get_data()['token'], $joined->get_data()['token'] );
+
+		$session_route = "/rondo/v1/narrowcasting/presentation/sessions/{$created->get_data()['session_id']}/signal";
+		$offer         = [
+			'description' => [
+				'type' => 'offer',
+				'sdp'  => "v=0\r\n",
+			],
+			'candidates'  => [],
+			'hangup'      => false,
+		];
+		$stored_offer  = $this->dispatch_json(
+			'POST',
+			$session_route,
+			$offer,
+			[ 'X-Rondo-Presentation-Token' => $joined->get_data()['token'] ]
+		);
+		$this->assertSame( 200, $stored_offer->get_status() );
+
+		$receiver_signal = $this->dispatch(
+			'GET',
+			$session_route,
+			[],
+			[ 'X-Rondo-Presentation-Token' => $created->get_data()['token'] ]
+		);
+		$this->assertSame( 'offer', $receiver_signal->get_data()['signal']['description']['type'] );
+
+		$answer = [
+			'description' => [
+				'type' => 'answer',
+				'sdp'  => "v=0\r\n",
+			],
+			'candidates'  => [],
+			'hangup'      => false,
+		];
+		$this->assertSame(
+			200,
+			$this->dispatch_json(
+				'POST',
+				$session_route,
+				$answer,
+				[ 'X-Rondo-Presentation-Token' => $created->get_data()['token'] ]
+			)->get_status()
+		);
+
+		$sender_signal = $this->dispatch(
+			'GET',
+			$session_route,
+			[],
+			[ 'X-Rondo-Presentation-Token' => $joined->get_data()['token'] ]
+		);
+		$this->assertSame( 'answer', $sender_signal->get_data()['signal']['description']['type'] );
+
+		$wrong_token = $this->dispatch(
+			'GET',
+			$session_route,
+			[],
+			[ 'X-Rondo-Presentation-Token' => 'wrong-token' ]
+		);
+		$this->assertSame( 401, $wrong_token->get_status() );
+	}
+
 	private function dispatch( string $method, string $route, array $params = [], array $headers = [] ): \WP_REST_Response {
 		$request = new WP_REST_Request( $method, $route );
 		$request->set_body_params( $params );
+		foreach ( $headers as $name => $value ) {
+			$request->set_header( $name, $value );
+		}
+
+		return $this->server->dispatch( $request );
+	}
+
+	private function dispatch_json( string $method, string $route, array $params, array $headers = [] ): \WP_REST_Response {
+		$request = new WP_REST_Request( $method, $route );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( $params ) );
 		foreach ( $headers as $name => $value ) {
 			$request->set_header( $name, $value );
 		}

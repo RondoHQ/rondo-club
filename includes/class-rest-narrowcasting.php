@@ -32,6 +32,9 @@ class Narrowcasting extends Base {
 	private const ONLINE_TTL                   = 180;
 	private const DURABLE_HEARTBEAT_INTERVAL   = 300;
 	private const COMMAND_TTL                  = 600;
+	private const PRESENTATION_CODE_TTL        = 600;
+	private const PRESENTATION_SESSION_TTL     = 7200;
+	private const PRESENTATION_JOIN_RATE       = 10;
 	private const REGISTRATION_RATE_PER_MINUTE = 10;
 	private const OPTION_STABLE_VERSION        = 'rondo_player_stable_version';
 	private const OPTION_BETA_VERSION          = 'rondo_player_beta_version';
@@ -129,6 +132,8 @@ class Narrowcasting extends Base {
 				'permission_callback' => '__return_true',
 			]
 		);
+
+		$this->register_presentation_routes();
 
 		register_rest_route(
 			'rondo/v1',
@@ -239,6 +244,51 @@ class Narrowcasting extends Base {
 				'args'                => [
 					'id' => [
 						'sanitize_callback' => 'absint',
+					],
+				],
+			]
+		);
+	}
+
+	/** Register the temporary browser-presentation signaling routes. */
+	private function register_presentation_routes(): void {
+		register_rest_route(
+			'rondo/v1',
+			'/narrowcasting/devices/me/presentation/session',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'create_presentation_session' ],
+				'permission_callback' => '__return_true',
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/narrowcasting/presentation/join',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'join_presentation_session' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/narrowcasting/presentation/sessions/(?P<session_id>[a-f0-9-]{36})/signal',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_presentation_signal' ],
+					'permission_callback' => '__return_true',
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_presentation_signal' ],
+					'permission_callback' => '__return_true',
+				],
+				'args' => [
+					'session_id' => [
+						'sanitize_callback' => 'sanitize_text_field',
 					],
 				],
 			]
@@ -582,6 +632,132 @@ class Narrowcasting extends Base {
 		return $this->no_store_response( $this->content->resolve_manifest( $display_id ) );
 	}
 
+	/** Create one short-lived presentation code for a paired display. */
+	public function create_presentation_session( $request ) {
+		$display_id = $this->authenticate_device( $request );
+		if ( is_wp_error( $display_id ) ) {
+			return $display_id;
+		}
+		if ( ! Fields::get_for_post( $display_id, 'presentation_enabled' ) ) {
+			return new \WP_Error( 'rondo_presentation_disabled', __( 'Browserpresentaties zijn niet ingeschakeld voor dit scherm.', 'rondo' ), [ 'status' => 403 ] );
+		}
+
+		$previous_session_id = get_transient( $this->presentation_display_key( $display_id ) );
+		if ( is_string( $previous_session_id ) && $previous_session_id !== '' ) {
+			$this->delete_presentation_session( $previous_session_id );
+		}
+
+		$code = $this->generate_presentation_code();
+		if ( is_wp_error( $code ) ) {
+			return $code;
+		}
+
+		$session_id     = wp_generate_uuid4();
+		$receiver_token = $this->generate_device_token();
+		$created_at     = time();
+		$session        = [
+			'id'                  => $session_id,
+			'display_id'          => $display_id,
+			'code'                => $code,
+			'code_expires_at'     => $created_at + self::PRESENTATION_CODE_TTL,
+			'expires_at'          => $created_at + self::PRESENTATION_SESSION_TTL,
+			'receiver_token_hash' => $this->hash_device_token( $receiver_token ),
+			'sender_token_hash'   => '',
+			'user_id'             => 0,
+		];
+
+		set_transient( $this->presentation_session_key( $session_id ), $session, self::PRESENTATION_SESSION_TTL );
+		set_transient( $this->presentation_code_key( $code ), $session_id, self::PRESENTATION_CODE_TTL );
+		set_transient( $this->presentation_display_key( $display_id ), $session_id, self::PRESENTATION_SESSION_TTL );
+
+		return $this->no_store_response(
+			[
+				'session_id'            => $session_id,
+				'code'                  => $code,
+				'token'                 => $receiver_token,
+				'code_expires_at'       => gmdate( DATE_RFC3339, $session['code_expires_at'] ),
+				'poll_interval_seconds' => 1,
+			]
+		);
+	}
+
+	/** Exchange a visible presentation code for an authenticated sender token. */
+	public function join_presentation_session( $request ) {
+		$rate_error = $this->consume_presentation_join_rate_limit();
+		if ( is_wp_error( $rate_error ) ) {
+			return $rate_error;
+		}
+
+		$code = $this->normalize_presentation_code( $request->get_param( 'code' ) );
+		if ( $code === '' ) {
+			return new \WP_Error( 'rondo_presentation_code_invalid', __( 'Voer de zescijferige code van het scherm in.', 'rondo' ), [ 'status' => 400 ] );
+		}
+
+		$session_id = get_transient( $this->presentation_code_key( $code ) );
+		$session    = is_string( $session_id ) ? get_transient( $this->presentation_session_key( $session_id ) ) : false;
+		if ( ! is_array( $session ) || (int) $session['code_expires_at'] < time() ) {
+			return new \WP_Error( 'rondo_presentation_code_expired', __( 'Deze schermcode is ongeldig of verlopen.', 'rondo' ), [ 'status' => 404 ] );
+		}
+		if ( ! empty( $session['sender_token_hash'] ) ) {
+			return new \WP_Error( 'rondo_presentation_in_use', __( 'Dit scherm wordt al door iemand gebruikt.', 'rondo' ), [ 'status' => 409 ] );
+		}
+		if ( ! $this->is_display( (int) $session['display_id'] ) || ! Fields::get_for_post( (int) $session['display_id'], 'presentation_enabled' ) ) {
+			return new \WP_Error( 'rondo_presentation_unavailable', __( 'Dit scherm is niet beschikbaar voor browserpresentaties.', 'rondo' ), [ 'status' => 409 ] );
+		}
+
+		$sender_token                 = $this->generate_device_token();
+		$session['sender_token_hash'] = $this->hash_device_token( $sender_token );
+		$session['user_id']           = get_current_user_id();
+		$session['expires_at']        = time() + self::PRESENTATION_SESSION_TTL;
+		set_transient( $this->presentation_session_key( $session['id'] ), $session, self::PRESENTATION_SESSION_TTL );
+		delete_transient( $this->presentation_code_key( $code ) );
+
+		return $this->no_store_response(
+			[
+				'session_id'            => $session['id'],
+				'token'                 => $sender_token,
+				'display_name'          => get_the_title( (int) $session['display_id'] ),
+				'poll_interval_seconds' => 1,
+			]
+		);
+	}
+
+	/** Return the other participant's latest complete signaling snapshot. */
+	public function get_presentation_signal( $request ) {
+		$identity = $this->authenticate_presentation_session( $request );
+		if ( is_wp_error( $identity ) ) {
+			return $identity;
+		}
+
+		$other_role = $identity['role'] === 'sender' ? 'receiver' : 'sender';
+		$signal     = get_transient( $this->presentation_signal_key( $identity['session']['id'], $other_role ) );
+		$this->refresh_presentation_session( $identity['session'] );
+
+		return $this->no_store_response( [ 'signal' => is_array( $signal ) ? $signal : null ] );
+	}
+
+	/** Store one participant's complete signaling snapshot. */
+	public function update_presentation_signal( $request ) {
+		$identity = $this->authenticate_presentation_session( $request );
+		if ( is_wp_error( $identity ) ) {
+			return $identity;
+		}
+
+		$signal = $this->sanitize_presentation_signal( $request->get_json_params(), $identity['role'] );
+		if ( is_wp_error( $signal ) ) {
+			return $signal;
+		}
+
+		set_transient(
+			$this->presentation_signal_key( $identity['session']['id'], $identity['role'] ),
+			$signal,
+			self::PRESENTATION_SESSION_TTL
+		);
+		$this->refresh_presentation_session( $identity['session'] );
+
+		return $this->no_store_response( [ 'stored' => true ] );
+	}
+
 	/** List content in the current user's allowed scope. */
 	public function get_content_items() {
 		return rest_ensure_response( $this->content->list_items( $this->is_sponsor_only_user() ) );
@@ -771,11 +947,14 @@ class Narrowcasting extends Base {
 			return new \WP_Error( 'rondo_display_title_required', __( 'Geef het scherm een naam.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
-		$current    = $this->wire_fields( $display_id, [ 'wake_time', 'sleep_time', 'display_timezone', 'update_channel' ] );
-		$wake_time  = $this->sanitize_time( $request->get_param( 'wake_time' ), (string) $current['wake_time'] );
-		$sleep_time = $this->sanitize_time( $request->get_param( 'sleep_time' ), (string) $current['sleep_time'] );
-		$timezone   = $this->sanitize_timezone( $request->get_param( 'timezone' ) ?: $current['display_timezone'] );
-		$channel    = $this->sanitize_update_channel( $request->get_param( 'update_channel' ) ?: $current['update_channel'] );
+		$current              = $this->wire_fields( $display_id, [ 'wake_time', 'sleep_time', 'display_timezone', 'update_channel', 'presentation_enabled' ] );
+		$wake_time            = $this->sanitize_time( $request->get_param( 'wake_time' ), (string) $current['wake_time'] );
+		$sleep_time           = $this->sanitize_time( $request->get_param( 'sleep_time' ), (string) $current['sleep_time'] );
+		$timezone             = $this->sanitize_timezone( $request->get_param( 'timezone' ) ?: $current['display_timezone'] );
+		$channel              = $this->sanitize_update_channel( $request->get_param( 'update_channel' ) ?: $current['update_channel'] );
+		$presentation_enabled = $request->has_param( 'presentation_enabled' )
+			? rest_sanitize_boolean( $request->get_param( 'presentation_enabled' ) )
+			: (bool) $current['presentation_enabled'];
 		if ( is_wp_error( $wake_time ) ) {
 			return $wake_time;
 		}
@@ -803,11 +982,12 @@ class Narrowcasting extends Base {
 		$stored = Fields::update_many_for_post(
 			$display_id,
 			[
-				'location'         => sanitize_text_field( (string) $request->get_param( 'location' ) ),
-				'display_timezone' => $timezone,
-				'wake_time'        => $wake_time,
-				'sleep_time'       => $sleep_time,
-				'update_channel'   => $channel,
+				'location'             => sanitize_text_field( (string) $request->get_param( 'location' ) ),
+				'display_timezone'     => $timezone,
+				'wake_time'            => $wake_time,
+				'sleep_time'           => $sleep_time,
+				'update_channel'       => $channel,
+				'presentation_enabled' => $presentation_enabled,
 			]
 		);
 		return is_wp_error( $stored ) ? $stored : rest_ensure_response( $this->format_display( $display_id ) );
@@ -818,15 +998,16 @@ class Narrowcasting extends Base {
 		return $this->no_store_response(
 			$this->configuration_envelope(
 				[
-					'id'            => 0,
-					'name'          => __( 'Voorbeeldscherm', 'rondo' ),
-					'location'      => __( 'Browserpreview', 'rondo' ),
-					'timezone'      => wp_timezone_string() ?: 'Europe/Amsterdam',
-					'wake_time'     => '08:00',
-					'sleep_time'    => '23:00',
-					'cec_enabled'   => false,
-					'pilot_message' => __( 'Rondo Club TV is klaar voor de pilot', 'rondo' ),
-					'preview'       => true,
+					'id'                   => 0,
+					'name'                 => __( 'Voorbeeldscherm', 'rondo' ),
+					'location'             => __( 'Browserpreview', 'rondo' ),
+					'timezone'             => wp_timezone_string() ?: 'Europe/Amsterdam',
+					'wake_time'            => '08:00',
+					'sleep_time'           => '23:00',
+					'cec_enabled'          => false,
+					'presentation_enabled' => false,
+					'pilot_message'        => __( 'Rondo Club TV is klaar voor de pilot', 'rondo' ),
+					'preview'              => true,
 				]
 			)
 		);
@@ -968,21 +1149,23 @@ class Narrowcasting extends Base {
 				'pilot_message',
 				'assigned_playlist_id',
 				'update_channel',
+				'presentation_enabled',
 			]
 		);
 
 		$configuration           = $this->configuration_envelope(
 			[
-				'id'            => $display_id,
-				'name'          => get_the_title( $display_id ),
-				'location'      => $fields['location'],
-				'timezone'      => $fields['display_timezone'],
-				'wake_time'     => $fields['wake_time'],
-				'sleep_time'    => $fields['sleep_time'],
-				'cec_enabled'   => $fields['cec_enabled'],
-				'pilot_message' => $fields['pilot_message'],
-				'playlist_id'   => $fields['assigned_playlist_id'] ?: null,
-				'preview'       => false,
+				'id'                   => $display_id,
+				'name'                 => get_the_title( $display_id ),
+				'location'             => $fields['location'],
+				'timezone'             => $fields['display_timezone'],
+				'wake_time'            => $fields['wake_time'],
+				'sleep_time'           => $fields['sleep_time'],
+				'cec_enabled'          => $fields['cec_enabled'],
+				'pilot_message'        => $fields['pilot_message'],
+				'presentation_enabled' => (bool) $fields['presentation_enabled'],
+				'playlist_id'          => $fields['assigned_playlist_id'] ?: null,
+				'preview'              => false,
 			]
 		);
 		$configuration['update'] = $this->player_update_config( (string) $fields['update_channel'] );
@@ -1043,6 +1226,7 @@ class Narrowcasting extends Base {
 				'pilot_message',
 				'assigned_playlist_id',
 				'update_channel',
+				'presentation_enabled',
 			]
 		);
 
@@ -1290,6 +1474,147 @@ class Narrowcasting extends Base {
 
 	private function hash_device_token( string $token ): string {
 		return hash_hmac( 'sha256', $token, wp_salt( 'auth' ) );
+	}
+
+	/** @return string|\WP_Error */
+	private function generate_presentation_code() {
+		for ( $attempt = 0; $attempt < 20; $attempt++ ) {
+			$code = str_pad( (string) random_int( 0, 999999 ), 6, '0', STR_PAD_LEFT );
+			if ( get_transient( $this->presentation_code_key( $code ) ) === false ) {
+				return $code;
+			}
+		}
+
+		return new \WP_Error( 'rondo_presentation_code_unavailable', __( 'Er kon geen vrije schermcode worden gemaakt. Probeer het opnieuw.', 'rondo' ), [ 'status' => 503 ] );
+	}
+
+	private function normalize_presentation_code( $value ): string {
+		$code = preg_replace( '/\D/', '', (string) $value );
+		return strlen( $code ) === 6 ? $code : '';
+	}
+
+	/** Limit code guessing per signed-in user. */
+	private function consume_presentation_join_rate_limit() {
+		$key   = 'rondo_present_join_' . get_current_user_id();
+		$count = (int) get_transient( $key );
+		if ( $count >= self::PRESENTATION_JOIN_RATE ) {
+			return new \WP_Error( 'rondo_presentation_rate_limited', __( 'Te veel schermcodes geprobeerd. Probeer het over een minuut opnieuw.', 'rondo' ), [ 'status' => 429 ] );
+		}
+		set_transient( $key, $count + 1, MINUTE_IN_SECONDS );
+		return true;
+	}
+
+	/** @return array|\WP_Error */
+	private function authenticate_presentation_session( $request ) {
+		$session_id = sanitize_text_field( (string) $request->get_param( 'session_id' ) );
+		$token      = trim( (string) $request->get_header( 'x-rondo-presentation-token' ) );
+		if ( ! wp_is_uuid( $session_id ) || $token === '' || strlen( $token ) > 200 ) {
+			return new \WP_Error( 'rondo_presentation_unauthorized', __( 'Geldige presentatieauthenticatie ontbreekt.', 'rondo' ), [ 'status' => 401 ] );
+		}
+
+		$session = get_transient( $this->presentation_session_key( $session_id ) );
+		if ( ! is_array( $session ) || (int) $session['expires_at'] < time() ) {
+			return new \WP_Error( 'rondo_presentation_expired', __( 'Deze presentatiesessie is verlopen.', 'rondo' ), [ 'status' => 410 ] );
+		}
+
+		$token_hash = $this->hash_device_token( $token );
+		$role       = '';
+		if ( hash_equals( (string) $session['receiver_token_hash'], $token_hash ) ) {
+			$role = 'receiver';
+		} elseif ( $session['sender_token_hash'] !== '' && hash_equals( (string) $session['sender_token_hash'], $token_hash ) ) {
+			$role = 'sender';
+		}
+		if ( $role === '' ) {
+			return new \WP_Error( 'rondo_presentation_unauthorized', __( 'De presentatiecredential is ongeldig.', 'rondo' ), [ 'status' => 401 ] );
+		}
+
+		return [
+			'role'    => $role,
+			'session' => $session,
+		];
+	}
+
+	/** @return array|\WP_Error */
+	private function sanitize_presentation_signal( $payload, string $role ) {
+		if ( ! is_array( $payload ) ) {
+			return new \WP_Error( 'rondo_presentation_signal_invalid', __( 'Het presentatiesignaal is ongeldig.', 'rondo' ), [ 'status' => 400 ] );
+		}
+
+		$clean       = [
+			'description' => null,
+			'candidates'  => [],
+			'hangup'      => rest_sanitize_boolean( $payload['hangup'] ?? false ),
+		];
+		$description = $payload['description'] ?? null;
+		if ( $description !== null ) {
+			$expected_type = $role === 'sender' ? 'offer' : 'answer';
+			if ( ! is_array( $description ) || ( $description['type'] ?? '' ) !== $expected_type ) {
+				return new \WP_Error( 'rondo_presentation_description_invalid', __( 'De WebRTC-beschrijving is ongeldig.', 'rondo' ), [ 'status' => 400 ] );
+			}
+			$sdp = wp_check_invalid_utf8( (string) ( $description['sdp'] ?? '' ) );
+			if ( $sdp === '' || strlen( $sdp ) > 65535 ) {
+				return new \WP_Error( 'rondo_presentation_sdp_invalid', __( 'De WebRTC-beschrijving is te groot of leeg.', 'rondo' ), [ 'status' => 400 ] );
+			}
+			$clean['description'] = [
+				'type' => $expected_type,
+				'sdp'  => $sdp,
+			];
+		}
+
+		$candidates = $payload['candidates'] ?? [];
+		if ( ! is_array( $candidates ) || count( $candidates ) > 128 ) {
+			return new \WP_Error( 'rondo_presentation_candidates_invalid', __( 'De WebRTC-kandidaten zijn ongeldig.', 'rondo' ), [ 'status' => 400 ] );
+		}
+		foreach ( $candidates as $candidate ) {
+			if ( ! is_array( $candidate ) ) {
+				return new \WP_Error( 'rondo_presentation_candidate_invalid', __( 'Een WebRTC-kandidaat is ongeldig.', 'rondo' ), [ 'status' => 400 ] );
+			}
+			$value = sanitize_text_field( (string) ( $candidate['candidate'] ?? '' ) );
+			if ( $value === '' || strlen( $value ) > 2048 ) {
+				return new \WP_Error( 'rondo_presentation_candidate_invalid', __( 'Een WebRTC-kandidaat is te groot of leeg.', 'rondo' ), [ 'status' => 400 ] );
+			}
+			$clean['candidates'][] = [
+				'candidate'        => $value,
+				'sdpMid'           => substr( sanitize_text_field( (string) ( $candidate['sdpMid'] ?? '' ) ), 0, 64 ),
+				'sdpMLineIndex'    => absint( $candidate['sdpMLineIndex'] ?? 0 ),
+				'usernameFragment' => substr( sanitize_text_field( (string) ( $candidate['usernameFragment'] ?? '' ) ), 0, 256 ),
+			];
+		}
+
+		return $clean;
+	}
+
+	private function refresh_presentation_session( array $session ): void {
+		$session['expires_at'] = time() + self::PRESENTATION_SESSION_TTL;
+		set_transient( $this->presentation_session_key( $session['id'] ), $session, self::PRESENTATION_SESSION_TTL );
+		set_transient( $this->presentation_display_key( (int) $session['display_id'] ), $session['id'], self::PRESENTATION_SESSION_TTL );
+	}
+
+	private function delete_presentation_session( string $session_id ): void {
+		$session = get_transient( $this->presentation_session_key( $session_id ) );
+		if ( is_array( $session ) ) {
+			delete_transient( $this->presentation_code_key( (string) $session['code'] ) );
+			delete_transient( $this->presentation_display_key( (int) $session['display_id'] ) );
+		}
+		delete_transient( $this->presentation_signal_key( $session_id, 'sender' ) );
+		delete_transient( $this->presentation_signal_key( $session_id, 'receiver' ) );
+		delete_transient( $this->presentation_session_key( $session_id ) );
+	}
+
+	private function presentation_session_key( string $session_id ): string {
+		return 'rondo_present_session_' . $session_id;
+	}
+
+	private function presentation_code_key( string $code ): string {
+		return 'rondo_present_code_' . substr( hash( 'sha256', $code ), 0, 32 );
+	}
+
+	private function presentation_display_key( int $display_id ): string {
+		return 'rondo_present_display_' . $display_id;
+	}
+
+	private function presentation_signal_key( string $session_id, string $role ): string {
+		return 'rondo_present_signal_' . $session_id . '_' . $role;
 	}
 
 	private function device_registration_key( string $device_id ): string {

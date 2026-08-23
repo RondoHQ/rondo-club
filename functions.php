@@ -1060,6 +1060,7 @@ function rondo_theme_template_redirect() {
 		'dates',
 		'settings',
 		'narrowcasting',
+		'presenteren',
 		'display',
 		'login',
 	];
