@@ -26,6 +26,17 @@ class VolunteerDataQualityTest extends RondoTestCase {
 		return $person_id;
 	}
 
+	public function test_invalidation_advances_the_cache_generation(): void {
+		$season    = '2026-2027';
+		$cache_key = VolunteerEligibilityService::cache_key( $season );
+		set_transient( $cache_key, [ 'sentinel' => true ], MINUTE_IN_SECONDS );
+
+		VolunteerEligibilityService::invalidate_cache();
+
+		$this->assertNotSame( $cache_key, VolunteerEligibilityService::cache_key( $season ) );
+		$this->assertSame( [ 'sentinel' => true ], get_transient( $cache_key ) );
+	}
+
 	public function test_only_playing_members_without_an_age_group_are_reported(): void {
 		$parent_id            = $this->person(
 			'Niet-spelende ouder',

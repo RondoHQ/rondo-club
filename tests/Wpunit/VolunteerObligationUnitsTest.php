@@ -2,6 +2,8 @@
 
 namespace Tests\Wpunit;
 
+use Rondo\Fields\Fields;
+use Rondo\Volunteer\VolunteerExemptionResolver;
 use Rondo\Volunteer\VolunteerEligibilityService;
 use Tests\Support\RondoTestCase;
 
@@ -84,6 +86,38 @@ class VolunteerObligationUnitsTest extends RondoTestCase {
 
 		$this->assertSame( [ 'gezin' ], $this->kinds( $units ) );
 		$this->assertSame( 2, $units[0]['required_count'] );
+	}
+
+	public function test_trainer_coach_parent_exempts_the_shared_family_duty(): void {
+		$first_parent   = $this->person( null, 'Eerste ouder' );
+		$trainer_parent = $this->person( null, 'Trainer ouder' );
+		$child          = $this->person( 'Onder 10', 'Kind' );
+		$this->link_parent_child( $first_parent, $child );
+		$this->link_parent_child( $trainer_parent, $child );
+		Fields::update_for_post(
+			$trainer_parent,
+			'work_history',
+			[
+				[
+					'team'        => 123,
+					'entity_type' => 'team',
+					'job_title'   => 'Trainer/coach',
+					'is_current'  => true,
+				],
+			]
+		);
+
+		$units = $this->service->get_eligible_units_for_person( $first_parent );
+		$match = VolunteerExemptionResolver::resolve_unit( $units[0], '2026-2027' );
+
+		$this->assertContains( $trainer_parent, $units[0]['person_ids'] );
+		$this->assertSame(
+			[
+				'person_id' => $trainer_parent,
+				'reason'    => VolunteerExemptionResolver::REASON_STAFF,
+			],
+			$match
+		);
 	}
 
 	public function test_playing_parent_owes_both_duties_speler_first(): void {

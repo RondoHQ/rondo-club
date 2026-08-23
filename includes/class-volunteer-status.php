@@ -84,6 +84,7 @@ class VolunteerStatus {
 	 */
 	private const DEFAULT_STAFF_ROLES = [
 		'Trainer',
+		'Trainer/coach',
 		'Hoofdtrainer',
 		'Assistent-trainer',
 		'Leider',
