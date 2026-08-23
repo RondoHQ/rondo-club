@@ -23,6 +23,9 @@ final class Rooms extends Base {
 	public function __construct() {
 		parent::__construct();
 		$this->service = new BookingService();
+		if ( ! \rondo_rooms_enabled() ) {
+			return;
+		}
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 		add_filter( 'rest_pre_serve_request', [ $this, 'serve_calendar' ], 10, 4 );
 	}

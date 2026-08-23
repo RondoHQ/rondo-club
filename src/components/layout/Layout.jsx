@@ -57,7 +57,7 @@ import { prmApi } from '@/api/client';
 const navigation = [
   { name: 'Mijn inschrijftaken', href: '/vrijwillig', icon: HeartHandshake, personal: true },
   { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, requiresLinkedPerson: true, personal: true },
-  { name: 'Ruimtes', href: '/rooms', icon: CalendarDays, personal: true },
+  { name: 'Ruimtes', href: '/rooms', icon: CalendarDays, personal: true, requiresFeature: 'rooms' },
   { name: 'Dashboard', href: '/', icon: Home, requiresKader: true },
   { name: 'Relaties', href: '/people', icon: Users, requiresKader: true },
   { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
@@ -203,6 +203,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const visibleNav = navigation.filter((item) => {
     // Enforce mobile-only items regardless of role.
     if (item.mobileOnly && !mobile) return false;
+    if (item.requiresFeature && !window.rondoConfig?.features?.[item.requiresFeature]) return false;
     if (item.requiresLinkedPerson && !currentUser?.linked_person_id) return false;
     if (isAdmin) return true;
     if (item.adminOnly && !isAdmin) return false;

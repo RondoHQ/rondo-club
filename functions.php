@@ -97,6 +97,16 @@ function rondo_register_fallback_autoloader() {
 }
 rondo_register_fallback_autoloader();
 
+/**
+ * Whether the room reservation feature is enabled for this site.
+ *
+ * The option deliberately defaults to false so a deployment never exposes the
+ * feature before the site has configured rooms and completed its pilot.
+ */
+function rondo_rooms_enabled(): bool {
+	return (bool) apply_filters( 'rondo_rooms_enabled', get_option( 'rondo_rooms_enabled', false ) );
+}
+
 // PSR-4 namespaced class imports
 use Rondo\Core\PostTypes;
 use Rondo\Core\Taxonomies;
@@ -348,7 +358,9 @@ function rondo_init() {
 		new RESTCapabilities();
 		new RESTFinanceSettings();
 		new RESTNarrowcasting();
-		new RESTRooms();
+		if ( rondo_rooms_enabled() ) {
+			new RESTRooms();
+		}
 		new \Rondo\REST\MemberProfile();
 		new RabobankOAuth();
 		new RabobankPayment();
@@ -715,6 +727,9 @@ function rondo_get_js_config() {
 		'freescoutUrl'        => $club_settings['freescout_url'],
 		'isDemo'              => (bool) get_option( 'rondo_is_demo_site', false ),
 		'isDemoUser'          => (bool) get_option( 'rondo_is_demo_site', false ) && $user && $user->user_login === 'demo',
+		'features'            => [
+			'rooms' => rondo_rooms_enabled(),
+		],
 	];
 }
 
