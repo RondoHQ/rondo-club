@@ -126,7 +126,7 @@ function DisplayEditForm({ display, isPending, onCancel, onSave }) {
             onChange={(event) => updateValue('presentation_enabled', event.target.checked)}
           />
           <span>
-            <span className="block font-medium text-gray-700 dark:text-gray-300">Browserpresentaties testen</span>
+            <span className="block font-medium text-gray-700 dark:text-gray-300">Browserpresentaties</span>
             <span className="block text-gray-500 dark:text-gray-400">Toon een tijdelijke code waarmee ingelogde gebruikers hun scherm kunnen delen.</span>
           </span>
         </label>
