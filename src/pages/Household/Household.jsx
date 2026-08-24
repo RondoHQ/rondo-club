@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, Building2, ImagePlus, LoaderCircle, Pencil, X } from 'lucide-react';
+import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, Building2, ImagePlus, LoaderCircle, Pencil, UserRoundPlus, X } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useUploadSponsorLogo } from '@/hooks/useSponsors';
@@ -9,6 +9,8 @@ import { formatPersonName, parseFieldDate } from '@/utils/formatters';
 import { format } from '@/utils/dateFormat';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import AnchoredPopover from '@/components/AnchoredPopover';
+import ParentRelationshipModal from '@/components/ParentRelationshipModal';
+import { useAddHouseholdParent } from '@/hooks/useMemberProfile';
 import MemberProfileEditors from './MemberProfileEditors';
 
 const WALLET_TYPES = ['apple', 'google'];
@@ -108,51 +110,49 @@ function MembershipPassActions({ membershipPass, personId }) {
   };
 
   return (
-    <div className="mt-4 rounded-lg border border-cyan-100 bg-cyan-50/60 p-4 dark:border-gray-700 dark:bg-gray-800/60">
-      <div className="flex items-start gap-3">
-        <IdCard className="mt-0.5 h-5 w-5 shrink-0 text-bright-cobalt dark:text-electric-cyan" aria-hidden="true" />
-        <div className="min-w-0">
-          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{membershipPass.label}</div>
-          <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400">
-            Voeg deze pas direct toe aan je wallet.
-          </p>
-        </div>
-      </div>
-
-      {wallets.length > 0 ? (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {wallets.map((wallet) => {
-            const badge = getWalletBadge(wallet);
-            const walletData = membershipPass.wallets[wallet];
-            const commonProps = {
-              className: 'inline-flex rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bright-cobalt',
-              onClick: (event) => openWallet(event, wallet),
-            };
-            const badgeImage = <img src={badge.src} alt={badge.alt} className="h-12 w-auto" />;
-
-            return membershipPass.requires_role ? (
-              <button
-                key={wallet}
-                type="button"
-                {...commonProps}
-                aria-haspopup="dialog"
-                aria-expanded={rolePicker?.wallet === wallet}
-                aria-controls={`membership-pass-role-picker-${personId}`}
-              >
-                {badgeImage}
-              </button>
-            ) : (
-              <a key={wallet} href={walletData.url} {...commonProps}>
-                {badgeImage}
-              </a>
-            );
-          })}
-        </div>
-      ) : (
-        <p className="mt-3 text-xs text-gray-600 dark:text-gray-400">
-          Er is op dit apparaat geen geconfigureerde wallet beschikbaar.
+    <div className="flex items-start gap-3 py-1.5 sm:col-span-2">
+      <IdCard className="mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" aria-hidden="true" />
+      <div className="min-w-0">
+        <div className="text-xs text-gray-500 dark:text-gray-400">{membershipPass.label}</div>
+        <p className="text-sm text-gray-900 dark:text-gray-100">
+          Voeg deze pas direct toe aan je wallet.
         </p>
-      )}
+
+        {wallets.length > 0 ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {wallets.map((wallet) => {
+              const badge = getWalletBadge(wallet);
+              const walletData = membershipPass.wallets[wallet];
+              const commonProps = {
+                className: 'inline-flex rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bright-cobalt',
+                onClick: (event) => openWallet(event, wallet),
+              };
+              const badgeImage = <img src={badge.src} alt={badge.alt} className="h-12 w-auto" />;
+
+              return membershipPass.requires_role ? (
+                <button
+                  key={wallet}
+                  type="button"
+                  {...commonProps}
+                  aria-haspopup="dialog"
+                  aria-expanded={rolePicker?.wallet === wallet}
+                  aria-controls={`membership-pass-role-picker-${personId}`}
+                >
+                  {badgeImage}
+                </button>
+              ) : (
+                <a key={wallet} href={walletData.url} {...commonProps}>
+                  {badgeImage}
+                </a>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="mt-3 text-xs text-gray-600 dark:text-gray-400">
+            Er is op dit apparaat geen geconfigureerde wallet beschikbaar.
+          </p>
+        )}
+      </div>
 
       {rolePicker ? (
         <AnchoredPopover
@@ -247,7 +247,7 @@ function SponsorLogoEditor({ organization }) {
   );
 }
 
-function PersonCard({ person, isSelf, isParent, householdPeople, linkedPersonId }) {
+function PersonCard({ person, isParent, householdPeople, linkedPersonId, onAddParent }) {
   const [profileEditorAnchor, setProfileEditorAnchor] = useState(null);
   const closeProfileEditor = useCallback(() => setProfileEditorAnchor(null), []);
   const profileEditorCloseRef = useRef(null);
@@ -255,6 +255,10 @@ function PersonCard({ person, isSelf, isParent, householdPeople, linkedPersonId 
   const name = formatPersonName(fields.first_name, fields.infix, fields.last_name) || 'Onbekend';
   const membershipPass = person.membership_pass;
   const sponsorOrganization = person.sponsor_organization;
+  const isSelf = person.household_role === 'self';
+  const relationshipLabel = isSelf
+    ? 'Dit ben jij'
+    : person.household_role === 'other_parent' ? 'Andere ouder/verzorger' : 'Jouw kind';
 
   return (
     <div className="card max-w-3xl p-5">
@@ -268,9 +272,6 @@ function PersonCard({ person, isSelf, isParent, householdPeople, linkedPersonId 
           </h2>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <span className="inline-block rounded bg-cyan-100 px-2 py-0.5 text-xs font-medium text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
-            {isSelf ? 'Jij' : 'Kind'}
-          </span>
           {isSelf ? (
             <button
               type="button"
@@ -284,6 +285,9 @@ function PersonCard({ person, isSelf, isParent, householdPeople, linkedPersonId 
               Wijzigen
             </button>
           ) : null}
+          <span className="inline-block rounded bg-cyan-100 px-2 py-0.5 text-xs font-medium text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
+            {relationshipLabel}
+          </span>
         </div>
       </div>
 
@@ -300,9 +304,15 @@ function PersonCard({ person, isSelf, isParent, householdPeople, linkedPersonId 
         <Detail icon={IdCard} label="KNVB-ID" value={fields['knvb_id']} />
         <Detail icon={Calendar} label="Lid sinds" value={formatFieldDate(fields['lid_sinds'])} />
         <Detail icon={ShieldCheck} label="VOG afgegeven" value={formatFieldDate(fields['datum_vog'])} />
+        {membershipPass ? <MembershipPassActions membershipPass={membershipPass} personId={person.id} /> : null}
       </div>
 
-      {membershipPass ? <MembershipPassActions membershipPass={membershipPass} personId={person.id} /> : null}
+      {person.can_add_parent ? (
+        <button type="button" className="btn-secondary mt-4 gap-2" onClick={() => onAddParent(person.id)}>
+          <UserRoundPlus className="h-4 w-4" aria-hidden="true" />
+          Andere ouder/verzorger toevoegen
+        </button>
+      ) : null}
 
       {isSelf && sponsorOrganization?.can_edit_logo ? (
         <SponsorLogoEditor organization={sponsorOrganization} />
@@ -345,6 +355,8 @@ export default function Household() {
   useDocumentTitle('Mijn gegevens');
 
   const { data: currentUser } = useCurrentUser();
+  const addHouseholdParent = useAddHouseholdParent();
+  const [parentEditorChildId, setParentEditorChildId] = useState(null);
 
   const { data: people = [], isLoading, isError } = useQuery({
     queryKey: ['household'],
@@ -357,9 +369,14 @@ export default function Household() {
   const linkedPersonId = currentUser?.linked_person_id ?? null;
   const ordered = useMemo(() => {
     const self = people.filter((person) => person.id === linkedPersonId);
-    const others = people.filter((person) => person.id !== linkedPersonId);
-    return [...self, ...others];
+    const children = people.filter((person) => person.household_role === 'child');
+    const otherParents = people.filter((person) => person.household_role === 'other_parent');
+    return [...self, ...children, ...otherParents];
   }, [people, linkedPersonId]);
+  const editablePeople = useMemo(
+    () => ordered.filter((person) => person.household_role !== 'other_parent'),
+    [ordered],
+  );
 
   if (isLoading) return <ContentLoadingSpinner />;
 
@@ -395,12 +412,21 @@ export default function Household() {
             <PersonCard
               key={person.id}
               person={person}
-              isSelf={person.id === linkedPersonId}
               isParent={currentUser?.is_parent === true}
-              householdPeople={ordered}
+              householdPeople={editablePeople}
               linkedPersonId={linkedPersonId}
+              onAddParent={setParentEditorChildId}
             />
           ))}
+          <ParentRelationshipModal
+            isOpen={parentEditorChildId !== null}
+            onClose={() => setParentEditorChildId(null)}
+            onSubmit={(data) => addHouseholdParent.mutateAsync({ childId: parentEditorChildId, data }).then(() => setParentEditorChildId(null))}
+            canAddParent
+            newOnly
+            isLoading={addHouseholdParent.isPending}
+            personId={parentEditorChildId}
+          />
         </>
       )}
     </div>

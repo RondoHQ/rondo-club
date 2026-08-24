@@ -55,6 +55,14 @@ export function useUpdateHouseholdAddress() {
   });
 }
 
+export function useAddHouseholdParent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ childId, data }) => prmApi.addHouseholdParent(childId, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['household'] }),
+  });
+}
+
 export function useProfileChangeLog(page = 1) {
   return useQuery({
     queryKey: ['profile-change-log', page],

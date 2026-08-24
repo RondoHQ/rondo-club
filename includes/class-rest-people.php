@@ -79,6 +79,22 @@ class People extends Base {
 
 		register_rest_route(
 			'rondo/v1',
+			'/people/(?P<person_id>\d+)/household-parent',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'add_household_parent' ],
+				'permission_callback' => 'is_user_logged_in',
+				'args'                => [
+					'person_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
 			'/people/(?P<person_id>\d+)/parent-sync-status',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -738,9 +754,10 @@ class People extends Base {
 		);
 	}
 
-	/** Return only the linked person and their minor children. */
+	/** Return the linked person, minor children, and their other parents/guardians. */
 	public function get_household() {
-		$ids = \Rondo\Core\AccessControl::get_visible_person_ids();
+		$context = $this->personal_household_context();
+		$ids     = $context['person_ids'];
 		if ( empty( $ids ) ) {
 			return rest_ensure_response( [] );
 		}
@@ -775,23 +792,91 @@ class People extends Base {
 		];
 		$people = [];
 		foreach ( $posts as $post ) {
-			$people[] = [
+			$role           = $context['roles'][ $post->ID ] ?? 'child';
+			$visible_fields = $role === 'other_parent'
+				? [ 'first_name', 'infix', 'last_name', 'email_1', 'email_2', 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2', 'addresses' ]
+				: $fields;
+			$people[]       = [
 				'id'                   => $post->ID,
+				'household_role'       => $role,
+				'can_add_parent'       => (bool) ( $context['can_add_parent'][ $post->ID ] ?? false ),
 				'fields'               => array_intersect_key(
 					\Rondo\Fields\RestFields::for_post( 'person', $post->ID ),
 					array_flip(
 						array_map(
 							fn( $name ) => \Rondo\Fields\Registry::resolve( 'person', $name )['canonical_name'],
-							$fields
+							$visible_fields
 						)
 					)
 				),
-				'membership_pass'      => MembershipPassService::get_person_pass_summary( (int) $post->ID ),
-				'sponsor_organization' => $this->personal_sponsor_organization( (int) $post->ID ),
+				'membership_pass'      => $role === 'other_parent' ? null : MembershipPassService::get_person_pass_summary( (int) $post->ID ),
+				'sponsor_organization' => $role === 'other_parent' ? null : $this->personal_sponsor_organization( (int) $post->ID ),
 			];
 		}
 
 		return rest_ensure_response( $people );
+	}
+
+	/** Build the narrowly scoped data graph behind the personal household page. */
+	private function personal_household_context(): array {
+		$visible_ids = \Rondo\Core\AccessControl::get_visible_person_ids();
+		$self_id     = (int) get_user_meta( get_current_user_id(), 'rondo_linked_person_id', true );
+		$child_ids   = array_values( array_diff( $visible_ids, [ $self_id ] ) );
+		$roles       = [];
+
+		if ( $self_id > 0 && in_array( $self_id, $visible_ids, true ) ) {
+			$roles[ $self_id ] = 'self';
+		}
+		foreach ( $child_ids as $child_id ) {
+			$roles[ $child_id ] = 'child';
+		}
+
+		$other_parent_ids = [];
+		$can_add_parent   = [];
+		foreach ( $child_ids as $child_id ) {
+			$parent_ids = [];
+			foreach ( \Rondo\Fields\Fields::get_for_post( $child_id, 'relationships' ) ?: [] as $relationship ) {
+				$type = $relationship['relationship_type'] ?? 0;
+				if ( is_object( $type ) ) {
+					$type = $type->term_id ?? 0;
+				} elseif ( is_array( $type ) ) {
+					$type = $type['term_id'] ?? 0;
+				}
+				if ( (int) $type !== \Rondo\Data\InverseRelationships::TYPE_PARENT ) {
+					continue;
+				}
+
+				$related = $relationship['related_person'] ?? 0;
+				if ( is_object( $related ) ) {
+					$related = $related->ID ?? 0;
+				} elseif ( is_array( $related ) ) {
+					$related = $related['ID'] ?? $related['id'] ?? 0;
+				}
+				$parent_id = absint( $related );
+				if ( $parent_id > 0 && get_post_status( $parent_id ) === 'publish' ) {
+					$parent_ids[] = $parent_id;
+				}
+			}
+
+			$parent_ids = array_values( array_unique( $parent_ids ) );
+			foreach ( array_diff( $parent_ids, [ $self_id ] ) as $parent_id ) {
+				$other_parent_ids[]  = $parent_id;
+				$roles[ $parent_id ] = 'other_parent';
+			}
+
+			$can_add_parent[ $child_id ] = count( array_diff( $parent_ids, [ $self_id ] ) ) === 0
+				&& trim( (string) \Rondo\Fields\Fields::get_for_post( $child_id, 'knvb_id' ) ) !== ''
+				&& ! (bool) \Rondo\Fields\Fields::get_for_post( $child_id, 'former_member' );
+		}
+
+		$other_parent_ids = array_values( array_unique( $other_parent_ids ) );
+
+		return [
+			'person_ids'     => array_values( array_unique( array_merge( $visible_ids, $other_parent_ids ) ) ),
+			'child_ids'      => $child_ids,
+			'roles'          => $roles,
+			'can_add_parent' => $can_add_parent,
+		];
 	}
 
 	/** Return the active organization behind a person's sponsor pass. */
@@ -914,6 +999,44 @@ class People extends Base {
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
+		return new \WP_REST_Response( $result, 201 );
+	}
+
+	/** Add a new second parent/guardian to one of the current user's minor children. */
+	public function add_household_parent( $request ) {
+		$child_id = (int) $request->get_param( 'person_id' );
+		$context  = $this->personal_household_context();
+
+		if ( ! in_array( $child_id, $context['child_ids'], true ) ) {
+			return new \WP_Error(
+				'rondo_household_parent_forbidden',
+				__( 'Je kunt alleen een ouder/verzorger toevoegen aan je eigen minderjarige kind.', 'rondo' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		if ( empty( $context['can_add_parent'][ $child_id ] ) ) {
+			return new \WP_Error(
+				'rondo_household_parent_unavailable',
+				__( 'Bij dit kind kan geen andere ouder/verzorger worden toegevoegd.', 'rondo' ),
+				[ 'status' => 409 ]
+			);
+		}
+
+		$params         = $request->get_params();
+		$params['mode'] = 'new';
+		$result         = ( new ParentRelationshipService() )->add_parent( $child_id, $params );
+		if ( is_wp_error( $result ) ) {
+			if ( $result->get_error_code() === 'rondo_parent_email_exists' ) {
+				return new \WP_Error(
+					'rondo_household_parent_email_exists',
+					__( 'Dit e-mailadres is al bij Rondo bekend. Neem contact op met de ledenadministratie om de bestaande persoon te laten koppelen.', 'rondo' ),
+					[ 'status' => 409 ]
+				);
+			}
+			return $result;
+		}
+
 		return new \WP_REST_Response( $result, 201 );
 	}
 
