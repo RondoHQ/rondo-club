@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.6.7] - 2026-08-24
+
+### Changed
+
+- Bij het wijzigen van een e-mailadres vermeldt Rondo dat verwerking in Sportlink en Voetbal.nl tot een half uur kan duren.
+
 ## [35.6.6] - 2026-08-24
 
 ### Removed

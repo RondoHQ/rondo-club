@@ -1,8 +1,18 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { X } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
+import { SPORTLINK_EMAIL_SYNC_DELAY_MESSAGE } from '@/constants/contact';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { formatPhoneForDisplay } from '@/utils/formatters';
+
+function SportlinkEmailSyncNotice() {
+  return (
+    <div className="mt-2 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-100">
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-300" aria-hidden="true" />
+      <p>{SPORTLINK_EMAIL_SYNC_DELAY_MESSAGE}</p>
+    </div>
+  );
+}
 
 export default function ContactEditModal({
   isOpen,
@@ -99,6 +109,7 @@ export default function ContactEditModal({
                     className="input"
                     disabled={isLoading}
                   />
+                  <SportlinkEmailSyncNotice />
                 </div>
                 <div>
                   <label className="label">Telefoon ouder/verzorger</label>
@@ -124,9 +135,6 @@ export default function ContactEditModal({
                   className="input"
                   disabled={isLoading}
                 />
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                  &#9888;&#65039; Wijzigingen beinvloeden de voetbal.nl login
-                </p>
               </div>
               <div>
                 <label className="label">Email (2e)</label>
@@ -139,6 +147,7 @@ export default function ContactEditModal({
                 />
               </div>
             </div>
+            <SportlinkEmailSyncNotice />
 
             {/* Mobile fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
