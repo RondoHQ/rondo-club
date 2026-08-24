@@ -674,7 +674,7 @@ function RoomAdministration({ rooms, onSaved }) {
           </button>
         ))}
       </div>
-      {editing ? <RoomForm room={editing.id ? editing : null} onClose={() => setEditing(null)} onSaved={async () => { await onSaved(); setEditing(null); }} /> : <EmptyState>Kies een ruimte om de instellingen te bewerken.</EmptyState>}
+      {editing ? <RoomForm key={editing.id || 'new'} room={editing.id ? editing : null} onClose={() => setEditing(null)} onSaved={async () => { await onSaved(); setEditing(null); }} /> : <EmptyState>Kies een ruimte om de instellingen te bewerken.</EmptyState>}
     </section>
   );
 }
