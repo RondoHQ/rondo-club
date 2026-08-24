@@ -31,11 +31,23 @@ final class MemberProfile extends Base {
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_pending_email' ],
 					'permission_callback' => 'is_user_logged_in',
+					'args'                => [
+						'person_id' => [
+							'type'    => 'integer',
+							'minimum' => 1,
+						],
+					],
 				],
 				[
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => [ $this, 'cancel_pending_email' ],
 					'permission_callback' => 'is_user_logged_in',
+					'args'                => [
+						'person_id' => [
+							'type'    => 'integer',
+							'minimum' => 1,
+						],
+					],
 				],
 			]
 		);
@@ -48,13 +60,17 @@ final class MemberProfile extends Base {
 				'callback'            => [ $this, 'request_email_change' ],
 				'permission_callback' => 'is_user_logged_in',
 				'args'                => [
-					'slot'  => [
+					'slot'      => [
 						'required' => true,
 						'type'     => 'string',
 					],
-					'email' => [
+					'email'     => [
 						'required' => true,
 						'type'     => 'string',
+					],
+					'person_id' => [
+						'type'    => 'integer',
+						'minimum' => 1,
 					],
 				],
 			]
@@ -67,6 +83,12 @@ final class MemberProfile extends Base {
 				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => [ $this, 'remove_secondary_email' ],
 				'permission_callback' => 'is_user_logged_in',
+				'args'                => [
+					'person_id' => [
+						'type'    => 'integer',
+						'minimum' => 1,
+					],
+				],
 			]
 		);
 
@@ -145,12 +167,12 @@ final class MemberProfile extends Base {
 		);
 	}
 
-	public function get_pending_email(): \WP_REST_Response {
-		return rest_ensure_response( [ 'pending' => MemberProfileService::pending_email_change( get_current_user_id() ) ] );
+	public function get_pending_email( \WP_REST_Request $request ): \WP_REST_Response {
+		return rest_ensure_response( [ 'pending' => MemberProfileService::pending_email_change( get_current_user_id(), (int) $request['person_id'] ?: null ) ] );
 	}
 
-	public function cancel_pending_email(): \WP_REST_Response {
-		MemberProfileService::cancel_email_change( get_current_user_id() );
+	public function cancel_pending_email( \WP_REST_Request $request ): \WP_REST_Response {
+		MemberProfileService::cancel_email_change( get_current_user_id(), (int) $request['person_id'] ?: null );
 		return rest_ensure_response( [ 'success' => true ] );
 	}
 
@@ -159,16 +181,18 @@ final class MemberProfile extends Base {
 			get_current_user_id(),
 			(string) $request['slot'],
 			(string) $request['email'],
-			ActivationService::client_ip()
+			ActivationService::client_ip(),
+			(int) $request['person_id'] ?: null
 		);
 	}
 
-	public function remove_secondary_email() {
-		return MemberProfileService::remove_secondary_email( get_current_user_id() );
+	public function remove_secondary_email( \WP_REST_Request $request ) {
+		return MemberProfileService::remove_secondary_email( get_current_user_id(), (int) $request['person_id'] ?: null );
 	}
 
 	public function update_phones( \WP_REST_Request $request ) {
-		return MemberProfileService::update_phones( get_current_user_id(), (array) $request->get_json_params() );
+		$values = (array) $request->get_json_params();
+		return MemberProfileService::update_phones( get_current_user_id(), $values, (int) ( $values['person_id'] ?? 0 ) ?: null );
 	}
 
 	public function update_household_address( \WP_REST_Request $request ) {

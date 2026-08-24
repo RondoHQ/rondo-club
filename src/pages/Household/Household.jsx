@@ -272,7 +272,7 @@ function PersonCard({ person, isParent, householdPeople, linkedPersonId, onAddPa
           </h2>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {isSelf ? (
+          {isSelf || person.household_role === 'child' ? (
             <button
               type="button"
               className="btn-secondary gap-2 px-3 py-1.5 text-sm"
@@ -331,13 +331,13 @@ function PersonCard({ person, isParent, householdPeople, linkedPersonId, onAddPa
           <div className="p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 id={`member-profile-editor-title-${person.id}`} className="font-semibold text-gray-900 dark:text-gray-100">
-                Gegevens wijzigen
+                Gegevens van {name} wijzigen
               </h2>
               <button ref={profileEditorCloseRef} type="button" className="btn-tertiary px-2 py-2" aria-label="Sluiten" onClick={closeProfileEditor}>
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
-            <MemberProfileEditors people={householdPeople} linkedPersonId={linkedPersonId} embedded />
+            <MemberProfileEditors people={householdPeople} linkedPersonId={linkedPersonId} targetPersonId={person.id} embedded />
           </div>
         </AnchoredPopover>
       ) : null}

@@ -8,10 +8,10 @@ function invalidateProfile(queryClient) {
   queryClient.invalidateQueries({ queryKey: ['current-user'] });
 }
 
-export function usePendingProfileEmail() {
+export function usePendingProfileEmail(personId) {
   return useQuery({
-    queryKey: pendingEmailKey,
-    queryFn: async () => (await prmApi.getPendingProfileEmail()).data.pending,
+    queryKey: [...pendingEmailKey, personId],
+    queryFn: async () => (await prmApi.getPendingProfileEmail(personId)).data.pending,
   });
 }
 
@@ -26,7 +26,7 @@ export function useRequestProfileEmailChange() {
 export function useCancelProfileEmailChange() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => prmApi.cancelProfileEmailChange(),
+    mutationFn: (personId) => prmApi.cancelProfileEmailChange(personId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: pendingEmailKey }),
   });
 }
@@ -34,7 +34,7 @@ export function useCancelProfileEmailChange() {
 export function useRemoveSecondaryProfileEmail() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => prmApi.removeSecondaryProfileEmail(),
+    mutationFn: (personId) => prmApi.removeSecondaryProfileEmail(personId),
     onSuccess: () => invalidateProfile(queryClient),
   });
 }

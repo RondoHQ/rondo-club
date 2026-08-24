@@ -45,7 +45,7 @@ function SectionHeader({ icon: Icon, title, onEdit, editing }) {
 
 function EmailEditor({ person, embedded }) {
   const fields = person.fields || {};
-  const { data: pending } = usePendingProfileEmail();
+  const { data: pending } = usePendingProfileEmail(person.id);
   const requestChange = useRequestProfileEmailChange();
   const cancelChange = useCancelProfileEmailChange();
   const removeSecondary = useRemoveSecondaryProfileEmail();
@@ -63,7 +63,7 @@ function EmailEditor({ person, embedded }) {
     event.preventDefault();
     setError('');
     try {
-      await requestChange.mutateAsync({ slot: editing, email });
+      await requestChange.mutateAsync({ person_id: person.id, slot: editing, email });
       setEditing(null);
     } catch (requestError) {
       setError(errorMessage(requestError, 'De verificatiemail kon niet worden verstuurd.'));
@@ -73,7 +73,7 @@ function EmailEditor({ person, embedded }) {
   const promote = async () => {
     setError('');
     try {
-      await requestChange.mutateAsync({ slot: 'primary', email: fields.email_2 });
+      await requestChange.mutateAsync({ person_id: person.id, slot: 'primary', email: fields.email_2 });
     } catch (requestError) {
       setError(errorMessage(requestError, 'De verificatiemail kon niet worden verstuurd.'));
     }
@@ -83,7 +83,7 @@ function EmailEditor({ person, embedded }) {
     if (!window.confirm('Tweede e-mailadres verwijderen?')) return;
     setError('');
     try {
-      await removeSecondary.mutateAsync();
+      await removeSecondary.mutateAsync(person.id);
     } catch (removeError) {
       setError(errorMessage(removeError, 'Het tweede e-mailadres kon niet worden verwijderd.'));
     }
@@ -101,7 +101,7 @@ function EmailEditor({ person, embedded }) {
       {pending ? (
         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-100">
           <div className="font-medium">Wacht op bevestiging van {pending.email}</div>
-          <button type="button" className="mt-2 underline" disabled={cancelChange.isPending} onClick={() => cancelChange.mutate()}>Aanvraag annuleren</button>
+          <button type="button" className="mt-2 underline" disabled={cancelChange.isPending} onClick={() => cancelChange.mutate(person.id)}>Aanvraag annuleren</button>
         </div>
       ) : null}
 
@@ -154,7 +154,7 @@ function PhoneEditor({ person, embedded }) {
     event.preventDefault();
     setError('');
     try {
-      await updatePhones.mutateAsync(values);
+      await updatePhones.mutateAsync({ ...values, person_id: person.id });
       setEditing(false);
     } catch (updateError) {
       setError(errorMessage(updateError, 'De telefoonnummers konden niet worden opgeslagen.'));
@@ -248,14 +248,14 @@ function AddressEditor({ people, embedded }) {
   );
 }
 
-export default function MemberProfileEditors({ people, linkedPersonId, embedded = false }) {
-  const self = people.find((person) => person.id === linkedPersonId);
-  if (!self) return null;
+export default function MemberProfileEditors({ people, linkedPersonId, targetPersonId = linkedPersonId, embedded = false }) {
+  const target = people.find((person) => person.id === targetPersonId);
+  if (!target || target.household_role === 'other_parent') return null;
   return (
     <div className="space-y-4">
-      <EmailEditor person={self} embedded={embedded} />
-      <PhoneEditor person={self} embedded={embedded} />
-      <AddressEditor people={people} embedded={embedded} />
+      <EmailEditor person={target} embedded={embedded} />
+      <PhoneEditor person={target} embedded={embedded} />
+      {target.id === linkedPersonId ? <AddressEditor people={people} embedded={embedded} /> : null}
     </div>
   );
 }
