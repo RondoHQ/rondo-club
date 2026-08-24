@@ -12,10 +12,11 @@ export default function ParentRelationshipModal({
   onAddPerson,
   onAddSponsor,
   canAddParent = false,
+  newOnly = false,
   isLoading,
   personId,
 }) {
-  const [screen, setScreen] = useState('choice');
+  const [screen, setScreen] = useState(newOnly ? 'new' : 'choice');
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState('');
   const [existingParentId, setExistingParentId] = useState(null);
@@ -23,12 +24,12 @@ export default function ParentRelationshipModal({
 
   useEffect(() => {
     if (isOpen) {
-      setScreen('choice');
+      setScreen(newOnly ? 'new' : 'choice');
       setForm(EMPTY_FORM);
       setError('');
       setExistingParentId(null);
     }
-  }, [isOpen]);
+  }, [isOpen, newOnly]);
 
   if (!isOpen) return null;
 
@@ -193,7 +194,7 @@ export default function ParentRelationshipModal({
               {error && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{error}</p>}
             </div>
             <div className="flex justify-between gap-2 border-t border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
-              <button type="button" onClick={() => setScreen('choice')} className="btn-secondary" disabled={isLoading}>Terug</button>
+              {!newOnly ? <button type="button" onClick={() => setScreen('choice')} className="btn-secondary" disabled={isLoading}>Terug</button> : <span />}
               <button type="submit" className="btn-primary" disabled={!isOnline || isLoading}>
                 {isLoading ? 'Toevoegen…' : 'Ouder/verzorger toevoegen'}
               </button>

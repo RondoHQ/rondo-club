@@ -2,6 +2,7 @@
 
 namespace Tests\Wpunit;
 
+use Rondo\Core\AccessControl;
 use Rondo\Data\InverseRelationships;
 use Rondo\Fields\Fields;
 use Rondo\REST\People;
@@ -80,6 +81,111 @@ class ParentRelationshipRestTest extends RondoTestCase {
 		$this->assertSame( 403, $response->get_status() );
 	}
 
+	public function test_household_includes_the_other_parent_as_contact_only(): void {
+		$current_parent = $this->createPerson( [], [ 'first_name' => 'Huidige ouder' ] );
+		$other_parent   = $this->createPerson(
+			[],
+			[
+				'first_name' => 'Andere ouder',
+				'email_1'    => 'andere@example.org',
+				'birthdate'  => '1980-01-01',
+				'knvb_id'    => 'PRIVATE123',
+			]
+		);
+		$child          = $this->createPerson(
+			[],
+			[
+				'first_name' => 'Kind',
+				'birthdate'  => gmdate( 'Y-m-d', strtotime( '-10 years' ) ),
+				'knvb_id'    => 'CHILD123',
+			]
+		);
+		$this->link_parent_to_child( $current_parent, $child );
+		$this->link_parent_to_child( $other_parent, $child );
+
+		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $current_parent );
+		AccessControl::flush_visible_person_ids_cache();
+		wp_set_current_user( $user_id );
+
+		$response = $this->request( 'GET', '/rondo/v1/people/household' );
+		$people   = array_column( $response->get_data(), null, 'id' );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'self', $people[ $current_parent ]['household_role'] );
+		$this->assertSame( 'child', $people[ $child ]['household_role'] );
+		$this->assertSame( 'other_parent', $people[ $other_parent ]['household_role'] );
+		$this->assertFalse( $people[ $child ]['can_add_parent'] );
+		$this->assertSame( 'andere@example.org', $people[ $other_parent ]['fields']['email_1'] );
+		$this->assertArrayNotHasKey( 'birthdate', $people[ $other_parent ]['fields'] );
+		$this->assertArrayNotHasKey( 'knvb_id', $people[ $other_parent ]['fields'] );
+		$this->assertNull( $people[ $other_parent ]['membership_pass'] );
+	}
+
+	public function test_parent_can_add_a_new_other_parent_to_own_minor_child(): void {
+		$current_parent = $this->createPerson( [], [ 'first_name' => 'Huidige ouder' ] );
+		$child          = $this->createPerson(
+			[],
+			[
+				'first_name' => 'Kind',
+				'birthdate'  => gmdate( 'Y-m-d', strtotime( '-10 years' ) ),
+				'knvb_id'    => 'CHILD124',
+			]
+		);
+		$this->link_parent_to_child( $current_parent, $child );
+
+		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $current_parent );
+		AccessControl::flush_visible_person_ids_cache();
+		wp_set_current_user( $user_id );
+
+		$before = array_column( $this->request( 'GET', '/rondo/v1/people/household' )->get_data(), null, 'id' );
+		$this->assertTrue( $before[ $child ]['can_add_parent'] );
+
+		$created = $this->request(
+			'POST',
+			'/rondo/v1/people/' . $child . '/household-parent',
+			[
+				'name'  => 'Nieuwe ouder',
+				'email' => 'nieuwe.ouder@example.org',
+				'phone' => '0612345678',
+			]
+		);
+
+		$this->assertSame( 201, $created->get_status() );
+		$parent_id = (int) $created->get_data()['parent_id'];
+		$after     = array_column( $this->request( 'GET', '/rondo/v1/people/household' )->get_data(), null, 'id' );
+		$this->assertSame( 'other_parent', $after[ $parent_id ]['household_role'] );
+		$this->assertFalse( $after[ $child ]['can_add_parent'] );
+	}
+
+	public function test_parent_cannot_add_a_parent_to_an_unrelated_child(): void {
+		$current_parent = $this->createPerson( [], [ 'first_name' => 'Huidige ouder' ] );
+		$unrelated      = $this->createPerson(
+			[],
+			[
+				'first_name' => 'Onbekend kind',
+				'birthdate'  => gmdate( 'Y-m-d', strtotime( '-10 years' ) ),
+				'knvb_id'    => 'CHILD125',
+			]
+		);
+		$user_id        = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $current_parent );
+		AccessControl::flush_visible_person_ids_cache();
+		wp_set_current_user( $user_id );
+
+		$response = $this->request(
+			'POST',
+			'/rondo/v1/people/' . $unrelated . '/household-parent',
+			[
+				'name'  => 'Niet toegestaan',
+				'email' => 'niet.toegestaan@example.org',
+			]
+		);
+
+		$this->assertSame( 403, $response->get_status() );
+	}
+
 	private function request( string $method, string $route, array $params = [] ) {
 		$request = new WP_REST_Request( $method, $route );
 		foreach ( $params as $key => $value ) {
@@ -104,5 +210,15 @@ class ParentRelationshipRestTest extends RondoTestCase {
 		}
 		Fields::update_for_term( 'relationship_type', $ids['parent'], 'inverse_relationship_type', $ids['child'] );
 		Fields::update_for_term( 'relationship_type', $ids['child'], 'inverse_relationship_type', $ids['parent'] );
+	}
+
+	private function link_parent_to_child( int $parent_id, int $child_id ): void {
+		$relationships   = Fields::get_for_post( $parent_id, 'relationships' ) ?: [];
+		$relationships[] = [
+			'related_person'    => $child_id,
+			'relationship_type' => InverseRelationships::TYPE_CHILD,
+		];
+		Fields::update_for_post( $parent_id, 'relationships', $relationships );
+		AccessControl::flush_visible_person_ids_cache();
 	}
 }

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.5.0] - 2026-08-24
+
+### Added
+
+- **Mijn gegevens** toont ook de andere ouder/verzorger als alleen-lezen kaart; ontbreekt die, dan kan de gekoppelde ouder bij een eigen minderjarig kind een nieuwe ouder/verzorger toevoegen.
+
+### Changed
+
+- Het ledenpasgedeelte sluit visueel aan op de overige gegevensregels, de wijzigknop staat vóór het persoonslabel en de labels heten voortaan **Dit ben jij** en **Jouw kind**.
+
 ## [35.4.0] - 2026-08-24
 
 ### Added
