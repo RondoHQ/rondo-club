@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.6.0] - 2026-08-24
+
+### Added
+
+- Ouders kunnen via **Mijn gegevens** de e-mailadressen en telefoonnummers van hun eigen minderjarige kinderen aanpassen; e-mailwijzigingen blijven beschermd met verificatie en alle wijzigingen volgen de bestaande Sportlink-synchronisatie.
+
 ## [35.5.0] - 2026-08-24
 
 ### Added

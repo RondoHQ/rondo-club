@@ -116,6 +116,73 @@ class MemberProfileServiceTest extends RondoTestCase {
 		$this->assertGreaterThan( '2020-01-01 00:00:00', get_post_field( 'post_modified_gmt', $person_id ) );
 	}
 
+	public function test_parent_can_update_minor_child_phones_without_changing_own_phones(): void {
+		[ $user_id, $parent_id ] = $this->linked_member( 'parent-phone@example.com' );
+		$child_id                = $this->add_minor_child( $parent_id, 'Kind Telefoon', 'child-phone@example.com' );
+		Fields::update_for_post( $parent_id, 'mobile_1', '+31611111111' );
+
+		$result = MemberProfileService::update_phones(
+			$user_id,
+			[ 'mobile_1' => '+31622222222' ],
+			$child_id
+		);
+
+		$this->assertIsArray( $result );
+		$this->assertSame( [ $child_id ], $result['affected'] );
+		$this->assertSame( '+31622222222', Fields::get_for_post( $child_id, 'mobile_1' ) );
+		$this->assertSame( '+31611111111', Fields::get_for_post( $parent_id, 'mobile_1' ) );
+	}
+
+	public function test_parent_can_verify_minor_child_email_without_changing_account_or_sibling(): void {
+		[ $user_id, $parent_id ] = $this->linked_member( 'parent-email@example.com' );
+		$child_id                = $this->add_minor_child( $parent_id, 'Kind Mail', 'old-child@example.com' );
+		$sibling_id              = $this->add_minor_child( $parent_id, 'Ander Kind', 'old-child@example.com' );
+		$token                   = '';
+		add_filter(
+			'pre_wp_mail',
+			static function ( $return, $atts ) use ( &$token ) {
+				preg_match( '#email-wijzigen/([a-f0-9]{64})#', (string) $atts['message'], $matches );
+				$token = $matches[1] ?? '';
+				return true;
+			},
+			10,
+			2
+		);
+
+		$request = MemberProfileService::request_email_change( $user_id, 'primary', 'new-child@example.com', '192.0.2.20', $child_id );
+
+		$this->assertIsArray( $request );
+		$this->assertSame( $child_id, $request['person_id'] );
+		$this->assertSame( $child_id, MemberProfileService::pending_email_change( $user_id, $child_id )['person_id'] );
+		$this->assertNull( MemberProfileService::pending_email_change( $user_id, $parent_id ) );
+
+		$result = MemberProfileService::verify_email_token( $token );
+
+		$this->assertIsArray( $result );
+		$this->assertSame( 'new-child@example.com', Fields::get_for_post( $child_id, 'email_1' ) );
+		$this->assertSame( 'old-child@example.com', Fields::get_for_post( $sibling_id, 'email_1' ) );
+		$this->assertSame( 'parent-email@example.com', Fields::get_for_post( $parent_id, 'email_1' ) );
+		$this->assertSame( 'parent-email@example.com', UserProvisioning::contact_email( $user_id ) );
+		$this->assertSame( 'parent-email@example.com', get_userdata( $user_id )->user_email );
+	}
+
+	public function test_parent_cannot_update_person_outside_minor_household_scope(): void {
+		[ $user_id ] = $this->linked_member( 'scoped-parent@example.com' );
+		$other_id    = $this->createPerson(
+			[ 'post_title' => 'Niet Mijn Kind' ],
+			[
+				'first_name' => 'Niet',
+				'birthdate'  => gmdate( 'Y-m-d', strtotime( '-10 years' ) ),
+			]
+		);
+
+		$result = MemberProfileService::update_phones( $user_id, [ 'mobile_1' => '+31633333333' ], $other_id );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'rondo_profile_target_forbidden', $result->get_error_code() );
+		$this->assertSame( '', Fields::get_for_post( $other_id, 'mobile_1' ) );
+	}
+
 	public function test_household_address_updates_parent_and_child_and_preserves_other_rows(): void {
 		[ $user_id, $parent_id ] = $this->linked_member( 'parent@example.com' );
 		$child_id                = $this->add_minor_child( $parent_id, 'Adres Kind', 'parent@example.com' );
@@ -188,6 +255,43 @@ class MemberProfileServiceTest extends RondoTestCase {
 		wp_set_current_user( $admin_id );
 		$allowed = $server->dispatch( new \WP_REST_Request( 'GET', '/rondo/v1/profile-change-log' ) );
 		$this->assertSame( 200, $allowed->get_status() );
+	}
+
+	public function test_phone_route_accepts_only_a_minor_child_in_the_personal_household(): void {
+		$server                  = $this->bootRestControllers( [ MemberProfile::class ] );
+		[ $user_id, $parent_id ] = $this->linked_member( 'route-parent@example.com' );
+		$child_id                = $this->add_minor_child( $parent_id, 'Route Kind', 'route-child@example.com' );
+		$other_id                = $this->createPerson( [ 'post_title' => 'Route Ander' ], [ 'birthdate' => gmdate( 'Y-m-d', strtotime( '-10 years' ) ) ] );
+		$child_request           = new \WP_REST_Request( 'PATCH', '/rondo/v1/user/profile-phones' );
+		$child_request->set_header( 'content-type', 'application/json' );
+		$child_request->set_body(
+			(string) wp_json_encode(
+			[
+				'person_id' => $child_id,
+				'mobile_1'  => '+31644444444',
+			]
+			)
+			);
+
+		$child_response = $server->dispatch( $child_request );
+
+		$this->assertSame( 200, $child_response->get_status() );
+		$this->assertSame( '+31644444444', Fields::get_for_post( $child_id, 'mobile_1' ) );
+
+		$other_request = new \WP_REST_Request( 'PATCH', '/rondo/v1/user/profile-phones' );
+		$other_request->set_header( 'content-type', 'application/json' );
+		$other_request->set_body(
+			(string) wp_json_encode(
+			[
+				'person_id' => $other_id,
+				'mobile_1'  => '+31655555555',
+			]
+			)
+			);
+		$other_response = $server->dispatch( $other_request );
+
+		$this->assertSame( 403, $other_response->get_status() );
+		$this->assertSame( '', Fields::get_for_post( $other_id, 'mobile_1' ) );
 	}
 
 	private function linked_member( string $email ): array {

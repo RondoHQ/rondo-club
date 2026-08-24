@@ -44,8 +44,8 @@ final class MemberProfileService {
 	}
 
 	/** Request verification before changing or promoting an email address. */
-	public static function request_email_change( int $user_id, string $slot, string $email, string $ip ) {
-		$person_id = self::linked_person_id( $user_id );
+	public static function request_email_change( int $user_id, string $slot, string $email, string $ip, ?int $requested_person_id = null ) {
+		$person_id = self::editable_person_id( $user_id, $requested_person_id );
 		if ( is_wp_error( $person_id ) ) {
 			return $person_id;
 		}
@@ -98,6 +98,7 @@ final class MemberProfileService {
 
 		return [
 			'pending'    => true,
+			'person_id'  => $person_id,
 			'email'      => $email,
 			'slot'       => $slot,
 			'operation'  => $operation,
@@ -106,7 +107,7 @@ final class MemberProfileService {
 	}
 
 	/** Return current pending verification without exposing the token hash. */
-	public static function pending_email_change( int $user_id ): ?array {
+	public static function pending_email_change( int $user_id, ?int $person_id = null ): ?array {
 		$pending = get_user_meta( $user_id, self::PENDING_META, true );
 		if ( ! is_array( $pending ) || empty( $pending['token_hash'] ) || (int) ( $pending['expires_at'] ?? 0 ) <= time() ) {
 			self::cancel_email_change( $user_id );
@@ -116,8 +117,12 @@ final class MemberProfileService {
 			self::cancel_email_change( $user_id );
 			return null;
 		}
+		if ( $person_id && (int) ( $pending['person_id'] ?? 0 ) !== $person_id ) {
+			return null;
+		}
 
 		return [
+			'person_id'  => (int) $pending['person_id'],
 			'email'      => (string) $pending['new_email'],
 			'slot'       => (string) $pending['slot'],
 			'operation'  => (string) $pending['operation'],
@@ -126,8 +131,11 @@ final class MemberProfileService {
 	}
 
 	/** Cancel the current user's pending email change. */
-	public static function cancel_email_change( int $user_id ): void {
+	public static function cancel_email_change( int $user_id, ?int $person_id = null ): void {
 		$pending = get_user_meta( $user_id, self::PENDING_META, true );
+		if ( $person_id && is_array( $pending ) && (int) ( $pending['person_id'] ?? 0 ) !== $person_id ) {
+			return;
+		}
 		if ( is_array( $pending ) && ! empty( $pending['token_hash'] ) ) {
 			delete_transient( self::TOKEN_PREFIX . $pending['token_hash'] );
 		}
@@ -146,9 +154,9 @@ final class MemberProfileService {
 		}
 
 		$user_id   = (int) $payload['user_id'];
-		$person_id = self::linked_person_id( $user_id );
+		$person_id = self::editable_person_id( $user_id, (int) $payload['person_id'] );
 		$pending   = get_user_meta( $user_id, self::PENDING_META, true );
-		if ( is_wp_error( $person_id ) || (int) $person_id !== (int) $payload['person_id'] || ! is_array( $pending ) || ! hash_equals( (string) ( $pending['token_hash'] ?? '' ), $hash ) ) {
+		if ( is_wp_error( $person_id ) || ! is_array( $pending ) || ! hash_equals( (string) ( $pending['token_hash'] ?? '' ), $hash ) ) {
 			self::cancel_email_change( $user_id );
 			return new \WP_Error( 'rondo_stale_email_token', 'Deze verificatielink hoort niet meer bij het huidige profiel.' );
 		}
@@ -166,8 +174,8 @@ final class MemberProfileService {
 	}
 
 	/** Remove the secondary email immediately and mirror matching child slots. */
-	public static function remove_secondary_email( int $user_id ) {
-		$person_id = self::linked_person_id( $user_id );
+	public static function remove_secondary_email( int $user_id, ?int $requested_person_id = null ) {
+		$person_id = self::editable_person_id( $user_id, $requested_person_id );
 		if ( is_wp_error( $person_id ) ) {
 			return $person_id;
 		}
@@ -176,10 +184,13 @@ final class MemberProfileService {
 			return new \WP_Error( 'rondo_no_secondary_email', 'Er is geen tweede e-mailadres om te verwijderen.', [ 'status' => 400 ] );
 		}
 
-		$updates = [ $person_id => [ 'email_2' => '' ] ];
-		foreach ( self::minor_child_ids( $user_id, $person_id ) as $child_id ) {
-			if ( self::email( $child_id, 'email_2' ) === $old ) {
-				$updates[ $child_id ] = [ 'email_2' => '' ];
+		$updates   = [ $person_id => [ 'email_2' => '' ] ];
+		$linked_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+		if ( $person_id === $linked_id ) {
+			foreach ( self::minor_child_ids( $user_id, $person_id ) as $child_id ) {
+				if ( self::email( $child_id, 'email_2' ) === $old ) {
+					$updates[ $child_id ] = [ 'email_2' => '' ];
+				}
 			}
 		}
 
@@ -187,8 +198,8 @@ final class MemberProfileService {
 	}
 
 	/** Replace all four Rondo phone slots for the linked person. */
-	public static function update_phones( int $user_id, array $values ) {
-		$person_id = self::linked_person_id( $user_id );
+	public static function update_phones( int $user_id, array $values, ?int $requested_person_id = null ) {
+		$person_id = self::editable_person_id( $user_id, $requested_person_id );
 		if ( is_wp_error( $person_id ) ) {
 			return $person_id;
 		}
@@ -283,7 +294,8 @@ final class MemberProfileService {
 			$type    = $slot === 'primary' ? 'email_primary' : 'email_secondary';
 		}
 
-		foreach ( self::minor_child_ids( $user_id, $person_id ) as $child_id ) {
+		$linked_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+		foreach ( $person_id === $linked_id ? self::minor_child_ids( $user_id, $person_id ) : [] as $child_id ) {
 			$child_primary   = self::email( $child_id, 'email_1' );
 			$child_secondary = self::email( $child_id, 'email_2' );
 			$child_update    = [];
@@ -312,7 +324,7 @@ final class MemberProfileService {
 		}
 
 		$old_account = null;
-		if ( $slot === 'primary' ) {
+		if ( $slot === 'primary' && $person_id === $linked_id ) {
 			$old_account = self::sync_account_email( $user_id, $person_id, $new );
 			if ( is_wp_error( $old_account ) ) {
 				return $old_account;
@@ -330,6 +342,26 @@ final class MemberProfileService {
 			update_user_meta( $user_id, UserProvisioning::META_CONTACT_EMAIL, $old_account['contact_email'] );
 		}
 		return $result;
+	}
+
+	/** Resolve the linked member or one of their visible, writable minor children. */
+	private static function editable_person_id( int $user_id, ?int $requested_person_id = null ) {
+		$linked_id = self::linked_person_id( $user_id );
+		if ( is_wp_error( $linked_id ) ) {
+			return $linked_id;
+		}
+		$person_id = $requested_person_id ?: $linked_id;
+		if ( $person_id !== $linked_id && ! in_array( $person_id, AccessControl::get_visible_person_ids( $user_id ), true ) ) {
+			return new \WP_Error( 'rondo_profile_target_forbidden', 'Je kunt alleen je eigen gegevens en die van je minderjarige kinderen wijzigen.', [ 'status' => 403 ] );
+		}
+		$person = get_post( $person_id );
+		if ( ! $person || $person->post_type !== 'person' || $person->post_status !== 'publish' ) {
+			return new \WP_Error( 'rondo_profile_target_not_found', 'Dit gezinslid kon niet worden gevonden.', [ 'status' => 404 ] );
+		}
+		if ( CommunicationPolicy::is_deceased( $person_id ) || ( (bool) Fields::try_get_for_post( $person_id, 'former_member' ) && ! user_can( $user_id, 'manage_options' ) ) ) {
+			return new \WP_Error( 'rondo_profile_readonly', 'Dit ledenprofiel is alleen-lezen.', [ 'status' => 403 ] );
+		}
+		return $person_id;
 	}
 
 	/** Persist a set of canonical person changes, touch modified dates and log once. */
