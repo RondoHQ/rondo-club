@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.6.1] - 2026-08-24
+
+### Fixed
+
+- Het ruimteformulier laadt nu direct de juiste gegevens wanneer een beheerder vanuit een andere ruimte naar bewerken wisselt.
+
 ## [35.6.0] - 2026-08-24
 
 ### Added
