@@ -2,7 +2,6 @@ import { Outlet } from 'react-router-dom';
 import { useVersionCheck } from '@/hooks/useVersionCheck';
 import { useTheme } from '@/hooks/useTheme';
 import { OfflineBanner } from '@/components/OfflineBanner';
-import { InstallPrompt } from '@/components/InstallPrompt';
 import { IOSInstallModal } from '@/components/IOSInstallModal';
 import { ReloadPrompt } from '@/components/ReloadPrompt';
 import { RefreshCw } from 'lucide-react';
@@ -38,11 +37,8 @@ function App() {
     <div className="app-root">
       <UpdateBanner />
       <OfflineBanner />
-      {/* Registers the service worker. Without this mounted nothing registers
-          it, Chrome never fires beforeinstallprompt, and InstallPrompt below
-          can never appear. */}
+      {/* Registers the service worker and enables browser-managed installation. */}
       <ReloadPrompt />
-      <InstallPrompt />
       <IOSInstallModal />
       <Outlet />
     </div>
