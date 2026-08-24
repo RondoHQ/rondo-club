@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.6.5] - 2026-08-24
+
+### Changed
+
+- De navigatietabs van Ruimtes gebruiken dezelfde actieve tabstijl als Instellingen.
+
+### Fixed
+
+- Een aangemaakte of gewijzigde reservering wordt direct in de beschikbaarheid verwerkt.
+
 ## [35.6.4] - 2026-08-24
 
 ### Fixed
