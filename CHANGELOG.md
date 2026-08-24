@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.6.2] - 2026-08-24
+
+### Fixed
+
+- De reserveringsknop blijft beschikbaar voor vrijwilligersfuncties waarvan het gekoppelde commissie- of teamtype niet expliciet in de werkhistorie staat.
+
 ## [35.6.1] - 2026-08-24
 
 ### Fixed
