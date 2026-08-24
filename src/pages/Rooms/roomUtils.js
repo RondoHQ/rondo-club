@@ -16,6 +16,37 @@ export function rangeForDate(date, days = 1) {
   return { start: start.toISOString(), end: end.toISOString() };
 }
 
+export function upsertAvailabilityBooking(bookings = [], booking, range) {
+  const withoutBooking = bookings.filter((item) => item.id !== booking.id);
+  const start = new Date(booking.start_datetime).getTime();
+  const end = new Date(booking.effective_end_datetime || booking.end_datetime).getTime();
+  const rangeStart = new Date(range?.start).getTime();
+  const rangeEnd = new Date(range?.end).getTime();
+
+  if (
+    booking.status === 'cancelled'
+    || !Number.isFinite(start)
+    || !Number.isFinite(end)
+    || !Number.isFinite(rangeStart)
+    || !Number.isFinite(rangeEnd)
+    || start >= rangeEnd
+    || end <= rangeStart
+  ) {
+    return withoutBooking;
+  }
+
+  return [
+    ...withoutBooking,
+    {
+      id: booking.id,
+      room_id: booking.room_id,
+      start_datetime: booking.start_datetime,
+      end_datetime: booking.effective_end_datetime || booking.end_datetime,
+      status: booking.status,
+    },
+  ].sort((left, right) => left.start_datetime.localeCompare(right.start_datetime));
+}
+
 export function contextValue(context) {
   return context.type === 'commissie'
     ? `commissie:${context.commissie_id}`

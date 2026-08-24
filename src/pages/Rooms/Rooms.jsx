@@ -19,6 +19,7 @@ import { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
+import TabButton from '@/components/TabButton';
 import {
   contextPayload,
   contextValue,
@@ -27,6 +28,7 @@ import {
   localDateTimeIso,
   localDateValue,
   rangeForDate,
+  upsertAvailabilityBooking,
 } from './roomUtils';
 
 const STATUS_LABELS = {
@@ -86,6 +88,17 @@ export default function Rooms() {
     ]);
   };
 
+  const syncAvailabilityCache = (booking) => {
+    for (const [queryKey] of queryClient.getQueriesData({ queryKey: ['rooms', 'availability'] })) {
+      queryClient.setQueryData(queryKey, (current = []) => upsertAvailabilityBooking(current, booking, queryKey[2]));
+    }
+  };
+
+  const refreshRoomBookingData = async (booking) => {
+    await invalidateRoomData();
+    syncAvailabilityCache(booking);
+  };
+
   const actionMutation = useMutation({
     mutationFn: async ({ action, booking, reason = '' }) => {
       if (action === 'cancel') return prmApi.cancelRoomBooking(booking.id, reason);
@@ -93,7 +106,7 @@ export default function Rooms() {
       return prmApi.setRoomPresentationOverride(booking.id, action);
     },
     onSuccess: async (response) => {
-      await invalidateRoomData();
+      await refreshRoomBookingData(response.data);
       setMessage(response.data?.notification?.status === 'no_email'
         ? 'Opgeslagen; de houder heeft geen bruikbaar e-mailadres.'
         : 'De reservering is bijgewerkt.');
@@ -157,19 +170,18 @@ export default function Rooms() {
         )}
       </header>
 
-      <nav className="flex gap-2 overflow-x-auto border-b border-gray-200 pb-2 dark:border-gray-700" aria-label="Ruimtes">
-        {tabs.map(([value, label]) => (
-          <button
-            key={value}
-            type="button"
-            className={tab === value ? 'btn-primary whitespace-nowrap' : 'btn-tertiary whitespace-nowrap'}
-            aria-pressed={tab === value}
-            onClick={() => setTab(value)}
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
+      <div className="border-b border-gray-200 dark:border-gray-700">
+        <nav className="-mb-px flex space-x-8 overflow-x-auto [&>button]:shrink-0 [&>button]:whitespace-nowrap" aria-label="Ruimtes">
+          {tabs.map(([value, label]) => (
+            <TabButton
+              key={value}
+              label={label}
+              isActive={tab === value}
+              onClick={() => setTab(value)}
+            />
+          ))}
+        </nav>
+      </div>
 
       {message && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
@@ -230,7 +242,7 @@ export default function Rooms() {
           booking={bookingModal.booking}
           onClose={() => setBookingModal(null)}
           onSaved={async (booking) => {
-            await invalidateRoomData();
+            await refreshRoomBookingData(booking);
             setBookingModal(null);
             setMessage(booking.notification?.status === 'no_email'
               ? 'Reservering opgeslagen; de houder heeft geen bruikbaar e-mailadres.'

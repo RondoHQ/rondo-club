@@ -6,6 +6,7 @@ import {
   groupBookingsByDate,
   localDateTimeIso,
   rangeForDate,
+  upsertAvailabilityBooking,
 } from '../../src/pages/Rooms/roomUtils.js';
 
 test('serializes server-derived booking contexts', () => {
@@ -41,4 +42,34 @@ test('groups bookings by local start date in chronological order', () => {
 
   assert.deepEqual(groups.map(([date]) => date), ['2026-09-01', '2026-09-02']);
   assert.deepEqual(groups[0][1].map(({ id }) => id), [1, 3]);
+});
+
+test('keeps availability cache aligned after booking changes', () => {
+  const range = rangeForDate('2026-08-24');
+  const booking = {
+    id: 10510,
+    room_id: 10509,
+    start_datetime: '2026-08-24T19:00:00+02:00',
+    end_datetime: '2026-08-24T20:00:00+02:00',
+    effective_end_datetime: '2026-08-24T20:00:00+02:00',
+    status: 'confirmed',
+    purpose: 'Niet openbaar maken',
+  };
+
+  const inserted = upsertAvailabilityBooking([], booking, range);
+  assert.deepEqual(inserted, [{
+    id: 10510,
+    room_id: 10509,
+    start_datetime: '2026-08-24T19:00:00+02:00',
+    end_datetime: '2026-08-24T20:00:00+02:00',
+    status: 'confirmed',
+  }]);
+
+  assert.deepEqual(upsertAvailabilityBooking(inserted, { ...booking, status: 'cancelled' }, range), []);
+  assert.deepEqual(upsertAvailabilityBooking(inserted, {
+    ...booking,
+    start_datetime: '2026-08-25T19:00:00+02:00',
+    end_datetime: '2026-08-25T20:00:00+02:00',
+    effective_end_datetime: '2026-08-25T20:00:00+02:00',
+  }, range), []);
 });
