@@ -7,10 +7,8 @@ import { isStandalone } from '@/utils/platform';
 /**
  * InstallAppButton - always-available way to install the app.
  *
- * The automatic prompts are gated on engagement and back off after a dismissal,
- * so a member who wants the app on their home screen right now had no way to
- * ask for it. This sits in the sidebar and is the only install affordance that
- * works on every platform, including iOS where no install API exists.
+ * This sits in the sidebar and is the install affordance that works on every
+ * platform, including iOS where no install API exists.
  *
  * On Chromium it fires the real native prompt when one was captured; otherwise
  * it explains where the browser hides the option.

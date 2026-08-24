@@ -7,9 +7,7 @@ const NOTES_KEY = 'pwa-notes-added';
 /**
  * Last path counted, shared across every consumer of the hook.
  *
- * InstallPrompt and IOSInstallModal both track engagement and both re-run on
- * the same navigation, so without this guard a single route change would count
- * as two page views.
+ * Keep page-view counting stable if this hook gains another consumer.
  */
 let lastCountedPath = null;
 
@@ -36,7 +34,7 @@ function recordPageView(pathname) {
 }
 
 /**
- * React hook that tracks user engagement for timing install prompts.
+ * React hook that tracks user engagement for timing the iOS install prompt.
  * Uses sessionStorage to track page views and note additions.
  *
  * Counts client-side navigations, not document loads. Rondo is a single page
@@ -74,7 +72,7 @@ export function useEngagementTracking({
  * Call this from note/activity creation success handlers.
  *
  * Increments counter in sessionStorage, which is used by useEngagementTracking
- * to determine when to show install prompts.
+ * to determine when to show the iOS install prompt.
  */
 export function trackNoteAdded() {
   const count = readCount(NOTES_KEY);

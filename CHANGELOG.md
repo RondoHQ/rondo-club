@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.6.6] - 2026-08-24
+
+### Removed
+
+- De automatische toast “Installeer AWC Rondo” wordt niet meer getoond; installeren blijft mogelijk via “App installeren” in het menu.
+
 ## [35.6.5] - 2026-08-24
 
 ### Changed

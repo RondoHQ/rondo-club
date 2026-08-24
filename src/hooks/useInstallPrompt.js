@@ -4,18 +4,12 @@ import { isStandalone } from '../utils/platform';
 
 /**
  * React hook that captures the beforeinstallprompt event for Android PWA installation.
- * Manages install prompt state and provides functions to trigger or dismiss the prompt.
+ * Manages install prompt state for the explicit "App installeren" action.
  *
- * `canInstall` drives the automatic banner and respects the dismissal backoff.
- * `hasNativePrompt` reports whether a real prompt was captured at all, and
- * ignores the backoff — an explicit "App installeren" click should always fire
- * the native dialog, however often the passive banner was waved away.
- *
- * @returns {Object} - { canInstall, hasNativePrompt, promptInstall, hidePrompt, isInstalled }
+ * @returns {Object} - { hasNativePrompt, promptInstall, isInstalled }
  */
 export function useInstallPrompt() {
   const [installPrompt, setInstallPrompt] = useState(null);
-  const [canInstall, setCanInstall] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
@@ -32,17 +26,11 @@ export function useInstallPrompt() {
 
       // Store the event for later use
       setInstallPrompt(e);
-
-      // Check if user previously dismissed and if we should show prompt
-      if (installTracking.shouldShowPrompt()) {
-        setCanInstall(true);
-      }
     };
 
     const handleAppInstalled = () => {
       // Clear prompt state
       setInstallPrompt(null);
-      setCanInstall(false);
       setIsInstalled(true);
 
       // Track successful installation
@@ -77,14 +65,8 @@ export function useInstallPrompt() {
       const choiceResult = await installPrompt.userChoice;
       const outcome = choiceResult.outcome;
 
-      // Track dismissal if user declined
-      if (outcome === 'dismissed') {
-        installTracking.trackDismissal();
-      }
-
       // Clear state
       setInstallPrompt(null);
-      setCanInstall(false);
 
       return { outcome };
     } catch (error) {
@@ -93,20 +75,9 @@ export function useInstallPrompt() {
     }
   };
 
-  /**
-   * Hide the install prompt without triggering native prompt
-   * Tracks dismissal for future prompt timing
-   */
-  const hidePrompt = () => {
-    installTracking.trackDismissal();
-    setCanInstall(false);
-  };
-
   return {
-    canInstall,
     hasNativePrompt: installPrompt !== null,
     promptInstall,
-    hidePrompt,
     isInstalled,
   };
 }
