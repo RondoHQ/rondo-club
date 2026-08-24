@@ -77,6 +77,24 @@ class RoomBookingsTest extends RondoTestCase {
 		$this->assertSame( 'created', $this->service->activity( $booking['id'] )[0]['action'] );
 	}
 
+	public function test_blank_entity_type_uses_the_linked_commission_type(): void {
+		$holder_id    = $this->createRondoUser();
+		$commissie_id = self::factory()->post->create(
+			[
+				'post_type'   => 'commissie',
+				'post_status' => 'publish',
+				'post_title'  => 'Ledenadministratie',
+			]
+		);
+		$this->link_user_with_roles( $holder_id, [ $this->position( $commissie_id, '', 'Voorzitter' ) ] );
+
+		$contexts = BookingEligibility::for_user( $holder_id );
+
+		$this->assertCount( 1, $contexts );
+		$this->assertSame( 'commissie', $contexts[0]['type'] );
+		$this->assertSame( $commissie_id, $contexts[0]['commissie_id'] );
+	}
+
 	public function test_accommodation_role_can_operate_but_cannot_permanently_delete_bookings(): void {
 		$manager_id   = self::factory()->user->create( [ 'role' => 'rondo_accommodatiebeheerder' ] );
 		$capabilities = PostTypes::capability_map( BookingService::BOOKING_POST_TYPE );

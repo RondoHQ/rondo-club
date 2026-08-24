@@ -40,7 +40,10 @@ final class BookingEligibility {
 			}
 
 			$entity_id   = (int) ( $position['team'] ?? $position['team_id'] ?? 0 );
-			$entity_type = (string) ( $position['entity_type'] ?? get_post_type( $entity_id ) );
+			$entity_type = (string) ( $position['entity_type'] ?? '' );
+			if ( $entity_type === '' ) {
+				$entity_type = (string) get_post_type( $entity_id );
+			}
 			if ( $entity_id <= 0 ) {
 				continue;
 			}
