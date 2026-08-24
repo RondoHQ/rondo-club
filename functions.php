@@ -98,13 +98,12 @@ function rondo_register_fallback_autoloader() {
 rondo_register_fallback_autoloader();
 
 /**
- * Whether the room reservation feature is enabled for this site.
+ * Backward-compatible room feature availability helper.
  *
- * The option deliberately defaults to false so a deployment never exposes the
- * feature before the site has configured rooms and completed its pilot.
+ * @deprecated 35.4.0 Use Rondo\Config\FeatureToggles directly.
  */
 function rondo_rooms_enabled(): bool {
-	return (bool) apply_filters( 'rondo_rooms_enabled', get_option( 'rondo_rooms_enabled', false ) );
+	return \Rondo\Config\FeatureToggles::is_available( 'rooms' );
 }
 
 // PSR-4 namespaced class imports
@@ -115,6 +114,7 @@ use Rondo\Core\PhoneNormalizer;
 use Rondo\Core\VolunteerStatus;
 use Rondo\Core\AccessControl;
 use Rondo\Core\UserRoles;
+use Rondo\Config\FeatureToggles;
 use Rondo\Abilities\Registrar as AbilityRegistrar;
 use Rondo\REST\Api;
 use Rondo\REST\People;
@@ -345,7 +345,9 @@ function rondo_init() {
 		new RESTFeedback();
 		new RESTInvoices();
 		new RESTMembershipPasses();
-		new RESTClothing();
+		if ( FeatureToggles::is_available( 'clothing' ) ) {
+			new RESTClothing();
+		}
 		new RESTUserSettings();
 		new RESTUsers();
 		new RESTReminders();
@@ -358,7 +360,7 @@ function rondo_init() {
 		new RESTCapabilities();
 		new RESTFinanceSettings();
 		new RESTNarrowcasting();
-		if ( rondo_rooms_enabled() ) {
+		if ( FeatureToggles::is_available( 'rooms' ) ) {
 			new RESTRooms();
 		}
 		new \Rondo\REST\MemberProfile();
@@ -727,9 +729,7 @@ function rondo_get_js_config() {
 		'freescoutUrl'        => $club_settings['freescout_url'],
 		'isDemo'              => (bool) get_option( 'rondo_is_demo_site', false ),
 		'isDemoUser'          => (bool) get_option( 'rondo_is_demo_site', false ) && $user && $user->user_login === 'demo',
-		'features'            => [
-			'rooms' => rondo_rooms_enabled(),
-		],
+		'featureToggles'      => FeatureToggles::get_all(),
 	];
 }
 

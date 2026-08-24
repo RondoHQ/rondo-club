@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.4.0] - 2026-08-24
+
+### Added
+
+- Beheerders kunnen Ruimtes, Kleding en Club TV per site op Aan, Uit of Admin-only zetten via Instellingen → Beheer → Feature toggles.
+
+### Changed
+
+- Feature toggles bewaken gezamenlijk de navigatie, browserroutes en menselijke REST-toegang; Club TV-players blijven ook bij een uitgeschakelde beheerfunctie hun bestaande afspeellijsten ophalen.
+- De bestaande ruimtesvlag wordt automatisch als togglewaarde gebruikt totdat de nieuwe instellingen voor het eerst worden opgeslagen.
+
 ## [35.3.1] - 2026-08-23
 
 ### Changed

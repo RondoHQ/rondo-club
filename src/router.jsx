@@ -7,6 +7,7 @@ import Layout from '@/components/layout/Layout';
 import { PageLoadingSpinner, ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { Shield } from 'lucide-react';
 import App from './App';
+import { canAccessFeature } from '@/utils/featureToggles';
 
 // Direct import for Dashboard (no lazy loading)
 import Dashboard from '@/pages/Dashboard';
@@ -110,8 +111,14 @@ function NarrowcastingRoute({ children }) {
   );
 }
 
-function RoomsFeatureRoute({ children }) {
-  if (!window.rondoConfig?.features?.rooms) {
+function FeatureRoute({ feature, children }) {
+  const { data: user, isLoading } = useCurrentUser();
+
+  if (isLoading) {
+    return <PageLoadingSpinner />;
+  }
+
+  if (!canAccessFeature(feature, user?.is_admin)) {
     return <Navigate to="/" replace />;
   }
 
@@ -548,17 +555,21 @@ const router = createBrowserRouter([
           {
             path: 'kleding/:tab',
             element: (
-              <ClothingRoute>
-                <ClothingPage />
-              </ClothingRoute>
+              <FeatureRoute feature="clothing">
+                <ClothingRoute>
+                  <ClothingPage />
+                </ClothingRoute>
+              </FeatureRoute>
             ),
           },
           {
             path: 'kleding',
             element: (
-              <ClothingRoute>
-                <ClothingPage />
-              </ClothingRoute>
+              <FeatureRoute feature="clothing">
+                <ClothingRoute>
+                  <ClothingPage />
+                </ClothingRoute>
+              </FeatureRoute>
             ),
           },
 
@@ -577,13 +588,15 @@ const router = createBrowserRouter([
           {
             path: 'narrowcasting',
             element: (
-              <NarrowcastingRoute>
-                <Narrowcasting />
-              </NarrowcastingRoute>
+              <FeatureRoute feature="narrowcasting">
+                <NarrowcastingRoute>
+                  <Narrowcasting />
+                </NarrowcastingRoute>
+              </FeatureRoute>
             ),
           },
-          { path: 'presenteren', element: <PresentationSender /> },
-          { path: 'rooms', element: <RoomsFeatureRoute><Rooms /></RoomsFeatureRoute> },
+          { path: 'presenteren', element: <FeatureRoute feature="narrowcasting"><PresentationSender /></FeatureRoute> },
+          { path: 'rooms', element: <FeatureRoute feature="rooms"><Rooms /></FeatureRoute> },
 
           // Settings routes — kader only
           { path: 'settings/notifications', element: <Navigate to="/profile" replace /> },

@@ -136,7 +136,8 @@ abstract class Base {
 	 * @return bool True if user has clothing capability.
 	 */
 	public function check_clothing_permission() {
-		return current_user_can( 'manage_clothing' ) || current_user_can( 'manage_options' );
+		return \Rondo\Config\FeatureToggles::can_access( 'clothing' )
+			&& ( current_user_can( 'manage_clothing' ) || current_user_can( 'manage_options' ) );
 	}
 
 	/**

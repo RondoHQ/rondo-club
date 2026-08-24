@@ -19,11 +19,13 @@ class RoomBookingsTest extends RondoTestCase {
 
 	protected function set_up(): void {
 		parent::set_up();
+		delete_option( \Rondo\Config\FeatureToggles::OPTION_NAME );
 		update_option( 'rondo_rooms_enabled', true );
 		$this->service = new BookingService();
 	}
 
 	protected function tear_down(): void {
+		delete_option( \Rondo\Config\FeatureToggles::OPTION_NAME );
 		delete_option( 'rondo_rooms_enabled' );
 		parent::tear_down();
 	}
@@ -31,7 +33,7 @@ class RoomBookingsTest extends RondoTestCase {
 	public function test_feature_flag_defaults_off_and_hides_rest_routes(): void {
 		delete_option( 'rondo_rooms_enabled' );
 		$this->assertFalse( \rondo_rooms_enabled() );
-		$this->assertFalse( rondo_get_js_config()['features']['rooms'] );
+		$this->assertSame( 'off', rondo_get_js_config()['featureToggles']['rooms'] );
 
 		$server = $this->bootRestControllers( [ Rooms::class ] );
 		$this->assertSame( 404, $this->dispatch( $server, 'GET', '/rondo/v1/rooms' )->get_status() );

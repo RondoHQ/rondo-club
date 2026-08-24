@@ -718,6 +718,23 @@ class Api extends Base {
 			]
 		);
 
+		register_rest_route(
+			'rondo/v1',
+			'/settings/feature-toggles',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_feature_toggles' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::EDITABLE,
+					'callback'            => [ $this, 'update_feature_toggles' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+			]
+		);
+
 		// Capability sync (admin only — called by rondo-sync per member)
 		register_rest_route(
 			'rondo/v1',
@@ -1832,6 +1849,40 @@ class Api extends Base {
 	 */
 	public function get_club_config( $request ) {
 		return rest_ensure_response( \Rondo\Config\ClubConfig::get_all_settings() );
+	}
+
+	/** Return feature definitions and their effective states. */
+	public function get_feature_toggles() {
+		return rest_ensure_response(
+			[
+				'features' => \Rondo\Config\FeatureToggles::definitions(),
+				'states'   => \Rondo\Config\FeatureToggles::get_all(),
+			]
+		);
+	}
+
+	/** Persist feature toggle states. */
+	public function update_feature_toggles( $request ) {
+		$states = $request->get_param( 'states' );
+		if ( ! is_array( $states ) ) {
+			return new \WP_Error(
+				'rondo_feature_toggles_required',
+				__( 'Geef de gewenste feature toggles door.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$result = \Rondo\Config\FeatureToggles::update( $states );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return rest_ensure_response(
+			[
+				'features' => \Rondo\Config\FeatureToggles::definitions(),
+				'states'   => $result,
+			]
+		);
 	}
 
 	/**
