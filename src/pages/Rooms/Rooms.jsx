@@ -638,7 +638,7 @@ function UserSearch({ label, value, setValue, results, selected, onSelect, onRem
         <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{label}</span>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input className="input w-full pl-9" value={value} onChange={(event) => setValue(event.target.value)} placeholder="Zoek op naam…" />
+          <input className="input input-leading-icon w-full" value={value} onChange={(event) => setValue(event.target.value)} placeholder="Zoek op naam…" />
         </div>
       </label>
       {value.trim().length >= 2 && results.length > 0 && (

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.6.3] - 2026-08-24
+
+### Fixed
+
+- Het zoekicoon in de houder- en presentatorenvelden overlapt de placeholdertekst niet meer.
+
 ## [35.6.2] - 2026-08-24
 
 ### Fixed
