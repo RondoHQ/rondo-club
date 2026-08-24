@@ -23,7 +23,7 @@ final class Rooms extends Base {
 	public function __construct() {
 		parent::__construct();
 		$this->service = new BookingService();
-		if ( ! \rondo_rooms_enabled() ) {
+		if ( ! \Rondo\Config\FeatureToggles::is_available( 'rooms' ) ) {
 			return;
 		}
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
@@ -37,7 +37,7 @@ final class Rooms extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_rooms' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_feature_permission' ],
 			]
 		);
 		register_rest_route(
@@ -46,7 +46,7 @@ final class Rooms extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_availability' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_feature_permission' ],
 			]
 		);
 		register_rest_route(
@@ -55,7 +55,7 @@ final class Rooms extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_booking_contexts' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_feature_permission' ],
 			]
 		);
 		register_rest_route(
@@ -64,7 +64,7 @@ final class Rooms extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_my_bookings' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_feature_permission' ],
 			]
 		);
 		register_rest_route(
@@ -73,7 +73,7 @@ final class Rooms extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'create_booking' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_feature_permission' ],
 			]
 		);
 		register_rest_route(
@@ -175,7 +175,7 @@ final class Rooms extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_management_config' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_feature_admin_permission' ],
 			]
 		);
 		register_rest_route(
@@ -184,7 +184,7 @@ final class Rooms extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'create_room' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_feature_admin_permission' ],
 			]
 		);
 		register_rest_route(
@@ -193,23 +193,34 @@ final class Rooms extends Base {
 			[
 				'methods'             => \WP_REST_Server::EDITABLE,
 				'callback'            => [ $this, 'update_room' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_feature_admin_permission' ],
 				'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
 			]
 		);
 	}
 
 	public function check_manager_permission(): bool {
-		return current_user_can( 'accommodatiebeheer' ) || current_user_can( 'manage_options' );
+		return \Rondo\Config\FeatureToggles::can_access( 'rooms' )
+			&& ( current_user_can( 'accommodatiebeheer' ) || current_user_can( 'manage_options' ) );
+	}
+
+	public function check_feature_permission(): bool {
+		return \Rondo\Config\FeatureToggles::can_access( 'rooms' ) && $this->check_user_approved();
+	}
+
+	public function check_feature_admin_permission(): bool {
+		return \Rondo\Config\FeatureToggles::can_access( 'rooms' ) && $this->check_admin_permission();
 	}
 
 	public function check_booking_read( $request ): bool {
-		return is_user_logged_in() && $this->service->user_can_read_booking( absint( $request->get_param( 'id' ) ), get_current_user_id() );
+		return $this->check_feature_permission()
+			&& $this->service->user_can_read_booking( absint( $request->get_param( 'id' ) ), get_current_user_id() );
 	}
 
 	public function check_booking_write( $request ): bool {
-		return $this->check_manager_permission()
-			|| ( is_user_logged_in() && $this->service->user_is_holder( absint( $request->get_param( 'id' ) ), get_current_user_id() ) );
+		return \Rondo\Config\FeatureToggles::can_access( 'rooms' )
+			&& ( $this->check_manager_permission()
+				|| ( is_user_logged_in() && $this->service->user_is_holder( absint( $request->get_param( 'id' ) ), get_current_user_id() ) ) );
 	}
 
 	public function get_rooms( $request ) {

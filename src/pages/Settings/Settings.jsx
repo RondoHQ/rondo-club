@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, UserPlus, Wrench, AlertCircle, Wallet, Award, Mail, X, Plus, Trash2 } from 'lucide-react';
+import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, UserPlus, Wrench, AlertCircle, Wallet, Award, Mail, X, Plus, Trash2, SlidersHorizontal } from 'lucide-react';
 import { APP_NAME } from '@/constants/app';
 import api, { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -10,13 +10,14 @@ import FinanceSettings from '@/pages/Finance/FinanceSettings';
 import VOGSettings from '@/pages/VOG/VOGSettings';
 import RichTextEditor from '@/components/RichTextEditor';
 import { useClothingSettings, useUpdateClothingSettings } from '@/hooks/useClothing';
+import { canAccessFeature } from '@/utils/featureToggles';
 
 
 // Tab configuration (no icons - using TabButton component)
 const TABS = [
   { id: 'appearance', label: 'Club' },
   { id: 'connections', label: 'Koppelingen' },
-  { id: 'clothing', label: 'Kleding', requiresClothing: true },
+  { id: 'clothing', label: 'Kleding', requiresClothing: true, requiresFeature: 'clothing' },
   { id: 'financieel', label: 'Financieel', requiresFinancieel: true },
   { id: 'vog', label: 'VOG', adminOnly: true, requiresVOG: true },
   { id: 'admin', label: 'Beheer', adminOnly: true },
@@ -34,6 +35,7 @@ const CONNECTION_SUBTABS = [
 
 // Admin subtabs configuration
 const ADMIN_SUBTABS = [
+  { id: 'toggles', label: 'Feature toggles', icon: SlidersHorizontal },
   { id: 'users', label: 'Gebruikers', icon: Users },
   { id: 'rollen', label: 'Rollen' },
   { id: 'functies', label: 'Functies' },
@@ -87,6 +89,7 @@ export default function Settings() {
   // Filter tabs based on capabilities.
   const visibleTabs = TABS.filter((tab) => {
     if (tab.adminOnly && !isAdmin) return false;
+    if (tab.requiresFeature && !canAccessFeature(tab.requiresFeature, isAdmin)) return false;
     if (tab.requiresClothing && !canAccessClothing) return false;
     if (tab.requiresFinancieel && !canEditFinancieel) return false;
     if (tab.requiresVOG && !canAccessVOG) return false;
@@ -2164,7 +2167,9 @@ function AdminTabWithSubtabs({
       </div>
 
       {/* Subtab Content */}
-      {activeSubtab === 'users' || !activeSubtab ? (
+      {activeSubtab === 'toggles' ? (
+        <FeatureTogglesTab />
+      ) : activeSubtab === 'users' || !activeSubtab ? (
         <GebruikersTab />
       ) : activeSubtab === 'rollen' ? (
         <div className="card p-6">
@@ -2251,6 +2256,98 @@ function AdminTabWithSubtabs({
           cronMessage={cronMessage}
         />
       ) : null}
+    </div>
+  );
+}
+
+const FEATURE_STATE_OPTIONS = [
+  { value: 'on', label: 'Aan', description: 'Beschikbaar voor gebruikers met de juiste rechten.' },
+  { value: 'off', label: 'Uit', description: 'Verborgen en niet toegankelijk, ook niet voor administrators.' },
+  { value: 'admin_only', label: 'Admin-only', description: 'Alleen administrators kunnen de functie zien en inregelen.' },
+];
+
+function FeatureTogglesTab() {
+  const [features, setFeatures] = useState({});
+  const [states, setStates] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState(null);
+
+  useEffect(() => {
+    prmApi.getFeatureToggles()
+      .then((response) => {
+        setFeatures(response.data?.features || {});
+        setStates(response.data?.states || {});
+      })
+      .catch((error) => setMessage({ type: 'error', text: error.response?.data?.message || 'Kon de feature toggles niet laden.' }))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const response = await prmApi.updateFeatureToggles(states);
+      window.rondoConfig.featureToggles = response.data?.states || states;
+      window.location.reload();
+    } catch (error) {
+      setMessage({ type: 'error', text: error.response?.data?.message || 'Kon de feature toggles niet opslaan.' });
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="card flex justify-center p-8">
+        <Loader2 className="h-6 w-6 animate-spin text-electric-cyan" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="card p-6">
+      <h2 className="text-lg font-semibold text-brand-gradient">Feature toggles</h2>
+      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        Zet een functie eerst op Admin-only om haar buiten het zicht van gewone gebruikers in te regelen.
+      </p>
+
+      <div className="mt-6 divide-y divide-gray-200 rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700">
+        {Object.entries(features).map(([feature, definition]) => (
+          <fieldset key={feature} className="p-4 sm:flex sm:items-start sm:justify-between sm:gap-6">
+            <legend className="font-medium text-gray-900 dark:text-gray-100">{definition.label}</legend>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 sm:max-w-sm">{definition.description}</p>
+            <div className="mt-3 grid gap-2 sm:mt-0 sm:min-w-64">
+              {FEATURE_STATE_OPTIONS.map((option) => (
+                <label key={option.value} className="flex cursor-pointer items-start gap-2 rounded-md p-2 hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <input
+                    type="radio"
+                    name={`feature-${feature}`}
+                    value={option.value}
+                    checked={states[feature] === option.value}
+                    onChange={() => setStates((current) => ({ ...current, [feature]: option.value }))}
+                    className="mt-1"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium text-gray-900 dark:text-gray-100">{option.label}</span>
+                    <span className="block text-xs text-gray-500 dark:text-gray-400">{option.description}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        ))}
+      </div>
+
+      {message && (
+        <p className="mt-4 text-sm text-red-600 dark:text-red-400">{message.text}</p>
+      )}
+
+      <div className="mt-6 flex justify-end">
+        <button type="button" onClick={handleSave} disabled={saving} className="btn-primary gap-2 disabled:opacity-50">
+          {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+          Opslaan
+        </button>
+      </div>
     </div>
   );
 }

@@ -16,6 +16,9 @@ class Clothing extends Base {
 	 */
 	public function __construct() {
 		parent::__construct();
+		if ( ! \Rondo\Config\FeatureToggles::is_available( 'clothing' ) ) {
+			return;
+		}
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 

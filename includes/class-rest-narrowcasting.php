@@ -143,7 +143,7 @@ class Narrowcasting extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_displays' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_narrowcasting_admin_permission' ],
 			]
 		);
 
@@ -153,7 +153,7 @@ class Narrowcasting extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'update_display' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_narrowcasting_admin_permission' ],
 				'args'                => [
 					'id' => [
 						'sanitize_callback' => 'absint',
@@ -181,12 +181,12 @@ class Narrowcasting extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_matchday_settings' ],
-					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'permission_callback' => [ $this, 'check_narrowcasting_admin_permission' ],
 				],
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'update_matchday_settings' ],
-					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'permission_callback' => [ $this, 'check_narrowcasting_admin_permission' ],
 				],
 			]
 		);
@@ -197,7 +197,7 @@ class Narrowcasting extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'refresh_matchday_feed' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_narrowcasting_admin_permission' ],
 			]
 		);
 
@@ -217,7 +217,7 @@ class Narrowcasting extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'approve_display' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_narrowcasting_admin_permission' ],
 			]
 		);
 
@@ -227,7 +227,7 @@ class Narrowcasting extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'queue_display_command' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_narrowcasting_admin_permission' ],
 				'args'                => [
 					'id' => [
 						'sanitize_callback' => 'absint',
@@ -242,7 +242,7 @@ class Narrowcasting extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'revoke_display' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_narrowcasting_admin_permission' ],
 				'args'                => [
 					'id' => [
 						'sanitize_callback' => 'absint',
@@ -270,7 +270,7 @@ class Narrowcasting extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'join_presentation_session' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_presentation_user_permission' ],
 			]
 		);
 
@@ -416,7 +416,7 @@ class Narrowcasting extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'assign_display_playlist' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_narrowcasting_admin_permission' ],
 				'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
 			]
 		);
@@ -732,6 +732,9 @@ class Narrowcasting extends Base {
 		if ( ! \rondo_rooms_enabled() && (int) ( $session['booking_id'] ?? 0 ) > 0 ) {
 			$this->delete_presentation_session( $session['id'] );
 			return new \WP_Error( 'rondo_presentation_expired', __( 'Deze presentatiesessie is verlopen.', 'rondo' ), [ 'status' => 410 ] );
+		}
+		if ( (int) ( $session['booking_id'] ?? 0 ) > 0 && ! \Rondo\Config\FeatureToggles::can_access( 'rooms' ) ) {
+			return new \WP_Error( 'rondo_presentation_not_authorized', __( 'Je hebt nu geen toegang tot dit scherm.', 'rondo' ), [ 'status' => 403 ] );
 		}
 		$booking_service = \rondo_rooms_enabled() ? new BookingService() : null;
 		if ( $booking_service && ( (int) ( $session['booking_id'] ?? 0 ) > 0 || $booking_service->display_is_reservation_controlled( (int) $session['display_id'] ) ) ) {
@@ -1349,12 +1352,24 @@ class Narrowcasting extends Base {
 
 	/** Allow dedicated content managers and sponsor managers into Club TV. */
 	public function check_content_permission(): bool {
-		return current_user_can( 'manage_options' ) || current_user_can( 'narrowcasting' ) || current_user_can( 'sponsorbeheer' );
+		return \Rondo\Config\FeatureToggles::can_access( 'narrowcasting' )
+			&& ( current_user_can( 'manage_options' ) || current_user_can( 'narrowcasting' ) || current_user_can( 'sponsorbeheer' ) );
 	}
 
 	/** Playlist structure and overrides are outside the sponsor-only role. */
 	public function check_playlist_permission(): bool {
-		return current_user_can( 'manage_options' ) || current_user_can( 'narrowcasting' );
+		return \Rondo\Config\FeatureToggles::can_access( 'narrowcasting' )
+			&& ( current_user_can( 'manage_options' ) || current_user_can( 'narrowcasting' ) );
+	}
+
+	/** Club TV administrator access, including the feature state. */
+	public function check_narrowcasting_admin_permission(): bool {
+		return \Rondo\Config\FeatureToggles::can_access( 'narrowcasting' ) && $this->check_admin_permission();
+	}
+
+	/** Browser presentation access, including the feature state. */
+	public function check_presentation_user_permission(): bool {
+		return \Rondo\Config\FeatureToggles::can_access( 'narrowcasting' ) && $this->check_user_approved();
 	}
 
 	private function is_sponsor_only_user(): bool {
@@ -1611,6 +1626,9 @@ class Narrowcasting extends Base {
 		}
 		if ( $role === '' ) {
 			return new \WP_Error( 'rondo_presentation_unauthorized', __( 'De presentatiecredential is ongeldig.', 'rondo' ), [ 'status' => 401 ] );
+		}
+		if ( $role === 'sender' && ! \Rondo\Config\FeatureToggles::can_access( 'narrowcasting', (int) ( $session['user_id'] ?? 0 ) ) ) {
+			return new \WP_Error( 'rondo_presentation_unauthorized', __( 'Je hebt geen toegang meer tot deze presentatie.', 'rondo' ), [ 'status' => 403 ] );
 		}
 
 		return [

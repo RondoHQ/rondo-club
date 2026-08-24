@@ -53,6 +53,7 @@ import { useCreateFeedback } from '@/hooks/useFeedback';
 import { useVOGCount } from '@/hooks/useVOGCount';
 import { useDisciplineCasesCount } from '@/hooks/useDisciplineCases';
 import { prmApi } from '@/api/client';
+import { canAccessFeature } from '@/utils/featureToggles';
 
 const navigation = [
   { name: 'Mijn inschrijftaken', href: '/vrijwillig', icon: HeartHandshake, personal: true },
@@ -67,7 +68,7 @@ const navigation = [
   { name: 'Sponsoren', href: '/sponsors', icon: Building2, requiresSponsors: true },
   { name: 'Teams', href: '/teams', icon: Shield, requiresKader: true },
   { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true, requiresKader: true },
-  { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true },
+  { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true, requiresFeature: 'clothing' },
   { name: 'Commissies', href: '/commissies', icon: UsersRound, requiresKader: true },
   { name: 'Vrijwilligers', href: '/vrijwilligers', icon: HeartHandshake, requiresVrijwilligers: true },
   { name: 'VOG', href: '/vrijwilligers/vog', icon: FileCheck, indent: true, requiresVOG: true },
@@ -83,7 +84,7 @@ const navigation = [
   { name: 'Lidpas Scanner', href: '/lidpas-scanner', icon: QrCode, requiresToegangscontrole: true, mobileOnly: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare, requiresKader: true },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare, requiresKader: true },
-  { name: 'Club TV', href: '/narrowcasting', icon: MonitorPlay, requiresNarrowcasting: true },
+  { name: 'Club TV', href: '/narrowcasting', icon: MonitorPlay, requiresNarrowcasting: true, requiresFeature: 'narrowcasting' },
   { name: 'Instellingen', href: '/settings', icon: Settings, requiresKader: true },
 ];
 
@@ -203,7 +204,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const visibleNav = navigation.filter((item) => {
     // Enforce mobile-only items regardless of role.
     if (item.mobileOnly && !mobile) return false;
-    if (item.requiresFeature && !window.rondoConfig?.features?.[item.requiresFeature]) return false;
+    if (item.requiresFeature && !canAccessFeature(item.requiresFeature, isAdmin)) return false;
     if (item.requiresLinkedPerson && !currentUser?.linked_person_id) return false;
     if (isAdmin) return true;
     if (item.adminOnly && !isAdmin) return false;
