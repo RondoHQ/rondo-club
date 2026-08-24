@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Check, Mail, MapPin, Pencil, Phone, Trash2, X } from 'lucide-react';
+import { SPORTLINK_EMAIL_SYNC_DELAY_MESSAGE } from '@/constants/contact';
 import {
   useCancelProfileEmailChange,
   usePendingProfileEmail,
@@ -95,7 +96,7 @@ function EmailEditor({ person, embedded }) {
       <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Een nieuw e-mailadres wordt pas opgeslagen nadat je de link in de verificatiemail hebt geopend.</p>
       <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-100">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-300" aria-hidden="true" />
-        <p>Let op: dit e-mailadres wordt ook aangepast in Sportlink, het systeem van de KNVB. Daarna moet je in Voetbal.nl inloggen met het nieuwe e-mailadres.</p>
+        <p>{SPORTLINK_EMAIL_SYNC_DELAY_MESSAGE} Daarna moet je in Voetbal.nl inloggen met het nieuwe e-mailadres.</p>
       </div>
 
       {pending ? (
