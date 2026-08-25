@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.7.1] - 2026-08-25
+
+### Added
+
+- Het ledenwijzigingslog toont “Actie nodig” wanneer Sportlink een wijziging pas na handmatig herstel kan verwerken.
+
 ## [35.7.0] - 2026-08-25
 
 ### Added

@@ -156,7 +156,7 @@ final class MemberProfile extends Base {
 					'status'    => [
 						'required' => true,
 						'type'     => 'string',
-						'enum'     => [ 'synced', 'failed' ],
+						'enum'     => [ 'synced', 'failed', 'action_required' ],
 					],
 					'error'     => [
 						'type'    => 'string',

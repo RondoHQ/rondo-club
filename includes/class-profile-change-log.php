@@ -122,7 +122,7 @@ final class ProfileChangeLog {
 				'meta_query'       => [
 					[
 						'key'     => '_rondo_profile_change_sync_status',
-						'value'   => [ 'pending', 'failed' ],
+						'value'   => [ 'pending', 'failed', 'action_required' ],
 						'compare' => 'IN',
 					],
 				],
@@ -157,7 +157,11 @@ final class ProfileChangeLog {
 					'at'        => current_time( 'mysql', true ),
 				];
 				update_post_meta( $post->ID, '_rondo_profile_change_sync_errors', $errors );
-				update_post_meta( $post->ID, '_rondo_profile_change_sync_status', 'failed' );
+				update_post_meta(
+					$post->ID,
+					'_rondo_profile_change_sync_status',
+					$status === 'action_required' ? 'action_required' : 'failed'
+				);
 			}
 			++$updated;
 		}
