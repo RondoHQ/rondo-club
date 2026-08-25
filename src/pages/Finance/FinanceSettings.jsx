@@ -42,6 +42,33 @@ function createEmptyMollieAccount() {
   };
 }
 
+function AppleCertificateStatus({ certificate }) {
+  const status = certificate?.status || 'missing';
+  const expiresAt = certificate?.expires_at
+    ? new Date(certificate.expires_at).toLocaleDateString('nl-NL')
+    : '';
+  const healthy = status === 'valid';
+
+  const messages = {
+    missing: 'Geen bruikbaar certificaat ingesteld.',
+    unreadable: 'Certificaat kan niet worden gelezen. Controleer het bestand en wachtwoord.',
+    expired: `Certificaat is verlopen op ${expiresAt}.`,
+    expires_soon: `Certificaat verloopt op ${expiresAt} (${certificate?.days_remaining ?? 0} dagen).`,
+    valid: `Certificaat is geldig tot ${expiresAt}.`,
+  };
+
+  return (
+    <div className={`mt-2 flex items-start gap-2 rounded-lg border p-3 text-sm ${
+      healthy
+        ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-200'
+        : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200'
+    }`}>
+      {healthy ? <CheckCircle className="mt-0.5 h-4 w-4 shrink-0" /> : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />}
+      <span>{messages[status] || messages.unreadable}</span>
+    </div>
+  );
+}
+
 function TestEmailBlock({ templateType }) {
   const [recipient, setRecipient] = useState('');
   const [sending, setSending] = useState(false);
@@ -1843,6 +1870,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                   Huidig bestand: {formData.membership_pass_apple_cert_url.split('/').pop()}
                 </div>
               )}
+              <AppleCertificateStatus certificate={settings?.membership_pass_apple_certificate_status} />
               <input
                 type="file"
                 accept=".p12,application/x-pkcs12"

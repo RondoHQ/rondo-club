@@ -14,7 +14,6 @@ use Google\Service\Walletobjects\Image;
 use Google\Service\Walletobjects\ImageUri;
 use Google\Service\Walletobjects\TextModuleData;
 use Rondo\Config\FinanceConfig;
-use Rondo\Fees\SeasonKey;
 use Rondo\Config\ClubConfig;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -76,7 +75,6 @@ class MembershipPassGoogle {
 
 		$class_suffix = $this->get_class_suffix();
 		$class_id     = $issuer_id . '.' . $class_suffix;
-		$season       = SeasonKey::current();
 
 		$qr_service = new MembershipPassQr();
 		$qr_result  = $qr_service->issue_for_person( $person_id );
@@ -191,7 +189,7 @@ class MembershipPassGoogle {
 			static function ( array $module ): TextModuleData {
 				return new TextModuleData( $module );
 			},
-			$this->get_text_module_definitions( $member_tier, $team_name, $functions, $company_name, $knvb_id, $season )
+			$this->get_text_module_definitions( $member_tier, $team_name, $functions, $company_name, $knvb_id )
 		);
 
 		$object = new GenericObject(
@@ -674,10 +672,9 @@ class MembershipPassGoogle {
 	 * @param string $functions Functions label.
 	 * @param string $company_name Company name.
 	 * @param string $knvb_id KNVB ID.
-	 * @param string $season Season key.
 	 * @return array<int, array{id: string, header: string, body: string}>
 	 */
-	private function get_text_module_definitions( string $member_tier, string $team_name, string $functions, string $company_name, string $knvb_id, string $season ): array {
+	private function get_text_module_definitions( string $member_tier, string $team_name, string $functions, string $company_name, string $knvb_id ): array {
 		if ( $member_tier === 'sponsor' ) {
 			$modules = [
 				[
@@ -708,12 +705,6 @@ class MembershipPassGoogle {
 				'body'   => $knvb_id,
 			];
 		}
-		$modules[] = [
-			'id'     => 'seizoen',
-			'header' => 'SEIZOEN',
-			'body'   => $season,
-		];
-
 		return $modules;
 	}
 

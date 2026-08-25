@@ -4,6 +4,16 @@ import { Camera, CameraOff, CheckCircle2, XCircle } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import jsQR from 'jsqr';
 
+function getInvalidPassMessage(reason) {
+  if (reason === 'revoked') {
+    return 'Deze pas is ingetrokken.';
+  }
+  if (reason === 'no_pass_right') {
+    return 'Geen geldig pasrecht.';
+  }
+  return 'Geen lid meer.';
+}
+
 export default function MembershipPassScanner() {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -58,7 +68,10 @@ export default function MembershipPassScanner() {
       setResult(response.data);
     } catch (error) {
       setResult(null);
-      setScanError(error?.response?.data?.message || 'Verificatie van QR-token mislukt.');
+      setScanError(
+        error?.response?.data?.message
+        || 'Geldigheid kan niet worden gecontroleerd. Controleer je internetverbinding.'
+      );
     }
   }, []);
 
@@ -164,7 +177,7 @@ export default function MembershipPassScanner() {
 
   useEffect(() => stopCamera, [stopCamera]);
 
-  const isActiveMembership = result?.membership?.status === 'active';
+  const isActiveMembership = result?.valid === true;
   const resultPhoto = result?.person?.photo_thumbnail || result?.person?.thumbnail || '';
   const resultKnvbId = result?.person?.knvb_id || result?.person?.['knvb_id'] || '';
   const isSponsor = result?.person?.is_sponsor === true;
@@ -216,7 +229,7 @@ export default function MembershipPassScanner() {
           </div>
           {!isActiveMembership ? (
             <div className="text-sm font-medium text-red-700 dark:text-red-400">
-              Geen lid meer
+              {getInvalidPassMessage(result.reason)}
             </div>
           ) : null}
 

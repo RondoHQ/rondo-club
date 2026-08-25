@@ -2,7 +2,7 @@
 
 > Digitale ledenpassen in Apple Wallet en Google Wallet, met een PWA-scanoplossing voor toegangscontrole en identificatie.
 
-**Status:** Research
+**Status:** Implemented (phase 1 and 2)
 **Components:** club
 **Date:** 2026-02-20
 
@@ -31,7 +31,7 @@ Elk lid krijgt een digitale pas op hun telefoon. Bruikbaar voor:
 - Format: `.pkpass` (signed ZIP met JSON + images)
 - Vereist: Apple Developer account via Emilia Projects
 - Pass type: "Generic"
-- Velden: naam, foto, lidnummer, team, seizoen, barcode/QR
+- Velden: naam, foto, lidnummer, team en barcode/QR
 - **Push updates**: passen kunnen remote geüpdatet worden (seizoenswissel, teamwijziging)
 - Barcode formaten: QR, PDF417, Aztec, Code 128
 - Distributie: via link, e-mail, of vanuit ledenprofiel
@@ -261,13 +261,18 @@ Elke pas bevat een unieke QR-code die een lid-ID of token encodeert.
 - **Signed token**: JWT met lid-ID + verloopdatum → offline validatie mogelijk
 - **Roterende codes**: hogere beveiliging, maar overkill voor sportclubs
 
-**Beslissing: signed JWT in QR.** Werkt offline, vervalt automatisch, niet kopieerbaar.
+**Beslissing: signed JWT in QR, altijd online gecontroleerd.** De token verloopt
+niet standaard. De server controleert bij iedere scan het actuele pasrecht en
+de persoonlijke `pass_version`. Een wijziging in lidstatus, lidtype of
+sponsorrelatie verhoogt die versie en trekt alle eerder uitgegeven QR-codes
+definitief in.
 
 ```
 eyJhbGciOiJIUzI1NiJ9.eyJtZW1iZXIiOjEyMzQsInNlYXNvbiI6IjIwMjUtMjAyNiIsImV4cCI6MTcyNTAwMH0.xxx
 ```
 
-De PWA scanner decodeert de QR → valideert de JWT lokaal (offline) of via de API (online).
+De PWA scanner decodeert de QR en valideert deze via de API. Zonder verbinding
+wordt geen uitspraak over de geldigheid gedaan.
 
 ---
 
@@ -330,13 +335,11 @@ Dit is het **grootste risico** van de hele feature:
 - Fallback: als camera faalt, sta foto-upload toe → decode from image
 - Detect standalone mode en toon "scan in Safari" fallback voor oude iOS
 
-### Offline capability
+### Online validatie
 
-`qr-scanner` werkt volledig offline na caching via Service Worker. Alle decoding is client-side JavaScript.
-
-Validatie kan op twee manieren:
-- **Online**: POST gescande QR naar server API voor real-time validatie
-- **Offline**: Cache ledenlijst in IndexedDB, valideer lokaal, sync wanneer weer online
+De camera en QR-detectie draaien lokaal, maar de geldigheid wordt altijd online
+gecontroleerd. Daardoor is een opgezegd of ingetrokken pas direct ongeldig. Bij
+een netwerkfout toont de scanner **Geldigheid kan niet worden gecontroleerd**.
 
 ### Scanner UX
 
@@ -371,31 +374,30 @@ Pass images (icons, logos op 1x/2x/3x) in de theme `assets/` directory. Certific
 - Geboortedatum
 - Pasfoto
 - Team
-- Seizoen
 
 ### Pass design
 
 - Clublogo en kleuren per club configureerbaar
-- Seizoensgebonden: pas is geldig voor huidig seizoen
+- Geldig zolang het actuele lid- of sponsorpasrecht actief blijft
 - Foto van het lid op de pas
 
 ---
 
 ## 8. Fasering
 
-### Fase 1 — MVP
+### Fase 1 — Pasrecht en intrekking
 
-- Genereer Apple Wallet + Google Wallet passen vanuit Rondo
-- QR-code per lid met signed JWT
-- "Voeg toe aan Wallet" knop op ledenprofiel en/of betaalpagina
-- Basis scan-PWA voor vrijwilligers (camera-based, `qr-scanner`)
+- Eén centrale bepaling van actief pasrecht
+- Permanente signed JWT met persoonlijke `pass_version`
+- Directe intrekking bij wijzigingen in lidstatus, lidtype en sponsorrelaties
+- Scanner-API alleen voor beheerders en toegangscontrole
 
-### Fase 2 — Automatisering
+### Fase 2 — Productierijp maken
 
-- Automatisch pas versturen bij nieuw lidmaatschap
-- Pas updaten bij seizoenswissel of teamwijziging
-- Pas intrekken bij uitschrijving
-- Scanlog: wie was wanneer aanwezig
+- Duidelijke scannerstatus bij ingetrokken passen en netwerkfouten
+- Apple-certificaatstatus en verloopwaarschuwing in Wallet-instellingen
+- Geen seizoensveld meer op Apple- en Google-passen
+- Geautomatiseerde lifecycle-, autorisatie- en regressietests
 
 ### Fase 3 — Uitbreidingen
 
@@ -414,7 +416,7 @@ Pass images (icons, logos op 1x/2x/3x) in de theme `assets/` directory. Certific
 - ✅ **Scanner**: PWA met QR-scanning (camera-based, `qr-scanner`)
 - ✅ **Foto's**: beschikbaar of te verkrijgen voor alle leden
 - ✅ **Apple Developer account**: via Emilia Projects (centraal)
-- ✅ **QR payload**: signed JWT voor offline validatie
+- ✅ **QR payload**: signed JWT met permanente online validatie en intrekbare pasversie
 - ✅ **Apple Wallet library**: `pkpass/pkpass` via Composer
 - ✅ **Google Wallet**: `google/apiclient` + `firebase/php-jwt`
 
@@ -422,8 +424,6 @@ Pass images (icons, logos op 1x/2x/3x) in de theme `assets/` directory. Certific
 
 - [ ] Pass style: `generic` vs `eventTicket` vs `storeCard` (generic is meest flexibel)
 - [ ] Member photo: resize/crop pipeline voor embedding in pass
-- [ ] Offline ledenlijst sync-strategie voor de scanner PWA
-- [ ] Season rollover: auto-expire oude passen, nieuwe uitsturen?
 - [ ] Willen clubs toegangscontrole of is identificatie voldoende?
 - [ ] NFC: hoe betrouwbaar is NFC tap met Wallet passes bij sportparken?
 
@@ -436,5 +436,5 @@ Pass images (icons, logos op 1x/2x/3x) in de theme `assets/` directory. Certific
 | QR scanner (PWA) | [`qr-scanner`](https://github.com/nimiq/qr-scanner) (nimiq) — 25 KB, iOS 16.4+ |
 | Apple Wallet | [`pkpass/pkpass`](https://github.com/includable/php-pkpass) via Composer |
 | Google Wallet | [`google/apiclient`](https://github.com/googleapis/google-api-php-client) + [`firebase/php-jwt`](https://github.com/firebase/php-jwt) |
-| QR content | Signed JWT voor offline verificatie |
+| QR content | Signed JWT met permanente online verificatie en intrekbare pasversie |
 | Pass updates | Apple: APNs + web service endpoints · Google: REST API patch |

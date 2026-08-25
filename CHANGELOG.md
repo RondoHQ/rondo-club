@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.6.8] - 2026-08-25
+
+### Added
+
+- De Wallet-instellingen tonen de geldigheid en verloopwaarschuwing van het Apple-certificaat.
+- Ledenpassen bevatten een intrekbare pasversie, zodat oude QR-codes na een wijziging niet opnieuw geldig kunnen worden.
+
+### Changed
+
+- QR-codes blijven standaard geldig zolang het actuele lid- of sponsorpasrecht actief is en worden bij iedere scan online gecontroleerd.
+- Apple- en Google-passen tonen geen seizoen meer.
+- Alleen beheerders en toegangscontroleurs kunnen QR-codes verifiëren.
+
+### Fixed
+
+- Oud-leden en leden met een verstreken einddatum krijgen geen spelers- of Businessclubpas meer.
+- De scanner meldt expliciet wanneer geldigheid door een netwerkfout niet kan worden gecontroleerd.
+
 ## [35.6.7] - 2026-08-24
 
 ### Changed

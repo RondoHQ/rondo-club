@@ -7,7 +7,6 @@ namespace Rondo\Passes;
 
 use PKPass\PKPass;
 use Rondo\Config\FinanceConfig;
-use Rondo\Fees\SeasonKey;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -28,6 +27,42 @@ class MembershipPassApple {
 			&& $this->get_cert_password() !== ''
 			&& $this->get_pass_type_identifier() !== ''
 			&& $this->get_team_identifier() !== '';
+	}
+
+	/** Return a safe health summary for the configured signing certificate. */
+	public function get_certificate_status(): array {
+		$result    = [
+			'configured'     => $this->is_configured(),
+			'status'         => 'missing',
+			'expires_at'     => null,
+			'days_remaining' => null,
+		];
+		$cert_path = $this->get_cert_path();
+		if ( ! class_exists( PKPass::class ) || $cert_path === '' || ! file_exists( $cert_path ) || $this->get_cert_password() === '' ) {
+			return $result;
+		}
+
+		try {
+			$pass   = new PKPass( $cert_path, $this->get_cert_password() );
+			$method = new \ReflectionMethod( PKPass::class, 'readP12' );
+			$method->setAccessible( true );
+			$certs   = $method->invoke( $pass );
+			$parsed  = is_array( $certs ) && isset( $certs['cert'] ) ? openssl_x509_parse( $certs['cert'] ) : false;
+			$expires = is_array( $parsed ) ? (int) ( $parsed['validTo_time_t'] ?? 0 ) : 0;
+			if ( $expires <= 0 ) {
+				$result['status'] = 'unreadable';
+				return $result;
+			}
+
+			$days_remaining           = (int) floor( ( $expires - time() ) / DAY_IN_SECONDS );
+			$result['expires_at']     = gmdate( DATE_ATOM, $expires );
+			$result['days_remaining'] = $days_remaining;
+			$result['status']         = $days_remaining < 0 ? 'expired' : ( $days_remaining <= 45 ? 'expires_soon' : 'valid' );
+			return $result;
+		} catch ( \Throwable $error ) {
+			$result['status'] = 'unreadable';
+			return $result;
+		}
 	}
 
 	/**
@@ -71,8 +106,6 @@ class MembershipPassApple {
 			return $qr_result;
 		}
 
-		$season = SeasonKey::current();
-
 		$person_name       = $this->get_person_full_name( $person_id );
 		$details           = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
 		$team_name         = $details['teams'] !== '' ? $details['teams'] : '-';
@@ -82,7 +115,7 @@ class MembershipPassApple {
 			: trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
 		$organization_name = $this->get_organization_name();
 		$card_title        = $this->get_card_title( $organization_name, $member_tier, $sponsor_pass_variant );
-		$card_fields       = $this->get_card_fields( $member_tier, $team_name, $functions, $company_name, $knvb_id, $season );
+		$card_fields       = $this->get_card_fields( $member_tier, $team_name, $functions, $company_name, $knvb_id );
 		$serial            = 'person-' . $person_id;
 		if ( $details['selection'] !== '' ) {
 			$serial .= '-' . substr( hash( 'sha256', $details['selection'] ), 0, 12 );
@@ -504,20 +537,14 @@ class MembershipPassApple {
 	 * @param string $functions Functions label.
 	 * @param string $company_name Company name.
 	 * @param string $knvb_id KNVB ID.
-	 * @param string $season Season key.
 	 * @return array{secondary: array<int, array<string, string>>, auxiliary: array<int, array<string, string>>}
 	 */
-	private function get_card_fields( string $member_tier, string $team_name, string $functions, string $company_name, string $knvb_id, string $season ): array {
+	private function get_card_fields( string $member_tier, string $team_name, string $functions, string $company_name, string $knvb_id ): array {
 		$secondary = [
 			[
 				'key'   => $member_tier === 'sponsor' ? 'company' : 'team',
 				'label' => $member_tier === 'sponsor' ? 'BEDRIJF' : 'TEAMS',
 				'value' => $member_tier === 'sponsor' ? ( $company_name !== '' ? $company_name : '-' ) : $team_name,
-			],
-			[
-				'key'   => 'season',
-				'label' => 'SEIZOEN',
-				'value' => $season,
 			],
 		];
 

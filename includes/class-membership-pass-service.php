@@ -21,6 +21,7 @@ class MembershipPassService {
 	const LEGACY_URL_META_KEY               = '_membership_pass_url';
 	const LEGACY_BACKFILL_OPTION            = 'rondo_membership_pass_backfill_v2_done';
 	const LEGACY_CLEANUP_OPTION             = 'rondo_membership_pass_private_actions_v1_done';
+	const PASS_VERSION_META_KEY             = '_rondo_membership_pass_version';
 	const SPONSOR_PASS_VARIANT_BUSINESSCLUB = 'businessclub';
 	const SPONSOR_PASS_VARIANT_AWC_SPONSOR  = 'awc_sponsor';
 	const SPONSOR_PASS_SELECTION            = 'sponsor_pass';
@@ -29,6 +30,41 @@ class MembershipPassService {
 		add_action( 'admin_post_' . self::ACTION, [ $this, 'handle_wallet_action' ] );
 		add_action( 'admin_post_nopriv_' . self::ACTION, [ $this, 'reject_unauthenticated_action' ] );
 		add_action( 'init', [ $this, 'maybe_remove_legacy_public_pass_data' ], 20 );
+		add_action( 'rondo_fields_updated', [ $this, 'maybe_bump_pass_version_for_field' ], 20, 4 );
+		add_action( 'transition_post_status', [ $this, 'maybe_bump_sponsor_contact_versions' ], 20, 3 );
+	}
+
+	/** Return the current revocation version for a person's passes. */
+	public static function get_pass_version( int $person_id ): int {
+		return max( 1, (int) get_post_meta( $person_id, self::PASS_VERSION_META_KEY, true ) );
+	}
+
+	/** Revoke all previously issued passes for a person. */
+	public static function bump_pass_version( int $person_id ): int {
+		$version = self::get_pass_version( $person_id ) + 1;
+		update_post_meta( $person_id, self::PASS_VERSION_META_KEY, $version );
+		return $version;
+	}
+
+	/** Resolve the current membership status used by every pass surface. */
+	public static function get_person_membership_status( int $person_id ): array {
+		$is_former   = (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' );
+		$lid_tot_raw = \Rondo\Fields\Fields::get_for_post( $person_id, 'lid_tot' );
+		$lid_tot     = \Rondo\Fields\Formatter::for_wire( 'person', [ 'lid_tot' => $lid_tot_raw ] )['lid_tot'];
+		$today       = wp_date( 'Y-m-d' );
+		$status      = 'active';
+
+		if ( $is_former ) {
+			$status = 'former';
+		} elseif ( is_string( $lid_tot ) && $lid_tot !== '' && $lid_tot < $today ) {
+			$status = 'expired';
+		}
+
+		return [
+			'status'        => $status,
+			'former_member' => $is_former,
+			'lid_tot'       => $lid_tot,
+		];
 	}
 
 	/**
@@ -112,6 +148,10 @@ class MembershipPassService {
 
 	/** Resolve pass eligibility tier for one person. */
 	public static function get_person_member_tier( int $person_id ): string {
+		if ( self::get_person_membership_status( $person_id )['status'] !== 'active' ) {
+			return '';
+		}
+
 		if ( SponsorStatus::is_sponsor( $person_id ) ) {
 			return self::get_sponsor_pass_variant( $person_id ) !== '' ? 'sponsor' : '';
 		}
@@ -134,6 +174,10 @@ class MembershipPassService {
 
 	/** Resolve and validate the tier requested by a wallet generator. */
 	public static function resolve_person_member_tier( int $person_id, string $requested_tier = '' ): string {
+		if ( self::get_person_membership_status( $person_id )['status'] !== 'active' ) {
+			return '';
+		}
+
 		if ( $requested_tier === '' ) {
 			return self::get_person_member_tier( $person_id );
 		}
@@ -250,6 +294,89 @@ class MembershipPassService {
 		delete_option( self::LEGACY_BACKFILL_OPTION );
 		update_option( self::LEGACY_CLEANUP_OPTION, true, false );
 		flush_rewrite_rules( false );
+	}
+
+	/** Revoke passes when a person field that determines eligibility changes. */
+	public function maybe_bump_pass_version_for_field( int $post_id, string $field_name, $new_value, $old_value ): void {
+		if ( get_post_type( $post_id ) === 'person' ) {
+			$person_fields = [ 'former_member', 'lid_tot', 'type_lid', 'is_sponsor', 'sponsor_pass_variant' ];
+			if ( in_array( $field_name, $person_fields, true ) ) {
+				self::bump_pass_version( $post_id );
+			}
+			return;
+		}
+
+		if ( get_post_type( $post_id ) !== 'rondo_sponsor' || ! in_array( $field_name, [ 'contacts', 'sponsor_role' ], true ) ) {
+			return;
+		}
+
+		if ( $field_name === 'contacts' ) {
+			$this->bump_changed_contact_versions(
+				is_array( $old_value ) ? $old_value : [],
+				is_array( $new_value ) ? $new_value : []
+			);
+			return;
+		}
+
+		$contacts = \Rondo\Fields\Fields::get_for_post( $post_id, 'contacts' );
+		$this->bump_contact_versions( is_array( $contacts ) ? $contacts : [] );
+	}
+
+	/** Revoke sponsor passes when their company becomes active or inactive. */
+	public function maybe_bump_sponsor_contact_versions( string $new_status, string $old_status, $post ): void {
+		if ( ! $post instanceof \WP_Post || $post->post_type !== 'rondo_sponsor' || $new_status === $old_status ) {
+			return;
+		}
+
+		$contacts = \Rondo\Fields\Fields::get_for_post( (int) $post->ID, 'contacts' );
+		$this->bump_contact_versions( is_array( $contacts ) ? $contacts : [] );
+	}
+
+	/** Revoke passes for every unique person in sponsor contact rows. */
+	private function bump_contact_versions( array $contacts ): void {
+		$person_ids = [];
+		foreach ( $contacts as $contact ) {
+			if ( is_array( $contact ) ) {
+				$person_ids[] = absint( $contact['person_id'] ?? 0 );
+			}
+		}
+
+		foreach ( array_unique( array_filter( $person_ids ) ) as $person_id ) {
+			self::bump_pass_version( (int) $person_id );
+		}
+	}
+
+	/** Revoke only contacts whose sponsor-pass entitlement changed. */
+	private function bump_changed_contact_versions( array $old_contacts, array $new_contacts ): void {
+		$old_entitlements = $this->contact_entitlements( $old_contacts );
+		$new_entitlements = $this->contact_entitlements( $new_contacts );
+		$person_ids       = array_unique( array_merge( array_keys( $old_entitlements ), array_keys( $new_entitlements ) ) );
+
+		foreach ( $person_ids as $person_id ) {
+			if ( ( $old_entitlements[ $person_id ] ?? null ) !== ( $new_entitlements[ $person_id ] ?? null ) ) {
+				self::bump_pass_version( (int) $person_id );
+			}
+		}
+	}
+
+	/** Map sponsor contacts to the fields that determine their pass right. */
+	private function contact_entitlements( array $contacts ): array {
+		$entitlements = [];
+		foreach ( $contacts as $contact ) {
+			if ( ! is_array( $contact ) ) {
+				continue;
+			}
+			$person_id = absint( $contact['person_id'] ?? 0 );
+			if ( $person_id <= 0 ) {
+				continue;
+			}
+			$entitlements[ $person_id ] = [
+				'receives_pass'   => ! empty( $contact['receives_pass'] ),
+				'is_primary_pass' => ! empty( $contact['is_primary_pass'] ),
+			];
+		}
+		ksort( $entitlements );
+		return $entitlements;
 	}
 
 	/** Build an authenticated direct action URL for one wallet. */
