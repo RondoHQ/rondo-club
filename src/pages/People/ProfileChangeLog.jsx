@@ -8,6 +8,7 @@ const STATUS = {
   pending: { label: 'Wacht op Sportlink', icon: Clock3, classes: 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200' },
   synced: { label: 'Gesynchroniseerd', icon: CheckCircle2, classes: 'bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-200' },
   failed: { label: 'Synchronisatie mislukt', icon: CircleAlert, classes: 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-200' },
+  action_required: { label: 'Actie nodig', icon: CircleAlert, classes: 'bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-200' },
   local_only: { label: 'Alleen Rondo', icon: HardDrive, classes: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
 };
 

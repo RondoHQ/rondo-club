@@ -116,6 +116,26 @@ class MemberProfileServiceTest extends RondoTestCase {
 		$this->assertGreaterThan( '2020-01-01 00:00:00', get_post_field( 'post_modified_gmt', $person_id ) );
 	}
 
+	public function test_action_required_sync_status_can_later_recover(): void {
+		[ $user_id, $person_id ] = $this->linked_member( 'action-required@example.com' );
+		Fields::update_for_post( $person_id, 'knvb_id', 'ACTION123' );
+		$result = MemberProfileService::update_phones( $user_id, [ 'mobile_1' => '+31612345678' ] );
+
+		$this->assertSame( 'pending', get_post_meta( $result['log_id'], '_rondo_profile_change_sync_status', true ) );
+		$this->assertSame(
+			1,
+			ProfileChangeLog::update_sync_status(
+				$person_id,
+				[ 'mobile_1' ],
+				'action_required',
+				'Sportlink vraagt om handmatig herstel.'
+			)
+		);
+		$this->assertSame( 'action_required', get_post_meta( $result['log_id'], '_rondo_profile_change_sync_status', true ) );
+		$this->assertSame( 1, ProfileChangeLog::update_sync_status( $person_id, [ 'mobile_1' ], 'synced' ) );
+		$this->assertSame( 'synced', get_post_meta( $result['log_id'], '_rondo_profile_change_sync_status', true ) );
+	}
+
 	public function test_parent_can_update_minor_child_phones_without_changing_own_phones(): void {
 		[ $user_id, $parent_id ] = $this->linked_member( 'parent-phone@example.com' );
 		$child_id                = $this->add_minor_child( $parent_id, 'Kind Telefoon', 'child-phone@example.com' );
