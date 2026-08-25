@@ -16,8 +16,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class MembershipPasses extends Base {
 
-	public function __construct() {
-		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+	public function __construct( bool $register_routes = true ) {
+		if ( $register_routes ) {
+			add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+		}
 	}
 
 	/**
@@ -140,8 +142,9 @@ class MembershipPasses extends Base {
 		$status          = $service->get_person_status( $person_id, $season );
 		$token_version   = isset( $payload['pass_version'] ) ? max( 1, (int) $payload['pass_version'] ) : 1;
 		$current_version = MembershipPassService::get_pass_version( $person_id );
-		$member_tier     = MembershipPassService::get_person_member_tier( $person_id );
-		$valid           = $status['status'] === 'active' && $member_tier !== '' && $token_version === $current_version;
+		$pass_type       = isset( $payload['pass_type'] ) ? sanitize_key( (string) $payload['pass_type'] ) : MembershipPassService::get_person_pass_type( $person_id );
+		$has_pass_right  = MembershipPassService::person_has_pass_type( $person_id, $pass_type );
+		$valid           = $status['status'] === 'active' && $has_pass_right && $token_version === $current_version;
 		$reason          = null;
 		if ( $token_version !== $current_version ) {
 			$reason = 'revoked';
@@ -149,7 +152,7 @@ class MembershipPasses extends Base {
 			$reason = 'former';
 		} elseif ( $status['status'] === 'expired' ) {
 			$reason = 'expired';
-		} elseif ( $member_tier === '' ) {
+		} elseif ( ! $has_pass_right ) {
 			$reason = 'no_pass_right';
 		}
 
@@ -157,6 +160,7 @@ class MembershipPasses extends Base {
 			[
 				'valid'      => $valid,
 				'reason'     => $reason,
+				'pass_type'  => $pass_type,
 				'token'      => [
 					'issued_at'  => isset( $payload['iat'] ) ? gmdate( DATE_ATOM, (int) $payload['iat'] ) : null,
 					'expires_at' => isset( $payload['exp'] ) ? gmdate( DATE_ATOM, (int) $payload['exp'] ) : null,

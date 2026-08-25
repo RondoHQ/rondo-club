@@ -17,6 +17,8 @@ class FieldRegistryTest extends RondoTestCase {
 				'discipline_case',
 				'person',
 				'relationship_type',
+				'rondo_access_event',
+				'rondo_admission',
 				'rondo_display',
 				'rondo_signage_item',
 				'rondo_signage_list',

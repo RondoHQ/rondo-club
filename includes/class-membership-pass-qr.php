@@ -31,7 +31,9 @@ class MembershipPassQr {
 		if ( ! $person || $person->post_type !== 'person' ) {
 			return new \WP_Error( 'membership_pass_person_not_found', 'Persoon niet gevonden.', [ 'status' => 404 ] );
 		}
-		if ( MembershipPassService::get_person_member_tier( $person_id ) === '' ) {
+		$requested_tier = isset( $options['member_tier'] ) ? sanitize_key( (string) $options['member_tier'] ) : '';
+		$pass_type      = MembershipPassService::get_person_pass_type( $person_id, $requested_tier );
+		if ( $pass_type === '' ) {
 			return new \WP_Error( 'membership_pass_ineligible_member', 'Voor deze persoon is geen actieve ledenpas beschikbaar.', [ 'status' => 422 ] );
 		}
 
@@ -61,6 +63,7 @@ class MembershipPassQr {
 			'nbf'          => $now - 30,
 			'jti'          => wp_generate_uuid4(),
 			'pass_version' => MembershipPassService::get_pass_version( $person_id ),
+			'pass_type'    => $pass_type,
 		];
 		if ( $ttl_days > 0 ) {
 			$payload['exp'] = $now + ( DAY_IN_SECONDS * $ttl_days );

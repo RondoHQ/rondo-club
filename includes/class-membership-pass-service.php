@@ -206,6 +206,33 @@ class MembershipPassService {
 		return in_array( $variant, $allowed, true ) ? $variant : '';
 	}
 
+	/** Resolve the exact type printed on a person's current pass. */
+	public static function get_person_pass_type( int $person_id, string $requested_tier = '' ): string {
+		$member_tier = self::resolve_person_member_tier( $person_id, $requested_tier );
+		if ( $member_tier === '' ) {
+			return '';
+		}
+
+		return $member_tier === 'sponsor' ? self::get_sponsor_pass_variant( $person_id ) : $member_tier;
+	}
+
+	/** Whether the exact pass type still grants access. */
+	public static function person_has_pass_type( int $person_id, string $pass_type ): bool {
+		if ( self::get_person_membership_status( $person_id )['status'] !== 'active' ) {
+			return false;
+		}
+
+		if ( in_array( $pass_type, [ 'bondslid', 'verenigingslid' ], true ) ) {
+			return self::get_person_standard_member_tier( $person_id ) === $pass_type;
+		}
+
+		if ( in_array( $pass_type, [ self::SPONSOR_PASS_VARIANT_BUSINESSCLUB, self::SPONSOR_PASS_VARIANT_AWC_SPONSOR ], true ) ) {
+			return SponsorStatus::is_sponsor( $person_id ) && self::get_sponsor_pass_variant( $person_id ) === $pass_type;
+		}
+
+		return false;
+	}
+
 	/** Return the company belonging to the selected sponsor-pass relationship. */
 	public static function get_sponsor_company_name( int $person_id ): string {
 		$relationship = \Rondo\Sponsors\Relations::pass_relationship_for_person( $person_id );

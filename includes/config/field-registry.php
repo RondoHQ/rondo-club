@@ -1958,6 +1958,141 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
       ),
       'kind' => 'term',
     ),
+    'rondo_access_event' =>
+    array (
+      'fields' =>
+      array (
+        'away_team' =>
+        array (
+          'canonical_name' => 'away_team',
+          'key' => 'field_access_event_away_team',
+          'label' => 'Uitteam',
+          'name' => 'away_team',
+          'storage_name' => 'away_team',
+          'type' => 'text',
+        ),
+        'cancelled' =>
+        array (
+          'canonical_name' => 'cancelled',
+          'default_value' => 0,
+          'key' => 'field_access_event_cancelled',
+          'label' => 'Afgelast',
+          'name' => 'cancelled',
+          'storage_name' => 'cancelled',
+          'type' => 'true_false',
+        ),
+        'home_team' =>
+        array (
+          'canonical_name' => 'home_team',
+          'key' => 'field_access_event_home_team',
+          'label' => 'Thuisteam',
+          'name' => 'home_team',
+          'storage_name' => 'home_team',
+          'type' => 'text',
+        ),
+        'location' =>
+        array (
+          'canonical_name' => 'location',
+          'key' => 'field_access_event_location',
+          'label' => 'Locatie',
+          'name' => 'location',
+          'storage_name' => 'location',
+          'type' => 'text',
+        ),
+        'pitch' =>
+        array (
+          'canonical_name' => 'pitch',
+          'key' => 'field_access_event_pitch',
+          'label' => 'Veld',
+          'name' => 'pitch',
+          'storage_name' => 'pitch',
+          'type' => 'text',
+        ),
+        'source_id' =>
+        array (
+          'canonical_name' => 'source_id',
+          'key' => 'field_access_event_source_id',
+          'label' => 'Sportlink wedstrijdcode',
+          'name' => 'source_id',
+          'storage_name' => 'source_id',
+          'type' => 'text',
+        ),
+        'sportlink_status' =>
+        array (
+          'canonical_name' => 'sportlink_status',
+          'key' => 'field_access_event_sportlink_status',
+          'label' => 'Sportlink-status',
+          'name' => 'sportlink_status',
+          'storage_name' => 'sportlink_status',
+          'type' => 'text',
+        ),
+        'starts_at' =>
+        array (
+          'canonical_name' => 'starts_at',
+          'display_format' => 'd-m-Y H:i',
+          'key' => 'field_access_event_starts_at',
+          'label' => 'Aanvang',
+          'name' => 'starts_at',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'starts_at',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+      ),
+      'kind' => 'post',
+    ),
+    'rondo_admission' =>
+    array (
+      'fields' =>
+      array (
+        'event_id' =>
+        array (
+          'allow_null' => 0,
+          'canonical_name' => 'event_id',
+          'key' => 'field_admission_event_id',
+          'label' => 'Toegangsevenement',
+          'name' => 'event_id',
+          'post_type' =>
+          array (
+            0 => 'rondo_access_event',
+          ),
+          'return_format' => 'id',
+          'storage_name' => 'event_id',
+          'type' => 'post_object',
+        ),
+        'pass_type' =>
+        array (
+          'canonical_name' => 'pass_type',
+          'choices' =>
+          array (
+            'awc_sponsor' => 'AWC-sponsor',
+            'bondslid' => 'Bondslid',
+            'businessclub' => 'Businessclub',
+            'verenigingslid' => 'Verenigingslid',
+          ),
+          'key' => 'field_admission_pass_type',
+          'label' => 'Pastype',
+          'name' => 'pass_type',
+          'storage_name' => 'pass_type',
+          'type' => 'select',
+        ),
+        'scanned_at' =>
+        array (
+          'canonical_name' => 'scanned_at',
+          'display_format' => 'd-m-Y H:i:s',
+          'key' => 'field_admission_scanned_at',
+          'label' => 'Gescand op',
+          'name' => 'scanned_at',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'scanned_at',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+      ),
+      'kind' => 'post',
+    ),
     'rondo_display' =>
     array (
       'fields' =>

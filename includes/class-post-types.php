@@ -40,6 +40,8 @@ class PostTypes {
 		'dienst_shift'         => [ 'dienst_shift', 'dienst_shifts' ],
 		'taakuitleg'           => [ 'taakuitleg', 'taakuitleg_items' ],
 		'rondo_profile_change' => [ 'profile_change', 'profile_changes' ],
+		'rondo_access_event'   => [ 'access_event', 'access_events' ],
+		'rondo_admission'      => [ 'admission', 'admissions' ],
 	];
 
 	/**
@@ -118,6 +120,58 @@ class PostTypes {
 		$this->register_dienst_shift_post_type();
 		$this->register_taakuitleg_post_type();
 		$this->register_profile_change_post_type();
+		$this->register_access_event_post_type();
+		$this->register_admission_post_type();
+	}
+
+	/** Register private Sportlink-backed access events. */
+	private function register_access_event_post_type() {
+		$args = array_merge(
+			[
+				'labels'             => [
+					'name'          => __( 'Toegangsevenementen', 'rondo' ),
+					'singular_name' => __( 'Toegangsevenement', 'rondo' ),
+				],
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => false,
+				'show_in_menu'       => false,
+				'show_in_rest'       => false,
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'supports'           => [ 'title' ],
+			],
+			self::capability_args( 'rondo_access_event' )
+		);
+
+		register_post_type( 'rondo_access_event', $args );
+	}
+
+	/** Register anonymous accepted admissions. */
+	private function register_admission_post_type() {
+		$args = array_merge(
+			[
+				'labels'             => [
+					'name'          => __( 'Toegangsregistraties', 'rondo' ),
+					'singular_name' => __( 'Toegangsregistratie', 'rondo' ),
+				],
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => false,
+				'show_in_menu'       => false,
+				'show_in_rest'       => false,
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'supports'           => [ 'title' ],
+			],
+			self::capability_args( 'rondo_admission' )
+		);
+
+		register_post_type( 'rondo_admission', $args );
 	}
 
 	/** Register private reservable rooms. */

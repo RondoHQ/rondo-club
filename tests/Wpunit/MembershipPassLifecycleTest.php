@@ -23,6 +23,7 @@ class MembershipPassLifecycleTest extends RondoTestCase {
 		$this->assertNotWPError( $issued );
 		$this->assertArrayNotHasKey( 'exp', $issued['payload'] );
 		$this->assertSame( MembershipPassService::get_pass_version( $person_id ), $issued['payload']['pass_version'] );
+		$this->assertSame( 'bondslid', $issued['payload']['pass_type'] );
 		$this->assertNotWPError( ( new MembershipPassQr() )->verify_token( $issued['token'] ) );
 	}
 
@@ -136,5 +137,37 @@ class MembershipPassLifecycleTest extends RondoTestCase {
 			]
 		);
 		$this->assertGreaterThan( $version, MembershipPassService::get_pass_version( $person_id ) );
+	}
+
+	public function test_dual_role_person_gets_the_exact_selected_pass_type(): void {
+		$person_id  = $this->createPerson( [ 'post_title' => 'Lid en sponsorcontact' ], [ 'type-lid' => 'Bondslid' ] );
+		$sponsor_id = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_sponsor',
+				'post_status' => 'publish',
+				'post_title'  => 'Businessclub BV',
+			]
+		);
+		new MembershipPassService();
+		Fields::update_for_post( $sponsor_id, 'sponsor_role', 'businessclub' );
+		Relations::set_contacts(
+			$sponsor_id,
+			[
+				[
+					'person_id'     => $person_id,
+					'contact_role'  => 'Directeur',
+					'receives_pass' => true,
+				],
+			]
+		);
+
+		$qr           = new MembershipPassQr();
+		$sponsor_pass = $qr->issue_for_person( $person_id, [ 'member_tier' => 'sponsor' ] );
+		$member_pass  = $qr->issue_for_person( $person_id, [ 'member_tier' => 'bondslid' ] );
+
+		$this->assertNotWPError( $sponsor_pass );
+		$this->assertNotWPError( $member_pass );
+		$this->assertSame( 'businessclub', $sponsor_pass['payload']['pass_type'] );
+		$this->assertSame( 'bondslid', $member_pass['payload']['pass_type'] );
 	}
 }

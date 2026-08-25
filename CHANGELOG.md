@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.7.0] - 2026-08-25
+
+### Added
+
+- De ledenpasscanner kiest automatisch de actieve thuiswedstrijd uit het Sportlink-programma en onthoudt een handmatige keuze op het scanapparaat.
+- Geldige scans worden per wedstrijd anoniem geteld als Bondslid, Verenigingslid, Businessclub of AWC-sponsor, met live totalen in de scanner.
+
+### Changed
+
+- QR-codes leggen het exacte type van de gekozen gewone of sponsorpas vast, zodat personen met meerdere pasrechten in de juiste statistiek terechtkomen.
+
+### Security
+
+- Toegangsregistraties bewaren geen persoon-ID, naam, e-mailadres, KNVB-ID of ruwe QR-code; een tijdelijke, niet-omkeerbare dubbelscancontrole wordt na 30 dagen verwijderd.
+
 ## [35.6.8] - 2026-08-25
 
 ### Added
