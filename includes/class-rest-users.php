@@ -63,6 +63,17 @@ class Users extends Base {
 			]
 		);
 
+		// Recent public activation errors (admin only).
+		register_rest_route(
+			'rondo/v1',
+			'/users/activation-errors',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_activation_errors' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+			]
+		);
+
 		// Search published people that can become the new identity behind an
 		// existing account (admin repair workflow).
 		register_rest_route(
@@ -223,6 +234,11 @@ class Users extends Base {
 		return rest_ensure_response( $user_list );
 	}
 
+	/** Return the fifty most recent public account-activation errors. */
+	public function get_activation_errors() {
+		return rest_ensure_response( \Rondo\Users\ActivationLog::recent( 50 ) );
+	}
+
 	/**
 	 * Search people without another valid linked account.
 	 */
@@ -311,7 +327,7 @@ class Users extends Base {
 
 		$result = [];
 		foreach ( $people as $person_id ) {
-			if ( \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' ) === true ) {
+			if ( ! \Rondo\Users\ActivationService::is_person_activatable( (int) $person_id ) ) {
 				continue;
 			}
 

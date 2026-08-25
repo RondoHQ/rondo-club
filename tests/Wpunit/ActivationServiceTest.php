@@ -3,6 +3,7 @@
 namespace Tests\Wpunit;
 
 use Rondo\Users\ActivationService;
+use Rondo\Users\ActivationLog;
 use Rondo\Users\GuardianAccountService;
 use Rondo\Users\MagicLoginActivation;
 use Rondo\Users\UserProvisioning;
@@ -109,6 +110,18 @@ class ActivationServiceTest extends RondoTestCase {
 		$this->assertTrue( ActivationService::has_account( $parent_id ) );
 	}
 
+	public function test_a_former_member_with_an_active_sponsor_role_can_activate(): void {
+		$person_id = $this->person( 'Oud Lid Sponsor', 'sponsor@example.com', true );
+		update_post_meta( $person_id, 'is_sponsor', '1' );
+
+		$this->assertSame( [ $person_id ], ActivationService::persons_for_email( 'sponsor@example.com' ) );
+
+		$result = ActivationService::activate( ActivationService::create_token( 'sponsor@example.com' ), $person_id );
+
+		$this->assertIsString( $result );
+		$this->assertTrue( ActivationService::has_account( $person_id ) );
+	}
+
 	public function test_a_former_member_with_only_a_former_child_is_not_activatable(): void {
 		$parent_id = $this->person( 'Oud Lid Ouder', 'ouder@example.com', true );
 		$child_id  = $this->person( 'Oud Kind', 'kind@example.com', true );
@@ -159,6 +172,37 @@ class ActivationServiceTest extends RondoTestCase {
 		);
 	}
 
+	public function test_an_expired_real_token_is_logged_once_with_its_person(): void {
+		$person_id = $this->person( 'Anne Jansen', 'anne@example.com' );
+		$token     = ActivationService::create_token( 'anne@example.com' );
+		delete_transient( ActivationService::TOKEN_TRANSIENT_PREFIX . hash( 'sha256', $token ) );
+
+		$log_id = ActivationService::record_invalid_token_failure( $token );
+
+		$this->assertIsInt( $log_id );
+		$this->assertSame( 'activation_token_expired', get_post_meta( $log_id, '_rondo_activation_error_code', true ) );
+		$this->assertSame( [ $person_id ], get_post_meta( $log_id, '_rondo_activation_person_ids', true ) );
+		$this->assertSame( 'anne@example.com', get_post_meta( $log_id, '_rondo_activation_email', true ) );
+		$this->assertNull( ActivationService::record_invalid_token_failure( $token ) );
+		$this->assertCount( 1, ActivationLog::recent() );
+	}
+
+	public function test_a_consumed_token_is_logged_as_already_used(): void {
+		$this->person( 'Anne Jansen', 'anne@example.com' );
+		$token = ActivationService::create_token( 'anne@example.com' );
+		ActivationService::consume_token( $token );
+
+		$log_id = ActivationService::record_invalid_token_failure( $token );
+
+		$this->assertIsInt( $log_id );
+		$this->assertSame( 'activation_token_used', get_post_meta( $log_id, '_rondo_activation_error_code', true ) );
+	}
+
+	public function test_a_guessed_token_without_context_is_not_logged(): void {
+		$this->assertNull( ActivationService::record_invalid_token_failure( str_repeat( 'a', 64 ) ) );
+		$this->assertSame( [], ActivationLog::recent() );
+	}
+
 	public function test_activation_email_uses_the_membership_administration_sender(): void {
 		$mail = null;
 		add_filter(
@@ -181,6 +225,19 @@ class ActivationServiceTest extends RondoTestCase {
 		);
 		$this->assertCount( 1, $from_headers );
 		$this->assertStringContainsString( '<' . ActivationService::ACTIVATION_FROM_EMAIL . '>', $from_headers[0] );
+	}
+
+	public function test_a_failed_activation_email_is_visible_in_the_log(): void {
+		$person_id = $this->person( 'Anne Jansen', 'anne@example.com' );
+		remove_filter( 'pre_wp_mail', '__return_true' );
+		add_filter( 'pre_wp_mail', '__return_false' );
+
+		$this->assertFalse( ActivationService::send_activation_email( 'anne@example.com', str_repeat( 'a', 64 ) ) );
+
+		$log = ActivationLog::recent();
+		$this->assertCount( 1, $log );
+		$this->assertSame( 'activation_email_failed', $log[0]['code'] );
+		$this->assertSame( $person_id, $log[0]['people'][0]['id'] );
 	}
 
 	public function test_existing_account_receives_a_magic_login_link(): void {

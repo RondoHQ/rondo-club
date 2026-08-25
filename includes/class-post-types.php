@@ -40,6 +40,7 @@ class PostTypes {
 		'dienst_shift'         => [ 'dienst_shift', 'dienst_shifts' ],
 		'taakuitleg'           => [ 'taakuitleg', 'taakuitleg_items' ],
 		'rondo_profile_change' => [ 'profile_change', 'profile_changes' ],
+		'rondo_activation_log' => [ 'activation_log', 'activation_logs' ],
 		'rondo_access_event'   => [ 'access_event', 'access_events' ],
 		'rondo_admission'      => [ 'admission', 'admissions' ],
 	];
@@ -120,6 +121,7 @@ class PostTypes {
 		$this->register_dienst_shift_post_type();
 		$this->register_taakuitleg_post_type();
 		$this->register_profile_change_post_type();
+		$this->register_activation_log_post_type();
 		$this->register_access_event_post_type();
 		$this->register_admission_post_type();
 	}
@@ -247,6 +249,31 @@ class PostTypes {
 		);
 
 		register_post_type( 'rondo_profile_change', $args );
+	}
+
+	/** Register the private public-account activation error log. */
+	private function register_activation_log_post_type() {
+		$args = array_merge(
+			[
+				'labels'             => [
+					'name'          => __( 'Activatiefouten', 'rondo' ),
+					'singular_name' => __( 'Activatiefout', 'rondo' ),
+				],
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => false,
+				'show_in_menu'       => false,
+				'show_in_rest'       => false,
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'supports'           => [ 'title' ],
+			],
+			self::capability_args( 'rondo_activation_log' )
+		);
+
+		register_post_type( 'rondo_activation_log', $args );
 	}
 
 	/** Register private sponsors managed through Rondo's REST API. */

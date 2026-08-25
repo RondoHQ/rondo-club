@@ -148,6 +148,7 @@ class ActivationPage {
 		$email = ActivationService::email_for_token( $token );
 
 		if ( $email === null ) {
+			ActivationService::record_invalid_token_failure( $token );
 			$this->render_error( 'Deze activatielink is verlopen of ongeldig. Vraag een nieuwe aan.' );
 			return;
 		}
@@ -158,6 +159,11 @@ class ActivationPage {
 			$identity      = isset( $_POST['identity'] ) ? sanitize_text_field( wp_unslash( $_POST['identity'] ) ) : '';
 			$guardian_name = isset( $_POST['guardian_name'] ) ? sanitize_text_field( wp_unslash( $_POST['guardian_name'] ) ) : '';
 			if ( ! preg_match( '/^(self|guardian):(\d+)$/', $identity, $matches ) ) {
+				ActivationService::record_token_failure(
+					$token,
+					'activation_identity_missing',
+					'Er is geen geldige persoon gekozen bij de accountactivatie.'
+				);
 				$this->render_error( 'Kies voor wie je het account aanmaakt.' );
 				return;
 			}
@@ -168,6 +174,12 @@ class ActivationPage {
 				: ActivationService::activate( $token, $person_id );
 
 			if ( is_wp_error( $result ) ) {
+				ActivationService::record_token_failure(
+					$token,
+					$result->get_error_code(),
+					$result->get_error_message(),
+					$person_id
+				);
 				$this->render_error( $result->get_error_message() );
 				return;
 			}
