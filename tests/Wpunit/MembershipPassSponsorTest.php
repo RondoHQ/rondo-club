@@ -132,13 +132,13 @@ class MembershipPassSponsorTest extends RondoTestCase {
 		$this->assertSame( 'Businessclub AWC', $apple_title->invoke( $apple, 'AWC', 'sponsor', 'businessclub' ) );
 		$this->assertSame( 'Businessclub AWC', $google_title->invoke( $google, 'AWC', 'sponsor', 'businessclub' ) );
 
-		$apple_content  = $apple_fields->invoke( $apple, 'sponsor', 'Team 1', 'Trainer', 'Sponsor BV', '', '2026-2027' );
-		$google_content = $google_modules->invoke( $google, 'sponsor', 'Team 1', 'Trainer', 'Sponsor BV', '', '2026-2027' );
+		$apple_content  = $apple_fields->invoke( $apple, 'sponsor', 'Team 1', 'Trainer', 'Sponsor BV', '' );
+		$google_content = $google_modules->invoke( $google, 'sponsor', 'Team 1', 'Trainer', 'Sponsor BV', '' );
 
-		$this->assertSame( [ 'BEDRIJF', 'SEIZOEN' ], array_column( $apple_content['secondary'], 'label' ) );
+		$this->assertSame( [ 'BEDRIJF' ], array_column( $apple_content['secondary'], 'label' ) );
 		$this->assertSame( 'Sponsor BV', $apple_content['secondary'][0]['value'] );
 		$this->assertSame( [], $apple_content['auxiliary'] );
-		$this->assertSame( [ 'BEDRIJF', 'SEIZOEN' ], array_column( $google_content, 'header' ) );
+		$this->assertSame( [ 'BEDRIJF' ], array_column( $google_content, 'header' ) );
 		$this->assertSame( 'Sponsor BV', $google_content[0]['body'] );
 	}
 

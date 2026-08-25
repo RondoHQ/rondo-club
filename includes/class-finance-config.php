@@ -13,6 +13,7 @@ namespace Rondo\Config;
 use Rondo\Data\CredentialEncryption;
 use Rondo\Config\ClubConfig;
 use Rondo\Finance\FinanceServices;
+use Rondo\Passes\MembershipPassApple;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -517,10 +518,11 @@ class FinanceConfig {
 		$club_logo_url         = $this->get_attachment_url( $club_logo_id );
 		$businessclub_logo_url = $this->get_attachment_url( $businessclub_logo_id );
 
-		$apple_cert_id  = $this->get_membership_pass_apple_cert_attachment_id();
-		$google_sa_id   = $this->get_membership_pass_google_service_account_attachment_id();
-		$apple_cert_url = $apple_cert_id > 0 ? ( wp_get_attachment_url( $apple_cert_id ) ?: '' ) : '';
-		$google_sa_url  = $google_sa_id > 0 ? ( wp_get_attachment_url( $google_sa_id ) ?: '' ) : '';
+		$apple_cert_id     = $this->get_membership_pass_apple_cert_attachment_id();
+		$google_sa_id      = $this->get_membership_pass_google_service_account_attachment_id();
+		$apple_cert_url    = $apple_cert_id > 0 ? ( wp_get_attachment_url( $apple_cert_id ) ?: '' ) : '';
+		$google_sa_url     = $google_sa_id > 0 ? ( wp_get_attachment_url( $google_sa_id ) ?: '' ) : '';
+		$apple_cert_status = ( new MembershipPassApple() )->get_certificate_status();
 
 		return [
 			'org_name'                                   => $this->get_org_name(),
@@ -577,6 +579,7 @@ class FinanceConfig {
 			'membership_pass_apple_pass_type_identifier' => $this->get_membership_pass_apple_pass_type_identifier(),
 			'membership_pass_apple_team_identifier'      => $this->get_membership_pass_apple_team_identifier(),
 			'membership_pass_apple_organization_name'    => $this->get_membership_pass_apple_organization_name(),
+			'membership_pass_apple_certificate_status'   => $apple_cert_status,
 			'membership_pass_google_service_account_attachment_id' => $google_sa_id,
 			'membership_pass_google_service_account_url' => $google_sa_url,
 			'membership_pass_google_issuer_id'           => $this->get_membership_pass_google_issuer_id(),

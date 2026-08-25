@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MembershipPassQr {
 
 	const OPTION_JWT_SECRET = 'rondo_membership_pass_jwt_secret';
-	const DEFAULT_TTL_DAYS  = 365;
+	const DEFAULT_TTL_DAYS  = 0;
 	const TOKEN_AUDIENCE    = 'rondo-membership-pass';
 
 	/**
@@ -31,6 +31,9 @@ class MembershipPassQr {
 		if ( ! $person || $person->post_type !== 'person' ) {
 			return new \WP_Error( 'membership_pass_person_not_found', 'Persoon niet gevonden.', [ 'status' => 404 ] );
 		}
+		if ( MembershipPassService::get_person_member_tier( $person_id ) === '' ) {
+			return new \WP_Error( 'membership_pass_ineligible_member', 'Voor deze persoon is geen actieve ledenpas beschikbaar.', [ 'status' => 422 ] );
+		}
 
 		$season = isset( $options['season'] ) && is_string( $options['season'] ) ? sanitize_text_field( $options['season'] ) : '';
 		if ( $season === '' ) {
@@ -42,23 +45,26 @@ class MembershipPassQr {
 		}
 
 		$ttl_days = isset( $options['ttl_days'] ) ? (int) $options['ttl_days'] : self::DEFAULT_TTL_DAYS;
-		$ttl_days = max( 1, min( 730, $ttl_days ) );
+		$ttl_days = max( 0, min( 730, $ttl_days ) );
 
 		$status = $this->get_person_status( $person_id, $season );
 		$now    = time();
 
 		$payload = [
-			'iss'    => home_url( '/' ),
-			'aud'    => self::TOKEN_AUDIENCE,
-			'sub'    => (string) $person_id,
-			'pid'    => $person_id,
-			'season' => $season,
-			'status' => $status['status'],
-			'iat'    => $now,
-			'nbf'    => $now - 30,
-			'exp'    => $now + ( DAY_IN_SECONDS * $ttl_days ),
-			'jti'    => wp_generate_uuid4(),
+			'iss'          => home_url( '/' ),
+			'aud'          => self::TOKEN_AUDIENCE,
+			'sub'          => (string) $person_id,
+			'pid'          => $person_id,
+			'season'       => $season,
+			'status'       => $status['status'],
+			'iat'          => $now,
+			'nbf'          => $now - 30,
+			'jti'          => wp_generate_uuid4(),
+			'pass_version' => MembershipPassService::get_pass_version( $person_id ),
 		];
+		if ( $ttl_days > 0 ) {
+			$payload['exp'] = $now + ( DAY_IN_SECONDS * $ttl_days );
+		}
 
 		$knvb_id = \Rondo\Fields\Fields::get_for_post( $person_id, 'knvb_id' );
 		if ( ! empty( $knvb_id ) ) {
@@ -119,7 +125,7 @@ class MembershipPassQr {
 		if ( isset( $payload['nbf'] ) && is_numeric( $payload['nbf'] ) && $now < (int) $payload['nbf'] ) {
 			return new \WP_Error( 'membership_pass_not_yet_valid', 'Token is nog niet geldig.', [ 'status' => 401 ] );
 		}
-		if ( ! isset( $payload['exp'] ) || ! is_numeric( $payload['exp'] ) || $now >= (int) $payload['exp'] ) {
+		if ( isset( $payload['exp'] ) && ( ! is_numeric( $payload['exp'] ) || $now >= (int) $payload['exp'] ) ) {
 			return new \WP_Error( 'membership_pass_expired', 'Token is verlopen.', [ 'status' => 401 ] );
 		}
 		if ( ! isset( $payload['aud'] ) || self::TOKEN_AUDIENCE !== $payload['aud'] ) {
@@ -140,24 +146,13 @@ class MembershipPassQr {
 	 * @return array
 	 */
 	public function get_person_status( int $person_id, string $season ): array {
-		$is_former   = (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' );
-		$lid_tot_raw = \Rondo\Fields\Fields::get_for_post( $person_id, 'lid_tot' );
-		$lid_tot     = \Rondo\Fields\Formatter::for_wire( 'person', [ 'lid_tot' => $lid_tot_raw ] )['lid_tot'];
-		$today       = gmdate( 'Y-m-d' );
-
-		$status = 'active';
-		if ( $is_former ) {
-			$status = 'former';
-		} elseif ( is_string( $lid_tot ) && $lid_tot < $today ) {
-			$status = 'expired';
-		}
-
+		$status     = MembershipPassService::get_person_membership_status( $person_id );
 		$season_end = $this->season_end_date( $season );
 
 		return [
-			'status'        => $status,
-			'former_member' => $is_former,
-			'lid_tot'       => $lid_tot,
+			'status'        => $status['status'],
+			'former_member' => $status['former_member'],
+			'lid_tot'       => $status['lid_tot'],
 			'season_end'    => $season_end,
 		];
 	}

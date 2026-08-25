@@ -55,7 +55,7 @@ class MembershipPasses extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'verify_qr_token' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_admin_or_toegangscontrole_permission' ],
 				'args'                => [
 					'token' => [
 						'required'          => true,
@@ -98,7 +98,7 @@ class MembershipPasses extends Base {
 		return rest_ensure_response(
 			[
 				'token'      => $result['token'],
-				'expires_at' => gmdate( DATE_ATOM, (int) $payload['exp'] ),
+				'expires_at' => isset( $payload['exp'] ) ? gmdate( DATE_ATOM, (int) $payload['exp'] ) : null,
 				'payload'    => $payload,
 				'person'     => $result['person'],
 			]
@@ -136,12 +136,27 @@ class MembershipPasses extends Base {
 			return new \WP_Error( 'membership_pass_person_not_found', 'Persoon niet gevonden.', [ 'status' => 404 ] );
 		}
 
-		$season = isset( $payload['season'] ) ? (string) $payload['season'] : '';
-		$status = $service->get_person_status( $person_id, $season );
+		$season          = isset( $payload['season'] ) ? (string) $payload['season'] : '';
+		$status          = $service->get_person_status( $person_id, $season );
+		$token_version   = isset( $payload['pass_version'] ) ? max( 1, (int) $payload['pass_version'] ) : 1;
+		$current_version = MembershipPassService::get_pass_version( $person_id );
+		$member_tier     = MembershipPassService::get_person_member_tier( $person_id );
+		$valid           = $status['status'] === 'active' && $member_tier !== '' && $token_version === $current_version;
+		$reason          = null;
+		if ( $token_version !== $current_version ) {
+			$reason = 'revoked';
+		} elseif ( $status['status'] === 'former' ) {
+			$reason = 'former';
+		} elseif ( $status['status'] === 'expired' ) {
+			$reason = 'expired';
+		} elseif ( $member_tier === '' ) {
+			$reason = 'no_pass_right';
+		}
 
 		return rest_ensure_response(
 			[
-				'valid'      => true,
+				'valid'      => $valid,
+				'reason'     => $reason,
 				'token'      => [
 					'issued_at'  => isset( $payload['iat'] ) ? gmdate( DATE_ATOM, (int) $payload['iat'] ) : null,
 					'expires_at' => isset( $payload['exp'] ) ? gmdate( DATE_ATOM, (int) $payload['exp'] ) : null,
