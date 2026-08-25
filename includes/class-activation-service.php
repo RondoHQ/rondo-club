@@ -19,8 +19,11 @@
 
 namespace Rondo\Users;
 
+use Rondo\Core\SponsorStatus;
+use Rondo\Fields\Fields;
 use Rondo\Notifications\EmailTemplate;
 use Rondo\Pages\PublicPageChrome;
+use Rondo\People\CommunicationPolicy;
 use Rondo\People\ParentRelationshipService;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -36,6 +39,15 @@ class ActivationService {
 
 	/** How long an activation link stays valid. */
 	const TOKEN_TTL_SECONDS = 2 * HOUR_IN_SECONDS;
+
+	/** Diagnostic context retained after a token expires or is consumed. */
+	const TOKEN_CONTEXT_PREFIX = 'rondo_activation_context_';
+
+	/** Keep token diagnostics for seven days without storing the raw token. */
+	const TOKEN_CONTEXT_TTL_SECONDS = 7 * DAY_IN_SECONDS;
+
+	/** Prevent repeated refreshes of one failed link from flooding the audit log. */
+	const TOKEN_LOGGED_PREFIX = 'rondo_activation_logged_';
 
 	/** Transient prefix for the per-IP rate limiter. */
 	const RATE_IP_PREFIX = 'rondo_act_ip_';
@@ -55,10 +67,10 @@ class ActivationService {
 	/**
 	 * Every active person reachable at this address.
 	 *
-	 * Former members are excluded unless they still have a current parent role. Those
-	 * parents need an account for their active child's club obligations even though
-	 * their own membership record stays read-only. Includes people who already have an
-	 * account, so the token page can say "you already have one" rather than hiding them.
+	 * Former members are excluded unless they still have a current parent role or an
+	 * active sponsor role. Those roles need an account even though the former member's
+	 * own profile stays read-only. Includes people who already have an account, so the
+	 * token page can say "you already have one" rather than hiding them.
 	 *
 	 * @param string $email Address to match against email_1 and email_2.
 	 * @return int[] Person post IDs.
@@ -91,18 +103,23 @@ class ActivationService {
 			]
 		);
 
-		$parent_relationships = new ParentRelationshipService();
-
 		return array_values(
 			array_filter(
 				array_map( 'intval', $matches ),
-				static fn( int $person_id ): bool => \Rondo\People\CommunicationPolicy::may_contact( $person_id )
-					&& (
-						get_post_meta( $person_id, 'former_member', true ) !== '1'
-						|| $parent_relationships->has_current_child( $person_id )
-					)
+				[ self::class, 'is_person_activatable' ]
 			)
 		);
+	}
+
+	/** Whether a person may receive a Rondo account through any activation route. */
+	public static function is_person_activatable( int $person_id ): bool {
+		if ( get_post_type( $person_id ) !== 'person' || ! CommunicationPolicy::may_contact( $person_id ) ) {
+			return false;
+		}
+
+		return Fields::get_for_post( $person_id, 'former_member' ) !== true
+			|| ( new ParentRelationshipService() )->has_current_child( $person_id )
+			|| SponsorStatus::is_sponsor( $person_id );
 	}
 
 	/**
@@ -125,12 +142,23 @@ class ActivationService {
 	 * @return string The raw 64-character hex token, to be emailed and never persisted.
 	 */
 	public static function create_token( string $email ): string {
-		$token = bin2hex( random_bytes( 32 ) );
+		$token      = bin2hex( random_bytes( 32 ) );
+		$token_hash = hash( 'sha256', $token );
+		$email      = strtolower( $email );
 
 		set_transient(
-			self::TOKEN_TRANSIENT_PREFIX . hash( 'sha256', $token ),
-			strtolower( $email ),
+			self::TOKEN_TRANSIENT_PREFIX . $token_hash,
+			$email,
 			self::TOKEN_TTL_SECONDS
+		);
+		set_transient(
+			self::TOKEN_CONTEXT_PREFIX . $token_hash,
+			[
+				'email'      => $email,
+				'person_ids' => self::persons_for_email( $email ),
+				'consumed'   => false,
+			],
+			self::TOKEN_CONTEXT_TTL_SECONDS
 		);
 
 		return $token;
@@ -158,7 +186,79 @@ class ActivationService {
 	 * @param string $token Raw token.
 	 */
 	public static function consume_token( string $token ): void {
-		delete_transient( self::TOKEN_TRANSIENT_PREFIX . hash( 'sha256', $token ) );
+		$token_hash = hash( 'sha256', $token );
+		delete_transient( self::TOKEN_TRANSIENT_PREFIX . $token_hash );
+
+		$context = self::context_for_token( $token );
+		if ( $context !== null ) {
+			$context['consumed'] = true;
+			set_transient( self::TOKEN_CONTEXT_PREFIX . $token_hash, $context, self::TOKEN_CONTEXT_TTL_SECONDS );
+		}
+	}
+
+	/**
+	 * Record a real expired or reused activation link without logging guessed URLs.
+	 *
+	 * @return int|\WP_Error|null Log post ID, insertion error, or null without context.
+	 */
+	public static function record_invalid_token_failure( string $token ) {
+		$context = self::context_for_token( $token );
+		if ( $context === null ) {
+			return null;
+		}
+
+		$consumed = ! empty( $context['consumed'] );
+		return self::record_token_failure(
+			$token,
+			$consumed ? 'activation_token_used' : 'activation_token_expired',
+			$consumed ? 'De activatielink was al gebruikt.' : 'De activatielink was verlopen.',
+			0
+		);
+	}
+
+	/**
+	 * Record a failed activation against context proven by the emailed token.
+	 *
+	 * @return int|\WP_Error|null Log post ID, insertion error, or null without context.
+	 */
+	public static function record_token_failure( string $token, string $code, string $message, int $person_id = 0 ) {
+		$context = self::context_for_token( $token );
+		if ( $context === null ) {
+			return null;
+		}
+
+		$token_hash = hash( 'sha256', $token );
+		$dedupe_key = self::TOKEN_LOGGED_PREFIX . hash( 'sha256', $token_hash . '|' . sanitize_key( $code ) );
+		if ( get_transient( $dedupe_key ) ) {
+			return null;
+		}
+
+		$person_ids = array_map( 'intval', (array) ( $context['person_ids'] ?? [] ) );
+		if ( $person_id > 0 && in_array( $person_id, $person_ids, true ) ) {
+			$person_ids = [ $person_id ];
+		}
+
+		$result = ActivationLog::record_failure(
+			$code,
+			$message,
+			$person_ids,
+			(string) ( $context['email'] ?? '' )
+		);
+		if ( ! is_wp_error( $result ) ) {
+			set_transient( $dedupe_key, 1, HOUR_IN_SECONDS );
+		}
+
+		return $result;
+	}
+
+	/** Return diagnostic context for a genuine activation token. */
+	private static function context_for_token( string $token ): ?array {
+		if ( ! preg_match( '/^[a-f0-9]{64}$/', $token ) ) {
+			return null;
+		}
+
+		$context = get_transient( self::TOKEN_CONTEXT_PREFIX . hash( 'sha256', $token ) );
+		return is_array( $context ) && is_email( $context['email'] ?? '' ) ? $context : null;
 	}
 
 	/**
@@ -244,7 +344,18 @@ class ActivationService {
 			]
 		);
 
-		return (bool) wp_mail( $email, $subject, $html, self::email_headers( $branding['name'] ) );
+		$sent = (bool) wp_mail( $email, $subject, $html, self::email_headers( $branding['name'] ) );
+		if ( ! $sent ) {
+			ActivationLog::record_failure(
+				'activation_email_failed',
+				'De e-mail met de activatielink kon niet worden verzonden.',
+				self::persons_for_email( $email ),
+				$email,
+				'activation_email'
+			);
+		}
+
+		return $sent;
 	}
 
 	/**
@@ -334,7 +445,18 @@ class ActivationService {
 			]
 		);
 
-		return (bool) wp_mail( $email, $subject, $html, self::email_headers( $branding['name'] ) );
+		$sent = (bool) wp_mail( $email, $subject, $html, self::email_headers( $branding['name'] ) );
+		if ( ! $sent ) {
+			ActivationLog::record_failure(
+				'household_access_email_failed',
+				'De e-mail met de inlog- en activatielinks kon niet worden verzonden.',
+				self::persons_for_email( $email ),
+				$email,
+				'household_access_email'
+			);
+		}
+
+		return $sent;
 	}
 
 	/**
@@ -417,6 +539,13 @@ class ActivationService {
 
 		$result = ( new UserProvisioning() )->provision( $available[0], false );
 		if ( is_wp_error( $result ) ) {
+			ActivationLog::record_failure(
+				$result->get_error_code(),
+				$result->get_error_message(),
+				[ $available[0] ],
+				$email,
+				'magic_login_activation'
+			);
 			error_log(
 				sprintf(
 					'[Rondo] Magic Login activation failed for person %d: %s',
@@ -427,7 +556,15 @@ class ActivationService {
 			return;
 		}
 
-		self::send_magic_login_email( $email, $persons );
+		if ( ! self::send_magic_login_email( $email, $persons ) ) {
+			ActivationLog::record_failure(
+				'activation_login_email_failed',
+				'Het account is aangemaakt, maar de e-mail met de inloglink kon niet worden verzonden.',
+				[ $available[0] ],
+				$email,
+				'magic_login_activation'
+			);
+		}
 	}
 
 	/**

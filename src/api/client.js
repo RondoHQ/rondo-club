@@ -168,6 +168,7 @@ export const prmApi = {
   
   // User management (admin only)
   getUsers: () => api.get('/rondo/v1/users'),
+  getActivationErrors: () => api.get('/rondo/v1/users/activation-errors'),
   deleteUser: (userId) => api.delete(`/rondo/v1/users/${userId}`),
   searchLinkablePeople: (query) => api.get('/rondo/v1/users/linkable-people', { params: { search: query } }),
   relinkUser: (userId, personId) => api.post(`/rondo/v1/users/${userId}/linked-person`, { person_id: personId }),

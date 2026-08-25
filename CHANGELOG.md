@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [35.8.0] - 2026-08-25
+
+### Added
+
+- Beheerders zien de 50 nieuwste herleidbare accountactivatiefouten bij Beheer → Gebruikers; het volledige log wordt 12 maanden bewaard.
+
+### Changed
+
+- Oud-leden met een actieve sponsorrol kunnen voortaan zelf een Rondo-account activeren en handmatig worden uitgenodigd.
+
 ## [35.7.1] - 2026-08-25
 
 ### Added

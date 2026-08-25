@@ -2355,6 +2355,7 @@ function FeatureTogglesTab() {
 // Gebruikers Tab Component - User management (active users + invite)
 function GebruikersTab() {
   const [users, setUsers] = useState([]);
+  const [activationErrors, setActivationErrors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [provisioning, setProvisioning] = useState(null);
   const [provisionMessage, setProvisionMessage] = useState(null);
@@ -2371,8 +2372,12 @@ function GebruikersTab() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const usersRes = await prmApi.getUsers();
+      const [usersRes, activationErrorsRes] = await Promise.all([
+        prmApi.getUsers(),
+        prmApi.getActivationErrors(),
+      ]);
       setUsers(usersRes.data || []);
+      setActivationErrors(activationErrorsRes.data || []);
     } catch {
       // Fetch failed silently
     } finally {
@@ -2604,6 +2609,57 @@ function GebruikersTab() {
           </div>
         )}
 
+      </div>
+
+      {/* Public activation errors */}
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold text-brand-gradient mb-1">Mislukte accountactivaties</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          De 50 meest recente herleidbare fouten; het volledige log wordt 12 maanden bewaard.
+        </p>
+
+        {activationErrors.length === 0 ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Geen mislukte activaties vastgelegd.</p>
+        ) : (
+          <div className="border rounded-md border-gray-300 dark:border-gray-600 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
+                  <tr>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">Moment</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">Persoon</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">E-mail</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">Fout</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {activationErrors.map(error => (
+                    <tr key={error.id} className="align-top hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="whitespace-nowrap px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400">
+                        {formatDateTime(error.created_at)}
+                      </td>
+                      <td className="px-4 py-2.5 text-sm">
+                        {error.people?.length > 0 ? error.people.map((person, index) => (
+                          <span key={person.id}>
+                            {index > 0 && ', '}
+                            <Link to={`/people/${person.id}`} className="text-electric-cyan hover:underline">
+                              {person.name}
+                            </Link>
+                          </span>
+                        )) : <span className="text-gray-500 dark:text-gray-400">Onbekend</span>}
+                      </td>
+                      <td className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400">{error.email || '-'}</td>
+                      <td className="px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100">
+                        <p>{error.message}</p>
+                        <p className="mt-1 font-mono text-xs text-gray-500 dark:text-gray-400">{error.code}</p>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {relinkAccount && (

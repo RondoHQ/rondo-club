@@ -292,6 +292,7 @@ function rondo_init() {
 	new \Rondo\Users\MagicLoginActivation();
 	// Immutable member self-service audit trail and its 24-month retention job.
 	new \Rondo\Users\ProfileChangeLog();
+	new \Rondo\Users\ActivationLog();
 
 	// Skip loading heavy classes for non-relevant requests
 	$is_admin = is_admin();
@@ -1256,6 +1257,7 @@ function rondo_theme_deactivation() {
 	// Clear legacy scheduled hook (for backward compatibility)
 	wp_clear_scheduled_hook( 'rondo_daily_reminder_check' );
 	wp_clear_scheduled_hook( 'rondo_profile_change_cleanup' );
+	wp_clear_scheduled_hook( 'rondo_activation_log_cleanup' );
 
 	// Clear volunteer shift lifecycle hooks.
 	\Rondo\Volunteer\ShiftScheduler::unregister_cron();
