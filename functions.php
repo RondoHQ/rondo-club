@@ -125,6 +125,7 @@ use Rondo\REST\Todos;
 use Rondo\REST\Feedback as RESTFeedback;
 use Rondo\REST\Invoices as RESTInvoices;
 use Rondo\REST\MembershipPasses as RESTMembershipPasses;
+use Rondo\REST\AccessEvents as RESTAccessEvents;
 use Rondo\REST\Clothing as RESTClothing;
 use Rondo\Notifications\EmailChannel;
 use Rondo\Notifications\LettermintMailer;
@@ -300,6 +301,7 @@ function rondo_init() {
 	// Classes needed for content creation/editing (admin, REST, or cron)
 	if ( $is_admin || $is_rest || $is_cron ) {
 		new \Rondo\Narrowcasting\SportlinkMatchday();
+		new \Rondo\Access\AdmissionService();
 		new AutoTitle();
 		new PhoneNormalizer();
 		new VolunteerStatus();
@@ -345,6 +347,7 @@ function rondo_init() {
 		new RESTFeedback();
 		new RESTInvoices();
 		new RESTMembershipPasses();
+		new RESTAccessEvents();
 		if ( FeatureToggles::is_available( 'clothing' ) ) {
 			new RESTClothing();
 		}

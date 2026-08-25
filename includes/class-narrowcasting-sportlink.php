@@ -32,6 +32,8 @@ class SportlinkMatchday {
 	private const STALE_MAX_AGE         = DAY_IN_SECONDS;
 	private const HTTP_TIMEOUT_SECONDS  = 12;
 	private const MANUAL_REFRESH_WINDOW = 30;
+	private const ACCESS_WINDOW_BEFORE  = 2 * HOUR_IN_SECONDS;
+	private const ACCESS_WINDOW_AFTER   = 4 * HOUR_IN_SECONDS;
 
 	/** Register the periodic refresh when the service is booted outside a REST controller test. */
 	public function __construct( bool $register_hooks = true ) {
@@ -157,6 +159,65 @@ class SportlinkMatchday {
 		$target = (int) $today->format( 'N' ) === 6 ? $today : $today->modify( 'next saturday' );
 
 		return $this->get_feed( $refresh_if_stale, $target->format( 'Y-m-d' ) );
+	}
+
+	/**
+	 * Return upcoming home matches for the access scanner.
+	 *
+	 * The normalized programme cache is shared with Club TV, so credentials and
+	 * outbound Sportlink requests stay server-side and are never duplicated in
+	 * the browser.
+	 */
+	public function get_access_candidates( bool $refresh_if_stale = true ): array {
+		$cache = $this->cache();
+		if ( $refresh_if_stale && $this->client_id() !== '' && $this->cache_needs_refresh( $cache ) ) {
+			$this->refresh( false );
+			$cache = $this->cache();
+		}
+
+		$matches       = $cache['feeds']['matches']['items'] ?? [];
+		$cancellations = $cache['feeds']['cancellations']['items'] ?? [];
+		$cancelled_ids = array_fill_keys( array_column( $cancellations, 'id' ), true );
+		$now           = new DateTimeImmutable( 'now', wp_timezone() );
+		$today         = new DateTimeImmutable( 'today', wp_timezone() );
+		$latest        = $now->modify( '+8 days' );
+		$candidates    = [];
+
+		foreach ( $matches as $match ) {
+			if ( ( $match['club_side'] ?? null ) !== 'home' ) {
+				continue;
+			}
+
+			try {
+				$starts_at = new DateTimeImmutable( (string) ( $match['starts_at'] ?? '' ) );
+				$starts_at = $starts_at->setTimezone( wp_timezone() );
+			} catch ( Exception $exception ) {
+				continue;
+			}
+
+			if ( $starts_at < $today || $starts_at > $latest ) {
+				continue;
+			}
+
+			$is_cancelled           = ! empty( $match['cancelled'] ) || isset( $cancelled_ids[ $match['id'] ?? '' ] );
+			$window_starts_at       = $starts_at->modify( '-' . self::ACCESS_WINDOW_BEFORE . ' seconds' );
+			$window_ends_at         = $starts_at->modify( '+' . self::ACCESS_WINDOW_AFTER . ' seconds' );
+			$match['cancelled']     = $is_cancelled;
+			$match['is_active']     = ! $is_cancelled && $now >= $window_starts_at && $now <= $window_ends_at;
+			$match['is_selectable'] = ! $is_cancelled && ( $match['is_active'] || $starts_at->format( 'Y-m-d' ) === $today->format( 'Y-m-d' ) );
+			$match['window_from']   = $window_starts_at->format( DATE_RFC3339 );
+			$match['window_until']  = $window_ends_at->format( DATE_RFC3339 );
+			$candidates[]           = $match;
+		}
+
+		$feed = $this->public_feed( $cache );
+
+		return [
+			'configured' => $feed['configured'],
+			'local_date' => $today->format( 'Y-m-d' ),
+			'matches'    => array_values( $candidates ),
+			'source'     => $feed['source'],
+		];
 	}
 
 	/**

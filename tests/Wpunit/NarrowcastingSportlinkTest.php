@@ -183,6 +183,59 @@ class NarrowcastingSportlinkTest extends RondoTestCase {
 		$this->assertSame( 'saturday-match', $feed['matches'][0]['id'] );
 	}
 
+	public function test_access_candidates_include_only_home_matches_and_mark_the_active_window(): void {
+		$service = new SportlinkMatchday( false );
+		$service->update_settings(
+			[
+				'client_id'          => self::CLIENT_ID,
+				'club_relation_code' => self::CLUB_CODE,
+			]
+		);
+
+		$starts_at = ( new DateTimeImmutable( 'now', wp_timezone() ) )->modify( '+30 minutes' );
+		$future    = $starts_at->modify( '+2 days' );
+		$this->mock_sportlink(
+			[
+				[
+					'wedstrijdcode'            => 'home-access-match',
+					'wedstrijddatum'           => $starts_at->format( DATE_RFC3339 ),
+					'thuisteam'                => 'AWC 1',
+					'thuisteamclubrelatiecode' => self::CLUB_CODE,
+					'uitteam'                  => 'Bezoekers 1',
+					'uitteamclubrelatiecode'   => 'OTHER1',
+				],
+				[
+					'wedstrijdcode'            => 'future-access-match',
+					'wedstrijddatum'           => $future->format( DATE_RFC3339 ),
+					'thuisteam'                => 'AWC 2',
+					'thuisteamclubrelatiecode' => self::CLUB_CODE,
+					'uitteam'                  => 'Bezoekers 2',
+					'uitteamclubrelatiecode'   => 'OTHER3',
+				],
+				[
+					'wedstrijdcode'            => 'away-access-match',
+					'wedstrijddatum'           => $starts_at->format( DATE_RFC3339 ),
+					'thuisteam'                => 'Andere club 1',
+					'thuisteamclubrelatiecode' => 'OTHER2',
+					'uitteam'                  => 'AWC 2',
+					'uitteamclubrelatiecode'   => self::CLUB_CODE,
+				],
+			],
+			[],
+			[]
+		);
+		$service->refresh( true );
+
+		$feed = $service->get_access_candidates( false );
+
+		$this->assertCount( 2, $feed['matches'] );
+		$this->assertSame( 'home-access-match', $feed['matches'][0]['id'] );
+		$this->assertTrue( $feed['matches'][0]['is_active'] );
+		$this->assertTrue( $feed['matches'][0]['is_selectable'] );
+		$this->assertFalse( $feed['matches'][1]['is_selectable'] );
+		$this->assertSame( wp_date( 'Y-m-d' ), $feed['local_date'] );
+	}
+
 	/** Install a deterministic pre_http_request response for each Club.Data endpoint. */
 	private function mock_sportlink( array $matches, array $cancellations, array $results ): void {
 		$this->http_filter = static function ( $preempt, $arguments, $url ) use ( $matches, $cancellations, $results ) {

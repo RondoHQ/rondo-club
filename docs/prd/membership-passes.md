@@ -351,6 +351,25 @@ De PWA toont na een succesvolle scan:
 
 Elke vrijwilliger met een telefoon kan scannen. Geen speciale hardware nodig.
 
+### Wedstrijdselectie en toegangsstatistieken
+
+De scanner haalt thuiswedstrijden uit dezelfde server-side Sportlink-feed als
+Club TV. Een wedstrijd is automatisch actief vanaf twee uur voor tot vier uur
+na de aanvangstijd. Bij precies één actieve wedstrijd wordt deze direct
+geselecteerd. Bij meerdere actieve wedstrijden kiest de scanner één keer; die
+keuze wordt voor dezelfde dag op het apparaat onthouden. Handmatig kiezen blijft
+mogelijk uit de beschikbare thuiswedstrijden van vandaag.
+
+Iedere geldige pas telt per wedstrijd maximaal één keer mee als `bondslid`,
+`verenigingslid`, `businessclub` of `awc_sponsor`. De scanner toont het totaal
+en de vier deelstanden live. De permanente toegangsregistratie bevat alleen het
+wedstrijd-ID, pastype en scantijdstip. Naam, persoon-ID, e-mail, KNVB-ID en de
+ruwe QR-code worden niet opgeslagen. Voor dubbelscanpreventie bestaat tijdelijk
+een wedstrijdgebonden HMAC; de bijbehorende sleutel wordt na 30 dagen verwijderd.
+
+Ticketverkoop, bestellingen en betalingen vallen buiten deze implementatie en
+worden pas in een afzonderlijke fase ontworpen.
+
 ---
 
 ## 7. Rondo Club integratie
@@ -398,6 +417,8 @@ Pass images (icons, logos op 1x/2x/3x) in de theme `assets/` directory. Certific
 - Apple-certificaatstatus en verloopwaarschuwing in Wallet-instellingen
 - Geen seizoensveld meer op Apple- en Google-passen
 - Geautomatiseerde lifecycle-, autorisatie- en regressietests
+- Automatische Sportlink-wedstrijdselectie met handmatige fallback
+- Anonieme telling per wedstrijd en pastype, inclusief dubbelscanpreventie
 
 ### Fase 3 — Uitbreidingen
 
@@ -419,12 +440,14 @@ Pass images (icons, logos op 1x/2x/3x) in de theme `assets/` directory. Certific
 - ✅ **QR payload**: signed JWT met permanente online validatie en intrekbare pasversie
 - ✅ **Apple Wallet library**: `pkpass/pkpass` via Composer
 - ✅ **Google Wallet**: `google/apiclient` + `firebase/php-jwt`
+- ✅ **Toegangsstatistieken**: anonieme totalen per Sportlink-thuiswedstrijd en pastype
+- ⏸️ **Ticketverkoop**: uitgesteld naar een afzonderlijke fase
 
 ## 10. Open vragen
 
 - [ ] Pass style: `generic` vs `eventTicket` vs `storeCard` (generic is meest flexibel)
 - [ ] Member photo: resize/crop pipeline voor embedding in pass
-- [ ] Willen clubs toegangscontrole of is identificatie voldoende?
+- [x] Toegangscontrole registreert anonieme aantallen per wedstrijd en pastype
 - [ ] NFC: hoe betrouwbaar is NFC tap met Wallet passes bij sportparken?
 
 ---

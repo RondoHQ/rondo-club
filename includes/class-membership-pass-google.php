@@ -77,7 +77,7 @@ class MembershipPassGoogle {
 		$class_id     = $issuer_id . '.' . $class_suffix;
 
 		$qr_service = new MembershipPassQr();
-		$qr_result  = $qr_service->issue_for_person( $person_id );
+		$qr_result  = $qr_service->issue_for_person( $person_id, [ 'member_tier' => $member_tier ] );
 		if ( is_wp_error( $qr_result ) ) {
 			return $qr_result;
 		}
