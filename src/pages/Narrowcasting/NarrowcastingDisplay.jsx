@@ -335,7 +335,7 @@ function DateTimeFooter({ timezone, dateLabel }) {
 
 function sceneTitle(scene) {
   const titles = {
-    matches: 'Wedstrijden, velden en kleedkamers',
+    matches: 'Wedstrijdinformatie',
     cancellations: 'Afgelaste wedstrijden',
     results: 'Recente uitslagen',
     unavailable: 'Wedstrijdinformatie',
