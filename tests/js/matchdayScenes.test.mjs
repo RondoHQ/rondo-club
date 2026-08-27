@@ -31,7 +31,7 @@ test('often receives three times as many single-slot rotations as sometimes', ()
   assert.equal(counts.get(2), 30);
 });
 
-test('at most six always sponsors occupy the six available positions', () => {
+test('at most eight always sponsors occupy the eight available positions', () => {
   const sponsors = Array.from({ length: 8 }, (_, index) => sponsor(index + 1, 3));
-  assert.deepEqual(rotateSponsors(sponsors, 0).map((item) => item.id), [1, 2, 3, 4, 5, 6]);
+  assert.deepEqual(rotateSponsors(sponsors, 0).map((item) => item.id), [1, 2, 3, 4, 5, 6, 7, 8]);
 });

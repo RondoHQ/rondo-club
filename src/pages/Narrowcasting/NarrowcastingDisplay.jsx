@@ -280,13 +280,13 @@ export default function NarrowcastingDisplay() {
             )}
             <h1 className="max-w-[62vw] text-[3.1vw] font-bold leading-[1.04] tracking-tight">{slideTitle}</h1>
           </div>
-          <SponsorLogoRow sponsors={sponsorLogos.slice(0, 2)} size="top" />
+          <SponsorLogoRow sponsors={sponsorLogos.slice(0, 3)} size="top" />
         </header>
 
         <div key={scene?.id || `${scene?.type}-${sceneIndex}`} className="animate-[fadeIn_500ms_ease-out] py-[1.5vw]"><NarrowcastingScene scene={scene} /></div>
 
         <footer className="flex items-end justify-between border-t border-[var(--display-border)] pt-[1.4vw]">
-          <SponsorLogoRow sponsors={sponsorLogos.slice(2, 6)} size="bottom" />
+          <SponsorLogoRow sponsors={sponsorLogos.slice(3, 8)} size="bottom" />
           {showDateTime ? <DateTimeFooter timezone={timezone} dateLabel={scene?.dateLabel} /> : <div aria-hidden="true" />}
         </footer>
       </div>
@@ -327,8 +327,8 @@ function DateTimeFooter({ timezone, dateLabel }) {
 
   return (
     <div className="text-right">
-      <p className="mb-[0.2vw] text-[1.35vw] font-medium capitalize text-[var(--display-text)] opacity-80">{date}</p>
-      <time className="font-mono text-[4.5vw] font-semibold tabular-nums tracking-[-0.06em]">{time}</time>
+      <p className="mb-[0.05vw] text-[1.65vw] font-medium leading-none capitalize text-[var(--display-text)] opacity-80">{date}</p>
+      <time className="font-mono text-[4.1vw] font-semibold leading-none tabular-nums tracking-[-0.06em]">{time}</time>
     </div>
   );
 }
@@ -350,7 +350,7 @@ function SponsorLogoRow({ sponsors, size }) {
   return (
     <div className="flex items-center gap-[0.8vw]">
       {sponsors.map((sponsor) => (
-        <div key={sponsor.id} className={`flex ${dimensions} items-center justify-center rounded-[0.65vw] bg-white/90 p-[0.825vw] shadow-sm`}>
+        <div key={sponsor.id} className={`flex ${dimensions} items-center justify-center rounded-[0.65vw] bg-white/90 p-[0.45vw] shadow-sm`}>
           <img src={sponsor.logo_url} alt={sponsor.name} className="h-full w-full object-contain" />
         </div>
       ))}

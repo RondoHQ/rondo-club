@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Club TV toont voortaan drie sponsorlogo's rechtsboven en vijf linksonder, met compactere logokaders; mededelingen en afbeeldingsslides tonen nu ook de groter en dichter op de klok geplaatste datum.
 - De Club TV-slide met wedstrijden, velden en kleedkamers heeft voortaan de kortere titel **Wedstrijdinformatie**.
 - De lege melding bij **Mijn toernooien** legt uit dat er nog geen beschikbare inschrijvingen zijn.
 - Sponsorlogo's worden in alle Club TV-ontwerpen 50% groter weergegeven.

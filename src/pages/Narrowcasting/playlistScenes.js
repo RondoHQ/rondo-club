@@ -1,7 +1,7 @@
 import { buildMatchdayScenes, rotateSponsors } from './matchdayScenes.js';
 
 const dynamicTypes = new Set(['matches', 'rooms', 'cancellations', 'results']);
-const dateTimeTypes = new Set(['matches', 'cancellations', 'results']);
+const dateTimeTypes = new Set(['matches', 'cancellations', 'results', 'announcement', 'image']);
 
 export function showsDateTimeForScene(scene) {
   return dateTimeTypes.has(scene?.type);
