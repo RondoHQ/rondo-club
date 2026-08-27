@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Alle gebruikers krijgen eenmalig uitleg bij de feedbackknop; bevestiging wordt per account onthouden.
 - De nieuwe rol Rondo Kaderlijst geeft toegang tot de volledige kaderlijst zonder de algemene ledenlijst of andere kaderpagina's te openen.
 
+### Fixed
+
+- Het formulier voor een nieuw toernooi opent zonder eerst bestaande toernooigegevens te verwachten.
+
 ## [35.8.0] - 2026-08-25
 
 ### Added

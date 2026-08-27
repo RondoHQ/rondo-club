@@ -279,7 +279,7 @@ export default function TournamentDetail() {
       {(isNew || tournament.lifecycle_status === 'draft') ? <DraftEditor key={tournament?.id || 'new'} tournament={tournament} /> : null}
       {tournament?.lifecycle_status === 'draft' ? <PublishPanel tournament={tournament} /> : null}
       {tournament?.lifecycle_status === 'open' ? <DeadlinePanel key={tournament.internal_deadline} tournament={tournament} /> : null}
-      {tournament?.lifecycle_status !== 'draft' ? <EntriesOverview tournamentId={tournament.id} /> : null}
+      {tournament && tournament.lifecycle_status !== 'draft' ? <EntriesOverview tournamentId={tournament.id} /> : null}
     </div>
   );
 }
