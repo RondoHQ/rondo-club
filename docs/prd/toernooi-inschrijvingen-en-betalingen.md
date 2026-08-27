@@ -532,7 +532,7 @@ Publicatie bevriest doelgroep, uitnodigingstekst, tariefregels en spelvormen voo
 opdrachten. Een planner kan tekstuele correcties aan toekomstige programmaberichten blijven maken,
 maar prijswijzigingen vereisen een nieuwe toernooieditie zolang er al opdrachten gepubliceerd zijn.
 
-### 10.2 `rondo_tournament_entry`
+### 10.2 `rondo_tourn_entry`
 
 Privé contenttype voor precies één combinatie van toernooi en Rondo-team. Het record wordt bij
 publicatie als opdracht aangemaakt, ook wanneer het team uiteindelijk niets indient.
@@ -583,7 +583,7 @@ Zowel `draft_team_entries` als `submitted_team_entries` gebruiken dezelfde repea
 De bestaande `rondo_invoice` krijgt het type `tournament`:
 
 - factuurnummerprefix `O` voor toernooi;
-- één factuur per definitieve `rondo_tournament_entry`;
+- één factuur per definitieve `rondo_tourn_entry`;
 - `_tournament_entry_id` als onveranderlijke koppeling;
 - `_mollie_description` als snapshot van toernooi, team, aantallen en spelers;
 - de verplichte standaard-Mollie-rekening voor toernooien uit **Financiële instellingen → Mollie**;

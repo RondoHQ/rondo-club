@@ -54,3 +54,7 @@ export const Narrowcasting = lazy(() => import('@/pages/Narrowcasting/Narrowcast
 export const NarrowcastingDisplay = lazy(() => import('@/pages/Narrowcasting/NarrowcastingDisplay'));
 export const PresentationSender = lazy(() => import('@/pages/Narrowcasting/PresentationSender'));
 export const Rooms = lazy(() => import('@/pages/Rooms/Rooms'));
+export const TournamentsList = lazy(() => import('@/pages/Tournaments/TournamentsList'));
+export const TournamentDetail = lazy(() => import('@/pages/Tournaments/TournamentDetail'));
+export const MyTournaments = lazy(() => import('@/pages/Tournaments/MyTournaments'));
+export const TournamentEntry = lazy(() => import('@/pages/Tournaments/TournamentEntry'));

@@ -3641,6 +3641,496 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
       ),
       'kind' => 'post',
     ),
+    'rondo_tournament' =>
+    array (
+      'fields' =>
+      array (
+        'created_by_user_id' =>
+        array (
+          'canonical_name' => 'created_by_user_id',
+          'key' => 'field_tournament_created_by_user_id',
+          'label' => 'Aangemaakt door',
+          'name' => 'created_by_user_id',
+          'storage_name' => 'created_by_user_id',
+          'type' => 'number',
+        ),
+        'description' =>
+        array (
+          'canonical_name' => 'description',
+          'key' => 'field_tournament_description',
+          'label' => 'Uitnodiging en praktische informatie',
+          'name' => 'description',
+          'storage_name' => 'description',
+          'type' => 'textarea',
+        ),
+        'external_deadline' =>
+        array (
+          'canonical_name' => 'external_deadline',
+          'key' => 'field_tournament_external_deadline',
+          'label' => 'Externe deadline',
+          'name' => 'external_deadline',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'external_deadline',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+        'internal_deadline' =>
+        array (
+          'canonical_name' => 'internal_deadline',
+          'key' => 'field_tournament_internal_deadline',
+          'label' => 'Interne deadline',
+          'name' => 'internal_deadline',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'internal_deadline',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+        'lifecycle_status' =>
+        array (
+          'canonical_name' => 'lifecycle_status',
+          'default_value' => 'draft',
+          'key' => 'field_tournament_lifecycle_status',
+          'label' => 'Status',
+          'name' => 'lifecycle_status',
+          'storage_name' => 'lifecycle_status',
+          'type' => 'select',
+        ),
+        'location' =>
+        array (
+          'canonical_name' => 'location',
+          'key' => 'field_tournament_location',
+          'label' => 'Locatie',
+          'name' => 'location',
+          'storage_name' => 'location',
+          'type' => 'text',
+        ),
+        'organizer' =>
+        array (
+          'canonical_name' => 'organizer',
+          'key' => 'field_tournament_organizer',
+          'label' => 'Organisator',
+          'name' => 'organizer',
+          'storage_name' => 'organizer',
+          'type' => 'text',
+        ),
+        'pricing_rules' =>
+        array (
+          'canonical_name' => 'pricing_rules',
+          'key' => 'field_tournament_pricing_rules',
+          'label' => 'Tarieven en spelvormen',
+          'name' => 'pricing_rules',
+          'storage_name' => 'pricing_rules',
+          'sub_fields' =>
+          array (
+            'amount' =>
+            array (
+              'canonical_name' => 'amount',
+              'key' => 'field_tournament_pricing_amount',
+              'label' => 'Bedrag per team',
+              'min' => 0,
+              'name' => 'amount',
+              'storage_name' => 'amount',
+              'type' => 'number',
+            ),
+            'game_format' =>
+            array (
+              'canonical_name' => 'game_format',
+              'key' => 'field_tournament_pricing_game_format',
+              'label' => 'Spelvorm',
+              'name' => 'game_format',
+              'storage_name' => 'game_format',
+              'type' => 'text',
+            ),
+            'max_age' =>
+            array (
+              'canonical_name' => 'max_age',
+              'key' => 'field_tournament_pricing_max_age',
+              'label' => 'Tot en met O',
+              'min' => 1,
+              'name' => 'max_age',
+              'storage_name' => 'max_age',
+              'type' => 'number',
+            ),
+            'min_age' =>
+            array (
+              'canonical_name' => 'min_age',
+              'key' => 'field_tournament_pricing_min_age',
+              'label' => 'Vanaf O',
+              'min' => 1,
+              'name' => 'min_age',
+              'storage_name' => 'min_age',
+              'type' => 'number',
+            ),
+          ),
+          'type' => 'repeater',
+        ),
+        'published_at' =>
+        array (
+          'canonical_name' => 'published_at',
+          'key' => 'field_tournament_published_at',
+          'label' => 'Gepubliceerd op',
+          'name' => 'published_at',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'published_at',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+        'published_by_user_id' =>
+        array (
+          'canonical_name' => 'published_by_user_id',
+          'key' => 'field_tournament_published_by_user_id',
+          'label' => 'Gepubliceerd door',
+          'name' => 'published_by_user_id',
+          'storage_name' => 'published_by_user_id',
+          'type' => 'number',
+        ),
+        'schedule' =>
+        array (
+          'canonical_name' => 'schedule',
+          'key' => 'field_tournament_schedule',
+          'label' => 'Programma per leeftijd',
+          'name' => 'schedule',
+          'storage_name' => 'schedule',
+          'sub_fields' =>
+          array (
+            'age_group' =>
+            array (
+              'canonical_name' => 'age_group',
+              'key' => 'field_tournament_schedule_age_group',
+              'label' => 'Leeftijd',
+              'name' => 'age_group',
+              'storage_name' => 'age_group',
+              'type' => 'text',
+            ),
+            'location' =>
+            array (
+              'canonical_name' => 'location',
+              'key' => 'field_tournament_schedule_location',
+              'label' => 'Locatie',
+              'name' => 'location',
+              'storage_name' => 'location',
+              'type' => 'text',
+            ),
+            'start_datetime' =>
+            array (
+              'canonical_name' => 'start_datetime',
+              'key' => 'field_tournament_schedule_start_datetime',
+              'label' => 'Datum en tijd',
+              'name' => 'start_datetime',
+              'storage_name' => 'start_datetime',
+              'type' => 'text',
+            ),
+          ),
+          'type' => 'repeater',
+        ),
+        'target_team_ids' =>
+        array (
+          'canonical_name' => 'target_team_ids',
+          'key' => 'field_tournament_target_team_ids',
+          'label' => 'Geselecteerde teams',
+          'name' => 'target_team_ids',
+          'post_type' =>
+          array (
+            0 => 'team',
+          ),
+          'storage_name' => 'target_team_ids',
+          'type' => 'relationship',
+        ),
+      ),
+      'kind' => 'post',
+    ),
+    'rondo_tourn_entry' =>
+    array (
+      'fields' =>
+      array (
+        'age_group_snapshot' =>
+        array (
+          'canonical_name' => 'age_group_snapshot',
+          'key' => 'field_tournament_entry_age_group_snapshot',
+          'label' => 'Leeftijdslaag',
+          'name' => 'age_group_snapshot',
+          'storage_name' => 'age_group_snapshot',
+          'type' => 'text',
+        ),
+        'assignment_snapshot' =>
+        array (
+          'canonical_name' => 'assignment_snapshot',
+          'key' => 'field_tournament_entry_assignment_snapshot',
+          'label' => 'Toewijzingssnapshot',
+          'name' => 'assignment_snapshot',
+          'storage_name' => 'assignment_snapshot',
+          'sub_fields' =>
+          array (
+            'email' =>
+            array (
+              'canonical_name' => 'email',
+              'key' => 'field_tournament_entry_assignment_email',
+              'label' => 'E-mail',
+              'name' => 'email',
+              'storage_name' => 'email',
+              'type' => 'email',
+            ),
+            'name' =>
+            array (
+              'canonical_name' => 'name',
+              'key' => 'field_tournament_entry_assignment_name',
+              'label' => 'Naam',
+              'name' => 'name',
+              'storage_name' => 'name',
+              'type' => 'text',
+            ),
+            'person_id' =>
+            array (
+              'canonical_name' => 'person_id',
+              'key' => 'field_tournament_entry_assignment_person_id',
+              'label' => 'Persoon',
+              'name' => 'person_id',
+              'storage_name' => 'person_id',
+              'type' => 'number',
+            ),
+            'role' =>
+            array (
+              'canonical_name' => 'role',
+              'key' => 'field_tournament_entry_assignment_role',
+              'label' => 'Functie',
+              'name' => 'role',
+              'storage_name' => 'role',
+              'type' => 'text',
+            ),
+            'user_id' =>
+            array (
+              'canonical_name' => 'user_id',
+              'key' => 'field_tournament_entry_assignment_user_id',
+              'label' => 'Gebruiker',
+              'name' => 'user_id',
+              'storage_name' => 'user_id',
+              'type' => 'number',
+            ),
+          ),
+          'type' => 'repeater',
+        ),
+        'contact_email' =>
+        array (
+          'canonical_name' => 'contact_email',
+          'key' => 'field_tournament_entry_contact_email',
+          'label' => 'E-mailadres contactpersoon',
+          'name' => 'contact_email',
+          'storage_name' => 'contact_email',
+          'type' => 'email',
+        ),
+        'contact_mobile' =>
+        array (
+          'canonical_name' => 'contact_mobile',
+          'key' => 'field_tournament_entry_contact_mobile',
+          'label' => 'Mobiel contactpersoon',
+          'name' => 'contact_mobile',
+          'storage_name' => 'contact_mobile',
+          'type' => 'text',
+        ),
+        'contact_name' =>
+        array (
+          'canonical_name' => 'contact_name',
+          'key' => 'field_tournament_entry_contact_name',
+          'label' => 'Contactpersoon',
+          'name' => 'contact_name',
+          'storage_name' => 'contact_name',
+          'type' => 'text',
+        ),
+        'draft_team_entries' =>
+        array (
+          'canonical_name' => 'draft_team_entries',
+          'key' => 'field_tournament_entry_draft_teams',
+          'label' => 'Conceptteams',
+          'name' => 'draft_team_entries',
+          'storage_name' => 'draft_team_entries',
+          'sub_fields' =>
+          array (
+            'player_count' =>
+            array (
+              'canonical_name' => 'player_count',
+              'key' => 'field_tournament_entry_draft_player_count',
+              'label' => 'Aantal spelers',
+              'min' => 0,
+              'name' => 'player_count',
+              'storage_name' => 'player_count',
+              'type' => 'number',
+            ),
+            'sequence' =>
+            array (
+              'canonical_name' => 'sequence',
+              'key' => 'field_tournament_entry_draft_sequence',
+              'label' => 'Volgnummer',
+              'min' => 1,
+              'name' => 'sequence',
+              'storage_name' => 'sequence',
+              'type' => 'number',
+            ),
+          ),
+          'type' => 'repeater',
+        ),
+        'player_count' =>
+        array (
+          'canonical_name' => 'player_count',
+          'default_value' => 0,
+          'key' => 'field_tournament_entry_player_count',
+          'label' => 'Totaal spelers',
+          'min' => 0,
+          'name' => 'player_count',
+          'storage_name' => 'player_count',
+          'type' => 'number',
+        ),
+        'price_per_team' =>
+        array (
+          'canonical_name' => 'price_per_team',
+          'default_value' => 0,
+          'key' => 'field_tournament_entry_price_per_team',
+          'label' => 'Bedrag per team',
+          'min' => 0,
+          'name' => 'price_per_team',
+          'storage_name' => 'price_per_team',
+          'type' => 'number',
+        ),
+        'registered_team_count' =>
+        array (
+          'canonical_name' => 'registered_team_count',
+          'default_value' => 0,
+          'key' => 'field_tournament_entry_registered_team_count',
+          'label' => 'Aantal ingeschreven teams',
+          'min' => 0,
+          'name' => 'registered_team_count',
+          'storage_name' => 'registered_team_count',
+          'type' => 'number',
+        ),
+        'registration_status' =>
+        array (
+          'canonical_name' => 'registration_status',
+          'default_value' => 'open',
+          'key' => 'field_tournament_entry_registration_status',
+          'label' => 'Inschrijfstatus',
+          'name' => 'registration_status',
+          'storage_name' => 'registration_status',
+          'type' => 'select',
+        ),
+        'submitted_at' =>
+        array (
+          'canonical_name' => 'submitted_at',
+          'key' => 'field_tournament_entry_submitted_at',
+          'label' => 'Ingeschreven op',
+          'name' => 'submitted_at',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'submitted_at',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+        'submitted_by_user_id' =>
+        array (
+          'canonical_name' => 'submitted_by_user_id',
+          'key' => 'field_tournament_entry_submitted_by_user_id',
+          'label' => 'Ingeschreven door',
+          'name' => 'submitted_by_user_id',
+          'storage_name' => 'submitted_by_user_id',
+          'type' => 'number',
+        ),
+        'submitted_team_entries' =>
+        array (
+          'canonical_name' => 'submitted_team_entries',
+          'key' => 'field_tournament_entry_submitted_teams',
+          'label' => 'Definitieve teams',
+          'name' => 'submitted_team_entries',
+          'storage_name' => 'submitted_team_entries',
+          'sub_fields' =>
+          array (
+            'player_count' =>
+            array (
+              'canonical_name' => 'player_count',
+              'key' => 'field_tournament_entry_submitted_player_count',
+              'label' => 'Aantal spelers',
+              'min' => 1,
+              'name' => 'player_count',
+              'storage_name' => 'player_count',
+              'type' => 'number',
+            ),
+            'sequence' =>
+            array (
+              'canonical_name' => 'sequence',
+              'key' => 'field_tournament_entry_submitted_sequence',
+              'label' => 'Volgnummer',
+              'min' => 1,
+              'name' => 'sequence',
+              'storage_name' => 'sequence',
+              'type' => 'number',
+            ),
+          ),
+          'type' => 'repeater',
+        ),
+        'team_id' =>
+        array (
+          'allow_null' => 0,
+          'canonical_name' => 'team_id',
+          'key' => 'field_tournament_entry_team_id',
+          'label' => 'Rondo-team',
+          'name' => 'team_id',
+          'post_type' =>
+          array (
+            0 => 'team',
+          ),
+          'return_format' => 'id',
+          'storage_name' => 'team_id',
+          'type' => 'post_object',
+        ),
+        'team_name_snapshot' =>
+        array (
+          'canonical_name' => 'team_name_snapshot',
+          'key' => 'field_tournament_entry_team_name_snapshot',
+          'label' => 'Teamnaam',
+          'name' => 'team_name_snapshot',
+          'storage_name' => 'team_name_snapshot',
+          'type' => 'text',
+        ),
+        'total_amount' =>
+        array (
+          'canonical_name' => 'total_amount',
+          'default_value' => 0,
+          'key' => 'field_tournament_entry_total_amount',
+          'label' => 'Totaalbedrag',
+          'min' => 0,
+          'name' => 'total_amount',
+          'storage_name' => 'total_amount',
+          'type' => 'number',
+        ),
+        'tournament_id' =>
+        array (
+          'allow_null' => 0,
+          'canonical_name' => 'tournament_id',
+          'key' => 'field_tournament_entry_tournament_id',
+          'label' => 'Toernooi',
+          'name' => 'tournament_id',
+          'post_type' =>
+          array (
+            0 => 'rondo_tournament',
+          ),
+          'return_format' => 'id',
+          'storage_name' => 'tournament_id',
+          'type' => 'post_object',
+        ),
+        'version' =>
+        array (
+          'canonical_name' => 'version',
+          'default_value' => 1,
+          'key' => 'field_tournament_entry_version',
+          'label' => 'Versie',
+          'min' => 1,
+          'name' => 'version',
+          'storage_name' => 'version',
+          'type' => 'number',
+        ),
+      ),
+      'kind' => 'post',
+    ),
     'rondo_sponsor' =>
     array (
       'fields' =>
