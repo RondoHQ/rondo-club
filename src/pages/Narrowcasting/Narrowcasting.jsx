@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   CircleAlert,
@@ -16,6 +16,8 @@ import {
   X,
 } from 'lucide-react';
 import { prmApi } from '@/api/client';
+import AnchoredPopover from '@/components/AnchoredPopover';
+import TabButton from '@/components/TabButton';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import NarrowcastingContent from './NarrowcastingContent';
@@ -139,6 +141,110 @@ function DisplayEditForm({ display, isPending, onCancel, onSave }) {
   );
 }
 
+function PlayerClaimPopover({ anchor, form, initialFocusRef, isPending, onClose, onFormChange, onSubmit }) {
+  const updateField = (field, value) => onFormChange((current) => ({ ...current, [field]: value }));
+
+  return (
+    <AnchoredPopover
+      anchor={anchor}
+      id="new-player-popover"
+      initialFocusRef={initialFocusRef}
+      labelledBy="new-player-popover-title"
+      maxWidth={960}
+      onClose={onClose}
+      preferredHeight={620}
+    >
+      <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-700">
+        <div>
+          <h2 id="new-player-popover-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">Nieuw player koppelen</h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            Neem de code over die op de tv staat. De code blijft 15 minuten geldig.
+          </p>
+        </div>
+        <button type="button" className="btn-tertiary shrink-0 p-2" onClick={onClose} aria-label="Sluiten">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      <form onSubmit={onSubmit} className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Activatiecode</span>
+          <input
+            ref={initialFocusRef}
+            className="input w-full uppercase tracking-widest"
+            value={form.code}
+            onChange={(event) => updateField('code', event.target.value.toUpperCase())}
+            placeholder="ABCD-EFGH"
+            required
+            autoComplete="off"
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Automatische updates</span>
+          <select className="input w-full" value={form.update_channel} onChange={(event) => updateField('update_channel', event.target.value)}>
+            <option value="stable">Stabiel — aanbevolen</option>
+            <option value="beta">Beta</option>
+            <option value="off">Uit</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Naam</span>
+          <input
+            className="input w-full"
+            value={form.title}
+            onChange={(event) => updateField('title', event.target.value)}
+            placeholder="Scherm kantine"
+            required
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Locatie</span>
+          <input
+            className="input w-full"
+            value={form.location}
+            onChange={(event) => updateField('location', event.target.value)}
+            placeholder="Kantine"
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Tv aan</span>
+          <input
+            type="time"
+            className="input w-full"
+            value={form.wake_time}
+            onChange={(event) => updateField('wake_time', event.target.value)}
+            required
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Tv uit</span>
+          <input
+            type="time"
+            className="input w-full"
+            value={form.sleep_time}
+            onChange={(event) => updateField('sleep_time', event.target.value)}
+            required
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Tijdzone</span>
+          <input
+            className="input w-full"
+            value={form.timezone}
+            onChange={(event) => updateField('timezone', event.target.value)}
+            required
+          />
+        </label>
+        <div className="flex items-end md:col-span-2 xl:col-span-3">
+          <button type="submit" className="btn-primary" disabled={isPending}>
+            {isPending ? 'Koppelen…' : 'Player goedkeuren'}
+          </button>
+        </div>
+      </form>
+    </AnchoredPopover>
+  );
+}
+
 export default function Narrowcasting() {
   useRouteTitle('Club TV');
   const queryClient = useQueryClient();
@@ -151,6 +257,15 @@ export default function Narrowcasting() {
   const [updateForm, setUpdateForm] = useState({ stable_version: '0.3.0', beta_version: '' });
   const [notice, setNotice] = useState('');
   const [editingDisplayId, setEditingDisplayId] = useState(null);
+  const [claimPopoverOpen, setClaimPopoverOpen] = useState(false);
+  const claimButtonRef = useRef(null);
+  const claimCodeInputRef = useRef(null);
+
+  const closeClaimPopover = useCallback(() => setClaimPopoverOpen(false), []);
+  const selectTab = useCallback((tab) => {
+    setActiveTab(tab);
+    setClaimPopoverOpen(false);
+  }, []);
 
   const displaysQuery = useQuery({
     queryKey: ['narrowcasting', 'displays'],
@@ -190,6 +305,7 @@ export default function Narrowcasting() {
     onSuccess: () => {
       setNotice('De player is goedgekeurd. Hij rondt de koppeling nu zelf af.');
       setForm(defaultForm);
+      setClaimPopoverOpen(false);
       refreshDisplays();
     },
   });
@@ -333,16 +449,19 @@ export default function Narrowcasting() {
         </div>
       )}
 
-      <nav className="flex flex-wrap gap-2 border-b border-gray-200 pb-3 dark:border-gray-700" aria-label="Club TV-onderdelen">
-        <button type="button" className={activeTab === 'content' ? 'btn-primary' : 'btn-tertiary'} onClick={() => setActiveTab('content')}>Content</button>
-        {canManage && <button type="button" className={activeTab === 'playlists' ? 'btn-primary' : 'btn-tertiary'} onClick={() => setActiveTab('playlists')}>Afspeellijsten</button>}
-        {isAdmin && <button type="button" className={activeTab === 'technical' ? 'btn-primary' : 'btn-tertiary'} onClick={() => setActiveTab('technical')}>Players & koppelingen</button>}
-      </nav>
+      <div className="border-b border-gray-200 dark:border-gray-700">
+        <nav className="-mb-px flex space-x-8" aria-label="Club TV-onderdelen">
+          <TabButton label="Content" isActive={activeTab === 'content'} onClick={() => selectTab('content')} />
+          {canManage && <TabButton label="Afspeellijsten" isActive={activeTab === 'playlists'} onClick={() => selectTab('playlists')} />}
+          {isAdmin && <TabButton label="Players" isActive={activeTab === 'players'} onClick={() => selectTab('players')} />}
+          {isAdmin && <TabButton label="Instellingen" isActive={activeTab === 'settings'} onClick={() => selectTab('settings')} />}
+        </nav>
+      </div>
 
       {activeTab === 'content' && <NarrowcastingContent sponsorOnly={!canManage} />}
       {activeTab === 'playlists' && canManage && <NarrowcastingPlaylists />}
 
-      {activeTab === 'technical' && isAdmin && (
+      {activeTab === 'settings' && isAdmin && (
         <>
 
       <section className="card p-6">
@@ -455,103 +574,32 @@ export default function Narrowcasting() {
         </form>
       </section>
 
-      <section className="card p-6">
-        <div className="flex items-start gap-3">
-          <div className="rounded-lg bg-cyan-50 p-2 text-bright-cobalt dark:bg-gray-800 dark:text-electric-cyan">
-            <MonitorPlay className="h-6 w-6" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Nieuwe player koppelen</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Neem de code over die op de tv staat. De code blijft 15 minuten geldig.
-            </p>
-          </div>
-        </div>
+        </>
+      )}
 
-        <form onSubmit={submitClaim} className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Activatiecode</span>
-            <input
-              className="input w-full uppercase tracking-widest"
-              value={form.code}
-              onChange={(event) => setForm({ ...form, code: event.target.value.toUpperCase() })}
-              placeholder="ABCD-EFGH"
-              required
-              autoComplete="off"
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Automatische updates</span>
-            <select className="input w-full" value={form.update_channel} onChange={(event) => setForm({ ...form, update_channel: event.target.value })}>
-              <option value="stable">Stabiel — aanbevolen</option>
-              <option value="beta">Beta</option>
-              <option value="off">Uit</option>
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Naam</span>
-            <input
-              className="input w-full"
-              value={form.title}
-              onChange={(event) => setForm({ ...form, title: event.target.value })}
-              placeholder="Scherm kantine"
-              required
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Locatie</span>
-            <input
-              className="input w-full"
-              value={form.location}
-              onChange={(event) => setForm({ ...form, location: event.target.value })}
-              placeholder="Kantine"
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Tv aan</span>
-            <input
-              type="time"
-              className="input w-full"
-              value={form.wake_time}
-              onChange={(event) => setForm({ ...form, wake_time: event.target.value })}
-              required
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Tv uit</span>
-            <input
-              type="time"
-              className="input w-full"
-              value={form.sleep_time}
-              onChange={(event) => setForm({ ...form, sleep_time: event.target.value })}
-              required
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Tijdzone</span>
-            <input
-              className="input w-full"
-              value={form.timezone}
-              onChange={(event) => setForm({ ...form, timezone: event.target.value })}
-              required
-            />
-          </label>
-          <div className="md:col-span-2 xl:col-span-3">
-            <button type="submit" className="btn-primary" disabled={claimMutation.isPending}>
-              {claimMutation.isPending ? 'Koppelen…' : 'Player goedkeuren'}
-            </button>
-          </div>
-        </form>
-      </section>
-
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Schermen</h2>
-          <button type="button" className="btn-tertiary text-sm" onClick={() => displaysQuery.refetch()} disabled={displaysQuery.isFetching}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${displaysQuery.isFetching ? 'animate-spin' : ''}`} />
-            Vernieuwen
-          </button>
-        </div>
+      {activeTab === 'players' && isAdmin && (
+        <>
+          <section>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Players</h2>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  ref={claimButtonRef}
+                  type="button"
+                  className="btn-tertiary text-sm"
+                  onClick={() => setClaimPopoverOpen((isOpen) => !isOpen)}
+                  aria-expanded={claimPopoverOpen}
+                  aria-controls="new-player-popover"
+                >
+                  <MonitorPlay className="mr-2 h-4 w-4" />
+                  Nieuw player koppelen
+                </button>
+                <button type="button" className="btn-tertiary text-sm" onClick={() => displaysQuery.refetch()} disabled={displaysQuery.isFetching}>
+                  <RefreshCw className={`mr-2 h-4 w-4 ${displaysQuery.isFetching ? 'animate-spin' : ''}`} />
+                  Vernieuwen
+                </button>
+              </div>
+            </div>
 
         {displaysQuery.isError && (
           <div className="card p-6 text-red-700 dark:text-red-300">{errorMessage(displaysQuery.error)}</div>
@@ -679,7 +727,19 @@ export default function Narrowcasting() {
             </article>
           ))}
         </div>
-      </section>
+          </section>
+
+          {claimPopoverOpen && (
+            <PlayerClaimPopover
+              anchor={claimButtonRef.current}
+              form={form}
+              initialFocusRef={claimCodeInputRef}
+              isPending={claimMutation.isPending}
+              onClose={closeClaimPopover}
+              onFormChange={setForm}
+              onSubmit={submitClaim}
+            />
+          )}
         </>
       )}
     </div>

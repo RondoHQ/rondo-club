@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - De lege melding bij **Mijn toernooien** legt uit dat er nog geen beschikbare inschrijvingen zijn.
 - Sponsorlogo's worden in alle Club TV-ontwerpen 50% groter weergegeven.
+- Club TV gebruikt voortaan dezelfde tabstijl als Instellingen, met aparte tabbladen voor Players en Instellingen.
+- Het formulier om een player te koppelen opent voortaan vanuit een compacte knop in een popover.
 
 ## [35.8.0] - 2026-08-25
 
