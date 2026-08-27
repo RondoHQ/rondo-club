@@ -345,12 +345,12 @@ function sceneTitle(scene) {
 }
 
 function SponsorLogoRow({ sponsors, size }) {
-  const dimensions = size === 'top' ? 'h-[4.8vw] w-[8.5vw]' : 'h-[4.2vw] w-[7.5vw]';
+  const dimensions = size === 'top' ? 'h-[7.2vw] w-[12.75vw]' : 'h-[6.3vw] w-[11.25vw]';
   if (!sponsors.length) return <div aria-hidden="true" />;
   return (
     <div className="flex items-center gap-[0.8vw]">
       {sponsors.map((sponsor) => (
-        <div key={sponsor.id} className={`flex ${dimensions} items-center justify-center rounded-[0.65vw] bg-white/90 p-[0.55vw] shadow-sm`}>
+        <div key={sponsor.id} className={`flex ${dimensions} items-center justify-center rounded-[0.65vw] bg-white/90 p-[0.825vw] shadow-sm`}>
           <img src={sponsor.logo_url} alt={sponsor.name} className="h-full w-full object-contain" />
         </div>
       ))}
