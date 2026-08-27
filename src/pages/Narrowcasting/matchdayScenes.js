@@ -51,7 +51,7 @@ export function buildMatchdayScenes(feed, fallbackMessage) {
   }));
 }
 
-export function rotateSponsors(sponsors, sceneIndex, slots = 6) {
+export function rotateSponsors(sponsors, sceneIndex, slots = 8) {
   const capacity = Math.max(0, Number(slots) || 0);
   if (!sponsors.length || capacity === 0) return [];
 
