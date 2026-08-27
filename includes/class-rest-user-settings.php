@@ -15,6 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class UserSettings extends Base {
+	/** User meta key storing when the feedback introduction was acknowledged. */
+	private const FEEDBACK_INTRO_SEEN_META = 'rondo_feedback_intro_seen_at';
 
 	/**
 	 * Default visible columns for People list.
@@ -415,6 +417,17 @@ class UserSettings extends Base {
 				'permission_callback' => function () {
 					return is_user_logged_in();
 				},
+			]
+		);
+
+		// Mark the one-time feedback introduction as seen.
+		register_rest_route(
+			'rondo/v1',
+			'/user/feedback-intro-seen',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'mark_feedback_intro_seen' ],
+				'permission_callback' => 'is_user_logged_in',
 			]
 		);
 
@@ -1237,6 +1250,7 @@ class UserSettings extends Base {
 			'active_functies'               => $active_functies,
 			'linked_person_photo'           => $linked_person_photo,
 			'pending_guardian'              => $pending_guardian,
+			'feedback_intro_seen'           => get_user_meta( $user_id, self::FEEDBACK_INTRO_SEEN_META, true ) !== '',
 		];
 	}
 
@@ -1259,6 +1273,23 @@ class UserSettings extends Base {
 		}
 
 		return rest_ensure_response( $data );
+	}
+
+	/**
+	 * Mark the feedback introduction as acknowledged for the current account.
+	 *
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function mark_feedback_intro_seen() {
+		$user_id = get_current_user_id();
+
+		if ( ! $user_id ) {
+			return new \WP_Error( 'not_logged_in', __( 'User is not logged in.', 'rondo' ), [ 'status' => 401 ] );
+		}
+
+		update_user_meta( $user_id, self::FEEDBACK_INTRO_SEEN_META, current_time( 'mysql', true ) );
+
+		return rest_ensure_response( [ 'feedback_intro_seen' => true ] );
 	}
 
 	/**
