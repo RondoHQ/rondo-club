@@ -45,8 +45,9 @@ const getDarkLogoUrl = () => `${window.rondoConfig?.themeUrl || ''}/rondo_logo_w
 import { useAuth } from '@/hooks/useAuth';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch, useDashboard } from '@/hooks/useDashboard';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useCurrentUser, useMarkFeedbackIntroSeen } from '@/hooks/useCurrentUser';
 import FeedbackModal from '@/components/FeedbackModal';
+import FeedbackIntroPopover from '@/components/FeedbackIntroPopover';
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { useCreateFeedback } from '@/hooks/useFeedback';
 
@@ -67,7 +68,7 @@ const navigation = [
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
   { name: 'Sponsoren', href: '/sponsors', icon: Building2, requiresSponsors: true },
   { name: 'Teams', href: '/teams', icon: Shield, requiresKader: true },
-  { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true, requiresKader: true },
+  { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true, requiresKaderlijst: true },
   { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true, requiresFeature: 'clothing' },
   { name: 'Commissies', href: '/commissies', icon: UsersRound, requiresKader: true },
   { name: 'Vrijwilligers', href: '/vrijwilligers', icon: HeartHandshake, requiresVrijwilligers: true },
@@ -105,6 +106,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessVrijwilligers = currentUser?.can_access_vrijwilligers ?? false;
   const canAccessNarrowcasting = currentUser?.can_access_narrowcasting ?? false;
   const canManageSponsors = currentUser?.can_manage_sponsors ?? false;
+  const canAccessKaderlijst = currentUser?.can_access_kaderlijst ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
   const sidebarUserName = currentUser?.linked_person_name || currentUser?.name || '';
 
@@ -217,12 +219,15 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresVrijwilligers && !canAccessVrijwilligers) return false;
     if (item.requiresNarrowcasting && !canAccessNarrowcasting) return false;
     if (item.requiresSponsors && !canManageSponsors) return false;
+    if (item.requiresKaderlijst && !canAccessKaderlijst) return false;
     if (item.requiresKader && !isKader) return false;
     return true;
   });
 
   const personalNav = visibleNav.filter((item) => item.personal);
-  const clubNav = visibleNav.filter((item) => !item.personal);
+  const clubNav = visibleNav
+    .filter((item) => !item.personal)
+    .map((item) => (item.requiresKaderlijst && !isKader ? { ...item, indent: false } : item));
 
   const navGroups = [];
   for (const item of clubNav) {
@@ -679,7 +684,7 @@ function SearchModal({ isOpen, onClose }) {
   );
 }
 
-function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
+function Header({ onMenuClick, onOpenSearch, onOpenFeedback, showFeedbackIntro, onAcknowledgeFeedbackIntro }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -765,15 +770,24 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Feedback button */}
-      <button
-        onClick={onOpenFeedback}
-        className="p-2 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors dark:text-gray-400 dark:hover:bg-gray-700"
-        aria-label="Feedback verzenden"
-        title="Feedback verzenden"
-      >
-        <MessageSquarePlus className="w-5 h-5" />
-      </button>
+      {/* Feedback button and one-time introduction */}
+      <div className="relative">
+        <button
+          onClick={onOpenFeedback}
+          className={`p-2 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors dark:text-gray-400 dark:hover:bg-gray-700 ${showFeedbackIntro ? 'bg-cyan-50 text-cyan-700 ring-2 ring-cyan-400 dark:bg-cyan-950 dark:text-cyan-300' : ''}`}
+          aria-label="Feedback verzenden"
+          title="Feedback verzenden"
+          aria-describedby={showFeedbackIntro ? 'feedback-intro-description' : undefined}
+        >
+          <MessageSquarePlus className="w-5 h-5" />
+        </button>
+        {showFeedbackIntro ? (
+          <FeedbackIntroPopover
+            onAcknowledge={onAcknowledgeFeedbackIntro}
+            onOpenFeedback={onOpenFeedback}
+          />
+        ) : null}
+      </div>
 
       {/* Search button */}
       <button
@@ -813,8 +827,24 @@ export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackIntroDismissed, setFeedbackIntroDismissed] = useState(false);
   const isDemo = window.rondoConfig?.isDemo;
   const createFeedback = useCreateFeedback();
+  const { data: currentUser } = useCurrentUser();
+  const markFeedbackIntroSeen = useMarkFeedbackIntroSeen();
+  const showFeedbackIntro = Boolean(currentUser && !currentUser.feedback_intro_seen && !feedbackIntroDismissed);
+
+  const acknowledgeFeedbackIntro = () => {
+    setFeedbackIntroDismissed(true);
+    markFeedbackIntroSeen.mutate();
+  };
+
+  const openFeedback = () => {
+    if (showFeedbackIntro) {
+      acknowledgeFeedbackIntro();
+    }
+    setShowFeedbackModal(true);
+  };
 
   // Fetch dashboard stats for navigation counts
   const { data: dashboardData } = useDashboard();
@@ -877,7 +907,9 @@ export default function Layout({ children }) {
         <Header
           onMenuClick={() => setSidebarOpen(true)}
           onOpenSearch={() => setShowSearchModal(true)}
-          onOpenFeedback={() => setShowFeedbackModal(true)}
+          onOpenFeedback={openFeedback}
+          showFeedbackIntro={showFeedbackIntro}
+          onAcknowledgeFeedbackIntro={acknowledgeFeedbackIntro}
         />
 
         <main className="flex-1 px-4 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom))] overflow-visible lg:min-h-0 lg:overflow-y-auto lg:p-6 [overscroll-behavior-y:none]">

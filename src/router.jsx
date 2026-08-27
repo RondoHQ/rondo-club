@@ -103,6 +103,14 @@ function VOGRoute({ children }) {
   );
 }
 
+function KaderlijstRoute({ children }) {
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.can_access_kaderlijst}>
+      {children}
+    </CapabilityRoute>
+  );
+}
+
 function NarrowcastingRoute({ children }) {
   return (
     <CapabilityRoute checkAccess={(user) => user?.can_access_narrowcasting}>
@@ -551,7 +559,7 @@ const router = createBrowserRouter([
           // Teams routes — kader only
           { path: 'teams', element: <KaderOrVrijwilligRedirect><TeamsList /></KaderOrVrijwilligRedirect> },
           { path: 'teams/:id', element: <KaderOrVrijwilligRedirect><TeamDetail /></KaderOrVrijwilligRedirect> },
-          { path: 'kaderlijst', element: <KaderOrVrijwilligRedirect><Kaderlijst /></KaderOrVrijwilligRedirect> },
+          { path: 'kaderlijst', element: <KaderlijstRoute><Kaderlijst /></KaderlijstRoute> },
           {
             path: 'kleding/:tab',
             element: (

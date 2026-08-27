@@ -28,6 +28,8 @@ class UserRoles {
 	const ACCOMMODATIE_CAPABILITY       = 'accommodatiebeheer';
 	const VRIJWILLIGERS_CAPABILITY      = 'vrijwilligers';
 	const IVA_APPROVE_CAPABILITY        = 'rondo_iva_approve';
+	const KADERLIJST_CAPABILITY         = 'kaderlijst';
+	const KADERLIJST_ROLE               = 'rondo_kaderlijst';
 
 	/**
 	 * Option key holding the schema version of the registered roles.
@@ -35,7 +37,7 @@ class UserRoles {
 	 * installs must also receive; add_role() does not touch existing roles.
 	 */
 	const ROLES_VERSION_OPTION = 'rondo_roles_version';
-	const ROLES_VERSION        = 10;
+	const ROLES_VERSION        = 11;
 
 	/** Generic WordPress write capabilities removed from non-admin Rondo roles. */
 	private const LEGACY_GENERIC_WRITE_CAPS = [
@@ -71,6 +73,7 @@ class UserRoles {
 		'rondo_accommodatiebeheerder' => [ 'Rondo Accommodatiebeheerder', [ 'accommodatiebeheer' ] ],
 		'rondo_vrijwilligers'         => [ 'Rondo Vrijwilligers', [ 'vrijwilligers' ] ],
 		'rondo_iva_approver'          => [ 'Rondo IVA Goedkeurder (Bestuurslid Kantine)', [ 'rondo_iva_approve', 'vrijwilligers' ] ],
+		'rondo_kaderlijst'            => [ 'Rondo Kaderlijst', [ 'kaderlijst' ] ],
 		'rondo_pool_schoonmaak'       => [ 'Rondo Schoonmaakpoule', [] ],
 		'rondo_pool_activiteiten'     => [ 'Rondo Activiteitenpoule', [] ],
 		'rondo_pool_werkploeg'        => [ 'Rondo Werkploeg terreinonderhoud', [] ],
@@ -136,6 +139,75 @@ class UserRoles {
 		$user = get_user_by( 'id', $user_id );
 
 		return $user && in_array( 'rondo_bestuur', (array) $user->roles, true );
+	}
+
+	/**
+	 * Whether the user has an extra role that opens the general staff surfaces.
+	 *
+	 * A role carrying only the dedicated Kaderlijst capability is deliberately
+	 * excluded: it may open that one roster without turning the account into a
+	 * general kader account. Any other extra role keeps the historical behavior.
+	 *
+	 * @param int|null $user_id User ID, defaults to the current user.
+	 * @return bool True when at least one general staff role is present.
+	 */
+	public static function has_extra_staff_role( $user_id = null ): bool {
+		$user_id = $user_id ?? get_current_user_id();
+		$user    = $user_id ? get_user_by( 'id', $user_id ) : false;
+
+		if ( ! $user ) {
+			return false;
+		}
+
+		$extra_roles = array_diff( (array) $user->roles, [ self::ROLE_NAME, 'subscriber' ] );
+
+		foreach ( $extra_roles as $role_slug ) {
+			$role = get_role( $role_slug );
+			if ( ! $role || ! $role->has_cap( self::KADERLIJST_CAPABILITY ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * The canonical server-side definition of a general kader account.
+	 *
+	 * @param int|null $user_id User ID, defaults to the current user.
+	 * @return bool True when the account may use the general kader surfaces.
+	 */
+	public static function is_kader( $user_id = null ): bool {
+		$user_id = $user_id ?? get_current_user_id();
+
+		if ( ! $user_id ) {
+			return false;
+		}
+
+		return user_can( $user_id, 'manage_options' )
+			|| self::has_extra_staff_role( $user_id )
+			|| user_can( $user_id, self::FAIRPLAY_CAPABILITY )
+			|| user_can( $user_id, self::VOG_CAPABILITY )
+			|| self::can_view_finances( $user_id )
+			|| user_can( $user_id, self::TOEGANG_CAPABILITY )
+			|| user_can( $user_id, self::CLOTHING_CAPABILITY )
+			|| user_can( $user_id, self::LEDENADMINISTRATIE_CAPABILITY )
+			|| user_can( $user_id, self::SPONSORBEHEER_CAPABILITY )
+			|| user_can( $user_id, self::NARROWCASTING_CAPABILITY )
+			|| user_can( $user_id, self::ACCOMMODATIE_CAPABILITY )
+			|| user_can( $user_id, self::VRIJWILLIGERS_CAPABILITY );
+	}
+
+	/**
+	 * Whether the user may open the Kaderlijst.
+	 *
+	 * @param int|null $user_id User ID, defaults to the current user.
+	 * @return bool True for general kader accounts and dedicated roster viewers.
+	 */
+	public static function can_access_kaderlijst( $user_id = null ): bool {
+		$user_id = $user_id ?? get_current_user_id();
+
+		return $user_id && ( self::is_kader( $user_id ) || user_can( $user_id, self::KADERLIJST_CAPABILITY ) );
 	}
 
 	public function __construct() {
@@ -311,6 +383,7 @@ class UserRoles {
 	 * Version 7: narrowcasting content, playlist and editor capabilities are introduced.
 	 * Version 8: sponsor managers gain dedicated sponsor-company CPT capabilities.
 	 * Version 9: accommodation managers and room-domain capabilities are introduced.
+	 * Version 11: the isolated Kaderlijst role and capability are introduced.
 	 */
 	public function maybe_upgrade_roles() {
 		$installed_version = (int) get_option( self::ROLES_VERSION_OPTION, 0 );
@@ -343,6 +416,10 @@ class UserRoles {
 			if ( $installed_version < 9
 				&& in_array( $slug, [ 'rondo_accommodatiebeheerder', 'rondo_bestuur', 'administrator' ], true ) ) {
 				$role->add_cap( self::ACCOMMODATIE_CAPABILITY );
+			}
+
+			if ( $installed_version < 11 && $slug === 'administrator' ) {
+				$role->add_cap( self::KADERLIJST_CAPABILITY );
 			}
 
 			self::sync_role_capabilities( $slug );
@@ -381,6 +458,7 @@ class UserRoles {
 			$admin_role->add_cap( self::ACCOMMODATIE_CAPABILITY );
 			$admin_role->add_cap( self::VRIJWILLIGERS_CAPABILITY );
 			$admin_role->add_cap( self::IVA_APPROVE_CAPABILITY );
+			$admin_role->add_cap( self::KADERLIJST_CAPABILITY );
 			self::sync_role_capabilities( 'administrator' );
 		}
 	}
@@ -593,6 +671,7 @@ class UserRoles {
 			$admin_role->remove_cap( self::ACCOMMODATIE_CAPABILITY );
 			$admin_role->remove_cap( self::VRIJWILLIGERS_CAPABILITY );
 			$admin_role->remove_cap( self::IVA_APPROVE_CAPABILITY );
+			$admin_role->remove_cap( self::KADERLIJST_CAPABILITY );
 		}
 
 		foreach ( self::get_all_roles() as $slug => $_ ) {

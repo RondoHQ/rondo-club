@@ -156,6 +156,7 @@ export const prmApi = {
 
   // Current user
   getCurrentUser: () => api.get('/rondo/v1/user/me'),
+  markFeedbackIntroSeen: () => api.post('/rondo/v1/user/feedback-intro-seen'),
   changePassword: (data) => api.post('/rondo/v1/user/password', data),
   requestPasswordReset: () => api.post('/rondo/v1/user/password-reset'),
   getPendingProfileEmail: (personId) => api.get('/rondo/v1/user/profile-email/pending', { params: { person_id: personId } }),
