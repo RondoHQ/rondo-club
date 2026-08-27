@@ -261,7 +261,7 @@ function ErrorNotice({ error }) {
 
 export default function TournamentDetail() {
   const { id } = useParams();
-  const isNew = id === 'nieuw';
+  const isNew = !id || id === 'nieuw';
   const tournamentQuery = useTournament(isNew ? null : id);
   const tournament = tournamentQuery.data;
   useDocumentTitle(isNew ? 'Toernooi toevoegen' : tournament?.name || 'Toernooi');
