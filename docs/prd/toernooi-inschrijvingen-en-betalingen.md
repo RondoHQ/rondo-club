@@ -1,6 +1,6 @@
 # PRD: Toernooi-inschrijvingen en betalingen
 
-**Status:** Plan — niet geïmplementeerd, gereed voor productreview
+**Status:** Plan — productkeuzes bevestigd, niet geïmplementeerd
 **Datum:** 2026-08-27
 **Eigenaar:** Toernooiplanning
 **Raakt:** Rondo Club, Kaderlijst, Financiën, Mollie en Lettermint
@@ -14,7 +14,8 @@ van ieder team.
 Een toegewezen kaderlid logt in op Rondo en ziet de opdracht onder **Mijn toernooien**. Het kaderlid
 kan uitsluitend een positieve inschrijving indienen. Er is geen knop of status voor "wij doen niet
 mee". Bij de inschrijving worden het aantal deelnemende teams, het aantal spelers en de
-contactpersoon per deelnemend team vastgelegd.
+spelersverdeling per deelnemend team vastgelegd. Iedere inschrijving heeft één contactpersoon voor
+alle deelnemende teams samen.
 
 Na bevestiging berekent Rondo het bedrag vanuit de voor dat toernooi vastgelegde tarieven en maakt
 Rondo via de bestaande Mollie-integratie een blijvende betaallink aan. De inschrijving en de
@@ -24,8 +25,9 @@ verstuurt geen herinneringen om een team alsnog te laten inschrijven.
 
 De toernooiplanner krijgt één overzicht met inschrijvingen, aantallen, contactpersonen, bedragen,
 betaalstatussen en de voortgang van de inschrijving bij de externe organisatie. Wanneer het
-programma beschikbaar is, kan de planner het vanuit Rondo versturen naar alle oorspronkelijk
-toegewezen kaderleden en de bij inschrijvingen opgegeven contactpersonen.
+programma beschikbaar is, kan de planner het vanuit Rondo versturen naar de toegewezen kaderleden
+en de contactpersoon van ieder definitief ingeschreven Rondo-team. Teams die niet zijn ingeschreven
+ontvangen het programma niet.
 
 ## 2. Bevestigde productkeuzes
 
@@ -50,6 +52,24 @@ De volgende keuzes zijn vastgesteld voor de eerste versie:
    toernooiorganisatie blijft in de eerste versie een handmatige stap.
 10. Rondo gebruikt voor alle betalingen de Mollie Payment Links API; reguliere kortlopende Mollie
     Payments worden niet gebruikt.
+11. Eén Rondo-team kan binnen zijn ene inschrijving meerdere deelnemende toernooiteams opgeven. Per
+    deelnemend team wordt het spelersaantal vastgelegd; de hele inschrijving heeft één gezamenlijke
+    contactpersoon.
+12. Iedere definitieve Rondo-teaminschrijving krijgt één factuur en één gezamenlijke betaallink voor
+    het totaalbedrag van alle deelnemende teams.
+13. Automatische betaalherinneringen gaan standaard zeven en twee dagen vóór de betaaldeadline naar
+    alle toegewezen kaderleden. De planner kan daarnaast handmatig een betaalherinnering sturen.
+14. Alleen toegewezen kaderleden en de contactpersoon van definitief ingeschreven Rondo-teams
+    ontvangen het programma.
+15. De externe voortgang wordt eenmaal voor het hele toernooi bijgehouden als niet verwerkt,
+    ingediend of bevestigd.
+16. De planner krijgt zowel een CSV als een printvriendelijke PDF-export.
+17. Na de interne deadline kunnen kaderleden niet meer inschrijven; alleen de planner kan de
+    deadline verlengen.
+18. Toernooibetalingen gebruiken een eigen Rondo-factuurtype met prefix `O` en de ene, in
+    Financiële instellingen gekozen standaard-Mollie-rekening voor toernooien.
+19. Toernooibeheer is beschikbaar voor administrators en gebruikers met de actieve kaderfunctie
+    `Coördinator toernooien`.
 
 ## 3. Aanleiding en huidig proces
 
@@ -108,7 +128,8 @@ Een toegewezen kaderlid mag:
 - de toernooi-informatie bekijken;
 - de gedeelde conceptinschrijving van het eigen team invullen en wijzigen;
 - één of meer deelnemende teams opgeven;
-- per deelnemend team het spelersaantal en de contactpersoon vastleggen;
+- per deelnemend team het spelersaantal vastleggen;
+- één contactpersoon voor de volledige Rondo-teaminschrijving vastleggen;
 - de inschrijving definitief bevestigen;
 - de betaalstatus en betaallink van de eigen inschrijving bekijken;
 - de betaallink doorsturen aan iemand die namens het team betaalt.
@@ -127,8 +148,10 @@ toernooibeheer, financieel beheer of extra toegang tot persoonsrecords.
 
 ### 6.2 Toernooiplanner
 
-Introduceer de capability `toernooien_beheren` en de ingebouwde rol
-`rondo_toernooiplanner`. Deze capability blijft via de bestaande rollenmatrix toewijsbaar.
+Een toernooiplanner is een goedgekeurde gebruiker van wie het gekoppelde persoonsrecord een actieve
+kaderfunctie `Coördinator toernooien` in `work_history` bevat. Administrators hebben altijd dezelfde
+beheertoegang. De server bepaalt dit via één centrale `can_manage_tournaments()`-controle; er komt
+geen afzonderlijke, handmatig toe te wijzen Rondo-rol of capability.
 
 Een toernooiplanner mag:
 
@@ -146,14 +169,15 @@ Een toernooiplanner mag:
 - een programma uploaden en de programmamail versturen;
 - de volledige activiteitengeschiedenis bekijken.
 
-De capability geeft geen algemeen personenbeheer of recht om betaalde facturen als betaald,
+De kaderfunctie geeft geen algemeen personenbeheer of recht om betaalde facturen als betaald,
 onbetaald of vervallen te markeren. Die handelingen blijven onder de bestaande financiële rechten.
 
 ### 6.3 Financieel beheerder en administrator
 
 Gebruikers met bestaande financiële rechten kunnen de toernooifacturen in het financiële overzicht
-zien en volgens de bestaande factuurregels beheren. Administrators hebben daarnaast alle rechten
-van de toernooiplanner.
+zien en volgens de bestaande factuurregels beheren. Zij kiezen in **Financiële instellingen →
+Mollie** de verplichte standaardrekening voor alle nieuwe toernooifacturen. Administrators hebben
+daarnaast alle rechten van de toernooiplanner.
 
 ## 7. Hoofdproces
 
@@ -226,6 +250,10 @@ snapshot vast van de toegewezen gebruikers, personen, teamnaam, leeftijdslaag en
 Latere wijzigingen in `work_history` veranderen een gepubliceerde opdracht niet stilzwijgend. De
 planner kan de toewijzing handmatig synchroniseren of herverdelen; iedere wijziging wordt gelogd.
 
+Publicatie wordt geblokkeerd wanneer financieel beheer nog geen bruikbare standaard-Mollie-rekening
+voor toernooien heeft ingesteld. Zo ontstaat nooit een open inschrijfopdracht waarvan de betaling
+bij bevestiging bij voorbaat niet kan worden aangemaakt.
+
 ### 7.3 Initiële toewijzing
 
 Na publicatie:
@@ -259,12 +287,17 @@ Het kaderlid kiest het aantal deelnemende teams. Voor ieder deelnemend team vers
 |---|---:|---|
 | Deelteam | Automatisch | Bijvoorbeeld `O15-1 · team 1` en `O15-1 · team 2` |
 | Aantal spelers | Ja | Positief geheel getal |
-| Naam contactpersoon | Ja | Contactpersoon op of rond de toernooidag |
+
+Onder de deelnemende teams legt het kaderlid eenmaal de gezamenlijke contactpersoon vast:
+
+| Veld | Verplicht | Toelichting |
+|---|---:|---|
+| Naam contactpersoon | Ja | Contactpersoon voor alle deelnemende teams binnen deze inschrijving |
 | E-mailadres contactpersoon | Ja | Voor het latere programma en wijzigingen |
 | Mobiel nummer contactpersoon | Ja | Voor praktische bereikbaarheid rond het toernooi |
 
-Dezelfde contactpersoon mag bij meerdere deelnemende teams worden ingevuld. Rondo berekent en toont
-het totale aantal teams, totale aantal spelers en totaalbedrag voordat het kaderlid bevestigt.
+Rondo berekent en toont het totale aantal teams, het opgetelde aantal spelers en het totaalbedrag
+voordat het kaderlid bevestigt.
 
 Er is uitsluitend een knop **Inschrijving bevestigen**. Er is geen knop voor afmelden of geen
 deelname. Minimaal één deelnemend team is vereist om te kunnen bevestigen.
@@ -364,11 +397,12 @@ notitie opslaan wanneer de externe organisatie een uitzondering of correctie mel
 De planner kan na ontvangst een programmabestand uploaden of een programmalink vastleggen. Voor
 verzending toont Rondo een voorbeeld van de doelgroep en ongeldige of ontbrekende e-mailadressen.
 
-De programmamail gaat naar de unieke, geldige e-mailadressen van:
+De programmamail gaat uitsluitend naar de unieke, geldige e-mailadressen van:
 
-- alle gebruikers die op dat moment aan de oorspronkelijke teamopdrachten zijn toegewezen, ook
-  wanneer hun team niet is ingeschreven;
-- alle contactpersonen uit definitieve inschrijvingen.
+- alle gebruikers die op dat moment zijn toegewezen aan een definitief ingeschreven Rondo-team;
+- de ene contactpersoon van iedere definitieve inschrijving.
+
+Niet-ingeschreven teams ontvangen geen programmamail.
 
 Adressen worden ontdubbeld. De planner verstuurt de programmamail handmatig; er is geen automatische
 verzenddatum in de eerste versie. Onderwerp, bericht, bestand of link, verzendtijd en resultaten
@@ -407,7 +441,7 @@ De tabel **Teams en betalingen** bevat minimaal:
 | Inschrijving | Niet ingeschreven, betaling open, betaallink mislukt of betaald |
 | Deelnemende teams | Aantal binnen de inschrijving |
 | Spelers | Totaal en uitklapbare verdeling per deelnemend team |
-| Contactpersonen | Naam, e-mail en mobiel per deelnemend team |
+| Contactpersoon | Eén naam, e-mail en mobiel voor de volledige Rondo-teaminschrijving |
 | Bedrag | Vastgelegd totaalbedrag |
 | Betaling | Open, betaald of vervallen; met betaaldatum indien bekend |
 | Laatste betaalmail | Datum en type van de laatste betaalmail |
@@ -436,7 +470,7 @@ De planner kan een CSV en een printvriendelijk PDF-overzicht downloaden met:
 - toernooigegevens en deadlines;
 - totalen per leeftijdslaag;
 - per Rondo-team het aantal deelnemende teams en spelers;
-- per deelnemend team de contactpersoon;
+- per Rondo-teaminschrijving de gezamenlijke contactpersoon;
 - bedrag en betaalstatus;
 - datum van de laatst verwerkte betaling.
 
@@ -515,6 +549,9 @@ publicatie als opdracht aangemaakt, ook wanneer het team uiteindelijk niets indi
 | `registration_status` | Keuze | `open` of `submitted` |
 | `draft_team_entries` | Repeater | Bewerkbaar concept vóór bevestiging |
 | `submitted_team_entries` | Repeater | Onveranderlijk inschrijfsnapshot |
+| `contact_name` | Tekst | Eén gezamenlijke contactpersoon voor de inschrijving |
+| `contact_email` | E-mail | E-mailadres van de gezamenlijke contactpersoon |
+| `contact_mobile` | Telefoon | Mobiel nummer van de gezamenlijke contactpersoon |
 | `registered_team_count` | Getal | Afgeleid en vastgelegd bij bevestiging |
 | `player_count` | Getal | Afgeleid en vastgelegd bij bevestiging |
 | `price_per_team` | Bedrag | Tariefsnapshot |
@@ -540,9 +577,6 @@ Zowel `draft_team_entries` als `submitted_team_entries` gebruiken dezelfde repea
 | `sequence` | Getal | Stabiel volgnummer binnen het Rondo-team |
 | `display_name` | Tekst | Automatisch afgeleid, bijvoorbeeld O15-1 · team 2 |
 | `player_count` | Getal | Positief geheel getal |
-| `contact_name` | Tekst | Verplicht |
-| `contact_email` | E-mail | Verplicht en gevalideerd |
-| `contact_mobile` | Telefoon | Verplicht, genormaliseerd voor weergave en `tel:` |
 
 ### 10.4 Toernooifactuur
 
@@ -552,8 +586,9 @@ De bestaande `rondo_invoice` krijgt het type `tournament`:
 - één factuur per definitieve `rondo_tournament_entry`;
 - `_tournament_entry_id` als onveranderlijke koppeling;
 - `_mollie_description` als snapshot van toernooi, team, aantallen en spelers;
-- de standaard Mollie-rekening voor handmatige facturen tenzij financieel beheer later een aparte
-  standaardrekening voor toernooien configureert;
+- de verplichte standaard-Mollie-rekening voor toernooien uit **Financiële instellingen → Mollie**;
+- het bij factuurcreatie vastgelegde rekening-ID blijft op die factuur staan als de globale
+  standaardrekening later wijzigt;
 - bestaande betaling-, webhook-, PDF-, verval- en auditlogica blijft leidend.
 
 De factuur en de entry dupliceren alleen de financiële snapshot die nodig is om historie en
@@ -634,8 +669,9 @@ Voorgestelde routes:
 | `GET /tournaments/{id}/export.pdf` | Printvriendelijk planner-overzicht |
 | `POST /tournaments/{id}/program` | Programma opslaan en/of versturen |
 
-Iedere entry-route controleert server-side of de huidige gebruiker in `assigned_user_ids` staat of
-`toernooien_beheren` heeft. De frontendstatus is nooit een autorisatiebeslissing. Responses aan
+Iedere entry-route controleert server-side of de huidige gebruiker in `assigned_user_ids` staat,
+administrator is of via `can_manage_tournaments()` een actieve kaderfunctie
+`Coördinator toernooien` heeft. De frontendstatus is nooit een autorisatiebeslissing. Responses aan
 kaderleden bevatten geen andere teams, planner-notities, financiële dashboardlinks of e-mailstatus
 van andere ontvangers.
 
@@ -690,7 +726,8 @@ alleen een operationele waarschuwing en geen providergeheimen.
 3. Alleen toegewezen gebruikers mogen het kaderconcept bevestigen; planners kunnen ondersteunen,
    maar niet stilzwijgend namens een team positief inschrijven zonder gelogde actor en reden.
 4. Bevestiging vereist minimaal één deelnemend team.
-5. Ieder deelnemend team vereist spelersaantal, contactnaam, geldig e-mailadres en mobiel nummer.
+5. Ieder deelnemend team vereist een spelersaantal; iedere volledige Rondo-teaminschrijving vereist
+   precies één contactnaam, geldig e-mailadres en mobiel nummer.
 6. Bedrag en totalen worden uitsluitend server-side berekend.
 7. Leeftijdslaag en tarief komen uit de gepubliceerde assignment-snapshot.
 8. Een tariefwijziging verandert nooit een bestaande opdracht, inschrijving of factuur.
@@ -705,6 +742,8 @@ alleen een operationele waarschuwing en geen providergeheimen.
     de deadline heeft verlengd.
 16. Programmaontvangers worden vlak vóór verzending opnieuw gevalideerd en ontdubbeld.
 17. Geen enkele e-mail bevat Mollie API-sleutels, interne tokens of persoonsgegevens van andere teams.
+18. Een toernooifactuur kan alleen worden gemaakt wanneer financieel beheer een bruikbare
+    standaard-Mollie-rekening voor toernooien heeft ingesteld.
 
 ## 15. Randgevallen
 
@@ -763,7 +802,9 @@ Er gebeurt niets. De planner ziet **Niet ingeschreven** en Rondo verstuurt geen 
 ### Inschrijving
 
 - [ ] Het formulier biedt alleen een positieve inschrijving en geen afmeldmogelijkheid.
-- [ ] Het kaderlid kan één of meer deelnemende teams met spelersaantal en contactpersoon opgeven.
+- [ ] Het kaderlid kan één of meer deelnemende teams met ieder een eigen spelersaantal opgeven.
+- [ ] Iedere Rondo-teaminschrijving heeft precies één gezamenlijke contactpersoon, ongeacht het
+  aantal deelnemende teams.
 - [ ] Een opgeslagen concept telt voor de planner als niet ingeschreven.
 - [ ] Bevestiging legt aantallen, contactpersonen, tarief en totaalbedrag als snapshot vast.
 - [ ] Het totaalbedrag wordt server-side berekend en kan niet vanuit de client worden gemanipuleerd.
@@ -774,6 +815,8 @@ Er gebeurt niets. De planner ziet **Niet ingeschreven** en Rondo verstuurt geen 
 
 - [ ] Een definitieve inschrijving maakt precies één toernooifactuur en één blijvende Mollie-
   betaallink aan.
+- [ ] Iedere toernooifactuur gebruikt de in Financiële instellingen gekozen standaardrekening voor
+  toernooien en bewaart die rekening als factuursnapshot.
 - [ ] De Mollie-omschrijving bevat toernooi, Rondo-team, aantal teams en aantal spelers.
 - [ ] Een Mollie-storing verliest de inschrijving niet en kan idempotent worden hersteld.
 - [ ] Alleen een geverifieerde Mollie-webhook zet de betaling op betaald.
@@ -786,8 +829,9 @@ Er gebeurt niets. De planner ziet **Niet ingeschreven** en Rondo verstuurt geen 
 - [ ] Alleen definitief ingeschreven, onbetaalde teams ontvangen betaalherinneringen.
 - [ ] Iedere geplande herinnering wordt per entry maximaal eenmaal verstuurd.
 - [ ] Een betaling die vóór verzending binnenkomt voorkomt de herinnering.
-- [ ] De programmamail bereikt de unieke adressen van alle toegewezen kaderleden en alle opgegeven
-  contactpersonen.
+- [ ] De programmamail bereikt alleen de unieke adressen van toegewezen kaderleden en de ene
+  contactpersoon van definitief ingeschreven Rondo-teams.
+- [ ] Niet-ingeschreven teams ontvangen geen programmamail.
 - [ ] Verzendresultaten en mislukkingen zijn voor de planner controleerbaar.
 
 ### Overzicht en export
@@ -807,7 +851,8 @@ Er gebeurt niets. De planner ziet **Niet ingeschreven** en Rondo verstuurt geen 
 - doelgroepselectie op actieve teamgebonden kaderfuncties;
 - uitsluiten van spelersrollen, oud-leden en gebruikers zonder actief account;
 - unieke toernooi-teamcombinaties en idempotente publicatie;
-- REST-permissies voor toegewezen gebruiker, planner, financieel beheerder en buitenstaander;
+- REST-permissies voor toegewezen gebruiker, actieve Coördinator toernooien, administrator,
+  financieel beheerder en buitenstaander;
 - server-side tariefberekening en snapshotgedrag;
 - deadline- en versieconflicten;
 - idempotente factuur- en payment-linkaanmaak;
@@ -905,6 +950,7 @@ twee kaderaccounts op hetzelfde team. Voor volledige uitrol worden gecontroleerd
 5. geen inschrijfherinnering aan een niet-ingeschreven pilotteam;
 6. één betaalherinnering aan een ingeschreven, onbetaald pilotteam;
 7. correcte totalen en export;
-8. programmamail naar zowel toegewezen kaderleden als opgegeven contactpersonen.
+8. programmamail uitsluitend naar toegewezen kaderleden en de gezamenlijke contactpersoon van
+   definitief ingeschreven Rondo-teams.
 
 Pas na deze echte ketentest wordt de module voor alle jeugdteams gebruikt.
