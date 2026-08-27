@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Het formulier voor een nieuw toernooi opent zonder eerst bestaande toernooigegevens te verwachten.
 
+### Changed
+
+- De lege melding bij **Mijn toernooien** legt uit dat er nog geen beschikbare inschrijvingen zijn.
+
 ## [35.8.0] - 2026-08-25
 
 ### Added
