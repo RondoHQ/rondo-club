@@ -31,6 +31,8 @@ class PostTypes {
 		'rondo_invoice'        => [ 'invoice', 'invoices' ],
 		'rondo_room'           => [ 'room', 'rooms' ],
 		'rondo_room_booking'   => [ 'room_booking', 'room_bookings' ],
+		'rondo_tournament'     => [ 'tournament', 'tournaments' ],
+		'rondo_tourn_entry'    => [ 'tournament_entry', 'tournament_entries' ],
 		'rondo_display'        => [ 'display', 'displays' ],
 		'rondo_signage_item'   => [ 'signage_item', 'signage_items' ],
 		'rondo_signage_list'   => [ 'signage_playlist', 'signage_playlists' ],
@@ -112,6 +114,8 @@ class PostTypes {
 		$this->register_invoice_post_type();
 		$this->register_room_post_type();
 		$this->register_room_booking_post_type();
+		$this->register_tournament_post_type();
+		$this->register_tournament_entry_post_type();
 		$this->register_display_post_type();
 		$this->register_signage_item_post_type();
 		$this->register_signage_playlist_post_type();
@@ -224,6 +228,56 @@ class PostTypes {
 		);
 
 		register_post_type( 'rondo_room_booking', $args );
+	}
+
+	/** Register private tournament editions managed through Rondo's REST API. */
+	private function register_tournament_post_type() {
+		$args = array_merge(
+			[
+				'labels'             => [
+					'name'          => __( 'Toernooien', 'rondo' ),
+					'singular_name' => __( 'Toernooi', 'rondo' ),
+				],
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => false,
+				'show_in_menu'       => false,
+				'show_in_rest'       => false,
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'rondo_tournament' )
+		);
+
+		register_post_type( 'rondo_tournament', $args );
+	}
+
+	/** Register one private shared tournament entry per Rondo team. */
+	private function register_tournament_entry_post_type() {
+		$args = array_merge(
+			[
+				'labels'             => [
+					'name'          => __( 'Toernooi-inschrijvingen', 'rondo' ),
+					'singular_name' => __( 'Toernooi-inschrijving', 'rondo' ),
+				],
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => false,
+				'show_in_menu'       => false,
+				'show_in_rest'       => false,
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'rondo_tourn_entry' )
+		);
+
+		register_post_type( 'rondo_tourn_entry', $args );
 	}
 
 	/** Register the private, immutable member self-service audit log. */

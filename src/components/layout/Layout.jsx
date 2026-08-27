@@ -36,7 +36,8 @@ import {
   MonitorPlay,
   ChartPie,
   History,
-  CalendarDays
+  CalendarDays,
+  Trophy
 } from 'lucide-react';
 
 // Wordmark URLs from theme directory.
@@ -60,6 +61,7 @@ const navigation = [
   { name: 'Mijn inschrijftaken', href: '/vrijwillig', icon: HeartHandshake, personal: true },
   { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, requiresLinkedPerson: true, personal: true },
   { name: 'Ruimtes', href: '/rooms', icon: CalendarDays, personal: true, requiresFeature: 'rooms' },
+  { name: 'Mijn toernooien', href: '/mijn-toernooien', icon: Trophy, personal: true, requiresTournamentAssignments: true },
   { name: 'Dashboard', href: '/', icon: Home, requiresKader: true },
   { name: 'Relaties', href: '/people', icon: Users, requiresKader: true },
   { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
@@ -69,6 +71,7 @@ const navigation = [
   { name: 'Sponsoren', href: '/sponsors', icon: Building2, requiresSponsors: true },
   { name: 'Teams', href: '/teams', icon: Shield, requiresKader: true },
   { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true, requiresKaderlijst: true },
+  { name: 'Toernooien', href: '/toernooien', icon: Trophy, requiresTournamentManager: true },
   { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true, requiresFeature: 'clothing' },
   { name: 'Commissies', href: '/commissies', icon: UsersRound, requiresKader: true },
   { name: 'Vrijwilligers', href: '/vrijwilligers', icon: HeartHandshake, requiresVrijwilligers: true },
@@ -107,6 +110,8 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessNarrowcasting = currentUser?.can_access_narrowcasting ?? false;
   const canManageSponsors = currentUser?.can_manage_sponsors ?? false;
   const canAccessKaderlijst = currentUser?.can_access_kaderlijst ?? false;
+  const canManageTournaments = currentUser?.can_manage_tournaments ?? false;
+  const hasTournamentAssignments = currentUser?.has_tournament_assignments ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
   const sidebarUserName = currentUser?.linked_person_name || currentUser?.name || '';
 
@@ -220,6 +225,8 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresNarrowcasting && !canAccessNarrowcasting) return false;
     if (item.requiresSponsors && !canManageSponsors) return false;
     if (item.requiresKaderlijst && !canAccessKaderlijst) return false;
+    if (item.requiresTournamentManager && !canManageTournaments) return false;
+    if (item.requiresTournamentAssignments && !hasTournamentAssignments && !canManageTournaments) return false;
     if (item.requiresKader && !isKader) return false;
     return true;
   });

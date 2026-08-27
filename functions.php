@@ -154,6 +154,7 @@ use Rondo\REST\Capabilities as RESTCapabilities;
 use Rondo\REST\FinanceSettings as RESTFinanceSettings;
 use Rondo\REST\Narrowcasting as RESTNarrowcasting;
 use Rondo\REST\Rooms as RESTRooms;
+use Rondo\REST\Tournaments as RESTTournaments;
 use Rondo\VOG\VOGEmail;
 use Rondo\Fees\FeeCacheInvalidator;
 use Rondo\Config\ClubConfig;
@@ -367,6 +368,7 @@ function rondo_init() {
 		if ( FeatureToggles::is_available( 'rooms' ) ) {
 			new RESTRooms();
 		}
+		new RESTTournaments();
 		new \Rondo\REST\MemberProfile();
 		new RabobankOAuth();
 		new RabobankPayment();

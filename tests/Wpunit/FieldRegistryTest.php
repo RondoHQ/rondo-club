@@ -26,6 +26,8 @@ class FieldRegistryTest extends RondoTestCase {
 				'rondo_invoice',
 				'rondo_room',
 				'rondo_room_booking',
+				'rondo_tournament',
+				'rondo_tourn_entry',
 				'rondo_sponsor',
 				'rondo_todo',
 				'shift_template',

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Toernooicoördinatoren kunnen toernooien aanmaken, actuele kaderleden per team uitnodigen en de voortgang per Rondo-team volgen.
+- Kaderleden kunnen via **Mijn toernooien** één of meer toernooiteams met een spelersaantal per team en één gedeelde contactpersoon inschrijven.
 - Alle gebruikers krijgen eenmalig uitleg bij de feedbackknop; bevestiging wordt per account onthouden.
 - De nieuwe rol Rondo Kaderlijst geeft toegang tot de volledige kaderlijst zonder de algemene ledenlijst of andere kaderpagina's te openen.
 

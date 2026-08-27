@@ -1218,6 +1218,8 @@ class UserSettings extends Base {
 			'can_access_narrowcasting'      => \Rondo\Config\FeatureToggles::can_access( 'narrowcasting' ) && ( current_user_can( 'narrowcasting' ) || current_user_can( 'sponsorbeheer' ) || $is_admin ),
 			'can_manage_narrowcasting'      => \Rondo\Config\FeatureToggles::can_access( 'narrowcasting' ) && ( current_user_can( 'narrowcasting' ) || $is_admin ),
 			'can_manage_accommodatie'       => \Rondo\Config\FeatureToggles::can_access( 'rooms' ) && ( current_user_can( 'accommodatiebeheer' ) || $is_admin ),
+			'can_manage_tournaments'        => \Rondo\Tournaments\TournamentAccess::can_manage( $user_id ),
+			'has_tournament_assignments'    => \Rondo\Tournaments\TournamentAccess::has_assignments( $user_id ),
 			'can_access_fairplay'           => current_user_can( 'fairplay' ),
 			'can_access_vog'                => current_user_can( 'vog' ),
 			'can_access_financieel'         => \Rondo\Core\UserRoles::can_view_finances(),

@@ -29,6 +29,7 @@ import {
   TaakuitlegList, TaakuitlegForm,
   Narrowcasting, NarrowcastingDisplay, PresentationSender,
   Rooms,
+  TournamentsList, TournamentDetail, MyTournaments, TournamentEntry,
 } from './lazyPages';
 
 // Page loader for Suspense fallback
@@ -136,6 +137,22 @@ function FeatureRoute({ feature, children }) {
 function SponsorRoute({ children }) {
   return (
     <CapabilityRoute checkAccess={(user) => user?.can_manage_sponsors}>
+      {children}
+    </CapabilityRoute>
+  );
+}
+
+function TournamentManagerRoute({ children }) {
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.can_manage_tournaments}>
+      {children}
+    </CapabilityRoute>
+  );
+}
+
+function TournamentAssignmentRoute({ children }) {
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.has_tournament_assignments || user?.can_manage_tournaments}>
       {children}
     </CapabilityRoute>
   );
@@ -484,6 +501,8 @@ const router = createBrowserRouter([
           { path: 'vrijwillig', element: <Vrijwillig /> },
           // Mijn gegevens — eigen record + kinderen. Server-side gescoped.
           { path: 'mijn-gegevens', element: <Household /> },
+          { path: 'mijn-toernooien', element: <TournamentAssignmentRoute><MyTournaments /></TournamentAssignmentRoute> },
+          { path: 'mijn-toernooien/:id', element: <TournamentAssignmentRoute><TournamentEntry /></TournamentAssignmentRoute> },
           // Legacy: /vrijwillig/profiel is verplaatst naar /profile/iva.
           { path: 'vrijwillig/profiel', element: <Navigate to="/profile/iva" replace /> },
 
@@ -560,6 +579,9 @@ const router = createBrowserRouter([
           { path: 'teams', element: <KaderOrVrijwilligRedirect><TeamsList /></KaderOrVrijwilligRedirect> },
           { path: 'teams/:id', element: <KaderOrVrijwilligRedirect><TeamDetail /></KaderOrVrijwilligRedirect> },
           { path: 'kaderlijst', element: <KaderlijstRoute><Kaderlijst /></KaderlijstRoute> },
+          { path: 'toernooien', element: <TournamentManagerRoute><TournamentsList /></TournamentManagerRoute> },
+          { path: 'toernooien/nieuw', element: <TournamentManagerRoute><TournamentDetail /></TournamentManagerRoute> },
+          { path: 'toernooien/:id', element: <TournamentManagerRoute><TournamentDetail /></TournamentManagerRoute> },
           {
             path: 'kleding/:tab',
             element: (
