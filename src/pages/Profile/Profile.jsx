@@ -26,16 +26,7 @@ export default function Profile() {
   const [savingTime, setSavingTime] = useState(false);
   const [savingMentionPref, setSavingMentionPref] = useState(false);
 
-  const isKader = Boolean(
-    user?.is_admin ||
-    user?.can_access_fairplay ||
-    user?.can_access_vog ||
-    user?.can_access_financieel ||
-    user?.can_access_toegangscontrole ||
-    user?.can_access_clothing ||
-    user?.can_access_ledenadministratie ||
-    user?.can_access_vrijwilligers
-  );
+  const isKader = Boolean(user?.is_kader);
 
   const isDemoUser = window.rondoConfig?.isDemoUser;
   const colorSchemeOptions = [

@@ -1172,25 +1172,10 @@ class UserSettings extends Base {
 		$avatar_url = get_avatar_url( $user_id, [ 'size' => 96 ] );
 		$is_admin   = current_user_can( 'manage_options' );
 
-		// Roles beyond the plain member baseline — e.g. poule-rollen of custom rollen
-		// zonder eigen capability. Deze gebruikers horen het dashboard te zien.
-		$has_extra_roles = ! empty( array_diff( (array) $user->roles, [ \Rondo\Core\UserRoles::ROLE_NAME, 'subscriber' ] ) );
-
-		// The single definition of "kader". The React router and the sidebar both read
-		// this; deriving it separately in either place lets them disagree, and a user
-		// lands on a dashboard with no navigation to it.
-		$is_kader = $is_admin
-			|| $has_extra_roles
-			|| current_user_can( 'fairplay' )
-			|| current_user_can( 'vog' )
-			|| \Rondo\Core\UserRoles::can_view_finances()
-			|| current_user_can( 'toegangscontrole' )
-			|| current_user_can( 'manage_clothing' )
-			|| current_user_can( 'ledenadministratie' )
-			|| current_user_can( 'sponsorbeheer' )
-			|| current_user_can( 'narrowcasting' )
-			|| current_user_can( 'accommodatiebeheer' )
-			|| current_user_can( 'vrijwilligers' );
+		// Keep the role and route definitions server-side. The dedicated Kaderlijst
+		// role is an extra WordPress role, but deliberately not a general kader role.
+		$has_extra_roles = \Rondo\Core\UserRoles::has_extra_staff_role( $user_id );
+		$is_kader        = \Rondo\Core\UserRoles::is_kader( $user_id );
 
 		$person_id           = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
 		$is_parent           = $person_id ? ( new ParentRelationshipService() )->has_current_child( $person_id ) : false;
@@ -1224,6 +1209,7 @@ class UserSettings extends Base {
 			'is_admin'                      => $is_admin,
 			'has_extra_roles'               => $has_extra_roles,
 			'is_kader'                      => $is_kader,
+			'can_access_kaderlijst'         => \Rondo\Core\UserRoles::can_access_kaderlijst( $user_id ),
 			'is_sponsor'                    => $person_id ? \Rondo\Core\SponsorStatus::is_sponsor( $person_id ) : false,
 			'is_parent'                     => $is_parent,
 			'can_edit_people'               => \Rondo\Core\AccessControl::can_edit_people(),

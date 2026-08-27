@@ -72,8 +72,20 @@ class Api extends Base {
 	 * @return \WP_REST_Response
 	 */
 	public function get_kaderlijst_people( $request ) {
+		$refresh = rest_sanitize_boolean( $request->get_param( 'refresh' ) );
+
+		// The dedicated capability grants this narrow endpoint, not general person
+		// visibility. Its response is already limited to active kader and the fields
+		// rendered by the table.
+		if ( current_user_can( \Rondo\Core\UserRoles::KADERLIJST_CAPABILITY ) ) {
+			return $this->cached_kaderlijst_response(
+				[ 'type' => 'all' ],
+				fn() => $this->build_kaderlijst_people( $this->kaderlijst_candidate_ids() ),
+				$refresh
+			);
+		}
+
 		$permitted = \Rondo\Core\AccessControl::get_permitted_age_groups();
-		$refresh   = rest_sanitize_boolean( $request->get_param( 'refresh' ) );
 
 		// Scoped member: only their own household, and only if they are kader.
 		if ( is_array( $permitted ) && empty( $permitted ) ) {
@@ -405,7 +417,8 @@ class Api extends Base {
 			$stored[ $definition['storage_name'] ] = \Rondo\Fields\Fields::get_for_post( $person_id, $field_name );
 		}
 
-		if ( \Rondo\Core\AccessControl::is_scoped_member() ) {
+		if ( \Rondo\Core\AccessControl::is_scoped_member()
+			&& ! current_user_can( \Rondo\Core\UserRoles::KADERLIJST_CAPABILITY ) ) {
 			$stored = \Rondo\Core\AccessControl::filter_member_visible_fields( $stored );
 		}
 		$stored = \Rondo\Core\AccessControl::filter_sensitive_fields( $stored );
@@ -459,6 +472,23 @@ class Api extends Base {
 	public function invalidate_dashboard_cache() {
 		update_option( self::DASHBOARD_CACHE_GENERATION_OPTION, wp_generate_uuid4(), false );
 		delete_transient( 'rondo_anniversaries_365' );
+	}
+
+	/**
+	 * Require either general kader access or the isolated Kaderlijst capability.
+	 *
+	 * @return bool|\WP_Error True when allowed, otherwise a REST error.
+	 */
+	public function check_kaderlijst_access() {
+		if ( ! is_user_logged_in() ) {
+			return new \WP_Error( 'rest_not_logged_in', __( 'You are not currently logged in.', 'rondo' ), [ 'status' => 401 ] );
+		}
+
+		if ( ! \Rondo\Core\UserRoles::can_access_kaderlijst() ) {
+			return new \WP_Error( 'rest_forbidden_kaderlijst', __( 'You do not have permission to view the Kaderlijst.', 'rondo' ), [ 'status' => 403 ] );
+		}
+
+		return true;
 	}
 
 	/**
@@ -568,7 +598,7 @@ class Api extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_kaderlijst_people' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_kaderlijst_access' ],
 				'args'                => [
 					'refresh' => [
 						'required'          => false,
