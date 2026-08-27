@@ -68,7 +68,7 @@ const navigation = [
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
   { name: 'Sponsoren', href: '/sponsors', icon: Building2, requiresSponsors: true },
   { name: 'Teams', href: '/teams', icon: Shield, requiresKader: true },
-  { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true, requiresKader: true },
+  { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true, requiresKaderlijst: true },
   { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true, requiresFeature: 'clothing' },
   { name: 'Commissies', href: '/commissies', icon: UsersRound, requiresKader: true },
   { name: 'Vrijwilligers', href: '/vrijwilligers', icon: HeartHandshake, requiresVrijwilligers: true },
@@ -106,6 +106,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessVrijwilligers = currentUser?.can_access_vrijwilligers ?? false;
   const canAccessNarrowcasting = currentUser?.can_access_narrowcasting ?? false;
   const canManageSponsors = currentUser?.can_manage_sponsors ?? false;
+  const canAccessKaderlijst = currentUser?.can_access_kaderlijst ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
   const sidebarUserName = currentUser?.linked_person_name || currentUser?.name || '';
 
@@ -218,12 +219,15 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresVrijwilligers && !canAccessVrijwilligers) return false;
     if (item.requiresNarrowcasting && !canAccessNarrowcasting) return false;
     if (item.requiresSponsors && !canManageSponsors) return false;
+    if (item.requiresKaderlijst && !canAccessKaderlijst) return false;
     if (item.requiresKader && !isKader) return false;
     return true;
   });
 
   const personalNav = visibleNav.filter((item) => item.personal);
-  const clubNav = visibleNav.filter((item) => !item.personal);
+  const clubNav = visibleNav
+    .filter((item) => !item.personal)
+    .map((item) => (item.requiresKaderlijst && !isKader ? { ...item, indent: false } : item));
 
   const navGroups = [];
   for (const item of clubNav) {

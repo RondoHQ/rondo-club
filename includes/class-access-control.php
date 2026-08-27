@@ -545,6 +545,13 @@ class AccessControl {
 		$permitted = [];
 
 		foreach ( $user->roles as $role ) {
+			$role_object = get_role( $role );
+			if ( $role_object && $role_object->has_cap( UserRoles::KADERLIJST_CAPABILITY ) ) {
+				// Kaderlijst access is intentionally isolated from general person
+				// visibility, even if stale age-group settings still exist for the role.
+				continue;
+			}
+
 			if ( ! isset( $config[ $role ] ) ) {
 				continue;
 			}

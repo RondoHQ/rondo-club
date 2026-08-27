@@ -494,6 +494,7 @@ class Capabilities extends Base {
 			'vrijwilligers'      => 'Vrijwilligersbeheer',
 			'rondo_iva_approve'  => 'IVA goedkeuren',
 		];
+		$capability_labels[ \Rondo\Core\UserRoles::KADERLIJST_CAPABILITY ] = 'Kaderlijst';
 
 		$wp_roles     = wp_roles();
 		$all_roles    = \Rondo\Core\UserRoles::get_all_roles();
@@ -560,9 +561,10 @@ class Capabilities extends Base {
 			);
 		}
 
-		$allowed_caps  = [ 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'narrowcasting', 'accommodatiebeheer', 'vrijwilligers', 'rondo_iva_approve' ];
-		$valid_slugs   = array_keys( \Rondo\Core\UserRoles::get_all_roles() );
-		$valid_slugs[] = 'administrator';
+		$allowed_caps   = [ 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'narrowcasting', 'accommodatiebeheer', 'vrijwilligers', 'rondo_iva_approve' ];
+		$allowed_caps[] = \Rondo\Core\UserRoles::KADERLIJST_CAPABILITY;
+		$valid_slugs    = array_keys( \Rondo\Core\UserRoles::get_all_roles() );
+		$valid_slugs[]  = 'administrator';
 
 		foreach ( $submitted_roles as $slug => $role_data ) {
 			if ( ! in_array( $slug, $valid_slugs, true ) ) {
