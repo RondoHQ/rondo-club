@@ -26,7 +26,7 @@ export default function MyTournaments() {
         <div className="card p-10 text-center">
           <ClipboardList className="mx-auto h-10 w-10 text-gray-400" />
           <h2 className="mt-3 font-semibold text-gray-900 dark:text-gray-100">Geen openstaande toernooien</h2>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Je bent nog niet aan een toernooi-inschrijving toegewezen.</p>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Er zijn nog geen toernooien waarvoor je je hier kunt inschrijven.</p>
         </div>
       ) : null}
 
