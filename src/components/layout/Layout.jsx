@@ -45,8 +45,9 @@ const getDarkLogoUrl = () => `${window.rondoConfig?.themeUrl || ''}/rondo_logo_w
 import { useAuth } from '@/hooks/useAuth';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch, useDashboard } from '@/hooks/useDashboard';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useCurrentUser, useMarkFeedbackIntroSeen } from '@/hooks/useCurrentUser';
 import FeedbackModal from '@/components/FeedbackModal';
+import FeedbackIntroPopover from '@/components/FeedbackIntroPopover';
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { useCreateFeedback } from '@/hooks/useFeedback';
 
@@ -679,7 +680,7 @@ function SearchModal({ isOpen, onClose }) {
   );
 }
 
-function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
+function Header({ onMenuClick, onOpenSearch, onOpenFeedback, showFeedbackIntro, onAcknowledgeFeedbackIntro }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -765,15 +766,24 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Feedback button */}
-      <button
-        onClick={onOpenFeedback}
-        className="p-2 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors dark:text-gray-400 dark:hover:bg-gray-700"
-        aria-label="Feedback verzenden"
-        title="Feedback verzenden"
-      >
-        <MessageSquarePlus className="w-5 h-5" />
-      </button>
+      {/* Feedback button and one-time introduction */}
+      <div className="relative">
+        <button
+          onClick={onOpenFeedback}
+          className={`p-2 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors dark:text-gray-400 dark:hover:bg-gray-700 ${showFeedbackIntro ? 'bg-cyan-50 text-cyan-700 ring-2 ring-cyan-400 dark:bg-cyan-950 dark:text-cyan-300' : ''}`}
+          aria-label="Feedback verzenden"
+          title="Feedback verzenden"
+          aria-describedby={showFeedbackIntro ? 'feedback-intro-description' : undefined}
+        >
+          <MessageSquarePlus className="w-5 h-5" />
+        </button>
+        {showFeedbackIntro ? (
+          <FeedbackIntroPopover
+            onAcknowledge={onAcknowledgeFeedbackIntro}
+            onOpenFeedback={onOpenFeedback}
+          />
+        ) : null}
+      </div>
 
       {/* Search button */}
       <button
@@ -813,8 +823,24 @@ export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackIntroDismissed, setFeedbackIntroDismissed] = useState(false);
   const isDemo = window.rondoConfig?.isDemo;
   const createFeedback = useCreateFeedback();
+  const { data: currentUser } = useCurrentUser();
+  const markFeedbackIntroSeen = useMarkFeedbackIntroSeen();
+  const showFeedbackIntro = Boolean(currentUser && !currentUser.feedback_intro_seen && !feedbackIntroDismissed);
+
+  const acknowledgeFeedbackIntro = () => {
+    setFeedbackIntroDismissed(true);
+    markFeedbackIntroSeen.mutate();
+  };
+
+  const openFeedback = () => {
+    if (showFeedbackIntro) {
+      acknowledgeFeedbackIntro();
+    }
+    setShowFeedbackModal(true);
+  };
 
   // Fetch dashboard stats for navigation counts
   const { data: dashboardData } = useDashboard();
@@ -877,7 +903,9 @@ export default function Layout({ children }) {
         <Header
           onMenuClick={() => setSidebarOpen(true)}
           onOpenSearch={() => setShowSearchModal(true)}
-          onOpenFeedback={() => setShowFeedbackModal(true)}
+          onOpenFeedback={openFeedback}
+          showFeedbackIntro={showFeedbackIntro}
+          onAcknowledgeFeedbackIntro={acknowledgeFeedbackIntro}
         />
 
         <main className="flex-1 px-4 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom))] overflow-visible lg:min-h-0 lg:overflow-y-auto lg:p-6 [overscroll-behavior-y:none]">

@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 
 /**
@@ -18,6 +18,22 @@ export function useCurrentUser() {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes - user data rarely changes
     retry: false,
+  });
+}
+
+/**
+ * Persist that the current account acknowledged the feedback introduction.
+ */
+export function useMarkFeedbackIntroSeen() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => prmApi.markFeedbackIntroSeen(),
+    onSuccess: () => {
+      queryClient.setQueryData(['current-user'], (currentUser) => (
+        currentUser ? { ...currentUser, feedback_intro_seen: true } : currentUser
+      ));
+    },
   });
 }
 
