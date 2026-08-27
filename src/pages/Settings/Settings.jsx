@@ -12,6 +12,7 @@ import RichTextEditor from '@/components/RichTextEditor';
 import { useClothingSettings, useUpdateClothingSettings } from '@/hooks/useClothing';
 import { canAccessFeature } from '@/utils/featureToggles';
 
+const KADERLIJST_CAPABILITY = 'kaderlijst';
 
 // Tab configuration (no icons - using TabButton component)
 const TABS = [
@@ -3526,10 +3527,11 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, manage
       },
     }));
 
-    // If adding a management capability, auto-clear age-group restriction for that role.
+    // If adding a management or isolated Kaderlijst capability, auto-clear the
+    // age-group restriction for that role.
     // The list comes from the server (AccessControl::AGE_GROUP_BYPASS_CAPS) — a copy
     // maintained here went stale every time that constant changed.
-    if (checked && managementCaps.includes(capSlug)) {
+    if (checked && (managementCaps.includes(capSlug) || capSlug === KADERLIJST_CAPABILITY)) {
       setAgeGroupAccess(prev => {
         const next = { ...prev };
         delete next[roleSlug];
@@ -3666,6 +3668,7 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, manage
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {roleEntries.map(([roleSlug, roleData]) => {
                     const hasMgmtCap = roleHasManagementCap(roleData);
+                    const hasKaderlijstOnly = !hasMgmtCap && roleData.capabilities?.[KADERLIJST_CAPABILITY];
                     const isDropdownOpen = openDropdownRole === roleSlug;
                     const selectedGroups = ageGroupAccess[roleSlug] || [];
                     const isCustom = roleData.is_custom;
@@ -3706,6 +3709,8 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, manage
                         <td className="px-4 py-2.5 w-48 text-center align-middle">
                           {hasMgmtCap ? (
                             <span className="text-sm text-gray-400 dark:text-gray-500 italic">Alle leden</span>
+                          ) : hasKaderlijstOnly ? (
+                            <span className="text-sm text-gray-400 dark:text-gray-500 italic">Alleen kaderlijst</span>
                           ) : (
                             <div className="relative inline-block text-left" ref={isDropdownOpen ? dropdownRef : undefined}>
                               <button
