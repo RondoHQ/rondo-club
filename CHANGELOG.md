@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Contributiefacturen** telt een gekozen termijnplan direct als **In termijnen**, ook wanneer de eerste termijn nog niet is betaald.
 - Het middenlabel van de contributiefacturengrafiek staat op twee regels en blijft daardoor binnen de cirkel.
 - Het hoofdpercentage bij contributiefacturen telt zowel betaalde facturen als facturen in termijnen mee; beide contributiepercentages tonen één decimaal om toevallige gelijke afrondingen te voorkomen.
 - Het Facturen-blok op het financiële dashboard toont alleen Concept en Achterstallig; Vervallen is verwijderd omdat die status geen actie vereist.

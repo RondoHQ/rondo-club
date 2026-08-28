@@ -115,8 +115,8 @@ class InvoiceStatisticsTest extends RondoTestCase {
 			[
 				'season'       => SeasonKey::current( $this->now->format( 'Y-m-d' ) ),
 				'paid'         => 1,
-				'installments' => 1,
-				'unpaid'       => 1,
+				'installments' => 2,
+				'unpaid'       => 0,
 				'total'        => 3,
 			],
 			$data['membership_payment_status']
