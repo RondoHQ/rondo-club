@@ -267,6 +267,18 @@ class Fees extends Base {
 			]
 		);
 
+		// Process one bulk invoice batch while the progress UI is open. Production
+		// disables request-driven WP-Cron, so polling must not depend on cron timing.
+		register_rest_route(
+			'rondo/v1',
+			'/fees/bulk-invoice-job/process',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'process_bulk_invoice_job' ],
+				'permission_callback' => [ $this, 'check_financieel_permission' ],
+			]
+		);
+
 		// Single-member invoice creation (admin only)
 		register_rest_route(
 			'rondo/v1',
@@ -1223,6 +1235,19 @@ class Fees extends Base {
 	 * @return \WP_REST_Response Job status.
 	 */
 	public function get_bulk_invoice_job_status( $request ) {
+		return rest_ensure_response( \Rondo\Finance\BulkInvoiceCreator::get_job_status() );
+	}
+
+	/**
+	 * Process one bulk invoice batch and return the updated status.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Updated job status.
+	 */
+	public function process_bulk_invoice_job( $request ) {
+		$creator = new \Rondo\Finance\BulkInvoiceCreator();
+		$creator->run_batch();
+
 		return rest_ensure_response( \Rondo\Finance\BulkInvoiceCreator::get_job_status() );
 	}
 

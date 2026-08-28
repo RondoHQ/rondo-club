@@ -35,6 +35,11 @@ class BulkInvoiceCreator {
 	const JOB_OPTION = 'rondo_bulk_invoice_job';
 
 	/**
+	 * WordPress option used as an atomic batch-processing lock.
+	 */
+	const JOB_LOCK_OPTION = 'rondo_bulk_invoice_job_lock';
+
+	/**
 	 * Number of invoices to create per cron batch.
 	 */
 	const BATCH_SIZE = 50;
@@ -49,7 +54,7 @@ class BulkInvoiceCreator {
 	/**
 	 * Start a bulk invoice creation job.
 	 *
-	 * Queries all published persons, saves job state, and schedules the first batch.
+	 * Queries all invoice-eligible persons, saves job state, and schedules the first batch.
 	 * Returns immediately — actual invoice creation happens in cron batches.
 	 *
 	 * @param string $season Season key in "YYYY-YYYY" format (e.g., "2025-2026").
@@ -78,7 +83,30 @@ class BulkInvoiceCreator {
 			]
 		);
 
-		$person_ids = array_map( 'intval', $query->posts );
+		$published_person_ids = array_map( 'intval', $query->posts );
+
+		// Prime all person metadata at once. The eligibility checks below use
+		// canonical fields and the persisted fee cache, so this avoids a query per
+		// person while keeping the job total aligned with the contributie overview.
+		update_meta_cache( 'post', $published_person_ids );
+
+		$person_ids = array_values(
+			array_filter(
+				$published_person_ids,
+				static function ( int $person_id ) use ( $season ): bool {
+					$is_former = ( \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' ) === true );
+					if ( $is_former && ! FeeServices::person_context()->is_former_member_in_season( $person_id, $season ) ) {
+						return false;
+					}
+
+					$fee_data = FeeServices::fee_cache()->get_fee_for_person_cached( $person_id, $season );
+
+					return is_array( $fee_data )
+						&& ! empty( $fee_data['category'] )
+						&& ( $fee_data['final_fee'] ?? 0 ) > 0;
+				}
+			)
+		);
 		$total      = count( $person_ids );
 
 		// Build job state.
@@ -115,6 +143,21 @@ class BulkInvoiceCreator {
 	 * updates counters, and reschedules until all persons are processed.
 	 */
 	public function run_batch(): void {
+		if ( ! self::acquire_batch_lock() ) {
+			return;
+		}
+
+		try {
+			$this->process_batch();
+		} finally {
+			delete_option( self::JOB_LOCK_OPTION );
+		}
+	}
+
+	/**
+	 * Process one batch after the job lock has been acquired.
+	 */
+	private function process_batch(): void {
 		$state = get_option( self::JOB_OPTION, [] );
 
 		if ( empty( $state ) || ( $state['status'] ?? '' ) !== 'running' ) {
@@ -155,6 +198,26 @@ class BulkInvoiceCreator {
 		}
 
 		update_option( self::JOB_OPTION, $state, false );
+	}
+
+	/**
+	 * Acquire an atomic lock so cron and REST polling cannot process the same batch.
+	 */
+	private static function acquire_batch_lock(): bool {
+		$now = time();
+
+		if ( add_option( self::JOB_LOCK_OPTION, $now, '', false ) ) {
+			return true;
+		}
+
+		$started_at = (int) get_option( self::JOB_LOCK_OPTION, 0 );
+		if ( $started_at > 0 && ( $now - $started_at ) < 300 ) {
+			return false;
+		}
+
+		delete_option( self::JOB_LOCK_OPTION );
+
+		return add_option( self::JOB_LOCK_OPTION, $now, '', false );
 	}
 
 	/**

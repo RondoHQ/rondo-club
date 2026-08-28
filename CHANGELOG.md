@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- De voortgang van een contributiefactuurrun telt alleen leden met een positieve contributie, in plaats van alle gepubliceerde personen te verwerken en als factuurtotaal te tonen; het open voortgangsscherm verwerkt de batches nu ook direct, zodat de run niet meer blijft wachten op de externe WordPress-cron.
 - Spelersrollen met een einddatum van vandaag tellen niet meer mee voor contributie, zodat beëindigde spelers niet tijdens een factuurrun worden meegenomen; bestaande contributiecaches worden automatisch opnieuw berekend.
 - Individuele Sportlink-syncs lopen niet meer vast bij contributie-invalidatie: alleen het betreffende huishouden wordt herberekend, zodat een verwijderde spelactiviteit direct wordt opgeslagen.
 - Recente Club TV-uitslagen tonen de wedstrijddatum, zetten een eventuele strafschoppenstand met een duidelijk label naast de eindstand en laten geen letterblok meer zien wanneer een clublogo ontbreekt.

@@ -18,7 +18,7 @@ export function ContributieOverzicht() {
   );
 
   // Poll bulk invoice job status
-  const { data: jobStatus } = useBulkInvoiceJob();
+  const { data: jobStatus } = useBulkInvoiceJob(isAdmin);
 
   // Read billing method from fee summary
   const billingMethod = data?.billing_method ?? 'nikki';

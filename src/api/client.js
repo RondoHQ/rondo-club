@@ -475,6 +475,7 @@ export const prmApi = {
   // Bulk invoice creation
   startBulkInvoiceJob: (data) => api.post('/rondo/v1/fees/bulk-create-invoices', data),
   getBulkInvoiceJobStatus: () => api.get('/rondo/v1/fees/bulk-invoice-job'),
+  processBulkInvoiceJob: () => api.post('/rondo/v1/fees/bulk-invoice-job/process'),
   createMembershipInvoice: (data) => api.post('/rondo/v1/fees/create-membership-invoice', data),
 
   // Billing settings
