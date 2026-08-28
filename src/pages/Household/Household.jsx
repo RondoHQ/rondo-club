@@ -399,13 +399,6 @@ function PersonCard({ person, isParent, householdPeople, linkedPersonId, onAddPa
 
       <ContributionStatus contribution={person.contribution} />
 
-      {person.can_add_parent ? (
-        <button type="button" className="btn-secondary mt-4 gap-2" onClick={() => onAddParent(person.id)}>
-          <UserRoundPlus className="h-4 w-4" aria-hidden="true" />
-          Andere ouder/verzorger toevoegen
-        </button>
-      ) : null}
-
       {isSelf && sponsorOrganization?.can_edit_logo ? (
         <SponsorLogoEditor organization={sponsorOrganization} />
       ) : null}
@@ -430,6 +423,21 @@ function PersonCard({ person, isParent, householdPeople, linkedPersonId, onAddPa
               </button>
             </div>
             <MemberProfileEditors people={householdPeople} linkedPersonId={linkedPersonId} targetPersonId={person.id} embedded />
+            {person.can_add_parent ? (
+              <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+                <button
+                  type="button"
+                  className="btn-secondary gap-2"
+                  onClick={() => {
+                    closeProfileEditor();
+                    onAddParent(person.id);
+                  }}
+                >
+                  <UserRoundPlus className="h-4 w-4" aria-hidden="true" />
+                  Andere ouder/verzorger toevoegen
+                </button>
+              </div>
+            ) : null}
           </div>
         </AnchoredPopover>
       ) : null}
