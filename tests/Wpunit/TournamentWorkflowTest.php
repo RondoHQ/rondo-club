@@ -235,6 +235,41 @@ class TournamentWorkflowTest extends RondoTestCase {
 		$this->assertSame( 'rondo_tournament_deadline_invalid', $invalid->get_error_code() );
 	}
 
+	public function test_date_only_values_are_stored_with_day_boundaries(): void {
+		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$result   = $this->service->save_tournament(
+			[
+				'name'              => 'Datumtoernooi',
+				'internal_deadline' => '2030-05-10',
+				'external_deadline' => '2030-05-12',
+				'schedule'          => [
+					[
+						'age_group'      => 'O8',
+						'start_datetime' => '2030-05-20',
+						'location'       => 'Sportpark',
+					],
+				],
+				'pricing_rules'     => [
+					[
+						'min_age'     => 8,
+						'max_age'     => 8,
+						'amount'      => 35,
+						'game_format' => '6 tegen 6',
+					],
+				],
+			],
+			$admin_id
+		);
+
+		$this->assertIsArray( $result );
+		$this->assertSame( '2030-05-10 23:59:59', $result['internal_deadline'] );
+		$this->assertSame( '2030-05-12 23:59:59', $result['external_deadline'] );
+		$this->assertSame(
+			\DateTimeImmutable::createFromFormat( '!Y-m-d', '2030-05-20', wp_timezone() )->format( DATE_RFC3339 ),
+			$result['schedule'][0]['start_datetime']
+		);
+	}
+
 	public function test_incomplete_shared_draft_can_be_saved(): void {
 		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		$team_id  = $this->createOrganization( [ 'post_title' => 'AWC O9-1' ] );

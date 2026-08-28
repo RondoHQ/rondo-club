@@ -14,7 +14,7 @@ import {
 import {
   formatTournamentCurrency,
   formatTournamentDate,
-  toDateTimeLocal,
+  toDateInput,
 } from './tournamentFormatters';
 
 const emptyTournament = {
@@ -42,11 +42,11 @@ function tournamentFormState(tournament) {
     organizer: source.organizer || '',
     location: source.location || '',
     description: source.description || '',
-    internal_deadline: toDateTimeLocal(source.internal_deadline),
-    external_deadline: toDateTimeLocal(source.external_deadline),
+    internal_deadline: toDateInput(source.internal_deadline),
+    external_deadline: toDateInput(source.external_deadline),
     schedule: (source.schedule?.length ? source.schedule : emptyTournament.schedule).map((row) => ({
       ...row,
-      start_datetime: toDateTimeLocal(row.start_datetime),
+      start_datetime: toDateInput(row.start_datetime),
     })),
     pricing_rules: (source.pricing_rules?.length ? source.pricing_rules : emptyTournament.pricing_rules).map((row) => ({ ...row })),
   };
@@ -93,10 +93,10 @@ function DraftEditor({ tournament }) {
           </label>
           <div />
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Interne deadline
-            <input className="input mt-1" type="datetime-local" required value={form.internal_deadline} onChange={(event) => setForm({ ...form, internal_deadline: event.target.value })} />
+            <input className="input mt-1" type="date" required value={form.internal_deadline} onChange={(event) => setForm({ ...form, internal_deadline: event.target.value })} />
           </label>
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Deadline organisatie
-            <input className="input mt-1" type="datetime-local" required value={form.external_deadline} onChange={(event) => setForm({ ...form, external_deadline: event.target.value })} />
+            <input className="input mt-1" type="date" required value={form.external_deadline} onChange={(event) => setForm({ ...form, external_deadline: event.target.value })} />
           </label>
         </div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Uitnodiging en overige informatie
@@ -114,7 +114,7 @@ function DraftEditor({ tournament }) {
         {form.schedule.map((row, index) => (
           <div key={index} className="grid gap-3 rounded-lg border border-gray-200 p-3 md:grid-cols-[1fr_1fr_1fr_auto] dark:border-gray-700">
             <input className="input" aria-label={`Leeftijdsgroep moment ${index + 1}`} placeholder="Bijv. O6 t/m O7" required value={row.age_group} onChange={(event) => updateRow('schedule', index, 'age_group', event.target.value)} />
-            <input className="input" aria-label={`Datum moment ${index + 1}`} type="datetime-local" required value={row.start_datetime} onChange={(event) => updateRow('schedule', index, 'start_datetime', event.target.value)} />
+            <input className="input" aria-label={`Datum moment ${index + 1}`} type="date" required value={row.start_datetime} onChange={(event) => updateRow('schedule', index, 'start_datetime', event.target.value)} />
             <input className="input" aria-label={`Locatie moment ${index + 1}`} placeholder="Locatie" value={row.location} onChange={(event) => updateRow('schedule', index, 'location', event.target.value)} />
             <button type="button" className="btn-tertiary p-2" aria-label="Moment verwijderen" disabled={form.schedule.length === 1} onClick={() => removeRow('schedule', index)}><Trash2 className="h-4 w-4" /></button>
           </div>
@@ -129,12 +129,20 @@ function DraftEditor({ tournament }) {
           </button>
         </div>
         {form.pricing_rules.map((row, index) => (
-          <div key={index} className="grid gap-3 rounded-lg border border-gray-200 p-3 md:grid-cols-[8rem_8rem_9rem_1fr_auto] dark:border-gray-700">
-            <input className="input" type="number" min="1" aria-label={`Vanaf leeftijd tarief ${index + 1}`} placeholder="Vanaf O" required value={row.min_age} onChange={(event) => updateRow('pricing_rules', index, 'min_age', event.target.value)} />
-            <input className="input" type="number" min="1" aria-label={`Tot leeftijd tarief ${index + 1}`} placeholder="Tot O" required value={row.max_age} onChange={(event) => updateRow('pricing_rules', index, 'max_age', event.target.value)} />
-            <input className="input" type="number" min="0" step="0.01" aria-label={`Bedrag tarief ${index + 1}`} placeholder="Bedrag" required value={row.amount} onChange={(event) => updateRow('pricing_rules', index, 'amount', event.target.value)} />
-            <input className="input" aria-label={`Spelvorm tarief ${index + 1}`} placeholder="Spelvorm" value={row.game_format} onChange={(event) => updateRow('pricing_rules', index, 'game_format', event.target.value)} />
-            <button type="button" className="btn-tertiary p-2" aria-label="Tarief verwijderen" disabled={form.pricing_rules.length === 1} onClick={() => removeRow('pricing_rules', index)}><Trash2 className="h-4 w-4" /></button>
+          <div key={index} className="grid gap-3 rounded-lg border border-gray-200 p-3 md:grid-cols-[10rem_11rem_11rem_1fr_auto] dark:border-gray-700">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Vanaf leeftijd
+              <input className="input mt-1" type="number" min="1" placeholder="Bijv. 6" required value={row.min_age} onChange={(event) => updateRow('pricing_rules', index, 'min_age', event.target.value)} />
+            </label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tot en met leeftijd
+              <input className="input mt-1" type="number" min="1" placeholder="Bijv. 7" required value={row.max_age} onChange={(event) => updateRow('pricing_rules', index, 'max_age', event.target.value)} />
+            </label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bedrag per team (€)
+              <input className="input mt-1" type="number" min="0" step="0.01" placeholder="Bijv. 28" required value={row.amount} onChange={(event) => updateRow('pricing_rules', index, 'amount', event.target.value)} />
+            </label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Spelvorm
+              <input className="input mt-1" placeholder="Bijv. 4 tegen 4" value={row.game_format} onChange={(event) => updateRow('pricing_rules', index, 'game_format', event.target.value)} />
+            </label>
+            <button type="button" className="btn-tertiary self-end p-2" aria-label="Tarief verwijderen" disabled={form.pricing_rules.length === 1} onClick={() => removeRow('pricing_rules', index)}><Trash2 className="h-4 w-4" /></button>
           </div>
         ))}
       </section>
@@ -235,7 +243,7 @@ function EntriesOverview({ tournamentId }) {
 
 function DeadlinePanel({ tournament }) {
   const extendDeadline = useExtendTournamentDeadline();
-  const [deadline, setDeadline] = useState(() => toDateTimeLocal(tournament.internal_deadline));
+  const [deadline, setDeadline] = useState(() => toDateInput(tournament.internal_deadline));
   const [message, setMessage] = useState('');
   const save = async (event) => {
     event.preventDefault();
@@ -246,7 +254,7 @@ function DeadlinePanel({ tournament }) {
   return (
     <form className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-end" onSubmit={save}>
       <label className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">Interne deadline verlengen
-        <input className="input mt-1" type="datetime-local" required value={deadline} onChange={(event) => setDeadline(event.target.value)} />
+        <input className="input mt-1" type="date" required value={deadline} onChange={(event) => setDeadline(event.target.value)} />
       </label>
       <button className="btn-tertiary" disabled={extendDeadline.isPending}>{extendDeadline.isPending ? 'Opslaan…' : 'Deadline opslaan'}</button>
       {extendDeadline.error ? <ErrorNotice error={extendDeadline.error} /> : null}
