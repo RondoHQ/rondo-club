@@ -505,11 +505,24 @@ class Lettermint extends Base {
 				'eyebrow'       => $eyebrow,
 				'heading'       => $heading,
 				'body_html'     => $email_body,
-				'support_email' => $config->get_contact_email(),
+				'support_email' => in_array( $template_type, [ 'membership', 'installment', 'reminder_1', 'reminder_2', 'invoice_reminder_1', 'invoice_reminder_2' ], true ) ? '' : $config->get_contact_email(),
 			]
 		);
 
-		$subject = '[TEST] ' . $eyebrow . ' - ' . $heading . ' - ' . $org_name;
+		if ( $template_type === 'membership' ) {
+			$subject_template = $config->get_membership_email_subject();
+			if ( trim( $subject_template ) === '' ) {
+				$subject_template = 'Contributie van {organisatie_naam}';
+			}
+			$subject = str_replace(
+				[ '{naam}', '{voornaam}', '{factuur_nummer}', '{organisatie_naam}', '{totaal_bedrag}' ],
+				[ 'Jan Jansen', 'Jan', 'C-2025-0042', $org_name, '€ 230,00' ],
+				$subject_template
+			);
+			$subject = '[TEST] ' . $subject;
+		} else {
+			$subject = '[TEST] ' . $eyebrow . ' - ' . $heading . ' - ' . $org_name;
+		}
 
 		$headers = [
 			'Content-Type: text/html; charset=UTF-8',
