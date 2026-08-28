@@ -4,6 +4,7 @@ namespace Tests\Wpunit;
 
 use Rondo\Core\AccessControl;
 use Rondo\Data\InverseRelationships;
+use Rondo\Fees\SeasonKey;
 use Rondo\Fields\Fields;
 use Rondo\REST\People;
 use Tests\Support\RondoTestCase;
@@ -102,6 +103,19 @@ class ParentRelationshipRestTest extends RondoTestCase {
 		);
 		$this->link_parent_to_child( $current_parent, $child );
 		$this->link_parent_to_child( $other_parent, $child );
+		$private_invoice = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_invoice',
+				'post_status' => 'rondo_paid',
+				'post_title'  => 'Private contribution',
+			]
+		);
+		Fields::update_for_post( $private_invoice, 'invoice_number', 'C-PRIVATE' );
+		Fields::update_for_post( $private_invoice, 'person', $other_parent );
+		Fields::update_for_post( $private_invoice, 'status', 'paid' );
+		Fields::update_for_post( $private_invoice, 'invoice_type', 'membership' );
+		Fields::update_for_post( $private_invoice, 'total_amount', 200 );
+		update_post_meta( $private_invoice, '_invoice_season', SeasonKey::current( wp_date( 'Y-m-d' ) ) );
 
 		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $current_parent );
@@ -120,6 +134,7 @@ class ParentRelationshipRestTest extends RondoTestCase {
 		$this->assertArrayNotHasKey( 'birthdate', $people[ $other_parent ]['fields'] );
 		$this->assertArrayNotHasKey( 'knvb_id', $people[ $other_parent ]['fields'] );
 		$this->assertNull( $people[ $other_parent ]['membership_pass'] );
+		$this->assertNull( $people[ $other_parent ]['contribution'] );
 	}
 
 	public function test_parent_can_add_a_new_other_parent_to_own_minor_child(): void {

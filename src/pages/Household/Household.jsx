@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, Building2, ImagePlus, LoaderCircle, Pencil, UserRoundPlus, X } from 'lucide-react';
+import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, Building2, ReceiptEuro, ImagePlus, LoaderCircle, Pencil, UserRoundPlus, X } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useUploadSponsorLogo } from '@/hooks/useSponsors';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { formatPersonName, parseFieldDate } from '@/utils/formatters';
+import { formatCurrency, formatPersonName, parseFieldDate } from '@/utils/formatters';
 import { format } from '@/utils/dateFormat';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import AnchoredPopover from '@/components/AnchoredPopover';
@@ -78,6 +78,96 @@ function Detail({ icon: Icon, label, value }) {
         <div className="text-xs text-gray-500 dark:text-gray-400">{label}</div>
         <div className="text-sm text-gray-900 dark:text-gray-100 break-words">{value}</div>
       </div>
+    </div>
+  );
+}
+
+const CONTRIBUTION_STATUS_STYLES = {
+  paid: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  overdue: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+  sent: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+  installments: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+};
+
+function contributionDisplay(contribution) {
+  const installmentCount = contribution.installment_count || 0;
+  if (contribution.status === 'paid') {
+    return { key: 'paid', label: 'Betaald' };
+  }
+  if (contribution.status === 'overdue') {
+    return { key: 'overdue', label: 'Achterstallig' };
+  }
+  if (installmentCount > 1) {
+    return { key: 'installments', label: `In ${installmentCount} termijnen` };
+  }
+  return { key: 'sent', label: 'Te betalen' };
+}
+
+function formatContributionDate(value) {
+  const date = parseFieldDate(value);
+  if (!date || Number.isNaN(date.getTime())) return null;
+  return format(date, 'd MMMM yyyy');
+}
+
+function ContributionStatus({ contribution }) {
+  if (!contribution) return null;
+
+  const display = contributionDisplay(contribution);
+  const installmentCount = contribution.installment_count || 0;
+  const isInstallmentPlan = installmentCount > 1;
+  const nextInstallment = contribution.next_installment;
+  const dueDate = formatContributionDate(isInstallmentPlan ? nextInstallment?.due_date : contribution.due_date);
+  let description = `${formatCurrency(contribution.total_amount, 2)} · factuur ${contribution.invoice_number}`;
+
+  if (isInstallmentPlan) {
+    description = `${contribution.paid_installments} van ${installmentCount} voldaan`;
+    if (nextInstallment) {
+      description += ` · volgende termijn ${formatCurrency(nextInstallment.amount, 2)}`;
+      if (dueDate) description += ` op ${dueDate}`;
+    }
+  } else if (display.key === 'paid') {
+    description = `${formatCurrency(contribution.total_amount, 2)} · volledig voldaan`;
+  } else if (dueDate) {
+    description = `${formatCurrency(contribution.total_amount, 2)} · betaal uiterlijk ${dueDate}`;
+  }
+
+  const actionLabel = isInstallmentPlan ? 'Betaal termijn' : 'Bekijk en betaal';
+
+  return (
+    <div className="mt-4 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-3 border-t border-gray-200 pt-4 sm:grid-cols-[auto_minmax(0,1fr)_auto] dark:border-gray-700">
+      <ReceiptEuro className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" aria-hidden="true" />
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Contributie {contribution.season}</span>
+          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${CONTRIBUTION_STATUS_STYLES[display.key]}`}>
+            {display.label}
+          </span>
+        </div>
+        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{description}</p>
+        {isInstallmentPlan ? (
+          <div
+            className="mt-2 h-1 max-w-52 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"
+            role="progressbar"
+            aria-label={`${contribution.paid_installments} van ${installmentCount} termijnen voldaan`}
+            aria-valuemin="0"
+            aria-valuemax={installmentCount}
+            aria-valuenow={contribution.paid_installments}
+          >
+            <div
+              className="h-full rounded-full bg-brand-gradient"
+              style={{ width: `${Math.min(100, (contribution.paid_installments / installmentCount) * 100)}%` }}
+            />
+          </div>
+        ) : null}
+      </div>
+      {contribution.payment_url ? (
+        <a
+          href={contribution.payment_url}
+          className="btn-primary col-span-2 justify-center text-sm sm:col-span-1"
+        >
+          {actionLabel}
+        </a>
+      ) : null}
     </div>
   );
 }
@@ -307,6 +397,8 @@ function PersonCard({ person, isParent, householdPeople, linkedPersonId, onAddPa
         {membershipPass ? <MembershipPassActions membershipPass={membershipPass} personId={person.id} /> : null}
       </div>
 
+      <ContributionStatus contribution={person.contribution} />
+
       {person.can_add_parent ? (
         <button type="button" className="btn-secondary mt-4 gap-2" onClick={() => onAddParent(person.id)}>
           <UserRoundPlus className="h-4 w-4" aria-hidden="true" />
@@ -396,7 +488,7 @@ export default function Household() {
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Mijn gegevens</h1>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
           Je eigen gegevens en die van je kinderen onder de 18, zoals ze bij de club bekend zijn.
-          Je kunt je contactgegevens en het woonadres van je gezin hier aanpassen.
+          Je kunt je contactgegevens en het woonadres van je gezin hier aanpassen en de contributiestatus bekijken.
         </p>
       </div>
 
