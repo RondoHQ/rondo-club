@@ -206,26 +206,26 @@ class FeeCacheInvalidator {
 	/**
 	 * Invalidate all family members' caches and recalculate positions for a given family key
 	 *
-	 * Combines invalidation and position recalculation into a single pass over family groups
-	 * to avoid calling build_family_groups() twice per address change.
+	 * Uses a targeted postal-code lookup so an individual sync never scans the
+	 * complete people collection while it is writing one person.
 	 *
 	 * @param string $family_key The family key (postal code + house number).
 	 * @param int    $exclude_id Person ID to exclude from invalidation (already invalidated).
 	 */
 	private function invalidate_and_recalculate_family( string $family_key, int $exclude_id ): void {
-		$families = $this->family_grouping->build_family_groups()['families'];
+		$member_ids = $this->family_grouping->get_family_member_ids( $family_key );
 
-		if ( empty( $families[ $family_key ] ) ) {
+		if ( empty( $member_ids ) ) {
 			return;
 		}
 
-		foreach ( $families[ $family_key ] as $member_id ) {
+		foreach ( $member_ids as $member_id ) {
 			if ( (int) $member_id !== $exclude_id ) {
 				$this->clear_person_family_cache( (int) $member_id );
 			}
 		}
 
-		$first_member = (int) $families[ $family_key ][0];
+		$first_member = (int) $member_ids[0];
 		$this->family_grouping->recalculate_family_positions_for_person( $first_member );
 	}
 

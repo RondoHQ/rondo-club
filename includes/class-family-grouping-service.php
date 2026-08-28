@@ -185,6 +185,52 @@ class FamilyGroupingService {
 	}
 
 	/**
+	 * Find all people belonging to one household without scanning every person.
+	 *
+	 * The first four postal-code digits provide a small candidate set while
+	 * remaining insensitive to spacing and letter case. Exact normalized family
+	 * keys are compared afterwards, so house-number additions remain significant.
+	 *
+	 * @param string $family_key Normalized family key.
+	 * @return array<int> Matching person post IDs.
+	 */
+	public function get_family_member_ids( string $family_key ): array {
+		if ( ! preg_match( '/^(\d{4})[A-Z]{2}-.+$/', $family_key, $matches ) ) {
+			return [];
+		}
+
+		$query = new \WP_Query(
+			[
+				'post_type'        => 'person',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+				'meta_query'       => [
+					[
+						'key'     => 'addresses_0_postal_code',
+						'value'   => $matches[1],
+						'compare' => 'LIKE',
+					],
+				],
+			]
+		);
+
+		update_meta_cache( 'post', $query->posts );
+
+		$member_ids = [];
+		foreach ( $query->posts as $person_id ) {
+			$person_id = (int) $person_id;
+			if ( $this->get_family_key( $person_id ) === $family_key ) {
+				$member_ids[] = $person_id;
+			}
+		}
+
+		sort( $member_ids, SORT_NUMERIC );
+		return $member_ids;
+	}
+
+	/**
 	 * Build family groups from youth members.
 	 *
 	 * Groups youth members (mini, pupil, junior) by family key (address).
@@ -380,28 +426,13 @@ class FamilyGroupingService {
 			return 1;
 		}
 
-		// Find all youth members at the same family key
+		// Find all people at the same family key through the primary postal-code row.
 		$youth_categories = $this->settings->get_youth_category_slugs( $season );
-		$all_persons      = new \WP_Query(
-			[
-				'post_type'        => 'person',
-				'posts_per_page'   => -1,
-				'fields'           => 'ids',
-				'no_found_rows'    => true,
-				'suppress_filters' => true,
-			]
-		);
+		$person_ids       = $this->get_family_member_ids( $family_key );
+		$family_members   = [];
 
-		$family_members = [];
-
-		foreach ( $all_persons->posts as $pid ) {
+		foreach ( $person_ids as $pid ) {
 			$pid = (int) $pid;
-
-			// Check if same family key
-			$pid_key = $this->get_family_key( $pid );
-			if ( $pid_key !== $family_key ) {
-				continue;
-			}
 
 			// Former members never participate in the current household discount.
 			if ( (bool) \Rondo\Fields\Fields::get_for_post( $pid, 'former_member' ) ) {
