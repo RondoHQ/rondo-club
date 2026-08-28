@@ -21,8 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Alle gebruikers krijgen eenmalig uitleg bij de feedbackknop; bevestiging wordt per account onthouden.
 - De nieuwe rol Rondo Kaderlijst geeft toegang tot de volledige kaderlijst zonder de algemene ledenlijst of andere kaderpagina's te openen.
 
+### Changed
+
+- **Betaalstatistieken** toont de maandinkomsten naast de contributiegrafieken en de dagelijkse inkomsten daaronder over de volle breedte.
+
 ### Fixed
 
+- Het middenlabel van de contributiefacturengrafiek staat op twee regels en blijft daardoor binnen de cirkel.
 - Het hoofdpercentage bij contributiefacturen telt zowel betaalde facturen als facturen in termijnen mee; beide contributiepercentages tonen één decimaal om toevallige gelijke afrondingen te voorkomen.
 - Het Facturen-blok op het financiële dashboard toont alleen Concept en Achterstallig; Vervallen is verwijderd omdat die status geen actie vereist.
 - Het contributieoverzicht telt ieder lid nog maar één keer wanneer oude data per ongeluk meerdere contributiecache-regels voor dezelfde persoon en hetzelfde seizoen bevat.

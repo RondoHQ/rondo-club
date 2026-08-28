@@ -17,6 +17,7 @@ const INVOICE_TYPES = [
 const dateFormatter = new Intl.DateTimeFormat('nl-NL', { day: 'numeric', month: 'short' });
 const monthFormatter = new Intl.DateTimeFormat('nl-NL', { month: 'short', year: '2-digit' });
 const percentageFormatter = new Intl.NumberFormat('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const PAYMENT_CENTER_LABEL = ['betaald +', 'termijnen'];
 
 function parseLocalDate(value) {
   return new Date(`${value}T12:00:00`);
@@ -162,6 +163,7 @@ function BarChart({ data }) {
 function DonutChart({ total, segments, percentage, centerLabel, ariaLabel }) {
   const radius = 68;
   const circumference = 2 * Math.PI * radius;
+  const centerLabelLines = Array.isArray(centerLabel) ? centerLabel : [centerLabel];
   let previousLength = 0;
 
   return (
@@ -193,8 +195,17 @@ function DonutChart({ total, segments, percentage, centerLabel, ariaLabel }) {
         <text x="90" y="85" textAnchor="middle" className="fill-gray-900 dark:fill-gray-50 text-[30px] font-semibold">
           {percentage}%
         </text>
-        <text x="90" y="108" textAnchor="middle" className="fill-gray-500 dark:fill-gray-400 text-[12px]">
-          {centerLabel}
+        <text
+          x="90"
+          y={centerLabelLines.length > 1 ? 103 : 108}
+          textAnchor="middle"
+          className="fill-gray-500 dark:fill-gray-400 text-[12px]"
+        >
+          {centerLabelLines.map((line, index) => (
+            <tspan key={`${line}-${index}`} x="90" dy={index === 0 ? 0 : 14}>
+              {line}
+            </tspan>
+          ))}
         </text>
       </svg>
       <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
@@ -249,7 +260,7 @@ function ContributionPaymentPieChart({ data }) {
       total={total}
       segments={segments}
       percentage={percentageFormatter.format(selectedPercentage)}
-      centerLabel="betaald + termijnen"
+      centerLabel={PAYMENT_CENTER_LABEL}
       ariaLabel={`${paid} betaald, ${installments} in termijnen en ${unpaid} openstaand van ${total} contributiefacturen`}
     />
   );
@@ -358,8 +369,8 @@ export default function Betaalstatistieken() {
             <StatisticsSummary statistics={statistics} />
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               <div className="min-w-0">
-                <ChartCard title="Inkomsten per dag · laatste 30 dagen">
-                  <LineChart data={statistics.daily_income} />
+                <ChartCard title="Inkomsten per maand · laatste 12 maanden">
+                  <BarChart data={statistics.monthly_income} />
                 </ChartCard>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 min-w-0">
@@ -371,8 +382,8 @@ export default function Betaalstatistieken() {
                 </ChartCard>
               </div>
             </div>
-            <ChartCard title="Inkomsten per maand · laatste 12 maanden">
-              <BarChart data={statistics.monthly_income} />
+            <ChartCard title="Inkomsten per dag · laatste 30 dagen">
+              <LineChart data={statistics.daily_income} />
             </ChartCard>
           </>
         )}
