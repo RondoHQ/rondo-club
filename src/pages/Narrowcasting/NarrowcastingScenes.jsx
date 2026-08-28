@@ -42,9 +42,25 @@ function VideoScene({ scene }) {
   return <section className="flex items-center justify-center"><video key={scene.media?.url} src={scene.media?.url} className="max-h-[60vh] max-w-[90vw]" autoPlay muted playsInline /></section>;
 }
 
-function Team({ name, align = 'left' }) {
+function TeamLogo({ name, url }) {
+  if (!url) return null;
   return (
-    <span className={`block min-w-0 truncate ${align === 'right' ? 'text-right' : ''}`}>{name}</span>
+    <img
+      src={url}
+      alt={`Logo ${name}`}
+      className="h-[2.8vw] w-[2.8vw] shrink-0 rounded-[0.35vw] bg-white p-[0.16vw] object-contain shadow-sm"
+    />
+  );
+}
+
+function Team({ name, logoUrl, align = 'left' }) {
+  const logo = <TeamLogo name={name} url={logoUrl} />;
+  return (
+    <span className={`flex min-w-0 items-center gap-[0.65vw] ${align === 'right' ? 'justify-end text-right' : ''}`}>
+      {align === 'right' ? null : logo}
+      <span className="min-w-0 truncate">{name}</span>
+      {align === 'right' ? logo : null}
+    </span>
   );
 }
 
@@ -55,8 +71,8 @@ function MatchesScene({ items, dateLabel }) {
         {items.map((match) => (
           <article key={match.id} className={`grid grid-cols-[6.5vw_minmax(0,1fr)_minmax(0,1fr)_10vw] items-center gap-[1.2vw] rounded-[0.9vw] border px-[1.7vw] py-[0.8vw] backdrop-blur-sm ${match.cancelled ? 'border-[var(--display-danger-border)] bg-[var(--display-danger-bg)]' : 'border-[var(--display-border)] bg-[var(--display-surface)]'}`}>
             <time className="font-mono text-[1.75vw] font-bold tabular-nums text-[var(--scene-accent-readable)]">{match.time}</time>
-            <TeamAssignment team={match.home_team} room={match.dressing_rooms?.home} cancelled={match.cancelled} />
-            <TeamAssignment team={match.away_team} room={match.dressing_rooms?.away} cancelled={match.cancelled} />
+            <TeamAssignment team={match.home_team} logoUrl={match.home_logo_url} room={match.dressing_rooms?.home} cancelled={match.cancelled} />
+            <TeamAssignment team={match.away_team} logoUrl={match.away_logo_url} room={match.dressing_rooms?.away} cancelled={match.cancelled} />
             <div className="text-right">
               {match.cancelled ? (
                 <span className="rounded-full bg-white/70 px-[0.8vw] py-[0.4vw] text-[1vw] font-semibold uppercase tracking-wide text-[var(--display-danger-text)]">Afgelast</span>
@@ -75,11 +91,14 @@ function MatchesScene({ items, dateLabel }) {
   );
 }
 
-function TeamAssignment({ team, room, cancelled }) {
+function TeamAssignment({ team, logoUrl, room, cancelled }) {
   return (
-    <div className="min-w-0">
-      <p className={`text-[1.25vw] font-semibold ${cancelled ? 'text-[var(--display-danger-text)] line-through' : ''}`}><Team name={team} /></p>
-      {!cancelled && <p className="mt-[0.2vw] text-[0.9vw] text-[var(--display-muted)]">Kleedkamer <strong className="text-[var(--display-text)]">{room || 'volgt'}</strong></p>}
+    <div className="flex min-w-0 items-center gap-[0.65vw]">
+      <TeamLogo name={team} url={logoUrl} />
+      <div className="min-w-0">
+        <p className={`truncate text-[1.25vw] font-semibold ${cancelled ? 'text-[var(--display-danger-text)] line-through' : ''}`}>{team}</p>
+        {!cancelled && <p className="mt-[0.2vw] text-[0.9vw] text-[var(--display-muted)]">Kleedkamer <strong className="text-[var(--display-text)]">{room || 'volgt'}</strong></p>}
+      </div>
     </div>
   );
 }
@@ -108,7 +127,7 @@ function ResultsScene({ items }) {
       <div className="overflow-hidden rounded-[1vw] border border-[var(--display-border)] bg-[var(--display-surface)] backdrop-blur-sm">
         {items.map((match) => (
           <div key={match.id} className="grid grid-cols-[1fr_9vw] items-center gap-[1.5vw] border-b border-[var(--display-border)] px-[2vw] py-[1.05vw] last:border-b-0">
-            <p className="grid min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-[0.9vw] text-[1.45vw] font-semibold"><Team name={match.home_team} align="right" /><span className="text-[var(--display-muted)]">–</span><Team name={match.away_team} /></p>
+            <p className="grid min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-[0.9vw] text-[1.45vw] font-semibold"><Team name={match.home_team} logoUrl={match.home_logo_url} align="right" /><span className="text-[var(--display-muted)]">–</span><Team name={match.away_team} logoUrl={match.away_logo_url} /></p>
             <p className="text-right font-mono text-[2vw] font-bold tabular-nums text-[var(--scene-accent-readable)]">{match.result}</p>
           </div>
         ))}
