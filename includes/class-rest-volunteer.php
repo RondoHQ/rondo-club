@@ -57,6 +57,10 @@ class Volunteer extends Base {
 						'required' => false,
 						'default'  => false,
 					],
+					'summary_only' => [
+						'required' => false,
+						'default'  => false,
+					],
 					'person_id'    => [
 						'required'          => false,
 						'sanitize_callback' => 'absint',
@@ -981,6 +985,7 @@ class Volunteer extends Base {
 	public function get_eligibility( \WP_REST_Request $request ) {
 		$season       = $request->get_param( 'season' ) ?: SeasonKey::current();
 		$with_persons = filter_var( $request->get_param( 'with_persons' ), FILTER_VALIDATE_BOOLEAN );
+		$summary_only = filter_var( $request->get_param( 'summary_only' ), FILTER_VALIDATE_BOOLEAN );
 		$person_id    = (int) $request->get_param( 'person_id' );
 
 		$service = new VolunteerEligibilityService();
@@ -1003,7 +1008,7 @@ class Volunteer extends Base {
 		$units                = $view['units'];
 		$obligation_partition = VolunteerExemptionResolver::partition_units( $units, $season );
 
-		if ( $with_persons ) {
+		if ( $with_persons && ! $summary_only ) {
 			$units = array_map(
 				fn( $unit ) => $this->expand_unit( $unit, $season ),
 				$units
@@ -1029,7 +1034,7 @@ class Volunteer extends Base {
 		return rest_ensure_response(
 			[
 				'season'              => $season,
-				'units'               => $units,
+				'units'               => $summary_only ? [] : $units,
 				'total_units'         => count( $units ),
 				'obligation_summary'  => [
 					'total_units'    => count( $obligation_partition['active'] ) + count( $obligation_partition['exempt'] ),

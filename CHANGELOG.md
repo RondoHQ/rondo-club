@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Het vrijwilligersdashboard vraagt alleen de samenvatting op die het toont en verwerkt werkhistorie één keer per vrijstellingscontrole, waardoor de response veel kleiner is en een koude herberekening minder werk doet.
 - Vrijwilligersverplichtingen berekenen alle ontbrekende speler- en gezinseenheden voortaan met één gedeelde dienstscan in plaats van een volledige scan per eenheid.
 - ID-only leden- en dienstqueries laden hun post- en metadatacaches voortaan als één batch, zodat koude vrijwilligers-, contributie- en datakwaliteitsberekeningen niet per record een extra databasequery uitvoeren.
 - Club TV toont voortaan drie sponsorlogo's rechtsboven en vijf linksonder, met compactere logokaders; mededelingen en afbeeldingsslides tonen nu ook de groter en dichter op de klok geplaatste datum.

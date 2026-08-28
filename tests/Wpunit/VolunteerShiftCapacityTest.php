@@ -53,6 +53,22 @@ class VolunteerShiftCapacityTest extends RondoTestCase {
 		);
 	}
 
+	public function test_dashboard_summary_keeps_counts_without_sending_unit_details(): void {
+		$person_id = $this->createPerson( [ 'post_title' => 'Samenvatting speler' ] );
+		update_post_meta( $person_id, 'leeftijdsgroep', 'Senioren' );
+		VolunteerEligibilityService::invalidate_cache();
+
+		$request = new WP_REST_Request( 'GET', '/rondo/v1/volunteer-eligibility' );
+		$request->set_param( 'season', '2026-2027' );
+		$request->set_param( 'summary_only', 1 );
+		$data = ( new Volunteer() )->get_eligibility( $request )->get_data();
+
+		$this->assertSame( [], $data['units'] );
+		$this->assertSame( 1, $data['total_units'] );
+		$this->assertSame( 1, $data['obligation_summary']['total_units'] );
+		$this->assertSame( 2, $data['obligation_summary']['required_count'] );
+	}
+
 	public function test_eligibility_counts_only_users_linked_to_a_person_as_rondo_accounts(): void {
 		$baseline_request = new WP_REST_Request( 'GET', '/rondo/v1/volunteer-eligibility' );
 		$baseline_request->set_param( 'season', '2026-2027' );

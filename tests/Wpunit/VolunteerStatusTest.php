@@ -13,6 +13,39 @@ use Tests\Support\RondoTestCase;
 class VolunteerStatusTest extends RondoTestCase {
 
 	/**
+	 * Commissie remains the highest-priority reason when one history also has a staff role.
+	 */
+	public function test_commissie_reason_wins_over_staff_role_from_same_work_history(): void {
+		$person_id    = $this->createPerson( [ 'post_title' => 'Commissietrainer' ] );
+		$committee_id = self::factory()->post->create(
+			[
+				'post_type'   => 'commissie',
+				'post_status' => 'publish',
+				'post_title'  => 'Technische commissie',
+			]
+		);
+
+		Fields::update_for_post(
+			$person_id,
+			'work_history',
+			[
+				[
+					'team'        => $committee_id,
+					'entity_type' => 'commissie',
+					'job_title'   => 'Trainer',
+					'start_date'  => '2026-07-01',
+					'end_date'    => '',
+					'is_current'  => true,
+				],
+			]
+		);
+
+		$this->assertTrue( VolunteerExemptionResolver::has_active_commissie( $person_id ) );
+		$this->assertTrue( VolunteerExemptionResolver::has_active_staff_role( $person_id ) );
+		$this->assertSame( VolunteerExemptionResolver::REASON_COMMISSIE, VolunteerExemptionResolver::resolve( $person_id, '2026-2027' ) );
+	}
+
+	/**
 	 * Sportlink's combined trainer title grants the same exemption as Trainer.
 	 */
 	public function test_trainer_coach_role_grants_staff_exemption(): void {

@@ -133,11 +133,14 @@ class VolunteerExemptionResolver {
 			return null;
 		}
 
-		if ( self::has_active_commissie( $person_id ) ) {
+		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' );
+		$work_history = is_array( $work_history ) ? $work_history : [];
+
+		if ( self::has_active_commissie_in_history( $work_history ) ) {
 			return self::REASON_COMMISSIE;
 		}
 
-		if ( self::has_active_staff_role( $person_id ) ) {
+		if ( self::has_active_staff_role_in_history( $work_history ) ) {
 			return self::REASON_STAFF;
 		}
 
@@ -226,6 +229,16 @@ class VolunteerExemptionResolver {
 			return false;
 		}
 
+		return self::has_active_commissie_in_history( $work_history );
+	}
+
+	/**
+	 * Check already-loaded work history for an active commissie position.
+	 *
+	 * @param array<int, array<string, mixed>> $work_history Person work history.
+	 * @return bool Whether an active commissie position exists.
+	 */
+	private static function has_active_commissie_in_history( array $work_history ): bool {
 		foreach ( $work_history as $position ) {
 			if ( ! VolunteerStatus::is_position_current( $position ) ) {
 				continue;
@@ -259,6 +272,16 @@ class VolunteerExemptionResolver {
 			return false;
 		}
 
+		return self::has_active_staff_role_in_history( $work_history );
+	}
+
+	/**
+	 * Check already-loaded work history for an active configured staff role.
+	 *
+	 * @param array<int, array<string, mixed>> $work_history Person work history.
+	 * @return bool Whether an active staff role exists.
+	 */
+	private static function has_active_staff_role_in_history( array $work_history ): bool {
 		$staff_roles = VolunteerStatus::get_staff_roles();
 		if ( empty( $staff_roles ) ) {
 			return false;
