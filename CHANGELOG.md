@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Spelersrollen met een einddatum van vandaag tellen niet meer mee voor contributie, zodat beëindigde spelers niet tijdens een factuurrun worden meegenomen; bestaande contributiecaches worden automatisch opnieuw berekend.
 - Individuele Sportlink-syncs lopen niet meer vast bij contributie-invalidatie: alleen het betreffende huishouden wordt herberekend, zodat een verwijderde spelactiviteit direct wordt opgeslagen.
 - Recente Club TV-uitslagen tonen de wedstrijddatum, zetten een eventuele strafschoppenstand met een duidelijk label naast de eindstand en laten geen letterblok meer zien wanneer een clublogo ontbreekt.
 - Leeftijdsgebonden contributie wordt alleen berekend voor leden met een Sportlink-spelactiviteit of een actuele spelersteamrol; functiegebaseerde regels zoals Donateur blijven ook zonder spelactiviteit geldig.

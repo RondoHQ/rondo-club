@@ -121,6 +121,48 @@ class FeePlayingEligibilityTest extends RondoTestCase {
 		$this->assertSame( 'junior', $this->calculator()->calculate_fee( $person_id )['category'] );
 	}
 
+	public function test_player_role_ending_today_is_not_a_playing_signal(): void {
+		$team      = $this->createOrganization( [ 'post_title' => 'Onder 19' ] );
+		$person_id = $this->createPerson(
+			[],
+			[
+				'leeftijdsgroep' => 'Onder 19',
+				'spelactiviteit' => null,
+				'work_history'   => [
+					[
+						'team_id'    => $team,
+						'job_title'  => 'Teamspeler',
+						'is_current' => false,
+						'end_date'   => current_datetime()->format( 'Y-m-d' ),
+					],
+				],
+			]
+		);
+
+		$this->assertNull( $this->calculator()->calculate_fee( $person_id ) );
+	}
+
+	public function test_player_role_ending_tomorrow_remains_a_playing_signal(): void {
+		$team      = $this->createOrganization( [ 'post_title' => 'Onder 19' ] );
+		$person_id = $this->createPerson(
+			[],
+			[
+				'leeftijdsgroep' => 'Onder 19',
+				'spelactiviteit' => null,
+				'work_history'   => [
+					[
+						'team_id'    => $team,
+						'job_title'  => 'Teamspeler',
+						'is_current' => true,
+						'end_date'   => current_datetime()->modify( '+1 day' )->format( 'Y-m-d' ),
+					],
+				],
+			]
+		);
+
+		$this->assertSame( 'junior', $this->calculator()->calculate_fee( $person_id )['category'] );
+	}
+
 	public function test_recreant_team_remains_eligible_without_game_activity(): void {
 		$team      = $this->createOrganization( [ 'post_title' => 'Walking Football' ] );
 		$person_id = $this->createPerson(

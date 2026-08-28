@@ -36,6 +36,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Fee cache storage layer.
  */
 class FeeCache {
+	/**
+	 * Increment when cached eligibility semantics change.
+	 */
+	private const CACHE_VERSION = 2;
 
 	/**
 	 * Deferred full-fee calculator callable.
@@ -183,6 +187,7 @@ class FeeCache {
 		// Add metadata
 		$fee_data['calculated_at'] = current_time( 'Y-m-d H:i:s' );
 		$fee_data['season']        = $season ?: SeasonKey::current();
+		$fee_data['cache_version'] = self::CACHE_VERSION;
 
 		return (bool) update_post_meta( $person_id, $meta_key, $fee_data );
 	}
@@ -240,15 +245,19 @@ class FeeCache {
 	/**
 	 * Check whether a dated work-history transition has outlived the cache.
 	 *
-	 * Positions remain current through their end date. A fee calculated on that
-	 * date is therefore correct until midnight, but must be recalculated the next
-	 * day. Field-update invalidation alone cannot handle that passage of time.
+	 * A position stops being current on its end date. Field-update invalidation
+	 * handles newly saved endings; this read-time check handles future end dates
+	 * that become effective through the passage of midnight.
 	 *
 	 * @param int   $person_id Person post ID.
 	 * @param array $cached    Cached fee payload.
 	 * @return bool True when the cached calculation must be replaced.
 	 */
 	private function is_cache_stale( int $person_id, array $cached ): bool {
+		if ( (int) ( $cached['cache_version'] ?? 0 ) !== self::CACHE_VERSION ) {
+			return true;
+		}
+
 		$calculated_at = trim( (string) ( $cached['calculated_at'] ?? '' ) );
 		if ( preg_match( '/^(\d{4}-\d{2}-\d{2})/', $calculated_at, $matches ) !== 1 ) {
 			return true;
@@ -276,7 +285,7 @@ class FeeCache {
 			}
 
 			$end_date = substr( $end_date, 0, 4 ) . '-' . substr( $end_date, 4, 2 ) . '-' . substr( $end_date, 6, 2 );
-			if ( $end_date >= $calculated_date && $end_date < $today ) {
+			if ( $end_date > $calculated_date && $end_date <= $today ) {
 				return true;
 			}
 		}

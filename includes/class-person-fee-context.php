@@ -56,7 +56,7 @@ class PersonFeeContext {
 		if ( ! empty( $job['is_current'] ) ) {
 			if ( ! empty( $job['end_date'] ) ) {
 				$end_date = strtotime( (string) $job['end_date'] );
-				return $end_date !== false && $end_date >= $today;
+				return $end_date !== false && $end_date > $today;
 			}
 			return true;
 		}
@@ -66,7 +66,7 @@ class PersonFeeContext {
 		}
 
 		$end_date = strtotime( (string) $job['end_date'] );
-		return $end_date !== false && $end_date >= $today;
+		return $end_date !== false && $end_date > $today;
 	}
 
 	/**
