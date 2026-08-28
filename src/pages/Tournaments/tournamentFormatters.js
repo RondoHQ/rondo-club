@@ -1,6 +1,9 @@
-export function formatTournamentDate(value, withTime = true) {
+export function formatTournamentDate(value, withTime = false) {
   if (!value) return 'Niet ingesteld';
-  const date = new Date(value);
+  const dateParts = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const date = !withTime && dateParts
+    ? new Date(Number(dateParts[1]), Number(dateParts[2]) - 1, Number(dateParts[3]))
+    : new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat('nl-NL', {
     day: 'numeric',
@@ -14,12 +17,9 @@ export function formatTournamentCurrency(value) {
   return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(Number(value) || 0);
 }
 
-export function toDateTimeLocal(value) {
+export function toDateInput(value) {
   if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value).slice(0, 16);
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return local.toISOString().slice(0, 16);
+  return String(value).slice(0, 10);
 }
 
 export function tournamentStatusLabel(status) {

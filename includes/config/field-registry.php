@@ -3818,7 +3818,7 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
             array (
               'canonical_name' => 'start_datetime',
               'key' => 'field_tournament_schedule_start_datetime',
-              'label' => 'Datum en tijd',
+              'label' => 'Datum',
               'name' => 'start_datetime',
               'storage_name' => 'start_datetime',
               'type' => 'text',

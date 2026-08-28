@@ -508,10 +508,10 @@ Privé contenttype voor één toernooieditie.
 | `name` | Titel | Bijvoorbeeld Kerst Zaaltoernooi 2026 |
 | `organizer` | Tekst | Externe organisator |
 | `location` | Tekst | Algemene locatie |
-| `tournament_dates` | Repeater | Datum, tijd, locatie en leeftijdsscope |
-| `internal_deadline` | Datum/tijd | Laatste moment om intern in te schrijven |
-| `payment_deadline` | Datum/tijd | Basis voor betaalherinneringen |
-| `external_deadline` | Datum/tijd | Deadline van organisator |
+| `tournament_dates` | Repeater | Datum, locatie en leeftijdsscope |
+| `internal_deadline` | Datum | Laatste dag om intern in te schrijven; geldig tot het einde van die dag |
+| `payment_deadline` | Datum | Basis voor betaalherinneringen |
+| `external_deadline` | Datum | Deadline van organisator; geldig tot het einde van die dag |
 | `description` | Rich text | Algemene uitnodiging en praktische informatie |
 | `charity_information` | Rich text | Optionele informatie over goed doel |
 | `pricing_rules` | Repeater | Leeftijd van/tot, bedrag per team, spelvorm en toelichting |

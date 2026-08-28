@@ -53,8 +53,8 @@ final class TournamentService {
 			return new \WP_Error( 'rondo_tournament_name_required', __( 'Geef het toernooi een naam.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
-		$internal_deadline = $this->parse_datetime( $payload['internal_deadline'] ?? '' );
-		$external_deadline = $this->parse_datetime( $payload['external_deadline'] ?? '' );
+		$internal_deadline = $this->parse_datetime( $payload['internal_deadline'] ?? '', true );
+		$external_deadline = $this->parse_datetime( $payload['external_deadline'] ?? '', true );
 		if ( is_wp_error( $internal_deadline ) || is_wp_error( $external_deadline ) ) {
 			return is_wp_error( $internal_deadline ) ? $internal_deadline : $external_deadline;
 		}
@@ -267,7 +267,7 @@ final class TournamentService {
 			return new \WP_Error( 'rondo_tournament_not_open', __( 'Alleen van een open toernooi kan de deadline worden verlengd.', 'rondo' ), [ 'status' => 409 ] );
 		}
 
-		$deadline = $this->parse_datetime( $value );
+		$deadline = $this->parse_datetime( $value, true );
 		if ( is_wp_error( $deadline ) ) {
 			return $deadline;
 		}
@@ -633,7 +633,7 @@ final class TournamentService {
 				esc_html( (string) ( $assignee['name'] ?? '' ) ),
 				esc_html( $tournament['name'] ),
 				esc_html( $entry['team_name'] ),
-				esc_html( wp_date( 'j F Y H:i', strtotime( $tournament['internal_deadline'] ) ) ),
+				esc_html( wp_date( 'j F Y', strtotime( $tournament['internal_deadline'] ) ) ),
 				wpautop( wp_kses_post( $tournament['description'] ) ),
 				esc_url( $url )
 			);
@@ -717,15 +717,21 @@ final class TournamentService {
 		return $rows;
 	}
 
-	private function parse_datetime( $value ) {
+	private function parse_datetime( $value, bool $date_is_end_of_day = false ) {
 		$value = trim( (string) $value );
 		if ( $value === '' ) {
-			return new \WP_Error( 'rondo_tournament_datetime_required', __( 'Vul alle verplichte datums en tijden in.', 'rondo' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'rondo_tournament_datetime_required', __( 'Vul alle verplichte datums in.', 'rondo' ), [ 'status' => 400 ] );
+		}
+		if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) === 1 ) {
+			$date = DateTimeImmutable::createFromFormat( '!Y-m-d', $value, wp_timezone() );
+			if ( $date instanceof DateTimeImmutable && $date->format( 'Y-m-d' ) === $value ) {
+				return $date_is_end_of_day ? $date->setTime( 23, 59, 59 ) : $date;
+			}
 		}
 		try {
 			return new DateTimeImmutable( $value, wp_timezone() );
 		} catch ( \Exception $error ) {
-			return new \WP_Error( 'rondo_tournament_datetime_invalid', __( 'Een datum of tijd is ongeldig.', 'rondo' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'rondo_tournament_datetime_invalid', __( 'Een datum is ongeldig.', 'rondo' ), [ 'status' => 400 ] );
 		}
 	}
 
