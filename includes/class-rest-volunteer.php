@@ -939,7 +939,7 @@ class Volunteer extends Base {
 
 		/**
 		 * Fires after a person is marked no-show on a shift.
-		 * Consumed by ShiftScheduler → VolunteerFineGenerator.
+		 * Available to volunteer-obligation integrations.
 		 */
 		do_action( 'rondo_volunteer_no_show_marked', $shift_id, $person_id, get_current_user_id() );
 

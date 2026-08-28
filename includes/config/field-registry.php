@@ -2963,7 +2963,6 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           array (
             'discipline' => 'Tuchtzaak',
             'membership' => 'Lidmaatschapsbijdrage',
-            'volunteer_fine' => 'Vrijwilligersboete',
           ),
           'default_value' => 'discipline',
           'instructions' => 'Type factuur: tuchtzaak of lidmaatschapsbijdrage',

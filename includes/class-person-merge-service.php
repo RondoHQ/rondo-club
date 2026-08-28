@@ -49,7 +49,6 @@ final class PersonMergeService {
 		'_shift_assigned_by_',
 		'_shift_assigned_at_',
 		'_no_show_',
-		'_volunteer_fine_invoice_',
 	];
 
 	private const PERSON_META_TO_COMBINE = [
@@ -658,7 +657,6 @@ final class PersonMergeService {
 		$this->move_scalar_field_references( 'discipline_case', 'person', $source_id, $target_id );
 		$this->move_scalar_field_references( 'rondo_invoice', 'person', $source_id, $target_id );
 		$this->move_scalar_meta_references( 'clothing_assignment', '_clothing_person_id', $source_id, $target_id );
-		$this->move_scalar_meta_references( 'rondo_invoice', '_volunteer_fine_no_show_person_id', $source_id, $target_id );
 		$this->move_scalar_meta_references( 'rondo_todo', 'related_person', $source_id, $target_id );
 		$this->move_shift_meta( $source_id, $target_id );
 

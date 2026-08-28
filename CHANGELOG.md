@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Het factuurtype **Vrijwilligersboete** en de automatische boetefactuur bij een no-show zijn verwijderd; een no-show blijft wel meetellen voor de vrijwilligersverplichting.
 - **Betaalstatistieken** toont de maandinkomsten naast de contributiegrafieken en de dagelijkse inkomsten daaronder over de volle breedte.
 
 ### Fixed

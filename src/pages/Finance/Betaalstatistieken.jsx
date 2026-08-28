@@ -11,7 +11,6 @@ const INVOICE_TYPES = [
   { value: 'membership', label: 'Contributie' },
   { value: 'discipline', label: 'Tuchtzaken' },
   { value: 'manual', label: 'Handmatig' },
-  { value: 'volunteer_fine', label: 'Vrijwilligersboetes' },
 ];
 
 const dateFormatter = new Intl.DateTimeFormat('nl-NL', { day: 'numeric', month: 'short' });
