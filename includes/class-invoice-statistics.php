@@ -153,14 +153,15 @@ class InvoiceStatistics {
 			return;
 		}
 
-		$total     = max( 0.0, (float) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'total_amount' ) );
-		$collected = $status === 'rondo_paid'
+		$total            = max( 0.0, (float) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'total_amount' ) );
+		$collected        = $status === 'rondo_paid'
 			? $total
 			: min( $total, $this->get_paid_installment_principal( $invoice_id ) );
+		$installment_plan = (string) get_post_meta( $invoice_id, '_installment_plan', true );
 
 		if ( $status === 'rondo_paid' ) {
 			++$counts['paid'];
-		} elseif ( $collected > 0.0 ) {
+		} elseif ( in_array( $installment_plan, [ 'quarterly_3', 'monthly_8' ], true ) ) {
 			++$counts['installments'];
 		} else {
 			++$counts['unpaid'];
