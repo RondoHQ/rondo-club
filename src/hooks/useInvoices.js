@@ -117,11 +117,11 @@ export function useInvoices(params = {}, options = {}) {
  * Get rolling payment statistics for the finance dashboard.
  * @returns {object} Query result with seven- and thirty-day totals and lead time.
  */
-export function useInvoiceStatistics() {
+export function useInvoiceStatistics(params = {}) {
   return useQuery({
-    queryKey: ['invoice-statistics'],
+    queryKey: ['invoice-statistics', params],
     queryFn: async () => {
-      const response = await prmApi.getInvoiceStatistics();
+      const response = await prmApi.getInvoiceStatistics(params);
       return response.data;
     },
     staleTime: 30000,

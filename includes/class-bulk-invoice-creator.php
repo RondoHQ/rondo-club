@@ -90,7 +90,7 @@ class BulkInvoiceCreator {
 		// person while keeping the job total aligned with the contributie overview.
 		update_meta_cache( 'post', $published_person_ids );
 
-		$person_ids = array_values(
+		$eligible_person_ids = array_values(
 			array_filter(
 				$published_person_ids,
 				static function ( int $person_id ) use ( $season ): bool {
@@ -107,7 +107,8 @@ class BulkInvoiceCreator {
 				}
 			)
 		);
-		$total      = count( $person_ids );
+		$person_ids          = self::filter_people_without_invoice( $eligible_person_ids, $season );
+		$total               = count( $person_ids );
 
 		// Build job state.
 		$state = [
@@ -134,6 +135,79 @@ class BulkInvoiceCreator {
 		unset( $response['person_ids'] );
 
 		return $response;
+	}
+
+	/**
+	 * Count people who can still receive a membership invoice for a season.
+	 *
+	 * @param array<int> $person_ids Invoice-eligible person IDs.
+	 * @param string     $season    Season key in "YYYY-YYYY" format.
+	 * @return int
+	 */
+	public static function count_people_without_invoice( array $person_ids, string $season ): int {
+		return count( self::filter_people_without_invoice( $person_ids, $season ) );
+	}
+
+	/**
+	 * Remove people who already have a membership invoice for the season.
+	 *
+	 * @param array<int> $person_ids Invoice-eligible person IDs.
+	 * @param string     $season    Season key in "YYYY-YYYY" format.
+	 * @return array<int>
+	 */
+	private static function filter_people_without_invoice( array $person_ids, string $season ): array {
+		$person_ids = array_values( array_unique( array_filter( array_map( 'intval', $person_ids ) ) ) );
+		if ( empty( $person_ids ) ) {
+			return [];
+		}
+
+		$existing_invoice_ids = get_posts(
+			[
+				'post_type'        => 'rondo_invoice',
+				'post_status'      => 'any',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+				'meta_query'       => [
+					'relation' => 'AND',
+					[
+						'key'     => 'person',
+						'value'   => $person_ids,
+						'compare' => 'IN',
+						'type'    => 'NUMERIC',
+					],
+					[
+						'key'   => '_invoice_season',
+						'value' => $season,
+					],
+					[
+						'key'   => 'invoice_type',
+						'value' => 'membership',
+					],
+				],
+			]
+		);
+
+		if ( empty( $existing_invoice_ids ) ) {
+			return $person_ids;
+		}
+
+		update_meta_cache( 'post', $existing_invoice_ids );
+		$invoiced_people = [];
+		foreach ( $existing_invoice_ids as $invoice_id ) {
+			$person_id = (int) \Rondo\Fields\Fields::get_for_post( (int) $invoice_id, 'person' );
+			if ( $person_id > 0 ) {
+				$invoiced_people[ $person_id ] = true;
+			}
+		}
+
+		return array_values(
+			array_filter(
+				$person_ids,
+				static fn( int $person_id ): bool => ! isset( $invoiced_people[ $person_id ] )
+			)
+		);
 	}
 
 	/**

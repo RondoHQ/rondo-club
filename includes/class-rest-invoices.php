@@ -46,6 +46,13 @@ class Invoices extends Base {
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_invoice_statistics' ],
 					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
+					'args'                => [
+						'invoice_type' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_key',
+							'validate_callback' => static fn( $value ): bool => empty( $value ) || in_array( $value, [ 'membership', 'discipline', 'manual', 'volunteer_fine' ], true ),
+						],
+					],
 				],
 			]
 		);
@@ -496,8 +503,10 @@ class Invoices extends Base {
 	 *
 	 * @return \WP_REST_Response
 	 */
-	public function get_invoice_statistics(): \WP_REST_Response {
-		return rest_ensure_response( ( new InvoiceStatistics() )->calculate() );
+	public function get_invoice_statistics( $request ): \WP_REST_Response {
+		$invoice_type = sanitize_key( (string) $request->get_param( 'invoice_type' ) );
+
+		return rest_ensure_response( ( new InvoiceStatistics() )->calculate( null, $invoice_type ?: null ) );
 	}
 
 	/**

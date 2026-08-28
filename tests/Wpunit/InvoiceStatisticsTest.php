@@ -92,6 +92,33 @@ class InvoiceStatisticsTest extends RondoTestCase {
 		$this->assertSame( 2, $data['installment_plans']['total_people'] );
 		$this->assertSame( 1, $data['installment_plans']['quarterly_3'] );
 		$this->assertSame( 1, $data['installment_plans']['monthly_8'] );
+		$this->assertCount( 30, $data['daily_income'] );
+		$this->assertCount( 12, $data['monthly_income'] );
+		$this->assertSame( $this->now->format( 'Y-m-d' ), $data['daily_income'][29]['date'] );
+		$this->assertSame( $this->now->format( 'Y-m' ), $data['monthly_income'][11]['month'] );
+	}
+
+	public function test_statistics_can_be_filtered_by_invoice_type(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+
+		$membership = $this->create_invoice( 125.0, $this->now->modify( '-6 days' )->format( 'Ymd' ) );
+		Fields::update_for_post( $membership, 'invoice_type', 'membership' );
+		update_post_meta( $membership, '_mollie_paid_at', $this->now->modify( '-2 days' )->format( DATE_ATOM ) );
+
+		$discipline = $this->create_invoice( 75.0, $this->now->modify( '-5 days' )->format( 'Ymd' ) );
+		Fields::update_for_post( $discipline, 'invoice_type', 'discipline' );
+		update_post_meta( $discipline, '_mollie_paid_at', $this->now->modify( '-1 day' )->format( DATE_ATOM ) );
+
+		$request = new WP_REST_Request( 'GET', '/rondo/v1/invoices/statistics' );
+		$request->set_param( 'invoice_type', 'membership' );
+		$response = $this->server->dispatch( $request );
+		$data     = $response->get_data();
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'membership', $data['invoice_type'] );
+		$this->assertSame( 125.0, $data['week']['received_amount'] );
+		$this->assertSame( 1, $data['week']['payment_count'] );
+		$this->assertSame( 125.0, array_sum( array_column( $data['daily_income'], 'amount' ) ) );
 	}
 
 	public function test_statistics_require_financial_read_access(): void {

@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Het financieel dashboard toont hoeveel betalingen in de afgelopen 7 en 30 dagen zijn ontvangen en hoe lang recent betaalde facturen gemiddeld openstonden.
-- Het financieel dashboard toont voor het huidige seizoen hoeveel unieke leden een betaalplan van 3 of 8 termijnen gebruiken.
+- De aparte pagina **Betaalstatistieken** toont ontvangen betalingen, gemiddelde betaaltijd en termijngebruik, filterbaar op factuursoort.
+- **Betaalstatistieken** toont een daggrafiek over de laatste 30 dagen en een maandgrafiek over de laatste 12 maanden.
 - Het onderwerp van contributiefactuurmails is volledig instelbaar, waarbij het factuurnummer alleen wordt toegevoegd als de bijbehorende variabele in het onderwerp staat.
 - Club TV toont bij iedere programma- en uitslagenregel de beschikbare logo's van beide clubs, met de officiële voetbal.nl-logobron als Sportlink zelf geen logo meestuurt; recente uitslagen gebruiken nu dezelfde rustige kaartindeling als wedstrijdinformatie.
 - Leden en ouders zien op **Mijn gegevens** per zichtbaar gezinslid de contributiestatus, termijnvoortgang en alleen de betaalactie die op dat moment relevant is.
@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Het contributieoverzicht telt ieder lid nog maar één keer wanneer oude data per ongeluk meerdere contributiecache-regels voor dezelfde persoon en hetzelfde seizoen bevat.
+- **Maak facturen** verwerkt alleen leden zonder bestaande contributiefactuur, toont vooraf het exacte aantal en verdwijnt wanneer er niets te factureren is.
 - De voortgang van een contributiefactuurrun telt alleen leden met een positieve contributie, in plaats van alle gepubliceerde personen te verwerken en als factuurtotaal te tonen; het open voortgangsscherm verwerkt de batches nu ook direct, zodat de run niet meer blijft wachten op de externe WordPress-cron.
 - Spelersrollen met een einddatum van vandaag tellen niet meer mee voor contributie, zodat beëindigde spelers niet tijdens een factuurrun worden meegenomen; bestaande contributiecaches worden automatisch opnieuw berekend.
 - Individuele Sportlink-syncs lopen niet meer vast bij contributie-invalidatie: alleen het betreffende huishouden wordt herberekend, zodat een verwijderde spelactiviteit direct wordt opgeslagen.
@@ -35,6 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Het financieel dashboard toont bij factuurstatussen geen aantallen meer voor Verstuurd en Betaald; Factuurbedragen toont alleen het openstaande bedrag.
+- De afgeronde melding van een contributiefactuurrun verdwijnt zodra de verwerking klaar is.
 - Contributiemails tonen onder de ingestelde e-mailtekst niet langer de vaste regel om op de mail te reageren of contact op te nemen.
 - De knop om een andere ouder of verzorger aan een kind toe te voegen verschijnt op **Mijn gegevens** pas nadat de ouder op **Wijzigen** heeft geklikt.
 - **Mijn inschrijftaken** opent vanuit het persoonlijke menu direct de eigen planning en haalt de volledige beschikbare kalender pas op wanneer dat tabblad wordt geopend.
