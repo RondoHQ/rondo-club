@@ -2294,36 +2294,14 @@ class People extends Base {
 		// Shows people who have a spelactiviteit value but no current PLAYER role in a team.
 		// Volunteer/staff roles in teams should NOT exclude a person from this filter.
 		if ( $spelactiviteit_no_team === '1' ) {
-			$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} sa ON p.ID = sa.post_id AND sa.meta_key = 'spelactiviteit'";
-
-			// Build the list of player roles for the SQL IN clause.
-			$player_roles      = \Rondo\Core\VolunteerStatus::get_player_roles();
-			$role_placeholders = implode( ', ', array_fill( 0, count( $player_roles ), '%s' ) );
-
-			// Subquery: person has at least one current work_history entry that is
-			// (a) linked to a team (post_type = 'team'), and (b) has a player job_title.
-			// native field repeater rows are stored as work_history_{N}_job_title, work_history_{N}_team, etc.
-			$player_team_subquery = $wpdb->prepare(
-				"SELECT 1
-				 FROM {$wpdb->postmeta} wh_jt
-				 JOIN {$wpdb->postmeta} wh_tm
-				   ON wh_jt.post_id = wh_tm.post_id
-				   AND REPLACE(wh_jt.meta_key, '_job_title', '_team') = wh_tm.meta_key
-				 JOIN {$wpdb->postmeta} wh_ic
-				   ON wh_jt.post_id = wh_ic.post_id
-				   AND REPLACE(wh_jt.meta_key, '_job_title', '_is_current') = wh_ic.meta_key
-				 JOIN {$wpdb->posts} linked_team
-				   ON wh_tm.meta_value = linked_team.ID
-				 WHERE wh_jt.post_id = p.ID
-				   AND wh_jt.meta_key REGEXP '^work_history_[0-9]+_job_title$'
-				   AND wh_ic.meta_value = '1'
-				   AND linked_team.post_type = 'team'
-				   AND wh_jt.meta_value IN ($role_placeholders)
-				 LIMIT 1",
-				...$player_roles
-			);
-
-			$where_clauses[] = "(sa.meta_value IS NOT NULL AND sa.meta_value != '' AND NOT EXISTS ($player_team_subquery))";
+			$person_ids = $this->get_spelactiviteit_without_team_person_ids();
+			if ( empty( $person_ids ) ) {
+				$where_clauses[] = '1 = 0';
+			} else {
+				$id_placeholders = implode( ', ', array_fill( 0, count( $person_ids ), '%d' ) );
+				$where_clauses[] = "p.ID IN ($id_placeholders)";
+				$prepare_values  = array_merge( $prepare_values, $person_ids );
+			}
 		}
 
 		// Spelend lid — playing members have a spelactiviteit value other than empty or '-'.
@@ -2593,6 +2571,81 @@ class People extends Base {
 				'total_pages' => (int) ceil( $total / $per_page ),
 			]
 		);
+	}
+
+	/**
+	 * Find people with a playing activity but no current player role in a team.
+	 *
+	 * Loading the candidate metadata once is substantially faster than the former
+	 * correlated postmeta subquery, which repeated a REGEXP scan for every person
+	 * in both the result and count queries.
+	 *
+	 * @return int[] Person post IDs.
+	 */
+	private function get_spelactiviteit_without_team_person_ids(): array {
+		$candidate_ids = get_posts(
+			[
+				'post_type'      => 'person',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'meta_query'     => [
+					[
+						'key'     => 'spelactiviteit',
+						'value'   => '',
+						'compare' => '!=',
+					],
+				],
+			]
+		);
+
+		if ( empty( $candidate_ids ) ) {
+			return [];
+		}
+
+		$team_ids = get_posts(
+			[
+				'post_type'      => 'team',
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+			]
+		);
+
+		$team_lookup        = array_fill_keys( array_map( 'intval', $team_ids ), true );
+		$player_role_lookup = array_fill_keys( array_map( 'strval', \Rondo\Core\VolunteerStatus::get_player_roles() ), true );
+		$person_ids         = [];
+
+		update_meta_cache( 'post', $candidate_ids );
+
+		foreach ( $candidate_ids as $candidate_id ) {
+			$work_history            = \Rondo\Fields\Fields::get_for_post( (int) $candidate_id, 'work_history' );
+			$has_current_player_team = false;
+
+			if ( is_array( $work_history ) ) {
+				foreach ( $work_history as $position ) {
+					$team_id   = (int) ( $position['team'] ?? 0 );
+					$job_title = (string) ( $position['job_title'] ?? '' );
+
+					if (
+						! empty( $position['is_current'] )
+						&& isset( $team_lookup[ $team_id ] )
+						&& isset( $player_role_lookup[ $job_title ] )
+					) {
+						$has_current_player_team = true;
+						break;
+					}
+				}
+			}
+
+			if ( ! $has_current_player_team ) {
+				$person_ids[] = (int) $candidate_id;
+			}
+		}
+
+		return $person_ids;
 	}
 
 	/**

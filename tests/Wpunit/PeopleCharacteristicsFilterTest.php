@@ -139,6 +139,62 @@ class PeopleCharacteristicsFilterTest extends RondoTestCase {
 		$this->assertNotContains( $known_id, $unknown_ids );
 	}
 
+	public function test_spelactiviteit_without_team_filter_only_excludes_current_players(): void {
+		$team_id = self::factory()->post->create(
+			[
+				'post_type'   => 'team',
+				'post_status' => 'publish',
+				'post_title'  => 'AWC 1',
+			]
+		);
+
+		$without_team_id = $this->createPerson(
+			[ 'post_title' => 'Speler zonder team' ],
+			[ 'spelactiviteit' => 'Veldvoetbal' ]
+		);
+		$player_id       = $this->createPerson(
+			[ 'post_title' => 'Speler met team' ],
+			[ 'spelactiviteit' => 'Veldvoetbal' ]
+		);
+		$staff_id        = $this->createPerson(
+			[ 'post_title' => 'Trainer met spelactiviteit' ],
+			[ 'spelactiviteit' => 'Veldvoetbal' ]
+		);
+		$no_activity_id  = $this->createPerson( [ 'post_title' => 'Geen spelactiviteit' ] );
+
+		\Rondo\Fields\Fields::update_for_post(
+			$player_id,
+			'work_history',
+			[
+				[
+					'team'        => $team_id,
+					'entity_type' => 'team',
+					'job_title'   => 'Speler',
+					'is_current'  => true,
+				],
+			]
+		);
+		\Rondo\Fields\Fields::update_for_post(
+			$staff_id,
+			'work_history',
+			[
+				[
+					'team'        => $team_id,
+					'entity_type' => 'team',
+					'job_title'   => 'Trainer',
+					'is_current'  => true,
+				],
+			]
+		);
+
+		$ids = array_column( $this->filtered_data( [ 'spelactiviteit_no_team' => '1' ] )['people'], 'id' );
+
+		$this->assertContains( $without_team_id, $ids );
+		$this->assertNotContains( $player_id, $ids );
+		$this->assertContains( $staff_id, $ids );
+		$this->assertNotContains( $no_activity_id, $ids );
+	}
+
 	public function test_sponsor_filters_follow_company_relationships(): void {
 		$person_id  = $this->createPerson( [ 'post_title' => 'Nieuw sponsorcontact' ] );
 		$sponsor_id = self::factory()->post->create(
