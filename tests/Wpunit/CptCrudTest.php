@@ -4,6 +4,7 @@ namespace Tests\Wpunit;
 
 use Rondo\Core\AccessControl;
 use Rondo\Core\UserRoles;
+use Rondo\Fields\RestFields;
 use Rondo\REST\People;
 use Rondo\REST\Sponsors;
 use Tests\Support\RondoTestCase;
@@ -438,5 +439,42 @@ class CptCrudTest extends RondoTestCase {
 		$this->assertSame( '0622222222', $fields['mobile_2'] );
 		$this->assertSame( '0241111111', $fields['telephone_1'] );
 		$this->assertSame( '0242222222', $fields['telephone_2'] );
+	}
+
+	public function test_projected_rest_fields_do_not_read_unrequested_person_meta(): void {
+		$person_id = $this->createPerson(
+			[ 'post_title' => 'Projected member' ],
+			[
+				'first_name'   => 'Projected',
+				'email_1'      => 'projected@example.com',
+				'work_history' => [
+					[
+						'job_title' => 'Trainer',
+					],
+				],
+			]
+		);
+		$admin_id  = $this->user( 'administrator' );
+		wp_set_current_user( $admin_id );
+
+		$requested_meta = [];
+		$record_reads   = static function ( $value, $object_id, $meta_key ) use ( $person_id, &$requested_meta ) {
+			if ( (int) $object_id === $person_id ) {
+				$requested_meta[] = (string) $meta_key;
+			}
+			return $value;
+		};
+		add_filter( 'get_post_metadata', $record_reads, 10, 3 );
+		try {
+			$fields = RestFields::for_post_fields( 'person', $person_id, [ 'first_name', 'email_1' ] );
+		} finally {
+			remove_filter( 'get_post_metadata', $record_reads, 10 );
+		}
+
+		$field_names = array_keys( $fields );
+		sort( $field_names );
+		$this->assertSame( [ 'email_1', 'first_name' ], $field_names );
+		$this->assertContains( 'first_name', $requested_meta );
+		$this->assertNotContains( 'work_history', $requested_meta );
 	}
 }

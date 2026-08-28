@@ -58,7 +58,7 @@ import { prmApi } from '@/api/client';
 import { canAccessFeature } from '@/utils/featureToggles';
 
 const navigation = [
-  { name: 'Mijn inschrijftaken', href: '/vrijwillig', icon: HeartHandshake, personal: true },
+  { name: 'Mijn inschrijftaken', href: '/vrijwillig?tab=mine', icon: HeartHandshake, personal: true },
   { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, requiresLinkedPerson: true, personal: true },
   { name: 'Ruimtes', href: '/rooms', icon: CalendarDays, personal: true, requiresFeature: 'rooms' },
   { name: 'Mijn toernooien', href: '/mijn-toernooien', icon: Trophy, personal: true, requiresTournamentAssignments: true },
@@ -202,8 +202,9 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const location = useLocation();
   const isHrefActive = (href) => {
     if (!href) return false;
-    if (href === '/') return location.pathname === '/';
-    return location.pathname === href || location.pathname.startsWith(`${href}/`);
+    const hrefPath = href.split('?')[0];
+    if (hrefPath === '/') return location.pathname === '/';
+    return location.pathname === hrefPath || location.pathname.startsWith(`${hrefPath}/`);
   };
 
   // Filter to the items this user may see, then group each top-level item

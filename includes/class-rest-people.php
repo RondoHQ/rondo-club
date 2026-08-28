@@ -786,9 +786,9 @@ class People extends Base {
 			'addresses',
 			'birthdate',
 			'leeftijdsgroep',
-			'knvb-id',
-			'lid-sinds',
-			'datum-vog',
+			'knvb_id',
+			'lid_sinds',
+			'datum_vog',
 		];
 		$people = [];
 		foreach ( $posts as $post ) {
@@ -800,15 +800,7 @@ class People extends Base {
 				'id'                   => $post->ID,
 				'household_role'       => $role,
 				'can_add_parent'       => (bool) ( $context['can_add_parent'][ $post->ID ] ?? false ),
-				'fields'               => array_intersect_key(
-					\Rondo\Fields\RestFields::for_post( 'person', $post->ID ),
-					array_flip(
-						array_map(
-							fn( $name ) => \Rondo\Fields\Registry::resolve( 'person', $name )['canonical_name'],
-							$visible_fields
-						)
-					)
-				),
+				'fields'               => \Rondo\Fields\RestFields::for_post_fields( 'person', $post->ID, $visible_fields ),
 				'membership_pass'      => $role === 'other_parent' ? null : MembershipPassService::get_person_pass_summary( (int) $post->ID ),
 				'sponsor_organization' => $role === 'other_parent' ? null : $this->personal_sponsor_organization( (int) $post->ID ),
 			];

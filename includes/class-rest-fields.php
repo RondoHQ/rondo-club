@@ -35,6 +35,16 @@ final class RestFields {
 		return $serializer->read( $context, $post_id );
 	}
 
+	/**
+	 * Serialize only the requested canonical fields for a hand-built endpoint.
+	 *
+	 * @param string[] $field_names Canonical field names.
+	 */
+	public static function for_post_fields( string $context, int $post_id, array $field_names ): array {
+		$serializer = new self( false );
+		return $serializer->read( $context, $post_id, $field_names );
+	}
+
 	/** Serialize a taxonomy term for hand-built Rondo endpoints. */
 	public static function for_term( string $taxonomy, int $term_id ): array {
 		$serializer = new self( false );
@@ -138,9 +148,20 @@ final class RestFields {
 	/**
 	 * Read every registered field and format the canonical response.
 	 */
-	private function read( string $context, int $object_id ): array {
+	private function read( string $context, int $object_id, ?array $field_names = null ): array {
+		$definitions = Registry::fields_for( $context );
+		if ( $field_names !== null ) {
+			$field_names = array_values( array_unique( $field_names ) );
+			foreach ( $field_names as $field_name ) {
+				if ( ! isset( $definitions[ $field_name ] ) ) {
+					throw new InvalidArgumentException( "Field {$context}.{$field_name} is unresolved." );
+				}
+			}
+			$definitions = array_intersect_key( $definitions, array_flip( $field_names ) );
+		}
+
 		$legacy = [];
-		foreach ( Registry::fields_for( $context ) as $definition ) {
+		foreach ( $definitions as $definition ) {
 			if ( $definition['storage_name'] === null ) {
 				continue;
 			}
