@@ -68,13 +68,16 @@ export function usePersonFee(personId, params = {}) {
  * Hook for polling bulk invoice job status.
  * Automatically refetches every 2 seconds while a job is running.
  *
+ * @param {boolean} processBatches - Whether polling may process the next batch.
  * @returns {Object} Query result with data (job status), isLoading, error
  */
-export function useBulkInvoiceJob() {
+export function useBulkInvoiceJob(processBatches = false) {
   return useQuery({
     queryKey: feeKeys.bulkJob,
     queryFn: async () => {
-      const response = await prmApi.getBulkInvoiceJobStatus();
+      const response = processBatches
+        ? await prmApi.processBulkInvoiceJob()
+        : await prmApi.getBulkInvoiceJobStatus();
       return response.data;
     },
     refetchInterval: (query) => {
