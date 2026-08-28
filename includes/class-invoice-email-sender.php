@@ -359,7 +359,7 @@ class InvoiceEmailSender {
 				'eyebrow'       => 'Factuur ' . $invoice_number,
 				'heading'       => $config->get_email_heading( $heading_type ),
 				'body_html'     => $email_body,
-				'support_email' => $config->get_contact_email(),
+				'support_email' => $invoice_type === 'membership' ? '' : $config->get_contact_email(),
 			]
 		);
 
@@ -375,6 +375,11 @@ class InvoiceEmailSender {
 				$subject = $config->get_regular_invoice_email_subject();
 				if ( trim( $subject ) === '' ) {
 					$subject = 'Factuur ' . $invoice_number . ' - ' . $org_name;
+				}
+			} elseif ( $invoice_type === 'membership' ) {
+				$subject = $config->get_membership_email_subject();
+				if ( trim( $subject ) === '' ) {
+					$subject = 'Contributie van ' . $org_name;
 				}
 			} else {
 				$subject = 'Factuur ' . $invoice_number . ' - ' . $org_name;

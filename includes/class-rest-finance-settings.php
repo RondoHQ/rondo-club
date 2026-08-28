@@ -79,6 +79,10 @@ class FinanceSettings extends Base {
 							'required'          => false,
 							'sanitize_callback' => 'wp_kses_post',
 						],
+						'membership_email_subject'         => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
 						'installment_email_template'       => [
 							'required'          => false,
 							'sanitize_callback' => 'wp_kses_post',

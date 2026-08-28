@@ -272,12 +272,11 @@ class InstallmentEmailSender {
 
 		$email_body = EmailTemplate::render(
 			[
-				'brand_name'    => $org_name,
-				'preheader'     => sprintf( 'Termijn %d voor factuur %s', $installment_number, $invoice_number ),
-				'eyebrow'       => 'Factuur ' . $invoice_number,
-				'heading'       => $config->get_email_heading( $heading_type ),
-				'body_html'     => $email_body,
-				'support_email' => $contact_email,
+				'brand_name' => $org_name,
+				'preheader'  => sprintf( 'Termijn %d voor factuur %s', $installment_number, $invoice_number ),
+				'eyebrow'    => 'Factuur ' . $invoice_number,
+				'heading'    => $config->get_email_heading( $heading_type ),
+				'body_html'  => $email_body,
 			]
 		);
 

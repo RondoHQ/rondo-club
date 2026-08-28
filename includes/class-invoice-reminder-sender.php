@@ -280,7 +280,7 @@ class InvoiceReminderSender {
 				'eyebrow'       => 'Factuur ' . $invoice_number,
 				'heading'       => $config->get_email_heading( $heading_type ),
 				'body_html'     => $email_body,
-				'support_email' => $contact_email,
+				'support_email' => self::is_membership_invoice( $invoice_id ) ? '' : $contact_email,
 				'accent_color'  => $accent_color,
 			]
 		);

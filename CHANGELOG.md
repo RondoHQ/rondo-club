@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Het onderwerp van contributiefactuurmails is volledig instelbaar, waarbij het factuurnummer alleen wordt toegevoegd als de bijbehorende variabele in het onderwerp staat.
 - Club TV toont bij iedere programma- en uitslagenregel de beschikbare logo's van beide clubs, met de officiële voetbal.nl-logobron als Sportlink zelf geen logo meestuurt; recente uitslagen gebruiken nu dezelfde rustige kaartindeling als wedstrijdinformatie.
 - Leden en ouders zien op **Mijn gegevens** per zichtbaar gezinslid de contributiestatus, termijnvoortgang en alleen de betaalactie die op dat moment relevant is.
 - Toernooicoördinatoren kunnen toernooien aanmaken, actuele kaderleden per team uitnodigen en de voortgang per Rondo-team volgen.
@@ -30,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Contributiemails tonen onder de ingestelde e-mailtekst niet langer de vaste regel om op de mail te reageren of contact op te nemen.
 - De knop om een andere ouder of verzorger aan een kind toe te voegen verschijnt op **Mijn gegevens** pas nadat de ouder op **Wijzigen** heeft geklikt.
 - **Mijn inschrijftaken** opent vanuit het persoonlijke menu direct de eigen planning en haalt de volledige beschikbare kalender pas op wanneer dat tabblad wordt geopend.
 - **Mijn gegevens** leest per gezinslid alleen de velden die de pagina toont, in plaats van eerst het volledige persoonsdossier op te bouwen.
