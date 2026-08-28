@@ -38,7 +38,7 @@ export default function VrijwilligersDashboard() {
   const { data: eligibility, isLoading, error } = useQuery({
     queryKey: ['volunteer', 'eligibility'],
     queryFn: async () => {
-      const response = await prmApi.getVolunteerEligibility();
+      const response = await prmApi.getVolunteerEligibility({ summary_only: 1 });
       return response.data;
     },
     staleTime: 5 * 60 * 1000,
@@ -76,12 +76,12 @@ export default function VrijwilligersDashboard() {
         <button
           type="button"
           onClick={() => refreshMutation.mutate()}
-          disabled={refreshMutation.isLoading}
+          disabled={refreshMutation.isPending}
           className="shrink-0 inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
-          title="Cache wissen en data opnieuw berekenen (~10s)"
+          title="Cache wissen en data opnieuw berekenen"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${refreshMutation.isLoading ? 'animate-spin' : ''}`} />
-          {refreshMutation.isLoading ? 'Bezig…' : 'Ververs'}
+          <RefreshCw className={`w-3.5 h-3.5 ${refreshMutation.isPending ? 'animate-spin' : ''}`} />
+          {refreshMutation.isPending ? 'Bezig…' : 'Ververs'}
         </button>
       </header>
 
