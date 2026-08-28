@@ -17,15 +17,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 class InvoiceStatistics {
 
 	/**
-	 * Build the rolling seven- and thirty-day finance statistics.
+	 * Build rolling totals, lead time, and chart series for received payments.
 	 *
 	 * @param \DateTimeImmutable|null $now Reference time; defaults to the WordPress site time.
+	 * @param string|null             $invoice_type Optional invoice type filter.
 	 * @return array<string,mixed>
 	 */
-	public function calculate( ?\DateTimeImmutable $now = null ): array {
+	public function calculate( ?\DateTimeImmutable $now = null, ?string $invoice_type = null ): array {
 		$now         = $now ?: current_datetime();
 		$week_start  = $now->modify( '-7 days' );
 		$month_start = $now->modify( '-30 days' );
+		$day_start   = $now->setTime( 0, 0 )->modify( '-29 days' );
+		$year_start  = $now->modify( 'first day of this month' )->setTime( 0, 0 )->modify( '-11 months' );
 		$payments    = [];
 		$open_days   = [];
 		$season      = SeasonKey::current( $now->format( 'Y-m-d' ) );
@@ -50,7 +53,11 @@ class InvoiceStatistics {
 
 		foreach ( $invoice_ids as $invoice_id ) {
 			$invoice_id = (int) $invoice_id;
-			$payments   = array_merge( $payments, $this->get_invoice_payments( $invoice_id ) );
+			if ( ! $this->matches_invoice_type( $invoice_id, $invoice_type ) ) {
+				continue;
+			}
+
+			$payments = array_merge( $payments, $this->get_invoice_payments( $invoice_id ) );
 			$this->collect_installment_plan_person( $invoice_id, $season, $plan_people );
 
 			if ( get_post_status( $invoice_id ) !== 'rondo_paid' ) {
@@ -80,6 +87,9 @@ class InvoiceStatistics {
 			'generated_at'       => $now->format( DATE_ATOM ),
 			'week'               => $this->summarize_period( $week_payments, $week_start, $now, 7 ),
 			'month'              => $this->summarize_period( $month_payments, $month_start, $now, 30 ),
+			'invoice_type'       => $invoice_type,
+			'daily_income'       => $this->build_daily_income( $payments, $day_start, $now ),
+			'monthly_income'     => $this->build_monthly_income( $payments, $year_start, $now ),
 			'average_days_open'  => empty( $open_days ) ? null : round( array_sum( $open_days ) / count( $open_days ), 1 ),
 			'paid_invoice_count' => count( $open_days ),
 			'installment_plans'  => [
@@ -89,6 +99,96 @@ class InvoiceStatistics {
 				'monthly_8'    => count( $plan_people['monthly_8'] ),
 			],
 		];
+	}
+
+	/**
+	 * Check whether an invoice belongs in the selected statistics.
+	 *
+	 * Credit invoices are excluded because they are not income.
+	 *
+	 * @param int         $invoice_id   Invoice post ID.
+	 * @param string|null $invoice_type Optional invoice type filter.
+	 * @return bool
+	 */
+	private function matches_invoice_type( int $invoice_id, ?string $invoice_type ): bool {
+		if ( get_post_meta( $invoice_id, '_invoice_kind', true ) === 'credit' ) {
+			return false;
+		}
+
+		return $invoice_type === null
+			|| \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_type' ) === $invoice_type;
+	}
+
+	/**
+	 * Build one income bucket for each of the last 30 calendar days.
+	 *
+	 * @param array<int,array{amount:float,paid_at:\DateTimeImmutable}> $payments Payments.
+	 * @param \DateTimeImmutable                                      $start    First day.
+	 * @param \DateTimeImmutable                                      $end      Last day.
+	 * @return array<int,array{date:string,amount:float,payment_count:int}>
+	 */
+	private function build_daily_income( array $payments, \DateTimeImmutable $start, \DateTimeImmutable $end ): array {
+		$buckets = [];
+		for ( $date = $start; $date <= $end; $date = $date->modify( '+1 day' ) ) {
+			$key             = $date->format( 'Y-m-d' );
+			$buckets[ $key ] = [
+				'date'          => $key,
+				'amount'        => 0.0,
+				'payment_count' => 0,
+			];
+		}
+
+		foreach ( $payments as $payment ) {
+			$key = $payment['paid_at']->format( 'Y-m-d' );
+			if ( ! isset( $buckets[ $key ] ) ) {
+				continue;
+			}
+			$buckets[ $key ]['amount'] += $payment['amount'];
+			++$buckets[ $key ]['payment_count'];
+		}
+
+		foreach ( $buckets as &$bucket ) {
+			$bucket['amount'] = round( $bucket['amount'], 2 );
+		}
+		unset( $bucket );
+
+		return array_values( $buckets );
+	}
+
+	/**
+	 * Build one income bucket for each of the last 12 calendar months.
+	 *
+	 * @param array<int,array{amount:float,paid_at:\DateTimeImmutable}> $payments Payments.
+	 * @param \DateTimeImmutable                                      $start    First month.
+	 * @param \DateTimeImmutable                                      $end      Last month.
+	 * @return array<int,array{month:string,amount:float,payment_count:int}>
+	 */
+	private function build_monthly_income( array $payments, \DateTimeImmutable $start, \DateTimeImmutable $end ): array {
+		$buckets = [];
+		for ( $month = $start; $month <= $end; $month = $month->modify( '+1 month' ) ) {
+			$key             = $month->format( 'Y-m' );
+			$buckets[ $key ] = [
+				'month'         => $key,
+				'amount'        => 0.0,
+				'payment_count' => 0,
+			];
+		}
+
+		foreach ( $payments as $payment ) {
+			$key = $payment['paid_at']->format( 'Y-m' );
+			if ( ! isset( $buckets[ $key ] ) ) {
+				continue;
+			}
+			$buckets[ $key ]['amount'] += $payment['amount'];
+			++$buckets[ $key ]['payment_count'];
+		}
+
+		foreach ( $buckets as &$bucket ) {
+			$bucket['amount'] = round( $bucket['amount'], 2 );
+		}
+		unset( $bucket );
+
+		return array_values( $buckets );
 	}
 
 	/**

@@ -19,7 +19,7 @@ import {
   CommissiesList, CommissieDetail, TodosList,
   FeedbackList, FeedbackDetail, Settings, VOG,
   Contributie, DisciplineCasesList,
-  FinanceDashboard, Facturen, FactuurDetail, FactuurNieuw, RelationshipTypes,
+  FinanceDashboard, Betaalstatistieken, Facturen, FactuurDetail, FactuurNieuw, RelationshipTypes,
   CustomFields, Login, Profile, ProfileIva, ProfileVog,
   MembershipPassScanner,
   ClothingPage,
@@ -520,6 +520,14 @@ const router = createBrowserRouter([
             element: (
               <FinancieelRoute>
                 <Contributie />
+              </FinancieelRoute>
+            ),
+          },
+          {
+            path: 'financien/betaalstatistieken',
+            element: (
+              <FinancieelRoute>
+                <Betaalstatistieken />
               </FinancieelRoute>
             ),
           },

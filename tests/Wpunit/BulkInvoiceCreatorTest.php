@@ -74,6 +74,40 @@ class BulkInvoiceCreatorTest extends RondoTestCase {
 		$this->assertSame( [ $eligible ], $state['person_ids'] );
 	}
 
+	public function test_job_excludes_people_who_already_have_a_membership_invoice(): void {
+		$already_invoiced = $this->createPerson();
+		$pending          = $this->createPerson();
+
+		foreach ( [ $already_invoiced, $pending ] as $person_id ) {
+			FeeServices::fee_cache()->save_fee_cache(
+				$person_id,
+				[
+					'category'  => 'senior',
+					'base_fee'  => 250,
+					'final_fee' => 250,
+				],
+				self::SEASON
+			);
+		}
+
+		$invoice_id = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_invoice',
+				'post_status' => 'rondo_paid',
+			]
+		);
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'person', $already_invoiced );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'invoice_type', 'membership' );
+		update_post_meta( $invoice_id, '_invoice_season', self::SEASON );
+
+		$result = BulkInvoiceCreator::start_job( self::SEASON );
+		$state  = get_option( BulkInvoiceCreator::JOB_OPTION, [] );
+
+		$this->assertSame( 1, $result['total'] );
+		$this->assertSame( [ $pending ], $state['person_ids'] );
+		$this->assertSame( 1, BulkInvoiceCreator::count_people_without_invoice( [ $already_invoiced, $pending ], self::SEASON ) );
+	}
+
 	public function test_batch_lock_prevents_the_same_offset_from_being_processed_twice(): void {
 		update_option(
 			BulkInvoiceCreator::JOB_OPTION,

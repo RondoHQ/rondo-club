@@ -822,6 +822,7 @@ class Fees extends Base {
 		$aggregates           = [];
 		$total_members        = 0;
 		$processed_person_ids = [];
+		$invoice_eligible_ids = [];
 
 		if ( ! $forecast && ! empty( $rows ) ) {
 			update_meta_cache( 'post', array_map( 'intval', wp_list_pluck( $rows, 'post_id' ) ) );
@@ -924,6 +925,9 @@ class Fees extends Base {
 				$aggregates[ $cat ]['prorata_amount'] += $prorata_amount;
 
 				$aggregates[ $cat ]['final_fee'] += $final_fee;
+				if ( $final_fee > 0 ) {
+					$invoice_eligible_ids[] = $person_id;
+				}
 			}
 			++$total_members;
 		}
@@ -952,6 +956,9 @@ class Fees extends Base {
 		$billing_method             = FeeServices::settings()->get_billing_method( $season );
 		$installment_plan_3_enabled = FeeServices::settings()->get_installment_plan_3_enabled( $season );
 		$installment_plan_8_enabled = FeeServices::settings()->get_installment_plan_8_enabled( $season );
+		$pending_invoice_count      = $forecast
+			? 0
+			: \Rondo\Finance\BulkInvoiceCreator::count_people_without_invoice( $invoice_eligible_ids, $season );
 
 		return rest_ensure_response(
 			[
@@ -963,6 +970,7 @@ class Fees extends Base {
 				'billing_method'             => $billing_method,
 				'installment_plan_3_enabled' => $installment_plan_3_enabled,
 				'installment_plan_8_enabled' => $installment_plan_8_enabled,
+				'pending_invoice_count'      => $pending_invoice_count,
 			]
 		);
 	}

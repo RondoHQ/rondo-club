@@ -2,6 +2,7 @@
 
 namespace Tests\Wpunit;
 
+use Rondo\Fields\Fields;
 use Rondo\Fees\FeeServices;
 use Rondo\REST\Fees;
 use Tests\Support\RondoTestCase;
@@ -34,5 +35,19 @@ class FeeSummaryDuplicateCacheTest extends RondoTestCase {
 
 		$this->assertSame( 1, $summary['total'] );
 		$this->assertSame( 1, $summary['aggregates']['senior']['count'] );
+		$this->assertSame( 1, $summary['pending_invoice_count'] );
+
+		$invoice_id = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_invoice',
+				'post_status' => 'rondo_draft',
+			]
+		);
+		Fields::update_for_post( $invoice_id, 'person', $person_id );
+		Fields::update_for_post( $invoice_id, 'invoice_type', 'membership' );
+		update_post_meta( $invoice_id, '_invoice_season', self::SEASON );
+
+		$summary = ( new Fees() )->get_fee_summary( $request )->get_data();
+		$this->assertSame( 0, $summary['pending_invoice_count'] );
 	}
 }

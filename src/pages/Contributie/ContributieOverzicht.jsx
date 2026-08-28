@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Coins, FileText, Loader2 } from 'lucide-react';
 import { useFeeSummary, useBulkInvoiceJob, feeKeys } from '@/hooks/useFees';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -22,6 +22,7 @@ export function ContributieOverzicht() {
 
   // Read billing method from fee summary
   const billingMethod = data?.billing_method ?? 'nikki';
+  const pendingInvoiceCount = data?.pending_invoice_count ?? 0;
 
   // Mutation to start bulk invoice job
   const startBulkJob = useMutation({
@@ -31,10 +32,18 @@ export function ContributieOverzicht() {
     },
   });
 
+  useEffect(() => {
+    if (jobStatus?.status === 'done') {
+      queryClient.invalidateQueries({ queryKey: feeKeys.summary({}) });
+      queryClient.invalidateQueries({ queryKey: feeKeys.list({}) });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    }
+  }, [jobStatus?.status, jobStatus?.finished_at, queryClient]);
+
   const handleStartBulkJob = () => {
-    const memberCount = data?.total ?? 0;
+    const memberLabel = pendingInvoiceCount === 1 ? '1 lid' : `${pendingInvoiceCount} leden`;
     const confirmed = window.confirm(
-      `Weet je zeker dat je de facturatie voor ${memberCount} leden in seizoen ${data?.season} wilt starten? ` +
+      `Weet je zeker dat je voor ${memberLabel} in seizoen ${data?.season} een conceptfactuur wilt aanmaken? ` +
       'Rondo maakt voor alle leden die nog geen contributiefactuur hebben een conceptfactuur aan.'
     );
 
@@ -95,7 +104,7 @@ export function ContributieOverzicht() {
           memberCount={data?.total ?? 0}
         />
         {/* Bulk invoice creation button */}
-        {isAdmin && billingMethod === 'rondo' && !isForecast && (
+        {isAdmin && billingMethod === 'rondo' && !isForecast && (pendingInvoiceCount > 0 || jobStatus?.status === 'running') && (
           <button
             onClick={handleStartBulkJob}
             disabled={jobStatus?.status === 'running' || startBulkJob.isPending}
@@ -106,13 +115,13 @@ export function ContributieOverzicht() {
             ) : (
               <FileText className="w-4 h-4" />
             )}
-            Maak facturen
+            Maak facturen{pendingInvoiceCount > 0 ? ` (${pendingInvoiceCount})` : ''}
           </button>
         )}
       </div>
 
       {/* Bulk job progress */}
-      {jobStatus && ['running', 'done', 'error'].includes(jobStatus.status) && !isForecast && (
+      {jobStatus && ['running', 'error'].includes(jobStatus.status) && !isForecast && (
         <div className="card p-4">
           {jobStatus.status === 'running' && (
             <div className="flex items-center gap-3">
@@ -121,12 +130,6 @@ export function ContributieOverzicht() {
                 {jobStatus.created + jobStatus.skipped} van {jobStatus.total} facturen verwerkt
                 ({jobStatus.created} aangemaakt, {jobStatus.skipped} overgeslagen)
               </span>
-            </div>
-          )}
-          {jobStatus.status === 'done' && (
-            <div className="text-sm text-green-700 dark:text-green-400">
-              Klaar: {jobStatus.created} facturen aangemaakt, {jobStatus.skipped} overgeslagen
-              {jobStatus.errors > 0 && `, ${jobStatus.errors} fouten`}
             </div>
           )}
           {jobStatus.status === 'error' && (

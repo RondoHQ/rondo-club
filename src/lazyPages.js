@@ -22,6 +22,7 @@ export const Contributie = lazy(() => import('@/pages/Contributie/Contributie'))
 export const DisciplineCasesList = lazy(() => import('@/pages/DisciplineCases/DisciplineCasesList'));
 export const FinanceSettings = lazy(() => import('@/pages/Finance/FinanceSettings'));
 export const FinanceDashboard = lazy(() => import('@/pages/Finance/FinanceDashboard'));
+export const Betaalstatistieken = lazy(() => import('@/pages/Finance/Betaalstatistieken'));
 export const Facturen = lazy(() => import('@/pages/Finance/Facturen'));
 export const FactuurDetail = lazy(() => import('@/pages/Finance/FactuurDetail'));
 export const FactuurNieuw = lazy(() => import('@/pages/Finance/FactuurNieuw'));
