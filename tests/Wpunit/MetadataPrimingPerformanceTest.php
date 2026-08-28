@@ -132,4 +132,39 @@ class MetadataPrimingPerformanceTest extends RondoTestCase {
 
 		$this->assert_query_count_is_constant( $single, $many, 'Obligation tally' );
 	}
+
+	public function test_decorating_cold_units_runs_one_shared_shift_query(): void {
+		$units = [];
+		for ( $index = 1; $index <= 8; ++$index ) {
+			$person_id = $this->createPerson( [ 'post_title' => 'Speler ' . $index ] );
+			$this->create_shift( [ $person_id ] );
+			$units[] = [
+				'unit_id'        => 'speler_' . $person_id,
+				'kind'           => VolunteerEligibilityService::UNIT_KIND_SPELER,
+				'person_ids'     => [ $person_id ],
+				'required_count' => 2,
+			];
+		}
+
+		VolunteerObligationCalculator::invalidate_cache();
+		$shift_queries = 0;
+		$counter       = static function ( \WP_Query $query ) use ( &$shift_queries ): void {
+			if ( $query->get( 'post_type' ) === 'dienst_shift' ) {
+				++$shift_queries;
+			}
+		};
+		add_action( 'pre_get_posts', $counter );
+
+		try {
+			$calculator = new VolunteerObligationCalculator();
+			$calculator->decorate_units( $units, '2026-2027' );
+			$cold_shift_queries = $shift_queries;
+			$calculator->decorate_units( $units, '2026-2027' );
+		} finally {
+			remove_action( 'pre_get_posts', $counter );
+		}
+
+		$this->assertSame( 1, $cold_shift_queries );
+		$this->assertSame( $cold_shift_queries, $shift_queries, 'Warm unit caches should not scan shifts again.' );
+	}
 }
