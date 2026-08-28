@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- ID-only leden- en dienstqueries laden hun post- en metadatacaches voortaan als één batch, zodat koude vrijwilligers-, contributie- en datakwaliteitsberekeningen niet per record een extra databasequery uitvoeren.
 - Club TV toont voortaan drie sponsorlogo's rechtsboven en vijf linksonder, met compactere logokaders; mededelingen en afbeeldingsslides tonen nu ook de groter en dichter op de klok geplaatste datum.
 - De Club TV-slide met wedstrijden, velden en kleedkamers heeft voortaan de kortere titel **Wedstrijdinformatie**.
 - De lege melding bij **Mijn toernooien** legt uit dat er nog geen beschikbare inschrijvingen zijn.

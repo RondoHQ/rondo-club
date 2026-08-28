@@ -330,6 +330,10 @@ class VolunteerObligationCalculator {
 			]
 		);
 
+		// Shift assignments, status and timing all live in post meta. Prime the
+		// batch because an ID-only WP_Query leaves that cache cold.
+		update_meta_cache( 'post', $query->posts );
+
 		$now_ts = time();
 
 		foreach ( $query->posts as $shift_id ) {

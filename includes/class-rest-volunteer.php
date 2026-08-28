@@ -1095,6 +1095,7 @@ class Volunteer extends Base {
 				],
 			]
 		);
+		update_meta_cache( 'post', $shift_ids );
 
 		$stats = [
 			'total_slots'    => 0,
@@ -1322,6 +1323,7 @@ class Volunteer extends Base {
 				'post_status'      => [ 'publish' ],
 			]
 		);
+		update_meta_cache( 'post', $query->posts );
 
 		$ids = [];
 		foreach ( $query->posts as $pid ) {
