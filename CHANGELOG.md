@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Mijn inschrijftaken** opent vanuit het persoonlijke menu direct de eigen planning en haalt de volledige beschikbare kalender pas op wanneer dat tabblad wordt geopend.
+- **Mijn gegevens** leest per gezinslid alleen de velden die de pagina toont, in plaats van eerst het volledige persoonsdossier op te bouwen.
 - De vrijwilligersdoelgroep verwerkt persoonsmetadata in begrensde groepen en ruimt alleen de lokale object-cache tussendoor op, waardoor een koude herberekening veel minder geheugen gebruikt zonder gedeelde cachewaarden te verwijderen.
 - Het vrijwilligersdashboard vraagt alleen de samenvatting op die het toont en verwerkt werkhistorie één keer per vrijstellingscontrole, waardoor de response veel kleiner is en een koude herberekening minder werk doet.
 - Vrijwilligersverplichtingen berekenen alle ontbrekende speler- en gezinseenheden voortaan met één gedeelde dienstscan in plaats van een volledige scan per eenheid.

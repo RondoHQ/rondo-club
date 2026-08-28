@@ -381,12 +381,12 @@ export default function Vrijwillig() {
   useDocumentTitle('Vrijwilligers — Aanmelden');
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [tab, setTab] = useState('available');
   const [confirmOverlap, setConfirmOverlap] = useState(null); // { shiftId, message }
   const [actionError, setActionError] = useState('');
   const [guardianClaimOpen, setGuardianClaimOpen] = useState(false);
   const [guardianName, setGuardianName] = useState('');
   const selectedDienstType = searchParams.get('diensttype') || '';
+  const tab = searchParams.get('tab') === 'mine' ? 'mine' : 'available';
   const volunteerSignupInfo = window.rondoConfig?.volunteerSignupInfo || '';
 
   const { data: mine, isLoading: mineLoading, error: mineError } = useQuery({
@@ -402,6 +402,7 @@ export default function Vrijwillig() {
       dienst_type_id: selectedDienstType || undefined,
     })).data,
     staleTime: 60 * 1000,
+    enabled: tab === 'available',
   });
 
   const signupMutation = useMutation({
@@ -471,6 +472,30 @@ export default function Vrijwillig() {
     ),
     [calendarData]
   );
+  const myDienstTypes = useMemo(() => {
+    const types = new Map();
+    for (const shift of mine?.shifts || []) {
+      if (shift.dienst_type_id && !types.has(shift.dienst_type_id)) {
+        types.set(shift.dienst_type_id, {
+          id: shift.dienst_type_id,
+          name: shift.dienst_type_name || shift.title,
+        });
+      }
+    }
+    return [...types.values()].sort((a, b) => a.name.localeCompare(b.name, 'nl'));
+  }, [mine]);
+
+  const handleTabChange = (nextTab) => {
+    setSearchParams((previousParams) => {
+      const nextParams = new URLSearchParams(previousParams);
+      if (nextTab === 'mine') {
+        nextParams.set('tab', 'mine');
+      } else {
+        nextParams.delete('tab');
+      }
+      return nextParams;
+    }, { replace: true });
+  };
 
   const handleDienstTypeChange = (dienstType) => {
     setSearchParams((previousParams) => {
@@ -537,21 +562,21 @@ export default function Vrijwillig() {
       ) : (
         <>
           <ObligationList obligations={mine?.obligations} exemption={mine?.exemption} identity={mine?.identity} />
-          <BlockBanners blockReasons={calendarData?.block_reasons} />
+          {tab === 'available' ? <BlockBanners blockReasons={calendarData?.block_reasons} /> : null}
 
           <nav className="flex gap-6 border-b border-gray-200 dark:border-gray-700">
             <button
-              onClick={() => setTab('available')}
+              onClick={() => handleTabChange('available')}
               className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
                 tab === 'available'
                   ? 'border-bright-cobalt text-bright-cobalt dark:border-electric-cyan dark:text-electric-cyan'
                   : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
               }`}
             >
-              Beschikbaar ({availableCount})
+              Beschikbaar{calendarData ? ` (${availableCount})` : ''}
             </button>
             <button
-              onClick={() => setTab('mine')}
+              onClick={() => handleTabChange('mine')}
               className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
                 tab === 'mine'
                   ? 'border-bright-cobalt text-bright-cobalt dark:border-electric-cyan dark:text-electric-cyan'
@@ -562,7 +587,7 @@ export default function Vrijwillig() {
             </button>
           </nav>
 
-          {tab === 'mine' && ((calendarData?.dienst_types || []).length > 1 || selectedDienstType) && (
+          {tab === 'mine' && (myDienstTypes.length > 1 || selectedDienstType) && (
             <div className="flex flex-col gap-1.5 sm:max-w-xs">
               <label
                 htmlFor="diensttype-filter"
@@ -577,10 +602,10 @@ export default function Vrijwillig() {
                 className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-bright-cobalt focus:outline-none focus:ring-1 focus:ring-bright-cobalt dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-electric-cyan dark:focus:ring-electric-cyan"
               >
                 <option value="">Alle inschrijftaken</option>
-                {selectedDienstType && !(calendarData?.dienst_types || []).some((type) => String(type.id) === selectedDienstType) && (
+                {selectedDienstType && !myDienstTypes.some((type) => String(type.id) === selectedDienstType) && (
                   <option value={selectedDienstType}>Geselecteerde inschrijftaak</option>
                 )}
-                {(calendarData?.dienst_types || []).map((type) => (
+                {myDienstTypes.map((type) => (
                   <option key={type.id} value={type.id}>{type.name}</option>
                 ))}
               </select>
