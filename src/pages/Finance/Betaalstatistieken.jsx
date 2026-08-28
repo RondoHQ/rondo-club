@@ -222,7 +222,7 @@ function DonutChart({ total, segments, percentage, centerLabel, ariaLabel }) {
   );
 }
 
-function ContributionPaymentPieChart({ data }) {
+function InvoicePaymentPieChart({ data }) {
   const total = data.total || 0;
   const paid = data.paid || 0;
   const installments = data.installments || 0;
@@ -261,12 +261,12 @@ function ContributionPaymentPieChart({ data }) {
       segments={segments}
       percentage={percentageFormatter.format(selectedPercentage)}
       centerLabel={PAYMENT_CENTER_LABEL}
-      ariaLabel={`${paid} betaald, ${installments} in termijnen en ${unpaid} openstaand van ${total} contributiefacturen`}
+      ariaLabel={`${paid} betaald, ${installments} in termijnen en ${unpaid} openstaand van ${total} facturen`}
     />
   );
 }
 
-function ContributionAmountPieChart({ data }) {
+function InvoiceAmountPieChart({ data }) {
   const total = data.total || 0;
   const collected = data.collected || 0;
   const outstanding = data.outstanding || 0;
@@ -296,7 +296,7 @@ function ContributionAmountPieChart({ data }) {
       segments={segments}
       percentage={percentageFormatter.format(collectedPercentage)}
       centerLabel="geïnd"
-      ariaLabel={`${formatCurrency(collected, 2)} van ${formatCurrency(total, 2)} contributie geïnd`}
+      ariaLabel={`${formatCurrency(collected, 2)} van ${formatCurrency(total, 2)} aan facturen geïnd`}
     />
   );
 }
@@ -322,6 +322,7 @@ export default function Betaalstatistieken() {
   const invoiceType = INVOICE_TYPES.some((type) => type.value === requestedInvoiceType)
     ? requestedInvoiceType
     : '';
+  const invoiceTypeLabel = INVOICE_TYPES.find((type) => type.value === invoiceType)?.label;
   const { data: statistics, isLoading, error } = useInvoiceStatistics(
     invoiceType ? { invoice_type: invoiceType } : {}
   );
@@ -374,11 +375,11 @@ export default function Betaalstatistieken() {
                 </ChartCard>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 min-w-0">
-                <ChartCard title={`Contributiefacturen · ${statistics.membership_payment_status.season}`}>
-                  <ContributionPaymentPieChart data={statistics.membership_payment_status} />
+                <ChartCard title={`Facturen · ${invoiceTypeLabel} · ${statistics.invoice_payment_status.season}`}>
+                  <InvoicePaymentPieChart data={statistics.invoice_payment_status} />
                 </ChartCard>
-                <ChartCard title={`Contributie geïnd · ${statistics.membership_amount_status.season}`}>
-                  <ContributionAmountPieChart data={statistics.membership_amount_status} />
+                <ChartCard title={`Bedrag geïnd · ${invoiceTypeLabel} · ${statistics.invoice_amount_status.season}`}>
+                  <InvoiceAmountPieChart data={statistics.invoice_amount_status} />
                 </ChartCard>
               </div>
             </div>

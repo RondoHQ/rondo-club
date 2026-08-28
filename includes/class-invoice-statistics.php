@@ -45,6 +45,15 @@ class InvoiceStatistics {
 			'collected' => 0.0,
 			'total'     => 0.0,
 		];
+		$invoice_payment_status    = [
+			'paid'         => 0,
+			'installments' => 0,
+			'unpaid'       => 0,
+		];
+		$invoice_amount_status     = [
+			'collected' => 0.0,
+			'total'     => 0.0,
+		];
 		$invoice_ids               = get_posts(
 			[
 				'post_type'              => 'rondo_invoice',
@@ -67,6 +76,7 @@ class InvoiceStatistics {
 				continue;
 			}
 
+			$this->collect_invoice_payment_status( $invoice_id, $season, $invoice_payment_status, $invoice_amount_status );
 			$payments = array_merge( $payments, $this->get_invoice_payments( $invoice_id ) );
 			$this->collect_installment_plan_person( $invoice_id, $season, $plan_people );
 
@@ -115,6 +125,19 @@ class InvoiceStatistics {
 				'outstanding' => round( max( 0.0, $membership_amount_status['total'] - $membership_amount_status['collected'] ), 2 ),
 				'total'       => round( $membership_amount_status['total'], 2 ),
 			],
+			'invoice_payment_status'    => [
+				'season'       => $season,
+				'paid'         => $invoice_payment_status['paid'],
+				'installments' => $invoice_payment_status['installments'],
+				'unpaid'       => $invoice_payment_status['unpaid'],
+				'total'        => array_sum( $invoice_payment_status ),
+			],
+			'invoice_amount_status'     => [
+				'season'      => $season,
+				'collected'   => round( $invoice_amount_status['collected'], 2 ),
+				'outstanding' => round( max( 0.0, $invoice_amount_status['total'] - $invoice_amount_status['collected'] ), 2 ),
+				'total'       => round( $invoice_amount_status['total'], 2 ),
+			],
 			'installment_plans'         => [
 				'season'       => $season,
 				'total_people' => count( $all_plan_people ),
@@ -122,6 +145,63 @@ class InvoiceStatistics {
 				'monthly_8'    => count( $plan_people['monthly_8'] ),
 			],
 		];
+	}
+
+	/**
+	 * Count current-season invoices matching the selected type.
+	 *
+	 * Membership invoices carry an explicit sports season. Other invoice types
+	 * are assigned to the sports season containing their sent date.
+	 *
+	 * @param int                     $invoice_id Invoice post ID.
+	 * @param string                  $season     Current season key.
+	 * @param array<string,int>       $counts     Paid, installment, and unpaid counters.
+	 * @param array<string,float>     $amounts    Collected and total principal amounts.
+	 * @return void
+	 */
+	private function collect_invoice_payment_status( int $invoice_id, string $season, array &$counts, array &$amounts ): void {
+		$status = get_post_status( $invoice_id );
+		if ( ! in_array( $status, [ 'rondo_sent', 'rondo_paid', 'rondo_overdue' ], true ) ) {
+			return;
+		}
+
+		if ( ! $this->invoice_belongs_to_season( $invoice_id, $season ) ) {
+			return;
+		}
+
+		$total            = max( 0.0, (float) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'total_amount' ) );
+		$collected        = $status === 'rondo_paid'
+			? $total
+			: min( $total, $this->get_paid_installment_principal( $invoice_id ) );
+		$installment_plan = (string) get_post_meta( $invoice_id, '_installment_plan', true );
+
+		if ( $status === 'rondo_paid' ) {
+			++$counts['paid'];
+		} elseif ( in_array( $installment_plan, [ 'quarterly_3', 'monthly_8' ], true ) ) {
+			++$counts['installments'];
+		} else {
+			++$counts['unpaid'];
+		}
+
+		$amounts['collected'] += $collected;
+		$amounts['total']     += $total;
+	}
+
+	/**
+	 * Check whether an invoice belongs to a sports season.
+	 *
+	 * @param int    $invoice_id Invoice post ID.
+	 * @param string $season     Sports season key.
+	 * @return bool
+	 */
+	private function invoice_belongs_to_season( int $invoice_id, string $season ): bool {
+		if ( \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_type' ) === 'membership' ) {
+			return (string) get_post_meta( $invoice_id, '_invoice_season', true ) === $season;
+		}
+
+		$sent_at = $this->parse_date( (string) get_post_meta( $invoice_id, 'sent_date', true ) );
+
+		return $sent_at && SeasonKey::current( $sent_at->format( 'Y-m-d' ) ) === $season;
 	}
 
 	/**
