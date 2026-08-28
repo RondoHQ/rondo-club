@@ -324,7 +324,7 @@ class SportlinkMatchday {
 						'aantaldagen'     => 14,
 						'weekoffset'      => -1,
 						'sorteervolgorde' => 'datum-omgekeerd',
-						'velden'          => 'wedstrijdcode,wedstrijdnummer,thuisteam,thuisteamclubrelatiecode,uitslag,wedstrijddatum,uitteam,uitteamclubrelatiecode,status',
+						'velden'          => 'wedstrijdcode,wedstrijdnummer,thuisteamlogo,thuisteam,thuisteamclubrelatiecode,uitslag,wedstrijddatum,uitteamlogo,uitteam,uitteamclubrelatiecode,status',
 					]
 				),
 			],
@@ -438,7 +438,9 @@ class SportlinkMatchday {
 			'date'           => $starts_at->format( 'Y-m-d' ),
 			'time'           => $starts_at->format( 'H:i' ),
 			'home_team'      => $home_name,
+			'home_logo_url'  => $this->clean_url( $row['thuisteamlogo'] ?? '' ),
 			'away_team'      => $away_name,
+			'away_logo_url'  => $this->clean_url( $row['uitteamlogo'] ?? '' ),
 			'club_side'      => $club_side,
 			'pitch'          => $this->clean_text( $row['veld'] ?? '' ),
 			'dressing_rooms' => [
@@ -481,6 +483,12 @@ class SportlinkMatchday {
 	/** Strip markup and bound data originating outside WordPress. */
 	private function clean_text( $value ): string {
 		return substr( sanitize_text_field( is_scalar( $value ) ? (string) $value : '' ), 0, 200 );
+	}
+
+	/** Keep external logo URLs limited to web-safe image sources. */
+	private function clean_url( $value ): string {
+		$url = is_scalar( $value ) ? trim( (string) $value ) : '';
+		return esc_url_raw( substr( $url, 0, 2048 ), [ 'http', 'https' ] );
 	}
 
 	/** Select one matchday, merge cancellations, and expose freshness metadata. */

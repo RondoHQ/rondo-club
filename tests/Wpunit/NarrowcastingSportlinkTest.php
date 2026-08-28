@@ -50,8 +50,10 @@ class NarrowcastingSportlinkTest extends RondoTestCase {
 				[
 					'wedstrijdcode'            => 'match-100',
 					'wedstrijddatum'           => $today . 'T12:30:00+0000',
+					'thuisteamlogo'            => 'https://example.test/awc.png',
 					'thuisteam'                => 'AWC JO13-1',
 					'thuisteamclubrelatiecode' => self::CLUB_CODE,
+					'uitteamlogo'              => 'https://example.test/bezoekers.png',
 					'uitteam'                  => 'Bezoekers JO13-1',
 					'uitteamclubrelatiecode'   => 'OTHER1',
 					'veld'                     => 'Veld 2',
@@ -66,8 +68,10 @@ class NarrowcastingSportlinkTest extends RondoTestCase {
 				[
 					'wedstrijdcode'            => 'result-90',
 					'wedstrijddatum'           => $yesterday . 'T15:00:00+0000',
+					'thuisteamlogo'            => 'https://example.test/awc.png',
 					'thuisteam'                => 'AWC 1',
 					'thuisteamclubrelatiecode' => self::CLUB_CODE,
+					'uitteamlogo'              => 'https://example.test/bezoekers.png',
 					'uitteam'                  => 'Bezoekers 1',
 					'uitteamclubrelatiecode'   => 'OTHER2',
 					'uitslag'                  => '3 - 1',
@@ -81,10 +85,14 @@ class NarrowcastingSportlinkTest extends RondoTestCase {
 		$this->assertFalse( is_wp_error( $feed ) );
 		$this->assertCount( 1, $feed['matches'] );
 		$this->assertSame( 'home', $feed['matches'][0]['club_side'] );
+		$this->assertSame( 'https://example.test/awc.png', $feed['matches'][0]['home_logo_url'] );
+		$this->assertSame( 'https://example.test/bezoekers.png', $feed['matches'][0]['away_logo_url'] );
 		$this->assertSame( 'Veld 2', $feed['matches'][0]['pitch'] );
 		$this->assertSame( '3', $feed['matches'][0]['dressing_rooms']['home'] );
 		$this->assertSame( 'S1', $feed['matches'][0]['dressing_rooms']['referee'] );
 		$this->assertSame( '3 - 1', $feed['results'][0]['result'] );
+		$this->assertSame( 'https://example.test/awc.png', $feed['results'][0]['home_logo_url'] );
+		$this->assertSame( 'https://example.test/bezoekers.png', $feed['results'][0]['away_logo_url'] );
 		$this->assertFalse( $feed['source']['stale'] );
 		$this->assertStringNotContainsString( self::CLIENT_ID, wp_json_encode( $feed ) );
 		$this->assertStringNotContainsString( self::CLIENT_ID, wp_json_encode( get_option( 'rondo_narrowcasting_matchday_cache' ) ) );
@@ -247,6 +255,15 @@ class NarrowcastingSportlinkTest extends RondoTestCase {
 				$body = $cancellations;
 			} elseif ( str_ends_with( $path, '/uitslagen' ) ) {
 				$body = $results;
+			}
+
+			$query  = wp_parse_url( $url, PHP_URL_QUERY );
+			$params = [];
+			wp_parse_str( is_string( $query ) ? $query : '', $params );
+			$fields = array_filter( explode( ',', (string) ( $params['velden'] ?? '' ) ) );
+			if ( $fields ) {
+				$allowed = array_fill_keys( $fields, true );
+				$body    = array_map( static fn( array $row ): array => array_intersect_key( $row, $allowed ), $body );
 			}
 
 			return [
