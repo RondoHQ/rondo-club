@@ -61,6 +61,7 @@ class VolunteerEligibilityService {
 	const CACHE_PREFIX            = 'rondo_eligibility_view_';
 	const CACHE_GENERATION_OPTION = 'rondo_eligibility_cache_generation';
 	const CACHE_TTL_SECONDS       = 5 * MINUTE_IN_SECONDS;
+	const PERSON_META_BATCH_SIZE  = 250;
 
 	/**
 	 * In-memory cache for the address→adults map, used during a single
@@ -184,72 +185,83 @@ class VolunteerEligibilityService {
 			]
 		);
 
-		// The hot loop reads both person objects and their meta. An ID-only query
-		// does not prime either cache, so prepare the complete batch up front.
-		_prime_post_caches( $query->posts, false, true );
-
 		$gezin_units               = [];
 		$speler_units              = [];
 		$skipped_no_leeftijdsgroep = 0;
+		$person_ids                = array_map( 'intval', $query->posts );
+		$bounded_batches           = $this->can_release_runtime_object_cache();
+		$batch_size                = $bounded_batches
+			? max( 1, (int) apply_filters( 'rondo_eligibility_person_meta_batch_size', self::PERSON_META_BATCH_SIZE ) )
+			: max( 1, count( $person_ids ) );
 
-		foreach ( $query->posts as $person_id ) {
-			$person_id = (int) $person_id;
-			$age       = $this->age_group_number( $person_id );
+		// A full person-meta preload expands more than half a million rows into
+		// PHP arrays on production. Prime bounded groups instead and release only
+		// the request-local cache between them; persistent cache values remain.
+		foreach ( array_chunk( $person_ids, $batch_size ) as $person_batch ) {
+			_prime_post_caches( $person_batch, false, true );
 
-			if ( $age === null ) {
-				// Alleen spelende leden horen een Sportlink-leeftijdsgroep te
-				// hebben. Niet-spelende ouders, sponsorcontacten en andere
-				// contacten zonder spelactiviteit zijn dus geen data-issue.
-				// Spelende dubbelrollen (bijvoorbeeld ouder + speler of sponsor +
-				// speler) blijven juist wel zichtbaar wanneer de groep ontbreekt.
-				if (
-					self::is_active_member( $person_id )
-					&& self::is_playing_member( $person_id )
-					&& ! self::is_current_volunteer( $person_id )
-					&& ! self::has_active_honorary_role( $person_id )
-				) {
-					++$skipped_no_leeftijdsgroep;
+			foreach ( $person_batch as $person_id ) {
+				$age = $this->age_group_number( $person_id );
+
+				if ( $age === null ) {
+					// Alleen spelende leden horen een Sportlink-leeftijdsgroep te
+					// hebben. Niet-spelende ouders, sponsorcontacten en andere
+					// contacten zonder spelactiviteit zijn dus geen data-issue.
+					// Spelende dubbelrollen (bijvoorbeeld ouder + speler of sponsor +
+					// speler) blijven juist wel zichtbaar wanneer de groep ontbreekt.
+					if (
+						self::is_active_member( $person_id )
+						&& self::is_playing_member( $person_id )
+						&& ! self::is_current_volunteer( $person_id )
+						&& ! self::has_active_honorary_role( $person_id )
+					) {
+						++$skipped_no_leeftijdsgroep;
+					}
+					continue;
 				}
-				continue;
-			}
 
-			// Alleen actieve leden tellen mee voor de plicht. Ex-leden vallen
-			// af. Contributie-vrijstelling is bewust géén exclusion-grond hier
-			// — die loopt via VolunteerExemptionResolver of honorary role.
-			if ( ! self::is_active_member( $person_id ) ) {
-				continue;
-			}
-
-			if ( $age >= self::ADULT_MIN_AGE ) {
-				$unit                             = $this->build_speler_unit( $person_id );
-				$speler_units[ $unit['unit_id'] ] = $unit;
-				continue;
-			}
-
-			if ( $age <= self::YOUTH_MAX_AGE ) {
-				$gezin_unit = $this->build_gezin_unit( $person_id );
-				$key        = $gezin_unit['unit_id'];
-
-				if ( isset( $gezin_units[ $key ] ) ) {
-					$gezin_units[ $key ]['trigger_person_ids'] = array_values(
-						array_unique(
-							array_merge(
-								$gezin_units[ $key ]['trigger_person_ids'],
-								$gezin_unit['trigger_person_ids']
-							)
-						)
-					);
-					$gezin_units[ $key ]['person_ids']         = array_values(
-						array_unique(
-							array_merge(
-								$gezin_units[ $key ]['person_ids'],
-								$gezin_unit['person_ids']
-							)
-						)
-					);
-				} else {
-					$gezin_units[ $key ] = $gezin_unit;
+				// Alleen actieve leden tellen mee voor de plicht. Ex-leden vallen
+				// af. Contributie-vrijstelling is bewust géén exclusion-grond hier
+				// — die loopt via VolunteerExemptionResolver of honorary role.
+				if ( ! self::is_active_member( $person_id ) ) {
+					continue;
 				}
+
+				if ( $age >= self::ADULT_MIN_AGE ) {
+					$unit                             = $this->build_speler_unit( $person_id );
+					$speler_units[ $unit['unit_id'] ] = $unit;
+					continue;
+				}
+
+				if ( $age <= self::YOUTH_MAX_AGE ) {
+					$gezin_unit = $this->build_gezin_unit( $person_id );
+					$key        = $gezin_unit['unit_id'];
+
+					if ( isset( $gezin_units[ $key ] ) ) {
+						$gezin_units[ $key ]['trigger_person_ids'] = array_values(
+							array_unique(
+								array_merge(
+									$gezin_units[ $key ]['trigger_person_ids'],
+									$gezin_unit['trigger_person_ids']
+								)
+							)
+						);
+						$gezin_units[ $key ]['person_ids']         = array_values(
+							array_unique(
+								array_merge(
+									$gezin_units[ $key ]['person_ids'],
+									$gezin_unit['person_ids']
+								)
+							)
+						);
+					} else {
+						$gezin_units[ $key ] = $gezin_unit;
+					}
+				}
+			}
+
+			if ( $bounded_batches ) {
+				$this->release_runtime_object_cache();
 			}
 		}
 
@@ -281,6 +293,40 @@ class VolunteerEligibilityService {
 				'speler_units'              => count( $speler_units ),
 			],
 		];
+	}
+
+	/** Whether this request can discard local cache values without touching persistent storage. */
+	private function can_release_runtime_object_cache(): bool {
+		if ( wp_cache_supports( 'flush_runtime' ) ) {
+			return true;
+		}
+
+		global $wp_object_cache;
+		$properties = is_object( $wp_object_cache ) ? get_object_vars( $wp_object_cache ) : [];
+
+		// SiteGround's Memcached drop-in predates flush_runtime. Its group lists
+		// are public, so they can be preserved across a standard reinitialization.
+		return isset( $properties['global_groups'], $properties['no_mc_groups'] )
+			&& is_array( $properties['global_groups'] )
+			&& is_array( $properties['no_mc_groups'] );
+	}
+
+	/** Release request-local object-cache memory while preserving persistent values and groups. */
+	private function release_runtime_object_cache(): void {
+		if ( wp_cache_supports( 'flush_runtime' ) ) {
+			wp_cache_flush_runtime();
+			return;
+		}
+
+		global $wp_object_cache;
+		$properties            = get_object_vars( $wp_object_cache );
+		$global_groups         = $properties['global_groups'];
+		$non_persistent_groups = $properties['no_mc_groups'];
+
+		wp_cache_close();
+		wp_cache_init();
+		wp_cache_add_global_groups( $global_groups );
+		wp_cache_add_non_persistent_groups( $non_persistent_groups );
 	}
 
 	/**

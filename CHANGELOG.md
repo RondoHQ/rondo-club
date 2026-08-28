@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- De vrijwilligersdoelgroep verwerkt persoonsmetadata in begrensde groepen en ruimt alleen de lokale object-cache tussendoor op, waardoor een koude herberekening veel minder geheugen gebruikt zonder gedeelde cachewaarden te verwijderen.
 - Het vrijwilligersdashboard vraagt alleen de samenvatting op die het toont en verwerkt werkhistorie één keer per vrijstellingscontrole, waardoor de response veel kleiner is en een koude herberekening minder werk doet.
 - Vrijwilligersverplichtingen berekenen alle ontbrekende speler- en gezinseenheden voortaan met één gedeelde dienstscan in plaats van een volledige scan per eenheid.
 - ID-only leden- en dienstqueries laden hun post- en metadatacaches voortaan als één batch, zodat koude vrijwilligers-, contributie- en datakwaliteitsberekeningen niet per record een extra databasequery uitvoeren.

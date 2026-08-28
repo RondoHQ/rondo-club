@@ -113,6 +113,24 @@ class MetadataPrimingPerformanceTest extends RondoTestCase {
 		$this->assert_query_count_is_constant( $single, $many, 'Volunteer eligibility' );
 	}
 
+	public function test_eligibility_result_is_stable_across_meta_batches(): void {
+		for ( $index = 1; $index <= 4; ++$index ) {
+			$this->createPerson( [ 'post_title' => 'Batch speler ' . $index ], [ 'leeftijdsgroep' => 'Senioren' ] );
+		}
+		$service = new VolunteerEligibilityService();
+		$default = $this->invoke_private( $service, 'compute_eligibility_view', [ '2026-2027' ] );
+		$filter  = static fn(): int => 1;
+
+		add_filter( 'rondo_eligibility_person_meta_batch_size', $filter );
+		try {
+			$batched = $this->invoke_private( $service, 'compute_eligibility_view', [ '2026-2027' ] );
+		} finally {
+			remove_filter( 'rondo_eligibility_person_meta_batch_size', $filter );
+		}
+
+		$this->assertSame( $default, $batched );
+	}
+
 	public function test_obligation_tally_query_count_does_not_scale_with_shift_count(): void {
 		$person_id = $this->createPerson( [ 'post_title' => 'Speler' ] );
 		$this->create_shift( [ $person_id ] );
