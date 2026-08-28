@@ -119,4 +119,42 @@ class FormerMemberFeeEligibilityTest extends RondoTestCase {
 		$this->assertSame( 1, $calls );
 		$this->assertSame( '', get_post_meta( $person_id, $meta_key, true ) );
 	}
+
+	public function test_legacy_fee_cache_is_recalculated_on_the_same_day(): void {
+		$today     = current_datetime()->format( 'Y-m-d' );
+		$person_id = $this->createPerson(
+			[],
+			[
+				'work_history' => [
+					[
+						'job_title'  => 'Teamspeler',
+						'is_current' => false,
+						'end_date'   => $today,
+					],
+				],
+			]
+		);
+		$calls     = 0;
+		$cache     = new FeeCache(
+			static function () use ( &$calls ) {
+				++$calls;
+				return null;
+			}
+		);
+		$meta_key  = $cache->get_fee_cache_meta_key( self::SEASON );
+
+		update_post_meta(
+			$person_id,
+			$meta_key,
+			[
+				'category'      => 'senior',
+				'final_fee'     => 263,
+				'calculated_at' => $today . ' 12:00:00',
+			]
+		);
+
+		$this->assertNull( $cache->get_fee_for_person_cached( $person_id, self::SEASON ) );
+		$this->assertSame( 1, $calls );
+		$this->assertSame( '', get_post_meta( $person_id, $meta_key, true ) );
+	}
 }
