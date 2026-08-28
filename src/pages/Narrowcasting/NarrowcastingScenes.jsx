@@ -91,13 +91,13 @@ function MatchesScene({ items, dateLabel }) {
   );
 }
 
-function TeamAssignment({ team, logoUrl, room, cancelled }) {
+function TeamAssignment({ team, logoUrl, room, cancelled, showRoom = true }) {
   return (
     <div className="flex min-w-0 items-center gap-[0.65vw]">
       <TeamLogo name={team} url={logoUrl} />
       <div className="min-w-0">
         <p className={`truncate text-[1.25vw] font-semibold ${cancelled ? 'text-[var(--display-danger-text)] line-through' : ''}`}>{team}</p>
-        {!cancelled && <p className="mt-[0.2vw] text-[0.9vw] text-[var(--display-muted)]">Kleedkamer <strong className="text-[var(--display-text)]">{room || 'volgt'}</strong></p>}
+        {!cancelled && showRoom && <p className="mt-[0.2vw] text-[0.9vw] text-[var(--display-muted)]">Kleedkamer <strong className="text-[var(--display-text)]">{room || 'volgt'}</strong></p>}
       </div>
     </div>
   );
@@ -124,12 +124,14 @@ function CancellationsScene({ items, dateLabel }) {
 function ResultsScene({ items }) {
   return (
     <section>
-      <div className="overflow-hidden rounded-[1vw] border border-[var(--display-border)] bg-[var(--display-surface)] backdrop-blur-sm">
+      <div className="space-y-[0.7vw]">
         {items.map((match) => (
-          <div key={match.id} className="grid grid-cols-[1fr_9vw] items-center gap-[1.5vw] border-b border-[var(--display-border)] px-[2vw] py-[1.05vw] last:border-b-0">
-            <p className="grid min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-[0.9vw] text-[1.45vw] font-semibold"><Team name={match.home_team} logoUrl={match.home_logo_url} align="right" /><span className="text-[var(--display-muted)]">–</span><Team name={match.away_team} logoUrl={match.away_logo_url} /></p>
+          <article key={match.id} className="grid grid-cols-[6.5vw_minmax(0,1fr)_minmax(0,1fr)_10vw] items-center gap-[1.2vw] rounded-[0.9vw] border border-[var(--display-border)] bg-[var(--display-surface)] px-[1.7vw] py-[0.8vw] backdrop-blur-sm">
+            <time className="font-mono text-[1.75vw] font-bold tabular-nums text-[var(--scene-accent-readable)]">{match.time}</time>
+            <TeamAssignment team={match.home_team} logoUrl={match.home_logo_url} showRoom={false} />
+            <TeamAssignment team={match.away_team} logoUrl={match.away_logo_url} showRoom={false} />
             <p className="text-right font-mono text-[2vw] font-bold tabular-nums text-[var(--scene-accent-readable)]">{match.result}</p>
-          </div>
+          </article>
         ))}
       </div>
     </section>

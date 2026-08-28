@@ -68,10 +68,8 @@ class NarrowcastingSportlinkTest extends RondoTestCase {
 				[
 					'wedstrijdcode'            => 'result-90',
 					'wedstrijddatum'           => $yesterday . 'T15:00:00+0000',
-					'thuisteamlogo'            => 'https://example.test/awc.png',
 					'thuisteam'                => 'AWC 1',
 					'thuisteamclubrelatiecode' => self::CLUB_CODE,
-					'uitteamlogo'              => 'https://example.test/bezoekers.png',
 					'uitteam'                  => 'Bezoekers 1',
 					'uitteamclubrelatiecode'   => 'OTHER2',
 					'uitslag'                  => '3 - 1',
@@ -91,8 +89,8 @@ class NarrowcastingSportlinkTest extends RondoTestCase {
 		$this->assertSame( '3', $feed['matches'][0]['dressing_rooms']['home'] );
 		$this->assertSame( 'S1', $feed['matches'][0]['dressing_rooms']['referee'] );
 		$this->assertSame( '3 - 1', $feed['results'][0]['result'] );
-		$this->assertSame( 'https://example.test/awc.png', $feed['results'][0]['home_logo_url'] );
-		$this->assertSame( 'https://example.test/bezoekers.png', $feed['results'][0]['away_logo_url'] );
+		$this->assertSame( 'https://logoapi.voetbal.nl/logo.php?clubcode=' . self::CLUB_CODE, $feed['results'][0]['home_logo_url'] );
+		$this->assertSame( 'https://logoapi.voetbal.nl/logo.php?clubcode=OTHER2', $feed['results'][0]['away_logo_url'] );
 		$this->assertFalse( $feed['source']['stale'] );
 		$this->assertStringNotContainsString( self::CLIENT_ID, wp_json_encode( $feed ) );
 		$this->assertStringNotContainsString( self::CLIENT_ID, wp_json_encode( get_option( 'rondo_narrowcasting_matchday_cache' ) ) );

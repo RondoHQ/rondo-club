@@ -36,7 +36,7 @@ export function buildMatchdayScenes(feed, fallbackMessage) {
 
   chunks(matches, 5).forEach((items, page) => scenes.push({ type: 'matches', items, page, dateLabel }));
   chunks(cancellations, 6).forEach((items, page) => scenes.push({ type: 'cancellations', items, page, dateLabel }));
-  chunks(results, 6).forEach((items, page) => scenes.push({ type: 'results', items, page }));
+  chunks(results, 5).forEach((items, page) => scenes.push({ type: 'results', items, page }));
 
   if (scenes.length === 0) {
     const message = dateLabel === 'vandaag'
