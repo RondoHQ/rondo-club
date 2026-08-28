@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Het hoofdpercentage bij contributiefacturen telt zowel betaalde facturen als facturen in termijnen mee; beide contributiepercentages tonen één decimaal om toevallige gelijke afrondingen te voorkomen.
 - Het Facturen-blok op het financiële dashboard toont alleen Concept en Achterstallig; Vervallen is verwijderd omdat die status geen actie vereist.
 - Het contributieoverzicht telt ieder lid nog maar één keer wanneer oude data per ongeluk meerdere contributiecache-regels voor dezelfde persoon en hetzelfde seizoen bevat.
 - **Maak facturen** verwerkt alleen leden zonder bestaande contributiefactuur, toont vooraf het exacte aantal en verdwijnt wanneer er niets te factureren is.
