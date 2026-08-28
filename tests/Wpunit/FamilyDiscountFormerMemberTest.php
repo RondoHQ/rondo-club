@@ -111,6 +111,41 @@ class FamilyDiscountFormerMemberTest extends RondoTestCase {
 		$this->assertSame( '2', get_post_meta( $active_2, '_family_discount_position', true ) );
 	}
 
+	public function test_family_member_lookup_only_returns_the_exact_normalized_household(): void {
+		$settings       = $this->configure_youth_fees();
+		$family_member  = $this->create_youth_member();
+		$other_number   = $this->createPerson(
+			[],
+			[
+				'addresses' => [
+					[
+						'house_number'          => '13',
+						'house_number_addition' => '',
+						'postal_code'           => '1234ab',
+					],
+				],
+			]
+		);
+		$other_postcode = $this->createPerson(
+			[],
+			[
+				'addresses' => [
+					[
+						'house_number'          => '12',
+						'house_number_addition' => '',
+						'postal_code'           => '5678 AB',
+					],
+				],
+			]
+		);
+		$grouping       = $this->family_grouping( $settings );
+
+		$this->assertSame( [ $family_member ], $grouping->get_family_member_ids( '1234AB-12' ) );
+		$this->assertNotContains( $other_number, $grouping->get_family_member_ids( '1234AB-12' ) );
+		$this->assertNotContains( $other_postcode, $grouping->get_family_member_ids( '1234AB-12' ) );
+		$this->assertSame( [], $grouping->get_family_member_ids( 'invalid' ) );
+	}
+
 	public function test_former_member_never_receives_a_stored_family_discount(): void {
 		$settings = $this->configure_youth_fees();
 		$former   = $this->create_youth_member( true );
@@ -159,13 +194,9 @@ class FamilyDiscountFormerMemberTest extends RondoTestCase {
 		$family_grouping = $this->createMock( FamilyGroupingService::class );
 		$family_grouping->expects( $this->once() )->method( 'get_family_key' )->with( $current )->willReturn( '1234AB-12' );
 		$family_grouping->expects( $this->once() )
-			->method( 'build_family_groups' )
-			->willReturn(
-				[
-					'families'    => [ '1234AB-12' => [ $sibling ] ],
-					'person_data' => [],
-				]
-			);
+			->method( 'get_family_member_ids' )
+			->with( '1234AB-12' )
+			->willReturn( [ $sibling ] );
 		$family_grouping->expects( $this->once() )
 			->method( 'recalculate_family_positions_for_person' )
 			->with( $sibling );
