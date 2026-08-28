@@ -1,3 +1,5 @@
+import { formatMatchDate, splitResult } from './matchDisplay';
+
 export default function NarrowcastingScene({ scene }) {
   if (scene.type === 'matches') return <MatchesScene items={scene.items} dateLabel={scene.dateLabel} />;
   if (scene.type === 'cancellations') return <CancellationsScene items={scene.items} dateLabel={scene.dateLabel} />;
@@ -43,17 +45,8 @@ function VideoScene({ scene }) {
 }
 
 function TeamLogo({ name, url }) {
-  if (!url) {
-    const abbreviation = String(name || '?').trim().split(/\s+/)[0].replace(/[^a-z0-9]/gi, '').slice(0, 4).toUpperCase() || '?';
-    return (
-      <span
-        aria-label={`Clubafkorting ${name}`}
-        className="flex h-[2.8vw] w-[2.8vw] shrink-0 items-center justify-center rounded-[0.35vw] bg-white text-[0.72vw] font-extrabold tracking-tight text-[var(--club-primary)] shadow-sm"
-      >
-        {abbreviation}
-      </span>
-    );
-  }
+  if (!url) return null;
+
   return (
     <img
       src={url}
@@ -135,14 +128,27 @@ function ResultsScene({ items }) {
   return (
     <section>
       <div className="space-y-[0.7vw]">
-        {items.map((match) => (
-          <article key={match.id} className="grid grid-cols-[6.5vw_minmax(0,1fr)_minmax(0,1fr)_10vw] items-center gap-[1.2vw] rounded-[0.9vw] border border-[var(--display-border)] bg-[var(--display-surface)] px-[1.7vw] py-[0.8vw] backdrop-blur-sm">
-            <time className="font-mono text-[1.75vw] font-bold tabular-nums text-[var(--scene-accent-readable)]">{match.time}</time>
-            <TeamAssignment team={match.home_team} logoUrl={match.home_logo_url} showRoom={false} />
-            <TeamAssignment team={match.away_team} logoUrl={match.away_logo_url} showRoom={false} />
-            <p className="text-right font-mono text-[2vw] font-bold tabular-nums text-[var(--scene-accent-readable)]">{match.result}</p>
-          </article>
-        ))}
+        {items.map((match) => {
+          const result = splitResult(match.result);
+          return (
+            <article key={match.id} className="grid grid-cols-[8.5vw_minmax(0,1fr)_minmax(0,1fr)_17vw] items-center gap-[1.2vw] rounded-[0.9vw] border border-[var(--display-border)] bg-[var(--display-surface)] px-[1.7vw] py-[0.8vw] backdrop-blur-sm">
+              <time dateTime={match.starts_at} className="font-mono font-bold tabular-nums text-[var(--scene-accent-readable)]">
+                <span className="block text-[0.85vw] uppercase tracking-[0.08em] text-[var(--display-muted)]">{formatMatchDate(match.date)}</span>
+                <span className="block text-[1.65vw]">{match.time}</span>
+              </time>
+              <TeamAssignment team={match.home_team} logoUrl={match.home_logo_url} showRoom={false} />
+              <TeamAssignment team={match.away_team} logoUrl={match.away_logo_url} showRoom={false} />
+              <div className="flex items-baseline justify-end gap-[0.55vw] whitespace-nowrap text-[var(--scene-accent-readable)]">
+                <span className="font-mono text-[1.85vw] font-bold tabular-nums">{result.score}</span>
+                {result.penalties && (
+                  <span className="text-[0.72vw] font-semibold text-[var(--display-muted)]">
+                    na strafschoppen <strong className="font-mono text-[1.05vw] tabular-nums text-[var(--scene-accent-readable)]">{result.penalties}</strong>
+                  </span>
+                )}
+              </div>
+            </article>
+          );
+        })}
       </div>
     </section>
   );
