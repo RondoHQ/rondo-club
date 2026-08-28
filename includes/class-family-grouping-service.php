@@ -212,6 +212,10 @@ class FamilyGroupingService {
 			]
 		);
 
+		// Family grouping reads several scalar and repeater fields per person.
+		// Prime them in one query before scanning the ID-only result.
+		update_meta_cache( 'post', $query->posts );
+
 		$families    = [];
 		$person_data = [];
 

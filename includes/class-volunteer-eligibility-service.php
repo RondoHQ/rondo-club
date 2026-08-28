@@ -184,6 +184,10 @@ class VolunteerEligibilityService {
 			]
 		);
 
+		// The hot loop reads both person objects and their meta. An ID-only query
+		// does not prime either cache, so prepare the complete batch up front.
+		_prime_post_caches( $query->posts, false, true );
+
 		$gezin_units               = [];
 		$speler_units              = [];
 		$skipped_no_leeftijdsgroep = 0;

@@ -95,6 +95,7 @@ class RelationshipQualityChecker {
 				'post_status'      => [ 'publish' ],
 			]
 		);
+		_prime_post_caches( $persons, false, true );
 
 		$suspects = [];
 
