@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Leeftijdsgebonden contributie wordt alleen berekend voor leden met een Sportlink-spelactiviteit of een actuele spelersteamrol; functiegebaseerde regels zoals Donateur blijven ook zonder spelactiviteit geldig.
 - Teampagina's tonen actuele spelers en staf weer wanneer iemand ook een oudere periode bij hetzelfde team heeft.
 - De teamkolom in de relatieslijst toont geen beëindigde teamkoppeling meer, zodat **Spelactiviteit zonder team** geen schijnbaar tegenstrijdige resultaten geeft.
 - De relatieslijst met het filter **Spelactiviteit zonder team** laadt weer snel doordat werkhistorie één keer via de WordPress-veldlaag wordt verwerkt.

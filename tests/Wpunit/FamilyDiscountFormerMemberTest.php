@@ -60,6 +60,7 @@ class FamilyDiscountFormerMemberTest extends RondoTestCase {
 			[],
 			[
 				'leeftijdsgroep' => 'Onder 10',
+				'spelactiviteit' => 'Veld - Algemeen',
 				'former_member'  => $former,
 				'addresses'      => [
 					[

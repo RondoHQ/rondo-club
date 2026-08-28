@@ -21,6 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Class FeeCacheInvalidator
  *
  * Manages automatic invalidation of fee caches when dependencies change:
+ * - spelactiviteit: Controls eligibility for age-based fees
  * - leeftijdsgroep: Affects fee category (mini/pupil/junior/senior)
  * - addresses: Affects family grouping and discount
  * - work_history: Affects team membership and recreant detection
@@ -80,9 +81,9 @@ class FeeCacheInvalidator {
 	public function invalidate_native_field( int $post_id, string $canonical_name, $value, $old_value, array $field ): void {
 		if ( $canonical_name === 'addresses' ) {
 			$this->invalidate_family_cache( $value, $post_id, $field, $old_value );
-		} elseif ( $canonical_name === 'former_member' ) {
+		} elseif ( in_array( $canonical_name, [ 'former_member', 'spelactiviteit', 'work_history' ], true ) ) {
 			$this->invalidate_family_membership_cache( $value, $post_id, $field );
-		} elseif ( in_array( $canonical_name, [ 'leeftijdsgroep', 'work_history', 'lid_sinds', 'lid_tot' ], true ) ) {
+		} elseif ( in_array( $canonical_name, [ 'leeftijdsgroep', 'lid_sinds', 'lid_tot' ], true ) ) {
 			$this->invalidate_person_cache( $value, $post_id, $field );
 		}
 	}

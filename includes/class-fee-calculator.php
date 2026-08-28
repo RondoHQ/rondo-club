@@ -116,6 +116,14 @@ class FeeCalculator {
 			return null;
 		}
 
+		// Age-based fees apply only to players. Sportlink's game activity is the
+		// primary signal; a current player role is the fallback for valid cases
+		// such as recreational teams whose activity is not populated. Function-
+		// based categories (for example Donateur) remain eligible without either.
+		$spelactiviteit  = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'spelactiviteit' ) );
+		$teams           = $this->person_context->get_current_teams( $person_id );
+		$has_play_signal = ( $spelactiviteit !== '' && $spelactiviteit !== '-' ) || ! empty( $teams );
+
 		// Get leeftijdsgroep from person
 		$leeftijdsgroep     = \Rondo\Fields\Fields::get_for_post( $person_id, 'leeftijdsgroep' );
 		$age_class_category = null;
@@ -127,7 +135,7 @@ class FeeCalculator {
 
 		// Youth categories: Return immediately (priority over everything)
 		$youth_categories = $this->settings->get_youth_category_slugs( $season );
-		if ( $age_class_category && in_array( $age_class_category, $youth_categories, true ) ) {
+		if ( $has_play_signal && $age_class_category && in_array( $age_class_category, $youth_categories, true ) ) {
 			return [
 				'category'       => $age_class_category,
 				'base_fee'       => $this->settings->get_fee( $age_class_category, $season ),
@@ -137,7 +145,6 @@ class FeeCalculator {
 		}
 
 		// Check team matching (config-driven, player roles only)
-		$teams = $this->person_context->get_current_teams( $person_id );
 		if ( ! empty( $teams ) ) {
 			$team_matched_category = $this->category_resolver->get_category_by_team_match( $teams, $season );
 			if ( $team_matched_category !== null ) {
@@ -167,7 +174,7 @@ class FeeCalculator {
 		}
 
 		// Fallback: Non-youth age class match (e.g., senior)
-		if ( $age_class_category !== null ) {
+		if ( $has_play_signal && $age_class_category !== null ) {
 			return [
 				'category'       => $age_class_category,
 				'base_fee'       => $this->settings->get_fee( $age_class_category, $season ),
