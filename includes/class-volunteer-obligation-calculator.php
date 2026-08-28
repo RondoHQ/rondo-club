@@ -65,8 +65,9 @@ class VolunteerObligationCalculator {
 	 * @return array Same units, each augmented with completed_count, pending_count, no_show_count.
 	 */
 	public function decorate_units( array $units, string $season ): array {
-		foreach ( $units as &$unit ) {
-			$progress                = $this->progress_for_unit( $unit, $season );
+		$progress_by_unit = $this->progress_for_units( $units, $season );
+		foreach ( $units as $index => &$unit ) {
+			$progress                = $progress_by_unit[ $index ];
 			$unit['completed_count'] = $progress['completed_count'];
 			$unit['pending_count']   = $progress['pending_count'];
 			$unit['no_show_count']   = $progress['no_show_count'];
@@ -136,16 +137,62 @@ class VolunteerObligationCalculator {
 	 * @return array{completed_count: int, pending_count: int, no_show_count: int}
 	 */
 	public function progress_for_unit( array $unit, string $season ): array {
+		return $this->progress_for_units( [ $unit ], $season )[0];
+	}
+
+	/**
+	 * Resolve progress for multiple units while scanning season shifts only once.
+	 *
+	 * Cached units retain their own transient. Every cache miss is calculated from
+	 * one shared per-person tally, instead of walking every shift once per unit.
+	 *
+	 * @param array  $units  Eligible volunteer units.
+	 * @param string $season KNVB season key.
+	 * @return array<int|string, array{completed_count: int, pending_count: int, no_show_count: int}>
+	 */
+	private function progress_for_units( array $units, string $season ): array {
 		$generation = (string) get_option( self::CACHE_GENERATION_OPTION, '1' );
-		$cache_key  = 'rondo_vobligation_' . md5( $unit['unit_id'] . '|' . $season . '|' . $generation );
-		$cached     = get_transient( $cache_key );
-		if ( is_array( $cached ) ) {
-			return $cached;
+		$progress   = [];
+		$uncached   = [];
+		$cache_keys = [];
+
+		foreach ( $units as $index => $unit ) {
+			$cache_key = 'rondo_vobligation_' . md5( $unit['unit_id'] . '|' . $season . '|' . $generation );
+			$cached    = get_transient( $cache_key );
+			if ( is_array( $cached ) ) {
+				$progress[ $index ] = $cached;
+				continue;
+			}
+
+			$uncached[ $index ]   = $unit;
+			$cache_keys[ $index ] = $cache_key;
 		}
 
-		$result = $this->compute_progress( $unit, $season );
-		set_transient( $cache_key, $result, self::CACHE_TTL_SECONDS );
-		return $result;
+		if ( empty( $uncached ) ) {
+			return $progress;
+		}
+
+		$person_ids = [];
+		foreach ( $uncached as $unit ) {
+			$person_ids = array_merge( $person_ids, array_map( 'intval', $unit['person_ids'] ?? [] ) );
+		}
+		$person_ids = array_values( array_unique( array_filter( $person_ids ) ) );
+
+		if ( ! empty( $person_ids ) ) {
+			// Share person objects and metadata across gezin/speler attribution too.
+			_prime_post_caches( $person_ids, false, true );
+			$tallies = $this->tally_per_person( $person_ids, $season );
+		} else {
+			$tallies = [];
+		}
+
+		foreach ( $uncached as $index => $unit ) {
+			$result             = $this->progress_from_tallies( $unit, $tallies );
+			$progress[ $index ] = $result;
+			set_transient( $cache_keys[ $index ], $result, self::CACHE_TTL_SECONDS );
+		}
+
+		return $progress;
 	}
 
 	/**
@@ -266,14 +313,14 @@ class VolunteerObligationCalculator {
 	}
 
 	/**
-	 * Heart of the calculator — actually walks `dienst_shift` posts and counts.
+	 * Attribute a shared per-person tally to one volunteer unit.
 	 *
 	 * Every shift is attributed to exactly ONE unit. A person who owes both a
 	 * spelersplicht and a gezinsplicht fills the speler duty first; the surplus
 	 * spills into the gezin. Without this a playing parent who owes 2 + 3 = 5
 	 * would be done after 3 shifts, because each shift counted twice.
 	 */
-	private function compute_progress( array $unit, string $season ): array {
+	private function progress_from_tallies( array $unit, array $tallies ): array {
 		$person_ids = array_map( 'intval', $unit['person_ids'] ?? [] );
 		if ( empty( $person_ids ) ) {
 			return [
@@ -282,8 +329,6 @@ class VolunteerObligationCalculator {
 				'no_show_count'   => 0,
 			];
 		}
-
-		$tallies = $this->tally_per_person( $person_ids, $season );
 
 		if ( ( $unit['kind'] ?? '' ) === VolunteerEligibilityService::UNIT_KIND_SPELER ) {
 			return $this->speler_share( $person_ids[0], $tallies[ $person_ids[0] ], (int) ( $unit['required_count'] ?? 0 ) );
@@ -339,7 +384,10 @@ class VolunteerObligationCalculator {
 		foreach ( $query->posts as $shift_id ) {
 			$assigned = ShiftAssignments::person_ids( $shift_id );
 
-			$overlap = array_intersect( $assigned, $person_ids );
+			$overlap = array_filter(
+				$assigned,
+				static fn( int $person_id ): bool => isset( $tallies[ $person_id ] )
+			);
 			if ( empty( $overlap ) ) {
 				continue;
 			}
