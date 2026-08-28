@@ -438,9 +438,9 @@ class SportlinkMatchday {
 			'date'           => $starts_at->format( 'Y-m-d' ),
 			'time'           => $starts_at->format( 'H:i' ),
 			'home_team'      => $home_name,
-			'home_logo_url'  => $this->clean_url( $row['thuisteamlogo'] ?? '' ),
+			'home_logo_url'  => $this->club_logo_url( $row['thuisteamlogo'] ?? '', $home_code ),
 			'away_team'      => $away_name,
-			'away_logo_url'  => $this->clean_url( $row['uitteamlogo'] ?? '' ),
+			'away_logo_url'  => $this->club_logo_url( $row['uitteamlogo'] ?? '', $away_code ),
 			'club_side'      => $club_side,
 			'pitch'          => $this->clean_text( $row['veld'] ?? '' ),
 			'dressing_rooms' => [
@@ -489,6 +489,20 @@ class SportlinkMatchday {
 	private function clean_url( $value ): string {
 		$url = is_scalar( $value ) ? trim( (string) $value ) : '';
 		return esc_url_raw( substr( $url, 0, 2048 ), [ 'http', 'https' ] );
+	}
+
+	/** Use Sportlink's direct logo first, then its documented voetbal.nl club-code fallback. */
+	private function club_logo_url( $value, string $club_code ): string {
+		$direct_url = $this->clean_url( $value );
+		if ( $direct_url !== '' ) {
+			return $direct_url;
+		}
+
+		if ( ! preg_match( '/^[A-Z0-9_-]{3,30}$/', $club_code ) ) {
+			return '';
+		}
+
+		return 'https://logoapi.voetbal.nl/logo.php?clubcode=' . rawurlencode( $club_code );
 	}
 
 	/** Select one matchday, merge cancellations, and expose freshness metadata. */

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { rotateSponsors } from '../../src/pages/Narrowcasting/matchdayScenes.js';
+import { buildMatchdayScenes, rotateSponsors } from '../../src/pages/Narrowcasting/matchdayScenes.js';
 
 function sponsor(id, priority) {
   return { id, name: `Sponsor ${id}`, logo_url: `https://example.test/${id}.png`, club_tv_priority: priority };
@@ -34,4 +34,17 @@ test('often receives three times as many single-slot rotations as sometimes', ()
 test('at most eight always sponsors occupy the eight available positions', () => {
   const sponsors = Array.from({ length: 8 }, (_, index) => sponsor(index + 1, 3));
   assert.deepEqual(rotateSponsors(sponsors, 0).map((item) => item.id), [1, 2, 3, 4, 5, 6, 7, 8]);
+});
+
+test('results use the same five-row page size as match information', () => {
+  const results = Array.from({ length: 6 }, (_, index) => ({ id: index + 1, result: '1 - 0' }));
+  const scenes = buildMatchdayScenes({
+    configured: true,
+    target_date: '2026-08-29',
+    source: { fetched_at: new Date().toISOString() },
+    results,
+  });
+
+  assert.deepEqual(scenes.map((scene) => scene.items.length), [5, 1]);
+  assert.equal(scenes.every((scene) => scene.type === 'results'), true);
 });
