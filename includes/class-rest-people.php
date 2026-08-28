@@ -9,6 +9,7 @@ namespace Rondo\REST;
 
 use Rondo\CustomFields\Manager;
 use Rondo\Core\SponsorStatus;
+use Rondo\Finance\MembershipContributionSummary;
 use Rondo\Fields\Registry;
 use Rondo\Passes\MembershipPassService;
 use Rondo\People\ParentRelationshipService;
@@ -773,7 +774,7 @@ class People extends Base {
 			]
 		);
 
-		$fields = [
+		$fields                  = [
 			'first_name',
 			'infix',
 			'last_name',
@@ -790,7 +791,14 @@ class People extends Base {
 			'lid_sinds',
 			'datum_vog',
 		];
-		$people = [];
+		$contribution_person_ids = array_values(
+			array_filter(
+				$ids,
+				static fn( int $person_id ): bool => ( $context['roles'][ $person_id ] ?? 'child' ) !== 'other_parent'
+			)
+		);
+		$contributions           = MembershipContributionSummary::for_people( $contribution_person_ids );
+		$people                  = [];
 		foreach ( $posts as $post ) {
 			$role           = $context['roles'][ $post->ID ] ?? 'child';
 			$visible_fields = $role === 'other_parent'
@@ -802,6 +810,7 @@ class People extends Base {
 				'can_add_parent'       => (bool) ( $context['can_add_parent'][ $post->ID ] ?? false ),
 				'fields'               => \Rondo\Fields\RestFields::for_post_fields( 'person', $post->ID, $visible_fields ),
 				'membership_pass'      => $role === 'other_parent' ? null : MembershipPassService::get_person_pass_summary( (int) $post->ID ),
+				'contribution'         => $role === 'other_parent' ? null : ( $contributions[ $post->ID ] ?? null ),
 				'sponsor_organization' => $role === 'other_parent' ? null : $this->personal_sponsor_organization( (int) $post->ID ),
 			];
 		}
