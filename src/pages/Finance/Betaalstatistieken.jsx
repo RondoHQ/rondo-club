@@ -16,6 +16,7 @@ const INVOICE_TYPES = [
 
 const dateFormatter = new Intl.DateTimeFormat('nl-NL', { day: 'numeric', month: 'short' });
 const monthFormatter = new Intl.DateTimeFormat('nl-NL', { month: 'short', year: '2-digit' });
+const percentageFormatter = new Intl.NumberFormat('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 function parseLocalDate(value) {
   return new Date(`${value}T12:00:00`);
@@ -215,7 +216,7 @@ function ContributionPaymentPieChart({ data }) {
   const paid = data.paid || 0;
   const installments = data.installments || 0;
   const unpaid = data.unpaid || 0;
-  const paidPercentage = total > 0 ? Math.round((paid / total) * 100) : 0;
+  const selectedPercentage = total > 0 ? ((paid + installments) / total) * 100 : 0;
   const segments = [
     {
       key: 'paid',
@@ -247,8 +248,8 @@ function ContributionPaymentPieChart({ data }) {
     <DonutChart
       total={total}
       segments={segments}
-      percentage={paidPercentage}
-      centerLabel="betaald"
+      percentage={percentageFormatter.format(selectedPercentage)}
+      centerLabel="betaald + termijnen"
       ariaLabel={`${paid} betaald, ${installments} in termijnen en ${unpaid} openstaand van ${total} contributiefacturen`}
     />
   );
@@ -258,7 +259,7 @@ function ContributionAmountPieChart({ data }) {
   const total = data.total || 0;
   const collected = data.collected || 0;
   const outstanding = data.outstanding || 0;
-  const collectedPercentage = total > 0 ? Math.round((collected / total) * 100) : 0;
+  const collectedPercentage = total > 0 ? (collected / total) * 100 : 0;
   const segments = [
     {
       key: 'collected',
@@ -282,7 +283,7 @@ function ContributionAmountPieChart({ data }) {
     <DonutChart
       total={total}
       segments={segments}
-      percentage={collectedPercentage}
+      percentage={percentageFormatter.format(collectedPercentage)}
       centerLabel="geïnd"
       ariaLabel={`${formatCurrency(collected, 2)} van ${formatCurrency(total, 2)} contributie geïnd`}
     />
