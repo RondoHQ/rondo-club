@@ -320,7 +320,7 @@ function rondo_init() {
 		// Seed volunteer-policy fixtures (dienst_types + pool commissies).
 		new \Rondo\Volunteer\VolunteerSeeder();
 
-		// Hourly shift-completion cron + no-show → boete wiring.
+		// Hourly shift-completion cron.
 		new \Rondo\Volunteer\ShiftScheduler();
 
 		// Hourly member reminders and post-shift survey emails.

@@ -71,4 +71,15 @@ class InvoiceNumberingTest extends RondoTestCase {
 			InvoiceNumbering::generate_next( 'membership' )
 		);
 	}
+
+	/**
+	 * Removed invoice types fall back to the manual sequence and are not valid prefixes.
+	 */
+	public function test_removed_volunteer_fine_type_is_not_supported(): void {
+		$year = gmdate( 'Y' );
+		$this->createInvoiceWithNumber( $year . 'F0004' );
+
+		$this->assertSame( $year . 'F005', InvoiceNumbering::generate_next( 'volunteer_fine' ) );
+		$this->assertFalse( InvoiceNumbering::is_valid( $year . 'V001' ) );
+	}
 }

@@ -155,7 +155,7 @@ class VolunteerObligationUnitsTest extends RondoTestCase {
 
 	/**
 	 * The deprecated singular accessor still returns exactly what it always did.
-	 * VolunteerFineGenerator depends on this shape.
+	 * Volunteer integrations depend on this shape.
 	 */
 	public function test_singular_accessor_is_unchanged_for_a_playing_parent(): void {
 		$parent_id = $this->person( 'Senioren', 'Spelende ouder' );

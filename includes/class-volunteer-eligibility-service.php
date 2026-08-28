@@ -542,8 +542,8 @@ class VolunteerEligibilityService {
 	 * not a Senior/Veteraan player).
 	 *
 	 * @deprecated Use get_eligible_units_for_person(), which also returns the gezin
-	 *             unit of a playing parent. Kept for VolunteerFineGenerator, which
-	 *             only needs a household roster.
+	 *             unit of a playing parent. Kept for integrations that need one
+	 *             household roster.
 	 *
 	 * @param int         $person_id Person post ID.
 	 * @param string|null $season    Defaults to current KNVB season.
