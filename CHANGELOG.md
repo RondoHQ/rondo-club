@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- De teamkolom in de relatieslijst toont geen beëindigde teamkoppeling meer, zodat **Spelactiviteit zonder team** geen schijnbaar tegenstrijdige resultaten geeft.
 - De relatieslijst met het filter **Spelactiviteit zonder team** laadt weer snel doordat werkhistorie één keer via de WordPress-veldlaag wordt verwerkt.
 - Het formulier voor een nieuw toernooi opent zonder eerst bestaande toernooigegevens te verwachten.
 - Tariefregels tonen nu duidelijke veldlabels en toernooidatums vragen geen overbodige tijd meer.
