@@ -65,6 +65,12 @@ class InvoiceStatisticsTest extends RondoTestCase {
 		Fields::update_for_post( $quarterly, 'person', $quarterly_person );
 		update_post_meta( $quarterly, '_invoice_season', SeasonKey::current( $this->now->format( 'Y-m-d' ) ) );
 		update_post_meta( $quarterly, '_installment_plan', 'quarterly_3' );
+		update_post_meta( $quarterly, '_installment_count', 3 );
+		update_post_meta( $quarterly, '_installment_1_status', 'betaald' );
+		update_post_meta( $quarterly, '_installment_1_amount', 40.0 );
+		update_post_meta( $quarterly, '_installment_1_admin_fee', 0.5 );
+		update_post_meta( $quarterly, '_installment_2_status', 'pending' );
+		update_post_meta( $quarterly, '_installment_3_status', 'pending' );
 
 		$duplicate_quarterly = $this->create_invoice( 120.0, $this->now->modify( '-4 days' )->format( 'Ymd' ), 'rondo_overdue' );
 		Fields::update_for_post( $duplicate_quarterly, 'invoice_type', 'membership' );
@@ -107,12 +113,22 @@ class InvoiceStatisticsTest extends RondoTestCase {
 		$this->assertSame( 1, $data['installment_plans']['monthly_8'] );
 		$this->assertSame(
 			[
-				'season' => SeasonKey::current( $this->now->format( 'Y-m-d' ) ),
-				'paid'   => 1,
-				'unpaid' => 2,
-				'total'  => 3,
+				'season'       => SeasonKey::current( $this->now->format( 'Y-m-d' ) ),
+				'paid'         => 1,
+				'installments' => 1,
+				'unpaid'       => 1,
+				'total'        => 3,
 			],
 			$data['membership_payment_status']
+		);
+		$this->assertSame(
+			[
+				'season'      => SeasonKey::current( $this->now->format( 'Y-m-d' ) ),
+				'collected'   => 200.0,
+				'outstanding' => 200.0,
+				'total'       => 400.0,
+			],
+			$data['membership_amount_status']
 		);
 		$this->assertCount( 30, $data['daily_income'] );
 		$this->assertCount( 12, $data['monthly_income'] );
