@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Factuurdetails tonen de volledige betaaldatum en het tijdstip voor directe, handmatige en afgeronde termijnbetalingen; **Betaald op** is ook beschikbaar als optionele kolom in het facturenoverzicht.
 - De aparte pagina **Betaalstatistieken** toont ontvangen betalingen, gemiddelde betaaltijd en termijngebruik, filterbaar op factuursoort.
 - **Betaalstatistieken** toont een daggrafiek over de laatste 30 dagen en een maandgrafiek over de laatste 12 maanden.
 - Het onderwerp van contributiefactuurmails is volledig instelbaar, waarbij het factuurnummer alleen wordt toegevoegd als de bijbehorende variabele in het onderwerp staat.

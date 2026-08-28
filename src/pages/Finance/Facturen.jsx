@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useInvoices, useSendInvoice, useDeleteInvoice, useScheduleInvoice } from '@/hooks/useInvoices';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { format, parseYmd } from '@/utils/dateFormat';
+import { format, formatStoredDateTime, parseStoredDateTime, parseYmd } from '@/utils/dateFormat';
 import { comparePersonNames, formatCurrency, formatPersonSurname } from '@/utils/formatters';
 import { buildCsv, downloadCsv } from '@/utils/csvExport';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
@@ -509,6 +509,15 @@ export default function Facturen() {
           row.original.sent_date ? format(parseYmd(row.original.sent_date), 'd MMM yyyy') : '-',
         filterType: null,
         size: 130,
+      }),
+      createColumn({
+        id: 'paid_at',
+        header: 'Betaald op',
+        accessorFn: (row) => parseStoredDateTime(row.paid_at)?.getTime() ?? 0,
+        cell: ({ row }) => formatStoredDateTime(row.original.paid_at, 'd MMM yyyy HH:mm', '-'),
+        filterType: null,
+        defaultHidden: true,
+        size: 170,
       }),
       createColumn({
         id: 'reminder_sent_at',

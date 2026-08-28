@@ -24,12 +24,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Invoices extends Base {
+	private InvoiceStatistics $invoice_statistics;
 
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
 		parent::__construct();
+		$this->invoice_statistics = new InvoiceStatistics();
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 
@@ -2263,6 +2265,12 @@ class Invoices extends Base {
 		$sent_by_user_id      = (int) get_post_meta( $post->ID, '_invoice_sent_by_user_id', true );
 		$last_sent_by_user_id = (int) get_post_meta( $post->ID, '_invoice_last_sent_by_user_id', true );
 		$reminder_sent_at     = null;
+		$paid_at              = null;
+
+		if ( $status === 'paid' ) {
+			$resolved_paid_at = $this->invoice_statistics->get_fully_paid_at( $post->ID );
+			$paid_at          = $resolved_paid_at ? $resolved_paid_at->format( DATE_ATOM ) : null;
+		}
 
 		if ( $reminder_1_sent_at && $reminder_2_sent_at ) {
 			$reminder_sent_at = ( strtotime( $reminder_2_sent_at ) >= strtotime( $reminder_1_sent_at ) ) ? $reminder_2_sent_at : $reminder_1_sent_at;
@@ -2304,6 +2312,7 @@ class Invoices extends Base {
 			'installment_plan'    => get_post_meta( $post->ID, '_installment_plan', true ) ?: null,
 			'installment_count'   => (int) get_post_meta( $post->ID, '_installment_count', true ) ?: null,
 			'paid_installments'   => $this->count_paid_installments( $post->ID ),
+			'paid_at'             => $paid_at,
 			'reminder_sent_at'    => $reminder_sent_at,
 			'reminder_count'      => $reminder_count,
 			'sent_by'             => $this->get_user_summary_by_id( $sent_by_user_id ?: $last_sent_by_user_id ),
@@ -2711,17 +2720,19 @@ class Invoices extends Base {
 		$installments = [];
 		if ( $count >= 1 && $plan && $plan !== 'full' ) {
 			for ( $n = 1; $n <= $count; $n++ ) {
-				$amount         = (float) get_post_meta( $post->ID, '_installment_' . $n . '_amount', true );
-				$admin_fee      = (float) get_post_meta( $post->ID, '_installment_' . $n . '_admin_fee', true );
-				$installments[] = [
+				$amount           = (float) get_post_meta( $post->ID, '_installment_' . $n . '_amount', true );
+				$admin_fee        = (float) get_post_meta( $post->ID, '_installment_' . $n . '_admin_fee', true );
+				$mollie_paid_at   = (string) get_post_meta( $post->ID, '_installment_' . $n . '_mollie_paid_at', true ) ?: null;
+				$recorded_paid_at = (string) get_post_meta( $post->ID, '_installment_' . $n . '_paid_at', true ) ?: null;
+				$installments[]   = [
 					'number'               => $n,
 					'amount'               => $amount + $admin_fee,
 					'status'               => (string) get_post_meta( $post->ID, '_installment_' . $n . '_status', true ) ?: 'pending',
 					'due_date'             => (string) get_post_meta( $post->ID, '_installment_' . $n . '_due_date', true ) ?: null,
-					'paid_at'              => (string) get_post_meta( $post->ID, '_installment_' . $n . '_paid_at', true ) ?: null,
+					'paid_at'              => $mollie_paid_at ?: $recorded_paid_at,
 					'sent_at'              => (string) get_post_meta( $post->ID, '_installment_' . $n . '_sent_at', true ) ?: null,
 					'mollie_method'        => (string) get_post_meta( $post->ID, '_installment_' . $n . '_mollie_method', true ) ?: null,
-					'mollie_paid_at'       => (string) get_post_meta( $post->ID, '_installment_' . $n . '_mollie_paid_at', true ) ?: null,
+					'mollie_paid_at'       => $mollie_paid_at,
 					'mollie_dashboard_url' => (string) get_post_meta( $post->ID, '_installment_' . $n . '_mollie_dashboard_url', true ) ?: null,
 				];
 			}

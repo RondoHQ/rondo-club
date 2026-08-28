@@ -5,7 +5,7 @@ import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, u
 import { useCreatePaymentLink, useFinanceSettings } from '@/hooks/useFinanceSettings';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { format, parseYmd } from '@/utils/dateFormat';
+import { format, formatStoredDateTime, parseYmd } from '@/utils/dateFormat';
 import { formatCurrency } from '@/utils/formatters';
 import { prmApi } from '@/api/client';
 import InvoiceDraftForm from '@/components/finance/InvoiceDraftForm';
@@ -648,6 +648,14 @@ export default function FactuurDetail() {
                   </p>
                 </div>
               )}
+              {invoice.paid_at && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Betaald op</h3>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {formatStoredDateTime(invoice.paid_at, 'd MMM yyyy HH:mm', '-')}
+                  </p>
+                </div>
+              )}
               {displayCustomFields.map((field, index) => (
                 <div key={`${field.label}-${index}`}>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{field.label || `Extra veld ${index + 1}`}</h3>
@@ -897,7 +905,7 @@ export default function FactuurDetail() {
                       <InstallmentStatusBadge status={inst.status} />
                     </td>
                     <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                      {inst.paid_at ? format(new Date(inst.paid_at), 'd MMM yyyy') : '-'}
+                      {formatStoredDateTime(inst.paid_at, 'd MMM yyyy HH:mm', '-')}
                     </td>
                     <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
                       {inst.mollie_method ? getMollieMethodLabel(inst.mollie_method) : '-'}
@@ -937,14 +945,6 @@ export default function FactuurDetail() {
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Betaalmethode</h3>
                   <p className="text-gray-700 dark:text-gray-300">{getMollieMethodLabel(invoice.mollie_payment_method)}</p>
                 </div>
-                {invoice.mollie_paid_at && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Betaald op</h3>
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {format(new Date(invoice.mollie_paid_at), 'd MMM yyyy HH:mm')}
-                    </p>
-                  </div>
-                )}
                 {invoice.mollie_consumer_name && (
                   <div>
                     <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Naam betaler</h3>
@@ -980,12 +980,6 @@ export default function FactuurDetail() {
                   <p className="text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
                     <UserCheck className="w-4 h-4 text-green-600 dark:text-green-400" />
                     Handmatig gemarkeerd als betaald
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Betaald op</h3>
-                  <p className="text-gray-700 dark:text-gray-300">
-                    {format(new Date(invoice.manually_marked_paid_at), 'd MMM yyyy HH:mm')}
                   </p>
                 </div>
                 <div>
