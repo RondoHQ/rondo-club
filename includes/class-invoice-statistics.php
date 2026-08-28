@@ -24,19 +24,23 @@ class InvoiceStatistics {
 	 * @return array<string,mixed>
 	 */
 	public function calculate( ?\DateTimeImmutable $now = null, ?string $invoice_type = null ): array {
-		$now         = $now ?: current_datetime();
-		$week_start  = $now->modify( '-7 days' );
-		$month_start = $now->modify( '-30 days' );
-		$day_start   = $now->setTime( 0, 0 )->modify( '-29 days' );
-		$year_start  = $now->modify( 'first day of this month' )->setTime( 0, 0 )->modify( '-11 months' );
-		$payments    = [];
-		$open_days   = [];
-		$season      = SeasonKey::current( $now->format( 'Y-m-d' ) );
-		$plan_people = [
+		$now                       = $now ?: current_datetime();
+		$week_start                = $now->modify( '-7 days' );
+		$month_start               = $now->modify( '-30 days' );
+		$day_start                 = $now->setTime( 0, 0 )->modify( '-29 days' );
+		$year_start                = $now->modify( 'first day of this month' )->setTime( 0, 0 )->modify( '-11 months' );
+		$payments                  = [];
+		$open_days                 = [];
+		$season                    = SeasonKey::current( $now->format( 'Y-m-d' ) );
+		$plan_people               = [
 			'quarterly_3' => [],
 			'monthly_8'   => [],
 		];
-		$invoice_ids = get_posts(
+		$membership_payment_status = [
+			'paid'   => 0,
+			'unpaid' => 0,
+		];
+		$invoice_ids               = get_posts(
 			[
 				'post_type'              => 'rondo_invoice',
 				'post_status'            => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue', 'rondo_cancelled' ],
@@ -53,6 +57,7 @@ class InvoiceStatistics {
 
 		foreach ( $invoice_ids as $invoice_id ) {
 			$invoice_id = (int) $invoice_id;
+			$this->collect_membership_payment_status( $invoice_id, $season, $membership_payment_status );
 			if ( ! $this->matches_invoice_type( $invoice_id, $invoice_type ) ) {
 				continue;
 			}
@@ -84,21 +89,58 @@ class InvoiceStatistics {
 		);
 
 		return [
-			'generated_at'       => $now->format( DATE_ATOM ),
-			'week'               => $this->summarize_period( $week_payments, $week_start, $now, 7 ),
-			'month'              => $this->summarize_period( $month_payments, $month_start, $now, 30 ),
-			'invoice_type'       => $invoice_type,
-			'daily_income'       => $this->build_daily_income( $payments, $day_start, $now ),
-			'monthly_income'     => $this->build_monthly_income( $payments, $year_start, $now ),
-			'average_days_open'  => empty( $open_days ) ? null : round( array_sum( $open_days ) / count( $open_days ), 1 ),
-			'paid_invoice_count' => count( $open_days ),
-			'installment_plans'  => [
+			'generated_at'              => $now->format( DATE_ATOM ),
+			'week'                      => $this->summarize_period( $week_payments, $week_start, $now, 7 ),
+			'month'                     => $this->summarize_period( $month_payments, $month_start, $now, 30 ),
+			'invoice_type'              => $invoice_type,
+			'daily_income'              => $this->build_daily_income( $payments, $day_start, $now ),
+			'monthly_income'            => $this->build_monthly_income( $payments, $year_start, $now ),
+			'average_days_open'         => empty( $open_days ) ? null : round( array_sum( $open_days ) / count( $open_days ), 1 ),
+			'paid_invoice_count'        => count( $open_days ),
+			'membership_payment_status' => [
+				'season' => $season,
+				'paid'   => $membership_payment_status['paid'],
+				'unpaid' => $membership_payment_status['unpaid'],
+				'total'  => $membership_payment_status['paid'] + $membership_payment_status['unpaid'],
+			],
+			'installment_plans'         => [
 				'season'       => $season,
 				'total_people' => count( $all_plan_people ),
 				'quarterly_3'  => count( $plan_people['quarterly_3'] ),
 				'monthly_8'    => count( $plan_people['monthly_8'] ),
 			],
 		];
+	}
+
+	/**
+	 * Count current-season membership invoices that are paid or still open.
+	 *
+	 * Draft, cancelled, and credit invoices are outside the payable population.
+	 *
+	 * @param int                     $invoice_id Invoice post ID.
+	 * @param string                  $season     Current season key.
+	 * @param array<string,int>       $counts     Paid and unpaid counters.
+	 * @return void
+	 */
+	private function collect_membership_payment_status( int $invoice_id, string $season, array &$counts ): void {
+		$status = get_post_status( $invoice_id );
+		if ( ! in_array( $status, [ 'rondo_sent', 'rondo_paid', 'rondo_overdue' ], true ) ) {
+			return;
+		}
+
+		if ( get_post_meta( $invoice_id, '_invoice_kind', true ) === 'credit' ) {
+			return;
+		}
+
+		if ( (string) get_post_meta( $invoice_id, '_invoice_season', true ) !== $season ) {
+			return;
+		}
+
+		if ( \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_type' ) !== 'membership' ) {
+			return;
+		}
+
+		++$counts[ $status === 'rondo_paid' ? 'paid' : 'unpaid' ];
 	}
 
 	/**

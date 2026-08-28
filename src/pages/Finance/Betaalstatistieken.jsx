@@ -158,9 +158,56 @@ function BarChart({ data }) {
   );
 }
 
+function ContributionPaymentPieChart({ data }) {
+  const total = data.total || 0;
+  const paid = data.paid || 0;
+  const unpaid = data.unpaid || 0;
+  const paidPercentage = total > 0 ? Math.round((paid / total) * 100) : 0;
+  const radius = 68;
+  const circumference = 2 * Math.PI * radius;
+  const paidLength = total > 0 ? (paid / total) * circumference : 0;
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[280px] gap-5">
+      <svg viewBox="0 0 180 180" className="w-48 h-48" role="img" aria-label={`${paid} van de ${total} contributiefacturen zijn betaald`}>
+        <circle cx="90" cy="90" r={radius} fill="none" className="stroke-gray-200 dark:stroke-gray-700" strokeWidth="32" />
+        {paidLength > 0 && (
+          <circle
+            cx="90"
+            cy="90"
+            r={radius}
+            fill="none"
+            className="stroke-electric-cyan"
+            strokeWidth="32"
+            strokeDasharray={`${paidLength} ${circumference - paidLength}`}
+            strokeLinecap={paid === total ? 'butt' : 'round'}
+            transform="rotate(-90 90 90)"
+          />
+        )}
+        <text x="90" y="85" textAnchor="middle" className="fill-gray-900 dark:fill-gray-50 text-[30px] font-semibold">
+          {paidPercentage}%
+        </text>
+        <text x="90" y="108" textAnchor="middle" className="fill-gray-500 dark:fill-gray-400 text-[12px]">
+          betaald
+        </text>
+      </svg>
+      <div className="grid grid-cols-2 gap-6 text-sm">
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-electric-cyan" />
+          <span className="text-gray-600 dark:text-gray-300">Betaald <strong className="text-gray-900 dark:text-gray-50">{paid}</strong></span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-gray-200 dark:bg-gray-700" />
+          <span className="text-gray-600 dark:text-gray-300">Openstaand <strong className="text-gray-900 dark:text-gray-50">{unpaid}</strong></span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ChartCard({ title, children }) {
   return (
-    <section className="card">
+    <section className="card h-full">
       <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
       </div>
@@ -224,9 +271,16 @@ export default function Betaalstatistieken() {
         {statistics && (
           <>
             <StatisticsSummary statistics={statistics} />
-            <ChartCard title="Inkomsten per dag · laatste 30 dagen">
-              <LineChart data={statistics.daily_income} />
-            </ChartCard>
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div className="xl:col-span-2 min-w-0">
+                <ChartCard title="Inkomsten per dag · laatste 30 dagen">
+                  <LineChart data={statistics.daily_income} />
+                </ChartCard>
+              </div>
+              <ChartCard title={`Contributiefacturen · ${statistics.membership_payment_status.season}`}>
+                <ContributionPaymentPieChart data={statistics.membership_payment_status} />
+              </ChartCard>
+            </div>
             <ChartCard title="Inkomsten per maand · laatste 12 maanden">
               <BarChart data={statistics.monthly_income} />
             </ChartCard>
