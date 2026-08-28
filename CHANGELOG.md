@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Het Facturen-blok op het financiële dashboard toont alleen Concept en Achterstallig; Vervallen is verwijderd omdat die status geen actie vereist.
 - Het contributieoverzicht telt ieder lid nog maar één keer wanneer oude data per ongeluk meerdere contributiecache-regels voor dezelfde persoon en hetzelfde seizoen bevat.
 - **Maak facturen** verwerkt alleen leden zonder bestaande contributiefactuur, toont vooraf het exacte aantal en verdwijnt wanneer er niets te factureren is.
 - De voortgang van een contributiefactuurrun telt alleen leden met een positieve contributie, in plaats van alle gepubliceerde personen te verwerken en als factuurtotaal te tonen; het open voortgangsscherm verwerkt de batches nu ook direct, zodat de run niet meer blijft wachten op de externe WordPress-cron.
