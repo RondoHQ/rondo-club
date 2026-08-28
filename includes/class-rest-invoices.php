@@ -1905,8 +1905,8 @@ class Invoices extends Base {
 	 */
 	public function update_membership_discount( \WP_REST_Request $request ) {
 		$invoice_id              = (int) $request->get_param( 'id' );
-		$has_family_param        = $request->get_param !== null( 'family_discount_percent' );
-		$has_entry_param         = $request->get_param !== null( 'entry_discount_percent' );
+		$has_family_param        = $request->get_param( 'family_discount_percent' ) !== null;
+		$has_entry_param         = $request->get_param( 'entry_discount_percent' ) !== null;
 		$family_discount_percent = $has_family_param ? round( (float) $request->get_param( 'family_discount_percent' ), 2 ) : null;
 		$entry_discount_percent  = $has_entry_param ? round( (float) $request->get_param( 'entry_discount_percent' ), 2 ) : null;
 
@@ -1955,26 +1955,13 @@ class Invoices extends Base {
 			);
 		}
 
-		$installment_count = (int) get_post_meta( $invoice_id, '_installment_count', true );
-		$check_up_to       = max( $installment_count, 8 );
-		for ( $n = 1; $n <= $check_up_to; $n++ ) {
-			$installment_status = (string) get_post_meta( $invoice_id, '_installment_' . $n . '_status', true );
-			if ( $installment_status === 'betaald' ) {
-				return new \WP_Error(
-					'installment_paid',
-					__( 'Deze factuur heeft al betaalde termijn(en) en kan niet meer worden aangepast.', 'rondo' ),
-					[ 'status' => 400 ]
-				);
-			}
-
-			$issued_payment_link_id = (string) get_post_meta( $invoice_id, '_installment_' . $n . '_mollie_payment_id', true );
-			if ( $issued_payment_link_id !== '' ) {
-				return new \WP_Error(
-					'installment_link_issued',
-					__( 'Deze factuur heeft al een actieve termijnbetaallink. Pas eerst het betaalplan aan via de publieke betaalpagina.', 'rondo' ),
-					[ 'status' => 400 ]
-				);
-			}
+		$installment_block = $this->get_membership_discount_installment_block( $invoice_id );
+		if ( $installment_block !== null ) {
+			return new \WP_Error(
+				$installment_block['code'],
+				$installment_block['message'],
+				[ 'status' => 400 ]
+			);
 		}
 
 		$line_items = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'line_items' );
@@ -2079,6 +2066,36 @@ class Invoices extends Base {
 
 		$invoice = get_post( $invoice_id );
 		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
+	 * Explain why a membership discount cannot use the normal correction flow.
+	 *
+	 * @param int $invoice_id Invoice post ID.
+	 * @return array{code:string,message:string}|null Block details, or null when safe.
+	 */
+	private function get_membership_discount_installment_block( int $invoice_id ): ?array {
+		$installment_count = (int) get_post_meta( $invoice_id, '_installment_count', true );
+		$check_up_to       = max( $installment_count, 8 );
+		for ( $n = 1; $n <= $check_up_to; $n++ ) {
+			$installment_status = (string) get_post_meta( $invoice_id, '_installment_' . $n . '_status', true );
+			if ( $installment_status === 'betaald' ) {
+				return [
+					'code'    => 'installment_paid',
+					'message' => __( 'Deze factuur heeft al betaalde termijn(en) en kan niet meer via dit formulier worden aangepast.', 'rondo' ),
+				];
+			}
+
+			$issued_payment_link_id = (string) get_post_meta( $invoice_id, '_installment_' . $n . '_mollie_payment_id', true );
+			if ( $issued_payment_link_id !== '' ) {
+				return [
+					'code'    => 'installment_link_issued',
+					'message' => __( 'Deze factuur heeft al een actieve termijnbetaallink en kan niet meer via dit formulier worden aangepast.', 'rondo' ),
+				];
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -2742,6 +2759,8 @@ class Invoices extends Base {
 		$invoice['installment_count']    = $count;
 		$invoice['installments']         = $installments;
 		$invoice['disable_installments'] = (bool) get_post_meta( $post->ID, '_disable_installments', true );
+		$discount_block                  = $this->get_membership_discount_installment_block( $post->ID );
+		$invoice['membership_discount_adjustment_block_reason'] = $discount_block['message'] ?? null;
 
 		// Mollie payment details (stored by webhook on payment confirmation)
 		$invoice['mollie_payment_method']   = (string) get_post_meta( $post->ID, '_mollie_payment_method', true ) ?: null;

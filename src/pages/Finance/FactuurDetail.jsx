@@ -141,6 +141,17 @@ function getCurrentEntryDiscountPercent(invoice) {
   return Math.max(0, Math.min(100, parsed));
 }
 
+function getMembershipDiscountBlockReason(invoice) {
+  if (invoice?.membership_discount_adjustment_block_reason) {
+    return invoice.membership_discount_adjustment_block_reason;
+  }
+  const installments = Array.isArray(invoice?.installments) ? invoice.installments : [];
+  if (installments.some((installment) => installment?.status === 'betaald')) {
+    return 'Kortingen kunnen niet via dit formulier worden aangepast omdat al een termijn is betaald.';
+  }
+  return '';
+}
+
 function normalizeAttentionValue(value) {
   return String(value || '').replace(/^\s*(t\.?\s*a\.?\s*v\.?:?\s*)/i, '').trim();
 }
@@ -191,6 +202,7 @@ export default function FactuurDetail() {
   const [scheduleDateInput, setScheduleDateInput] = useState('');
   const displayCustomFields = getDisplayCustomFields(invoice?.custom_fields);
   const customerAttention = normalizeAttentionValue(invoice?.customer_attention);
+  const membershipDiscountBlockReason = getMembershipDiscountBlockReason(invoice);
 
   const isTestMode = (() => {
     if (!financeSettings) return false;
@@ -1189,7 +1201,7 @@ export default function FactuurDetail() {
                         value={familyDiscountPercentInput}
                         onChange={(e) => setFamilyDiscountPercentInput(e.target.value)}
                         className="input w-40"
-                        disabled={isPending}
+                        disabled={isPending || !!membershipDiscountBlockReason}
                       />
                     </div>
                     <div>
@@ -1204,12 +1216,12 @@ export default function FactuurDetail() {
                         value={entryDiscountPercentInput}
                         onChange={(e) => setEntryDiscountPercentInput(e.target.value)}
                         className="input w-40"
-                        disabled={isPending}
+                        disabled={isPending || !!membershipDiscountBlockReason}
                       />
                     </div>
                     <button
                       onClick={handleUpdateMembershipDiscount}
-                      disabled={isPending}
+                      disabled={isPending || !!membershipDiscountBlockReason}
                       className="btn-tertiary gap-2"
                     >
                       {updateMembershipDiscount.isPending ? (
@@ -1221,7 +1233,7 @@ export default function FactuurDetail() {
                     </button>
                   </div>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                    Alleen beschikbaar voor verstuurde/onbetaalde contributiefacturen zonder actieve termijnbetaallinks.
+                    {membershipDiscountBlockReason || 'Alleen beschikbaar zolang geen termijn is betaald en geen termijnbetaalverzoek is verstuurd.'}
                   </p>
                 </div>
               )}
