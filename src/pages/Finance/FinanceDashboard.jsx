@@ -19,7 +19,6 @@ function FacturenStatusCard({ byStatus, href }) {
   const statusItems = [
     { key: 'draft', label: 'Concept', count: byStatus.draft || 0 },
     { key: 'overdue', label: 'Achterstallig', count: byStatus.overdue || 0 },
-    { key: 'cancelled', label: 'Vervallen', count: byStatus.cancelled || 0 },
   ].filter((item) => item.count > 0);
 
   const content = (
