@@ -1,8 +1,8 @@
-import { Coins, FileText, Receipt } from 'lucide-react';
+import { Coins, FileText, Receipt, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
-import { useAllInvoicedCaseIds, useInvoices } from '@/hooks/useInvoices';
+import { useAllInvoicedCaseIds, useInvoices, useInvoiceStatistics } from '@/hooks/useInvoices';
 import { useFeeList, feeKeys } from '@/hooks/useFees';
 import { useCurrentSeason, useDisciplineCases } from '@/hooks/useDisciplineCases';
 import { formatCurrency } from '@/utils/formatters';
@@ -125,11 +125,83 @@ function NogTeFacturerenCard({ contributieCount, tuchtzakenCount, href }) {
   return href ? <Link to={href}>{content}</Link> : content;
 }
 
+function formatDays(value) {
+  if (value === null || value === undefined) return 'Geen data';
+  return `${new Intl.NumberFormat('nl-NL', { maximumFractionDigits: 1 }).format(value)} dagen`;
+}
+
+function PaymentStatisticsCard({ statistics, isLoading, error }) {
+  const items = [
+    {
+      key: 'week',
+      value: statistics ? formatCurrency(statistics.week.received_amount, 2) : '—',
+      label: 'Afgelopen 7 dagen',
+      detail: statistics ? `${statistics.week.payment_count} betalingen` : '',
+    },
+    {
+      key: 'month',
+      value: statistics ? formatCurrency(statistics.month.received_amount, 2) : '—',
+      label: 'Afgelopen 30 dagen',
+      detail: statistics ? `${statistics.month.payment_count} betalingen` : '',
+    },
+    {
+      key: 'average',
+      value: statistics ? formatDays(statistics.average_days_open) : '—',
+      label: 'Gemiddeld open',
+      detail: statistics ? `${statistics.paid_invoice_count} betaalde facturen in 30 dagen` : '',
+    },
+    {
+      key: 'installments',
+      value: statistics ? `${statistics.installment_plans.total_people} mensen` : '—',
+      label: 'Betalen in termijnen',
+      detail: statistics
+        ? `${statistics.installment_plans.quarterly_3} in 3 · ${statistics.installment_plans.monthly_8} in 8`
+        : '',
+    },
+  ];
+
+  return (
+    <section className="card">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Betaalstatistieken</h2>
+        <div className="p-2 bg-cyan-50 dark:bg-gray-700 rounded-lg">
+          <TrendingUp className="w-5 h-5 text-electric-cyan" />
+        </div>
+      </div>
+      {error ? (
+        <p className="p-4 text-sm text-red-600 dark:text-red-400">
+          Betaalstatistieken konden niet worden geladen.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 p-4 gap-4">
+          {items.map((item, index) => (
+            <div
+              key={item.key}
+              className={`text-center ${index % 2 === 1 ? 'sm:border-l sm:border-gray-200 sm:dark:border-gray-700 sm:pl-4' : ''} ${index > 0 ? 'xl:border-l xl:border-gray-200 xl:dark:border-gray-700 xl:pl-4' : 'xl:border-l-0 xl:pl-0'}`}
+            >
+              <p className="text-xl font-semibold text-gray-900 dark:text-gray-50">
+                {isLoading ? '—' : item.value}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{item.label}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{isLoading ? '' : item.detail}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function FinanceDashboard() {
   useDocumentTitle('Financiën');
 
   const queryClient = useQueryClient();
   const { data: invoices = [], error: invoicesError } = useInvoices();
+  const {
+    data: invoiceStatistics,
+    isLoading: isLoadingInvoiceStatistics,
+    error: invoiceStatisticsError,
+  } = useInvoiceStatistics();
   const { data: feeList } = useFeeList();
   const { data: currentSeason, isLoading: isLoadingSeason } = useCurrentSeason();
   const { data: disciplineCases = [] } = useDisciplineCases({
@@ -141,6 +213,7 @@ export default function FinanceDashboard() {
   const handleRefresh = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['invoices'] }),
+      queryClient.invalidateQueries({ queryKey: ['invoice-statistics'] }),
       queryClient.invalidateQueries({ queryKey: feeKeys.all }),
       queryClient.invalidateQueries({ queryKey: ['discipline-cases'] }),
       queryClient.invalidateQueries({ queryKey: ['invoiced-case-ids'] }),
@@ -227,6 +300,12 @@ export default function FinanceDashboard() {
             />
           )}
         </div>
+
+        <PaymentStatisticsCard
+          statistics={invoiceStatistics}
+          isLoading={isLoadingInvoiceStatistics}
+          error={invoiceStatisticsError}
+        />
 
         <section className="card">
           <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">

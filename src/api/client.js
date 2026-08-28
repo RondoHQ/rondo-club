@@ -443,6 +443,7 @@ export const prmApi = {
   // Invoice endpoints
   getNextInvoiceNumber: () => api.get('/rondo/v1/invoices/next-number'),
   getInvoices: (params = {}) => api.get('/rondo/v1/invoices', { params }),
+  getInvoiceStatistics: () => api.get('/rondo/v1/invoices/statistics'),
   getInvoice: (id) => api.get(`/rondo/v1/invoices/${id}`),
   createInvoice: (data) => api.post('/rondo/v1/invoices', data),
   updateDraftInvoice: (id, data) => api.post(`/rondo/v1/invoices/${id}/draft-details`, data),

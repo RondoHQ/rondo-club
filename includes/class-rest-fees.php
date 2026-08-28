@@ -819,8 +819,9 @@ class Fees extends Base {
 		}
 
 		// Aggregate in PHP (unserialize each cached fee record)
-		$aggregates    = [];
-		$total_members = 0;
+		$aggregates           = [];
+		$total_members        = 0;
+		$processed_person_ids = [];
 
 		if ( ! $forecast && ! empty( $rows ) ) {
 			update_meta_cache( 'post', array_map( 'intval', wp_list_pluck( $rows, 'post_id' ) ) );
@@ -830,10 +831,15 @@ class Fees extends Base {
 		$current_youth_slugs = $forecast ? FeeServices::settings()->get_youth_category_slugs( SeasonKey::current() ) : [];
 
 		foreach ( $rows as $row ) {
+			$person_id = (int) $row->post_id;
+			if ( isset( $processed_person_ids[ $person_id ] ) ) {
+				continue;
+			}
+			$processed_person_ids[ $person_id ] = true;
+
 			if ( $forecast ) {
 				$fee_data = maybe_unserialize( $row->meta_value );
 			} else {
-				$person_id = (int) $row->post_id;
 				$is_former = (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' );
 				if ( $is_former && ! FeeServices::person_context()->is_former_member_in_season( $person_id, $season ) ) {
 					continue;

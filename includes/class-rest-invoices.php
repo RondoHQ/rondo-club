@@ -11,6 +11,7 @@ namespace Rondo\REST;
 use Rondo\Finance\InvoiceNumbering;
 use Rondo\Finance\InvoicePdfGenerator;
 use Rondo\Finance\InvoiceEmailSender;
+use Rondo\Finance\InvoiceStatistics;
 use Rondo\Finance\PublicPaymentPage;
 use Rondo\Finance\RabobankOAuth;
 use Rondo\Finance\RabobankPayment;
@@ -36,6 +37,19 @@ class Invoices extends Base {
 	 * Register REST API routes
 	 */
 	public function register_routes() {
+		// Recent payment totals and average paid-invoice lead time.
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/statistics',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_invoice_statistics' ],
+					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
+				],
+			]
+		);
+
 		// Get invoiced discipline case IDs for a person
 		register_rest_route(
 			'rondo/v1',
@@ -475,6 +489,15 @@ class Invoices extends Base {
 					],
 				]
 			);
+	}
+
+	/**
+	 * Get rolling payment totals and paid-invoice lead time.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function get_invoice_statistics(): \WP_REST_Response {
+		return rest_ensure_response( ( new InvoiceStatistics() )->calculate() );
 	}
 
 	/**

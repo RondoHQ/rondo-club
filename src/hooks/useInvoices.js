@@ -114,6 +114,21 @@ export function useInvoices(params = {}, options = {}) {
 }
 
 /**
+ * Get rolling payment statistics for the finance dashboard.
+ * @returns {object} Query result with seven- and thirty-day totals and lead time.
+ */
+export function useInvoiceStatistics() {
+  return useQuery({
+    queryKey: ['invoice-statistics'],
+    queryFn: async () => {
+      const response = await prmApi.getInvoiceStatistics();
+      return response.data;
+    },
+    staleTime: 30000,
+  });
+}
+
+/**
  * Get a single invoice by ID
  * @param {number} id - Invoice ID
  * @param {object} options - TanStack Query options
