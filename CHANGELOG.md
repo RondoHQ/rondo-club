@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Club TV toont bij iedere programma- en uitslagenregel de logo's van beide clubs, met de officiële voetbal.nl-logobron als Sportlink zelf geen logo meestuurt; recente uitslagen gebruiken nu dezelfde rustige kaartindeling als wedstrijdinformatie.
+- Club TV toont bij iedere programma- en uitslagenregel de logo's van beide clubs, met de officiële voetbal.nl-logobron als Sportlink zelf geen logo meestuurt en een clubafkorting voor handmatig ingevoerde tegenstanders zonder KNVB-clubcode; recente uitslagen gebruiken nu dezelfde rustige kaartindeling als wedstrijdinformatie.
 - Leden en ouders zien op **Mijn gegevens** per zichtbaar gezinslid de contributiestatus, termijnvoortgang en alleen de betaalactie die op dat moment relevant is.
 - Toernooicoördinatoren kunnen toernooien aanmaken, actuele kaderleden per team uitnodigen en de voortgang per Rondo-team volgen.
 - Kaderleden kunnen via **Mijn toernooien** één of meer toernooiteams met een spelersaantal per team en één gedeelde contactpersoon inschrijven.

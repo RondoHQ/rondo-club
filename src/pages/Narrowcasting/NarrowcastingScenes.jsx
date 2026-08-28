@@ -43,7 +43,17 @@ function VideoScene({ scene }) {
 }
 
 function TeamLogo({ name, url }) {
-  if (!url) return null;
+  if (!url) {
+    const abbreviation = String(name || '?').trim().split(/\s+/)[0].replace(/[^a-z0-9]/gi, '').slice(0, 4).toUpperCase() || '?';
+    return (
+      <span
+        aria-label={`Clubafkorting ${name}`}
+        className="flex h-[2.8vw] w-[2.8vw] shrink-0 items-center justify-center rounded-[0.35vw] bg-white text-[0.72vw] font-extrabold tracking-tight text-[var(--club-primary)] shadow-sm"
+      >
+        {abbreviation}
+      </span>
+    );
+  }
   return (
     <img
       src={url}
