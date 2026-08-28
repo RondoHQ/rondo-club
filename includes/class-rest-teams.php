@@ -186,12 +186,13 @@ class Teams extends Base {
 		// Loop through all people and check their work history
 		foreach ( $people as $person ) {
 			$work_history = \Rondo\Fields\Fields::get_for_post( $person->ID, 'work_history' ) ?: [];
+			$former_match = null;
 
 			if ( empty( $work_history ) ) {
 				continue;
 			}
 
-			// Find the relevant work history entry for this team
+			// Prefer a current entry when a person has multiple periods at this team.
 			foreach ( $work_history as $job ) {
 				// Ensure type consistency for comparison
 				$job_team_id = isset( $job['team'] ) ? (int) $job['team'] : 0;
@@ -232,12 +233,19 @@ class Teams extends Base {
 					}
 
 					if ( $is_current ) {
-						$current[] = $person_data;
-					} else {
-						$former[] = $person_data;
+						$current[]    = $person_data;
+						$former_match = null;
+						break;
 					}
-					break; // Found the matching job, move to next person
+
+					if ( $former_match === null ) {
+						$former_match = $person_data;
+					}
 				}
+			}
+
+			if ( $former_match !== null ) {
+				$former[] = $former_match;
 			}
 		}
 

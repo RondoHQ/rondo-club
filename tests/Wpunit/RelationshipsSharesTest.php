@@ -257,6 +257,57 @@ class RelationshipsSharesTest extends RondoTestCase {
 	}
 
 	/**
+	 * A current period must win when the same person has an older period at the team.
+	 */
+	public function test_team_people_endpoint_prefers_current_period_for_same_team(): void {
+		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel3' ] );
+		wp_set_current_user( $alice_id );
+
+		$team_id = $this->createOrganization(
+			[
+				'post_author' => $alice_id,
+				'post_title'  => 'Returning Team',
+			]
+		);
+
+		$person_id = $this->createPerson(
+			[
+				'post_author' => $alice_id,
+				'post_title'  => 'Returning Player',
+			]
+		);
+
+		\Rondo\Fields\Fields::update_for_post(
+			$person_id,
+			'work_history',
+			[
+				[
+					'team'       => $team_id,
+					'job_title'  => 'Former Player',
+					'start_date' => '2024-07-01',
+					'end_date'   => '2025-06-30',
+					'is_current' => false,
+				],
+				[
+					'team'       => $team_id,
+					'job_title'  => 'Current Player',
+					'start_date' => '2026-07-01',
+					'end_date'   => '',
+					'is_current' => true,
+				],
+			]
+		);
+
+		$response = $this->restRequest( 'GET', '/rondo/v1/teams/' . $team_id . '/people' );
+		$data     = $response->get_data();
+
+		$this->assertCount( 1, $data['current'] );
+		$this->assertCount( 0, $data['former'] );
+		$this->assertEquals( $person_id, $data['current'][0]['id'] );
+		$this->assertEquals( 'Current Player', $data['current'][0]['job_title'] );
+	}
+
+	/**
 	 * Test person computed field birth_year from birthdate field.
 	 */
 	public function test_person_computed_fields_birth_year(): void {
