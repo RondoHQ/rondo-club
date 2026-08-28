@@ -79,6 +79,19 @@ class InvoiceStatisticsTest extends RondoTestCase {
 		update_post_meta( $monthly, '_invoice_season', SeasonKey::current( $this->now->format( 'Y-m-d' ) ) );
 		update_post_meta( $monthly, '_installment_plan', 'monthly_8' );
 
+		$ignored_draft = $this->create_invoice( 60.0, $this->now->format( 'Ymd' ), 'rondo_draft' );
+		Fields::update_for_post( $ignored_draft, 'invoice_type', 'membership' );
+		update_post_meta( $ignored_draft, '_invoice_season', SeasonKey::current( $this->now->format( 'Y-m-d' ) ) );
+
+		$ignored_cancelled = $this->create_invoice( 60.0, $this->now->format( 'Ymd' ), 'rondo_cancelled' );
+		Fields::update_for_post( $ignored_cancelled, 'invoice_type', 'membership' );
+		update_post_meta( $ignored_cancelled, '_invoice_season', SeasonKey::current( $this->now->format( 'Y-m-d' ) ) );
+
+		$ignored_credit = $this->create_invoice( -60.0, $this->now->format( 'Ymd' ) );
+		Fields::update_for_post( $ignored_credit, 'invoice_type', 'membership' );
+		update_post_meta( $ignored_credit, '_invoice_season', SeasonKey::current( $this->now->format( 'Y-m-d' ) ) );
+		update_post_meta( $ignored_credit, '_invoice_kind', 'credit' );
+
 		$response = $this->server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/invoices/statistics' ) );
 		$data     = $response->get_data();
 
@@ -92,6 +105,15 @@ class InvoiceStatisticsTest extends RondoTestCase {
 		$this->assertSame( 2, $data['installment_plans']['total_people'] );
 		$this->assertSame( 1, $data['installment_plans']['quarterly_3'] );
 		$this->assertSame( 1, $data['installment_plans']['monthly_8'] );
+		$this->assertSame(
+			[
+				'season' => SeasonKey::current( $this->now->format( 'Y-m-d' ) ),
+				'paid'   => 1,
+				'unpaid' => 2,
+				'total'  => 3,
+			],
+			$data['membership_payment_status']
+		);
 		$this->assertCount( 30, $data['daily_income'] );
 		$this->assertCount( 12, $data['monthly_income'] );
 		$this->assertSame( $this->now->format( 'Y-m-d' ), $data['daily_income'][29]['date'] );
