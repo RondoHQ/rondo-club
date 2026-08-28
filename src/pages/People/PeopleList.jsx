@@ -18,6 +18,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import ColumnSettingsModal from './ColumnSettingsModal';
 import PersonEditModal from '@/components/PersonEditModal';
 import FloatingHorizontalScrollbar from '@/components/FloatingHorizontalScrollbar';
+import { getCurrentTeamId } from './peopleListUtils';
 
 // Helper function to get first email from fixed fields
 function getFirstEmail(person) {
@@ -64,29 +65,6 @@ function getMembershipTypeLabel(person) {
   if (isParent || !fields['knvb_id']) return `Ouder${sponsorSuffix}`;
 
   return `Bondslid${sponsorSuffix}`;
-}
-
-// Helper function to get current team ID from person's work history
-function getCurrentTeamId(person) {
-  if (person?.team_id) return person.team_id;
-
-  const workHistory = person.fields?.work_history || [];
-  if (workHistory.length === 0) return null;
-
-  // First, try to find current position
-  const currentJob = workHistory.find(job => job.is_current && job.team_id);
-  if (currentJob) return currentJob.team_id;
-
-  // Otherwise, get the most recent (by start_date)
-  const jobsWithTeam = workHistory
-    .filter(job => job.team_id)
-    .sort((a, b) => {
-      const dateA = a.start_date ? new Date(a.start_date) : new Date(0);
-      const dateB = b.start_date ? new Date(b.start_date) : new Date(0);
-      return dateB - dateA; // Most recent first
-    });
-
-  return jobsWithTeam.length > 0 ? jobsWithTeam[0].team_id : null;
 }
 
 // Map column IDs to sort field names
