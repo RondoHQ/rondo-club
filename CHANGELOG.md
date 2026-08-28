@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Het aanpassen van kortingen op contributiefacturen veroorzaakt geen fatale PHP-fout meer; facturen met betaalde of al verstuurde termijnen tonen vooraf waarom een gewone kortingswijziging is geblokkeerd.
+- De taartgrafieken bij **Betaalstatistieken** volgen nu het gekozen factuursoort en passen hun titels en bedragen daarop aan.
 - **Contributiefacturen** telt een gekozen termijnplan direct als **In termijnen**, ook wanneer de eerste termijn nog niet is betaald.
 - Het middenlabel van de contributiefacturengrafiek staat op twee regels en blijft daardoor binnen de cirkel.
 - Het hoofdpercentage bij contributiefacturen telt zowel betaalde facturen als facturen in termijnen mee; beide contributiepercentages tonen één decimaal om toevallige gelijke afrondingen te voorkomen.

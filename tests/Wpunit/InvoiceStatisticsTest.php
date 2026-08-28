@@ -142,10 +142,14 @@ class InvoiceStatisticsTest extends RondoTestCase {
 		$membership = $this->create_invoice( 125.0, $this->now->modify( '-6 days' )->format( 'Ymd' ) );
 		Fields::update_for_post( $membership, 'invoice_type', 'membership' );
 		update_post_meta( $membership, '_mollie_paid_at', $this->now->modify( '-2 days' )->format( DATE_ATOM ) );
+		update_post_meta( $membership, '_invoice_season', SeasonKey::current( $this->now->format( 'Y-m-d' ) ) );
 
 		$discipline = $this->create_invoice( 75.0, $this->now->modify( '-5 days' )->format( 'Ymd' ) );
 		Fields::update_for_post( $discipline, 'invoice_type', 'discipline' );
 		update_post_meta( $discipline, '_mollie_paid_at', $this->now->modify( '-1 day' )->format( DATE_ATOM ) );
+
+		$open_discipline = $this->create_invoice( 25.0, $this->now->modify( '-4 days' )->format( 'Ymd' ), 'rondo_sent' );
+		Fields::update_for_post( $open_discipline, 'invoice_type', 'discipline' );
 
 		$request = new WP_REST_Request( 'GET', '/rondo/v1/invoices/statistics' );
 		$request->set_param( 'invoice_type', 'membership' );
@@ -157,6 +161,40 @@ class InvoiceStatisticsTest extends RondoTestCase {
 		$this->assertSame( 125.0, $data['week']['received_amount'] );
 		$this->assertSame( 1, $data['week']['payment_count'] );
 		$this->assertSame( 125.0, array_sum( array_column( $data['daily_income'], 'amount' ) ) );
+		$this->assertSame(
+			[
+				'season'       => SeasonKey::current( $this->now->format( 'Y-m-d' ) ),
+				'paid'         => 1,
+				'installments' => 0,
+				'unpaid'       => 0,
+				'total'        => 1,
+			],
+			$data['invoice_payment_status']
+		);
+
+		$request = new WP_REST_Request( 'GET', '/rondo/v1/invoices/statistics' );
+		$request->set_param( 'invoice_type', 'discipline' );
+		$data = $this->server->dispatch( $request )->get_data();
+
+		$this->assertSame(
+			[
+				'season'       => SeasonKey::current( $this->now->format( 'Y-m-d' ) ),
+				'paid'         => 1,
+				'installments' => 0,
+				'unpaid'       => 1,
+				'total'        => 2,
+			],
+			$data['invoice_payment_status']
+		);
+		$this->assertSame(
+			[
+				'season'      => SeasonKey::current( $this->now->format( 'Y-m-d' ) ),
+				'collected'   => 75.0,
+				'outstanding' => 25.0,
+				'total'       => 100.0,
+			],
+			$data['invoice_amount_status']
+		);
 	}
 
 	public function test_statistics_require_financial_read_access(): void {
