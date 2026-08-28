@@ -115,7 +115,7 @@ export default function DataTable({
   // --- Column visibility (localStorage) ---
   const [columnVisibility, setColumnVisibility] = useState(() => {
     const stored = readStoredVisibility(storageKey);
-    return stored ?? buildDefaultVisibility(columns);
+    return { ...buildDefaultVisibility(columns), ...(stored ?? {}) };
   });
 
   useEffect(() => {

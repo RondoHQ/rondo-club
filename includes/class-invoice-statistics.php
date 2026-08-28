@@ -288,7 +288,7 @@ class InvoiceStatistics {
 	 * @param int $invoice_id Invoice post ID.
 	 * @return \DateTimeImmutable|null
 	 */
-	private function get_fully_paid_at( int $invoice_id ): ?\DateTimeImmutable {
+	public function get_fully_paid_at( int $invoice_id ): ?\DateTimeImmutable {
 		$manual_paid_at = $this->parse_date( (string) get_post_meta( $invoice_id, '_manually_marked_paid_at', true ) );
 		if ( $manual_paid_at ) {
 			return $manual_paid_at;
