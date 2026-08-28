@@ -158,50 +158,134 @@ function BarChart({ data }) {
   );
 }
 
-function ContributionPaymentPieChart({ data }) {
-  const total = data.total || 0;
-  const paid = data.paid || 0;
-  const unpaid = data.unpaid || 0;
-  const paidPercentage = total > 0 ? Math.round((paid / total) * 100) : 0;
+function DonutChart({ total, segments, percentage, centerLabel, ariaLabel }) {
   const radius = 68;
   const circumference = 2 * Math.PI * radius;
-  const paidLength = total > 0 ? (paid / total) * circumference : 0;
+  let previousLength = 0;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[280px] gap-5">
-      <svg viewBox="0 0 180 180" className="w-48 h-48" role="img" aria-label={`${paid} van de ${total} contributiefacturen zijn betaald`}>
+      <svg viewBox="0 0 180 180" className="w-44 h-44" role="img" aria-label={ariaLabel}>
         <circle cx="90" cy="90" r={radius} fill="none" className="stroke-gray-200 dark:stroke-gray-700" strokeWidth="32" />
-        {paidLength > 0 && (
-          <circle
-            cx="90"
-            cy="90"
-            r={radius}
-            fill="none"
-            className="stroke-electric-cyan"
-            strokeWidth="32"
-            strokeDasharray={`${paidLength} ${circumference - paidLength}`}
-            strokeLinecap={paid === total ? 'butt' : 'round'}
-            transform="rotate(-90 90 90)"
-          />
-        )}
+        {segments.map((segment) => {
+          const length = total > 0 ? (segment.value / total) * circumference : 0;
+          const dashOffset = -previousLength;
+          previousLength += length;
+
+          if (length === 0) return null;
+
+          return (
+            <circle
+              key={segment.key}
+              cx="90"
+              cy="90"
+              r={radius}
+              fill="none"
+              className={segment.strokeClass}
+              strokeWidth="32"
+              strokeDasharray={`${length} ${circumference - length}`}
+              strokeDashoffset={dashOffset}
+              transform="rotate(-90 90 90)"
+            />
+          );
+        })}
         <text x="90" y="85" textAnchor="middle" className="fill-gray-900 dark:fill-gray-50 text-[30px] font-semibold">
-          {paidPercentage}%
+          {percentage}%
         </text>
         <text x="90" y="108" textAnchor="middle" className="fill-gray-500 dark:fill-gray-400 text-[12px]">
-          betaald
+          {centerLabel}
         </text>
       </svg>
-      <div className="grid grid-cols-2 gap-6 text-sm">
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full bg-electric-cyan" />
-          <span className="text-gray-600 dark:text-gray-300">Betaald <strong className="text-gray-900 dark:text-gray-50">{paid}</strong></span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full bg-gray-200 dark:bg-gray-700" />
-          <span className="text-gray-600 dark:text-gray-300">Openstaand <strong className="text-gray-900 dark:text-gray-50">{unpaid}</strong></span>
-        </div>
+      <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
+        {segments.map((segment) => (
+          <div key={segment.key} className="flex items-center gap-2">
+            <span className={`w-3 h-3 rounded-full ${segment.dotClass}`} />
+            <span className="text-gray-600 dark:text-gray-300">
+              {segment.label} <strong className="text-gray-900 dark:text-gray-50">{segment.formattedValue}</strong>
+            </span>
+          </div>
+        ))}
       </div>
     </div>
+  );
+}
+
+function ContributionPaymentPieChart({ data }) {
+  const total = data.total || 0;
+  const paid = data.paid || 0;
+  const installments = data.installments || 0;
+  const unpaid = data.unpaid || 0;
+  const paidPercentage = total > 0 ? Math.round((paid / total) * 100) : 0;
+  const segments = [
+    {
+      key: 'paid',
+      label: 'Betaald',
+      value: paid,
+      formattedValue: paid,
+      strokeClass: 'stroke-electric-cyan',
+      dotClass: 'bg-electric-cyan',
+    },
+    {
+      key: 'installments',
+      label: 'In termijnen',
+      value: installments,
+      formattedValue: installments,
+      strokeClass: 'stroke-amber-400 dark:stroke-amber-500',
+      dotClass: 'bg-amber-400 dark:bg-amber-500',
+    },
+    {
+      key: 'unpaid',
+      label: 'Openstaand',
+      value: unpaid,
+      formattedValue: unpaid,
+      strokeClass: 'stroke-gray-200 dark:stroke-gray-700',
+      dotClass: 'bg-gray-200 dark:bg-gray-700',
+    },
+  ];
+
+  return (
+    <DonutChart
+      total={total}
+      segments={segments}
+      percentage={paidPercentage}
+      centerLabel="betaald"
+      ariaLabel={`${paid} betaald, ${installments} in termijnen en ${unpaid} openstaand van ${total} contributiefacturen`}
+    />
+  );
+}
+
+function ContributionAmountPieChart({ data }) {
+  const total = data.total || 0;
+  const collected = data.collected || 0;
+  const outstanding = data.outstanding || 0;
+  const collectedPercentage = total > 0 ? Math.round((collected / total) * 100) : 0;
+  const segments = [
+    {
+      key: 'collected',
+      label: 'Geïnd',
+      value: collected,
+      formattedValue: formatCurrency(collected, 2),
+      strokeClass: 'stroke-electric-cyan',
+      dotClass: 'bg-electric-cyan',
+    },
+    {
+      key: 'outstanding',
+      label: 'Openstaand',
+      value: outstanding,
+      formattedValue: formatCurrency(outstanding, 2),
+      strokeClass: 'stroke-gray-200 dark:stroke-gray-700',
+      dotClass: 'bg-gray-200 dark:bg-gray-700',
+    },
+  ];
+
+  return (
+    <DonutChart
+      total={total}
+      segments={segments}
+      percentage={collectedPercentage}
+      centerLabel="geïnd"
+      ariaLabel={`${formatCurrency(collected, 2)} van ${formatCurrency(total, 2)} contributie geïnd`}
+    />
   );
 }
 
@@ -271,15 +355,20 @@ export default function Betaalstatistieken() {
         {statistics && (
           <>
             <StatisticsSummary statistics={statistics} />
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              <div className="xl:col-span-2 min-w-0">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <div className="min-w-0">
                 <ChartCard title="Inkomsten per dag · laatste 30 dagen">
                   <LineChart data={statistics.daily_income} />
                 </ChartCard>
               </div>
-              <ChartCard title={`Contributiefacturen · ${statistics.membership_payment_status.season}`}>
-                <ContributionPaymentPieChart data={statistics.membership_payment_status} />
-              </ChartCard>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 min-w-0">
+                <ChartCard title={`Contributiefacturen · ${statistics.membership_payment_status.season}`}>
+                  <ContributionPaymentPieChart data={statistics.membership_payment_status} />
+                </ChartCard>
+                <ChartCard title={`Contributie geïnd · ${statistics.membership_amount_status.season}`}>
+                  <ContributionAmountPieChart data={statistics.membership_amount_status} />
+                </ChartCard>
+              </div>
             </div>
             <ChartCard title="Inkomsten per maand · laatste 12 maanden">
               <BarChart data={statistics.monthly_income} />

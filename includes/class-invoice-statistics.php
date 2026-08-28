@@ -37,8 +37,13 @@ class InvoiceStatistics {
 			'monthly_8'   => [],
 		];
 		$membership_payment_status = [
-			'paid'   => 0,
-			'unpaid' => 0,
+			'paid'         => 0,
+			'installments' => 0,
+			'unpaid'       => 0,
+		];
+		$membership_amount_status  = [
+			'collected' => 0.0,
+			'total'     => 0.0,
 		];
 		$invoice_ids               = get_posts(
 			[
@@ -57,7 +62,7 @@ class InvoiceStatistics {
 
 		foreach ( $invoice_ids as $invoice_id ) {
 			$invoice_id = (int) $invoice_id;
-			$this->collect_membership_payment_status( $invoice_id, $season, $membership_payment_status );
+			$this->collect_membership_payment_status( $invoice_id, $season, $membership_payment_status, $membership_amount_status );
 			if ( ! $this->matches_invoice_type( $invoice_id, $invoice_type ) ) {
 				continue;
 			}
@@ -98,10 +103,17 @@ class InvoiceStatistics {
 			'average_days_open'         => empty( $open_days ) ? null : round( array_sum( $open_days ) / count( $open_days ), 1 ),
 			'paid_invoice_count'        => count( $open_days ),
 			'membership_payment_status' => [
-				'season' => $season,
-				'paid'   => $membership_payment_status['paid'],
-				'unpaid' => $membership_payment_status['unpaid'],
-				'total'  => $membership_payment_status['paid'] + $membership_payment_status['unpaid'],
+				'season'       => $season,
+				'paid'         => $membership_payment_status['paid'],
+				'installments' => $membership_payment_status['installments'],
+				'unpaid'       => $membership_payment_status['unpaid'],
+				'total'        => array_sum( $membership_payment_status ),
+			],
+			'membership_amount_status'  => [
+				'season'      => $season,
+				'collected'   => round( $membership_amount_status['collected'], 2 ),
+				'outstanding' => round( max( 0.0, $membership_amount_status['total'] - $membership_amount_status['collected'] ), 2 ),
+				'total'       => round( $membership_amount_status['total'], 2 ),
 			],
 			'installment_plans'         => [
 				'season'       => $season,
@@ -113,16 +125,17 @@ class InvoiceStatistics {
 	}
 
 	/**
-	 * Count current-season membership invoices that are paid or still open.
+	 * Count current-season membership invoices and their collected principal.
 	 *
 	 * Draft, cancelled, and credit invoices are outside the payable population.
 	 *
 	 * @param int                     $invoice_id Invoice post ID.
 	 * @param string                  $season     Current season key.
-	 * @param array<string,int>       $counts     Paid and unpaid counters.
+	 * @param array<string,int>       $counts     Paid, installment, and unpaid counters.
+	 * @param array<string,float>     $amounts    Collected and total principal amounts.
 	 * @return void
 	 */
-	private function collect_membership_payment_status( int $invoice_id, string $season, array &$counts ): void {
+	private function collect_membership_payment_status( int $invoice_id, string $season, array &$counts, array &$amounts ): void {
 		$status = get_post_status( $invoice_id );
 		if ( ! in_array( $status, [ 'rondo_sent', 'rondo_paid', 'rondo_overdue' ], true ) ) {
 			return;
@@ -140,7 +153,45 @@ class InvoiceStatistics {
 			return;
 		}
 
-		++$counts[ $status === 'rondo_paid' ? 'paid' : 'unpaid' ];
+		$total     = max( 0.0, (float) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'total_amount' ) );
+		$collected = $status === 'rondo_paid'
+			? $total
+			: min( $total, $this->get_paid_installment_principal( $invoice_id ) );
+
+		if ( $status === 'rondo_paid' ) {
+			++$counts['paid'];
+		} elseif ( $collected > 0.0 ) {
+			++$counts['installments'];
+		} else {
+			++$counts['unpaid'];
+		}
+
+		$amounts['collected'] += $collected;
+		$amounts['total']     += $total;
+	}
+
+	/**
+	 * Sum the contribution principal of paid installments.
+	 *
+	 * Per-installment administration fees are receipts, but are not part of the
+	 * contribution principal and therefore stay outside this amount split.
+	 *
+	 * @param int $invoice_id Invoice post ID.
+	 * @return float
+	 */
+	private function get_paid_installment_principal( int $invoice_id ): float {
+		$principal = 0.0;
+		$count     = (int) get_post_meta( $invoice_id, '_installment_count', true );
+
+		for ( $number = 1; $number <= $count; $number++ ) {
+			if ( get_post_meta( $invoice_id, '_installment_' . $number . '_status', true ) !== 'betaald' ) {
+				continue;
+			}
+
+			$principal += (float) get_post_meta( $invoice_id, '_installment_' . $number . '_amount', true );
+		}
+
+		return $principal;
 	}
 
 	/**
