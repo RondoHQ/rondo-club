@@ -55,7 +55,9 @@ export function rotateSponsors(sponsors, sceneIndex, slots = 8) {
   const capacity = Math.max(0, Number(slots) || 0);
   if (!sponsors.length || capacity === 0) return [];
 
-  const eligible = sponsors.filter((sponsor) => sponsor.logo_url && Number(sponsor.club_tv_priority) > 0);
+  const eligible = sponsors.filter((sponsor) => (
+    sponsor.logo_url && !sponsor.club_tv_opt_out && Number(sponsor.club_tv_priority) > 0
+  ));
   const always = eligible.filter((sponsor) => Number(sponsor.club_tv_priority) === 3).slice(0, capacity);
   const remainingSlots = capacity - always.length;
   if (remainingSlots === 0) return always;

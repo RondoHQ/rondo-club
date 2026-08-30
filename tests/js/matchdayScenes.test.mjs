@@ -8,11 +8,13 @@ function sponsor(id, priority) {
 }
 
 test('hidden sponsors are excluded and always sponsors stay on every slide', () => {
-  const sponsors = [sponsor(1, 0), sponsor(2, 1), sponsor(3, 2), sponsor(4, 3)];
+  const optedOut = { ...sponsor(5, 3), club_tv_opt_out: true };
+  const sponsors = [sponsor(1, 0), sponsor(2, 1), sponsor(3, 2), sponsor(4, 3), optedOut];
 
   for (let index = 0; index < 12; index += 1) {
     const selected = rotateSponsors(sponsors, index, 3);
     assert.equal(selected.some((item) => item.id === 1), false);
+    assert.equal(selected.some((item) => item.id === 5), false);
     assert.equal(selected.some((item) => item.id === 4), true);
     assert.equal(new Set(selected.map((item) => item.id)).size, selected.length);
   }

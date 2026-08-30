@@ -182,6 +182,64 @@ class SponsorCompaniesTest extends RondoTestCase {
 		$this->assertSame( 'Eigen bedrijf', get_the_title( $own_sponsor_id ) );
 	}
 
+	public function test_businessclub_contact_can_update_only_own_narrowcasting_preference(): void {
+		$own_person_id    = $this->createPerson( [ 'post_title' => 'Eigen Businessclubcontact' ] );
+		$own_sponsor_id   = $this->createSponsor(
+			'Eigen Businessclubbedrijf',
+			'businessclub',
+			[
+				[
+					'person_id'       => $own_person_id,
+					'receives_pass'   => true,
+					'is_primary_pass' => true,
+				],
+			]
+		);
+		$other_sponsor_id = $this->createSponsor( 'Ander Businessclubbedrijf', 'businessclub', [] );
+		$user_id          = $this->createRondoUser( [ 'user_login' => 'sponsor_narrowcasting_owner' ] );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $own_person_id );
+		wp_set_current_user( $user_id );
+
+		$own_response = $this->json_request(
+			'PATCH',
+			'/rondo/v1/sponsors/' . $own_sponsor_id . '/narrowcasting-preference',
+			[ 'opt_out' => true ]
+		);
+		$this->assertSame( 200, $own_response->get_status() );
+		$this->assertTrue( $own_response->get_data()['opt_out'] );
+		$this->assertTrue( (bool) Fields::get_for_post( $own_sponsor_id, 'club_tv_opt_out' ) );
+
+		$other_response = $this->json_request(
+			'PATCH',
+			'/rondo/v1/sponsors/' . $other_sponsor_id . '/narrowcasting-preference',
+			[ 'opt_out' => true ]
+		);
+		$this->assertSame( 403, $other_response->get_status() );
+		$this->assertFalse( (bool) Fields::get_for_post( $other_sponsor_id, 'club_tv_opt_out' ) );
+
+		$restore_response = $this->json_request(
+			'PATCH',
+			'/rondo/v1/sponsors/' . $own_sponsor_id . '/narrowcasting-preference',
+			[ 'opt_out' => false ]
+		);
+		$this->assertSame( 200, $restore_response->get_status() );
+		$this->assertFalse( $restore_response->get_data()['opt_out'] );
+		$this->assertFalse( (bool) Fields::get_for_post( $own_sponsor_id, 'club_tv_opt_out' ) );
+	}
+
+	public function test_non_businessclub_sponsor_cannot_set_narrowcasting_preference(): void {
+		$sponsor_id = $this->createSponsor( 'Gewone sponsor', 'awc_sponsor', [] );
+		$response   = $this->json_request(
+			'PATCH',
+			'/rondo/v1/sponsors/' . $sponsor_id . '/narrowcasting-preference',
+			[ 'opt_out' => true ]
+		);
+
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertSame( 'rondo_sponsor_narrowcasting_preference_unavailable', $response->get_data()['code'] );
+		$this->assertFalse( (bool) Fields::get_for_post( $sponsor_id, 'club_tv_opt_out' ) );
+	}
+
 	public function test_saving_an_unchanged_logo_is_idempotent(): void {
 		$sponsor_id    = $this->createSponsor( 'Logo behouden BV', 'awc_sponsor', [] );
 		$image         = wp_upload_bits( 'bestaand-logo.gif', null, base64_decode( 'R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==' ) );

@@ -111,10 +111,13 @@ class HouseholdMembershipPassTest extends RondoTestCase {
 
 		$this->assertSame(
 			[
-				'id'            => $sponsor_id,
-				'name'          => 'Voorbeeld & Partner BV',
-				'logo_url'      => null,
-				'can_edit_logo' => true,
+				'id'                  => $sponsor_id,
+				'name'                => 'Voorbeeld & Partner BV',
+				'logo_url'            => null,
+				'sponsor_role'        => 'awc_sponsor',
+				'club_tv_opt_out'     => false,
+				'can_edit_logo'       => true,
+				'can_manage_presence' => true,
 			],
 			$person['sponsor_organization']
 		);

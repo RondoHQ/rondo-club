@@ -4213,6 +4213,17 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'storage_name' => 'club_tv_priority',
           'type' => 'number',
         ),
+        'club_tv_opt_out' =>
+        array (
+          'canonical_name' => 'club_tv_opt_out',
+          'default_value' => 0,
+          'instructions' => 'De sponsor wil niet op Club TV of andere narrowcasting-uitingen worden getoond.',
+          'key' => 'field_sponsor_club_tv_opt_out',
+          'label' => 'Niet tonen op Club TV',
+          'name' => 'club_tv_opt_out',
+          'storage_name' => 'club_tv_opt_out',
+          'type' => 'true_false',
+        ),
         'contacts' =>
         array (
           'button_label' => 'Contactpersoon toevoegen',

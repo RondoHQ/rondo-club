@@ -15,6 +15,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 const emptyForm = {
   title: '', status: 'publish', sponsor_type: 'organization', sponsor_role: 'awc_sponsor', sponsit_contact_id: '',
   club_tv_priority: 0,
+  club_tv_opt_out: false,
   website: '',
   address_street_name: '', address_house_number: '', address_house_number_addition: '',
   address_postal_code: '', address_city: '', address_country: 'Nederland', address_country_code: 'NL',
@@ -30,6 +31,7 @@ function sponsorToForm(sponsor) {
     sponsor_type: fields.sponsor_type || 'organization',
     sponsor_role: fields.sponsor_role || 'awc_sponsor',
     club_tv_priority: Number(fields.club_tv_priority) || 0,
+    club_tv_opt_out: Boolean(fields.club_tv_opt_out),
     sponsit_contact_id: fields.sponsit_contact_id || '',
     website: fields.website || '',
     address_street_name: fields.address_street_name || '',
@@ -241,6 +243,11 @@ export default function SponsorDetail() {
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(event) => uploadLogo(event.target.files?.[0])} />
           {form.logo_url && <button type="button" className="mt-3 text-sm text-red-600" onClick={() => { updateField('logo_attachment_id', 0); updateField('logo_url', null); }}>Logo verwijderen</button>}
           <div className="mt-5 border-t border-gray-200 pt-5 dark:border-gray-700">
+            {form.club_tv_opt_out ? (
+              <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-100">
+                Deze sponsor heeft via Mijn gegevens gekozen niet op Club TV te verschijnen.
+              </p>
+            ) : null}
             <label>
               <span className="label">Club TV-weergave</span>
               <select className="input w-full" value={form.club_tv_priority} onChange={(event) => updateField('club_tv_priority', Number(event.target.value))}>

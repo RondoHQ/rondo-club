@@ -894,15 +894,18 @@ class People extends Base {
 		if ( (string) ( $fields['sponsor_type'] ?? 'organization' ) !== 'organization' ) {
 			return null;
 		}
-		if ( ! \Rondo\Core\AccessControl::can_edit_sponsor_logo( $sponsor_id ) ) {
+		if ( ! \Rondo\Core\AccessControl::can_manage_sponsor_self_service( $sponsor_id ) ) {
 			return null;
 		}
 
 		return [
-			'id'            => $sponsor_id,
-			'name'          => $this->sanitize_text( get_the_title( $sponsor ) ),
-			'logo_url'      => get_the_post_thumbnail_url( $sponsor, 'medium_large' ) ?: null,
-			'can_edit_logo' => true,
+			'id'                  => $sponsor_id,
+			'name'                => $this->sanitize_text( get_the_title( $sponsor ) ),
+			'logo_url'            => get_the_post_thumbnail_url( $sponsor, 'medium_large' ) ?: null,
+			'sponsor_role'        => (string) ( $fields['sponsor_role'] ?? '' ),
+			'club_tv_opt_out'     => (bool) ( $fields['club_tv_opt_out'] ?? false ),
+			'can_edit_logo'       => true,
+			'can_manage_presence' => true,
 		];
 	}
 

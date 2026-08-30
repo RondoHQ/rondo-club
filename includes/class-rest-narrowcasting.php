@@ -1125,6 +1125,7 @@ class Narrowcasting extends Base {
 				$this->content->sponsor_choices(),
 				static fn( array $sponsor ): bool => empty( $sponsor['legacy'] )
 					&& ! empty( $sponsor['logo_url'] )
+					&& empty( $sponsor['club_tv_opt_out'] )
 					&& (int) ( $sponsor['club_tv_priority'] ?? 0 ) > 0
 			)
 		);

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Businessclubleden zien op **Mijn gegevens** hun sponsorlogo in een Club TV-voorbeeld en kunnen daar zelf aangeven dat hun bedrijf niet op de narrowcasting mag verschijnen.
 - **Betaalstatistieken** splitst contributiefacturen in betaald, in termijnen en openstaand, en toont daarnaast welk percentage van het totale contributiebedrag is geïnd.
 - Factuurdetails tonen de volledige betaaldatum en het tijdstip voor directe, handmatige en afgeronde termijnbetalingen; **Betaald op** is ook beschikbaar als optionele kolom in het facturenoverzicht.
 - De aparte pagina **Betaalstatistieken** toont ontvangen betalingen, gemiddelde betaaltijd en termijngebruik, filterbaar op factuursoort.
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Sponsorinformatie staat op **Mijn gegevens** in een eigen blok onder de contactpersoon, met uitleg over het gebruik van het bedrijfslogo op de tv-schermen bij AWC.
 - Het factuurtype **Vrijwilligersboete** en de automatische boetefactuur bij een no-show zijn verwijderd; een no-show blijft wel meetellen voor de vrijwilligersverplichting.
 - **Betaalstatistieken** toont de maandinkomsten naast de contributiegrafieken en de dagelijkse inkomsten daaronder over de volle breedte.
 
