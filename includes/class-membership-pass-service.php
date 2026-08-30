@@ -5,6 +5,7 @@
 
 namespace Rondo\Passes;
 
+use Rondo\Config\FinanceConfig;
 use Rondo\Core\AccessControl;
 use Rondo\Core\SponsorStatus;
 
@@ -44,6 +45,21 @@ class MembershipPassService {
 		$version = self::get_pass_version( $person_id ) + 1;
 		update_post_meta( $person_id, self::PASS_VERSION_META_KEY, $version );
 		return $version;
+	}
+
+	/** Return the configured wallet background color for a membership tier. */
+	public static function get_background_color_hex( string $member_tier = '' ): string {
+		if ( $member_tier === 'sponsor' ) {
+			return '#ffffff';
+		}
+
+		$config = new FinanceConfig();
+		$hex    = trim( $config->get_accent_color() );
+		if ( preg_match( '/^#?[a-f0-9]{6}$/i', $hex ) ) {
+			return '#' . ltrim( strtolower( $hex ), '#' );
+		}
+
+		return '#006935';
 	}
 
 	/** Resolve the current membership status used by every pass surface. */

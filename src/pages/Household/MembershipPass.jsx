@@ -87,7 +87,10 @@ export default function MembershipPass() {
   const primaryDetailValue = presentation.sponsor ? person.company_name : roleLabel || person.team;
   const cardStyle = presentation.sponsor
     ? 'border-gray-200 bg-white text-gray-950'
-    : 'border-cyan-300/40 bg-brand-gradient text-white';
+    : 'border-white/25 text-white';
+  const cardBackgroundStyle = {
+    backgroundColor: data.pass?.background_color || (presentation.sponsor ? '#ffffff' : '#006935'),
+  };
   const mutedStyle = presentation.sponsor ? 'text-gray-500' : 'text-white/75';
 
   return (
@@ -97,7 +100,11 @@ export default function MembershipPass() {
         Terug naar Mijn gegevens
       </Link>
 
-      <section className={`overflow-hidden rounded-[1.75rem] border shadow-xl ${cardStyle}`} aria-label={presentation.title}>
+      <section
+        className={`overflow-hidden rounded-[1.75rem] border shadow-xl ${cardStyle}`}
+        style={cardBackgroundStyle}
+        aria-label={presentation.title}
+      >
         <div className="p-6 sm:p-7">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">

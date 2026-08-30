@@ -58,6 +58,8 @@ class MembershipPassSponsorTest extends RondoTestCase {
 	}
 
 	public function test_sponsor_wallet_passes_use_a_white_background(): void {
+		update_option( FinanceConfig::OPTION_ACCENT_COLOR, '#127a43' );
+
 		$apple_method  = ( new ReflectionClass( MembershipPassApple::class ) )->getMethod( 'get_background_color' );
 		$google_method = ( new ReflectionClass( MembershipPassGoogle::class ) )->getMethod( 'get_hex_background_color' );
 
@@ -66,6 +68,10 @@ class MembershipPassSponsorTest extends RondoTestCase {
 
 		$this->assertSame( 'rgb(255,255,255)', $apple_method->invoke( new MembershipPassApple(), 'sponsor' ) );
 		$this->assertSame( '#ffffff', $google_method->invoke( new MembershipPassGoogle(), 'sponsor' ) );
+		$this->assertSame( '#ffffff', MembershipPassService::get_background_color_hex( 'sponsor' ) );
+		$this->assertSame( 'rgb(18,122,67)', $apple_method->invoke( new MembershipPassApple(), 'bondslid' ) );
+		$this->assertSame( '#127a43', $google_method->invoke( new MembershipPassGoogle(), 'bondslid' ) );
+		$this->assertSame( '#127a43', MembershipPassService::get_background_color_hex( 'bondslid' ) );
 	}
 
 	public function test_apple_membership_pass_description_uses_the_club_name(): void {

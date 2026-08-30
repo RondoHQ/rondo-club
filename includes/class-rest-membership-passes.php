@@ -115,9 +115,10 @@ class MembershipPasses extends Base {
 				'payload'    => $payload,
 				'person'     => $result['person'],
 				'pass'       => [
-					'type'       => (string) ( $payload['pass_type'] ?? '' ),
-					'role_label' => $selection['role_label'],
-					'logo_url'   => $this->get_pass_logo_url( (string) ( $payload['pass_type'] ?? '' ) ),
+					'type'             => (string) ( $payload['pass_type'] ?? '' ),
+					'role_label'       => $selection['role_label'],
+					'logo_url'         => $this->get_pass_logo_url( (string) ( $payload['pass_type'] ?? '' ) ),
+					'background_color' => MembershipPassService::get_background_color_hex( $selection['member_tier'] ),
 				],
 			]
 		);

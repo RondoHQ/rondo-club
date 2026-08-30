@@ -714,15 +714,6 @@ class MembershipPassGoogle {
 	 * @return string
 	 */
 	private function get_hex_background_color( string $member_tier = '' ): string {
-		if ( $member_tier === 'sponsor' ) {
-			return '#ffffff';
-		}
-
-		$config = new FinanceConfig();
-		$hex    = trim( $config->get_accent_color() );
-		if ( preg_match( '/^#?[a-f0-9]{6}$/i', $hex ) ) {
-			return '#' . ltrim( strtolower( $hex ), '#' );
-		}
-		return '#006935';
+		return MembershipPassService::get_background_color_hex( $member_tier );
 	}
 }
