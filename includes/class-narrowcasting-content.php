@@ -197,6 +197,7 @@ final class Content {
 					'name'             => get_the_title( $post ),
 					'logo_url'         => get_the_post_thumbnail_url( $post, 'medium' ) ?: null,
 					'club_tv_priority' => (int) Fields::get_for_post( (int) $post->ID, 'club_tv_priority' ),
+					'club_tv_opt_out'  => (bool) Fields::get_for_post( (int) $post->ID, 'club_tv_opt_out' ),
 					'legacy'           => false,
 				];
 			},
@@ -222,6 +223,7 @@ final class Content {
 				'name'             => get_the_title( $post ),
 				'logo_url'         => get_the_post_thumbnail_url( $post, 'medium' ) ?: null,
 				'club_tv_priority' => 0,
+				'club_tv_opt_out'  => false,
 				'legacy'           => true,
 			];
 		}
@@ -307,9 +309,13 @@ final class Content {
 		$sponsor_id          = get_post_type( $selected_sponsor_id ) === 'rondo_sponsor' ? $selected_sponsor_id : 0;
 		$legacy_sponsor_id   = get_post_type( $selected_sponsor_id ) === 'person' ? $selected_sponsor_id : 0;
 		$company_is_active   = $sponsor_id && get_post_status( $sponsor_id ) === 'publish';
+		$company_opted_out   = $company_is_active && (bool) Fields::get_for_post( $sponsor_id, 'club_tv_opt_out' );
 		$legacy_is_active    = $legacy_sponsor_id && SponsorStatus::is_sponsor( $legacy_sponsor_id );
 		if ( $type === 'sponsor' && ! $company_is_active && ! $legacy_is_active ) {
 			return new \WP_Error( 'rondo_signage_sponsor_required', __( 'Kies een bestaande sponsorrelatie.', 'rondo' ), [ 'status' => 400 ] );
+		}
+		if ( $type === 'sponsor' && $company_opted_out ) {
+			return new \WP_Error( 'rondo_signage_sponsor_opted_out', __( 'Deze sponsor wil niet op Club TV worden getoond.', 'rondo' ), [ 'status' => 409 ] );
 		}
 
 		$media_id    = absint( $payload['media_attachment_id'] ?? $current['media_attachment_id'] ?? 0 );
@@ -554,6 +560,9 @@ final class Content {
 		if ( $type === 'sponsor' ) {
 			$sponsor_id = (int) ( $item['fields']['sponsor_id'] ?? 0 );
 			if ( $sponsor_id && get_post_type( $sponsor_id ) === 'rondo_sponsor' && get_post_status( $sponsor_id ) === 'publish' ) {
+				if ( (bool) Fields::get_for_post( $sponsor_id, 'club_tv_opt_out' ) ) {
+					return new \WP_Error( 'sponsor_opted_out', __( 'Sponsor heeft Club TV-weergave uitgeschakeld.', 'rondo' ) );
+				}
 				$sponsor = [
 					'id'       => $sponsor_id,
 					'name'     => get_the_title( $sponsor_id ),

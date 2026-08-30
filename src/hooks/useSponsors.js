@@ -61,6 +61,33 @@ export function useUploadSponsorLogo() {
   });
 }
 
+export function useUpdateSponsorNarrowcastingPreference() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, optOut }) => prmApi.updateSponsorNarrowcastingPreference(id, optOut),
+    onSuccess: (response, { id, optOut }) => {
+      const storedOptOut = response.data?.opt_out ?? optOut;
+      queryClient.setQueryData(['household'], (people) => (
+        Array.isArray(people)
+          ? people.map((person) => (
+            person.sponsor_organization?.id === id
+              ? {
+                ...person,
+                sponsor_organization: {
+                  ...person.sponsor_organization,
+                  club_tv_opt_out: storedOptOut,
+                },
+              }
+              : person
+          ))
+          : people
+      ));
+      invalidateSponsorData(queryClient, id);
+      queryClient.invalidateQueries({ queryKey: ['household'] });
+    },
+  });
+}
+
 export function useArchiveSponsor() {
   const queryClient = useQueryClient();
   return useMutation({

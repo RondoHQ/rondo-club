@@ -109,7 +109,9 @@ export default function SponsorList() {
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-gray-900 dark:text-gray-100">{sponsor.title}</p>
                       <p className="mt-0.5 text-sm text-gray-500 md:hidden">{roleLabels[sponsor.fields?.sponsor_role] || 'Geen sponsorrol'}</p>
-                      {Number(sponsor.fields?.club_tv_priority) > 0 ? (
+                      {sponsor.fields?.club_tv_opt_out ? (
+                        <p className="mt-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">Club TV: afgemeld door sponsor</p>
+                      ) : Number(sponsor.fields?.club_tv_priority) > 0 ? (
                         <p className="mt-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">Club TV: {clubTvLabels[sponsor.fields.club_tv_priority]}</p>
                       ) : null}
                     </div>

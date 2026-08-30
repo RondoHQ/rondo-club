@@ -1,9 +1,9 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, Building2, ReceiptEuro, ImagePlus, LoaderCircle, Pencil, UserRoundPlus, X } from 'lucide-react';
+import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, Building2, ReceiptEuro, ImagePlus, LoaderCircle, Monitor, Pencil, UserRoundPlus, X } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { useUploadSponsorLogo } from '@/hooks/useSponsors';
+import { useUpdateSponsorNarrowcastingPreference, useUploadSponsorLogo } from '@/hooks/useSponsors';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { formatCurrency, formatPersonName, parseFieldDate } from '@/utils/formatters';
 import { format } from '@/utils/dateFormat';
@@ -277,63 +277,109 @@ function MembershipPassActions({ membershipPass, personId }) {
   );
 }
 
-function SponsorLogoEditor({ organization }) {
+function SponsorCard({ organization }) {
   const fileRef = useRef(null);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [logoError, setLogoError] = useState('');
+  const [preferenceError, setPreferenceError] = useState('');
   const uploadLogo = useUploadSponsorLogo();
+  const updatePreference = useUpdateSponsorNarrowcastingPreference();
 
   const handleLogoChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setErrorMessage('');
+    setLogoError('');
     try {
       await uploadLogo.mutateAsync({ id: organization.id, file });
     } catch (error) {
-      setErrorMessage(error.response?.data?.message || 'Het logo kon niet worden opgeslagen.');
+      setLogoError(error.response?.data?.message || 'Het logo kon niet worden opgeslagen.');
     } finally {
       event.target.value = '';
     }
   };
 
+  const handlePreferenceChange = async (event) => {
+    const optOut = event.target.checked;
+    setPreferenceError('');
+    try {
+      await updatePreference.mutateAsync({ id: organization.id, optOut });
+    } catch (error) {
+      setPreferenceError(error.response?.data?.message || 'De narrowcastingvoorkeur kon niet worden opgeslagen.');
+    }
+  };
+
   return (
-    <div className="mt-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+    <section className="card max-w-3xl p-5">
       <div className="flex items-start gap-3">
         <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" aria-hidden="true" />
         <div className="min-w-0">
           <Eyebrow>Sponsor</Eyebrow>
-          <h3 className="mt-0.5 break-words text-sm font-medium text-gray-900 dark:text-gray-100">
+          <h2 className="mt-0.5 break-words font-semibold text-gray-900 dark:text-gray-100">
             {organization.name}
-          </h3>
+          </h2>
         </div>
       </div>
 
-      <button
-        type="button"
-        className="mt-4 flex min-h-36 w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white p-4 transition-colors hover:border-bright-cobalt focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bright-cobalt disabled:cursor-wait disabled:opacity-70 dark:border-gray-600 dark:bg-gray-900"
-        onClick={() => fileRef.current?.click()}
-        disabled={uploadLogo.isPending}
-      >
-        {uploadLogo.isPending ? (
-          <span className="flex items-center gap-2 text-sm text-gray-500">
-            <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" />
-            Logo uploaden…
-          </span>
-        ) : organization.logo_url ? (
-          <img src={organization.logo_url} alt={`Logo van ${organization.name}`} className="max-h-32 max-w-full object-contain" />
-        ) : (
-          <span className="flex flex-col items-center gap-2 text-sm text-gray-500">
-            <ImagePlus className="h-8 w-8" aria-hidden="true" />
-            Bedrijfslogo toevoegen
-          </span>
-        )}
-      </button>
+      <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">
+        We gebruiken je bedrijfslogo onder meer op Club TV, de narrowcasting op de tv-schermen bij AWC.
+        Zo zien leden en bezoekers welke bedrijven de club steunen.
+      </p>
+
+      <div className="mt-4 overflow-hidden rounded-xl bg-slate-900 p-4 sm:p-6">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/70">
+          <Monitor className="h-4 w-4" aria-hidden="true" />
+          Voorbeeld op Club TV
+        </div>
+
+        <button
+          type="button"
+          className="mt-4 flex aspect-[1.77] w-full max-w-sm items-center justify-center rounded-xl border-2 border-white/80 bg-white/90 p-4 shadow-sm transition-colors hover:border-electric-cyan focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-cyan disabled:cursor-wait disabled:opacity-70 sm:p-5"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploadLogo.isPending}
+        >
+          {uploadLogo.isPending ? (
+            <span className="flex items-center gap-2 text-sm text-gray-500">
+              <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" />
+              Logo uploaden…
+            </span>
+          ) : organization.logo_url ? (
+            <img src={organization.logo_url} alt={`Logo van ${organization.name}`} className="h-full w-full object-contain" />
+          ) : (
+            <span className="flex flex-col items-center gap-2 text-sm text-gray-500">
+              <ImagePlus className="h-8 w-8" aria-hidden="true" />
+              Bedrijfslogo toevoegen
+            </span>
+          )}
+        </button>
+      </div>
       <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml" className="hidden" onChange={handleLogoChange} />
       <p className="mt-2 text-xs text-gray-500">
         Klik op het logo om het te vervangen. JPEG, PNG, GIF, WebP of SVG, maximaal 5 MB.
       </p>
-      {errorMessage ? <p className="mt-2 text-sm text-red-600 dark:text-red-400">{errorMessage}</p> : null}
-    </div>
+      {logoError ? <p className="mt-2 text-sm text-red-600 dark:text-red-400">{logoError}</p> : null}
+
+      {organization.sponsor_role === 'businessclub' && organization.can_manage_presence ? (
+        <div className="mt-5 border-t border-gray-200 pt-4 dark:border-gray-700">
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-bright-cobalt focus:ring-bright-cobalt"
+              checked={Boolean(organization.club_tv_opt_out)}
+              disabled={updatePreference.isPending}
+              onChange={handlePreferenceChange}
+            />
+            <span>
+              <span className="block text-sm font-medium text-gray-900 dark:text-gray-100">Toon ons niet op de narrowcasting</span>
+              <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+                Als je dit aanvinkt, verschijnt jullie logo niet op de tv-schermen bij AWC.
+              </span>
+            </span>
+          </label>
+          {updatePreference.isPending ? <p className="mt-2 text-xs text-gray-500">Voorkeur opslaan…</p> : null}
+          {preferenceError ? <p className="mt-2 text-sm text-red-600 dark:text-red-400">{preferenceError}</p> : null}
+        </div>
+      ) : null}
+    </section>
   );
 }
 
@@ -398,10 +444,6 @@ function PersonCard({ person, isParent, householdPeople, linkedPersonId, onAddPa
       </div>
 
       <ContributionStatus contribution={person.contribution} />
-
-      {isSelf && sponsorOrganization?.can_edit_logo ? (
-        <SponsorLogoEditor organization={sponsorOrganization} />
-      ) : null}
 
       {profileEditorAnchor ? (
         <AnchoredPopover
@@ -509,14 +551,18 @@ export default function Household() {
       ) : (
         <>
           {ordered.map((person) => (
-            <PersonCard
-              key={person.id}
-              person={person}
-              isParent={currentUser?.is_parent === true}
-              householdPeople={editablePeople}
-              linkedPersonId={linkedPersonId}
-              onAddParent={setParentEditorChildId}
-            />
+            <Fragment key={person.id}>
+              <PersonCard
+                person={person}
+                isParent={currentUser?.is_parent === true}
+                householdPeople={editablePeople}
+                linkedPersonId={linkedPersonId}
+                onAddParent={setParentEditorChildId}
+              />
+              {person.household_role === 'self' && person.sponsor_organization?.can_edit_logo ? (
+                <SponsorCard organization={person.sponsor_organization} />
+              ) : null}
+            </Fragment>
           ))}
           <ParentRelationshipModal
             isOpen={parentEditorChildId !== null}

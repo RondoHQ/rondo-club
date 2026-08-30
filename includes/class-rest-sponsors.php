@@ -89,6 +89,16 @@ final class Sponsors extends Base {
 
 		register_rest_route(
 			'rondo/v1',
+			'/sponsors/(?P<id>\d+)/narrowcasting-preference',
+			[
+				'methods'             => [ 'POST', 'PATCH' ],
+				'callback'            => [ $this, 'update_narrowcasting_preference' ],
+				'permission_callback' => [ $this, 'can_manage_self_service' ],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
 			'/sponsor-person-options',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -105,6 +115,11 @@ final class Sponsors extends Base {
 	/** Allow a sponsor contact to replace only their own pass company's logo. */
 	public function can_upload_logo( \WP_REST_Request $request ): bool {
 		return AccessControl::can_edit_sponsor_logo( absint( $request['id'] ) );
+	}
+
+	/** Allow a sponsor contact to manage only its own pass company's preference. */
+	public function can_manage_self_service( \WP_REST_Request $request ): bool {
+		return AccessControl::can_manage_sponsor_self_service( absint( $request['id'] ) );
 	}
 
 	public function list_sponsors( \WP_REST_Request $request ) {
@@ -387,6 +402,43 @@ final class Sponsors extends Base {
 		}
 
 		return rest_ensure_response( $formatted );
+	}
+
+	/** Store a Businessclub sponsor's narrowcasting opt-out preference. */
+	public function update_narrowcasting_preference( \WP_REST_Request $request ) {
+		$sponsor = $this->sponsor_post( absint( $request['id'] ) );
+		if ( is_wp_error( $sponsor ) ) {
+			return $sponsor;
+		}
+
+		if ( Fields::get_for_post( $sponsor->ID, 'sponsor_role' ) !== 'businessclub' ) {
+			return new \WP_Error(
+				'rondo_sponsor_narrowcasting_preference_unavailable',
+				'Alleen Businessclubleden kunnen deze narrowcastingvoorkeur instellen.',
+				[ 'status' => 403 ]
+			);
+		}
+
+		$payload = $request->get_json_params() ?: $request->get_params();
+		if ( ! array_key_exists( 'opt_out', $payload ) || ! is_bool( $payload['opt_out'] ) ) {
+			return new \WP_Error(
+				'rondo_sponsor_narrowcasting_preference_invalid',
+				'Geef met opt_out true of false door of de sponsor getoond mag worden.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		$result = Fields::update_for_post( $sponsor->ID, 'club_tv_opt_out', $payload['opt_out'] );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return rest_ensure_response(
+			[
+				'id'      => $sponsor->ID,
+				'opt_out' => (bool) Fields::get_for_post( $sponsor->ID, 'club_tv_opt_out' ),
+			]
+		);
 	}
 
 	/** Create an external person and append it as a sponsor contact atomically enough to recover. */

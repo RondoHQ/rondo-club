@@ -219,6 +219,54 @@ class NarrowcastingContentTest extends RondoTestCase {
 		$this->assertStringNotContainsString( 'private@example.test', wp_json_encode( $manifest ) );
 	}
 
+	public function test_sponsor_opt_out_blocks_new_and_existing_sponsor_slides(): void {
+		$sponsor_id = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_sponsor',
+				'post_status' => 'publish',
+				'post_title'  => 'Afgemelde Businessclub Sponsor',
+			]
+		);
+		Fields::update_many_for_post(
+			$sponsor_id,
+			[
+				'sponsor_role'     => 'businessclub',
+				'club_tv_priority' => 1,
+				'club_tv_opt_out'  => false,
+			]
+		);
+		$item = $this->content->create_item(
+			[
+				'title'        => 'Businessclub Sponsor',
+				'content_type' => 'sponsor',
+				'sponsor_id'   => $sponsor_id,
+			]
+		);
+		$this->assertFalse( is_wp_error( $item ) );
+
+		$playlist = $this->content->create_playlist(
+			[
+				'title' => 'Sponsors',
+				'items' => [ [ 'item_id' => $item['id'] ] ],
+			]
+		);
+		Fields::update_for_post( $sponsor_id, 'club_tv_opt_out', true );
+
+		$manifest = $this->content->resolve_manifest( 0, $playlist['id'], null, true );
+		$this->assertSame( 'builtin-matches', $manifest['scenes'][0]['id'] );
+		$this->assertSame( 'Sponsor heeft Club TV-weergave uitgeschakeld.', $manifest['excluded'][0]['reason'] );
+
+		$new_item = $this->content->create_item(
+			[
+				'title'        => 'Geblokkeerde Sponsor',
+				'content_type' => 'sponsor',
+				'sponsor_id'   => $sponsor_id,
+			]
+		);
+		$this->assertWPError( $new_item );
+		$this->assertSame( 'rondo_signage_sponsor_opted_out', $new_item->get_error_code() );
+	}
+
 	public function test_paired_player_receives_assigned_safe_manifest(): void {
 		$this->login_with_capability( 'narrowcasting' );
 		$item     = $this->content->create_item(

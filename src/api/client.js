@@ -123,6 +123,7 @@ export const prmApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+  updateSponsorNarrowcastingPreference: (id, optOut) => api.patch(`/rondo/v1/sponsors/${id}/narrowcasting-preference`, { opt_out: optOut }),
   archiveSponsor: (id) => api.delete(`/rondo/v1/sponsors/${id}`),
   createSponsorContact: (id, data) => api.post(`/rondo/v1/sponsors/${id}/contacts`, data),
   searchSponsorPeople: (search) => api.get('/rondo/v1/sponsor-person-options', { params: { search } }),

@@ -274,7 +274,7 @@ class AccessControl {
 	}
 
 	/**
-	 * Check whether a user may replace one sponsor organization's logo.
+	 * Check whether a user may manage one sponsor organization's self-service presence.
 	 *
 	 * Sponsor managers retain their broad access. A regular account may only
 	 * update the active sponsor organization that supplies the pass belonging
@@ -282,9 +282,9 @@ class AccessControl {
 	 *
 	 * @param int      $sponsor_id Sponsor post ID.
 	 * @param int|null $user_id    User ID (optional, defaults to current user).
-	 * @return bool Whether the user may replace this logo.
+	 * @return bool Whether the user may manage this sponsor presence.
 	 */
-	public static function can_edit_sponsor_logo( int $sponsor_id, $user_id = null ): bool {
+	public static function can_manage_sponsor_self_service( int $sponsor_id, $user_id = null ): bool {
 		$user_id = $user_id ?? get_current_user_id();
 		if ( ! $user_id ) {
 			return false;
@@ -299,6 +299,20 @@ class AccessControl {
 
 		return $relationship !== null
 			&& (int) ( $relationship['sponsor_id'] ?? 0 ) === $sponsor_id;
+	}
+
+	/**
+	 * Check whether a user may replace one sponsor organization's logo.
+	 *
+	 * Kept as the logo-specific public contract while sharing the same narrowly
+	 * scoped organization lookup with other sponsor self-service preferences.
+	 *
+	 * @param int      $sponsor_id Sponsor post ID.
+	 * @param int|null $user_id    User ID (optional, defaults to current user).
+	 * @return bool Whether the user may replace this logo.
+	 */
+	public static function can_edit_sponsor_logo( int $sponsor_id, $user_id = null ): bool {
+		return self::can_manage_sponsor_self_service( $sponsor_id, $user_id );
 	}
 
 	/**
