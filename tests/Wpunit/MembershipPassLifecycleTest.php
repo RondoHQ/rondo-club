@@ -2,6 +2,7 @@
 
 namespace Tests\Wpunit;
 
+use Rondo\Core\AccessControl;
 use Rondo\Fields\Fields;
 use Rondo\Passes\MembershipPassQr;
 use Rondo\Passes\MembershipPassService;
@@ -169,5 +170,89 @@ class MembershipPassLifecycleTest extends RondoTestCase {
 		$this->assertNotWPError( $member_pass );
 		$this->assertSame( 'businessclub', $sponsor_pass['payload']['pass_type'] );
 		$this->assertSame( 'bondslid', $member_pass['payload']['pass_type'] );
+	}
+
+	public function test_qr_endpoint_requires_and_honours_the_exact_pass_choice(): void {
+		$person_id = $this->createPerson(
+			[ 'post_title' => 'Lid met digitale passen' ],
+			[
+				'first_name' => 'Digitaal',
+				'last_name'  => 'Lid',
+				'type-lid'   => 'Bondslid',
+			]
+		);
+		$team_id   = self::factory()->post->create(
+			[
+				'post_type'   => 'team',
+				'post_status' => 'publish',
+				'post_title'  => 'AWC 1',
+			]
+		);
+		Fields::update_for_post(
+			$person_id,
+			'work_history',
+			[
+				[
+					'team'       => $team_id,
+					'job_title'  => 'Trainer',
+					'is_current' => true,
+				],
+			]
+		);
+
+		$sponsor_id = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_sponsor',
+				'post_status' => 'publish',
+				'post_title'  => 'Businessclub Digitaal',
+			]
+		);
+		new MembershipPassService();
+		Fields::update_for_post( $sponsor_id, 'sponsor_role', 'businessclub' );
+		Relations::set_contacts(
+			$sponsor_id,
+			[
+				[
+					'person_id'     => $person_id,
+					'contact_role'  => 'Directeur',
+					'receives_pass' => true,
+				],
+			]
+		);
+
+		$user_id = $this->createRondoUser( [ 'user_login' => 'digital_pass_member' ] );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+		AccessControl::flush_visible_person_ids_cache();
+		wp_set_current_user( $user_id );
+
+		$summary  = MembershipPassService::get_person_pass_summary( $person_id );
+		$role_key = $summary['role_options'][1]['key'];
+		$server   = $this->bootRestControllers( [ MembershipPasses::class ] );
+
+		$missing_choice = new \WP_REST_Request( 'GET', '/rondo/v1/membership-passes/people/' . $person_id . '/qr-token' );
+		$this->assertSame( 400, $server->dispatch( $missing_choice )->get_status() );
+
+		$sponsor_request = new \WP_REST_Request( 'GET', '/rondo/v1/membership-passes/people/' . $person_id . '/qr-token' );
+		$sponsor_request->set_param( 'role', MembershipPassService::SPONSOR_PASS_SELECTION );
+		$sponsor_data = $server->dispatch( $sponsor_request )->get_data();
+		$this->assertSame( 'businessclub', $sponsor_data['payload']['pass_type'] );
+		$this->assertSame( 'Businessclub Digitaal', $sponsor_data['person']['company_name'] );
+		$this->assertSame( 'Businessclubpas', $sponsor_data['pass']['role_label'] );
+		$this->assertStringEndsWith( '/public/icons/businessclub-awc-logo.png', $sponsor_data['pass']['logo_url'] );
+
+		$member_request = new \WP_REST_Request( 'GET', '/rondo/v1/membership-passes/people/' . $person_id . '/qr-token' );
+		$member_request->set_param( 'role', $role_key );
+		$member_data = $server->dispatch( $member_request )->get_data();
+		$this->assertSame( 'bondslid', $member_data['payload']['pass_type'] );
+		$this->assertSame( 'AWC 1 — Trainer', $member_data['pass']['role_label'] );
+		$this->assertStringEndsWith( '/public/icons/apple-touch-icon-180x180.png', $member_data['pass']['logo_url'] );
+
+		$invalid_request = new \WP_REST_Request( 'GET', '/rondo/v1/membership-passes/people/' . $person_id . '/qr-token' );
+		$invalid_request->set_param( 'role', 'not-a-real-choice' );
+		$this->assertSame( 400, $server->dispatch( $invalid_request )->get_status() );
+
+		$unrelated_id      = $this->createPerson( [ 'post_title' => 'Onverwant lid' ], [ 'type-lid' => 'Bondslid' ] );
+		$unrelated_request = new \WP_REST_Request( 'GET', '/rondo/v1/membership-passes/people/' . $unrelated_id . '/qr-token' );
+		$this->assertSame( 403, $server->dispatch( $unrelated_request )->get_status() );
 	}
 }

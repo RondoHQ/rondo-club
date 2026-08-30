@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Leden, ouders, sponsoren en Businessclubleden kunnen op **Mijn gegevens** een digitale pas met scanbare QR-code openen als zij geen Apple Wallet of Google Wallet gebruiken.
 - Businessclubleden zien op **Mijn gegevens** hun sponsorlogo in een Club TV-voorbeeld en kunnen daar zelf aangeven dat hun bedrijf niet op de narrowcasting mag verschijnen.
 - **Betaalstatistieken** splitst contributiefacturen in betaald, in termijnen en openstaand, en toont daarnaast welk percentage van het totale contributiebedrag is geïnd.
 - Factuurdetails tonen de volledige betaaldatum en het tijdstip voor directe, handmatige en afgeronde termijnbetalingen; **Betaald op** is ook beschikbaar als optionele kolom in het facturenoverzicht.

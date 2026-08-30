@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, Building2, ReceiptEuro, ImagePlus, LoaderCircle, Monitor, Pencil, UserRoundPlus, X } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -12,6 +13,7 @@ import AnchoredPopover from '@/components/AnchoredPopover';
 import ParentRelationshipModal from '@/components/ParentRelationshipModal';
 import { useAddHouseholdParent } from '@/hooks/useMemberProfile';
 import MemberProfileEditors from './MemberProfileEditors';
+import { buildDigitalPassPath } from './membershipPassUtils';
 
 const WALLET_TYPES = ['apple', 'google'];
 
@@ -39,10 +41,10 @@ function getWalletBadge(wallet) {
   };
 }
 
-function addRoleToWalletUrl(url, role) {
-  const walletUrl = new URL(url, window.location.origin);
-  walletUrl.searchParams.set('role', role);
-  return walletUrl.toString();
+function addRoleToUrl(url, role) {
+  const actionUrl = new URL(url, window.location.origin);
+  actionUrl.searchParams.set('role', role);
+  return actionUrl.toString();
 }
 
 /**
@@ -190,12 +192,12 @@ function MembershipPassActions({ membershipPass, personId }) {
     && membershipPass.wallets[wallet].url
   ));
 
-  const openWallet = (event, wallet) => {
+  const openPassAction = (event, target) => {
     if (!membershipPass.requires_role) return;
     event.preventDefault();
     setRolePicker({
       anchor: event.currentTarget,
-      wallet,
+      target,
     });
   };
 
@@ -205,7 +207,17 @@ function MembershipPassActions({ membershipPass, personId }) {
       <div className="min-w-0">
         <div className="text-xs text-gray-500 dark:text-gray-400">{membershipPass.label}</div>
         <p className="text-sm text-gray-900 dark:text-gray-100">
-          Voeg deze pas direct toe aan je wallet.
+          Voeg deze pas direct toe aan je wallet.{' '}
+          <Link
+            to={buildDigitalPassPath(personId)}
+            className="font-medium text-bright-cobalt hover:underline dark:text-electric-cyan"
+            aria-haspopup={membershipPass.requires_role ? 'dialog' : undefined}
+            aria-expanded={membershipPass.requires_role ? Boolean(rolePicker?.target === 'qr') : undefined}
+            aria-controls={membershipPass.requires_role ? `membership-pass-role-picker-${personId}` : undefined}
+            onClick={(event) => openPassAction(event, 'qr')}
+          >
+            Geen wallet? Toon je pas met QR-code.
+          </Link>
         </p>
 
         {wallets.length > 0 ? (
@@ -215,7 +227,7 @@ function MembershipPassActions({ membershipPass, personId }) {
               const walletData = membershipPass.wallets[wallet];
               const commonProps = {
                 className: 'inline-flex rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bright-cobalt',
-                onClick: (event) => openWallet(event, wallet),
+                onClick: (event) => openPassAction(event, wallet),
               };
               const badgeImage = <img src={badge.src} alt={badge.alt} className="h-12 w-auto" />;
 
@@ -225,7 +237,7 @@ function MembershipPassActions({ membershipPass, personId }) {
                   type="button"
                   {...commonProps}
                   aria-haspopup="dialog"
-                  aria-expanded={rolePicker?.wallet === wallet}
+                  aria-expanded={rolePicker?.target === wallet}
                   aria-controls={`membership-pass-role-picker-${personId}`}
                 >
                   {badgeImage}
@@ -259,16 +271,19 @@ function MembershipPassActions({ membershipPass, personId }) {
               Welke pas wil je toevoegen?
             </h3>
             <div className="mt-3 grid gap-2">
-              {membershipPass.role_options.map((role, index) => (
-                <a
-                  key={role.key}
-                  ref={index === 0 ? firstRoleRef : undefined}
-                  href={addRoleToWalletUrl(membershipPass.wallets[rolePicker.wallet].url, role.key)}
-                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 transition-colors hover:border-bright-cobalt hover:bg-cyan-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bright-cobalt dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800"
-                >
-                  {role.label}
-                </a>
-              ))}
+              {membershipPass.role_options.map((role, index) => {
+                const commonProps = {
+                  key: role.key,
+                  ref: index === 0 ? firstRoleRef : undefined,
+                  className: 'rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 transition-colors hover:border-bright-cobalt hover:bg-cyan-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bright-cobalt dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800',
+                };
+
+                return rolePicker.target === 'qr' ? (
+                  <Link {...commonProps} to={buildDigitalPassPath(personId, role.key)}>{role.label}</Link>
+                ) : (
+                  <a {...commonProps} href={addRoleToUrl(membershipPass.wallets[rolePicker.target].url, role.key)}>{role.label}</a>
+                );
+              })}
             </div>
           </div>
         </AnchoredPopover>
