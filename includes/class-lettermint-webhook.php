@@ -23,7 +23,6 @@ class LettermintWebhook {
 	 */
 	const ACTIONABLE_EVENTS = [
 		'message.hard_bounced',
-		'message.soft_bounced',
 		'message.spam_complaint',
 	];
 

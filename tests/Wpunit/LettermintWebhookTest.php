@@ -83,6 +83,29 @@ class LettermintWebhookTest extends RondoTestCase {
 		);
 	}
 
+	public function test_soft_bounce_is_ignored_without_creating_a_task(): void {
+		$secret = 'test-lettermint-secret';
+		update_option( LettermintConfig::OPTION_WEBHOOK_SECRET, $secret );
+
+		$payload = [
+			'event' => 'message.soft_bounced',
+			'id'    => 'evt_soft_bounce_001',
+			'data'  => [
+				'recipient'  => 'temporary@example.com',
+				'subject'    => 'Temporary delivery failure',
+				'message_id' => 'msg_soft_bounce_001',
+				'timestamp'  => gmdate( 'c' ),
+			],
+		];
+
+		$response = $this->dispatch_signed_webhook( $payload, $secret );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$this->assertTrue( $response->get_data()['ignored'] ?? false );
+		$this->assertSame( [], $this->get_tasks_for_event( 'evt_soft_bounce_001' ) );
+		$this->assertSame( [], get_option( LettermintWebhook::OPTION_SUPPRESSED_EMAILS, [] ) );
+	}
+
 	/**
 	 * Dispatch a signed Lettermint webhook request.
 	 *
