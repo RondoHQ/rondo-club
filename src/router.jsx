@@ -25,7 +25,7 @@ import {
   ClothingPage,
   VrijwilligersDashboard, VrijwilligersStatistieken, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten, VrijwilligersAanmeldingen,
   VrijwilligersDienstForm, VrijwilligersDienstTypeForm, VrijwilligersSjablonen, VrijwilligersSjabloonForm,
-  VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig, Household,
+  VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig, Household, MembershipPass,
   TaakuitlegList, TaakuitlegForm,
   Narrowcasting, NarrowcastingDisplay, PresentationSender,
   Rooms,
@@ -501,6 +501,7 @@ const router = createBrowserRouter([
           { path: 'vrijwillig', element: <Vrijwillig /> },
           // Mijn gegevens — eigen record + kinderen. Server-side gescoped.
           { path: 'mijn-gegevens', element: <Household /> },
+          { path: 'mijn-gegevens/pas/:personId', element: <MembershipPass /> },
           { path: 'mijn-toernooien', element: <TournamentAssignmentRoute><MyTournaments /></TournamentAssignmentRoute> },
           { path: 'mijn-toernooien/:id', element: <TournamentAssignmentRoute><TournamentEntry /></TournamentAssignmentRoute> },
           // Legacy: /vrijwillig/profiel is verplaatst naar /profile/iva.

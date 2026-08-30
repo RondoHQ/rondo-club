@@ -5,6 +5,7 @@
 
 namespace Rondo\REST;
 
+use Rondo\Config\FinanceConfig;
 use Rondo\Core\AccessControl;
 use Rondo\Passes\MembershipPassQr;
 use Rondo\Core\SponsorStatus;
@@ -47,6 +48,10 @@ class MembershipPasses extends Base {
 						'required'          => false,
 						'sanitize_callback' => 'absint',
 					],
+					'role'      => [
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					],
 				],
 			]
 		);
@@ -81,13 +86,19 @@ class MembershipPasses extends Base {
 		$person_id = (int) $request->get_param( 'person_id' );
 		$season    = (string) $request->get_param( 'season' );
 		$ttl_days  = (int) $request->get_param( 'ttl_days' );
+		$role      = (string) $request->get_param( 'role' );
+		$selection = MembershipPassService::resolve_person_pass_selection( $person_id, $role );
+		if ( $selection === null ) {
+			return new \WP_Error( 'membership_pass_choice_required', 'Kies eerst welke pas je wilt tonen.', [ 'status' => 400 ] );
+		}
 
 		$service = new MembershipPassQr();
 		$result  = $service->issue_for_person(
 			$person_id,
 			[
-				'season'   => $season,
-				'ttl_days' => $ttl_days,
+				'season'      => $season,
+				'ttl_days'    => $ttl_days,
+				'member_tier' => $selection['member_tier'],
 			]
 		);
 
@@ -103,8 +114,34 @@ class MembershipPasses extends Base {
 				'expires_at' => isset( $payload['exp'] ) ? gmdate( DATE_ATOM, (int) $payload['exp'] ) : null,
 				'payload'    => $payload,
 				'person'     => $result['person'],
+				'pass'       => [
+					'type'       => (string) ( $payload['pass_type'] ?? '' ),
+					'role_label' => $selection['role_label'],
+					'logo_url'   => $this->get_pass_logo_url( (string) ( $payload['pass_type'] ?? '' ) ),
+				],
 			]
 		);
+	}
+
+	/** Return the configured logo that belongs on this pass type. */
+	private function get_pass_logo_url( string $pass_type ): string {
+		$config  = new FinanceConfig();
+		$logo_id = $pass_type === MembershipPassService::SPONSOR_PASS_VARIANT_BUSINESSCLUB
+			? $config->get_businessclub_logo_id()
+			: $config->get_club_logo_id();
+
+		if ( $logo_id > 0 ) {
+			$url = wp_get_attachment_url( $logo_id );
+			if ( is_string( $url ) && $url !== '' ) {
+				return $url;
+			}
+		}
+
+		$filename = $pass_type === MembershipPassService::SPONSOR_PASS_VARIANT_BUSINESSCLUB
+			? 'businessclub-awc-logo.png'
+			: 'apple-touch-icon-180x180.png';
+
+		return get_template_directory_uri() . '/public/icons/' . $filename;
 	}
 
 	/**

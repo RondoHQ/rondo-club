@@ -23,7 +23,7 @@ class MembershipPassQr {
 	 * Issue a signed QR token for a person.
 	 *
 	 * @param int   $person_id Person post ID.
-	 * @param array $options   Optional params: season, ttl_days.
+	 * @param array $options   Optional params: season, ttl_days, member_tier.
 	 * @return array|\WP_Error
 	 */
 	public function issue_for_person( int $person_id, array $options = [] ) {
@@ -176,6 +176,9 @@ class MembershipPassQr {
 		$full_name  = $full_name !== '' ? $full_name : MembershipPassService::get_sponsor_company_name( $person_id );
 
 		$knvb_id = \Rondo\Fields\Fields::get_for_post( $person_id, 'knvb_id' );
+		$company = MembershipPassService::get_person_member_tier( $person_id ) === 'sponsor'
+			? MembershipPassService::get_sponsor_company_name( $person_id )
+			: '';
 
 		return [
 			'id'              => $person_id,
@@ -183,6 +186,7 @@ class MembershipPassQr {
 			'first_name'      => $first_name,
 			'last_name'       => $last_name,
 			'knvb_id'         => ! empty( $knvb_id ) ? (string) $knvb_id : null,
+			'company_name'    => $company !== '' ? $company : null,
 			'team'            => $this->get_current_team_name( $person_id ),
 			'season'          => $season,
 			'status'          => $status['status'],

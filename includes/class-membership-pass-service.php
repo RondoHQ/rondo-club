@@ -216,6 +216,39 @@ class MembershipPassService {
 		return $member_tier === 'sponsor' ? self::get_sponsor_pass_variant( $person_id ) : $member_tier;
 	}
 
+	/**
+	 * Resolve one client-safe pass choice to the validated tier and work role.
+	 *
+	 * @param int    $person_id    Person post ID.
+	 * @param string $selected_role Opaque role key from the household pass summary.
+	 * @return array{member_tier:string,work:string,role_label:string}|null
+	 */
+	public static function resolve_person_pass_selection( int $person_id, string $selected_role = '' ): ?array {
+		$apple_service = new MembershipPassApple();
+		$work_options  = $apple_service->get_work_options_for_person( $person_id );
+		$selection     = self::resolve_selected_pass( $person_id, $selected_role, $work_options );
+		if ( $selection === null ) {
+			return null;
+		}
+
+		$selection['role_label'] = '';
+		if ( $selection['member_tier'] === 'sponsor' ) {
+			$selection['role_label'] = self::get_sponsor_pass_variant( $person_id ) === self::SPONSOR_PASS_VARIANT_BUSINESSCLUB
+				? 'Businessclubpas'
+				: 'Sponsorpas';
+			return $selection;
+		}
+
+		foreach ( $work_options as $option ) {
+			if ( isset( $option['key'], $option['label'] ) && hash_equals( (string) $option['key'], $selection['work'] ) ) {
+				$selection['role_label'] = (string) $option['label'];
+				break;
+			}
+		}
+
+		return $selection;
+	}
+
 	/** Whether the exact pass type still grants access. */
 	public static function person_has_pass_type( int $person_id, string $pass_type ): bool {
 		if ( self::get_person_membership_status( $person_id )['status'] !== 'active' ) {
@@ -269,8 +302,7 @@ class MembershipPassService {
 			wp_die( esc_html__( 'Voor dit lid is geen geldige ledenpas beschikbaar.', 'rondo' ), '', [ 'response' => 404 ] );
 		}
 
-		$apple_service = new MembershipPassApple();
-		$selection     = self::resolve_selected_pass( $person_id, $role, $apple_service->get_work_options_for_person( $person_id ) );
+		$selection = self::resolve_person_pass_selection( $person_id, $role );
 		if ( $selection === null ) {
 			wp_die( esc_html__( 'Kies eerst welke pas je wilt toevoegen.', 'rondo' ), '', [ 'response' => 400 ] );
 		}
