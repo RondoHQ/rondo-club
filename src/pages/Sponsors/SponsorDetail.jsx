@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Archive, ImagePlus, Plus, Save, Search, Trash2, UserPlus, X } from 'lucide-react';
+import { ArrowLeft, Archive, Clock3, ImagePlus, Plus, Save, Search, Trash2, UserPlus, X } from 'lucide-react';
 import { wpApi } from '@/api/client';
 import {
   useArchiveSponsor,
@@ -45,6 +45,16 @@ function sponsorToForm(sponsor) {
     logo_attachment_id: sponsor?.logo_attachment_id || 0,
     logo_url: sponsor?.logo_url || null,
   };
+}
+
+const activityDateFormatter = new Intl.DateTimeFormat('nl-NL', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+});
+
+function formatActivityDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Onbekend tijdstip' : activityDateFormatter.format(date);
 }
 
 export default function SponsorDetail() {
@@ -285,6 +295,39 @@ export default function SponsorDetail() {
 
         {form.contacts.length === 0 ? <p className="text-sm text-gray-500">Nog geen persoon gekoppeld.</p> : <div className="space-y-3">{form.contacts.map((contact, index) => <div key={contact.person_id} className="grid gap-3 rounded-xl border border-gray-200 p-4 dark:border-gray-700 lg:grid-cols-[minmax(12rem,1fr)_minmax(10rem,1fr)_auto_auto_auto_auto] lg:items-center"><div><Link to={`/people/${contact.person_id}`} className="font-medium text-electric-cyan hover:underline">{contact.person_name || `Persoon #${contact.person_id}`}</Link><p className="text-xs text-gray-500">{contact.email || contact.person_type}</p></div><input className="input" value={contact.contact_role || (form.sponsor_type === 'person' ? 'Sponsor' : 'Contactpersoon')} onChange={(event) => updateContact(index, { contact_role: event.target.value })} /><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(contact.is_primary)} onChange={(event) => updateContact(index, { is_primary: event.target.checked })} /> Primair contact</label><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(contact.receives_pass)} onChange={(event) => updateContact(index, { receives_pass: event.target.checked, is_primary_pass: event.target.checked ? contact.is_primary_pass : false })} /> Sponsorpas</label><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(contact.is_primary_pass)} disabled={!contact.receives_pass} onChange={(event) => updateContact(index, { is_primary_pass: event.target.checked })} /> Primaire pas</label><button type="button" className="p-2 text-red-600" aria-label="Ontkoppelen" onClick={() => updateField('contacts', form.contacts.filter((_, contactIndex) => contactIndex !== index))}><Trash2 className="h-4 w-4" /></button></div>)}</div>}
       </section>
+
+      {!isNew && (
+        <section className="card p-5">
+          <div className="flex items-start gap-3">
+            <Clock3 className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" aria-hidden="true" />
+            <div>
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">Sponsoractiviteit</h2>
+              <p className="text-sm text-gray-500">Succesvolle logins en aanpassingen door sponsorcontacten.</p>
+            </div>
+          </div>
+
+          {sponsor?.activity?.length ? (
+            <ol className="mt-4 divide-y divide-gray-200 dark:divide-gray-700">
+              {sponsor.activity.map((activity) => (
+                <li key={activity.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3 first:pt-0 last:pb-0">
+                  <div className="min-w-0 text-sm">
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{activity.label}</span>
+                    <span className="text-gray-500"> door </span>
+                    {activity.person_id ? (
+                      <Link to={`/people/${activity.person_id}`} className="text-electric-cyan hover:underline">{activity.actor_name}</Link>
+                    ) : (
+                      <span className="text-gray-700 dark:text-gray-300">{activity.actor_name}</span>
+                    )}
+                  </div>
+                  <time className="text-xs text-gray-500" dateTime={activity.created_at}>{formatActivityDate(activity.created_at)}</time>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="mt-4 text-sm text-gray-500">Nog geen sponsoractiviteit vastgelegd.</p>
+          )}
+        </section>
+      )}
     </form>
   );
 }

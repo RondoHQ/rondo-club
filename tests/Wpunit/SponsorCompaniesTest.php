@@ -6,6 +6,7 @@ use Rondo\Core\AccessControl;
 use Rondo\Fields\Fields;
 use Rondo\Passes\MembershipPassService;
 use Rondo\REST\Sponsors;
+use Rondo\Sponsors\ActivityLog;
 use Rondo\Sponsors\Migration;
 use Rondo\Sponsors\Relations;
 use Tests\Support\RondoTestCase;
@@ -85,6 +86,36 @@ class SponsorCompaniesTest extends RondoTestCase {
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertSame( 'Briggs & Stratton', $data['title'] );
 		$this->assertSame( 'Jan & Piet', $data['fields']['contacts'][0]['person_name'] );
+	}
+
+	public function test_sponsor_login_is_recorded_and_returned_on_the_company_profile(): void {
+		$manager_id = get_current_user_id();
+		$person_id  = $this->createPerson( [ 'post_title' => 'Inloggende Sponsor' ] );
+		$sponsor_id = $this->createSponsor(
+			'Loginbedrijf',
+			'awc_sponsor',
+			[
+				[
+					'person_id'     => $person_id,
+					'receives_pass' => false,
+				],
+			]
+		);
+		$user_id    = $this->createRondoUser( [ 'display_name' => 'Accountnaam' ] );
+		$user       = get_user_by( 'id', $user_id );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+
+		( new ActivityLog() )->record_login( $user->user_login, $user );
+
+		wp_set_current_user( $manager_id );
+		$response = $this->json_request( 'GET', '/rondo/v1/sponsors/' . $sponsor_id );
+		$activity = $response->get_data()['activity'];
+
+		$this->assertCount( 1, $activity );
+		$this->assertSame( 'login', $activity[0]['type'] );
+		$this->assertSame( 'Ingelogd', $activity[0]['label'] );
+		$this->assertSame( 'Inloggende Sponsor', $activity[0]['actor_name'] );
+		$this->assertSame( $person_id, $activity[0]['person_id'] );
 	}
 
 	public function test_club_tv_priority_is_validated_and_only_six_sponsors_can_always_show(): void {
@@ -208,6 +239,17 @@ class SponsorCompaniesTest extends RondoTestCase {
 		$this->assertSame( 200, $own_response->get_status() );
 		$this->assertTrue( $own_response->get_data()['opt_out'] );
 		$this->assertTrue( (bool) Fields::get_for_post( $own_sponsor_id, 'club_tv_opt_out' ) );
+		$activity = ActivityLog::recent( $own_sponsor_id );
+		$this->assertCount( 1, $activity );
+		$this->assertSame( 'Club TV: niet tonen', $activity[0]['label'] );
+		$this->assertSame( $own_person_id, $activity[0]['person_id'] );
+
+		$this->json_request(
+			'PATCH',
+			'/rondo/v1/sponsors/' . $own_sponsor_id . '/narrowcasting-preference',
+			[ 'opt_out' => true ]
+		);
+		$this->assertCount( 1, ActivityLog::recent( $own_sponsor_id ), 'An unchanged preference must not create another activity.' );
 
 		$other_response = $this->json_request(
 			'PATCH',
@@ -225,6 +267,22 @@ class SponsorCompaniesTest extends RondoTestCase {
 		$this->assertSame( 200, $restore_response->get_status() );
 		$this->assertFalse( $restore_response->get_data()['opt_out'] );
 		$this->assertFalse( (bool) Fields::get_for_post( $own_sponsor_id, 'club_tv_opt_out' ) );
+		$this->assertSame( 'Club TV: tonen', ActivityLog::recent( $own_sponsor_id )[0]['label'] );
+	}
+
+	public function test_logo_change_activity_uses_the_linked_person_snapshot(): void {
+		$person_id  = $this->createPerson( [ 'post_title' => 'Logo Contact' ] );
+		$sponsor_id = $this->createSponsor( 'Logoactiviteit BV', 'awc_sponsor', [] );
+		$user_id    = $this->createRondoUser();
+		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+
+		$result   = ActivityLog::record( $sponsor_id, 'logo_changed', $user_id );
+		$activity = ActivityLog::recent( $sponsor_id );
+
+		$this->assertIsInt( $result );
+		$this->assertSame( 'logo_changed', $activity[0]['type'] );
+		$this->assertSame( 'Logo aangepast', $activity[0]['label'] );
+		$this->assertSame( 'Logo Contact', $activity[0]['actor_name'] );
 	}
 
 	public function test_non_businessclub_sponsor_cannot_set_narrowcasting_preference(): void {

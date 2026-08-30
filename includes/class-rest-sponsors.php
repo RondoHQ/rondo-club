@@ -7,6 +7,7 @@ namespace Rondo\REST;
 
 use Rondo\Core\AccessControl;
 use Rondo\Fields\Fields;
+use Rondo\Sponsors\ActivityLog;
 use Rondo\Sponsors\Relations;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -211,7 +212,7 @@ final class Sponsors extends Base {
 
 	public function get_sponsor( \WP_REST_Request $request ) {
 		$post = $this->sponsor_post( absint( $request['id'] ) );
-		return is_wp_error( $post ) ? $post : rest_ensure_response( $this->format_sponsor( $post ) );
+		return is_wp_error( $post ) ? $post : rest_ensure_response( $this->format_sponsor( $post, true ) );
 	}
 
 	public function create_sponsor( \WP_REST_Request $request ) {
@@ -392,6 +393,7 @@ final class Sponsors extends Base {
 		}
 
 		Relations::flush_cache();
+		ActivityLog::record( $sponsor->ID, 'logo_changed', get_current_user_id() );
 		$formatted = $this->format_sponsor( get_post( $sponsor->ID ) );
 		if ( ! AccessControl::can_manage_sponsors() ) {
 			$formatted = [
@@ -428,9 +430,19 @@ final class Sponsors extends Base {
 			);
 		}
 
-		$result = Fields::update_for_post( $sponsor->ID, 'club_tv_opt_out', $payload['opt_out'] );
+		$old_opt_out = (bool) Fields::get_for_post( $sponsor->ID, 'club_tv_opt_out' );
+		$result      = Fields::update_for_post( $sponsor->ID, 'club_tv_opt_out', $payload['opt_out'] );
 		if ( is_wp_error( $result ) ) {
 			return $result;
+		}
+		if ( $old_opt_out !== $payload['opt_out'] ) {
+			ActivityLog::record(
+				$sponsor->ID,
+				'club_tv_preference_changed',
+				get_current_user_id(),
+				0,
+				[ 'opt_out' => $payload['opt_out'] ]
+			);
 		}
 
 		return rest_ensure_response(
@@ -778,7 +790,7 @@ final class Sponsors extends Base {
 		return $ids !== [];
 	}
 
-	private function format_sponsor( \WP_Post $post ): array {
+	private function format_sponsor( \WP_Post $post, bool $include_activity = false ): array {
 		$fields   = Fields::all_for_post( $post->ID );
 		$contacts = [];
 		foreach ( (array) ( $fields['contacts'] ?? [] ) as $row ) {
@@ -802,7 +814,7 @@ final class Sponsors extends Base {
 		$fields['contacts']     = $contacts;
 		$fields['sponsor_type'] = (string) ( $fields['sponsor_type'] ?? 'organization' );
 
-		return [
+		$data = [
 			'id'                 => $post->ID,
 			'title'              => $this->sanitize_text( get_the_title( $post ) ),
 			'status'             => $post->post_status,
@@ -811,5 +823,11 @@ final class Sponsors extends Base {
 			'logo_url'           => get_the_post_thumbnail_url( $post, 'medium_large' ) ?: null,
 			'modified'           => get_post_modified_time( DATE_ATOM, false, $post ),
 		];
+
+		if ( $include_activity ) {
+			$data['activity'] = ActivityLog::recent( $post->ID );
+		}
+
+		return $data;
 	}
 }

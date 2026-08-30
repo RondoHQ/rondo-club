@@ -43,6 +43,7 @@ class PostTypes {
 		'taakuitleg'           => [ 'taakuitleg', 'taakuitleg_items' ],
 		'rondo_profile_change' => [ 'profile_change', 'profile_changes' ],
 		'rondo_activation_log' => [ 'activation_log', 'activation_logs' ],
+		'rondo_sponsor_log'    => [ 'sponsor_log', 'sponsor_logs' ],
 		'rondo_access_event'   => [ 'access_event', 'access_events' ],
 		'rondo_admission'      => [ 'admission', 'admissions' ],
 	];
@@ -126,8 +127,34 @@ class PostTypes {
 		$this->register_taakuitleg_post_type();
 		$this->register_profile_change_post_type();
 		$this->register_activation_log_post_type();
+		$this->register_sponsor_log_post_type();
 		$this->register_access_event_post_type();
 		$this->register_admission_post_type();
+	}
+
+	/** Register the private, immutable sponsor self-service activity log. */
+	private function register_sponsor_log_post_type() {
+		$args = array_merge(
+			[
+				'labels'             => [
+					'name'          => __( 'Sponsoractiviteiten', 'rondo' ),
+					'singular_name' => __( 'Sponsoractiviteit', 'rondo' ),
+				],
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => false,
+				'show_in_menu'       => false,
+				'show_in_rest'       => false,
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'rondo_sponsor_log' )
+		);
+
+		register_post_type( 'rondo_sponsor_log', $args );
 	}
 
 	/** Register private Sportlink-backed access events. */
