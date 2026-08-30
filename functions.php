@@ -294,6 +294,7 @@ function rondo_init() {
 	// Immutable member self-service audit trail and its 24-month retention job.
 	new \Rondo\Users\ProfileChangeLog();
 	new \Rondo\Users\ActivationLog();
+	new \Rondo\Sponsors\ActivityLog();
 
 	// Skip loading heavy classes for non-relevant requests
 	$is_admin = is_admin();
