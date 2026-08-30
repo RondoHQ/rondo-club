@@ -238,6 +238,7 @@ class MembershipPassLifecycleTest extends RondoTestCase {
 		$this->assertSame( 'businessclub', $sponsor_data['payload']['pass_type'] );
 		$this->assertSame( 'Businessclub Digitaal', $sponsor_data['person']['company_name'] );
 		$this->assertSame( 'Businessclubpas', $sponsor_data['pass']['role_label'] );
+		$this->assertSame( '#ffffff', $sponsor_data['pass']['background_color'] );
 		$this->assertStringEndsWith( '/public/icons/businessclub-awc-logo.png', $sponsor_data['pass']['logo_url'] );
 
 		$member_request = new \WP_REST_Request( 'GET', '/rondo/v1/membership-passes/people/' . $person_id . '/qr-token' );
@@ -245,6 +246,7 @@ class MembershipPassLifecycleTest extends RondoTestCase {
 		$member_data = $server->dispatch( $member_request )->get_data();
 		$this->assertSame( 'bondslid', $member_data['payload']['pass_type'] );
 		$this->assertSame( 'AWC 1 — Trainer', $member_data['pass']['role_label'] );
+		$this->assertMatchesRegularExpression( '/^#[a-f0-9]{6}$/', $member_data['pass']['background_color'] );
 		$this->assertStringEndsWith( '/public/icons/apple-touch-icon-180x180.png', $member_data['pass']['logo_url'] );
 
 		$invalid_request = new \WP_REST_Request( 'GET', '/rondo/v1/membership-passes/people/' . $person_id . '/qr-token' );
