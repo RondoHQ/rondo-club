@@ -87,6 +87,7 @@ class VolunteerStatus {
 		'Trainer/coach',
 		'Hoofdtrainer',
 		'Assistent-trainer',
+		'Assistent-trainer/coach',
 		'Leider',
 		'Teamleider',
 		'Teammanager',
