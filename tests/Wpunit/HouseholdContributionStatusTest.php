@@ -44,6 +44,7 @@ class HouseholdContributionStatusTest extends RondoTestCase {
 		update_post_meta( $invoice_id, '_installment_plan', 'quarterly_3' );
 		update_post_meta( $invoice_id, '_installment_count', 3 );
 		update_post_meta( $invoice_id, '_installment_1_status', 'betaald' );
+		update_post_meta( $invoice_id, '_installment_1_amount', 80 );
 		update_post_meta( $invoice_id, '_installment_1_payment_link', 'https://example.org/oude-link' );
 		update_post_meta( $invoice_id, '_installment_2_status', 'sent' );
 		update_post_meta( $invoice_id, '_installment_2_amount', 80 );
@@ -56,6 +57,8 @@ class HouseholdContributionStatusTest extends RondoTestCase {
 
 		$this->assertSame( 3, $summary['installment_count'] );
 		$this->assertSame( 1, $summary['paid_installments'] );
+		$this->assertSame( 240.00, $summary['total_amount'] );
+		$this->assertSame( 160.00, $summary['outstanding_amount'] );
 		$this->assertSame( 2, $summary['next_installment']['number'] );
 		$this->assertSame( 81.50, $summary['next_installment']['amount'] );
 		$this->assertSame( '2026-10-01', $summary['next_installment']['due_date'] );
@@ -71,7 +74,22 @@ class HouseholdContributionStatusTest extends RondoTestCase {
 		$summary = MembershipContributionSummary::for_people( [ $member ] )[ $member ];
 
 		$this->assertSame( 'paid', $summary['status'] );
+		$this->assertSame( 0.0, $summary['outstanding_amount'] );
 		$this->assertNull( $summary['payment_url'] );
+	}
+
+	public function test_finance_summary_includes_latest_draft_invoice(): void {
+		$member = $this->createPerson( [ 'post_title' => 'Conceptlid' ] );
+		$season = SeasonKey::current( wp_date( 'Y-m-d' ) );
+		$this->create_membership_invoice( $member, $season, 'rondo_cancelled', 'C-VERVALLEN', 180.00 );
+		$draft_id = $this->create_membership_invoice( $member, $season, 'rondo_draft', 'C-CONCEPT', 195.00 );
+
+		$summary = MembershipContributionSummary::for_finance_people( [ $member ], $season )[ $member ];
+
+		$this->assertSame( $draft_id, $summary['invoice_id'] );
+		$this->assertSame( 'draft', $summary['status'] );
+		$this->assertSame( 'C-CONCEPT', $summary['invoice_number'] );
+		$this->assertNull( $summary['outstanding_amount'] );
 	}
 
 	private function create_membership_invoice( int $person_id, string $season, string $post_status, string $number, float $amount ): int {
