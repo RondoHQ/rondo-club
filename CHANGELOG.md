@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- De mobiele sidebar sluit nu ook wanneer de gebruiker onderaan op zijn profiel klikt.
 - De kleurenschemaknoppen blijven op mobiel binnen de profielkaart en de Google Wallet-knop houdt in dark mode zwarte tekst op zijn lichte achtergrond.
 - De zoekdialoog heeft op mobiel een duidelijke sluitknop en sluit op desktop met de Escape-toets, ongeacht welk element focus heeft.
 - Het aanpassen van kortingen op contributiefacturen veroorzaakt geen fatale PHP-fout meer; facturen met betaalde termijnen of actieve termijnbetaallinks tonen vooraf waarom een gewone kortingswijziging is geblokkeerd.
