@@ -12,6 +12,12 @@ const STATUS_CONFIG = {
   missing: { label: 'Geen VOG', color: 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200',                icon: AlertTriangle },
 };
 
+const DEFAULT_PROFILE_TEXTS = {
+  missing: 'Je hebt nog geen VOG ingeleverd. De VOG-coördinator kan een aanvraag voor je starten via Justis — de aanvraag is gratis voor vrijwilligers.',
+  expired: 'Je VOG is verlopen. Neem contact op met de VOG-coördinator om een nieuwe aanvraag te starten.',
+  renewal: 'Je VOG verloopt binnenkort — neem contact op met de VOG-coördinator om de aanvraag te vernieuwen.',
+};
+
 export default function ProfileVog() {
   useDocumentTitle('Mijn VOG');
 
@@ -38,6 +44,7 @@ export default function ProfileVog() {
   const status = vog?.status || 'missing';
   const cfg    = STATUS_CONFIG[status] || STATUS_CONFIG.missing;
   const Icon   = cfg.icon;
+  const profileTexts = { ...DEFAULT_PROFILE_TEXTS, ...vog?.profile_texts };
 
   return (
     <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-6">
@@ -85,17 +92,17 @@ export default function ProfileVog() {
               </div>
               {status === 'missing' && (
                 <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                  Je hebt nog geen VOG ingeleverd. De VOG-coördinator kan een aanvraag voor je starten via Justis — de aanvraag is gratis voor vrijwilligers.
+                  {profileTexts.missing}
                 </p>
               )}
               {status === 'expired' && (
                 <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                  Je VOG is verlopen. Neem contact op met de VOG-coördinator om een nieuwe aanvraag te starten.
+                  {profileTexts.expired}
                 </p>
               )}
               {vog?.needs_renewal_reminder && status === 'valid' && (
                 <p className="mt-2 text-sm text-amber-700 dark:text-amber-400">
-                  Je VOG verloopt binnenkort — neem contact op met de VOG-coördinator om de aanvraag te vernieuwen.
+                  {profileTexts.renewal}
                 </p>
               )}
             </div>

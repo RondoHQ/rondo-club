@@ -826,6 +826,7 @@ class Volunteer extends Base {
 				'expires_at'             => $expires_at,
 				'needs_renewal_reminder' => $needs_renewal_reminder,
 				'validity_years'         => 3,
+				'profile_texts'          => ( new \Rondo\VOG\VOGEmail() )->get_profile_texts(),
 			]
 		);
 	}
