@@ -229,7 +229,13 @@ function MembershipPassActions({ membershipPass, personId }) {
                 className: 'inline-flex rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bright-cobalt',
                 onClick: (event) => openPassAction(event, wallet),
               };
-              const badgeImage = <img src={badge.src} alt={badge.alt} className="h-12 w-auto" />;
+              const badgeImage = (
+                <img
+                  src={badge.src}
+                  alt={badge.alt}
+                  className={`h-12 w-auto ${wallet === 'google' ? 'dark:invert dark:hue-rotate-180' : ''}`}
+                />
+              );
 
               return membershipPass.requires_role ? (
                 <button

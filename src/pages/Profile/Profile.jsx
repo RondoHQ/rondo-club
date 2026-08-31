@@ -167,7 +167,7 @@ export default function Profile() {
           Kies hoe de app eruitziet. Selecteer een thema of synchroniseer met je systeeminstellingen.
         </p>
 
-        <div className="flex gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {colorSchemeOptions.map((option) => {
             const Icon = option.icon;
             const isSelected = colorScheme === option.id;
@@ -176,7 +176,7 @@ export default function Profile() {
                 key={option.id}
                 onClick={() => setColorScheme(option.id)}
                 className={`
-                  flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors
+                  flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors
                   ${isSelected
                     ? 'bg-electric-cyan text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'}
