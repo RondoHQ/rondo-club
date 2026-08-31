@@ -38,6 +38,8 @@ guard and manual grant/revoke behavior.
 7. Access managed by this integration is removed automatically when the capability disappears.
    Mailbox access assigned manually outside the managed mapping is never changed.
 8. Failure of Rondo or the sidebar endpoint must never block normal FreeScout conversation work.
+9. New FreeScout installations receive a known fixed Rondo Integration module version and then use
+   FreeScout's built-in third-party module updater to reach the latest approved release.
 
 ## Why this replaces copied customer context
 
@@ -301,6 +303,57 @@ One custom FreeScout module owns all Rondo-specific behavior on the FreeScout si
 The module records the audited Sidebar Webhook commit used as a reference. Any copied or
 substantially derived code retains the upstream MIT copyright and license notice. There is no
 runtime dependency on the Sidebar Webhook module and no second custom provisioning module.
+
+#### Distribution, provisioning and updates
+
+FreeScout core supports updates for installed third-party modules through these `module.json`
+fields:
+
+```json
+{
+  "alias": "rondointegration",
+  "version": "1.0.0",
+  "requiredAppVersion": "1.8.238",
+  "authorUrl": "https://rondo.club",
+  "latestVersionUrl": "https://github.com/RondoHQ/freescout-rondo-integration/releases/latest/download/module.json",
+  "latestVersionZipUrl": "https://github.com/RondoHQ/freescout-rondo-integration/releases/latest/download/rondo-integration.zip"
+}
+```
+
+The exact repository and URLs are confirmed when the FreeScout module repository is created. The
+contract is:
+
+1. Provision a fresh FreeScout installation with a known compatible, fixed-version ZIP.
+2. Extract it as `Modules/RondoIntegration` and run FreeScout's module installation/activation
+   command for alias `rondointegration`.
+3. Run the module-owned `php artisan rondo:integration-update` provisioning command.
+4. That command reads and validates `latestVersionUrl`, compares the semantic version and invokes
+   FreeScout's core updater only for alias `rondointegration`.
+5. FreeScout downloads `latestVersionZipUrl`, installs migrations/assets and rebuilds its module
+   configuration.
+6. Record the resulting module version and fail provisioning if it differs from the approved
+   latest release.
+
+Current FreeScout `1.8.238` detects `module.json` version responses and performs alias-specific
+updates correctly through its Modules UI. Its generic `freescout:module-update` command does not
+apply the same JSON parsing and alias filtering consistently for third-party modules. Automated
+provisioning therefore uses the Rondo-owned wrapper around `App\Module::updateModule()` and verifies
+the alias before and after the update. The generic command is not used for unattended provisioning.
+
+The fixed bootstrap version guarantees that a new installation always has the updater contract,
+even when provisioning code has not yet been changed for a later module release. Routine updates
+then use FreeScout's normal Modules UI or the Rondo-owned targeted Artisan command.
+
+FreeScout's third-party updater does not verify an artifact checksum or signature before
+extraction. Therefore:
+
+- release ZIPs and `module.json` are published together as immutable GitHub Release assets;
+- `latestVersionUrl` and `latestVersionZipUrl` resolve to assets from the same release;
+- only protected CI release workflows may publish or replace update artifacts;
+- provisioning records the downloaded release version and artifact SHA-256 independently;
+- unattended updates are not scheduled in version one;
+- a database and module-directory backup is taken before an operator-approved update;
+- module updates are first installed and tested on the non-production FreeScout instance.
 
 #### FreeScout request authorization
 
@@ -587,8 +640,8 @@ Automatic creation may be enabled only when:
 
 ### Revocation
 
-Removing `ledenadministratie` causes the bridge to remove the managed mailbox. It does not
-automatically terminate an existing FreeScout session or delete the FreeScout account.
+Removing `ledenadministratie` causes the Rondo Integration module to remove the managed mailbox. It
+does not automatically terminate an existing FreeScout session or delete the FreeScout account.
 
 This is acceptable for version one because the user loses the mailbox and Rondo sidebar data. A
 future account-deactivation policy may be considered only after proving that the user has no manual
@@ -641,6 +694,10 @@ mappings remain authoritative.
 - Client secrets stored hashed where retrieval is unnecessary and otherwise encrypted using the
   existing Rondo secret-storage boundary.
 - Signing keys rotatable with an overlap window for one previous key.
+- Rondo Integration update URLs use HTTPS and one controlled release origin.
+- Release artifacts are immutable, produced by protected CI and accompanied by a recorded SHA-256.
+- An updater release never advertises a version before both its manifest and ZIP are available.
+- Production module updates require a backup and explicit operator initiation in version one.
 - HMAC validation before parsing or querying personal data.
 - Replay prevention through timestamp and one-time nonce.
 - Constant-time signature comparison.
@@ -754,6 +811,10 @@ confirmed current-agent hook.
 
 - Create the custom FreeScout module and record the audited Sidebar Webhook reference commit.
 - Retain the upstream MIT notice for reused or substantially derived code.
+- Add third-party updater metadata to `module.json`.
+- Add `rondo:integration-update` as an alias-restricted wrapper around FreeScout's core updater.
+- Publish matching `module.json` and ZIP assets through a protected release workflow.
+- Add a fixed-version bootstrap artifact and targeted update command to FreeScout provisioning.
 - Add authentication and conversation authorization.
 - Add current agent to the signed payload.
 - Replace body secret with versioned HMAC headers.
@@ -816,6 +877,20 @@ confirmed current-agent hook.
 - Oversized or wrong-content-type response is rejected.
 - Returned script/event-handler markup cannot execute in FreeScout.
 
+### Module distribution and updates
+
+- A clean FreeScout installation can provision the fixed bootstrap module version.
+- The targeted third-party update command detects and installs a newer semantic version.
+- The command parses both a plain version response and the version in `module.json`.
+- Updating `rondointegration` never updates another installed third-party module.
+- A current version reports that no update is available and remains unchanged.
+- An unavailable version endpoint leaves the installed module unchanged.
+- A failed or invalid ZIP does not produce an active partial module.
+- The manifest and ZIP endpoints resolve to assets from the same release.
+- The resulting module version and independently calculated artifact SHA-256 are recorded.
+- Migrations and assets are installed once and repeated updates are idempotent.
+- A backup and restore rehearsal returns the previous module and database state.
+
 ### Person matching and fields
 
 - One exact primary-email match renders.
@@ -856,6 +931,9 @@ The milestone is complete only when:
 - an unreachable Rondo endpoint does not freeze FreeScout or exhaust workers;
 - returned sidebar content cannot execute scripts in the FreeScout parent page;
 - existing manual mailbox assignments remain unchanged;
+- a fresh FreeScout installation can provision a fixed Rondo Integration version and update it to
+  the latest approved release through FreeScout's targeted module updater;
+- the installed version and artifact SHA-256 match the approved release record;
 - a break-glass FreeScout administrator login is proven;
 - the current customer-enrichment sync remains available until explicit cutover approval;
 - production OAuth forcing and sync disablement each receive separate approval.
@@ -867,6 +945,7 @@ The milestone is complete only when:
 - Disable managed provisioning in the Rondo Integration module while leaving existing mailbox
   relations unchanged.
 - Disable the sidebar feature or Rondo Integration module.
+- Restore the previous module directory and database backup if a module update fails.
 - Re-enable the existing Rondo Sync FreeScout customer pipeline if it was disabled.
 - Preserve FreeScout users, conversations, customer records and historical custom fields.
 - Rotate the OAuth client secret and HMAC signing key if compromise is suspected.
@@ -887,3 +966,4 @@ The milestone is complete only when:
    retired.
 10. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
 11. Audit retention period and operational owners for failed provisioning events.
+12. Final module repository, protected release workflow and update-asset URLs.
