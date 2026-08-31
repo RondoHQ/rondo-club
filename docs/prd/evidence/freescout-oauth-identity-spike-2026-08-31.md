@@ -108,8 +108,55 @@ binding remained unchanged.
 Automatic user creation was disabled again and the synthetic provider was restored to its normal
 administrator identity after the test.
 
+## Managed mailbox reconciliation proof
+
+The disposable Rondo Integration listener called a synthetic access service from
+`Illuminate\Auth\Events\Login`. The access service returned the stable key
+`ledenadministratie`; local configuration translated that key to FreeScout mailbox ID `1`, named
+`Ledenadministratie test`. Mailbox ID `2`, `Algemeen test`, represented unrelated manual access.
+
+Observed results for the ordinary synthetic user:
+
+| Step | Actual mailbox IDs | Module-owned IDs | Reconciliation result |
+|---|---|---|---|
+| Before grant | `[2]` | `[]` | Unrelated manual mailbox only |
+| First desired-state grant | `[1, 2]` | `[1]` | Attached `[1]`; mailbox `2` preserved |
+| Repeated identical grant | `[1, 2]` | `[1]` | Attached `[]`; detached `[]` |
+| Desired-state revoke | `[2]` | `[]` | Detached `[1]`; mailbox `2` preserved |
+| Manually attach mapped mailbox, then reconcile revoked state | `[1, 2]` | `[]` | Attached `[]`; detached `[]` |
+
+Grant used `App\User::mailboxes()->attach($mailboxId)` and then
+`App\User::syncPersonalFolders(null)`. Revocation used `detach($mailboxId)` only for IDs recorded
+in module-owned state. The proof never called `sync()` on the complete mailbox collection. The
+relation is FreeScout's `App\User` to `App\Mailbox` `belongsToMany` relation through
+`mailbox_user`; module-owned IDs and a redacted last-result audit were stored separately in
+`App\Option` for the spike.
+
+An administrator login with revoked desired state kept role `App\User::ROLE_ADMIN`, retained both
+mailbox relations and recorded `skipped_admin` with no attachment changes.
+
+### Customer-visibility prerequisite
+
+FreeScout denied mailbox `1` and its synthetic conversation to a user with zero mailbox relations.
+However, with FreeScout's default `APP_LIMIT_USER_CUSTOMER_VISIBILITY=false`, that same user could
+open the synthetic customer's profile and edit form directly by customer ID. The profile exposed
+the customer email and the edit route rendered editable customer fields.
+
+FreeScout core already provides the required restriction. After persisting and verifying
+`APP_LIMIT_USER_CUSTOMER_VISIBILITY=true`, the same zero-mailbox session received `Access denied`
+for all three direct routes:
+
+- customer conversation list;
+- customer edit form;
+- mailbox conversation.
+
+This setting is therefore a mandatory deployment invariant, not an optional hardening preference.
+With it enabled, the managed mailbox reconciliation proof passes. The disposable environment was
+left with automatic creation disabled, revoked synthetic desired state and the administrator signed
+in.
+
 ## Current decision
 
-The paid module remains usable only with the Rondo identity guard and one-to-one subject binding.
-The OAuth identity-guard proof is a provisional pass; the complete compatibility spike remains in
-progress.
+The paid module remains usable only with the Rondo identity guard, one-to-one subject binding and
+`APP_LIMIT_USER_CUSTOMER_VISIBILITY=true`. Identity binding and managed mailbox reconciliation are
+provisional passes; the complete compatibility spike remains in progress.

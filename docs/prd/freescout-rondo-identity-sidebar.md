@@ -44,6 +44,9 @@ guard and manual grant/revoke behavior.
     identity can be trusted for later logins; email is used only for the controlled first link.
 11. The Rondo installation URL is environment-specific configuration. No Rondo or FreeScout
     hostname is embedded in module code.
+12. FreeScout runs with `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true`. Its default `false` value lets a
+    non-administrator with zero mailboxes open customer profile and edit routes by ID even though
+    the related conversation is denied.
 
 ## Why this replaces copied customer context
 
@@ -788,6 +791,8 @@ mappings remain authoritative.
 - Conversation policy authorization and mailbox/conversation consistency check.
 - Agent identity reloaded server-side; never trusted from browser parameters.
 - Mailbox allowlist intersects Rondo access; it never widens it.
+- FreeScout customer visibility is limited to customers with conversations in mailboxes the agent
+  may view; `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true` is a required deployment invariant.
 - Script-free isolated sidebar response.
 - No credentials, raw tokens, signatures, personal payloads or returned HTML in normal logs.
 - Rate limiting per FreeScout instance, agent and source IP where reliable.
@@ -1026,6 +1031,8 @@ confirmed current-agent hook.
 - A manually attached instance of the managed mailbox is not detached unless recorded as managed.
 - FreeScout administrators are not downgraded.
 - Repeated login/event/reconciliation is idempotent.
+- A zero-mailbox user is denied on direct customer, customer-edit and conversation URLs with
+  `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true`.
 - Missed event is repaired hourly.
 - Rondo outage leaves existing FreeScout access unchanged and records a retryable error.
 
@@ -1048,6 +1055,8 @@ The milestone is complete only when:
 - an unreachable Rondo endpoint does not freeze FreeScout or exhaust workers;
 - returned sidebar content cannot execute scripts in the FreeScout parent page;
 - existing manual mailbox assignments remain unchanged;
+- `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true` is verified in the deployed FreeScout runtime and a
+  zero-mailbox user cannot open customer, customer-edit or conversation routes by ID;
 - a fresh FreeScout installation can provision a fixed Rondo Integration version and update it to
   the latest approved release through FreeScout's targeted module updater;
 - the installed version and artifact SHA-256 match the approved release record;
