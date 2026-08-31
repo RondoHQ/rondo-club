@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { shouldPlacePopoverBelow } from '@/utils/popoverPosition';
 
 export default function AnchoredPopover({
   anchor,
@@ -25,8 +26,7 @@ export default function AnchoredPopover({
     const anchorRect = anchor.getBoundingClientRect();
     const availableBelow = window.innerHeight - anchorRect.bottom - gap - margin;
     const availableAbove = anchorRect.top - gap - margin;
-    const placeBelow = availableBelow >= Math.min(preferredHeight, window.innerHeight * 0.4)
-      || availableBelow >= availableAbove;
+    const placeBelow = shouldPlacePopoverBelow(anchorRect, window.innerHeight, preferredHeight, margin, gap);
     const availableHeight = placeBelow ? availableBelow : availableAbove;
     const centeredLeft = anchorRect.left + (anchorRect.width / 2) - (width / 2);
 
@@ -59,17 +59,21 @@ export default function AnchoredPopover({
       onClose();
       anchor?.focus();
     };
+    const handleScroll = (event) => {
+      if (popoverRef.current?.contains(event.target)) return;
+      updatePosition();
+    };
 
     document.addEventListener('pointerdown', handlePointerDown);
     document.addEventListener('keydown', handleKeyDown);
     window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('scroll', handleScroll, true);
 
     return () => {
       document.removeEventListener('pointerdown', handlePointerDown);
       document.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('scroll', handleScroll, true);
     };
   }, [anchor, onClose, updatePosition]);
 
@@ -81,7 +85,7 @@ export default function AnchoredPopover({
       id={id}
       role="dialog"
       aria-labelledby={labelledBy}
-      className={`fixed z-50 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900 ${className}`}
+      className={`fixed z-50 overflow-y-auto overscroll-contain rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900 ${className}`}
       style={position}
     >
       {children}

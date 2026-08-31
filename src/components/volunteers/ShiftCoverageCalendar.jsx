@@ -14,6 +14,7 @@ import { CheckCircle2, Circle, X, XCircle } from 'lucide-react';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import AnchoredPopover from '@/components/AnchoredPopover';
 import { format } from '@/utils/dateFormat';
+import { shouldPlacePopoverBelow } from '@/utils/popoverPosition';
 
 const WEEKDAYS = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
@@ -182,8 +183,21 @@ export default function ShiftCoverageCalendar({
 
   const closeDetails = useCallback(() => setSelection(null), []);
   const handleSelectDate = useCallback((date, anchor) => {
-    setSelection((current) => current?.date === date ? null : { date, anchor });
-  }, []);
+    if (selection?.date === date) {
+      closeDetails();
+      return;
+    }
+
+    const anchorRect = anchor.getBoundingClientRect();
+    if (
+      window.innerWidth < 640
+      && !shouldPlacePopoverBelow(anchorRect, window.innerHeight, 360)
+    ) {
+      anchor.scrollIntoView({ block: 'center', inline: 'nearest' });
+    }
+
+    setSelection({ date, anchor });
+  }, [closeDetails, selection?.date]);
 
   useEffect(() => {
     if (selectedDate && !daysByDate.has(selectedDate)) closeDetails();
