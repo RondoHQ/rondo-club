@@ -88,7 +88,7 @@ class VolunteerObligationUnitsTest extends RondoTestCase {
 		$this->assertSame( 2, $units[0]['required_count'] );
 	}
 
-	public function test_trainer_coach_parent_exempts_the_shared_family_duty(): void {
+	public function test_assistant_trainer_coach_parent_exempts_the_shared_family_duty(): void {
 		$first_parent   = $this->person( null, 'Eerste ouder' );
 		$trainer_parent = $this->person( null, 'Trainer ouder' );
 		$child          = $this->person( 'Onder 10', 'Kind' );
@@ -101,7 +101,7 @@ class VolunteerObligationUnitsTest extends RondoTestCase {
 				[
 					'team'        => 123,
 					'entity_type' => 'team',
-					'job_title'   => 'Trainer/coach',
+					'job_title'   => 'Assistent-trainer/coach',
 					'is_current'  => true,
 				],
 			]
