@@ -40,6 +40,8 @@ guard and manual grant/revoke behavior.
 8. Failure of Rondo or the sidebar endpoint must never block normal FreeScout conversation work.
 9. New FreeScout installations receive a known fixed Rondo Integration module version and then use
    FreeScout's built-in third-party module updater to reach the latest approved release.
+10. The Rondo Integration module binds each Rondo `sub` to exactly one FreeScout user before that
+    identity can be trusted for later logins; email is used only for the controlled first link.
 
 ## Why this replaces copied customer context
 
@@ -107,8 +109,12 @@ The paid OAuth Login module accepts a custom provider with:
 - client ID and client secret;
 - claim-to-user-field mapping.
 
-It can force OAuth login and optionally create new FreeScout users. It explicitly does not map
-users to mailboxes or Teams, so the custom Rondo Integration module owns mailbox provisioning.
+It can force OAuth login and optionally create new FreeScout users. Version `1.0.28` validates
+`state`, but sends neither PKCE nor an OpenID Connect `nonce`, consumes User Info, ignores `sub` and
+`email_verified` during user matching, and looks up an existing user only by email. Automatic user
+creation is enabled by default. The Rondo Integration module must therefore harden identity
+matching as well as own mailbox provisioning; the paid module is not an authorization boundary by
+itself.
 
 Reference: <https://freescout.net/module/oauth-login/>
 
@@ -220,11 +226,11 @@ The initial client is FreeScout. Client registration is administrator-only and s
 - client label shown to users;
 - secret-created and last-rotated timestamps.
 
-Rondo supports the authorization-code flow. It supports PKCE S256 when sent by the client and
-requires `state`. Whether the purchased FreeScout module sends PKCE and OpenID Connect `nonce` must
-be established in the compatibility spike. If it does not send PKCE, the FreeScout client remains
-a confidential server-side client authenticated by its secret, and the exception is documented
-before production approval.
+Rondo supports the authorization-code flow, requires `state`, and supports PKCE S256 when sent by
+the client. OAuth Login `1.0.28` sends neither PKCE nor an OpenID Connect `nonce`; it exchanges the
+code server-to-server using `client_secret_post` and retrieves User Info with the access token. The
+FreeScout client therefore remains a confidential server-side client authenticated by its secret,
+and this compatibility exception must receive explicit approval before production.
 
 When the `openid` scope is granted, the token response includes a short-lived, signed ID token with
 `iss`, `sub`, `aud`, `iat`, `exp` and the request `nonce` when supplied. Rondo publishes only the
@@ -303,6 +309,33 @@ One custom FreeScout module owns all Rondo-specific behavior on the FreeScout si
 The module records the audited Sidebar Webhook commit used as a reference. Any copied or
 substantially derived code retains the upstream MIT copyright and license notice. There is no
 runtime dependency on the Sidebar Webhook module and no second custom provisioning module.
+
+#### OAuth identity guard and subject binding
+
+OAuth Login `1.0.28` invokes the `oauthlogin.get_user_data` filter after retrieving User Info and
+before looking up a FreeScout user. The Rondo Integration module uses that pre-login hook as a
+mandatory identity guard. It fails closed unless:
+
+- the configured provider is the expected Rondo provider;
+- `sub` is non-empty;
+- `email_verified` is the boolean `true`;
+- the email is non-empty and acceptable under the Rondo identity policy; and
+- Rondo confirms that the subject is still eligible for FreeScout.
+
+The module stores a one-to-one binding between the configured Rondo provider plus `sub` and the
+FreeScout user ID. Both sides of the binding are unique.
+
+For the first login only, an unbound subject may select one existing, unbound FreeScout user by its
+unique verified email. The module stores this as a pending binding in the server-side session and
+commits it only when the paid module emits the successful login event for that same FreeScout user.
+Later logins resolve the bound user by ID and pass that user's current FreeScout email to the paid
+module's downstream lookup. A changed email or another subject presenting the old email can never
+silently move the binding.
+
+Automatic user creation remains disabled for the pilot. If it is enabled later, the new user must
+be bound to the initiating subject in the same successful login flow before mailbox provisioning
+runs. Any unlink or rebind requires an explicit, audited administrator action; normal OAuth login
+never replaces an existing binding.
 
 #### Distribution, provisioning and updates
 
@@ -691,6 +724,11 @@ mappings remain authoritative.
 - PKCE S256 supported; required when the client sends it.
 - `state` required and validated by FreeScout.
 - OpenID Connect `nonce` supported when sent.
+- User Info is accepted only from the configured Rondo provider and must contain a non-empty `sub`
+  and `email_verified: true`.
+- Rondo subject and FreeScout user bindings are one-to-one, persistent and never changed from an
+  ordinary login attempt.
+- Email is a first-link locator only; a later login resolves the already-bound FreeScout user.
 - Client secrets stored hashed where retrieval is unnecessary and otherwise encrypted using the
   existing Rondo secret-storage boundary.
 - Signing keys rotatable with an overlap window for one previous key.
@@ -762,6 +800,12 @@ bodies.
 Before product implementation, verify the paid OAuth Login module and current FreeScout release in
 a non-production environment.
 
+The partial `1.0.28` / FreeScout `1.8.238` execution has confirmed `state` validation,
+`client_secret_post`, User Info consumption, and the absence of PKCE and `nonce`. It also confirmed
+that the paid module alone accepts a different `sub` with `email_verified: false` when the email
+matches an existing user. The identity guard and subject binding are therefore blocking controls,
+not optional hardening.
+
 Required observations:
 
 1. Exact authorization request parameters and scopes.
@@ -792,6 +836,8 @@ Execution checklist:
 - Install licensed OAuth Login and a proof build of the custom Rondo Integration module outside
   production.
 - Capture OAuth behavior and FreeScout login events.
+- Prove the pre-login identity guard rejects missing/unverified claims and conflicting subjects.
+- Prove first-link, persistent subject binding and explicit administrator recovery.
 - Prove the sandboxed response design.
 - Confirm timeout values.
 - Review the threat model and decide any documented OAuth compatibility exception.
@@ -815,6 +861,7 @@ confirmed current-agent hook.
 - Add `rondo:integration-update` as an alias-restricted wrapper around FreeScout's core updater.
 - Publish matching `module.json` and ZIP assets through a protected release workflow.
 - Add a fixed-version bootstrap artifact and targeted update command to FreeScout provisioning.
+- Add the pre-login Rondo identity guard and one-to-one subject binding.
 - Add authentication and conversation authorization.
 - Add current agent to the signed payload.
 - Replace body secret with versioned HMAC headers.
@@ -864,6 +911,12 @@ confirmed current-agent hook.
 - PKCE verifier mismatch is denied when PKCE was initiated.
 - Unsupported scope is denied.
 - User Info token with wrong scope/expiry is denied.
+- Missing `sub` or `email_verified` other than boolean `true` is denied before FreeScout login.
+- A first login binds one verified Rondo subject to one unbound FreeScout user.
+- The same subject can log in again after an email change without changing the binding.
+- A different subject presenting a bound user's email is denied.
+- A subject already bound to another FreeScout user is denied.
+- An ordinary login cannot unlink, replace or transfer a subject binding.
 
 ### Sidebar request
 
@@ -921,6 +974,8 @@ confirmed current-agent hook.
 The milestone is complete only when:
 
 - a real pilot agent signs into FreeScout through Rondo;
+- that agent's verified Rondo subject is bound one-to-one to the expected FreeScout user;
+- another subject presenting the same email cannot authenticate as that FreeScout user;
 - FreeScout identifies the current agent and signs the sidebar request;
 - Rondo maps that agent to the expected approved WordPress user;
 - a current `ledenadministratie` capability grants the correct FreeScout mailbox;
@@ -955,7 +1010,8 @@ The milestone is complete only when:
 1. Exact production FreeScout mailbox ID and stable key for Ledenadministratie.
 2. Whether `srcdoc` with a scriptless sandbox fits the final FreeScout sidebar height and refresh
    behavior; otherwise use the escaped JSON renderer.
-3. The paid OAuth module's exact PKCE, nonce, token and login-event behavior.
+3. The exact successful-login/user-created event names and module-owned persistence mechanism for
+   one-to-one subject bindings.
 4. Whether current Rondo account approval is sufficient email verification for automatic
    FreeScout account matching.
 5. Whether automatic FreeScout user creation is ever enabled after the pilot.
