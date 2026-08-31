@@ -59,6 +59,18 @@ class Vog extends Base {
 						'reminder_template_renewal' => [
 							'required' => false,
 						],
+						'profile_text_missing'      => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_textarea_field',
+						],
+						'profile_text_expired'      => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_textarea_field',
+						],
+						'profile_text_renewal'      => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_textarea_field',
+						],
 						'exempt_commissies'         => [
 							'required'          => false,
 							'validate_callback' => function ( $param ) {
@@ -180,6 +192,9 @@ class Vog extends Base {
 		$template_renewal          = $request->get_param( 'template_renewal' );
 		$reminder_template_new     = $request->get_param( 'reminder_template_new' );
 		$reminder_template_renewal = $request->get_param( 'reminder_template_renewal' );
+		$profile_text_missing      = $request->get_param( 'profile_text_missing' );
+		$profile_text_expired      = $request->get_param( 'profile_text_expired' );
+		$profile_text_renewal      = $request->get_param( 'profile_text_renewal' );
 		$exempt_commissies         = $request->get_param( 'exempt_commissies' );
 		$exempt_roles              = $request->get_param( 'exempt_roles' );
 		$exempt_discipline_teams   = $request->get_param( 'exempt_discipline_teams' );
@@ -207,6 +222,17 @@ class Vog extends Base {
 
 		if ( $reminder_template_renewal !== null ) {
 			$vog_email->update_reminder_template_renewal( $reminder_template_renewal );
+		}
+
+		$profile_texts = [
+			'missing' => $profile_text_missing,
+			'expired' => $profile_text_expired,
+			'renewal' => $profile_text_renewal,
+		];
+		foreach ( $profile_texts as $status => $text ) {
+			if ( $text !== null ) {
+				$vog_email->update_profile_text( $status, $text );
+			}
 		}
 
 		// Track if exempt commissies changed for recalculation

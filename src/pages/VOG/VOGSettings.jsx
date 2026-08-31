@@ -12,6 +12,9 @@ export default function VOGSettings() {
     template_renewal: '',
     reminder_template_new: '',
     reminder_template_renewal: '',
+    profile_text_missing: '',
+    profile_text_expired: '',
+    profile_text_renewal: '',
     exempt_commissies: [],
     exempt_roles: [],
   });
@@ -70,7 +73,7 @@ export default function VOGSettings() {
           VOG instellingen
         </h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Configureer de e-mails die verstuurd worden voor VOG-aanvragen.
+          Configureer de ledencommunicatie en e-mails voor VOG-aanvragen.
         </p>
       </div>
 
@@ -80,6 +83,59 @@ export default function VOGSettings() {
         </div>
       ) : (
         <div className="space-y-6">
+          <div>
+            <h4 className="mb-1 text-base font-medium text-gray-900 dark:text-gray-100">
+              Teksten op Mijn VOG
+            </h4>
+            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+              Deze teksten zien leden bij een ontbrekende, verlopen of bijna verlopende VOG.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="vog-profile-text-missing" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Geen VOG
+                </label>
+                <textarea
+                  id="vog-profile-text-missing"
+                  rows={3}
+                  value={vogSettings.profile_text_missing}
+                  onChange={(event) => setVogSettings(prev => ({ ...prev, profile_text_missing: event.target.value }))}
+                  className="input mt-1 w-full"
+                />
+              </div>
+              <div>
+                <label htmlFor="vog-profile-text-expired" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Verlopen VOG
+                </label>
+                <textarea
+                  id="vog-profile-text-expired"
+                  rows={3}
+                  value={vogSettings.profile_text_expired}
+                  onChange={(event) => setVogSettings(prev => ({ ...prev, profile_text_expired: event.target.value }))}
+                  className="input mt-1 w-full"
+                />
+              </div>
+              <div>
+                <label htmlFor="vog-profile-text-renewal" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Verloopt binnenkort
+                </label>
+                <textarea
+                  id="vog-profile-text-renewal"
+                  rows={3}
+                  value={vogSettings.profile_text_renewal}
+                  onChange={(event) => setVogSettings(prev => ({ ...prev, profile_text_renewal: event.target.value }))}
+                  className="input mt-1 w-full"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200 pt-6 dark:border-gray-700">
+            <h4 className="text-base font-medium text-gray-900 dark:text-gray-100">
+              E-mailinstellingen
+            </h4>
+          </div>
+
           {/* From Email */}
           <div>
             <label htmlFor="vog-from-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">

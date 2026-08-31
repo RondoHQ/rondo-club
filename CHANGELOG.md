@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Beheerders kunnen onder **Instellingen → VOG** de ledencommunicatie voor ontbrekende, verlopen en bijna verlopende VOG's aanpassen.
 - Sponsorprofielen tonen een activiteitenlog van succesvolle logins, logo-aanpassingen en wijzigingen van de Club TV-voorkeur door sponsorcontacten.
 - Leden, ouders, sponsoren en Businessclubleden kunnen op **Mijn gegevens** een digitale pas met scanbare QR-code openen als zij geen Apple Wallet of Google Wallet gebruiken.
 - Businessclubleden zien op **Mijn gegevens** hun sponsorlogo in een Club TV-voorbeeld en kunnen daar zelf aangeven dat hun bedrijf niet op de narrowcasting mag verschijnen.

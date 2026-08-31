@@ -1454,7 +1454,7 @@ class DemoExport {
 			$settings['rondo_anniversary_milestones'] = $anniversary_milestones;
 		}
 
-		// VOG email settings (nullable)
+		// VOG settings (nullable)
 		$settings['rondo_vog_from_email'] = $this->normalize_value( get_option( 'rondo_vog_from_email', '' ) );
 		$settings['rondo_vog_from_name']  = $this->normalize_value( get_option( 'rondo_vog_from_name', '' ) );
 
@@ -1463,6 +1463,11 @@ class DemoExport {
 		$settings['rondo_vog_template_renewal']          = $this->normalize_value( get_option( 'rondo_vog_template_renewal', '' ) );
 		$settings['rondo_vog_reminder_template_new']     = $this->normalize_value( get_option( 'rondo_vog_reminder_template_new', '' ) );
 		$settings['rondo_vog_reminder_template_renewal'] = $this->normalize_value( get_option( 'rondo_vog_reminder_template_renewal', '' ) );
+
+		// Member-facing VOG profile texts.
+		$settings['rondo_vog_profile_text_missing'] = $this->normalize_value( get_option( 'rondo_vog_profile_text_missing', '' ) );
+		$settings['rondo_vog_profile_text_expired'] = $this->normalize_value( get_option( 'rondo_vog_profile_text_expired', '' ) );
+		$settings['rondo_vog_profile_text_renewal'] = $this->normalize_value( get_option( 'rondo_vog_profile_text_renewal', '' ) );
 
 		// VOG exempt commissies (convert post IDs to fixture refs)
 		$exempt_commissies      = get_option( 'rondo_vog_exempt_commissies', [] );

@@ -65,6 +65,22 @@ class VOGEmail {
 	 */
 	const OPTION_REMINDER_TEMPLATE_RENEWAL = 'rondo_vog_reminder_template_renewal';
 
+	/** Member-facing text shown when no VOG is registered. */
+	const OPTION_PROFILE_TEXT_MISSING = 'rondo_vog_profile_text_missing';
+
+	/** Member-facing text shown when the VOG has expired. */
+	const OPTION_PROFILE_TEXT_EXPIRED = 'rondo_vog_profile_text_expired';
+
+	/** Member-facing text shown shortly before the VOG expires. */
+	const OPTION_PROFILE_TEXT_RENEWAL = 'rondo_vog_profile_text_renewal';
+
+	/** Default member-facing VOG status texts. */
+	const DEFAULT_PROFILE_TEXTS = [
+		'missing' => 'Je hebt nog geen VOG ingeleverd. De VOG-coördinator kan een aanvraag voor je starten via Justis — de aanvraag is gratis voor vrijwilligers.',
+		'expired' => 'Je VOG is verlopen. Neem contact op met de VOG-coördinator om een nieuwe aanvraag te starten.',
+		'renewal' => 'Je VOG verloopt binnenkort — neem contact op met de VOG-coördinator om de aanvraag te vernieuwen.',
+	];
+
 	/**
 	 * Custom from email for current send operation
 	 *
@@ -227,11 +243,34 @@ class VOGEmail {
 	}
 
 	/**
+	 * Get the texts shown to members on their personal VOG page.
+	 *
+	 * @return array{missing:string,expired:string,renewal:string}
+	 */
+	public function get_profile_texts(): array {
+		$options = [
+			'missing' => self::OPTION_PROFILE_TEXT_MISSING,
+			'expired' => self::OPTION_PROFILE_TEXT_EXPIRED,
+			'renewal' => self::OPTION_PROFILE_TEXT_RENEWAL,
+		];
+		$texts   = [];
+
+		foreach ( $options as $status => $option ) {
+			$value            = trim( (string) get_option( $option, '' ) );
+			$texts[ $status ] = $value !== '' ? $value : self::DEFAULT_PROFILE_TEXTS[ $status ];
+		}
+
+		return $texts;
+	}
+
+	/**
 	 * Get all VOG settings
 	 *
 	 * @return array Settings array with email templates and VOG exemptions.
 	 */
 	public function get_all_settings(): array {
+		$profile_texts = $this->get_profile_texts();
+
 		return [
 			'from_email'                => $this->get_from_email(),
 			'from_name'                 => $this->get_from_name(),
@@ -239,6 +278,9 @@ class VOGEmail {
 			'template_renewal'          => $this->get_template_renewal(),
 			'reminder_template_new'     => $this->get_reminder_template_new(),
 			'reminder_template_renewal' => $this->get_reminder_template_renewal(),
+			'profile_text_missing'      => $profile_texts['missing'],
+			'profile_text_expired'      => $profile_texts['expired'],
+			'profile_text_renewal'      => $profile_texts['renewal'],
 			'exempt_commissies'         => $this->get_exempt_commissies(),
 			'exempt_roles'              => self::get_exempt_roles(),
 			'exempt_discipline_teams'   => $this->get_exempt_discipline_teams(),
@@ -312,6 +354,25 @@ class VOGEmail {
 	public function update_reminder_template_renewal( string $template ): bool {
 		$sanitized = wp_kses_post( $template );
 		return update_option( self::OPTION_REMINDER_TEMPLATE_RENEWAL, $sanitized );
+	}
+
+	/**
+	 * Update one member-facing VOG status text.
+	 *
+	 * @param string $status Status key: missing, expired or renewal.
+	 * @param string $text Text shown to the member.
+	 */
+	public function update_profile_text( string $status, string $text ): bool {
+		$options = [
+			'missing' => self::OPTION_PROFILE_TEXT_MISSING,
+			'expired' => self::OPTION_PROFILE_TEXT_EXPIRED,
+			'renewal' => self::OPTION_PROFILE_TEXT_RENEWAL,
+		];
+		if ( ! isset( $options[ $status ] ) ) {
+			return false;
+		}
+
+		return update_option( $options[ $status ], sanitize_textarea_field( $text ) );
 	}
 
 	/**
