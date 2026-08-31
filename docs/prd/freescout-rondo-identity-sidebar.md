@@ -693,6 +693,9 @@ Required observations:
 The spike produces captured request shapes with secrets redacted, a compatibility matrix and a
 go/no-go decision. It does not use production member data.
 
+Execution checklist:
+[FreeScout and Rondo compatibility spike checklist](freescout-rondo-compatibility-spike-checklist.md).
+
 ## Implementation phases
 
 ### Phase 0: compatibility and threat-model spike
