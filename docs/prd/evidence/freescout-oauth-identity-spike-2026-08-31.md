@@ -10,7 +10,7 @@
 ## Safe test configuration
 
 - Force OAuth Login: disabled.
-- Automatic user creation: disabled.
+- Automatic user creation: disabled except during the isolated new-user test, then disabled again.
 - OAuth debug logging: disabled.
 - Mail delivery: log driver only.
 - Provider, users and tokens: synthetic local test values.
@@ -76,6 +76,37 @@ The proof persisted one synthetic binding in both directions and used a pending 
 value to distinguish the OAuth login event from unrelated logins. This proves the hook and event
 shape are viable; the production persistence mechanism, recovery UI and concurrency behavior remain
 to be designed and tested.
+
+## Automatic user-creation result
+
+Automatic creation was enabled only for one synthetic, verified, previously unknown Rondo
+identity. OAuth Login created this FreeScout account:
+
+| Property | Observed value |
+|---|---|
+| FreeScout role | `1`, equal to `App\User::ROLE_USER` |
+| Status | `1`, active |
+| Mailbox memberships | `0` |
+| Visible application access | Dashboard only; no mailbox was available |
+| Subject binding | New Rondo subject bound bidirectionally to the new FreeScout user ID |
+
+Installed source and the proof listener established this order for the new-user callback:
+
+1. `oauthlogin.get_user_data` validated the provider, `sub`, verified email and pending binding.
+2. `oauthlogin.user_data` filtered the proposed FreeScout user data.
+3. `App\User::create()` persisted the user and fired the normal Eloquent creation events.
+4. `Auth::login($user)` fired `Illuminate\Auth\Events\Login` with the created user.
+5. The proof listener read the user's server-side ID and email and committed the subject binding.
+6. OAuth Login redirected to the application only after the listener returned.
+
+The `Login` event is therefore the safer production provisioning trigger than a model-created
+event: it covers both existing and newly created OAuth users, supplies the authenticated user, and
+runs before the browser reaches the application. A second login with the same synthetic identity
+returned to the same user ID; the email count remained one, mailbox count remained zero and the
+binding remained unchanged.
+
+Automatic user creation was disabled again and the synthetic provider was restored to its normal
+administrator identity after the test.
 
 ## Current decision
 

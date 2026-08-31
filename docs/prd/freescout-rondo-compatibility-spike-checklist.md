@@ -121,11 +121,11 @@ Keep automatic user creation disabled for the first five tests.
 
 In the isolated environment only, enable automatic user creation and observe:
 
-- [ ] the default FreeScout role and permissions;
-- [ ] whether the user starts with zero mailboxes;
-- [ ] which login/user-created events fire and in what order;
-- [ ] whether a provisioning listener can run before the user reaches a conversation;
-- [ ] duplicate behavior when the same identity logs in again.
+- [x] the default FreeScout role and permissions;
+- [x] whether the user starts with zero mailboxes;
+- [x] which login/user-created events fire and in what order;
+- [x] whether a provisioning listener can run before the user reaches a conversation;
+- [x] duplicate behavior when the same identity logs in again.
 
 Return automatic creation to disabled after the tests.
 
@@ -139,8 +139,8 @@ Use a minimal test listener inside a proof build of the custom Rondo Integration
 build the complete provisioning component during this spike.
 
 - [x] Identify the event fired after a successful OAuth login for an existing user.
-- [ ] Identify the event fired after OAuth creates a new user.
-- [ ] Confirm the listener can read the authenticated FreeScout user ID and email server-side.
+- [x] Identify the event fired after OAuth creates a new user.
+- [x] Confirm the listener can read the authenticated FreeScout user ID and email server-side.
 - [x] Confirm the listener can distinguish OAuth login from unrelated application events when
   necessary.
 - [ ] Confirm a temporary Rondo access-service failure can leave mailbox access unchanged while
@@ -307,7 +307,7 @@ architecture assumption must change before repeating the spike.
 - [ ] Completed version and environment record.
 - [ ] Completed checklist with evidence links.
 - [ ] Redacted OAuth request/response shapes.
-- [ ] Login and user-creation event map.
+- [x] Login and user-creation event map.
 - [ ] Managed mailbox model/event notes.
 - [ ] Sidebar authorization and isolation proof.
 - [ ] Timeout/failure results at expected pilot concurrency.
