@@ -42,6 +42,8 @@ guard and manual grant/revoke behavior.
    FreeScout's built-in third-party module updater to reach the latest approved release.
 10. The Rondo Integration module binds each Rondo `sub` to exactly one FreeScout user before that
     identity can be trusted for later logins; email is used only for the controlled first link.
+11. The Rondo installation URL is environment-specific configuration. No Rondo or FreeScout
+    hostname is embedded in module code.
 
 ## Why this replaces copied customer context
 
@@ -224,6 +226,7 @@ The initial client is FreeScout. Client registration is administrator-only and s
 - allowed scopes;
 - enabled/disabled status;
 - client label shown to users;
+- environment-specific FreeScout base URL for provisioning-event delivery;
 - secret-created and last-rotated timestamps.
 
 Rondo supports the authorization-code flow, requires `state`, and supports PKCE S256 when sent by
@@ -309,6 +312,44 @@ One custom FreeScout module owns all Rondo-specific behavior on the FreeScout si
 The module records the audited Sidebar Webhook commit used as a reference. Any copied or
 substantially derived code retains the upstream MIT copyright and license notice. There is no
 runtime dependency on the Sidebar Webhook module and no second custom provisioning module.
+
+#### Rondo connection configuration
+
+The module requires one **Rondo base URL** setting, for example `https://rondo.example.nl`. It is
+stored as environment-specific FreeScout configuration and may also be supplied during automated
+provisioning through `RONDO_BASE_URL`; the environment value takes precedence over the UI value.
+There is no compiled default and the integration remains disabled until a value is configured and
+verified.
+
+The value is normalized once when saved. It may contain a deployment path prefix, but never user
+info, a query string or a fragment. HTTPS is mandatory outside an explicitly marked local/test
+environment. A trailing slash does not change the resulting URL.
+
+All FreeScout-to-Rondo requests derive their destinations from this base URL plus module-owned,
+versioned paths:
+
+```text
+/wp-json/rondo/v1/integrations/freescout/sidebar
+/wp-json/rondo/v1/integrations/freescout/access
+```
+
+The paid OAuth Login module continues to store its Authorization, Token and User Info URLs in its
+own settings. Setup documentation and the Rondo Integration settings screen show the corresponding
+values derived from the configured Rondo base URL, but no endpoint hostname is duplicated in code:
+
+```text
+/oauth/authorize
+/oauth/token
+/oauth/userinfo
+```
+
+Changing the base URL disables Rondo requests until an administrator re-verifies the destination
+and signing configuration. Outbound requests may use only the configured origin and path prefix;
+redirects to another origin are never followed.
+
+The inverse Rondo-to-FreeScout provisioning target uses a separate environment-specific
+**FreeScout base URL** in Rondo's client configuration. It is not inferred from an OAuth redirect
+URI, and Rondo derives the provisioning-event path from it.
 
 #### OAuth identity guard and subject binding
 
@@ -460,7 +501,7 @@ is a fixed local renderer that receives a versioned JSON view model and escapes 
 
 ### Component 3: Rondo sidebar endpoint
 
-Proposed route:
+Route appended to the configured Rondo base URL:
 
 ```text
 POST /wp-json/rondo/v1/integrations/freescout/sidebar
@@ -523,7 +564,7 @@ unconfigured mailbox.
 
 #### Rondo access service
 
-Proposed route:
+Route appended to the configured Rondo base URL:
 
 ```text
 POST /wp-json/rondo/v1/integrations/freescout/access
@@ -729,6 +770,10 @@ mappings remain authoritative.
 - Rondo subject and FreeScout user bindings are one-to-one, persistent and never changed from an
   ordinary login attempt.
 - Email is a first-link locator only; a later login resolves the already-bound FreeScout user.
+- Rondo and FreeScout base URLs are explicit environment configuration with no compiled hostname.
+- Integration URLs reject credentials, query strings and fragments; production requires HTTPS.
+- Outbound integration requests stay within the configured origin and path prefix and never follow
+  cross-origin redirects.
 - Client secrets stored hashed where retrieval is unnecessary and otherwise encrypted using the
   existing Rondo secret-storage boundary.
 - Signing keys rotatable with an overlap window for one previous key.
@@ -861,6 +906,8 @@ confirmed current-agent hook.
 - Add `rondo:integration-update` as an alias-restricted wrapper around FreeScout's core updater.
 - Publish matching `module.json` and ZIP assets through a protected release workflow.
 - Add a fixed-version bootstrap artifact and targeted update command to FreeScout provisioning.
+- Add configurable Rondo base URL storage, `RONDO_BASE_URL` provisioning support and derived
+  endpoint display.
 - Add the pre-login Rondo identity guard and one-to-one subject binding.
 - Add authentication and conversation authorization.
 - Add current agent to the signed payload.
@@ -917,6 +964,19 @@ confirmed current-agent hook.
 - A different subject presenting a bound user's email is denied.
 - A subject already bound to another FreeScout user is denied.
 - An ordinary login cannot unlink, replace or transfer a subject binding.
+
+### Connection configuration
+
+- No source or built artifact contains a club-specific Rondo or FreeScout hostname.
+- The same module build connects to two different Rondo test installations by changing only the
+  base URL setting.
+- UI and `RONDO_BASE_URL` provisioning values produce the same normalized endpoint URLs.
+- A deployment path prefix and optional trailing slash are normalized without losing the prefix.
+- Missing, malformed, credential-bearing, query-bearing or fragment-bearing URLs are rejected.
+- Plain HTTP is rejected outside an explicitly marked local/test environment.
+- Changing the base URL disables requests until destination and signing configuration are
+  re-verified.
+- A redirect to another origin is rejected.
 
 ### Sidebar request
 
@@ -976,6 +1036,8 @@ The milestone is complete only when:
 - a real pilot agent signs into FreeScout through Rondo;
 - that agent's verified Rondo subject is bound one-to-one to the expected FreeScout user;
 - another subject presenting the same email cannot authenticate as that FreeScout user;
+- the deployed module contains no hardcoded Rondo hostname and uses the verified configured base
+  URL for every Rondo request;
 - FreeScout identifies the current agent and signs the sidebar request;
 - Rondo maps that agent to the expected approved WordPress user;
 - a current `ledenadministratie` capability grants the correct FreeScout mailbox;

@@ -48,6 +48,8 @@ Fill this section when executing the spike.
   plan to install it alongside the custom Rondo Integration module.
 - [ ] Configure a controlled test identity provider that can show redacted authorization, token and
   User Info request shapes.
+- [ ] Configure the Rondo base URL without changing module code and record the normalized derived
+  sidebar and access endpoints.
 - [ ] Create a synthetic FreeScout mailbox named `Ledenadministratie test`.
 - [ ] Create these synthetic FreeScout agents:
   - existing administrator with local login;
@@ -243,6 +245,11 @@ Use only the non-production endpoint and the expected pilot concurrency.
 - [ ] Repeated failures at expected pilot concurrency do not exhaust available PHP workers.
 - [ ] Manual refresh is rate limited and cannot create an unbounded request storm.
 - [ ] Confirm or adjust the proposed 2-second connection and 5-second total timeout using evidence.
+- [ ] Change the configured Rondo base URL and confirm all Rondo-bound requests use only the new
+  verified origin and path prefix.
+- [ ] Confirm missing or invalid configuration disables integration requests without affecting
+  normal FreeScout work.
+- [ ] Confirm a redirect to another origin is rejected.
 
 **Blocking failure:** a failed Rondo endpoint can make normal FreeScout conversation work
 unavailable.
@@ -260,6 +267,7 @@ Complete one row for every material behavior.
 | ID token/User Info | | Complete OIDC plus User Info | | | |
 | Existing-user match | | Unique verified email only | | | |
 | Subject binding | | One Rondo subject per FreeScout user | | | |
+| Rondo base URL | | Configured, verified and not hardcoded | | | |
 | Automatic creation | | Disabled for pilot | | | |
 | Login event | | Current agent available | | | |
 | Managed mailbox access | | Manual access preserved | | | |
