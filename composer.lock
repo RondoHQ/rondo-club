@@ -174,16 +174,16 @@
         },
         {
             "name": "composer/ca-bundle",
-            "version": "1.5.13",
+            "version": "1.5.14",
             "source": {
                 "type": "git",
                 "url": "https://github.com/composer/ca-bundle.git",
-                "reference": "c008272789979f709f7fcb32c2ecf1d2db5e84e5"
+                "reference": "0c8abba0634f637bd78c4e451981da368d403463"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/composer/ca-bundle/zipball/c008272789979f709f7fcb32c2ecf1d2db5e84e5",
-                "reference": "c008272789979f709f7fcb32c2ecf1d2db5e84e5",
+                "url": "https://api.github.com/repos/composer/ca-bundle/zipball/0c8abba0634f637bd78c4e451981da368d403463",
+                "reference": "0c8abba0634f637bd78c4e451981da368d403463",
                 "shasum": ""
             },
             "require": {
@@ -230,7 +230,7 @@
             "support": {
                 "irc": "irc://irc.freenode.org/composer",
                 "issues": "https://github.com/composer/ca-bundle/issues",
-                "source": "https://github.com/composer/ca-bundle/tree/1.5.13"
+                "source": "https://github.com/composer/ca-bundle/tree/1.5.14"
             },
             "funding": [
                 {
@@ -242,7 +242,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-07-18T12:35:13+00:00"
+            "time": "2026-08-21T14:57:29+00:00"
         },
         {
             "name": "firebase/php-jwt",
@@ -881,16 +881,16 @@
         },
         {
             "name": "mollie/mollie-api-php",
-            "version": "v3.13.1",
+            "version": "v3.13.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/mollie/mollie-api-php.git",
-                "reference": "c35f5b1549a032a3cb52014828485bb6c40396cb"
+                "reference": "9cbac3526de63b1675657fda631330a6d29759b0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mollie/mollie-api-php/zipball/c35f5b1549a032a3cb52014828485bb6c40396cb",
-                "reference": "c35f5b1549a032a3cb52014828485bb6c40396cb",
+                "url": "https://api.github.com/repos/mollie/mollie-api-php/zipball/9cbac3526de63b1675657fda631330a6d29759b0",
+                "reference": "9cbac3526de63b1675657fda631330a6d29759b0",
                 "shasum": ""
             },
             "require": {
@@ -971,9 +971,9 @@
             ],
             "support": {
                 "issues": "https://github.com/mollie/mollie-api-php/issues",
-                "source": "https://github.com/mollie/mollie-api-php/tree/v3.13.1"
+                "source": "https://github.com/mollie/mollie-api-php/tree/v3.13.2"
             },
-            "time": "2026-06-08T09:26:28+00:00"
+            "time": "2026-08-24T11:46:03+00:00"
         },
         {
             "name": "monolog/monolog",
