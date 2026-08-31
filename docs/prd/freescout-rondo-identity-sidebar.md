@@ -1,7 +1,7 @@
 # FreeScout sidebar, Rondo identity and mailbox provisioning
 
-**Status:** draft PRD, 2026-08-31  
-**Scope:** Rondo Club, a maintained FreeScout module fork, and a small FreeScout access-bridge module  
+**Status:** draft PRD, 2026-08-31<br>
+**Scope:** Rondo Club, one custom Rondo Integration FreeScout module, and the paid FreeScout OAuth Login module<br>
 **Milestone type:** planning only; this document does not authorize implementation or production changes
 
 ## Outcome
@@ -24,7 +24,9 @@ guard and manual grant/revoke behavior.
 
 ## Decisions already taken
 
-1. Use `fulldecent/freescout-sidebar-webhook` as the starting point, but maintain a hardened fork.
+1. Build one custom **Rondo Integration** FreeScout module for the sidebar and managed mailbox
+   provisioning. Use the MIT-licensed `fulldecent/freescout-sidebar-webhook` implementation and
+   relevant forks as attributed references, not as a maintained fork or separate installed module.
 2. The sidebar varies by FreeScout mailbox. Ledenadministratie receives a more extensive view than
    a general mailbox.
 3. Rondo becomes an OAuth/OpenID Connect identity provider for FreeScout agents.
@@ -104,23 +106,28 @@ The paid OAuth Login module accepts a custom provider with:
 - claim-to-user-field mapping.
 
 It can force OAuth login and optionally create new FreeScout users. It explicitly does not map
-users to mailboxes or Teams, so mailbox provisioning requires the separate access-bridge module.
+users to mailboxes or Teams, so the custom Rondo Integration module owns mailbox provisioning.
 
 Reference: <https://freescout.net/module/oauth-login/>
 
-### Sidebar Webhook module
+### Sidebar Webhook reference implementation
 
 Upstream version `3.2.2` sends customer, conversation and mailbox context to a configured endpoint
 and injects the returned HTML into the conversation page.
 
-Relevant fork work:
+Its current operational implementation is small, generic and MIT licensed. The Rondo Integration
+module may reuse compatible portions with the original copyright and license notice, but it owns
+its own name, release lifecycle, security model and configuration. The upstream module is not
+installed alongside it.
+
+Relevant reference work:
 
 - `8c88174489686536431640395ed7b1b8c30fad2d` moves the returned content higher in the FreeScout
-  sidebar DOM so it can contain multiple panels and accordions. Reproduce the layout intent on the
-  current upstream base; do not blindly cherry-pick the old commit.
+  sidebar DOM so it can contain multiple panels and accordions. Reproduce the layout intent in the
+  custom module; do not blindly copy the old commit.
 - `w-paheg` commit `ecfd64dc59e17e16a078d3a8814161fb9ac074b9` adds a 5-second connection
   timeout and 10-second total timeout after an unreachable endpoint exhausted FreeScout workers.
-  Reimplement the protection on the current upstream base and tune the final values during the
+  Reimplement the protection in the custom module and tune the final values during the
   compatibility spike.
 
 References:
@@ -142,20 +149,22 @@ References:
 7. FreeScout exchanges the code and reads the User Info endpoint.
 8. FreeScout matches an existing agent by verified email. Automatic creation remains off during
    the pilot.
-9. The access-bridge login listener asks Rondo for the agent's desired managed mailbox keys.
+9. The Rondo Integration login listener asks Rondo for the agent's desired managed mailbox keys.
 10. The agent enters FreeScout with only the mailboxes permitted by Rondo plus any unrelated manual
     access already present.
 
 ### Later logins
 
 - Rondo re-evaluates eligibility on every authorization request.
-- The access bridge reconciles managed mailbox access after every successful FreeScout login.
+- The Rondo Integration module reconciles managed mailbox access after every successful FreeScout
+  login.
 - An agent who no longer has an eligible Rondo account cannot start a new OAuth session.
 
 ### Conversation sidebar
 
 1. A logged-in agent opens a conversation they may view.
-2. The hardened module validates the conversation and mailbox before sending anything to Rondo.
+2. The Rondo Integration module validates the conversation and mailbox before sending anything to
+   Rondo.
 3. FreeScout signs customer, conversation, mailbox and current-agent context.
 4. Rondo maps the signed agent to the approved Rondo user.
 5. Rondo intersects three boundaries:
@@ -277,9 +286,21 @@ Synthetic `@members.rondo.invalid` addresses and ambiguous shared addresses fail
 message directing the agent to an administrator. The provider never silently substitutes another
 person's contact email.
 
-### Component 2: hardened Sidebar Webhook fork
+### Component 2: custom Rondo Integration FreeScout module
 
-The fork is pinned to an audited upstream commit and keeps its patch set small.
+One custom FreeScout module owns all Rondo-specific behavior on the FreeScout side:
+
+- conversation-sidebar placement and loading;
+- current-agent and conversation authorization;
+- signed server-to-server sidebar requests;
+- isolated response rendering and failure handling;
+- OAuth-login event handling;
+- managed mailbox mapping, grants and revocations;
+- provisioning-event receipt, reconciliation and audit settings.
+
+The module records the audited Sidebar Webhook commit used as a reference. Any copied or
+substantially derived code retains the upstream MIT copyright and license notice. There is no
+runtime dependency on the Sidebar Webhook module and no second custom provisioning module.
 
 #### FreeScout request authorization
 
@@ -378,27 +399,37 @@ The endpoint must not use an unrestricted FreeScout service identity to read per
 filter it manually. It establishes the mapped Rondo user as the effective user for the request and
 reuses the existing access-control predicates.
 
-### Component 4: FreeScout access bridge
+### Component 4: managed mailbox provisioning
 
-OAuth Login authenticates users but does not assign mailboxes. A separate, small FreeScout module
-owns only Rondo-managed mailbox relationships.
+OAuth Login authenticates users but does not assign mailboxes. This provisioning component lives
+inside the same custom Rondo Integration module described in Component 2; it is not a separate
+FreeScout module. It owns only Rondo-managed mailbox relationships.
 
 #### Managed mapping
 
-Rondo stores a mapping such as:
+Rondo stores the capability-to-stable-key mapping:
 
 ```json
 {
   "ledenadministratie": {
     "freescout_mailbox_key": "ledenadministratie",
-    "freescout_mailbox_id": 12,
     "enabled": true
   }
 }
 ```
 
-The key is stable configuration; the numeric ID is environment-specific. Administrators configure
-and verify both sides before enabling automation.
+The Rondo Integration module separately stores the environment-specific FreeScout mapping:
+
+```json
+{
+  "ledenadministratie": {
+    "mailbox_id": 12,
+    "enabled": true
+  }
+}
+```
+
+Administrators configure and verify both sides before enabling automation.
 
 The access service returns desired **managed mailbox keys**, not arbitrary FreeScout IDs. The
 FreeScout module translates keys to its local IDs. Rondo therefore cannot attach a user to an
@@ -412,7 +443,8 @@ Proposed route:
 POST /wp-json/rondo/v1/integrations/freescout/access
 ```
 
-The access bridge sends a signed FreeScout user identity. Rondo resolves the user and returns:
+The Rondo Integration module sends a signed FreeScout user identity. Rondo resolves the user and
+returns:
 
 ```json
 {
@@ -435,9 +467,9 @@ For every configured managed mailbox:
 - unrelated mailbox: never touch;
 - FreeScout administrator: never downgrade or detach administrator access.
 
-The bridge must not call `sync()` over all of a user's mailboxes because that would remove manual
-assignments. It manages only the configured mailbox IDs and records enough module-owned state to
-distinguish a managed attachment from an unrelated manual attachment.
+The provisioning component must not call `sync()` over all of a user's mailboxes because that
+would remove manual assignments. It manages only the configured mailbox IDs and records enough
+module-owned state to distinguish a managed attachment from an unrelated manual attachment.
 
 #### Sync triggers
 
@@ -451,8 +483,8 @@ The push event is an optimization; reconciliation remains authoritative and idem
 ### Component 5: Rondo-to-FreeScout provisioning events
 
 When `CapabilitySync` grants or revokes a capability participating in a mailbox mapping, Rondo
-queues a signed event for the access bridge. The event contains only the stable Rondo subject and
-the fact that access must be re-evaluated; it does not assert the final mailbox list.
+queues a signed event for the Rondo Integration module. The event contains only the stable Rondo
+subject and the fact that access must be re-evaluated; it does not assert the final mailbox list.
 
 FreeScout then calls the Rondo access service to obtain current desired state. This avoids accepting
 stale capability data from a delayed event.
@@ -549,7 +581,7 @@ Automatic creation may be enabled only when:
 
 - Rondo denies authorization for users without a mapped FreeScout capability;
 - unique-email and synthetic-email guards are proven;
-- the access bridge assigns zero or more managed mailboxes immediately after creation;
+- the Rondo Integration module assigns zero or more managed mailboxes immediately after creation;
 - a newly created user with no mailbox cannot see customer data;
 - duplicate and renamed-email behavior is tested.
 
@@ -651,7 +683,7 @@ FreeScout records:
 
 - endpoint availability and timeout class;
 - invalid response type/size;
-- access-bridge reconciliation counts;
+- managed-mailbox reconciliation counts;
 - last successful reconciliation timestamp.
 
 Neither side logs OAuth codes, access tokens, HMAC signatures, client secrets or complete request
@@ -700,7 +732,8 @@ Execution checklist:
 
 ### Phase 0: compatibility and threat-model spike
 
-- Install licensed OAuth Login and a test build of the sidebar fork outside production.
+- Install licensed OAuth Login and a proof build of the custom Rondo Integration module outside
+  production.
 - Capture OAuth behavior and FreeScout login events.
 - Prove the sandboxed response design.
 - Confirm timeout values.
@@ -717,9 +750,10 @@ confirmed current-agent hook.
 - Add tests for redirects, codes, tokens, scopes, PKCE and denials.
 - Document administration and break-glass recovery.
 
-### Phase 2: hardened sidebar fork
+### Phase 2: Rondo Integration module foundation and sidebar
 
-- Rebase from current upstream tag/commit.
+- Create the custom FreeScout module and record the audited Sidebar Webhook reference commit.
+- Retain the upstream MIT notice for reused or substantially derived code.
 - Add authentication and conversation authorization.
 - Add current agent to the signed payload.
 - Replace body secret with versioned HMAC headers.
@@ -736,9 +770,9 @@ confirmed current-agent hook.
 - Add no-match, ambiguous, unauthorized and unavailable states.
 - Link all mutations to authenticated Rondo pages.
 
-### Phase 4: access bridge and automatic provisioning
+### Phase 4: automatic provisioning in the Rondo Integration module
 
-- Add FreeScout login listener.
+- Extend the same custom module with the FreeScout login listener.
 - Add signed Rondo access service.
 - Add managed capability-to-mailbox configuration.
 - Reconcile only managed mailbox relationships.
@@ -830,8 +864,9 @@ The milestone is complete only when:
 
 - Disable the Rondo OAuth client.
 - Disable Force OAuth Login through the documented FreeScout server setting.
-- Disable the access-bridge mapping while leaving existing mailbox relations unchanged.
-- Disable the sidebar module or mailbox webhook URL.
+- Disable managed provisioning in the Rondo Integration module while leaving existing mailbox
+  relations unchanged.
+- Disable the sidebar feature or Rondo Integration module.
 - Re-enable the existing Rondo Sync FreeScout customer pipeline if it was disabled.
 - Preserve FreeScout users, conversations, customer records and historical custom fields.
 - Rotate the OAuth client secret and HMAC signing key if compromise is suspected.
