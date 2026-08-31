@@ -50,7 +50,9 @@ Fill this section when executing the spike.
   User Info request shapes.
 - [ ] Configure the Rondo base URL without changing module code and record the normalized derived
   sidebar and access endpoints.
-- [ ] Create a synthetic FreeScout mailbox named `Ledenadministratie test`.
+- [x] Create a synthetic FreeScout mailbox named `Ledenadministratie test`.
+- [x] Enable and verify `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true` so mailbox authorization also
+  constrains direct customer profile and edit routes.
 - [ ] Create these synthetic FreeScout agents:
   - existing administrator with local login;
   - existing eligible agent with a unique email;
@@ -154,15 +156,15 @@ Integration module.
 
 Use synthetic mailboxes and a disposable proof listener or console test.
 
-- [ ] Attach the test mailbox without replacing the user's complete mailbox collection.
-- [ ] Detach only a relationship previously recorded as integration-managed.
-- [ ] Preserve an unrelated manually assigned mailbox during grant and revoke.
-- [ ] Preserve a manually assigned instance of the mapped mailbox when it was never recorded as
+- [x] Attach the test mailbox without replacing the user's complete mailbox collection.
+- [x] Detach only a relationship previously recorded as integration-managed.
+- [x] Preserve an unrelated manually assigned mailbox during grant and revoke.
+- [x] Preserve a manually assigned instance of the mapped mailbox when it was never recorded as
   integration-managed.
-- [ ] Repeating the same desired state is idempotent.
-- [ ] A FreeScout administrator is never downgraded or detached.
-- [ ] A user with zero mailboxes cannot view test customers or conversations.
-- [ ] Record the FreeScout models/events needed for safe grant, revoke and audit.
+- [x] Repeating the same desired state is idempotent.
+- [x] A FreeScout administrator is never downgraded or detached.
+- [x] A user with zero mailboxes cannot view test customers or conversations.
+- [x] Record the FreeScout models/events needed for safe grant, revoke and audit.
 
 **Blocking failure:** safe reconciliation requires replacing all mailbox relationships or cannot
 distinguish managed access from manual access.
@@ -270,7 +272,7 @@ Complete one row for every material behavior.
 | Rondo base URL | | Configured, verified and not hardcoded | | | |
 | Automatic creation | | Disabled for pilot | | | |
 | Login event | | Current agent available | | | |
-| Managed mailbox access | | Manual access preserved | | | |
+| Managed mailbox access | Targeted pivot attach/detach works; customer routes require the core visibility flag | Manual access preserved | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Never use `sync()`; require `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true` |
 | Force-login recovery | | Proven break glass | | | |
 | Mobile | | Explicit pilot decision | | | |
 | Sidebar authorization | | Agent and conversation authorized | | | |
@@ -308,7 +310,7 @@ architecture assumption must change before repeating the spike.
 - [ ] Completed checklist with evidence links.
 - [ ] Redacted OAuth request/response shapes.
 - [x] Login and user-creation event map.
-- [ ] Managed mailbox model/event notes.
+- [x] Managed mailbox model/event notes.
 - [ ] Sidebar authorization and isolation proof.
 - [ ] Timeout/failure results at expected pilot concurrency.
 - [ ] Completed compatibility matrix.
