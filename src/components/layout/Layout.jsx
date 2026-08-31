@@ -442,6 +442,20 @@ function SearchModal({ isOpen, onClose }) {
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [isOpen]);
+
+  // Escape should close the modal regardless of which element currently has focus.
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
   
   // Reset selection when results change
   useEffect(() => {
@@ -450,11 +464,6 @@ function SearchModal({ isOpen, onClose }) {
   
   // Handle keyboard navigation
   const handleKeyDown = (e) => {
-    if (e.key === 'Escape') {
-      onClose();
-      return;
-    }
-    
     if (!showResults || !hasResults) return;
     
     if (e.key === 'ArrowDown') {
@@ -496,7 +505,12 @@ function SearchModal({ isOpen, onClose }) {
       
       {/* Modal */}
       <div className="relative min-h-screen flex items-start justify-center pt-[15vh] px-4">
-        <div className="relative w-full max-w-xl bg-white rounded-xl shadow-2xl overflow-hidden dark:bg-gray-800">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Zoeken"
+          className="relative w-full max-w-xl bg-white rounded-xl shadow-2xl overflow-hidden dark:bg-gray-800"
+        >
           {/* Search input */}
           <div className="flex items-center px-4 border-b border-gray-200 dark:border-gray-700">
             <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
@@ -507,13 +521,19 @@ function SearchModal({ isOpen, onClose }) {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Zoek relaties en teams..."
-              className="flex-1 px-4 py-4 text-lg outline-none placeholder:text-gray-400 bg-transparent dark:text-gray-100"
+              className="min-w-0 flex-1 px-4 py-4 text-lg outline-none placeholder:text-gray-400 bg-transparent dark:text-gray-100"
               autoComplete="off"
             />
-            <div className="flex items-center gap-1 text-xs text-gray-400">
-              <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 font-mono dark:bg-gray-700 dark:text-gray-400">esc</kbd>
-              <span>to close</span>
-            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Zoeken sluiten"
+              aria-keyshortcuts="Escape"
+              className="ml-2 inline-flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-electric-cyan dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+              <X className="h-5 w-5 sm:hidden" aria-hidden="true" />
+              <kbd className="hidden rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs dark:bg-gray-700 sm:inline">esc</kbd>
+            </button>
           </div>
           
           {/* Results */}

@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- De zoekdialoog heeft op mobiel een duidelijke sluitknop en sluit op desktop met de Escape-toets, ongeacht welk element focus heeft.
 - Het aanpassen van kortingen op contributiefacturen veroorzaakt geen fatale PHP-fout meer; facturen met betaalde termijnen of actieve termijnbetaallinks tonen vooraf waarom een gewone kortingswijziging is geblokkeerd.
 - De taartgrafieken bij **Betaalstatistieken** volgen nu het gekozen factuursoort en passen hun titels en bedragen daarop aan.
 - **Contributiefacturen** telt een gekozen termijnplan direct als **In termijnen**, ook wanneer de eerste termijn nog niet is betaald.
