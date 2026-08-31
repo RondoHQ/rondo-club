@@ -9,6 +9,8 @@ namespace Rondo\REST;
 
 use Rondo\Access\AdmissionService;
 use Rondo\Narrowcasting\SportlinkMatchday;
+use Rondo\Passes\GuestPassService;
+use Rondo\Passes\MembershipPassQr;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -20,11 +22,13 @@ class AccessEvents extends Base {
 	private SportlinkMatchday $matchday;
 	private AdmissionService $admissions;
 	private MembershipPasses $membership_passes;
+	private GuestPassService $guest_passes;
 
-	public function __construct( ?SportlinkMatchday $matchday = null, ?AdmissionService $admissions = null, ?MembershipPasses $membership_passes = null ) {
+	public function __construct( ?SportlinkMatchday $matchday = null, ?AdmissionService $admissions = null, ?MembershipPasses $membership_passes = null, ?GuestPassService $guest_passes = null ) {
 		$this->matchday          = $matchday ?? new SportlinkMatchday( false );
 		$this->admissions        = $admissions ?? new AdmissionService( false );
 		$this->membership_passes = $membership_passes ?? new MembershipPasses( false );
+		$this->guest_passes      = $guest_passes ?? new GuestPassService();
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 
@@ -135,8 +139,17 @@ class AccessEvents extends Base {
 			return new \WP_Error( 'rondo_access_event_not_found', __( 'Toegangsevenement niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
+		$token        = (string) $request->get_param( 'token' );
+		$guest_result = ( new MembershipPassQr() )->verify_guest_token( $token );
+		if ( ! is_wp_error( $guest_result ) ) {
+			return $this->scan_guest_pass( $event_id, $guest_result['payload'] );
+		}
+		if ( $guest_result->get_error_code() !== 'membership_pass_invalid_audience' ) {
+			return $guest_result;
+		}
+
 		$verify_request = new \WP_REST_Request( 'POST', '/rondo/v1/membership-passes/verify' );
-		$verify_request->set_param( 'token', (string) $request->get_param( 'token' ) );
+		$verify_request->set_param( 'token', $token );
 		$verified = $this->membership_passes->verify_qr_token( $verify_request );
 		if ( is_wp_error( $verified ) ) {
 			return $verified;
@@ -165,6 +178,72 @@ class AccessEvents extends Base {
 		$data['stats']     = $this->admissions->get_stats( $event_id );
 
 		return rest_ensure_response( $data );
+	}
+
+	/** Validate and count one guest slot for the selected AWC 1 match. */
+	private function scan_guest_pass( int $event_id, array $payload ) {
+		$guest_pass_id = isset( $payload['gpid'] ) ? (int) $payload['gpid'] : 0;
+		$token_version = isset( $payload['pass_version'] ) ? max( 1, (int) $payload['pass_version'] ) : 1;
+		$guest         = $this->guest_passes->validate_for_event( $guest_pass_id, $token_version, $event_id );
+		if ( is_wp_error( $guest ) ) {
+			$current = $this->guest_passes->get_pass_data( $guest_pass_id );
+			return rest_ensure_response(
+				[
+					'valid'     => false,
+					'reason'    => $this->guest_error_reason( $guest->get_error_code() ),
+					'pass_type' => 'guest',
+					'guest'     => $current === null ? null : $this->format_guest( $current ),
+					'admission' => [
+						'counted'    => false,
+						'duplicate'  => false,
+						'pass_type'  => 'guest',
+						'scanned_at' => null,
+					],
+					'stats'     => $this->admissions->get_stats( $event_id ),
+				]
+			);
+		}
+
+		$admission = $this->admissions->record_guest_admission(
+			$event_id,
+			$guest['id'],
+			$guest['host_person_id'],
+			$guest['slot'],
+			$guest['guest_name']
+		);
+		if ( is_wp_error( $admission ) ) {
+			return $admission;
+		}
+
+		return rest_ensure_response(
+			[
+				'valid'     => true,
+				'reason'    => null,
+				'pass_type' => 'guest',
+				'guest'     => $this->format_guest( $guest ),
+				'admission' => $admission,
+				'stats'     => $this->admissions->get_stats( $event_id ),
+			]
+		);
+	}
+
+	private function format_guest( array $guest ): array {
+		return [
+			'name'           => $guest['guest_name'],
+			'host_name'      => $guest['host_name'],
+			'host_person_id' => $guest['host_person_id'],
+			'slot'           => $guest['slot'],
+		];
+	}
+
+	private function guest_error_reason( string $error_code ): string {
+		return match ( $error_code ) {
+			'rondo_guest_pass_revoked'         => 'revoked',
+			'rondo_guest_pass_unclaimed'       => 'unclaimed',
+			'rondo_guest_pass_host_ineligible' => 'host_ineligible',
+			'rondo_guest_pass_wrong_match'     => 'wrong_match',
+			default                            => 'invalid',
+		};
 	}
 
 	/** Return anonymous event totals. */

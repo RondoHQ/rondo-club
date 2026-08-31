@@ -15,9 +15,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class MembershipPassQr {
 
-	const OPTION_JWT_SECRET = 'rondo_membership_pass_jwt_secret';
-	const DEFAULT_TTL_DAYS  = 0;
-	const TOKEN_AUDIENCE    = 'rondo-membership-pass';
+	const OPTION_JWT_SECRET    = 'rondo_membership_pass_jwt_secret';
+	const DEFAULT_TTL_DAYS     = 0;
+	const TOKEN_AUDIENCE       = 'rondo-membership-pass';
+	const GUEST_TOKEN_AUDIENCE = 'rondo-guest-pass';
 
 	/**
 	 * Issue a signed QR token for a person.
@@ -86,13 +87,50 @@ class MembershipPassQr {
 		];
 	}
 
+	/** Issue a signed QR token for one reusable guest slot. */
+	public function issue_for_guest( int $guest_pass_id ) {
+		$service = new GuestPassService();
+		$pass    = $service->get_pass_data( $guest_pass_id );
+		if ( $pass === null ) {
+			return new \WP_Error( 'rondo_guest_pass_not_found', 'Gastpas niet gevonden.', [ 'status' => 404 ] );
+		}
+		if ( $pass['status'] !== 'active' || $pass['guest_name'] === '' ) {
+			return new \WP_Error( 'rondo_guest_pass_unclaimed', 'Deze gastpas is nog niet geregistreerd.', [ 'status' => 422 ] );
+		}
+
+		$now     = time();
+		$payload = [
+			'iss'          => home_url( '/' ),
+			'aud'          => self::GUEST_TOKEN_AUDIENCE,
+			'sub'          => 'guest-pass-' . $guest_pass_id,
+			'gpid'         => $guest_pass_id,
+			'host_pid'     => $pass['host_person_id'],
+			'slot'         => $pass['slot'],
+			'iat'          => $now,
+			'nbf'          => $now - 30,
+			'jti'          => wp_generate_uuid4(),
+			'pass_version' => $pass['pass_version'],
+			'pass_type'    => 'guest',
+		];
+		$token   = $this->encode_jwt( $payload );
+		if ( is_wp_error( $token ) ) {
+			return $token;
+		}
+
+		return [
+			'token'   => $token,
+			'payload' => $payload,
+			'guest'   => $pass,
+		];
+	}
+
 	/**
 	 * Verify a signed token.
 	 *
 	 * @param string $token JWT token.
 	 * @return array|\WP_Error
 	 */
-	public function verify_token( string $token ) {
+	public function verify_token( string $token, string $expected_audience = self::TOKEN_AUDIENCE ) {
 		$parts = explode( '.', trim( $token ) );
 		if ( count( $parts ) !== 3 ) {
 			return new \WP_Error( 'membership_pass_invalid_token', 'Ongeldig tokenformaat.', [ 'status' => 400 ] );
@@ -131,7 +169,7 @@ class MembershipPassQr {
 		if ( isset( $payload['exp'] ) && ( ! is_numeric( $payload['exp'] ) || $now >= (int) $payload['exp'] ) ) {
 			return new \WP_Error( 'membership_pass_expired', 'Token is verlopen.', [ 'status' => 401 ] );
 		}
-		if ( ! isset( $payload['aud'] ) || self::TOKEN_AUDIENCE !== $payload['aud'] ) {
+		if ( ! isset( $payload['aud'] ) || $expected_audience !== $payload['aud'] ) {
 			return new \WP_Error( 'membership_pass_invalid_audience', 'Token audience ongeldig.', [ 'status' => 400 ] );
 		}
 
@@ -139,6 +177,11 @@ class MembershipPassQr {
 			'header'  => $header,
 			'payload' => $payload,
 		];
+	}
+
+	/** Verify a signed guest-pass token. */
+	public function verify_guest_token( string $token ) {
+		return $this->verify_token( $token, self::GUEST_TOKEN_AUDIENCE );
 	}
 
 	/**

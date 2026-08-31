@@ -129,6 +129,64 @@ class MembershipPassGoogle {
 		return 'https://pay.google.com/gp/v/save/' . $jwt;
 	}
 
+	/** Create/update a Google Wallet object for one reusable guest slot. */
+	public function get_add_to_wallet_url_for_guest( int $guest_pass_id ) {
+		$guest_service = new GuestPassService();
+		$guest         = $guest_service->get_pass_data( $guest_pass_id );
+		if ( $guest === null || $guest['status'] !== 'active' || ! $guest_service->is_eligible_player( $guest['host_person_id'] ) ) {
+			return new \WP_Error( 'rondo_guest_pass_unavailable', 'Deze gastpas is niet beschikbaar.' );
+		}
+
+		$issuer_id = $this->get_issuer_id();
+		$json_path = $this->get_service_account_path();
+		if ( $issuer_id === '' || $json_path === '' || ! file_exists( $json_path ) ) {
+			return new \WP_Error( 'membership_pass_google_not_configured', 'Google Wallet is nog niet geconfigureerd.' );
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$service_account = json_decode( (string) file_get_contents( $json_path ), true );
+		if ( ! is_array( $service_account ) || empty( $service_account['client_email'] ) || empty( $service_account['private_key'] ) ) {
+			return new \WP_Error( 'membership_pass_google_invalid_service_account', 'Google service-account JSON is ongeldig.' );
+		}
+
+		$qr_result = ( new MembershipPassQr() )->issue_for_guest( $guest_pass_id );
+		if ( is_wp_error( $qr_result ) ) {
+			return $qr_result;
+		}
+
+		$client = new GoogleClient();
+		$client->setAuthConfig( $json_path );
+		$client->addScope( 'https://www.googleapis.com/auth/wallet_object.issuer' );
+		$service   = new Walletobjects( $client );
+		$class_id  = $issuer_id . '.' . $this->get_class_suffix();
+		$object_id = $issuer_id . '.guest_' . $guest_pass_id;
+
+		try {
+			$this->ensure_class( $service, $class_id );
+			$this->upsert_guest_object( $service, $object_id, $class_id, $guest, $qr_result['token'] );
+		} catch ( \Throwable $error ) {
+			return new \WP_Error( 'rondo_guest_pass_google_failed', 'Google Wallet API fout: ' . $error->getMessage() );
+		}
+
+		$claims = [
+			'iss'     => $service_account['client_email'],
+			'aud'     => 'google',
+			'typ'     => 'savetowallet',
+			'origins' => [ home_url() ],
+			'payload' => [
+				'genericObjects' => [
+					[
+						'id'      => $object_id,
+						'classId' => $class_id,
+					],
+				],
+			],
+		];
+
+		$jwt = $this->create_rs256_jwt( $claims, (string) $service_account['private_key'] );
+		return is_wp_error( $jwt ) ? $jwt : 'https://pay.google.com/gp/v/save/' . $jwt;
+	}
+
 	/**
 	 * Ensure pass class exists.
 	 *
@@ -237,6 +295,71 @@ class MembershipPassGoogle {
 			$service->genericobject->get( $object_id );
 			$service->genericobject->update( $object_id, $object );
 		} catch ( \Throwable $e ) {
+			$service->genericobject->insert( $object );
+		}
+	}
+
+	/** Insert or update a reusable guest-pass object. */
+	private function upsert_guest_object( Walletobjects $service, string $object_id, string $class_id, array $guest, string $qr_payload ): void {
+		$text_modules = [
+			new TextModuleData(
+				[
+					'id'     => 'host',
+					'header' => 'Gast van',
+					'body'   => $guest['host_name'],
+				]
+			),
+			new TextModuleData(
+				[
+					'id'     => 'valid_for',
+					'header' => 'Geldig voor',
+					'body'   => GuestPassService::ELIGIBLE_TEAM_NAME . ' thuiswedstrijden',
+				]
+			),
+		];
+		$object       = new GenericObject(
+			[
+				'id'                 => $object_id,
+				'classId'            => $class_id,
+				'state'              => 'ACTIVE',
+				'cardTitle'          => [
+					'defaultValue' => [
+						'language' => 'nl-NL',
+						'value'    => $this->get_issuer_name(),
+					],
+				],
+				'header'             => [
+					'defaultValue' => [
+						'language' => 'nl-NL',
+						'value'    => $guest['guest_name'],
+					],
+				],
+				'subheader'          => [
+					'defaultValue' => [
+						'language' => 'nl-NL',
+						'value'    => 'Gastpas',
+					],
+				],
+				'barcode'            => new Barcode(
+					[
+						'type'          => 'QR_CODE',
+						'value'         => $qr_payload,
+						'alternateText' => '',
+					]
+				),
+				'textModulesData'    => $text_modules,
+				'hexBackgroundColor' => $this->get_hex_background_color(),
+			]
+		);
+		$logo         = $this->get_logo_image_url();
+		if ( $logo !== '' ) {
+			$object->setLogo( $this->build_logo_image( $logo ) );
+		}
+
+		try {
+			$service->genericobject->get( $object_id );
+			$service->genericobject->update( $object_id, $object );
+		} catch ( \Throwable $error ) {
 			$service->genericobject->insert( $object );
 		}
 	}

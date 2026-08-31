@@ -46,6 +46,7 @@ class PostTypes {
 		'rondo_sponsor_log'    => [ 'sponsor_log', 'sponsor_logs' ],
 		'rondo_access_event'   => [ 'access_event', 'access_events' ],
 		'rondo_admission'      => [ 'admission', 'admissions' ],
+		'rondo_guest_pass'     => [ 'guest_pass', 'guest_passes' ],
 	];
 
 	/**
@@ -130,6 +131,7 @@ class PostTypes {
 		$this->register_sponsor_log_post_type();
 		$this->register_access_event_post_type();
 		$this->register_admission_post_type();
+		$this->register_guest_pass_post_type();
 	}
 
 	/** Register the private, immutable sponsor self-service activity log. */
@@ -205,6 +207,31 @@ class PostTypes {
 		);
 
 		register_post_type( 'rondo_admission', $args );
+	}
+
+	/** Register private reusable guest-pass slots. */
+	private function register_guest_pass_post_type() {
+		$args = array_merge(
+			[
+				'labels'             => [
+					'name'          => __( 'Gastpassen', 'rondo' ),
+					'singular_name' => __( 'Gastpas', 'rondo' ),
+				],
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => false,
+				'show_in_menu'       => false,
+				'show_in_rest'       => false,
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'rondo_guest_pass' )
+		);
+
+		register_post_type( 'rondo_guest_pass', $args );
 	}
 
 	/** Register private reservable rooms. */

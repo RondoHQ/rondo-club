@@ -170,6 +170,89 @@ class MembershipPassApple {
 		];
 	}
 
+	/** Generate an Apple Wallet pass for one reusable guest slot. */
+	public function generate_for_guest( int $guest_pass_id ) {
+		if ( ! class_exists( PKPass::class ) ) {
+			return new \WP_Error( 'membership_pass_apple_library_missing', 'Apple pass library ontbreekt (pkpass/pkpass niet geïnstalleerd).' );
+		}
+
+		$guest_service = new GuestPassService();
+		$guest         = $guest_service->get_pass_data( $guest_pass_id );
+		if ( $guest === null || $guest['status'] !== 'active' || ! $guest_service->is_eligible_player( $guest['host_person_id'] ) ) {
+			return new \WP_Error( 'rondo_guest_pass_unavailable', 'Deze gastpas is niet beschikbaar.' );
+		}
+
+		$cert_path = $this->get_cert_path();
+		if ( $cert_path === '' || ! file_exists( $cert_path ) ) {
+			return new \WP_Error( 'membership_pass_apple_cert_missing', 'Apple pas-certificaat niet gevonden op de server.' );
+		}
+
+		$qr_result = ( new MembershipPassQr() )->issue_for_guest( $guest_pass_id );
+		if ( is_wp_error( $qr_result ) ) {
+			return $qr_result;
+		}
+
+		$organization_name = $this->get_organization_name();
+		$pass_data         = [
+			'formatVersion'      => 1,
+			'passTypeIdentifier' => $this->get_pass_type_identifier(),
+			'serialNumber'       => 'guest-pass-' . $guest_pass_id,
+			'teamIdentifier'     => $this->get_team_identifier(),
+			'organizationName'   => $organization_name,
+			'description'        => $organization_name . ' gastpas',
+			'logoText'           => $organization_name,
+			'foregroundColor'    => 'rgb(255,255,255)',
+			'labelColor'         => 'rgb(255,255,255)',
+			'backgroundColor'    => $this->get_background_color(),
+			'generic'            => [
+				'primaryFields'   => [
+					[
+						'key'   => 'guest_name',
+						'label' => 'GAST',
+						'value' => $guest['guest_name'],
+					],
+				],
+				'secondaryFields' => [
+					[
+						'key'   => 'host_name',
+						'label' => 'GAST VAN',
+						'value' => $guest['host_name'],
+					],
+				],
+				'auxiliaryFields' => [
+					[
+						'key'   => 'valid_for',
+						'label' => 'GELDIG VOOR',
+						'value' => GuestPassService::ELIGIBLE_TEAM_NAME . ' thuiswedstrijden',
+					],
+				],
+			],
+			'barcode'            => [
+				'format'          => 'PKBarcodeFormatQR',
+				'message'         => $qr_result['token'],
+				'messageEncoding' => 'iso-8859-1',
+			],
+		];
+
+		$pass = new PKPass( $cert_path, $this->get_cert_password() );
+		try {
+			$pass->setData( $pass_data );
+			$this->add_default_images( $pass, 0 );
+			$binary = $pass->create( false );
+		} catch ( \Throwable $error ) {
+			return new \WP_Error( 'rondo_guest_pass_apple_failed', 'Genereren van Apple gastpas mislukt: ' . $error->getMessage() );
+		}
+
+		if ( ! is_string( $binary ) || $binary === '' ) {
+			return new \WP_Error( 'rondo_guest_pass_apple_failed', 'Genereren van Apple gastpas mislukt: lege output.' );
+		}
+
+		return [
+			'filename' => 'rondo-gastpas-' . $guest_pass_id . '.pkpass',
+			'content'  => $binary,
+		];
+	}
+
 	/**
 	 * Add pass image assets.
 	 *
@@ -183,7 +266,7 @@ class MembershipPassApple {
 		$default   = $theme_dir . '/public/icons/apple-touch-icon-180x180.png';
 		$logo_path = $this->get_logo_image_path( $member_tier, $sponsor_pass_variant );
 
-		$thumbnail_path = $this->get_person_photo_path( $person_id );
+		$thumbnail_path = $person_id > 0 ? $this->get_person_photo_path( $person_id ) : '';
 
 		$default_bytes = $this->read_file_bytes( $default );
 		$logo_bytes    = $this->read_file_bytes( $logo_path );

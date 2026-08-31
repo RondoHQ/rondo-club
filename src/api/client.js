@@ -225,6 +225,11 @@ export const prmApi = {
   selectAccessEvent: (sourceId) => api.post('/rondo/v1/access-events/select', { source_id: sourceId }),
   scanAccessEvent: (eventId, token) => api.post(`/rondo/v1/access-events/${eventId}/scan`, { token }),
   getAccessEventStats: (eventId) => api.get(`/rondo/v1/access-events/${eventId}/stats`),
+
+  // Reusable AWC 1 guest-pass slots
+  getMyGuestPasses: () => api.get('/rondo/v1/guest-passes/me'),
+  createGuestPassSlot: (slot) => api.post(`/rondo/v1/guest-passes/slots/${slot}`),
+  replaceGuestPassSlot: (slot) => api.post(`/rondo/v1/guest-passes/slots/${slot}/replace`),
   createNote: (personId, content, visibility = 'private') =>
     api.post(`/rondo/v1/people/${personId}/notes`, { content, visibility }),
   updateNote: (noteId, content, visibility = null) =>

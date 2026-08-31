@@ -14,7 +14,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Stores accepted admissions without attendee identifiers.
+ * Stores accepted admissions. Regular member admissions remain anonymous;
+ * guest admissions retain their host and guest label for 30 days.
  */
 class AdmissionService {
 
@@ -29,6 +30,7 @@ class AdmissionService {
 		'verenigingslid' => 'Verenigingslid',
 		'businessclub'   => 'Businessclub',
 		'awc_sponsor'    => 'AWC-sponsor',
+		'guest'          => 'Gast',
 	];
 
 	/** Register daily privacy cleanup. */
@@ -154,9 +156,37 @@ class AdmissionService {
 			return new \WP_Error( 'rondo_access_pass_type_invalid', __( 'Onbekend pastype.', 'rondo' ), [ 'status' => 422 ] );
 		}
 
-		$fingerprint = hash_hmac( 'sha256', $event_id . '|' . $person_id, $this->fingerprint_secret() );
-		$lock_key    = 'rondo_admission_once_' . $event_id . '_' . substr( $fingerprint, 0, 40 );
-		$lock_value  = get_option( $lock_key, false );
+		$fingerprint = hash_hmac( 'sha256', 'person|' . $event_id . '|' . $person_id, $this->fingerprint_secret() );
+		return $this->record_with_fingerprint( $event_id, $pass_type, $fingerprint );
+	}
+
+	/** Record one stable guest slot once per event. */
+	public function record_guest_admission( int $event_id, int $guest_pass_id, int $host_person_id, int $slot, string $guest_name ) {
+		if ( get_post_type( $event_id ) !== 'rondo_access_event' ) {
+			return new \WP_Error( 'rondo_access_event_not_found', __( 'Toegangsevenement niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+		}
+		if ( get_post_type( $guest_pass_id ) !== 'rondo_guest_pass' || $host_person_id <= 0 || $slot < 1 || $slot > 2 ) {
+			return new \WP_Error( 'rondo_guest_admission_invalid', __( 'Ongeldige gastpasregistratie.', 'rondo' ), [ 'status' => 422 ] );
+		}
+
+		$fingerprint = hash_hmac( 'sha256', 'guest|' . $event_id . '|' . $host_person_id . '|' . $slot, $this->fingerprint_secret() );
+		return $this->record_with_fingerprint(
+			$event_id,
+			'guest',
+			$fingerprint,
+			[
+				'guest_pass_id'  => $guest_pass_id,
+				'host_person_id' => $host_person_id,
+				'guest_slot'     => $slot,
+				'guest_name'     => sanitize_text_field( $guest_name ),
+			]
+		);
+	}
+
+	/** Persist an admission behind one atomic event-scoped lock. */
+	private function record_with_fingerprint( int $event_id, string $pass_type, string $fingerprint, array $extra_fields = [] ) {
+		$lock_key   = 'rondo_admission_once_' . $event_id . '_' . substr( $fingerprint, 0, 40 );
+		$lock_value = get_option( $lock_key, false );
 
 		if ( $lock_value !== false ) {
 			$existing = $this->duplicate_result( $lock_value, $pass_type );
@@ -194,11 +224,14 @@ class AdmissionService {
 
 		$updated = Fields::update_many_for_post(
 			$admission_id,
-			[
-				'event_id'   => $event_id,
-				'pass_type'  => $pass_type,
-				'scanned_at' => $scanned_at,
-			]
+			array_merge(
+				[
+					'event_id'   => $event_id,
+					'pass_type'  => $pass_type,
+					'scanned_at' => $scanned_at,
+				],
+				$extra_fields
+			)
 		);
 		if ( is_wp_error( $updated ) ) {
 			wp_delete_post( $admission_id, true );
@@ -317,6 +350,13 @@ class AdmissionService {
 			}
 			delete_post_meta( (int) $admission_id, self::LOCK_META_KEY );
 			delete_post_meta( (int) $admission_id, self::FINGERPRINT_ACTIVE_META );
+
+			if ( Fields::get_for_post( (int) $admission_id, 'pass_type' ) === 'guest' ) {
+				Fields::delete_for_post( (int) $admission_id, 'guest_pass_id' );
+				Fields::delete_for_post( (int) $admission_id, 'host_person_id' );
+				Fields::delete_for_post( (int) $admission_id, 'guest_slot' );
+				Fields::delete_for_post( (int) $admission_id, 'guest_name' );
+			}
 		}
 	}
 

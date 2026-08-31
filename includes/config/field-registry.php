@@ -2061,6 +2061,56 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'storage_name' => 'event_id',
           'type' => 'post_object',
         ),
+		'guest_name' =>
+		array (
+		  'canonical_name' => 'guest_name',
+		  'key' => 'field_admission_guest_name',
+		  'label' => 'Gastnaam',
+		  'name' => 'guest_name',
+		  'storage_name' => 'guest_name',
+		  'type' => 'text',
+		),
+		'guest_pass_id' =>
+		array (
+		  'allow_null' => 1,
+		  'canonical_name' => 'guest_pass_id',
+		  'key' => 'field_admission_guest_pass_id',
+		  'label' => 'Gastpas',
+		  'name' => 'guest_pass_id',
+		  'post_type' =>
+		  array (
+			0 => 'rondo_guest_pass',
+		  ),
+		  'return_format' => 'id',
+		  'storage_name' => 'guest_pass_id',
+		  'type' => 'post_object',
+		),
+		'guest_slot' =>
+		array (
+		  'canonical_name' => 'guest_slot',
+		  'key' => 'field_admission_guest_slot',
+		  'label' => 'Gastslot',
+		  'max' => 2,
+		  'min' => 1,
+		  'name' => 'guest_slot',
+		  'storage_name' => 'guest_slot',
+		  'type' => 'number',
+		),
+		'host_person_id' =>
+		array (
+		  'allow_null' => 1,
+		  'canonical_name' => 'host_person_id',
+		  'key' => 'field_admission_host_person_id',
+		  'label' => 'Gast van',
+		  'name' => 'host_person_id',
+		  'post_type' =>
+		  array (
+			0 => 'person',
+		  ),
+		  'return_format' => 'id',
+		  'storage_name' => 'host_person_id',
+		  'type' => 'post_object',
+		),
         'pass_type' =>
         array (
           'canonical_name' => 'pass_type',
@@ -2069,6 +2119,7 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
             'awc_sponsor' => 'AWC-sponsor',
             'bondslid' => 'Bondslid',
             'businessclub' => 'Businessclub',
+			'guest' => 'Gast',
             'verenigingslid' => 'Verenigingslid',
           ),
           'key' => 'field_admission_pass_type',
@@ -2093,6 +2144,87 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
       ),
       'kind' => 'post',
     ),
+	'rondo_guest_pass' =>
+	array (
+	  'fields' =>
+	  array (
+		'claimed_at' =>
+		array (
+		  'canonical_name' => 'claimed_at',
+		  'display_format' => 'd-m-Y H:i:s',
+		  'key' => 'field_guest_pass_claimed_at',
+		  'label' => 'Geregistreerd op',
+		  'name' => 'claimed_at',
+		  'storage_format' => 'Y-m-d H:i:s',
+		  'storage_name' => 'claimed_at',
+		  'timezone' => 'site',
+		  'type' => 'date_time_picker',
+		  'wire_format' => 'Y-m-d\\TH:i:sP',
+		),
+		'guest_name' =>
+		array (
+		  'canonical_name' => 'guest_name',
+		  'key' => 'field_guest_pass_guest_name',
+		  'label' => 'Naam gast',
+		  'name' => 'guest_name',
+		  'storage_name' => 'guest_name',
+		  'type' => 'text',
+		),
+		'host_person_id' =>
+		array (
+		  'allow_null' => 0,
+		  'canonical_name' => 'host_person_id',
+		  'key' => 'field_guest_pass_host_person_id',
+		  'label' => 'Speler',
+		  'name' => 'host_person_id',
+		  'post_type' =>
+		  array (
+			0 => 'person',
+		  ),
+		  'return_format' => 'id',
+		  'storage_name' => 'host_person_id',
+		  'type' => 'post_object',
+		),
+		'pass_version' =>
+		array (
+		  'canonical_name' => 'pass_version',
+		  'default_value' => 1,
+		  'key' => 'field_guest_pass_version',
+		  'label' => 'Pasversie',
+		  'min' => 1,
+		  'name' => 'pass_version',
+		  'storage_name' => 'pass_version',
+		  'type' => 'number',
+		),
+		'slot_number' =>
+		array (
+		  'canonical_name' => 'slot_number',
+		  'key' => 'field_guest_pass_slot_number',
+		  'label' => 'Gastslot',
+		  'max' => 2,
+		  'min' => 1,
+		  'name' => 'slot_number',
+		  'storage_name' => 'slot_number',
+		  'type' => 'number',
+		),
+		'pass_status' =>
+		array (
+		  'canonical_name' => 'pass_status',
+		  'choices' =>
+		  array (
+			'active' => 'Actief',
+			'unclaimed' => 'Nog niet geregistreerd',
+		  ),
+		  'default_value' => 'unclaimed',
+		  'key' => 'field_guest_pass_status',
+		  'label' => 'Status',
+		  'name' => 'pass_status',
+		  'storage_name' => 'pass_status',
+		  'type' => 'select',
+		),
+	  ),
+	  'kind' => 'post',
+	),
     'rondo_display' =>
     array (
       'fields' =>
