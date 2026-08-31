@@ -1,6 +1,6 @@
 # FreeScout and Rondo compatibility spike checklist
 
-**Status:** ready to execute  
+**Status:** in progress
 **Parent PRD:** [FreeScout sidebar, Rondo identity and mailbox provisioning](freescout-rondo-identity-sidebar.md)  
 **Environment:** non-production only  
 **Data:** synthetic users, customers and conversations only
@@ -100,10 +100,20 @@ Keep automatic user creation disabled for the first five tests.
 
 - [ ] A unique verified email maps to the correct existing FreeScout agent.
 - [ ] Email-case differences do not create a duplicate user.
-- [ ] A different provider subject with the same email cannot silently take over an existing user.
+- [ ] Confirm and record that the paid module alone ignores `sub` and `email_verified` when matching
+  an existing user by email.
+- [ ] With the proof Rondo Integration module enabled, a missing `sub` or `email_verified` other
+  than boolean `true` is rejected before FreeScout login.
+- [ ] The first successful verified login creates a one-to-one subject-to-FreeScout-user binding.
+- [ ] A later login with the same subject resolves the bound user even after an email change.
+- [ ] A different subject with the same email cannot take over an existing bound user.
+- [ ] A subject already bound to another user cannot be rebound through OAuth login.
+- [ ] Only the documented administrator recovery flow can unlink or replace a binding, and the
+  change is audited.
 - [ ] A duplicate/ambiguous email fails closed with no account mutation.
 - [ ] An identity without an existing FreeScout user is denied cleanly.
-- [ ] Determine whether the module reads or enforces `email_verified`.
+- [ ] Record that OAuth Login `1.0.28` does not enforce `email_verified` without the Rondo identity
+  guard.
 - [ ] Document whether Rondo's present account-approval process provides enough evidence to assert
   `email_verified: true`; otherwise record explicit email verification as a prerequisite.
 
@@ -117,8 +127,9 @@ In the isolated environment only, enable automatic user creation and observe:
 
 Return automatic creation to disabled after the tests.
 
-**Blocking failure:** ambiguous identity can authenticate as an existing agent or a new user gains
-mailbox/customer access before provisioning completes.
+**Blocking failure:** ambiguous or unverified identity can authenticate as an existing agent, a
+subject binding can move through normal login, or a new user gains mailbox/customer access before
+provisioning completes.
 
 ## 5. Prove the current-agent integration hook
 
@@ -248,6 +259,7 @@ Complete one row for every material behavior.
 | Token client auth | | Server-side confidential client | | | |
 | ID token/User Info | | Complete OIDC plus User Info | | | |
 | Existing-user match | | Unique verified email only | | | |
+| Subject binding | | One Rondo subject per FreeScout user | | | |
 | Automatic creation | | Disabled for pilot | | | |
 | Login event | | Current agent available | | | |
 | Managed mailbox access | | Manual access preserved | | | |
