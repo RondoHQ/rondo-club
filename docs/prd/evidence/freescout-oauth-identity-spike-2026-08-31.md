@@ -155,6 +155,37 @@ With it enabled, the managed mailbox reconciliation proof passes. The disposable
 left with automatic creation disabled, revoked synthetic desired state and the administrator signed
 in.
 
+## Access-service failure containment
+
+The ordinary synthetic user first received mailbox ID `1` as an integration-managed grant. The
+synthetic Rondo access service then returned one `503` response during the next OAuth login.
+
+Observed result:
+
+- the browser reached the FreeScout dashboard in approximately 1.5 seconds;
+- `Ledenadministratie test` remained visible and usable;
+- the actual mailbox IDs remained `[1]`;
+- the module-owned mailbox IDs remained `[1]`;
+- no relationship was attached or detached;
+- the module audit recorded `access_service_error` with empty `attached` and `detached` arrays;
+- the login flow made one access request and did not retry the `503` response.
+
+The redacted audit contained only the FreeScout user ID, reason code, empty change lists and
+timestamp. The access-request evidence contained only method, failure mode, presence flags,
+FreeScout user ID and content type. Neither record contained an OAuth token, subject, email,
+signature or response body.
+
+The administrator then signed in successfully while the access service still returned failures.
+The listener's administrator guard made no mailbox or role change. After the synthetic service
+recovered with revoked desired state, the next ordinary-user login removed mailbox ID `1` normally.
+The environment was returned to revoked desired state, zero mailbox relations for the test user,
+automatic creation disabled and the administrator signed in.
+
+The production rule is: transport errors, non-2xx responses, invalid response schemas and subject
+mismatches yield no desired-state decision. Login continues, existing mailbox and module-owned
+state remain unchanged, one redacted retryable error is recorded, and the login request does not
+retry automatically.
+
 ## Current decision
 
 The paid module remains usable only with the Rondo identity guard, one-to-one subject binding and

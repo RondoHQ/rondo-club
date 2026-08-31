@@ -145,9 +145,9 @@ build the complete provisioning component during this spike.
 - [x] Confirm the listener can read the authenticated FreeScout user ID and email server-side.
 - [x] Confirm the listener can distinguish OAuth login from unrelated application events when
   necessary.
-- [ ] Confirm a temporary Rondo access-service failure can leave mailbox access unchanged while
+- [x] Confirm a temporary Rondo access-service failure can leave mailbox access unchanged while
   allowing a safe login result.
-- [ ] Confirm listener failure is logged without exposing tokens or blocking all local admin access.
+- [x] Confirm listener failure is logged without exposing tokens or blocking all local admin access.
 
 **Gate:** record the exact event/class names and execution order needed by the production Rondo
 Integration module.
@@ -242,7 +242,7 @@ Use only the non-production endpoint and the expected pilot concurrency.
 - [ ] A redirect is rejected.
 - [ ] A response over 256 KiB is rejected.
 - [ ] An unexpected content type is rejected.
-- [ ] A 4xx/5xx response is not retried automatically.
+- [x] A 4xx/5xx response is not retried automatically.
 - [ ] FreeScout conversation controls remain interactive while the sidebar request runs.
 - [ ] Repeated failures at expected pilot concurrency do not exhaust available PHP workers.
 - [ ] Manual refresh is rate limited and cannot create an unbounded request storm.
@@ -277,7 +277,7 @@ Complete one row for every material behavior.
 | Mobile | | Explicit pilot decision | | | |
 | Sidebar authorization | | Agent and conversation authorized | | | |
 | Response isolation | | No parent-page code execution | | | |
-| Failure containment | | Conversation work remains available | | | |
+| Failure containment | Access-service `503` allowed login in 1.5 seconds and preserved access | Conversation work remains available | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Keep prior state; record redacted error; no login-flow retry |
 
 ## Go/no-go decision
 
