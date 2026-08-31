@@ -19,16 +19,16 @@ Fill this section when executing the spike.
 
 | Item | Value |
 |---|---|
-| Date | |
-| Tester | |
-| FreeScout version/commit | |
-| OAuth Login module version | |
+| Date | 2026-08-31 |
+| Tester | Joost and Codex |
+| FreeScout version/commit | 1.8.238 |
+| OAuth Login module version | 1.0.28 |
 | Sidebar Webhook reference version/commit | |
-| PHP version | |
+| PHP version | 8.5.9 |
 | Browser versions | |
 | FreeScout mobile app/version | |
-| Result | `GO`, `CONDITIONAL GO` or `NO-GO` |
-| Evidence location | |
+| Result | In progress; OAuth identity-guard proof passed |
+| Evidence location | [OAuth identity evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) |
 
 ## Evidence rules
 
@@ -43,10 +43,10 @@ Fill this section when executing the spike.
 
 - [ ] Clone the production FreeScout version and relevant configuration into an isolated
   non-production instance.
-- [ ] Install the licensed OAuth Login module without enabling Force OAuth Login.
+- [x] Install the licensed OAuth Login module without enabling Force OAuth Login.
 - [ ] Record the exact Sidebar Webhook upstream commit used as an MIT-licensed reference; do not
   plan to install it alongside the custom Rondo Integration module.
-- [ ] Configure a controlled test identity provider that can show redacted authorization, token and
+- [x] Configure a controlled test identity provider that can show redacted authorization, token and
   User Info request shapes.
 - [ ] Configure the Rondo base URL without changing module code and record the normalized derived
   sidebar and access endpoints.
@@ -59,8 +59,8 @@ Fill this section when executing the spike.
   - new identity that has no FreeScout user.
 - [ ] Create synthetic conversations representing one exact customer match, no match and an
   ambiguous shared-email match.
-- [ ] Preserve a tested local administrator login as break glass.
-- [ ] Confirm the environment cannot send real customer email or notifications.
+- [x] Preserve a tested local administrator login as break glass.
+- [x] Confirm the environment cannot send real customer email or notifications.
 
 **Evidence:** version record, module list, redacted configuration and test-data inventory.
 
@@ -68,25 +68,25 @@ Fill this section when executing the spike.
 
 Start a FreeScout login and capture the browser redirect to the test provider.
 
-- [ ] Record the exact authorization endpoint method and query parameters.
+- [x] Record the exact authorization endpoint method and query parameters.
 - [ ] Confirm a fresh, unpredictable `state` value is sent on each login attempt.
-- [ ] Confirm FreeScout rejects a callback with a missing or changed `state`.
-- [ ] Record the exact redirect URI and confirm FreeScout uses the configured value consistently.
-- [ ] Record the requested scopes.
-- [ ] Record whether a PKCE `code_challenge` and `code_challenge_method=S256` are sent.
-- [ ] Record whether an OpenID Connect `nonce` is sent.
-- [ ] Confirm login cancellation returns a usable FreeScout login screen and clear error.
+- [x] Confirm FreeScout rejects a callback with a missing or changed `state`.
+- [x] Record the exact redirect URI and confirm FreeScout uses the configured value consistently.
+- [x] Record the requested scopes.
+- [x] Record whether a PKCE `code_challenge` and `code_challenge_method=S256` are sent.
+- [x] Record whether an OpenID Connect `nonce` is sent.
+- [x] Confirm login cancellation returns a usable FreeScout login screen and clear error.
 
 **Blocking failure:** FreeScout does not send or validate `state`.
 
 ## 3. Observe token exchange and identity consumption
 
-- [ ] Record whether token exchange uses HTTP Basic, request-body credentials or another client
+- [x] Record whether token exchange uses HTTP Basic, request-body credentials or another client
   authentication method.
-- [ ] Confirm token exchange occurs server-to-server and the client secret never reaches browser
+- [x] Confirm token exchange occurs server-to-server and the client secret never reaches browser
   code or a URL.
 - [ ] Record whether FreeScout sends a PKCE `code_verifier` when PKCE was initiated.
-- [ ] Determine whether FreeScout consumes an ID token, User Info, or both.
+- [x] Determine whether FreeScout consumes an ID token, User Info, or both.
 - [ ] If it consumes an ID token, record accepted signing algorithms, issuer/audience checks and
   whether `nonce` is validated.
 - [ ] Record the minimum User Info claims required for a successful login.
@@ -100,21 +100,21 @@ Start a FreeScout login and capture the browser redirect to the test provider.
 
 Keep automatic user creation disabled for the first five tests.
 
-- [ ] A unique verified email maps to the correct existing FreeScout agent.
+- [x] A unique verified email maps to the correct existing FreeScout agent.
 - [ ] Email-case differences do not create a duplicate user.
-- [ ] Confirm and record that the paid module alone ignores `sub` and `email_verified` when matching
+- [x] Confirm and record that the paid module alone ignores `sub` and `email_verified` when matching
   an existing user by email.
-- [ ] With the proof Rondo Integration module enabled, a missing `sub` or `email_verified` other
+- [x] With the proof Rondo Integration module enabled, a missing `sub` or `email_verified` other
   than boolean `true` is rejected before FreeScout login.
-- [ ] The first successful verified login creates a one-to-one subject-to-FreeScout-user binding.
+- [x] The first successful verified login creates a one-to-one subject-to-FreeScout-user binding.
 - [ ] A later login with the same subject resolves the bound user even after an email change.
-- [ ] A different subject with the same email cannot take over an existing bound user.
+- [x] A different subject with the same email cannot take over an existing bound user.
 - [ ] A subject already bound to another user cannot be rebound through OAuth login.
 - [ ] Only the documented administrator recovery flow can unlink or replace a binding, and the
   change is audited.
 - [ ] A duplicate/ambiguous email fails closed with no account mutation.
-- [ ] An identity without an existing FreeScout user is denied cleanly.
-- [ ] Record that OAuth Login `1.0.28` does not enforce `email_verified` without the Rondo identity
+- [x] An identity without an existing FreeScout user is denied cleanly.
+- [x] Record that OAuth Login `1.0.28` does not enforce `email_verified` without the Rondo identity
   guard.
 - [ ] Document whether Rondo's present account-approval process provides enough evidence to assert
   `email_verified: true`; otherwise record explicit email verification as a prerequisite.
@@ -138,10 +138,10 @@ provisioning completes.
 Use a minimal test listener inside a proof build of the custom Rondo Integration module; do not
 build the complete provisioning component during this spike.
 
-- [ ] Identify the event fired after a successful OAuth login for an existing user.
+- [x] Identify the event fired after a successful OAuth login for an existing user.
 - [ ] Identify the event fired after OAuth creates a new user.
 - [ ] Confirm the listener can read the authenticated FreeScout user ID and email server-side.
-- [ ] Confirm the listener can distinguish OAuth login from unrelated application events when
+- [x] Confirm the listener can distinguish OAuth login from unrelated application events when
   necessary.
 - [ ] Confirm a temporary Rondo access-service failure can leave mailbox access unchanged while
   allowing a safe login result.
