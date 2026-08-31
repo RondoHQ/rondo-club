@@ -379,7 +379,11 @@ function Sidebar({ mobile = false, onClose, stats }) {
             )}
           </div>
         ) : (
-          <Link to="/profile" className="flex items-center gap-3 px-1 py-1 mb-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+          <Link
+            to="/profile"
+            onClick={mobile ? onClose : undefined}
+            className="flex items-center gap-3 px-1 py-1 mb-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
             {currentUser?.linked_person_photo ? (
               <img
                 src={currentUser.linked_person_photo}
