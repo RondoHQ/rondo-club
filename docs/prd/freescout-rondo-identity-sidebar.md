@@ -1,0 +1,851 @@
+# FreeScout sidebar, Rondo identity and mailbox provisioning
+
+**Status:** draft PRD, 2026-08-31  
+**Scope:** Rondo Club, a maintained FreeScout module fork, and a small FreeScout access-bridge module  
+**Milestone type:** planning only; this document does not authorize implementation or production changes
+
+## Outcome
+
+FreeScout agents sign in through Rondo, receive FreeScout mailbox access from their effective Rondo
+capabilities, and see live Rondo person context beside a conversation without copying that context
+into FreeScout.
+
+The first managed access rule is:
+
+```text
+Rondo capability ledenadministratie -> FreeScout mailbox Ledenadministratie
+```
+
+Current membership of the Ledenadministratie commissie can already grant the
+`rondo_ledenadministratie` role through `CommissieCapabilityMap`. That role carries the
+`ledenadministratie` capability. FreeScout provisioning therefore consumes the **effective Rondo
+capability**, not raw committee rows. This preserves the existing capability sync, administrator
+guard and manual grant/revoke behavior.
+
+## Decisions already taken
+
+1. Use `fulldecent/freescout-sidebar-webhook` as the starting point, but maintain a hardened fork.
+2. The sidebar varies by FreeScout mailbox. Ledenadministratie receives a more extensive view than
+   a general mailbox.
+3. Rondo becomes an OAuth/OpenID Connect identity provider for FreeScout agents.
+4. Read-only sidebar authorization uses the signed current FreeScout agent mapped to a Rondo user.
+5. Actions that mutate or expose a complete record open Rondo and require its normal WordPress
+   session.
+6. FreeScout mailbox access is provisioned from Rondo capabilities. The first mapping is
+   `ledenadministratie` to the Ledenadministratie mailbox.
+7. Access managed by this integration is removed automatically when the capability disappears.
+   Mailbox access assigned manually outside the managed mapping is never changed.
+8. Failure of Rondo or the sidebar endpoint must never block normal FreeScout conversation work.
+
+## Why this replaces copied customer context
+
+The current Rondo Sync FreeScout pipeline copies customer fields from Rondo into FreeScout:
+
+- names, email addresses and phone numbers;
+- profile photo and Rondo/Sportlink links;
+- current teams, KNVB ID and membership dates;
+- relation-end data;
+- current contribution balance and status.
+
+The proposed sidebar reads current Rondo data when a conversation opens. It removes the need to
+keep most of these secondary FreeScout fields synchronized and prevents stale information from
+being treated as authoritative.
+
+It does **not** automatically replace the separate FreeScout-conversations-to-Rondo activity
+pipeline. That pipeline remains enabled during the initial rollout until its historical value and
+customer-matching dependency have been reviewed separately.
+
+## Goals
+
+- One Rondo identity for Rondo and FreeScout.
+- No FreeScout access for an unapproved or ineligible Rondo user.
+- Automatic grant and revocation of managed mailbox access.
+- Live, mailbox-specific Rondo context in the FreeScout conversation sidebar.
+- Rondo permissions remain authoritative for every field returned.
+- Exact, auditable customer matching with safe zero-match and multiple-match states.
+- No shared secret in a request body, browser code, URL or log.
+- A slow or unavailable endpoint cannot exhaust FreeScout PHP workers.
+- A sidebar response cannot execute arbitrary code in the FreeScout page.
+- Existing manually managed FreeScout access remains untouched.
+
+## Non-goals
+
+- Replacing FreeScout's own conversation, assignment, Team or mailbox-permission model.
+- Mapping all Rondo roles to FreeScout in the first release.
+- Editing Rondo person fields directly inside the sidebar.
+- Showing the complete Rondo person record.
+- Automatically deactivating every FreeScout account that loses one managed mailbox.
+- Replacing the FreeScout conversation activity sync in the first release.
+- Making Rondo a public, general-purpose identity provider for third parties.
+- Supporting implicit OAuth flows or password grants.
+
+## Current systems and constraints
+
+### Rondo identity and capabilities
+
+- A provisioned WordPress user links to one person through `rondo_linked_person_id` user meta.
+- `CapabilitySync` derives current commissie IDs from the linked person's `work_history` field.
+- `CommissieCapabilityMap` maps commissie IDs to Rondo roles.
+- `rondo_ledenadministratie` carries the `ledenadministratie` capability.
+- Capability sync respects manual grants and revocations and never alters administrators.
+- `AccessControl` already treats FreeScout/onboarding fields as a separate support-sensitive group
+  readable by ledenadministratie and administrators.
+- Some shared-email accounts use a synthetic `@members.rondo.invalid` WordPress email. Such an
+  address cannot become an external FreeScout agent identity.
+
+### FreeScout OAuth Login module
+
+The paid OAuth Login module accepts a custom provider with:
+
+- Authorization URL;
+- Token URL;
+- User Info URL;
+- client ID and client secret;
+- claim-to-user-field mapping.
+
+It can force OAuth login and optionally create new FreeScout users. It explicitly does not map
+users to mailboxes or Teams, so mailbox provisioning requires the separate access-bridge module.
+
+Reference: <https://freescout.net/module/oauth-login/>
+
+### Sidebar Webhook module
+
+Upstream version `3.2.2` sends customer, conversation and mailbox context to a configured endpoint
+and injects the returned HTML into the conversation page.
+
+Relevant fork work:
+
+- `8c88174489686536431640395ed7b1b8c30fad2d` moves the returned content higher in the FreeScout
+  sidebar DOM so it can contain multiple panels and accordions. Reproduce the layout intent on the
+  current upstream base; do not blindly cherry-pick the old commit.
+- `w-paheg` commit `ecfd64dc59e17e16a078d3a8814161fb9ac074b9` adds a 5-second connection
+  timeout and 10-second total timeout after an unreachable endpoint exhausted FreeScout workers.
+  Reimplement the protection on the current upstream base and tune the final values during the
+  compatibility spike.
+
+References:
+
+- <https://github.com/fulldecent/freescout-sidebar-webhook/commit/8c88174489686536431640395ed7b1b8c30fad2d>
+- <https://github.com/fulldecent/freescout-sidebar-webhook/compare/main...w-paheg:freescout-sidebar-webhook:main>
+
+## Product experience
+
+### First FreeScout login
+
+1. The agent chooses **Login with Rondo**.
+2. FreeScout redirects to Rondo's authorization endpoint.
+3. Rondo requires a normal authenticated, approved WordPress account.
+4. Rondo checks that the user is eligible for the FreeScout OAuth client.
+5. Rondo displays a concise consent/continuation screen naming FreeScout and the identity claims
+   being shared.
+6. Rondo returns a short-lived authorization code to the exact registered FreeScout redirect URI.
+7. FreeScout exchanges the code and reads the User Info endpoint.
+8. FreeScout matches an existing agent by verified email. Automatic creation remains off during
+   the pilot.
+9. The access-bridge login listener asks Rondo for the agent's desired managed mailbox keys.
+10. The agent enters FreeScout with only the mailboxes permitted by Rondo plus any unrelated manual
+    access already present.
+
+### Later logins
+
+- Rondo re-evaluates eligibility on every authorization request.
+- The access bridge reconciles managed mailbox access after every successful FreeScout login.
+- An agent who no longer has an eligible Rondo account cannot start a new OAuth session.
+
+### Conversation sidebar
+
+1. A logged-in agent opens a conversation they may view.
+2. The hardened module validates the conversation and mailbox before sending anything to Rondo.
+3. FreeScout signs customer, conversation, mailbox and current-agent context.
+4. Rondo maps the signed agent to the approved Rondo user.
+5. Rondo intersects three boundaries:
+   - which person the agent may view;
+   - which fields the agent's Rondo capabilities permit;
+   - which fields the current FreeScout mailbox permits.
+6. Rondo returns a script-free sidebar document.
+7. The module displays the document in an isolated sidebar surface.
+
+### Sidebar actions
+
+- **Open in Rondo** and record-specific actions open a new Rondo page.
+- Rondo performs its normal browser-session authorization again.
+- The sidebar itself is read-only in version one.
+
+### Safe non-success states
+
+The sidebar shows a small, non-sensitive state for:
+
+- no Rondo match;
+- multiple possible Rondo matches;
+- agent not mapped to an eligible Rondo account;
+- mailbox not configured;
+- invalid or expired signature;
+- Rondo timeout or temporary error.
+
+Normal FreeScout conversation controls remain usable in every state.
+
+## Architecture
+
+### Component 1: Rondo OpenID Connect provider
+
+Rondo exposes a narrowly scoped provider for registered first-party clients:
+
+```text
+GET  /oauth/authorize
+POST /oauth/token
+GET  /oauth/userinfo
+GET  /oauth/jwks
+GET  /.well-known/openid-configuration
+GET  /.well-known/oauth-authorization-server
+```
+
+The initial client is FreeScout. Client registration is administrator-only and stores:
+
+- opaque client ID;
+- hashed client secret;
+- exact redirect URI allowlist;
+- allowed scopes;
+- enabled/disabled status;
+- client label shown to users;
+- secret-created and last-rotated timestamps.
+
+Rondo supports the authorization-code flow. It supports PKCE S256 when sent by the client and
+requires `state`. Whether the purchased FreeScout module sends PKCE and OpenID Connect `nonce` must
+be established in the compatibility spike. If it does not send PKCE, the FreeScout client remains
+a confidential server-side client authenticated by its secret, and the exception is documented
+before production approval.
+
+When the `openid` scope is granted, the token response includes a short-lived, signed ID token with
+`iss`, `sub`, `aud`, `iat`, `exp` and the request `nonce` when supplied. Rondo publishes only the
+corresponding public keys through the JWKS endpoint. The signing private key remains in server
+configuration outside WordPress content and supports controlled rotation. If the compatibility
+spike proves that the FreeScout module uses OAuth User Info without consuming an ID token, Rondo
+still implements this complete OpenID Connect contract rather than advertising partial OIDC.
+
+Only these initial scopes are supported:
+
+```text
+openid email profile
+```
+
+The User Info response is limited to:
+
+```json
+{
+  "sub": "opaque-stable-rondo-subject",
+  "email": "agent@example.nl",
+  "email_verified": true,
+  "name": "Agent Name",
+  "picture": "https://rondo.example.nl/path/to/avatar"
+}
+```
+
+No Rondo role, capability, committee, KNVB ID or person ID is exposed as an identity claim.
+FreeScout access is obtained separately from the signed access service.
+
+Rondo may assert `email_verified: true` only when the address has passed the approved Rondo account
+verification or administrator-provisioning policy. If current account approval does not provide
+sufficient assurance of control over the address, automatic email linking remains disabled until
+an explicit email-verification step exists.
+
+#### Provider storage
+
+Rondo follows the repository's WordPress-native storage rule:
+
+- client configuration in an option;
+- one opaque subject identifier in user meta;
+- short-lived authorization codes in transients, stored hashed;
+- short-lived access-token records in transients, stored hashed;
+- consent/audit metadata in user meta or a native audit post/comment model if required;
+- no custom database tables.
+
+Authorization codes are single-use and expire within two minutes. Access tokens are short-lived
+and scoped only to User Info. Refresh tokens are out of scope unless the FreeScout module proves
+they are required.
+
+#### Eligible Rondo identity
+
+A user may authorize the FreeScout client only when all are true:
+
+- the WordPress user exists and is not blocked/deleted;
+- the account is approved under the normal Rondo account policy;
+- the user has at least one capability mapped to a FreeScout mailbox, or is an administrator;
+- the user has an acceptable unique external email identity;
+- the linked person, when required by the mapping, still exists.
+
+Synthetic `@members.rondo.invalid` addresses and ambiguous shared addresses fail closed with a
+message directing the agent to an administrator. The provider never silently substitutes another
+person's contact email.
+
+### Component 2: hardened Sidebar Webhook fork
+
+The fork is pinned to an audited upstream commit and keeps its patch set small.
+
+#### FreeScout request authorization
+
+- Add `auth` middleware to the AJAX route; upstream currently applies only `web`.
+- Read the current agent with `auth()->user()`.
+- Authorize the agent against the conversation using FreeScout's normal conversation policy.
+- Verify `conversation.mailbox_id` equals the supplied mailbox ID.
+- Fetch the customer through the already-authorized conversation.
+- Never accept agent, customer, conversation or mailbox identity from browser-supplied data without
+  reloading and authorizing it server-side.
+
+#### Signed server request
+
+The request body contains:
+
+```json
+{
+  "version": 1,
+  "mailboxId": 12,
+  "conversationId": 3456,
+  "conversationNumber": 789,
+  "customerId": 123,
+  "customerEmail": "member@example.nl",
+  "customerEmails": ["member@example.nl"],
+  "customerPhones": [],
+  "agent": {
+    "id": 44,
+    "email": "agent@example.nl"
+  }
+}
+```
+
+Headers contain:
+
+```text
+X-Rondo-Timestamp: Unix timestamp
+X-Rondo-Nonce: cryptographically random one-time value
+X-Rondo-Signature: v1=<hex HMAC-SHA256>
+```
+
+The signature covers the timestamp, nonce and exact raw body. The shared signing key is stored only
+in server configuration. It is never included in the body, URL, response, JavaScript or logs.
+
+#### Availability limits
+
+- HTTPS endpoint only.
+- Redirects disabled.
+- Explicit connection and total timeouts.
+- Initial target: 2-second connection timeout and 5-second total timeout; confirm with production
+  latency during the spike.
+- Maximum accepted response size: 256 KiB.
+- Expected content type enforced.
+- No automatic retry in version one; the user may trigger one controlled refresh.
+- Failure hides the data surface and leaves a compact retry control.
+
+#### Response isolation
+
+Do not insert remote HTML directly into the FreeScout document.
+
+The preferred implementation creates a sandboxed `iframe` and assigns the response through the
+DOM `srcdoc` property. The sandbox does not permit scripts or same-origin access. It may permit
+user-initiated popups that escape the sandbox solely so server-generated, allowlisted Rondo links
+can open in a new tab. Those links use `target="_blank"` and `rel="noopener noreferrer"`; forms,
+scripts, same-origin access and parent navigation remain disabled. The response also carries a
+restrictive content-security policy. This gives Rondo control over the presentation while
+preventing its CSS and markup from affecting FreeScout.
+
+If the compatibility spike rejects `srcdoc` because of FreeScout layout constraints, the fallback
+is a fixed local renderer that receives a versioned JSON view model and escapes every value. Raw
+`.html(response.html)` injection is not accepted for production.
+
+### Component 3: Rondo sidebar endpoint
+
+Proposed route:
+
+```text
+POST /wp-json/rondo/v1/integrations/freescout/sidebar
+```
+
+The endpoint is publicly routable but accepts only valid signed requests. Its permission path:
+
+1. Enforce the request method, content type, required headers and raw-body size limit.
+2. Validate timestamp within a narrow clock-skew window.
+3. Validate the HMAC over the still-unparsed raw body with constant-time comparison.
+4. Reject and then record a reused nonce using a short-lived transient.
+5. Parse and validate the protocol version and body schema.
+6. Validate the mailbox against configured mailbox mappings.
+7. Resolve the FreeScout agent to one approved Rondo user.
+8. Recheck the user's current effective capabilities.
+9. Resolve the customer using the matching policy.
+10. Apply person visibility and field-level access through existing Rondo services.
+11. Apply the mailbox field allowlist.
+12. Render escaped, script-free output.
+
+The endpoint must not use an unrestricted FreeScout service identity to read person data and then
+filter it manually. It establishes the mapped Rondo user as the effective user for the request and
+reuses the existing access-control predicates.
+
+### Component 4: FreeScout access bridge
+
+OAuth Login authenticates users but does not assign mailboxes. A separate, small FreeScout module
+owns only Rondo-managed mailbox relationships.
+
+#### Managed mapping
+
+Rondo stores a mapping such as:
+
+```json
+{
+  "ledenadministratie": {
+    "freescout_mailbox_key": "ledenadministratie",
+    "freescout_mailbox_id": 12,
+    "enabled": true
+  }
+}
+```
+
+The key is stable configuration; the numeric ID is environment-specific. Administrators configure
+and verify both sides before enabling automation.
+
+The access service returns desired **managed mailbox keys**, not arbitrary FreeScout IDs. The
+FreeScout module translates keys to its local IDs. Rondo therefore cannot attach a user to an
+unconfigured mailbox.
+
+#### Rondo access service
+
+Proposed route:
+
+```text
+POST /wp-json/rondo/v1/integrations/freescout/access
+```
+
+The access bridge sends a signed FreeScout user identity. Rondo resolves the user and returns:
+
+```json
+{
+  "subject": "opaque-stable-rondo-subject",
+  "active": true,
+  "managed_mailboxes": ["ledenadministratie"],
+  "evaluated_at": "2026-08-31T20:00:00Z"
+}
+```
+
+No person or committee data is returned.
+
+#### Reconciliation algorithm
+
+For every configured managed mailbox:
+
+- desired and absent: attach;
+- desired and present: leave unchanged;
+- not desired and previously managed: detach;
+- unrelated mailbox: never touch;
+- FreeScout administrator: never downgrade or detach administrator access.
+
+The bridge must not call `sync()` over all of a user's mailboxes because that would remove manual
+assignments. It manages only the configured mailbox IDs and records enough module-owned state to
+distinguish a managed attachment from an unrelated manual attachment.
+
+#### Sync triggers
+
+1. After every successful OAuth login.
+2. After a Rondo capability change, through a signed Rondo-to-FreeScout provisioning event.
+3. Hourly reconciliation as repair when an event was missed.
+4. Nightly full audit with counts and errors but no personal data in logs.
+
+The push event is an optimization; reconciliation remains authoritative and idempotent.
+
+### Component 5: Rondo-to-FreeScout provisioning events
+
+When `CapabilitySync` grants or revokes a capability participating in a mailbox mapping, Rondo
+queues a signed event for the access bridge. The event contains only the stable Rondo subject and
+the fact that access must be re-evaluated; it does not assert the final mailbox list.
+
+FreeScout then calls the Rondo access service to obtain current desired state. This avoids accepting
+stale capability data from a delayed event.
+
+Retries use WordPress cron/transients or another existing native Rondo queue pattern. No custom
+database table is introduced. Repeated delivery is safe.
+
+## Authorization model
+
+### Why capability, not raw commissie membership
+
+The requested behavior is “members of the Ledenadministratie commissie get access to the
+Ledenadministratie mailbox.” Rondo already has a more complete authorization path:
+
+```text
+current work_history commissie membership
+  -> CommissieCapabilityMap
+  -> rondo_ledenadministratie role
+  -> ledenadministratie capability
+  -> FreeScout managed mailbox
+```
+
+Using the effective capability:
+
+- respects current/end-dated work history;
+- respects the configured commissie-to-role map;
+- includes explicitly authorized board/administrator users;
+- respects manual capability grants and revocations;
+- avoids a second interpretation of “current commissie member.”
+
+### Mailbox field policy
+
+The mailbox policy can only narrow the Rondo user's permissions. It can never grant a field the
+user cannot read in Rondo.
+
+Initial Ledenadministratie sidebar allowlist:
+
+- identity: name, active/former-member status and exact match state;
+- membership: type, KNVB ID, birthdate/age, member-since date and relation-end date;
+- sport: current teams, spelactiviteit and transfer-pending state;
+- contact: primary/secondary email, phone and address;
+- household: directly related people with relationship label and current team summary;
+- process: onboarding email state, digital membership-pass state and last source-sync timestamp;
+- work: count and summary of open Rondo tasks relevant to ledenadministratie;
+- links: person, relevant task and Sportlink record.
+
+Explicitly excluded unless a future mailbox policy and Rondo capability both allow them:
+
+- contribution balance, invoices and installment details;
+- financial block and Nikki fields;
+- VOG details;
+- sponsor-management fields;
+- private notes and unrestricted timeline content;
+- discipline cases;
+- arbitrary custom fields.
+
+## Customer matching
+
+Version one matches in this order:
+
+1. Normalize all FreeScout customer emails.
+2. Search Rondo for exact normalized matches in canonical email fields.
+3. Deduplicate matches by person ID.
+4. Render a record only when exactly one accessible person remains.
+
+Rules:
+
+- Case differences are ignored.
+- An exact secondary email is valid.
+- Phone numbers never select a person automatically.
+- A shared email returning multiple people produces an ambiguous state.
+- An inaccessible record is indistinguishable from no match.
+- The agent may open Rondo search, but the sidebar never asks them to pick from inaccessible people.
+- No match state contains no inferred membership information.
+
+A future stable customer-to-person mapping may be added after an explicit, audited linking action.
+Email matching remains the rollout baseline because the goal is to retire dependence on copied
+FreeScout IDs.
+
+## OAuth and account lifecycle
+
+### Pilot
+
+- Automatic FreeScout user creation is disabled.
+- Existing FreeScout agents are matched to Rondo by a unique verified email.
+- OAuth is optional until every pilot agent succeeds.
+- One documented local FreeScout administrator remains available as break glass.
+- Force OAuth Login is enabled only after recovery through FreeScout server configuration has been
+  rehearsed.
+
+### Later automatic creation
+
+Automatic creation may be enabled only when:
+
+- Rondo denies authorization for users without a mapped FreeScout capability;
+- unique-email and synthetic-email guards are proven;
+- the access bridge assigns zero or more managed mailboxes immediately after creation;
+- a newly created user with no mailbox cannot see customer data;
+- duplicate and renamed-email behavior is tested.
+
+### Revocation
+
+Removing `ledenadministratie` causes the bridge to remove the managed mailbox. It does not
+automatically terminate an existing FreeScout session or delete the FreeScout account.
+
+This is acceptable for version one because the user loses the mailbox and Rondo sidebar data. A
+future account-deactivation policy may be considered only after proving that the user has no manual
+mailboxes and no other managed capability.
+
+## Migration from the current FreeScout sync
+
+### Keep initially
+
+- Existing FreeScout users and mailbox assignments.
+- Existing customer records and historical custom fields.
+- FreeScout conversation-to-Rondo activity sync.
+- Existing FreeScout customer IDs and SQLite mappings as rollback/reference data.
+
+### Dual-run validation
+
+For a pilot group, compare sidebar output to existing FreeScout customer fields:
+
+- person identity;
+- current team;
+- member-since date;
+- contact details;
+- contribution values where the validating agent has finance access, without adding those values to
+  the Ledenadministratie sidebar.
+
+Differences are treated as evidence about stale copied data or matching defects; the sidebar does
+not silently overwrite FreeScout.
+
+### Disable only after acceptance
+
+After the sidebar has passed pilot acceptance:
+
+1. Stop creating/updating copied FreeScout customer custom fields.
+2. Preserve existing FreeScout customers; do not bulk-delete them.
+3. Keep the old pipeline available behind an explicit rollback switch for one release window.
+4. Review whether FreeScout customer ID reverse sync to Rondo/Sportlink is still needed.
+5. Review and redesign the conversation activity pipeline's person mapping before removing its
+   dependency on the existing FreeScout SQLite map.
+
+No local Rondo Sync pipeline is run as part of planning or migration analysis; production SQLite
+mappings remain authoritative.
+
+## Security requirements
+
+- Exact OAuth redirect URI matching.
+- Authorization codes single-use and short-lived.
+- PKCE S256 supported; required when the client sends it.
+- `state` required and validated by FreeScout.
+- OpenID Connect `nonce` supported when sent.
+- Client secrets stored hashed where retrieval is unnecessary and otherwise encrypted using the
+  existing Rondo secret-storage boundary.
+- Signing keys rotatable with an overlap window for one previous key.
+- HMAC validation before parsing or querying personal data.
+- Replay prevention through timestamp and one-time nonce.
+- Constant-time signature comparison.
+- Authenticated FreeScout AJAX route.
+- Conversation policy authorization and mailbox/conversation consistency check.
+- Agent identity reloaded server-side; never trusted from browser parameters.
+- Mailbox allowlist intersects Rondo access; it never widens it.
+- Script-free isolated sidebar response.
+- No credentials, raw tokens, signatures, personal payloads or returned HTML in normal logs.
+- Rate limiting per FreeScout instance, agent and source IP where reliable.
+- Response cache keys include mailbox policy and effective authorization class; no cross-user PII
+  cache leakage.
+- All integration endpoints fail closed for data and fail open for normal FreeScout operation.
+
+## Privacy requirements
+
+- Document FreeScout as a recipient/display surface for live Rondo data in the processing record.
+- Send only customer identifiers needed for exact matching.
+- Send only agent ID/email needed for identity mapping.
+- Do not persist sidebar person payloads in FreeScout.
+- Avoid browser analytics, third-party fonts, external images and remote scripts inside the sidebar.
+- Keep audit logs event-oriented: success/failure, IDs and reason codes, without full person payloads.
+- Set an explicit retention period for OAuth and provisioning audit records.
+- Review the expanded Ledenadministratie field allowlist with the club before production.
+
+## Observability
+
+Rondo records aggregate and audit-safe events for:
+
+- OAuth authorizations allowed/denied by reason;
+- token exchange failures;
+- sidebar signature/replay failures;
+- match outcomes: exact, none, ambiguous and inaccessible;
+- sidebar latency and timeout rate;
+- mailbox access grants/revocations;
+- reconciliation drift and repair;
+- signing-key and OAuth-client-secret rotation.
+
+FreeScout records:
+
+- endpoint availability and timeout class;
+- invalid response type/size;
+- access-bridge reconciliation counts;
+- last successful reconciliation timestamp.
+
+Neither side logs OAuth codes, access tokens, HMAC signatures, client secrets or complete request
+bodies.
+
+## Performance and availability targets
+
+- Sidebar endpoint p95 server time below 500 ms after warm-up.
+- Visible sidebar result or quiet unavailable state within 5 seconds.
+- FreeScout conversation page remains interactive while the sidebar loads.
+- Rondo outage causes no FreeScout login outage for an existing FreeScout session.
+- Rondo outage during a new OAuth login returns a clear login failure without changing access.
+- Managed mailbox grant after successful OAuth login: immediate in the same login flow.
+- Managed mailbox revocation after successful Rondo event: within 5 minutes.
+- Missed-event repair: within one hourly reconciliation cycle.
+
+## Compatibility spike
+
+Before product implementation, verify the paid OAuth Login module and current FreeScout release in
+a non-production environment.
+
+Required observations:
+
+1. Exact authorization request parameters and scopes.
+2. Whether `state`, PKCE and OpenID Connect `nonce` are sent and validated.
+3. Token endpoint client-authentication method.
+4. Whether the module requires an ID token or relies only on User Info.
+5. User matching and duplicate-email behavior.
+6. Whether current Rondo account approval provides sufficient assurance to assert
+   `email_verified: true`.
+7. Automatic user creation defaults and role assigned.
+8. Events fired after OAuth login and after new-user creation.
+9. Behavior when Rondo denies authorization.
+10. Force-login recovery procedure.
+11. FreeScout mobile-app behavior.
+12. Sidebar `srcdoc`/sandbox layout at realistic sidebar widths.
+13. Timeout behavior with DNS failure, connection refusal, TLS error and slow response.
+
+The spike produces captured request shapes with secrets redacted, a compatibility matrix and a
+go/no-go decision. It does not use production member data.
+
+## Implementation phases
+
+### Phase 0: compatibility and threat-model spike
+
+- Install licensed OAuth Login and a test build of the sidebar fork outside production.
+- Capture OAuth behavior and FreeScout login events.
+- Prove the sandboxed response design.
+- Confirm timeout values.
+- Review the threat model and decide any documented OAuth compatibility exception.
+
+**Gate:** no implementation phase proceeds without a successful end-to-end test user login and a
+confirmed current-agent hook.
+
+### Phase 1: Rondo identity provider
+
+- Add first-party client registration and secret rotation.
+- Implement discovery, authorize, token and User Info endpoints.
+- Add opaque subjects and external-email eligibility checks.
+- Add tests for redirects, codes, tokens, scopes, PKCE and denials.
+- Document administration and break-glass recovery.
+
+### Phase 2: hardened sidebar fork
+
+- Rebase from current upstream tag/commit.
+- Add authentication and conversation authorization.
+- Add current agent to the signed payload.
+- Replace body secret with versioned HMAC headers.
+- Add strict timeouts, redirect prevention and response limits.
+- Replace raw HTML injection with the accepted isolated renderer.
+- Preserve a small visible refresh action and graceful failure state.
+
+### Phase 3: Rondo sidebar service
+
+- Add signature/replay validation.
+- Add agent mapping and effective-user authorization.
+- Add exact customer matching.
+- Add mailbox policies and the Ledenadministratie view.
+- Add no-match, ambiguous, unauthorized and unavailable states.
+- Link all mutations to authenticated Rondo pages.
+
+### Phase 4: access bridge and automatic provisioning
+
+- Add FreeScout login listener.
+- Add signed Rondo access service.
+- Add managed capability-to-mailbox configuration.
+- Reconcile only managed mailbox relationships.
+- Add Rondo capability-change events and FreeScout receiver.
+- Add hourly repair and nightly audit.
+
+### Phase 5: pilot and sync cutover
+
+- Pilot with a small Ledenadministratie group.
+- Compare live sidebar values with copied FreeScout fields.
+- Validate grant and revocation with real non-admin agents.
+- Enable OAuth login without forcing it.
+- Rehearse break-glass recovery.
+- Disable customer enrichment only after acceptance.
+- Keep conversation activity sync until separately approved.
+
+## Test matrix
+
+### Identity provider
+
+- Approved eligible user succeeds.
+- User without a mapped capability is denied.
+- Disabled/deleted user is denied.
+- Synthetic/shared/ambiguous email is denied.
+- Redirect URI mismatch is denied.
+- Expired or reused authorization code is denied.
+- Invalid client secret is denied.
+- PKCE verifier mismatch is denied when PKCE was initiated.
+- Unsupported scope is denied.
+- User Info token with wrong scope/expiry is denied.
+
+### Sidebar request
+
+- Authenticated agent with conversation access succeeds.
+- Unauthenticated AJAX request is denied.
+- Agent without conversation access is denied before webhook dispatch.
+- Conversation/mailbox mismatch is denied.
+- Tampered body, timestamp or nonce is denied.
+- Replayed request is denied.
+- Slow endpoint times out without blocking the conversation UI.
+- Oversized or wrong-content-type response is rejected.
+- Returned script/event-handler markup cannot execute in FreeScout.
+
+### Person matching and fields
+
+- One exact primary-email match renders.
+- One exact secondary-email match renders.
+- Zero matches shows no-match state.
+- Two accessible matches show ambiguous state without details.
+- An inaccessible match is treated as no match.
+- Phone-only match never auto-selects.
+- Ledenadministratie sees its allowlist.
+- Ledenadministratie does not see finance, VOG, sponsor or private-note fields.
+- A future finance mailbox cannot expose finance to an agent lacking Rondo finance access.
+
+### Mailbox provisioning
+
+- Current mapped commissie member receives the Rondo role/capability and FreeScout mailbox.
+- End-dated commissie membership revokes the managed mailbox.
+- Manual Rondo revoke prevents the mailbox grant.
+- Manual Rondo grant permits the mailbox without direct committee membership.
+- Unrelated manual FreeScout mailbox access survives every reconciliation.
+- A manually attached instance of the managed mailbox is not detached unless recorded as managed.
+- FreeScout administrators are not downgraded.
+- Repeated login/event/reconciliation is idempotent.
+- Missed event is repaired hourly.
+- Rondo outage leaves existing FreeScout access unchanged and records a retryable error.
+
+## Acceptance criteria
+
+The milestone is complete only when:
+
+- a real pilot agent signs into FreeScout through Rondo;
+- FreeScout identifies the current agent and signs the sidebar request;
+- Rondo maps that agent to the expected approved WordPress user;
+- a current `ledenadministratie` capability grants the correct FreeScout mailbox;
+- revoking that capability removes only integration-managed access;
+- the Ledenadministratie sidebar renders the approved live field set;
+- zero-match and multiple-match cases disclose no person data;
+- an agent lacking Rondo access cannot retrieve the sidebar record by changing IDs;
+- an unreachable Rondo endpoint does not freeze FreeScout or exhaust workers;
+- returned sidebar content cannot execute scripts in the FreeScout parent page;
+- existing manual mailbox assignments remain unchanged;
+- a break-glass FreeScout administrator login is proven;
+- the current customer-enrichment sync remains available until explicit cutover approval;
+- production OAuth forcing and sync disablement each receive separate approval.
+
+## Rollback
+
+- Disable the Rondo OAuth client.
+- Disable Force OAuth Login through the documented FreeScout server setting.
+- Disable the access-bridge mapping while leaving existing mailbox relations unchanged.
+- Disable the sidebar module or mailbox webhook URL.
+- Re-enable the existing Rondo Sync FreeScout customer pipeline if it was disabled.
+- Preserve FreeScout users, conversations, customer records and historical custom fields.
+- Rotate the OAuth client secret and HMAC signing key if compromise is suspected.
+
+## Open decisions before implementation
+
+1. Exact production FreeScout mailbox ID and stable key for Ledenadministratie.
+2. Whether `srcdoc` with a scriptless sandbox fits the final FreeScout sidebar height and refresh
+   behavior; otherwise use the escaped JSON renderer.
+3. The paid OAuth module's exact PKCE, nonce, token and login-event behavior.
+4. Whether current Rondo account approval is sufficient email verification for automatic
+   FreeScout account matching.
+5. Whether automatic FreeScout user creation is ever enabled after the pilot.
+6. The acceptable FreeScout session lifetime after Rondo account revocation.
+7. The approved final Ledenadministratie sidebar field allowlist.
+8. Whether the FreeScout conversation activity sync remains a long-term feature.
+9. How its person matching works after customer enrichment and FreeScout ID reverse sync are
+   retired.
+10. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
+11. Audit retention period and operational owners for failed provisioning events.
