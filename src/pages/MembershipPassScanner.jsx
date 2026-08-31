@@ -26,6 +26,9 @@ import {
 function getInvalidPassMessage(reason) {
   if (reason === 'revoked') return 'Deze pas is ingetrokken.';
   if (reason === 'no_pass_right') return 'Geen geldig pasrecht.';
+  if (reason === 'unclaimed') return 'Deze gastpas is nog niet geregistreerd.';
+  if (reason === 'host_ineligible') return 'De speler kan momenteel geen gastpassen gebruiken.';
+  if (reason === 'wrong_match') return 'Deze gastpas is alleen geldig bij thuiswedstrijden van AWC 1.';
   return 'Geen lid meer.';
 }
 
@@ -164,7 +167,7 @@ function AccessStats({ stats, isLoading }) {
       ) : (
         <>
           <div className="text-4xl font-bold text-gray-900 dark:text-gray-100">{stats?.total ?? 0}</div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             {(stats?.breakdown || []).map((item) => (
               <div key={item.type} className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/70">
                 <div className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{item.count}</div>
@@ -382,6 +385,7 @@ export default function MembershipPassScanner() {
 
   const isActiveMembership = result?.valid === true;
   const isDuplicate = isActiveMembership && result?.admission?.duplicate === true;
+  const isGuest = result?.pass_type === 'guest';
   const resultPhoto = result?.person?.photo_thumbnail || result?.person?.thumbnail || '';
   const resultKnvbId = result?.person?.knvb_id || result?.person?.['knvb_id'] || '';
   const isSponsor = result?.person?.is_sponsor === true;
@@ -463,12 +467,12 @@ export default function MembershipPassScanner() {
                 ? selectedEvent
                   ? 'Toegang geregistreerd'
                   : 'Geldige ledenpas'
-                : 'Ongeldige ledenpas'}
+                : isGuest ? 'Ongeldige gastpas' : 'Ongeldige ledenpas'}
           </div>
 
           {isDuplicate ? (
             <div className="text-sm font-medium text-amber-700 dark:text-amber-400">
-              Deze persoon telde al mee
+              {isGuest ? 'Deze gastpas' : 'Deze persoon'} telde al mee
               {result.admission?.scanned_at ? ` om ${formatScanTime(result.admission.scanned_at)}` : ''}.
             </div>
           ) : null}
@@ -489,9 +493,13 @@ export default function MembershipPassScanner() {
               <div className="h-16 w-16 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-200 dark:border-gray-700" aria-hidden="true" />
             )}
             <div>
-              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">{result.person?.name || '-'}</div>
+              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {isGuest ? result.guest?.name || '-' : result.person?.name || '-'}
+              </div>
               <div className="text-sm text-gray-500 dark:text-gray-400">
-                {isSponsor ? `Bedrijf: ${resultCompanyName || '-'}` : `KNVB ID: ${resultKnvbId || '-'}`}
+                {isGuest
+                  ? `Gast van ${result.guest?.host_name || '-'}`
+                  : isSponsor ? `Bedrijf: ${resultCompanyName || '-'}` : `KNVB ID: ${resultKnvbId || '-'}`}
               </div>
             </div>
           </div>
@@ -499,6 +507,11 @@ export default function MembershipPassScanner() {
           {result.person?.id ? (
             <Link to={`/people/${result.person.id}`} className="btn-tertiary gap-2">
               Open lidprofiel
+            </Link>
+          ) : null}
+          {isGuest && result.guest?.host_person_id ? (
+            <Link to={`/people/${result.guest.host_person_id}`} className="btn-tertiary gap-2">
+              Open spelersprofiel
             </Link>
           ) : null}
         </div>

@@ -126,6 +126,7 @@ use Rondo\REST\Feedback as RESTFeedback;
 use Rondo\REST\Invoices as RESTInvoices;
 use Rondo\REST\MembershipPasses as RESTMembershipPasses;
 use Rondo\REST\AccessEvents as RESTAccessEvents;
+use Rondo\REST\GuestPasses as RESTGuestPasses;
 use Rondo\REST\Clothing as RESTClothing;
 use Rondo\Notifications\EmailChannel;
 use Rondo\Notifications\LettermintMailer;
@@ -179,6 +180,7 @@ use Rondo\Demo\DemoAnonymizer;
 use Rondo\Demo\DemoImport;
 use Rondo\Demo\DemoProtection;
 use Rondo\Passes\MembershipPassService;
+use Rondo\Passes\PublicGuestPassPage;
 use Rondo\Volunteer\PublicTaakuitlegPage;
 
 define( 'RONDO_THEME_DIR', get_template_directory() );
@@ -351,6 +353,7 @@ function rondo_init() {
 		new RESTInvoices();
 		new RESTMembershipPasses();
 		new RESTAccessEvents();
+		new RESTGuestPasses();
 		if ( FeatureToggles::is_available( 'clothing' ) ) {
 			new RESTClothing();
 		}
@@ -411,6 +414,7 @@ function rondo_init() {
 
 	// Authenticated Apple and Google Wallet actions for personal membership passes.
 	new MembershipPassService();
+	new PublicGuestPassPage();
 
 	// Public self-service account activation - /activeren
 	new \Rondo\Users\ActivationPage();
@@ -1164,7 +1168,7 @@ add_filter( 'query_vars', 'rondo_pwa_query_vars' );
  * Runs late on `init` so every add_rewrite_rule() call has already registered.
  */
 function rondo_maybe_flush_rewrite_rules() {
-	$rewrite_version = '5'; // Bump when adding/changing a rewrite rule.
+	$rewrite_version = '6'; // Bump when adding/changing a rewrite rule.
 	if ( get_option( 'rondo_rewrite_rules_version' ) === $rewrite_version ) {
 		return;
 	}
@@ -1199,6 +1203,9 @@ function rondo_theme_activation() {
 	// Register public payment page rewrite rules
 	$payment_page = new PublicPaymentPage();
 	$payment_page->register_rewrite_rules();
+
+	$guest_pass_page = new PublicGuestPassPage();
+	$guest_pass_page->register_rewrite_rules();
 
 	$email_change_page = new \Rondo\Users\EmailChangePage();
 	$email_change_page->register_rewrite_rules();

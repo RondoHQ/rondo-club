@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, Building2, ReceiptEuro, ImagePlus, LoaderCircle, Monitor, Pencil, UserRoundPlus, X } from 'lucide-react';
+import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, Building2, ReceiptEuro, ImagePlus, LoaderCircle, Monitor, Pencil, UserRoundPlus, X, Link2, Share2, RotateCcw, Check } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useUpdateSponsorNarrowcastingPreference, useUploadSponsorLogo } from '@/hooks/useSponsors';
@@ -12,6 +12,7 @@ import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import AnchoredPopover from '@/components/AnchoredPopover';
 import ParentRelationshipModal from '@/components/ParentRelationshipModal';
 import { useAddHouseholdParent } from '@/hooks/useMemberProfile';
+import { useCreateGuestPassSlot, useMyGuestPasses, useReplaceGuestPassSlot } from '@/hooks/useGuestPasses';
 import MemberProfileEditors from './MemberProfileEditors';
 import { buildDigitalPassPath } from './membershipPassUtils';
 
@@ -508,6 +509,111 @@ function PersonCard({ person, isParent, householdPeople, linkedPersonId, onAddPa
   );
 }
 
+function GuestPassesCard() {
+  const { data, isLoading } = useMyGuestPasses();
+  const createSlot = useCreateGuestPassSlot();
+  const replaceSlot = useReplaceGuestPassSlot();
+  const [copiedSlot, setCopiedSlot] = useState(null);
+
+  if (isLoading || !data?.eligible) return null;
+
+  const shareSlot = async (slot) => {
+    const shareData = {
+      title: `Gastpas ${data.team}`,
+      text: `Hiermee kun je jouw gastpas voor de thuiswedstrijden van ${data.team} op je telefoon zetten.`,
+      url: slot.share_url,
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (error) {
+        if (error?.name === 'AbortError') return;
+      }
+    }
+    await navigator.clipboard.writeText(slot.share_url);
+    setCopiedSlot(slot.slot);
+    window.setTimeout(() => setCopiedSlot(null), 2000);
+  };
+
+  const replace = (slot) => {
+    const guest = slot.guest_name || `gast ${slot.slot}`;
+    if (!window.confirm(`Weet je zeker dat je de pas van ${guest} wilt vervangen? De huidige QR-code werkt daarna niet meer.`)) return;
+    replaceSlot.mutate(slot.slot);
+  };
+
+  return (
+    <section className="card max-w-3xl p-5">
+      <div className="flex items-start gap-3">
+        <Link2 className="mt-0.5 h-5 w-5 shrink-0 text-electric-cyan" aria-hidden="true" />
+        <div>
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100">Gastpassen {data.team}</h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            Je hebt twee herbruikbare gastpassen. Iedere pas kan per thuiswedstrijd één keer worden gebruikt.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {data.slots.map((slot) => (
+          <div key={slot.slot} className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  Gastpas {slot.slot}
+                </div>
+                <div className="mt-1 font-medium text-gray-900 dark:text-gray-100">
+                  {slot.status === 'active' ? slot.guest_name : slot.status === 'unclaimed' ? 'Wacht op registratie' : 'Nog niet aangemaakt'}
+                </div>
+              </div>
+              {slot.status === 'active' ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                  <Check className="h-3.5 w-3.5" aria-hidden="true" /> Actief
+                </span>
+              ) : null}
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {slot.status === 'empty' ? (
+                <button
+                  type="button"
+                  className="btn-primary text-sm"
+                  disabled={createSlot.isPending}
+                  onClick={() => createSlot.mutate(slot.slot)}
+                >
+                  {createSlot.isPending ? 'Link maken…' : 'Maak gastlink'}
+                </button>
+              ) : (
+                <>
+                  <button type="button" className="btn-primary gap-2 text-sm" onClick={() => shareSlot(slot)}>
+                    {copiedSlot === slot.slot ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+                    {copiedSlot === slot.slot ? 'Link gekopieerd' : 'Deel link'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-tertiary gap-2 text-sm"
+                    disabled={replaceSlot.isPending}
+                    onClick={() => replace(slot)}
+                  >
+                    <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                    Gast vervangen
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {(createSlot.error || replaceSlot.error) ? (
+        <p className="mt-3 text-sm text-red-600 dark:text-red-400">
+          {createSlot.error?.response?.data?.message || replaceSlot.error?.response?.data?.message || 'De gastpas kon niet worden bijgewerkt.'}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 /**
  * "Mijn gezin" — the member's own record plus their children under 18.
  *
@@ -580,6 +686,7 @@ export default function Household() {
                 linkedPersonId={linkedPersonId}
                 onAddParent={setParentEditorChildId}
               />
+              {person.household_role === 'self' ? <GuestPassesCard /> : null}
               {person.household_role === 'self' && person.sponsor_organization?.can_edit_logo ? (
                 <SponsorCard organization={person.sponsor_organization} />
               ) : null}
