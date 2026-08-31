@@ -8,7 +8,7 @@
 ## Purpose
 
 Prove the licensed FreeScout OAuth Login module, the current FreeScout release and the proposed
-sidebar/access modules can support the PRD before product implementation starts.
+custom Rondo Integration module can support the PRD before product implementation starts.
 
 This spike may use a disposable standards-compliant test identity provider to observe FreeScout's
 actual OAuth behavior. It does not implement Rondo's production identity provider.
@@ -23,7 +23,7 @@ Fill this section when executing the spike.
 | Tester | |
 | FreeScout version/commit | |
 | OAuth Login module version | |
-| Sidebar Webhook upstream version/commit | |
+| Sidebar Webhook reference version/commit | |
 | PHP version | |
 | Browser versions | |
 | FreeScout mobile app/version | |
@@ -44,7 +44,8 @@ Fill this section when executing the spike.
 - [ ] Clone the production FreeScout version and relevant configuration into an isolated
   non-production instance.
 - [ ] Install the licensed OAuth Login module without enabling Force OAuth Login.
-- [ ] Install an unmodified Sidebar Webhook module at the exact upstream commit being evaluated.
+- [ ] Record the exact Sidebar Webhook upstream commit used as an MIT-licensed reference; do not
+  plan to install it alongside the custom Rondo Integration module.
 - [ ] Configure a controlled test identity provider that can show redacted authorization, token and
   User Info request shapes.
 - [ ] Create a synthetic FreeScout mailbox named `Ledenadministratie test`.
@@ -121,7 +122,8 @@ mailbox/customer access before provisioning completes.
 
 ## 5. Prove the current-agent integration hook
 
-Use a minimal test listener; do not build the access bridge during this spike.
+Use a minimal test listener inside a proof build of the custom Rondo Integration module; do not
+build the complete provisioning component during this spike.
 
 - [ ] Identify the event fired after a successful OAuth login for an existing user.
 - [ ] Identify the event fired after OAuth creates a new user.
@@ -132,7 +134,8 @@ Use a minimal test listener; do not build the access bridge during this spike.
   allowing a safe login result.
 - [ ] Confirm listener failure is logged without exposing tokens or blocking all local admin access.
 
-**Gate:** record the exact event/class names and execution order needed by the future access bridge.
+**Gate:** record the exact event/class names and execution order needed by the production Rondo
+Integration module.
 
 ## 6. Prove managed mailbox reconciliation
 
@@ -177,7 +180,8 @@ Mobile incompatibility is a documented product decision, not an automatic securi
 
 ## 9. Prove sidebar authorization context
 
-Use a minimal hardened test fork based on the selected upstream commit.
+Use a minimal proof route in the custom Rondo Integration module, informed by the selected upstream
+reference commit.
 
 - [ ] Add authentication middleware to the sidebar AJAX route.
 - [ ] Confirm an unauthenticated request is rejected before webhook dispatch.
@@ -289,4 +293,3 @@ architecture assumption must change before repeating the spike.
 - [ ] Timeout/failure results at expected pilot concurrency.
 - [ ] Completed compatibility matrix.
 - [ ] Signed-off `GO`, `CONDITIONAL GO` or `NO-GO` decision.
-
