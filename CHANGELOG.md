@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- De contributie-API levert per lid de actuele Rondo-factuur, het openstaande contributiebedrag en de termijnvoortgang voor veilige synchronisatie met FreeScout.
 - Beheerders kunnen onder **Instellingen → Club** kiezen welk team gastpassen gebruikt; actuele spelers van dat team kunnen op **Mijn gegevens** twee vaste gastlinks delen en iedere gast bewaart na eenmalige registratie een herbruikbare Apple Wallet-, Google Wallet- of QR-pas.
 - Beheerders kunnen onder **Instellingen → VOG** de ledencommunicatie voor ontbrekende, verlopen en bijna verlopende VOG's aanpassen.
 - Sponsorprofielen tonen een activiteitenlog van succesvolle logins, logo-aanpassingen en wijzigingen van de Club TV-voorkeur door sponsorcontacten.

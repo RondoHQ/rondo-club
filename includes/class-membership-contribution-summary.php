@@ -28,16 +28,51 @@ final class MembershipContributionSummary {
 	 * @return array<int,array<string,mixed>>
 	 */
 	public static function for_people( array $person_ids ): array {
+		$season = SeasonKey::current( wp_date( 'Y-m-d' ) );
+
+		return self::query_for_people(
+			$person_ids,
+			$season,
+			[ 'rondo_sent', 'rondo_paid', 'rondo_overdue' ]
+		);
+	}
+
+	/**
+	 * Return the latest current-season invoice summary used by finance integrations.
+	 *
+	 * Unlike the household surface this includes draft and cancelled invoices, so
+	 * support systems can distinguish "not invoiced" from an internal invoice state.
+	 *
+	 * @param int[]  $person_ids Person IDs included in the fee list.
+	 * @param string $season Season key in YYYY-YYYY format.
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function for_finance_people( array $person_ids, string $season ): array {
+		return self::query_for_people(
+			$person_ids,
+			$season,
+			[ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue', 'rondo_cancelled' ]
+		);
+	}
+
+	/**
+	 * Query and format the latest contribution invoice per person.
+	 *
+	 * @param int[]    $person_ids Person IDs.
+	 * @param string   $season Season key.
+	 * @param string[] $post_statuses Included invoice post statuses.
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function query_for_people( array $person_ids, string $season, array $post_statuses ): array {
 		$person_ids = array_values( array_unique( array_filter( array_map( 'absint', $person_ids ) ) ) );
 		if ( empty( $person_ids ) ) {
 			return [];
 		}
 
-		$season   = SeasonKey::current( wp_date( 'Y-m-d' ) );
 		$invoices = get_posts(
 			[
 				'post_type'        => 'rondo_invoice',
-				'post_status'      => [ 'rondo_sent', 'rondo_paid', 'rondo_overdue' ],
+				'post_status'      => $post_statuses,
 				'posts_per_page'   => -1,
 				'orderby'          => [
 					'date' => 'DESC',
@@ -85,19 +120,23 @@ final class MembershipContributionSummary {
 			[ 'invoice_number', 'total_amount', 'due_date', 'payment_link' ]
 		);
 		$status = match ( $invoice->post_status ) {
+			'rondo_draft'     => 'draft',
 			'rondo_paid'    => 'paid',
 			'rondo_overdue' => 'overdue',
+			'rondo_cancelled' => 'cancelled',
 			default          => 'sent',
 		};
 		$plan  = (string) get_post_meta( $invoice->ID, '_installment_plan', true );
 		$count = max( 0, (int) get_post_meta( $invoice->ID, '_installment_count', true ) );
 
 		$paid_installments = 0;
+		$paid_principal    = 0.0;
 		$next_installment  = null;
 		for ( $number = 1; $number <= $count; $number++ ) {
 			$installment_status = (string) get_post_meta( $invoice->ID, '_installment_' . $number . '_status', true );
 			if ( $installment_status === 'betaald' ) {
 				++$paid_installments;
+				$paid_principal += (float) get_post_meta( $invoice->ID, '_installment_' . $number . '_amount', true );
 				continue;
 			}
 
@@ -115,23 +154,32 @@ final class MembershipContributionSummary {
 		}
 
 		$payment_url = null;
-		if ( $status !== 'paid' ) {
+		if ( in_array( $status, [ 'sent', 'overdue' ], true ) ) {
 			$payment_url = $plan === ''
 				? self::safe_url( (string) ( $fields['payment_link'] ?? '' ) )
 				: ( $next_installment['payment_url'] ?? null );
 		}
 
+		$total_amount       = (float) ( $fields['total_amount'] ?? 0 );
+		$outstanding_amount = match ( $status ) {
+			'paid'            => 0.0,
+			'sent', 'overdue' => round( max( 0.0, $total_amount - $paid_principal ), 2 ),
+			default           => null,
+		};
+
 		return [
-			'invoice_number'    => (string) ( $fields['invoice_number'] ?? '' ),
-			'season'            => $season,
-			'total_amount'      => (float) ( $fields['total_amount'] ?? 0 ),
-			'status'            => $status,
-			'due_date'          => $fields['due_date'] ?? null,
-			'payment_url'       => $payment_url,
-			'installment_plan'  => $plan !== '' ? $plan : null,
-			'installment_count' => $count,
-			'paid_installments' => $paid_installments,
-			'next_installment'  => $next_installment,
+			'invoice_id'         => $invoice->ID,
+			'invoice_number'     => (string) ( $fields['invoice_number'] ?? '' ),
+			'season'             => $season,
+			'total_amount'       => $total_amount,
+			'outstanding_amount' => $outstanding_amount,
+			'status'             => $status,
+			'due_date'           => $fields['due_date'] ?? null,
+			'payment_url'        => $payment_url,
+			'installment_plan'   => $plan !== '' ? $plan : null,
+			'installment_count'  => $count,
+			'paid_installments'  => $paid_installments,
+			'next_installment'   => $next_installment,
 		];
 	}
 

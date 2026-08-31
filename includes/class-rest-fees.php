@@ -10,6 +10,7 @@ namespace Rondo\REST;
 
 use Rondo\Fees\FeeServices;
 use Rondo\Fees\SeasonKey;
+use Rondo\Finance\MembershipContributionSummary;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -665,49 +666,21 @@ class Fees extends Base {
 			$results[] = $result;
 		}
 
-		// Look up existing membership invoices for this season (skip for forecast).
+		// Enrich current-season results with the latest Rondo contribution invoice.
 		if ( ! $forecast ) {
-			$invoice_query = new \WP_Query(
-				[
-					'post_type'      => 'rondo_invoice',
-					'posts_per_page' => -1,
-					'post_status'    => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue', 'rondo_cancelled' ],
-					'no_found_rows'  => true,
-					'fields'         => 'ids',
-					'meta_query'     => [
-						'relation' => 'AND',
-						[
-							'key'   => '_invoice_season',
-							'value' => $season,
-						],
-						[
-							'key'   => 'invoice_type',
-							'value' => 'membership',
-						],
-					],
-				]
-			);
-
-			// Build person_id => { invoice_id, invoice_status } lookup.
-			$invoice_map = [];
-			if ( ! empty( $invoice_query->posts ) ) {
-				update_meta_cache( 'post', $invoice_query->posts );
-				foreach ( $invoice_query->posts as $inv_id ) {
-					$inv_person = get_post_meta( $inv_id, 'person', true );
-					if ( $inv_person ) {
-						$invoice_map[ (int) $inv_person ] = [
-							'id'     => $inv_id,
-							'status' => get_post_meta( $inv_id, 'status', true ) ?: 'draft',
-						];
-					}
-				}
-			}
+			$invoice_map = MembershipContributionSummary::for_finance_people( array_column( $results, 'id' ), $season );
 
 			// Enrich results with invoice data.
 			foreach ( $results as &$result ) {
-				$inv                      = $invoice_map[ $result['id'] ] ?? null;
-				$result['invoice_id']     = $inv ? $inv['id'] : null;
-				$result['invoice_status'] = $inv ? $inv['status'] : null;
+				$inv                           = $invoice_map[ $result['id'] ] ?? null;
+				$result['invoice_id']          = $inv['invoice_id'] ?? null;
+				$result['invoice_number']      = $inv['invoice_number'] ?? null;
+				$result['invoice_status']      = $inv ? $inv['status'] : null;
+				$result['invoice_total']       = $inv['total_amount'] ?? null;
+				$result['invoice_outstanding'] = $inv['outstanding_amount'] ?? null;
+				$result['installment_plan']    = $inv['installment_plan'] ?? null;
+				$result['installment_count']   = $inv['installment_count'] ?? 0;
+				$result['paid_installments']   = $inv['paid_installments'] ?? 0;
 			}
 			unset( $result );
 		}
