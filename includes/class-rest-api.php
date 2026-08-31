@@ -669,6 +669,14 @@ class Api extends Base {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
+						'guest_pass_team_id'          => [
+							'required'          => false,
+							'sanitize_callback' => 'absint',
+							'validate_callback' => static function ( $param ): bool {
+								$team_id = (int) $param;
+								return $team_id === 0 || get_post_type( $team_id ) === 'team';
+							},
+						],
 						'volunteer_signup_info'       => [
 							'required'          => false,
 							'sanitize_callback' => 'wp_kses_post',
@@ -1928,6 +1936,16 @@ class Api extends Base {
 		$club_name = $request->get_param( 'club_name' );
 		if ( $club_name !== null ) {
 			\Rondo\Config\ClubConfig::update_club_name( $club_name );
+		}
+
+		$guest_pass_team_id = $request->get_param( 'guest_pass_team_id' );
+		if ( $guest_pass_team_id !== null
+			&& ! \Rondo\Config\ClubConfig::update_guest_pass_team_id( (int) $guest_pass_team_id ) ) {
+			return new \WP_Error(
+				'rondo_invalid_guest_pass_team',
+				__( 'Kies een geldig team voor de gastpassen.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
 		}
 
 		$volunteer_signup_info = $request->get_param( 'volunteer_signup_info' );

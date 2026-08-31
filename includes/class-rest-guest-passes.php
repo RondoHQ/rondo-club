@@ -64,10 +64,12 @@ class GuestPasses extends Base {
 	public function get_mine() {
 		$host_person_id = $this->service->get_current_host_person_id();
 		$eligible       = $this->service->is_eligible_player( $host_person_id );
+		$team_id        = $this->service->get_eligible_team_id();
 		return rest_ensure_response(
 			[
 				'eligible'       => $eligible,
-				'team'           => GuestPassService::ELIGIBLE_TEAM_NAME,
+				'team_id'        => $team_id,
+				'team'           => $this->service->get_eligible_team_name(),
 				'limit'          => GuestPassService::SLOT_LIMIT,
 				'host_person_id' => $eligible ? $host_person_id : null,
 				'slots'          => $eligible ? $this->service->get_slots( $host_person_id ) : [],

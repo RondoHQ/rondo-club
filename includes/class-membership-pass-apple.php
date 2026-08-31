@@ -193,6 +193,7 @@ class MembershipPassApple {
 		}
 
 		$organization_name = $this->get_organization_name();
+		$team_name         = $guest_service->get_eligible_team_name();
 		$pass_data         = [
 			'formatVersion'      => 1,
 			'passTypeIdentifier' => $this->get_pass_type_identifier(),
@@ -223,7 +224,7 @@ class MembershipPassApple {
 					[
 						'key'   => 'valid_for',
 						'label' => 'GELDIG VOOR',
-						'value' => GuestPassService::ELIGIBLE_TEAM_NAME . ' thuiswedstrijden',
+						'value' => $team_name . ' thuiswedstrijden',
 					],
 				],
 			],

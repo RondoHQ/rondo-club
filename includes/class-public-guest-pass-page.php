@@ -117,6 +117,7 @@ class PublicGuestPassPage {
 		$brand_name = $config->get_display_name() ?: get_bloginfo( 'name' );
 		$accent     = MembershipPassService::get_background_color_hex();
 		$logo_url   = $this->get_logo_url( $config );
+		$team_name  = $this->service->get_eligible_team_name();
 
 		status_header( 200 );
 		nocache_headers();
@@ -165,7 +166,7 @@ class PublicGuestPassPage {
 				?>
 				<img class="logo" src="<?php echo esc_url( $logo_url ); ?>" alt=""><?php endif; ?>
 			<h1>Gastpas <?php echo esc_html( $brand_name ); ?></h1>
-			<p class="subtitle">Voor thuiswedstrijden van <?php echo esc_html( GuestPassService::ELIGIBLE_TEAM_NAME ); ?></p>
+			<p class="subtitle">Voor thuiswedstrijden van <?php echo esc_html( $team_name ); ?></p>
 		</header>
 		<div class="content">
 			<?php if ( $pass['status'] !== 'active' ) : ?>
@@ -181,7 +182,7 @@ class PublicGuestPassPage {
 				<h2><?php echo esc_html( $pass['guest_name'] ); ?></h2>
 				<div class="meta">
 					<div><span>Gast van</span><?php echo esc_html( $pass['host_name'] ); ?></div>
-					<div><span>Geldig voor</span><?php echo esc_html( GuestPassService::ELIGIBLE_TEAM_NAME ); ?> thuiswedstrijden</div>
+					<div><span>Geldig voor</span><?php echo esc_html( $team_name ); ?> thuiswedstrijden</div>
 				</div>
 				<p>Bewaar deze pas op je telefoon. Je hoeft voor de volgende wedstrijd geen nieuwe pas aan te vragen.</p>
 				<div class="wallets">

@@ -1,6 +1,6 @@
 <?php
 /**
- * Reusable guest-pass slots for AWC 1 players.
+ * Reusable guest-pass slots for players of the configured team.
  *
  * @package Rondo\Passes
  */
@@ -8,6 +8,7 @@
 namespace Rondo\Passes;
 
 use Rondo\Core\VolunteerStatus;
+use Rondo\Config\ClubConfig;
 use Rondo\Fields\Fields;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -17,8 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /** Owns guest-pass eligibility, slot state and public claim tokens. */
 class GuestPassService {
 
-	public const ELIGIBLE_TEAM_NAME = 'AWC 1';
-	public const SLOT_LIMIT         = 2;
+	public const SLOT_LIMIT = 2;
 
 	private const SHARE_TOKEN_META_KEY = '_rondo_guest_pass_share_token';
 
@@ -29,8 +29,23 @@ class GuestPassService {
 			: 0;
 	}
 
-	/** Check whether a person currently plays for AWC 1. */
+	/** Return the team selected by an administrator. */
+	public function get_eligible_team_id(): int {
+		return ClubConfig::get_guest_pass_team_id();
+	}
+
+	/** Return the current title of the selected team. */
+	public function get_eligible_team_name(): string {
+		return ClubConfig::get_guest_pass_team_name();
+	}
+
+	/** Check whether a person currently plays for the configured team. */
 	public function is_eligible_player( int $person_id ): bool {
+		$eligible_team_id = $this->get_eligible_team_id();
+		if ( $eligible_team_id <= 0 ) {
+			return false;
+		}
+
 		$person = get_post( $person_id );
 		if ( ! $person || $person->post_type !== 'person' ) {
 			return false;
@@ -51,8 +66,7 @@ class GuestPassService {
 			}
 
 			$team_id = isset( $position['team'] ) ? (int) $position['team'] : 0;
-			$team    = $team_id > 0 ? get_post( $team_id ) : null;
-			if ( ! $team || $team->post_type !== 'team' || $this->normalize( $team->post_title ) !== $this->normalize( self::ELIGIBLE_TEAM_NAME ) ) {
+			if ( $team_id !== $eligible_team_id ) {
 				continue;
 			}
 
@@ -78,7 +92,7 @@ class GuestPassService {
 	/** Create a slot on first use and keep its identity stable afterwards. */
 	public function ensure_slot( int $host_person_id, int $slot ) {
 		if ( ! $this->is_eligible_player( $host_person_id ) ) {
-			return new \WP_Error( 'rondo_guest_pass_ineligible', 'Alleen actuele spelers van AWC 1 kunnen gastpassen gebruiken.', [ 'status' => 403 ] );
+			return new \WP_Error( 'rondo_guest_pass_ineligible', 'Alleen actuele spelers van het ingestelde gastpasteam kunnen gastpassen gebruiken.', [ 'status' => 403 ] );
 		}
 		if ( $slot < 1 || $slot > self::SLOT_LIMIT ) {
 			return new \WP_Error( 'rondo_guest_pass_invalid_slot', 'Ongeldig gastslot.', [ 'status' => 400 ] );
@@ -145,7 +159,7 @@ class GuestPassService {
 			return $this->ensure_slot( $host_person_id, $slot );
 		}
 		if ( ! $this->is_eligible_player( $host_person_id ) ) {
-			return new \WP_Error( 'rondo_guest_pass_ineligible', 'Alleen actuele spelers van AWC 1 kunnen gastpassen gebruiken.', [ 'status' => 403 ] );
+			return new \WP_Error( 'rondo_guest_pass_ineligible', 'Alleen actuele spelers van het ingestelde gastpasteam kunnen gastpassen gebruiken.', [ 'status' => 403 ] );
 		}
 
 		$version = max( 1, (int) Fields::get_for_post( $pass_id, 'pass_version' ) ) + 1;
@@ -243,9 +257,10 @@ class GuestPassService {
 			return new \WP_Error( 'rondo_guest_pass_event_required', 'Selecteer eerst een wedstrijd.', [ 'status' => 422 ] );
 		}
 
-		$home_team = (string) Fields::get_for_post( $event_id, 'home_team' );
-		if ( $this->normalize( $home_team ) !== $this->normalize( self::ELIGIBLE_TEAM_NAME ) ) {
-			return new \WP_Error( 'rondo_guest_pass_wrong_match', 'Deze gastpas is alleen geldig bij thuiswedstrijden van AWC 1.', [ 'status' => 403 ] );
+		$home_team          = (string) Fields::get_for_post( $event_id, 'home_team' );
+		$eligible_team_name = $this->get_eligible_team_name();
+		if ( $eligible_team_name === '' || $this->normalize( $home_team ) !== $this->normalize( $eligible_team_name ) ) {
+			return new \WP_Error( 'rondo_guest_pass_wrong_match', 'Deze gastpas is niet geldig voor de gekozen wedstrijd.', [ 'status' => 403 ] );
 		}
 
 		return $data;

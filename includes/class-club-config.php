@@ -24,6 +24,11 @@ class ClubConfig {
 	const OPTION_CLUB_NAME = 'rondo_club_name';
 
 	/**
+	 * Option key for the team whose current players receive guest passes.
+	 */
+	const OPTION_GUEST_PASS_TEAM_ID = 'rondo_guest_pass_team_id';
+
+	/**
 	 * Option key for the member-facing volunteer signup information block.
 	 */
 	const OPTION_VOLUNTEER_SIGNUP_INFO = 'rondo_volunteer_signup_info';
@@ -121,6 +126,7 @@ class ClubConfig {
 	 */
 	const DEFAULTS = [
 		'club_name'                             => '',
+		'guest_pass_team_id'                    => 0,
 		'volunteer_signup_info'                 => '',
 		'volunteer_second_half_opens'           => '11-01',
 		'iva_approval_email_subject'            => 'Je bewijs voor verantwoord alcohol schenken is goedgekeurd',
@@ -148,6 +154,18 @@ class ClubConfig {
 	 */
 	public static function get_club_name(): string {
 		return get_option( self::OPTION_CLUB_NAME, self::DEFAULTS['club_name'] );
+	}
+
+	/** Return the configured guest-pass team, or zero when guest passes are disabled. */
+	public static function get_guest_pass_team_id(): int {
+		$team_id = (int) get_option( self::OPTION_GUEST_PASS_TEAM_ID, self::DEFAULTS['guest_pass_team_id'] );
+		return $team_id > 0 && get_post_type( $team_id ) === 'team' ? $team_id : 0;
+	}
+
+	/** Return the current title of the configured guest-pass team. */
+	public static function get_guest_pass_team_name(): string {
+		$team_id = self::get_guest_pass_team_id();
+		return $team_id > 0 ? (string) get_the_title( $team_id ) : '';
 	}
 
 	/**
@@ -386,6 +404,8 @@ class ClubConfig {
 
 		return [
 			'club_name'                             => self::get_club_name(),
+			'guest_pass_team_id'                    => self::get_guest_pass_team_id(),
+			'guest_pass_team_name'                  => self::get_guest_pass_team_name(),
 			'volunteer_signup_info'                 => self::get_volunteer_signup_info(),
 			'volunteer_second_half_opens'           => self::get_volunteer_second_half_opens(),
 			'iva_approval_email_subject'            => self::get_iva_approval_email_subject(),
@@ -417,6 +437,16 @@ class ClubConfig {
 	public static function update_club_name( string $name ): bool {
 		$sanitized = sanitize_text_field( $name );
 		return update_option( self::OPTION_CLUB_NAME, $sanitized );
+	}
+
+	/** Select the team whose current players receive guest passes; zero disables the feature. */
+	public static function update_guest_pass_team_id( int $team_id ): bool {
+		if ( $team_id < 0 || ( $team_id > 0 && get_post_type( $team_id ) !== 'team' ) ) {
+			return false;
+		}
+
+		return self::get_guest_pass_team_id() === $team_id
+			|| update_option( self::OPTION_GUEST_PASS_TEAM_ID, $team_id );
 	}
 
 	/**
