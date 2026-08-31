@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- De lidpasscanner kan passen ook zonder geselecteerde wedstrijd controleren en toont wedstrijdstatistieken voortaan onder de scanresultaten.
 - Een datum onderin de mobiele inschrijftakenkalender schuift eerst naar het midden, zodat de details natuurlijk naar beneden openen en de pagina achter het paneel niet meescrollt.
 - De mobiele sidebar sluit nu ook wanneer de gebruiker onderaan op zijn profiel klikt.
 - De kleurenschemaknoppen blijven op mobiel binnen de profielkaart en de Google Wallet-knop houdt in dark mode zwarte tekst op zijn lichte achtergrond.
