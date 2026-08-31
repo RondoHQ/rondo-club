@@ -3,6 +3,7 @@
 namespace Tests\Wpunit;
 
 use Rondo\Access\AdmissionService;
+use Rondo\Config\ClubConfig;
 use Rondo\Fields\Fields;
 use Rondo\Passes\GuestPassService;
 use Rondo\Passes\MembershipPassQr;
@@ -10,8 +11,18 @@ use Rondo\REST\AccessEvents;
 use Rondo\REST\GuestPasses;
 use Tests\Support\RondoTestCase;
 
-/** Tests reusable AWC 1 guest slots and their match quota. */
+/** Tests reusable guest slots for the configured team and their match quota. */
 class GuestPassTest extends RondoTestCase {
+
+	protected function set_up(): void {
+		parent::set_up();
+		delete_option( ClubConfig::OPTION_GUEST_PASS_TEAM_ID );
+	}
+
+	protected function tear_down(): void {
+		delete_option( ClubConfig::OPTION_GUEST_PASS_TEAM_ID );
+		parent::tear_down();
+	}
 
 	public function test_player_can_claim_two_slots_and_each_counts_once_per_match(): void {
 		[ $user_id, $person_id ] = $this->create_awc_one_player();
@@ -97,6 +108,22 @@ class GuestPassTest extends RondoTestCase {
 		$this->assertSame( [], $response->get_data()['slots'] );
 	}
 
+	public function test_eligibility_uses_the_configured_team_id_and_is_disabled_without_it(): void {
+		[ , $person_id, $team_id ] = $this->create_awc_one_player();
+		$service                   = new GuestPassService();
+		$this->assertTrue( $service->is_eligible_player( $person_id ) );
+
+		delete_option( ClubConfig::OPTION_GUEST_PASS_TEAM_ID );
+		$this->assertFalse( $service->is_eligible_player( $person_id ) );
+
+		$other_team_id = $this->createOrganization( [ 'post_title' => 'AWC 1' ] );
+		ClubConfig::update_guest_pass_team_id( $other_team_id );
+		$this->assertFalse( $service->is_eligible_player( $person_id ) );
+
+		ClubConfig::update_guest_pass_team_id( $team_id );
+		$this->assertTrue( $service->is_eligible_player( $person_id ) );
+	}
+
 	public function test_guest_identity_is_removed_after_thirty_days_but_count_remains(): void {
 		[ $user_id, $person_id ] = $this->create_awc_one_player();
 		wp_set_current_user( $user_id );
@@ -126,7 +153,7 @@ class GuestPassTest extends RondoTestCase {
 		$this->assertSame( 1, $admissions->get_stats( $event['id'] )['counts']['guest'] );
 	}
 
-	/** @return array{0:int,1:int} */
+	/** @return array{0:int,1:int,2:int} */
 	private function create_awc_one_player(): array {
 		$user_id = $this->createRondoUser();
 		$team_id = $this->createOrganization( [ 'post_title' => 'AWC 1' ] );
@@ -146,8 +173,9 @@ class GuestPassTest extends RondoTestCase {
 				],
 			]
 		);
+		ClubConfig::update_guest_pass_team_id( $team_id );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person );
-		return [ $user_id, $person ];
+		return [ $user_id, $person, $team_id ];
 	}
 
 	private function issue_guest_token( int $pass_id ): string {

@@ -28,7 +28,7 @@ function getInvalidPassMessage(reason) {
   if (reason === 'no_pass_right') return 'Geen geldig pasrecht.';
   if (reason === 'unclaimed') return 'Deze gastpas is nog niet geregistreerd.';
   if (reason === 'host_ineligible') return 'De speler kan momenteel geen gastpassen gebruiken.';
-  if (reason === 'wrong_match') return 'Deze gastpas is alleen geldig bij thuiswedstrijden van AWC 1.';
+  if (reason === 'wrong_match') return 'Deze gastpas is niet geldig voor de gekozen wedstrijd.';
   return 'Geen lid meer.';
 }
 

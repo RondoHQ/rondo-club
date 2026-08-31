@@ -301,6 +301,7 @@ class MembershipPassGoogle {
 
 	/** Insert or update a reusable guest-pass object. */
 	private function upsert_guest_object( Walletobjects $service, string $object_id, string $class_id, array $guest, string $qr_payload ): void {
+		$team_name    = ( new GuestPassService() )->get_eligible_team_name();
 		$text_modules = [
 			new TextModuleData(
 				[
@@ -313,7 +314,7 @@ class MembershipPassGoogle {
 				[
 					'id'     => 'valid_for',
 					'header' => 'Geldig voor',
-					'body'   => GuestPassService::ELIGIBLE_TEAM_NAME . ' thuiswedstrijden',
+					'body'   => $team_name . ' thuiswedstrijden',
 				]
 			),
 		];

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Actuele spelers van AWC 1 kunnen op **Mijn gegevens** twee vaste gastlinks delen; iedere gast registreert één keer een naam en bewaart daarna een herbruikbare Apple Wallet-, Google Wallet- of QR-pas die per thuiswedstrijd eenmaal geldig is.
+- Beheerders kunnen onder **Instellingen → Club** kiezen welk team gastpassen gebruikt; actuele spelers van dat team kunnen op **Mijn gegevens** twee vaste gastlinks delen en iedere gast bewaart na eenmalige registratie een herbruikbare Apple Wallet-, Google Wallet- of QR-pas.
 - Beheerders kunnen onder **Instellingen → VOG** de ledencommunicatie voor ontbrekende, verlopen en bijna verlopende VOG's aanpassen.
 - Sponsorprofielen tonen een activiteitenlog van succesvolle logins, logo-aanpassingen en wijzigingen van de Club TV-voorkeur door sponsorcontacten.
 - Leden, ouders, sponsoren en Businessclubleden kunnen op **Mijn gegevens** een digitale pas met scanbare QR-code openen als zij geen Apple Wallet of Google Wallet gebruiken.

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, UserPlus, Wrench, AlertCircle, Wallet, Award, Mail, X, Plus, Trash2, SlidersHorizontal } from 'lucide-react';
 import { APP_NAME } from '@/constants/app';
-import api, { prmApi } from '@/api/client';
+import api, { prmApi, wpApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import PersonAvatar from '@/components/PersonAvatar';
 import TabButton from '@/components/TabButton';
@@ -11,6 +11,7 @@ import VOGSettings from '@/pages/VOG/VOGSettings';
 import RichTextEditor from '@/components/RichTextEditor';
 import { useClothingSettings, useUpdateClothingSettings } from '@/hooks/useClothing';
 import { canAccessFeature } from '@/utils/featureToggles';
+import { decodeHtml } from '@/utils/formatters';
 
 const KADERLIJST_CAPABILITY = 'kaderlijst';
 
@@ -757,6 +758,9 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
 
   // Club Configuration state (admin only)
   const [clubName, setClubName] = useState(config.clubName || '');
+  const [guestPassTeamId, setGuestPassTeamId] = useState(0);
+  const [guestPassTeams, setGuestPassTeams] = useState([]);
+  const [guestPassTeamsLoading, setGuestPassTeamsLoading] = useState(false);
   const [volunteerSignupInfo, setVolunteerSignupInfo] = useState(config.volunteerSignupInfo || '');
   const [secondHalfOpens, setSecondHalfOpens] = useState('11-01');
   const [savingClubConfig, setSavingClubConfig] = useState(false);
@@ -775,9 +779,33 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
   useEffect(() => {
     if (!clubConfig) return;
     setClubName(clubConfig.club_name || '');
+    setGuestPassTeamId(Number(clubConfig.guest_pass_team_id || 0));
     setVolunteerSignupInfo(clubConfig.volunteer_signup_info || '');
     setSecondHalfOpens(clubConfig.volunteer_second_half_opens || '11-01');
   }, [clubConfig]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const loadGuestPassTeams = async () => {
+      setGuestPassTeamsLoading(true);
+      try {
+        const response = await wpApi.getTeams({
+          per_page: 100,
+          orderby: 'title',
+          order: 'asc',
+          _fields: 'id,title',
+        });
+        setGuestPassTeams(response.data || []);
+      } catch {
+        setGuestPassTeams([]);
+      } finally {
+        setGuestPassTeamsLoading(false);
+      }
+    };
+
+    loadGuestPassTeams();
+  }, [isAdmin]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -810,6 +838,7 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
     try {
       const response = await prmApi.updateClubConfig({
         club_name: clubName,
+        guest_pass_team_id: Number(guestPassTeamId || 0),
         volunteer_signup_info: volunteerSignupInfo,
         volunteer_second_half_opens: secondHalfOpens,
       });
@@ -895,6 +924,28 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Wordt getoond op het inlogscherm en in de paginatitel.
+              </p>
+            </div>
+
+            <div>
+              <label className="label" htmlFor="guest-pass-team">Team met gastpassen</label>
+              <select
+                id="guest-pass-team"
+                value={guestPassTeamId}
+                onChange={(event) => setGuestPassTeamId(Number(event.target.value))}
+                className="input max-w-md"
+                disabled={clubConfigLoading || guestPassTeamsLoading}
+              >
+                <option value={0}>Geen team geselecteerd</option>
+                {guestPassTeams.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {decodeHtml(team.title?.rendered || team.title || '')}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Alleen actuele spelers van dit team krijgen twee gastpassen op Mijn gegevens.
+                Zonder selectie zijn gastpassen uitgeschakeld.
               </p>
             </div>
 

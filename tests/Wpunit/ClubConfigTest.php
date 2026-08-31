@@ -15,12 +15,14 @@ class ClubConfigTest extends RondoTestCase {
 		delete_option( ClubConfig::OPTION_VOLUNTEER_SIGNUP_INFO );
 		delete_option( ClubConfig::OPTION_IVA_APPROVAL_EMAIL_SUBJECT );
 		delete_option( ClubConfig::OPTION_IVA_APPROVAL_EMAIL_BODY );
+		delete_option( ClubConfig::OPTION_GUEST_PASS_TEAM_ID );
 	}
 
 	protected function tear_down(): void {
 		delete_option( ClubConfig::OPTION_VOLUNTEER_SIGNUP_INFO );
 		delete_option( ClubConfig::OPTION_IVA_APPROVAL_EMAIL_SUBJECT );
 		delete_option( ClubConfig::OPTION_IVA_APPROVAL_EMAIL_BODY );
+		delete_option( ClubConfig::OPTION_GUEST_PASS_TEAM_ID );
 		parent::tear_down();
 	}
 
@@ -57,5 +59,23 @@ class ClubConfigTest extends RondoTestCase {
 			ClubConfig::get_iva_approval_email_body(),
 			ClubConfig::get_all_settings()['iva_approval_email_body']
 		);
+	}
+
+	public function test_guest_pass_team_defaults_to_disabled_and_accepts_only_teams(): void {
+		$this->assertSame( 0, ClubConfig::get_guest_pass_team_id() );
+		$this->assertSame( '', ClubConfig::get_guest_pass_team_name() );
+
+		$team_id = $this->createOrganization( [ 'post_title' => 'AWC Zaterdag 1' ] );
+		$this->assertTrue( ClubConfig::update_guest_pass_team_id( $team_id ) );
+		$this->assertSame( $team_id, ClubConfig::get_guest_pass_team_id() );
+		$this->assertSame( 'AWC Zaterdag 1', ClubConfig::get_guest_pass_team_name() );
+		$this->assertSame( $team_id, ClubConfig::get_all_settings()['guest_pass_team_id'] );
+
+		$person_id = $this->createPerson( [ 'post_title' => 'Geen team' ] );
+		$this->assertFalse( ClubConfig::update_guest_pass_team_id( $person_id ) );
+		$this->assertSame( $team_id, ClubConfig::get_guest_pass_team_id() );
+
+		$this->assertTrue( ClubConfig::update_guest_pass_team_id( 0 ) );
+		$this->assertSame( 0, ClubConfig::get_guest_pass_team_id() );
 	}
 }

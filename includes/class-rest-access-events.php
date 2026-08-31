@@ -180,7 +180,7 @@ class AccessEvents extends Base {
 		return rest_ensure_response( $data );
 	}
 
-	/** Validate and count one guest slot for the selected AWC 1 match. */
+	/** Validate and count one guest slot for the configured team's selected match. */
 	private function scan_guest_pass( int $event_id, array $payload ) {
 		$guest_pass_id = isset( $payload['gpid'] ) ? (int) $payload['gpid'] : 0;
 		$token_version = isset( $payload['pass_version'] ) ? max( 1, (int) $payload['pass_version'] ) : 1;
