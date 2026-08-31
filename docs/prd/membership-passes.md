@@ -360,10 +360,16 @@ geselecteerd. Bij meerdere actieve wedstrijden kiest de scanner één keer; die
 keuze wordt voor dezelfde dag op het apparaat onthouden. Handmatig kiezen blijft
 mogelijk uit de beschikbare thuiswedstrijden van vandaag.
 
+De camera blijft ook zonder geselecteerde wedstrijd beschikbaar. Zo kan een
+toegangscontroleur altijd de actuele geldigheid en het pasrecht controleren.
+Alleen scans met een geselecteerde wedstrijd worden als toegang geregistreerd
+en in de wedstrijdstatistieken opgenomen.
+
 Iedere geldige pas telt per wedstrijd maximaal één keer mee als `bondslid`,
 `verenigingslid`, `businessclub` of `awc_sponsor`. De scanner toont het totaal
-en de vier deelstanden live. De permanente toegangsregistratie bevat alleen het
-wedstrijd-ID, pastype en scantijdstip. Naam, persoon-ID, e-mail, KNVB-ID en de
+en de vier deelstanden live, onder de scanresultaten aan het einde van de pagina.
+De permanente toegangsregistratie bevat alleen het wedstrijd-ID, pastype en
+scantijdstip. Naam, persoon-ID, e-mail, KNVB-ID en de
 ruwe QR-code worden niet opgeslagen. Voor dubbelscanpreventie bestaat tijdelijk
 een wedstrijdgebonden HMAC; de bijbehorende sleutel wordt na 30 dagen verwijderd.
 

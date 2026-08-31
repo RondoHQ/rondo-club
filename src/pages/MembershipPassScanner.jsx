@@ -130,7 +130,8 @@ function MatchSelector({
 
       {!isLoading && !isSelecting && matches.length === 0 ? (
         <p className="text-sm text-amber-700 dark:text-amber-400">
-          Geen thuiswedstrijd beschikbaar om vandaag te scannen.
+          Geen thuiswedstrijd beschikbaar. Je kunt wel passen controleren; scans worden dan niet
+          in wedstrijdstatistieken opgenomen.
         </p>
       ) : null}
 
@@ -276,10 +277,10 @@ export default function MembershipPassScanner() {
 
   const verifyToken = useCallback(async (rawToken) => {
     const cleanedToken = String(rawToken || '').trim();
-    if (!cleanedToken || !selectedEvent?.id) return;
+    if (!cleanedToken) return;
     setScanError('');
     try {
-      const data = await scanEvent({ eventId: selectedEvent.id, token: cleanedToken });
+      const data = await scanEvent({ eventId: selectedEvent?.id, token: cleanedToken });
       setResult(data);
     } catch (error) {
       setResult(null);
@@ -334,10 +335,6 @@ export default function MembershipPassScanner() {
     setCameraError('');
     setScanError('');
     setResult(null);
-    if (!selectedEvent) {
-      setCameraError('Selecteer eerst een wedstrijd.');
-      return;
-    }
     if (!canScanQr) {
       setCameraError('QR-camera is niet beschikbaar in deze browser.');
       return;
@@ -363,7 +360,7 @@ export default function MembershipPassScanner() {
       setCameraError(error?.message || 'Camera kon niet gestart worden.');
       stopCamera();
     }
-  }, [canScanQr, detectFrame, selectedEvent, stopCamera]);
+  }, [canScanQr, detectFrame, stopCamera]);
 
   useEffect(() => {
     async function loadFormats() {
@@ -404,8 +401,6 @@ export default function MembershipPassScanner() {
         onChange={changeMatch}
       />
 
-      {selectedEvent ? <AccessStats stats={statsQuery.data} isLoading={statsQuery.isLoading} /> : null}
-
       <div className="card p-6 space-y-4">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Camera</h2>
         <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-black/90">
@@ -418,7 +413,7 @@ export default function MembershipPassScanner() {
               type="button"
               className="btn-primary gap-2"
               onClick={startCamera}
-              disabled={!selectedEvent || isScanning}
+              disabled={isScanning}
             >
               <Camera className="w-4 h-4" />
               {isScanning ? 'Pas controleren…' : 'Start camera'}
@@ -431,7 +426,9 @@ export default function MembershipPassScanner() {
           )}
         </div>
         {!selectedEvent ? (
-          <p className="text-sm text-amber-700 dark:text-amber-400">Selecteer eerst een wedstrijd.</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Zonder wedstrijd wordt de pas wel gecontroleerd, maar de scan niet meegeteld.
+          </p>
         ) : null}
         {!canScanQr ? (
           <p className="text-sm text-amber-700 dark:text-amber-400">
@@ -463,7 +460,9 @@ export default function MembershipPassScanner() {
             {isDuplicate
               ? 'Pas al gescand'
               : isActiveMembership
-                ? 'Toegang geregistreerd'
+                ? selectedEvent
+                  ? 'Toegang geregistreerd'
+                  : 'Geldige ledenpas'
                 : 'Ongeldige ledenpas'}
           </div>
 
@@ -504,6 +503,8 @@ export default function MembershipPassScanner() {
           ) : null}
         </div>
       ) : null}
+
+      {selectedEvent ? <AccessStats stats={statsQuery.data} isLoading={statsQuery.isLoading} /> : null}
     </div>
   );
 }

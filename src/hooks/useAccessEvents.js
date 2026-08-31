@@ -45,11 +45,13 @@ export function useScanAccessEvent() {
 
   return useMutation({
     mutationFn: async ({ eventId, token }) => {
-      const response = await prmApi.scanAccessEvent(eventId, token);
+      const response = eventId
+        ? await prmApi.scanAccessEvent(eventId, token)
+        : await prmApi.verifyMembershipPassQrToken(token);
       return response.data;
     },
     onSuccess: (data, variables) => {
-      if (data?.stats) {
+      if (variables.eventId && data?.stats) {
         queryClient.setQueryData(['access-event-stats', variables.eventId], data.stats);
       }
     },
