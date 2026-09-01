@@ -7,11 +7,13 @@
 
 ## Purpose
 
-Prove the licensed FreeScout OAuth Login module, the current FreeScout release and the proposed
-custom Rondo Integration module can support the PRD before product implementation starts.
+Evaluate the licensed FreeScout OAuth Login add-on, record its rejection, and prove that the current
+FreeScout release plus the custom Rondo Integration module can support the PRD before product
+implementation starts.
 
-This spike may use a disposable standards-compliant test identity provider to observe FreeScout's
-actual OAuth behavior. It does not implement Rondo's production identity provider.
+**Paid add-on disposition:** `NO-GO`, approved 2026-09-01. It is evaluation evidence only and will
+not be a production dependency. The remaining login tests target the custom module as an OpenID
+Connect relying party.
 
 ## Completion record
 
@@ -27,7 +29,7 @@ Fill this section when executing the spike.
 | PHP version | 8.5.9 |
 | Browser versions | |
 | FreeScout mobile app/version | |
-| Result | In progress; OAuth identity-guard proof passed |
+| Result | In progress; paid OAuth Login add-on rejected, custom OIDC client not yet proven |
 | Evidence location | [OAuth identity evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) |
 
 ## Evidence rules
@@ -66,7 +68,7 @@ Fill this section when executing the spike.
 
 **Evidence:** version record, module list, redacted configuration and test-data inventory.
 
-## 2. Observe the OAuth authorization request
+## 2. Observe the paid add-on authorization request
 
 Start a FreeScout login and capture the browser redirect to the test provider.
 
@@ -79,9 +81,10 @@ Start a FreeScout login and capture the browser redirect to the test provider.
 - [x] Record whether an OpenID Connect `nonce` is sent.
 - [x] Confirm login cancellation returns a usable FreeScout login screen and clear error.
 
-**Blocking failure:** FreeScout does not send or validate `state`.
+**Paid-add-on conclusion:** `state` passes, but this does not offset the blocking OIDC failures
+recorded below.
 
-## 3. Observe token exchange and identity consumption
+## 3. Observe paid add-on token exchange and identity consumption
 
 - [x] Record whether token exchange uses HTTP Basic, request-body credentials or another client
   authentication method.
@@ -100,7 +103,31 @@ Start a FreeScout login and capture the browser redirect to the test provider.
 
 **Evidence:** redacted HTTP shapes, accepted claim matrix and relevant FreeScout configuration.
 
-## 4. Test user matching and creation
+## 3A. Prove the custom OIDC client
+
+Repeat the login tests with the paid add-on disabled and the custom Rondo Integration module
+responsible for the entire relying-party flow.
+
+- [ ] Discover the configured Rondo issuer, authorization, token, UserInfo and JWKS endpoints.
+- [ ] Generate and validate a fresh session-bound `state` for each attempt.
+- [ ] Send PKCE `code_challenge_method=S256` and the matching token-request verifier.
+- [ ] Generate a fresh session-bound `nonce` and reject an ID token with a missing or changed nonce.
+- [ ] Authenticate the confidential client with `client_secret_basic`.
+- [ ] Validate the ID-token signature, exact issuer, audience, `azp` when present, expiry, issued-at
+  time and `at_hash` when present.
+- [ ] Call UserInfo and reject a response whose `sub` differs from the ID-token `sub`.
+- [ ] Reject missing `sub`, a missing email, or `email_verified` other than boolean `true`.
+- [ ] Clear state, nonce, verifier, code and token material after every success or terminal failure.
+- [ ] Confirm the login creates only the intended FreeScout session after binding succeeds.
+- [ ] Confirm a denial or callback failure returns once to `/login?rondo_oauth=0` without a new
+  authorization request.
+- [ ] Confirm clearing `RONDO_FORCE_OAUTH_LOGIN` restores local login without Rondo.
+- [ ] Inspect logs and confirm codes, tokens, secrets and complete claims are absent.
+
+**Blocking failure:** any missing state, PKCE, nonce, ID-token, UserInfo-subject or non-looping
+recovery control prevents the custom module from shipping.
+
+## 4. Test paid add-on user matching and creation
 
 Keep automatic user creation disabled for the first five tests.
 
@@ -172,7 +199,7 @@ Use synthetic mailboxes and a disposable proof listener or console test.
 **Blocking failure:** safe reconciliation requires replacing all mailbox relationships or cannot
 distinguish managed access from manual access.
 
-## 7. Test Force OAuth Login and recovery
+## 7. Record paid add-on Force OAuth Login and recovery behavior
 
 Enable Force OAuth Login only after the local administrator session and recovery path are ready.
 
@@ -193,6 +220,10 @@ The normal forced-login regression test also passed.
 **Recovery proof:** `/login?oauth=0` bypasses forcing immediately. Clearing
 `OAUTHLOGIN_FORCE_OAUTH_LOGIN` server-side and restarting FreeScout also restores local login; the
 same break-glass administrator remained usable after re-enabling and disabling the setting.
+
+These paths belong to the rejected add-on and are not production requirements. The custom module
+must repeat the denial, outage and recovery tests using `/login?rondo_oauth=0` and
+`RONDO_FORCE_OAUTH_LOGIN`.
 
 ## 8. Check FreeScout mobile behavior
 
@@ -273,18 +304,18 @@ Complete one row for every material behavior.
 
 | Area | Observed behavior | PRD requirement | Result | Evidence | Decision/workaround |
 |---|---|---|---|---|---|
-| OAuth state | Fresh 40-character value per attempt; missing or changed state rejected | Required and validated | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Keep the paid module's state handling |
-| PKCE S256 | No challenge or verifier is sent | Bounded confidential-client pilot exception | Conditional pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Approval required; replace or patch before expanding beyond pilot |
-| OIDC nonce | No nonce is sent and no ID token is consumed | FreeScout is not described as an OIDC client | Not applicable | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Remove `openid`; use the dedicated `freescout_identity` OAuth scope |
-| Token client auth | Server-side `client_secret_post`; secret absent from browser and logs | Bounded confidential-client pilot exception over verified HTTPS | Conditional pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Dedicated secret, short rotation, debug off; replace or patch before expansion |
-| ID token/User Info | Paid module consumes JSON identity data only; minimum guarded claims are `sub`, `email`, and boolean `email_verified: true` | Dedicated OAuth identity resource, no OIDC claim | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Configure `/oauth/freescout-identity` with scope `freescout_identity` |
+| OAuth state | Paid add-on sends a fresh 40-character value and rejects missing or changed state | Custom module generates and validates fresh session-bound state | Retest required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Reimplement and test in the custom client |
+| PKCE S256 | Paid add-on sends no challenge or verifier | Required for every custom-client login | **Fail** | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Reject the paid add-on; custom client must use S256 |
+| OIDC nonce | Paid add-on sends no nonce and consumes no ID token | Required and bound to the validated ID token | **Fail** | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Reject the paid add-on; custom client must validate nonce |
+| Token client auth | Paid add-on uses server-side `client_secret_post` | Custom client uses `client_secret_basic` with PKCE | **Fail** | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Reject the paid add-on; implement the required method |
+| ID token/UserInfo | Paid add-on consumes UserInfo without an ID token | Validate signed ID token and require matching UserInfo `sub` | **Fail** | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Reject the paid add-on; implement full OIDC validation |
 | Existing-user match | Guard requires a unique verified email for first link; case difference created no duplicate | Unique verified email only | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Keep automatic creation off during pilot |
 | Subject binding | Bound subject wins after email change or conflicting email; administrator unlink/audit remains untested | One Rondo subject per FreeScout user | Provisional pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Prove administrator recovery before release |
 | Rondo base URL | | Configured, verified and not hardcoded | | | |
 | Automatic creation | Defaults on in paid module; explicit off works; isolated creation produced an ordinary zero-mailbox user | Disabled for pilot | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Provision with automatic creation disabled |
 | Login event | Laravel `Login` fires for existing and newly created OAuth users before redirect | Current agent available | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Use the login event for binding and provisioning |
 | Managed mailbox access | Targeted pivot attach/detach works; customer routes require the core visibility flag | Manual access preserved | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Never use `sync()`; require `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true` |
-| Force-login recovery | Custom response filter sends failed callbacks to `/login?oauth=0`; local and server-side recovery work | Proven break glass and a non-looping denial | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Ship the proven filter in Rondo Integration; keep Force OAuth off until release-artifact retest |
+| Force-login recovery | Paid add-on loops without a response filter; its patched `/login?oauth=0` paths work | Custom callback fails once to `/login?rondo_oauth=0`; server setting restores local login | Paid add-on **Fail**; custom retest required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Implement recovery directly in Rondo Integration |
 | Mobile | | Explicit pilot decision | | | |
 | Sidebar authorization | | Agent and conversation authorized | | | |
 | Response isolation | | No parent-page code execution | | | |
@@ -292,15 +323,17 @@ Complete one row for every material behavior.
 
 ## Go/no-go decision
 
-### OAuth compatibility sub-decision
+### Paid OAuth Login add-on decision
 
-**Recommendation:** conditional acceptance for a non-administrator pilot, pending explicit
-product-owner approval. The exact deviations, controls, residual risk, owner and expansion deadline
-are recorded in the [identity and sidebar PRD](freescout-rondo-identity-sidebar.md#recommended-oauth-compatibility-exception).
+**Decision:** `NO-GO`, approved 2026-09-01. Do not ship or require the paid add-on.
 
-This is not the final spike sign-off. Administrator binding recovery, sidebar isolation, timeout
-proof and the remaining compatibility rows must still pass before the overall decision can become
-`CONDITIONAL GO`.
+It lacks PKCE, nonce and ID-token validation; matches users by email without enforcing `sub` or
+`email_verified`; enables automatic creation by default; and its forced-login denial path loops
+without a custom patch. Since a custom module is already required for the sidebar and provisioning,
+Rondo Integration will own the complete OIDC relying-party flow instead of wrapping these gaps.
+
+This is not the final compatibility-spike sign-off. The custom OIDC client, administrator binding
+recovery, sidebar isolation, timeout proof and the remaining rows must pass before overall `GO`.
 
 ### GO
 
@@ -335,4 +368,5 @@ architecture assumption must change before repeating the spike.
 - [ ] Sidebar authorization and isolation proof.
 - [ ] Timeout/failure results at expected pilot concurrency.
 - [ ] Completed compatibility matrix.
+- [x] Signed-off paid OAuth Login add-on `NO-GO` decision.
 - [ ] Signed-off `GO`, `CONDITIONAL GO` or `NO-GO` decision.
