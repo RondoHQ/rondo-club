@@ -115,6 +115,10 @@ guard and manual grant/revoke behavior.
     protected `main` by a human-approved GitHub Actions workflow and published as immutable GitHub
     Releases. The first stable bootstrap is `v1.0.0`; production updates remain operator-approved
     and version-pinned rather than scheduled automatically.
+29. AWC's initial configured appearance values are interface accent `#006935` and interface accent
+    surface `#CCE1D7`, taken from AWC's published house-style palette. They are installation
+    configuration, never module defaults: an unconfigured club still receives FreeScout blue and
+    another club can select its own validated pair.
 
 ## Why this replaces copied customer context
 
@@ -652,6 +656,21 @@ These are site-wide settings for each club's FreeScout installation. The release
 no AWC-specific green or other club-specific color. An installation with no configured values uses
 FreeScout's native blue accents. The same module build must support different club color pairs
 through configuration alone.
+
+AWC production is provisioned with:
+
+| Setting | Value | Intended use |
+|---|---|---|
+| Interface accent | `#006935` | Links, actionable icons, active text and focus indicators |
+| Interface accent surface | `#CCE1D7` | Active mailbox row, conversation toolbar and selected/highlighted backgrounds |
+
+Both values come from AWC's official logo and house-style page. The darker `#006935` is selected
+instead of its medium `#4E8A63` because the official dark green has sufficient contrast for normal
+text and icons: `6.84:1` on white and `4.99:1` on `#CCE1D7`. AWC's published neutral `#333333` is
+`9.22:1` on the surface, and white is `6.84:1` on the dark green. The module still validates the
+actual supported FreeScout foregrounds. The existing top-header setting may use the same dark green
+but remains independently controlled by FreeScout. Evidence:
+[AWC appearance colors](evidence/awc-freescout-colors-2026-09-01.md).
 
 The settings screen previews both colors together and rejects combinations that do not meet WCAG
 AA contrast for their actual text/icon use. The module maps them only to an audited selector
@@ -1943,6 +1962,8 @@ The milestone is complete only when:
   message without exposing FreeScout DOM, cookies or storage;
 - the configured interface accent replaces the audited default-blue roles without changing
   semantic status colors or failing contrast requirements;
+- AWC production uses `#006935` for the interface accent and `#CCE1D7` for the accent surface,
+  while the release artifact retains no AWC-specific default;
 - a configured maximum customer-sidebar width of `360px` widens the sidebar and reserves the same
   space in the conversation header and body without overlap;
 - disabling appearance overrides restores FreeScout's native colors and `280px` desktop sidebar;
@@ -1980,6 +2001,5 @@ The milestone is complete only when:
 
 ## Open decisions before implementation
 
-1. Initial production values for interface accent and interface accent surface.
-2. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
+1. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
     200%-zoom testing.
