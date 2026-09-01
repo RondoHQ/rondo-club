@@ -273,6 +273,33 @@ Test at narrow, normal and wide FreeScout sidebar widths.
 If `srcdoc` cannot meet the layout requirements, repeat the tests with the fixed escaped JSON
 renderer and record that as the selected design.
 
+## 10A. Prove controlled appearance and width overrides
+
+Run these tests with the unsupported Design module disabled. Use only the Rondo Integration
+module's allowlisted settings and stylesheet.
+
+- [ ] Record the unmodified header, active mailbox row, conversation toolbar, links, icons and
+  `280px` desktop customer-sidebar baseline.
+- [ ] Confirm FreeScout's existing header-color setting remains authoritative.
+- [ ] Change the interface accent and confirm only audited links, actionable icons, active mailbox
+  text and focus indicators change.
+- [ ] Change the interface accent surface and confirm only audited selected/highlighted backgrounds
+  change.
+- [ ] Confirm success, warning, destructive, unread and availability colors remain semantic.
+- [ ] Reject invalid hexadecimal values and insufficient-contrast color pairs.
+- [ ] Confirm no setting accepts CSS, selectors, HTML or an external stylesheet URL.
+- [ ] Confirm the isolated sidebar receives the semantic colors without reading parent-page styles.
+- [ ] Test maximum customer-sidebar widths `280`, `360` and `420` pixels.
+- [ ] At each width, confirm `#conv-layout-customer`, `#conv-layout-header` and
+  `#conv-layout-main` reserve the same effective width without overlap.
+- [ ] Test at viewport widths `1101`, `1280`, `1440` and `1920` pixels and at 200% zoom.
+- [ ] At `1100px` and below, confirm FreeScout's full-width stacked customer layout remains active.
+- [ ] Disable appearance overrides and confirm the core colors and `280px` desktop sidebar return
+  without stale inline styles or modified core files.
+
+**Blocking failure:** the override obscures conversation controls, changes semantic status colors,
+permits arbitrary CSS, breaks the core responsive layout or survives after being disabled.
+
 ## 11. Test timeout and failure containment
 
 Use only the non-production endpoint and the expected pilot concurrency.
@@ -319,6 +346,8 @@ Complete one row for every material behavior.
 | Mobile | | Explicit pilot decision | | | |
 | Sidebar authorization | | Agent and conversation authorized | | | |
 | Response isolation | | No parent-page code execution | | | |
+| Appearance controls | Design module disabled; core blue accent roles visible | Two semantic color settings, allowlisted selectors and no arbitrary CSS | Retest required | Post-removal screenshots reviewed 2026-09-01; screenshots not stored because they contain member data | Prove against current FreeScout CSS before release |
+| Customer-sidebar width | FreeScout core desktop width is `280px`; narrow layout becomes full width | Coordinated responsive width up to configured maximum, default `360px` | Retest required | Current FreeScout stylesheet inspection | Update customer width plus header/main spacing together |
 | Failure containment | Access-service `503` allowed login in 1.5 seconds and preserved access | Conversation work remains available | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Keep prior state; record redacted error; no login-flow retry |
 
 ## Go/no-go decision
@@ -366,6 +395,7 @@ architecture assumption must change before repeating the spike.
 - [x] Login and user-creation event map.
 - [x] Managed mailbox model/event notes.
 - [ ] Sidebar authorization and isolation proof.
+- [ ] Appearance and customer-sidebar width compatibility proof.
 - [ ] Timeout/failure results at expected pilot concurrency.
 - [ ] Completed compatibility matrix.
 - [x] Signed-off paid OAuth Login add-on `NO-GO` decision.

@@ -1,6 +1,6 @@
 # FreeScout sidebar, Rondo identity and mailbox provisioning
 
-**Status:** draft PRD, 2026-08-31<br>
+**Status:** draft PRD, updated 2026-09-01<br>
 **Scope:** Rondo Club and one custom Rondo Integration FreeScout module<br>
 **Milestone type:** planning only; this document does not authorize implementation or production changes
 
@@ -55,6 +55,9 @@ guard and manual grant/revoke behavior.
 14. A failed custom OIDC callback returns once to `/login?rondo_oauth=0`, preserves a safe visible
     error and never automatically starts a second authorization request. Production forcing remains
     disabled until the released module passes this proof.
+15. The unsupported FreeScout Design module has been disabled. Rondo Integration replaces only the
+    required appearance controls: semantic accent colors and responsive conversation-sidebar width.
+    It does not become a general FreeScout theme or accept arbitrary CSS.
 
 ## Why this replaces copied customer context
 
@@ -86,6 +89,10 @@ customer-matching dependency have been reviewed separately.
 - A slow or unavailable endpoint cannot exhaust FreeScout PHP workers.
 - A sidebar response cannot execute arbitrary code in the FreeScout page.
 - Existing manually managed FreeScout access remains untouched.
+- Administrators can align FreeScout's blue accent surfaces with the club identity without editing
+  FreeScout core files.
+- The desktop customer sidebar can be wider while preserving usable conversation space and
+  FreeScout's narrow-screen layout.
 
 ## Non-goals
 
@@ -97,6 +104,8 @@ customer-matching dependency have been reviewed separately.
 - Replacing the FreeScout conversation activity sync in the first release.
 - Making Rondo a public, general-purpose identity provider for third parties.
 - Supporting implicit OAuth flows or password grants.
+- Replacing every feature of the retired Design module or offering unrestricted CSS injection.
+- Recoloring semantic success, warning, destructive or availability states as branding.
 
 ## Current systems and constraints
 
@@ -314,6 +323,7 @@ One custom FreeScout module owns all Rondo-specific behavior on the FreeScout si
 - current-agent and conversation authorization;
 - signed server-to-server sidebar requests;
 - isolated response rendering and failure handling;
+- controlled FreeScout accent and conversation-layout settings;
 - managed mailbox mapping, grants and revocations;
 - provisioning-event receipt, reconciliation and audit settings.
 
@@ -416,6 +426,49 @@ Optional forced login is controlled by `RONDO_FORCE_OAUTH_LOGIN`, defaults off a
 to unauthenticated login-page requests without `rondo_oauth=0`. Clearing the server-side setting
 and restarting FreeScout restores local login without Rondo. One local administrator account is
 maintained and tested as break glass. Version one does not implement provider-initiated logout.
+
+#### Controlled appearance settings
+
+The disabled Design module is not restored as a dependency. Rondo Integration loads one
+module-owned stylesheet after FreeScout core and exposes a small allowlisted appearance contract.
+It never modifies core files and does not accept custom CSS, selectors or uploaded stylesheets.
+
+The existing FreeScout header-color setting remains authoritative for the top navigation. Rondo
+Integration adds two validated hexadecimal color settings:
+
+- **Interface accent:** links, actionable icons, active mailbox text and focus indicators;
+- **Interface accent surface:** the light-tint backgrounds used for the active mailbox row,
+  conversation toolbar and comparable selected or highlighted surfaces.
+
+The settings screen previews both colors together and rejects combinations that do not meet WCAG
+AA contrast for their actual text/icon use. The module maps them only to an audited selector
+allowlist for the supported FreeScout version. Neutral text, borders and surfaces retain FreeScout
+defaults. Success, warning, destructive, unread and availability colors retain their semantic
+meaning. The isolated Rondo sidebar document receives the same two semantic colors without gaining
+access to parent-page CSS.
+
+The screenshots captured after disabling the Design module establish the visual baseline: a
+club-colored top header with FreeScout's default blue active navigation, toolbar, links and icons.
+No member names, addresses or other screenshot content is stored as PRD evidence.
+
+#### Responsive conversation-sidebar width
+
+FreeScout core gives `#conv-layout-customer` a fixed `280px` desktop width and reserves the same
+space through `padding-right` on `#conv-layout-header` and `#conv-layout-main`. Rondo Integration
+must update all three values together; changing only the customer element would overlap the
+conversation.
+
+The setting is labelled **Maximum conversation sidebar width**, accepts `280` through `420` pixels
+and defaults to `360`. Above FreeScout's `1100px` desktop breakpoint, the actual width is:
+
+```css
+clamp(280px, 25vw, var(--rondo-sidebar-max-width))
+```
+
+At `1100px` and below, the module removes its geometry override and FreeScout's existing full-width
+stacked customer layout remains authoritative. The stylesheet is scoped to conversation pages and
+an enabled Rondo appearance class. Disabling the appearance feature or the module restores core
+layout without a file rollback.
 
 #### Distribution, provisioning and updates
 
@@ -959,6 +1012,8 @@ login, complete token validation and a confirmed current-agent hook.
 - Add strict timeouts, redirect prevention and response limits.
 - Replace raw HTML injection with the accepted isolated renderer.
 - Preserve a small visible refresh action and graceful failure state.
+- Add allowlisted accent settings and a live preview without arbitrary CSS support.
+- Add the responsive customer-sidebar maximum-width setting and coordinated conversation spacing.
 
 ### Phase 3: Rondo sidebar service
 
@@ -1035,6 +1090,21 @@ login, complete token validation and a confirmed current-agent hook.
 - Oversized or wrong-content-type response is rejected.
 - Returned script/event-handler markup cannot execute in FreeScout.
 
+### Appearance and conversation layout
+
+- Disabling appearance overrides reproduces the unmodified FreeScout UI.
+- Header color remains controlled by FreeScout's existing setting.
+- Accent and accent-surface settings affect only the documented blue interface roles.
+- Success, warning, destructive, unread and availability colors do not change with branding.
+- Invalid hexadecimal values and insufficient-contrast pairs are rejected.
+- No setting or request can inject CSS, selectors, HTML or external stylesheets.
+- The isolated sidebar uses the same semantic colors without reading parent-page styles.
+- The customer sidebar, conversation header and conversation body reserve exactly the same width.
+- Maximum values `280`, `360` and `420` produce no overlap at desktop widths.
+- Viewports `1100px` and below retain FreeScout's full-width stacked customer layout.
+- The layout remains usable at `1101`, `1280`, `1440` and `1920` pixels and at 200% zoom.
+- Disabling Rondo appearance overrides restores core width and colors without stale inline styles.
+
 ### Module distribution and updates
 
 - A clean FreeScout installation can provision the fixed bootstrap module version.
@@ -1094,6 +1164,11 @@ The milestone is complete only when:
 - an agent lacking Rondo access cannot retrieve the sidebar record by changing IDs;
 - an unreachable Rondo endpoint does not freeze FreeScout or exhaust workers;
 - returned sidebar content cannot execute scripts in the FreeScout parent page;
+- the configured interface accent replaces the audited default-blue roles without changing
+  semantic status colors or failing contrast requirements;
+- a configured maximum customer-sidebar width of `360px` widens the sidebar and reserves the same
+  space in the conversation header and body without overlap;
+- disabling appearance overrides restores FreeScout's native colors and `280px` desktop sidebar;
 - existing manual mailbox assignments remain unchanged;
 - `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true` is verified in the deployed FreeScout runtime and a
   zero-mailbox user cannot open customer, customer-edit or conversation routes by ID;
@@ -1115,6 +1190,7 @@ The milestone is complete only when:
 - Disable managed provisioning in the Rondo Integration module while leaving existing mailbox
   relations unchanged.
 - Disable the sidebar feature or Rondo Integration module.
+- Disable Rondo appearance overrides to restore FreeScout's native accent colors and layout.
 - Restore the previous module directory and database backup if a module update fails.
 - Re-enable the existing Rondo Sync FreeScout customer pipeline if it was disabled.
 - Preserve FreeScout users, conversations, customer records and historical custom fields.
@@ -1137,3 +1213,6 @@ The milestone is complete only when:
 10. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
 11. Audit retention period and operational owners for failed provisioning events.
 12. Final module repository, protected release workflow and update-asset URLs.
+13. Initial production values for interface accent and interface accent surface.
+14. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
+    200%-zoom testing.
