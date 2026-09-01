@@ -433,6 +433,9 @@ function rondo_init() {
 	// Invoice scheduled-send sweeper — daily cron that sends drafts queued for a future date
 	new InvoiceScheduledSendScheduler();
 
+	// Tournament payment reminders — daily sweeper for configured pre-deadline moments.
+	new \Rondo\Tournaments\TournamentPaymentReminderScheduler();
+
 	$initialized = true;
 }
 // Initialize early for REST requests and once more after plugins load.

@@ -5,8 +5,10 @@ namespace Tests\Wpunit;
 use Rondo\Fields\Fields;
 use Rondo\REST\Tournaments;
 use Rondo\Tournaments\TournamentAccess;
+use Rondo\Tournaments\TournamentPaymentService;
 use Rondo\Tournaments\TournamentService;
 use Tests\Support\RondoTestCase;
+use Tests\Support\TournamentPaymentMollieStub;
 use WP_REST_Request;
 
 /** End-to-end coverage for tournament creation, assignment and positive registration. */
@@ -16,7 +18,18 @@ class TournamentWorkflowTest extends RondoTestCase {
 
 	protected function set_up(): void {
 		parent::set_up();
-		$this->service = new TournamentService();
+		$this->service = new TournamentService(
+			new TournamentPaymentService(
+				new TournamentPaymentMollieStub(),
+				static fn(): array => [
+					'id'              => 'toernooien',
+					'internal_name'   => 'Toernooien',
+					'account_holder'  => 'AWC',
+					'iban'            => 'NL00TEST0000000000',
+					'linked_provider' => 'mollie',
+				]
+			)
+		);
 	}
 
 	public function test_private_post_types_are_registered(): void {
@@ -315,11 +328,38 @@ class TournamentWorkflowTest extends RondoTestCase {
 
 		$this->assertIsArray( $result );
 		$this->assertSame( '2030-05-10 23:59:59', $result['internal_deadline'] );
+		$this->assertSame( '2030-05-10 23:59:59', $result['payment_deadline'] );
+		$this->assertSame( [ 7, 2 ], $result['payment_reminder_days'] );
 		$this->assertSame( '2030-05-12 23:59:59', $result['external_deadline'] );
 		$this->assertSame(
 			\DateTimeImmutable::createFromFormat( '!Y-m-d', '2030-05-20', wp_timezone() )->format( DATE_RFC3339 ),
 			$result['schedule'][0]['start_datetime']
 		);
+	}
+
+	public function test_publication_is_blocked_without_tournament_payment_account(): void {
+		$admin_id   = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$tournament = $this->create_tournament( $admin_id );
+		$service    = new TournamentService(
+			new TournamentPaymentService(
+				new TournamentPaymentMollieStub(),
+				static fn() => new \WP_Error( 'missing_account', 'Geen rekening.' )
+			)
+		);
+
+		$result = $service->publish(
+			$tournament['id'],
+			[
+				[
+					'team_id'  => 123,
+					'user_ids' => [ 456 ],
+				],
+			],
+			$admin_id
+			);
+		$this->assertWPError( $result );
+		$this->assertSame( 'rondo_tournament_payment_account_required', $result->get_error_code() );
+		$this->assertSame( 'draft', Fields::get_for_post( $tournament['id'], 'lifecycle_status' ) );
 	}
 
 	public function test_incomplete_shared_draft_can_be_saved(): void {

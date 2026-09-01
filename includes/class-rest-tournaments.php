@@ -151,6 +151,26 @@ final class Tournaments extends Base {
 				'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
 			]
 		);
+		register_rest_route(
+			'rondo/v1',
+			'/tournament-entries/(?P<id>\d+)/payment-reminder',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'send_payment_reminder' ],
+				'permission_callback' => [ $this, 'check_manager_permission' ],
+				'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
+			]
+		);
+		register_rest_route(
+			'rondo/v1',
+			'/tournament-entries/(?P<id>\d+)/reopen',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'reopen_entry' ],
+				'permission_callback' => [ $this, 'check_manager_permission' ],
+				'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
+			]
+		);
 	}
 
 	public function check_manager_permission(): bool {
@@ -242,6 +262,16 @@ final class Tournaments extends Base {
 
 	public function retry_payment_link( $request ) {
 		$result = $this->service->retry_payment( absint( $request->get_param( 'id' ) ), get_current_user_id() );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	public function send_payment_reminder( $request ) {
+		$result = $this->service->send_payment_reminder( absint( $request->get_param( 'id' ) ) );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	public function reopen_entry( $request ) {
+		$result = $this->service->reopen_entry( absint( $request->get_param( 'id' ) ), get_current_user_id() );
 		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 	}
 }

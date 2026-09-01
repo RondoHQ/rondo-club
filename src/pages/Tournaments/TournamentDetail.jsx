@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Plus, RefreshCw, Send, Trash2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Mail, Plus, RefreshCw, RotateCcw, Send, Trash2 } from 'lucide-react';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   useDeleteTournament,
   usePublishTournament,
+  useReopenTournamentEntry,
   useRetryTournamentPaymentLink,
+  useSendTournamentPaymentReminder,
   useExtendTournamentDeadline,
   useSaveTournament,
   useTournament,
@@ -28,6 +30,8 @@ const emptyTournament = {
   description: '',
   internal_deadline: '',
   external_deadline: '',
+  payment_deadline: '',
+  payment_reminder_days: [7, 2],
   schedule: [{ age_group: 'O6 t/m O19', start_datetime: '', location: '' }],
   pricing_rules: [
     { min_age: 6, max_age: 7, amount: 28, game_format: '4 tegen 4, zonder doelverdediger' },
@@ -48,6 +52,8 @@ function tournamentFormState(tournament) {
     description: source.description || '',
     internal_deadline: toDateInput(source.internal_deadline),
     external_deadline: toDateInput(source.external_deadline),
+    payment_deadline: toDateInput(source.payment_deadline || source.internal_deadline),
+    payment_reminder_days: source.payment_reminder_days?.length ? source.payment_reminder_days.map(Number) : [7, 2],
     schedule: (source.schedule?.length ? source.schedule : emptyTournament.schedule).map((row) => ({
       ...row,
       start_datetime: toDateInput(row.start_datetime),
@@ -102,6 +108,29 @@ function DraftEditor({ tournament }) {
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Deadline organisatie
             <input className="input mt-1" type="date" required value={form.external_deadline} onChange={(event) => setForm({ ...form, external_deadline: event.target.value })} />
           </label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Betaaldeadline
+            <input className="input mt-1" type="date" required value={form.payment_deadline} onChange={(event) => setForm({ ...form, payment_deadline: event.target.value })} />
+          </label>
+          <fieldset className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <legend>Betaalherinneringen, dagen vooraf</legend>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {form.payment_reminder_days.map((days, index) => (
+                <div key={index} className="flex items-center gap-1">
+                  <input
+                    className="input w-24"
+                    type="number"
+                    min="0"
+                    max="60"
+                    aria-label={`Betaalherinnering ${index + 1}`}
+                    value={days}
+                    onChange={(event) => setForm({ ...form, payment_reminder_days: form.payment_reminder_days.map((value, rowIndex) => rowIndex === index ? Number(event.target.value) : value) })}
+                  />
+                  <button type="button" className="btn-tertiary p-2" aria-label="Herinnering verwijderen" onClick={() => setForm({ ...form, payment_reminder_days: form.payment_reminder_days.filter((_, rowIndex) => rowIndex !== index) })}><Trash2 className="h-4 w-4" /></button>
+                </div>
+              ))}
+              <button type="button" className="btn-tertiary" onClick={() => setForm({ ...form, payment_reminder_days: [...form.payment_reminder_days, 1] })}>Herinnering toevoegen</button>
+            </div>
+          </fieldset>
         </div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Uitnodiging en overige informatie
           <textarea className="input mt-1 min-h-32" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} />
@@ -222,12 +251,34 @@ function PublishPanel({ tournament }) {
 function EntriesOverview({ tournamentId }) {
   const { data: entries = [], isLoading, error } = useTournamentEntries(tournamentId);
   const retryPayment = useRetryTournamentPaymentLink();
+  const sendReminder = useSendTournamentPaymentReminder();
+  const reopenEntry = useReopenTournamentEntry();
+  const [actionMessage, setActionMessage] = useState('');
+
+  const remind = async (entry) => {
+    setActionMessage('');
+    try {
+      await sendReminder.mutateAsync(entry.id);
+      setActionMessage(`Betaalherinnering voor ${entry.team_name} verstuurd.`);
+    } catch {
+      // The mutation error is rendered above the table.
+    }
+  };
+
+  const reopen = (entry) => {
+    if (!window.confirm(`Inschrijving van ${entry.team_name} heropenen? De huidige betaallink wordt ingetrokken. Na de nieuwe bevestiging maakt Rondo een nieuwe factuur en betaallink.`)) return;
+    setActionMessage('');
+    reopenEntry.mutate(entry.id, { onSuccess: () => setActionMessage(`Inschrijving van ${entry.team_name} heropend.`) });
+  };
   if (isLoading) return <ContentLoadingSpinner />;
   return (
     <section className="card overflow-hidden">
       <div className="border-b border-gray-200 p-5 dark:border-gray-700"><h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Voortgang per Rondo-team</h2></div>
       {error ? <div className="p-5"><ErrorNotice error={error} /></div> : null}
       {retryPayment.error ? <div className="p-5"><ErrorNotice error={retryPayment.error} /></div> : null}
+      {sendReminder.error ? <div className="p-5"><ErrorNotice error={sendReminder.error} /></div> : null}
+      {reopenEntry.error ? <div className="p-5"><ErrorNotice error={reopenEntry.error} /></div> : null}
+      {actionMessage ? <div className="p-5 text-sm text-green-700 dark:text-green-300">{actionMessage}</div> : null}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-700">
           <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-gray-800"><tr><th className="px-4 py-3">Team</th><th className="px-4 py-3">Inschrijving</th><th className="px-4 py-3">Aantallen</th><th className="px-4 py-3">Contact</th><th className="px-4 py-3">Kader</th><th className="px-4 py-3">Bedrag</th><th className="px-4 py-3">Betaling</th></tr></thead>
@@ -247,6 +298,16 @@ function EntriesOverview({ tournamentId }) {
                 {entry.payment_state === 'error' && entry.can_retry_payment ? (
                   <button type="button" className="mt-2 inline-flex items-center text-xs font-medium text-bright-cobalt dark:text-electric-cyan" disabled={retryPayment.isPending} onClick={() => retryPayment.mutate(entry.id)}>
                     <RefreshCw className={`mr-1 h-3.5 w-3.5 ${retryPayment.isPending ? 'animate-spin' : ''}`} />Betaallink maken
+                  </button>
+                ) : null}
+                {entry.registration_status === 'submitted' && entry.payment_state === 'open' ? (
+                  <button type="button" className="mt-2 flex items-center text-xs font-medium text-bright-cobalt dark:text-electric-cyan" disabled={sendReminder.isPending} onClick={() => remind(entry)}>
+                    <Mail className="mr-1 h-3.5 w-3.5" />Betaalherinnering sturen
+                  </button>
+                ) : null}
+                {entry.registration_status === 'submitted' && entry.payment_state !== 'paid' ? (
+                  <button type="button" className="mt-2 flex items-center text-xs font-medium text-gray-600 dark:text-gray-300" disabled={reopenEntry.isPending} onClick={() => reopen(entry)}>
+                    <RotateCcw className="mr-1 h-3.5 w-3.5" />Inschrijving heropenen
                   </button>
                 ) : null}
               </td>

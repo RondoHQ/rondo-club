@@ -135,3 +135,24 @@ export function useRetryTournamentPaymentLink() {
     },
   });
 }
+
+function useManagerEntryMutation(mutationFn) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: (entry) => {
+      if (entry?.id) queryClient.setQueryData(['tournament-entries', Number(entry.id)], entry);
+      queryClient.invalidateQueries({ queryKey: ['tournaments'] });
+      queryClient.invalidateQueries({ queryKey: ['tournament-entries'] });
+      if (entry?.tournament_id) queryClient.invalidateQueries({ queryKey: ['tournaments', Number(entry.tournament_id), 'entries'] });
+    },
+  });
+}
+
+export function useSendTournamentPaymentReminder() {
+  return useManagerEntryMutation(async (id) => (await prmApi.sendTournamentPaymentReminder(id)).data);
+}
+
+export function useReopenTournamentEntry() {
+  return useManagerEntryMutation(async (id) => (await prmApi.reopenTournamentEntry(id)).data);
+}

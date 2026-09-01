@@ -6,6 +6,7 @@ use Rondo\Fields\Fields;
 use Rondo\Config\FinanceConfig;
 use Rondo\Finance\MollieConfig;
 use Rondo\Tournaments\TournamentPaymentService;
+use Rondo\Tournaments\TournamentPaymentReminderScheduler;
 use Rondo\Tournaments\TournamentService;
 use Tests\Support\RondoTestCase;
 use Tests\Support\TournamentPaymentMollieStub;
@@ -44,6 +45,7 @@ class TournamentPaymentTest extends RondoTestCase {
 		$this->assertSame( $person_id, (int) Fields::get_for_post( $invoice_id, 'person' ) );
 		$this->assertSame( $entry_id, (int) get_post_meta( $invoice_id, '_tournament_entry_id', true ) );
 		$this->assertSame( 'toernooien', get_post_meta( $invoice_id, '_payment_account_id', true ) );
+		$this->assertSame( '20270518', Fields::get_for_post( $invoice_id, 'due_date' ) );
 		$this->assertStringContainsString( '2 teams · 21 spelers', get_post_meta( $invoice_id, '_mollie_description', true ) );
 
 		$second = $service->ensure_payment( $entry_id, $actor_id );
@@ -126,6 +128,110 @@ class TournamentPaymentTest extends RondoTestCase {
 		$this->assertSame( '', get_post_meta( $invoice_id, '_mollie_payment_link_id', true ) );
 	}
 
+	public function test_payment_email_and_configured_reminder_are_idempotent(): void {
+		$user_id  = $this->createRondoUser(
+			[
+				'display_name' => 'Trainer',
+				'user_email'   => 'trainer@example.test',
+			]
+			);
+		$entry_id = $this->create_submitted_entry( 1, 12.0 );
+		Fields::update_for_post(
+			$entry_id,
+			'assignment_snapshot',
+			[
+				[
+					'user_id' => $user_id,
+					'name'    => 'Trainer',
+					'email'   => 'trainer@example.test',
+				],
+			]
+		);
+		$tournament_id = (int) Fields::get_for_post( $entry_id, 'tournament_id' );
+		Fields::update_many_for_post(
+			$tournament_id,
+			[
+				'payment_deadline'      => current_datetime()->modify( '+7 days' )->format( 'Y-m-d H:i:s' ),
+				'payment_reminder_days' => [ [ 'days_before' => 7 ] ],
+			]
+		);
+
+		$mails  = [];
+		$filter = static function ( $return, array $atts ) use ( &$mails ) {
+			$mails[] = $atts;
+			return true;
+		};
+		add_filter( 'pre_wp_mail', $filter, 10, 2 );
+		$service = new TournamentPaymentService( new TournamentPaymentMollieStub(), [ $this, 'payment_account' ] );
+		$service->ensure_payment( $entry_id, $user_id );
+		$service->ensure_payment( $entry_id, $user_id );
+		$this->assertCount( 1, $mails );
+		$this->assertStringContainsString( 'Open betaallink', $mails[0]['message'] );
+
+		$scheduler = new TournamentPaymentReminderScheduler();
+		$scheduler->process_entry( $entry_id );
+		$scheduler->process_entry( $entry_id );
+		$this->assertCount( 2, $mails );
+		$this->assertNotEmpty( get_post_meta( $entry_id, '_tournament_payment_reminder_7_sent_at', true ) );
+		remove_filter( 'pre_wp_mail', $filter, 10 );
+	}
+
+	public function test_unpaid_entry_can_reopen_and_new_submission_gets_new_invoice(): void {
+		$entry_id = $this->create_submitted_entry( 1, 12.0 );
+		$mollie   = new TournamentPaymentMollieStub();
+		$payments = new TournamentPaymentService( $mollie, [ $this, 'payment_account' ] );
+		$service  = new TournamentService( $payments );
+		$first    = $payments->ensure_payment( $entry_id, self::factory()->user->create() );
+		update_post_meta( $entry_id, '_tournament_payment_email_sent_10', current_time( 'mysql' ) );
+		update_post_meta( $entry_id, '_tournament_payment_reminder_7_sent_at', current_time( 'mysql' ) );
+		Fields::update_for_post(
+			$entry_id,
+			'assignment_snapshot',
+			[
+				[
+					'user_id' => 10,
+					'email'   => 'trainer@example.test',
+				],
+			]
+			);
+		$reopened = $service->reopen_entry( $entry_id, self::factory()->user->create() );
+
+		$this->assertIsArray( $reopened );
+		$this->assertSame( 'open', $reopened['registration_status'] );
+		$this->assertNull( $reopened['invoice_id'] );
+		$this->assertSame( '', get_post_meta( $entry_id, '_tournament_payment_email_sent_10', true ) );
+		$this->assertSame( '', get_post_meta( $entry_id, '_tournament_payment_reminder_7_sent_at', true ) );
+		$this->assertSame( 'rondo_cancelled', get_post_status( (int) $first['invoice_id'] ) );
+
+		Fields::update_many_for_post(
+			$entry_id,
+			[
+				'registration_status'   => 'submitted',
+				'registered_team_count' => 1,
+				'total_amount'          => 12,
+			]
+		);
+		$second = $payments->ensure_payment( $entry_id, self::factory()->user->create() );
+		$this->assertNotSame( (int) $first['invoice_id'], (int) $second['invoice_id'] );
+	}
+
+	public function test_paid_entry_cannot_reopen(): void {
+		$entry_id = $this->create_submitted_entry( 1, 12.0 );
+		$payments = new TournamentPaymentService( new TournamentPaymentMollieStub(), [ $this, 'payment_account' ] );
+		$created  = $payments->ensure_payment( $entry_id, self::factory()->user->create() );
+		wp_update_post(
+			[
+				'ID'          => (int) $created['invoice_id'],
+				'post_status' => 'rondo_paid',
+			]
+			);
+		Fields::update_for_post( (int) $created['invoice_id'], 'status', 'paid' );
+
+		$result = ( new TournamentService( $payments ) )->reopen_entry( $entry_id, self::factory()->user->create() );
+		$this->assertWPError( $result );
+		$this->assertSame( 'rondo_tournament_payment_already_paid', $result->get_error_code() );
+	}
+
 	public function payment_account(): array {
 		return [
 			'id'              => 'toernooien',
@@ -148,6 +254,7 @@ class TournamentPaymentTest extends RondoTestCase {
 			$tournament_id,
 			[
 				'external_deadline' => '2027-05-20 23:59:59',
+				'payment_deadline'  => '2027-05-18 23:59:59',
 				'lifecycle_status'  => 'open',
 			]
 		);
