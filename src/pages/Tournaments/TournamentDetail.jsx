@@ -4,6 +4,7 @@ import { ArrowLeft, CheckCircle2, Plus, Send, Trash2 } from 'lucide-react';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
+  useDeleteTournament,
   usePublishTournament,
   useExtendTournamentDeadline,
   useSaveTournament,
@@ -263,6 +264,39 @@ function DeadlinePanel({ tournament }) {
   );
 }
 
+function DeleteTournamentPanel({ tournament }) {
+  const navigate = useNavigate();
+  const deleteTournament = useDeleteTournament();
+
+  const remove = async () => {
+    const entryCount = Number(tournament.entry_count || 0);
+    const submittedCount = Number(tournament.submitted_entry_count || 0);
+    const entrySummary = entryCount === 0
+      ? 'Dit toernooi heeft geen gekoppelde inschrijvingen.'
+      : `Dit verwijdert ook ${entryCount} gekoppelde ${entryCount === 1 ? 'inschrijving' : 'inschrijvingen'}, waarvan ${submittedCount} definitief.`;
+    const confirmed = window.confirm(
+      `Weet je zeker dat je “${tournament.name}” wilt verwijderen?\n\n${entrySummary}\n\nRondo verstuurt geen bericht. Je moet aangemelde teams zelf informeren.`,
+    );
+    if (!confirmed) return;
+
+    await deleteTournament.mutateAsync(tournament.id);
+    navigate('/toernooien', { replace: true });
+  };
+
+  return (
+    <section className="card border-red-200 p-5 dark:border-red-900">
+      <h2 className="text-lg font-semibold text-red-700 dark:text-red-300">Toernooi verwijderen</h2>
+      <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+        Het toernooi en alle gekoppelde inschrijvingen verdwijnen uit Rondo. Rondo verstuurt geen bericht; je moet aangemelde teams zelf informeren.
+      </p>
+      {deleteTournament.error ? <div className="mt-4"><ErrorNotice error={deleteTournament.error} /></div> : null}
+      <button type="button" className="btn-tertiary mt-4 inline-flex items-center text-red-700 dark:text-red-300" disabled={deleteTournament.isPending} onClick={remove}>
+        <Trash2 className="mr-2 h-4 w-4" />{deleteTournament.isPending ? 'Verwijderen…' : 'Toernooi verwijderen'}
+      </button>
+    </section>
+  );
+}
+
 function ErrorNotice({ error }) {
   return <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">{errorMessage(error)}</div>;
 }
@@ -288,6 +322,7 @@ export default function TournamentDetail() {
       {tournament?.lifecycle_status === 'draft' ? <PublishPanel tournament={tournament} /> : null}
       {tournament?.lifecycle_status === 'open' ? <DeadlinePanel key={tournament.internal_deadline} tournament={tournament} /> : null}
       {tournament && tournament.lifecycle_status !== 'draft' ? <EntriesOverview tournamentId={tournament.id} /> : null}
+      {tournament ? <DeleteTournamentPanel tournament={tournament} /> : null}
     </div>
   );
 }

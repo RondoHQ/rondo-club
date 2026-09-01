@@ -64,6 +64,11 @@ final class Tournaments extends Base {
 					'callback'            => [ $this, 'update_tournament' ],
 					'permission_callback' => [ $this, 'check_manager_permission' ],
 				],
+				[
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => [ $this, 'delete_tournament' ],
+					'permission_callback' => [ $this, 'check_manager_permission' ],
+				],
 				'args' => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
 			]
 		);
@@ -168,6 +173,11 @@ final class Tournaments extends Base {
 
 	public function update_tournament( $request ) {
 		$result = $this->service->save_tournament( $request->get_json_params() ?: [], get_current_user_id(), absint( $request->get_param( 'id' ) ) );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	public function delete_tournament( $request ) {
+		$result = $this->service->delete_tournament( absint( $request->get_param( 'id' ) ) );
 		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 	}
 

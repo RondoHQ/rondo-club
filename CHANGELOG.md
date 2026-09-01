@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Toernooicoördinatoren kunnen concepten en gepubliceerde toernooien verwijderen; gekoppelde inschrijvingen verdwijnen mee en Rondo waarschuwt dat aangemelde teams handmatig geïnformeerd moeten worden.
 - De contributie-API levert per lid de actuele Rondo-factuur, het openstaande contributiebedrag en de termijnvoortgang voor veilige synchronisatie met FreeScout.
 - Beheerders kunnen onder **Instellingen → Club** kiezen welk team gastpassen gebruikt; actuele spelers van dat team kunnen op **Mijn gegevens** twee vaste gastlinks delen en iedere gast bewaart na eenmalige registratie een herbruikbare Apple Wallet-, Google Wallet- of QR-pas.
 - Beheerders kunnen onder **Instellingen → VOG** de ledencommunicatie voor ontbrekende, verlopen en bijna verlopende VOG's aanpassen.
