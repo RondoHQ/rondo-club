@@ -42,7 +42,7 @@ guard and manual grant/revoke behavior.
    Mailbox access assigned manually outside the managed mapping is never changed.
 8. Failure of Rondo or the sidebar endpoint must never block normal FreeScout conversation work.
 9. New FreeScout installations receive a known fixed Rondo Integration module version and then use
-   FreeScout's built-in third-party module updater to reach the latest approved release.
+   FreeScout's built-in third-party module updater to reach an exact approved release.
 10. The Rondo Integration module binds each Rondo `sub` to exactly one FreeScout user before that
     identity can be trusted for later logins; email is used only for the controlled first link.
 11. The Rondo installation URL is environment-specific configuration. No Rondo or FreeScout
@@ -124,6 +124,26 @@ guard and manual grant/revoke behavior.
     desktop ceiling rather than a forced width. At `1100px` and below, including desktop layouts
     that cross the breakpoint at 200% zoom, FreeScout's native full-width stacked layout remains
     authoritative. The existing mocks remain the `360px` target and do not need revision.
+31. Sidebar requests identify the agent by the exact bound Rondo issuer and subject, plus the local
+    FreeScout user ID for audit/rate limiting. Agent email is never used after first link. The body
+    contains only the customer's current normalized email set for matching; duplicate singular
+    email and unused phone fields are removed.
+32. Version one does not cache matched person payloads or rendered sidebar HTML on either side.
+    Only non-personal discovery, JWKS, configuration and field-policy metadata may be cached.
+33. Version one supports FreeScout's browser UI, including its responsive web layout. Compatibility
+    with the official native mobile client is not required for the pilot or release; observed app
+    behavior is documented without weakening browser security controls or claiming native support.
+34. Rondo capability-change delivery uses a private WordPress custom post type as a durable,
+    at-least-once queue. Transients are not a provisioning queue. Successful or reconciled items
+    are deleted after an audit-safe result, while unresolved delivery failures remain visible to
+    the configured operational owners.
+35. Production module updates require an operator-approved exact tag and SHA-256. The updater may
+    report the latest stable version, but it never installs “latest” as an unresolved target;
+    approval occurs only after tagged assets and provenance have been preflighted.
+36. Rondo is the single source of truth for audit retention. A Rondo-server
+    `RONDO_AUDIT_RETENTION_DAYS` environment value overrides the Rondo UI option; FreeScout never
+    reads a separate local override and applies only the signed effective value and source returned
+    by Rondo.
 
 ## Why this replaces copied customer context
 
@@ -175,6 +195,7 @@ the Rondo Integration module after its replacement person-matching path is prove
 - Mirroring FreeScout messages, replies, recipients, attachments or conversation bodies in Rondo.
 - Making Rondo a public, general-purpose identity provider for third parties.
 - Supporting implicit OAuth flows or password grants.
+- Integrating with or claiming support for FreeScout's native mobile client in version one.
 - Replacing every feature of the retired Design module or offering unrestricted CSS injection.
 - Recoloring semantic success, warning, destructive or availability states as branding.
 
@@ -774,10 +795,14 @@ The installation/update contract is:
 1. Provision a fresh FreeScout installation from the tagged `v1.0.0` ZIP and its recorded SHA-256.
 2. Extract it as `Modules/RondoIntegration` and run FreeScout's module installation/activation
    command for alias `rondointegration`.
-3. Run the module-owned `php artisan rondo:integration-update` provisioning command.
-4. After explicit operator approval, that command resolves the latest stable tag, downloads the
-   tagged manifest, ZIP and checksum, confirms their versions and SHA-256, validates the archive
-   layout, and stages the archive without changing the active module.
+3. Run `php artisan rondo:integration-update --version=vX.Y.Z --sha256=<64-hex> --check` for the
+   exact candidate recorded in the change request. The command downloads only that tag's manifest,
+   ZIP, checksum and provenance, confirms their version and SHA-256, validates the archive layout,
+   and reports the preflight result without changing the active module.
+4. After that preflight, the operator approves the exact tag and artifact SHA-256. Installation
+   repeats the command with the same `--version` and `--sha256` plus `--install`; the command never
+   accepts an unresolved `latest` target, and a newly published release cannot change the approved
+   target.
 5. The wrapper backs up the database and current module directory, then uses FreeScout's core
    module installation/activation path only for alias `rondointegration` to install migrations,
    assets and configuration.
@@ -805,8 +830,8 @@ checksum first. Therefore:
   release, and a correction is always a new patch release;
 - release ZIP, `module.json`, `SHA256SUMS` and SPDX SBOM are attached to one draft and tested before
   that draft is published and becomes immutable;
-- the production wrapper resolves `/releases/latest/` once, pins the returned `vX.Y.Z` tag and uses
-  only version-specific URLs for that update;
+- `/releases/latest/` is used only to report that a newer stable release exists; the production
+  wrapper accepts an exact approved `vX.Y.Z` tag and SHA-256 and uses only that tag's URLs;
 - CI produces GitHub build provenance for the ZIP and verifies the release assets after publication;
 - unattended updates are not scheduled in version one;
 - a database and module-directory backup is taken before an operator-approved update;
@@ -842,7 +867,8 @@ Repository protection and release workflow:
 - Add `auth` middleware to the AJAX route; upstream currently applies only `web`.
 - Read the current agent with `auth()->user()`.
 - Authorize the agent against the conversation using FreeScout's normal conversation policy.
-- Verify `conversation.mailbox_id` equals the supplied mailbox ID.
+- Reload `conversation.mailbox_id` and resolve it through the active local stable-key mapping;
+  reject a missing, inactive or drifted mapping.
 - Fetch the customer through the already-authorized conversation.
 - Never accept agent, customer, conversation or mailbox identity from browser-supplied data without
   reloading and authorizing it server-side.
@@ -854,19 +880,26 @@ The request body contains:
 ```json
 {
   "version": 1,
-  "mailboxId": 12,
+  "mailboxKey": "ledenadministratie",
   "conversationId": 3456,
   "conversationNumber": 789,
   "customerId": 123,
-  "customerEmail": "member@example.nl",
   "customerEmails": ["member@example.nl"],
-  "customerPhones": [],
   "agent": {
-    "id": 44,
-    "email": "agent@example.nl"
+    "freescoutUserId": 44,
+    "issuer": "https://rondo.example.nl",
+    "subject": "opaque-stable-rondo-subject"
   }
 }
 ```
+
+FreeScout reloads the authorized conversation and its local mailbox ID, then maps that ID to the
+locally verified stable key before signing the request. Rondo never accepts or needs the numeric
+FreeScout mailbox ID. After the first OIDC link, the request identifies the agent only by the exact
+bound Rondo issuer and subject plus the local FreeScout user ID for audit correlation; it does not
+send or rematch an agent email address. The only customer matching input is the deduplicated set of
+current normalized email addresses from the authorized conversation customer. Singular email and
+phone fields are not sent.
 
 Headers contain:
 
@@ -933,8 +966,9 @@ The endpoint is publicly routable but accepts only valid signed requests. Its pe
 3. Validate the HMAC over the still-unparsed raw body with constant-time comparison.
 4. Reject and then record a reused nonce using a short-lived transient.
 5. Parse and validate the protocol version and body schema.
-6. Validate the mailbox against configured mailbox mappings.
-7. Resolve the FreeScout agent to one eligible, verified Rondo user.
+6. Validate the stable mailbox key against the signed Rondo configuration catalog.
+7. Require the configured issuer and resolve the exact bound subject to one eligible Rondo user;
+   never rematch the agent by email.
 8. Recheck the user's current effective capabilities.
 9. Resolve the customer using the matching policy.
 10. Apply person visibility and field-level access through existing Rondo services.
@@ -1081,6 +1115,10 @@ The response contains no users or person data:
       "enabled": true
     }
   ],
+  "audit": {
+    "retention_days": 365,
+    "source": "environment"
+  },
   "evaluated_at": "2026-09-01T12:00:00Z"
 }
 ```
@@ -1189,8 +1227,20 @@ subject and the fact that access must be re-evaluated; it does not assert the fi
 FreeScout then calls the Rondo access service to obtain current desired state. This avoids accepting
 stale capability data from a delayed event.
 
-Retries use WordPress cron/transients or another existing native Rondo queue pattern. No custom
-database table is introduced. Repeated delivery is safe.
+Rondo persists each event as a private, non-public `rondo_integration_event` post with private post
+meta for an event UUID, opaque subject, state, attempt count, next-attempt time, creation time and
+last reason code. WordPress cron claims due posts in bounded batches and uses the event UUID as the
+FreeScout idempotency key. Delivery is at least once: missed cron runs and process restarts leave
+the posts intact, and repeated delivery is safe. Transients may provide short-lived locks but are
+never the queue. No custom database table is introduced.
+
+The first attempt is immediate, followed by exponential delays of 1, 5, 15 and 60 minutes and then
+hourly retry. A successful acknowledgement deletes the queue post after its audit-safe outcome is
+recorded. The hourly authoritative reconciliation may also mark a superseded event reconciled and
+delete it. Exhausted or repeatedly failing events remain visible as unresolved operational failures
+until delivery, reconciliation or an explicit administrator resolution; they are never silently
+expired. Queue records contain no email, capability payload or mailbox list, and the opaque subject
+is removed with the terminal queue post.
 
 ## Authorization model
 
@@ -1498,8 +1548,9 @@ customer reassignment and missed-event repair pass the compatibility checklist.
 - Customer emails are transient matching inputs for the signed activity request; neither Rondo
   activity meta nor integration logs retain another copy of them.
 - Rate limiting per FreeScout instance, agent and source IP where reliable.
-- Response cache keys include mailbox policy and effective authorization class; no cross-user PII
-  cache leakage.
+- Matched-person payloads and rendered sidebar HTML are not cached in version one. Only
+  non-personal discovery, JWKS, signed configuration-catalog and policy metadata may be cached;
+  subject authorization, matching, visibility and field filtering run for every sidebar request.
 - All integration endpoints fail closed for data and fail open for normal FreeScout operation.
 
 ## Privacy requirements
@@ -1508,7 +1559,8 @@ customer reassignment and missed-event repair pass the compatibility checklist.
 - Send only customer identifiers needed for exact matching.
 - For activity delivery, send only the customer's current normalized emails and discard them after
   matching; pending repair reloads them from FreeScout instead of storing a queue copy.
-- Send only agent ID/email needed for identity mapping.
+- Send only the local FreeScout user ID and exact bound Rondo issuer/subject needed for agent
+  identity; never send or rematch the agent email after the first link.
 - Do not persist sidebar person payloads in FreeScout.
 - Avoid browser analytics, third-party fonts, external images and remote scripts inside the sidebar.
 - Keep audit logs event-oriented: success/failure, IDs and reason codes, without full person payloads.
@@ -1545,17 +1597,23 @@ bodies.
 
 ### Audit retention and operational ownership
 
-The audit policy is installation-level configuration, not a compiled club value:
+The audit policy is installation-level configuration, not a compiled club value. Rondo is its
+single source of truth and calculates the signed effective value in this order:
 
-- Rondo stores `freescout_audit_retention_days` through the WordPress Options API and publishes it
-  in the signed integration configuration; default `365`, accepted range `90` through `730`;
-- FreeScout applies the last verified signed value to module-owned audit records. A missing,
-  malformed or out-of-range value blocks a new activation and never silently shortens the current
-  retention period;
-- an optional `RONDO_AUDIT_RETENTION_DAYS` environment value may lock the same setting during
-  provisioning. The settings screen shows the source and cannot override a locked value;
-- a scheduled daily prune removes eligible records in bounded batches and records only aggregate
-  deleted counts. Manual deletion of selected audit rows is unavailable in the user interface.
+1. valid Rondo-server environment value `RONDO_AUDIT_RETENTION_DAYS`;
+2. valid Rondo WordPress option `freescout_audit_retention_days`;
+3. default `365`.
+
+The accepted range is `90` through `730`. An invalid environment value blocks integration
+configuration and activation instead of silently falling back. Rondo publishes both the effective
+`retention_days` and its `source` (`environment`, `rondo_setting` or `default`) in the signed
+configuration. The Rondo settings screen shows the source and cannot override an environment-locked
+value. FreeScout has no local setting or environment override for this policy: it applies only the
+last verified signed Rondo value to module-owned audit records. A missing, malformed, unsigned or
+out-of-range value blocks a new activation and never silently shortens the current retention period.
+
+A scheduled daily prune removes eligible records in bounded batches and records only aggregate
+deleted counts. Manual deletion of selected audit rows is unavailable in the user interface.
 
 The retention clock starts when the event is written. A failed access removal, session
 invalidation, identity binding/recovery or signature/security event remains open and is excluded
@@ -1698,7 +1756,8 @@ login, complete token validation and a confirmed current-agent hook.
 - Add the administrator Mailbox mappings screen, verification state machine, aggregate dry run and
   protected activate/change/pause/disable workflows.
 - Add authentication and conversation authorization.
-- Add current agent to the signed payload.
+- Add the current agent's exact bound Rondo issuer/subject and local FreeScout user ID to the signed
+  payload; do not include agent email.
 - Replace body secret with versioned HMAC headers.
 - Add strict timeouts, redirect prevention and response limits.
 - Render sanitized Rondo markup in the opaque-origin `srcdoc` sandbox with the nonce-authorized,
@@ -1728,6 +1787,8 @@ login, complete token validation and a confirmed current-agent hook.
 - Reconcile only managed mailbox relationships.
 - Add conditional session invalidation plus Rondo-created account deactivation/reactivation.
 - Add Rondo capability-change events and FreeScout receiver.
+- Add the private `rondo_integration_event` post queue, bounded WordPress-cron worker,
+  event-UUID idempotency and unresolved-failure health reporting.
 - Add hourly repair and nightly audit.
 
 ### Phase 5: pilot and sync cutover
@@ -1841,7 +1902,10 @@ login, complete token validation and a confirmed current-agent hook.
   approved contract before the first tag is created.
 - Only a protected, human-approved workflow can publish stable release assets.
 - A clean FreeScout installation can provision the fixed bootstrap module version.
-- The targeted third-party update command detects and installs a newer semantic version.
+- The targeted third-party update command may report a newer semantic version but installs only an
+  exact operator-supplied tag and SHA-256 that passed preflight.
+- Missing target values, an unresolved `latest` target or a release published after preflight
+  cannot change the approved installation target.
 - The command parses both a plain version response and the version in `module.json`.
 - Updating `rondointegration` never updates another installed third-party module.
 - A current version reports that no update is available and remains unchanged.
@@ -1954,7 +2018,8 @@ The milestone is complete only when:
 - the deployed module contains no hardcoded Rondo hostname and uses the verified configured base
   URL for every Rondo request;
 - FreeScout identifies the current agent and signs the sidebar request;
-- Rondo maps that agent to the expected eligible WordPress user with current email proof;
+- Rondo resolves that agent through the exact persistent issuer/subject binding, then rechecks the
+  expected eligible WordPress user and current email proof without rematching agent email;
 - a current `ledenadministratie` capability grants the correct FreeScout mailbox;
 - production key `ledenadministratie` resolves only to locally verified mailbox ID `18`, displayed
   as `Ledenadministratie <ledenadministratie@svawc.nl>`;
@@ -1977,6 +2042,8 @@ The milestone is complete only when:
 - zero-match and multiple-match cases disclose no person data;
 - an agent lacking Rondo access cannot retrieve the sidebar record by changing IDs;
 - an unreachable Rondo endpoint does not freeze FreeScout or exhaust workers;
+- matched-person payloads and rendered sidebar HTML are never response-cached, and revocation or
+  changed person data is reflected after a fresh authorized request;
 - returned sidebar content cannot execute scripts in the FreeScout parent page;
 - expanding or collapsing sidebar content resizes the iframe through a validated height-only
   message without exposing FreeScout DOM, cookies or storage;
@@ -1989,11 +2056,13 @@ The milestone is complete only when:
 - AWC's `360px` maximum produces effective widths `280`, `320`, `360` and `360px` at CSS viewports
   `1101`, `1280`, `1440` and `1920px`, with the native stacked layout at `1100px` and below;
 - disabling appearance overrides restores FreeScout's native colors and `280px` desktop sidebar;
+- the responsive FreeScout browser UI is the supported version-one surface; observed native mobile
+  incompatibility is documented and creates no native-client support claim;
 - existing manual mailbox assignments remain unchanged;
 - `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true` is verified in the deployed FreeScout runtime and a
   zero-mailbox user cannot open customer, customer-edit or conversation routes by ID;
 - a fresh FreeScout installation can provision a fixed Rondo Integration version and update it to
-  the latest approved release through FreeScout's targeted module updater;
+  an exact approved tag and SHA-256 through FreeScout's targeted module updater;
 - the installed version and artifact SHA-256 match the approved release record;
 - `v1.0.0` and every later stable release originate from protected `main`, pass the protected
   release workflow and expose the fixed public latest/tagged asset URLs;
@@ -2023,6 +2092,7 @@ The milestone is complete only when:
 
 ## Implementation gate
 
-No product decisions remain open. Implementation may start with the approved values, but production
-activation remains blocked until the compatibility checklist passes, including realistic
-conversation content, all supported widths and the 200%-zoom stacked-layout proof.
+No product decisions remain open. Only Phase 0 compatibility and threat-model proof may begin now;
+Phases 1 through 5 product implementation remain blocked by the Phase 0 gate. Production activation
+is additionally blocked until the full compatibility checklist passes, including realistic
+conversation content, all supported browser widths and the 200%-zoom stacked-layout proof.
