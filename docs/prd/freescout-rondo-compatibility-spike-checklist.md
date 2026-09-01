@@ -476,8 +476,11 @@ module's allowlisted settings and stylesheet.
 - [ ] Test maximum customer-sidebar widths `280`, `360` and `420` pixels.
 - [ ] At each width, confirm `#conv-layout-customer`, `#conv-layout-header` and
   `#conv-layout-main` reserve the same effective width without overlap.
+- [ ] With AWC maximum `360`, confirm effective sidebar widths are `280`, `320`, `360` and `360px`
+  at CSS viewports `1101`, `1280`, `1440` and `1920px` respectively.
 - [ ] Test at viewport widths `1101`, `1280`, `1440` and `1920` pixels and at 200% zoom.
-- [ ] At `1100px` and below, confirm FreeScout's full-width stacked customer layout remains active.
+- [ ] At `1100px` and below, including the reduced CSS viewport at 200% zoom, confirm FreeScout's
+  full-width stacked customer layout remains active and no horizontal mock scaling/scrolling occurs.
 - [ ] Disable appearance overrides and confirm the core colors and `280px` desktop sidebar return
   without stale inline styles or modified core files.
 
