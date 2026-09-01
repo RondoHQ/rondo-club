@@ -34,13 +34,14 @@ final class OidcAuthorizationService {
 	/** Return OpenID Provider and OAuth authorization-server metadata. */
 	public static function metadata(): array {
 		$issuer = self::issuer();
+		$base   = untrailingslashit( home_url( '/' ) );
 
 		return [
 			'issuer'                                => $issuer,
-			'authorization_endpoint'                => $issuer . '/oauth/authorize',
-			'token_endpoint'                        => $issuer . '/oauth/token',
-			'userinfo_endpoint'                     => $issuer . '/oauth/userinfo',
-			'jwks_uri'                              => $issuer . '/oauth/jwks',
+			'authorization_endpoint'                => $base . '/oauth/authorize',
+			'token_endpoint'                        => $base . '/oauth/token',
+			'userinfo_endpoint'                     => $base . '/oauth/userinfo',
+			'jwks_uri'                              => $base . '/oauth/jwks',
 			'response_types_supported'              => [ 'code' ],
 			'grant_types_supported'                 => [ 'authorization_code' ],
 			'subject_types_supported'               => [ 'public' ],
@@ -374,9 +375,9 @@ final class OidcAuthorizationService {
 		}
 	}
 
-	/** Return the configured issuer without a trailing slash. */
+	/** Return the path-based issuer without a trailing slash. */
 	public static function issuer(): string {
-		return untrailingslashit( home_url( '/' ) );
+		return untrailingslashit( home_url( '/oauth' ) );
 	}
 
 	/** Read an opaque pending handle for page rendering. */

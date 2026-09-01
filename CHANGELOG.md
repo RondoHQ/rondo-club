@@ -46,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- OpenID Connect-discovery blijft bereikbaar wanneer de webserver de fysieke map `.well-known` voor certificaatvalidatie gebruikt.
+- OpenID Connect-discovery gebruikt een `/oauth`-issuerpad, zodat een door de host gereserveerde map `.well-known` de metadata niet kan blokkeren.
 - Het clublogo in toernooi-PDF's wordt op een vaste kophoogte geschaald, zodat de inhoud direct op de eerste pagina begint.
 - De Sportlink-rol `Assistent-trainer/coach` stelt, net als de overige actieve stafrollen, het volledige gezin vrij van verplichte inschrijftaken.
 - De lidpasscanner kan passen ook zonder geselecteerde wedstrijd controleren en toont wedstrijdstatistieken voortaan onder de scanresultaten.
