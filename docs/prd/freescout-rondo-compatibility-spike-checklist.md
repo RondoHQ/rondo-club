@@ -274,10 +274,10 @@ Complete one row for every material behavior.
 | Area | Observed behavior | PRD requirement | Result | Evidence | Decision/workaround |
 |---|---|---|---|---|---|
 | OAuth state | Fresh 40-character value per attempt; missing or changed state rejected | Required and validated | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Keep the paid module's state handling |
-| PKCE S256 | No challenge or verifier is sent | Supported when sent | Fail | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Requires an explicit security exception or a different OAuth client |
-| OIDC nonce | No nonce is sent; no ID token is consumed | Validated when sent | Fail | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Treat this as OAuth 2.0 with User Info, or replace the client for full OIDC |
-| Token client auth | Server-side `client_secret_post`; secret absent from browser and logs | Server-side confidential client | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Permit body credentials only over verified HTTPS |
-| ID token/User Info | User Info only; minimal accepted claims are `sub`, `email`, and boolean `email_verified: true` with the guard | Complete OIDC plus User Info | Fail | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Document OAuth/User Info compatibility exception or replace the paid module |
+| PKCE S256 | No challenge or verifier is sent | Bounded confidential-client pilot exception | Conditional pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Approval required; replace or patch before expanding beyond pilot |
+| OIDC nonce | No nonce is sent and no ID token is consumed | FreeScout is not described as an OIDC client | Not applicable | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Remove `openid`; use the dedicated `freescout_identity` OAuth scope |
+| Token client auth | Server-side `client_secret_post`; secret absent from browser and logs | Bounded confidential-client pilot exception over verified HTTPS | Conditional pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Dedicated secret, short rotation, debug off; replace or patch before expansion |
+| ID token/User Info | Paid module consumes JSON identity data only; minimum guarded claims are `sub`, `email`, and boolean `email_verified: true` | Dedicated OAuth identity resource, no OIDC claim | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Configure `/oauth/freescout-identity` with scope `freescout_identity` |
 | Existing-user match | Guard requires a unique verified email for first link; case difference created no duplicate | Unique verified email only | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Keep automatic creation off during pilot |
 | Subject binding | Bound subject wins after email change or conflicting email; administrator unlink/audit remains untested | One Rondo subject per FreeScout user | Provisional pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Prove administrator recovery before release |
 | Rondo base URL | | Configured, verified and not hardcoded | | | |
@@ -291,6 +291,16 @@ Complete one row for every material behavior.
 | Failure containment | Access-service `503` allowed login in 1.5 seconds and preserved access | Conversation work remains available | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Keep prior state; record redacted error; no login-flow retry |
 
 ## Go/no-go decision
+
+### OAuth compatibility sub-decision
+
+**Recommendation:** conditional acceptance for a non-administrator pilot, pending explicit
+product-owner approval. The exact deviations, controls, residual risk, owner and expansion deadline
+are recorded in the [identity and sidebar PRD](freescout-rondo-identity-sidebar.md#recommended-oauth-compatibility-exception).
+
+This is not the final spike sign-off. Administrator binding recovery, sidebar isolation, timeout
+proof and the remaining compatibility rows must still pass before the overall decision can become
+`CONDITIONAL GO`.
 
 ### GO
 

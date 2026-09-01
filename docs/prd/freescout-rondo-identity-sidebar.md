@@ -29,7 +29,9 @@ guard and manual grant/revoke behavior.
    relevant forks as attributed references, not as a maintained fork or separate installed module.
 2. The sidebar varies by FreeScout mailbox. Ledenadministratie receives a more extensive view than
    a general mailbox.
-3. Rondo becomes an OAuth/OpenID Connect identity provider for FreeScout agents.
+3. Rondo becomes an OAuth 2.0 authorization server for FreeScout agents. The paid FreeScout module
+   uses a dedicated Rondo identity resource and is not described as an OpenID Connect client because
+   it does not consume or validate an ID token.
 4. Read-only sidebar authorization uses the signed current FreeScout agent mapped to a Rondo user.
 5. Actions that mutate or expose a complete record open Rondo and require its normal WordPress
    session.
@@ -163,7 +165,7 @@ References:
 5. Rondo displays a concise consent/continuation screen naming FreeScout and the identity claims
    being shared.
 6. Rondo returns a short-lived authorization code to the exact registered FreeScout redirect URI.
-7. FreeScout exchanges the code and reads the User Info endpoint.
+7. FreeScout exchanges the code and reads the dedicated Rondo identity resource.
 8. FreeScout matches an existing agent by verified email. Automatic creation remains off during
    the pilot.
 9. The Rondo Integration login listener asks Rondo for the agent's desired managed mailbox keys.
@@ -212,16 +214,14 @@ Normal FreeScout conversation controls remain usable in every state.
 
 ## Architecture
 
-### Component 1: Rondo OpenID Connect provider
+### Component 1: Rondo OAuth provider
 
 Rondo exposes a narrowly scoped provider for registered first-party clients:
 
 ```text
 GET  /oauth/authorize
 POST /oauth/token
-GET  /oauth/userinfo
-GET  /oauth/jwks
-GET  /.well-known/openid-configuration
+GET  /oauth/freescout-identity
 GET  /.well-known/oauth-authorization-server
 ```
 
@@ -238,24 +238,18 @@ The initial client is FreeScout. Client registration is administrator-only and s
 
 Rondo supports the authorization-code flow, requires `state`, and supports PKCE S256 when sent by
 the client. OAuth Login `1.0.28` sends neither PKCE nor an OpenID Connect `nonce`; it exchanges the
-code server-to-server using `client_secret_post` and retrieves User Info with the access token. The
-FreeScout client therefore remains a confidential server-side client authenticated by its secret,
-and this compatibility exception must receive explicit approval before production.
+code server-to-server using `client_secret_post` and retrieves identity data with the access token.
+The FreeScout client therefore remains a confidential server-side OAuth client authenticated by its
+secret. Rondo does not advertise this FreeScout flow as OpenID Connect and does not grant the
+`openid` scope to it.
 
-When the `openid` scope is granted, the token response includes a short-lived, signed ID token with
-`iss`, `sub`, `aud`, `iat`, `exp` and the request `nonce` when supplied. Rondo publishes only the
-corresponding public keys through the JWKS endpoint. The signing private key remains in server
-configuration outside WordPress content and supports controlled rotation. If the compatibility
-spike proves that the FreeScout module uses OAuth User Info without consuming an ID token, Rondo
-still implements this complete OpenID Connect contract rather than advertising partial OIDC.
-
-Only these initial scopes are supported:
+The initial client receives only this dedicated scope:
 
 ```text
-openid email profile
+freescout_identity
 ```
 
-The User Info response is limited to:
+The dedicated identity response is limited to:
 
 ```json
 {
@@ -286,9 +280,57 @@ Rondo follows the repository's WordPress-native storage rule:
 - consent/audit metadata in user meta or a native audit post/comment model if required;
 - no custom database tables.
 
-Authorization codes are single-use and expire within two minutes. Access tokens are short-lived
-and scoped only to User Info. Refresh tokens are out of scope unless the FreeScout module proves
-they are required.
+Authorization codes are single-use and expire within two minutes. Access tokens expire within five
+minutes, are audience-bound to the FreeScout client and are scoped only to the dedicated identity
+resource. Refresh tokens are not issued.
+
+#### Recommended OAuth compatibility exception
+
+**Status:** recommended for the non-administrator pilot; explicit product-owner approval remains
+required before implementation or production use.
+
+OAuth Login `1.0.28` creates two standards deviations:
+
+1. It sends no PKCE challenge or verifier. RFC 9700 recommends PKCE for confidential clients because
+   it protects against authorization-code injection, but does not make it mandatory for them.
+2. It authenticates at the token endpoint with `client_secret_post`. RFC 6749 permits request-body
+   credentials but does not recommend them when HTTP Basic or another method is available.
+
+The missing OpenID Connect `nonce` and ID-token validation are not accepted as an OIDC exception.
+FreeScout instead uses the dedicated OAuth scope and identity resource above. Rondo may add a full
+OpenID Connect contract for other clients later, but that is outside this FreeScout milestone.
+
+The bounded pilot exception is acceptable only while all of these controls hold:
+
+- one active Rondo OAuth provider in FreeScout and no provider-selection ambiguity;
+- no FreeScout administrator authenticates through OAuth; the local administrator remains break
+  glass;
+- Force OAuth Login remains disabled;
+- exact pre-registered redirect URI and no open redirectors;
+- HTTPS for authorization, token and identity endpoints;
+- one confidential client secret used only by FreeScout, rotated before pilot and stored outside
+  logs and browser-visible configuration;
+- single-use authorization codes expiring within two minutes and bound to client ID and redirect
+  URI;
+- opaque access tokens expiring within five minutes, audience-bound to FreeScout, with no refresh
+  token;
+- fresh session-bound `state`, the verified Rondo identity guard and one-to-one subject binding;
+- automatic user creation and OAuth debug logging disabled;
+- the release-artifact denial/recovery proof passes before any pilot login.
+
+**Residual risk:** an attacker capable of reading or injecting an authorization response may have
+an opportunity that PKCE would block. The confidential client secret, exact redirect URI, TLS,
+short-lived single-use codes and session-bound `state` reduce but do not remove that risk.
+
+**Owner:** Rondo Integration maintainer. **Review deadline:** replace or patch the OAuth client
+before enabling Force OAuth Login, allowing OAuth for administrators, adding another provider or
+expanding beyond the bounded pilot.
+
+Standards references:
+
+- [RFC 9700, OAuth 2.0 Security Best Current Practice, section 2.1.1](https://www.rfc-editor.org/rfc/rfc9700.html#section-2.1.1)
+- [RFC 6749, client password authentication, section 2.3.1](https://www.rfc-editor.org/rfc/rfc6749.html#section-2.3.1)
+- [OpenID Connect Core, token and ID-token validation](https://openid.net/specs/openid-connect-core-1_0-18.html#TokenResponseValidation)
 
 #### Eligible Rondo identity
 
@@ -340,14 +382,15 @@ versioned paths:
 /wp-json/rondo/v1/integrations/freescout/access
 ```
 
-The paid OAuth Login module continues to store its Authorization, Token and User Info URLs in its
-own settings. Setup documentation and the Rondo Integration settings screen show the corresponding
-values derived from the configured Rondo base URL, but no endpoint hostname is duplicated in code:
+The paid OAuth Login module continues to label its third endpoint setting **User Info URL**. For
+Rondo, that field points to the dedicated FreeScout identity resource. Setup documentation and the
+Rondo Integration settings screen show the corresponding values derived from the configured Rondo
+base URL, but no endpoint hostname is duplicated in code:
 
 ```text
 /oauth/authorize
 /oauth/token
-/oauth/userinfo
+/oauth/freescout-identity
 ```
 
 Changing the base URL disables Rondo requests until an administrator re-verifies the destination
@@ -771,8 +814,8 @@ mappings remain authoritative.
 - Authorization codes single-use and short-lived.
 - PKCE S256 supported; required when the client sends it.
 - `state` required and validated by FreeScout.
-- OpenID Connect `nonce` supported when sent.
-- User Info is accepted only from the configured Rondo provider and must contain a non-empty `sub`
+- The FreeScout client is described as OAuth 2.0, not as an OpenID Connect relying party.
+- Identity data is accepted only from the configured Rondo resource and must contain a non-empty `sub`
   and `email_verified: true`.
 - Rondo subject and FreeScout user bindings are one-to-one, persistent and never changed from an
   ordinary login attempt.
@@ -899,10 +942,11 @@ Execution checklist:
 **Gate:** no implementation phase proceeds without a successful end-to-end test user login and a
 confirmed current-agent hook.
 
-### Phase 1: Rondo identity provider
+### Phase 1: Rondo OAuth provider
 
 - Add first-party client registration and secret rotation.
-- Implement discovery, authorize, token and User Info endpoints.
+- Implement OAuth authorization-server metadata, authorize, token and dedicated FreeScout identity
+  endpoints.
 - Add opaque subjects and external-email eligibility checks.
 - Add tests for redirects, codes, tokens, scopes, PKCE and denials.
 - Document `/login?oauth=0` and server-side Force OAuth disablement as separate break-glass paths.
@@ -966,7 +1010,7 @@ confirmed current-agent hook.
 - Invalid client secret is denied.
 - PKCE verifier mismatch is denied when PKCE was initiated.
 - Unsupported scope is denied.
-- User Info token with wrong scope/expiry is denied.
+- FreeScout identity token with wrong audience, scope or expiry is denied.
 - Missing `sub` or `email_verified` other than boolean `true` is denied before FreeScout login.
 - A first login binds one verified Rondo subject to one unbound FreeScout user.
 - The same subject can log in again after an email change without changing the binding.
