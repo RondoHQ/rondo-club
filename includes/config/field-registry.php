@@ -3847,6 +3847,40 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'storage_name' => 'organizer',
           'type' => 'text',
         ),
+        'payment_deadline' =>
+        array (
+          'canonical_name' => 'payment_deadline',
+          'key' => 'field_tournament_payment_deadline',
+          'label' => 'Betaaldeadline',
+          'name' => 'payment_deadline',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'payment_deadline',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+        'payment_reminder_days' =>
+        array (
+          'canonical_name' => 'payment_reminder_days',
+          'key' => 'field_tournament_payment_reminder_days',
+          'label' => 'Betaalherinneringen',
+          'name' => 'payment_reminder_days',
+          'storage_name' => 'payment_reminder_days',
+          'sub_fields' =>
+          array (
+            'days_before' =>
+            array (
+              'canonical_name' => 'days_before',
+              'key' => 'field_tournament_payment_reminder_days_before',
+              'label' => 'Dagen voor betaaldeadline',
+              'min' => 0,
+              'name' => 'days_before',
+              'storage_name' => 'days_before',
+              'type' => 'number',
+            ),
+          ),
+          'type' => 'repeater',
+        ),
         'pricing_rules' =>
         array (
           'canonical_name' => 'pricing_rules',

@@ -1,6 +1,6 @@
 # PRD: Toernooi-inschrijvingen en betalingen
 
-**Status:** In uitvoering — inschrijving en betaal-kern geïmplementeerd; herinneringen, externe verwerking en programma volgen nog
+**Status:** In uitvoering — mijlpalen 1 en 2 geïmplementeerd; externe verwerking, export en programma volgen nog
 **Datum:** 2026-08-27
 **Eigenaar:** Toernooiplanning
 **Raakt:** Rondo Club, Kaderlijst, Financiën, Mollie en Lettermint
@@ -516,7 +516,7 @@ Privé contenttype voor één toernooieditie.
 | `charity_information` | Rich text | Optionele informatie over goed doel |
 | `pricing_rules` | Repeater | Leeftijd van/tot, bedrag per team, spelvorm en toelichting |
 | `target_team_ids` | Relaties | Geselecteerde Rondo-teams |
-| `payment_reminder_offsets` | Getallen | Dagen vóór de betaaldeadline |
+| `payment_reminder_days` | Repeater | Dagen vóór de betaaldeadline; standaard 7 en 2 |
 | `planner_user_ids` | Gebruikers | Verantwoordelijke planners |
 | `status` | Keuze | `draft`, `open`, `closed`, `archived` |
 | `published_at` | Datum/tijd | Eerste publicatie |
@@ -790,26 +790,26 @@ Er gebeurt niets. De planner ziet **Niet ingeschreven** en Rondo verstuurt geen 
 
 ### Toernooi en toewijzing
 
-- [ ] Een planner kan een concepttoernooi met deadlines, leeftijdsinformatie, tarieven en doelgroep
+- [x] Een planner kan een concepttoernooi met deadlines, leeftijdsinformatie, tarieven en doelgroep
   aanmaken.
-- [ ] Rondo toont vóór publicatie per team de actuele, teamgebonden kaderleden met accountstatus.
-- [ ] Een team zonder toewijsbaar actief account kan niet ongemerkt worden gepubliceerd.
-- [ ] Publicatie maakt per geselecteerd team precies één gedeelde opdracht.
-- [ ] Alle toegewezen kaderleden krijgen toegang tot dezelfde opdracht en ontvangen eenmaal de
+- [x] Rondo toont vóór publicatie per team de actuele, teamgebonden kaderleden met accountstatus.
+- [x] Een team zonder toewijsbaar actief account kan niet ongemerkt worden gepubliceerd.
+- [x] Publicatie maakt per geselecteerd team precies één gedeelde opdracht.
+- [x] Alle toegewezen kaderleden krijgen toegang tot dezelfde opdracht en ontvangen eenmaal de
   initiële mail.
-- [ ] Niet-toegewezen gebruikers kunnen de entry niet via UI of REST lezen.
+- [x] Niet-toegewezen gebruikers kunnen de entry niet via UI of REST lezen.
 
 ### Inschrijving
 
-- [ ] Het formulier biedt alleen een positieve inschrijving en geen afmeldmogelijkheid.
-- [ ] Het kaderlid kan één of meer deelnemende teams met ieder een eigen spelersaantal opgeven.
-- [ ] Iedere Rondo-teaminschrijving heeft precies één gezamenlijke contactpersoon, ongeacht het
+- [x] Het formulier biedt alleen een positieve inschrijving en geen afmeldmogelijkheid.
+- [x] Het kaderlid kan één of meer deelnemende teams met ieder een eigen spelersaantal opgeven.
+- [x] Iedere Rondo-teaminschrijving heeft precies één gezamenlijke contactpersoon, ongeacht het
   aantal deelnemende teams.
-- [ ] Een opgeslagen concept telt voor de planner als niet ingeschreven.
-- [ ] Bevestiging legt aantallen, contactpersonen, tarief en totaalbedrag als snapshot vast.
-- [ ] Het totaalbedrag wordt server-side berekend en kan niet vanuit de client worden gemanipuleerd.
-- [ ] Een verouderde gelijktijdige wijziging overschrijft geen nieuwere conceptdata.
-- [ ] Na de interne deadline kan een kaderlid niet meer bevestigen.
+- [x] Een opgeslagen concept telt voor de planner als niet ingeschreven.
+- [x] Bevestiging legt aantallen, contactpersonen, tarief en totaalbedrag als snapshot vast.
+- [x] Het totaalbedrag wordt server-side berekend en kan niet vanuit de client worden gemanipuleerd.
+- [x] Een verouderde gelijktijdige wijziging overschrijft geen nieuwere conceptdata.
+- [x] Na de interne deadline kan een kaderlid niet meer bevestigen.
 
 ### Betaling
 
@@ -825,10 +825,10 @@ Er gebeurt niets. De planner ziet **Niet ingeschreven** en Rondo verstuurt geen 
 
 ### Herinneringen en communicatie
 
-- [ ] Rondo verstuurt geen inschrijfherinneringen aan niet-ingeschreven teams.
-- [ ] Alleen definitief ingeschreven, onbetaalde teams ontvangen betaalherinneringen.
-- [ ] Iedere geplande herinnering wordt per entry maximaal eenmaal verstuurd.
-- [ ] Een betaling die vóór verzending binnenkomt voorkomt de herinnering.
+- [x] Rondo verstuurt geen inschrijfherinneringen aan niet-ingeschreven teams.
+- [x] Alleen definitief ingeschreven, onbetaalde teams ontvangen betaalherinneringen.
+- [x] Iedere geplande herinnering wordt per entry maximaal eenmaal verstuurd.
+- [x] Een betaling die vóór verzending binnenkomt voorkomt de herinnering.
 - [ ] De programmamail bereikt alleen de unieke adressen van toegewezen kaderleden en de ene
   contactpersoon van definitief ingeschreven Rondo-teams.
 - [ ] Niet-ingeschreven teams ontvangen geen programmamail.

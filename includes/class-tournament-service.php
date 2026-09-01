@@ -67,6 +67,17 @@ final class TournamentService {
 		if ( $external_deadline <= $internal_deadline ) {
 			return new \WP_Error( 'rondo_tournament_deadline_order', __( 'De externe deadline moet na de interne deadline liggen.', 'rondo' ), [ 'status' => 400 ] );
 		}
+		$payment_deadline = $this->parse_datetime( $payload['payment_deadline'] ?? $internal_deadline->format( DATE_RFC3339 ), true );
+		if ( is_wp_error( $payment_deadline ) ) {
+			return $payment_deadline;
+		}
+		if ( $payment_deadline > $external_deadline ) {
+			return new \WP_Error( 'rondo_tournament_payment_deadline_order', __( 'De betaaldeadline mag niet na de deadline van de organisatie liggen.', 'rondo' ), [ 'status' => 400 ] );
+		}
+		$payment_reminder_days = $this->sanitize_payment_reminder_days( $payload['payment_reminder_days'] ?? [ 7, 2 ] );
+		if ( is_wp_error( $payment_reminder_days ) ) {
+			return $payment_reminder_days;
+		}
 
 		$pricing_rules = $this->sanitize_pricing_rules( $payload['pricing_rules'] ?? [] );
 		if ( is_wp_error( $pricing_rules ) ) {
@@ -95,17 +106,19 @@ final class TournamentService {
 		Fields::update_many_for_post(
 			(int) $saved_id,
 			[
-				'created_by_user_id' => $tournament_id > 0
+				'created_by_user_id'    => $tournament_id > 0
 					? (int) Fields::get_for_post( $tournament_id, 'created_by_user_id' )
 					: $actor_user_id,
-				'description'        => wp_kses_post( (string) ( $payload['description'] ?? '' ) ),
-				'external_deadline'  => $external_deadline->format( 'Y-m-d H:i:s' ),
-				'internal_deadline'  => $internal_deadline->format( 'Y-m-d H:i:s' ),
-				'lifecycle_status'   => 'draft',
-				'location'           => sanitize_text_field( (string) ( $payload['location'] ?? '' ) ),
-				'organizer'          => sanitize_text_field( (string) ( $payload['organizer'] ?? '' ) ),
-				'pricing_rules'      => $pricing_rules,
-				'schedule'           => $schedule,
+				'description'           => wp_kses_post( (string) ( $payload['description'] ?? '' ) ),
+				'external_deadline'     => $external_deadline->format( 'Y-m-d H:i:s' ),
+				'internal_deadline'     => $internal_deadline->format( 'Y-m-d H:i:s' ),
+				'lifecycle_status'      => 'draft',
+				'location'              => sanitize_text_field( (string) ( $payload['location'] ?? '' ) ),
+				'organizer'             => sanitize_text_field( (string) ( $payload['organizer'] ?? '' ) ),
+				'payment_deadline'      => $payment_deadline->format( 'Y-m-d H:i:s' ),
+				'payment_reminder_days' => array_map( static fn( int $days ): array => [ 'days_before' => $days ], $payment_reminder_days ),
+				'pricing_rules'         => $pricing_rules,
+				'schedule'              => $schedule,
 			]
 		);
 
@@ -121,20 +134,22 @@ final class TournamentService {
 
 		$fields = Fields::all_for_post( $tournament_id );
 		$result = [
-			'id'                   => $tournament_id,
-			'name'                 => get_the_title( $tournament_id ),
-			'organizer'            => (string) ( $fields['organizer'] ?? '' ),
-			'location'             => (string) ( $fields['location'] ?? '' ),
-			'description'          => (string) ( $fields['description'] ?? '' ),
-			'internal_deadline'    => (string) ( $fields['internal_deadline'] ?? '' ),
-			'external_deadline'    => (string) ( $fields['external_deadline'] ?? '' ),
-			'pricing_rules'        => array_values( $fields['pricing_rules'] ?? [] ),
-			'schedule'             => array_values( $fields['schedule'] ?? [] ),
-			'target_team_ids'      => array_values( array_map( 'intval', $fields['target_team_ids'] ?? [] ) ),
-			'lifecycle_status'     => (string) ( $fields['lifecycle_status'] ?? 'draft' ),
-			'published_at'         => (string) ( $fields['published_at'] ?? '' ),
-			'published_by_user_id' => (int) ( $fields['published_by_user_id'] ?? 0 ),
-			'can_manage'           => TournamentAccess::can_manage(),
+			'id'                    => $tournament_id,
+			'name'                  => get_the_title( $tournament_id ),
+			'organizer'             => (string) ( $fields['organizer'] ?? '' ),
+			'location'              => (string) ( $fields['location'] ?? '' ),
+			'description'           => (string) ( $fields['description'] ?? '' ),
+			'internal_deadline'     => (string) ( $fields['internal_deadline'] ?? '' ),
+			'external_deadline'     => (string) ( $fields['external_deadline'] ?? '' ),
+			'payment_deadline'      => (string) ( $fields['payment_deadline'] ?? $fields['internal_deadline'] ?? '' ),
+			'payment_reminder_days' => $this->format_payment_reminder_days( $fields['payment_reminder_days'] ?? [] ),
+			'pricing_rules'         => array_values( $fields['pricing_rules'] ?? [] ),
+			'schedule'              => array_values( $fields['schedule'] ?? [] ),
+			'target_team_ids'       => array_values( array_map( 'intval', $fields['target_team_ids'] ?? [] ) ),
+			'lifecycle_status'      => (string) ( $fields['lifecycle_status'] ?? 'draft' ),
+			'published_at'          => (string) ( $fields['published_at'] ?? '' ),
+			'published_by_user_id'  => (int) ( $fields['published_by_user_id'] ?? 0 ),
+			'can_manage'            => TournamentAccess::can_manage(),
 		];
 
 		if ( $include_entries ) {
@@ -200,6 +215,10 @@ final class TournamentService {
 		}
 		if ( empty( $assignments ) ) {
 			return new \WP_Error( 'rondo_tournament_assignments_required', __( 'Selecteer minimaal één team.', 'rondo' ), [ 'status' => 400 ] );
+		}
+		$payment_configuration = $this->payments->validate_configuration();
+		if ( is_wp_error( $payment_configuration ) ) {
+			return $payment_configuration;
 		}
 
 		$available_by_team = [];
@@ -557,6 +576,53 @@ final class TournamentService {
 		return is_wp_error( $result ) ? $result : $this->format_entry( $entry_id );
 	}
 
+	/** Send a manager-triggered reminder for one unpaid submitted entry. */
+	public function send_payment_reminder( int $entry_id ) {
+		return TournamentPaymentEmail::send_manual_reminder( $entry_id );
+	}
+
+	/** Reopen an unpaid submitted entry and retire its existing invoice. */
+	public function reopen_entry( int $entry_id, int $actor_user_id ) {
+		$entry = $this->format_entry( $entry_id );
+		if ( empty( $entry ) ) {
+			return new \WP_Error( 'rondo_tournament_entry_not_found', __( 'Inschrijfopdracht niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+		}
+		if ( $entry['registration_status'] !== 'submitted' ) {
+			return new \WP_Error( 'rondo_tournament_entry_not_submitted', __( 'Alleen een definitieve inschrijving kan worden heropend.', 'rondo' ), [ 'status' => 409 ] );
+		}
+		$cancelled = $this->payments->cancel_unpaid_payment( $entry_id );
+		if ( is_wp_error( $cancelled ) ) {
+			return $cancelled;
+		}
+
+		Fields::update_many_for_post(
+			$entry_id,
+			[
+				'invoice_id'             => null,
+				'payment_state'          => 'not_applicable',
+				'player_count'           => 0,
+				'price_per_team'         => 0,
+				'registered_team_count'  => 0,
+				'registration_status'    => 'open',
+				'submitted_at'           => null,
+				'submitted_by_user_id'   => 0,
+				'submitted_team_entries' => [],
+				'total_amount'           => 0,
+				'version'                => (int) $entry['version'] + 1,
+			]
+		);
+		delete_post_meta( $entry_id, '_tournament_payment_error' );
+		foreach ( $entry['assigned_user_ids'] as $user_id ) {
+			delete_post_meta( $entry_id, '_tournament_payment_email_sent_' . (int) $user_id );
+		}
+		foreach ( $entry['tournament']['payment_reminder_days'] ?? [ 7, 2 ] as $days_before ) {
+			delete_post_meta( $entry_id, '_tournament_payment_reminder_' . absint( $days_before ) . '_sent_at' );
+		}
+		update_post_meta( $entry_id, '_tournament_reopened_at', current_time( 'mysql' ) );
+		update_post_meta( $entry_id, '_tournament_reopened_by_user_id', $actor_user_id );
+		return $this->format_entry( $entry_id );
+	}
+
 	private function create_entry( int $tournament_id, array $team, array $user_ids, int $actor_user_id ) {
 		$existing = $this->find_entry( $tournament_id, (int) $team['id'] );
 		if ( $existing > 0 ) {
@@ -744,6 +810,33 @@ final class TournamentService {
 			];
 		}
 		return $rules;
+	}
+
+	private function sanitize_payment_reminder_days( $raw ) {
+		if ( ! is_array( $raw ) ) {
+			return new \WP_Error( 'rondo_tournament_payment_reminders_invalid', __( 'Controleer de betaalherinneringen.', 'rondo' ), [ 'status' => 400 ] );
+		}
+		$days = [];
+		foreach ( $raw as $row ) {
+			$value = is_array( $row ) ? ( $row['days_before'] ?? null ) : $row;
+			if ( ! is_numeric( $value ) || (int) $value < 0 || (int) $value > 60 ) {
+				return new \WP_Error( 'rondo_tournament_payment_reminders_invalid', __( 'Een betaalherinnering moet 0 tot en met 60 dagen voor de deadline staan.', 'rondo' ), [ 'status' => 400 ] );
+			}
+			$days[] = (int) $value;
+		}
+		$days = array_values( array_unique( $days ) );
+		rsort( $days, SORT_NUMERIC );
+		return $days;
+	}
+
+	private function format_payment_reminder_days( $rows ): array {
+		if ( ! is_array( $rows ) || empty( $rows ) ) {
+			return [ 7, 2 ];
+		}
+		$days = array_map( static fn( $row ): int => absint( is_array( $row ) ? ( $row['days_before'] ?? 0 ) : $row ), $rows );
+		$days = array_values( array_unique( $days ) );
+		rsort( $days, SORT_NUMERIC );
+		return $days;
 	}
 
 	private function sanitize_schedule( $raw ) {

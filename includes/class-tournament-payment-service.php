@@ -38,6 +38,22 @@ final class TournamentPaymentService {
 		};
 	}
 
+	/** Validate that publishing can create tournament payment links. */
+	public function validate_configuration() {
+		$account = ( $this->account_resolver )();
+		if ( is_wp_error( $account ) ) {
+			return new \WP_Error(
+				'rondo_tournament_payment_account_required',
+				__( 'Kies eerst onder Instellingen → Koppelingen → Betaalproviders een standaard Mollie-rekening voor toernooien.', 'rondo' ),
+				[ 'status' => 409 ]
+			);
+		}
+		if ( ! is_array( $account ) || empty( $account['id'] ) ) {
+			return new \WP_Error( 'rondo_tournament_payment_account_required', __( 'De standaard Mollie-rekening voor toernooien is niet bruikbaar.', 'rondo' ), [ 'status' => 409 ] );
+		}
+		return $account;
+	}
+
 	/** Create or reuse the one invoice and payment link for a submitted entry. */
 	public function ensure_payment( int $entry_id, int $actor_user_id ) {
 		$entry = get_post( $entry_id );
@@ -59,6 +75,9 @@ final class TournamentPaymentService {
 
 		$summary = $this->payment_summary( $entry_id, $fields );
 		if ( in_array( $summary['payment_state'], [ 'open', 'paid' ], true ) ) {
+			if ( $summary['payment_state'] === 'open' ) {
+				TournamentPaymentEmail::send_initial( $entry_id );
+			}
 			return $summary;
 		}
 
@@ -120,7 +139,9 @@ final class TournamentPaymentService {
 
 			Fields::update_for_post( $entry_id, 'payment_state', 'open' );
 			delete_post_meta( $entry_id, '_tournament_payment_error' );
-			return $this->payment_summary( $entry_id );
+			$summary = $this->payment_summary( $entry_id );
+			TournamentPaymentEmail::send_initial( $entry_id );
+			return $summary;
 		} finally {
 			delete_post_meta( $entry_id, '_tournament_payment_lock' );
 		}
@@ -166,10 +187,13 @@ final class TournamentPaymentService {
 	}
 
 	/** Cancel an unpaid linked invoice before its tournament entry is trashed. */
-	public function cancel_unpaid_payment( int $entry_id ): void {
+	public function cancel_unpaid_payment( int $entry_id ) {
 		$invoice_id = $this->find_invoice_id( $entry_id );
-		if ( $invoice_id <= 0 || get_post_status( $invoice_id ) === 'rondo_paid' || Fields::get_for_post( $invoice_id, 'status' ) === 'paid' ) {
-			return;
+		if ( $invoice_id <= 0 ) {
+			return true;
+		}
+		if ( get_post_status( $invoice_id ) === 'rondo_paid' || Fields::get_for_post( $invoice_id, 'status' ) === 'paid' ) {
+			return new \WP_Error( 'rondo_tournament_payment_already_paid', __( 'Een betaalde inschrijving kan niet worden heropend.', 'rondo' ), [ 'status' => 409 ] );
 		}
 
 		$this->mollie_payment->archive_payment_links( $invoice_id );
@@ -193,6 +217,7 @@ final class TournamentPaymentService {
 		delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
 		delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
 		Fields::update_for_post( $entry_id, 'payment_state', 'expired' );
+		return true;
 	}
 
 	private function create_invoice( int $entry_id, array $fields, int $actor_user_id, array $account ) {
@@ -228,11 +253,14 @@ final class TournamentPaymentService {
 			];
 		}
 
-		$external_deadline = (string) Fields::get_for_post( $tournament_id, 'external_deadline' );
+		$payment_deadline = (string) Fields::get_for_post( $tournament_id, 'payment_deadline' );
+		if ( $payment_deadline === '' ) {
+			$payment_deadline = (string) Fields::get_for_post( $tournament_id, 'internal_deadline' );
+		}
 		Fields::update_many_for_post(
 			(int) $invoice_id,
 			[
-				'due_date'       => $external_deadline !== '' ? str_replace( '-', '', substr( $external_deadline, 0, 10 ) ) : null,
+				'due_date'       => $payment_deadline !== '' ? str_replace( '-', '', substr( $payment_deadline, 0, 10 ) ) : null,
 				'invoice_number' => $number,
 				'invoice_type'   => 'tournament',
 				'line_items'     => $line_items,
@@ -293,7 +321,7 @@ final class TournamentPaymentService {
 			[
 				'post_type'        => 'rondo_invoice',
 				'post_status'      => 'any',
-				'posts_per_page'   => 1,
+				'posts_per_page'   => -1,
 				'fields'           => 'ids',
 				'no_found_rows'    => true,
 				'suppress_filters' => true,
@@ -305,7 +333,12 @@ final class TournamentPaymentService {
 				],
 			]
 		);
-		return empty( $ids ) ? 0 : (int) $ids[0];
+		foreach ( $ids as $id ) {
+			if ( get_post_status( (int) $id ) !== 'rondo_cancelled' ) {
+				return (int) $id;
+			}
+		}
+		return 0;
 	}
 
 	private function record_error( int $entry_id, \WP_Error $error ): void {
