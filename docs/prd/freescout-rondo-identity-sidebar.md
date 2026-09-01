@@ -89,6 +89,11 @@ guard and manual grant/revoke behavior.
     emails are compared with Rondo `email_1` and `email_2`; exactly one person may match. No phone,
     name, FreeScout ID, KNVB ID, SQLite mapping or automatic persistent customer binding may select
     a person.
+24. The production managed-mailbox key is `ledenadministratie` and its configured FreeScout
+    mailbox ID is `18`. A read-only production API query on 2026-09-01 returned the unique mailbox
+    name `Ledenadministratie` and address `ledenadministratie@svawc.nl`. The numeric ID remains
+    environment configuration, not a source-code constant, and the module must verify its local
+    existence and enabled state before provisioning is switched on.
 
 ## Why this replaces copied customer context
 
@@ -839,13 +844,34 @@ The Rondo Integration module separately stores the environment-specific FreeScou
 ```json
 {
   "ledenadministratie": {
-    "mailbox_id": 12,
+    "mailbox_id": 18,
+    "verified_name": "Ledenadministratie",
+    "verified_email": "ledenadministratie@svawc.nl",
     "enabled": true
   }
 }
 ```
 
-Administrators configure and verify both sides before enabling automation.
+These are the approved production values. Other installations configure their own numeric ID for
+the same stable key; neither `18` nor the AWC name/address is compiled into the module.
+
+Mapping verification rules:
+
+- the module loads mailbox ID `18` through FreeScout's local model during production setup and
+  confirms it exists and is enabled before the mapping can be enabled;
+- the numeric local ID is authoritative after verification; name and email are a human-readable
+  snapshot and are never used as a fallback lookup;
+- a later name or address change raises mapping drift and requires administrator re-verification,
+  but never silently searches for or switches to another mailbox;
+- a missing, deleted, disabled or replaced ID blocks new managed grants and records an operator
+  error; it never guesses by name/address or touches unrelated manual mailbox access;
+- changing the configured ID requires an authenticated FreeScout administrator, explicit selection
+  from local mailboxes, confirmation of the displayed name/address and an audit event;
+- Rondo only knows the stable key `ledenadministratie`; it never sends production mailbox ID `18`.
+
+The production API list used for planning exposes ID, name and address but not the active flag, so
+the module-local enabled-state check remains a release gate rather than an assumed API fact.
+Evidence: [FreeScout production mailbox mapping](evidence/freescout-mailbox-mapping-2026-09-01.md).
 
 The access service returns desired **managed mailbox keys**, not arbitrary FreeScout IDs. The
 FreeScout module translates keys to its local IDs. Rondo therefore cannot attach a user to an
@@ -1244,6 +1270,7 @@ Rondo records aggregate and audit-safe events for:
 - match outcomes: exact, none, ambiguous and inaccessible;
 - sidebar latency and timeout rate;
 - mailbox access grants/revocations;
+- mailbox mapping verification and name/address/availability drift;
 - reconciliation drift and repair;
 - signing-key and OAuth-client-secret rotation.
 
@@ -1586,6 +1613,8 @@ The milestone is complete only when:
 - FreeScout identifies the current agent and signs the sidebar request;
 - Rondo maps that agent to the expected eligible WordPress user with current email proof;
 - a current `ledenadministratie` capability grants the correct FreeScout mailbox;
+- production key `ledenadministratie` resolves only to locally verified mailbox ID `18`, displayed
+  as `Ledenadministratie <ledenadministratie@svawc.nl>`;
 - revoking that capability removes only integration-managed access;
 - the Ledenadministratie sidebar renders exactly the approved live field contract, omits empty
   values, applies related-person and task visibility independently and exposes no prohibited
@@ -1637,10 +1666,9 @@ The milestone is complete only when:
 
 ## Open decisions before implementation
 
-1. Exact production FreeScout mailbox ID and stable key for Ledenadministratie.
-2. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
-3. Audit retention period and operational owners for failed provisioning events.
-4. Final module repository, protected release workflow and update-asset URLs.
-5. Initial production values for interface accent and interface accent surface.
-6. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
+1. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
+2. Audit retention period and operational owners for failed provisioning events.
+3. Final module repository, protected release workflow and update-asset URLs.
+4. Initial production values for interface accent and interface accent surface.
+5. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
     200%-zoom testing.
