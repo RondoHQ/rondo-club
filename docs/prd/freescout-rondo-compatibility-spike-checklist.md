@@ -442,6 +442,33 @@ Use only the non-production endpoint and the expected pilot concurrency.
 **Blocking failure:** a failed Rondo endpoint can make normal FreeScout conversation work
 unavailable.
 
+## 11A. Prove conversation activity delivery
+
+Use synthetic conversations only; do not include real message content in fixtures or evidence.
+
+- [ ] Identify a reliable FreeScout conversation-created event available to Rondo Integration and
+  record its transaction timing and retry behavior.
+- [ ] Deliver a signed minimal event containing only instance, conversation/customer identifiers,
+  mailbox key, plain-text subject, creation time and the separately approved minimum matching
+  inputs.
+- [ ] Confirm Rondo ignores supplied Rondo/KNVB identifiers and applies the approved independent
+  person-matching policy.
+- [ ] Confirm Rondo creates one native `rondo_activity` comment with instance/conversation comment
+  meta and no custom table.
+- [ ] Replay and race the same event; exactly one activity may exist for the instance-and-
+  conversation pair.
+- [ ] Confirm the stored/rendered activity contains only escaped subject, creation date/time and a
+  server-generated allowlisted FreeScout link.
+- [ ] Confirm message bodies/previews, replies, recipients, attachments, customer payloads and
+  agent identity are absent from request, storage and logs.
+- [ ] Miss an event and prove the bounded repair path creates the pointer once after matching;
+  unmatched or ambiguous events remain retryable without attaching to a guessed person.
+- [ ] Confirm historical batch-created pointers survive cutover and rollback does not duplicate
+  conversations already represented in Rondo.
+
+**Blocking failure:** no reliable creation/repair signal exists, delivery can duplicate or attach
+to a guessed person, or FreeScout message content leaves FreeScout.
+
 ## 12. Produce the compatibility matrix
 
 Complete one row for every material behavior.
@@ -465,6 +492,7 @@ Complete one row for every material behavior.
 | Mobile | | Explicit pilot decision | | | |
 | Sidebar authorization | | Agent and conversation authorized | | | |
 | Ledenadministratie fields | Canonical field registry, person formatters and task visibility support the approved bounded view; no canonical Sportlink-sync timestamp exists | Exact fixed contract with independent related-person/task checks and prohibited-key filtering | Custom proof required | Source inspection 2026-09-01 | Omit unknown values and source-sync claims; test response keys and rendered groups with synthetic records |
+| Conversation activity | Daily batch currently creates one subject/link activity through customer-ID to KNVB-ID to Rondo-ID SQLite mappings | Keep the pointer long-term, move to minimal idempotent module events after matching and repair proof | Custom proof required | Rondo Sync source inspection 2026-09-01 | Keep batch during rollout; do not copy message content |
 | Response isolation | | Opaque-origin iframe with a nonce-authorized, height-only resize bridge and no parent-page code execution | | | |
 | Appearance controls | Design module disabled; core blue accent roles visible | Two semantic color settings, allowlisted selectors and no arbitrary CSS | Retest required | Post-removal screenshots reviewed 2026-09-01; screenshots not stored because they contain member data | Prove against current FreeScout CSS before release |
 | Customer-sidebar width | FreeScout core desktop width is `280px`; narrow layout becomes full width | Coordinated responsive width up to configured maximum, default `360px` | Retest required | Current FreeScout stylesheet inspection | Update customer width plus header/main spacing together |
@@ -521,6 +549,7 @@ architecture assumption must change before repeating the spike.
 - [ ] Conditional session-revocation and invalidation-retry proof.
 - [ ] Sidebar authorization and isolation proof.
 - [ ] Ledenadministratie field-contract and prohibited-key proof.
+- [ ] Conversation activity event, idempotency, matching and repair proof.
 - [ ] Appearance and customer-sidebar width compatibility proof.
 - [ ] Timeout/failure results at expected pilot concurrency.
 - [ ] Completed compatibility matrix.
