@@ -270,6 +270,26 @@ Use synthetic mailboxes and a disposable proof listener or console test.
   access remains and neither name nor address is used as a fallback lookup.
 - [ ] Change the configured ID only through authenticated administrator selection, explicit
   name/address confirmation and an audit event.
+- [ ] Confirm the mapping UI lists only stable keys advertised by the verified Rondo installation
+  and local `Mailbox::isActive()` choices; no free-form key/capability/ID input exists.
+- [ ] Validate the signed configuration response schema and reject unknown/duplicate keys, unknown
+  policy versions, stale signatures and unsigned responses.
+- [ ] Verify a draft mapping and confirm it stores key, ID, name/address and policy-version
+  snapshots without changing any user-mailbox relation.
+- [ ] Activate after aggregate dry run and recent local-password confirmation; confirm displayed
+  grant/unchanged/manual/failure counts equal the reconciliation result.
+- [ ] Pause and confirm all current managed relations remain while no new grants or revocations run.
+- [ ] Disable and revoke after impact preview; confirm the state remains Disabling until every
+  managed relation is removed and manual relations remain.
+- [ ] Change to a second active synthetic mailbox and confirm only managed relations move; retries
+  are idempotent and the old ID remains auditable until its managed count is zero.
+- [ ] Confirm duplicate stable-key and duplicate active-mailbox mappings are rejected.
+- [ ] Configure an environment-locked mapping and confirm the UI shows its source but cannot
+  override its locked fields.
+- [ ] Supply malformed JSON, unknown keys and duplicate/non-positive IDs through
+  `RONDO_MANAGED_MAILBOX_MAPPINGS`; activation must stop without changing last confirmed state.
+- [ ] Confirm activate, change and disable reject missing CSRF, non-admin and stale/missing local
+  password confirmation.
 - [ ] Keep a session open while revoking one of multiple mailboxes; confirm the next protected
   request to the removed mailbox/customer/conversation is denied while the other mailbox works.
 - [ ] Revoke the final mailbox and confirm all active sessions and remember tokens are invalidated.
@@ -515,6 +535,7 @@ Complete one row for every material behavior.
 | Automatic creation | Paid add-on defaults on and isolated creation produced an ordinary zero-mailbox user before the proof listener ran | Guarded custom creation atomically commits an ordinary OIDC-only user, binding, non-empty mapped access and audit before login | Custom proof required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Default off; enable only after atomic creation, rollback, attribution and lifecycle tests pass |
 | Login event | Laravel `Login` fires for existing and newly created OAuth users before redirect | Current agent available | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Use the login event for binding and provisioning |
 | Managed mailbox access | Targeted pivot attach/detach works; customer routes require the core visibility flag; production API resolves key `ledenadministratie` to mailbox ID `18`, name `Ledenadministratie`, address `ledenadministratie@svawc.nl` | Manual access preserved; local ID is verified configuration with no name/address fallback | Provisional pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) and [production mailbox mapping evidence](evidence/freescout-mailbox-mapping-2026-09-01.md) | Prove local enabled-state and mapping-drift gates; never use `sync()` |
+| Mapping settings | No production module UI exists yet | Listed Rondo keys plus local active-mailbox selector, verification/dry run, explicit state transitions and protected mass-impact actions | Custom proof required | PRD contract | Build inside Rondo Integration; no free-form identifiers or silent retargeting |
 | Session revocation | Zero-mailbox customer/conversation denial is proven; conditional logout, binding recovery and invalidation failure remain untested | Next-request mailbox denial; logout for zero-mailbox or identity change; manual access preserved | Custom proof required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Prove session/remember-token invalidation and retry without restoring revoked pivots |
 | Force-login recovery | Paid add-on loops without a response filter; its patched `/login?oauth=0` paths work | Custom callback fails once to `/login?rondo_oauth=0`; server setting restores local login | Paid add-on **Fail**; custom retest required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Implement recovery directly in Rondo Integration |
 | Mobile | | Explicit pilot decision | | | |
@@ -572,6 +593,7 @@ architecture assumption must change before repeating the spike.
 - [x] Login and user-creation event map.
 - [x] Managed mailbox model/event notes.
 - [ ] Production mailbox `18` local existence/enabled-state and drift-control proof.
+- [ ] Mailbox mapping settings, aggregate preview, state-machine and protected-action proof.
 - [ ] Subject-binding migration, concurrency and administrator-recovery proof.
 - [ ] Durable Rondo email-verification and authorization-resume proof.
 - [ ] Guarded automatic-creation, reply-attribution and deactivation/reactivation proof.
