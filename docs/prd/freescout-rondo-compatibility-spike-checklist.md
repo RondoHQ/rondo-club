@@ -143,6 +143,24 @@ Keep automatic user creation disabled for the first five tests.
 - [x] A subject already bound to another user cannot be rebound through OAuth login.
 - [ ] Only the documented administrator recovery flow can unlink or replace a binding, and the
   change is audited.
+- [ ] Confirm migrations create unique constraints for both active FreeScout user ID and
+  issuer/subject identity fingerprint while retired identities remain reserved.
+- [ ] Race two first-link callbacks for one subject and two users; only one final pair may commit.
+- [ ] Race two subjects for one user; only one final pair may commit.
+- [ ] Force a binding insert or audit failure and confirm the transaction leaves no partial binding
+  and creates no FreeScout session.
+- [ ] Confirm a disabled or recovery-pending binding cannot use ordinary email-based first link.
+- [ ] Require administrator permission, recent local-password confirmation and a reason before
+  disabling or replacing a binding.
+- [ ] Confirm disabling invalidates the target's active sessions and remember tokens.
+- [ ] Confirm replacement issues one hashed, single-use recovery token that expires after 10
+  minutes and never accepts an administrator-typed subject.
+- [ ] Complete the recovery through full Rondo OIDC validation; atomically retire the old identity,
+  bind the new unbound subject, consume the recovery and write the audit event.
+- [ ] Confirm an expired, reused, invalid or competing recovery leaves the target disabled and the
+  previous/new bindings unchanged.
+- [ ] Confirm binding logs and audit rows contain only shortened fingerprints, not raw subjects,
+  tokens or claims.
 - [x] FreeScout's unique user-email index prevents duplicate/ambiguous stored emails; an uppercase
   first-link test selected the one existing lowercase user and created no duplicate.
 - [x] An identity without an existing FreeScout user is denied cleanly.
@@ -352,7 +370,7 @@ Complete one row for every material behavior.
 | Token client auth | Paid add-on uses server-side `client_secret_post` | Custom client uses `client_secret_basic` with PKCE | **Fail** | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Reject the paid add-on; implement the required method |
 | ID token/UserInfo | Paid add-on consumes UserInfo without an ID token | Validate signed ID token and require matching UserInfo `sub` | **Fail** | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Reject the paid add-on; implement full OIDC validation |
 | Existing-user match | Guard requires a unique verified email for first link; case difference created no duplicate | Unique verified email only | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Keep automatic creation off during pilot |
-| Subject binding | Bound subject wins after email change or conflicting email; administrator unlink/audit remains untested | One Rondo subject per FreeScout user | Provisional pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Prove administrator recovery before release |
+| Subject binding | Bound subject wins after email change or conflicting email; administrator recovery and concurrency remain untested | Database-enforced one-to-one binding with atomic first link and single-use administrator recovery | Provisional pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Prove migrations, races, rollback, session invalidation and recovery before release |
 | Rondo base URL | | Configured, verified and not hardcoded | | | |
 | Automatic creation | Defaults on in paid module; explicit off works; isolated creation produced an ordinary zero-mailbox user | Disabled for pilot | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Provision with automatic creation disabled |
 | Login event | Laravel `Login` fires for existing and newly created OAuth users before redirect | Current agent available | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Use the login event for binding and provisioning |
@@ -409,6 +427,7 @@ architecture assumption must change before repeating the spike.
 - [ ] Redacted OAuth request/response shapes.
 - [x] Login and user-creation event map.
 - [x] Managed mailbox model/event notes.
+- [ ] Subject-binding migration, concurrency and administrator-recovery proof.
 - [ ] Sidebar authorization and isolation proof.
 - [ ] Appearance and customer-sidebar width compatibility proof.
 - [ ] Timeout/failure results at expected pilot concurrency.
