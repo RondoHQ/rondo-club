@@ -917,6 +917,138 @@ final class TournamentService {
 		return TournamentPaymentEmail::send_manual_reminder( $entry_id );
 	}
 
+	/** Replace the assigned team staff for one published tournament entry. */
+	public function update_entry_assignees( int $entry_id, array $user_ids, int $expected_version, int $actor_user_id ) {
+		$entry = $this->format_entry( $entry_id );
+		if ( empty( $entry ) ) {
+			return new \WP_Error( 'rondo_tournament_entry_not_found', __( 'Inschrijfopdracht niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+		}
+		if ( ! in_array( $entry['tournament']['lifecycle_status'] ?? '', [ 'open', 'closed' ], true ) ) {
+			return new \WP_Error( 'rondo_tournament_assignment_readonly', __( 'De toewijzing van dit toernooi kan niet meer worden gewijzigd.', 'rondo' ), [ 'status' => 409 ] );
+		}
+
+		$user_ids = array_values( array_unique( array_filter( array_map( 'absint', $user_ids ) ) ) );
+		if ( empty( $user_ids ) ) {
+			return new \WP_Error( 'rondo_tournament_assignees_required', __( 'Kies minimaal één actueel kaderlid.', 'rondo' ), [ 'status' => 400 ] );
+		}
+
+		$result = $this->with_tournament_lock(
+			(int) $entry['tournament_id'],
+			function () use ( $actor_user_id, $entry_id, $expected_version, $user_ids ) {
+				$locked_entry = $this->format_entry( $entry_id );
+				if ( empty( $locked_entry ) ) {
+					return new \WP_Error( 'rondo_tournament_entry_not_found', __( 'Inschrijfopdracht niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+				}
+				if ( ! in_array( $locked_entry['tournament']['lifecycle_status'] ?? '', [ 'open', 'closed' ], true ) ) {
+					return new \WP_Error( 'rondo_tournament_assignment_readonly', __( 'De toewijzing van dit toernooi kan niet meer worden gewijzigd.', 'rondo' ), [ 'status' => 409 ] );
+				}
+				if ( $expected_version !== (int) $locked_entry['version'] ) {
+					return new \WP_Error(
+						'rondo_tournament_assignment_conflict',
+						__( 'Deze toewijzing of inschrijving is intussen gewijzigd. Laad de actuele versie opnieuw.', 'rondo' ),
+						[
+							'status'  => 409,
+							'current' => $locked_entry,
+						]
+					);
+				}
+
+				$team_option = current(
+					array_filter(
+						$this->assignment_options(),
+						static fn( array $team ): bool => (int) $team['id'] === (int) $locked_entry['team_id']
+					)
+				);
+				$available   = is_array( $team_option ) ? array_values( $team_option['assignees'] ?? [] ) : [];
+				$allowed_ids = array_map( static fn( array $candidate ): int => (int) $candidate['user_id'], $available );
+				if ( array_diff( $user_ids, $allowed_ids ) ) {
+					return new \WP_Error( 'rondo_tournament_assignees_invalid', __( 'Kies alleen actuele kaderleden van dit team met een actief Rondo-account.', 'rondo' ), [ 'status' => 400 ] );
+				}
+
+				$previous_ids     = array_values( array_map( 'intval', $locked_entry['assigned_user_ids'] ) );
+				$added_ids        = array_values( array_diff( $user_ids, $previous_ids ) );
+				$removed_ids      = array_values( array_diff( $previous_ids, $user_ids ) );
+				$selected         = array_values(
+					array_filter(
+						$available,
+						static fn( array $candidate ): bool => in_array( (int) $candidate['user_id'], $user_ids, true )
+					)
+				);
+				$snapshot_changed = $this->normalize_assignment_snapshots( $selected ) !== $this->normalize_assignment_snapshots( $locked_entry['assignees'] );
+				if ( empty( $added_ids ) && empty( $removed_ids ) && ! $snapshot_changed ) {
+					$locked_entry['assignment_update'] = [
+						'added_count'          => 0,
+						'removed_count'        => 0,
+						'snapshot_refreshed'   => false,
+						'email_sent_count'     => 0,
+						'email_existing_count' => 0,
+						'email_failed_count'   => 0,
+					];
+					return $locked_entry;
+				}
+
+				$updates = [
+					'assignment_snapshot' => $selected,
+					'version'             => (int) $locked_entry['version'] + 1,
+				];
+				if ( $locked_entry['registration_status'] === 'open' && (int) $locked_entry['contact_person_id'] > 0 ) {
+					$selected_person_ids = array_map( static fn( array $candidate ): int => (int) ( $candidate['person_id'] ?? 0 ), $selected );
+					if ( ! in_array( (int) $locked_entry['contact_person_id'], $selected_person_ids, true ) ) {
+						$updates['contact_email']     = '';
+						$updates['contact_mobile']    = '';
+						$updates['contact_name']      = '';
+						$updates['contact_person_id'] = null;
+					}
+				}
+
+				Fields::update_many_for_post( $entry_id, $updates );
+				foreach ( $removed_ids as $user_id ) {
+					delete_post_meta( $entry_id, '_tournament_assigned_user_' . $user_id );
+				}
+				foreach ( $user_ids as $user_id ) {
+					update_post_meta( $entry_id, '_tournament_assigned_user_' . $user_id, 1 );
+				}
+
+				$updated                  = $this->format_entry( $entry_id );
+				$email_entry              = $updated;
+				$email_entry['assignees'] = array_values(
+					array_filter(
+						$updated['assignees'],
+						static fn( array $assignee ): bool => in_array( (int) $assignee['user_id'], $added_ids, true )
+					)
+				);
+				$email_results            = $this->send_assignment_emails( $email_entry, $updated['tournament'] );
+				$sent_count               = count( array_filter( $email_results, static fn( array $email ): bool => ! empty( $email['sent'] ) && empty( $email['existing'] ) ) );
+				$existing_count           = count( array_filter( $email_results, static fn( array $email ): bool => ! empty( $email['existing'] ) ) );
+				$failed_count             = count( array_filter( $email_results, static fn( array $email ): bool => empty( $email['sent'] ) ) );
+				TournamentActivityLog::record(
+					$entry_id,
+					'entry_assignments_updated',
+					$actor_user_id,
+					[
+						'added_user_ids'       => $added_ids,
+						'removed_user_ids'     => $removed_ids,
+						'snapshot_refreshed'   => $snapshot_changed,
+						'email_sent_count'     => $sent_count,
+						'email_existing_count' => $existing_count,
+						'email_failed_count'   => $failed_count,
+					]
+				);
+				$updated['assignment_update'] = [
+					'added_count'          => count( $added_ids ),
+					'removed_count'        => count( $removed_ids ),
+					'snapshot_refreshed'   => $snapshot_changed,
+					'email_sent_count'     => $sent_count,
+					'email_existing_count' => $existing_count,
+					'email_failed_count'   => $failed_count,
+				];
+				return $updated;
+			}
+		);
+
+		return $result;
+	}
+
 	/** Save one planner-only operational note for a team entry. */
 	public function update_planner_note( int $entry_id, string $note, int $actor_user_id ) {
 		$entry = $this->format_entry( $entry_id );
@@ -1103,6 +1235,22 @@ final class TournamentService {
 		}
 		unset( $candidates );
 		return $by_team;
+	}
+
+	private function normalize_assignment_snapshots( array $assignments ): array {
+		return array_values(
+			array_map(
+				static fn( array $assignment ): array => [
+					'user_id'   => (int) ( $assignment['user_id'] ?? 0 ),
+					'person_id' => (int) ( $assignment['person_id'] ?? 0 ),
+					'name'      => (string) ( $assignment['name'] ?? '' ),
+					'role'      => (string) ( $assignment['role'] ?? '' ),
+					'email'     => (string) ( $assignment['email'] ?? '' ),
+					'mobile'    => (string) ( $assignment['mobile'] ?? '' ),
+				],
+				$assignments
+			)
+		);
 	}
 
 	/** Resolve the assigned Rondo people who may be the registration contact. */

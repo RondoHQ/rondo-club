@@ -268,6 +268,12 @@ Bij publicatie maakt Rondo per toernooi-teamcombinatie precies één opdracht aa
 snapshot vast van de toegewezen gebruikers, personen, teamnaam, leeftijdslaag en tariefregel.
 Latere wijzigingen in `work_history` veranderen een gepubliceerde opdracht niet stilzwijgend. De
 planner kan de toewijzing handmatig synchroniseren of herverdelen; iedere wijziging wordt gelogd.
+Rondo toont daarbij alleen de actuele, teamgebonden kaderleden met een actief account en vereist
+minimaal één toegewezen persoon. Nieuw toegevoegde kaderleden krijgen maximaal eenmaal de
+toewijzingsmail; verwijderde kaderleden verliezen direct lees- en schrijfrechten. Als een nog open
+conceptinschrijving een verwijderde contactpersoon gebruikte, wordt die keuze gewist. De vastgelegde
+contactpersoon van een definitieve inschrijving blijft als financiële en operationele snapshot
+ongewijzigd.
 
 Publicatie wordt geblokkeerd wanneer financieel beheer nog geen bruikbare standaard-Mollie-rekening
 voor toernooien heeft ingesteld. Zo ontstaat nooit een open inschrijfopdracht waarvan de betaling
@@ -717,17 +723,17 @@ Voorgestelde routes:
 | `GET /tournaments/{id}` | Detail volgens rol en veldrechten |
 | `PATCH /tournaments/{id}` | Toegestane concept- of publicatiewijziging met verwachte versie |
 | `POST /tournaments/{id}/change-notification` | Optionele mail voor één opgeslagen wijziging versturen |
-| `POST /tournaments/{id}/preview-assignments` | Teams en toewijsbare kaderaccounts controleren |
+| `GET /tournaments/assignment-options` | Teams en actuele toewijsbare kaderaccounts controleren |
 | `POST /tournaments/{id}/publish` | Opdrachten maken en initiële mail sturen |
 | `GET /tournaments/{id}/entries` | Planner-overzicht en totalen |
 | `GET /tournament-entries/mine` | Eigen opdrachten van ingelogde gebruiker |
 | `GET /tournament-entries/{id}` | Eigen gedeelde opdracht of plannerdetail |
 | `PATCH /tournament-entries/{id}/draft` | Concept opslaan met verwachte versie |
 | `POST /tournament-entries/{id}/submit` | Positief inschrijven en betaling starten |
-| `POST /tournament-entries/{id}/retry-payment-link` | Idempotente herstelactie |
+| `PATCH /tournament-entries/{id}/assignees` | Gepubliceerde opdracht herverdelen met verwachte versie |
 | `POST /tournament-entries/{id}/payment-reminder` | Handmatige betaalherinnering door planner |
 | `POST /tournament-entries/{id}/reopen` | Alleen onbetaalde inschrijving heropenen |
-| `POST /tournaments/{id}/external-status` | Externe voortgang wijzigen |
+| `PATCH /tournaments/{id}/external-status` | Externe voortgang wijzigen |
 | `GET /tournaments/{id}/export.csv` | Plannerexport |
 | `GET /tournaments/{id}/export.pdf` | Printvriendelijk planner-overzicht |
 | `POST /tournaments/{id}/program` | Programma opslaan en/of versturen |
@@ -904,6 +910,10 @@ verstuurd.
 - [x] Publicatie maakt per geselecteerd team precies één gedeelde opdracht.
 - [x] Alle toegewezen kaderleden krijgen toegang tot dezelfde opdracht en ontvangen eenmaal de
   initiële mail.
+- [x] Een planner kan na publicatie per team de actuele kadergegevens synchroniseren of de opdracht
+  handmatig herverdelen, met minimaal één actueel kaderlid.
+- [x] Nieuw toegevoegde kaderleden ontvangen maximaal eenmaal een uitnodiging en verwijderde
+  kaderleden verliezen direct toegang; iedere wijziging wordt gelogd.
 - [x] Niet-toegewezen gebruikers kunnen de entry niet via UI of REST lezen.
 
 ### Inschrijving
@@ -1077,8 +1087,27 @@ veilig naar een andere dag of tijd verplaatsen en betrokkenen desgewenst vanuit 
 
 **Opgeleverd in:** Rondo Club 35.30.0.
 
+### Mijlpaal 5 — Toewijzingen na publicatie beheren
+
+- per gepubliceerd Rondo-team de huidige opdrachttoewijzing openen;
+- actuele teamgebonden kaderleden met een actief Rondo-account opnieuw ophalen;
+- alle actuele kaderleden selecteren of de opdracht handmatig herverdelen;
+- minimaal één actueel kaderlid en server-side validatie afdwingen;
+- toegang van verwijderde kaderleden direct intrekken;
+- nieuw toegevoegde kaderleden maximaal eenmaal uitnodigen;
+- een verwijderde conceptcontactpersoon wissen zonder een definitieve contactsnapshot te wijzigen;
+- optimistische versiecontrole en volledige activiteitregistratie;
+- REST-, permission-, mail- en frontendtests;
+- bijgewerkte gebruikers- en ontwikkelaarsdocumentatie.
+
+**Uitkomst:** de toernooicoördinator kan personeelswisselingen na publicatie opvangen zonder een
+toernooi opnieuw te publiceren of de inschrijving en financiële snapshots te wijzigen.
+
+**Opgeleverd in:** Rondo Club 35.32.0.
+
 Mijlpalen 1 tot en met 3 vormden de eerste productierelease. Mijlpaal 4 is een afzonderlijke,
-achterwaarts compatibele uitbreiding daarop.
+achterwaarts compatibele uitbreiding daarop. Mijlpaal 5 rondt de eerder vastgelegde handmatige
+herverdeling van gepubliceerde opdrachten af.
 
 ## 19. Documentatie bij implementatie
 

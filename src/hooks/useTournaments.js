@@ -151,6 +151,12 @@ export function useSendTournamentPaymentReminder() {
   return useManagerEntryMutation(async (id) => (await prmApi.sendTournamentPaymentReminder(id)).data);
 }
 
+export function useUpdateTournamentEntryAssignees() {
+  return useManagerEntryMutation(async ({ id, userIds, version }) => (
+    await prmApi.updateTournamentEntryAssignees(id, { user_ids: userIds, version })
+  ).data);
+}
+
 export function useReopenTournamentEntry() {
   return useManagerEntryMutation(async (id) => (await prmApi.reopenTournamentEntry(id)).data);
 }

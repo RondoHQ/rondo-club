@@ -162,6 +162,16 @@ final class Tournaments extends Base {
 		);
 		register_rest_route(
 			'rondo/v1',
+			'/tournament-entries/(?P<id>\d+)/assignees',
+			[
+				'methods'             => \WP_REST_Server::EDITABLE,
+				'callback'            => [ $this, 'update_entry_assignees' ],
+				'permission_callback' => [ $this, 'check_manager_permission' ],
+				'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
+			]
+		);
+		register_rest_route(
+			'rondo/v1',
 			'/tournament-entries/(?P<id>\d+)/payment-reminder',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -330,6 +340,17 @@ final class Tournaments extends Base {
 
 	public function submit_entry( $request ) {
 		$result = $this->service->submit_entry( absint( $request->get_param( 'id' ) ), $request->get_json_params() ?: [], get_current_user_id() );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	public function update_entry_assignees( $request ) {
+		$payload = $request->get_json_params() ?: [];
+		$result  = $this->service->update_entry_assignees(
+			absint( $request->get_param( 'id' ) ),
+			is_array( $payload['user_ids'] ?? null ) ? $payload['user_ids'] : [],
+			absint( $payload['version'] ?? 0 ),
+			get_current_user_id()
+		);
 		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 	}
 
