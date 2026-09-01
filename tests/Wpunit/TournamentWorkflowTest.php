@@ -235,6 +235,58 @@ class TournamentWorkflowTest extends RondoTestCase {
 		$this->assertSame( 'rondo_tournament_deadline_invalid', $invalid->get_error_code() );
 	}
 
+	public function test_manager_can_delete_published_tournament_and_linked_entries(): void {
+		$server      = $this->bootRestControllers( [ Tournaments::class ] );
+		$admin_id    = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$team_id     = $this->createOrganization( [ 'post_title' => 'AWC O13-1' ] );
+		$assigned_id = $this->createRondoUser( [ 'user_email' => 'toernooi@example.test' ] );
+		$this->link_user( $assigned_id, [ $this->position( $team_id, 'team', 'Trainer' ) ] );
+		$tournament = $this->create_tournament( $admin_id );
+		$published  = $this->service->publish(
+			$tournament['id'],
+			[
+				[
+					'team_id'  => $team_id,
+					'user_ids' => [ $assigned_id ],
+				],
+			],
+			$admin_id
+		);
+		$entry_id   = $published['entries'][0]['id'];
+		$submitted  = $this->service->submit_entry(
+			$entry_id,
+			[
+				'version'        => 1,
+				'contact_name'   => 'Contactpersoon',
+				'contact_email'  => 'contact@example.test',
+				'contact_mobile' => '0612345678',
+				'team_entries'   => [ [ 'player_count' => 12 ] ],
+			],
+			$assigned_id
+		);
+		$this->assertSame( 'submitted', $submitted['registration_status'] );
+
+		wp_set_current_user( $assigned_id );
+		$this->assertSame( 403, $server->dispatch( new WP_REST_Request( 'DELETE', '/rondo/v1/tournaments/' . $tournament['id'] ) )->get_status() );
+
+		wp_set_current_user( $admin_id );
+		$response = $server->dispatch( new WP_REST_Request( 'DELETE', '/rondo/v1/tournaments/' . $tournament['id'] ) );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame(
+			[
+				'deleted'     => true,
+				'id'          => $tournament['id'],
+				'entry_count' => 1,
+			],
+			$response->get_data()
+		);
+		$this->assertSame( 'trash', get_post_status( $tournament['id'] ) );
+		$this->assertSame( 'trash', get_post_status( $entry_id ) );
+		$this->assertSame( [], $this->service->format_tournament( $tournament['id'], true ) );
+		$this->assertSame( [], $this->service->format_entry( $entry_id ) );
+		$this->assertSame( [], $this->service->entries_for_user( $assigned_id ) );
+	}
+
 	public function test_date_only_values_are_stored_with_day_boundaries(): void {
 		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		$result   = $this->service->save_tournament(

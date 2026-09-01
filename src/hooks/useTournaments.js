@@ -48,6 +48,18 @@ export function useSaveTournament() {
   });
 }
 
+export function useDeleteTournament() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id) => (await prmApi.deleteTournament(id)).data,
+    onSuccess: (_, id) => {
+      queryClient.removeQueries({ queryKey: ['tournaments', Number(id)] });
+      queryClient.invalidateQueries({ queryKey: ['tournaments'] });
+      queryClient.invalidateQueries({ queryKey: ['tournament-entries'] });
+    },
+  });
+}
+
 export function usePublishTournament() {
   const queryClient = useQueryClient();
   return useMutation({

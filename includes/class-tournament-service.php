@@ -26,7 +26,7 @@ final class TournamentService {
 		$ids = get_posts(
 			[
 				'post_type'        => self::TOURNAMENT_POST_TYPE,
-				'post_status'      => 'any',
+				'post_status'      => [ 'draft', 'publish' ],
 				'posts_per_page'   => -1,
 				'fields'           => 'ids',
 				'orderby'          => 'date',
@@ -109,7 +109,7 @@ final class TournamentService {
 	/** Format one tournament for the REST API. */
 	public function format_tournament( int $tournament_id, bool $include_entries = false ): array {
 		$post = get_post( $tournament_id );
-		if ( ! $post || $post->post_type !== self::TOURNAMENT_POST_TYPE ) {
+		if ( ! $post || $post->post_type !== self::TOURNAMENT_POST_TYPE || $post->post_status === 'trash' ) {
 			return [];
 		}
 
@@ -280,12 +280,63 @@ final class TournamentService {
 		return $this->format_tournament( $tournament_id, true );
 	}
 
+	/** Move a tournament and all linked entries to the WordPress trash. */
+	public function delete_tournament( int $tournament_id ) {
+		$post = get_post( $tournament_id );
+		if ( ! $post || $post->post_type !== self::TOURNAMENT_POST_TYPE || $post->post_status === 'trash' ) {
+			return new \WP_Error( 'rondo_tournament_not_found', __( 'Toernooi niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+		}
+
+		$entry_ids = array_map(
+			'intval',
+			get_posts(
+				[
+					'post_type'        => self::ENTRY_POST_TYPE,
+					'post_status'      => 'publish',
+					'posts_per_page'   => -1,
+					'fields'           => 'ids',
+					'suppress_filters' => true,
+					'meta_query'       => [
+						[
+							'key'   => 'tournament_id',
+							'value' => $tournament_id,
+						],
+					],
+				]
+			)
+		);
+
+		$trashed_entry_ids = [];
+		foreach ( $entry_ids as $entry_id ) {
+			if ( ! wp_trash_post( $entry_id ) ) {
+				foreach ( array_reverse( $trashed_entry_ids ) as $trashed_entry_id ) {
+					wp_untrash_post( $trashed_entry_id );
+				}
+				return new \WP_Error( 'rondo_tournament_delete_failed', __( 'Het toernooi kon niet volledig worden verwijderd.', 'rondo' ), [ 'status' => 500 ] );
+			}
+			$trashed_entry_ids[] = $entry_id;
+		}
+
+		if ( ! wp_trash_post( $tournament_id ) ) {
+			foreach ( array_reverse( $trashed_entry_ids ) as $trashed_entry_id ) {
+				wp_untrash_post( $trashed_entry_id );
+			}
+			return new \WP_Error( 'rondo_tournament_delete_failed', __( 'Het toernooi kon niet worden verwijderd.', 'rondo' ), [ 'status' => 500 ] );
+		}
+
+		return [
+			'deleted'     => true,
+			'id'          => $tournament_id,
+			'entry_count' => count( $entry_ids ),
+		];
+	}
+
 	/** Return all entries for one tournament. */
 	public function entries_for_tournament( int $tournament_id ): array {
 		$ids = get_posts(
 			[
 				'post_type'        => self::ENTRY_POST_TYPE,
-				'post_status'      => 'any',
+				'post_status'      => 'publish',
 				'posts_per_page'   => -1,
 				'fields'           => 'ids',
 				'orderby'          => 'title',
@@ -315,7 +366,7 @@ final class TournamentService {
 		$ids = get_posts(
 			[
 				'post_type'        => self::ENTRY_POST_TYPE,
-				'post_status'      => 'any',
+				'post_status'      => 'publish',
 				'posts_per_page'   => -1,
 				'fields'           => 'ids',
 				'orderby'          => 'date',
@@ -336,7 +387,7 @@ final class TournamentService {
 	/** Format one shared team entry. */
 	public function format_entry( int $entry_id ): array {
 		$post = get_post( $entry_id );
-		if ( ! $post || $post->post_type !== self::ENTRY_POST_TYPE ) {
+		if ( ! $post || $post->post_type !== self::ENTRY_POST_TYPE || $post->post_status === 'trash' ) {
 			return [];
 		}
 
