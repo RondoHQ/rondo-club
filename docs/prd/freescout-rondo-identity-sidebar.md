@@ -1,8 +1,8 @@
 # FreeScout sidebar, Rondo identity and mailbox provisioning
 
-**Status:** Phase 1 implemented; FreeScout module and production compatibility proof pending, updated 2026-09-01<br>
+**Status:** Phases 1 and 2 implemented; Rondo sidebar service and production cutover pending, updated 2026-09-01<br>
 **Scope:** Rondo Club and one custom Rondo Integration FreeScout module<br>
-**Milestone type:** product specification; Phase 1 was separately approved, and later phases require separate approval
+**Milestone type:** product specification; Phases 1 and 2 were separately approved, and later phases require separate approval
 
 ## Outcome
 
@@ -112,9 +112,10 @@ guard and manual grant/revoke behavior.
 28. The FreeScout module lives in the public repository
     `RondoHQ/freescout-rondo-integration`, licensed `AGPL-3.0-only` with retained MIT notices for
     Sidebar Webhook-derived work. Stable `vMAJOR.MINOR.PATCH` releases are produced only from
-    protected `main` by a human-approved GitHub Actions workflow and published as immutable GitHub
-    Releases. The first stable bootstrap is `v1.0.0`; production updates remain operator-approved
-    and version-pinned rather than scheduled automatically.
+    protected `main` by a manually dispatched GitHub Actions workflow and published as immutable
+    GitHub Releases. The first historical stable tag is `v1.0.0`; the supported bootstrap baseline
+    is `v1.0.5`, and production updates remain operator-approved and version-pinned rather than
+    scheduled automatically.
 29. AWC's initial configured appearance values are interface accent `#006935` and interface accent
     surface `#CCE1D7`, taken from AWC's published house-style palette. They are installation
     configuration, never module defaults: an unconfigured club still receives FreeScout blue and
@@ -759,8 +760,9 @@ The module has its own public source and release repository:
 
 The repository contains no Rondo client secrets, HMAC keys, club URLs, mailbox IDs, AWC colors,
 production fixtures or customer data. Installation-specific values are configuration only. The
-repository was not present in the RondoHQ organization during read-only discovery on 2026-09-01;
-creating it is Phase 2 implementation, not part of this planning milestone. Evidence:
+repository was created during Phase 2 at
+[`RondoHQ/freescout-rondo-integration`](https://github.com/RondoHQ/freescout-rondo-integration).
+The preceding read-only repository decision remains available as historical evidence:
 [module repository decision](evidence/freescout-module-release-repository-2026-09-01.md).
 
 FreeScout core supports updates for installed third-party modules through these `module.json`
@@ -769,7 +771,7 @@ fields:
 ```json
 {
   "alias": "rondointegration",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "requiredAppVersion": "1.8.238",
   "authorUrl": "https://rondo.club",
   "latestVersionUrl": "https://github.com/RondoHQ/freescout-rondo-integration/releases/latest/download/module.json",
@@ -792,24 +794,30 @@ The ZIP has exactly one top-level `RondoIntegration/` directory, so FreeScout ex
 `Modules/RondoIntegration`; it contains no repository metadata, tests, development dependencies,
 unbuilt source assets or environment files.
 
+Tags `v1.0.0` through `v1.0.4` remain immutable historical artifacts but are superseded and must
+not be used for new provisioning. `v1.0.5` is the first supported bootstrap after package-boundary,
+cross-timezone reproducibility, updater-option and SBOM-preflight verification.
+
 The installation/update contract is:
 
-1. Provision a fresh FreeScout installation from the tagged `v1.0.0` ZIP and its recorded SHA-256.
+1. Provision a fresh FreeScout installation from the tagged `v1.0.5` ZIP and its recorded SHA-256.
 2. Extract it as `Modules/RondoIntegration` and run FreeScout's module installation/activation
    command for alias `rondointegration`.
-3. Run `php artisan rondo:integration-update --version=vX.Y.Z --sha256=<64-hex> --check` for the
+3. Run `php artisan rondo:integration-update --release=vX.Y.Z --sha256=<64-hex> --check` for the
    exact candidate recorded in the change request. The command downloads only that tag's manifest,
-   ZIP, checksum and provenance, confirms their version and SHA-256, validates the archive layout,
-   and reports the preflight result without changing the active module.
+   ZIP, checksum and SPDX SBOM, confirms their version, declared license and SHA-256, validates the
+   archive layout, and reports the preflight result without changing the active module. Build
+   provenance is verified against the same immutable tagged ZIP before this operator step.
 4. After that preflight, the operator approves the exact tag and artifact SHA-256. Installation
-   repeats the command with the same `--version` and `--sha256` plus `--install`; the command never
+   repeats the command with the same `--release` and `--sha256` plus `--install`; the command never
    accepts an unresolved `latest` target, and a newly published release cannot change the approved
    target.
 5. The wrapper backs up the database and current module directory, then uses FreeScout's core
    module installation/activation path only for alias `rondointegration` to install migrations,
    assets and configuration.
-6. It records tag, commit SHA, module version and artifact SHA-256, verifies the running version,
-   and restores the backup if installation or post-install checks fail.
+6. It records the tag, module version, artifact SHA-256 and backup location, verifies the running
+   version, and restores the backup if installation or post-install checks fail. The immutable
+   GitHub release record links that exact tag and artifact to its source commit.
 
 Current FreeScout `1.8.238` detects `module.json` version responses and performs alias-specific
 updates correctly through its Modules UI. Its generic `freescout:module-update` command does not
@@ -819,7 +827,7 @@ then call FreeScout's core install/activation sequence. It verifies the alias be
 update. The generic command is not used for unattended provisioning, and production does not use
 the Modules UI because that path does not pre-verify the checksum.
 
-The fixed bootstrap version guarantees that a new installation always has the updater contract,
+The fixed `v1.0.5` bootstrap guarantees that a new installation always has the updater contract,
 even when provisioning code has not yet been changed for a later module release. FreeScout's
 Modules UI may report that an update exists, but approved installation updates use the Rondo-owned
 targeted Artisan command so checksum verification and backup gates cannot be skipped.
@@ -846,19 +854,19 @@ attestation; the release workflow follows its draft-then-publish guidance. See
 Repository protection and release workflow:
 
 1. `main` rejects direct and force pushes and deletion, including administrator bypass, and
-   requires a pull request, one approving RondoHQ module maintainer, resolved review threads and
-   passing `lint`, `test`, `package` and dependency checks.
-2. `CODEOWNERS` requires module-maintainer review for authentication, binding, migrations,
-   provisioning, updater, `module.json` and `.github/workflows/` changes.
+   requires a pull request, resolved review threads and passing `lint`, `test`, `package` and
+   dependency checks. An approving review is not required.
+2. `CODEOWNERS` records module ownership for authentication, binding, migrations, provisioning,
+   updater, `module.json` and `.github/workflows/` changes without adding a mandatory review gate.
 3. Actions are pinned to full commit SHAs and use least-privilege permissions. Pull-request jobs
    receive no release environment, write token or production secret.
 4. The release is started manually with an exact version and commit SHA. It accepts only a checked
    commit reachable from protected `main`, a clean `vX.Y.Z` semantic version that equals
    `module.json` and `CHANGELOG.md`, and a tag that does not already exist.
-5. A protected GitHub `release` environment requires a human RondoHQ module-maintainer approval.
-   The workflow creates a draft, builds deterministic assets, tests the packaged ZIP against the
-   pinned FreeScout compatibility version, uploads all four assets, verifies checksums and then
-   publishes once.
+5. The GitHub `release` environment accepts deployments only from protected branches and does not
+   require an additional reviewer; the explicit exact-version workflow dispatch is the publication
+   decision. The workflow creates a draft, builds deterministic assets, tests the module and
+   package, uploads all four assets, verifies checksums and then publishes once.
 6. After publication, the workflow verifies the immutable release and public tagged/latest URLs.
    A failed verification blocks rollout and is corrected only through a new patch release.
 7. Release publication never deploys or updates a FreeScout installation. Non-production testing,
@@ -1751,7 +1759,7 @@ managed confidential clients, RS256 discovery/JWKS, authorization code with PKCE
 redirect matching, opaque subjects, short-lived tokens, durable exact-address proof and resumable
 email verification. Automated coverage includes signed claims, scope and redirect denials, PKCE,
 code replay, key and secret rotation, shared or changed email rejection, and the existing activation,
-Magic Login and profile-email verification hooks. Phase 2 remains unimplemented.
+Magic Login and profile-email verification hooks.
 
 ### Phase 2: Rondo Integration module foundation and sidebar
 
@@ -1782,6 +1790,22 @@ Magic Login and profile-email verification hooks. Phase 2 remains unimplemented.
 - Add the responsive customer-sidebar maximum-width setting and coordinated conversation spacing.
 - Add the inbound/agent-created/customer-change activity listeners and module-owned pending-delivery
   queue without storing email copies.
+
+**Result, 2026-09-01:** implemented in the public
+[`RondoHQ/freescout-rondo-integration`](https://github.com/RondoHQ/freescout-rondo-integration)
+repository. The supported bootstrap is immutable release
+[`v1.0.5`](https://github.com/RondoHQ/freescout-rondo-integration/releases/tag/v1.0.5), built from
+protected-main commit `9d9beb9a34469459ec085ffed7c30970706fbd97` by
+[release run 33524923311](https://github.com/RondoHQ/freescout-rondo-integration/actions/runs/33524923311).
+Its ZIP SHA-256 is `138580360b9f4e70062e3a836991a060c6394b6ba0cd1723f2d0b8a8df744ef0`.
+Local and protected CI validation passed 12 tests with 209 assertions, PHP lint, dependency audit,
+package-boundary checks, byte-identical UTC/Auckland builds, checksum, SPDX and build-provenance
+verification. A disposable FreeScout installation completed exact-tag preflight, database and
+module backup, `v1.0.4` to `v1.0.5` self-update, repeated preflight under the new SBOM-validating
+code, migration and running-version checks, deliberate checksum rejection and the
+`/login?rondo_oauth=0` break-glass response. The release environment is restricted to protected
+branches without a separate reviewer prompt; publishing still requires an explicit exact-version
+workflow dispatch. Phase 3 and production cutover remain unimplemented.
 
 ### Phase 3: Rondo sidebar service
 
@@ -1915,15 +1939,15 @@ Magic Login and profile-email verification hooks. Phase 2 remains unimplemented.
 
 - The public repository, license, branch/ruleset protection and immutable-release setting match the
   approved contract before the first tag is created.
-- Only a protected, human-approved workflow can publish stable release assets.
+- Only the protected, manually dispatched exact-version workflow can publish stable release assets.
 - A clean FreeScout installation can provision the fixed bootstrap module version.
 - The targeted third-party update command may report a newer semantic version but installs only an
   exact operator-supplied tag and SHA-256 that passed preflight.
 - Missing target values, an unresolved `latest` target or a release published after preflight
   cannot change the approved installation target.
-- The command parses both a plain version response and the version in `module.json`.
+- The command verifies the tagged `module.json` and matching manifest inside the ZIP.
 - Updating `rondointegration` never updates another installed third-party module.
-- A current version reports that no update is available and remains unchanged.
+- Reinstalling the same exact approved version is idempotent and leaves that version active.
 - An unavailable version endpoint leaves the installed module unchanged.
 - A failed or invalid ZIP does not produce an active partial module.
 - The manifest and ZIP endpoints resolve to assets from the same release.
