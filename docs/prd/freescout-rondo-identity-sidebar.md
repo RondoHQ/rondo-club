@@ -98,6 +98,12 @@ guard and manual grant/revoke behavior.
     select a Rondo-supported stable key and a local FreeScout mailbox from lists; they never type a
     capability, stable key or numeric mailbox ID. Activation, repointing and revoking a mapping use
     verification, aggregate impact preview, recent local-password confirmation and an audit event.
+26. The first release advertises only `ledenadministratie`. The only pre-approved later mapping
+    candidates are `fairplay` for the FairPlay mailbox and `contributie` for the Contributie
+    mailbox. Contributie requires the effective `financieel` capability because mailbox access can
+    send replies; `financieel_read` is explicitly insufficient. Every other current capability and
+    mailbox remains unavailable until it has an exact dedicated capability, sidebar policy and
+    separate product and privacy approval.
 
 ## Why this replaces copied customer context
 
@@ -908,6 +914,38 @@ Version one shows only stable keys advertised by the verified Rondo installation
 key once. The same local FreeScout mailbox cannot be active for two Rondo keys. The initial list
 contains only `ledenadministratie`; adding future keys requires a Rondo release and its approved
 mailbox/sidebar policy, not a FreeScout text entry.
+
+The mapping catalog is deliberately closed:
+
+| Stable key | Required effective capability | Production mailbox candidate | Status | Release gate |
+|---|---|---|---|---|
+| `ledenadministratie` | `ledenadministratie` | Ledenadministratie, locally configured as ID `18` | First release | Current `ledenadministratie.v1` policy and all compatibility gates |
+| `fairplay` | `fairplay` | FairPlay, currently discovered as ID `17` | Pre-approved candidate | Define and approve `fairplay.v1` fields, privacy rules and pilot before Rondo advertises the key |
+| `contributie` | `financieel` | Contributie, currently discovered as ID `9` | Pre-approved candidate | Define and approve `contributie.v1` fields, finance-specific privacy rules and pilot before Rondo advertises the key |
+
+Candidate IDs are production discovery snapshots only. They remain environment configuration and
+receive the same local existence, active-state and drift verification as Ledenadministratie.
+Neither candidate appears in the signed configuration response until its release gates have passed.
+
+No other existing capability may be mapped implicitly:
+
+- `financieel_read` cannot grant Contributie because a FreeScout agent can send or alter
+  correspondence; read-only Rondo finance access is not equivalent to mailbox participation;
+- `toegangscontrole`, `manage_clothing`, `sponsorbeheer`, `narrowcasting`,
+  `accommodatiebeheer`, `vrijwilligers`, `rondo_iva_approve`, `kaderlijst` and `vog` do not
+  semantically match a current dedicated production mailbox;
+- Communicatie, Grote Clubactie, Info, Jeugdkamp, Junioren, Pupillen, Sjors Sportief, Toernooien,
+  Wedstrijdzaken and age-team mailboxes remain manually administered in FreeScout until Rondo has
+  an exact, narrowly scoped capability and approved sidebar policy for that work;
+- Rondo roles, committee membership, team membership, age-group visibility, pool roles,
+  administrator status and arbitrary WordPress capabilities are never accepted as alternate
+  mapping inputs. Authorization uses only the catalog's named effective capability;
+- one user may receive multiple managed mailboxes only when the signed Rondo access response
+  independently returns each active catalog key.
+
+Adding a catalog entry is a Rondo product release: amend this PRD, add the dedicated capability if
+none exists, version and test its sidebar field policy, then advertise the key from the signed
+configuration endpoint. Updating FreeScout settings alone cannot make an unsupported key available.
 
 The module obtains that allowlist through a signed server-to-server request:
 
@@ -1739,6 +1777,8 @@ The milestone is complete only when:
 - a current `ledenadministratie` capability grants the correct FreeScout mailbox;
 - production key `ledenadministratie` resolves only to locally verified mailbox ID `18`, displayed
   as `Ledenadministratie <ledenadministratie@svawc.nl>`;
+- the signed first-release catalog advertises only `ledenadministratie`; `fairplay`, `contributie`,
+  `financieel_read`, role names and arbitrary capabilities cannot be activated through FreeScout;
 - the mapping settings screen can verify, preview, activate, pause, change and intentionally revoke
   the mapping without accepting arbitrary identifiers or modifying manual mailbox relations;
 - revoking that capability removes only integration-managed access;
@@ -1792,9 +1832,8 @@ The milestone is complete only when:
 
 ## Open decisions before implementation
 
-1. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
-2. Audit retention period and operational owners for failed provisioning events.
-3. Final module repository, protected release workflow and update-asset URLs.
-4. Initial production values for interface accent and interface accent surface.
-5. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
+1. Audit retention period and operational owners for failed provisioning events.
+2. Final module repository, protected release workflow and update-asset URLs.
+3. Initial production values for interface accent and interface accent surface.
+4. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
     200%-zoom testing.
