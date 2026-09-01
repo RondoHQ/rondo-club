@@ -481,6 +481,35 @@ module's allowlisted settings and stylesheet.
 **Blocking failure:** the override obscures conversation controls, changes semantic status colors,
 permits arbitrary CSS, breaks the core responsive layout or survives after being disabled.
 
+## 10C. Prove the module release supply chain
+
+- [ ] Create the public `RondoHQ/freescout-rondo-integration` repository with
+  `AGPL-3.0-only`, `THIRD_PARTY_NOTICES.md`, no installation-specific data and protected `main`.
+- [ ] Confirm the ruleset rejects direct/force pushes and deletion and requires one maintainer
+  approval, resolved threads, CODEOWNERS and all required CI checks.
+- [ ] Enable GitHub immutable releases before creating `v1.0.0`; confirm release settings through
+  the GitHub API and record the result.
+- [ ] Confirm pull-request workflows use pinned actions, least-privilege read permissions and have
+  no release environment or write token.
+- [ ] Attempt release from a non-main commit, mismatched version/changelog, existing tag, failed
+  check and unapproved environment; each must stop before a tag or release is published.
+- [ ] Build a draft with exactly `module.json`, `rondo-integration.zip`, `SHA256SUMS` and
+  `rondo-integration.spdx.json`; verify the ZIP has one `RondoIntegration/` root and no development,
+  repository, environment or secret files.
+- [ ] Test the draft ZIP against pinned FreeScout `1.8.238`, verify checksum/provenance and publish
+  it once through the protected `release` environment.
+- [ ] Confirm the published release and its assets are immutable; replacement or tag movement is
+  rejected and a correction requires a new patch version.
+- [ ] Confirm the fixed `/releases/latest/download/` manifest and ZIP URLs resolve to the same
+  stable tag while a prerelease never becomes latest.
+- [ ] Confirm the wrapper pins that tag, downloads only tagged manifest/ZIP/checksum URLs and aborts
+  before extraction on a version, checksum, provenance or archive-layout mismatch.
+- [ ] Confirm publishing a release changes no FreeScout installation; non-production and production
+  updates each require separate operator action.
+
+**Blocking failure:** an unreviewed commit can publish, a release asset/tag remains mutable, the
+archive or checksum is ambiguous, or publication can update production automatically.
+
 ## 11. Test timeout and failure containment
 
 Use only the non-production endpoint and the expected pilot concurrency.
@@ -564,6 +593,7 @@ Complete one row for every material behavior.
 | Managed mailbox access | Targeted pivot attach/detach works; customer routes require the core visibility flag; production API resolves key `ledenadministratie` to mailbox ID `18`, name `Ledenadministratie`, address `ledenadministratie@svawc.nl` | Manual access preserved; local ID is verified configuration with no name/address fallback | Provisional pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) and [production mailbox mapping evidence](evidence/freescout-mailbox-mapping-2026-09-01.md) | Prove local enabled-state and mapping-drift gates; never use `sync()` |
 | Mapping settings | No production module UI exists yet | Listed Rondo keys plus local active-mailbox selector, verification/dry run, explicit state transitions and protected mass-impact actions | Custom proof required | PRD contract | Build inside Rondo Integration; no free-form identifiers or silent retargeting |
 | Audit retention and ownership | No production module policy exists yet | Per-club 90–730 days, default 365; unresolved security/access failures excluded until closure; primary and escalation administrators required | Custom proof required | PRD contract | Prove signed configuration, locked override, pruning, notification redaction and escalation |
+| Module release supply chain | Proposed RondoHQ repository did not exist on 2026-09-01; FreeScout core updater does not pre-verify the third-party ZIP checksum | Public AGPL repository, protected main, immutable human-approved releases, tagged checksummed artifacts and no automatic production rollout | Custom proof required | [Module repository decision](evidence/freescout-module-release-repository-2026-09-01.md) | Create during Phase 2 and prove every repository, packaging, provenance and update gate before `v1.0.0` |
 | Session revocation | Zero-mailbox customer/conversation denial is proven; conditional logout, binding recovery and invalidation failure remain untested | Next-request mailbox denial; logout for zero-mailbox or identity change; manual access preserved | Custom proof required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Prove session/remember-token invalidation and retry without restoring revoked pivots |
 | Force-login recovery | Paid add-on loops without a response filter; its patched `/login?oauth=0` paths work | Custom callback fails once to `/login?rondo_oauth=0`; server setting restores local login | Paid add-on **Fail**; custom retest required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Implement recovery directly in Rondo Integration |
 | Mobile | | Explicit pilot decision | | | |
