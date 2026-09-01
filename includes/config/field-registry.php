@@ -3095,9 +3095,10 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           array (
             'discipline' => 'Tuchtzaak',
             'membership' => 'Lidmaatschapsbijdrage',
+            'tournament' => 'Toernooi',
           ),
           'default_value' => 'discipline',
-          'instructions' => 'Type factuur: tuchtzaak of lidmaatschapsbijdrage',
+          'instructions' => 'Type factuur: handmatig, tuchtzaak, lidmaatschapsbijdrage of toernooi',
           'key' => 'field_invoice_type',
           'label' => 'Factuurtype',
           'name' => 'invoice_type',
@@ -4112,6 +4113,31 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'name' => 'player_count',
           'storage_name' => 'player_count',
           'type' => 'number',
+        ),
+        'invoice_id' =>
+        array (
+          'allow_null' => 1,
+          'canonical_name' => 'invoice_id',
+          'key' => 'field_tournament_entry_invoice_id',
+          'label' => 'Toernooifactuur',
+          'name' => 'invoice_id',
+          'post_type' =>
+          array (
+            0 => 'rondo_invoice',
+          ),
+          'return_format' => 'id',
+          'storage_name' => 'invoice_id',
+          'type' => 'post_object',
+        ),
+        'payment_state' =>
+        array (
+          'canonical_name' => 'payment_state',
+          'default_value' => 'not_applicable',
+          'key' => 'field_tournament_entry_payment_state',
+          'label' => 'Betaalstatus',
+          'name' => 'payment_state',
+          'storage_name' => 'payment_state',
+          'type' => 'select',
         ),
         'price_per_team' =>
         array (

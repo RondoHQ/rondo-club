@@ -75,9 +75,16 @@ class MolliePayment {
 		$amount_string = number_format( (float) $total_amount, 2, '.', '' );
 
 		// 6. Determine redirect URL — configured URL or fallback to homepage.
-		$redirect_url = FinanceServices::mollie()->get_mollie_redirect_url();
+		$redirect_url = (string) get_post_meta( $invoice_id, '_mollie_redirect_url', true );
+		if ( empty( $redirect_url ) ) {
+			$redirect_url = FinanceServices::mollie()->get_mollie_redirect_url();
+		}
 		if ( empty( $redirect_url ) ) {
 			$redirect_url = home_url( '/' );
+		}
+		$description = (string) get_post_meta( $invoice_id, '_mollie_description', true );
+		if ( $description === '' ) {
+			$description = 'Factuur ' . $invoice_number;
 		}
 
 		// 7. Build payload
@@ -86,7 +93,7 @@ class MolliePayment {
 				'currency' => 'EUR',
 				'value'    => $amount_string,
 			],
-			'description' => 'Factuur ' . $invoice_number,
+			'description' => $description,
 			'redirectUrl' => $redirect_url,
 		];
 

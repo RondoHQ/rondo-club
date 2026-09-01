@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Plus, Send, Trash2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Plus, RefreshCw, Send, Trash2 } from 'lucide-react';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   useDeleteTournament,
   usePublishTournament,
+  useRetryTournamentPaymentLink,
   useExtendTournamentDeadline,
   useSaveTournament,
   useTournament,
@@ -15,6 +16,8 @@ import {
 import {
   formatTournamentCurrency,
   formatTournamentDate,
+  tournamentPaymentStatus,
+  tournamentPaymentToneClasses,
   toDateInput,
 } from './tournamentFormatters';
 
@@ -218,15 +221,19 @@ function PublishPanel({ tournament }) {
 
 function EntriesOverview({ tournamentId }) {
   const { data: entries = [], isLoading, error } = useTournamentEntries(tournamentId);
+  const retryPayment = useRetryTournamentPaymentLink();
   if (isLoading) return <ContentLoadingSpinner />;
   return (
     <section className="card overflow-hidden">
       <div className="border-b border-gray-200 p-5 dark:border-gray-700"><h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Voortgang per Rondo-team</h2></div>
       {error ? <div className="p-5"><ErrorNotice error={error} /></div> : null}
+      {retryPayment.error ? <div className="p-5"><ErrorNotice error={retryPayment.error} /></div> : null}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-700">
-          <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-gray-800"><tr><th className="px-4 py-3">Team</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Ingeschreven</th><th className="px-4 py-3">Contact</th><th className="px-4 py-3">Kader</th><th className="px-4 py-3">Bedrag</th></tr></thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">{entries.map((entry) => (
+          <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-gray-800"><tr><th className="px-4 py-3">Team</th><th className="px-4 py-3">Inschrijving</th><th className="px-4 py-3">Aantallen</th><th className="px-4 py-3">Contact</th><th className="px-4 py-3">Kader</th><th className="px-4 py-3">Bedrag</th><th className="px-4 py-3">Betaling</th></tr></thead>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">{entries.map((entry) => {
+            const paymentStatus = tournamentPaymentStatus(entry);
+            return (
             <tr key={entry.id}>
               <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{entry.team_name}</td>
               <td className="px-4 py-3">{entry.registration_status === 'submitted' ? <span className="inline-flex items-center text-green-700 dark:text-green-300"><CheckCircle2 className="mr-1 h-4 w-4" />Ingeschreven</span> : <span className="text-amber-700 dark:text-amber-300">Niet ingeschreven</span>}</td>
@@ -234,8 +241,17 @@ function EntriesOverview({ tournamentId }) {
               <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{entry.contact_name || 'Nog niet ingevuld'}</td>
               <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{entry.assignees.map((assignee) => assignee.name).join(', ')}</td>
               <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{entry.registration_status === 'submitted' ? formatTournamentCurrency(entry.total_amount) : '—'}</td>
+              <td className="px-4 py-3">
+                <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${tournamentPaymentToneClasses(paymentStatus.tone)}`}>{paymentStatus.label}</span>
+                {entry.payment_state === 'paid' && entry.paid_at ? <span className="mt-1 block text-xs text-gray-500">{formatTournamentDate(entry.paid_at)}</span> : null}
+                {entry.payment_state === 'error' && entry.can_retry_payment ? (
+                  <button type="button" className="mt-2 inline-flex items-center text-xs font-medium text-bright-cobalt dark:text-electric-cyan" disabled={retryPayment.isPending} onClick={() => retryPayment.mutate(entry.id)}>
+                    <RefreshCw className={`mr-1 h-3.5 w-3.5 ${retryPayment.isPending ? 'animate-spin' : ''}`} />Betaallink maken
+                  </button>
+                ) : null}
+              </td>
             </tr>
-          ))}</tbody>
+          );})}</tbody>
         </table>
       </div>
     </section>

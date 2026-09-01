@@ -1,6 +1,6 @@
 # PRD: Toernooi-inschrijvingen en betalingen
 
-**Status:** Plan — productkeuzes bevestigd, niet geïmplementeerd
+**Status:** In uitvoering — inschrijving en betaal-kern geïmplementeerd; herinneringen, externe verwerking en programma volgen nog
 **Datum:** 2026-08-27
 **Eigenaar:** Toernooiplanning
 **Raakt:** Rondo Club, Kaderlijst, Financiën, Mollie en Lettermint
@@ -813,15 +813,15 @@ Er gebeurt niets. De planner ziet **Niet ingeschreven** en Rondo verstuurt geen 
 
 ### Betaling
 
-- [ ] Een definitieve inschrijving maakt precies één toernooifactuur en één blijvende Mollie-
+- [x] Een definitieve inschrijving maakt precies één toernooifactuur en één blijvende Mollie-
   betaallink aan.
-- [ ] Iedere toernooifactuur gebruikt de in Financiële instellingen gekozen standaardrekening voor
+- [x] Iedere toernooifactuur gebruikt de in Financiële instellingen gekozen standaardrekening voor
   toernooien en bewaart die rekening als factuursnapshot.
-- [ ] De Mollie-omschrijving bevat toernooi, Rondo-team, aantal teams en aantal spelers.
-- [ ] Een Mollie-storing verliest de inschrijving niet en kan idempotent worden hersteld.
-- [ ] Alleen een geverifieerde Mollie-webhook zet de betaling op betaald.
-- [ ] De planner ziet de actuele betaalstatus zonder financiële mutatierechten te krijgen.
-- [ ] Betaalde inschrijvingen zijn voor kaderleden en planners financieel vergrendeld.
+- [x] De Mollie-omschrijving bevat toernooi, Rondo-team, aantal teams en aantal spelers.
+- [x] Een Mollie-storing verliest de inschrijving niet en kan idempotent worden hersteld.
+- [x] Alleen een geverifieerde Mollie-webhook zet de betaling op betaald.
+- [x] De planner ziet de actuele betaalstatus zonder financiële mutatierechten te krijgen.
+- [x] Betaalde inschrijvingen zijn voor kaderleden en planners financieel vergrendeld.
 
 ### Herinneringen en communicatie
 

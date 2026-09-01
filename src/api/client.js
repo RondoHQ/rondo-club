@@ -108,6 +108,7 @@ export const prmApi = {
   getTournamentEntry: (id) => api.get(`/rondo/v1/tournament-entries/${id}`),
   saveTournamentEntryDraft: (id, data) => api.patch(`/rondo/v1/tournament-entries/${id}/draft`, data),
   submitTournamentEntry: (id, data) => api.post(`/rondo/v1/tournament-entries/${id}/submit`, data),
+  retryTournamentPaymentLink: (id) => api.post(`/rondo/v1/tournament-entries/${id}/retry-payment-link`),
 
   // Current season helper
   getCurrentSeason: () => api.get('/rondo/v1/current-season'),

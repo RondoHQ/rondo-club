@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Loader2, AlertCircle, CheckCircle, Link2, Unlink, ExternalLink, Copy, Check, ShieldCheck, Send } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useFinanceSettings, useUpdateFinanceSettings, useRabobankStatus, useDisconnectRabobank } from '@/hooks/useFinanceSettings';
@@ -301,6 +301,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     mollie_default_membership_account_id: '',
     mollie_default_discipline_account_id: '',
     mollie_default_manual_account_id: '',
+    mollie_default_tournament_account_id: '',
     membership_pass_apple_cert_attachment_id: 0,
     membership_pass_apple_cert_url: '',
     membership_pass_apple_cert_password: '',
@@ -387,6 +388,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         mollie_default_membership_account_id: settings.mollie_default_membership_account_id || '',
         mollie_default_discipline_account_id: settings.mollie_default_discipline_account_id || '',
         mollie_default_manual_account_id: settings.mollie_default_manual_account_id || '',
+        mollie_default_tournament_account_id: settings.mollie_default_tournament_account_id || '',
         membership_pass_apple_cert_attachment_id: settings.membership_pass_apple_cert_attachment_id || 0,
         membership_pass_apple_cert_url: settings.membership_pass_apple_cert_url || '',
         membership_pass_apple_cert_password: '',
@@ -469,10 +471,14 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
       mollie_default_membership_account_id: prev.mollie_default_membership_account_id === accountId ? '' : prev.mollie_default_membership_account_id,
       mollie_default_discipline_account_id: prev.mollie_default_discipline_account_id === accountId ? '' : prev.mollie_default_discipline_account_id,
       mollie_default_manual_account_id: prev.mollie_default_manual_account_id === accountId ? '' : prev.mollie_default_manual_account_id,
+      mollie_default_tournament_account_id: prev.mollie_default_tournament_account_id === accountId ? '' : prev.mollie_default_tournament_account_id,
     }));
   };
 
-  const usableMollieAccounts = (formData.mollie_accounts || []).filter((account) => account.has_api_key || account.api_key.trim());
+  const usableMollieAccounts = useMemo(
+    () => (formData.mollie_accounts || []).filter((account) => account.has_api_key || account.api_key.trim()),
+    [formData.mollie_accounts],
+  );
 
   useEffect(() => {
     if (usableMollieAccounts.length !== 1) {
@@ -481,13 +487,14 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
 
     const onlyAccountId = usableMollieAccounts[0].id;
     setFormData((prev) => ({
-      ...(prev.mollie_default_membership_account_id && prev.mollie_default_discipline_account_id && prev.mollie_default_manual_account_id
+      ...(prev.mollie_default_membership_account_id && prev.mollie_default_discipline_account_id && prev.mollie_default_manual_account_id && prev.mollie_default_tournament_account_id
         ? prev
         : {
             ...prev,
             mollie_default_membership_account_id: prev.mollie_default_membership_account_id || onlyAccountId,
             mollie_default_discipline_account_id: prev.mollie_default_discipline_account_id || onlyAccountId,
             mollie_default_manual_account_id: prev.mollie_default_manual_account_id || onlyAccountId,
+            mollie_default_tournament_account_id: prev.mollie_default_tournament_account_id || onlyAccountId,
           }),
     }));
   }, [usableMollieAccounts]);
@@ -578,6 +585,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         mollie_default_membership_account_id: formData.mollie_default_membership_account_id,
         mollie_default_discipline_account_id: formData.mollie_default_discipline_account_id,
         mollie_default_manual_account_id: formData.mollie_default_manual_account_id,
+        mollie_default_tournament_account_id: formData.mollie_default_tournament_account_id,
         membership_pass_apple_cert_attachment_id: formData.membership_pass_apple_cert_attachment_id,
         membership_pass_apple_pass_type_identifier: formData.membership_pass_apple_pass_type_identifier,
         membership_pass_apple_team_identifier: formData.membership_pass_apple_team_identifier,
@@ -1781,7 +1789,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
             )})}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             <div>
               <label htmlFor="mollie_default_membership_account_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Standaard voor contributie
@@ -1830,11 +1838,27 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                 ))}
               </select>
             </div>
+            <div>
+              <label htmlFor="mollie_default_tournament_account_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Standaard voor toernooien
+              </label>
+              <select
+                id="mollie_default_tournament_account_id"
+                value={formData.mollie_default_tournament_account_id}
+                onChange={(e) => setFormData(prev => ({ ...prev, mollie_default_tournament_account_id: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+              >
+                <option value="">Kies een rekening</option>
+                {usableMollieAccounts.map((account) => (
+                  <option key={account.id} value={account.id}>{account.internal_name} · {account.iban}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {usableMollieAccounts.length === 0 && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
-              Voeg minimaal één Mollie-rekening met API-sleutel toe om contributie-, tuchtzaak- en handmatige facturen via Mollie te kunnen gebruiken.
+              Voeg minimaal één Mollie-rekening met API-sleutel toe om contributie-, tuchtzaak-, toernooi- en handmatige facturen via Mollie te kunnen gebruiken.
             </div>
           )}
 

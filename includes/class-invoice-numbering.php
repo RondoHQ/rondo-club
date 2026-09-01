@@ -31,6 +31,10 @@ class InvoiceNumbering {
 			'prefix' => 'C',
 			'pad'    => 3,
 		],
+		'tournament' => [
+			'prefix' => 'O',
+			'pad'    => 3,
+		],
 	];
 
 	/**
@@ -48,6 +52,7 @@ class InvoiceNumbering {
 	 * - manual: F
 	 * - discipline: T
 	 * - membership/contributie: C
+	 * - tournament/toernooi: O
 	 *
 	 * Sequence is per prefix and resets every calendar year.
 	 * Number suffix is zero-padded to 3 digits.
@@ -55,7 +60,7 @@ class InvoiceNumbering {
 	 * Queries existing rondo_invoice posts for the current year and type prefix to find
 	 * the highest existing number, then increments by 1.
 	 *
-	 * @param string $type Invoice type slug (manual|discipline|membership).
+	 * @param string $type Invoice type slug (manual|discipline|membership|tournament).
 	 * @return string The generated invoice number (e.g., "2026F0001").
 	 */
 	public static function generate_next( string $type = 'manual' ): string {
@@ -125,12 +130,12 @@ class InvoiceNumbering {
 	 * Validate invoice number format.
 	 *
 	 * Checks if the provided string matches the expected format:
-	 * 4-digit year + one of F/T/C + at least 3 digits (e.g., "2026F0001")
+	 * 4-digit year + one of F/T/C/O + at least 3 digits (e.g., "2026F0001")
 	 *
 	 * @param string $number The invoice number to validate.
 	 * @return bool True if valid, false otherwise.
 	 */
 	public static function is_valid( string $number ): bool {
-		return (bool) preg_match( '/^\d{4}[FTC]\d{3,}$/', $number );
+		return (bool) preg_match( '/^\d{4}[FTCO]\d{3,}$/', $number );
 	}
 }

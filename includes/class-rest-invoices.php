@@ -52,7 +52,7 @@ class Invoices extends Base {
 						'invoice_type' => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_key',
-							'validate_callback' => static fn( $value ): bool => empty( $value ) || in_array( $value, [ 'membership', 'discipline', 'manual' ], true ),
+							'validate_callback' => static fn( $value ): bool => empty( $value ) || in_array( $value, [ 'membership', 'discipline', 'manual', 'tournament' ], true ),
 						],
 					],
 				],
@@ -120,7 +120,7 @@ class Invoices extends Base {
 						'invoice_type' => [
 							'required'          => false,
 							'validate_callback' => function ( $param ) {
-								return empty( $param ) || in_array( $param, [ 'manual', 'discipline', 'membership' ], true );
+								return empty( $param ) || in_array( $param, [ 'manual', 'discipline', 'membership', 'tournament' ], true );
 							},
 						],
 					],
@@ -154,7 +154,7 @@ class Invoices extends Base {
 						'type'         => [
 							'default'           => '',
 							'validate_callback' => function ( $param ) {
-								return empty( $param ) || in_array( $param, [ 'membership', 'discipline', 'manual' ], true );
+								return empty( $param ) || in_array( $param, [ 'membership', 'discipline', 'manual', 'tournament' ], true );
 							},
 						],
 						'payment_plan' => [
@@ -760,7 +760,7 @@ class Invoices extends Base {
 	 */
 	public function get_next_invoice_number( $request ) {
 		$invoice_type = sanitize_key( (string) ( $request->get_param( 'invoice_type' ) ?: 'manual' ) );
-		if ( ! in_array( $invoice_type, [ 'manual', 'discipline', 'membership' ], true ) ) {
+		if ( ! in_array( $invoice_type, [ 'manual', 'discipline', 'membership', 'tournament' ], true ) ) {
 			$invoice_type = 'manual';
 		}
 

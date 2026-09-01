@@ -20,7 +20,7 @@ export default function FactuurNieuw() {
   // Contributiefacturen are managed automatically (payment page + termijnen), so
   // a hand-made copy is created as a manual invoice. Manual/discipline keep their type.
   const invoiceType = isCopy
-    ? (source?.invoice_type === 'membership' ? 'manual' : (source?.invoice_type || 'manual'))
+    ? (['membership', 'tournament'].includes(source?.invoice_type) ? 'manual' : (source?.invoice_type || 'manual'))
     : 'manual';
 
   const initialValues = useMemo(() => (

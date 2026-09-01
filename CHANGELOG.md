@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Ingediende toernooi-inschrijvingen krijgen één blijvende Mollie-betaallink; kaderleden kunnen direct betalen en toernooicoördinatoren zien en herstellen de betaalstatus, met een apart instelbare Mollie-rekening voor toernooien.
 - Toernooicoördinatoren kunnen concepten en gepubliceerde toernooien verwijderen; gekoppelde inschrijvingen verdwijnen mee en Rondo waarschuwt dat aangemelde teams handmatig geïnformeerd moeten worden.
 - De contributie-API levert per lid de actuele Rondo-factuur, het openstaande contributiebedrag en de termijnvoortgang voor veilige synchronisatie met FreeScout.
 - Beheerders kunnen onder **Instellingen → Club** kiezen welk team gastpassen gebruikt; actuele spelers van dat team kunnen op **Mijn gegevens** twee vaste gastlinks delen en iedere gast bewaart na eenmalige registratie een herbruikbare Apple Wallet-, Google Wallet- of QR-pas.

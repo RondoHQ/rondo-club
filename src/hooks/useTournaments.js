@@ -122,3 +122,16 @@ export function useSubmitTournamentEntry() {
     },
   });
 }
+
+export function useRetryTournamentPaymentLink() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id) => (await prmApi.retryTournamentPaymentLink(id)).data,
+    onSuccess: (entry) => {
+      queryClient.setQueryData(['tournament-entries', Number(entry.id)], entry);
+      queryClient.invalidateQueries({ queryKey: ['tournament-entries', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: ['tournaments', Number(entry.tournament_id), 'entries'] });
+      queryClient.invalidateQueries({ queryKey: ['tournaments'] });
+    },
+  });
+}
