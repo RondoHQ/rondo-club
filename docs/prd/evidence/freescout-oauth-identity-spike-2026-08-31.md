@@ -7,6 +7,10 @@
 **PHP:** 8.5.9
 **Overall spike status:** in progress
 
+**Successor evidence:** the paid add-on remained rejected; the independent custom-client Phase 0
+proof subsequently passed. See
+[FreeScout custom OIDC Phase 0 evidence](freescout-custom-oidc-phase0-2026-09-01.md).
+
 ## Safe test configuration
 
 - Force OAuth Login: disabled.
@@ -267,8 +271,9 @@ dependency.
 The production Rondo Integration module will therefore implement authorization code flow with PKCE
 S256, `state`, `nonce`, `client_secret_basic`, signed ID-token validation, UserInfo subject matching,
 one-to-one subject binding, and its own non-looping recovery path. The paid-module results above are
-retained as rejection evidence and regression-test cases only. Identity binding and managed mailbox
-reconciliation remain provisional design proofs and must be repeated against the custom module.
+retained as rejection evidence and regression-test cases only. The custom Phase 0 proof subsequently
+repeated the identity-binding and recovery shape; production persistence and managed mailbox
+reconciliation remain compatibility gates.
 
 Standards basis: [RFC 9700 section 2.1.1](https://www.rfc-editor.org/rfc/rfc9700.html#section-2.1.1),
 [RFC 6749 section 2.3.1](https://www.rfc-editor.org/rfc/rfc6749.html#section-2.3.1) and

@@ -1,6 +1,6 @@
 # FreeScout sidebar, Rondo identity and mailbox provisioning
 
-**Status:** product decisions complete; compatibility proof pending, updated 2026-09-01<br>
+**Status:** Phase 0 gate passed; product implementation may start; production compatibility proof pending, updated 2026-09-01<br>
 **Scope:** Rondo Club and one custom Rondo Integration FreeScout module<br>
 **Milestone type:** planning only; this document does not authorize implementation or production changes
 
@@ -1726,6 +1726,12 @@ Execution checklist:
 **Gate:** no product implementation proceeds without a successful custom-client end-to-end test
 login, complete token validation and a confirmed current-agent hook.
 
+**Result, 2026-09-01:** `PASS`. A disposable custom module completed the end-to-end login and full
+negative token-validation matrix, persistent subject selection and administrator-recovery shape,
+current-agent proof, opaque sandbox/height bridge, forced-login recovery and bounded transport
+failures. See [custom OIDC Phase 0 evidence](evidence/freescout-custom-oidc-phase0-2026-09-01.md).
+The test used a synthetic issuer and does not replace the remaining production compatibility gates.
+
 ### Phase 1: Rondo OpenID Connect provider
 
 - Add first-party client registration and secret rotation.
@@ -2092,7 +2098,8 @@ The milestone is complete only when:
 
 ## Implementation gate
 
-No product decisions remain open. Only Phase 0 compatibility and threat-model proof may begin now;
-Phases 1 through 5 product implementation remain blocked by the Phase 0 gate. Production activation
-is additionally blocked until the full compatibility checklist passes, including realistic
-conversation content, all supported browser widths and the 200%-zoom stacked-layout proof.
+No product decisions remain open. Phase 0 passed on 2026-09-01, so Phases 1 through 5 product
+implementation may begin. Production activation remains blocked until the full compatibility
+checklist passes, including production-grade identity persistence and audit, conversation
+authorization, realistic conversation content, all supported browser widths and the 200%-zoom
+stacked-layout proof.
