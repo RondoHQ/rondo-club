@@ -47,6 +47,9 @@ guard and manual grant/revoke behavior.
 12. FreeScout runs with `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true`. Its default `false` value lets a
     non-administrator with zero mailboxes open customer profile and edit routes by ID even though
     the related conversation is denied.
+13. Force OAuth Login remains disabled until the Rondo Integration module redirects failed OAuth
+    callbacks to `/login?oauth=0`, preserves the visible error and passes the provider-denial test
+    without starting another authorization request.
 
 ## Why this replaces copied customer context
 
@@ -702,8 +705,8 @@ FreeScout IDs.
 - Existing FreeScout agents are matched to Rondo by a unique verified email.
 - OAuth is optional until every pilot agent succeeds.
 - One documented local FreeScout administrator remains available as break glass.
-- Force OAuth Login is enabled only after recovery through FreeScout server configuration has been
-  rehearsed.
+- Force OAuth Login remains disabled until failed callbacks are hardened and recovery through both
+  `/login?oauth=0` and FreeScout server configuration has been rehearsed.
 
 ### Later automatic creation
 
@@ -901,7 +904,7 @@ confirmed current-agent hook.
 - Implement discovery, authorize, token and User Info endpoints.
 - Add opaque subjects and external-email eligibility checks.
 - Add tests for redirects, codes, tokens, scopes, PKCE and denials.
-- Document administration and break-glass recovery.
+- Document `/login?oauth=0` and server-side Force OAuth disablement as separate break-glass paths.
 
 ### Phase 2: Rondo Integration module foundation and sidebar
 
@@ -1061,13 +1064,17 @@ The milestone is complete only when:
   the latest approved release through FreeScout's targeted module updater;
 - the installed version and artifact SHA-256 match the approved release record;
 - a break-glass FreeScout administrator login is proven;
+- a denied or failed forced OAuth callback shows the local error page and does not start another
+  authorization request;
 - the current customer-enrichment sync remains available until explicit cutover approval;
 - production OAuth forcing and sync disablement each receive separate approval.
 
 ## Rollback
 
 - Disable the Rondo OAuth client.
-- Disable Force OAuth Login through the documented FreeScout server setting.
+- Open `/login?oauth=0` for immediate local break-glass login.
+- If browser recovery is unavailable, clear `OAUTHLOGIN_FORCE_OAUTH_LOGIN` in FreeScout's
+  server-side configuration and restart FreeScout.
 - Disable managed provisioning in the Rondo Integration module while leaving existing mailbox
   relations unchanged.
 - Disable the sidebar feature or Rondo Integration module.

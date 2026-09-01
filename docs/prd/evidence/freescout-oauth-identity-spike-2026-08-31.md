@@ -31,8 +31,8 @@
 }
 ```
 
-FreeScout rejected callbacks with a missing or changed `state`. Provider denial returned to a
-usable login screen with an authentication error.
+FreeScout rejected callbacks with a missing or changed `state`. With Force OAuth Login disabled,
+provider denial returned to a usable login screen with an authentication error.
 
 ## Observed token and User Info requests
 
@@ -186,8 +186,39 @@ mismatches yield no desired-state decision. Login continues, existing mailbox an
 state remain unchanged, one redacted retryable error is recorded, and the login request does not
 retry automatically.
 
+## Force OAuth Login and recovery proof
+
+Force OAuth Login was enabled only in the disposable environment after preserving a local
+administrator session and confirming the recovery account. The test then exercised normal login,
+provider denial, provider outage and two recovery paths.
+
+| Scenario | Observed result | Result |
+|---|---|---|
+| Normal forced login | FreeScout redirected to the provider and returned to the intended settings page in approximately 4.2 seconds | Pass |
+| Provider denial | The callback redirected to the bare login route, which immediately restarted OAuth; six consecutive authorization requests ended in `ERR_TOO_MANY_REDIRECTS` | **Fail** |
+| Mutation during denial loop | User count, administrator role, password fingerprint and subject bindings remained unchanged | Pass |
+| Provider outage for a new session | One redirect reached the provider's synthetic `503`; FreeScout did not loop | Pass |
+| Existing authenticated session during outage | The administrator continued to use the mailbox | Pass |
+| Direct break glass | `/login?oauth=0` displayed the local login form while Force OAuth Login was enabled, and the administrator signed in | Pass |
+| Server-side recovery | Clearing `OAUTHLOGIN_FORCE_OAUTH_LOGIN` and restarting FreeScout restored the normal local login form without provider access | Pass |
+| Recovery account after re-enable | Force OAuth Login was re-enabled, disabled again server-side and the same local administrator signed in; the password fingerprint was unchanged | Pass |
+
+The denial loop comes from the paid module's callback error path: it stores a floating error and
+redirects to the bare login route. The Force OAuth middleware sees that route and immediately
+redirects to the provider again. The middleware skips forcing when the request contains
+`oauth=0`, which makes `/login?oauth=0` a working immediate break-glass URL.
+
+The production decision is to keep Force OAuth Login disabled. Before it can be enabled, the Rondo
+Integration module must redirect failed OAuth callbacks to `/login?oauth=0`, preserve the visible
+error and pass the same denial test without starting another authorization request. Server-side
+recovery remains the second break-glass method.
+
+The environment was restored with the provider in normal mode, Force OAuth Login and automatic
+creation disabled, the visibility restriction enabled and the local administrator signed in.
+
 ## Current decision
 
 The paid module remains usable only with the Rondo identity guard, one-to-one subject binding and
-`APP_LIMIT_USER_CUSTOMER_VISIBILITY=true`. Identity binding and managed mailbox reconciliation are
-provisional passes; the complete compatibility spike remains in progress.
+`APP_LIMIT_USER_CUSTOMER_VISIBILITY=true`. Force OAuth Login remains disabled because provider
+denial loops until the browser stops following redirects. Identity binding and managed mailbox
+reconciliation are provisional passes; the complete compatibility spike remains in progress.
