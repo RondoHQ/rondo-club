@@ -21,6 +21,7 @@ namespace Rondo\Users;
 
 use Rondo\Core\SponsorStatus;
 use Rondo\Fields\Fields;
+use Rondo\Identity\OidcIdentity;
 use Rondo\Notifications\EmailTemplate;
 use Rondo\Pages\PublicPageChrome;
 use Rondo\People\CommunicationPolicy;
@@ -676,6 +677,7 @@ class ActivationService {
 	 * @return string|\WP_Error
 	 */
 	private static function activate_person( string $token, int $person_id, bool $allow_existing ) {
+		$verified_email = self::email_for_token( $token );
 		if ( self::has_account( $person_id ) ) {
 			if ( ! $allow_existing ) {
 				return new \WP_Error( 'already_active', 'Voor deze persoon bestaat al een account.' );
@@ -699,14 +701,18 @@ class ActivationService {
 		if ( ! $user instanceof \WP_User ) {
 			return new \WP_Error( 'invalid_user', 'Het aangemaakte account kon niet worden geopend.' );
 		}
+		if ( $verified_email !== null ) {
+			OidcIdentity::mark_email_verified( $user->ID, $verified_email, 'activation' );
+		}
 
 		return UserProvisioning::set_password_url( $user, (string) $result['reset_key'] );
 	}
 
 	/** Return a one-time login URL for an already provisioned parent account. */
 	private static function existing_account_url( string $token, int $person_id ) {
-		$user_id = (int) get_post_meta( $person_id, UserProvisioning::META_USER_ID, true );
-		$user    = $user_id > 0 ? get_userdata( $user_id ) : false;
+		$verified_email = self::email_for_token( $token );
+		$user_id        = (int) get_post_meta( $person_id, UserProvisioning::META_USER_ID, true );
+		$user           = $user_id > 0 ? get_userdata( $user_id ) : false;
 		if ( ! $user instanceof \WP_User ) {
 			return new \WP_Error( 'invalid_user', 'Het bestaande ouderaccount kon niet worden geopend.' );
 		}
@@ -717,6 +723,9 @@ class ActivationService {
 		}
 
 		self::consume_token( $token );
+		if ( $verified_email !== null ) {
+			OidcIdentity::mark_email_verified( $user->ID, $verified_email, 'activation' );
+		}
 		return $login_url;
 	}
 

@@ -5,6 +5,7 @@ namespace Tests\Wpunit;
 use Rondo\Core\AccessControl;
 use Rondo\Data\InverseRelationships;
 use Rondo\Fields\Fields;
+use Rondo\Identity\OidcIdentity;
 use Rondo\REST\MemberProfile;
 use Rondo\Users\MemberProfileService;
 use Rondo\Users\ProfileChangeLog;
@@ -50,6 +51,8 @@ class MemberProfileServiceTest extends RondoTestCase {
 		$this->assertSame( 'kind@example.com', Fields::get_for_post( $distinct_child, 'email_1' ) );
 		$this->assertSame( 'new@example.com', UserProvisioning::contact_email( $user_id ) );
 		$this->assertSame( 'new@example.com', get_userdata( $user_id )->user_email );
+		$this->assertSame( 'new@example.com', get_user_meta( $user_id, OidcIdentity::META_VERIFIED_EMAIL, true ) );
+		$this->assertSame( 'profile_email_change', get_user_meta( $user_id, OidcIdentity::META_VERIFIED_METHOD, true ) );
 		$this->assertWPError( MemberProfileService::verify_email_token( $token ) );
 
 		$log = get_posts(

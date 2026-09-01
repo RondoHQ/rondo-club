@@ -293,6 +293,9 @@ function rondo_init() {
 	new \Rondo\Users\LoginResolver();
 	// Turns the Magic Login email form into the single login/activation entry point.
 	new \Rondo\Users\MagicLoginActivation();
+	// First-party OIDC provider for FreeScout login and durable exact-email proof.
+	new \Rondo\Identity\OidcIdentity();
+	new \Rondo\Identity\OidcProvider();
 	// Immutable member self-service audit trail and its 24-month retention job.
 	new \Rondo\Users\ProfileChangeLog();
 	new \Rondo\Users\ActivationLog();
@@ -374,6 +377,7 @@ function rondo_init() {
 		}
 		new RESTTournaments();
 		new \Rondo\REST\MemberProfile();
+		new \Rondo\REST\Oidc();
 		new RabobankOAuth();
 		new RabobankPayment();
 		new MollieWebhook();
@@ -1171,7 +1175,7 @@ add_filter( 'query_vars', 'rondo_pwa_query_vars' );
  * Runs late on `init` so every add_rewrite_rule() call has already registered.
  */
 function rondo_maybe_flush_rewrite_rules() {
-	$rewrite_version = '6'; // Bump when adding/changing a rewrite rule.
+	$rewrite_version = '7'; // Bump when adding/changing a rewrite rule.
 	if ( get_option( 'rondo_rewrite_rules_version' ) === $rewrite_version ) {
 		return;
 	}
@@ -1212,6 +1216,9 @@ function rondo_theme_activation() {
 
 	$email_change_page = new \Rondo\Users\EmailChangePage();
 	$email_change_page->register_rewrite_rules();
+
+	$oidc_provider = new \Rondo\Identity\OidcProvider();
+	$oidc_provider->register_rewrite_rules();
 
 	// Flush only after every public route has been registered.
 	flush_rewrite_rules();
