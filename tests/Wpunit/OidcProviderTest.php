@@ -215,17 +215,21 @@ final class OidcProviderTest extends RondoTestCase {
 		$this->assertContains( $first['keys'][0]['kid'], array_column( $keys['keys'], 'kid' ) );
 	}
 
-	public function test_server_rules_route_discovery_before_physical_directory_check(): void {
-		$base_rules = "<IfModule mod_rewrite.c>\nRewriteEngine On\nRewriteCond %{REQUEST_FILENAME} !-d\nRewriteRule . /index.php [L]\n</IfModule>\n";
-		$rules      = OidcProvider::add_well_known_server_rules( $base_rules );
+	public function test_metadata_uses_a_path_issuer_without_duplicating_oauth_in_endpoints(): void {
+		$metadata = OidcAuthorizationService::metadata();
 
-		$this->assertStringContainsString(
-			"RewriteEngine On\nRewriteRule ^\\.well-known/openid-configuration/?$ index.php?rondo_oidc_endpoint=discovery [L,QSA]\n",
-			$rules
-		);
-		$this->assertStringContainsString(
-			"RewriteRule ^\\.well-known/oauth-authorization-server/?$ index.php?rondo_oidc_endpoint=metadata [L,QSA]\nRewriteCond %{REQUEST_FILENAME} !-d",
-			$rules
+		$this->assertSame( untrailingslashit( home_url( '/oauth' ) ), $metadata['issuer'] );
+		$this->assertSame( untrailingslashit( home_url( '/oauth/authorize' ) ), $metadata['authorization_endpoint'] );
+		$this->assertSame( untrailingslashit( home_url( '/oauth/token' ) ), $metadata['token_endpoint'] );
+		$this->assertSame( untrailingslashit( home_url( '/oauth/userinfo' ) ), $metadata['userinfo_endpoint'] );
+		$this->assertSame( untrailingslashit( home_url( '/oauth/jwks' ) ), $metadata['jwks_uri'] );
+
+		global $wp_rewrite;
+		$provider = new OidcProvider();
+		$provider->register_rewrite_rules();
+		$this->assertSame(
+			'index.php?rondo_oidc_endpoint=discovery',
+			$wp_rewrite->extra_rules_top['^oauth/\.well-known/openid-configuration/?$']
 		);
 	}
 

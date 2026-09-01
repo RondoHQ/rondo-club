@@ -333,8 +333,7 @@ GET  /oauth/authorize
 POST /oauth/token
 GET  /oauth/userinfo
 GET  /oauth/jwks
-GET  /.well-known/openid-configuration
-GET  /.well-known/oauth-authorization-server
+GET  /oauth/.well-known/openid-configuration
 ```
 
 The initial client is FreeScout. Client registration is administrator-only and stores:
@@ -498,14 +497,15 @@ versioned paths:
 /wp-json/rondo/v1/integrations/freescout/configuration
 ```
 
-The OIDC client discovers its provider endpoints from the configured Rondo base URL. Rondo adds
-the two discovery routes ahead of WordPress's physical-directory exclusion, so they also work when
-the host uses `.well-known` for ACME certificate validation. Setup
+The OIDC issuer is the configured Rondo base URL plus `/oauth`. The OIDC client discovers its
+provider endpoints from that issuer. Keeping `.well-known` below the issuer path prevents a
+host-reserved top-level `.well-known` directory for ACME certificate validation from intercepting
+the request. Setup
 documentation and the Rondo Integration settings screen show the derived values, but no endpoint
 hostname is duplicated in code:
 
 ```text
-/.well-known/openid-configuration
+/oauth/.well-known/openid-configuration
 /oauth/authorize
 /oauth/token
 /oauth/userinfo

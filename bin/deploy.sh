@@ -304,6 +304,10 @@ if [ "$PRUNE_DELETED" = true ]; then
     done
 fi
 
+echo -e "${YELLOW}Step 3c: Refreshing WordPress rewrite rules...${NC}"
+retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
+    "cd $DEPLOY_REMOTE_WP_PATH && wp rewrite flush --hard"
+
 if [ "$SKIP_CACHE_CLEAR" = false ]; then
     echo -e "${YELLOW}Step 4: Clearing caches...${NC}"
     retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
@@ -337,7 +341,7 @@ if [ "$SKIP_HEALTH_CHECK" = false ]; then
 
         curl --fail --silent --show-error \
             --retry 3 --retry-delay 2 --max-time 30 \
-            "${DEPLOY_PRODUCTION_URL%/}/.well-known/openid-configuration" >/dev/null
+            "${DEPLOY_PRODUCTION_URL%/}/oauth/.well-known/openid-configuration" >/dev/null
     fi
 fi
 
