@@ -258,20 +258,33 @@ sending Rondo data.
 
 Test at narrow, normal and wide FreeScout sidebar widths.
 
-- [ ] Render a script-free document through sandboxed `iframe.srcdoc`.
-- [ ] Confirm returned scripts, inline event handlers and hostile CSS cannot affect the FreeScout
-  parent page.
-- [ ] Confirm the iframe cannot read FreeScout cookies, DOM or browser storage.
+- [ ] Render sanitized, script-free Rondo markup through the module-owned sandboxed
+  `iframe.srcdoc` shell.
+- [ ] Run only the nonce-authorized module resize script; confirm returned scripts, nonce
+  attributes and inline event handlers are removed and cannot execute.
+- [ ] Confirm hostile returned CSS cannot affect the FreeScout parent page or make an external
+  request.
+- [ ] Confirm the sandbox has no `allow-same-origin`, form, download or top-navigation capability
+  and cannot read FreeScout cookies, DOM or browser storage.
 - [ ] Confirm server-generated, allowlisted Rondo links open in a new tab with `noopener` behavior.
 - [ ] Confirm non-Rondo and malformed links are removed or inert.
+- [ ] Confirm the resize observer sends only the versioned message type, per-render channel and
+  finite integer height to the exact FreeScout parent origin.
+- [ ] Confirm the parent ignores messages from the wrong window, type or channel and rejects
+  missing, non-numeric, negative and oversized heights.
+- [ ] Confirm accepted height changes are debounced and clamped between `160px` and `1600px`.
+- [ ] Confirm expanding and collapsing an accordion updates iframe height without exposing markup,
+  data, URLs or actions through the bridge.
+- [ ] Confirm a missing or invalid resize message keeps the safe `480px` default with internal
+  scrolling.
 - [ ] Confirm multiple panels/accordions fit without covering FreeScout controls.
 - [ ] Confirm loading, no-match, ambiguous, unauthorized and unavailable states fit cleanly.
 - [ ] Confirm keyboard navigation and visible focus for links and refresh control.
 - [ ] Confirm zoom at 200% remains usable without horizontal page scrolling.
-- [ ] Record height-management behavior without permitting scripts in the response.
 
-If `srcdoc` cannot meet the layout requirements, repeat the tests with the fixed escaped JSON
-renderer and record that as the selected design.
+**Blocking failure:** returned Rondo code can execute, iframe content can reach FreeScout state,
+the parent accepts anything beyond a validated height, or dynamic content cannot remain usable
+within the bounded iframe height.
 
 ## 10A. Prove controlled appearance and width overrides
 
@@ -347,7 +360,7 @@ Complete one row for every material behavior.
 | Force-login recovery | Paid add-on loops without a response filter; its patched `/login?oauth=0` paths work | Custom callback fails once to `/login?rondo_oauth=0`; server setting restores local login | Paid add-on **Fail**; custom retest required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Implement recovery directly in Rondo Integration |
 | Mobile | | Explicit pilot decision | | | |
 | Sidebar authorization | | Agent and conversation authorized | | | |
-| Response isolation | | No parent-page code execution | | | |
+| Response isolation | | Opaque-origin iframe with a nonce-authorized, height-only resize bridge and no parent-page code execution | | | |
 | Appearance controls | Design module disabled; core blue accent roles visible | Two semantic color settings, allowlisted selectors and no arbitrary CSS | Retest required | Post-removal screenshots reviewed 2026-09-01; screenshots not stored because they contain member data | Prove against current FreeScout CSS before release |
 | Customer-sidebar width | FreeScout core desktop width is `280px`; narrow layout becomes full width | Coordinated responsive width up to configured maximum, default `360px` | Retest required | Current FreeScout stylesheet inspection | Update customer width plus header/main spacing together |
 | Failure containment | Access-service `503` allowed login in 1.5 seconds and preserved access | Conversation work remains available | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Keep prior state; record redacted error; no login-flow retry |
