@@ -104,6 +104,11 @@ guard and manual grant/revoke behavior.
     send replies; `financieel_read` is explicitly insufficient. Every other current capability and
     mailbox remains unavailable until it has an exact dedicated capability, sidebar policy and
     separate product and privacy approval.
+27. OAuth, identity, mailbox-mapping and provisioning audit records are retained for 365 days by
+    default, configurable per club from 90 through 730 days. Unresolved access-removal, identity or
+    security failures are not pruned until an administrator resolves or explicitly accepts them.
+    Each installation must assign a primary operational owner and an escalation owner from its
+    active FreeScout administrators before managed provisioning can be activated.
 
 ## Why this replaces copied customer context
 
@@ -1400,7 +1405,8 @@ customer reassignment and missed-event repair pass the compatibility checklist.
 - Keep audit logs event-oriented: success/failure, IDs and reason codes, without full person payloads.
 - Keep FreeScout activity pointers to one subject, creation time and server-generated link per
   conversation; FreeScout remains the system of record for all message content.
-- Set an explicit retention period for OAuth and provisioning audit records.
+- Retain OAuth and provisioning audit records according to the per-club 90–730 day policy below;
+  the default is 365 days.
 - Treat the approved Ledenadministratie field contract as a privacy boundary; every later field or
   group requires a separate club review before production.
 
@@ -1427,6 +1433,67 @@ FreeScout records:
 
 Neither side logs OAuth codes, access tokens, HMAC signatures, client secrets or complete request
 bodies.
+
+### Audit retention and operational ownership
+
+The audit policy is installation-level configuration, not a compiled club value:
+
+- Rondo stores `freescout_audit_retention_days` through the WordPress Options API and publishes it
+  in the signed integration configuration; default `365`, accepted range `90` through `730`;
+- FreeScout applies the last verified signed value to module-owned audit records. A missing,
+  malformed or out-of-range value blocks a new activation and never silently shortens the current
+  retention period;
+- an optional `RONDO_AUDIT_RETENTION_DAYS` environment value may lock the same setting during
+  provisioning. The settings screen shows the source and cannot override a locked value;
+- a scheduled daily prune removes eligible records in bounded batches and records only aggregate
+  deleted counts. Manual deletion of selected audit rows is unavailable in the user interface.
+
+The retention clock starts when the event is written. A failed access removal, session
+invalidation, identity binding/recovery or signature/security event remains open and is excluded
+from pruning until an administrator records a resolution or explicit risk acceptance with a
+reason. Its configured retention clock restarts at closure. This exception does not apply to
+ordinary failed grants or transient sidebar availability errors, which never create access.
+
+The audit contains only what is needed to reconstruct the control decision:
+
+- UTC time, event type, outcome and stable reason code;
+- local actor or service ID, local target user ID where required, stable mailbox key and local
+  mailbox ID where applicable;
+- shortened issuer/subject fingerprint, correlation ID, old/new state and aggregate impact;
+- resolution time, resolving administrator ID and a short administrator-entered reason.
+
+It never contains names, email addresses, IP addresses, OAuth claims, tokens, signatures, message
+content, sidebar HTML, customer payloads or complete capability responses. Routine successful
+sidebar views and match attempts are aggregate metrics, not person-level audit rows. Subject
+bindings, managed-user markers, managed mailbox relations and Rondo activity pointers are
+operational records rather than audit logs and follow their own lifecycle rules.
+
+Before activation the FreeScout settings screen requires:
+
+1. **Primary operational owner:** at least one active FreeScout administrator who receives an
+   immediate local notification for security/access failures and a daily digest for retryable
+   provisioning failures.
+2. **Escalation owner:** a second active FreeScout administrator where the installation has one;
+   the same administrator is allowed only when no second active administrator exists, and the UI
+   displays reduced-resilience guidance.
+
+Owners are selected by local FreeScout user ID; notifications use FreeScout's existing local
+notification/email mechanisms and contain only severity, event type, time, aggregate count and a
+link to the authenticated audit screen. Owner changes require administrator authorization, recent
+local-password confirmation and their own audit event.
+
+Operational response targets:
+
+| Severity | Examples | Required response |
+|---|---|---|
+| Critical | Failed access removal; session invalidation after final access or binding replacement; subject-binding conflict; repeated signature/replay failure | Notify both owners immediately; primary owner triages within four working hours and manually contains access where necessary |
+| High | Mapping drift; reconciliation cannot establish desired state; unresolved critical event remains open | Notify primary immediately; escalate after three failed runs or 24 hours; resolve, pause or explicitly accept the risk within one business day |
+| Normal | Failed grant/JIT creation with no partial user or access; transient sidebar or Rondo availability failure | Include in daily digest; retry automatically and review by the next business day |
+
+The module health screen shows open counts by severity, oldest-open age, last successful
+reconciliation, last prune, configured retention and assigned owners. It never exposes affected
+user details in notification text; authorized administrators may inspect the minimal local IDs and
+reason codes in the audit screen.
 
 ## Performance and availability targets
 
@@ -1779,6 +1846,10 @@ The milestone is complete only when:
   as `Ledenadministratie <ledenadministratie@svawc.nl>`;
 - the signed first-release catalog advertises only `ledenadministratie`; `fairplay`, `contributie`,
   `financieel_read`, role names and arbitrary capabilities cannot be activated through FreeScout;
+- managed provisioning cannot activate until valid retention and operational-owner settings exist;
+- eligible audit records are pruned after the configured period, while unresolved access,
+  identity and security failures remain visible until explicitly closed and then receive a fresh
+  retention period;
 - the mapping settings screen can verify, preview, activate, pause, change and intentionally revoke
   the mapping without accepting arbitrary identifiers or modifying manual mailbox relations;
 - revoking that capability removes only integration-managed access;
@@ -1832,8 +1903,7 @@ The milestone is complete only when:
 
 ## Open decisions before implementation
 
-1. Audit retention period and operational owners for failed provisioning events.
-2. Final module repository, protected release workflow and update-asset URLs.
-3. Initial production values for interface accent and interface accent surface.
-4. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
+1. Final module repository, protected release workflow and update-asset URLs.
+2. Initial production values for interface accent and interface accent surface.
+3. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
     200%-zoom testing.
