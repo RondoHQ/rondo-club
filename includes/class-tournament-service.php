@@ -46,6 +46,7 @@ final class TournamentService {
 
 	/** Create or update one draft tournament. */
 	public function save_tournament( array $payload, int $actor_user_id, int $tournament_id = 0 ) {
+		$is_new = $tournament_id <= 0;
 		if ( $tournament_id > 0 && get_post_type( $tournament_id ) !== self::TOURNAMENT_POST_TYPE ) {
 			return new \WP_Error( 'rondo_tournament_not_found', __( 'Toernooi niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
 		}
@@ -121,6 +122,7 @@ final class TournamentService {
 				'schedule'              => $schedule,
 			]
 		);
+		TournamentActivityLog::record( (int) $saved_id, $is_new ? 'tournament_created' : 'tournament_updated', $actor_user_id );
 
 		return $this->format_tournament( (int) $saved_id, true );
 	}
@@ -134,33 +136,111 @@ final class TournamentService {
 
 		$fields = Fields::all_for_post( $tournament_id );
 		$result = [
-			'id'                    => $tournament_id,
-			'name'                  => get_the_title( $tournament_id ),
-			'organizer'             => (string) ( $fields['organizer'] ?? '' ),
-			'location'              => (string) ( $fields['location'] ?? '' ),
-			'description'           => (string) ( $fields['description'] ?? '' ),
-			'internal_deadline'     => (string) ( $fields['internal_deadline'] ?? '' ),
-			'external_deadline'     => (string) ( $fields['external_deadline'] ?? '' ),
-			'payment_deadline'      => (string) ( $fields['payment_deadline'] ?? $fields['internal_deadline'] ?? '' ),
-			'payment_reminder_days' => $this->format_payment_reminder_days( $fields['payment_reminder_days'] ?? [] ),
-			'pricing_rules'         => array_values( $fields['pricing_rules'] ?? [] ),
-			'schedule'              => array_values( $fields['schedule'] ?? [] ),
-			'target_team_ids'       => array_values( array_map( 'intval', $fields['target_team_ids'] ?? [] ) ),
-			'lifecycle_status'      => (string) ( $fields['lifecycle_status'] ?? 'draft' ),
-			'published_at'          => (string) ( $fields['published_at'] ?? '' ),
-			'published_by_user_id'  => (int) ( $fields['published_by_user_id'] ?? 0 ),
-			'can_manage'            => TournamentAccess::can_manage(),
+			'id'                         => $tournament_id,
+			'name'                       => get_the_title( $tournament_id ),
+			'organizer'                  => (string) ( $fields['organizer'] ?? '' ),
+			'location'                   => (string) ( $fields['location'] ?? '' ),
+			'description'                => (string) ( $fields['description'] ?? '' ),
+			'internal_deadline'          => (string) ( $fields['internal_deadline'] ?? '' ),
+			'external_deadline'          => (string) ( $fields['external_deadline'] ?? '' ),
+			'external_status'            => (string) ( $fields['external_status'] ?? 'not_processed' ),
+			'external_status_changed_at' => (string) ( $fields['external_status_changed_at'] ?? '' ),
+			'payment_deadline'           => (string) ( $fields['payment_deadline'] ?? $fields['internal_deadline'] ?? '' ),
+			'payment_reminder_days'      => $this->format_payment_reminder_days( $fields['payment_reminder_days'] ?? [] ),
+			'pricing_rules'              => array_values( $fields['pricing_rules'] ?? [] ),
+			'schedule'                   => array_values( $fields['schedule'] ?? [] ),
+			'target_team_ids'            => array_values( array_map( 'intval', $fields['target_team_ids'] ?? [] ) ),
+			'lifecycle_status'           => (string) ( $fields['lifecycle_status'] ?? 'draft' ),
+			'published_at'               => (string) ( $fields['published_at'] ?? '' ),
+			'published_by_user_id'       => (int) ( $fields['published_by_user_id'] ?? 0 ),
+			'program_attachment_id'      => (int) ( $fields['program_attachment_id'] ?? 0 ) ?: null,
+			'program_attachment_url'     => ! empty( $fields['program_attachment_id'] ) ? (string) wp_get_attachment_url( (int) $fields['program_attachment_id'] ) : '',
+			'program_attachment_name'    => ! empty( $fields['program_attachment_id'] ) ? (string) get_the_title( (int) $fields['program_attachment_id'] ) : '',
+			'program_url'                => (string) ( $fields['program_url'] ?? '' ),
+			'program_message'            => (string) ( $fields['program_message'] ?? '' ),
+			'program_sent_at'            => (string) ( $fields['program_sent_at'] ?? '' ),
+			'can_manage'                 => TournamentAccess::can_manage(),
 		];
 
 		if ( $include_entries ) {
 			$entries                         = $this->entries_for_tournament( $tournament_id );
-			$result['entry_count']           = count( $entries );
-			$result['submitted_entry_count'] = count( array_filter( $entries, static fn( array $entry ): bool => $entry['registration_status'] === 'submitted' ) );
-			$result['registered_team_count'] = array_sum( array_column( $entries, 'registered_team_count' ) );
-			$result['player_count']          = array_sum( array_column( $entries, 'player_count' ) );
+			$totals                          = $this->totals( $entries );
+			$result['entry_count']           = $totals['overall']['selected_team_count'];
+			$result['submitted_entry_count'] = $totals['overall']['submitted_entry_count'];
+			$result['registered_team_count'] = $totals['overall']['registered_team_count'];
+			$result['player_count']          = $totals['overall']['player_count'];
+			$result['receivable_amount']     = $totals['overall']['receivable_amount'];
+			$result['received_amount']       = $totals['overall']['received_amount'];
+			$result['outstanding_amount']    = $totals['overall']['outstanding_amount'];
+			$result['open_payment_count']    = $totals['overall']['open_payment_count'];
+			$result['totals']                = $totals;
+			$result['activity']              = TournamentActivityLog::recent( $tournament_id );
+			$last_send                       = get_post_meta( $tournament_id, '_tournament_program_last_send', true );
+			$result['program_last_send']     = is_array( $last_send ) ? [
+				'sent_at'      => (string) ( $last_send['sent_at'] ?? '' ),
+				'subject'      => (string) ( $last_send['subject'] ?? '' ),
+				'sent_count'   => (int) ( $last_send['sent_count'] ?? 0 ),
+				'failed_count' => (int) ( $last_send['failed_count'] ?? 0 ),
+			] : null;
 		}
 
 		return $result;
+	}
+
+	/** Calculate authoritative totals for the whole tournament and per age group. */
+	public function totals( array $entries ): array {
+		$empty   = [
+			'selected_team_count'   => 0,
+			'submitted_entry_count' => 0,
+			'registered_team_count' => 0,
+			'player_count'          => 0,
+			'receivable_amount'     => 0.0,
+			'received_amount'       => 0.0,
+			'outstanding_amount'    => 0.0,
+			'open_payment_count'    => 0,
+		];
+		$overall = $empty;
+		$by_age  = [];
+		foreach ( $entries as $entry ) {
+			$age_group = (string) ( $entry['age_group'] ?? '' ) ?: 'Onbekend';
+			if ( ! isset( $by_age[ $age_group ] ) ) {
+				$by_age[ $age_group ] = [
+					'age_group'  => $age_group,
+					'age_number' => (int) ( $entry['age_number'] ?? 0 ),
+				] + $empty;
+			}
+			++$overall['selected_team_count'];
+			++$by_age[ $age_group ]['selected_team_count'];
+			if ( ( $entry['registration_status'] ?? '' ) !== 'submitted' ) {
+				continue;
+			}
+			++$overall['submitted_entry_count'];
+			++$by_age[ $age_group ]['submitted_entry_count'];
+			foreach ( [ 'registered_team_count', 'player_count' ] as $field ) {
+				$overall[ $field ]              += (int) ( $entry[ $field ] ?? 0 );
+				$by_age[ $age_group ][ $field ] += (int) ( $entry[ $field ] ?? 0 );
+			}
+			$amount                                     = (float) ( $entry['total_amount'] ?? 0 );
+			$overall['receivable_amount']              += $amount;
+			$by_age[ $age_group ]['receivable_amount'] += $amount;
+			if ( ( $entry['payment_state'] ?? '' ) === 'paid' ) {
+				$overall['received_amount']              += $amount;
+				$by_age[ $age_group ]['received_amount'] += $amount;
+			} elseif ( $amount > 0 ) {
+				$overall['outstanding_amount']              += $amount;
+				$by_age[ $age_group ]['outstanding_amount'] += $amount;
+				++$overall['open_payment_count'];
+				++$by_age[ $age_group ]['open_payment_count'];
+			}
+		}
+		usort(
+			$by_age,
+			static fn( array $left, array $right ): int => $right['age_number'] <=> $left['age_number']
+		);
+		return [
+			'overall'      => $overall,
+			'by_age_group' => array_values( $by_age ),
+		];
 	}
 
 	/** Return team and kader options for the publication review. */
@@ -269,6 +349,12 @@ final class TournamentService {
 				'post_status' => 'publish',
 			]
 			);
+		TournamentActivityLog::record(
+			$tournament_id,
+			'tournament_published',
+			$actor_user_id,
+			[ 'entry_count' => count( $entry_results ) ]
+		);
 
 		$email_results = [];
 		foreach ( $entry_results as $entry ) {
@@ -283,7 +369,7 @@ final class TournamentService {
 	}
 
 	/** Extend the internal response deadline for an open tournament. */
-	public function extend_deadline( int $tournament_id, $value ) {
+	public function extend_deadline( int $tournament_id, $value, int $actor_user_id = 0 ) {
 		$tournament = $this->format_tournament( $tournament_id, false );
 		if ( empty( $tournament ) ) {
 			return new \WP_Error( 'rondo_tournament_not_found', __( 'Toernooi niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
@@ -301,7 +387,85 @@ final class TournamentService {
 			return new \WP_Error( 'rondo_tournament_deadline_invalid', __( 'Kies een toekomstige interne deadline vóór de deadline van de organisatie.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
-		Fields::update_for_post( $tournament_id, 'internal_deadline', $deadline->format( 'Y-m-d H:i:s' ) );
+		$before = $tournament['internal_deadline'];
+		$after  = $deadline->format( 'Y-m-d H:i:s' );
+		Fields::update_for_post( $tournament_id, 'internal_deadline', $after );
+		TournamentActivityLog::record(
+			$tournament_id,
+			'deadline_changed',
+			$actor_user_id,
+			[
+				'before' => $before,
+				'after'  => $after,
+			]
+			);
+		return $this->format_tournament( $tournament_id, true );
+	}
+
+	/** Update the one external-processing status for a published tournament. */
+	public function update_external_status( int $tournament_id, string $status, int $actor_user_id ) {
+		$tournament = $this->format_tournament( $tournament_id, false );
+		if ( empty( $tournament ) ) {
+			return new \WP_Error( 'rondo_tournament_not_found', __( 'Toernooi niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+		}
+		if ( $tournament['lifecycle_status'] === 'draft' ) {
+			return new \WP_Error( 'rondo_tournament_not_published', __( 'Publiceer het toernooi voordat je de externe voortgang bijwerkt.', 'rondo' ), [ 'status' => 409 ] );
+		}
+		if ( $tournament['lifecycle_status'] === 'archived' ) {
+			return new \WP_Error( 'rondo_tournament_archived', __( 'Een gearchiveerd toernooi is alleen-lezen.', 'rondo' ), [ 'status' => 409 ] );
+		}
+		$status = sanitize_key( $status );
+		if ( ! in_array( $status, [ 'not_processed', 'submitted', 'confirmed' ], true ) ) {
+			return new \WP_Error( 'rondo_tournament_external_status_invalid', __( 'Kies een geldige externe voortgang.', 'rondo' ), [ 'status' => 400 ] );
+		}
+		$before = $tournament['external_status'];
+		if ( $before !== $status ) {
+			$changed_at = current_datetime()->format( 'Y-m-d H:i:s' );
+			Fields::update_many_for_post(
+				$tournament_id,
+				[
+					'external_status'            => $status,
+					'external_status_changed_at' => $changed_at,
+				]
+			);
+			TournamentActivityLog::record(
+				$tournament_id,
+				'external_status_changed',
+				$actor_user_id,
+				[
+					'before' => $before,
+					'after'  => $status,
+				]
+				);
+		}
+		return $this->format_tournament( $tournament_id, true );
+	}
+
+	/** Close, reopen or archive a published tournament. */
+	public function update_lifecycle_status( int $tournament_id, string $status, int $actor_user_id ) {
+		$tournament = $this->format_tournament( $tournament_id, false );
+		if ( empty( $tournament ) ) {
+			return new \WP_Error( 'rondo_tournament_not_found', __( 'Toernooi niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+		}
+		$status = sanitize_key( $status );
+		if ( ! in_array( $status, [ 'open', 'closed', 'archived' ], true ) || $tournament['lifecycle_status'] === 'draft' ) {
+			return new \WP_Error( 'rondo_tournament_status_invalid', __( 'Kies een geldige toernooistatus.', 'rondo' ), [ 'status' => 400 ] );
+		}
+		if ( $tournament['lifecycle_status'] === 'archived' && $status !== 'archived' ) {
+			return new \WP_Error( 'rondo_tournament_archived', __( 'Een gearchiveerd toernooi is alleen-lezen.', 'rondo' ), [ 'status' => 409 ] );
+		}
+		if ( $tournament['lifecycle_status'] !== $status ) {
+			Fields::update_for_post( $tournament_id, 'lifecycle_status', $status );
+			TournamentActivityLog::record(
+				$tournament_id,
+				'lifecycle_status_changed',
+				$actor_user_id,
+				[
+					'before' => $tournament['lifecycle_status'],
+					'after'  => $status,
+				]
+				);
+		}
 		return $this->format_tournament( $tournament_id, true );
 	}
 
@@ -447,6 +611,9 @@ final class TournamentService {
 				'player_count'           => (int) ( $fields['player_count'] ?? 0 ),
 				'price_per_team'         => (float) ( $fields['price_per_team'] ?? 0 ),
 				'total_amount'           => (float) ( $fields['total_amount'] ?? 0 ),
+				'last_payment_email_at'  => (string) ( $fields['last_payment_email_at'] ?? '' ),
+				'payment_reminder_log'   => array_values( $fields['payment_reminder_log'] ?? [] ),
+				'planner_note'           => (string) ( $fields['planner_note'] ?? '' ),
 				'submitted_at'           => (string) ( $fields['submitted_at'] ?? '' ),
 				'submitted_by_user_id'   => (int) ( $fields['submitted_by_user_id'] ?? 0 ),
 				'version'                => max( 1, (int) ( $fields['version'] ?? 1 ) ),
@@ -498,6 +665,7 @@ final class TournamentService {
 		);
 		update_post_meta( $entry_id, '_tournament_last_draft_user_id', $actor_user_id );
 		update_post_meta( $entry_id, '_tournament_last_draft_at', current_datetime()->format( 'Y-m-d H:i:s' ) );
+		TournamentActivityLog::record( $entry_id, 'draft_updated', $actor_user_id, [ 'version' => $entry['version'] + 1 ] );
 
 		return $this->format_entry( $entry_id );
 	}
@@ -565,6 +733,16 @@ final class TournamentService {
 				'version'                => $entry['version'] + 1,
 			]
 		);
+		TournamentActivityLog::record(
+			$entry_id,
+			'entry_submitted',
+			$actor_user_id,
+			[
+				'registered_team_count' => $team_count,
+				'player_count'          => $player_count,
+				'total_amount'          => $price * $team_count,
+			]
+		);
 
 		$this->payments->ensure_payment( $entry_id, $actor_user_id );
 		return $this->format_entry( $entry_id );
@@ -579,6 +757,24 @@ final class TournamentService {
 	/** Send a manager-triggered reminder for one unpaid submitted entry. */
 	public function send_payment_reminder( int $entry_id ) {
 		return TournamentPaymentEmail::send_manual_reminder( $entry_id );
+	}
+
+	/** Save one planner-only operational note for a team entry. */
+	public function update_planner_note( int $entry_id, string $note, int $actor_user_id ) {
+		$entry = $this->format_entry( $entry_id );
+		if ( empty( $entry ) ) {
+			return new \WP_Error( 'rondo_tournament_entry_not_found', __( 'Inschrijfopdracht niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+		}
+		if ( $entry['tournament']['lifecycle_status'] === 'archived' ) {
+			return new \WP_Error( 'rondo_tournament_archived', __( 'Een gearchiveerd toernooi is alleen-lezen.', 'rondo' ), [ 'status' => 409 ] );
+		}
+		$before = $entry['planner_note'];
+		$after  = sanitize_textarea_field( $note );
+		if ( $before !== $after ) {
+			Fields::update_for_post( $entry_id, 'planner_note', $after );
+			TournamentActivityLog::record( $entry_id, 'planner_note_changed', $actor_user_id );
+		}
+		return $this->format_entry( $entry_id );
 	}
 
 	/** Reopen an unpaid submitted entry and retire its existing invoice. */
@@ -599,6 +795,8 @@ final class TournamentService {
 			$entry_id,
 			[
 				'invoice_id'             => null,
+				'last_payment_email_at'  => null,
+				'payment_reminder_log'   => [],
 				'payment_state'          => 'not_applicable',
 				'player_count'           => 0,
 				'price_per_team'         => 0,
@@ -620,6 +818,7 @@ final class TournamentService {
 		}
 		update_post_meta( $entry_id, '_tournament_reopened_at', current_time( 'mysql' ) );
 		update_post_meta( $entry_id, '_tournament_reopened_by_user_id', $actor_user_id );
+		TournamentActivityLog::record( $entry_id, 'entry_reopened', $actor_user_id );
 		return $this->format_entry( $entry_id );
 	}
 
@@ -666,6 +865,7 @@ final class TournamentService {
 		foreach ( $user_ids as $user_id ) {
 			update_post_meta( (int) $entry_id, '_tournament_assigned_user_' . $user_id, 1 );
 		}
+		TournamentActivityLog::record( (int) $entry_id, 'entry_created', $actor_user_id, [ 'assigned_user_count' => count( $user_ids ) ] );
 
 		return $this->format_entry( (int) $entry_id );
 	}

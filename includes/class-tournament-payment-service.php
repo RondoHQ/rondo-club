@@ -140,6 +140,7 @@ final class TournamentPaymentService {
 			Fields::update_for_post( $entry_id, 'payment_state', 'open' );
 			delete_post_meta( $entry_id, '_tournament_payment_error' );
 			$summary = $this->payment_summary( $entry_id );
+			TournamentActivityLog::record( $entry_id, 'payment_created', $actor_user_id, [ 'invoice_id' => $invoice_id ] );
 			TournamentPaymentEmail::send_initial( $entry_id );
 			return $summary;
 		} finally {
@@ -344,6 +345,7 @@ final class TournamentPaymentService {
 	private function record_error( int $entry_id, \WP_Error $error ): void {
 		Fields::update_for_post( $entry_id, 'payment_state', 'error' );
 		update_post_meta( $entry_id, '_tournament_payment_error', sanitize_text_field( $error->get_error_message() ) );
+		TournamentActivityLog::record( $entry_id, 'payment_failed', get_current_user_id(), [ 'error_code' => $error->get_error_code() ] );
 	}
 
 	private function acquire_lock( int $entry_id ) {

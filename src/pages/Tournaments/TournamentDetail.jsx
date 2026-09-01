@@ -1,27 +1,21 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Mail, Plus, RefreshCw, RotateCcw, Send, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Send, Trash2 } from 'lucide-react';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   useDeleteTournament,
   usePublishTournament,
-  useReopenTournamentEntry,
-  useRetryTournamentPaymentLink,
-  useSendTournamentPaymentReminder,
   useExtendTournamentDeadline,
   useSaveTournament,
   useTournament,
   useTournamentAssignmentOptions,
-  useTournamentEntries,
 } from '@/hooks/useTournaments';
 import {
-  formatTournamentCurrency,
   formatTournamentDate,
-  tournamentPaymentStatus,
-  tournamentPaymentToneClasses,
   toDateInput,
 } from './tournamentFormatters';
+import TournamentOperations from './TournamentOperations';
 
 const emptyTournament = {
   name: '',
@@ -248,77 +242,6 @@ function PublishPanel({ tournament }) {
   );
 }
 
-function EntriesOverview({ tournamentId }) {
-  const { data: entries = [], isLoading, error } = useTournamentEntries(tournamentId);
-  const retryPayment = useRetryTournamentPaymentLink();
-  const sendReminder = useSendTournamentPaymentReminder();
-  const reopenEntry = useReopenTournamentEntry();
-  const [actionMessage, setActionMessage] = useState('');
-
-  const remind = async (entry) => {
-    setActionMessage('');
-    try {
-      await sendReminder.mutateAsync(entry.id);
-      setActionMessage(`Betaalherinnering voor ${entry.team_name} verstuurd.`);
-    } catch {
-      // The mutation error is rendered above the table.
-    }
-  };
-
-  const reopen = (entry) => {
-    if (!window.confirm(`Inschrijving van ${entry.team_name} heropenen? De huidige betaallink wordt ingetrokken. Na de nieuwe bevestiging maakt Rondo een nieuwe factuur en betaallink.`)) return;
-    setActionMessage('');
-    reopenEntry.mutate(entry.id, { onSuccess: () => setActionMessage(`Inschrijving van ${entry.team_name} heropend.`) });
-  };
-  if (isLoading) return <ContentLoadingSpinner />;
-  return (
-    <section className="card overflow-hidden">
-      <div className="border-b border-gray-200 p-5 dark:border-gray-700"><h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Voortgang per Rondo-team</h2></div>
-      {error ? <div className="p-5"><ErrorNotice error={error} /></div> : null}
-      {retryPayment.error ? <div className="p-5"><ErrorNotice error={retryPayment.error} /></div> : null}
-      {sendReminder.error ? <div className="p-5"><ErrorNotice error={sendReminder.error} /></div> : null}
-      {reopenEntry.error ? <div className="p-5"><ErrorNotice error={reopenEntry.error} /></div> : null}
-      {actionMessage ? <div className="p-5 text-sm text-green-700 dark:text-green-300">{actionMessage}</div> : null}
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-700">
-          <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-gray-800"><tr><th className="px-4 py-3">Team</th><th className="px-4 py-3">Inschrijving</th><th className="px-4 py-3">Aantallen</th><th className="px-4 py-3">Contact</th><th className="px-4 py-3">Kader</th><th className="px-4 py-3">Bedrag</th><th className="px-4 py-3">Betaling</th></tr></thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">{entries.map((entry) => {
-            const paymentStatus = tournamentPaymentStatus(entry);
-            return (
-            <tr key={entry.id}>
-              <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{entry.team_name}</td>
-              <td className="px-4 py-3">{entry.registration_status === 'submitted' ? <span className="inline-flex items-center text-green-700 dark:text-green-300"><CheckCircle2 className="mr-1 h-4 w-4" />Ingeschreven</span> : <span className="text-amber-700 dark:text-amber-300">Niet ingeschreven</span>}</td>
-              <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{entry.registered_team_count} teams · {entry.player_count} spelers</td>
-              <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{entry.contact_name || 'Nog niet ingevuld'}</td>
-              <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{entry.assignees.map((assignee) => assignee.name).join(', ')}</td>
-              <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{entry.registration_status === 'submitted' ? formatTournamentCurrency(entry.total_amount) : '—'}</td>
-              <td className="px-4 py-3">
-                <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${tournamentPaymentToneClasses(paymentStatus.tone)}`}>{paymentStatus.label}</span>
-                {entry.payment_state === 'paid' && entry.paid_at ? <span className="mt-1 block text-xs text-gray-500">{formatTournamentDate(entry.paid_at)}</span> : null}
-                {entry.payment_state === 'error' && entry.can_retry_payment ? (
-                  <button type="button" className="mt-2 inline-flex items-center text-xs font-medium text-bright-cobalt dark:text-electric-cyan" disabled={retryPayment.isPending} onClick={() => retryPayment.mutate(entry.id)}>
-                    <RefreshCw className={`mr-1 h-3.5 w-3.5 ${retryPayment.isPending ? 'animate-spin' : ''}`} />Betaallink maken
-                  </button>
-                ) : null}
-                {entry.registration_status === 'submitted' && entry.payment_state === 'open' ? (
-                  <button type="button" className="mt-2 flex items-center text-xs font-medium text-bright-cobalt dark:text-electric-cyan" disabled={sendReminder.isPending} onClick={() => remind(entry)}>
-                    <Mail className="mr-1 h-3.5 w-3.5" />Betaalherinnering sturen
-                  </button>
-                ) : null}
-                {entry.registration_status === 'submitted' && entry.payment_state !== 'paid' ? (
-                  <button type="button" className="mt-2 flex items-center text-xs font-medium text-gray-600 dark:text-gray-300" disabled={reopenEntry.isPending} onClick={() => reopen(entry)}>
-                    <RotateCcw className="mr-1 h-3.5 w-3.5" />Inschrijving heropenen
-                  </button>
-                ) : null}
-              </td>
-            </tr>
-          );})}</tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
 function DeadlinePanel({ tournament }) {
   const extendDeadline = useExtendTournamentDeadline();
   const [deadline, setDeadline] = useState(() => toDateInput(tournament.internal_deadline));
@@ -398,7 +321,7 @@ export default function TournamentDetail() {
       {(isNew || tournament.lifecycle_status === 'draft') ? <DraftEditor key={tournament?.id || 'new'} tournament={tournament} /> : null}
       {tournament?.lifecycle_status === 'draft' ? <PublishPanel tournament={tournament} /> : null}
       {tournament?.lifecycle_status === 'open' ? <DeadlinePanel key={tournament.internal_deadline} tournament={tournament} /> : null}
-      {tournament && tournament.lifecycle_status !== 'draft' ? <EntriesOverview tournamentId={tournament.id} /> : null}
+      {tournament && tournament.lifecycle_status !== 'draft' ? <TournamentOperations tournament={tournament} /> : null}
       {tournament ? <DeleteTournamentPanel tournament={tournament} /> : null}
     </div>
   );

@@ -67,10 +67,6 @@ final class TournamentPaymentEmail {
 		if ( empty( $recipients ) ) {
 			return new \WP_Error( 'rondo_tournament_payment_recipient_missing', __( 'Er is geen geldig e-mailadres voor het toegewezen kader.', 'rondo' ), [ 'status' => 409 ] );
 		}
-		if ( $moment_key !== '' ) {
-			update_post_meta( $entry_id, $moment_key, current_time( 'mysql' ) );
-		}
-
 		$tournament_id     = (int) ( $fields['tournament_id'] ?? 0 );
 		$tournament        = get_post( $tournament_id );
 		$tournament_fields = Fields::all_for_post( $tournament_id );
@@ -99,9 +95,6 @@ final class TournamentPaymentEmail {
 				];
 				continue;
 			}
-			if ( $kind === 'initial' ) {
-				update_post_meta( $entry_id, $sent_key, current_time( 'mysql' ) );
-			}
 			$body      = sprintf(
 				'<p>Hallo %s,</p><p>%s voor <strong>%s</strong> bij <strong>%s</strong>.</p><ul><li>%d %s</li><li>%d spelers</li><li>Totaal: <strong>%s</strong></li><li>Betaal uiterlijk: <strong>%s</strong></li></ul>',
 				esc_html( (string) ( $assignee['name'] ?? '' ) ),
@@ -129,14 +122,63 @@ final class TournamentPaymentEmail {
 				'user_id' => $user_id,
 				'sent'    => $sent,
 			];
+			if ( $kind === 'initial' && $sent ) {
+				update_post_meta( $entry_id, $sent_key, current_time( 'mysql' ) );
+			}
+		}
+
+		if ( $kind === 'initial' && ! empty( $results ) && count( array_filter( $results, static fn( array $row ): bool => ! empty( $row['existing'] ) ) ) === count( $results ) ) {
+			return [
+				'existing'   => true,
+				'sent_count' => 0,
+				'recipients' => $results,
+			];
 		}
 
 		$sent_count = count( array_filter( $results, static fn( array $row ): bool => $row['sent'] ) );
+		$sent_at    = current_datetime()->format( 'Y-m-d H:i:s' );
+		$log        = is_array( $fields['payment_reminder_log'] ?? null ) ? array_values( $fields['payment_reminder_log'] ) : [];
+		$log[]      = [
+			'actor_user_id' => get_current_user_id(),
+			'sent_at'       => $sent_at,
+			'sent_count'    => $sent_count,
+			'success'       => $sent_count === count( $results ),
+			'type'          => $kind,
+		];
+		Fields::update_many_for_post(
+			$entry_id,
+			[
+				'last_payment_email_at' => $sent_at,
+				'payment_reminder_log'  => $log,
+			]
+		);
 		if ( $sent_count < count( $results ) ) {
 			update_post_meta( $entry_id, '_tournament_payment_email_error', current_time( 'mysql' ) );
+			TournamentActivityLog::record(
+				$entry_id,
+				'payment_email_failed',
+				get_current_user_id(),
+				[
+					'type'            => $kind,
+					'sent_count'      => $sent_count,
+					'recipient_count' => count( $results ),
+				]
+				);
 			return new \WP_Error( 'rondo_tournament_payment_email_failed', __( 'De betaalmail kon niet aan alle kaderleden worden verstuurd.', 'rondo' ), [ 'status' => 502 ] );
 		}
+		if ( $moment_key !== '' ) {
+			update_post_meta( $entry_id, $moment_key, $sent_at );
+		}
 		delete_post_meta( $entry_id, '_tournament_payment_email_error' );
+		TournamentActivityLog::record(
+			$entry_id,
+			'payment_email_sent',
+			get_current_user_id(),
+			[
+				'type'       => $kind,
+				'sent_count' => $sent_count,
+			]
+			);
 		return [
 			'days_before' => $days_before,
 			'sent_count'  => $sent_count,

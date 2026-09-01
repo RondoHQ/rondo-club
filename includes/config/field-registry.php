@@ -3807,6 +3807,28 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'type' => 'date_time_picker',
           'wire_format' => 'Y-m-d\\TH:i:sP',
         ),
+        'external_status' =>
+        array (
+          'canonical_name' => 'external_status',
+          'default_value' => 'not_processed',
+          'key' => 'field_tournament_external_status',
+          'label' => 'Externe voortgang',
+          'name' => 'external_status',
+          'storage_name' => 'external_status',
+          'type' => 'select',
+        ),
+        'external_status_changed_at' =>
+        array (
+          'canonical_name' => 'external_status_changed_at',
+          'key' => 'field_tournament_external_status_changed_at',
+          'label' => 'Externe voortgang gewijzigd op',
+          'name' => 'external_status_changed_at',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'external_status_changed_at',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
         'internal_deadline' =>
         array (
           'canonical_name' => 'internal_deadline',
@@ -3931,6 +3953,49 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
             ),
           ),
           'type' => 'repeater',
+        ),
+        'program_attachment_id' =>
+        array (
+          'allow_null' => 1,
+          'canonical_name' => 'program_attachment_id',
+          'key' => 'field_tournament_program_attachment_id',
+          'label' => 'Programmabestand',
+          'library' => 'all',
+          'mime_types' => 'pdf',
+          'name' => 'program_attachment_id',
+          'return_format' => 'id',
+          'storage_name' => 'program_attachment_id',
+          'type' => 'file',
+        ),
+        'program_message' =>
+        array (
+          'canonical_name' => 'program_message',
+          'key' => 'field_tournament_program_message',
+          'label' => 'Programmatekst',
+          'name' => 'program_message',
+          'storage_name' => 'program_message',
+          'type' => 'textarea',
+        ),
+        'program_sent_at' =>
+        array (
+          'canonical_name' => 'program_sent_at',
+          'key' => 'field_tournament_program_sent_at',
+          'label' => 'Programma verzonden op',
+          'name' => 'program_sent_at',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'program_sent_at',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+        'program_url' =>
+        array (
+          'canonical_name' => 'program_url',
+          'key' => 'field_tournament_program_url',
+          'label' => 'Programmalink',
+          'name' => 'program_url',
+          'storage_name' => 'program_url',
+          'type' => 'url',
         ),
         'published_at' =>
         array (
@@ -4163,6 +4228,76 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'storage_name' => 'invoice_id',
           'type' => 'post_object',
         ),
+        'last_payment_email_at' =>
+        array (
+          'canonical_name' => 'last_payment_email_at',
+          'key' => 'field_tournament_entry_last_payment_email_at',
+          'label' => 'Laatste betaalmail',
+          'name' => 'last_payment_email_at',
+          'storage_format' => 'Y-m-d H:i:s',
+          'storage_name' => 'last_payment_email_at',
+          'timezone' => 'site',
+          'type' => 'date_time_picker',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+        ),
+        'payment_reminder_log' =>
+        array (
+          'canonical_name' => 'payment_reminder_log',
+          'key' => 'field_tournament_entry_payment_reminder_log',
+          'label' => 'Log betaalmails',
+          'name' => 'payment_reminder_log',
+          'storage_name' => 'payment_reminder_log',
+          'sub_fields' =>
+          array (
+            'actor_user_id' =>
+            array (
+              'canonical_name' => 'actor_user_id',
+              'key' => 'field_tournament_entry_payment_log_actor_user_id',
+              'label' => 'Gebruiker',
+              'name' => 'actor_user_id',
+              'storage_name' => 'actor_user_id',
+              'type' => 'number',
+            ),
+            'sent_at' =>
+            array (
+              'canonical_name' => 'sent_at',
+              'key' => 'field_tournament_entry_payment_log_sent_at',
+              'label' => 'Verzonden op',
+              'name' => 'sent_at',
+              'storage_name' => 'sent_at',
+              'type' => 'text',
+            ),
+            'sent_count' =>
+            array (
+              'canonical_name' => 'sent_count',
+              'key' => 'field_tournament_entry_payment_log_sent_count',
+              'label' => 'Aantal verzonden',
+              'min' => 0,
+              'name' => 'sent_count',
+              'storage_name' => 'sent_count',
+              'type' => 'number',
+            ),
+            'success' =>
+            array (
+              'canonical_name' => 'success',
+              'key' => 'field_tournament_entry_payment_log_success',
+              'label' => 'Gelukt',
+              'name' => 'success',
+              'storage_name' => 'success',
+              'type' => 'true_false',
+            ),
+            'type' =>
+            array (
+              'canonical_name' => 'type',
+              'key' => 'field_tournament_entry_payment_log_type',
+              'label' => 'Type',
+              'name' => 'type',
+              'storage_name' => 'type',
+              'type' => 'text',
+            ),
+          ),
+          'type' => 'repeater',
+        ),
         'payment_state' =>
         array (
           'canonical_name' => 'payment_state',
@@ -4172,6 +4307,15 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'name' => 'payment_state',
           'storage_name' => 'payment_state',
           'type' => 'select',
+        ),
+        'planner_note' =>
+        array (
+          'canonical_name' => 'planner_note',
+          'key' => 'field_tournament_entry_planner_note',
+          'label' => 'Interne notitie',
+          'name' => 'planner_note',
+          'storage_name' => 'planner_note',
+          'type' => 'textarea',
         ),
         'price_per_team' =>
         array (

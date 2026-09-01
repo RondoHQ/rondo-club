@@ -156,3 +156,48 @@ export function useSendTournamentPaymentReminder() {
 export function useReopenTournamentEntry() {
   return useManagerEntryMutation(async (id) => (await prmApi.reopenTournamentEntry(id)).data);
 }
+
+export function useUpdateTournamentPlannerNote() {
+  return useManagerEntryMutation(async ({ id, plannerNote }) => (await prmApi.updateTournamentPlannerNote(id, plannerNote)).data);
+}
+
+function useManagerTournamentMutation(mutationFn) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: (tournament) => {
+      if (!tournament?.id) return;
+      const id = Number(tournament.id);
+      queryClient.setQueryData(['tournaments', id], tournament);
+      queryClient.invalidateQueries({ queryKey: ['tournaments'] });
+      queryClient.invalidateQueries({ queryKey: ['tournaments', id, 'entries'] });
+      queryClient.invalidateQueries({ queryKey: ['tournament-entries'] });
+    },
+  });
+}
+
+export function useUpdateTournamentExternalStatus() {
+  return useManagerTournamentMutation(async ({ id, externalStatus }) => (await prmApi.updateTournamentExternalStatus(id, externalStatus)).data);
+}
+
+export function useUpdateTournamentLifecycleStatus() {
+  return useManagerTournamentMutation(async ({ id, lifecycleStatus }) => (await prmApi.updateTournamentLifecycleStatus(id, lifecycleStatus)).data);
+}
+
+export function useSaveTournamentProgram() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }) => (await prmApi.saveTournamentProgram(id, data)).data,
+    onSuccess: (result) => {
+      const id = Number(result.tournament.id);
+      queryClient.setQueryData(['tournaments', id], result.tournament);
+      queryClient.invalidateQueries({ queryKey: ['tournaments'] });
+    },
+  });
+}
+
+export function useTournamentExport() {
+  return useMutation({
+    mutationFn: async ({ id, format }) => prmApi.downloadTournamentExport(id, format),
+  });
+}

@@ -1,6 +1,6 @@
 # PRD: Toernooi-inschrijvingen en betalingen
 
-**Status:** In uitvoering — mijlpalen 1 en 2 geïmplementeerd; externe verwerking, export en programma volgen nog
+**Status:** Geïmplementeerd — mijlpalen 1, 2 en 3 zijn operationeel
 **Datum:** 2026-08-27
 **Eigenaar:** Toernooiplanning
 **Raakt:** Rondo Club, Kaderlijst, Financiën, Mollie en Lettermint
@@ -829,19 +829,19 @@ Er gebeurt niets. De planner ziet **Niet ingeschreven** en Rondo verstuurt geen 
 - [x] Alleen definitief ingeschreven, onbetaalde teams ontvangen betaalherinneringen.
 - [x] Iedere geplande herinnering wordt per entry maximaal eenmaal verstuurd.
 - [x] Een betaling die vóór verzending binnenkomt voorkomt de herinnering.
-- [ ] De programmamail bereikt alleen de unieke adressen van toegewezen kaderleden en de ene
+- [x] De programmamail bereikt alleen de unieke adressen van toegewezen kaderleden en de ene
   contactpersoon van definitief ingeschreven Rondo-teams.
-- [ ] Niet-ingeschreven teams ontvangen geen programmamail.
-- [ ] Verzendresultaten en mislukkingen zijn voor de planner controleerbaar.
+- [x] Niet-ingeschreven teams ontvangen geen programmamail.
+- [x] Verzendresultaten en mislukkingen zijn voor de planner controleerbaar.
 
 ### Overzicht en export
 
-- [ ] Het planner-overzicht toont geselecteerde teams, inschrijvingen, aantallen, contactpersonen,
+- [x] Het planner-overzicht toont geselecteerde teams, inschrijvingen, aantallen, contactpersonen,
   bedragen en betaalstatus in één tabel.
-- [ ] Totalen per leeftijdslaag en voor het hele toernooi sluiten exact aan op de definitieve
+- [x] Totalen per leeftijdslaag en voor het hele toernooi sluiten exact aan op de definitieve
   inschrijvingen.
-- [ ] CSV- en PDF-export bevatten voldoende informatie om het externe formulier over te nemen.
-- [ ] Niet-ingeschreven teams blijven zichtbaar zonder dat zij als afgemeld worden weergegeven.
+- [x] CSV- en PDF-export bevatten voldoende informatie om het externe formulier over te nemen.
+- [x] Niet-ingeschreven teams blijven zichtbaar zonder dat zij als afgemeld worden weergegeven.
 
 ## 17. Teststrategie
 
@@ -920,6 +920,8 @@ alleen openstaande betalingen.
 
 **Uitkomst:** de hele interne toernooicyclus staat in Rondo; alleen de feitelijke invoer bij de
 externe organisator blijft handmatig.
+
+**Opgeleverd in:** Rondo Club 35.28.0.
 
 Alle drie mijlpalen zijn nodig voordat de module als eerste productierelease aan toernooiplanners
 wordt aangeboden.
