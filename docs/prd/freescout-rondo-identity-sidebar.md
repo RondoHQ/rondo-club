@@ -84,6 +84,11 @@ guard and manual grant/revoke behavior.
     from a person timeline to FreeScout, not a message archive: one idempotent activity containing
     the conversation subject, creation time and server-generated link, with no message body,
     attachment, recipient or reply content.
+23. Conversation activities use the same normalized exact-email matcher as the sidebar, but under
+    integration service scope rather than the viewing agent's scope. All current FreeScout customer
+    emails are compared with Rondo `email_1` and `email_2`; exactly one person may match. No phone,
+    name, FreeScout ID, KNVB ID, SQLite mapping or automatic persistent customer binding may select
+    a person.
 
 ## Why this replaces copied customer context
 
@@ -975,26 +980,35 @@ Explicitly excluded unless a future mailbox policy and Rondo capability both all
 
 ## Customer matching
 
-Version one matches in this order:
+The shared matching core works in this order:
 
 1. Normalize all FreeScout customer emails.
 2. Search Rondo for exact normalized matches in canonical email fields.
 3. Deduplicate matches by person ID.
-4. Render a record only when exactly one accessible person remains.
+4. Accept a person only when exactly one candidate remains in the caller's permitted scope.
+
+The two callers apply different scopes without changing the identity rule:
+
+- the sidebar intersects candidates with the current agent's Rondo visibility and renders only one
+  accessible match;
+- conversation activity delivery uses the integration service scope across active and former
+  people, then relies on normal Rondo person/timeline authorization when humans read the pointer.
 
 Rules:
 
 - Case differences are ignored.
 - An exact secondary email is valid.
+- Synthetic `@members.rondo.invalid`, missing and malformed addresses are discarded before search.
 - Phone numbers never select a person automatically.
+- Names, FreeScout customer IDs, `freescout_id`, KNVB IDs and old SQLite mappings never break a tie
+  or select a person.
 - A shared email returning multiple people produces an ambiguous state.
 - An inaccessible record is indistinguishable from no match.
 - The agent may open Rondo search, but the sidebar never asks them to pick from inaccessible people.
 - No match state contains no inferred membership information.
 
-A future stable customer-to-person mapping may be added after an explicit, audited linking action.
-Email matching remains the rollout baseline because the goal is to retire dependence on copied
-FreeScout IDs.
+Version one creates no persistent customer-to-person binding from an automatic match. A future
+explicit, audited linking action may add one, but it is not required to retire copied FreeScout IDs.
 
 ## OAuth and account lifecycle
 
@@ -1099,16 +1113,20 @@ subject and FreeScout link. It does not copy individual replies, and once create
 conversation status in sync.
 
 The long-term version preserves that deliberately small product surface while removing the
-customer-enrichment dependency:
+customer-enrichment dependency. Current FreeScout core exposes both inbound
+`CustomerCreatedConversation` and agent-created `UserCreatedConversation` events, the
+`ConversationCustomerChanged` event and all emails through the customer relation; the
+compatibility spike must still prove the module listener timing and repair behavior:
 
-- Rondo Integration becomes the event source after a compatibility proof identifies a reliable
-  FreeScout conversation-created hook; the existing daily job remains the fallback until event
-  delivery and repair are accepted;
+- Rondo Integration listens for both inbound and agent-created conversations; the existing daily
+  job remains the fallback until both paths, customer reassignment and missed-event repair are
+  accepted;
 - the signed event contains only the configured FreeScout instance, numeric conversation and
-  customer identifiers, mailbox key, plain-text subject, creation time and the minimum customer
-  matching inputs approved by the next decision;
-- Rondo resolves the person under the separately approved matching policy; a FreeScout-supplied
-  Rondo person ID, KNVB ID or sidebar match result is never trusted as authority;
+  customer identifiers, mailbox key, plain-text subject, creation time and the customer's current
+  normalized email set;
+- Rondo resolves the person through the shared exact-email matcher; a FreeScout-supplied Rondo
+  person ID, KNVB ID, `freescout_id`, name, phone or sidebar match result is never trusted as
+  authority;
 - Rondo stores the pointer as its existing native `rondo_activity` comment plus comment meta for
   the FreeScout instance and conversation ID; no custom Rondo table is introduced;
 - the instance-and-conversation pair is the idempotency key, so retry, event replay and repair
@@ -1119,9 +1137,26 @@ customer-enrichment dependency:
   or agent identity is stored in Rondo;
 - existing historical activity comments stay in place during cutover and rollback.
 
-The exact customer-to-person matching and reassignment behavior is the next product decision. The
-event-driven path cannot replace the current batch until that policy and a missed-event repair path
-pass the compatibility checklist.
+Match and repair outcomes are explicit:
+
+- one person: create or confirm the approved activity on that person;
+- zero or multiple people: create no visible activity; Rondo returns only `no_match` or
+  `ambiguous`, and the module-owned delivery queue records IDs, attempts and reason code without
+  storing another copy of the email addresses;
+- hourly repair reloads the customer's current emails from FreeScout and retries pending delivery;
+- a later FreeScout customer-email edit or Rondo email change may resolve a pending delivery, but
+  never moves an already matched historical pointer by itself;
+- an explicit FreeScout conversation customer change is authoritative for association: re-run the
+  matcher, move the existing activity when the new customer uniquely matches another person, or
+  hide it as pending when the new customer has no unique match;
+- moving uses the WordPress comment API to change `comment_post_ID`; hiding retains the same comment
+  with non-approved status and match-state comment meta, so repair can restore it without deletion
+  or a second activity;
+- every move, hide and restore is idempotent and audited by instance/conversation and old/new Rondo
+  IDs without email addresses in the log.
+
+The event-driven path cannot replace the current batch until creation from both directions,
+customer reassignment and missed-event repair pass the compatibility checklist.
 
 ## Security requirements
 
@@ -1176,6 +1211,8 @@ pass the compatibility checklist.
 - No credentials, raw tokens, signatures, personal payloads or returned HTML in normal logs.
 - Conversation activity events and logs never contain message bodies, previews, recipients,
   attachments or agent identity; Rondo escapes the subject and constructs the FreeScout link.
+- Customer emails are transient matching inputs for the signed activity request; neither Rondo
+  activity meta nor integration logs retain another copy of them.
 - Rate limiting per FreeScout instance, agent and source IP where reliable.
 - Response cache keys include mailbox policy and effective authorization class; no cross-user PII
   cache leakage.
@@ -1185,6 +1222,8 @@ pass the compatibility checklist.
 
 - Document FreeScout as a recipient/display surface for live Rondo data in the processing record.
 - Send only customer identifiers needed for exact matching.
+- For activity delivery, send only the customer's current normalized emails and discard them after
+  matching; pending repair reloads them from FreeScout instead of storing a queue copy.
 - Send only agent ID/email needed for identity mapping.
 - Do not persist sidebar person payloads in FreeScout.
 - Avoid browser analytics, third-party fonts, external images and remote scripts inside the sidebar.
@@ -1259,6 +1298,7 @@ Required observations:
 11. FreeScout mobile-app behavior.
 12. Sandboxed `srcdoc` layout and height-bridge behavior at realistic sidebar widths.
 13. Timeout behavior with DNS failure, connection refusal, TLS error and slow response.
+14. Inbound, agent-created and customer-reassignment conversation events plus missed-event repair.
 
 The spike produces captured request shapes with secrets redacted, a compatibility matrix and a
 go/no-go decision. It does not use production member data.
@@ -1317,12 +1357,16 @@ login, complete token validation and a confirmed current-agent hook.
 - Preserve a small visible refresh action and graceful failure state.
 - Add allowlisted accent settings and a live preview without arbitrary CSS support.
 - Add the responsive customer-sidebar maximum-width setting and coordinated conversation spacing.
+- Add the inbound/agent-created/customer-change activity listeners and module-owned pending-delivery
+  queue without storing email copies.
 
 ### Phase 3: Rondo sidebar service
 
 - Add signature/replay validation.
 - Add agent mapping and effective-user authorization.
 - Add exact customer matching.
+- Reuse that matcher under integration scope for the signed conversation-activity endpoint.
+- Create idempotent native activity comments and implement pending, move, hide and restore behavior.
 - Add mailbox policies and the Ledenadministratie view.
 - Add no-match, ambiguous, unauthorized and unavailable states.
 - Link all mutations to authenticated Rondo pages.
@@ -1345,7 +1389,8 @@ login, complete token validation and a confirmed current-agent hook.
 - Enable Rondo OIDC login without forcing it.
 - Rehearse break-glass recovery.
 - Disable customer enrichment only after acceptance.
-- Keep conversation activity sync until separately approved.
+- Keep the conversation-activity product feature; disable its daily batch only after the module
+  event, exact-email matching, reassignment and repair path is accepted.
 
 ## Test matrix
 
@@ -1482,12 +1527,22 @@ login, complete token validation and a confirmed current-agent hook.
 
 - One new matched conversation creates exactly one `rondo_activity` pointer.
 - Replaying the same instance-and-conversation event creates no duplicate.
+- Both inbound and agent-created conversations use the same matching and idempotency rules.
+- All current customer emails are normalized and compared only with Rondo `email_1` and `email_2`;
+  exactly one integration-scope person may remain.
+- Former members remain eligible for activity matching; human readers still need normal Rondo
+  permission for that person and timeline.
+- Name, phone, FreeScout/KNVB ID and SQLite mapping inputs cannot select or disambiguate a person.
 - The activity contains only escaped subject, creation date/time and a server-generated FreeScout
   link; message, reply, recipient, attachment, customer-profile and agent data are absent.
 - A malformed instance, conversation ID, timestamp or signature creates no activity.
 - A FreeScout-supplied Rondo or KNVB ID is ignored.
 - An unmatched or ambiguous customer creates no person activity and remains eligible for repair
   after the matching state changes.
+- Email edits may resolve pending delivery but do not silently move an approved historical
+  pointer.
+- An explicit conversation customer change moves the pointer only after a new unique match; zero or
+  multiple matches hide it pending repair rather than leave it on the previous person.
 - Existing historical pointers remain readable after event delivery replaces the daily batch.
 - Disabling event delivery can restore the previous batch during its rollback window without
   duplicating activities already keyed to the same conversation.
@@ -1537,6 +1592,8 @@ The milestone is complete only when:
   payload keys;
 - each matched FreeScout conversation produces one minimal idempotent Rondo activity pointer while
   FreeScout remains the sole store for message content;
+- activity matching uses only the unique normalized intersection of current FreeScout customer
+  emails and Rondo `email_1`/`email_2`, with deterministic pending and reassignment behavior;
 - zero-match and multiple-match cases disclose no person data;
 - an agent lacking Rondo access cannot retrieve the sidebar record by changing IDs;
 - an unreachable Rondo endpoint does not freeze FreeScout or exhaust workers;
@@ -1581,11 +1638,9 @@ The milestone is complete only when:
 ## Open decisions before implementation
 
 1. Exact production FreeScout mailbox ID and stable key for Ledenadministratie.
-2. How conversation activity person matching works after customer enrichment and FreeScout ID
-   reverse sync are retired.
-3. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
-4. Audit retention period and operational owners for failed provisioning events.
-5. Final module repository, protected release workflow and update-asset URLs.
-6. Initial production values for interface accent and interface accent surface.
-7. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
+2. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
+3. Audit retention period and operational owners for failed provisioning events.
+4. Final module repository, protected release workflow and update-asset URLs.
+5. Initial production values for interface accent and interface accent surface.
+6. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
     200%-zoom testing.
