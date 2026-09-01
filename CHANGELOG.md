@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Het clublogo in toernooi-PDF's wordt op een vaste kophoogte geschaald, zodat de inhoud direct op de eerste pagina begint.
 - De Sportlink-rol `Assistent-trainer/coach` stelt, net als de overige actieve stafrollen, het volledige gezin vrij van verplichte inschrijftaken.
 - De lidpasscanner kan passen ook zonder geselecteerde wedstrijd controleren en toont wedstrijdstatistieken voortaan onder de scanresultaten.
 - Een datum onderin de mobiele inschrijftakenkalender schuift eerst naar het midden, zodat de details natuurlijk naar beneden openen en de pagina achter het paneel niet meescrollt.

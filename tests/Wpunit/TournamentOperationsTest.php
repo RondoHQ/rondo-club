@@ -108,6 +108,7 @@ class TournamentOperationsTest extends RondoTestCase {
 		$this->assertStringContainsString( 'background:#c8102e', $html );
 		$this->assertStringContainsString( 'background:#fff0f2', $html );
 		$this->assertStringContainsString( esc_attr( $logo_path ), $html );
+		$this->assertStringContainsString( 'style="height:52px"', $html );
 		$this->assertIsString( $pdf );
 		$this->assertStringStartsWith( '%PDF-', $pdf );
 	}
