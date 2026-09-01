@@ -260,6 +260,22 @@ The paid module remains usable only with the Rondo identity guard, one-to-one su
 Integration module rewrites failed callback redirects to `/login?oauth=0`; the disposable proof
 passes, but production forcing remains disabled until the release artifact repeats that proof.
 Identity binding and managed mailbox reconciliation are provisional passes. The paid module sends
-neither PKCE nor an OpenID Connect nonce and consumes User Info without an ID token, so the threat
-model still needs an explicit OAuth compatibility decision. The complete compatibility spike
-remains in progress.
+neither PKCE nor an OpenID Connect nonce and consumes identity JSON without an ID token.
+
+The recommended sub-decision is conditional acceptance for a non-administrator pilot. RFC 9700
+recommends, but does not mandate, PKCE for a confidential web client. The missing protection leaves
+residual authorization-code injection risk, bounded by a dedicated confidential client, exact
+redirect matching, TLS, fresh session-bound state and short-lived single-use codes. RFC 6749 permits
+`client_secret_post` but does not recommend it; the exception therefore also requires a dedicated
+rotated secret, verified HTTPS and debug logging off.
+
+The absence of an ID token is not treated as an OpenID Connect exception. OpenID Connect code flow
+requires an ID token and its validation, and UserInfo `sub` is normally checked against that token.
+The proposed production configuration removes `openid` and uses the dedicated
+`freescout_identity` OAuth scope and `/oauth/freescout-identity` resource instead. Rondo must not
+describe FreeScout as an OpenID Connect relying party.
+
+This recommendation remains pending explicit product-owner approval and the rest of the spike.
+Standards basis: [RFC 9700 section 2.1.1](https://www.rfc-editor.org/rfc/rfc9700.html#section-2.1.1),
+[RFC 6749 section 2.3.1](https://www.rfc-editor.org/rfc/rfc6749.html#section-2.3.1) and
+[OpenID Connect Core token/UserInfo validation](https://openid.net/specs/openid-connect-core-1_0-18.html#TokenResponseValidation).
