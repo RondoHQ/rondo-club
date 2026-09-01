@@ -317,6 +317,19 @@ Use synthetic mailboxes and a disposable proof listener or console test.
   is audited and invalidation is retried.
 - [ ] Miss a push event and confirm hourly repair revokes access; restore connectivity and confirm
   reconciliation runs immediately without claiming a hard deadline during the outage.
+- [ ] Confirm managed provisioning cannot activate without a valid 90–730 day retention value,
+  primary operational owner and escalation owner selection.
+- [ ] Set retention to its `90`, `365` and `730` day boundaries; reject out-of-range, malformed and
+  unsigned values without shortening the last verified policy.
+- [ ] Confirm `RONDO_AUDIT_RETENTION_DAYS` locks the displayed value and an owner change requires
+  recent local-password confirmation plus its own audit event.
+- [ ] Run daily pruning with eligible, too-new and unresolved security/access events; only eligible
+  rows are removed, bounded batches complete idempotently and aggregate deletion counts are kept.
+- [ ] Resolve an excluded failure and confirm its retention clock restarts at closure.
+- [ ] Confirm immediate critical/high notifications and the normal daily digest contain no names,
+  emails, target IDs, subject fingerprints or payload fragments.
+- [ ] Confirm escalation occurs after three failed runs or 24 hours and the health screen shows
+  severity counts, oldest-open age, owners, retention, reconciliation and prune timestamps.
 
 **Blocking failure:** safe reconciliation requires replacing all mailbox relationships, cannot
 distinguish managed access from manual access, or a revoked mailbox remains usable through an
@@ -550,6 +563,7 @@ Complete one row for every material behavior.
 | Login event | Laravel `Login` fires for existing and newly created OAuth users before redirect | Current agent available | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Use the login event for binding and provisioning |
 | Managed mailbox access | Targeted pivot attach/detach works; customer routes require the core visibility flag; production API resolves key `ledenadministratie` to mailbox ID `18`, name `Ledenadministratie`, address `ledenadministratie@svawc.nl` | Manual access preserved; local ID is verified configuration with no name/address fallback | Provisional pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) and [production mailbox mapping evidence](evidence/freescout-mailbox-mapping-2026-09-01.md) | Prove local enabled-state and mapping-drift gates; never use `sync()` |
 | Mapping settings | No production module UI exists yet | Listed Rondo keys plus local active-mailbox selector, verification/dry run, explicit state transitions and protected mass-impact actions | Custom proof required | PRD contract | Build inside Rondo Integration; no free-form identifiers or silent retargeting |
+| Audit retention and ownership | No production module policy exists yet | Per-club 90–730 days, default 365; unresolved security/access failures excluded until closure; primary and escalation administrators required | Custom proof required | PRD contract | Prove signed configuration, locked override, pruning, notification redaction and escalation |
 | Session revocation | Zero-mailbox customer/conversation denial is proven; conditional logout, binding recovery and invalidation failure remain untested | Next-request mailbox denial; logout for zero-mailbox or identity change; manual access preserved | Custom proof required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Prove session/remember-token invalidation and retry without restoring revoked pivots |
 | Force-login recovery | Paid add-on loops without a response filter; its patched `/login?oauth=0` paths work | Custom callback fails once to `/login?rondo_oauth=0`; server setting restores local login | Paid add-on **Fail**; custom retest required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Implement recovery directly in Rondo Integration |
 | Mobile | | Explicit pilot decision | | | |
