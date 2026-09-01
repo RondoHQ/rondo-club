@@ -7,6 +7,7 @@ use Rondo\Config\FinanceConfig;
 use Rondo\Finance\MollieConfig;
 use Rondo\Tournaments\TournamentPaymentService;
 use Rondo\Tournaments\TournamentPaymentReminderScheduler;
+use Rondo\Tournaments\TournamentPaymentRetryScheduler;
 use Rondo\Tournaments\TournamentService;
 use Tests\Support\RondoTestCase;
 use Tests\Support\TournamentPaymentMollieStub;
@@ -99,6 +100,26 @@ class TournamentPaymentTest extends RondoTestCase {
 		$this->assertSame( 'error', Fields::get_for_post( $entry_id, 'payment_state' ) );
 		$this->assertSame( 'error', $service->payment_summary( $entry_id )['payment_state'] );
 		$this->assertSame( 0, (int) Fields::get_for_post( $entry_id, 'invoice_id' ) );
+		$this->assertNotFalse( wp_next_scheduled( TournamentPaymentRetryScheduler::CRON_HOOK, [ $entry_id ] ) );
+	}
+
+	public function test_failed_payment_link_is_retried_automatically(): void {
+		$entry_id             = $this->create_submitted_entry( 1, 10.0 );
+		$mollie               = new TournamentPaymentMollieStub();
+		$mollie->create_error = new \WP_Error( 'temporary_provider_error', 'Tijdelijke storing.' );
+		$service              = new TournamentPaymentService( $mollie, [ $this, 'payment_account' ] );
+
+		$this->assertWPError( $service->ensure_payment( $entry_id, self::factory()->user->create() ) );
+		$this->assertNotFalse( wp_next_scheduled( TournamentPaymentRetryScheduler::CRON_HOOK, [ $entry_id ] ) );
+		$this->assertSame( 1, (int) get_post_meta( $entry_id, '_tournament_payment_retry_attempts', true ) );
+
+		$mollie->create_error = null;
+		( new TournamentPaymentRetryScheduler( $service ) )->retry( $entry_id );
+
+		$this->assertSame( 'open', $service->payment_summary( $entry_id )['payment_state'] );
+		$this->assertFalse( wp_next_scheduled( TournamentPaymentRetryScheduler::CRON_HOOK, [ $entry_id ] ) );
+		$this->assertSame( '', get_post_meta( $entry_id, '_tournament_payment_retry_attempts', true ) );
+		$this->assertSame( 2, $mollie->create_calls );
 	}
 
 	public function test_free_entry_needs_no_invoice(): void {

@@ -701,6 +701,11 @@ final class TournamentService {
 		$age_group     = (string) ( $fields['age_group_snapshot'] ?? '' );
 		$status        = (string) ( $fields['registration_status'] ?? 'open' );
 		$payment       = $this->payments->payment_summary( $entry_id, $fields );
+		$assignments   = array_values( $fields['assignment_snapshot'] ?? [] );
+		$contacts      = $this->contact_candidates( $assignments );
+		if ( $status === 'submitted' && in_array( $payment['payment_state'], [ 'error', 'expired' ], true ) ) {
+			TournamentPaymentRetryScheduler::schedule( $entry_id );
+		}
 
 		return array_merge(
 			[
@@ -711,8 +716,10 @@ final class TournamentService {
 				'team_name'              => (string) ( $fields['team_name_snapshot'] ?? '' ),
 				'age_group'              => $age_group,
 				'age_number'             => $this->age_number( $age_group ),
-				'assigned_user_ids'      => array_values( array_map( static fn( array $row ): int => (int) ( $row['user_id'] ?? 0 ), $fields['assignment_snapshot'] ?? [] ) ),
-				'assignees'              => array_values( $fields['assignment_snapshot'] ?? [] ),
+				'assigned_user_ids'      => array_values( array_map( static fn( array $row ): int => (int) ( $row['user_id'] ?? 0 ), $assignments ) ),
+				'assignees'              => $assignments,
+				'contact_candidates'     => $contacts,
+				'contact_person_id'      => (int) ( $fields['contact_person_id'] ?? 0 ),
 				'registration_status'    => $status,
 				'draft_team_entries'     => array_values( $fields['draft_team_entries'] ?? [] ),
 				'submitted_team_entries' => array_values( $fields['submitted_team_entries'] ?? [] ),
@@ -730,7 +737,6 @@ final class TournamentService {
 				'submitted_by_user_id'   => (int) ( $fields['submitted_by_user_id'] ?? 0 ),
 				'version'                => max( 1, (int) ( $fields['version'] ?? 1 ) ),
 				'can_edit'               => $status === 'open' && $this->deadline_is_open( $tournament ),
-				'can_retry_payment'      => $status === 'submitted' && ( TournamentAccess::can_manage() || TournamentAccess::is_assigned( $entry_id ) ),
 			],
 			$payment
 		);
@@ -765,12 +771,19 @@ final class TournamentService {
 			return $teams;
 		}
 
+		$contact_person_id = absint( $payload['contact_person_id'] ?? $entry['contact_person_id'] );
+		$contact           = $contact_person_id > 0 ? $this->entry_contact_candidate( $entry, $contact_person_id ) : null;
+		if ( is_wp_error( $contact ) ) {
+			return $contact;
+		}
+
 		Fields::update_many_for_post(
 			$entry_id,
 			[
-				'contact_email'      => sanitize_email( (string) ( $payload['contact_email'] ?? '' ) ),
-				'contact_mobile'     => sanitize_text_field( (string) ( $payload['contact_mobile'] ?? '' ) ),
-				'contact_name'       => sanitize_text_field( (string) ( $payload['contact_name'] ?? '' ) ),
+				'contact_email'      => $contact['email'] ?? '',
+				'contact_mobile'     => $contact['mobile'] ?? '',
+				'contact_name'       => $contact['name'] ?? '',
+				'contact_person_id'  => $contact_person_id ?: null,
 				'draft_team_entries' => $teams,
 				'version'            => $entry['version'] + 1,
 			]
@@ -811,18 +824,23 @@ final class TournamentService {
 		if ( is_wp_error( $teams ) ) {
 			return $teams;
 		}
-		$contact_name   = sanitize_text_field( (string) ( $payload['contact_name'] ?? $entry['contact_name'] ) );
-		$contact_email  = sanitize_email( (string) ( $payload['contact_email'] ?? $entry['contact_email'] ) );
-		$contact_mobile = sanitize_text_field( (string) ( $payload['contact_mobile'] ?? $entry['contact_mobile'] ) );
-		if ( $contact_name === '' || ! is_email( $contact_email ) || $contact_mobile === '' ) {
-			return new \WP_Error( 'rondo_tournament_contact_required', __( 'Vul één volledige contactpersoon voor deze inschrijving in.', 'rondo' ), [ 'status' => 400 ] );
+		$contact_person_id = absint( $payload['contact_person_id'] ?? $entry['contact_person_id'] );
+		$contact           = $this->entry_contact_candidate( $entry, $contact_person_id );
+		if ( is_wp_error( $contact ) ) {
+			return $contact;
 		}
+		if ( ! $contact['complete'] ) {
+			return new \WP_Error( 'rondo_tournament_contact_incomplete', __( 'De gekozen Rondo-persoon heeft nog geen geldig e-mailadres en mobiel nummer.', 'rondo' ), [ 'status' => 400 ] );
+		}
+		$contact_name   = $contact['name'];
+		$contact_email  = $contact['email'];
+		$contact_mobile = $contact['mobile'];
 
 		$team_count   = count( $teams );
 		$player_count = array_sum( array_map( static fn( array $team ): int => (int) $team['player_count'], $teams ) );
 		$submission   = $this->with_tournament_lock(
 			(int) $entry['tournament_id'],
-			function () use ( $actor_user_id, $contact_email, $contact_mobile, $contact_name, $entry_id, $expected_version, $player_count, $team_count, $teams ) {
+			function () use ( $actor_user_id, $contact_email, $contact_mobile, $contact_name, $contact_person_id, $entry_id, $expected_version, $player_count, $team_count, $teams ) {
 				$locked_entry = $this->format_entry( $entry_id );
 				if ( empty( $locked_entry ) ) {
 					return new \WP_Error( 'rondo_tournament_entry_not_found', __( 'Inschrijfopdracht niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
@@ -851,6 +869,7 @@ final class TournamentService {
 						'contact_email'          => $contact_email,
 						'contact_mobile'         => $contact_mobile,
 						'contact_name'           => $contact_name,
+						'contact_person_id'      => $contact_person_id,
 						'draft_team_entries'     => $teams,
 						'player_count'           => $player_count,
 						'payment_state'          => $price * $team_count > 0 ? 'creating' : 'not_applicable',
@@ -891,12 +910,6 @@ final class TournamentService {
 
 		$this->payments->ensure_payment( $entry_id, $actor_user_id );
 		return $this->format_entry( $entry_id );
-	}
-
-	/** Retry the idempotent invoice and payment-link creation for a submitted entry. */
-	public function retry_payment( int $entry_id, int $actor_user_id ) {
-		$result = $this->payments->ensure_payment( $entry_id, $actor_user_id );
-		return is_wp_error( $result ) ? $result : $this->format_entry( $entry_id );
 	}
 
 	/** Send a manager-triggered reminder for one unpaid submitted entry. */
@@ -1070,8 +1083,9 @@ final class TournamentService {
 				}
 			}
 
-			$name  = $this->person_name( $person_id, (string) $user->display_name );
-			$email = sanitize_email( (string) ( UserProvisioning::contact_email( (int) $user->ID ) ?? '' ) );
+			$name   = $this->person_name( $person_id, (string) $user->display_name );
+			$email  = sanitize_email( (string) ( UserProvisioning::contact_email( (int) $user->ID ) ?? '' ) );
+			$mobile = $this->person_mobile( $person_id );
 			foreach ( $roles_by_team as $team_id => $roles ) {
 				$by_team[ $team_id ][] = [
 					'user_id'   => (int) $user->ID,
@@ -1079,6 +1093,7 @@ final class TournamentService {
 					'name'      => $name,
 					'role'      => implode( ', ', array_values( array_unique( $roles ) ) ),
 					'email'     => $email,
+					'mobile'    => $mobile,
 				];
 			}
 		}
@@ -1088,6 +1103,52 @@ final class TournamentService {
 		}
 		unset( $candidates );
 		return $by_team;
+	}
+
+	/** Resolve the assigned Rondo people who may be the registration contact. */
+	private function contact_candidates( array $assignments ): array {
+		$candidates = [];
+		foreach ( $assignments as $assignment ) {
+			$person_id = (int) ( $assignment['person_id'] ?? 0 );
+			$user_id   = (int) ( $assignment['user_id'] ?? 0 );
+			if ( get_post_type( $person_id ) !== 'person' || $user_id <= 0 ) {
+				continue;
+			}
+
+			$email = sanitize_email( (string) ( UserProvisioning::contact_email( $user_id ) ?? '' ) );
+			if ( ! is_email( $email ) ) {
+				$email = sanitize_email( (string) ( Fields::get_for_post( $person_id, 'email_1' ) ?: Fields::get_for_post( $person_id, 'email_2' ) ) );
+			}
+			$mobile       = $this->person_mobile( $person_id );
+			$candidates[] = [
+				'user_id'         => $user_id,
+				'person_id'       => $person_id,
+				'name'            => $this->person_name( $person_id, (string) ( $assignment['name'] ?? '' ) ),
+				'role'            => (string) ( $assignment['role'] ?? '' ),
+				'email'           => $email,
+				'mobile'          => $mobile,
+				'complete'        => is_email( $email ) && $mobile !== '',
+				'is_current_user' => $user_id === get_current_user_id(),
+			];
+		}
+		return $candidates;
+	}
+
+	/** Return one assigned contact candidate or a permission-safe validation error. */
+	private function entry_contact_candidate( array $entry, int $person_id ) {
+		if ( $person_id <= 0 ) {
+			return new \WP_Error( 'rondo_tournament_contact_required', __( 'Kies een Rondo-persoon uit het toegewezen teamkader als contactpersoon.', 'rondo' ), [ 'status' => 400 ] );
+		}
+		foreach ( $entry['contact_candidates'] ?? [] as $candidate ) {
+			if ( (int) ( $candidate['person_id'] ?? 0 ) === $person_id ) {
+				return $candidate;
+			}
+		}
+		return new \WP_Error( 'rondo_tournament_contact_invalid', __( 'De gekozen contactpersoon hoort niet bij het toegewezen teamkader.', 'rondo' ), [ 'status' => 400 ] );
+	}
+
+	private function person_mobile( int $person_id ): string {
+		return sanitize_text_field( (string) ( Fields::get_for_post( $person_id, 'mobile_1' ) ?: Fields::get_for_post( $person_id, 'mobile_2' ) ) );
 	}
 
 	private function send_assignment_emails( array $entry, array $tournament ): array {

@@ -439,6 +439,8 @@ function rondo_init() {
 
 	// Tournament payment reminders — daily sweeper for configured pre-deadline moments.
 	new \Rondo\Tournaments\TournamentPaymentReminderScheduler();
+	// Failed tournament payment links retry automatically with increasing backoff.
+	new \Rondo\Tournaments\TournamentPaymentRetryScheduler();
 
 	$initialized = true;
 }

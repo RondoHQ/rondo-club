@@ -4124,6 +4124,15 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
               'storage_name' => 'name',
               'type' => 'text',
             ),
+            'mobile' =>
+            array (
+              'canonical_name' => 'mobile',
+              'key' => 'field_tournament_entry_assignment_mobile',
+              'label' => 'Mobiel',
+              'name' => 'mobile',
+              'storage_name' => 'mobile',
+              'type' => 'text',
+            ),
             'person_id' =>
             array (
               'canonical_name' => 'person_id',
@@ -4162,6 +4171,21 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'name' => 'contact_email',
           'storage_name' => 'contact_email',
           'type' => 'email',
+        ),
+        'contact_person_id' =>
+        array (
+          'allow_null' => 1,
+          'canonical_name' => 'contact_person_id',
+          'key' => 'field_tournament_entry_contact_person',
+          'label' => 'Rondo-contactpersoon',
+          'name' => 'contact_person_id',
+          'post_type' =>
+          array (
+            0 => 'person',
+          ),
+          'return_format' => 'id',
+          'storage_name' => 'contact_person_id',
+          'type' => 'post_object',
         ),
         'contact_mobile' =>
         array (

@@ -109,7 +109,6 @@ export const prmApi = {
   getTournamentEntry: (id) => api.get(`/rondo/v1/tournament-entries/${id}`),
   saveTournamentEntryDraft: (id, data) => api.patch(`/rondo/v1/tournament-entries/${id}/draft`, data),
   submitTournamentEntry: (id, data) => api.post(`/rondo/v1/tournament-entries/${id}/submit`, data),
-  retryTournamentPaymentLink: (id) => api.post(`/rondo/v1/tournament-entries/${id}/retry-payment-link`),
   sendTournamentPaymentReminder: (id) => api.post(`/rondo/v1/tournament-entries/${id}/payment-reminder`),
   reopenTournamentEntry: (id) => api.post(`/rondo/v1/tournament-entries/${id}/reopen`),
   updateTournamentPlannerNote: (id, plannerNote) => api.patch(`/rondo/v1/tournament-entries/${id}/planner-note`, { planner_note: plannerNote }),

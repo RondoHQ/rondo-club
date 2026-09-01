@@ -5,7 +5,6 @@ import {
   ExternalLink,
   FileText,
   Mail,
-  RefreshCw,
   RotateCcw,
   Save,
   Send,
@@ -13,7 +12,6 @@ import {
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import {
   useReopenTournamentEntry,
-  useRetryTournamentPaymentLink,
   useSaveTournamentProgram,
   useSendTournamentPaymentReminder,
   useTournamentEntries,
@@ -204,7 +202,6 @@ function PlannerNote({ entry, archived }) {
 }
 
 function TeamsPaymentsPanel({ tournament, entries, isLoading, error }) {
-  const retryPayment = useRetryTournamentPaymentLink();
   const sendReminder = useSendTournamentPaymentReminder();
   const reopenEntry = useReopenTournamentEntry();
   const [ageFilter, setAgeFilter] = useState('all');
@@ -243,7 +240,7 @@ function TeamsPaymentsPanel({ tournament, entries, isLoading, error }) {
         <p className="text-xs text-gray-500">{filtered.length} van {entries.length} Rondo-teams zichtbaar</p>
       </div>
       {error ? <div className="p-5"><ErrorNotice error={error} /></div> : null}
-      {(retryPayment.error || sendReminder.error || reopenEntry.error) ? <div className="p-5"><ErrorNotice error={retryPayment.error || sendReminder.error || reopenEntry.error} /></div> : null}
+      {(sendReminder.error || reopenEntry.error) ? <div className="p-5"><ErrorNotice error={sendReminder.error || reopenEntry.error} /></div> : null}
       {actionMessage ? <div className="p-5 text-sm text-green-700 dark:text-green-300">{actionMessage}</div> : null}
       <div className="overflow-x-auto">
         <table className="min-w-[1500px] divide-y divide-gray-200 text-sm dark:divide-gray-700">
@@ -258,7 +255,7 @@ function TeamsPaymentsPanel({ tournament, entries, isLoading, error }) {
                 <td className="px-4 py-3 align-top">{submitted ? <span className="inline-flex items-center text-green-700 dark:text-green-300"><CheckCircle2 className="mr-1 h-4 w-4" />Ingeschreven</span> : <span className="text-amber-700 dark:text-amber-300">Niet ingeschreven</span>}</td>
                 <td className="px-4 py-3 align-top text-gray-600 dark:text-gray-300">{submitted ? <><div>{entry.registered_team_count} teams · {entry.player_count} spelers</div><details className="mt-1"><summary className="cursor-pointer text-xs text-bright-cobalt dark:text-electric-cyan">Verdeling tonen</summary><ul className="mt-1 space-y-1 text-xs">{entry.submitted_team_entries.map((team) => <li key={team.sequence}>Team {team.sequence}: {team.player_count} spelers</li>)}</ul></details></> : '—'}</td>
                 <td className="px-4 py-3 align-top text-gray-600 dark:text-gray-300">{submitted ? <><div className="font-medium text-gray-900 dark:text-gray-100">{entry.contact_name}</div><div>{entry.contact_email}</div><div>{entry.contact_mobile}</div></> : '—'}</td>
-                <td className="px-4 py-3 align-top"><div>{submitted ? formatTournamentCurrency(entry.total_amount) : '—'}</div>{submitted ? <><span className={`mt-1 inline-flex rounded-full px-2 py-1 text-xs font-medium ${tournamentPaymentToneClasses(paymentStatus.tone)}`}>{paymentStatus.label}</span>{entry.payment_state === 'paid' && entry.paid_at ? <span className="mt-1 block text-xs text-gray-500">{formatTournamentDate(entry.paid_at)}</span> : null}{entry.payment_state === 'error' && entry.can_retry_payment && !archived ? <button type="button" className="mt-2 flex items-center text-xs font-medium text-bright-cobalt dark:text-electric-cyan" disabled={retryPayment.isPending} onClick={() => retryPayment.mutate(entry.id)}><RefreshCw className={`mr-1 h-3.5 w-3.5 ${retryPayment.isPending ? 'animate-spin' : ''}`} />Betaallink maken</button> : null}{entry.payment_state === 'open' && !archived ? <button type="button" className="mt-2 flex items-center text-xs font-medium text-bright-cobalt dark:text-electric-cyan" disabled={sendReminder.isPending} onClick={() => remind(entry)}><Mail className="mr-1 h-3.5 w-3.5" />Betaalherinnering sturen</button> : null}{entry.payment_state !== 'paid' && !archived ? <button type="button" className="mt-2 flex items-center text-xs font-medium text-gray-600 dark:text-gray-300" disabled={reopenEntry.isPending} onClick={() => reopen(entry)}><RotateCcw className="mr-1 h-3.5 w-3.5" />Inschrijving heropenen</button> : null}</> : null}</td>
+                <td className="px-4 py-3 align-top"><div>{submitted ? formatTournamentCurrency(entry.total_amount) : '—'}</div>{submitted ? <><span className={`mt-1 inline-flex rounded-full px-2 py-1 text-xs font-medium ${tournamentPaymentToneClasses(paymentStatus.tone)}`}>{paymentStatus.label}</span>{entry.payment_state === 'paid' && entry.paid_at ? <span className="mt-1 block text-xs text-gray-500">{formatTournamentDate(entry.paid_at)}</span> : null}{entry.payment_state === 'error' || entry.payment_state === 'expired' ? <span className="mt-2 block text-xs text-gray-500">Rondo maakt de betaallink automatisch opnieuw.</span> : null}{entry.payment_state === 'open' && !archived ? <button type="button" className="mt-2 flex items-center text-xs font-medium text-bright-cobalt dark:text-electric-cyan" disabled={sendReminder.isPending} onClick={() => remind(entry)}><Mail className="mr-1 h-3.5 w-3.5" />Betaalherinnering sturen</button> : null}{entry.payment_state !== 'paid' && !archived ? <button type="button" className="mt-2 flex items-center text-xs font-medium text-gray-600 dark:text-gray-300" disabled={reopenEntry.isPending} onClick={() => reopen(entry)}><RotateCcw className="mr-1 h-3.5 w-3.5" />Inschrijving heropenen</button> : null}</> : null}</td>
                 <td className="px-4 py-3 align-top text-gray-600 dark:text-gray-300">{entry.last_payment_email_at ? <><div>{formatTournamentDate(entry.last_payment_email_at, true)}</div><div className="text-xs text-gray-500">{entry.payment_reminder_log.at(-1)?.type || ''}</div></> : '—'}</td>
                 <td className="px-4 py-3 align-top"><PlannerNote key={`${entry.id}-${entry.planner_note}`} entry={entry} archived={archived} /></td>
               </tr>
