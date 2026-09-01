@@ -186,6 +186,30 @@ mismatches yield no desired-state decision. Login continues, existing mailbox an
 state remain unchanged, one redacted retryable error is recorded, and the login request does not
 retry automatically.
 
+## Additional identity edge cases
+
+The next identity pass used the same disposable provider and proof guard.
+
+| Test | Observed result | Result |
+|---|---|---|
+| State freshness | Two independent login attempts each sent a 40-character state value; the values differed | Pass |
+| Case-insensitive first link | An uppercase provider email selected one existing lowercase synthetic user, created no duplicate and committed the expected subject binding | Pass |
+| Bound subject after email change | The original administrator subject with a different provider email still resolved FreeScout user ID `1` | Pass |
+| Bound subject with another user's email | The subject already bound to user ID `2` still resolved user ID `2`, not administrator user ID `1` | Pass |
+| Minimal User Info | `sub`, `email` and boolean `email_verified: true` succeeded without `name` or `picture` | Pass |
+| Missing email | The guard returned no user data; FreeScout rendered the local error page and authenticated nobody | Pass |
+| Invalid access token | A synthetic User Info `401 invalid_token` rendered the local error page and authenticated nobody | Pass |
+| Log inspection | Authorization-code, access-token and configured-client-secret occurrence counts were all zero with OAuth debug disabled | Pass |
+
+FreeScout's `users.email` schema has a unique index. The case test created one mailbox-free user
+before login while automatic creation remained disabled, then verified that the OAuth login reused
+that row. Cleanup removed its proof binding and used FreeScout's native `deleteUser()` workflow;
+the environment returned to two active users.
+
+The binding map remained one-to-one throughout the email-change and conflicting-email tests. This
+proves that an ordinary OAuth login cannot move an existing binding. The administrator-only unlink,
+replacement and audit flow remains to be designed and tested separately.
+
 ## Force OAuth Login and recovery proof
 
 Force OAuth Login was enabled only in the disposable environment after preserving a local
@@ -235,5 +259,7 @@ The paid module remains usable only with the Rondo identity guard, one-to-one su
 `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true`. Force OAuth Login is compatible only when the Rondo
 Integration module rewrites failed callback redirects to `/login?oauth=0`; the disposable proof
 passes, but production forcing remains disabled until the release artifact repeats that proof.
-Identity binding and managed mailbox reconciliation are provisional passes; the complete
-compatibility spike remains in progress.
+Identity binding and managed mailbox reconciliation are provisional passes. The paid module sends
+neither PKCE nor an OpenID Connect nonce and consumes User Info without an ID token, so the threat
+model still needs an explicit OAuth compatibility decision. The complete compatibility spike
+remains in progress.
