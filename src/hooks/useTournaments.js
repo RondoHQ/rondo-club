@@ -60,6 +60,16 @@ export function useDeleteTournament() {
   });
 }
 
+export function useSendTournamentChangeNotification() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }) => (await prmApi.sendTournamentChangeNotification(id, data)).data,
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['tournaments', Number(id)] });
+    },
+  });
+}
+
 export function usePublishTournament() {
   const queryClient = useQueryClient();
   return useMutation({

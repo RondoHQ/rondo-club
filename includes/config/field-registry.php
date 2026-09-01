@@ -4049,7 +4049,7 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
             array (
               'canonical_name' => 'start_datetime',
               'key' => 'field_tournament_schedule_start_datetime',
-              'label' => 'Datum',
+              'label' => 'Datum en tijd',
               'name' => 'start_datetime',
               'storage_name' => 'start_datetime',
               'type' => 'text',
@@ -4069,6 +4069,17 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           ),
           'storage_name' => 'target_team_ids',
           'type' => 'relationship',
+        ),
+        'version' =>
+        array (
+          'canonical_name' => 'version',
+          'default_value' => 1,
+          'key' => 'field_tournament_version',
+          'label' => 'Versie',
+          'min' => 1,
+          'name' => 'version',
+          'storage_name' => 'version',
+          'type' => 'number',
         ),
       ),
       'kind' => 'post',

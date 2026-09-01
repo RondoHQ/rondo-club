@@ -1,6 +1,6 @@
 # PRD: Toernooi-inschrijvingen en betalingen
 
-**Status:** Mijlpalen 1, 2 en 3 operationeel; mijlpaal 4 goedgekeurd voor implementatie
+**Status:** Mijlpalen 1 tot en met 4 operationeel
 **Datum:** 2026-08-27
 **Bijgewerkt:** 2026-09-01
 **Eigenaar:** Toernooiplanning
@@ -943,20 +943,20 @@ verstuurd.
 
 ### Gepubliceerd toernooi wijzigen
 
-- [ ] Een planner kan naam, organisator, locatie, beschrijving, datum, tijd, deadlines en
+- [x] Een planner kan naam, organisator, locatie, beschrijving, datum, tijd, deadlines en
   herinneringsmomenten van een open of gesloten toernooi wijzigen.
-- [ ] Datum en tijd blijven bij laden, bewerken en opslaan volledig behouden in de site-tijdzone.
-- [ ] Een gearchiveerd toernooi kan niet worden gewijzigd.
-- [ ] Tariefregels en spelvormen zijn wijzigbaar totdat de eerste definitieve inschrijving bestaat
+- [x] Datum en tijd blijven bij laden, bewerken en opslaan volledig behouden in de site-tijdzone.
+- [x] Een gearchiveerd toernooi kan niet worden gewijzigd.
+- [x] Tariefregels en spelvormen zijn wijzigbaar totdat de eerste definitieve inschrijving bestaat
   en zijn daarna zowel in de interface als server-side vergrendeld.
-- [ ] Een toernooiwijziging verandert geen definitieve inschrijving, factuur of financiële snapshot.
-- [ ] De wijzigingsflow kan geen teams of toewijzingen toevoegen of verwijderen.
-- [ ] Een verouderde planneredit overschrijft geen nieuwere toernooiwijziging.
-- [ ] Na een deelnemersrelevante wijziging kan de planner kiezen voor opslaan zonder mail of voor
+- [x] Een toernooiwijziging verandert geen definitieve inschrijving, factuur of financiële snapshot.
+- [x] De wijzigingsflow kan geen teams of toewijzingen toevoegen of verwijderen.
+- [x] Een verouderde planneredit overschrijft geen nieuwere toernooiwijziging.
+- [x] Na een deelnemersrelevante wijziging kan de planner kiezen voor opslaan zonder mail of voor
   één wijzigingsmail.
-- [ ] De wijzigingsmail bereikt alleen unieke, geldige adressen van alle actueel toegewezen
+- [x] De wijzigingsmail bereikt alleen unieke, geldige adressen van alle actueel toegewezen
   kaderleden en de contactpersonen van definitief ingeschreven teams.
-- [ ] Wijzigingen en verzendresultaten zijn met actor en tijdstip controleerbaar in de activiteit.
+- [x] Wijzigingen en verzendresultaten zijn met actor en tijdstip controleerbaar in de activiteit.
 
 ### Overzicht en export
 
@@ -1075,7 +1075,7 @@ externe organisator blijft handmatig.
 **Uitkomst:** feedback 11605 is opgelost: een toernooicoördinator kan een gepubliceerd toernooi
 veilig naar een andere dag of tijd verplaatsen en betrokkenen desgewenst vanuit Rondo informeren.
 
-**Status:** Goedgekeurd voor implementatie.
+**Opgeleverd in:** Rondo Club 35.30.0.
 
 Mijlpalen 1 tot en met 3 vormden de eerste productierelease. Mijlpaal 4 is een afzonderlijke,
 achterwaarts compatibele uitbreiding daarop.

@@ -1,19 +1,20 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, Send, Trash2 } from 'lucide-react';
+import { ArrowLeft, Mail, Pencil, Plus, Send, Trash2, X } from 'lucide-react';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   useDeleteTournament,
   usePublishTournament,
-  useExtendTournamentDeadline,
   useSaveTournament,
+  useSendTournamentChangeNotification,
   useTournament,
   useTournamentAssignmentOptions,
 } from '@/hooks/useTournaments';
 import {
   formatTournamentDate,
   toDateInput,
+  toDateTimeInput,
 } from './tournamentFormatters';
 import TournamentOperations from './TournamentOperations';
 
@@ -48,19 +49,80 @@ function tournamentFormState(tournament) {
     external_deadline: toDateInput(source.external_deadline),
     payment_deadline: toDateInput(source.payment_deadline || source.internal_deadline),
     payment_reminder_days: source.payment_reminder_days?.length ? source.payment_reminder_days.map(Number) : [7, 2],
+    version: Number(source.version || 1),
     schedule: (source.schedule?.length ? source.schedule : emptyTournament.schedule).map((row) => ({
       ...row,
-      start_datetime: toDateInput(row.start_datetime),
+      start_datetime: toDateTimeInput(row.start_datetime),
     })),
     pricing_rules: (source.pricing_rules?.length ? source.pricing_rules : emptyTournament.pricing_rules).map((row) => ({ ...row })),
   };
 }
 
-function DraftEditor({ tournament }) {
+const tournamentChangeLabels = {
+  name: 'Naam',
+  organizer: 'Organisator',
+  location: 'Algemene locatie',
+  description: 'Uitnodiging en praktische informatie',
+  internal_deadline: 'Interne deadline',
+  payment_deadline: 'Betaaldeadline',
+  external_deadline: 'Deadline organisatie',
+  payment_reminder_days: 'Betaalherinneringen',
+  pricing_rules: 'Tarieven en spelvormen',
+  schedule: 'Datum, tijd en locatie',
+};
+
+function ChangeNotificationPanel({ tournament, change }) {
+  const sendNotification = useSendTournamentChangeNotification();
+  const [subject, setSubject] = useState(`Wijziging ${tournament.name}`);
+  const [message, setMessage] = useState('');
+  const [sent, setSent] = useState(null);
+  const preview = change.preview || {};
+
+  const send = async () => {
+    if (!window.confirm(`Wijzigingsmail versturen naar ${preview.recipient_count || 0} unieke adressen?`)) return;
+    const result = await sendNotification.mutateAsync({
+      id: tournament.id,
+      data: { activity_id: change.activity_id, subject, message },
+    });
+    setSent(result);
+  };
+
+  return (
+    <section className="card space-y-4 border-cyan-200 p-5 dark:border-cyan-900">
+      <div>
+        <h2 className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100"><Mail className="mr-2 h-5 w-5" />Betrokkenen informeren</h2>
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">De wijziging is opgeslagen. Een e-mail is optioneel.</p>
+      </div>
+      <div className="rounded-lg bg-gray-50 p-4 text-sm dark:bg-gray-800">
+        <div className="font-medium text-gray-900 dark:text-gray-100">Gewijzigd</div>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-gray-600 dark:text-gray-300">
+          {change.changed_fields.map((field) => <li key={field}>{tournamentChangeLabels[field] || field}</li>)}
+        </ul>
+        <p className="mt-3 text-gray-600 dark:text-gray-300">{preview.recipient_count || 0} unieke ontvangers, {preview.deduplicated_count || 0} ontdubbeld, {preview.invalid_count || 0} adresproblemen.</p>
+      </div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Onderwerp
+        <input className="input mt-1" value={subject} disabled={Boolean(sent)} onChange={(event) => setSubject(event.target.value)} />
+      </label>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Aanvullend bericht
+        <textarea className="input mt-1 min-h-28" value={message} disabled={Boolean(sent)} placeholder="Optioneel" onChange={(event) => setMessage(event.target.value)} />
+      </label>
+      {sendNotification.error ? <ErrorNotice error={sendNotification.error} /> : null}
+      {sent ? <p className={`text-sm ${sent.failed_count ? 'text-amber-700 dark:text-amber-300' : 'text-green-700 dark:text-green-300'}`}>{sent.sent_count} wijzigingsmails verzonden{sent.failed_count ? `, ${sent.failed_count} mislukt` : ''}.</p> : null}
+      <div className="flex justify-end">
+        <button type="button" className="btn-primary inline-flex items-center" disabled={Boolean(sent) || sendNotification.isPending || !preview.recipient_count} onClick={send}><Send className="mr-2 h-4 w-4" />{sendNotification.isPending ? 'Versturen…' : 'Wijzigingsmail versturen'}</button>
+      </div>
+    </section>
+  );
+}
+
+function TournamentEditor({ tournament, onCancel }) {
   const navigate = useNavigate();
   const saveTournament = useSaveTournament();
   const [form, setForm] = useState(() => tournamentFormState(tournament));
   const [savedMessage, setSavedMessage] = useState('');
+  const [change, setChange] = useState(null);
+  const published = tournament?.lifecycle_status && tournament.lifecycle_status !== 'draft';
+  const pricingLocked = published && !tournament.can_edit_pricing;
 
   const updateRow = (field, index, key, value) => {
     setForm((current) => ({
@@ -77,12 +139,15 @@ function DraftEditor({ tournament }) {
     event.preventDefault();
     setSavedMessage('');
     const saved = await saveTournament.mutateAsync({ id: tournament?.id, data: form });
-    setSavedMessage('Concept opgeslagen.');
+    setSavedMessage(published ? 'Toernooi bijgewerkt.' : 'Concept opgeslagen.');
+    setChange(saved.change || null);
     if (!tournament?.id) navigate(`/toernooien/${saved.id}`, { replace: true });
   };
 
   return (
+    <div className="space-y-6">
     <form className="space-y-6" onSubmit={handleSave}>
+      {published ? <div className="flex items-center justify-between gap-3"><div><h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Toernooi wijzigen</h2><p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Teams en toewijzingen blijven ongewijzigd.</p></div><button type="button" className="btn-tertiary inline-flex items-center" onClick={onCancel}><X className="mr-2 h-4 w-4" />Sluiten</button></div> : null}
       <section className="card space-y-4 p-5">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Toernooi-informatie</h2>
         <div className="grid gap-4 md:grid-cols-2">
@@ -141,7 +206,7 @@ function DraftEditor({ tournament }) {
         {form.schedule.map((row, index) => (
           <div key={index} className="grid gap-3 rounded-lg border border-gray-200 p-3 md:grid-cols-[1fr_1fr_1fr_auto] dark:border-gray-700">
             <input className="input" aria-label={`Leeftijdsgroep moment ${index + 1}`} placeholder="Bijv. O6 t/m O7" required value={row.age_group} onChange={(event) => updateRow('schedule', index, 'age_group', event.target.value)} />
-            <input className="input" aria-label={`Datum moment ${index + 1}`} type="date" required value={row.start_datetime} onChange={(event) => updateRow('schedule', index, 'start_datetime', event.target.value)} />
+            <input className="input" aria-label={`Datum en tijd moment ${index + 1}`} type="datetime-local" required value={row.start_datetime} onChange={(event) => updateRow('schedule', index, 'start_datetime', event.target.value)} />
             <input className="input" aria-label={`Locatie moment ${index + 1}`} placeholder="Locatie" value={row.location} onChange={(event) => updateRow('schedule', index, 'location', event.target.value)} />
             <button type="button" className="btn-tertiary p-2" aria-label="Moment verwijderen" disabled={form.schedule.length === 1} onClick={() => removeRow('schedule', index)}><Trash2 className="h-4 w-4" /></button>
           </div>
@@ -151,33 +216,36 @@ function DraftEditor({ tournament }) {
       <section className="card space-y-4 p-5">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tarieven en spelvorm</h2>
-          <button type="button" className="btn-tertiary inline-flex items-center" onClick={() => setForm({ ...form, pricing_rules: [...form.pricing_rules, { min_age: '', max_age: '', amount: '', game_format: '' }] })}>
+          <button type="button" className="btn-tertiary inline-flex items-center" disabled={pricingLocked} onClick={() => setForm({ ...form, pricing_rules: [...form.pricing_rules, { min_age: '', max_age: '', amount: '', game_format: '' }] })}>
             <Plus className="mr-2 h-4 w-4" />Tarief
           </button>
         </div>
+        {pricingLocked ? <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">Tarieven en spelvormen zijn vergrendeld omdat er al een definitieve inschrijving is.</p> : null}
         {form.pricing_rules.map((row, index) => (
           <div key={index} className="grid gap-3 rounded-lg border border-gray-200 p-3 md:grid-cols-[10rem_11rem_11rem_1fr_auto] dark:border-gray-700">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Vanaf leeftijd
-              <input className="input mt-1" type="number" min="1" placeholder="Bijv. 6" required value={row.min_age} onChange={(event) => updateRow('pricing_rules', index, 'min_age', event.target.value)} />
+              <input className="input mt-1" type="number" min="1" placeholder="Bijv. 6" required disabled={pricingLocked} value={row.min_age} onChange={(event) => updateRow('pricing_rules', index, 'min_age', event.target.value)} />
             </label>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tot en met leeftijd
-              <input className="input mt-1" type="number" min="1" placeholder="Bijv. 7" required value={row.max_age} onChange={(event) => updateRow('pricing_rules', index, 'max_age', event.target.value)} />
+              <input className="input mt-1" type="number" min="1" placeholder="Bijv. 7" required disabled={pricingLocked} value={row.max_age} onChange={(event) => updateRow('pricing_rules', index, 'max_age', event.target.value)} />
             </label>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bedrag per team (€)
-              <input className="input mt-1" type="number" min="0" step="0.01" placeholder="Bijv. 28" required value={row.amount} onChange={(event) => updateRow('pricing_rules', index, 'amount', event.target.value)} />
+              <input className="input mt-1" type="number" min="0" step="0.01" placeholder="Bijv. 28" required disabled={pricingLocked} value={row.amount} onChange={(event) => updateRow('pricing_rules', index, 'amount', event.target.value)} />
             </label>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Spelvorm
-              <input className="input mt-1" placeholder="Bijv. 4 tegen 4" value={row.game_format} onChange={(event) => updateRow('pricing_rules', index, 'game_format', event.target.value)} />
+              <input className="input mt-1" placeholder="Bijv. 4 tegen 4" disabled={pricingLocked} value={row.game_format} onChange={(event) => updateRow('pricing_rules', index, 'game_format', event.target.value)} />
             </label>
-            <button type="button" className="btn-tertiary self-end p-2" aria-label="Tarief verwijderen" disabled={form.pricing_rules.length === 1} onClick={() => removeRow('pricing_rules', index)}><Trash2 className="h-4 w-4" /></button>
+            <button type="button" className="btn-tertiary self-end p-2" aria-label="Tarief verwijderen" disabled={pricingLocked || form.pricing_rules.length === 1} onClick={() => removeRow('pricing_rules', index)}><Trash2 className="h-4 w-4" /></button>
           </div>
         ))}
       </section>
 
       {saveTournament.error ? <ErrorNotice error={saveTournament.error} /> : null}
       {savedMessage ? <p className="text-sm text-green-700 dark:text-green-300">{savedMessage}</p> : null}
-      <div className="flex justify-end"><button className="btn-primary" disabled={saveTournament.isPending}>{saveTournament.isPending ? 'Opslaan…' : 'Concept opslaan'}</button></div>
+      <div className="flex justify-end"><button className="btn-primary" disabled={saveTournament.isPending}>{saveTournament.isPending ? 'Opslaan…' : (published ? 'Wijzigingen opslaan' : 'Concept opslaan')}</button></div>
     </form>
+    {change ? <ChangeNotificationPanel key={change.activity_id} tournament={tournament} change={change} /> : null}
+    </div>
   );
 }
 
@@ -242,28 +310,6 @@ function PublishPanel({ tournament }) {
   );
 }
 
-function DeadlinePanel({ tournament }) {
-  const extendDeadline = useExtendTournamentDeadline();
-  const [deadline, setDeadline] = useState(() => toDateInput(tournament.internal_deadline));
-  const [message, setMessage] = useState('');
-  const save = async (event) => {
-    event.preventDefault();
-    setMessage('');
-    await extendDeadline.mutateAsync({ id: tournament.id, internalDeadline: deadline });
-    setMessage('Interne deadline bijgewerkt.');
-  };
-  return (
-    <form className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-end" onSubmit={save}>
-      <label className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">Interne deadline verlengen
-        <input className="input mt-1" type="date" required value={deadline} onChange={(event) => setDeadline(event.target.value)} />
-      </label>
-      <button className="btn-tertiary" disabled={extendDeadline.isPending}>{extendDeadline.isPending ? 'Opslaan…' : 'Deadline opslaan'}</button>
-      {extendDeadline.error ? <ErrorNotice error={extendDeadline.error} /> : null}
-      {message ? <p className="text-sm text-green-700 dark:text-green-300">{message}</p> : null}
-    </form>
-  );
-}
-
 function DeleteTournamentPanel({ tournament }) {
   const navigate = useNavigate();
   const deleteTournament = useDeleteTournament();
@@ -304,6 +350,7 @@ function ErrorNotice({ error }) {
 export default function TournamentDetail() {
   const { id } = useParams();
   const isNew = !id || id === 'nieuw';
+  const [editing, setEditing] = useState(false);
   const tournamentQuery = useTournament(isNew ? null : id);
   const tournament = tournamentQuery.data;
   useDocumentTitle(isNew ? 'Toernooi toevoegen' : tournament?.name || 'Toernooi');
@@ -313,15 +360,17 @@ export default function TournamentDetail() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
         <Link to="/toernooien" className="mb-3 inline-flex items-center text-sm text-bright-cobalt dark:text-electric-cyan"><ArrowLeft className="mr-1 h-4 w-4" />Alle toernooien</Link>
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{isNew ? 'Toernooi toevoegen' : tournament.name}</h1>
         {!isNew && tournament.lifecycle_status !== 'draft' ? <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Interne deadline: {formatTournamentDate(tournament.internal_deadline)}</p> : null}
+        </div>
+        {tournament && ['open', 'closed'].includes(tournament.lifecycle_status) && !editing ? <button type="button" className="btn-primary inline-flex items-center justify-center" onClick={() => setEditing(true)}><Pencil className="mr-2 h-4 w-4" />Toernooi wijzigen</button> : null}
       </div>
-      {(isNew || tournament.lifecycle_status === 'draft') ? <DraftEditor key={tournament?.id || 'new'} tournament={tournament} /> : null}
+      {(isNew || tournament.lifecycle_status === 'draft' || editing) ? <TournamentEditor key={tournament?.id || 'new'} tournament={tournament} onCancel={() => setEditing(false)} /> : null}
       {tournament?.lifecycle_status === 'draft' ? <PublishPanel tournament={tournament} /> : null}
-      {tournament?.lifecycle_status === 'open' ? <DeadlinePanel key={tournament.internal_deadline} tournament={tournament} /> : null}
-      {tournament && tournament.lifecycle_status !== 'draft' ? <TournamentOperations tournament={tournament} /> : null}
+      {tournament && tournament.lifecycle_status !== 'draft' && !editing ? <TournamentOperations tournament={tournament} /> : null}
       {tournament ? <DeleteTournamentPanel tournament={tournament} /> : null}
     </div>
   );

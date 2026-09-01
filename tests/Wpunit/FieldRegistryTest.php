@@ -53,6 +53,7 @@ class FieldRegistryTest extends RondoTestCase {
 		$this->assertSame( 0, Registry::resolve( 'rondo_sponsor', 'club_tv_priority' )['default_value'] );
 		$this->assertSame( 'status', Registry::resolve( 'rondo_feedback', 'status' )['canonical_name'] );
 		$this->assertSame( 'status', Registry::resolve( 'rondo_invoice', 'status' )['canonical_name'] );
+		$this->assertSame( 1, Registry::resolve( 'rondo_tournament', 'version' )['default_value'] );
 	}
 
 	public function test_nested_relationship_contract_is_explicit(): void {
