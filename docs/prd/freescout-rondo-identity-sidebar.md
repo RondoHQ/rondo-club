@@ -59,6 +59,9 @@ guard and manual grant/revoke behavior.
     required appearance controls: per-club semantic accent colors and responsive
     conversation-sidebar width. It does not become a general FreeScout theme or accept arbitrary
     CSS.
+16. Sidebar content renders through an opaque-origin sandboxed `iframe.srcdoc`. The Rondo response
+    remains script-free; one nonce-authorized, module-owned resize script may send height-only
+    messages to the parent. A separate JSON renderer is not planned.
 
 ## Why this replaces copied customer context
 
@@ -203,8 +206,9 @@ References:
    - which person the agent may view;
    - which fields the agent's Rondo capabilities permit;
    - which fields the current FreeScout mailbox permits.
-6. Rondo returns a script-free sidebar document.
-7. The module displays the document in an isolated sidebar surface.
+6. Rondo returns sanitized, script-free sidebar markup.
+7. The module places that markup inside its own sandboxed document shell and adjusts the iframe
+   height through the module-owned resize bridge.
 
 ### Sidebar actions
 
@@ -585,17 +589,28 @@ in server configuration. It is never included in the body, URL, response, JavaSc
 
 Do not insert remote HTML directly into the FreeScout document.
 
-The preferred implementation creates a sandboxed `iframe` and assigns the response through the
-DOM `srcdoc` property. The sandbox does not permit scripts or same-origin access. It may permit
-user-initiated popups that escape the sandbox solely so server-generated, allowlisted Rondo links
-can open in a new tab. Those links use `target="_blank"` and `rel="noopener noreferrer"`; forms,
-scripts, same-origin access and parent navigation remain disabled. The response also carries a
-restrictive content-security policy. This gives Rondo control over the presentation while
-preventing its CSS and markup from affecting FreeScout.
+The module creates a complete sandboxed `iframe.srcdoc` document from a module-owned shell,
+sanitized Rondo markup and one module-owned resize script. The sandbox permits scripts and
+user-initiated popups only; it does not permit same-origin access, forms, downloads, top-level
+navigation or any other capability. Its exact capability set is
+`sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"`. The Rondo response itself
+remains script-free. Before assembly, the module removes scripts, event-handler attributes, forms,
+embeds, base elements, refresh directives, nonce attributes and unknown URLs. Raw
+`.html(response.html)` injection into the FreeScout document is never permitted.
 
-If the compatibility spike rejects `srcdoc` because of FreeScout layout constraints, the fallback
-is a fixed local renderer that receives a versioned JSON view model and escapes every value. Raw
-`.html(response.html)` injection is not accepted for production.
+The generated document carries a restrictive content-security policy: `default-src 'none'`, a
+fresh nonce for the module-owned script, inline styles for the isolated presentation, data-only
+images, and no connections, forms, objects, frames or base URI. Server-generated Rondo links are
+restricted to the configured origin and approved paths, use `target="_blank"` and
+`rel="noopener noreferrer"`, and may escape the sandbox only after a user action.
+
+The module-owned script observes the document height with `ResizeObserver` and sends only a
+versioned message containing `type`, a fresh per-render channel and `height`. It sends to the exact
+FreeScout parent origin. Because an iframe without `allow-same-origin` has an opaque origin, the
+parent accepts a message only when its source is the expected iframe window and its type and
+channel match the current render. The height must be a finite integer, is debounced, and is clamped
+between `160px` and `1600px`. No markup, person data, URL or action is accepted through this bridge.
+If a valid message is absent, the iframe keeps a safe `480px` default height and scrolls internally.
 
 ### Component 3: Rondo sidebar endpoint
 
@@ -890,7 +905,11 @@ mappings remain authoritative.
 - Mailbox allowlist intersects Rondo access; it never widens it.
 - FreeScout customer visibility is limited to customers with conversations in mailboxes the agent
   may view; `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true` is a required deployment invariant.
-- Script-free isolated sidebar response.
+- Script-free Rondo markup inside an opaque-origin sandbox; only the nonce-authorized module resize
+  script runs.
+- The iframe sandbox excludes same-origin access, forms, downloads and top-level navigation.
+- Resize messages are height-only, source/channel/type validated, debounced and clamped before the
+  parent changes the iframe height.
 - No credentials, raw tokens, signatures, personal payloads or returned HTML in normal logs.
 - Rate limiting per FreeScout instance, agent and source IP where reliable.
 - Response cache keys include mailbox policy and effective authorization class; no cross-user PII
@@ -967,7 +986,7 @@ Required observations:
 9. Behavior when Rondo denies authorization.
 10. Force-login recovery procedure.
 11. FreeScout mobile-app behavior.
-12. Sidebar `srcdoc`/sandbox layout at realistic sidebar widths.
+12. Sandboxed `srcdoc` layout and height-bridge behavior at realistic sidebar widths.
 13. Timeout behavior with DNS failure, connection refusal, TLS error and slow response.
 
 The spike produces captured request shapes with secrets redacted, a compatibility matrix and a
@@ -985,7 +1004,7 @@ Execution checklist:
 - Prove authorization code flow with PKCE S256, `state`, `nonce`, ID-token validation and UserInfo
   subject matching.
 - Prove first-link, persistent subject binding and explicit administrator recovery.
-- Prove the sandboxed response design and current-agent hook.
+- Prove the opaque-origin sandbox, module-owned height bridge and current-agent hook.
 - Confirm timeout values and review the custom flow's threat model.
 
 **Gate:** no product implementation proceeds without a successful custom-client end-to-end test
@@ -1016,7 +1035,8 @@ login, complete token validation and a confirmed current-agent hook.
 - Add current agent to the signed payload.
 - Replace body secret with versioned HMAC headers.
 - Add strict timeouts, redirect prevention and response limits.
-- Replace raw HTML injection with the accepted isolated renderer.
+- Render sanitized Rondo markup in the opaque-origin `srcdoc` sandbox with the nonce-authorized,
+  height-only resize bridge.
 - Preserve a small visible refresh action and graceful failure state.
 - Add allowlisted accent settings and a live preview without arbitrary CSS support.
 - Add the responsive customer-sidebar maximum-width setting and coordinated conversation spacing.
@@ -1171,6 +1191,8 @@ The milestone is complete only when:
 - an agent lacking Rondo access cannot retrieve the sidebar record by changing IDs;
 - an unreachable Rondo endpoint does not freeze FreeScout or exhaust workers;
 - returned sidebar content cannot execute scripts in the FreeScout parent page;
+- expanding or collapsing sidebar content resizes the iframe through a validated height-only
+  message without exposing FreeScout DOM, cookies or storage;
 - the configured interface accent replaces the audited default-blue roles without changing
   semantic status colors or failing contrast requirements;
 - a configured maximum customer-sidebar width of `360px` widens the sidebar and reserves the same
@@ -1206,20 +1228,18 @@ The milestone is complete only when:
 ## Open decisions before implementation
 
 1. Exact production FreeScout mailbox ID and stable key for Ledenadministratie.
-2. Whether `srcdoc` with a scriptless sandbox fits the final FreeScout sidebar height and refresh
-   behavior; otherwise use the escaped JSON renderer.
-3. The module-owned persistence model and transactional boundary for one-to-one subject bindings.
-4. Whether current Rondo account approval is sufficient email verification for automatic
+2. The module-owned persistence model and transactional boundary for one-to-one subject bindings.
+3. Whether current Rondo account approval is sufficient email verification for automatic
    FreeScout account matching.
-5. Whether automatic FreeScout user creation is ever enabled after the pilot.
-6. The acceptable FreeScout session lifetime after Rondo account revocation.
-7. The approved final Ledenadministratie sidebar field allowlist.
-8. Whether the FreeScout conversation activity sync remains a long-term feature.
-9. How its person matching works after customer enrichment and FreeScout ID reverse sync are
+4. Whether automatic FreeScout user creation is ever enabled after the pilot.
+5. The acceptable FreeScout session lifetime after Rondo account revocation.
+6. The approved final Ledenadministratie sidebar field allowlist.
+7. Whether the FreeScout conversation activity sync remains a long-term feature.
+8. How its person matching works after customer enrichment and FreeScout ID reverse sync are
    retired.
-10. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
-11. Audit retention period and operational owners for failed provisioning events.
-12. Final module repository, protected release workflow and update-asset URLs.
-13. Initial production values for interface accent and interface accent surface.
-14. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
+9. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
+10. Audit retention period and operational owners for failed provisioning events.
+11. Final module repository, protected release workflow and update-asset URLs.
+12. Initial production values for interface accent and interface accent surface.
+13. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
     200%-zoom testing.
