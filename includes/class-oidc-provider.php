@@ -22,8 +22,33 @@ final class OidcProvider {
 	public function __construct() {
 		add_action( 'init', [ $this, 'register_rewrite_rules' ] );
 		add_filter( 'query_vars', [ $this, 'register_query_vars' ] );
+		add_filter( 'mod_rewrite_rules', [ self::class, 'add_well_known_server_rules' ] );
 		add_action( 'template_redirect', [ $this, 'handle_request' ], 0 );
 		add_action( 'rondo_oidc_cleanup_token_lock', [ OidcAuthorizationService::class, 'cleanup_token_lock' ] );
+	}
+
+	/**
+	 * Route discovery before WordPress skips the physical .well-known directory.
+	 *
+	 * Hosting platforms commonly create that directory for ACME challenges. The
+	 * standard WordPress rules exclude real directories, so ordinary rewrite
+	 * rules never see OIDC discovery requests unless these exact rules run first.
+	 */
+	public static function add_well_known_server_rules( string $rules ): string {
+		$marker = "RewriteEngine On\n";
+		if ( strpos( $rules, $marker ) === false ) {
+			return $rules;
+		}
+
+		$discovery_rules = implode(
+			"\n",
+			[
+				'RewriteRule ^\.well-known/openid-configuration/?$ index.php?' . self::QUERY_ENDPOINT . '=discovery [L,QSA]',
+				'RewriteRule ^\.well-known/oauth-authorization-server/?$ index.php?' . self::QUERY_ENDPOINT . '=metadata [L,QSA]',
+			]
+		) . "\n";
+
+		return preg_replace( '/RewriteEngine On\n/', $marker . $discovery_rules, $rules, 1 ) ?? $rules;
 	}
 
 	/** Register stable public endpoints without exposing WordPress internals. */

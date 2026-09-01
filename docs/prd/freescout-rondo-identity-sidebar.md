@@ -498,7 +498,9 @@ versioned paths:
 /wp-json/rondo/v1/integrations/freescout/configuration
 ```
 
-The OIDC client discovers its provider endpoints from the configured Rondo base URL. Setup
+The OIDC client discovers its provider endpoints from the configured Rondo base URL. Rondo adds
+the two discovery routes ahead of WordPress's physical-directory exclusion, so they also work when
+the host uses `.well-known` for ACME certificate validation. Setup
 documentation and the Rondo Integration settings screen show the derived values, but no endpoint
 hostname is duplicated in code:
 
