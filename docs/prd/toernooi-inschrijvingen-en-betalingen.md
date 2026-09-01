@@ -1,7 +1,8 @@
 # PRD: Toernooi-inschrijvingen en betalingen
 
-**Status:** Geïmplementeerd — mijlpalen 1, 2 en 3 zijn operationeel
+**Status:** Mijlpalen 1, 2 en 3 operationeel; mijlpaal 4 goedgekeurd voor implementatie
 **Datum:** 2026-08-27
+**Bijgewerkt:** 2026-09-01
 **Eigenaar:** Toernooiplanning
 **Raakt:** Rondo Club, Kaderlijst, Financiën, Mollie en Lettermint
 
@@ -28,6 +29,11 @@ betaalstatussen en de voortgang van de inschrijving bij de externe organisatie. 
 programma beschikbaar is, kan de planner het vanuit Rondo versturen naar de toegewezen kaderleden
 en de contactpersoon van ieder definitief ingeschreven Rondo-team. Teams die niet zijn ingeschreven
 ontvangen het programma niet.
+
+Als vervolg kan de planner ook de operationele gegevens van een gepubliceerd toernooi wijzigen.
+Prijsregels blijven alleen wijzigbaar zolang nog geen team definitief is ingeschreven. Na een
+relevante wijziging kan de planner vrijwillig één wijzigingsmail sturen naar de betrokken
+kaderleden en contactpersonen.
 
 ## 2. Bevestigde productkeuzes
 
@@ -70,6 +76,16 @@ De volgende keuzes zijn vastgesteld voor de eerste versie:
     Financiële instellingen gekozen standaard-Mollie-rekening voor toernooien.
 19. Toernooibeheer is beschikbaar voor administrators en gebruikers met de actieve kaderfunctie
     `Coördinator toernooien`.
+20. Een planner kan de operationele gegevens van een open of gesloten toernooi wijzigen, waaronder
+    naam, organisator, locatie, beschrijving, datum en tijd, deadlines en herinneringsmomenten.
+21. Tariefregels en spelvormen zijn alleen wijzigbaar zolang nog geen `rondo_tourn_entry` definitief
+    is ingeschreven. Bestaande financiële snapshots veranderen nooit.
+22. De doelgroep, geselecteerde teams en teamtoewijzingen vallen buiten de algemene wijzigingsflow
+    van mijlpaal 4 en houden hun bestaande, afzonderlijke beheeracties.
+23. Na een wijziging kiest de planner zelf of een wijzigingsmail nodig is; opslaan verstuurt nooit
+    automatisch opnieuw de initiële toewijzingsmail.
+24. De wijzigingsmail gaat naar de unieke, geldige adressen van alle actueel toegewezen kaderleden
+    en de contactpersonen van alle definitief ingeschreven teams.
 
 ## 3. Aanleiding en huidig proces
 
@@ -101,6 +117,9 @@ inschrijflijst en de ontvangen betalingen.
 - Alleen openstaande betalingen gericht herinneren.
 - De toernooiplanner een spreadsheetachtig operationeel overzicht en bruikbare export geven.
 - Het programma later vanuit dezelfde doelgroepselectie kunnen verspreiden.
+- Gepubliceerde toernooigegevens veilig kunnen corrigeren zonder bestaande inschrijvingen of
+  betalingen te herschrijven.
+- Betrokkenen na een relevante wijziging optioneel en controleerbaar kunnen informeren.
 
 ## 5. Niet in de eerste versie
 
@@ -379,7 +398,42 @@ of aanvullende betaling wordt door de planner en financieel beheerder buiten dez
 afgehandeld en als activiteit bij de inschrijving genoteerd. Betaalde records worden nooit
 overschreven of verwijderd.
 
-### 7.9 Externe inschrijving
+### 7.9 Gepubliceerd toernooi wijzigen
+
+Een planner kan een toernooi met status `open` of `closed` openen via **Toernooi wijzigen**. Het
+formulier is vooraf gevuld en gebruikt dezelfde veldvalidatie als het conceptformulier. Naam,
+organisator, algemene locatie, beschrijving, toernooidata en -tijden, locaties per programmaonderdeel,
+deadlines en betaalherinneringsmomenten blijven wijzigbaar. Een gearchiveerd toernooi blijft
+alleen-lezen.
+
+Datum en tijd worden samen bewerkt. De API ontvangt een RFC 3339-datetime met expliciete tijdzone;
+de interface toont en bewerkt deze in `Europe/Amsterdam`. Hiermee kan een planner zowel een andere
+dag als een ander tijdstip vastleggen zonder bestaande tijdinformatie af te kappen.
+
+Tariefregels en spelvormen blijven alleen wijzigbaar zolang geen enkele entry de status `submitted`
+heeft. De server controleert dit onmiddellijk vóór de write. Zodra een definitieve inschrijving
+bestaat, worden prijsvelden vergrendeld en geeft de interface uit waarom. Reeds ingediende
+inschrijvingen, facturen en prijs-snapshots wijzigen nooit mee.
+
+De algemene wijzigingsflow mag geen teams aan de doelgroep toevoegen, teams verwijderen of
+toewijzingen aanpassen. Daarvoor blijven de bestaande, expliciete toewijzingsacties leidend.
+
+Opslaan vereist het actuele toernooiversienummer. De server vergelijkt de oude en nieuwe waarden,
+verhoogt de versie en maakt een activiteit met de gewijzigde velden en een beperkte voor/na-
+samenvatting. Een verouderd formulier overschrijft geen nieuwere wijziging van een andere planner.
+
+Na een wijziging die voor deelnemers relevant is, toont Rondo een verzendpreview. De planner kan:
+
+1. **Wijziging opslaan zonder mail**; of
+2. **Wijzigingsmail versturen** naar de unieke, geldige adressen van alle actueel toegewezen
+   kaderleden en de contactpersonen van definitief ingeschreven teams.
+
+De wijzigingsmail vermeldt alleen de daadwerkelijk gewijzigde deelnemersinformatie, gevolgd door
+de actuele datum, tijd, locatie en een normale Rondo-link. Opslaan verstuurt nooit automatisch mail
+en herhaalt nooit de initiële toewijzingsmail. Een mislukte verzending draait de opgeslagen
+toernooiwijziging niet terug; het resultaat blijft zichtbaar in de activiteitengeschiedenis.
+
+### 7.10 Externe inschrijving
 
 De planner beheert per toernooi een afzonderlijke voortgangsstatus:
 
@@ -392,7 +446,7 @@ De planner beheert per toernooi een afzonderlijke voortgangsstatus:
 De status geldt voor het hele toernooi. De planner kan daarnaast per Rondo-team een korte interne
 notitie opslaan wanneer de externe organisatie een uitzondering of correctie meldt.
 
-### 7.10 Programma verspreiden
+### 7.11 Programma verspreiden
 
 De planner kan na ontvangst een programmabestand uploaden of een programmalink vastleggen. Voor
 verzending toont Rondo een voorbeeld van de doelgroep en ongeldige of ontbrekende e-mailadressen.
@@ -430,6 +484,10 @@ Het detail bestaat uit drie tabs:
 1. **Overzicht** — totalen, deadlines en externe voortgang.
 2. **Teams en betalingen** — de operationele tabel.
 3. **Communicatie** — initiële mail, betaalherinneringen en programma.
+
+De detailpagina toont **Toernooi wijzigen** voor concept-, open en gesloten toernooien. Bij een
+gepubliceerd toernooi opent dit het beperkte wijzigingsformulier uit paragraaf 7.9. Na opslaan toont
+Rondo de wijzigingssamenvatting en, wanneer van toepassing, de optionele verzendpreview.
 
 De tabel **Teams en betalingen** bevat minimaal:
 
@@ -527,10 +585,12 @@ Privé contenttype voor één toernooieditie.
 | `program_url` | URL | Optionele externe programmalink |
 | `program_message` | Rich text | Tekst van programmamail |
 | `program_sent_at` | Datum/tijd | Laatste programmaverzending |
+| `version` | Getal | Optimistische versiecontrole voor plannerwijzigingen |
 
-Publicatie bevriest doelgroep, uitnodigingstekst, tariefregels en spelvormen voor bestaande
-opdrachten. Een planner kan tekstuele correcties aan toekomstige programmaberichten blijven maken,
-maar prijswijzigingen vereisen een nieuwe toernooieditie zolang er al opdrachten gepubliceerd zijn.
+Publicatie bevriest de doelgroep en opdracht-snapshots. Operationele toernooi-informatie blijft
+wijzigbaar. Tariefregels en spelvormen blijven wijzigbaar totdat de eerste entry definitief is
+ingeschreven; daarna zijn zij vergrendeld. Bestaande inschrijvings- en factuursnapshots worden nooit
+door een toernooiwijziging herschreven.
 
 ### 10.2 `rondo_tourn_entry`
 
@@ -608,6 +668,8 @@ Gebruik WordPress-comments met een apart, niet-publiek activiteitstype. Leg mini
 - Mollie-betaling bevestigd;
 - onbetaalde inschrijving heropend;
 - externe status gewijzigd;
+- gepubliceerd toernooi gewijzigd;
+- wijzigingsmail verstuurd of mislukt;
 - programma verstuurd.
 
 Iedere activiteit bevat actor, tijdstip, entry of toernooi, actie, relevante voor/na-status en een
@@ -653,7 +715,8 @@ Voorgestelde routes:
 | `GET /tournaments` | Plannerlijst of permission-filtered lijst voor huidige gebruiker |
 | `POST /tournaments` | Concepttoernooi aanmaken |
 | `GET /tournaments/{id}` | Detail volgens rol en veldrechten |
-| `PATCH /tournaments/{id}` | Instellingen wijzigen als planner |
+| `PATCH /tournaments/{id}` | Toegestane concept- of publicatiewijziging met verwachte versie |
+| `POST /tournaments/{id}/change-notification` | Optionele mail voor één opgeslagen wijziging versturen |
 | `POST /tournaments/{id}/preview-assignments` | Teams en toewijsbare kaderaccounts controleren |
 | `POST /tournaments/{id}/publish` | Opdrachten maken en initiële mail sturen |
 | `GET /tournaments/{id}/entries` | Planner-overzicht en totalen |
@@ -674,6 +737,12 @@ administrator is of via `can_manage_tournaments()` een actieve kaderfunctie
 `Coördinator toernooien` heeft. De frontendstatus is nooit een autorisatiebeslissing. Responses aan
 kaderleden bevatten geen andere teams, planner-notities, financiële dashboardlinks of e-mailstatus
 van andere ontvangers.
+
+Een geslaagde `PATCH` retourneert de nieuwe versie, de veilige wijzigingssamenvatting, een
+`change_activity_id` en een ontvangerspreview wanneer deelnemersinformatie is gewijzigd. De
+afzonderlijke mailroute accepteert dat activity-ID, controleert opnieuw het toernooi en de
+plannerrechten en verzendt die ene wijziging maximaal eenmaal. De ontvangers worden vlak vóór
+verzending opnieuw opgebouwd en ontdubbeld.
 
 ## 13. E-mailstromen
 
@@ -713,7 +782,19 @@ openstaat.
 Handmatig verstuurd naar de eerder beschreven gecombineerde doelgroep. Een verzendpreview toont
 aantallen, ontbrekende adressen en ontdubbeling vóór definitieve verzending.
 
-### 13.5 Afleverproblemen
+### 13.5 Wijzigingsmail
+
+Na een relevante wijziging kan de planner vrijwillig een mail versturen. De preview bevat de
+gewijzigde deelnemersvelden en de actuele unieke ontvangers uit:
+
+- alle actueel toegewezen gebruikers van alle geselecteerde teams;
+- de contactpersoon van iedere definitief ingeschreven entry.
+
+De mail bevat een compacte wijzigingssamenvatting, de actuele datum, tijd en locatie en een normale
+Rondo-link. Het verzendrecord bewaart de gebruikte wijzigingsactiviteit, ontvangers, onderwerp,
+bericht, tijdstip en resultaten als snapshot.
+
+### 13.6 Afleverproblemen
 
 Een individuele mislukte verzending blokkeert andere ontvangers niet. Resultaten worden per
 ontvanger gelogd. Bounces volgen de bestaande Lettermint-afhandeling; de planner ziet in deze module
@@ -729,8 +810,10 @@ alleen een operationele waarschuwing en geen providergeheimen.
 5. Ieder deelnemend team vereist een spelersaantal; iedere volledige Rondo-teaminschrijving vereist
    precies één contactnaam, geldig e-mailadres en mobiel nummer.
 6. Bedrag en totalen worden uitsluitend server-side berekend.
-7. Leeftijdslaag en tarief komen uit de gepubliceerde assignment-snapshot.
-8. Een tariefwijziging verandert nooit een bestaande opdracht, inschrijving of factuur.
+7. Leeftijdslaag en tarief komen bij definitieve inschrijving uit de dan geldige gepubliceerde
+   opdracht- en toernooi-informatie.
+8. Tariefregels en spelvormen kunnen alleen wijzigen zolang nog geen entry definitief is
+   ingeschreven; een wijziging verandert nooit een bestaande inschrijving of factuur.
 9. Een definitieve inschrijving maakt idempotent maximaal één actieve factuur.
 10. Een mislukte Mollie-aanroep maakt geen tweede factuur bij opnieuw proberen.
 11. Alleen een door Mollie opnieuw opgehaalde en als betaald bevestigde link zet de factuur op betaald.
@@ -744,6 +827,13 @@ alleen een operationele waarschuwing en geen providergeheimen.
 17. Geen enkele e-mail bevat Mollie API-sleutels, interne tokens of persoonsgegevens van andere teams.
 18. Een toernooifactuur kan alleen worden gemaakt wanneer financieel beheer een bruikbare
     standaard-Mollie-rekening voor toernooien heeft ingesteld.
+19. Een gepubliceerd toernooi kan alleen met zijn actuele versienummer worden gewijzigd.
+20. De algemene wijzigingsroute weigert doelgroep-, team- en toewijzingswijzigingen.
+21. Een gearchiveerd toernooi is volledig alleen-lezen.
+22. Toernooidata en -tijden worden server-side gevalideerd en in API-responses als RFC 3339 met
+    expliciete tijdzone teruggegeven.
+23. Een wijzigingsmail vereist een geldige, nog niet verzonden wijzigingsactiviteit van hetzelfde
+    toernooi en wordt maximaal eenmaal verzonden.
 
 ## 15. Randgevallen
 
@@ -785,6 +875,23 @@ terugbetaling buiten de eerste selfserviceversie af en voegen een activiteit toe
 ### Een team schrijft niet in
 
 Er gebeurt niets. De planner ziet **Niet ingeschreven** en Rondo verstuurt geen vervolgbericht.
+
+### Twee planners wijzigen tegelijk
+
+Alleen de save met de actuele toernooiversie slaagt. De tweede planner ziet welke versie inmiddels
+actueel is en moet de nieuwste gegevens laden voordat opnieuw kan worden opgeslagen.
+
+### Een team bevestigt terwijl de planner een tarief wijzigt
+
+De server serialiseert beide acties per toernooi en controleert de aanwezigheid van definitieve
+entries direct vóór de prijswrite. Daardoor gebruikt een bevestigde entry precies één geldige
+tariefversie en kan daarna geen prijswijziging meer slagen.
+
+### Een wijzigingsmail mislukt gedeeltelijk
+
+De toernooiwijziging blijft geldig. Geslaagde en mislukte ontvangers worden afzonderlijk gelogd en
+de planner krijgt een operationele waarschuwing zonder dat alle mail automatisch opnieuw wordt
+verstuurd.
 
 ## 16. Acceptatiecriteria
 
@@ -834,6 +941,23 @@ Er gebeurt niets. De planner ziet **Niet ingeschreven** en Rondo verstuurt geen 
 - [x] Niet-ingeschreven teams ontvangen geen programmamail.
 - [x] Verzendresultaten en mislukkingen zijn voor de planner controleerbaar.
 
+### Gepubliceerd toernooi wijzigen
+
+- [ ] Een planner kan naam, organisator, locatie, beschrijving, datum, tijd, deadlines en
+  herinneringsmomenten van een open of gesloten toernooi wijzigen.
+- [ ] Datum en tijd blijven bij laden, bewerken en opslaan volledig behouden in de site-tijdzone.
+- [ ] Een gearchiveerd toernooi kan niet worden gewijzigd.
+- [ ] Tariefregels en spelvormen zijn wijzigbaar totdat de eerste definitieve inschrijving bestaat
+  en zijn daarna zowel in de interface als server-side vergrendeld.
+- [ ] Een toernooiwijziging verandert geen definitieve inschrijving, factuur of financiële snapshot.
+- [ ] De wijzigingsflow kan geen teams of toewijzingen toevoegen of verwijderen.
+- [ ] Een verouderde planneredit overschrijft geen nieuwere toernooiwijziging.
+- [ ] Na een deelnemersrelevante wijziging kan de planner kiezen voor opslaan zonder mail of voor
+  één wijzigingsmail.
+- [ ] De wijzigingsmail bereikt alleen unieke, geldige adressen van alle actueel toegewezen
+  kaderleden en de contactpersonen van definitief ingeschreven teams.
+- [ ] Wijzigingen en verzendresultaten zijn met actor en tijdstip controleerbaar in de activiteit.
+
 ### Overzicht en export
 
 - [x] Het planner-overzicht toont geselecteerde teams, inschrijvingen, aantallen, contactpersonen,
@@ -859,7 +983,13 @@ Er gebeurt niets. De planner ziet **Niet ingeschreven** en Rondo verstuurt geen 
 - Mollie-webhook voor onbekende, openstaande, betaalde en dubbele callbacks;
 - heropenen van onbetaalde en blokkeren van betaalde inschrijvingen;
 - selectie en deduplicatie van betaal- en programmaontvangers;
-- planner-totalen en exportinhoud.
+- planner-totalen en exportinhoud;
+- toegestane en geweigerde writes per toernooistatus;
+- prijswijziging vóór en blokkade vanaf de eerste definitieve inschrijving;
+- versieconflicten bij gelijktijdige plannerwijzigingen;
+- datum/tijd-roundtrip in `Europe/Amsterdam`, inclusief zomer- en wintertijd;
+- wijzigingsdiff, ontvangerselectie, deduplicatie en eenmalige verzending;
+- gedeeltelijk mislukte wijzigingsmail zonder rollback van de opgeslagen wijziging.
 
 REST-routetests booten de relevante controllers expliciet met de bestaande testhelper.
 
@@ -872,6 +1002,9 @@ REST-routetests booten de relevante controllers expliciet met de bestaande testh
 - conflictmelding bij een verouderd concept;
 - correcte read-only status na bevestiging en betaling;
 - plannerfilters, totalen en foutstatussen;
+- vooraf gevuld wijzigingsformulier voor open en gesloten toernooien;
+- vergrendelde prijsvelden met duidelijke reden zodra een definitieve inschrijving bestaat;
+- wijzigingssamenvatting en optionele mailpreview;
 - toegankelijke toetsenbord- en formulierinteractie.
 
 ### Integratie en operationele test
@@ -881,7 +1014,10 @@ REST-routetests booten de relevante controllers expliciet met de bestaande testh
 - betaalherinnering gaat alleen naar een onbetaalde testentry;
 - Lettermint registreert initiële mail, betaalmail en programmamail;
 - CSV en PDF handmatig vergelijken met planner-overzicht;
-- twee kaderaccounts van hetzelfde team bewerken dezelfde opdracht zonder dataverlies.
+- twee kaderaccounts van hetzelfde team bewerken dezelfde opdracht zonder dataverlies;
+- gepubliceerd pilottoernooi naar een andere dag en tijd verplaatsen en dezelfde wijziging als
+  kaderlid terugzien;
+- wijzigingsmail-preview vergelijken met toegewezen kaderleden en ingeschreven contactpersonen.
 
 ## 18. Implementatiemijlpalen
 
@@ -923,8 +1059,26 @@ externe organisator blijft handmatig.
 
 **Opgeleverd in:** Rondo Club 35.28.0.
 
-Alle drie mijlpalen zijn nodig voordat de module als eerste productierelease aan toernooiplanners
-wordt aangeboden.
+### Mijlpaal 4 — Gepubliceerde toernooien wijzigen
+
+- beperkt wijzigingsformulier voor open en gesloten toernooien;
+- correcte invoer en opslag van datum én tijd in `Europe/Amsterdam`;
+- bewerkbare operationele informatie, deadlines en herinneringsmomenten;
+- wijzigbare tariefregels en spelvormen tot de eerste definitieve inschrijving;
+- harde serverblokkade voor latere prijs-, doelgroep- en toewijzingswijzigingen;
+- optimistische versiecontrole en veilige wijzigingsactiviteit;
+- optionele wijzigingsmail met preview naar toegewezen kaderleden en contactpersonen van definitief
+  ingeschreven teams;
+- REST-, permission-, regressie- en frontendtests;
+- bijgewerkte gebruikers- en ontwikkelaarsdocumentatie.
+
+**Uitkomst:** feedback 11605 is opgelost: een toernooicoördinator kan een gepubliceerd toernooi
+veilig naar een andere dag of tijd verplaatsen en betrokkenen desgewenst vanuit Rondo informeren.
+
+**Status:** Goedgekeurd voor implementatie.
+
+Mijlpalen 1 tot en met 3 vormden de eerste productierelease. Mijlpaal 4 is een afzonderlijke,
+achterwaarts compatibele uitbreiding daarop.
 
 ## 19. Documentatie bij implementatie
 
