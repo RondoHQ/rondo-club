@@ -334,6 +334,10 @@ if [ "$SKIP_HEALTH_CHECK" = false ]; then
         curl --fail --silent --show-error --location \
             --retry 3 --retry-delay 2 --max-time 30 \
             "$DEPLOY_PRODUCTION_URL" >/dev/null
+
+        curl --fail --silent --show-error \
+            --retry 3 --retry-delay 2 --max-time 30 \
+            "${DEPLOY_PRODUCTION_URL%/}/.well-known/openid-configuration" >/dev/null
     fi
 fi
 

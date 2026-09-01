@@ -1175,9 +1175,15 @@ add_filter( 'query_vars', 'rondo_pwa_query_vars' );
  * Runs late on `init` so every add_rewrite_rule() call has already registered.
  */
 function rondo_maybe_flush_rewrite_rules() {
-	$rewrite_version = '8'; // Bump when adding/changing a rewrite rule.
+	$rewrite_version = '9'; // Bump when adding/changing a rewrite rule.
 	if ( get_option( 'rondo_rewrite_rules_version' ) === $rewrite_version ) {
 		return;
+	}
+
+	// Front-end requests do not load the file-writing API, so a nominal hard
+	// flush would otherwise update only the database and leave .htaccess stale.
+	if ( ! function_exists( 'save_mod_rewrite_rules' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/misc.php';
 	}
 
 	flush_rewrite_rules();
