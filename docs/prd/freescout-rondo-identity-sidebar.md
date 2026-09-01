@@ -62,6 +62,9 @@ guard and manual grant/revoke behavior.
 16. Sidebar content renders through an opaque-origin sandboxed `iframe.srcdoc`. The Rondo response
     remains script-free; one nonce-authorized, module-owned resize script may send height-only
     messages to the parent. A separate JSON renderer is not planned.
+17. Subject bindings use module-owned FreeScout tables with database-enforced uniqueness. First
+    link, disablement and replacement are transactional and audited; replacement uses a short-lived
+    administrator-authorized Rondo recovery flow instead of accepting a typed subject or email.
 
 ## Why this replaces copied customer context
 
@@ -408,18 +411,70 @@ The callback:
 Every terminal success or failure clears the transaction's state, nonce, verifier, code and token
 material from the session. Tokens, codes and claims are never written to normal logs.
 
-The module stores a one-to-one binding between the configured Rondo issuer plus `sub` and the
-FreeScout user ID. Both sides of the binding are unique.
+##### Binding persistence and concurrency
 
-For the first login only, an unbound subject may select one existing, unbound FreeScout user by its
-unique verified email. The module commits the binding and creates the authenticated FreeScout
-session as one controlled callback operation. Later logins resolve the bound user by ID. A changed
-email or another subject presenting the old email can never silently move the binding.
+The FreeScout module owns three migration-managed tables; Rondo itself gains no database table:
+
+- `rondo_oidc_bindings` stores current and retired identities: nullable active FreeScout user ID,
+  last FreeScout user ID, normalized issuer, case-sensitive subject, a binary SHA-256 identity
+  fingerprint, status, linked/disabled/retired timestamps and normal timestamps;
+- `rondo_oidc_binding_recoveries` stores only hashed single-use recovery tokens, target and actor
+  user IDs, expiry, consumption state and the administrator's reason;
+- `rondo_oidc_binding_audit` is append-only and stores event type, target and actor user IDs,
+  old/new identity fingerprints, reason, redacted correlation ID and timestamp.
+
+`rondo_oidc_bindings.active_user_id` and `identity_fingerprint` each have a unique database
+constraint. Active, disabled and recovery-pending rows retain `active_user_id`; retired rows set it
+to null but retain `last_user_id` and the unique identity fingerprint. The fingerprint is SHA-256
+over the exact normalized issuer and case-sensitive subject with an unambiguous separator. The
+stored issuer and subject are compared exactly after a fingerprint lookup and are available only to
+module services. The administrator UI, normal logs and audit output show a short fingerprint,
+never the raw subject. A user deletion retires the binding before the native deletion completes so
+the identity is not silently recycled.
+
+For the first login only, an unbound subject may select one existing, active, unbound FreeScout user
+by its unique verified email. After all remote OIDC and UserInfo validation has completed, the
+module starts a local database transaction, locks the identity, candidate user and candidate
+binding in a deterministic order, rechecks every condition, inserts the binding and its audit event,
+and commits. A uniqueness conflict or audit failure rolls back and fails closed. No HTTP request or
+FreeScout session creation occurs inside this transaction. The authenticated FreeScout session is
+created only after the binding commit succeeds.
+
+Later logins resolve the active bound user by issuer and subject, not by email. A changed email or
+another subject presenting the old email can never silently move the binding. Disabled or
+recovery-pending bindings fail before session creation. Concurrent callbacks may succeed only for
+the same final subject/user pair; all competing pairings are denied and audited without a partial
+binding.
 
 Automatic user creation remains disabled for the pilot. If it is enabled later, the new user must
 be bound to the initiating subject in the same successful login flow before mailbox provisioning
 runs. Any unlink or rebind requires an explicit, audited administrator action; normal OIDC login
 never replaces an existing binding.
+
+##### Administrator binding recovery
+
+Only a FreeScout administrator who has recently confirmed a local password may change a binding.
+The administrator sees the issuer, status, linked date and a shortened subject fingerprint, not the
+raw subject. Every action requires a reason.
+
+- **Disable Rondo sign-in** marks the binding disabled and invalidates the target user's active
+  FreeScout sessions and remember tokens. It does not delete the row or permit a new email-based
+  first link.
+- **Replace Rondo identity** marks the existing binding recovery-pending, invalidates the target's
+  sessions and creates a single-use recovery URL valid for 10 minutes. The administrator gives that
+  URL to the intended user; the administrator never types a subject or asserts an email mapping.
+- Opening the recovery URL starts the complete Rondo authorization flow with fresh `state`, `nonce`
+  and PKCE values. Its callback accepts only an eligible, verified and currently unbound Rondo
+  subject.
+- The callback locks the recovery, target binding and proposed identity, retires the old row,
+  inserts the new active row, consumes the recovery and writes the audit event in one database
+  transaction. The new FreeScout session is created only after commit.
+- Cancellation, expiry, validation failure or a competing binding leaves the target disabled. A
+  new recovery or explicit restoration of the previous binding requires another locally
+  authenticated, audited administrator action.
+
+The normal administrator UI never physically deletes a binding. Database maintenance or user
+deletion retains a retired identity fingerprint so a former subject cannot be reassigned silently.
 
 #### Login failure and break glass
 
@@ -885,6 +940,10 @@ mappings remain authoritative.
 - Rondo subject and FreeScout user bindings are one-to-one, persistent and never changed from an
   ordinary login attempt.
 - Email is a first-link locator only; a later login resolves the already-bound FreeScout user.
+- Binding uniqueness is enforced by database constraints and binding/audit writes share one local
+  transaction; no remote call or session creation occurs inside it.
+- Recovery requires a locally re-authenticated administrator, a reason and a single-use 10-minute
+  Rondo flow; subjects are never typed or reassigned by email.
 - Rondo and FreeScout base URLs are explicit environment configuration with no compiled hostname.
 - Integration URLs reject credentials, query strings and fragments; production requires HTTPS.
 - Outbound integration requests stay within the configured origin and path prefix and never follow
@@ -1031,6 +1090,8 @@ login, complete token validation and a confirmed current-agent hook.
 - Add configurable Rondo base URL storage, `RONDO_BASE_URL` provisioning support and derived
   endpoint display.
 - Add the complete OIDC relying-party flow, local session creation and one-to-one subject binding.
+- Add module migrations, row-locking transactions, immutable binding audit and the administrator
+  disable/replace recovery UI.
 - Add authentication and conversation authorization.
 - Add current agent to the signed payload.
 - Replace body secret with versioned HMAC headers.
@@ -1090,6 +1151,13 @@ login, complete token validation and a confirmed current-agent hook.
 - A different subject presenting a bound user's email is denied.
 - A subject already bound to another FreeScout user is denied.
 - An ordinary login cannot unlink, replace or transfer a subject binding.
+- Concurrent callbacks cannot bind one subject to two users or two subjects to one user.
+- A failed binding or audit write creates no FreeScout session and leaves no partial row.
+- Disabling a binding prevents email-based first link and invalidates the target's sessions.
+- A replacement requires local administrator re-authentication, a reason and a single-use
+  10-minute recovery flow through Rondo.
+- A successful replacement retires the old identity, binds the new identity and consumes the
+  recovery atomically; failure or expiry leaves the target disabled.
 
 ### Connection configuration
 
@@ -1180,6 +1248,9 @@ The milestone is complete only when:
 - a real pilot agent signs into FreeScout through Rondo;
 - that agent's verified Rondo subject is bound one-to-one to the expected FreeScout user;
 - another subject presenting the same email cannot authenticate as that FreeScout user;
+- simultaneous competing callbacks cannot create a conflicting or partial subject binding;
+- an administrator can disable or replace a binding through the audited recovery flow, and the
+  replaced subject can no longer authenticate;
 - the deployed module contains no hardcoded Rondo hostname and uses the verified configured base
   URL for every Rondo request;
 - FreeScout identifies the current agent and signs the sidebar request;
@@ -1228,18 +1299,17 @@ The milestone is complete only when:
 ## Open decisions before implementation
 
 1. Exact production FreeScout mailbox ID and stable key for Ledenadministratie.
-2. The module-owned persistence model and transactional boundary for one-to-one subject bindings.
-3. Whether current Rondo account approval is sufficient email verification for automatic
+2. Whether current Rondo account approval is sufficient email verification for automatic
    FreeScout account matching.
-4. Whether automatic FreeScout user creation is ever enabled after the pilot.
-5. The acceptable FreeScout session lifetime after Rondo account revocation.
-6. The approved final Ledenadministratie sidebar field allowlist.
-7. Whether the FreeScout conversation activity sync remains a long-term feature.
-8. How its person matching works after customer enrichment and FreeScout ID reverse sync are
+3. Whether automatic FreeScout user creation is ever enabled after the pilot.
+4. The acceptable FreeScout session lifetime after Rondo account revocation.
+5. The approved final Ledenadministratie sidebar field allowlist.
+6. Whether the FreeScout conversation activity sync remains a long-term feature.
+7. How its person matching works after customer enrichment and FreeScout ID reverse sync are
    retired.
-9. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
-10. Audit retention period and operational owners for failed provisioning events.
-11. Final module repository, protected release workflow and update-asset URLs.
-12. Initial production values for interface accent and interface accent surface.
-13. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
+8. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
+9. Audit retention period and operational owners for failed provisioning events.
+10. Final module repository, protected release workflow and update-asset URLs.
+11. Initial production values for interface accent and interface accent surface.
+12. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
     200%-zoom testing.
