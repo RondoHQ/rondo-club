@@ -41,6 +41,14 @@ synthetic non-production mailbox.
 |---|---:|---|---|---|---|
 | `ledenadministratie` | `18` | Ledenadministratie | `ledenadministratie@svawc.nl` | [Production mailbox mapping evidence](evidence/freescout-mailbox-mapping-2026-09-01.md) | Module-local existence and enabled-state verification before provisioning |
 
+The same discovery found two pre-approved later candidates. These are not active mappings and must
+not appear in the signed version-one catalog:
+
+| Future stable key | Production ID snapshot | Verified mailbox | Required capability | Remaining gate |
+|---|---:|---|---|---|
+| `fairplay` | `17` | FairPlay | `fairplay` | Approve `fairplay.v1` field/privacy policy and pilot |
+| `contributie` | `9` | Contributie | `financieel` | Approve `contributie.v1` field/privacy policy and pilot; never substitute `financieel_read` |
+
 ## Evidence rules
 
 - Record every result as `PASS`, `FAIL`, `BLOCKED` or `NOT APPLICABLE`.
@@ -274,6 +282,12 @@ Use synthetic mailboxes and a disposable proof listener or console test.
   and local `Mailbox::isActive()` choices; no free-form key/capability/ID input exists.
 - [ ] Validate the signed configuration response schema and reject unknown/duplicate keys, unknown
   policy versions, stale signatures and unsigned responses.
+- [ ] Confirm the first-release signed catalog exposes only `ledenadministratie`; attempts to use
+  the documented but unreleased `fairplay` or `contributie` keys are rejected.
+- [ ] Confirm role names, committee/team membership, arbitrary WordPress capabilities and
+  `financieel_read` cannot be submitted or interpreted as mailbox grants.
+- [ ] In a later candidate spike, confirm one user with both approved effective capabilities can
+  receive both managed mailboxes independently without replacing either relation.
 - [ ] Verify a draft mapping and confirm it stores key, ID, name/address and policy-version
   snapshots without changing any user-mailbox relation.
 - [ ] Activate after aggregate dry run and recent local-password confirmation; confirm displayed
