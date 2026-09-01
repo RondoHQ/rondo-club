@@ -17,6 +17,7 @@ import {
   toDateTimeInput,
 } from './tournamentFormatters';
 import TournamentOperations from './TournamentOperations';
+import { allEligibleTournamentAssignments, tournamentAssignmentCounts } from './tournamentSelections';
 
 const emptyTournament = {
   name: '',
@@ -253,6 +254,11 @@ function PublishPanel({ tournament }) {
   const optionsQuery = useTournamentAssignmentOptions(true);
   const publishTournament = usePublishTournament();
   const [selected, setSelected] = useState({});
+  const teams = optionsQuery.data || [];
+  const eligibleTeamCount = teams.filter((team) => team.assignees.length > 0).length;
+  const skippedTeamCount = teams.length - eligibleTeamCount;
+  const allEligibleSelected = eligibleTeamCount > 0 && Object.keys(selected).length === eligibleTeamCount;
+  const selectionCounts = tournamentAssignmentCounts(selected);
 
   const toggleTeam = (team) => {
     setSelected((current) => {
@@ -277,6 +283,10 @@ function PublishPanel({ tournament }) {
     await publishTournament.mutateAsync({ id: tournament.id, assignments });
   };
 
+  const toggleAllEligible = () => {
+    setSelected(allEligibleSelected ? {} : allEligibleTournamentAssignments(teams));
+  };
+
   return (
     <section className="card space-y-4 p-5">
       <div>
@@ -284,8 +294,9 @@ function PublishPanel({ tournament }) {
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Publiceren maakt per gekozen Rondo-team één gedeelde inschrijfopdracht en mailt alle geselecteerde kaderleden.</p>
       </div>
       {optionsQuery.isLoading ? <ContentLoadingSpinner /> : null}
+      {!optionsQuery.isLoading ? <div className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-gray-700"><div><p className="font-medium text-gray-900 dark:text-gray-100">Open voor alle teams</p><p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Selecteert alle {eligibleTeamCount} teams met een actief kaderlid en wijst hun volledige actuele kader toe.</p>{skippedTeamCount > 0 ? <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{skippedTeamCount} teams zonder kaderlid met Rondo-account worden overgeslagen.</p> : null}</div><button type="button" className={allEligibleSelected ? 'btn-tertiary' : 'btn-primary'} disabled={eligibleTeamCount === 0} onClick={toggleAllEligible}>{allEligibleSelected ? 'Alles deselecteren' : 'Alle teams selecteren'}</button></div> : null}
       <div className="grid gap-3 lg:grid-cols-2">
-        {(optionsQuery.data || []).map((team) => {
+        {teams.map((team) => {
           const checked = Object.hasOwn(selected, team.id);
           return (
             <div key={team.id} className={`rounded-lg border p-4 ${checked ? 'border-electric-cyan bg-cyan-50/60 dark:bg-cyan-950/20' : 'border-gray-200 dark:border-gray-700'}`}>
@@ -305,7 +316,8 @@ function PublishPanel({ tournament }) {
         })}
       </div>
       {publishTournament.error ? <ErrorNotice error={publishTournament.error} /> : null}
-      <div className="flex justify-end"><button type="button" className="btn-primary inline-flex items-center" disabled={publishTournament.isPending || Object.keys(selected).length === 0} onClick={publish}><Send className="mr-2 h-4 w-4" />{publishTournament.isPending ? 'Publiceren…' : 'Publiceren en uitnodigen'}</button></div>
+      {selectionCounts.teamCount > 0 ? <p className="text-sm text-gray-600 dark:text-gray-300">Je publiceert voor {selectionCounts.teamCount} teams en mailt {selectionCounts.assigneeCount} kaderleden.</p> : null}
+      <div className="flex justify-end"><button type="button" className="btn-primary inline-flex items-center" disabled={publishTournament.isPending || selectionCounts.teamCount === 0 || selectionCounts.hasTeamWithoutAssignee} onClick={publish}><Send className="mr-2 h-4 w-4" />{publishTournament.isPending ? 'Publiceren…' : 'Publiceren en uitnodigen'}</button></div>
     </section>
   );
 }

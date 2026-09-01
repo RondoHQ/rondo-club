@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, CreditCard, ExternalLink, Loader2, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, CreditCard, ExternalLink, Loader2, Plus, Trash2, UserRound } from 'lucide-react';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   useSaveTournamentEntryDraft,
-  useRetryTournamentPaymentLink,
   useSubmitTournamentEntry,
   useTournamentEntry,
 } from '@/hooks/useTournaments';
@@ -20,9 +19,7 @@ function EntryEditor({ entry }) {
   const submitEntry = useSubmitTournamentEntry();
   const initialRows = entry.draft_team_entries?.length ? entry.draft_team_entries : [{ sequence: 1, player_count: '' }];
   const [form, setForm] = useState({
-    contact_name: entry.contact_name || '',
-    contact_email: entry.contact_email || '',
-    contact_mobile: entry.contact_mobile || '',
+    contact_person_id: entry.contact_person_id || 0,
     team_entries: initialRows.map((row) => ({ ...row })),
   });
   const [message, setMessage] = useState('');
@@ -50,6 +47,8 @@ function EntryEditor({ entry }) {
     ...current,
     team_entries: current.team_entries.filter((_, rowIndex) => rowIndex !== index).map((row, rowIndex) => ({ ...row, sequence: rowIndex + 1 })),
   }));
+  const contactCandidates = [...(entry.contact_candidates || [])].sort((left, right) => Number(right.is_current_user) - Number(left.is_current_user));
+  const selectedContact = contactCandidates.find((candidate) => candidate.person_id === Number(form.contact_person_id));
 
   const mutationError = saveDraft.error || submitEntry.error;
   return (
@@ -70,12 +69,19 @@ function EntryEditor({ entry }) {
       </section>
 
       <section className="card space-y-4 p-5">
-        <div><h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Contactpersoon</h2><p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Eén contactpersoon voor alle hierboven ingeschreven teams.</p></div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Naam<input className="input mt-1" required value={form.contact_name} onChange={(event) => setForm({ ...form, contact_name: event.target.value })} /></label>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">E-mailadres<input className="input mt-1" type="email" required value={form.contact_email} onChange={(event) => setForm({ ...form, contact_email: event.target.value })} /></label>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Mobiel nummer<input className="input mt-1" required value={form.contact_mobile} onChange={(event) => setForm({ ...form, contact_mobile: event.target.value })} /></label>
+        <div><h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Contactpersoon</h2><p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Kies jezelf of een ander toegewezen kaderlid. Rondo gebruikt de gegevens uit het persoonsprofiel.</p></div>
+        <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Contactpersoon">
+          {contactCandidates.map((candidate) => {
+            const checked = Number(form.contact_person_id) === candidate.person_id;
+            return (
+              <label key={candidate.person_id} className={`cursor-pointer rounded-lg border p-4 ${checked ? 'border-electric-cyan bg-cyan-50/60 dark:bg-cyan-950/20' : 'border-gray-200 dark:border-gray-700'}`}>
+                <input className="sr-only" type="radio" name="contact_person_id" required checked={checked} value={candidate.person_id} onChange={() => setForm((current) => ({ ...current, contact_person_id: candidate.person_id }))} />
+                <span className="flex items-start gap-3"><UserRound className="mt-0.5 h-5 w-5 text-bright-cobalt dark:text-electric-cyan" /><span><span className="font-medium text-gray-900 dark:text-gray-100">{candidate.is_current_user ? 'Ikzelf' : candidate.name}</span>{candidate.is_current_user ? <span className="block text-sm text-gray-600 dark:text-gray-300">{candidate.name}</span> : null}<span className="block text-xs text-gray-500">{candidate.role}</span>{!candidate.complete ? <span className="mt-1 block text-xs text-amber-700 dark:text-amber-300">E-mailadres of mobiel nummer ontbreekt</span> : null}</span></span>
+              </label>
+            );
+          })}
         </div>
+        {selectedContact ? <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-300"><strong className="text-gray-900 dark:text-gray-100">{selectedContact.name}</strong><span className="mt-1 block">{selectedContact.email || 'Geen e-mailadres'} · {selectedContact.mobile || 'Geen mobiel nummer'}</span>{!selectedContact.complete ? <span className="mt-2 block text-amber-700 dark:text-amber-300">Vul de ontbrekende gegevens eerst aan in Rondo voordat je de inschrijving bevestigt.</span> : null}</div> : null}
       </section>
 
       {mutationError ? <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">{errorMessage(mutationError)}</div> : null}
@@ -89,9 +95,6 @@ function EntryEditor({ entry }) {
 }
 
 function SubmittedEntry({ entry }) {
-  const retryPayment = useRetryTournamentPaymentLink();
-  const retryError = retryPayment.error ? errorMessage(retryPayment.error) : '';
-
   return (
     <div className="space-y-6">
       {entry.payment_state === 'paid' ? (
@@ -116,16 +119,9 @@ function SubmittedEntry({ entry }) {
         </div>
       ) : null}
       {entry.payment_state === 'error' || entry.payment_state === 'expired' ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
-          <div className="font-semibold">Inschrijving bevestigd, betaallink niet beschikbaar</div>
-          <p className="mt-1 text-sm">{entry.payment_error || 'De betaling kon niet worden voorbereid.'}</p>
-          {retryError ? <p className="mt-2 text-sm font-medium">{retryError}</p> : null}
-          {entry.can_retry_payment ? (
-            <button type="button" className="btn-tertiary mt-4 inline-flex items-center" disabled={retryPayment.isPending} onClick={() => retryPayment.mutate(entry.id)}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${retryPayment.isPending ? 'animate-spin' : ''}`} />
-              {retryPayment.isPending ? 'Opnieuw proberen…' : 'Betaallink opnieuw maken'}
-            </button>
-          ) : null}
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-800 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200">
+          <div className="flex items-center font-semibold"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Betaallink wordt opnieuw aangemaakt</div>
+          <p className="mt-1 text-sm">Rondo probeert dit automatisch opnieuw en mailt de betaallink zodra die klaarstaat.</p>
         </div>
       ) : null}
       {entry.payment_state === 'not_applicable' ? (

@@ -70,6 +70,7 @@ final class TournamentPaymentService {
 		if ( $total_amount <= 0 ) {
 			Fields::update_for_post( $entry_id, 'payment_state', 'not_applicable' );
 			delete_post_meta( $entry_id, '_tournament_payment_error' );
+			TournamentPaymentRetryScheduler::clear( $entry_id );
 			return $this->payment_summary( $entry_id, $fields );
 		}
 
@@ -139,6 +140,7 @@ final class TournamentPaymentService {
 
 			Fields::update_for_post( $entry_id, 'payment_state', 'open' );
 			delete_post_meta( $entry_id, '_tournament_payment_error' );
+			TournamentPaymentRetryScheduler::clear( $entry_id );
 			$summary = $this->payment_summary( $entry_id );
 			TournamentActivityLog::record( $entry_id, 'payment_created', $actor_user_id, [ 'invoice_id' => $invoice_id ] );
 			TournamentPaymentEmail::send_initial( $entry_id );
@@ -189,6 +191,7 @@ final class TournamentPaymentService {
 
 	/** Cancel an unpaid linked invoice before its tournament entry is trashed. */
 	public function cancel_unpaid_payment( int $entry_id ) {
+		TournamentPaymentRetryScheduler::clear( $entry_id );
 		$invoice_id = $this->find_invoice_id( $entry_id );
 		if ( $invoice_id <= 0 ) {
 			return true;
@@ -238,9 +241,12 @@ final class TournamentPaymentService {
 			return $invoice_id;
 		}
 
-		$person_id = (int) get_user_meta( $actor_user_id, 'rondo_linked_person_id', true );
+		$person_id = (int) ( $fields['contact_person_id'] ?? 0 );
 		if ( get_post_type( $person_id ) !== 'person' ) {
-			$person_id = 0;
+			$person_id = (int) get_user_meta( $actor_user_id, 'rondo_linked_person_id', true );
+			if ( get_post_type( $person_id ) !== 'person' ) {
+				$person_id = 0;
+			}
 		}
 		$team_count = (int) ( $fields['registered_team_count'] ?? 0 );
 		$price      = (float) ( $fields['price_per_team'] ?? 0 );
@@ -346,6 +352,7 @@ final class TournamentPaymentService {
 		Fields::update_for_post( $entry_id, 'payment_state', 'error' );
 		update_post_meta( $entry_id, '_tournament_payment_error', sanitize_text_field( $error->get_error_message() ) );
 		TournamentActivityLog::record( $entry_id, 'payment_failed', get_current_user_id(), [ 'error_code' => $error->get_error_code() ] );
+		TournamentPaymentRetryScheduler::schedule( $entry_id );
 	}
 
 	private function acquire_lock( int $entry_id ) {

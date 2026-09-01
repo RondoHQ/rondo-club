@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Toernooicoördinatoren kunnen bij publicatie in één keer alle teams met actief Rondo-kader selecteren; de controle toont vooraf hoeveel teams en kaderleden worden uitgenodigd en welke teams worden overgeslagen.
+- Toernooi-inschrijvingen kiezen hun contactpersoon met één klik uit het toegewezen Rondo-kader; naam, e-mailadres en mobiel nummer komen uit het gekoppelde persoonsprofiel.
 - Toernooicoördinatoren kunnen open en gesloten toernooien wijzigen, inclusief datum en tijd, met versiecontrole, prijsvergrendeling na de eerste inschrijving en een optionele wijzigingsmail naar kaderleden en ingeschreven contactpersonen.
 - Rondo kan als beveiligde OpenID Connect-provider voor de eigen FreeScout-integratie werken, met PKCE, ondertekende ID-tokens, een blijvend anoniem subject, exacte e-mailverificatie en beheerbare client- en sleutelrotatie.
 - Toernooicoördinatoren krijgen operationele totalen per leeftijdslaag, externe voortgang, CSV- en PDF-export, planner-notities, activiteitengeschiedenis en gecontroleerde programmaverzending naar uitsluitend ingeschreven teams.
@@ -37,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Mislukte toernooi-betaallinks worden voortaan automatisch met oplopende tussenpozen opnieuw aangemaakt; deelnemers en coördinatoren hoeven geen herstelknop meer te gebruiken.
 - Toernooi-PDF's gebruiken het ingestelde clublogo en de clubkleuren uit de financiële instellingen.
 - De digitale pas op **Mijn gegevens** gebruikt exact dezelfde ingestelde achtergrondkleur als Apple Wallet en Google Wallet; sponsor- en Businessclubpassen blijven wit.
 - Lettermint-soft-bounces worden genegeerd, zodat tijdelijke bezorgproblemen geen opvolgtaak meer aanmaken; hard bounces en spamklachten blijven wel actie vereisen.

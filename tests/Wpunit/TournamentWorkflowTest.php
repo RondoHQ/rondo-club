@@ -85,21 +85,21 @@ class TournamentWorkflowTest extends RondoTestCase {
 	}
 
 	public function test_shared_entry_supports_multiple_tournament_teams_and_one_contact(): void {
-		$admin_id  = self::factory()->user->create( [ 'role' => 'administrator' ] );
-		$team_id   = $this->createOrganization( [ 'post_title' => 'AWC O15-1' ] );
-		$first_id  = $this->createRondoUser(
+		$admin_id        = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$team_id         = $this->createOrganization( [ 'post_title' => 'AWC O15-1' ] );
+		$first_id        = $this->createRondoUser(
 			[
 				'display_name' => 'Eerste trainer',
 				'user_email'   => 'eerste@example.test',
 			]
 			);
-		$second_id = $this->createRondoUser(
+		$second_id       = $this->createRondoUser(
 			[
 				'display_name' => 'Tweede trainer',
 				'user_email'   => 'tweede@example.test',
 			]
 			);
-		$this->link_user( $first_id, [ $this->position( $team_id, 'team', 'Trainer' ) ] );
+		$first_person_id = $this->link_user( $first_id, [ $this->position( $team_id, 'team', 'Trainer' ) ] );
 		$this->link_user( $second_id, [ $this->position( $team_id, 'team', 'Leider' ) ] );
 		$tournament = $this->create_tournament( $admin_id );
 
@@ -123,11 +123,9 @@ class TournamentWorkflowTest extends RondoTestCase {
 		$draft = $this->service->save_draft(
 			$entry['id'],
 			[
-				'version'        => 1,
-				'contact_name'   => 'Gedeelde contactpersoon',
-				'contact_email'  => 'contact@example.test',
-				'contact_mobile' => '0612345678',
-				'team_entries'   => [ [ 'player_count' => 6 ], [ 'player_count' => 7 ] ],
+				'version'           => 1,
+				'contact_person_id' => $first_person_id,
+				'team_entries'      => [ [ 'player_count' => 6 ], [ 'player_count' => 7 ] ],
 			],
 			$first_id
 		);
@@ -151,7 +149,40 @@ class TournamentWorkflowTest extends RondoTestCase {
 		$this->assertSame( 2, $submitted['registered_team_count'] );
 		$this->assertSame( 13, $submitted['player_count'] );
 		$this->assertSame( 96.0, $submitted['total_amount'] );
-		$this->assertSame( 'Gedeelde contactpersoon', $submitted['contact_name'] );
+		$this->assertSame( $first_person_id, $submitted['contact_person_id'] );
+		$this->assertSame( 'Eerste trainer', $submitted['contact_name'] );
+		$this->assertSame( $first_person_id, (int) Fields::get_for_post( (int) $submitted['invoice_id'], 'person' ) );
+	}
+
+	public function test_contact_must_be_an_assigned_rondo_person(): void {
+		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$team_id  = $this->createOrganization( [ 'post_title' => 'AWC O14-1' ] );
+		$kader_id = $this->createRondoUser( [ 'user_email' => 'kader@example.test' ] );
+		$this->link_user( $kader_id, [ $this->position( $team_id, 'team', 'Trainer' ) ] );
+		$tournament = $this->create_tournament( $admin_id );
+		$published  = $this->service->publish(
+			$tournament['id'],
+			[
+				[
+					'team_id'  => $team_id,
+					'user_ids' => [ $kader_id ],
+				],
+			],
+			$admin_id
+		);
+
+		$result = $this->service->save_draft(
+			$published['entries'][0]['id'],
+			[
+				'version'           => 1,
+				'contact_person_id' => $this->createPerson( [ 'post_title' => 'Niet toegewezen' ] ),
+				'team_entries'      => [ [ 'player_count' => 10 ] ],
+			],
+			$kader_id
+		);
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'rondo_tournament_contact_invalid', $result->get_error_code() );
 	}
 
 	public function test_only_assigned_users_can_read_or_write_entry_routes(): void {
@@ -188,12 +219,12 @@ class TournamentWorkflowTest extends RondoTestCase {
 	}
 
 	public function test_submission_cannot_record_no_participation(): void {
-		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
-		$team_id  = $this->createOrganization( [ 'post_title' => 'AWC O10-1' ] );
-		$kader_id = $this->createRondoUser( [ 'user_email' => 'trainer@example.test' ] );
-		$this->link_user( $kader_id, [ $this->position( $team_id, 'team', 'Trainer' ) ] );
-		$tournament = $this->create_tournament( $admin_id );
-		$published  = $this->service->publish(
+		$admin_id          = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$team_id           = $this->createOrganization( [ 'post_title' => 'AWC O10-1' ] );
+		$kader_id          = $this->createRondoUser( [ 'user_email' => 'trainer@example.test' ] );
+		$contact_person_id = $this->link_user( $kader_id, [ $this->position( $team_id, 'team', 'Trainer' ) ] );
+		$tournament        = $this->create_tournament( $admin_id );
+		$published         = $this->service->publish(
 			$tournament['id'],
 			[
 				[
@@ -207,11 +238,9 @@ class TournamentWorkflowTest extends RondoTestCase {
 		$result = $this->service->submit_entry(
 			$published['entries'][0]['id'],
 			[
-				'version'        => 1,
-				'contact_name'   => 'Contact',
-				'contact_email'  => 'contact@example.test',
-				'contact_mobile' => '0612345678',
-				'team_entries'   => [],
+				'version'           => 1,
+				'contact_person_id' => $contact_person_id,
+				'team_entries'      => [],
 			],
 			$kader_id
 		);
@@ -249,13 +278,13 @@ class TournamentWorkflowTest extends RondoTestCase {
 	}
 
 	public function test_manager_can_delete_published_tournament_and_linked_entries(): void {
-		$server      = $this->bootRestControllers( [ Tournaments::class ] );
-		$admin_id    = self::factory()->user->create( [ 'role' => 'administrator' ] );
-		$team_id     = $this->createOrganization( [ 'post_title' => 'AWC O13-1' ] );
-		$assigned_id = $this->createRondoUser( [ 'user_email' => 'toernooi@example.test' ] );
-		$this->link_user( $assigned_id, [ $this->position( $team_id, 'team', 'Trainer' ) ] );
-		$tournament = $this->create_tournament( $admin_id );
-		$published  = $this->service->publish(
+		$server            = $this->bootRestControllers( [ Tournaments::class ] );
+		$admin_id          = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$team_id           = $this->createOrganization( [ 'post_title' => 'AWC O13-1' ] );
+		$assigned_id       = $this->createRondoUser( [ 'user_email' => 'toernooi@example.test' ] );
+		$contact_person_id = $this->link_user( $assigned_id, [ $this->position( $team_id, 'team', 'Trainer' ) ] );
+		$tournament        = $this->create_tournament( $admin_id );
+		$published         = $this->service->publish(
 			$tournament['id'],
 			[
 				[
@@ -265,15 +294,13 @@ class TournamentWorkflowTest extends RondoTestCase {
 			],
 			$admin_id
 		);
-		$entry_id   = $published['entries'][0]['id'];
-		$submitted  = $this->service->submit_entry(
+		$entry_id          = $published['entries'][0]['id'];
+		$submitted         = $this->service->submit_entry(
 			$entry_id,
 			[
-				'version'        => 1,
-				'contact_name'   => 'Contactpersoon',
-				'contact_email'  => 'contact@example.test',
-				'contact_mobile' => '0612345678',
-				'team_entries'   => [ [ 'player_count' => 12 ] ],
+				'version'           => 1,
+				'contact_person_id' => $contact_person_id,
+				'team_entries'      => [ [ 'player_count' => 12 ] ],
 			],
 			$assigned_id
 		);
@@ -382,11 +409,9 @@ class TournamentWorkflowTest extends RondoTestCase {
 		$draft = $this->service->save_draft(
 			$published['entries'][0]['id'],
 			[
-				'version'        => 1,
-				'contact_name'   => '',
-				'contact_email'  => '',
-				'contact_mobile' => '',
-				'team_entries'   => [ [ 'player_count' => '' ] ],
+				'version'           => 1,
+				'contact_person_id' => null,
+				'team_entries'      => [ [ 'player_count' => '' ] ],
 			],
 			$kader_id
 		);
@@ -435,9 +460,14 @@ class TournamentWorkflowTest extends RondoTestCase {
 	}
 
 	private function link_user( int $user_id, array $positions ): int {
+		$user      = get_userdata( $user_id );
 		$person_id = $this->createPerson(
-			[ 'post_title' => get_userdata( $user_id )->display_name ],
-			[ 'first_name' => get_userdata( $user_id )->display_name ]
+			[ 'post_title' => $user->display_name ],
+			[
+				'email_1'    => $user->user_email,
+				'first_name' => $user->display_name,
+				'mobile_1'   => '0612345678',
+			]
 		);
 		Fields::update_for_post( $person_id, 'work_history', $positions );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );

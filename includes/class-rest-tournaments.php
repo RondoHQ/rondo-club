@@ -162,16 +162,6 @@ final class Tournaments extends Base {
 		);
 		register_rest_route(
 			'rondo/v1',
-			'/tournament-entries/(?P<id>\d+)/retry-payment-link',
-			[
-				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'retry_payment_link' ],
-				'permission_callback' => [ $this, 'check_entry_read' ],
-				'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
-			]
-		);
-		register_rest_route(
-			'rondo/v1',
 			'/tournament-entries/(?P<id>\d+)/payment-reminder',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -340,11 +330,6 @@ final class Tournaments extends Base {
 
 	public function submit_entry( $request ) {
 		$result = $this->service->submit_entry( absint( $request->get_param( 'id' ) ), $request->get_json_params() ?: [], get_current_user_id() );
-		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
-	}
-
-	public function retry_payment_link( $request ) {
-		$result = $this->service->retry_payment( absint( $request->get_param( 'id' ) ), get_current_user_id() );
 		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 	}
 
