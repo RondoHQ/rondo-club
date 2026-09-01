@@ -317,12 +317,23 @@ Use synthetic mailboxes and a disposable proof listener or console test.
   is audited and invalidation is retried.
 - [ ] Miss a push event and confirm hourly repair revokes access; restore connectivity and confirm
   reconciliation runs immediately without claiming a hard deadline during the outage.
+- [ ] Stop cron and restart the application after enqueueing a capability event; confirm the
+  private `rondo_integration_event` post survives and is delivered when processing resumes.
+- [ ] Replay the same event UUID and confirm FreeScout performs one idempotent reconciliation.
+- [ ] Confirm successful or authoritatively reconciled queue posts are deleted only after an
+  audit-safe result, while repeatedly failing posts remain visible as unresolved failures.
+- [ ] Confirm transients are used only for short-lived locks and no queued subject depends on a
+  transient for durability.
 - [ ] Confirm managed provisioning cannot activate without a valid 90–730 day retention value,
   primary operational owner and escalation owner selection.
 - [ ] Set retention to its `90`, `365` and `730` day boundaries; reject out-of-range, malformed and
   unsigned values without shortening the last verified policy.
-- [ ] Confirm `RONDO_AUDIT_RETENTION_DAYS` locks the displayed value and an owner change requires
-  recent local-password confirmation plus its own audit event.
+- [ ] Set `RONDO_AUDIT_RETENTION_DAYS` on the Rondo server and confirm it overrides the Rondo option,
+  is signed with source `environment`, and locks the displayed Rondo value; invalid environment
+  values block configuration instead of falling back.
+- [ ] Confirm FreeScout has no local retention override, consumes only the signed Rondo effective
+  value/source, and an owner change requires recent local-password confirmation plus its own audit
+  event.
 - [ ] Run daily pruning with eligible, too-new and unresolved security/access events; only eligible
   rows are removed, bounded batches complete idempotently and aggregate deletion counts are kept.
 - [ ] Resolve an excluded failure and confirm its retention clock restarts at closure.
@@ -363,13 +374,16 @@ must repeat the denial, outage and recovery tests using `/login?rondo_oauth=0` a
 
 ## 8. Check FreeScout mobile behavior
 
-- [ ] Record whether the official mobile client supports the custom OAuth flow.
-- [ ] Confirm callback/deep-link handling returns the user to the app when supported.
-- [ ] Confirm failure does not leave an OAuth session or code visible in browser history.
-- [ ] Record whether the conversation sidebar is visible, hidden or unsupported in the app.
-- [ ] Decide whether browser-only access is acceptable for the pilot if the app is incompatible.
+- [ ] Verify the responsive browser UI supports the complete login, conversation and sidebar flow
+  at the pilot's mobile browser widths.
+- [ ] Observe whether the official native mobile client supports the custom OAuth flow and record
+  its callback/deep-link and sidebar behavior as informational evidence.
+- [ ] If the native client attempts OAuth, confirm failure leaves no usable code, token or session
+  identifier in browser history; otherwise mark the native-client checks not applicable.
+- [ ] Document unsupported native-client behavior without advertising native mobile support.
 
-Mobile incompatibility is a documented product decision, not an automatic security exception.
+Version one supports the responsive browser UI only. Native-client incompatibility does not block a
+GO decision unless it exposes a security issue or also breaks the required browser flow.
 
 ## 9. Prove sidebar authorization context
 
@@ -380,11 +394,18 @@ reference commit.
 - [ ] Confirm an unauthenticated request is rejected before webhook dispatch.
 - [ ] Confirm the server can read the current agent through FreeScout authentication.
 - [ ] Confirm FreeScout's normal conversation policy denies an unauthorized agent.
-- [ ] Confirm a supplied mailbox ID that differs from the conversation mailbox is rejected.
+- [ ] Confirm the authorized conversation's reloaded local mailbox ID resolves to its active,
+  verified stable key and a missing, inactive or drifted mapping is rejected.
 - [ ] Confirm customer identity is reloaded from the authorized conversation, not trusted from
   browser parameters.
-- [ ] Capture the proposed signed payload and verify it includes current agent, mailbox,
-  conversation and customer context.
+- [ ] Capture the proposed signed payload and verify it contains the local FreeScout user ID, exact
+  bound issuer/subject, stable mailbox key, conversation/customer IDs and one deduplicated current
+  customer-email array.
+- [ ] Confirm the payload contains no agent email, numeric mailbox ID, singular customer email,
+  customer phone or browser-supplied identity value.
+- [ ] Revoke the bound subject or change visible person data between two requests and confirm the
+  second result is freshly authorized and rendered; no matched-person payload or sidebar HTML cache
+  may serve the first result.
 - [ ] Confirm no secret is included in the browser request or rendered page.
 
 **Blocking failure:** the server cannot reliably identify and authorize the current agent before
@@ -508,8 +529,12 @@ permits arbitrary CSS, breaks the core responsive layout or survives after being
   rejected and a correction requires a new patch version.
 - [ ] Confirm the fixed `/releases/latest/download/` manifest and ZIP URLs resolve to the same
   stable tag while a prerelease never becomes latest.
-- [ ] Confirm the wrapper pins that tag, downloads only tagged manifest/ZIP/checksum URLs and aborts
-  before extraction on a version, checksum, provenance or archive-layout mismatch.
+- [ ] Preflight an exact `--version=vX.Y.Z` and `--sha256=<64-hex>` without changing the installed
+  module, then approve and install those same values using only tagged URLs.
+- [ ] Publish a newer release after preflight and confirm it does not change the approved target;
+  reject a missing version/SHA or any unresolved `latest` install target.
+- [ ] Confirm the wrapper aborts before extraction on a version, checksum, provenance or
+  archive-layout mismatch.
 - [ ] Confirm publishing a release changes no FreeScout installation; non-production and production
   updates each require separate operator action.
 
@@ -598,11 +623,12 @@ Complete one row for every material behavior.
 | Login event | Laravel `Login` fires for existing and newly created OAuth users before redirect | Current agent available | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Use the login event for binding and provisioning |
 | Managed mailbox access | Targeted pivot attach/detach works; customer routes require the core visibility flag; production API resolves key `ledenadministratie` to mailbox ID `18`, name `Ledenadministratie`, address `ledenadministratie@svawc.nl` | Manual access preserved; local ID is verified configuration with no name/address fallback | Provisional pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) and [production mailbox mapping evidence](evidence/freescout-mailbox-mapping-2026-09-01.md) | Prove local enabled-state and mapping-drift gates; never use `sync()` |
 | Mapping settings | No production module UI exists yet | Listed Rondo keys plus local active-mailbox selector, verification/dry run, explicit state transitions and protected mass-impact actions | Custom proof required | PRD contract | Build inside Rondo Integration; no free-form identifiers or silent retargeting |
-| Audit retention and ownership | No production module policy exists yet | Per-club 90–730 days, default 365; unresolved security/access failures excluded until closure; primary and escalation administrators required | Custom proof required | PRD contract | Prove signed configuration, locked override, pruning, notification redaction and escalation |
+| Audit retention and ownership | No production module policy exists yet | Rondo-signed effective 90–730 days; Rondo-server environment overrides Rondo option, then default 365; FreeScout has no override; unresolved security/access failures excluded until closure; primary and escalation administrators required | Custom proof required | PRD contract | Prove precedence, signed value/source, invalid-environment blocking, pruning, notification redaction and escalation |
+| Provisioning event queue | No production queue exists yet | Private WordPress post queue, at-least-once delivery, UUID idempotency, bounded cron worker and visible unresolved failures; transients only for locks | Custom proof required | PRD contract | Prove restart durability, replay, terminal deletion and failure visibility |
 | Module release supply chain | Proposed RondoHQ repository did not exist on 2026-09-01; FreeScout core updater does not pre-verify the third-party ZIP checksum | Public AGPL repository, protected main, immutable human-approved releases, tagged checksummed artifacts and no automatic production rollout | Custom proof required | [Module repository decision](evidence/freescout-module-release-repository-2026-09-01.md) | Create during Phase 2 and prove every repository, packaging, provenance and update gate before `v1.0.0` |
 | Session revocation | Zero-mailbox customer/conversation denial is proven; conditional logout, binding recovery and invalidation failure remain untested | Next-request mailbox denial; logout for zero-mailbox or identity change; manual access preserved | Custom proof required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Prove session/remember-token invalidation and retry without restoring revoked pivots |
 | Force-login recovery | Paid add-on loops without a response filter; its patched `/login?oauth=0` paths work | Custom callback fails once to `/login?rondo_oauth=0`; server setting restores local login | Paid add-on **Fail**; custom retest required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Implement recovery directly in Rondo Integration |
-| Mobile | | Explicit pilot decision | | | |
+| Mobile | Not yet observed | Responsive browser UI is required; native FreeScout client support is outside version one | Browser retest required; native observation informational | PRD contract | Document native behavior without a support claim; native incompatibility does not block browser pilot unless it exposes a security issue |
 | Sidebar authorization | | Agent and conversation authorized | | | |
 | Ledenadministratie fields | Canonical field registry, person formatters and task visibility support the approved bounded view; no canonical Sportlink-sync timestamp exists | Exact fixed contract with independent related-person/task checks and prohibited-key filtering | Custom proof required | Source inspection 2026-09-01 | Omit unknown values and source-sync claims; test response keys and rendered groups with synthetic records |
 | Conversation activity | Daily batch creates one subject/link activity through customer-ID to KNVB-ID to Rondo-ID SQLite mappings; core exposes inbound, agent-created and customer-change events plus customer emails | Keep the pointer long-term; exact unique `email_1`/`email_2` match, idempotent module events and deterministic reassignment/repair | Custom proof required | Rondo Sync and FreeScout 1.8.238 source inspection 2026-09-01 | Keep batch during rollout; never use IDs/names/phones to select a person or copy message content |
