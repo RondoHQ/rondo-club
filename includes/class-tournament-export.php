@@ -7,6 +7,8 @@
 
 namespace Rondo\Tournaments;
 
+use Rondo\Config\FinanceConfig;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -111,7 +113,8 @@ final class TournamentExport {
 		$temp   = trailingslashit( $upload['basedir'] ) . 'rondo-mpdf-tmp';
 		wp_mkdir_p( $temp );
 		try {
-			$mpdf = new \Mpdf\Mpdf(
+			$branding = $this->branding();
+			$mpdf     = new \Mpdf\Mpdf(
 				[
 					'format'        => 'A4-L',
 					'margin_left'   => 10,
@@ -122,8 +125,8 @@ final class TournamentExport {
 				]
 			);
 			$mpdf->SetTitle( 'Toernooioverzicht - ' . $data['tournament']['name'] );
-			$mpdf->SetFooter( 'Rondo toernooioverzicht||{PAGENO}/{nbpg}' );
-			$mpdf->WriteHTML( $this->pdf_html( $data ) );
+			$mpdf->SetFooter( wp_strip_all_tags( $branding['club_name'] ) . ' toernooioverzicht||{PAGENO}/{nbpg}' );
+			$mpdf->WriteHTML( $this->pdf_html( $data, $branding ) );
 			return $mpdf->Output( '', \Mpdf\Output\Destination::STRING_RETURN );
 		} catch ( \Throwable $error ) {
 			return new \WP_Error(
@@ -137,10 +140,14 @@ final class TournamentExport {
 		}
 	}
 
-	private function pdf_html( array $data ): string {
+	private function pdf_html( array $data, array $branding ): string {
 		$tournament = $data['tournament'];
-		$html       = '<style>body{font-family:sans-serif;color:#172033;font-size:9pt}h1{font-size:20pt;margin:0 0 4mm;color:#123b78}h2{font-size:13pt;margin:7mm 0 2mm;color:#123b78}.meta{margin-bottom:4mm;color:#4b5563}.meta-table{margin-bottom:3mm}.meta-table td{width:33%;border:0;padding:0 5mm 2mm 0;color:#4b5563}table{width:100%;border-collapse:collapse}th{background:#123b78;color:#fff;text-align:left;padding:2.2mm;font-size:8pt}td{border-bottom:0.2mm solid #d7dce5;padding:2mm;vertical-align:top}.num{text-align:right;white-space:nowrap}.muted{color:#6b7280}.total td{font-weight:bold;background:#eef3f9}.note{font-size:8pt;color:#4b5563}</style>';
-		$html      .= '<h1>' . esc_html( $tournament['name'] ) . '</h1>';
+		$accent     = esc_attr( $branding['accent_color'] );
+		$background = esc_attr( $branding['accent_background_color'] );
+		$contrast   = esc_attr( $this->contrast_text_color( $branding['accent_color'] ) );
+		$logo       = $branding['logo_path'] !== '' ? '<img src="' . esc_attr( $branding['logo_path'] ) . '" alt="" />' : '';
+		$html       = '<style>body{font-family:sans-serif;color:#172033;font-size:9pt}h1{font-size:20pt;margin:0;color:' . $accent . '}h2{font-size:13pt;margin:7mm 0 2mm;color:' . $accent . '}.brand-header{border-bottom:0.8mm solid ' . $accent . ';margin-bottom:5mm}.brand-header td{border:0;padding:0 0 3mm}.brand-logo{width:30%;vertical-align:middle}.brand-logo img{max-width:42mm;max-height:18mm}.brand-title{text-align:right;vertical-align:middle}.club-name{color:#4b5563;font-size:9pt;margin-bottom:1mm}.meta-table{margin-bottom:3mm}.meta-table td{width:33%;border:0;padding:0 5mm 2mm 0;color:#4b5563}table{width:100%;border-collapse:collapse}th{background:' . $accent . ';color:' . $contrast . ';text-align:left;padding:2.2mm;font-size:8pt}td{border-bottom:0.2mm solid #d7dce5;padding:2mm;vertical-align:top}.num{text-align:right;white-space:nowrap}.muted{color:#6b7280}.total td{font-weight:bold;background:' . $background . '}.note{font-size:8pt;color:#4b5563}</style>';
+		$html      .= '<table class="brand-header"><tbody><tr><td class="brand-logo">' . $logo . '</td><td class="brand-title"><div class="club-name">' . esc_html( $branding['club_name'] ) . '</div><h1>' . esc_html( $tournament['name'] ) . '</h1></td></tr></tbody></table>';
 		$html      .= '<table class="meta-table"><tbody><tr><td><strong>Organisator:</strong><br>' . esc_html( $tournament['organizer'] ?: '-' ) . '</td><td><strong>Locatie:</strong><br>' . esc_html( $tournament['location'] ?: '-' ) . '</td><td><strong>Externe voortgang:</strong><br>' . esc_html( $this->external_status_label( $tournament['external_status'] ) ) . '</td></tr><tr><td><strong>Interne deadline:</strong><br>' . esc_html( $this->date_label( $tournament['internal_deadline'] ) ) . '</td><td><strong>Betaaldeadline:</strong><br>' . esc_html( $this->date_label( $tournament['payment_deadline'] ) ) . '</td><td><strong>Deadline organisatie:</strong><br>' . esc_html( $this->date_label( $tournament['external_deadline'] ) ) . '</td></tr></tbody></table>';
 		$html      .= '<h2>Totalen per leeftijdslaag</h2><table><thead><tr><th>Leeftijd</th><th class="num">Geselecteerd</th><th class="num">Ingeschreven</th><th class="num">Teams</th><th class="num">Spelers</th><th class="num">Te ontvangen</th><th class="num">Ontvangen</th><th class="num">Openstaand</th><th class="num">Open betalingen</th></tr></thead><tbody>';
 		foreach ( $data['totals']['by_age_group'] as $row ) {
@@ -156,6 +163,38 @@ final class TournamentExport {
 		}
 		$html .= '</tbody></table><p class="note">Deze export ondersteunt de handmatige invoer bij de externe toernooiorganisatie.</p>';
 		return $html;
+	}
+
+	/** Resolve the configured club identity for the PDF. */
+	private function branding(): array {
+		$config     = new FinanceConfig();
+		$accent     = sanitize_hex_color( $config->get_accent_color() ) ?: '#0891b2';
+		$background = sanitize_hex_color( $config->get_accent_background_color() ) ?: '#f8fafc';
+		$logo_path  = '';
+		$logo_id    = $config->get_club_logo_id();
+		if ( $logo_id > 0 ) {
+			$attached_file = get_attached_file( $logo_id );
+			if ( is_string( $attached_file ) && file_exists( $attached_file ) ) {
+				$logo_path = $attached_file;
+			}
+		}
+
+		return [
+			'accent_color'            => $accent,
+			'accent_background_color' => $background,
+			'club_name'               => $config->get_display_name(),
+			'logo_path'               => $logo_path,
+		];
+	}
+
+	/** Pick readable table-header text for the configured accent color. */
+	private function contrast_text_color( string $hex ): string {
+		$hex       = ltrim( $hex, '#' );
+		$red       = hexdec( substr( $hex, 0, 2 ) ) / 255;
+		$green     = hexdec( substr( $hex, 2, 2 ) ) / 255;
+		$blue      = hexdec( substr( $hex, 4, 2 ) ) / 255;
+		$luminance = ( 0.2126 * $red ) + ( 0.7152 * $green ) + ( 0.0722 * $blue );
+		return $luminance < 0.52 ? '#ffffff' : '#172033';
 	}
 
 	private function write_total_row( $stream, array $row ): void {

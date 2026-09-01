@@ -2,6 +2,7 @@
 
 namespace Tests\Wpunit;
 
+use Rondo\Config\FinanceConfig;
 use Rondo\Fields\Fields;
 use Rondo\REST\Tournaments;
 use Rondo\Tournaments\TournamentActivityLog;
@@ -77,6 +78,38 @@ class TournamentOperationsTest extends RondoTestCase {
 		$this->assertIsString( $pdf );
 		$this->assertStringStartsWith( '%PDF-', $pdf );
 		$this->assertGreaterThan( 5000, strlen( $pdf ) );
+	}
+
+	public function test_pdf_uses_configured_club_branding(): void {
+		$logo_path     = get_template_directory() . '/public/icons/apple-touch-icon-180x180.png';
+		$attachment_id = wp_insert_attachment(
+			[
+				'post_title'     => 'Clublogo',
+				'post_mime_type' => 'image/png',
+				'post_status'    => 'inherit',
+			],
+			$logo_path
+		);
+		update_attached_file( $attachment_id, $logo_path );
+		update_option( FinanceConfig::OPTION_CLUB_LOGO_ID, $attachment_id );
+		update_option( FinanceConfig::OPTION_ACCENT_COLOR, '#c8102e' );
+		update_option( FinanceConfig::OPTION_ACCENT_BACKGROUND_COLOR, '#fff0f2' );
+
+		$tournament_id = $this->create_tournament();
+		$export        = new TournamentExport( $this->service );
+		$data          = $export->data( $tournament_id );
+		$branding      = ( new \ReflectionClass( $export ) )->getMethod( 'branding' )->invoke( $export );
+		$html          = ( new \ReflectionClass( $export ) )->getMethod( 'pdf_html' )->invoke( $export, $data, $branding );
+		$pdf           = $export->pdf( $tournament_id );
+
+		$this->assertSame( '#c8102e', $branding['accent_color'] );
+		$this->assertSame( '#fff0f2', $branding['accent_background_color'] );
+		$this->assertSame( $logo_path, $branding['logo_path'] );
+		$this->assertStringContainsString( 'background:#c8102e', $html );
+		$this->assertStringContainsString( 'background:#fff0f2', $html );
+		$this->assertStringContainsString( esc_attr( $logo_path ), $html );
+		$this->assertIsString( $pdf );
+		$this->assertStringStartsWith( '%PDF-', $pdf );
 	}
 
 	public function test_program_preview_deduplicates_and_excludes_non_submitted_teams(): void {

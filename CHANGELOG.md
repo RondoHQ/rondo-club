@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Toernooi-PDF's gebruiken het ingestelde clublogo en de clubkleuren uit de financiële instellingen.
 - De digitale pas op **Mijn gegevens** gebruikt exact dezelfde ingestelde achtergrondkleur als Apple Wallet en Google Wallet; sponsor- en Businessclubpassen blijven wit.
 - Lettermint-soft-bounces worden genegeerd, zodat tijdelijke bezorgproblemen geen opvolgtaak meer aanmaken; hard bounces en spamklachten blijven wel actie vereisen.
 - Sponsorinformatie staat op **Mijn gegevens** in een eigen blok onder de contactpersoon, met uitleg over het gebruik van het bedrijfslogo op de tv-schermen bij AWC.
