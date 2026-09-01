@@ -111,6 +111,11 @@ export const prmApi = {
   retryTournamentPaymentLink: (id) => api.post(`/rondo/v1/tournament-entries/${id}/retry-payment-link`),
   sendTournamentPaymentReminder: (id) => api.post(`/rondo/v1/tournament-entries/${id}/payment-reminder`),
   reopenTournamentEntry: (id) => api.post(`/rondo/v1/tournament-entries/${id}/reopen`),
+  updateTournamentPlannerNote: (id, plannerNote) => api.patch(`/rondo/v1/tournament-entries/${id}/planner-note`, { planner_note: plannerNote }),
+  updateTournamentExternalStatus: (id, externalStatus) => api.patch(`/rondo/v1/tournaments/${id}/external-status`, { external_status: externalStatus }),
+  updateTournamentLifecycleStatus: (id, lifecycleStatus) => api.patch(`/rondo/v1/tournaments/${id}/status`, { lifecycle_status: lifecycleStatus }),
+  saveTournamentProgram: (id, data) => api.post(`/rondo/v1/tournaments/${id}/program`, data),
+  downloadTournamentExport: (id, format) => api.get(`/rondo/v1/tournaments/${id}/export.${format}`, { responseType: 'blob' }),
 
   // Current season helper
   getCurrentSeason: () => api.get('/rondo/v1/current-season'),

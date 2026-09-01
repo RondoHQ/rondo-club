@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Toernooicoördinatoren krijgen operationele totalen per leeftijdslaag, externe voortgang, CSV- en PDF-export, planner-notities, activiteitengeschiedenis en gecontroleerde programmaverzending naar uitsluitend ingeschreven teams.
 - Toernooi-inschrijvingen mailen de betaallink aan het toegewezen kader, versturen configureerbare herinneringen standaard zeven en twee dagen voor de betaaldeadline en bieden de coördinator een handmatige herinneringsactie.
 - Toernooicoördinatoren kunnen onbetaalde inschrijvingen veilig heropenen; Rondo trekt de oude betaallink in en maakt na een nieuwe bevestiging een nieuwe factuur.
 - Publicatie van een toernooi wordt geblokkeerd totdat een bruikbare standaard Mollie-rekening voor toernooien is gekozen.

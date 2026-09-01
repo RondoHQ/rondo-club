@@ -3,7 +3,7 @@ import { CalendarDays, Plus, Trophy } from 'lucide-react';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useTournaments } from '@/hooks/useTournaments';
-import { formatTournamentDate, tournamentStatusLabel } from './tournamentFormatters';
+import { formatTournamentCurrency, formatTournamentDate, tournamentStatusLabel } from './tournamentFormatters';
 
 export default function TournamentsList() {
   useDocumentTitle('Toernooien');
@@ -60,10 +60,11 @@ export default function TournamentsList() {
               <CalendarDays className="mr-2 h-4 w-4" />
               Interne deadline: {formatTournamentDate(tournament.internal_deadline)}
             </div>
-            <div className="mt-4 grid grid-cols-3 gap-3 border-t border-gray-200 pt-4 text-center dark:border-gray-700">
-              <div><div className="text-lg font-semibold text-gray-900 dark:text-gray-100">{tournament.entry_count || 0}</div><div className="text-xs text-gray-500">Rondo-teams</div></div>
+            <div className="mt-4 grid grid-cols-2 gap-3 border-t border-gray-200 pt-4 text-center sm:grid-cols-4 dark:border-gray-700">
+              <div><div className="text-lg font-semibold text-gray-900 dark:text-gray-100">{tournament.submitted_entry_count || 0}/{tournament.entry_count || 0}</div><div className="text-xs text-gray-500">Ingeschreven</div></div>
               <div><div className="text-lg font-semibold text-gray-900 dark:text-gray-100">{tournament.registered_team_count || 0}</div><div className="text-xs text-gray-500">Toernooiteams</div></div>
               <div><div className="text-lg font-semibold text-gray-900 dark:text-gray-100">{tournament.player_count || 0}</div><div className="text-xs text-gray-500">Spelers</div></div>
+              <div><div className="text-lg font-semibold text-gray-900 dark:text-gray-100">{formatTournamentCurrency(tournament.outstanding_amount)}</div><div className="text-xs text-gray-500">Openstaand</div></div>
             </div>
           </Link>
         ))}

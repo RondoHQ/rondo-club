@@ -202,6 +202,16 @@ class MollieWebhook {
 
 		// Update native field status field.
 		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'status', 'paid' );
+		$tournament_entry_id = (int) get_post_meta( $invoice_id, '_tournament_entry_id', true );
+		if ( $tournament_entry_id > 0 ) {
+			\Rondo\Fields\Fields::update_for_post( $tournament_entry_id, 'payment_state', 'paid' );
+			\Rondo\Tournaments\TournamentActivityLog::record(
+				$tournament_entry_id,
+				'payment_confirmed',
+				0,
+				[ 'invoice_id' => $invoice_id ]
+			);
+		}
 
 		return rest_ensure_response( [ 'ok' => true ] );
 	}

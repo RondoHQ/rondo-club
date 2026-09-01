@@ -8,6 +8,8 @@
 namespace Rondo\REST;
 
 use Rondo\Tournaments\TournamentAccess;
+use Rondo\Tournaments\TournamentExport;
+use Rondo\Tournaments\TournamentProgramService;
 use Rondo\Tournaments\TournamentService;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -17,10 +19,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class Tournaments extends Base {
 
 	private TournamentService $service;
+	private TournamentProgramService $programs;
+	private TournamentExport $export;
 
 	public function __construct() {
 		parent::__construct();
-		$this->service = new TournamentService();
+		$this->service  = new TournamentService();
+		$this->programs = new TournamentProgramService();
+		$this->export   = new TournamentExport( $this->service );
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 
@@ -171,6 +177,59 @@ final class Tournaments extends Base {
 				'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
 			]
 		);
+		register_rest_route(
+			'rondo/v1',
+			'/tournament-entries/(?P<id>\d+)/planner-note',
+			[
+				'methods'             => \WP_REST_Server::EDITABLE,
+				'callback'            => [ $this, 'update_planner_note' ],
+				'permission_callback' => [ $this, 'check_manager_permission' ],
+				'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
+			]
+		);
+		register_rest_route(
+			'rondo/v1',
+			'/tournaments/(?P<id>\d+)/external-status',
+			[
+				'methods'             => \WP_REST_Server::EDITABLE,
+				'callback'            => [ $this, 'update_external_status' ],
+				'permission_callback' => [ $this, 'check_manager_permission' ],
+				'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
+			]
+		);
+		register_rest_route(
+			'rondo/v1',
+			'/tournaments/(?P<id>\d+)/status',
+			[
+				'methods'             => \WP_REST_Server::EDITABLE,
+				'callback'            => [ $this, 'update_lifecycle_status' ],
+				'permission_callback' => [ $this, 'check_manager_permission' ],
+				'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
+			]
+		);
+		register_rest_route(
+			'rondo/v1',
+			'/tournaments/(?P<id>\d+)/program',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'handle_program' ],
+				'permission_callback' => [ $this, 'check_manager_permission' ],
+				'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
+			]
+		);
+		register_rest_route(
+			'rondo/v1',
+			'/tournaments/(?P<id>\d+)/export\.(?P<format>csv|pdf)',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'download_export' ],
+				'permission_callback' => [ $this, 'check_manager_permission' ],
+				'args'                => [
+					'id'     => [ 'sanitize_callback' => 'absint' ],
+					'format' => [ 'sanitize_callback' => 'sanitize_key' ],
+				],
+			]
+		);
 	}
 
 	public function check_manager_permission(): bool {
@@ -227,7 +286,7 @@ final class Tournaments extends Base {
 
 	public function extend_deadline( $request ) {
 		$payload = $request->get_json_params() ?: [];
-		$result  = $this->service->extend_deadline( absint( $request->get_param( 'id' ) ), $payload['internal_deadline'] ?? '' );
+		$result  = $this->service->extend_deadline( absint( $request->get_param( 'id' ) ), $payload['internal_deadline'] ?? '', get_current_user_id() );
 		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 	}
 
@@ -273,5 +332,73 @@ final class Tournaments extends Base {
 	public function reopen_entry( $request ) {
 		$result = $this->service->reopen_entry( absint( $request->get_param( 'id' ) ), get_current_user_id() );
 		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	public function update_planner_note( $request ) {
+		$payload = $request->get_json_params() ?: [];
+		$result  = $this->service->update_planner_note( absint( $request->get_param( 'id' ) ), (string) ( $payload['planner_note'] ?? '' ), get_current_user_id() );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	public function update_external_status( $request ) {
+		$payload = $request->get_json_params() ?: [];
+		$result  = $this->service->update_external_status( absint( $request->get_param( 'id' ) ), (string) ( $payload['external_status'] ?? '' ), get_current_user_id() );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	public function update_lifecycle_status( $request ) {
+		$payload = $request->get_json_params() ?: [];
+		$result  = $this->service->update_lifecycle_status( absint( $request->get_param( 'id' ) ), (string) ( $payload['lifecycle_status'] ?? '' ), get_current_user_id() );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	public function handle_program( $request ) {
+		$tournament_id = absint( $request->get_param( 'id' ) );
+		$payload       = $request->get_json_params() ?: $request->get_params();
+		$files         = $request->get_file_params();
+		$attachment_id = null;
+		if ( ! empty( $files['program_file'] ) ) {
+			$attachment_id = $this->programs->upload( $tournament_id, $files['program_file'] );
+			if ( is_wp_error( $attachment_id ) ) {
+				return $attachment_id;
+			}
+		}
+		$saved = $this->programs->save( $tournament_id, $payload, get_current_user_id(), $attachment_id );
+		if ( is_wp_error( $saved ) ) {
+			return $saved;
+		}
+		$preview = $this->programs->recipients( $tournament_id );
+		$sent    = null;
+		if ( sanitize_key( (string) ( $payload['action'] ?? 'preview' ) ) === 'send' ) {
+			$sent = $this->programs->send( $tournament_id, $payload, get_current_user_id() );
+			if ( is_wp_error( $sent ) ) {
+				return $sent;
+			}
+		}
+		return rest_ensure_response(
+			[
+				'tournament' => $this->service->format_tournament( $tournament_id, true ),
+				'program'    => $this->programs->state( $tournament_id ),
+				'preview'    => $preview,
+				'sent'       => $sent,
+			]
+		);
+	}
+
+	public function download_export( $request ) {
+		$tournament_id = absint( $request->get_param( 'id' ) );
+		$format        = sanitize_key( (string) $request->get_param( 'format' ) );
+		$content       = $format === 'pdf' ? $this->export->pdf( $tournament_id ) : $this->export->csv( $tournament_id );
+		if ( is_wp_error( $content ) ) {
+			return $content;
+		}
+		$name = sanitize_file_name( get_the_title( $tournament_id ) ?: 'toernooi' );
+		nocache_headers();
+		header( 'Content-Type: ' . ( $format === 'pdf' ? 'application/pdf' : 'text/csv; charset=UTF-8' ) );
+		header( 'Content-Disposition: attachment; filename="' . $name . '.' . $format . '"' );
+		header( 'Content-Length: ' . strlen( $content ) );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Binary download response.
+		echo $content;
+		exit;
 	}
 }
