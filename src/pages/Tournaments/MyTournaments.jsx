@@ -3,7 +3,7 @@ import { CalendarDays, CheckCircle2, ClipboardList } from 'lucide-react';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useMyTournamentEntries } from '@/hooks/useTournaments';
-import { formatTournamentDate } from './tournamentFormatters';
+import { formatTournamentDate, tournamentPaymentStatus, tournamentPaymentToneClasses } from './tournamentFormatters';
 
 export default function MyTournaments() {
   useDocumentTitle('Mijn toernooien');
@@ -32,7 +32,7 @@ export default function MyTournaments() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         {entries.map((entry) => {
-          const submitted = entry.registration_status === 'submitted';
+          const paymentStatus = tournamentPaymentStatus(entry);
           return (
             <Link
               key={entry.id}
@@ -44,9 +44,9 @@ export default function MyTournaments() {
                   <h2 className="font-semibold text-gray-900 dark:text-gray-100">{entry.tournament.name}</h2>
                   <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{entry.team_name}</p>
                 </div>
-                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${submitted ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300'}`}>
-                  {submitted ? <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> : null}
-                  {submitted ? 'Ingeschreven' : 'Niet ingeschreven'}
+                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${tournamentPaymentToneClasses(paymentStatus.tone)}`}>
+                  {paymentStatus.tone === 'success' ? <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> : null}
+                  {paymentStatus.label}
                 </span>
               </div>
               <div className="mt-4 flex items-center text-sm text-gray-600 dark:text-gray-400">

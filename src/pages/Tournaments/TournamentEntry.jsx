@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, CreditCard, ExternalLink, Loader2, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   useSaveTournamentEntryDraft,
+  useRetryTournamentPaymentLink,
   useSubmitTournamentEntry,
   useTournamentEntry,
 } from '@/hooks/useTournaments';
@@ -88,12 +89,51 @@ function EntryEditor({ entry }) {
 }
 
 function SubmittedEntry({ entry }) {
+  const retryPayment = useRetryTournamentPaymentLink();
+  const retryError = retryPayment.error ? errorMessage(retryPayment.error) : '';
+
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-200">
-        <div className="flex items-center font-semibold"><CheckCircle2 className="mr-2 h-5 w-5" />Inschrijving bevestigd</div>
-        <p className="mt-1 text-sm">De inschrijving is opgeslagen. Je ontvangt de betaallink zodra deze beschikbaar is.</p>
-      </div>
+      {entry.payment_state === 'paid' ? (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-200">
+          <div className="flex items-center font-semibold"><CheckCircle2 className="mr-2 h-5 w-5" />Ingeschreven en betaald</div>
+          {entry.paid_at ? <p className="mt-1 text-sm">Ontvangen op {formatTournamentDate(entry.paid_at, true)}.</p> : null}
+        </div>
+      ) : null}
+      {entry.payment_state === 'open' ? (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-800 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200">
+          <div className="flex items-center font-semibold"><CreditCard className="mr-2 h-5 w-5" />Ingeschreven, betaling open</div>
+          <p className="mt-1 text-sm">Betaal het volledige bedrag via de blijvende Mollie-betaallink.</p>
+          <a className="btn-primary mt-4 inline-flex items-center" href={entry.payment_url}>
+            Betaal nu <ExternalLink className="ml-2 h-4 w-4" />
+          </a>
+        </div>
+      ) : null}
+      {entry.payment_state === 'creating' ? (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-800 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200">
+          <div className="flex items-center font-semibold"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Betaallink wordt aangemaakt</div>
+          <p className="mt-1 text-sm">Laad de pagina zo opnieuw om de actuele status te zien.</p>
+        </div>
+      ) : null}
+      {entry.payment_state === 'error' || entry.payment_state === 'expired' ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+          <div className="font-semibold">Inschrijving bevestigd, betaallink niet beschikbaar</div>
+          <p className="mt-1 text-sm">{entry.payment_error || 'De betaling kon niet worden voorbereid.'}</p>
+          {retryError ? <p className="mt-2 text-sm font-medium">{retryError}</p> : null}
+          {entry.can_retry_payment ? (
+            <button type="button" className="btn-tertiary mt-4 inline-flex items-center" disabled={retryPayment.isPending} onClick={() => retryPayment.mutate(entry.id)}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${retryPayment.isPending ? 'animate-spin' : ''}`} />
+              {retryPayment.isPending ? 'Opnieuw proberen…' : 'Betaallink opnieuw maken'}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      {entry.payment_state === 'not_applicable' ? (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-200">
+          <div className="flex items-center font-semibold"><CheckCircle2 className="mr-2 h-5 w-5" />Inschrijving bevestigd</div>
+          <p className="mt-1 text-sm">Voor deze inschrijving is geen betaling nodig.</p>
+        </div>
+      ) : null}
       <section className="card p-5">
         <dl className="grid gap-4 md:grid-cols-3">
           <div><dt className="text-xs uppercase text-gray-500">Toernooiteams</dt><dd className="mt-1 font-semibold text-gray-900 dark:text-gray-100">{entry.registered_team_count}</dd></div>

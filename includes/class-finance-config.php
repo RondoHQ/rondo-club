@@ -60,6 +60,7 @@ class FinanceConfig {
 	const OPTION_MOLLIE_DEFAULT_MEMBERSHIP_ACCOUNT_ID       = 'rondo_finance_mollie_default_membership_account_id';
 	const OPTION_MOLLIE_DEFAULT_DISCIPLINE_ACCOUNT_ID       = 'rondo_finance_mollie_default_discipline_account_id';
 	const OPTION_MOLLIE_DEFAULT_MANUAL_ACCOUNT_ID           = 'rondo_finance_mollie_default_manual_account_id';
+	const OPTION_MOLLIE_DEFAULT_TOURNAMENT_ACCOUNT_ID       = 'rondo_finance_mollie_default_tournament_account_id';
 	const OPTION_ACTIVE_PAYMENT_PROVIDER                    = 'rondo_finance_active_payment_provider';
 	const OPTION_ADMIN_FEE                                  = 'rondo_finance_admin_fee';
 	const OPTION_INSTALLMENT_ADMIN_FEE                      = 'rondo_finance_installment_admin_fee';
@@ -147,6 +148,7 @@ class FinanceConfig {
 		'mollie_default_membership_account_id'      => '',
 		'mollie_default_discipline_account_id'      => '',
 		'mollie_default_manual_account_id'          => '',
+		'mollie_default_tournament_account_id'      => '',
 	];
 
 	/**
@@ -582,6 +584,7 @@ class FinanceConfig {
 			'mollie_default_membership_account_id'       => FinanceServices::mollie()->get_default_mollie_account_id( 'membership' ),
 			'mollie_default_discipline_account_id'       => FinanceServices::mollie()->get_default_mollie_account_id( 'discipline' ),
 			'mollie_default_manual_account_id'           => FinanceServices::mollie()->get_default_mollie_account_id( 'manual' ),
+			'mollie_default_tournament_account_id'       => FinanceServices::mollie()->get_default_mollie_account_id( 'tournament' ),
 			'active_payment_provider'                    => FinanceServices::mollie()->get_active_payment_provider(),
 			'membership_pass_apple_cert_attachment_id'   => $apple_cert_id,
 			'membership_pass_apple_cert_url'             => $apple_cert_url,
@@ -921,6 +924,7 @@ class FinanceConfig {
 			'mollie_default_membership_account_id' => self::OPTION_MOLLIE_DEFAULT_MEMBERSHIP_ACCOUNT_ID,
 			'mollie_default_discipline_account_id' => self::OPTION_MOLLIE_DEFAULT_DISCIPLINE_ACCOUNT_ID,
 			'mollie_default_manual_account_id'     => self::OPTION_MOLLIE_DEFAULT_MANUAL_ACCOUNT_ID,
+			'mollie_default_tournament_account_id' => self::OPTION_MOLLIE_DEFAULT_TOURNAMENT_ACCOUNT_ID,
 		];
 
 		$usable_account_ids = array_map(

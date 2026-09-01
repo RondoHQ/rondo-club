@@ -187,6 +187,10 @@ class FinanceSettings extends Base {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_key',
 						],
+						'mollie_default_tournament_account_id' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_key',
+						],
 						'active_payment_provider'          => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',

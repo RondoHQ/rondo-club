@@ -38,6 +38,7 @@ const typeLabels = {
   membership: 'Contributie',
   discipline: 'Tuchtzaken',
   manual: 'Handmatig',
+  tournament: 'Toernooien',
   credit: 'Credit',
 };
 
@@ -45,6 +46,7 @@ const typeColors = {
   membership: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   discipline: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   manual: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+  tournament: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   credit: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
 };
 
@@ -447,6 +449,7 @@ export default function Facturen() {
           { value: 'membership', label: 'Contributie' },
           { value: 'discipline', label: 'Tuchtzaken' },
           { value: 'manual', label: 'Handmatig' },
+          { value: 'tournament', label: 'Toernooien' },
           { value: 'credit', label: 'Credit' },
         ],
         size: 130,

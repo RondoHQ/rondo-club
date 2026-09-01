@@ -57,6 +57,9 @@ class MollieConfig {
 	 */
 	const OPTION_MOLLIE_DEFAULT_MANUAL_ACCOUNT_ID = 'rondo_finance_mollie_default_manual_account_id';
 
+	/** Option key for the default Mollie account for tournament invoices. */
+	const OPTION_MOLLIE_DEFAULT_TOURNAMENT_ACCOUNT_ID = 'rondo_finance_mollie_default_tournament_account_id';
+
 	/**
 	 * Option key for active payment provider.
 	 */
@@ -71,6 +74,7 @@ class MollieConfig {
 		'mollie_default_membership_account_id' => '',
 		'mollie_default_discipline_account_id' => '',
 		'mollie_default_manual_account_id'     => '',
+		'mollie_default_tournament_account_id' => '',
 	];
 
 	/**
@@ -183,6 +187,7 @@ class MollieConfig {
 		return match ( $invoice_type ) {
 			'membership' => (string) get_option( self::OPTION_MOLLIE_DEFAULT_MEMBERSHIP_ACCOUNT_ID, self::DEFAULTS['mollie_default_membership_account_id'] ),
 			'discipline' => (string) get_option( self::OPTION_MOLLIE_DEFAULT_DISCIPLINE_ACCOUNT_ID, self::DEFAULTS['mollie_default_discipline_account_id'] ),
+			'tournament' => (string) get_option( self::OPTION_MOLLIE_DEFAULT_TOURNAMENT_ACCOUNT_ID, self::DEFAULTS['mollie_default_tournament_account_id'] ),
 			default => (string) get_option( self::OPTION_MOLLIE_DEFAULT_MANUAL_ACCOUNT_ID, self::DEFAULTS['mollie_default_manual_account_id'] ),
 		};
 	}

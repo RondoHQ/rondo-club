@@ -21,6 +21,12 @@ final class TournamentService {
 	public const TOURNAMENT_POST_TYPE = 'rondo_tournament';
 	public const ENTRY_POST_TYPE      = 'rondo_tourn_entry';
 
+	private TournamentPaymentService $payments;
+
+	public function __construct( ?TournamentPaymentService $payments = null ) {
+		$this->payments = $payments ?? new TournamentPaymentService();
+	}
+
 	/** Return every tournament for a manager. */
 	public function tournaments(): array {
 		$ids = get_posts(
@@ -323,6 +329,9 @@ final class TournamentService {
 			}
 			return new \WP_Error( 'rondo_tournament_delete_failed', __( 'Het toernooi kon niet worden verwijderd.', 'rondo' ), [ 'status' => 500 ] );
 		}
+		foreach ( $entry_ids as $entry_id ) {
+			$this->payments->cancel_unpaid_payment( $entry_id );
+		}
 
 		return [
 			'deleted'     => true,
@@ -396,32 +405,37 @@ final class TournamentService {
 		$tournament    = $this->format_tournament( $tournament_id, false );
 		$age_group     = (string) ( $fields['age_group_snapshot'] ?? '' );
 		$status        = (string) ( $fields['registration_status'] ?? 'open' );
+		$payment       = $this->payments->payment_summary( $entry_id, $fields );
 
-		return [
-			'id'                     => $entry_id,
-			'tournament_id'          => $tournament_id,
-			'tournament'             => $tournament,
-			'team_id'                => (int) ( $fields['team_id'] ?? 0 ),
-			'team_name'              => (string) ( $fields['team_name_snapshot'] ?? '' ),
-			'age_group'              => $age_group,
-			'age_number'             => $this->age_number( $age_group ),
-			'assigned_user_ids'      => array_values( array_map( static fn( array $row ): int => (int) ( $row['user_id'] ?? 0 ), $fields['assignment_snapshot'] ?? [] ) ),
-			'assignees'              => array_values( $fields['assignment_snapshot'] ?? [] ),
-			'registration_status'    => $status,
-			'draft_team_entries'     => array_values( $fields['draft_team_entries'] ?? [] ),
-			'submitted_team_entries' => array_values( $fields['submitted_team_entries'] ?? [] ),
-			'contact_name'           => (string) ( $fields['contact_name'] ?? '' ),
-			'contact_email'          => (string) ( $fields['contact_email'] ?? '' ),
-			'contact_mobile'         => (string) ( $fields['contact_mobile'] ?? '' ),
-			'registered_team_count'  => (int) ( $fields['registered_team_count'] ?? 0 ),
-			'player_count'           => (int) ( $fields['player_count'] ?? 0 ),
-			'price_per_team'         => (float) ( $fields['price_per_team'] ?? 0 ),
-			'total_amount'           => (float) ( $fields['total_amount'] ?? 0 ),
-			'submitted_at'           => (string) ( $fields['submitted_at'] ?? '' ),
-			'submitted_by_user_id'   => (int) ( $fields['submitted_by_user_id'] ?? 0 ),
-			'version'                => max( 1, (int) ( $fields['version'] ?? 1 ) ),
-			'can_edit'               => $status === 'open' && $this->deadline_is_open( $tournament ),
-		];
+		return array_merge(
+			[
+				'id'                     => $entry_id,
+				'tournament_id'          => $tournament_id,
+				'tournament'             => $tournament,
+				'team_id'                => (int) ( $fields['team_id'] ?? 0 ),
+				'team_name'              => (string) ( $fields['team_name_snapshot'] ?? '' ),
+				'age_group'              => $age_group,
+				'age_number'             => $this->age_number( $age_group ),
+				'assigned_user_ids'      => array_values( array_map( static fn( array $row ): int => (int) ( $row['user_id'] ?? 0 ), $fields['assignment_snapshot'] ?? [] ) ),
+				'assignees'              => array_values( $fields['assignment_snapshot'] ?? [] ),
+				'registration_status'    => $status,
+				'draft_team_entries'     => array_values( $fields['draft_team_entries'] ?? [] ),
+				'submitted_team_entries' => array_values( $fields['submitted_team_entries'] ?? [] ),
+				'contact_name'           => (string) ( $fields['contact_name'] ?? '' ),
+				'contact_email'          => (string) ( $fields['contact_email'] ?? '' ),
+				'contact_mobile'         => (string) ( $fields['contact_mobile'] ?? '' ),
+				'registered_team_count'  => (int) ( $fields['registered_team_count'] ?? 0 ),
+				'player_count'           => (int) ( $fields['player_count'] ?? 0 ),
+				'price_per_team'         => (float) ( $fields['price_per_team'] ?? 0 ),
+				'total_amount'           => (float) ( $fields['total_amount'] ?? 0 ),
+				'submitted_at'           => (string) ( $fields['submitted_at'] ?? '' ),
+				'submitted_by_user_id'   => (int) ( $fields['submitted_by_user_id'] ?? 0 ),
+				'version'                => max( 1, (int) ( $fields['version'] ?? 1 ) ),
+				'can_edit'               => $status === 'open' && $this->deadline_is_open( $tournament ),
+				'can_retry_payment'      => $status === 'submitted' && ( TournamentAccess::can_manage() || TournamentAccess::is_assigned( $entry_id ) ),
+			],
+			$payment
+		);
 	}
 
 	/** Save a shared draft with optimistic locking. */
@@ -476,7 +490,8 @@ final class TournamentService {
 			return new \WP_Error( 'rondo_tournament_entry_not_found', __( 'Inschrijfopdracht niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
 		}
 		if ( $entry['registration_status'] === 'submitted' ) {
-			return $entry;
+			$this->payments->ensure_payment( $entry_id, $actor_user_id );
+			return $this->format_entry( $entry_id );
 		}
 		if ( ! $this->deadline_is_open( $entry['tournament'] ) ) {
 			return new \WP_Error( 'rondo_tournament_deadline_passed', __( 'De interne inschrijfdeadline is verstreken.', 'rondo' ), [ 'status' => 409 ] );
@@ -520,6 +535,7 @@ final class TournamentService {
 				'contact_name'           => $contact_name,
 				'draft_team_entries'     => $teams,
 				'player_count'           => $player_count,
+				'payment_state'          => $price * $team_count > 0 ? 'creating' : 'not_applicable',
 				'price_per_team'         => $price,
 				'registered_team_count'  => $team_count,
 				'registration_status'    => 'submitted',
@@ -531,7 +547,14 @@ final class TournamentService {
 			]
 		);
 
+		$this->payments->ensure_payment( $entry_id, $actor_user_id );
 		return $this->format_entry( $entry_id );
+	}
+
+	/** Retry the idempotent invoice and payment-link creation for a submitted entry. */
+	public function retry_payment( int $entry_id, int $actor_user_id ) {
+		$result = $this->payments->ensure_payment( $entry_id, $actor_user_id );
+		return is_wp_error( $result ) ? $result : $this->format_entry( $entry_id );
 	}
 
 	private function create_entry( int $tournament_id, array $team, array $user_ids, int $actor_user_id ) {
@@ -567,6 +590,7 @@ final class TournamentService {
 				'age_group_snapshot'  => $team['age_group'],
 				'assignment_snapshot' => $candidates,
 				'registration_status' => 'open',
+				'payment_state'       => 'not_applicable',
 				'team_id'             => (int) $team['id'],
 				'team_name_snapshot'  => $team['name'],
 				'tournament_id'       => $tournament_id,

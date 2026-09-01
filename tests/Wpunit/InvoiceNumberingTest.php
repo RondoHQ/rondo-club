@@ -72,6 +72,16 @@ class InvoiceNumberingTest extends RondoTestCase {
 		);
 	}
 
+	/** Tournament invoices use their own O-sequence. */
+	public function test_tournament_invoices_continue_existing_o_sequence(): void {
+		$year = gmdate( 'Y' );
+		$this->createInvoiceWithNumber( $year . 'O0008' );
+		$this->createInvoiceWithNumber( $year . 'F0999' );
+
+		$this->assertSame( $year . 'O009', InvoiceNumbering::generate_next( 'tournament' ) );
+		$this->assertTrue( InvoiceNumbering::is_valid( $year . 'O009' ) );
+	}
+
 	/**
 	 * Removed invoice types fall back to the manual sequence and are not valid prefixes.
 	 */
