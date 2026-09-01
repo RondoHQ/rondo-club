@@ -65,6 +65,10 @@ guard and manual grant/revoke behavior.
 17. Subject bindings use module-owned FreeScout tables with database-enforced uniqueness. First
     link, disablement and replacement are transactional and audited; replacement uses a short-lived
     administrator-authorized Rondo recovery flow instead of accepting a typed subject or email.
+18. Existing Rondo account status is not email-verification evidence. Rondo issues
+    `email_verified: true` only for the exact current external address recorded by a completed
+    mailbox-possession flow; existing users without durable evidence verify once before FreeScout
+    authorization can continue.
 
 ## Why this replaces copied customer context
 
@@ -87,7 +91,7 @@ customer-matching dependency have been reviewed separately.
 ## Goals
 
 - One Rondo identity for Rondo and FreeScout.
-- No FreeScout access for an unapproved or ineligible Rondo user.
+- No FreeScout access for a blocked or ineligible Rondo user.
 - Automatic grant and revocation of managed mailbox access.
 - Live, mailbox-specific Rondo context in the FreeScout conversation sidebar.
 - Rondo permissions remain authoritative for every field returned.
@@ -179,7 +183,8 @@ References:
 
 1. The agent chooses **Login with Rondo**.
 2. FreeScout redirects to Rondo's authorization endpoint.
-3. Rondo requires a normal authenticated, approved WordPress account.
+3. Rondo requires a normal authenticated WordPress account that passes the FreeScout-client
+   eligibility policy.
 4. Rondo checks that the user is eligible for the FreeScout OAuth client.
 5. Rondo displays a concise consent/continuation screen naming FreeScout and the identity claims
    being shared.
@@ -204,7 +209,7 @@ References:
 2. The Rondo Integration module validates the conversation and mailbox before sending anything to
    Rondo.
 3. FreeScout signs customer, conversation, mailbox and current-agent context.
-4. Rondo maps the signed agent to the approved Rondo user.
+4. Rondo maps the signed agent to the eligible, verified Rondo user.
 5. Rondo intersects three boundaries:
    - which person the agent may view;
    - which fields the agent's Rondo capabilities permit;
@@ -283,10 +288,9 @@ The UserInfo response is limited to:
 No Rondo role, capability, committee, KNVB ID or person ID is exposed as an identity claim.
 FreeScout access is obtained separately from the signed access service.
 
-Rondo may assert `email_verified: true` only when the address has passed the approved Rondo account
-verification or administrator-provisioning policy. If current account approval does not provide
-sufficient assurance of control over the address, automatic email linking remains disabled until
-an explicit email-verification step exists.
+Rondo may assert `email_verified: true` only under the explicit policy below. Account existence,
+roles, capabilities, a linked person, administrator provisioning and password authentication are
+not evidence that the current user controls the claimed address.
 
 #### Provider storage
 
@@ -294,8 +298,10 @@ Rondo follows the repository's WordPress-native storage rule:
 
 - client configuration in an option;
 - one opaque subject identifier in user meta;
+- the normalized verified email, verification timestamp and verification method in user meta;
 - short-lived authorization codes in transients, stored hashed;
 - short-lived access-token records in transients, stored hashed;
+- short-lived email-verification and authorization-resume tokens in transients, stored hashed;
 - consent/audit metadata in user meta or a native audit post/comment model if required;
 - no custom database tables.
 
@@ -313,14 +319,58 @@ rotation with an overlap window.
 A user may authorize the FreeScout client only when all are true:
 
 - the WordPress user exists and is not blocked/deleted;
-- the account is approved under the normal Rondo account policy;
 - the user has at least one capability mapped to a FreeScout mailbox, or is an administrator;
-- the user has an acceptable unique external email identity;
+- the user has an acceptable, uniquely assigned and explicitly verified external email identity;
 - the linked person, when required by the mapping, still exists.
 
 Synthetic `@members.rondo.invalid` addresses and ambiguous shared addresses fail closed with a
 message directing the agent to an administrator. The provider never silently substitutes another
 person's contact email.
+
+#### Email verification policy
+
+The current `is_user_approved()` compatibility method proves only that a WordPress user ID exists.
+Rondo's activation and Magic Login flows can prove mailbox possession when their emailed links are
+consumed, and member-profile email changes already require an emailed token, but no durable,
+account-wide verification marker currently survives those flows. Existing account status is
+therefore insufficient for an OIDC `email_verified: true` claim.
+
+The OIDC identity-email resolver uses `rondo_contact_email` when it is a valid external address and
+otherwise falls back to a valid, non-synthetic WordPress `user_email`. It normalizes case for email
+comparison and rejects the address when it is synthetic, shared by another FreeScout-eligible Rondo
+user or inconsistent with the linked person's permitted contact identity.
+
+Successful verification writes these WordPress-native user-meta values:
+
+```text
+rondo_oidc_verified_email
+rondo_oidc_verified_email_at
+rondo_oidc_verified_email_method
+```
+
+The claim is true only when `rondo_oidc_verified_email` exactly matches the resolver's current
+normalized address at issuance time. A different, missing or ambiguous address fails closed even if
+stale verification meta remains. There is no time-based expiry in version one; changing the
+resolved address invalidates the proof immediately and requires verification of the new address.
+
+Only consumption of an emailed, single-use proof may set the marker:
+
+- a Rondo account-activation link;
+- a Magic Login link for that exact user and address;
+- the existing verified member-profile email-change flow;
+- a dedicated verification link started while authorizing the FreeScout client.
+
+Sending an email, administrator provisioning, a password login or an administrator editing the
+address never sets the marker. Existing accounts are not backfilled from historical assumptions;
+each intended FreeScout agent without a durable marker verifies once.
+
+When authorization encounters missing or mismatched evidence, Rondo pauses the request and offers
+to send a rate-limited, single-use verification link to the resolved address. Rondo stores only a
+hash of the token for at most two hours. The email contains no OAuth parameters; it references a
+server-side continuation record bound to the user, client and exact original authorization request.
+After token consumption, Rondo rechecks the current address, uniqueness, account eligibility and
+authorization parameters before setting the marker and resuming consent. Failure returns a safe
+error and never issues an ID token or UserInfo response with `email_verified: true`.
 
 ### Component 2: custom Rondo Integration FreeScout module
 
@@ -683,7 +733,7 @@ The endpoint is publicly routable but accepts only valid signed requests. Its pe
 4. Reject and then record a reused nonce using a short-lived transient.
 5. Parse and validate the protocol version and body schema.
 6. Validate the mailbox against configured mailbox mappings.
-7. Resolve the FreeScout agent to one approved Rondo user.
+7. Resolve the FreeScout agent to one eligible, verified Rondo user.
 8. Recheck the user's current effective capabilities.
 9. Resolve the customer using the matching policy.
 10. Apply person visibility and field-level access through existing Rondo services.
@@ -1038,8 +1088,7 @@ Required observations:
 3. Token endpoint client-authentication method.
 4. Whether the module requires an ID token or relies only on User Info.
 5. User matching and duplicate-email behavior.
-6. Whether current Rondo account approval provides sufficient assurance to assert
-   `email_verified: true`.
+6. Current and changed-address email-verification behavior and durable proof.
 7. Automatic user creation defaults and role assigned.
 8. Events and extension points needed after custom OIDC login and user creation.
 9. Behavior when Rondo denies authorization.
@@ -1075,6 +1124,8 @@ login, complete token validation and a confirmed current-agent hook.
 - Implement OIDC discovery, authorization-server metadata, authorize, token, UserInfo and JWKS
   endpoints.
 - Add opaque subjects and external-email eligibility checks.
+- Add durable exact-address verification meta, hooks for successful emailed-link consumption and
+  the resumable FreeScout authorization verification flow.
 - Add tests for redirects, codes, tokens, claims, scopes, PKCE, nonce and denials.
 - Document `/login?rondo_oauth=0` and server-side `RONDO_FORCE_OAUTH_LOGIN` disablement as separate
   break-glass paths.
@@ -1146,6 +1197,14 @@ login, complete token validation and a confirmed current-agent hook.
 - An ID token with a bad signature, issuer, audience, nonce, expiry or issued-at time is denied.
 - A UserInfo response with a subject different from the ID-token subject is denied.
 - Missing `sub` or `email_verified` other than boolean `true` is denied before FreeScout login.
+- An existing account, linked person, capability, password login or administrator provisioning
+  alone never produces `email_verified: true`.
+- A future activation, Magic Login, verified profile change or dedicated OIDC verification records
+  the exact normalized email, time and approved method.
+- Existing accounts without that durable marker complete one emailed verification before consent.
+- A changed, synthetic or ambiguous current address invalidates the marker at claim time.
+- An emailed continuation token is hashed, single-use, rate-limited, expires within two hours and
+  contains no OAuth parameters.
 - A first login binds one verified Rondo subject to one unbound FreeScout user.
 - The same subject can log in again after an email change without changing the binding.
 - A different subject presenting a bound user's email is denied.
@@ -1248,13 +1307,15 @@ The milestone is complete only when:
 - a real pilot agent signs into FreeScout through Rondo;
 - that agent's verified Rondo subject is bound one-to-one to the expected FreeScout user;
 - another subject presenting the same email cannot authenticate as that FreeScout user;
+- Rondo issued `email_verified: true` only after durable proof for the exact current, unique
+  external address, and a changed address requires verification again;
 - simultaneous competing callbacks cannot create a conflicting or partial subject binding;
 - an administrator can disable or replace a binding through the audited recovery flow, and the
   replaced subject can no longer authenticate;
 - the deployed module contains no hardcoded Rondo hostname and uses the verified configured base
   URL for every Rondo request;
 - FreeScout identifies the current agent and signs the sidebar request;
-- Rondo maps that agent to the expected approved WordPress user;
+- Rondo maps that agent to the expected eligible WordPress user with current email proof;
 - a current `ledenadministratie` capability grants the correct FreeScout mailbox;
 - revoking that capability removes only integration-managed access;
 - the Ledenadministratie sidebar renders the approved live field set;
@@ -1299,17 +1360,15 @@ The milestone is complete only when:
 ## Open decisions before implementation
 
 1. Exact production FreeScout mailbox ID and stable key for Ledenadministratie.
-2. Whether current Rondo account approval is sufficient email verification for automatic
-   FreeScout account matching.
-3. Whether automatic FreeScout user creation is ever enabled after the pilot.
-4. The acceptable FreeScout session lifetime after Rondo account revocation.
-5. The approved final Ledenadministratie sidebar field allowlist.
-6. Whether the FreeScout conversation activity sync remains a long-term feature.
-7. How its person matching works after customer enrichment and FreeScout ID reverse sync are
+2. Whether automatic FreeScout user creation is ever enabled after the pilot.
+3. The acceptable FreeScout session lifetime after Rondo account revocation.
+4. The approved final Ledenadministratie sidebar field allowlist.
+5. Whether the FreeScout conversation activity sync remains a long-term feature.
+6. How its person matching works after customer enrichment and FreeScout ID reverse sync are
    retired.
-8. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
-9. Audit retention period and operational owners for failed provisioning events.
-10. Final module repository, protected release workflow and update-asset URLs.
-11. Initial production values for interface accent and interface accent surface.
-12. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
+7. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
+8. Audit retention period and operational owners for failed provisioning events.
+9. Final module repository, protected release workflow and update-asset URLs.
+10. Initial production values for interface accent and interface accent surface.
+11. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
     200%-zoom testing.

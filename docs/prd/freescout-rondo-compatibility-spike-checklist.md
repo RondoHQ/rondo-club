@@ -166,8 +166,21 @@ Keep automatic user creation disabled for the first five tests.
 - [x] An identity without an existing FreeScout user is denied cleanly.
 - [x] Record that OAuth Login `1.0.28` does not enforce `email_verified` without the Rondo identity
   guard.
-- [ ] Document whether Rondo's present account-approval process provides enough evidence to assert
-  `email_verified: true`; otherwise record explicit email verification as a prerequisite.
+- [x] Confirm Rondo's `is_user_approved()` compatibility method proves only user existence and does
+  not justify `email_verified: true`.
+- [ ] Confirm existing users receive no verification marker through blanket migration or
+  administrator provisioning.
+- [ ] Consume each approved emailed proof path and confirm it records the exact normalized email,
+  verification time and method.
+- [ ] Confirm password login, role/capability assignment, linked-person status and merely sending an
+  email do not record verification.
+- [ ] Start FreeScout authorization without a marker; confirm Rondo pauses it and sends a
+  rate-limited, hashed, single-use verification link containing no OAuth parameters.
+- [ ] Consume the link and confirm Rondo rechecks user, client, authorization request, address and
+  uniqueness before resuming consent.
+- [ ] Change the resolved address and confirm the old marker no longer yields
+  `email_verified: true` until the new address is verified.
+- [ ] Confirm a synthetic or shared address cannot be verified for the FreeScout client.
 
 In the isolated environment only, enable automatic user creation and observe:
 
@@ -370,6 +383,7 @@ Complete one row for every material behavior.
 | Token client auth | Paid add-on uses server-side `client_secret_post` | Custom client uses `client_secret_basic` with PKCE | **Fail** | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Reject the paid add-on; implement the required method |
 | ID token/UserInfo | Paid add-on consumes UserInfo without an ID token | Validate signed ID token and require matching UserInfo `sub` | **Fail** | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Reject the paid add-on; implement full OIDC validation |
 | Existing-user match | Guard requires a unique verified email for first link; case difference created no duplicate | Unique verified email only | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Keep automatic creation off during pilot |
+| Rondo email proof | `is_user_approved()` checks only user existence; emailed activation/login/change flows have no durable account-wide OIDC marker | Exact current unique address must have a durable marker from consumed emailed proof | **Fail** | [`is_user_approved()` test](../../tests/Wpunit/WorkspacePermissionsTest.php), [activation service](../../includes/class-activation-service.php) and [profile service](../../includes/class-member-profile-service.php) | Add verification meta and resumable authorization; no historical backfill |
 | Subject binding | Bound subject wins after email change or conflicting email; administrator recovery and concurrency remain untested | Database-enforced one-to-one binding with atomic first link and single-use administrator recovery | Provisional pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Prove migrations, races, rollback, session invalidation and recovery before release |
 | Rondo base URL | | Configured, verified and not hardcoded | | | |
 | Automatic creation | Defaults on in paid module; explicit off works; isolated creation produced an ordinary zero-mailbox user | Disabled for pilot | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Provision with automatic creation disabled |
@@ -428,6 +442,7 @@ architecture assumption must change before repeating the spike.
 - [x] Login and user-creation event map.
 - [x] Managed mailbox model/event notes.
 - [ ] Subject-binding migration, concurrency and administrator-recovery proof.
+- [ ] Durable Rondo email-verification and authorization-resume proof.
 - [ ] Sidebar authorization and isolation proof.
 - [ ] Appearance and customer-sidebar width compatibility proof.
 - [ ] Timeout/failure results at expected pilot concurrency.
