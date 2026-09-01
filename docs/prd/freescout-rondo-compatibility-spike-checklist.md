@@ -1,6 +1,6 @@
 # FreeScout and Rondo compatibility spike checklist
 
-**Status:** in progress
+**Status:** Phase 0 passed; remaining pre-production compatibility checks in progress
 **Parent PRD:** [FreeScout sidebar, Rondo identity and mailbox provisioning](freescout-rondo-identity-sidebar.md)  
 **Environment:** non-production only  
 **Data:** synthetic users, customers and conversations only
@@ -29,8 +29,8 @@ Fill this section when executing the spike.
 | PHP version | 8.5.9 |
 | Browser versions | |
 | FreeScout mobile app/version | |
-| Result | In progress; paid OAuth Login add-on rejected, custom OIDC client not yet proven |
-| Evidence location | [OAuth identity evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) |
+| Result | Phase 0 `PASS`; paid OAuth Login add-on rejected; production compatibility remains in progress |
+| Evidence location | [Custom OIDC Phase 0 evidence](evidence/freescout-custom-oidc-phase0-2026-09-01.md) and [paid add-on OAuth identity evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) |
 
 ## Production mailbox mapping record
 
@@ -125,21 +125,25 @@ recorded below.
 Repeat the login tests with the paid add-on disabled and the custom Rondo Integration module
 responsible for the entire relying-party flow.
 
-- [ ] Discover the configured Rondo issuer, authorization, token, UserInfo and JWKS endpoints.
-- [ ] Generate and validate a fresh session-bound `state` for each attempt.
-- [ ] Send PKCE `code_challenge_method=S256` and the matching token-request verifier.
-- [ ] Generate a fresh session-bound `nonce` and reject an ID token with a missing or changed nonce.
-- [ ] Authenticate the confidential client with `client_secret_basic`.
-- [ ] Validate the ID-token signature, exact issuer, audience, `azp` when present, expiry, issued-at
+- [x] Discover the configured Rondo issuer, authorization, token, UserInfo and JWKS endpoints.
+- [x] Generate and validate a fresh session-bound `state` for each attempt.
+- [x] Send PKCE `code_challenge_method=S256` and the matching token-request verifier.
+- [x] Generate a fresh session-bound `nonce` and reject an ID token with a missing or changed nonce.
+- [x] Authenticate the confidential client with `client_secret_basic`.
+- [x] Validate the ID-token signature, exact issuer, audience, `azp` when present, expiry, issued-at
   time and `at_hash` when present.
-- [ ] Call UserInfo and reject a response whose `sub` differs from the ID-token `sub`.
-- [ ] Reject missing `sub`, a missing email, or `email_verified` other than boolean `true`.
-- [ ] Clear state, nonce, verifier, code and token material after every success or terminal failure.
-- [ ] Confirm the login creates only the intended FreeScout session after binding succeeds.
-- [ ] Confirm a denial or callback failure returns once to `/login?rondo_oauth=0` without a new
+- [x] Call UserInfo and reject a response whose `sub` differs from the ID-token `sub`.
+- [x] Reject missing `sub`, a missing email, or `email_verified` other than boolean `true`.
+- [x] Clear state, nonce, verifier, code and token material after every success or terminal failure.
+- [x] Confirm the login creates only the intended FreeScout session after binding succeeds.
+- [x] Confirm a denial or callback failure returns once to `/login?rondo_oauth=0` without a new
   authorization request.
-- [ ] Confirm clearing `RONDO_FORCE_OAUTH_LOGIN` restores local login without Rondo.
-- [ ] Inspect logs and confirm codes, tokens, secrets and complete claims are absent.
+- [x] Confirm clearing `RONDO_FORCE_OAUTH_LOGIN` restores local login without Rondo.
+- [x] Inspect logs and confirm codes, tokens, secrets and complete claims are absent.
+
+**Phase 0 result:** `PASS` against a synthetic issuer. The real Rondo provider and production
+persistence are Phase 1 and Phase 2 deliverables. See
+[custom OIDC Phase 0 evidence](evidence/freescout-custom-oidc-phase0-2026-09-01.md).
 
 **Blocking failure:** any missing state, PKCE, nonce, ID-token, UserInfo-subject or non-looping
 recovery control prevents the custom module from shipping.
@@ -160,6 +164,9 @@ Keep automatic user creation disabled for the first five tests.
 - [x] A subject already bound to another user cannot be rebound through OAuth login.
 - [ ] Only the documented administrator recovery flow can unlink or replace a binding, and the
   change is audited.
+- [x] In the disposable proof, require an administrator and reason, issue a hashed single-use
+  10-minute recovery token, complete replacement through full OIDC validation and reject the
+  retired old subject and token reuse.
 - [ ] Confirm migrations create unique constraints for both active FreeScout user ID and
   issuer/subject identity fingerprint while retired identities remain reserved.
 - [ ] Race two first-link callbacks for one subject and two users; only one final pair may commit.
@@ -390,9 +397,9 @@ GO decision unless it exposes a security issue or also breaks the required brows
 Use a minimal proof route in the custom Rondo Integration module, informed by the selected upstream
 reference commit.
 
-- [ ] Add authentication middleware to the sidebar AJAX route.
-- [ ] Confirm an unauthenticated request is rejected before webhook dispatch.
-- [ ] Confirm the server can read the current agent through FreeScout authentication.
+- [x] Add authentication middleware to the proof route.
+- [x] Confirm an unauthenticated request is rejected before the proof route runs.
+- [x] Confirm the server can read the current agent through FreeScout authentication.
 - [ ] Confirm FreeScout's normal conversation policy denies an unauthorized agent.
 - [ ] Confirm the authorized conversation's reloaded local mailbox ID resolves to its active,
   verified stable key and a missing, inactive or drifted mapping is rejected.
@@ -421,18 +428,18 @@ Test at narrow, normal and wide FreeScout sidebar widths.
   attributes and inline event handlers are removed and cannot execute.
 - [ ] Confirm hostile returned CSS cannot affect the FreeScout parent page or make an external
   request.
-- [ ] Confirm the sandbox has no `allow-same-origin`, form, download or top-navigation capability
+- [x] Confirm the sandbox has no `allow-same-origin`, form, download or top-navigation capability
   and cannot read FreeScout cookies, DOM or browser storage.
 - [ ] Confirm server-generated, allowlisted Rondo links open in a new tab with `noopener` behavior.
 - [ ] Confirm non-Rondo and malformed links are removed or inert.
-- [ ] Confirm the resize observer sends only the versioned message type, per-render channel and
+- [x] Confirm the resize observer sends only the versioned message type, per-render channel and
   finite integer height to the exact FreeScout parent origin.
-- [ ] Confirm the parent ignores messages from the wrong window, type or channel and rejects
+- [x] Confirm the parent ignores messages from the wrong window, type or channel and rejects
   missing, non-numeric, negative and oversized heights.
-- [ ] Confirm accepted height changes are debounced and clamped between `160px` and `1600px`.
-- [ ] Confirm expanding and collapsing an accordion updates iframe height without exposing markup,
+- [x] Confirm accepted height changes are debounced and clamped between `160px` and `1600px`.
+- [x] Confirm expanding and collapsing an accordion updates iframe height without exposing markup,
   data, URLs or actions through the bridge.
-- [ ] Confirm a missing or invalid resize message keeps the safe `480px` default with internal
+- [x] Confirm a missing or invalid resize message keeps the safe `480px` default with internal
   scrolling.
 - [ ] Confirm multiple panels/accordions fit without covering FreeScout controls.
 - [ ] Confirm loading, no-match, ambiguous, unauthorized and unavailable states fit cleanly.
@@ -545,23 +552,23 @@ archive or checksum is ambiguous, or publication can update production automatic
 
 Use only the non-production endpoint and the expected pilot concurrency.
 
-- [ ] DNS failure reaches the quiet unavailable state within the total timeout.
-- [ ] Connection refusal reaches it within the total timeout.
-- [ ] TLS/certificate failure reaches it within the total timeout.
-- [ ] A server that accepts but never responds is stopped by the total timeout.
-- [ ] A redirect is rejected.
-- [ ] A response over 256 KiB is rejected.
-- [ ] An unexpected content type is rejected.
+- [x] DNS failure reaches the quiet unavailable state within the total timeout.
+- [x] Connection refusal reaches it within the total timeout.
+- [x] TLS/certificate failure reaches it within the total timeout.
+- [x] A server that accepts but never responds is stopped by the total timeout.
+- [x] A redirect is rejected.
+- [x] A response over 256 KiB is rejected.
+- [x] An unexpected content type is rejected.
 - [x] A 4xx/5xx response is not retried automatically.
 - [ ] FreeScout conversation controls remain interactive while the sidebar request runs.
 - [ ] Repeated failures at expected pilot concurrency do not exhaust available PHP workers.
 - [ ] Manual refresh is rate limited and cannot create an unbounded request storm.
-- [ ] Confirm or adjust the proposed 2-second connection and 5-second total timeout using evidence.
+- [x] Confirm or adjust the proposed 2-second connection and 5-second total timeout using evidence.
 - [ ] Change the configured Rondo base URL and confirm all Rondo-bound requests use only the new
   verified origin and path prefix.
 - [ ] Confirm missing or invalid configuration disables integration requests without affecting
   normal FreeScout work.
-- [ ] Confirm a redirect to another origin is rejected.
+- [x] Confirm a redirect to another origin is rejected.
 
 **Blocking failure:** a failed Rondo endpoint can make normal FreeScout conversation work
 unavailable.
@@ -610,14 +617,14 @@ Complete one row for every material behavior.
 
 | Area | Observed behavior | PRD requirement | Result | Evidence | Decision/workaround |
 |---|---|---|---|---|---|
-| OAuth state | Paid add-on sends a fresh 40-character value and rejects missing or changed state | Custom module generates and validates fresh session-bound state | Retest required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Reimplement and test in the custom client |
-| PKCE S256 | Paid add-on sends no challenge or verifier | Required for every custom-client login | **Fail** | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Reject the paid add-on; custom client must use S256 |
-| OIDC nonce | Paid add-on sends no nonce and consumes no ID token | Required and bound to the validated ID token | **Fail** | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Reject the paid add-on; custom client must validate nonce |
-| Token client auth | Paid add-on uses server-side `client_secret_post` | Custom client uses `client_secret_basic` with PKCE | **Fail** | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Reject the paid add-on; implement the required method |
-| ID token/UserInfo | Paid add-on consumes UserInfo without an ID token | Validate signed ID token and require matching UserInfo `sub` | **Fail** | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Reject the paid add-on; implement full OIDC validation |
+| OAuth state | Paid add-on passed; custom client generated different 43-character session-bound values, rejected missing/changed state and consumed the flow before callback replay | Custom module generates and validates fresh session-bound state | Custom Phase 0 pass | [Custom OIDC Phase 0 evidence](evidence/freescout-custom-oidc-phase0-2026-09-01.md) | Carry the proven control into the production module |
+| PKCE S256 | Paid add-on failed; custom client sent S256 and the matching verifier | Required for every custom-client login | Paid add-on fail; custom Phase 0 pass | [Custom OIDC Phase 0 evidence](evidence/freescout-custom-oidc-phase0-2026-09-01.md) | Reject the paid add-on; carry S256 into production |
+| OIDC nonce | Paid add-on failed; custom client generated a fresh nonce and rejected a changed nonce | Required and bound to the validated ID token | Paid add-on fail; custom Phase 0 pass | [Custom OIDC Phase 0 evidence](evidence/freescout-custom-oidc-phase0-2026-09-01.md) | Carry nonce validation into production |
+| Token client auth | Paid add-on uses `client_secret_post`; custom client used server-side `client_secret_basic` with PKCE | Custom client uses `client_secret_basic` with PKCE | Paid add-on fail; custom Phase 0 pass | [Custom OIDC Phase 0 evidence](evidence/freescout-custom-oidc-phase0-2026-09-01.md) | Keep the secret out of bodies, URLs, browser code and logs |
+| ID token/UserInfo | Paid add-on consumes UserInfo alone; custom client validated signed RS256 ID tokens and required the same UserInfo `sub` | Validate signed ID token and require matching UserInfo `sub` | Paid add-on fail; custom Phase 0 pass | [Custom OIDC Phase 0 evidence](evidence/freescout-custom-oidc-phase0-2026-09-01.md) | Carry the complete validation matrix into production tests |
 | Existing-user match | Guard requires a unique verified email for first link; case difference created no duplicate | Unique verified email only | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Prove this path independently before enabling guarded creation |
 | Rondo email proof | `is_user_approved()` checks only user existence; emailed activation/login/change flows have no durable account-wide OIDC marker | Exact current unique address must have a durable marker from consumed emailed proof | **Fail** | [`is_user_approved()` test](../../tests/Wpunit/WorkspacePermissionsTest.php), [activation service](../../includes/class-activation-service.php) and [profile service](../../includes/class-member-profile-service.php) | Add verification meta and resumable authorization; no historical backfill |
-| Subject binding | Bound subject wins after email change or conflicting email; administrator recovery and concurrency remain untested | Database-enforced one-to-one binding with atomic first link and single-use administrator recovery | Provisional pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Prove migrations, races, rollback, session invalidation and recovery before release |
+| Subject binding | Bound subject wins after email change or conflicting email; disposable administrator replacement used a hashed, expiring, single-use recovery and retired the old subject | Database-enforced one-to-one binding with atomic first link and single-use administrator recovery | Custom Phase 0 pass; production hardening required | [Custom OIDC Phase 0 evidence](evidence/freescout-custom-oidc-phase0-2026-09-01.md) | Prove migrations, races, rollback, audit and session invalidation before release |
 | Rondo base URL | | Configured, verified and not hardcoded | | | |
 | Automatic creation | Paid add-on defaults on and isolated creation produced an ordinary zero-mailbox user before the proof listener ran | Guarded custom creation atomically commits an ordinary OIDC-only user, binding, non-empty mapped access and audit before login | Custom proof required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Default off; enable only after atomic creation, rollback, attribution and lifecycle tests pass |
 | Login event | Laravel `Login` fires for existing and newly created OAuth users before redirect | Current agent available | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Use the login event for binding and provisioning |
@@ -627,16 +634,16 @@ Complete one row for every material behavior.
 | Provisioning event queue | No production queue exists yet | Private WordPress post queue, at-least-once delivery, UUID idempotency, bounded cron worker and visible unresolved failures; transients only for locks | Custom proof required | PRD contract | Prove restart durability, replay, terminal deletion and failure visibility |
 | Module release supply chain | Proposed RondoHQ repository did not exist on 2026-09-01; FreeScout core updater does not pre-verify the third-party ZIP checksum | Public AGPL repository, protected main, immutable human-approved releases, tagged checksummed artifacts and no automatic production rollout | Custom proof required | [Module repository decision](evidence/freescout-module-release-repository-2026-09-01.md) | Create during Phase 2 and prove every repository, packaging, provenance and update gate before `v1.0.0` |
 | Session revocation | Zero-mailbox customer/conversation denial is proven; conditional logout, binding recovery and invalidation failure remain untested | Next-request mailbox denial; logout for zero-mailbox or identity change; manual access preserved | Custom proof required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Prove session/remember-token invalidation and retry without restoring revoked pivots |
-| Force-login recovery | Paid add-on loops without a response filter; its patched `/login?oauth=0` paths work | Custom callback fails once to `/login?rondo_oauth=0`; server setting restores local login | Paid add-on **Fail**; custom retest required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Implement recovery directly in Rondo Integration |
-| Mobile | Not yet observed | Responsive browser UI is required; native FreeScout client support is outside version one | Browser retest required; native observation informational | PRD contract | Document native behavior without a support claim; native incompatibility does not block browser pilot unless it exposes a security issue |
-| Sidebar authorization | | Agent and conversation authorized | | | |
+| Force-login recovery | Paid add-on loops without a response filter; custom denial and outage did not loop, `/login?rondo_oauth=0` bypassed forcing, and clearing `RONDO_FORCE_OAUTH_LOGIN` restored local login | Custom callback fails once to `/login?rondo_oauth=0`; server setting restores local login | Paid add-on fail; custom Phase 0 pass | [Custom OIDC Phase 0 evidence](evidence/freescout-custom-oidc-phase0-2026-09-01.md) | Implement the proven paths directly in Rondo Integration |
+| Mobile | Opaque proof shell fit at 390 by 844 CSS pixels without horizontal overflow; full conversation flow and native client remain unobserved | Responsive browser UI is required; native FreeScout client support is outside version one | Phase 0 shell pass; full browser retest required; native observation informational | [Custom OIDC Phase 0 evidence](evidence/freescout-custom-oidc-phase0-2026-09-01.md) | Document native behavior without a support claim; complete browser widths and 200% zoom |
+| Sidebar authorization | Authenticated proof route rejected an unauthenticated request and read the current FreeScout agent server-side; conversation policy and payload are untested | Agent and conversation authorized | Current-agent Phase 0 pass; conversation authorization pending | [Custom OIDC Phase 0 evidence](evidence/freescout-custom-oidc-phase0-2026-09-01.md) | Add and prove conversation, mailbox and customer reload authorization |
 | Ledenadministratie fields | Canonical field registry, person formatters and task visibility support the approved bounded view; no canonical Sportlink-sync timestamp exists | Exact fixed contract with independent related-person/task checks and prohibited-key filtering | Custom proof required | Source inspection 2026-09-01 | Omit unknown values and source-sync claims; test response keys and rendered groups with synthetic records |
 | Conversation activity | Daily batch creates one subject/link activity through customer-ID to KNVB-ID to Rondo-ID SQLite mappings; core exposes inbound, agent-created and customer-change events plus customer emails | Keep the pointer long-term; exact unique `email_1`/`email_2` match, idempotent module events and deterministic reassignment/repair | Custom proof required | Rondo Sync and FreeScout 1.8.238 source inspection 2026-09-01 | Keep batch during rollout; never use IDs/names/phones to select a person or copy message content |
-| Response isolation | | Opaque-origin iframe with a nonce-authorized, height-only resize bridge and no parent-page code execution | | | |
+| Response isolation | Opaque `srcdoc` shell blocked parent access; strict height messages, validation, clamp, accordion resize and fallback passed | Opaque-origin iframe with a nonce-authorized, height-only resize bridge and no parent-page code execution | Phase 0 core pass; sanitizer, links and full layout pending | [Custom OIDC Phase 0 evidence](evidence/freescout-custom-oidc-phase0-2026-09-01.md) | Complete returned-markup sanitization and realistic layout tests |
 | Appearance controls | Design module disabled; core blue accent roles visible | Two semantic color settings, allowlisted selectors and no arbitrary CSS | Retest required | Post-removal screenshots reviewed 2026-09-01; screenshots not stored because they contain member data | Prove against current FreeScout CSS before release |
 | AWC appearance values | Official house style publishes dark green `#006935` and light green `#CCE1D7`; calculated contrast passes intended text/icon roles | Configure this pair only on AWC; keep the module default club-neutral | Planning pass; rendered retest required | [AWC appearance evidence](evidence/awc-freescout-colors-2026-09-01.md) | Provision as installation settings and verify against the supported FreeScout selectors |
 | Customer-sidebar width | FreeScout core desktop width is `280px`; narrow layout becomes full width | Coordinated responsive width up to configured maximum, default `360px` | Retest required | Current FreeScout stylesheet inspection | Update customer width plus header/main spacing together |
-| Failure containment | Access-service `503` allowed login in 1.5 seconds and preserved access | Conversation work remains available | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Keep prior state; record redacted error; no login-flow retry |
+| Failure containment | Custom transport rejected DNS, refusal, TLS, slow, redirect, oversized and wrong-content-type cases; slow response ended at 5.043 seconds | Conversation work remains available | Phase 0 transport pass; concurrency and conversation UI pending | [Custom OIDC Phase 0 evidence](evidence/freescout-custom-oidc-phase0-2026-09-01.md) | Keep 2-second connect/5-second total limits; prove expected concurrency |
 
 ## Go/no-go decision
 
@@ -649,9 +656,16 @@ It lacks PKCE, nonce and ID-token validation; matches users by email without enf
 without a custom patch. Since a custom module is already required for the sidebar and provisioning,
 Rondo Integration will own the complete OIDC relying-party flow instead of wrapping these gaps.
 
-This is not the final compatibility-spike sign-off. The custom OIDC client, administrator binding
-recovery, guarded creation, sidebar isolation, timeout proof and the remaining rows must pass
-before overall `GO`.
+### Phase 0 gate decision
+
+**Decision:** `GO` for Phases 1 through 5 implementation, approved 2026-09-01. The custom OIDC
+client, administrator binding-recovery shape, current-agent hook, opaque sidebar shell and transport
+limits passed the synthetic Phase 0 proof.
+
+This is not the final compatibility-spike or production sign-off. Guarded creation, production
+binding persistence and audit, conversation authorization, complete response sanitization,
+realistic content, all supported widths, 200% zoom, concurrency and the remaining rows must pass
+before production activation.
 
 ### GO
 
@@ -681,6 +695,7 @@ architecture assumption must change before repeating the spike.
 - [ ] Completed version and environment record.
 - [ ] Completed checklist with evidence links.
 - [ ] Redacted OAuth request/response shapes.
+- [x] Custom OIDC Phase 0 evidence and gate decision.
 - [x] Login and user-creation event map.
 - [x] Managed mailbox model/event notes.
 - [ ] Production mailbox `18` local existence/enabled-state and drift-control proof.
