@@ -358,7 +358,37 @@ Test at narrow, normal and wide FreeScout sidebar widths.
 the parent accepts anything beyond a validated height, or dynamic content cannot remain usable
 within the bounded iframe height.
 
-## 10A. Prove controlled appearance and width overrides
+## 10A. Prove the Ledenadministratie field contract
+
+Use synthetic person records containing every included and excluded field. Capture only redacted
+rendered evidence and response-key inventories.
+
+- [ ] Confirm the summary derives status from `former_member` and `lid_tot`, transfer state from
+  `wacht_op_overschrijving`, and current teams only from current `work_history` rows.
+- [ ] Confirm Membership shows only the approved birthdate/age, age group and membership dates.
+- [ ] Confirm Contact shows populated canonical email, mobile, telephone and labelled address
+  values, with Home first and no placeholder rows.
+- [ ] Confirm `is_deceased` disables communication links and shows Do not contact without returning
+  `datum_overlijden`.
+- [ ] Confirm Household is capped at six direct relationships, does not recurse, contains no
+  contact/birthdate fields and independently omits inaccessible people.
+- [ ] Confirm Process contains member-onboarding state, account-linked boolean/welcome time and the
+  client-safe pass type/platform availability without user IDs, wallet URLs or role choices.
+- [ ] Confirm Open tasks contains only open/awaiting tasks created by or assigned to the current
+  agent, capped at three, with no notes, Lettermint or assignee data.
+- [ ] Confirm person, task and Sportlink links are server-generated, stay on allowlisted origins and
+  disappear when their identifier is absent.
+- [ ] Confirm empty fields and groups are omitted, generation time is labelled Live from Rondo and
+  no Sportlink sync timestamp is claimed.
+- [ ] Confirm the response has no finance/Nikki, VOG, sponsor, discipline, private-note, arbitrary
+  custom-field, `freescout_id`, raw-user-ID, image or historical-work-row keys.
+- [ ] Confirm expanding every populated group remains usable at `280`, `360` and `420` pixels and
+  at 200% zoom.
+
+**Blocking failure:** a prohibited key leaves Rondo, a related person or task bypasses its own
+visibility rule, a missing value is guessed, or the output cannot fit the bounded sidebar.
+
+## 10B. Prove controlled appearance and width overrides
 
 Run these tests with the unsupported Design module disabled. Use only the Rondo Integration
 module's allowlisted settings and stylesheet.
@@ -434,6 +464,7 @@ Complete one row for every material behavior.
 | Force-login recovery | Paid add-on loops without a response filter; its patched `/login?oauth=0` paths work | Custom callback fails once to `/login?rondo_oauth=0`; server setting restores local login | Paid add-on **Fail**; custom retest required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Implement recovery directly in Rondo Integration |
 | Mobile | | Explicit pilot decision | | | |
 | Sidebar authorization | | Agent and conversation authorized | | | |
+| Ledenadministratie fields | Canonical field registry, person formatters and task visibility support the approved bounded view; no canonical Sportlink-sync timestamp exists | Exact fixed contract with independent related-person/task checks and prohibited-key filtering | Custom proof required | Source inspection 2026-09-01 | Omit unknown values and source-sync claims; test response keys and rendered groups with synthetic records |
 | Response isolation | | Opaque-origin iframe with a nonce-authorized, height-only resize bridge and no parent-page code execution | | | |
 | Appearance controls | Design module disabled; core blue accent roles visible | Two semantic color settings, allowlisted selectors and no arbitrary CSS | Retest required | Post-removal screenshots reviewed 2026-09-01; screenshots not stored because they contain member data | Prove against current FreeScout CSS before release |
 | Customer-sidebar width | FreeScout core desktop width is `280px`; narrow layout becomes full width | Coordinated responsive width up to configured maximum, default `360px` | Retest required | Current FreeScout stylesheet inspection | Update customer width plus header/main spacing together |
@@ -489,6 +520,7 @@ architecture assumption must change before repeating the spike.
 - [ ] Guarded automatic-creation, reply-attribution and deactivation/reactivation proof.
 - [ ] Conditional session-revocation and invalidation-retry proof.
 - [ ] Sidebar authorization and isolation proof.
+- [ ] Ledenadministratie field-contract and prohibited-key proof.
 - [ ] Appearance and customer-sidebar width compatibility proof.
 - [ ] Timeout/failure results at expected pilot concurrency.
 - [ ] Completed compatibility matrix.

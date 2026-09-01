@@ -77,6 +77,9 @@ guard and manual grant/revoke behavior.
     mailbox access is enforced on the next server request after reconciliation; sessions are
     invalidated when no mailbox remains or when the identity binding is disabled/replaced. Manual
     mailbox access and manually created account status remain under FreeScout administration.
+21. The first Ledenadministratie sidebar release uses the fixed field contract below. It shows
+    current membership, contact, household, onboarding, membership-pass and agent-visible task
+    context, but no contribution, VOG, sponsor, private-note or unrestricted custom-field data.
 
 ## Why this replaces copied customer context
 
@@ -921,16 +924,34 @@ Using the effective capability:
 The mailbox policy can only narrow the Rondo user's permissions. It can never grant a field the
 user cannot read in Rondo.
 
-Initial Ledenadministratie sidebar allowlist:
+The first Ledenadministratie release has this fixed, versioned display contract:
 
-- identity: name, active/former-member status and exact match state;
-- membership: type, KNVB ID, birthdate/age, member-since date and relation-end date;
-- sport: current teams, spelactiviteit and transfer-pending state;
-- contact: primary/secondary email, phone and address;
-- household: directly related people with relationship label and current team summary;
-- process: onboarding email state, digital membership-pass state and last source-sync timestamp;
-- work: count and summary of open Rondo tasks relevant to ledenadministratie;
-- links: person, relevant task and Sportlink record.
+| Group | Values | Canonical source and derivation |
+|---|---|---|
+| Summary | Full name; Active, Former member, Membership ended and Transfer pending badges; member type; KNVB ID; current teams; game activity | Name from `first_name`, `infix`, `last_name`; status from `former_member` and `lid_tot`; transfer from `wacht_op_overschrijving`; membership from `type_lid`; identity from `knvb_id`; sport from current `work_history` team rows and `spelactiviteit` |
+| Membership | Date of birth and derived age; age group; member since; member until | `birthdate`, `leeftijdsgroep`, `lid_sinds`, `lid_tot`; age is calculated on the server for the response date and is not stored separately |
+| Contact | Primary and secondary email; both mobile and telephone fields; populated labelled addresses | `email_1`, `email_2`, `mobile_1`, `mobile_2`, `telephone_1`, `telephone_2`, `addresses`; Home is shown first, followed by other populated labelled addresses |
+| Household | Directly related person's name, relationship label, active/former status and current team summary | One non-recursive level from `relationships`; the related person is independently visibility-checked and its current teams are derived from current `work_history` rows |
+| Process | Member-onboarding email state; whether a Rondo account is linked and its welcome-email time; eligible digital membership-pass type and available wallet platforms | `onboarding_email_lid_sent`, boolean presence of `linked_user_id`, `welcome_email_sent_at`, and the client-safe `membership_pass` summary; user IDs, wallet action URLs and role-selection details are not returned |
+| Open tasks | Count plus at most three open or awaiting tasks visible to the current agent, with title, status, due date and overdue state | `rondo_todo` records directly related through `related_persons`, after the normal created-by-or-assigned-to visibility filter; notes, email-event data and assignee details are omitted |
+| Links | Open person in Rondo; open the visible task list or task; open the Sportlink member record | Server-generated allowlisted links only; the Sportlink URL uses the canonical `knvb_id`; absent identifiers produce no link |
+
+Presentation and missing-data rules:
+
+- the summary stays visible; Membership, Contact, Household, Process and Open tasks are compact
+  collapsible groups suitable for the configured `360px` default maximum width;
+- empty values and empty groups are omitted rather than rendered as dashes or unknown facts;
+- an unavailable current-team relation is omitted; historical or raw `work_history` rows are never
+  returned;
+- at most six household members render, followed by an Open in Rondo link when more exist;
+- `is_deceased` may produce a discreet Do not contact state and disables clickable communication
+  links, but `datum_overlijden` is not returned;
+- the response includes its generation time labelled Live from Rondo; it does not claim a
+  Sportlink synchronization time because no canonical source-sync timestamp exists;
+- the FreeScout customer avatar remains the only portrait in this surface, so the Rondo payload
+  contains no image URL or image bytes;
+- the sidebar is read-only. Mail, telephone, Rondo, task and Sportlink links are explicit
+  navigation; no person, task, pass or onboarding mutation occurs in the iframe.
 
 Explicitly excluded unless a future mailbox policy and Rondo capability both allow them:
 
@@ -939,6 +960,9 @@ Explicitly excluded unless a future mailbox policy and Rondo capability both all
 - VOG details;
 - sponsor-management fields;
 - private notes and unrestricted timeline content;
+- todo notes, Lettermint event/recipient data and assignee details;
+- `freescout_id`, raw user IDs, wallet action URLs and full `work_history` rows;
+- gender, pronouns, nickname, photo gallery and date of death;
 - discipline cases;
 - arbitrary custom fields.
 
@@ -1124,7 +1148,8 @@ mappings remain authoritative.
 - Avoid browser analytics, third-party fonts, external images and remote scripts inside the sidebar.
 - Keep audit logs event-oriented: success/failure, IDs and reason codes, without full person payloads.
 - Set an explicit retention period for OAuth and provisioning audit records.
-- Review the expanded Ledenadministratie field allowlist with the club before production.
+- Treat the approved Ledenadministratie field contract as a privacy boundary; every later field or
+  group requires a separate club review before production.
 
 ## Observability
 
@@ -1394,7 +1419,18 @@ login, complete token validation and a confirmed current-agent hook.
 - Two accessible matches show ambiguous state without details.
 - An inaccessible match is treated as no match.
 - Phone-only match never auto-selects.
-- Ledenadministratie sees its allowlist.
+- Ledenadministratie sees exactly the fixed, versioned field contract.
+- Empty values and groups are absent; they never become guessed or stale fallback values.
+- Current teams contain only current derived team summaries, never raw or historical work history.
+- Household output is one level deep, independently visibility-checked and capped at six people.
+- A related person outside the agent's Rondo scope is absent without revealing that it exists.
+- Only tasks created by or assigned to the current agent appear; completed tasks, notes, Lettermint
+  metadata and assignee details never appear.
+- The pass summary exposes eligibility/type and wallet-platform availability without wallet action
+  URLs or role-selection details.
+- A deceased person shows Do not contact without returning the date of death or clickable
+  communication links.
+- The generation time is labelled as Rondo freshness and never as Sportlink sync time.
 - Ledenadministratie does not see finance, VOG, sponsor or private-note fields.
 - A future finance mailbox cannot expose finance to an agent lacking Rondo finance access.
 
@@ -1438,7 +1474,9 @@ The milestone is complete only when:
 - Rondo maps that agent to the expected eligible WordPress user with current email proof;
 - a current `ledenadministratie` capability grants the correct FreeScout mailbox;
 - revoking that capability removes only integration-managed access;
-- the Ledenadministratie sidebar renders the approved live field set;
+- the Ledenadministratie sidebar renders exactly the approved live field contract, omits empty
+  values, applies related-person and task visibility independently and exposes no prohibited
+  payload keys;
 - zero-match and multiple-match cases disclose no person data;
 - an agent lacking Rondo access cannot retrieve the sidebar record by changing IDs;
 - an unreachable Rondo endpoint does not freeze FreeScout or exhaust workers;
@@ -1481,13 +1519,12 @@ The milestone is complete only when:
 ## Open decisions before implementation
 
 1. Exact production FreeScout mailbox ID and stable key for Ledenadministratie.
-2. The approved final Ledenadministratie sidebar field allowlist.
-3. Whether the FreeScout conversation activity sync remains a long-term feature.
-4. How its person matching works after customer enrichment and FreeScout ID reverse sync are
+2. Whether the FreeScout conversation activity sync remains a long-term feature.
+3. How its person matching works after customer enrichment and FreeScout ID reverse sync are
    retired.
-5. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
-6. Audit retention period and operational owners for failed provisioning events.
-7. Final module repository, protected release workflow and update-asset URLs.
-8. Initial production values for interface accent and interface accent surface.
-9. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
+4. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
+5. Audit retention period and operational owners for failed provisioning events.
+6. Final module repository, protected release workflow and update-asset URLs.
+7. Initial production values for interface accent and interface accent surface.
+8. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
     200%-zoom testing.
