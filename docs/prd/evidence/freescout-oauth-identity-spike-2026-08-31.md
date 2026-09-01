@@ -246,36 +246,30 @@ rendered on the local login page. Successful callback redirects are unchanged: t
 login regression test completed in approximately 1.9 seconds and made one authorization request,
 one token request and one User Info request.
 
-Force OAuth Login is a provisional compatibility pass only with this behavior in the production
-Rondo Integration module. Keep it disabled until that module ships and the same denial test passes
-against its release artifact. Server-side disablement remains the second break-glass method.
+This proves why the paid add-on is not acceptable without custom interception. The production
+Rondo Integration module will instead own the callback and implement the non-looping failure path
+directly; it will not depend on this filter or either paid-add-on recovery setting.
 
 The environment was restored with the provider in normal mode, Force OAuth Login and automatic
 creation disabled, the visibility restriction enabled and the local administrator signed in.
 
 ## Current decision
 
-The paid module remains usable only with the Rondo identity guard, one-to-one subject binding and
-`APP_LIMIT_USER_CUSTOMER_VISIBILITY=true`. Force OAuth Login is compatible only when the Rondo
-Integration module rewrites failed callback redirects to `/login?oauth=0`; the disposable proof
-passes, but production forcing remains disabled until the release artifact repeats that proof.
-Identity binding and managed mailbox reconciliation are provisional passes. The paid module sends
-neither PKCE nor an OpenID Connect nonce and consumes identity JSON without an ID token.
+**Decision, 2026-09-01:** the paid OAuth Login add-on is `NO-GO` and will be removed. There is no
+production compatibility exception.
 
-The recommended sub-decision is conditional acceptance for a non-administrator pilot. RFC 9700
-recommends, but does not mandate, PKCE for a confidential web client. The missing protection leaves
-residual authorization-code injection risk, bounded by a dedicated confidential client, exact
-redirect matching, TLS, fresh session-bound state and short-lived single-use codes. RFC 6749 permits
-`client_secret_post` but does not recommend it; the exception therefore also requires a dedicated
-rotated secret, verified HTTPS and debug logging off.
+The decisive gaps are the absence of PKCE, nonce and ID-token validation; email-only matching that
+does not enforce `sub` or `email_verified`; automatic user creation being enabled by default; and
+the forced-login denial loop. Wrapping those gaps would leave the custom Rondo Integration module
+responsible for most of the security-critical login behavior while retaining a paid runtime
+dependency.
 
-The absence of an ID token is not treated as an OpenID Connect exception. OpenID Connect code flow
-requires an ID token and its validation, and UserInfo `sub` is normally checked against that token.
-The proposed production configuration removes `openid` and uses the dedicated
-`freescout_identity` OAuth scope and `/oauth/freescout-identity` resource instead. Rondo must not
-describe FreeScout as an OpenID Connect relying party.
+The production Rondo Integration module will therefore implement authorization code flow with PKCE
+S256, `state`, `nonce`, `client_secret_basic`, signed ID-token validation, UserInfo subject matching,
+one-to-one subject binding, and its own non-looping recovery path. The paid-module results above are
+retained as rejection evidence and regression-test cases only. Identity binding and managed mailbox
+reconciliation remain provisional design proofs and must be repeated against the custom module.
 
-This recommendation remains pending explicit product-owner approval and the rest of the spike.
 Standards basis: [RFC 9700 section 2.1.1](https://www.rfc-editor.org/rfc/rfc9700.html#section-2.1.1),
 [RFC 6749 section 2.3.1](https://www.rfc-editor.org/rfc/rfc6749.html#section-2.3.1) and
 [OpenID Connect Core token/UserInfo validation](https://openid.net/specs/openid-connect-core-1_0-18.html#TokenResponseValidation).
