@@ -10,6 +10,7 @@ namespace Rondo\Users;
 use Rondo\Core\AccessControl;
 use Rondo\Core\PhoneNormalizer;
 use Rondo\Fields\Fields;
+use Rondo\Identity\OidcIdentity;
 use Rondo\Notifications\EmailTemplate;
 use Rondo\Pages\PublicPageChrome;
 use Rondo\People\CommunicationPolicy;
@@ -340,6 +341,8 @@ final class MemberProfileService {
 				]
 				);
 			update_user_meta( $user_id, UserProvisioning::META_CONTACT_EMAIL, $old_account['contact_email'] );
+		} elseif ( ! is_wp_error( $result ) && $slot === 'primary' && $person_id === $linked_id ) {
+			OidcIdentity::mark_email_verified( $user_id, $new, 'profile_email_change' );
 		}
 		return $result;
 	}

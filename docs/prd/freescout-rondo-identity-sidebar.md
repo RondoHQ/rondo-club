@@ -1,8 +1,8 @@
 # FreeScout sidebar, Rondo identity and mailbox provisioning
 
-**Status:** Phase 0 gate passed; product implementation may start; production compatibility proof pending, updated 2026-09-01<br>
+**Status:** Phase 1 implemented; FreeScout module and production compatibility proof pending, updated 2026-09-01<br>
 **Scope:** Rondo Club and one custom Rondo Integration FreeScout module<br>
-**Milestone type:** planning only; this document does not authorize implementation or production changes
+**Milestone type:** product specification; Phase 1 was separately approved, and later phases require separate approval
 
 ## Outcome
 
@@ -1743,6 +1743,13 @@ The test used a synthetic issuer and does not replace the remaining production c
 - Add tests for redirects, codes, tokens, claims, scopes, PKCE, nonce and denials.
 - Document `/login?rondo_oauth=0` and server-side `RONDO_FORCE_OAUTH_LOGIN` disablement as separate
   break-glass paths.
+
+**Result, 2026-09-01:** implemented in Rondo Club `35.29.0`. The provider includes administrator-
+managed confidential clients, RS256 discovery/JWKS, authorization code with PKCE S256, exact
+redirect matching, opaque subjects, short-lived tokens, durable exact-address proof and resumable
+email verification. Automated coverage includes signed claims, scope and redirect denials, PKCE,
+code replay, key and secret rotation, shared or changed email rejection, and the existing activation,
+Magic Login and profile-email verification hooks. Phase 2 remains unimplemented.
 
 ### Phase 2: Rondo Integration module foundation and sidebar
 

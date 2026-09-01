@@ -2,6 +2,7 @@
 
 namespace Tests\Wpunit;
 
+use Rondo\Identity\OidcIdentity;
 use Rondo\Users\ActivationService;
 use Rondo\Users\ActivationLog;
 use Rondo\Users\GuardianAccountService;
@@ -551,6 +552,9 @@ class ActivationServiceTest extends RondoTestCase {
 		$this->assertIsString( $url );
 		$this->assertStringContainsString( 'action=rp', $url );
 		$this->assertTrue( ActivationService::has_account( $person_id ) );
+		$user_id = (int) get_post_meta( $person_id, UserProvisioning::META_USER_ID, true );
+		$this->assertSame( 'anne@example.com', get_user_meta( $user_id, OidcIdentity::META_VERIFIED_EMAIL, true ) );
+		$this->assertSame( 'activation', get_user_meta( $user_id, OidcIdentity::META_VERIFIED_METHOD, true ) );
 	}
 
 	public function test_a_parent_can_activate_through_a_youth_person(): void {
