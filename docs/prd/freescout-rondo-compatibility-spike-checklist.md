@@ -446,13 +446,18 @@ unavailable.
 
 Use synthetic conversations only; do not include real message content in fixtures or evidence.
 
-- [ ] Identify a reliable FreeScout conversation-created event available to Rondo Integration and
-  record its transaction timing and retry behavior.
+- [ ] Subscribe to and record transaction timing for inbound `CustomerCreatedConversation` and
+  agent-created `UserCreatedConversation`; both must reach Rondo Integration reliably.
+- [ ] Subscribe to `ConversationCustomerChanged` and confirm it identifies the same stable
+  conversation plus the new current customer.
 - [ ] Deliver a signed minimal event containing only instance, conversation/customer identifiers,
-  mailbox key, plain-text subject, creation time and the separately approved minimum matching
-  inputs.
-- [ ] Confirm Rondo ignores supplied Rondo/KNVB identifiers and applies the approved independent
-  person-matching policy.
+  mailbox key, plain-text subject, creation time and all current normalized customer emails.
+- [ ] Confirm Rondo compares those emails only with `email_1` and `email_2`, deduplicates by person
+  ID and accepts exactly one integration-scope match, including a former member.
+- [ ] Confirm two people sharing one address, or two customer addresses resolving to different
+  people, returns only `ambiguous` and creates no visible activity.
+- [ ] Confirm Rondo rejects synthetic/malformed addresses and ignores names, phones, Rondo/KNVB/
+  FreeScout IDs, sidebar results and old SQLite mappings as matching inputs.
 - [ ] Confirm Rondo creates one native `rondo_activity` comment with instance/conversation comment
   meta and no custom table.
 - [ ] Replay and race the same event; exactly one activity may exist for the instance-and-
@@ -462,7 +467,13 @@ Use synthetic conversations only; do not include real message content in fixture
 - [ ] Confirm message bodies/previews, replies, recipients, attachments, customer payloads and
   agent identity are absent from request, storage and logs.
 - [ ] Miss an event and prove the bounded repair path creates the pointer once after matching;
-  unmatched or ambiguous events remain retryable without attaching to a guessed person.
+  unmatched or ambiguous events store only IDs/reason, reload current emails from FreeScout and
+  remain retryable without attaching to a guessed person.
+- [ ] Edit customer or Rondo emails and confirm a pending event may resolve while an approved
+  historical pointer does not move automatically.
+- [ ] Change the conversation's FreeScout customer: a unique new match moves the existing pointer;
+  no unique match retains the same comment in non-approved pending state; repair restores or moves
+  that comment through WordPress APIs without duplication.
 - [ ] Confirm historical batch-created pointers survive cutover and rollback does not duplicate
   conversations already represented in Rondo.
 
@@ -492,7 +503,7 @@ Complete one row for every material behavior.
 | Mobile | | Explicit pilot decision | | | |
 | Sidebar authorization | | Agent and conversation authorized | | | |
 | Ledenadministratie fields | Canonical field registry, person formatters and task visibility support the approved bounded view; no canonical Sportlink-sync timestamp exists | Exact fixed contract with independent related-person/task checks and prohibited-key filtering | Custom proof required | Source inspection 2026-09-01 | Omit unknown values and source-sync claims; test response keys and rendered groups with synthetic records |
-| Conversation activity | Daily batch currently creates one subject/link activity through customer-ID to KNVB-ID to Rondo-ID SQLite mappings | Keep the pointer long-term, move to minimal idempotent module events after matching and repair proof | Custom proof required | Rondo Sync source inspection 2026-09-01 | Keep batch during rollout; do not copy message content |
+| Conversation activity | Daily batch creates one subject/link activity through customer-ID to KNVB-ID to Rondo-ID SQLite mappings; core exposes inbound, agent-created and customer-change events plus customer emails | Keep the pointer long-term; exact unique `email_1`/`email_2` match, idempotent module events and deterministic reassignment/repair | Custom proof required | Rondo Sync and FreeScout 1.8.238 source inspection 2026-09-01 | Keep batch during rollout; never use IDs/names/phones to select a person or copy message content |
 | Response isolation | | Opaque-origin iframe with a nonce-authorized, height-only resize bridge and no parent-page code execution | | | |
 | Appearance controls | Design module disabled; core blue accent roles visible | Two semantic color settings, allowlisted selectors and no arbitrary CSS | Retest required | Post-removal screenshots reviewed 2026-09-01; screenshots not stored because they contain member data | Prove against current FreeScout CSS before release |
 | Customer-sidebar width | FreeScout core desktop width is `280px`; narrow layout becomes full width | Coordinated responsive width up to configured maximum, default `360px` | Retest required | Current FreeScout stylesheet inspection | Update customer width plus header/main spacing together |
