@@ -73,6 +73,10 @@ guard and manual grant/revoke behavior.
     A new account, subject binding, OIDC-only marker, initial managed mailbox access and audit must
     commit together before a session exists. The feature defaults off until its local mailbox
     mapping and production invariants have been verified.
+20. Rondo revocation changes authorization, not every FreeScout session indiscriminately. Removed
+    mailbox access is enforced on the next server request after reconciliation; sessions are
+    invalidated when no mailbox remains or when the identity binding is disabled/replaced. Manual
+    mailbox access and manually created account status remain under FreeScout administration.
 
 ## Why this replaces copied customer context
 
@@ -210,6 +214,8 @@ References:
 - The Rondo Integration module reconciles managed mailbox access after every successful FreeScout
   login.
 - An agent who no longer has an eligible Rondo account cannot start a new OAuth session.
+- The module retains no ID token, access token or refresh token after creating the FreeScout
+  session; the normal configured FreeScout session lifetime remains authoritative.
 
 ### Conversation sidebar
 
@@ -987,10 +993,34 @@ Production automatic creation may be enabled only when:
 ### Revocation
 
 Removing `ledenadministratie` causes the Rondo Integration module to remove the managed mailbox. It
-never deletes the FreeScout account or its historical reply attribution. When a Rondo-created user
-then has no managed or manual mailbox, the module deactivates the account and invalidates its
-sessions. Existing manually created users keep their existing account-status and local-login policy;
-the integration changes only managed mailbox relationships.
+never deletes the FreeScout account or its historical reply attribution. FreeScout's normal
+authorization must read current mailbox relationships on every request; the module must not cache a
+revoked mailbox in its session. Once reconciliation commits, the next request to that mailbox or
+its customers/conversations is denied even if the browser still has a valid session cookie.
+
+Session and account handling depends on the remaining FreeScout authority:
+
+- if another managed or manual mailbox remains, the session and account remain active and only the
+  revoked mailbox disappears;
+- if no mailbox remains, all sessions and remember tokens are invalidated; a Rondo-created account
+  is also deactivated, while a manually created account keeps its administrator-controlled status;
+- disabling or replacing a subject binding invalidates all sessions regardless of remaining
+  mailboxes because the identity itself is in question;
+- regaining mapped access reactivates the same Rondo-created user before a new session is issued;
+- a manual mailbox on an OIDC-only account is preserved, but the administration screen warns that
+  future access requires continuing Rondo eligibility or an explicit audited conversion to local
+  login.
+
+The normal target remains managed-access removal within five minutes of a signed Rondo capability
+event. The hourly reconciliation is the maximum normal repair window when an event is missed. If
+Rondo or FreeScout cannot exchange current state, the integration preserves the last confirmed
+mailbox state and records drift; it does not guess a revocation or block unrelated FreeScout work.
+Once connectivity returns, reconciliation runs immediately. This availability exception is
+explicit: there is no claimed hard revocation deadline during a two-sided integration outage.
+
+Session invalidation runs after the mailbox transaction commits. If invalidation itself fails, the
+removed mailbox remains inaccessible through normal authorization, the failure is audited and the
+module retries invalidation; it never restores the mailbox relation to make logout appear atomic.
 
 ## Migration from the current FreeScout sync
 
@@ -1050,6 +1080,10 @@ mappings remain authoritative.
   user, OIDC-only state, binding, initial mailboxes and audit before session creation.
 - Rondo-created accounts cannot use password login/reset and are never promoted to administrator
   automatically.
+- Sessions contain no durable copy of managed mailbox authorization; current FreeScout mailbox
+  relationships are checked for each protected request.
+- Zero-mailbox and identity-binding revocations invalidate all sessions and remember tokens;
+  unrelated manual mailbox access never gets removed to force a logout.
 - Rondo and FreeScout base URLs are explicit environment configuration with no compiled hostname.
 - Integration URLs reject credentials, query strings and fragments; production requires HTTPS.
 - Outbound integration requests stay within the configured origin and path prefix and never follow
@@ -1125,6 +1159,10 @@ bodies.
 - Managed mailbox grant after successful OIDC login: immediate in the same login flow.
 - Managed mailbox revocation after successful Rondo event: within 5 minutes.
 - Missed-event repair: within one hourly reconciliation cycle.
+- Revoked mailbox authorization: denied on the next server request after reconciliation commits,
+  independent of the remaining FreeScout session cookie.
+- No hard revocation claim is made while current desired state cannot be exchanged; reconciliation
+  runs immediately after connectivity returns.
 
 ## Compatibility spike
 
@@ -1226,6 +1264,7 @@ login, complete token validation and a confirmed current-agent hook.
 - Add signed Rondo access service.
 - Add managed capability-to-mailbox configuration.
 - Reconcile only managed mailbox relationships.
+- Add conditional session invalidation plus Rondo-created account deactivation/reactivation.
 - Add Rondo capability-change events and FreeScout receiver.
 - Add hourly repair and nightly audit.
 
@@ -1285,6 +1324,12 @@ login, complete token validation and a confirmed current-agent hook.
 - Replies sent by the created agent retain that FreeScout user as author after later deactivation.
 - Losing the last managed mailbox deactivates a Rondo-created user with no manual mailbox and
   invalidates sessions; restored access reactivates the same account.
+- Losing one mailbox while another remains keeps the session but denies every subsequent request to
+  the removed mailbox.
+- A manually created zero-mailbox user is logged out without the integration changing its account
+  status; a manual mailbox is never detached to force logout.
+- Binding disablement or replacement invalidates sessions even when a mailbox remains.
+- An invalidation failure leaves the mailbox revoked, records the error and retries logout.
 
 ### Connection configuration
 
@@ -1384,6 +1429,9 @@ The milestone is complete only when:
   managed mailbox before login, while any failed access or transaction creates nothing;
 - replies remain attributed to that durable FreeScout user after access is revoked or the account
   is deactivated;
+- a revoked managed mailbox is inaccessible on the next server request after reconciliation;
+- zero-mailbox and binding-recovery cases invalidate sessions without deleting the user, while a
+  remaining manual mailbox and manually controlled account status are preserved;
 - the deployed module contains no hardcoded Rondo hostname and uses the verified configured base
   URL for every Rondo request;
 - FreeScout identifies the current agent and signs the sidebar request;
@@ -1433,14 +1481,13 @@ The milestone is complete only when:
 ## Open decisions before implementation
 
 1. Exact production FreeScout mailbox ID and stable key for Ledenadministratie.
-2. The acceptable FreeScout session lifetime after Rondo account revocation.
-3. The approved final Ledenadministratie sidebar field allowlist.
-4. Whether the FreeScout conversation activity sync remains a long-term feature.
-5. How its person matching works after customer enrichment and FreeScout ID reverse sync are
+2. The approved final Ledenadministratie sidebar field allowlist.
+3. Whether the FreeScout conversation activity sync remains a long-term feature.
+4. How its person matching works after customer enrichment and FreeScout ID reverse sync are
    retired.
-6. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
-7. Audit retention period and operational owners for failed provisioning events.
-8. Final module repository, protected release workflow and update-asset URLs.
-9. Initial production values for interface accent and interface accent surface.
-10. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
+5. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
+6. Audit retention period and operational owners for failed provisioning events.
+7. Final module repository, protected release workflow and update-asset URLs.
+8. Initial production values for interface accent and interface accent surface.
+9. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
     200%-zoom testing.
