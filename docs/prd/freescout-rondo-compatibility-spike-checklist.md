@@ -285,6 +285,8 @@ module's allowlisted settings and stylesheet.
   text and focus indicators change.
 - [ ] Change the interface accent surface and confirm only audited selected/highlighted backgrounds
   change.
+- [ ] Apply two different club color pairs to the same module build without changing source or
+  assets; confirm an unconfigured installation retains FreeScout's native blue accents.
 - [ ] Confirm success, warning, destructive, unread and availability colors remain semantic.
 - [ ] Reject invalid hexadecimal values and insufficient-contrast color pairs.
 - [ ] Confirm no setting accepts CSS, selectors, HTML or an external stylesheet URL.

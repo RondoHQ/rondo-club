@@ -56,8 +56,9 @@ guard and manual grant/revoke behavior.
     error and never automatically starts a second authorization request. Production forcing remains
     disabled until the released module passes this proof.
 15. The unsupported FreeScout Design module has been disabled. Rondo Integration replaces only the
-    required appearance controls: semantic accent colors and responsive conversation-sidebar width.
-    It does not become a general FreeScout theme or accept arbitrary CSS.
+    required appearance controls: per-club semantic accent colors and responsive
+    conversation-sidebar width. It does not become a general FreeScout theme or accept arbitrary
+    CSS.
 
 ## Why this replaces copied customer context
 
@@ -439,6 +440,11 @@ Integration adds two validated hexadecimal color settings:
 - **Interface accent:** links, actionable icons, active mailbox text and focus indicators;
 - **Interface accent surface:** the light-tint backgrounds used for the active mailbox row,
   conversation toolbar and comparable selected or highlighted surfaces.
+
+These are site-wide settings for each club's FreeScout installation. The release artifact contains
+no AWC-specific green or other club-specific color. An installation with no configured values uses
+FreeScout's native blue accents. The same module build must support different club color pairs
+through configuration alone.
 
 The settings screen previews both colors together and rejects combinations that do not meet WCAG
 AA contrast for their actual text/icon use. The module maps them only to an audited selector
@@ -1095,6 +1101,7 @@ login, complete token validation and a confirmed current-agent hook.
 - Disabling appearance overrides reproduces the unmodified FreeScout UI.
 - Header color remains controlled by FreeScout's existing setting.
 - Accent and accent-surface settings affect only the documented blue interface roles.
+- The same module build supports different club color pairs without source or asset changes.
 - Success, warning, destructive, unread and availability colors do not change with branding.
 - Invalid hexadecimal values and insufficient-contrast pairs are rejected.
 - No setting or request can inject CSS, selectors, HTML or external stylesheets.
