@@ -253,9 +253,23 @@ Use synthetic mailboxes and a disposable proof listener or console test.
 - [x] A FreeScout administrator is never downgraded or detached.
 - [x] A user with zero mailboxes cannot view test customers or conversations.
 - [x] Record the FreeScout models/events needed for safe grant, revoke and audit.
+- [ ] Keep a session open while revoking one of multiple mailboxes; confirm the next protected
+  request to the removed mailbox/customer/conversation is denied while the other mailbox works.
+- [ ] Revoke the final mailbox and confirm all active sessions and remember tokens are invalidated.
+- [ ] Confirm a Rondo-created zero-mailbox user deactivates, while a manually created user keeps its
+  administrator-controlled account status.
+- [ ] Preserve a manual mailbox and confirm neither it nor the active session is removed by managed
+  mailbox revocation.
+- [ ] Disable or replace a subject binding and confirm sessions end even when a mailbox remains.
+- [ ] Restore mapped access and confirm the same Rondo-created user reactivates before login.
+- [ ] Force session-invalidation failure and confirm mailbox authorization stays revoked, the error
+  is audited and invalidation is retried.
+- [ ] Miss a push event and confirm hourly repair revokes access; restore connectivity and confirm
+  reconciliation runs immediately without claiming a hard deadline during the outage.
 
-**Blocking failure:** safe reconciliation requires replacing all mailbox relationships or cannot
-distinguish managed access from manual access.
+**Blocking failure:** safe reconciliation requires replacing all mailbox relationships, cannot
+distinguish managed access from manual access, or a revoked mailbox remains usable through an
+existing session.
 
 ## 7. Record paid add-on Force OAuth Login and recovery behavior
 
@@ -416,6 +430,7 @@ Complete one row for every material behavior.
 | Automatic creation | Paid add-on defaults on and isolated creation produced an ordinary zero-mailbox user before the proof listener ran | Guarded custom creation atomically commits an ordinary OIDC-only user, binding, non-empty mapped access and audit before login | Custom proof required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Default off; enable only after atomic creation, rollback, attribution and lifecycle tests pass |
 | Login event | Laravel `Login` fires for existing and newly created OAuth users before redirect | Current agent available | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Use the login event for binding and provisioning |
 | Managed mailbox access | Targeted pivot attach/detach works; customer routes require the core visibility flag | Manual access preserved | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Never use `sync()`; require `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true` |
+| Session revocation | Zero-mailbox customer/conversation denial is proven; conditional logout, binding recovery and invalidation failure remain untested | Next-request mailbox denial; logout for zero-mailbox or identity change; manual access preserved | Custom proof required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Prove session/remember-token invalidation and retry without restoring revoked pivots |
 | Force-login recovery | Paid add-on loops without a response filter; its patched `/login?oauth=0` paths work | Custom callback fails once to `/login?rondo_oauth=0`; server setting restores local login | Paid add-on **Fail**; custom retest required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Implement recovery directly in Rondo Integration |
 | Mobile | | Explicit pilot decision | | | |
 | Sidebar authorization | | Agent and conversation authorized | | | |
@@ -472,6 +487,7 @@ architecture assumption must change before repeating the spike.
 - [ ] Subject-binding migration, concurrency and administrator-recovery proof.
 - [ ] Durable Rondo email-verification and authorization-resume proof.
 - [ ] Guarded automatic-creation, reply-attribution and deactivation/reactivation proof.
+- [ ] Conditional session-revocation and invalidation-retry proof.
 - [ ] Sidebar authorization and isolation proof.
 - [ ] Appearance and customer-sidebar width compatibility proof.
 - [ ] Timeout/failure results at expected pilot concurrency.
