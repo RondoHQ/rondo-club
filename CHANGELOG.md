@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Toernooicoördinatoren kunnen na publicatie per team de actuele kaderleden synchroniseren of de opdracht handmatig herverdelen; nieuwe kaderleden krijgen één uitnodiging, verwijderde kaderleden verliezen direct toegang en iedere wijziging wordt gelogd.
 - Toernooicoördinatoren kunnen bij publicatie in één keer alle teams met actief Rondo-kader selecteren; de controle toont vooraf hoeveel teams en kaderleden worden uitgenodigd en welke teams worden overgeslagen.
 - Toernooi-inschrijvingen kiezen hun contactpersoon met één klik uit het toegewezen Rondo-kader; naam, e-mailadres en mobiel nummer komen uit het gekoppelde persoonsprofiel.
 - Toernooicoördinatoren kunnen open en gesloten toernooien wijzigen, inclusief datum en tijd, met versiecontrole, prijsvergrendeling na de eerste inschrijving en een optionele wijzigingsmail naar kaderleden en ingeschreven contactpersonen.

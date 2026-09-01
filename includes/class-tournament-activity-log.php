@@ -23,6 +23,7 @@ final class TournamentActivityLog {
 		'tournament_published_updated'                    => 'Gepubliceerd toernooi bijgewerkt',
 		'tournament_published'                            => 'Toernooi gepubliceerd',
 		'entry_created'                                   => 'Inschrijfopdracht aangemaakt',
+		'entry_assignments_updated'                       => 'Toewijzing bijgewerkt',
 		'draft_updated'                                   => 'Conceptinschrijving bijgewerkt',
 		'entry_submitted'                                 => 'Inschrijving bevestigd',
 		'payment_created'                                 => 'Factuur en betaallink aangemaakt',

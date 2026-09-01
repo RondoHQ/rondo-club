@@ -8,14 +8,17 @@ import {
   RotateCcw,
   Save,
   Send,
+  Users,
 } from 'lucide-react';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import {
   useReopenTournamentEntry,
   useSaveTournamentProgram,
   useSendTournamentPaymentReminder,
+  useTournamentAssignmentOptions,
   useTournamentEntries,
   useTournamentExport,
+  useUpdateTournamentEntryAssignees,
   useUpdateTournamentExternalStatus,
   useUpdateTournamentLifecycleStatus,
   useUpdateTournamentPlannerNote,
@@ -26,6 +29,7 @@ import {
   tournamentPaymentStatus,
   tournamentPaymentToneClasses,
 } from './tournamentFormatters';
+import { tournamentAssignmentDelta, tournamentAssignmentNeedsSync } from './tournamentSelections';
 
 const tabs = [
   { id: 'overview', label: 'Overzicht' },
@@ -201,7 +205,72 @@ function PlannerNote({ entry, archived }) {
   );
 }
 
-function TeamsPaymentsPanel({ tournament, entries, isLoading, error }) {
+function AssignmentEditor({ entry, candidates, archived, onUpdated }) {
+  const updateAssignees = useUpdateTournamentEntryAssignees();
+  const [editing, setEditing] = useState(false);
+  const [selected, setSelected] = useState(() => entry.assigned_user_ids || []);
+  const delta = tournamentAssignmentDelta(entry.assigned_user_ids, selected);
+  const needsSync = tournamentAssignmentNeedsSync(entry.assignees, candidates, selected);
+
+  const toggle = (userId) => {
+    setSelected((current) => (
+      current.includes(userId)
+        ? current.filter((id) => id !== userId)
+        : [...current, userId]
+    ));
+  };
+
+  const cancel = () => {
+    setSelected(entry.assigned_user_ids || []);
+    setEditing(false);
+  };
+
+  const save = async () => {
+    const updated = await updateAssignees.mutateAsync({
+      id: entry.id,
+      userIds: selected,
+      version: entry.version,
+    });
+    setEditing(false);
+    onUpdated(entry.team_name, updated.assignment_update);
+  };
+
+  return (
+    <div className="min-w-64">
+      <div className="space-y-1">{entry.assignees.map((assignee) => (
+        <div key={assignee.user_id}>{assignee.name}<span className={`ml-1 text-xs ${assignee.email ? 'text-green-600' : 'text-red-600'}`}>{assignee.email ? 'e-mail aanwezig' : 'e-mail ontbreekt'}</span></div>
+      ))}</div>
+      {!archived && !editing ? (
+        <button type="button" className="mt-2 inline-flex items-center text-xs font-medium text-bright-cobalt disabled:text-gray-400 dark:text-electric-cyan" disabled={candidates.length === 0} onClick={() => setEditing(true)}>
+          <Users className="mr-1 h-3.5 w-3.5" />Toewijzing wijzigen
+        </button>
+      ) : null}
+      {!archived && candidates.length === 0 ? <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">Geen actueel teamkader met Rondo-account gevonden.</p> : null}
+      {editing ? (
+        <div className="mt-3 space-y-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+          <p className="text-xs text-gray-600 dark:text-gray-400">Nieuwe kaderleden krijgen direct een uitnodiging. Een verwijderd kaderlid verliest meteen toegang.</p>
+          <button type="button" className="text-xs font-medium text-bright-cobalt dark:text-electric-cyan" onClick={() => setSelected(candidates.map((candidate) => candidate.user_id))}>Alle actuele kaderleden selecteren</button>
+          <div className="space-y-2">{candidates.map((candidate) => (
+            <label key={candidate.user_id} className="flex cursor-pointer items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <input type="checkbox" className="mt-0.5" checked={selected.includes(candidate.user_id)} onChange={() => toggle(candidate.user_id)} />
+              <span>{candidate.name}<span className="block text-xs text-gray-500">{candidate.role}</span></span>
+            </label>
+          ))}</div>
+          <p className="text-xs text-gray-500">{delta.addedCount} toegevoegd · {delta.removedCount} verwijderd</p>
+          {needsSync && !delta.changed ? <p className="text-xs text-gray-500">De actuele kadergegevens worden bijgewerkt.</p> : null}
+          {entry.registration_status === 'open' ? <p className="text-xs text-gray-500">Een gekozen contactpersoon wordt gewist als die niet langer is toegewezen.</p> : null}
+          {updateAssignees.error ? <p className="text-xs text-red-600">{errorMessage(updateAssignees.error)}</p> : null}
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="btn-primary text-xs" disabled={(!delta.changed && !needsSync) || selected.length === 0 || updateAssignees.isPending} onClick={save}>{updateAssignees.isPending ? 'Opslaan…' : 'Toewijzing opslaan'}</button>
+            <button type="button" className="btn-tertiary text-xs" disabled={updateAssignees.isPending} onClick={cancel}>Annuleren</button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function TeamsPaymentsPanel({ tournament, entries, assignmentOptions, isLoading, error }) {
   const sendReminder = useSendTournamentPaymentReminder();
   const reopenEntry = useReopenTournamentEntry();
   const [ageFilter, setAgeFilter] = useState('all');
@@ -215,6 +284,9 @@ function TeamsPaymentsPanel({ tournament, entries, isLoading, error }) {
     && (registrationFilter === 'all' || entry.registration_status === registrationFilter)
     && (paymentFilter === 'all' || entry.payment_state === paymentFilter)
   )), [ageFilter, entries, paymentFilter, registrationFilter]);
+  const candidatesByTeam = useMemo(() => new Map(
+    assignmentOptions.map((team) => [Number(team.id), team.assignees || []]),
+  ), [assignmentOptions]);
 
   const remind = async (entry) => {
     setActionMessage('');
@@ -225,6 +297,16 @@ function TeamsPaymentsPanel({ tournament, entries, isLoading, error }) {
     if (!window.confirm(`Inschrijving van ${entry.team_name} heropenen? De huidige betaallink wordt ingetrokken.`)) return;
     setActionMessage('');
     reopenEntry.mutate(entry.id, { onSuccess: () => setActionMessage(`Inschrijving van ${entry.team_name} heropend.`) });
+  };
+  const assignmentUpdated = (teamName, update) => {
+    const details = [];
+    if (update?.email_sent_count === 1) details.push('1 nieuw kaderlid ontving een uitnodiging.');
+    if (update?.email_sent_count > 1) details.push(`${update.email_sent_count} nieuwe kaderleden ontvingen een uitnodiging.`);
+    if (update?.email_existing_count === 1) details.push('1 kaderlid was al eerder uitgenodigd.');
+    if (update?.email_existing_count > 1) details.push(`${update.email_existing_count} kaderleden waren al eerder uitgenodigd.`);
+    if (update?.email_failed_count === 1) details.push('1 uitnodiging kon niet worden verzonden.');
+    if (update?.email_failed_count > 1) details.push(`${update.email_failed_count} uitnodigingen konden niet worden verzonden.`);
+    setActionMessage(`Toewijzing van ${teamName} bijgewerkt.${details.length ? ` ${details.join(' ')}` : ''}`);
   };
 
   if (isLoading) return <ContentLoadingSpinner />;
@@ -251,7 +333,7 @@ function TeamsPaymentsPanel({ tournament, entries, isLoading, error }) {
             return (
               <tr key={entry.id}>
                 <td className="px-4 py-3 align-top"><span className="block text-xs text-gray-500">{entry.age_group}</span><span className="font-medium text-gray-900 dark:text-gray-100">{entry.team_name}</span></td>
-                <td className="px-4 py-3 align-top text-gray-600 dark:text-gray-300">{entry.assignees.map((assignee) => <div key={assignee.user_id}>{assignee.name}<span className={`ml-1 text-xs ${assignee.email ? 'text-green-600' : 'text-red-600'}`}>{assignee.email ? 'e-mail aanwezig' : 'e-mail ontbreekt'}</span></div>)}</td>
+                <td className="px-4 py-3 align-top text-gray-600 dark:text-gray-300"><AssignmentEditor key={`${entry.id}-${entry.version}-${entry.assigned_user_ids.join('-')}`} entry={entry} candidates={candidatesByTeam.get(Number(entry.team_id)) || []} archived={archived} onUpdated={assignmentUpdated} /></td>
                 <td className="px-4 py-3 align-top">{submitted ? <span className="inline-flex items-center text-green-700 dark:text-green-300"><CheckCircle2 className="mr-1 h-4 w-4" />Ingeschreven</span> : <span className="text-amber-700 dark:text-amber-300">Niet ingeschreven</span>}</td>
                 <td className="px-4 py-3 align-top text-gray-600 dark:text-gray-300">{submitted ? <><div>{entry.registered_team_count} teams · {entry.player_count} spelers</div><details className="mt-1"><summary className="cursor-pointer text-xs text-bright-cobalt dark:text-electric-cyan">Verdeling tonen</summary><ul className="mt-1 space-y-1 text-xs">{entry.submitted_team_entries.map((team) => <li key={team.sequence}>Team {team.sequence}: {team.player_count} spelers</li>)}</ul></details></> : '—'}</td>
                 <td className="px-4 py-3 align-top text-gray-600 dark:text-gray-300">{submitted ? <><div className="font-medium text-gray-900 dark:text-gray-100">{entry.contact_name}</div><div>{entry.contact_email}</div><div>{entry.contact_mobile}</div></> : '—'}</td>
@@ -332,6 +414,7 @@ function CommunicationPanel({ tournament }) {
 export default function TournamentOperations({ tournament }) {
   const [activeTab, setActiveTab] = useState('overview');
   const entriesQuery = useTournamentEntries(tournament.id);
+  const assignmentOptionsQuery = useTournamentAssignmentOptions(activeTab === 'teams' && tournament.lifecycle_status !== 'archived');
   return (
     <div className="space-y-6">
       <div className="border-b border-gray-200 dark:border-gray-700">
@@ -340,7 +423,7 @@ export default function TournamentOperations({ tournament }) {
         </nav>
       </div>
       {activeTab === 'overview' ? <OverviewPanel tournament={tournament} /> : null}
-      {activeTab === 'teams' ? <TeamsPaymentsPanel tournament={tournament} entries={entriesQuery.data || []} isLoading={entriesQuery.isLoading} error={entriesQuery.error} /> : null}
+      {activeTab === 'teams' ? <TeamsPaymentsPanel tournament={tournament} entries={entriesQuery.data || []} assignmentOptions={assignmentOptionsQuery.data || []} isLoading={entriesQuery.isLoading || assignmentOptionsQuery.isLoading} error={entriesQuery.error || assignmentOptionsQuery.error} /> : null}
       {activeTab === 'communication' ? <CommunicationPanel tournament={tournament} /> : null}
     </div>
   );
