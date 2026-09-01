@@ -94,6 +94,10 @@ guard and manual grant/revoke behavior.
     name `Ledenadministratie` and address `ledenadministratie@svawc.nl`. The numeric ID remains
     environment configuration, not a source-code constant, and the module must verify its local
     existence and enabled state before provisioning is switched on.
+25. Mailbox mappings are configured in the Rondo Integration administrator screen. Administrators
+    select a Rondo-supported stable key and a local FreeScout mailbox from lists; they never type a
+    capability, stable key or numeric mailbox ID. Activation, repointing and revoking a mapping use
+    verification, aggregate impact preview, recent local-password confirmation and an audit event.
 
 ## Why this replaces copied customer context
 
@@ -444,6 +448,7 @@ versioned paths:
 ```text
 /wp-json/rondo/v1/integrations/freescout/sidebar
 /wp-json/rondo/v1/integrations/freescout/access
+/wp-json/rondo/v1/integrations/freescout/configuration
 ```
 
 The OIDC client discovers its provider endpoints from the configured Rondo base URL. Setup
@@ -872,6 +877,107 @@ Mapping verification rules:
 The production API list used for planning exposes ID, name and address but not the active flag, so
 the module-local enabled-state check remains a release gate rather than an assumed API fact.
 Evidence: [FreeScout production mailbox mapping](evidence/freescout-mailbox-mapping-2026-09-01.md).
+
+#### Mailbox mapping settings screen
+
+Rondo Integration adds a **Mailbox mappings** section to its FreeScout administrator settings. It
+is visible only to FreeScout administrators and uses normal FreeScout CSRF protection. The screen
+does not accept free-form capability names, stable keys or mailbox IDs.
+
+The screen starts with a prerequisite banner showing:
+
+- Rondo connection and signing configuration: Verified or Action required;
+- Rondo access-service availability and last successful check;
+- `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true`: Verified or Blocking;
+- local break-glass administrator: Verified or Blocking;
+- last successful mapping reconciliation and any current drift.
+
+Each supported Rondo mapping appears as one row:
+
+| Column | Behavior |
+|---|---|
+| Rondo access | Read-only human label, stable key and required effective capability returned by the verified Rondo configuration service |
+| FreeScout mailbox | Local selector showing name, address and numeric ID; only `Mailbox::isActive()` mailboxes can be activated |
+| Sidebar policy | Read-only policy label/version associated with the stable key; FreeScout cannot widen its Rondo allowlist |
+| Managed access | Aggregate count of module-managed user-mailbox relations; no user names or emails in the overview |
+| State | Draft, Verified, Active, Paused, Drifted, Disabling or Disabled |
+| Health | Last local verification, last reconciliation and a short redacted error when applicable |
+| Actions | Verify, Activate, Pause, Resume, Change mailbox, Disable and revoke, or View audit, according to state |
+
+Version one shows only stable keys advertised by the verified Rondo installation and supports each
+key once. The same local FreeScout mailbox cannot be active for two Rondo keys. The initial list
+contains only `ledenadministratie`; adding future keys requires a Rondo release and its approved
+mailbox/sidebar policy, not a FreeScout text entry.
+
+The module obtains that allowlist through a signed server-to-server request:
+
+```text
+POST /wp-json/rondo/v1/integrations/freescout/configuration
+```
+
+The response contains no users or person data:
+
+```json
+{
+  "version": 1,
+  "mappings": [
+    {
+      "key": "ledenadministratie",
+      "label": "Ledenadministratie",
+      "required_capability": "ledenadministratie",
+      "sidebar_policy": "ledenadministratie.v1",
+      "enabled": true
+    }
+  ],
+  "evaluated_at": "2026-09-01T12:00:00Z"
+}
+```
+
+The response is schema-validated and cached only for short-lived settings-page use; previously
+verified rows remain visible but enter Action required when Rondo is unavailable. An unavailable
+configuration service cannot be used to add, activate or repoint a mapping.
+
+Mapping workflow:
+
+1. **Add mapping** opens a two-step form: choose an available Rondo key, then choose an active local
+   FreeScout mailbox. The selector displays `Name <address> · ID n`.
+2. **Verify** checks the key against the configured Rondo issuer, reloads the mailbox locally,
+   confirms `Mailbox::isActive()`, uniqueness, connection prerequisites and the field-policy
+   version, then stores the name/address snapshot. Verification performs no grants or revocations.
+3. **Activate** shows an aggregate dry run: users to grant, existing managed relations unchanged,
+   manual relations preserved, and invalid/unresolved users. It requires recent local-password
+   confirmation and an explicit **Activate and reconcile** action.
+4. Activation commits the verified mapping and an audit event before reconciliation starts. The UI
+   reports progress and final aggregate counts; individual failures remain retryable.
+5. **Change mailbox** verifies the new mailbox and previews grants to the new ID plus managed
+   revocations from the old ID. It requires the same password confirmation and explicit
+   **Change and reconcile** action. The old ID remains recorded in the audit/reconciliation state
+   until its managed relations reach zero.
+6. **Disable and revoke** previews the managed relations to remove and the manual relations that
+   remain. After password confirmation it enters Disabling, reconciles only module-managed
+   relations, and becomes Disabled only when their count reaches zero.
+
+Operational states are deliberately distinct:
+
+- **Pause** stops grants and revocations and preserves the last confirmed access state; use it for
+  maintenance or a Rondo outage;
+- **Disable and revoke** is an intentional access-policy change and removes managed relations;
+- **Drifted** means the selected ID is missing/inactive or its name/address differs from the
+  verification snapshot. Automatic reconciliation pauses, existing access is preserved, and an
+  administrator must re-verify or deliberately change/disable the mapping;
+- an environment-provisioned mapping may be displayed and verified in the UI, but its locked fields
+  identify their configuration source and cannot be overridden there.
+
+Automated provisioning may supply local IDs as a JSON object in
+`RONDO_MANAGED_MAILBOX_MAPPINGS`, for example `{"ledenadministratie":18}`. Environment values take
+precedence and lock the key/ID pair; name, address, `Mailbox::isActive()` and Rondo-policy snapshots
+are still resolved and verified locally before activation. Invalid JSON, unknown keys and
+non-positive or duplicate IDs block activation without changing the last confirmed mapping.
+
+Every mutating action records administrator ID, action, stable key, old/new mailbox IDs, aggregate
+impact, time and result. Activation, change and disable require a local-password confirmation made
+within the preceding 10 minutes. The audit never records capability payloads, user lists or email
+addresses in its normal view. No workflow calls `sync()` on a user's entire mailbox collection.
 
 The access service returns desired **managed mailbox keys**, not arbitrary FreeScout IDs. The
 FreeScout module translates keys to its local IDs. Rondo therefore cannot attach a user to an
@@ -1375,6 +1481,8 @@ login, complete token validation and a confirmed current-agent hook.
   disable/replace recovery UI.
 - Add guarded ordinary-user creation, the OIDC-only account boundary and atomic initial mailbox
   provisioning.
+- Add the administrator Mailbox mappings screen, verification state machine, aggregate dry run and
+  protected activate/change/pause/disable workflows.
 - Add authentication and conversation authorization.
 - Add current agent to the signed payload.
 - Replace body secret with versioned HMAC headers.
@@ -1588,6 +1696,22 @@ login, complete token validation and a confirmed current-agent hook.
   `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true`.
 - Missed event is repaired hourly.
 - Rondo outage leaves existing FreeScout access unchanged and records a retryable error.
+- An administrator cannot type a stable key, capability or mailbox ID; mappings use verified Rondo
+  keys and local active-mailbox selectors.
+- Verification stores the local ID/name/address snapshot but changes no access.
+- Activation dry-run counts match the resulting grants, unchanged relations, preserved manual
+  relations and failures.
+- Pause preserves current managed relations and performs no grants or revocations.
+- Disable and revoke removes only managed relations and reaches Disabled only when their count is
+  zero.
+- Change mailbox moves only managed relations from the old ID to the verified new ID and preserves
+  manual relations on both.
+- A missing/inactive or renamed/address-changed mailbox enters Drifted, pauses reconciliation and
+  never falls back to name/address lookup.
+- One stable key and one local mailbox cannot each be active in more than one mapping.
+- Environment-locked values are visible with their source and cannot be overridden in the UI.
+- Activate, change and disable require administrator authorization, recent local-password
+  confirmation, CSRF validation, explicit confirmation and an audit event.
 
 ## Acceptance criteria
 
@@ -1615,6 +1739,8 @@ The milestone is complete only when:
 - a current `ledenadministratie` capability grants the correct FreeScout mailbox;
 - production key `ledenadministratie` resolves only to locally verified mailbox ID `18`, displayed
   as `Ledenadministratie <ledenadministratie@svawc.nl>`;
+- the mapping settings screen can verify, preview, activate, pause, change and intentionally revoke
+  the mapping without accepting arbitrary identifiers or modifying manual mailbox relations;
 - revoking that capability removes only integration-managed access;
 - the Ledenadministratie sidebar renders exactly the approved live field contract, omits empty
   values, applies related-person and task visibility independently and exposes no prohibited
