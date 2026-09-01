@@ -174,17 +174,18 @@ distinguish managed access from manual access.
 Enable Force OAuth Login only after the local administrator session and recovery path are ready.
 
 - [x] Normal login redirects to the configured Rondo/test provider.
-- [ ] Provider denial returns a clear error without creating or changing a user.
+- [x] Provider denial returns a clear error without creating or changing a user.
 - [x] Provider outage produces a clear failure and does not loop indefinitely.
 - [x] The documented server-side setting disables Force OAuth Login without OAuth access.
 - [x] After disabling it, the break-glass administrator can sign in locally.
 - [x] Re-enabling Force OAuth Login does not invalidate the recovery account.
 - [x] Record whether an already authenticated FreeScout session continues during provider outage.
 
-**Observed failure:** provider denial redirects to the bare login route, Force OAuth immediately
-starts a new authorization request, and the browser stops after a redirect loop. No user, role,
-password or subject binding changed. Keep Force OAuth Login disabled until the Rondo Integration
-module redirects failed callbacks to `/login?oauth=0` and this test passes.
+**Mitigation proof:** the unmodified paid module loops after provider denial. The disposable Rondo
+Integration module now intercepts only a failed `oauthlogin.callback` redirect to the login route
+and changes it to `/login?oauth=0`. The retest made one authorization request, rendered the local
+form and preserved the visible denial message. No user, role, password or subject binding changed.
+The normal forced-login regression test also passed.
 
 **Recovery proof:** `/login?oauth=0` bypasses forcing immediately. Clearing
 `OAUTHLOGIN_FORCE_OAUTH_LOGIN` server-side and restarting FreeScout also restores local login; the
@@ -280,7 +281,7 @@ Complete one row for every material behavior.
 | Automatic creation | | Disabled for pilot | | | |
 | Login event | | Current agent available | | | |
 | Managed mailbox access | Targeted pivot attach/detach works; customer routes require the core visibility flag | Manual access preserved | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Never use `sync()`; require `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true` |
-| Force-login recovery | Local and server-side recovery passed, but provider denial loops under Force OAuth | Proven break glass and a non-looping denial | Fail | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Keep Force OAuth off; redirect failed callbacks to `/login?oauth=0` and retest |
+| Force-login recovery | Custom response filter sends failed callbacks to `/login?oauth=0`; local and server-side recovery work | Proven break glass and a non-looping denial | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Ship the proven filter in Rondo Integration; keep Force OAuth off until release-artifact retest |
 | Mobile | | Explicit pilot decision | | | |
 | Sidebar authorization | | Agent and conversation authorized | | | |
 | Response isolation | | No parent-page code execution | | | |

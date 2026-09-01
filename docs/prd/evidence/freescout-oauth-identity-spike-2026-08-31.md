@@ -195,8 +195,9 @@ provider denial, provider outage and two recovery paths.
 | Scenario | Observed result | Result |
 |---|---|---|
 | Normal forced login | FreeScout redirected to the provider and returned to the intended settings page in approximately 4.2 seconds | Pass |
-| Provider denial | The callback redirected to the bare login route, which immediately restarted OAuth; six consecutive authorization requests ended in `ERR_TOO_MANY_REDIRECTS` | **Fail** |
-| Mutation during denial loop | User count, administrator role, password fingerprint and subject bindings remained unchanged | Pass |
+| Provider denial before mitigation | The callback redirected to the bare login route, which immediately restarted OAuth; six consecutive authorization requests ended in `ERR_TOO_MANY_REDIRECTS` | **Fail** |
+| Provider denial after mitigation | One authorization request returned to `/login?oauth=0` in approximately 1.9 seconds with the local form and `Authentication error: access_denied — Synthetic user denial` visible | Pass |
+| Mutation across denial tests | User count, administrator role, password fingerprint and subject bindings remained unchanged | Pass |
 | Provider outage for a new session | One redirect reached the provider's synthetic `503`; FreeScout did not loop | Pass |
 | Existing authenticated session during outage | The administrator continued to use the mailbox | Pass |
 | Direct break glass | `/login?oauth=0` displayed the local login form while Force OAuth Login was enabled, and the administrator signed in | Pass |
@@ -208,10 +209,22 @@ redirects to the bare login route. The Force OAuth middleware sees that route an
 redirects to the provider again. The middleware skips forcing when the request contains
 `oauth=0`, which makes `/login?oauth=0` a working immediate break-glass URL.
 
-The production decision is to keep Force OAuth Login disabled. Before it can be enabled, the Rondo
-Integration module must redirect failed OAuth callbacks to `/login?oauth=0`, preserve the visible
-error and pass the same denial test without starting another authorization request. Server-side
-recovery remains the second break-glass method.
+A disposable Rondo Integration proof hardened the paid module through
+`middleware.web.custom_handle.response`. At priority `20`, after the paid module's priority `10`
+filter, it changes the response only when all three conditions hold:
+
+1. the request route is `oauthlogin.callback`;
+2. the response is a redirect;
+3. the redirect target path equals FreeScout's login-route path.
+
+That response becomes `/login?oauth=0`. The existing floating error remains in the session and is
+rendered on the local login page. Successful callback redirects are unchanged: the normal forced
+login regression test completed in approximately 1.9 seconds and made one authorization request,
+one token request and one User Info request.
+
+Force OAuth Login is a provisional compatibility pass only with this behavior in the production
+Rondo Integration module. Keep it disabled until that module ships and the same denial test passes
+against its release artifact. Server-side disablement remains the second break-glass method.
 
 The environment was restored with the provider in normal mode, Force OAuth Login and automatic
 creation disabled, the visibility restriction enabled and the local administrator signed in.
@@ -219,6 +232,8 @@ creation disabled, the visibility restriction enabled and the local administrato
 ## Current decision
 
 The paid module remains usable only with the Rondo identity guard, one-to-one subject binding and
-`APP_LIMIT_USER_CUSTOMER_VISIBILITY=true`. Force OAuth Login remains disabled because provider
-denial loops until the browser stops following redirects. Identity binding and managed mailbox
-reconciliation are provisional passes; the complete compatibility spike remains in progress.
+`APP_LIMIT_USER_CUSTOMER_VISIBILITY=true`. Force OAuth Login is compatible only when the Rondo
+Integration module rewrites failed callback redirects to `/login?oauth=0`; the disposable proof
+passes, but production forcing remains disabled until the release artifact repeats that proof.
+Identity binding and managed mailbox reconciliation are provisional passes; the complete
+compatibility spike remains in progress.

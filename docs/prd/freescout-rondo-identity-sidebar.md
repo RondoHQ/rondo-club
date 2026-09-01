@@ -47,9 +47,10 @@ guard and manual grant/revoke behavior.
 12. FreeScout runs with `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true`. Its default `false` value lets a
     non-administrator with zero mailboxes open customer profile and edit routes by ID even though
     the related conversation is denied.
-13. Force OAuth Login remains disabled until the Rondo Integration module redirects failed OAuth
-    callbacks to `/login?oauth=0`, preserves the visible error and passes the provider-denial test
-    without starting another authorization request.
+13. The Rondo Integration module redirects a failed `oauthlogin.callback` response whose target is
+    FreeScout's login route to `/login?oauth=0`. This preserves the visible error and prevents Force
+    OAuth Login from starting another authorization request. Production forcing remains disabled
+    until the released module passes this proof.
 
 ## Why this replaces copied customer context
 
