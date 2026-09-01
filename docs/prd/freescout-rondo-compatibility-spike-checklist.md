@@ -192,9 +192,36 @@ In the isolated environment only, enable automatic user creation and observe:
 
 Return automatic creation to disabled after the tests.
 
+Repeat creation with the custom Rondo Integration module:
+
+- [ ] Confirm automatic creation defaults off and cannot be enabled before the base URL, local
+  mailbox mappings, break-glass administrator and `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true` pass.
+- [ ] With an unknown verified subject and current non-empty mapped access, create one ordinary
+  OIDC-only user with the exact verified email and no usable local password.
+- [ ] Confirm the user, subject binding, managed-user marker, initial mailbox relationships and
+  audit events commit in one transaction before session creation.
+- [ ] Confirm user-creation hooks send no welcome/password email and perform no external side effect
+  before commit.
+- [ ] Force failure at user, binding, managed marker, mailbox pivot and audit writes; every case
+  leaves no partial row, relationship or authenticated session.
+- [ ] Return unavailable, inactive, empty, invalid and unknown-key access responses; each creates
+  nothing and shows a safe error.
+- [ ] Confirm a Rondo administrator is created only as an ordinary FreeScout agent and is never
+  auto-promoted.
+- [ ] Confirm password login, password reset and remember-token creation are blocked for the
+  Rondo-created account.
+- [ ] Repeat and race the callback; every success resolves the same FreeScout user ID and no
+  duplicate email, binding or mailbox relationship is created.
+- [ ] Send a synthetic reply and confirm FreeScout records the created user as its author.
+- [ ] Revoke the last managed mailbox: with no manual mailbox, confirm the account deactivates,
+  sessions end and historical reply attribution remains.
+- [ ] Restore mapped access and confirm the same bound account reactivates.
+- [ ] Add a manual mailbox, revoke managed access and confirm the manual relationship and account
+  status remain unchanged while OIDC-only login rules still apply.
+
 **Blocking failure:** ambiguous or unverified identity can authenticate as an existing agent, a
-subject binding can move through normal login, or a new user gains mailbox/customer access before
-provisioning completes.
+subject binding can move through normal login, creation leaves partial state, or a new user session
+exists before non-empty managed mailbox provisioning completes.
 
 ## 5. Prove the current-agent integration hook
 
@@ -382,11 +409,11 @@ Complete one row for every material behavior.
 | OIDC nonce | Paid add-on sends no nonce and consumes no ID token | Required and bound to the validated ID token | **Fail** | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Reject the paid add-on; custom client must validate nonce |
 | Token client auth | Paid add-on uses server-side `client_secret_post` | Custom client uses `client_secret_basic` with PKCE | **Fail** | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Reject the paid add-on; implement the required method |
 | ID token/UserInfo | Paid add-on consumes UserInfo without an ID token | Validate signed ID token and require matching UserInfo `sub` | **Fail** | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Reject the paid add-on; implement full OIDC validation |
-| Existing-user match | Guard requires a unique verified email for first link; case difference created no duplicate | Unique verified email only | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Keep automatic creation off during pilot |
+| Existing-user match | Guard requires a unique verified email for first link; case difference created no duplicate | Unique verified email only | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Prove this path independently before enabling guarded creation |
 | Rondo email proof | `is_user_approved()` checks only user existence; emailed activation/login/change flows have no durable account-wide OIDC marker | Exact current unique address must have a durable marker from consumed emailed proof | **Fail** | [`is_user_approved()` test](../../tests/Wpunit/WorkspacePermissionsTest.php), [activation service](../../includes/class-activation-service.php) and [profile service](../../includes/class-member-profile-service.php) | Add verification meta and resumable authorization; no historical backfill |
 | Subject binding | Bound subject wins after email change or conflicting email; administrator recovery and concurrency remain untested | Database-enforced one-to-one binding with atomic first link and single-use administrator recovery | Provisional pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Prove migrations, races, rollback, session invalidation and recovery before release |
 | Rondo base URL | | Configured, verified and not hardcoded | | | |
-| Automatic creation | Defaults on in paid module; explicit off works; isolated creation produced an ordinary zero-mailbox user | Disabled for pilot | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Provision with automatic creation disabled |
+| Automatic creation | Paid add-on defaults on and isolated creation produced an ordinary zero-mailbox user before the proof listener ran | Guarded custom creation atomically commits an ordinary OIDC-only user, binding, non-empty mapped access and audit before login | Custom proof required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Default off; enable only after atomic creation, rollback, attribution and lifecycle tests pass |
 | Login event | Laravel `Login` fires for existing and newly created OAuth users before redirect | Current agent available | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Use the login event for binding and provisioning |
 | Managed mailbox access | Targeted pivot attach/detach works; customer routes require the core visibility flag | Manual access preserved | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Never use `sync()`; require `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true` |
 | Force-login recovery | Paid add-on loops without a response filter; its patched `/login?oauth=0` paths work | Custom callback fails once to `/login?rondo_oauth=0`; server setting restores local login | Paid add-on **Fail**; custom retest required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Implement recovery directly in Rondo Integration |
@@ -409,7 +436,8 @@ without a custom patch. Since a custom module is already required for the sideba
 Rondo Integration will own the complete OIDC relying-party flow instead of wrapping these gaps.
 
 This is not the final compatibility-spike sign-off. The custom OIDC client, administrator binding
-recovery, sidebar isolation, timeout proof and the remaining rows must pass before overall `GO`.
+recovery, guarded creation, sidebar isolation, timeout proof and the remaining rows must pass
+before overall `GO`.
 
 ### GO
 
@@ -443,6 +471,7 @@ architecture assumption must change before repeating the spike.
 - [x] Managed mailbox model/event notes.
 - [ ] Subject-binding migration, concurrency and administrator-recovery proof.
 - [ ] Durable Rondo email-verification and authorization-resume proof.
+- [ ] Guarded automatic-creation, reply-attribution and deactivation/reactivation proof.
 - [ ] Sidebar authorization and isolation proof.
 - [ ] Appearance and customer-sidebar width compatibility proof.
 - [ ] Timeout/failure results at expected pilot concurrency.

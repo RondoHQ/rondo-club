@@ -69,6 +69,10 @@ guard and manual grant/revoke behavior.
     `email_verified: true` only for the exact current external address recorded by a completed
     mailbox-possession flow; existing users without durable evidence verify once before FreeScout
     authorization can continue.
+19. Rondo Integration supports guarded just-in-time creation of ordinary FreeScout agent accounts.
+    A new account, subject binding, OIDC-only marker, initial managed mailbox access and audit must
+    commit together before a session exists. The feature defaults off until its local mailbox
+    mapping and production invariants have been verified.
 
 ## Why this replaces copied customer context
 
@@ -100,6 +104,7 @@ customer-matching dependency have been reviewed separately.
 - A slow or unavailable endpoint cannot exhaust FreeScout PHP workers.
 - A sidebar response cannot execute arbitrary code in the FreeScout page.
 - Existing manually managed FreeScout access remains untouched.
+- Every reply remains attributable to a durable FreeScout user account and its bound Rondo subject.
 - Administrators can align FreeScout's blue accent surfaces with the club identity without editing
   FreeScout core files.
 - The desktop customer sidebar can be wider while preserving usable conversation space and
@@ -111,7 +116,8 @@ customer-matching dependency have been reviewed separately.
 - Mapping all Rondo roles to FreeScout in the first release.
 - Editing Rondo person fields directly inside the sidebar.
 - Showing the complete Rondo person record.
-- Automatically deactivating every FreeScout account that loses one managed mailbox.
+- Automatically deactivating a manually created FreeScout account merely because it loses one
+  managed mailbox.
 - Replacing the FreeScout conversation activity sync in the first release.
 - Making Rondo a public, general-purpose identity provider for third parties.
 - Supporting implicit OAuth flows or password grants.
@@ -190,11 +196,13 @@ References:
    being shared.
 6. Rondo returns a short-lived authorization code to the exact registered FreeScout redirect URI.
 7. FreeScout exchanges the code and reads the dedicated Rondo identity resource.
-8. FreeScout matches an existing agent by verified email. Automatic creation remains off during
-   the pilot.
-9. The Rondo Integration login listener asks Rondo for the agent's desired managed mailbox keys.
-10. The agent enters FreeScout with only the mailboxes permitted by Rondo plus any unrelated manual
-    access already present.
+8. FreeScout resolves an existing subject binding or one unique, unbound agent by verified email.
+9. When neither exists and guarded creation is enabled, the module asks Rondo for the subject's
+   current managed mailbox keys before creating anything.
+10. The module atomically creates an ordinary OIDC-only FreeScout agent, subject binding, initial
+    managed mailbox assignments and audit record.
+11. The agent enters FreeScout only after that commit; every later reply is attributed to the same
+    FreeScout user ID. Existing users retain unrelated manual access.
 
 ### Later logins
 
@@ -281,6 +289,8 @@ The UserInfo response is limited to:
   "email": "agent@example.nl",
   "email_verified": true,
   "name": "Agent Name",
+  "given_name": "Agent",
+  "family_name": "Name",
   "picture": "https://rondo.example.nl/path/to/avatar"
 }
 ```
@@ -377,6 +387,7 @@ error and never issues an ID token or UserInfo response with `email_verified: tr
 One custom FreeScout module owns all Rondo-specific behavior on the FreeScout side:
 
 - OIDC login initiation, callback validation, local session creation and recovery;
+- guarded creation and lifecycle of ordinary OIDC-only FreeScout agents;
 - conversation-sidebar placement and loading;
 - current-agent and conversation authorization;
 - signed server-to-server sidebar requests;
@@ -455,15 +466,18 @@ The callback:
 7. requires the UserInfo `sub` to exactly equal the validated ID-token `sub`;
 8. requires boolean `email_verified: true`, an acceptable non-empty email and current Rondo
    eligibility;
-9. resolves and commits the one-to-one subject binding before creating the FreeScout session;
-10. reconciles managed mailboxes before redirecting the browser to its intended FreeScout page.
+9. resolves an existing binding or unique unbound FreeScout user;
+10. for every first link, obtains and validates the subject's current desired managed mailboxes;
+11. atomically binds the existing user or safely creates and provisions a new ordinary agent;
+12. creates the FreeScout session only after commit and redirects to the intended page.
 
 Every terminal success or failure clears the transaction's state, nonce, verifier, code and token
 material from the session. Tokens, codes and claims are never written to normal logs.
 
 ##### Binding persistence and concurrency
 
-The FreeScout module owns three migration-managed tables; Rondo itself gains no database table:
+Subject binding uses three migration-managed FreeScout tables; Rondo itself gains no database
+table:
 
 - `rondo_oidc_bindings` stores current and retired identities: nullable active FreeScout user ID,
   last FreeScout user ID, normalized issuer, case-sensitive subject, a binary SHA-256 identity
@@ -484,11 +498,12 @@ the identity is not silently recycled.
 
 For the first login only, an unbound subject may select one existing, active, unbound FreeScout user
 by its unique verified email. After all remote OIDC and UserInfo validation has completed, the
-module starts a local database transaction, locks the identity, candidate user and candidate
-binding in a deterministic order, rechecks every condition, inserts the binding and its audit event,
-and commits. A uniqueness conflict or audit failure rolls back and fails closed. No HTTP request or
-FreeScout session creation occurs inside this transaction. The authenticated FreeScout session is
-created only after the binding commit succeeds.
+module starts a local database transaction, locks the identity, candidate user, candidate binding
+and relevant mapped mailboxes in a deterministic order, rechecks every condition, inserts the
+binding, applies initial managed mailbox state, writes its audit event and commits. A uniqueness,
+mailbox or audit failure rolls back and fails closed. No HTTP request or FreeScout session creation
+occurs inside this transaction. The authenticated FreeScout session is created only after the
+binding commit succeeds.
 
 Later logins resolve the active bound user by issuer and subject, not by email. A changed email or
 another subject presenting the old email can never silently move the binding. Disabled or
@@ -496,10 +511,45 @@ recovery-pending bindings fail before session creation. Concurrent callbacks may
 the same final subject/user pair; all competing pairings are denied and audited without a partial
 binding.
 
-Automatic user creation remains disabled for the pilot. If it is enabled later, the new user must
-be bound to the initiating subject in the same successful login flow before mailbox provisioning
-runs. Any unlink or rebind requires an explicit, audited administrator action; normal OIDC login
-never replaces an existing binding.
+Any unlink or rebind requires an explicit, audited administrator action; normal OIDC login never
+replaces an existing binding.
+
+##### Guarded FreeScout account creation
+
+Automatic creation is implemented by Rondo Integration, not by the rejected paid add-on. It is
+disabled by default and cannot be enabled until `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true`, the
+Rondo connection, at least one capability-to-mailbox mapping and the local break-glass
+administrator have all been verified. An environment setting may force it off; the UI cannot
+override that restriction.
+
+Creation is considered only after full OIDC validation and durable email verification, when no
+subject binding and no unique existing FreeScout email match exists. Before starting a database
+transaction, the module calls the Rondo access service with the validated subject. Creation fails
+without mutation when the response is unavailable, inactive, empty, contains an unknown mailbox
+key or maps to no enabled local mailbox. A Rondo administrator claim never creates or promotes a
+FreeScout administrator; new users always receive FreeScout's ordinary agent role.
+
+The module validates the standard `name`, `given_name` and `family_name` claims against the current
+FreeScout user schema. It creates the user with the exact verified email, an unrecoverable random
+local password and no welcome or password email. A module-owned `rondo_managed_users` row stores a
+unique FreeScout user ID, OIDC-only status, creation time, deactivation time and conversion audit
+reference. Password login, password reset and remember-token creation are blocked for that account
+unless a FreeScout administrator later converts it to a local account through a separate locally
+re-authenticated, audited action.
+
+One local database transaction creates the FreeScout user, active subject binding, OIDC-only
+marker, initial managed mailbox relationships and audit events. The transaction locks the relevant
+email, identity and mailbox mapping state and relies on the native unique email plus module binding
+constraints. Model side effects that send email or perform external work are suppressed or queued
+after commit. Any validation, insert, pivot or audit failure rolls back the whole unit and creates
+no session. A concurrent identical callback may reuse only the exact committed user/binding;
+competing identity or email pairings fail closed.
+
+The module never deletes a Rondo-created FreeScout user because conversation and reply attribution
+must remain intact. If reconciliation removes the last managed mailbox and the user has no manual
+mailbox, the module deactivates the account and invalidates its sessions. Regaining mapped access
+reactivates that same bound user. A manual mailbox prevents automatic deactivation but does not
+silently enable local-password login.
 
 ##### Administrator binding recovery
 
@@ -788,8 +838,8 @@ Route appended to the configured Rondo base URL:
 POST /wp-json/rondo/v1/integrations/freescout/access
 ```
 
-The Rondo Integration module sends a signed FreeScout user identity. Rondo resolves the user and
-returns:
+The Rondo Integration module sends the validated Rondo subject plus the FreeScout user identity
+when one already exists. Rondo resolves the subject and returns:
 
 ```json
 {
@@ -913,32 +963,34 @@ FreeScout IDs.
 
 ### Pilot
 
-- Automatic FreeScout user creation is disabled.
 - Existing FreeScout agents are matched to Rondo by a unique verified email.
+- Guarded creation starts disabled, is proven with one synthetic user, and is then enabled for a
+  bounded new-agent pilot only after all creation gates pass.
 - Rondo OIDC login is optional until every pilot agent succeeds.
 - One documented local FreeScout administrator remains available as break glass.
 - Forced Rondo login remains disabled until failed callbacks and recovery through both
   `/login?rondo_oauth=0` and `RONDO_FORCE_OAUTH_LOGIN` have been rehearsed against the released
   custom module.
 
-### Later automatic creation
+### Guarded automatic creation
 
-Automatic creation may be enabled only when:
+Production automatic creation may be enabled only when:
 
 - Rondo denies authorization for users without a mapped FreeScout capability;
-- unique-email and synthetic-email guards are proven;
-- the Rondo Integration module assigns zero or more managed mailboxes immediately after creation;
-- a newly created user with no mailbox cannot see customer data;
-- duplicate and renamed-email behavior is tested.
+- unique-email, durable-verification and synthetic/shared-email guards are proven;
+- every returned mailbox key maps to a verified enabled local mailbox;
+- account, binding, OIDC-only state, one or more managed mailboxes and audit commit atomically;
+- access-service failure or empty desired access creates nothing;
+- local password login/reset is blocked for module-created users;
+- duplicate, concurrent, revocation, deactivation and reactivation behavior is tested.
 
 ### Revocation
 
 Removing `ledenadministratie` causes the Rondo Integration module to remove the managed mailbox. It
-does not automatically terminate an existing FreeScout session or delete the FreeScout account.
-
-This is acceptable for version one because the user loses the mailbox and Rondo sidebar data. A
-future account-deactivation policy may be considered only after proving that the user has no manual
-mailboxes and no other managed capability.
+never deletes the FreeScout account or its historical reply attribution. When a Rondo-created user
+then has no managed or manual mailbox, the module deactivates the account and invalidates its
+sessions. Existing manually created users keep their existing account-status and local-login policy;
+the integration changes only managed mailbox relationships.
 
 ## Migration from the current FreeScout sync
 
@@ -994,6 +1046,10 @@ mappings remain authoritative.
   transaction; no remote call or session creation occurs inside it.
 - Recovery requires a locally re-authenticated administrator, a reason and a single-use 10-minute
   Rondo flow; subjects are never typed or reassigned by email.
+- Just-in-time creation requires current non-empty mapped access and atomically commits the ordinary
+  user, OIDC-only state, binding, initial mailboxes and audit before session creation.
+- Rondo-created accounts cannot use password login/reset and are never promoted to administrator
+  automatically.
 - Rondo and FreeScout base URLs are explicit environment configuration with no compiled hostname.
 - Integration URLs reject credentials, query strings and fragments; production requires HTTPS.
 - Outbound integration requests stay within the configured origin and path prefix and never follow
@@ -1143,6 +1199,8 @@ login, complete token validation and a confirmed current-agent hook.
 - Add the complete OIDC relying-party flow, local session creation and one-to-one subject binding.
 - Add module migrations, row-locking transactions, immutable binding audit and the administrator
   disable/replace recovery UI.
+- Add guarded ordinary-user creation, the OIDC-only account boundary and atomic initial mailbox
+  provisioning.
 - Add authentication and conversation authorization.
 - Add current agent to the signed payload.
 - Replace body secret with versioned HMAC headers.
@@ -1217,6 +1275,16 @@ login, complete token validation and a confirmed current-agent hook.
   10-minute recovery flow through Rondo.
 - A successful replacement retires the old identity, binds the new identity and consumes the
   recovery atomically; failure or expiry leaves the target disabled.
+- An unknown verified subject with current non-empty mapped access creates one ordinary OIDC-only
+  FreeScout user and at least one managed mailbox before the first session exists.
+- Empty, unavailable, invalid or unmapped desired access creates no user, binding or session.
+- A creation failure at every transaction step leaves no partial user, binding, mailbox or audit.
+- A repeated or concurrent login resolves the same FreeScout user and never creates a duplicate.
+- Password login/reset is denied for a Rondo-created user; administrators are never auto-created or
+  auto-promoted.
+- Replies sent by the created agent retain that FreeScout user as author after later deactivation.
+- Losing the last managed mailbox deactivates a Rondo-created user with no manual mailbox and
+  invalidates sessions; restored access reactivates the same account.
 
 ### Connection configuration
 
@@ -1312,6 +1380,10 @@ The milestone is complete only when:
 - simultaneous competing callbacks cannot create a conflicting or partial subject binding;
 - an administrator can disable or replace a binding through the audited recovery flow, and the
   replaced subject can no longer authenticate;
+- an eligible new agent receives exactly one ordinary OIDC-only FreeScout account and current
+  managed mailbox before login, while any failed access or transaction creates nothing;
+- replies remain attributed to that durable FreeScout user after access is revoked or the account
+  is deactivated;
 - the deployed module contains no hardcoded Rondo hostname and uses the verified configured base
   URL for every Rondo request;
 - FreeScout identifies the current agent and signs the sidebar request;
@@ -1345,6 +1417,7 @@ The milestone is complete only when:
 ## Rollback
 
 - Disable the Rondo OIDC client.
+- Disable further automatic creation without deleting or unlinking accounts already created.
 - Open `/login?rondo_oauth=0` for immediate local break-glass login.
 - If browser recovery is unavailable, clear `RONDO_FORCE_OAUTH_LOGIN` in FreeScout's
   server-side configuration and restart FreeScout.
@@ -1360,15 +1433,14 @@ The milestone is complete only when:
 ## Open decisions before implementation
 
 1. Exact production FreeScout mailbox ID and stable key for Ledenadministratie.
-2. Whether automatic FreeScout user creation is ever enabled after the pilot.
-3. The acceptable FreeScout session lifetime after Rondo account revocation.
-4. The approved final Ledenadministratie sidebar field allowlist.
-5. Whether the FreeScout conversation activity sync remains a long-term feature.
-6. How its person matching works after customer enrichment and FreeScout ID reverse sync are
+2. The acceptable FreeScout session lifetime after Rondo account revocation.
+3. The approved final Ledenadministratie sidebar field allowlist.
+4. Whether the FreeScout conversation activity sync remains a long-term feature.
+5. How its person matching works after customer enrichment and FreeScout ID reverse sync are
    retired.
-7. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
-8. Audit retention period and operational owners for failed provisioning events.
-9. Final module repository, protected release workflow and update-asset URLs.
-10. Initial production values for interface accent and interface accent surface.
-11. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
+6. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
+7. Audit retention period and operational owners for failed provisioning events.
+8. Final module repository, protected release workflow and update-asset URLs.
+9. Initial production values for interface accent and interface accent surface.
+10. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
     200%-zoom testing.
