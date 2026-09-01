@@ -22,6 +22,11 @@ export function toDateInput(value) {
   return String(value).slice(0, 10);
 }
 
+export function toDateTimeInput(value) {
+  if (!value) return '';
+  return String(value).slice(0, 16).replace(' ', 'T');
+}
+
 export function tournamentStatusLabel(status) {
   return {
     draft: 'Concept',

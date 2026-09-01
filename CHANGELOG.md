@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Toernooicoördinatoren kunnen open en gesloten toernooien wijzigen, inclusief datum en tijd, met versiecontrole, prijsvergrendeling na de eerste inschrijving en een optionele wijzigingsmail naar kaderleden en ingeschreven contactpersonen.
 - Rondo kan als beveiligde OpenID Connect-provider voor de eigen FreeScout-integratie werken, met PKCE, ondertekende ID-tokens, een blijvend anoniem subject, exacte e-mailverificatie en beheerbare client- en sleutelrotatie.
 - Toernooicoördinatoren krijgen operationele totalen per leeftijdslaag, externe voortgang, CSV- en PDF-export, planner-notities, activiteitengeschiedenis en gecontroleerde programmaverzending naar uitsluitend ingeschreven teams.
 - Toernooi-inschrijvingen mailen de betaallink aan het toegewezen kader, versturen configureerbare herinneringen standaard zeven en twee dagen voor de betaaldeadline en bieden de coördinator een handmatige herinneringsactie.

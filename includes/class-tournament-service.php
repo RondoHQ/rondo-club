@@ -22,9 +22,11 @@ final class TournamentService {
 	public const ENTRY_POST_TYPE      = 'rondo_tourn_entry';
 
 	private TournamentPaymentService $payments;
+	private TournamentChangeNotificationService $change_notifications;
 
-	public function __construct( ?TournamentPaymentService $payments = null ) {
-		$this->payments = $payments ?? new TournamentPaymentService();
+	public function __construct( ?TournamentPaymentService $payments = null, ?TournamentChangeNotificationService $change_notifications = null ) {
+		$this->payments             = $payments ?? new TournamentPaymentService();
+		$this->change_notifications = $change_notifications ?? new TournamentChangeNotificationService();
 	}
 
 	/** Return every tournament for a manager. */
@@ -44,15 +46,38 @@ final class TournamentService {
 		return array_map( fn( int $id ): array => $this->format_tournament( $id, true ), array_map( 'intval', $ids ) );
 	}
 
-	/** Create or update one draft tournament. */
+	/** Create a tournament or update its allowed operational fields. */
 	public function save_tournament( array $payload, int $actor_user_id, int $tournament_id = 0 ) {
-		$is_new = $tournament_id <= 0;
+		$is_new             = $tournament_id <= 0;
+		$current_tournament = [];
+		$lifecycle_status   = 'draft';
+		$current_version    = 1;
 		if ( $tournament_id > 0 && get_post_type( $tournament_id ) !== self::TOURNAMENT_POST_TYPE ) {
 			return new \WP_Error( 'rondo_tournament_not_found', __( 'Toernooi niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
 		}
-
-		if ( $tournament_id > 0 && Fields::get_for_post( $tournament_id, 'lifecycle_status' ) !== 'draft' ) {
-			return new \WP_Error( 'rondo_tournament_not_draft', __( 'Een gepubliceerd toernooi kan in deze fase niet meer worden gewijzigd.', 'rondo' ), [ 'status' => 409 ] );
+		if ( ! $is_new ) {
+			$current_tournament = $this->format_tournament( $tournament_id, false );
+			$lifecycle_status   = (string) $current_tournament['lifecycle_status'];
+			$current_version    = max( 1, (int) $current_tournament['version'] );
+			if ( $lifecycle_status === 'archived' ) {
+				return new \WP_Error( 'rondo_tournament_archived', __( 'Een gearchiveerd toernooi is alleen-lezen.', 'rondo' ), [ 'status' => 409 ] );
+			}
+			if ( $lifecycle_status !== 'draft' ) {
+				if ( array_key_exists( 'target_team_ids', $payload ) || array_key_exists( 'assignments', $payload ) ) {
+					return new \WP_Error( 'rondo_tournament_assignments_locked', __( 'Teams en toewijzingen beheer je na publicatie via de afzonderlijke toewijzingsactie.', 'rondo' ), [ 'status' => 409 ] );
+				}
+				$expected_version = absint( $payload['version'] ?? 0 );
+				if ( $expected_version !== $current_version ) {
+					return new \WP_Error(
+						'rondo_tournament_conflict',
+						__( 'Een andere planner heeft dit toernooi intussen gewijzigd. Laad de actuele versie opnieuw.', 'rondo' ),
+						[
+							'status'  => 409,
+							'current' => $this->format_tournament( $tournament_id, true ),
+						]
+					);
+				}
+			}
 		}
 
 		$name = sanitize_text_field( (string) ( $payload['name'] ?? '' ) );
@@ -89,42 +114,111 @@ final class TournamentService {
 			return $schedule;
 		}
 
-		$postarr = [
-			'post_type'   => self::TOURNAMENT_POST_TYPE,
-			'post_status' => 'draft',
-			'post_title'  => $name,
-			'post_author' => $actor_user_id,
+		$next    = [
+			'name'                      => $name,
+			'description'               => wp_kses_post( (string) ( $payload['description'] ?? '' ) ),
+			'external_deadline'         => $external_deadline->format( 'Y-m-d H:i:s' ),
+			'internal_deadline'         => $internal_deadline->format( 'Y-m-d H:i:s' ),
+			'location'                  => sanitize_text_field( (string) ( $payload['location'] ?? '' ) ),
+			'organizer'                 => sanitize_text_field( (string) ( $payload['organizer'] ?? '' ) ),
+			'payment_deadline'          => $payment_deadline->format( 'Y-m-d H:i:s' ),
+			'payment_reminder_days'     => $payment_reminder_days,
+			'payment_reminder_day_rows' => array_map( static fn( int $days ): array => [ 'days_before' => $days ], $payment_reminder_days ),
+			'pricing_rules'             => $pricing_rules,
+			'schedule'                  => $schedule,
 		];
-		if ( $tournament_id > 0 ) {
-			$postarr['ID'] = $tournament_id;
+		$changes = $is_new ? [] : $this->tournament_changes( $current_tournament, $next );
+		if ( ! $is_new && empty( $changes ) ) {
+			return $this->format_tournament( $tournament_id, true );
 		}
 
-		$saved_id = wp_insert_post( wp_slash( $postarr ), true );
+		$pricing_changed = isset( $changes['pricing_rules'] );
+
+		$save = function () use ( $actor_user_id, $current_version, $is_new, $lifecycle_status, $next, $pricing_changed, $tournament_id ) {
+			if ( $lifecycle_status !== 'draft' ) {
+				$locked_status  = (string) Fields::get_for_post( $tournament_id, 'lifecycle_status' );
+				$locked_version = max( 1, (int) Fields::get_for_post( $tournament_id, 'version' ) );
+				if ( $locked_status === 'archived' ) {
+					return new \WP_Error( 'rondo_tournament_archived', __( 'Een gearchiveerd toernooi is alleen-lezen.', 'rondo' ), [ 'status' => 409 ] );
+				}
+				if ( $locked_version !== $current_version ) {
+					return new \WP_Error(
+						'rondo_tournament_conflict',
+						__( 'Een andere planner heeft dit toernooi intussen gewijzigd. Laad de actuele versie opnieuw.', 'rondo' ),
+						[
+							'status'  => 409,
+							'current' => $this->format_tournament( $tournament_id, true ),
+						]
+					);
+				}
+			}
+			if ( $lifecycle_status !== 'draft' && $pricing_changed && $this->has_submitted_entries( $tournament_id ) ) {
+				return new \WP_Error( 'rondo_tournament_pricing_locked', __( 'Tarieven en spelvormen kunnen niet meer worden gewijzigd omdat er al een definitieve inschrijving is.', 'rondo' ), [ 'status' => 409 ] );
+			}
+			$postarr = [
+				'post_type'   => self::TOURNAMENT_POST_TYPE,
+				'post_status' => $lifecycle_status === 'draft' ? 'draft' : 'publish',
+				'post_title'  => $next['name'],
+				'post_author' => $actor_user_id,
+			];
+			if ( $tournament_id > 0 ) {
+				$postarr['ID'] = $tournament_id;
+			}
+
+			$saved_id = wp_insert_post( wp_slash( $postarr ), true );
+			if ( is_wp_error( $saved_id ) ) {
+				return $saved_id;
+			}
+
+			Fields::update_many_for_post(
+				(int) $saved_id,
+				[
+					'created_by_user_id'    => $tournament_id > 0
+						? (int) Fields::get_for_post( $tournament_id, 'created_by_user_id' )
+						: $actor_user_id,
+					'description'           => $next['description'],
+					'external_deadline'     => $next['external_deadline'],
+					'internal_deadline'     => $next['internal_deadline'],
+					'lifecycle_status'      => $lifecycle_status,
+					'location'              => $next['location'],
+					'organizer'             => $next['organizer'],
+					'payment_deadline'      => $next['payment_deadline'],
+					'payment_reminder_days' => $next['payment_reminder_day_rows'],
+					'pricing_rules'         => $next['pricing_rules'],
+					'schedule'              => $next['schedule'],
+					'version'               => $is_new ? 1 : $current_version + 1,
+				]
+			);
+			return (int) $saved_id;
+		};
+
+		$saved_id = $lifecycle_status !== 'draft'
+			? $this->with_tournament_lock( $tournament_id, $save )
+			: $save();
 		if ( is_wp_error( $saved_id ) ) {
 			return $saved_id;
 		}
 
-		Fields::update_many_for_post(
-			(int) $saved_id,
-			[
-				'created_by_user_id'    => $tournament_id > 0
-					? (int) Fields::get_for_post( $tournament_id, 'created_by_user_id' )
-					: $actor_user_id,
-				'description'           => wp_kses_post( (string) ( $payload['description'] ?? '' ) ),
-				'external_deadline'     => $external_deadline->format( 'Y-m-d H:i:s' ),
-				'internal_deadline'     => $internal_deadline->format( 'Y-m-d H:i:s' ),
-				'lifecycle_status'      => 'draft',
-				'location'              => sanitize_text_field( (string) ( $payload['location'] ?? '' ) ),
-				'organizer'             => sanitize_text_field( (string) ( $payload['organizer'] ?? '' ) ),
-				'payment_deadline'      => $payment_deadline->format( 'Y-m-d H:i:s' ),
-				'payment_reminder_days' => array_map( static fn( int $days ): array => [ 'days_before' => $days ], $payment_reminder_days ),
-				'pricing_rules'         => $pricing_rules,
-				'schedule'              => $schedule,
+		$activity_id = TournamentActivityLog::record(
+			$saved_id,
+			$is_new ? 'tournament_created' : ( $lifecycle_status === 'draft' ? 'tournament_updated' : 'tournament_published_updated' ),
+			$actor_user_id,
+			empty( $changes ) ? [] : [
+				'changed_fields' => array_keys( $changes ),
+				'changes'        => $changes,
 			]
 		);
-		TournamentActivityLog::record( (int) $saved_id, $is_new ? 'tournament_created' : 'tournament_updated', $actor_user_id );
 
-		return $this->format_tournament( (int) $saved_id, true );
+		$result = $this->format_tournament( $saved_id, true );
+		if ( $lifecycle_status !== 'draft' && $activity_id > 0 ) {
+			$result['change'] = [
+				'activity_id'    => $activity_id,
+				'changed_fields' => array_keys( $changes ),
+				'changes'        => $changes,
+				'preview'        => $this->change_notifications->recipients( $saved_id ),
+			];
+		}
+		return $result;
 	}
 
 	/** Format one tournament for the REST API. */
@@ -159,6 +253,7 @@ final class TournamentService {
 			'program_url'                => (string) ( $fields['program_url'] ?? '' ),
 			'program_message'            => (string) ( $fields['program_message'] ?? '' ),
 			'program_sent_at'            => (string) ( $fields['program_sent_at'] ?? '' ),
+			'version'                    => max( 1, (int) ( $fields['version'] ?? 1 ) ),
 			'can_manage'                 => TournamentAccess::can_manage(),
 		];
 
@@ -167,6 +262,7 @@ final class TournamentService {
 			$totals                          = $this->totals( $entries );
 			$result['entry_count']           = $totals['overall']['selected_team_count'];
 			$result['submitted_entry_count'] = $totals['overall']['submitted_entry_count'];
+			$result['can_edit_pricing']      = $totals['overall']['submitted_entry_count'] === 0;
 			$result['registered_team_count'] = $totals['overall']['registered_team_count'];
 			$result['player_count']          = $totals['overall']['player_count'];
 			$result['receivable_amount']     = $totals['overall']['receivable_amount'];
@@ -387,9 +483,25 @@ final class TournamentService {
 			return new \WP_Error( 'rondo_tournament_deadline_invalid', __( 'Kies een toekomstige interne deadline vóór de deadline van de organisatie.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
-		$before = $tournament['internal_deadline'];
-		$after  = $deadline->format( 'Y-m-d H:i:s' );
-		Fields::update_for_post( $tournament_id, 'internal_deadline', $after );
+		$before  = $tournament['internal_deadline'];
+		$after   = $deadline->format( 'Y-m-d H:i:s' );
+		$updated = $this->with_tournament_lock(
+			$tournament_id,
+			static function () use ( $after, $tournament_id ) {
+				$current_version = max( 1, (int) Fields::get_for_post( $tournament_id, 'version' ) );
+				Fields::update_many_for_post(
+					$tournament_id,
+					[
+						'internal_deadline' => $after,
+						'version'           => $current_version + 1,
+					]
+				);
+				return true;
+			}
+		);
+		if ( is_wp_error( $updated ) ) {
+			return $updated;
+		}
 		TournamentActivityLog::record(
 			$tournament_id,
 			'deadline_changed',
@@ -706,33 +818,66 @@ final class TournamentService {
 			return new \WP_Error( 'rondo_tournament_contact_required', __( 'Vul één volledige contactpersoon voor deze inschrijving in.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
-		$pricing = $this->pricing_for_age( $entry['tournament']['pricing_rules'], (int) $entry['age_number'] );
-		if ( $pricing === null ) {
-			return new \WP_Error( 'rondo_tournament_price_missing', __( 'Voor deze leeftijdslaag is geen tarief ingesteld.', 'rondo' ), [ 'status' => 409 ] );
-		}
-
 		$team_count   = count( $teams );
 		$player_count = array_sum( array_map( static fn( array $team ): int => (int) $team['player_count'], $teams ) );
-		$price        = (float) $pricing['amount'];
-		Fields::update_many_for_post(
-			$entry_id,
-			[
-				'contact_email'          => $contact_email,
-				'contact_mobile'         => $contact_mobile,
-				'contact_name'           => $contact_name,
-				'draft_team_entries'     => $teams,
-				'player_count'           => $player_count,
-				'payment_state'          => $price * $team_count > 0 ? 'creating' : 'not_applicable',
-				'price_per_team'         => $price,
-				'registered_team_count'  => $team_count,
-				'registration_status'    => 'submitted',
-				'submitted_at'           => current_datetime()->format( 'Y-m-d H:i:s' ),
-				'submitted_by_user_id'   => $actor_user_id,
-				'submitted_team_entries' => $teams,
-				'total_amount'           => $price * $team_count,
-				'version'                => $entry['version'] + 1,
-			]
+		$submission   = $this->with_tournament_lock(
+			(int) $entry['tournament_id'],
+			function () use ( $actor_user_id, $contact_email, $contact_mobile, $contact_name, $entry_id, $expected_version, $player_count, $team_count, $teams ) {
+				$locked_entry = $this->format_entry( $entry_id );
+				if ( empty( $locked_entry ) ) {
+					return new \WP_Error( 'rondo_tournament_entry_not_found', __( 'Inschrijfopdracht niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+				}
+				if ( $locked_entry['registration_status'] === 'submitted' ) {
+					return [ 'already_submitted' => true ];
+				}
+				if ( $expected_version !== (int) $locked_entry['version'] ) {
+					return new \WP_Error(
+						'rondo_tournament_entry_conflict',
+						__( 'Een ander kaderlid heeft deze inschrijving intussen gewijzigd. Laad de actuele versie opnieuw.', 'rondo' ),
+						[
+							'status'  => 409,
+							'current' => $locked_entry,
+						]
+					);
+				}
+				$pricing = $this->pricing_for_age( $locked_entry['tournament']['pricing_rules'], (int) $locked_entry['age_number'] );
+				if ( $pricing === null ) {
+					return new \WP_Error( 'rondo_tournament_price_missing', __( 'Voor deze leeftijdslaag is geen tarief ingesteld.', 'rondo' ), [ 'status' => 409 ] );
+				}
+				$price = (float) $pricing['amount'];
+				Fields::update_many_for_post(
+					$entry_id,
+					[
+						'contact_email'          => $contact_email,
+						'contact_mobile'         => $contact_mobile,
+						'contact_name'           => $contact_name,
+						'draft_team_entries'     => $teams,
+						'player_count'           => $player_count,
+						'payment_state'          => $price * $team_count > 0 ? 'creating' : 'not_applicable',
+						'price_per_team'         => $price,
+						'registered_team_count'  => $team_count,
+						'registration_status'    => 'submitted',
+						'submitted_at'           => current_datetime()->format( 'Y-m-d H:i:s' ),
+						'submitted_by_user_id'   => $actor_user_id,
+						'submitted_team_entries' => $teams,
+						'total_amount'           => $price * $team_count,
+						'version'                => $locked_entry['version'] + 1,
+					]
+				);
+				return [
+					'already_submitted' => false,
+					'price'             => $price,
+				];
+			}
 		);
+		if ( is_wp_error( $submission ) ) {
+			return $submission;
+		}
+		if ( $submission['already_submitted'] ) {
+			$this->payments->ensure_payment( $entry_id, $actor_user_id );
+			return $this->format_entry( $entry_id );
+		}
+		$price = (float) $submission['price'];
 		TournamentActivityLog::record(
 			$entry_id,
 			'entry_submitted',
@@ -988,6 +1133,94 @@ final class TournamentService {
 			];
 		}
 		return $results;
+	}
+
+	/** Return participant-visible changes with sanitized before/after values. */
+	private function tournament_changes( array $current, array $next ): array {
+		$current_pricing  = $this->sanitize_pricing_rules( $current['pricing_rules'] ?? [] );
+		$current_schedule = $this->sanitize_schedule( $current['schedule'] ?? [] );
+		$before           = [
+			'name'                  => (string) ( $current['name'] ?? '' ),
+			'organizer'             => (string) ( $current['organizer'] ?? '' ),
+			'location'              => (string) ( $current['location'] ?? '' ),
+			'description'           => (string) ( $current['description'] ?? '' ),
+			'internal_deadline'     => (string) ( $current['internal_deadline'] ?? '' ),
+			'payment_deadline'      => (string) ( $current['payment_deadline'] ?? '' ),
+			'external_deadline'     => (string) ( $current['external_deadline'] ?? '' ),
+			'payment_reminder_days' => $this->format_payment_reminder_days( $current['payment_reminder_days'] ?? [] ),
+			'pricing_rules'         => is_wp_error( $current_pricing ) ? array_values( $current['pricing_rules'] ?? [] ) : $current_pricing,
+			'schedule'              => is_wp_error( $current_schedule ) ? array_values( $current['schedule'] ?? [] ) : $current_schedule,
+		];
+		$after            = [
+			'name'                  => $next['name'],
+			'organizer'             => $next['organizer'],
+			'location'              => $next['location'],
+			'description'           => $next['description'],
+			'internal_deadline'     => $next['internal_deadline'],
+			'payment_deadline'      => $next['payment_deadline'],
+			'external_deadline'     => $next['external_deadline'],
+			'payment_reminder_days' => $next['payment_reminder_days'],
+			'pricing_rules'         => $next['pricing_rules'],
+			'schedule'              => $next['schedule'],
+		];
+
+		$changes = [];
+		foreach ( $after as $field => $value ) {
+			if ( wp_json_encode( $before[ $field ] ) !== wp_json_encode( $value ) ) {
+				$changes[ $field ] = [
+					'before' => $before[ $field ],
+					'after'  => $value,
+				];
+			}
+		}
+		return $changes;
+	}
+
+	/** Whether at least one team has a definitive registration. */
+	private function has_submitted_entries( int $tournament_id ): bool {
+		$ids = get_posts(
+			[
+				'post_type'        => self::ENTRY_POST_TYPE,
+				'post_status'      => 'publish',
+				'posts_per_page'   => 1,
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+				'meta_query'       => [
+					'relation' => 'AND',
+					[
+						'key'   => 'tournament_id',
+						'value' => $tournament_id,
+					],
+					[
+						'key'   => 'registration_status',
+						'value' => 'submitted',
+					],
+				],
+			]
+		);
+		return ! empty( $ids );
+	}
+
+	/** Serialize price mutation and registration submission for one tournament. */
+	private function with_tournament_lock( int $tournament_id, callable $callback ) {
+		$key      = 'rondo_tournament_write_lock_' . $tournament_id;
+		$acquired = add_option( $key, time(), '', false );
+		if ( ! $acquired ) {
+			$locked_at = (int) get_option( $key, 0 );
+			if ( $locked_at > 0 && $locked_at < time() - 30 ) {
+				delete_option( $key );
+				$acquired = add_option( $key, time(), '', false );
+			}
+		}
+		if ( ! $acquired ) {
+			return new \WP_Error( 'rondo_tournament_write_locked', __( 'Dit toernooi wordt nu door iemand anders bijgewerkt. Probeer het over enkele seconden opnieuw.', 'rondo' ), [ 'status' => 409 ] );
+		}
+		try {
+			return $callback();
+		} finally {
+			delete_option( $key );
+		}
 	}
 
 	private function sanitize_pricing_rules( $raw ) {

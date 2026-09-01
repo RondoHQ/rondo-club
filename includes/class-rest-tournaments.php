@@ -8,6 +8,7 @@
 namespace Rondo\REST;
 
 use Rondo\Tournaments\TournamentAccess;
+use Rondo\Tournaments\TournamentChangeNotificationService;
 use Rondo\Tournaments\TournamentExport;
 use Rondo\Tournaments\TournamentProgramService;
 use Rondo\Tournaments\TournamentService;
@@ -19,14 +20,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class Tournaments extends Base {
 
 	private TournamentService $service;
+	private TournamentChangeNotificationService $change_notifications;
 	private TournamentProgramService $programs;
 	private TournamentExport $export;
 
 	public function __construct() {
 		parent::__construct();
-		$this->service  = new TournamentService();
-		$this->programs = new TournamentProgramService();
-		$this->export   = new TournamentExport( $this->service );
+		$this->change_notifications = new TournamentChangeNotificationService();
+		$this->service              = new TournamentService( null, $this->change_notifications );
+		$this->programs             = new TournamentProgramService();
+		$this->export               = new TournamentExport( $this->service );
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 
@@ -76,6 +79,16 @@ final class Tournaments extends Base {
 					'permission_callback' => [ $this, 'check_manager_permission' ],
 				],
 				'args' => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
+			]
+		);
+		register_rest_route(
+			'rondo/v1',
+			'/tournaments/(?P<id>\d+)/change-notification',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'send_change_notification' ],
+				'permission_callback' => [ $this, 'check_manager_permission' ],
+				'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
 			]
 		);
 		register_rest_route(
@@ -279,6 +292,17 @@ final class Tournaments extends Base {
 		$result  = $this->service->publish(
 			absint( $request->get_param( 'id' ) ),
 			is_array( $payload['assignments'] ?? null ) ? $payload['assignments'] : [],
+			get_current_user_id()
+		);
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	public function send_change_notification( $request ) {
+		$payload = $request->get_json_params() ?: [];
+		$result  = $this->change_notifications->send(
+			absint( $request->get_param( 'id' ) ),
+			absint( $payload['activity_id'] ?? 0 ),
+			$payload,
 			get_current_user_id()
 		);
 		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
