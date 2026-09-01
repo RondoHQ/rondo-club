@@ -464,6 +464,9 @@ module's allowlisted settings and stylesheet.
   text and focus indicators change.
 - [ ] Change the interface accent surface and confirm only audited selected/highlighted backgrounds
   change.
+- [ ] Configure AWC's production pair `#006935` and `#CCE1D7`; confirm the actual rendered roles
+  match the approved palette and preserve the recorded `6.84:1`, `4.99:1` and `9.22:1` contrast
+  boundaries.
 - [ ] Apply two different club color pairs to the same module build without changing source or
   assets; confirm an unconfigured installation retains FreeScout's native blue accents.
 - [ ] Confirm success, warning, destructive, unread and availability colors remain semantic.
@@ -602,6 +605,7 @@ Complete one row for every material behavior.
 | Conversation activity | Daily batch creates one subject/link activity through customer-ID to KNVB-ID to Rondo-ID SQLite mappings; core exposes inbound, agent-created and customer-change events plus customer emails | Keep the pointer long-term; exact unique `email_1`/`email_2` match, idempotent module events and deterministic reassignment/repair | Custom proof required | Rondo Sync and FreeScout 1.8.238 source inspection 2026-09-01 | Keep batch during rollout; never use IDs/names/phones to select a person or copy message content |
 | Response isolation | | Opaque-origin iframe with a nonce-authorized, height-only resize bridge and no parent-page code execution | | | |
 | Appearance controls | Design module disabled; core blue accent roles visible | Two semantic color settings, allowlisted selectors and no arbitrary CSS | Retest required | Post-removal screenshots reviewed 2026-09-01; screenshots not stored because they contain member data | Prove against current FreeScout CSS before release |
+| AWC appearance values | Official house style publishes dark green `#006935` and light green `#CCE1D7`; calculated contrast passes intended text/icon roles | Configure this pair only on AWC; keep the module default club-neutral | Planning pass; rendered retest required | [AWC appearance evidence](evidence/awc-freescout-colors-2026-09-01.md) | Provision as installation settings and verify against the supported FreeScout selectors |
 | Customer-sidebar width | FreeScout core desktop width is `280px`; narrow layout becomes full width | Coordinated responsive width up to configured maximum, default `360px` | Retest required | Current FreeScout stylesheet inspection | Update customer width plus header/main spacing together |
 | Failure containment | Access-service `503` allowed login in 1.5 seconds and preserved access | Conversation work remains available | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Keep prior state; record redacted error; no login-flow retry |
 
