@@ -80,6 +80,10 @@ guard and manual grant/revoke behavior.
 21. The first Ledenadministratie sidebar release uses the fixed field contract below. It shows
     current membership, contact, household, onboarding, membership-pass and agent-visible task
     context, but no contribution, VOG, sponsor, private-note or unrestricted custom-field data.
+22. Keep FreeScout conversation activities in Rondo long-term. They remain a lightweight pointer
+    from a person timeline to FreeScout, not a message archive: one idempotent activity containing
+    the conversation subject, creation time and server-generated link, with no message body,
+    attachment, recipient or reply content.
 
 ## Why this replaces copied customer context
 
@@ -95,9 +99,10 @@ The proposed sidebar reads current Rondo data when a conversation opens. It remo
 keep most of these secondary FreeScout fields synchronized and prevents stale information from
 being treated as authoritative.
 
-It does **not** automatically replace the separate FreeScout-conversations-to-Rondo activity
-pipeline. That pipeline remains enabled during the initial rollout until its historical value and
-customer-matching dependency have been reviewed separately.
+The reverse FreeScout-conversation-to-Rondo activity feature stays because it solves a different
+problem: a Rondo user can see that support correspondence exists and open the authoritative
+conversation in FreeScout. Its current daily batch remains during rollout, then delivery moves to
+the Rondo Integration module after its replacement person-matching path is proven.
 
 ## Goals
 
@@ -105,6 +110,8 @@ customer-matching dependency have been reviewed separately.
 - No FreeScout access for a blocked or ineligible Rondo user.
 - Automatic grant and revocation of managed mailbox access.
 - Live, mailbox-specific Rondo context in the FreeScout conversation sidebar.
+- A lightweight FreeScout conversation pointer in the Rondo person timeline without copying the
+  conversation itself.
 - Rondo permissions remain authoritative for every field returned.
 - Exact, auditable customer matching with safe zero-match and multiple-match states.
 - No shared secret in a request body, browser code, URL or log.
@@ -125,7 +132,7 @@ customer-matching dependency have been reviewed separately.
 - Showing the complete Rondo person record.
 - Automatically deactivating a manually created FreeScout account merely because it loses one
   managed mailbox.
-- Replacing the FreeScout conversation activity sync in the first release.
+- Mirroring FreeScout messages, replies, recipients, attachments or conversation bodies in Rondo.
 - Making Rondo a public, general-purpose identity provider for third parties.
 - Supporting implicit OAuth flows or password grants.
 - Replacing every feature of the retired Design module or offering unrestricted CSS injection.
@@ -1077,11 +1084,44 @@ After the sidebar has passed pilot acceptance:
 2. Preserve existing FreeScout customers; do not bulk-delete them.
 3. Keep the old pipeline available behind an explicit rollback switch for one release window.
 4. Review whether FreeScout customer ID reverse sync to Rondo/Sportlink is still needed.
-5. Review and redesign the conversation activity pipeline's person mapping before removing its
-   dependency on the existing FreeScout SQLite map.
+5. Keep the conversation activity feature enabled and redesign its person mapping before removing
+   its dependency on the existing FreeScout SQLite map.
 
 No local Rondo Sync pipeline is run as part of planning or migration analysis; production SQLite
 mappings remain authoritative.
+
+### Long-term conversation activity delivery
+
+The current daily Rondo Sync job scans conversations for every customer tracked in the customer
+enrichment SQLite database, resolves FreeScout customer ID to KNVB ID there, resolves KNVB ID to a
+Rondo person ID in a second local database, and creates a `rondo_activity` comment containing the
+subject and FreeScout link. It does not copy individual replies, and once created it does not keep
+conversation status in sync.
+
+The long-term version preserves that deliberately small product surface while removing the
+customer-enrichment dependency:
+
+- Rondo Integration becomes the event source after a compatibility proof identifies a reliable
+  FreeScout conversation-created hook; the existing daily job remains the fallback until event
+  delivery and repair are accepted;
+- the signed event contains only the configured FreeScout instance, numeric conversation and
+  customer identifiers, mailbox key, plain-text subject, creation time and the minimum customer
+  matching inputs approved by the next decision;
+- Rondo resolves the person under the separately approved matching policy; a FreeScout-supplied
+  Rondo person ID, KNVB ID or sidebar match result is never trusted as authority;
+- Rondo stores the pointer as its existing native `rondo_activity` comment plus comment meta for
+  the FreeScout instance and conversation ID; no custom Rondo table is introduced;
+- the instance-and-conversation pair is the idempotency key, so retry, event replay and repair
+  cannot create duplicate timeline rows;
+- the subject is escaped as plain text and the conversation URL is constructed server-side from
+  the configured FreeScout base URL and validated numeric conversation ID;
+- no message body or preview, reply text, recipient address, attachment, customer profile payload
+  or agent identity is stored in Rondo;
+- existing historical activity comments stay in place during cutover and rollback.
+
+The exact customer-to-person matching and reassignment behavior is the next product decision. The
+event-driven path cannot replace the current batch until that policy and a missed-event repair path
+pass the compatibility checklist.
 
 ## Security requirements
 
@@ -1134,6 +1174,8 @@ mappings remain authoritative.
 - Resize messages are height-only, source/channel/type validated, debounced and clamped before the
   parent changes the iframe height.
 - No credentials, raw tokens, signatures, personal payloads or returned HTML in normal logs.
+- Conversation activity events and logs never contain message bodies, previews, recipients,
+  attachments or agent identity; Rondo escapes the subject and constructs the FreeScout link.
 - Rate limiting per FreeScout instance, agent and source IP where reliable.
 - Response cache keys include mailbox policy and effective authorization class; no cross-user PII
   cache leakage.
@@ -1147,6 +1189,8 @@ mappings remain authoritative.
 - Do not persist sidebar person payloads in FreeScout.
 - Avoid browser analytics, third-party fonts, external images and remote scripts inside the sidebar.
 - Keep audit logs event-oriented: success/failure, IDs and reason codes, without full person payloads.
+- Keep FreeScout activity pointers to one subject, creation time and server-generated link per
+  conversation; FreeScout remains the system of record for all message content.
 - Set an explicit retention period for OAuth and provisioning audit records.
 - Treat the approved Ledenadministratie field contract as a privacy boundary; every later field or
   group requires a separate club review before production.
@@ -1434,6 +1478,20 @@ login, complete token validation and a confirmed current-agent hook.
 - Ledenadministratie does not see finance, VOG, sponsor or private-note fields.
 - A future finance mailbox cannot expose finance to an agent lacking Rondo finance access.
 
+### Conversation activity pointer
+
+- One new matched conversation creates exactly one `rondo_activity` pointer.
+- Replaying the same instance-and-conversation event creates no duplicate.
+- The activity contains only escaped subject, creation date/time and a server-generated FreeScout
+  link; message, reply, recipient, attachment, customer-profile and agent data are absent.
+- A malformed instance, conversation ID, timestamp or signature creates no activity.
+- A FreeScout-supplied Rondo or KNVB ID is ignored.
+- An unmatched or ambiguous customer creates no person activity and remains eligible for repair
+  after the matching state changes.
+- Existing historical pointers remain readable after event delivery replaces the daily batch.
+- Disabling event delivery can restore the previous batch during its rollback window without
+  duplicating activities already keyed to the same conversation.
+
 ### Mailbox provisioning
 
 - Current mapped commissie member receives the Rondo role/capability and FreeScout mailbox.
@@ -1477,6 +1535,8 @@ The milestone is complete only when:
 - the Ledenadministratie sidebar renders exactly the approved live field contract, omits empty
   values, applies related-person and task visibility independently and exposes no prohibited
   payload keys;
+- each matched FreeScout conversation produces one minimal idempotent Rondo activity pointer while
+  FreeScout remains the sole store for message content;
 - zero-match and multiple-match cases disclose no person data;
 - an agent lacking Rondo access cannot retrieve the sidebar record by changing IDs;
 - an unreachable Rondo endpoint does not freeze FreeScout or exhaust workers;
@@ -1513,18 +1573,19 @@ The milestone is complete only when:
 - Disable Rondo appearance overrides to restore FreeScout's native accent colors and layout.
 - Restore the previous module directory and database backup if a module update fails.
 - Re-enable the existing Rondo Sync FreeScout customer pipeline if it was disabled.
+- Disable conversation events and re-enable the existing conversation-activity batch during its
+  rollback window; preserve all existing activity comments.
 - Preserve FreeScout users, conversations, customer records and historical custom fields.
 - Rotate the OAuth client secret and HMAC signing key if compromise is suspected.
 
 ## Open decisions before implementation
 
 1. Exact production FreeScout mailbox ID and stable key for Ledenadministratie.
-2. Whether the FreeScout conversation activity sync remains a long-term feature.
-3. How its person matching works after customer enrichment and FreeScout ID reverse sync are
-   retired.
-4. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
-5. Audit retention period and operational owners for failed provisioning events.
-6. Final module repository, protected release workflow and update-asset URLs.
-7. Initial production values for interface accent and interface accent surface.
-8. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
+2. How conversation activity person matching works after customer enrichment and FreeScout ID
+   reverse sync are retired.
+3. Which additional Rondo capabilities may map to FreeScout mailboxes in later releases.
+4. Audit retention period and operational owners for failed provisioning events.
+5. Final module repository, protected release workflow and update-asset URLs.
+6. Initial production values for interface accent and interface accent surface.
+7. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
     200%-zoom testing.
