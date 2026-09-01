@@ -1,6 +1,6 @@
 # FreeScout sidebar, Rondo identity and mailbox provisioning
 
-**Status:** draft PRD, updated 2026-09-01<br>
+**Status:** product decisions complete; compatibility proof pending, updated 2026-09-01<br>
 **Scope:** Rondo Club and one custom Rondo Integration FreeScout module<br>
 **Milestone type:** planning only; this document does not authorize implementation or production changes
 
@@ -119,6 +119,11 @@ guard and manual grant/revoke behavior.
     surface `#CCE1D7`, taken from AWC's published house-style palette. They are installation
     configuration, never module defaults: an unconfigured club still receives FreeScout blue and
     another club can select its own validated pair.
+30. AWC's maximum conversation-sidebar width is `360px`. The module keeps the configurable
+    `280`–`420px` range and responsive `clamp(280px, 25vw, maximum)` behavior, so `360px` is a
+    desktop ceiling rather than a forced width. At `1100px` and below, including desktop layouts
+    that cross the breakpoint at 200% zoom, FreeScout's native full-width stacked layout remains
+    authoritative. The existing mocks remain the `360px` target and do not need revision.
 
 ## Why this replaces copied customer context
 
@@ -691,11 +696,26 @@ must update all three values together; changing only the customer element would 
 conversation.
 
 The setting is labelled **Maximum conversation sidebar width**, accepts `280` through `420` pixels
-and defaults to `360`. Above FreeScout's `1100px` desktop breakpoint, the actual width is:
+and defaults to `360`; AWC keeps that default as its production value. Above FreeScout's `1100px`
+desktop breakpoint, the actual width is:
 
 ```css
 clamp(280px, 25vw, var(--rondo-sidebar-max-width))
 ```
+
+With AWC's `360px` maximum, the expected desktop geometry is:
+
+| CSS viewport | Effective customer sidebar |
+|---:|---:|
+| `1101px` | `280px` |
+| `1280px` | `320px` |
+| `1440px` | `360px` |
+| `1920px` | `360px` |
+
+The `360px` mock represents the common `1440px`-and-wider target. At narrower desktop widths the
+same content reflows inside the smaller effective width; the module does not scale or horizontally
+scroll the mock. At 200% browser zoom the reduced CSS viewport normally crosses the core `1100px`
+breakpoint and uses the stacked customer layout rather than forcing a narrow side column.
 
 At `1100px` and below, the module removes its geometry override and FreeScout's existing full-width
 stacked customer layout remains authoritative. The stylesheet is scoped to conversation pages and
@@ -1966,6 +1986,8 @@ The milestone is complete only when:
   while the release artifact retains no AWC-specific default;
 - a configured maximum customer-sidebar width of `360px` widens the sidebar and reserves the same
   space in the conversation header and body without overlap;
+- AWC's `360px` maximum produces effective widths `280`, `320`, `360` and `360px` at CSS viewports
+  `1101`, `1280`, `1440` and `1920px`, with the native stacked layout at `1100px` and below;
 - disabling appearance overrides restores FreeScout's native colors and `280px` desktop sidebar;
 - existing manual mailbox assignments remain unchanged;
 - `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true` is verified in the deployed FreeScout runtime and a
@@ -1999,7 +2021,8 @@ The milestone is complete only when:
 - Preserve FreeScout users, conversations, customer records and historical custom fields.
 - Rotate the OAuth client secret and HMAC signing key if compromise is suspected.
 
-## Open decisions before implementation
+## Implementation gate
 
-1. Whether the maximum customer-sidebar width remains `360px` after realistic conversation and
-    200%-zoom testing.
+No product decisions remain open. Implementation may start with the approved values, but production
+activation remains blocked until the compatibility checklist passes, including realistic
+conversation content, all supported widths and the 200%-zoom stacked-layout proof.
