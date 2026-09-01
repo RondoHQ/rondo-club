@@ -32,6 +32,15 @@ Fill this section when executing the spike.
 | Result | In progress; paid OAuth Login add-on rejected, custom OIDC client not yet proven |
 | Evidence location | [OAuth identity evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) |
 
+## Production mailbox mapping record
+
+This read-only discovery record fixes deployment configuration; spike execution still uses the
+synthetic non-production mailbox.
+
+| Stable key | Production ID | Verified name | Verified address | Discovery evidence | Remaining gate |
+|---|---:|---|---|---|---|
+| `ledenadministratie` | `18` | Ledenadministratie | `ledenadministratie@svawc.nl` | [Production mailbox mapping evidence](evidence/freescout-mailbox-mapping-2026-09-01.md) | Module-local existence and enabled-state verification before provisioning |
+
 ## Evidence rules
 
 - Record every result as `PASS`, `FAIL`, `BLOCKED` or `NOT APPLICABLE`.
@@ -253,6 +262,14 @@ Use synthetic mailboxes and a disposable proof listener or console test.
 - [x] A FreeScout administrator is never downgraded or detached.
 - [x] A user with zero mailboxes cannot view test customers or conversations.
 - [x] Record the FreeScout models/events needed for safe grant, revoke and audit.
+- [ ] Configure a stable key to a selected local numeric mailbox ID and persist the displayed
+  name/address verification snapshot.
+- [ ] Rename or change the address of that mailbox; confirm drift is shown and no alternate mailbox
+  is selected automatically.
+- [ ] Delete, disable or replace the configured mailbox; confirm new grants stop, unrelated manual
+  access remains and neither name nor address is used as a fallback lookup.
+- [ ] Change the configured ID only through authenticated administrator selection, explicit
+  name/address confirmation and an audit event.
 - [ ] Keep a session open while revoking one of multiple mailboxes; confirm the next protected
   request to the removed mailbox/customer/conversation is denied while the other mailbox works.
 - [ ] Revoke the final mailbox and confirm all active sessions and remember tokens are invalidated.
@@ -497,7 +514,7 @@ Complete one row for every material behavior.
 | Rondo base URL | | Configured, verified and not hardcoded | | | |
 | Automatic creation | Paid add-on defaults on and isolated creation produced an ordinary zero-mailbox user before the proof listener ran | Guarded custom creation atomically commits an ordinary OIDC-only user, binding, non-empty mapped access and audit before login | Custom proof required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Default off; enable only after atomic creation, rollback, attribution and lifecycle tests pass |
 | Login event | Laravel `Login` fires for existing and newly created OAuth users before redirect | Current agent available | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Use the login event for binding and provisioning |
-| Managed mailbox access | Targeted pivot attach/detach works; customer routes require the core visibility flag | Manual access preserved | Pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Never use `sync()`; require `APP_LIMIT_USER_CUSTOMER_VISIBILITY=true` |
+| Managed mailbox access | Targeted pivot attach/detach works; customer routes require the core visibility flag; production API resolves key `ledenadministratie` to mailbox ID `18`, name `Ledenadministratie`, address `ledenadministratie@svawc.nl` | Manual access preserved; local ID is verified configuration with no name/address fallback | Provisional pass | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) and [production mailbox mapping evidence](evidence/freescout-mailbox-mapping-2026-09-01.md) | Prove local enabled-state and mapping-drift gates; never use `sync()` |
 | Session revocation | Zero-mailbox customer/conversation denial is proven; conditional logout, binding recovery and invalidation failure remain untested | Next-request mailbox denial; logout for zero-mailbox or identity change; manual access preserved | Custom proof required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Prove session/remember-token invalidation and retry without restoring revoked pivots |
 | Force-login recovery | Paid add-on loops without a response filter; its patched `/login?oauth=0` paths work | Custom callback fails once to `/login?rondo_oauth=0`; server setting restores local login | Paid add-on **Fail**; custom retest required | [OAuth identity spike evidence](evidence/freescout-oauth-identity-spike-2026-08-31.md) | Implement recovery directly in Rondo Integration |
 | Mobile | | Explicit pilot decision | | | |
@@ -554,6 +571,7 @@ architecture assumption must change before repeating the spike.
 - [ ] Redacted OAuth request/response shapes.
 - [x] Login and user-creation event map.
 - [x] Managed mailbox model/event notes.
+- [ ] Production mailbox `18` local existence/enabled-state and drift-control proof.
 - [ ] Subject-binding migration, concurrency and administrator-recovery proof.
 - [ ] Durable Rondo email-verification and authorization-resume proof.
 - [ ] Guarded automatic-creation, reply-attribution and deactivation/reactivation proof.
