@@ -1175,7 +1175,7 @@ add_filter( 'query_vars', 'rondo_pwa_query_vars' );
  * Runs late on `init` so every add_rewrite_rule() call has already registered.
  */
 function rondo_maybe_flush_rewrite_rules() {
-	$rewrite_version = '7'; // Bump when adding/changing a rewrite rule.
+	$rewrite_version = '8'; // Bump when adding/changing a rewrite rule.
 	if ( get_option( 'rondo_rewrite_rules_version' ) === $rewrite_version ) {
 		return;
 	}

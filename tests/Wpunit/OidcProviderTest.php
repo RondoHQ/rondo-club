@@ -7,6 +7,7 @@ use Rondo\Identity\OidcAuthorizationService;
 use Rondo\Identity\OidcClientRegistry;
 use Rondo\Identity\OidcIdentity;
 use Rondo\Identity\OidcKeyStore;
+use Rondo\Identity\OidcProvider;
 use Rondo\REST\Oidc as RestOidc;
 use Rondo\Users\UserProvisioning;
 use Tests\Support\RondoTestCase;
@@ -212,6 +213,20 @@ final class OidcProviderTest extends RondoTestCase {
 		$this->assertCount( 2, $keys['keys'] );
 		$this->assertNotSame( $first['keys'][0]['kid'], $status['kid'] );
 		$this->assertContains( $first['keys'][0]['kid'], array_column( $keys['keys'], 'kid' ) );
+	}
+
+	public function test_server_rules_route_discovery_before_physical_directory_check(): void {
+		$base_rules = "<IfModule mod_rewrite.c>\nRewriteEngine On\nRewriteCond %{REQUEST_FILENAME} !-d\nRewriteRule . /index.php [L]\n</IfModule>\n";
+		$rules      = OidcProvider::add_well_known_server_rules( $base_rules );
+
+		$this->assertStringContainsString(
+			"RewriteEngine On\nRewriteRule ^\\.well-known/openid-configuration/?$ index.php?rondo_oidc_endpoint=discovery [L,QSA]\n",
+			$rules
+		);
+		$this->assertStringContainsString(
+			"RewriteRule ^\\.well-known/oauth-authorization-server/?$ index.php?rondo_oidc_endpoint=metadata [L,QSA]\nRewriteCond %{REQUEST_FILENAME} !-d",
+			$rules
+		);
 	}
 
 	public function test_admin_rest_api_never_lists_secret_hashes(): void {
