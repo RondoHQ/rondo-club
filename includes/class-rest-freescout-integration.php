@@ -29,6 +29,8 @@ final class FreeScoutIntegration extends Base {
 	private const SIDEBAR_POLICY         = 'ledenadministratie.v1';
 	private const ACTIVITY_META_INSTANCE = '_rondo_freescout_instance';
 	private const ACTIVITY_META_ID       = '_rondo_freescout_conversation_id';
+	private const ACTIVITY_META_EVENT    = '_rondo_freescout_event_type';
+	private const ACTIVITY_META_EVENT_ID = '_rondo_freescout_event_id';
 	private const ACTIVITY_META_CUSTOMER = '_rondo_freescout_customer_id';
 	private const ACTIVITY_META_MAILBOX  = '_rondo_freescout_mailbox_key';
 	private const ACTIVITY_META_STATE    = '_rondo_freescout_match_state';
@@ -187,18 +189,19 @@ final class FreeScoutIntegration extends Base {
 			return $instance;
 		}
 
+		$event_type = (string) $body['eventType'];
+		if ( $event_type === 'conversation_customer_changed' ) {
+			return $this->reconcile_conversation_activities( $instance, $body );
+		}
+
 		$conversation_id = absint( $body['conversationId'] );
-		$existing        = $this->find_activity( $instance, $conversation_id );
+		$existing        = $this->find_event_activity( $instance, $body );
 		if ( is_wp_error( $existing ) ) {
 			return $existing;
 		}
 
-		$match      = $this->matcher->match( $body['customerEmails'], 'integration' );
-		$event_type = (string) $body['eventType'];
+		$match = $this->matcher->match( $body['customerEmails'], 'integration' );
 		if ( $match['status'] !== 'exact' || empty( $match['person_id'] ) ) {
-			if ( $event_type === 'conversation_customer_changed' && $existing instanceof \WP_Comment ) {
-				$this->hide_activity( $existing, $body, $match['status'] );
-			}
 			$this->audit( 'activity_match', $match['status'], [ 'conversation_id' => $conversation_id ] );
 			return rest_ensure_response(
 				[
@@ -251,7 +254,7 @@ final class FreeScoutIntegration extends Base {
 
 	/** @return true|\WP_Error */
 	private function validate_activity_body( array $body ) {
-		$event_types = [ 'conversation_created', 'conversation_customer_changed' ];
+		$event_types = [ 'conversation_created', 'conversation_customer_changed', 'customer_replied', 'user_replied' ];
 		if ( ! $this->valid_version( $body ) || ! in_array( (string) ( $body['eventType'] ?? '' ), $event_types, true ) || (string) ( $body['mailboxKey'] ?? '' ) !== self::MAILBOX_KEY ) {
 			return $this->error( 'rondo_freescout_activity_schema_invalid', 'De activiteit request is ongeldig.', 400 );
 		}
@@ -260,6 +263,15 @@ final class FreeScoutIntegration extends Base {
 		}
 		if ( mb_strlen( (string) ( $body['subject'] ?? '' ) ) > 998 || strtotime( (string) ( $body['createdAt'] ?? '' ) ) === false ) {
 			return $this->error( 'rondo_freescout_activity_schema_invalid', 'De activiteit request is ongeldig.', 400 );
+		}
+		if ( in_array( (string) $body['eventType'], [ 'customer_replied', 'user_replied' ], true ) && absint( $body['eventId'] ?? 0 ) <= 0 ) {
+			return $this->error( 'rondo_freescout_activity_schema_invalid', 'De activiteit request is ongeldig.', 400 );
+		}
+		if ( isset( $body['actor'] ) ) {
+			$actor = $body['actor'];
+			if ( ! is_array( $actor ) || absint( $actor['freescoutUserId'] ?? 0 ) <= 0 || ! $this->valid_subject( (string) ( $actor['subject'] ?? '' ) ) || (string) ( $actor['issuer'] ?? '' ) !== OidcAuthorizationService::issuer() ) {
+				return $this->error( 'rondo_freescout_activity_schema_invalid', 'De activiteit request is ongeldig.', 400 );
+			}
 		}
 
 		return true;
@@ -329,13 +341,13 @@ final class FreeScoutIntegration extends Base {
 		];
 	}
 
-	/** @return \WP_Comment|null|\WP_Error */
-	private function find_activity( string $instance, int $conversation_id ) {
+	/** @return array<int,\WP_Comment> */
+	private function find_conversation_activities( string $instance, int $conversation_id ): array {
 		$comments = get_comments(
 			[
 				'type'       => CommentTypes::TYPE_ACTIVITY,
 				'status'     => 'all',
-				'number'     => 2,
+				'number'     => 0,
 				'meta_query' => [
 					'relation' => 'AND',
 					[
@@ -352,18 +364,93 @@ final class FreeScoutIntegration extends Base {
 				],
 			]
 		);
-		if ( count( $comments ) > 1 ) {
+
+		return array_values( array_filter( $comments, fn( $comment ) => $comment instanceof \WP_Comment ) );
+	}
+
+	/** @return \WP_Comment|null|\WP_Error */
+	private function find_event_activity( string $instance, array $body ) {
+		$event_type = (string) $body['eventType'];
+		$event_id   = absint( $body['eventId'] ?? 0 );
+		$matches    = [];
+		foreach ( $this->find_conversation_activities( $instance, absint( $body['conversationId'] ) ) as $comment ) {
+			$stored_type = (string) get_comment_meta( $comment->comment_ID, self::ACTIVITY_META_EVENT, true );
+			$stored_id   = absint( get_comment_meta( $comment->comment_ID, self::ACTIVITY_META_EVENT_ID, true ) );
+			if ( $event_type === 'conversation_created' ) {
+				if ( $stored_type === '' || $stored_type === 'conversation_created' ) {
+					$matches[] = $comment;
+				}
+			} elseif ( $stored_type === $event_type && $stored_id === $event_id ) {
+				$matches[] = $comment;
+			}
+		}
+		if ( count( $matches ) > 1 ) {
 			return $this->error( 'rondo_freescout_activity_duplicate', 'Er bestaan meerdere activiteiten voor deze conversatie.', 409 );
 		}
 
-		return $comments[0] ?? null;
+		return $matches[0] ?? null;
+	}
+
+	private function reconcile_conversation_activities( string $instance, array $body ): \WP_REST_Response|\WP_Error {
+		$conversation_id = absint( $body['conversationId'] );
+		$activities      = $this->find_conversation_activities( $instance, $conversation_id );
+		$match           = $this->matcher->match( $body['customerEmails'], 'integration' );
+		if ( $match['status'] !== 'exact' || empty( $match['person_id'] ) ) {
+			foreach ( $activities as $activity ) {
+				$this->hide_activity( $activity, $body, $match['status'] );
+			}
+			$this->audit( 'activity_match', $match['status'], [ 'conversation_id' => $conversation_id ] );
+			return rest_ensure_response(
+				[
+					'status'          => $match['status'],
+					'activity_id'     => isset( $activities[0] ) ? (int) $activities[0]->comment_ID : null,
+					'conversation_id' => $conversation_id,
+				]
+			);
+		}
+
+		if ( $activities === [] ) {
+			$creation_body              = $body;
+			$creation_body['eventType'] = 'conversation_created';
+			$result                     = $this->create_activity( (int) $match['person_id'], $instance, $creation_body );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+			return rest_ensure_response(
+				[
+					'status'          => $result['status'],
+					'activity_id'     => $result['activity_id'],
+					'conversation_id' => $conversation_id,
+				]
+			);
+		}
+
+		$statuses = [];
+		foreach ( $activities as $activity ) {
+			$result = $this->confirm_activity( $activity, (int) $match['person_id'], $body );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+			$statuses[] = $result['status'];
+		}
+		$status = in_array( 'moved', $statuses, true ) ? 'moved' : ( in_array( 'restored', $statuses, true ) ? 'restored' : 'confirmed' );
+
+		return rest_ensure_response(
+			[
+				'status'          => $status,
+				'activity_id'     => (int) $activities[0]->comment_ID,
+				'activity_ids'    => array_map( fn( $activity ) => (int) $activity->comment_ID, $activities ),
+				'conversation_id' => $conversation_id,
+			]
+		);
 	}
 
 	/** @return array{status:string,activity_id:int}|\WP_Error */
 	private function create_activity( int $person_id, string $instance, array $body ) {
 		$created = strtotime( (string) $body['createdAt'] );
 		$gmt     = gmdate( 'Y-m-d H:i:s', $created );
-		$content = $this->activity_content( $instance, absint( $body['conversationId'] ), (string) $body['subject'] );
+		$user_id = $this->activity_actor_user_id( $body );
+		$content = $this->activity_content( $instance, absint( $body['conversationId'] ), (string) $body['subject'], (string) $body['eventType'], $user_id );
 		$id      = wp_insert_comment(
 			[
 				'comment_post_ID'      => $person_id,
@@ -372,7 +459,7 @@ final class FreeScoutIntegration extends Base {
 				'comment_approved'     => 1,
 				'comment_author'       => 'Rondo Integration',
 				'comment_author_email' => '',
-				'user_id'              => 0,
+				'user_id'              => $user_id,
 				'comment_date_gmt'     => $gmt,
 				'comment_date'         => get_date_from_gmt( $gmt ),
 			]
@@ -404,12 +491,17 @@ final class FreeScoutIntegration extends Base {
 		$old_person_id = (int) $comment->comment_post_ID;
 		$was_hidden    = (string) $comment->comment_approved !== '1';
 		$instance      = (string) get_comment_meta( $comment->comment_ID, self::ACTIVITY_META_INSTANCE, true );
+		$is_reconcile  = (string) $body['eventType'] === 'conversation_customer_changed';
+		$event_type    = $is_reconcile ? (string) get_comment_meta( $comment->comment_ID, self::ACTIVITY_META_EVENT, true ) : (string) $body['eventType'];
+		$event_type    = $event_type !== '' ? $event_type : 'conversation_created';
+		$user_id       = $is_reconcile ? (int) $comment->user_id : $this->activity_actor_user_id( $body );
 		$result        = wp_update_comment(
 			[
 				'comment_ID'       => (int) $comment->comment_ID,
 				'comment_post_ID'  => $person_id,
-				'comment_content'  => $this->activity_content( $instance, absint( $body['conversationId'] ), (string) $body['subject'] ),
+				'comment_content'  => $this->activity_content( $instance, absint( $body['conversationId'] ), (string) $body['subject'], $event_type, $user_id ),
 				'comment_approved' => 1,
+				'user_id'          => $user_id,
 			],
 			true
 		);
@@ -451,16 +543,57 @@ final class FreeScoutIntegration extends Base {
 	private function update_activity_meta( int $comment_id, string $instance, array $body, string $state ): void {
 		update_comment_meta( $comment_id, self::ACTIVITY_META_INSTANCE, $instance );
 		update_comment_meta( $comment_id, self::ACTIVITY_META_ID, absint( $body['conversationId'] ) );
+		if ( (string) $body['eventType'] !== 'conversation_customer_changed' || get_comment_meta( $comment_id, self::ACTIVITY_META_EVENT, true ) === '' ) {
+			$event_type = (string) $body['eventType'] === 'conversation_customer_changed' ? 'conversation_created' : sanitize_key( (string) $body['eventType'] );
+			update_comment_meta( $comment_id, self::ACTIVITY_META_EVENT, $event_type );
+			update_comment_meta( $comment_id, self::ACTIVITY_META_EVENT_ID, absint( $body['eventId'] ?? 0 ) );
+		}
 		update_comment_meta( $comment_id, self::ACTIVITY_META_CUSTOMER, absint( $body['customerId'] ) );
 		update_comment_meta( $comment_id, self::ACTIVITY_META_MAILBOX, self::MAILBOX_KEY );
 		update_comment_meta( $comment_id, self::ACTIVITY_META_STATE, sanitize_key( $state ) );
 		update_comment_meta( $comment_id, self::ACTIVITY_META_UPDATED, gmdate( DATE_ATOM ) );
 	}
 
-	private function activity_content( string $instance, int $conversation_id, string $subject ): string {
-		$url = $instance . '/conversation/' . $conversation_id;
+	private function activity_content( string $instance, int $conversation_id, string $subject, string $event_type, int $user_id ): string {
+		$url            = $instance . '/conversation/' . $conversation_id;
+		$subject_markup = '<p><strong>' . esc_html( wp_strip_all_tags( $subject ) ) . '</strong></p>';
+		if ( $event_type === 'customer_replied' ) {
+			$subject_markup = '<p><strong>Antwoord ontvangen</strong></p>' . $subject_markup;
+		} elseif ( $event_type === 'user_replied' ) {
+			$display_name   = $user_id > 0 ? trim( (string) get_the_author_meta( 'display_name', $user_id ) ) : '';
+			$label          = $display_name !== '' ? 'Antwoord verzonden door ' . $display_name : 'Antwoord verzonden vanuit FreeScout';
+			$subject_markup = '<p><strong>' . esc_html( $label ) . '</strong></p>' . $subject_markup;
+		}
 
-		return '<p><strong>' . esc_html( wp_strip_all_tags( $subject ) ) . '</strong></p><p><a href="' . esc_url( $url ) . '">Bekijk in FreeScout</a></p>';
+		return $subject_markup . '<p><a href="' . esc_url( $url ) . '">Bekijk in FreeScout</a></p>';
+	}
+
+	private function activity_actor_user_id( array $body ): int {
+		if ( (string) $body['eventType'] !== 'user_replied' || ! is_array( $body['actor'] ?? null ) ) {
+			return 0;
+		}
+
+		return $this->resolve_actor_subject( (string) $body['actor']['issuer'], (string) $body['actor']['subject'] );
+	}
+
+	private function resolve_actor_subject( string $issuer, string $subject ): int {
+		if ( $issuer !== OidcAuthorizationService::issuer() || ! $this->valid_subject( $subject ) ) {
+			return 0;
+		}
+		$users = get_users(
+			[
+				'meta_key'   => OidcIdentity::META_SUBJECT,
+				'meta_value' => $subject,
+				'fields'     => 'ids',
+				'number'     => 2,
+			]
+		);
+		if ( count( $users ) !== 1 || ! get_userdata( (int) $users[0] ) instanceof \WP_User ) {
+			return 0;
+		}
+
+		$stored = (string) get_user_meta( (int) $users[0], OidcIdentity::META_SUBJECT, true );
+		return hash_equals( $subject, $stored ) ? (int) $users[0] : 0;
 	}
 
 	private function audit( string $event, string $reason, array $context = [] ): void {

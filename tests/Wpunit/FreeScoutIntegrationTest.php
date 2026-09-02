@@ -286,6 +286,57 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->assertStringNotContainsString( 'second@example.test', serialize( get_comment_meta( $created['activity_id'] ) ) );
 	}
 
+	public function test_reply_activities_are_distinct_idempotent_and_keep_message_content_out(): void {
+		$first  = $this->createPerson( [ 'post_title' => 'First member' ], [ 'email_1' => 'first@example.test' ] );
+		$second = $this->createPerson( [ 'post_title' => 'Second member' ], [ 'email_1' => 'second@example.test' ] );
+		$this->signed_request( 'activity', $this->activity_body( 'conversation_created', [ 'first@example.test' ] ) );
+
+		$incoming_body            = $this->activity_body( 'customer_replied', [ 'first@example.test' ] );
+		$incoming_body['eventId'] = 1001;
+		$incoming                 = $this->signed_request( 'activity', $incoming_body )->get_data();
+		$incoming_replay          = $this->signed_request( 'activity', $incoming_body )->get_data();
+		$this->assertSame( 'created', $incoming['status'] );
+		$this->assertSame( 'confirmed', $incoming_replay['status'] );
+		$this->assertSame( $incoming['activity_id'], $incoming_replay['activity_id'] );
+
+		$outgoing_body            = $this->activity_body( 'user_replied', [ 'first@example.test' ] );
+		$outgoing_body['eventId'] = 1002;
+		$outgoing_body['actor']   = [
+			'freescoutUserId' => 44,
+			'issuer'          => OidcAuthorizationService::issuer(),
+			'subject'         => $this->subject,
+		];
+		get_userdata( $this->agent_id )->remove_cap( 'ledenadministratie' );
+		$outgoing         = $this->signed_request( 'activity', $outgoing_body )->get_data();
+		$outgoing_comment = get_comment( $outgoing['activity_id'] );
+		$this->assertSame( $this->agent_id, (int) $outgoing_comment->user_id );
+		$this->assertStringContainsString( 'Antwoord verzonden door', $outgoing_comment->comment_content );
+		$this->assertStringNotContainsString( 'berichttekst', $outgoing_comment->comment_content );
+
+		$all = get_comments(
+			[
+				'type'   => 'rondo_activity',
+				'status' => 'all',
+			]
+			);
+		$this->assertCount( 3, $all );
+		$moved = $this->signed_request( 'activity', $this->activity_body( 'conversation_customer_changed', [ 'second@example.test' ] ) )->get_data();
+		$this->assertSame( 'moved', $moved['status'] );
+		$this->assertCount( 3, $moved['activity_ids'] );
+		foreach ( $all as $activity ) {
+			$this->assertSame( $first, (int) $activity->comment_post_ID );
+			$this->assertSame( $second, (int) get_comment( $activity->comment_ID )->comment_post_ID );
+		}
+	}
+
+	public function test_reply_activity_requires_a_thread_event_id(): void {
+		$this->createPerson( [ 'post_title' => 'First member' ], [ 'email_1' => 'first@example.test' ] );
+		$response = $this->signed_request( 'activity', $this->activity_body( 'customer_replied', [ 'first@example.test' ] ) );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'rondo_freescout_activity_schema_invalid', $response->as_error()->get_error_code() );
+	}
+
 	/** @return array<string,mixed> */
 	private function sidebar_body( array $emails ): array {
 		return [
