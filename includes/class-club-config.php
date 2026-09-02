@@ -412,6 +412,7 @@ class ClubConfig {
 			'iva_approval_email_body'               => self::get_iva_approval_email_body(),
 			'freescout_url'                         => self::get_freescout_url(),
 			'freescout_has_api_key'                 => self::has_freescout_api_key(),
+			'freescout_audit_retention'             => \Rondo\Integrations\FreeScout\Config::retention_status(),
 			'lettermint_project_id'                 => self::get_lettermint_project_id(),
 			'lettermint_route_id'                   => self::get_lettermint_route_id(),
 			'lettermint_from_email'                 => self::get_lettermint_from_email(),

@@ -1818,6 +1818,18 @@ workflow dispatch. Phase 3 and production cutover remain unimplemented.
 - Add no-match, ambiguous, unauthorized and unavailable states.
 - Link all mutations to authenticated Rondo pages.
 
+**Result, 2026-09-02:** implemented in Rondo Club `35.33.0`. Four publicly routable HMAC-protected
+services now publish the closed mailbox catalog, evaluate current subject-bound access, render the
+script-free `ledenadministratie.v1` sidebar as the effective Rondo user and receive idempotent
+conversation activities. The shared matcher uses exact canonical primary/secondary emails and
+separate effective-user or integration scopes. Activity pointers use native `rondo_activity`
+comments and support create, confirm, move, hide and restore without persisting customer emails.
+The signed catalog publishes the configurable 90–730 day retention policy with environment
+precedence. Automated coverage proves signature mismatch and replay denial, capability revocation,
+secondary and ambiguous matching, excluded-field behavior, synthetic-address rejection and the
+full activity reassignment lifecycle. Production FreeScout connection setup, activity-queue
+delivery and pilot acceptance remain later rollout gates; the existing sync is unchanged.
+
 ### Phase 4: automatic provisioning in the Rondo Integration module
 
 - Extend the same custom module with the FreeScout login listener.

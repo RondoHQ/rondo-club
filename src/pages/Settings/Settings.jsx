@@ -1274,6 +1274,7 @@ function FreeScoutConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loading
   const [formData, setFormData] = useState({
     freescout_url: '',
     freescout_api_key: '',
+    freescout_audit_retention_days: 365,
   });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -1282,6 +1283,7 @@ function FreeScoutConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loading
     setFormData({
       freescout_url: clubConfig?.freescout_url || '',
       freescout_api_key: '',
+      freescout_audit_retention_days: clubConfig?.freescout_audit_retention?.retention_days || 365,
     });
   }, [clubConfig]);
 
@@ -1299,6 +1301,9 @@ function FreeScoutConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loading
       };
       if (formData.freescout_api_key.trim()) {
         payload.freescout_api_key = formData.freescout_api_key.trim();
+      }
+      if (!clubConfig?.freescout_audit_retention?.locked) {
+        payload.freescout_audit_retention_days = Number(formData.freescout_audit_retention_days);
       }
       const response = await prmApi.updateClubConfig(payload);
       setClubConfig(response.data || null);
@@ -1362,6 +1367,29 @@ function FreeScoutConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loading
             ? 'Er is al een API key opgeslagen. Laat leeg om de huidige key te behouden.'
             : 'Wordt gebruikt voor toekomstige FreeScout API-acties.'}
         </p>
+      </div>
+
+      <div>
+        <label className="label">Bewaartermijn integratie-audit</label>
+        <input
+          type="number"
+          min="90"
+          max="730"
+          value={formData.freescout_audit_retention_days}
+          onChange={(e) => setFormData((prev) => ({ ...prev, freescout_audit_retention_days: e.target.value }))}
+          className="input"
+          disabled={!isAdmin || clubConfig?.freescout_audit_retention?.locked}
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          90 tot 730 dagen. Bron: {clubConfig?.freescout_audit_retention?.source === 'environment'
+            ? 'serverconfiguratie'
+            : clubConfig?.freescout_audit_retention?.source === 'rondo_setting' ? 'Rondo-instelling' : 'standaard'}.
+        </p>
+        {!clubConfig?.freescout_audit_retention?.valid && (
+          <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+            {clubConfig?.freescout_audit_retention?.message}
+          </p>
+        )}
       </div>
 
       {!isAdmin && (

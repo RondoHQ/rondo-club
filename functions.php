@@ -378,6 +378,7 @@ function rondo_init() {
 		new RESTTournaments();
 		new \Rondo\REST\MemberProfile();
 		new \Rondo\REST\Oidc();
+		new \Rondo\REST\FreeScoutIntegration();
 		new RabobankOAuth();
 		new RabobankPayment();
 		new MollieWebhook();
