@@ -15,6 +15,7 @@ use Google\Service\Walletobjects\ImageUri;
 use Google\Service\Walletobjects\TextModuleData;
 use Rondo\Config\FinanceConfig;
 use Rondo\Config\ClubConfig;
+use Rondo\Data\PrivateCredentialStorage;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -406,6 +407,11 @@ class MembershipPassGoogle {
 	 * @return string
 	 */
 	private function get_service_account_path(): string {
+		$private_path = PrivateCredentialStorage::temporary_path( PrivateCredentialStorage::GOOGLE );
+		if ( $private_path !== '' ) {
+			return $private_path;
+		}
+
 		$config        = new FinanceConfig();
 		$attachment_id = $config->get_membership_pass_google_service_account_attachment_id();
 		if ( $attachment_id > 0 ) {

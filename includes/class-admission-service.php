@@ -7,6 +7,7 @@
 
 namespace Rondo\Access;
 
+use Rondo\Data\CredentialEncryption;
 use Rondo\Fields\Fields;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -406,17 +407,14 @@ class AdmissionService {
 	}
 
 	private function fingerprint_secret(): string {
-		$secret = (string) get_option( self::FINGERPRINT_SECRET_OPTION, '' );
+		$secret = CredentialEncryption::get_secret_option( self::FINGERPRINT_SECRET_OPTION );
 		if ( strlen( $secret ) >= 32 ) {
 			return $secret;
 		}
 
 		$new_secret = wp_generate_password( 64, true, true );
-		if ( add_option( self::FINGERPRINT_SECRET_OPTION, $new_secret, '', false ) ) {
-			return $new_secret;
-		}
-
-		return (string) get_option( self::FINGERPRINT_SECRET_OPTION, $new_secret );
+		CredentialEncryption::update_secret_option( self::FINGERPRINT_SECRET_OPTION, $new_secret );
+		return CredentialEncryption::get_secret_option( self::FINGERPRINT_SECRET_OPTION, $new_secret );
 	}
 
 	/** @param array<string,mixed> $match Match data. */

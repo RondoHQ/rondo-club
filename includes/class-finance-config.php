@@ -529,10 +529,6 @@ class FinanceConfig {
 		$club_logo_url         = $this->get_attachment_url( $club_logo_id );
 		$businessclub_logo_url = $this->get_attachment_url( $businessclub_logo_id );
 
-		$apple_cert_id     = $this->get_membership_pass_apple_cert_attachment_id();
-		$google_sa_id      = $this->get_membership_pass_google_service_account_attachment_id();
-		$apple_cert_url    = $apple_cert_id > 0 ? ( wp_get_attachment_url( $apple_cert_id ) ?: '' ) : '';
-		$google_sa_url     = $google_sa_id > 0 ? ( wp_get_attachment_url( $google_sa_id ) ?: '' ) : '';
 		$apple_cert_status = ( new MembershipPassApple() )->get_certificate_status();
 
 		return [
@@ -586,15 +582,17 @@ class FinanceConfig {
 			'mollie_default_manual_account_id'           => FinanceServices::mollie()->get_default_mollie_account_id( 'manual' ),
 			'mollie_default_tournament_account_id'       => FinanceServices::mollie()->get_default_mollie_account_id( 'tournament' ),
 			'active_payment_provider'                    => FinanceServices::mollie()->get_active_payment_provider(),
-			'membership_pass_apple_cert_attachment_id'   => $apple_cert_id,
-			'membership_pass_apple_cert_url'             => $apple_cert_url,
+			'membership_pass_apple_cert_attachment_id'   => 0,
+			'membership_pass_apple_cert_url'             => '',
+			'membership_pass_apple_cert_filename'        => \Rondo\Data\PrivateCredentialStorage::filename( \Rondo\Data\PrivateCredentialStorage::APPLE ),
 			'membership_pass_apple_has_cert_password'    => $this->get_membership_pass_apple_cert_password() !== '',
 			'membership_pass_apple_pass_type_identifier' => $this->get_membership_pass_apple_pass_type_identifier(),
 			'membership_pass_apple_team_identifier'      => $this->get_membership_pass_apple_team_identifier(),
 			'membership_pass_apple_organization_name'    => $this->get_membership_pass_apple_organization_name(),
 			'membership_pass_apple_certificate_status'   => $apple_cert_status,
-			'membership_pass_google_service_account_attachment_id' => $google_sa_id,
-			'membership_pass_google_service_account_url' => $google_sa_url,
+			'membership_pass_google_service_account_attachment_id' => 0,
+			'membership_pass_google_service_account_url' => '',
+			'membership_pass_google_service_account_filename' => \Rondo\Data\PrivateCredentialStorage::filename( \Rondo\Data\PrivateCredentialStorage::GOOGLE ),
 			'membership_pass_google_issuer_id'           => $this->get_membership_pass_google_issuer_id(),
 			'membership_pass_google_class_suffix'        => $this->get_membership_pass_google_class_suffix(),
 		];
@@ -849,7 +847,7 @@ class FinanceConfig {
 		if ( isset( $data['membership_pass_apple_cert_password'] ) ) {
 			$password = sanitize_text_field( $data['membership_pass_apple_cert_password'] );
 			if ( $password !== '' ) {
-				$success = update_option( self::OPTION_MEMBERSHIP_PASS_APPLE_CERT_PASSWORD, $password ) && $success;
+				$success = CredentialEncryption::update_secret_option( self::OPTION_MEMBERSHIP_PASS_APPLE_CERT_PASSWORD, $password ) && $success;
 			}
 		}
 
@@ -984,7 +982,7 @@ class FinanceConfig {
 	 * @return string
 	 */
 	public function get_membership_pass_apple_cert_password(): string {
-		return (string) get_option( self::OPTION_MEMBERSHIP_PASS_APPLE_CERT_PASSWORD, '' );
+		return CredentialEncryption::get_secret_option( self::OPTION_MEMBERSHIP_PASS_APPLE_CERT_PASSWORD );
 	}
 
 	/**

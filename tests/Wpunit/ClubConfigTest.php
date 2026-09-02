@@ -3,6 +3,7 @@
 namespace Tests\Wpunit;
 
 use Rondo\Config\ClubConfig;
+use Rondo\Data\CredentialEncryption;
 use Tests\Support\RondoTestCase;
 
 /**
@@ -16,6 +17,7 @@ class ClubConfigTest extends RondoTestCase {
 		delete_option( ClubConfig::OPTION_IVA_APPROVAL_EMAIL_SUBJECT );
 		delete_option( ClubConfig::OPTION_IVA_APPROVAL_EMAIL_BODY );
 		delete_option( ClubConfig::OPTION_GUEST_PASS_TEAM_ID );
+		delete_option( ClubConfig::OPTION_LETTERMINT_API_TOKEN );
 	}
 
 	protected function tear_down(): void {
@@ -23,6 +25,7 @@ class ClubConfigTest extends RondoTestCase {
 		delete_option( ClubConfig::OPTION_IVA_APPROVAL_EMAIL_SUBJECT );
 		delete_option( ClubConfig::OPTION_IVA_APPROVAL_EMAIL_BODY );
 		delete_option( ClubConfig::OPTION_GUEST_PASS_TEAM_ID );
+		delete_option( ClubConfig::OPTION_LETTERMINT_API_TOKEN );
 		parent::tear_down();
 	}
 
@@ -77,5 +80,15 @@ class ClubConfigTest extends RondoTestCase {
 
 		$this->assertTrue( ClubConfig::update_guest_pass_team_id( 0 ) );
 		$this->assertSame( 0, ClubConfig::get_guest_pass_team_id() );
+	}
+
+	public function test_lettermint_token_is_encrypted_at_rest(): void {
+		$this->assertTrue( ClubConfig::update_lettermint_api_token( 'lm_test_secret' ) );
+		$stored = (string) get_option( ClubConfig::OPTION_LETTERMINT_API_TOKEN, '' );
+
+		$this->assertTrue( CredentialEncryption::is_encrypted( $stored ) );
+		$this->assertStringNotContainsString( 'lm_test_secret', $stored );
+		$this->assertTrue( ClubConfig::has_lettermint_api_token() );
+		$this->assertSame( 'lm_test_secret', \Rondo\Notifications\LettermintConfig::get_api_token() );
 	}
 }

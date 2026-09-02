@@ -9,6 +9,8 @@
 
 namespace Rondo\Config;
 
+use Rondo\Data\CredentialEncryption;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -256,7 +258,7 @@ class ClubConfig {
 	 * @return string The FreeScout API key (empty string if not configured)
 	 */
 	public static function get_freescout_api_key(): string {
-		return get_option( self::OPTION_FREESCOUT_API_KEY, self::DEFAULTS['freescout_api_key'] );
+		return CredentialEncryption::get_secret_option( self::OPTION_FREESCOUT_API_KEY, self::DEFAULTS['freescout_api_key'] );
 	}
 
 	/**
@@ -373,7 +375,7 @@ class ClubConfig {
 	 * @return bool
 	 */
 	public static function has_lettermint_api_token(): bool {
-		return trim( (string) get_option( self::OPTION_LETTERMINT_API_TOKEN, self::DEFAULTS['lettermint_api_token'] ) ) !== '';
+		return trim( CredentialEncryption::get_secret_option( self::OPTION_LETTERMINT_API_TOKEN, self::DEFAULTS['lettermint_api_token'] ) ) !== '';
 	}
 
 	/**
@@ -382,7 +384,7 @@ class ClubConfig {
 	 * @return bool
 	 */
 	public static function has_lettermint_team_api_token(): bool {
-		return trim( (string) get_option( self::OPTION_LETTERMINT_TEAM_API_TOKEN, self::DEFAULTS['lettermint_team_api_token'] ) ) !== '';
+		return trim( CredentialEncryption::get_secret_option( self::OPTION_LETTERMINT_TEAM_API_TOKEN, self::DEFAULTS['lettermint_team_api_token'] ) ) !== '';
 	}
 
 	/**
@@ -391,7 +393,7 @@ class ClubConfig {
 	 * @return bool
 	 */
 	public static function has_lettermint_webhook_secret(): bool {
-		return trim( (string) get_option( self::OPTION_LETTERMINT_WEBHOOK_SECRET, self::DEFAULTS['lettermint_webhook_secret'] ) ) !== '';
+		return trim( CredentialEncryption::get_secret_option( self::OPTION_LETTERMINT_WEBHOOK_SECRET, self::DEFAULTS['lettermint_webhook_secret'] ) ) !== '';
 	}
 
 	/**
@@ -499,7 +501,7 @@ class ClubConfig {
 	 */
 	public static function update_freescout_api_key( string $api_key ): bool {
 		$sanitized = sanitize_text_field( $api_key );
-		return update_option( self::OPTION_FREESCOUT_API_KEY, $sanitized );
+		return CredentialEncryption::update_secret_option( self::OPTION_FREESCOUT_API_KEY, $sanitized );
 	}
 
 	/**
@@ -510,7 +512,7 @@ class ClubConfig {
 	 */
 	public static function update_lettermint_api_token( string $api_token ): bool {
 		$sanitized = sanitize_text_field( $api_token );
-		return update_option( self::OPTION_LETTERMINT_API_TOKEN, $sanitized );
+		return CredentialEncryption::update_secret_option( self::OPTION_LETTERMINT_API_TOKEN, $sanitized );
 	}
 
 	/**
@@ -521,7 +523,7 @@ class ClubConfig {
 	 */
 	public static function update_lettermint_team_api_token( string $api_token ): bool {
 		$sanitized = sanitize_text_field( $api_token );
-		return update_option( self::OPTION_LETTERMINT_TEAM_API_TOKEN, $sanitized );
+		return CredentialEncryption::update_secret_option( self::OPTION_LETTERMINT_TEAM_API_TOKEN, $sanitized );
 	}
 
 	/**
@@ -576,7 +578,7 @@ class ClubConfig {
 	 */
 	public static function update_lettermint_webhook_secret( string $secret ): bool {
 		$sanitized = sanitize_text_field( $secret );
-		return update_option( self::OPTION_LETTERMINT_WEBHOOK_SECRET, $sanitized );
+		return CredentialEncryption::update_secret_option( self::OPTION_LETTERMINT_WEBHOOK_SECRET, $sanitized );
 	}
 
 	/**

@@ -304,12 +304,14 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     mollie_default_tournament_account_id: '',
     membership_pass_apple_cert_attachment_id: 0,
     membership_pass_apple_cert_url: '',
+    membership_pass_apple_cert_filename: '',
     membership_pass_apple_cert_password: '',
     membership_pass_apple_pass_type_identifier: '',
     membership_pass_apple_team_identifier: '',
     membership_pass_apple_organization_name: '',
     membership_pass_google_service_account_attachment_id: 0,
     membership_pass_google_service_account_url: '',
+    membership_pass_google_service_account_filename: '',
     membership_pass_google_issuer_id: '',
     membership_pass_google_class_suffix: 'rondo_membership',
   });
@@ -391,12 +393,14 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         mollie_default_tournament_account_id: settings.mollie_default_tournament_account_id || '',
         membership_pass_apple_cert_attachment_id: settings.membership_pass_apple_cert_attachment_id || 0,
         membership_pass_apple_cert_url: settings.membership_pass_apple_cert_url || '',
+        membership_pass_apple_cert_filename: settings.membership_pass_apple_cert_filename || '',
         membership_pass_apple_cert_password: '',
         membership_pass_apple_pass_type_identifier: settings.membership_pass_apple_pass_type_identifier || '',
         membership_pass_apple_team_identifier: settings.membership_pass_apple_team_identifier || '',
         membership_pass_apple_organization_name: settings.membership_pass_apple_organization_name || '',
         membership_pass_google_service_account_attachment_id: settings.membership_pass_google_service_account_attachment_id || 0,
         membership_pass_google_service_account_url: settings.membership_pass_google_service_account_url || '',
+        membership_pass_google_service_account_filename: settings.membership_pass_google_service_account_filename || '',
         membership_pass_google_issuer_id: settings.membership_pass_google_issuer_id || '',
         membership_pass_google_class_suffix: settings.membership_pass_google_class_suffix || 'rondo_membership',
       });
@@ -507,21 +511,23 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
       const uploadFormData = new FormData();
       uploadFormData.append('file', file);
 
-      const response = await api.post('/wp/v2/media', uploadFormData, {
+      const response = await api.post(`/rondo/v1/finance/credential-file/${type}`, uploadFormData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       if (type === 'apple') {
         setFormData(prev => ({
           ...prev,
-          membership_pass_apple_cert_attachment_id: response.data.id,
-          membership_pass_apple_cert_url: response.data.source_url,
+          membership_pass_apple_cert_attachment_id: 0,
+          membership_pass_apple_cert_url: '',
+          membership_pass_apple_cert_filename: response.data.filename,
         }));
       } else {
         setFormData(prev => ({
           ...prev,
-          membership_pass_google_service_account_attachment_id: response.data.id,
-          membership_pass_google_service_account_url: response.data.source_url,
+          membership_pass_google_service_account_attachment_id: 0,
+          membership_pass_google_service_account_url: '',
+          membership_pass_google_service_account_filename: response.data.filename,
         }));
       }
     } catch (err) {
@@ -1905,9 +1911,9 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 P12 certificaat
               </label>
-              {formData.membership_pass_apple_cert_url && (
+              {formData.membership_pass_apple_cert_filename && (
                 <div className="mb-2 text-sm text-gray-600 dark:text-gray-400">
-                  Huidig bestand: {formData.membership_pass_apple_cert_url.split('/').pop()}
+                  Versleuteld opgeslagen: {formData.membership_pass_apple_cert_filename}
                 </div>
               )}
               <AppleCertificateStatus certificate={settings?.membership_pass_apple_certificate_status} />
@@ -1978,9 +1984,9 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Service Account JSON
               </label>
-              {formData.membership_pass_google_service_account_url && (
+              {formData.membership_pass_google_service_account_filename && (
                 <div className="mb-2 text-sm text-gray-600 dark:text-gray-400">
-                  Huidig bestand: {formData.membership_pass_google_service_account_url.split('/').pop()}
+                  Versleuteld opgeslagen: {formData.membership_pass_google_service_account_filename}
                 </div>
               )}
               <input
