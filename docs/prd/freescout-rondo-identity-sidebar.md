@@ -1,6 +1,6 @@
 # FreeScout sidebar, Rondo identity and mailbox provisioning
 
-**Status:** Phases 1 and 2 implemented; Rondo sidebar service and production cutover pending, updated 2026-09-01<br>
+**Status:** Identity, live sidebar and activity delivery implemented; managed provisioning remains phased, updated 2026-09-02<br>
 **Scope:** Rondo Club and one custom Rondo Integration FreeScout module<br>
 **Milestone type:** product specification; Phases 1 and 2 were separately approved, and later phases require separate approval
 
@@ -28,8 +28,10 @@ guard and manual grant/revoke behavior.
    mailbox provisioning. Use the MIT-licensed `fulldecent/freescout-sidebar-webhook` implementation
    and relevant forks as attributed references, not as a maintained fork or separate installed
    module.
-2. The sidebar varies by FreeScout mailbox. Ledenadministratie receives a more extensive view than
-   a general mailbox.
+2. Administrators select independently in which active FreeScout mailboxes the sidebar appears.
+   This display selection never grants mailbox access. A valid bound Rondo user sees the regular
+   profile data in every selected mailbox; mailbox policy and user capabilities jointly control
+   extra sensitive sections such as financial data.
 3. Rondo becomes an OpenID Connect provider for FreeScout agents. The Rondo Integration module is
    the relying party and implements authorization code flow with PKCE S256, `state`, `nonce`, ID-token
    validation and UserInfo subject matching.
@@ -77,9 +79,10 @@ guard and manual grant/revoke behavior.
     mailbox access is enforced on the next server request after reconciliation; sessions are
     invalidated when no mailbox remains or when the identity binding is disabled/replaced. Manual
     mailbox access and manually created account status remain under FreeScout administration.
-21. The first Ledenadministratie sidebar release uses the fixed field contract below. It shows
-    current membership, contact, household, onboarding, membership-pass and agent-visible task
-    context, but no contribution, VOG, sponsor, private-note or unrestricted custom-field data.
+21. `ledenadministratie.v2` shows the original membership, contact, household, onboarding,
+    membership-pass and agent-visible task context. It adds a read-only Openstaande contributie
+    group only when the exact OIDC-bound Rondo user also has `financieel_read` or `financieel`.
+    Without either capability, the financial group is omitted completely.
 22. Keep FreeScout conversation activities in Rondo long-term. They remain lightweight pointers
     from a person timeline to FreeScout, not a message archive: one idempotent activity for the
     conversation start and one for each published incoming or sent reply. Each contains only its
@@ -91,21 +94,21 @@ guard and manual grant/revoke behavior.
     emails are compared with Rondo `email_1` and `email_2`; exactly one person may match. No phone,
     name, FreeScout ID, KNVB ID, SQLite mapping or automatic persistent customer binding may select
     a person.
-24. The production managed-mailbox key is `ledenadministratie` and its configured FreeScout
-    mailbox ID is `18`. A read-only production API query on 2026-09-01 returned the unique mailbox
-    name `Ledenadministratie` and address `ledenadministratie@svawc.nl`. The numeric ID remains
-    environment configuration, not a source-code constant, and the module must verify its local
-    existence and enabled state before provisioning is switched on.
+24. The production managed-mailbox keys are `ledenadministratie` and `contributie`. Their observed
+    FreeScout mailbox IDs were `18` and `9` respectively. Numeric IDs remain environment
+    configuration, not source-code constants, and the module must verify each local mailbox's
+    identity and enabled state before its mapping is activated.
 25. Mailbox mappings are configured in the Rondo Integration administrator screen. Administrators
     select a Rondo-supported stable key and a local FreeScout mailbox from lists; they never type a
     capability, stable key or numeric mailbox ID. Activation, repointing and revoking a mapping use
     verification, aggregate impact preview, recent local-password confirmation and an audit event.
-26. The first release advertises only `ledenadministratie`. The only pre-approved later mapping
-    candidates are `fairplay` for the FairPlay mailbox and `contributie` for the Contributie
-    mailbox. Contributie requires the effective `financieel` capability because mailbox access can
-    send replies; `financieel_read` is explicitly insufficient. Every other current capability and
-    mailbox remains unavailable until it has an exact dedicated capability, sidebar policy and
-    separate product and privacy approval.
+26. The managed-access catalog advertises `ledenadministratie` and `contributie`. Contributie requires
+    the effective `financieel` capability because mailbox access can send replies;
+    `financieel_read` is sufficient to reveal the financial sidebar group in Ledenadministratie,
+    but is explicitly insufficient to join the Contributie mailbox. Other selected mailboxes use
+    `basis.v1` and never reveal financial data. The only pre-approved
+    later candidate is `fairplay`; every other mapping remains unavailable until it has an exact
+    dedicated capability, sidebar policy and separate product and privacy approval.
 27. OAuth, identity, mailbox-mapping and provisioning audit records are retained for 365 days by
     default, configurable per club from 90 through 730 days. Unresolved access-removal, identity or
     security failures are not pruned until an administrator resolves or explicitly accepts them.
@@ -147,6 +150,11 @@ guard and manual grant/revoke behavior.
     `RONDO_AUDIT_RETENTION_DAYS` environment value overrides the Rondo UI option; FreeScout never
     reads a separate local override and applies only the signed effective value and source returned
     by Rondo.
+37. Sidebar visibility and managed mailbox access are separate settings. The module stores the
+    selected active mailbox IDs in its existing settings option. An active managed mapping is the
+    backward-compatible default until an administrator saves an explicit selection. Unmapped
+    selected mailboxes request `basis.v1`; mapped Ledenadministratie and Contributie mailboxes keep
+    their dedicated policies.
 
 ## Why this replaces copied customer context
 
@@ -301,7 +309,7 @@ References:
 5. Rondo intersects three boundaries:
    - which person the agent may view;
    - which fields the agent's Rondo capabilities permit;
-   - which fields the current FreeScout mailbox permits.
+   - which extra fields the current FreeScout mailbox policy permits.
 6. Rondo returns sanitized, script-free sidebar markup.
 7. The module places that markup inside its own sandboxed document shell and adjusts the iframe
    height through the module-owned resize bridge.
@@ -319,7 +327,7 @@ The sidebar shows a small, non-sensitive state for:
 - no Rondo match;
 - multiple possible Rondo matches;
 - agent not mapped to an eligible Rondo account;
-- mailbox not configured;
+- sidebar not enabled for the mailbox;
 - invalid or expired signature;
 - Rondo timeout or temporary error.
 
@@ -879,8 +887,9 @@ Repository protection and release workflow:
 - Add `auth` middleware to the AJAX route; upstream currently applies only `web`.
 - Read the current agent with `auth()->user()`.
 - Authorize the agent against the conversation using FreeScout's normal conversation policy.
-- Reload `conversation.mailbox_id` and resolve it through the active local stable-key mapping;
-  reject a missing, inactive or drifted mapping.
+- Reload `conversation.mailbox_id` and verify that the administrator enabled the sidebar there.
+- Use the active local stable-key mapping when present; otherwise use the generic `basis.v1`
+  policy. Never infer or change mailbox access from the sidebar selection.
 - Fetch the customer through the already-authorized conversation.
 - Never accept agent, customer, conversation or mailbox identity from browser-supplied data without
   reloading and authorizing it server-side.
@@ -1079,9 +1088,9 @@ The mapping catalog is deliberately closed:
 
 | Stable key | Required effective capability | Production mailbox candidate | Status | Release gate |
 |---|---|---|---|---|
-| `ledenadministratie` | `ledenadministratie` | Ledenadministratie, locally configured as ID `18` | First release | Current `ledenadministratie.v1` policy and all compatibility gates |
+| `ledenadministratie` | `ledenadministratie` | Ledenadministratie, locally configured as ID `18` | Released | Current `ledenadministratie.v2` policy and all compatibility gates |
 | `fairplay` | `fairplay` | FairPlay, currently discovered as ID `17` | Pre-approved candidate | Define and approve `fairplay.v1` fields, privacy rules and pilot before Rondo advertises the key |
-| `contributie` | `financieel` | Contributie, currently discovered as ID `9` | Pre-approved candidate | Define and approve `contributie.v1` fields, finance-specific privacy rules and pilot before Rondo advertises the key |
+| `contributie` | `financieel` | Contributie, currently discovered as ID `9` | Released | Current `contributie.v1` policy and all compatibility gates |
 
 Candidate IDs are production discovery snapshots only. They remain environment configuration and
 receive the same local existence, active-state and drift verification as Ledenadministratie.
@@ -1118,12 +1127,24 @@ The response contains no users or person data:
 ```json
 {
   "version": 1,
+  "sidebar": {
+    "key": "basis",
+    "sidebar_policy": "basis.v1",
+    "enabled": true
+  },
   "mappings": [
     {
       "key": "ledenadministratie",
       "label": "Ledenadministratie",
       "required_capability": "ledenadministratie",
-      "sidebar_policy": "ledenadministratie.v1",
+      "sidebar_policy": "ledenadministratie.v2",
+      "enabled": true
+    },
+    {
+      "key": "contributie",
+      "label": "Contributie",
+      "required_capability": "financieel",
+      "sidebar_policy": "contributie.v1",
       "enabled": true
     }
   ],
@@ -1282,7 +1303,8 @@ Using the effective capability:
 The mailbox policy can only narrow the Rondo user's permissions. It can never grant a field the
 user cannot read in Rondo.
 
-The first Ledenadministratie release has this fixed, versioned display contract:
+The current Ledenadministratie and Contributie policies share this fixed display contract. The
+financial row is additionally capability-gated for each rendered request:
 
 | Group | Values | Canonical source and derivation |
 |---|---|---|
@@ -1291,13 +1313,17 @@ The first Ledenadministratie release has this fixed, versioned display contract:
 | Contact | Primary and secondary email; both mobile and telephone fields; populated labelled addresses | `email_1`, `email_2`, `mobile_1`, `mobile_2`, `telephone_1`, `telephone_2`, `addresses`; Home is shown first, followed by other populated labelled addresses |
 | Household | Directly related person's name, relationship label, active/former status and current team summary | One non-recursive level from `relationships`; the related person is independently visibility-checked and its current teams are derived from current `work_history` rows |
 | Process | Member-onboarding email state; whether a Rondo account is linked and its welcome-email time; eligible digital membership-pass type and available wallet platforms | `onboarding_email_lid_sent`, boolean presence of `linked_user_id`, `welcome_email_sent_at`, and the client-safe `membership_pass` summary; user IDs, wallet action URLs and role-selection details are not returned |
+| Open contribution | Total outstanding principal plus each sent or overdue membership invoice's number, original principal, outstanding principal, next unpaid due date, paid/total installment count and Rondo link | Native `rondo_invoice` posts related to the matched person with `invoice_type=membership` and status `rondo_sent` or `rondo_overdue`; paid installment principal is deducted, credit, paid, cancelled, draft, manual, discipline and tournament invoices are excluded |
 | Open tasks | Count plus at most three open or awaiting tasks visible to the current agent, with title, status, due date and overdue state | `rondo_todo` records directly related through `related_persons`, after the normal created-by-or-assigned-to visibility filter; notes, email-event data and assignee details are omitted |
 | Links | Open person in Rondo; open the visible task list or task; open the Sportlink member record | Server-generated allowlisted links only; the Sportlink URL uses the canonical `knvb_id`; absent identifiers produce no link |
 
 Presentation and missing-data rules:
 
-- the summary stays visible; Membership, Contact, Household, Process and Open tasks are compact
-  collapsible groups suitable for the configured `360px` default maximum width;
+- the summary stays visible; Membership, Contact, Household, Process, Open contribution and Open
+  tasks are compact collapsible groups suitable for the configured `360px` default maximum width;
+- Open contribution is rendered only when the exact OIDC-bound viewer has `financieel_read` or
+  `financieel`; the check uses the resolved user ID and must also match WordPress's current-user
+  context for that request;
 - empty values and empty groups are omitted rather than rendered as dashes or unknown facts;
 - an unavailable current-team relation is omitted; historical or raw `work_history` rows are never
   returned;
@@ -1313,7 +1339,9 @@ Presentation and missing-data rules:
 
 Explicitly excluded unless a future mailbox policy and Rondo capability both allow them:
 
-- contribution balance, invoices and installment details;
+- paid, cancelled, draft, credit, discipline, manual and tournament invoices;
+- payment links, payment-provider identifiers, bank details, line items, reminder audit and full
+  installment payment history;
 - financial block and Nikki fields;
 - VOG details;
 - sponsor-management fields;
@@ -1839,6 +1867,12 @@ secondary and ambiguous matching, excluded-field behavior, synthetic-address rej
 full activity reassignment lifecycle. Production FreeScout connection setup, activity-queue
 delivery and pilot acceptance remain later rollout gates; the existing sync is unchanged.
 
+**Result, 2026-09-02, financial sidebar extension:** `ledenadministratie.v2` and
+`contributie.v1` add a minimal live open-contribution summary. Rondo derives the viewer from the
+durable OIDC subject binding and requires `financieel_read` or `financieel` before rendering any
+amount. The Contributie mailbox mapping itself requires `financieel`. No invoice data is persisted
+in FreeScout, and the existing customer-field sync is not used by the sidebar.
+
 ### Phase 4: automatic provisioning in the Rondo Integration module
 
 - Extend the same custom module with the FreeScout login listener.
@@ -2085,8 +2119,8 @@ The milestone is complete only when:
 - a current `ledenadministratie` capability grants the correct FreeScout mailbox;
 - production key `ledenadministratie` resolves only to locally verified mailbox ID `18`, displayed
   as `Ledenadministratie <ledenadministratie@svawc.nl>`;
-- the signed first-release catalog advertises only `ledenadministratie`; `fairplay`, `contributie`,
-  `financieel_read`, role names and arbitrary capabilities cannot be activated through FreeScout;
+- the signed current catalog advertises only `ledenadministratie` and `contributie`; `fairplay`,
+  `financieel_read`, role names and arbitrary capabilities cannot be activated as mailbox keys;
 - managed provisioning cannot activate until valid retention and operational-owner settings exist;
 - eligible audit records are pruned after the configured period, while unresolved access,
   identity and security failures remain visible until explicitly closed and then receive a fresh

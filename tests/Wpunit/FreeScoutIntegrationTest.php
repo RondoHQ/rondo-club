@@ -79,8 +79,19 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
 		$data = $response->get_data();
 		$this->assertSame( 1, $data['version'] );
+		$this->assertSame(
+			[
+				'key'            => 'basis',
+				'sidebar_policy' => 'basis.v1',
+				'enabled'        => true,
+			],
+			$data['sidebar']
+		);
 		$this->assertSame( 'ledenadministratie', $data['mappings'][0]['key'] );
-		$this->assertSame( 'ledenadministratie.v1', $data['mappings'][0]['sidebar_policy'] );
+		$this->assertSame( 'ledenadministratie.v2', $data['mappings'][0]['sidebar_policy'] );
+		$this->assertSame( 'contributie', $data['mappings'][1]['key'] );
+		$this->assertSame( 'financieel', $data['mappings'][1]['required_capability'] );
+		$this->assertSame( 'contributie.v1', $data['mappings'][1]['sidebar_policy'] );
 		$this->assertSame(
 			[
 				'retention_days' => 365,
@@ -152,7 +163,21 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->assertTrue( $active->get_data()['active'] );
 		$this->assertSame( [ 'ledenadministratie' ], $active->get_data()['managed_mailboxes'] );
 
-		get_userdata( $this->agent_id )->remove_cap( 'ledenadministratie' );
+		$agent = get_userdata( $this->agent_id );
+		$agent->add_cap( 'financieel' );
+		$both = $this->signed_request(
+			'access',
+			[
+				'version'         => 1,
+				'issuer'          => OidcAuthorizationService::issuer(),
+				'subject'         => $this->subject,
+				'freescoutUserId' => 44,
+			]
+		);
+		$this->assertSame( [ 'ledenadministratie', 'contributie' ], $both->get_data()['managed_mailboxes'] );
+
+		$agent->remove_cap( 'financieel' );
+		$agent->remove_cap( 'ledenadministratie' );
 		$inactive = $this->signed_request(
 			'access',
 			[
@@ -240,6 +265,97 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->assertStringContainsString( 'Second private name', $data['html'] );
 		$this->assertStringContainsString( 'data-rondo-profile-panel', $data['html'] );
 		$this->assertStringContainsString( 'hidden', $data['html'] );
+	}
+
+	public function test_basic_sidebar_works_for_an_exact_bound_rondo_user(): void {
+		$person_id  = $this->createPerson( [ 'post_title' => 'Basic member' ], [ 'email_1' => 'basic@example.test' ] );
+		$invoice_id = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_invoice',
+				'post_status' => 'rondo_overdue',
+			]
+		);
+		Fields::update_for_post( $invoice_id, 'person', $person_id );
+		Fields::update_for_post( $invoice_id, 'invoice_type', 'membership' );
+		Fields::update_for_post( $invoice_id, 'invoice_number', 'BASIC-HIDDEN' );
+		Fields::update_for_post( $invoice_id, 'total_amount', 100 );
+		get_userdata( $this->agent_id )->add_cap( 'financieel' );
+
+		$response = $this->signed_request( 'sidebar', $this->sidebar_body( [ 'basic@example.test' ], 'basis' ) );
+		$data     = $response->get_data();
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'ok', $data['status'] );
+		$this->assertStringContainsString( 'Basic member', $data['html'] );
+		$this->assertStringNotContainsString( 'Openstaande contributie', $data['html'] );
+		$this->assertStringNotContainsString( 'BASIC-HIDDEN', $data['html'] );
+	}
+
+	public function test_sidebar_rejects_an_unknown_policy_key(): void {
+		$response = $this->signed_request( 'sidebar', $this->sidebar_body( [ 'member@example.test' ], 'unknown' ) );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'rondo_freescout_sidebar_schema_invalid', $response->as_error()->get_error_code() );
+	}
+
+	public function test_sidebar_only_shows_open_contribution_invoices_to_finance_viewers(): void {
+		$person_id  = $this->createPerson( [ 'post_title' => 'Finance member' ], [ 'email_1' => 'finance@example.test' ] );
+		$invoice_id = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_invoice',
+				'post_status' => 'rondo_overdue',
+				'post_title'  => 'Membership invoice',
+			]
+		);
+		Fields::update_for_post( $invoice_id, 'person', $person_id );
+		Fields::update_for_post( $invoice_id, 'invoice_type', 'membership' );
+		Fields::update_for_post( $invoice_id, 'invoice_number', 'C2026-123' );
+		Fields::update_for_post( $invoice_id, 'total_amount', 120 );
+		Fields::update_for_post( $invoice_id, 'due_date', '2026-09-01' );
+		update_post_meta( $invoice_id, '_installment_plan', 'quarterly_3' );
+		update_post_meta( $invoice_id, '_installment_count', 3 );
+		update_post_meta( $invoice_id, '_installment_1_status', 'betaald' );
+		update_post_meta( $invoice_id, '_installment_1_amount', 40 );
+		update_post_meta( $invoice_id, '_installment_2_status', 'sent' );
+		update_post_meta( $invoice_id, '_installment_2_due_date', '2026-09-01' );
+
+		$manual_invoice_id = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_invoice',
+				'post_status' => 'rondo_overdue',
+			]
+			);
+		Fields::update_for_post( $manual_invoice_id, 'person', $person_id );
+		Fields::update_for_post( $manual_invoice_id, 'invoice_type', 'manual' );
+		Fields::update_for_post( $manual_invoice_id, 'invoice_number', 'F-PRIVATE' );
+		Fields::update_for_post( $manual_invoice_id, 'total_amount', 999 );
+
+		$without_finance = $this->signed_request( 'sidebar', $this->sidebar_body( [ 'finance@example.test' ] ) )->get_data();
+		$this->assertStringNotContainsString( 'Openstaande contributie', $without_finance['html'] );
+		$this->assertStringNotContainsString( 'C2026-123', $without_finance['html'] );
+
+		get_userdata( $this->agent_id )->add_cap( 'financieel_read' );
+		$with_finance = $this->signed_request( 'sidebar', $this->sidebar_body( [ 'finance@example.test' ] ) )->get_data();
+		$this->assertStringContainsString( 'Openstaande contributie', $with_finance['html'] );
+		$this->assertStringContainsString( 'C2026-123', $with_finance['html'] );
+		$this->assertStringContainsString( '€ 80.00', $with_finance['html'] );
+		$this->assertStringContainsString( '1/3 termijnen betaald', $with_finance['html'] );
+		$this->assertStringContainsString( '/financien/facturen/' . $invoice_id, $with_finance['html'] );
+		$this->assertStringNotContainsString( 'F-PRIVATE', $with_finance['html'] );
+		$this->assertStringNotContainsString( '999', $with_finance['html'] );
+	}
+
+	public function test_contribution_sidebar_requires_write_capability_but_accepts_finance_viewer_data(): void {
+		$this->createPerson( [ 'post_title' => 'Contribution member' ], [ 'email_1' => 'contribution@example.test' ] );
+		get_userdata( $this->agent_id )->add_cap( 'financieel_read' );
+
+		$denied = $this->signed_request( 'sidebar', $this->sidebar_body( [ 'contribution@example.test' ], 'contributie' ) )->get_data();
+		$this->assertSame( 'unauthorized', $denied['status'] );
+
+		get_userdata( $this->agent_id )->add_cap( 'financieel' );
+		$allowed = $this->signed_request( 'sidebar', $this->sidebar_body( [ 'contribution@example.test' ], 'contributie' ) )->get_data();
+		$this->assertSame( 'ok', $allowed['status'] );
+		$this->assertStringContainsString( 'Contribution member', $allowed['html'] );
 	}
 
 	public function test_matcher_discards_synthetic_and_malformed_emails(): void {
@@ -359,10 +475,10 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 	}
 
 	/** @return array<string,mixed> */
-	private function sidebar_body( array $emails ): array {
+	private function sidebar_body( array $emails, string $mailbox_key = 'ledenadministratie' ): array {
 		return [
 			'version'            => 1,
-			'mailboxKey'         => 'ledenadministratie',
+			'mailboxKey'         => $mailbox_key,
 			'conversationId'     => 3456,
 			'conversationNumber' => 789,
 			'customerId'         => 123,
