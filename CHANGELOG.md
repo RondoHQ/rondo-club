@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Gepubliceerde inkomende en verzonden FreeScout-antwoorden verschijnen afzonderlijk en idempotent in de Rondo-tijdlijn, zonder berichttekst; verzonden antwoorden gebruiken de bestaande subjectbinding voor de auteur.
 - De Rondo Integration-module kan live, mailboxspecifieke ledeninformatie ophalen via ondertekende FreeScout-services met replaybeveiliging, exacte e-mailmatching, actuele agentrechten en een vast privacy-allowlist voor Ledenadministratie.
 - FreeScout-conversaties kunnen idempotent als native Rondo-activiteit worden gemaakt en bij een expliciete klantwijziging veilig worden verplaatst, verborgen of hersteld zonder e-mailadressen op te slaan.
 - Beheerders kunnen de bewaartermijn voor de FreeScout integratie-audit instellen op 90 tot 730 dagen; een serverinstelling blijft leidend en vergrendelt het veld.
