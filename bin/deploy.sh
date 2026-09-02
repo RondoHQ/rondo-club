@@ -194,14 +194,33 @@ SSH_CMD=(ssh "${SSH_OPTIONS[@]}")
 printf -v RSYNC_SSH '%q ' "${SSH_CMD[@]}"
 REMOTE_TARGET="$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST"
 
+SCP_OPTIONS=(
+    -P "$DEPLOY_SSH_PORT"
+    -o BatchMode=yes
+    -o StrictHostKeyChecking=yes
+    -o ConnectTimeout=20
+    -o ServerAliveInterval=15
+    -o ServerAliveCountMax=4
+)
+
+if [ -n "${DEPLOY_SSH_IDENTITY_FILE:-}" ]; then
+    SCP_OPTIONS+=(-i "$DEPLOY_SSH_IDENTITY_FILE")
+fi
+
+if [ -n "${DEPLOY_SSH_KNOWN_HOSTS_FILE:-}" ]; then
+    SCP_OPTIONS+=(-o "UserKnownHostsFile=$DEPLOY_SSH_KNOWN_HOSTS_FILE")
+fi
+
+SCP_CMD=(scp "${SCP_OPTIONS[@]}")
+
 DEPLOY_RETRIES="${DEPLOY_RETRIES:-3}"
 DEPLOY_RETRY_DELAY="${DEPLOY_RETRY_DELAY:-15}"
 
-# Run a remote command, retrying transient SSH/rsync failures.
+# Run a remote command, retrying transient transfer and SSH failures.
 #
 # The host regularly refuses or drops connections ("connect to host ... port
-# 18765: Connection timed out"), which fails an otherwise healthy deploy. Both
-# rsync and the WP-CLI calls are idempotent, so a rerun is always safe.
+# 18765: Connection timed out"), which fails an otherwise healthy deploy. The
+# transfer and WP-CLI operations are idempotent, so a rerun is always safe.
 retry_remote() {
     local attempt=1
     local delay="$DEPLOY_RETRY_DELAY"
@@ -227,6 +246,38 @@ retry_remote() {
     done
 }
 
+# Some managed hosts allow normal SSH/SFTP writes while blocking rsync when it
+# runs as the receiver. Build a complete archive first, upload it with SCP, and
+# only then extract it on the host. A failed upload never changes production.
+archive_sync() {
+    local source_dir="$1"
+    local remote_dir="$2"
+    local mode="$3"
+    local label="$4"
+    shift 4
+
+    local archive
+    local remote_archive
+    local remote_archive_quoted
+    local remote_command
+    archive="$(mktemp "${TMPDIR:-/tmp}/rondo-${label}-XXXXXX")"
+    remote_archive="$REMOTE_THEME_PATH_RESOLVED/.rondo-${label}-${DEPLOY_COMMIT_SHA:-manual}.tar.gz"
+    printf -v remote_archive_quoted '%q' "$remote_archive"
+
+    tar -czf "$archive" -C "$source_dir" "$@" .
+    retry_remote "${SCP_CMD[@]}" "$archive" "$REMOTE_TARGET:$remote_archive"
+    rm -f "$archive"
+
+    printf -v remote_command 'set -e; tar -tzf %q >/dev/null; mkdir -p %q; ' "$remote_archive" "$remote_dir"
+    if [ "$mode" = "replace" ]; then
+        printf -v remote_command '%sfind %q -mindepth 1 -depth -delete; ' "$remote_command" "$remote_dir"
+    fi
+    printf -v remote_command '%star -xzf %q -C %q' "$remote_command" "$remote_archive" "$remote_dir"
+
+    retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" "$remote_command"
+    retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" "rm -f $remote_archive_quoted"
+}
+
 echo -e "${GREEN}=== Rondo Club Deployment ===${NC}"
 echo "Target: $REMOTE_TARGET"
 echo "Theme path: $DEPLOY_REMOTE_THEME_PATH"
@@ -235,6 +286,14 @@ if [ -n "${DEPLOY_COMMIT_SHA:-}" ]; then
     echo "Commit: $DEPLOY_COMMIT_SHA"
 fi
 echo ""
+
+REMOTE_THEME_PATH_RESOLVED="$(retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
+    "cd $DEPLOY_REMOTE_THEME_PATH && pwd -P" | tail -n 1 | tr -d '\r')"
+
+if [ -z "$REMOTE_THEME_PATH_RESOLVED" ]; then
+    echo -e "${RED}Error: could not resolve the remote theme path${NC}"
+    exit 1
+fi
 
 if [ "$SKIP_BUILD" = false ]; then
     echo -e "${YELLOW}Step 1: Building frontend assets...${NC}"
@@ -255,10 +314,13 @@ if [ ! -f "$SOURCE_DIR/vendor/autoload.php" ]; then
 fi
 
 echo -e "${YELLOW}Step 2: Syncing dist/ folder...${NC}"
-retry_remote rsync -avz --delete \
+if ! rsync -avz --delete \
     -e "$RSYNC_SSH" \
     "$SOURCE_DIR/dist/" \
-    "$REMOTE_TARGET:$DEPLOY_REMOTE_THEME_PATH/dist/"
+    "$REMOTE_TARGET:$DEPLOY_REMOTE_THEME_PATH/dist/"; then
+    echo -e "${YELLOW}  rsync receiver unavailable; using validated archive transfer.${NC}"
+    archive_sync "$SOURCE_DIR/dist" "$REMOTE_THEME_PATH_RESOLVED/dist" replace dist
+fi
 
 echo -e "${YELLOW}Step 3: Syncing theme files...${NC}"
 RSYNC_EXCLUDES=(
@@ -276,17 +338,36 @@ RSYNC_EXCLUDES=(
     --exclude='tests'
 )
 
+TAR_EXCLUDES=(
+    --exclude='.git'
+    --exclude='.github'
+    --exclude='.claude'
+    --exclude='.agents'
+    --exclude='.codex'
+    --exclude='.husky'
+    --exclude='.env'
+    --exclude='.DS_Store'
+    --exclude='dist'
+    --exclude='graphify-out'
+    --exclude='release'
+    --exclude='tests'
+)
+
 if [ "$INCLUDE_NODE_MODULES" = false ]; then
     RSYNC_EXCLUDES+=(--exclude='node_modules')
+    TAR_EXCLUDES+=(--exclude='node_modules')
 else
     echo "(Including node_modules)"
 fi
 
-retry_remote rsync -avz \
+if ! rsync -avz \
     "${RSYNC_EXCLUDES[@]}" \
     -e "$RSYNC_SSH" \
     "$SOURCE_DIR/" \
-    "$REMOTE_TARGET:$DEPLOY_REMOTE_THEME_PATH/"
+    "$REMOTE_TARGET:$DEPLOY_REMOTE_THEME_PATH/"; then
+    echo -e "${YELLOW}  rsync receiver unavailable; using validated archive transfer.${NC}"
+    archive_sync "$SOURCE_DIR" "$REMOTE_THEME_PATH_RESOLVED" overlay theme "${TAR_EXCLUDES[@]}"
+fi
 
 if [ "$PRUNE_DELETED" = true ]; then
     echo -e "${YELLOW}Step 3b: Pruning deleted files from ${PRUNE_DIRS[*]}...${NC}"
@@ -297,10 +378,13 @@ if [ "$PRUNE_DELETED" = true ]; then
         fi
 
         echo "  ${dir}/"
-        retry_remote rsync -az --delete \
+        if ! rsync -az --delete \
             -e "$RSYNC_SSH" \
             "$SOURCE_DIR/$dir/" \
-            "$REMOTE_TARGET:$DEPLOY_REMOTE_THEME_PATH/$dir/"
+            "$REMOTE_TARGET:$DEPLOY_REMOTE_THEME_PATH/$dir/"; then
+            echo -e "${YELLOW}    rsync receiver unavailable; using validated archive transfer.${NC}"
+            archive_sync "$SOURCE_DIR/$dir" "$REMOTE_THEME_PATH_RESOLVED/$dir" replace "prune-$dir"
+        fi
     done
 fi
 

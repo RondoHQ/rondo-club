@@ -1818,7 +1818,7 @@ workflow dispatch. Phase 3 and production cutover remain unimplemented.
 - Add no-match, ambiguous, unauthorized and unavailable states.
 - Link all mutations to authenticated Rondo pages.
 
-**Result, 2026-09-02:** implemented in Rondo Club `35.33.0`. Four publicly routable HMAC-protected
+**Result, 2026-09-02:** implemented in Rondo Club `35.33.1`. Four publicly routable HMAC-protected
 services now publish the closed mailbox catalog, evaluate current subject-bound access, render the
 script-free `ledenadministratie.v1` sidebar as the effective Rondo user and receive idempotent
 conversation activities. The shared matcher uses exact canonical primary/secondary emails and
