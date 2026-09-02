@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- De eerste FreeScout-aanmelding kan de actuele Rondo-toegang controleren voordat een lokaal FreeScout-gebruikers-ID bestaat; ongeldige niet-lege ID's blijven geweigerd.
 - Productiedeploys schakelen automatisch over op een gevalideerde archiefoverdracht wanneer een hostingplatform rsync-schrijfbewerkingen blokkeert.
 - OpenID Connect-discovery gebruikt een `/oauth`-issuerpad, zodat een door de host gereserveerde map `.well-known` de metadata niet kan blokkeren.
 - Het clublogo in toernooi-PDF's wordt op een vaste kophoogte geschaald, zodat de inhoud direct op de eerste pagina begint.

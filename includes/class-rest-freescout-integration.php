@@ -98,15 +98,20 @@ final class FreeScoutIntegration extends Base {
 			return $this->error( 'rondo_freescout_version_invalid', 'Niet-ondersteunde integratieversie.', 400 );
 		}
 
-		$issuer  = (string) ( $body['issuer'] ?? '' );
-		$subject = (string) ( $body['subject'] ?? '' );
-		if ( $issuer !== OidcAuthorizationService::issuer() || ! $this->valid_subject( $subject ) || absint( $body['freescoutUserId'] ?? 0 ) <= 0 ) {
+		$issuer            = (string) ( $body['issuer'] ?? '' );
+		$subject           = (string) ( $body['subject'] ?? '' );
+		$freescout_user_id = $body['freescoutUserId'] ?? null;
+		if ( $issuer !== OidcAuthorizationService::issuer()
+			|| ! $this->valid_subject( $subject )
+			|| ( $freescout_user_id !== null && ( ! is_int( $freescout_user_id ) || $freescout_user_id <= 0 ) )
+		) {
 			return $this->error( 'rondo_freescout_access_schema_invalid', 'De access request is ongeldig.', 400 );
 		}
 		$user_id = $this->resolve_subject( $issuer, $subject );
 		$active  = $user_id > 0 && user_can( $user_id, self::REQUIRED_CAPABILITY );
 
-		$this->audit( 'access_evaluated', $active ? 'active' : 'inactive', [ 'freescout_user_id' => absint( $body['freescoutUserId'] ?? 0 ) ] );
+		$audit_context = $freescout_user_id !== null ? [ 'freescout_user_id' => $freescout_user_id ] : [];
+		$this->audit( 'access_evaluated', $active ? 'active' : 'inactive', $audit_context );
 
 		return rest_ensure_response(
 			[
