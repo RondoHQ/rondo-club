@@ -178,6 +178,36 @@ class PersonNotesAccessTest extends RondoTestCase {
 		$this->assertSame( '2026-09-02T17:40:19+00:00', $items[0]['created'] );
 	}
 
+	/** Existing FreeScout activities expose their canonical local comment time. */
+	public function test_timeline_normalizes_legacy_freescout_activity_time(): void {
+		$author_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		wp_set_current_user( $author_id );
+
+		$comment_id = wp_insert_comment(
+			[
+				'comment_post_ID'  => $this->person_id,
+				'comment_content'  => 'Antwoord ontvangen',
+				'comment_type'     => CommentTypes::TYPE_ACTIVITY,
+				'comment_approved' => 1,
+				'user_id'          => $author_id,
+				'comment_date'     => '2026-09-02 19:40:19',
+				'comment_date_gmt' => '2026-09-02 17:40:19',
+			]
+		);
+		update_comment_meta( $comment_id, '_rondo_freescout_instance', 'https://support.example.test' );
+		update_comment_meta( $comment_id, 'activity_type', 'email' );
+		update_comment_meta( $comment_id, 'activity_date', '2026-09-02' );
+		update_comment_meta( $comment_id, 'activity_time', '17:40' );
+
+		$response = $this->get( $this->timeline_route() );
+		$this->assertSame( 200, $response->get_status() );
+		$items = array_values( array_filter( (array) $response->get_data(), fn( $item ) => (int) ( $item['id'] ?? 0 ) === $comment_id ) );
+		$this->assertCount( 1, $items );
+		$this->assertSame( '2026-09-02', $items[0]['activity_date'] );
+		$this->assertSame( '19:40', $items[0]['activity_time'] );
+		$this->assertSame( '2026-09-02T17:40:19+00:00', $items[0]['created'] );
+	}
+
 	/** Editing your own note is still author-or-admin; unchanged behaviour. */
 	public function test_comment_edit_access_is_unchanged(): void {
 		$author_id = self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] );
