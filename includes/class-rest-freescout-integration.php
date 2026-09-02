@@ -148,11 +148,18 @@ final class FreeScoutIntegration extends Base {
 		wp_set_current_user( $user_id );
 		try {
 			$match = $this->matcher->match( $body['customerEmails'], 'sidebar', $user_id );
+			if ( $match['status'] === 'ambiguous' && ! empty( $match['candidate_ids'] ) ) {
+				$this->audit( 'sidebar_match', 'ambiguous', [ 'freescout_user_id' => absint( $agent['freescoutUserId'] ) ] );
+				return rest_ensure_response(
+					$this->sidebar_response(
+						'ambiguous',
+						$this->renderer->render_switcher( $match['candidate_ids'] )
+					)
+				);
+			}
 			if ( $match['status'] !== 'exact' || empty( $match['person_id'] ) ) {
-				$public_status = $match['status'] === 'ambiguous' ? 'ambiguous' : 'no_match';
-				$message       = $public_status === 'ambiguous'
-					? 'Meerdere Rondo-profielen gebruiken dit e-mailadres.'
-					: 'Geen gekoppeld Rondo-profiel gevonden.';
+				$public_status = 'no_match';
+				$message       = 'Geen gekoppeld Rondo-profiel gevonden.';
 				$this->audit( 'sidebar_match', $match['status'], [ 'freescout_user_id' => absint( $agent['freescoutUserId'] ) ] );
 				return rest_ensure_response( $this->sidebar_response( $public_status, $this->renderer->state( $message ) ) );
 			}

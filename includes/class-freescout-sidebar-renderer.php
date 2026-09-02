@@ -7,6 +7,7 @@
 
 namespace Rondo\Integrations\FreeScout;
 
+use Rondo\Core\AccessControl;
 use Rondo\Fields\Fields;
 use Rondo\Fields\Formatter;
 use Rondo\Fields\RestFields;
@@ -75,6 +76,52 @@ final class SidebarRenderer {
 		$html .= '</section>';
 
 		return wp_kses_post( $html );
+	}
+
+	/** Render all accessible exact-email matches with an in-frame profile switcher. */
+	public function render_switcher( array $person_ids ): string {
+		$profiles = [];
+		foreach ( array_values( array_unique( array_map( 'absint', $person_ids ) ) ) as $person_id ) {
+			$person = get_post( $person_id );
+			if ( ! $person || $person->post_type !== 'person' || $person->post_status !== 'publish' || ! AccessControl::can_view_person( $person_id ) ) {
+				continue;
+			}
+			$profiles[] = [
+				'id'   => $person_id,
+				'name' => get_the_title( $person_id ),
+				'html' => $this->render( $person_id ),
+			];
+		}
+		if ( $profiles === [] ) {
+			return $this->state( 'Geen gekoppeld Rondo-profiel gevonden.' );
+		}
+
+		$html  = '<section class="rondo-profile-choice">';
+		$html .= '<label for="rondo-profile-switcher"><strong>Profiel</strong></label>';
+		$html .= '<select id="rondo-profile-switcher" data-rondo-profile-switcher>';
+		foreach ( $profiles as $index => $profile ) {
+			$html .= '<option value="rondo-profile-' . esc_attr( (string) $index ) . '">' . esc_html( $profile['name'] ) . '</option>';
+		}
+		$html .= '</select><p><small>' . esc_html( count( $profiles ) . ' Rondo-profielen gebruiken dit e-mailadres.' ) . '</small></p></section>';
+		foreach ( $profiles as $index => $profile ) {
+			$html .= '<div id="rondo-profile-' . esc_attr( (string) $index ) . '" data-rondo-profile-panel' . ( $index > 0 ? ' hidden' : '' ) . '>' . $profile['html'] . '</div>';
+		}
+
+		$allowed_html                                    = wp_kses_allowed_html( 'post' );
+		$allowed_html['select']                          = [
+			'id'                          => true,
+			'class'                       => true,
+			'data-rondo-profile-switcher' => true,
+			'aria-label'                  => true,
+		];
+		$allowed_html['option']                          = [
+			'value'    => true,
+			'selected' => true,
+		];
+		$allowed_html['div']['data-rondo-profile-panel'] = true;
+		$allowed_html['div']['hidden']                   = true;
+
+		return wp_kses( $html, $allowed_html );
 	}
 
 	public function state( string $message ): string {

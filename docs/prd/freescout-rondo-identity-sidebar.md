@@ -1348,9 +1348,11 @@ Rules:
 - Phone numbers never select a person automatically.
 - Names, FreeScout customer IDs, `freescout_id`, KNVB IDs and old SQLite mappings never break a tie
   or select a person.
-- A shared email returning multiple people produces an ambiguous state.
+- A shared email returning multiple accessible people produces an in-frame profile switcher; the
+  first profile is shown initially and selecting another profile replaces the visible full card.
 - An inaccessible record is indistinguishable from no match.
-- The agent may open Rondo search, but the sidebar never asks them to pick from inaccessible people.
+- The switcher contains only profiles the current agent may view and never exposes inaccessible
+  candidates.
 - No match state contains no inferred membership information.
 
 Version one creates no persistent customer-to-person binding from an automatic match. A future
