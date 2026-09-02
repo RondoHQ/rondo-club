@@ -166,6 +166,39 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->assertSame( [], $inactive->get_data()['managed_mailboxes'] );
 	}
 
+	public function test_access_allows_missing_local_user_id_during_first_binding(): void {
+		$without_id = $this->signed_request(
+			'access',
+			[
+				'version'         => 1,
+				'issuer'          => OidcAuthorizationService::issuer(),
+				'subject'         => $this->subject,
+				'freescoutUserId' => null,
+			]
+		);
+
+		$this->assertSame( 200, $without_id->get_status(), wp_json_encode( $without_id->get_data() ) );
+		$this->assertTrue( $without_id->get_data()['active'] );
+		$this->assertSame( [ 'ledenadministratie' ], $without_id->get_data()['managed_mailboxes'] );
+	}
+
+	public function test_access_rejects_invalid_local_user_ids(): void {
+		foreach ( [ 0, -1, '44' ] as $invalid_id ) {
+			$response = $this->signed_request(
+				'access',
+				[
+					'version'         => 1,
+					'issuer'          => OidcAuthorizationService::issuer(),
+					'subject'         => $this->subject,
+					'freescoutUserId' => $invalid_id,
+				]
+			);
+
+			$this->assertSame( 400, $response->get_status() );
+			$this->assertSame( 'rondo_freescout_access_schema_invalid', $response->get_data()['code'] );
+		}
+	}
+
 	public function test_sidebar_matches_secondary_email_and_omits_excluded_data(): void {
 		$person_id = $this->createPerson(
 			[ 'post_title' => 'Jan van Test' ],
