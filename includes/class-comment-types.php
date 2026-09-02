@@ -654,6 +654,14 @@ class CommentTypes {
 			foreach ( $meta_fields as $field ) {
 				$data[ $field ] = get_comment_meta( $comment->comment_ID, $field, true ) ?: ( $field === 'participants' ? [] : '' );
 			}
+
+			// Early FreeScout activities stored their UTC clock value in fields that
+			// the timeline displays as local site time. The canonical comment dates
+			// let us normalize those existing records without mutating history.
+			if ( get_comment_meta( $comment->comment_ID, '_rondo_freescout_instance', true ) !== '' ) {
+				$data['activity_date'] = substr( (string) $comment->comment_date, 0, 10 );
+				$data['activity_time'] = substr( (string) $comment->comment_date, 11, 5 );
+			}
 		} elseif ( $type === 'note' ) {
 			$visibility         = get_comment_meta( $comment->comment_ID, '_note_visibility', true );
 			$data['visibility'] = $visibility ?: 'private';
