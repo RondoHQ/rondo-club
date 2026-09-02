@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- De FreeScout-sidebar toont bij een gedeeld e-mailadres alle toegankelijke Rondo-profielen in een compacte keuzelijst en wisselt binnen hetzelfde iframe tussen hun volledige profielkaarten.
 - Gepubliceerde inkomende en verzonden FreeScout-antwoorden verschijnen afzonderlijk en idempotent in de Rondo-tijdlijn, zonder berichttekst; verzonden antwoorden gebruiken de bestaande subjectbinding voor de auteur.
 - De Rondo Integration-module kan live, mailboxspecifieke ledeninformatie ophalen via ondertekende FreeScout-services met replaybeveiliging, exacte e-mailmatching, actuele agentrechten en een vast privacy-allowlist voor Ledenadministratie.
 - FreeScout-conversaties kunnen idempotent als native Rondo-activiteit worden gemaakt en bij een expliciete klantwijziging veilig worden verplaatst, verborgen of hersteld zonder e-mailadressen op te slaan.

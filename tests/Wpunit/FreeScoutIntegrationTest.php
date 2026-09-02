@@ -228,15 +228,18 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->assertSame( 'publish', get_post_status( $person_id ) );
 	}
 
-	public function test_sidebar_shared_email_is_ambiguous_and_contains_no_person_data(): void {
+	public function test_sidebar_shared_email_renders_accessible_profile_switcher(): void {
 		$this->createPerson( [ 'post_title' => 'First private name' ], [ 'email_1' => 'shared@example.test' ] );
 		$this->createPerson( [ 'post_title' => 'Second private name' ], [ 'email_2' => 'shared@example.test' ] );
 
 		$data = $this->signed_request( 'sidebar', $this->sidebar_body( [ 'shared@example.test' ] ) )->get_data();
 
 		$this->assertSame( 'ambiguous', $data['status'] );
-		$this->assertStringNotContainsString( 'First private name', $data['html'] );
-		$this->assertStringNotContainsString( 'Second private name', $data['html'] );
+		$this->assertStringContainsString( 'data-rondo-profile-switcher', $data['html'] );
+		$this->assertStringContainsString( 'First private name', $data['html'] );
+		$this->assertStringContainsString( 'Second private name', $data['html'] );
+		$this->assertStringContainsString( 'data-rondo-profile-panel', $data['html'] );
+		$this->assertStringContainsString( 'hidden', $data['html'] );
 	}
 
 	public function test_matcher_discards_synthetic_and_malformed_emails(): void {

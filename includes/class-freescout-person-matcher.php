@@ -19,12 +19,12 @@ final class PersonMatcher {
 	/**
 	 * Match customer emails within either the effective user's scope or integration scope.
 	 *
-	 * @return array{status:string,person_id:?int,candidate_count:int}
+	 * @return array{status:string,person_id:?int,candidate_count:int,candidate_ids:int[]}
 	 */
 	public function match( array $emails, string $scope = 'integration', int $user_id = 0 ): array {
 		$emails = $this->normalize_emails( $emails );
 		if ( $emails === [] ) {
-			return $this->result( 'no_match', null, 0 );
+			return $this->result( 'no_match', null, [] );
 		}
 
 		$meta_query = [ 'relation' => 'OR' ];
@@ -62,19 +62,19 @@ final class PersonMatcher {
 				)
 			);
 			if ( $visible === [] && $candidates !== [] ) {
-				return $this->result( 'inaccessible', null, count( $candidates ) );
+				return $this->result( 'inaccessible', null, [] );
 			}
 			$candidates = $visible;
 		}
 
 		if ( count( $candidates ) === 1 ) {
-			return $this->result( 'exact', $candidates[0], 1 );
+			return $this->result( 'exact', $candidates[0], $candidates );
 		}
 		if ( count( $candidates ) > 1 ) {
-			return $this->result( 'ambiguous', null, count( $candidates ) );
+			return $this->result( 'ambiguous', null, $candidates );
 		}
 
-		return $this->result( 'no_match', null, 0 );
+		return $this->result( 'no_match', null, [] );
 	}
 
 	/** @return string[] */
@@ -94,8 +94,13 @@ final class PersonMatcher {
 		return array_values( array_unique( $normalized ) );
 	}
 
-	/** @return array{status:string,person_id:?int,candidate_count:int} */
-	private function result( string $status, ?int $person_id, int $candidate_count ): array {
-		return compact( 'status', 'person_id', 'candidate_count' );
+	/** @param int[] $candidate_ids
+	 * @return array{status:string,person_id:?int,candidate_count:int,candidate_ids:int[]}
+	 */
+	private function result( string $status, ?int $person_id, array $candidate_ids ): array {
+		$candidate_ids   = array_values( array_unique( array_map( 'intval', $candidate_ids ) ) );
+		$candidate_count = count( $candidate_ids );
+
+		return compact( 'status', 'person_id', 'candidate_count', 'candidate_ids' );
 	}
 }
