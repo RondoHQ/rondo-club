@@ -469,8 +469,8 @@ final class FreeScoutIntegration extends Base {
 		}
 		$this->update_activity_meta( (int) $id, $instance, $body, 'matched' );
 		update_comment_meta( (int) $id, 'activity_type', 'email' );
-		update_comment_meta( (int) $id, 'activity_date', gmdate( 'Y-m-d', $created ) );
-		update_comment_meta( (int) $id, 'activity_time', gmdate( 'H:i', $created ) );
+		update_comment_meta( (int) $id, 'activity_date', wp_date( 'Y-m-d', $created ) );
+		update_comment_meta( (int) $id, 'activity_time', wp_date( 'H:i', $created ) );
 		$this->audit(
 			'activity_created',
 			'exact',

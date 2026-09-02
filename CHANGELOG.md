@@ -56,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Tijdlijnmomenten bevatten nu expliciet hun UTC-tijdzone, zodat relatieve tijden niet door de browser-tijdzone verschuiven.
+- Tijdlijnmomenten bevatten nu expliciet hun UTC-tijdzone en geïmporteerde FreeScout-datums gebruiken de clubtijdzone, zodat relatieve tijden niet verschuiven.
 - De publiek vastgelegde Lettermint-token is uit de verificatiedocumentatie verwijderd en de achterhaalde plaintext-optie van de uitgeschakelde Lettermint-plugin wordt bij migratie gewist.
 - De eerste FreeScout-aanmelding kan de actuele Rondo-toegang controleren voordat een lokaal FreeScout-gebruikers-ID bestaat; ongeldige niet-lege ID's blijven geweigerd.
 - Productiedeploys schakelen automatisch over op een gevalideerde archiefoverdracht wanneer een hostingplatform rsync-schrijfbewerkingen blokkeert.

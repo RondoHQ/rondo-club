@@ -337,6 +337,24 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->assertSame( 'rondo_freescout_activity_schema_invalid', $response->as_error()->get_error_code() );
 	}
 
+	public function test_activity_date_and_time_use_the_site_timezone(): void {
+		$previous_timezone = get_option( 'timezone_string' );
+		update_option( 'timezone_string', 'Europe/Amsterdam' );
+
+		try {
+			$this->createPerson( [ 'post_title' => 'First member' ], [ 'email_1' => 'first@example.test' ] );
+			$response    = $this->signed_request( 'activity', $this->activity_body( 'conversation_created', [ 'first@example.test' ] ) );
+			$activity_id = (int) $response->get_data()['activity_id'];
+
+			$this->assertSame( '2026-09-01', get_comment_meta( $activity_id, 'activity_date', true ) );
+			$this->assertSame( '14:00', get_comment_meta( $activity_id, 'activity_time', true ) );
+			$this->assertSame( '2026-09-01 12:00:00', get_comment( $activity_id )->comment_date_gmt );
+			$this->assertSame( '2026-09-01 14:00:00', get_comment( $activity_id )->comment_date );
+		} finally {
+			update_option( 'timezone_string', $previous_timezone );
+		}
+	}
+
 	/** @return array<string,mixed> */
 	private function sidebar_body( array $emails ): array {
 		return [
