@@ -153,6 +153,31 @@ class PersonNotesAccessTest extends RondoTestCase {
 		);
 	}
 
+	/** Timeline timestamps include UTC explicitly so browser timezone cannot shift them. */
+	public function test_timeline_comment_created_timestamp_is_utc_rfc3339(): void {
+		$author_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		wp_set_current_user( $author_id );
+
+		$comment_id = wp_insert_comment(
+			[
+				'comment_post_ID'  => $this->person_id,
+				'comment_content'  => 'Tijdzonetest',
+				'comment_type'     => CommentTypes::TYPE_NOTE,
+				'comment_approved' => 1,
+				'user_id'          => $author_id,
+				'comment_date'     => '2026-09-02 19:40:19',
+				'comment_date_gmt' => '2026-09-02 17:40:19',
+			]
+		);
+		update_comment_meta( $comment_id, '_note_visibility', 'shared' );
+
+		$response = $this->get( $this->timeline_route() );
+		$this->assertSame( 200, $response->get_status() );
+		$items = array_values( array_filter( (array) $response->get_data(), fn( $item ) => (int) ( $item['id'] ?? 0 ) === $comment_id ) );
+		$this->assertCount( 1, $items );
+		$this->assertSame( '2026-09-02T17:40:19+00:00', $items[0]['created'] );
+	}
+
 	/** Editing your own note is still author-or-admin; unchanged behaviour. */
 	public function test_comment_edit_access_is_unchanged(): void {
 		$author_id = self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] );

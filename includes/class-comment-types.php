@@ -645,7 +645,7 @@ class CommentTypes {
 			'person_id' => (int) $comment->comment_post_ID,
 			'author_id' => (int) $comment->user_id,
 			'author'    => get_the_author_meta( 'display_name', $comment->user_id ),
-			'created'   => $comment->comment_date,
+			'created'   => $this->format_comment_created_at( $comment ),
 		];
 
 		// Add type-specific meta fields
@@ -665,6 +665,25 @@ class CommentTypes {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Format a comment timestamp as an unambiguous UTC RFC3339 value.
+	 *
+	 * WordPress stores both local and GMT comment dates without an offset. Sending
+	 * the local value over REST makes clients interpret it in their own timezone.
+	 *
+	 * @param WP_Comment $comment The comment object.
+	 * @return string RFC3339 timestamp in UTC.
+	 */
+	private function format_comment_created_at( $comment ) {
+		$gmt = (string) $comment->comment_date_gmt;
+		if ( $gmt === '' || $gmt === '0000-00-00 00:00:00' ) {
+			$gmt = get_gmt_from_date( (string) $comment->comment_date );
+		}
+
+		$timestamp = strtotime( $gmt . ' UTC' );
+		return $timestamp === false ? '' : gmdate( DATE_ATOM, $timestamp );
 	}
 
 	/**
