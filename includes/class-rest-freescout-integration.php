@@ -24,9 +24,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class FreeScoutIntegration extends Base {
 
 	private const VERSION                = 1;
-	private const MAILBOX_KEY            = 'ledenadministratie';
-	private const REQUIRED_CAPABILITY    = 'ledenadministratie';
-	private const SIDEBAR_POLICY         = 'ledenadministratie.v1';
+	private const DEFAULT_SIDEBAR        = [
+		'key'            => 'basis',
+		'sidebar_policy' => 'basis.v1',
+	];
+	private const MAILBOX_MAPPINGS       = [
+		'ledenadministratie' => [
+			'label'               => 'Ledenadministratie',
+			'required_capability' => 'ledenadministratie',
+			'sidebar_policy'      => 'ledenadministratie.v2',
+		],
+		'contributie'        => [
+			'label'               => 'Contributie',
+			'required_capability' => 'financieel',
+			'sidebar_policy'      => 'contributie.v1',
+		],
+	];
 	private const ACTIVITY_META_INSTANCE = '_rondo_freescout_instance';
 	private const ACTIVITY_META_ID       = '_rondo_freescout_conversation_id';
 	private const ACTIVITY_META_EVENT    = '_rondo_freescout_event_type';
@@ -83,7 +96,8 @@ final class FreeScoutIntegration extends Base {
 		return rest_ensure_response(
 			[
 				'version'      => self::VERSION,
-				'mappings'     => [ $this->mailbox_mapping() ],
+				'sidebar'      => array_merge( self::DEFAULT_SIDEBAR, [ 'enabled' => true ] ),
+				'mappings'     => $this->mailbox_mappings(),
 				'audit'        => $retention,
 				'evaluated_at' => gmdate( DATE_ATOM ),
 			]
@@ -109,17 +123,21 @@ final class FreeScoutIntegration extends Base {
 		) {
 			return $this->error( 'rondo_freescout_access_schema_invalid', 'De access request is ongeldig.', 400 );
 		}
-		$user_id = $this->resolve_subject( $issuer, $subject );
-		$active  = $user_id > 0 && user_can( $user_id, self::REQUIRED_CAPABILITY );
+		$user_id           = $this->resolve_subject( $issuer, $subject );
+		$managed_mailboxes = $user_id > 0 ? $this->managed_mailboxes_for_user( $user_id ) : [];
+		$active            = $managed_mailboxes !== [];
 
-		$audit_context = $freescout_user_id !== null ? [ 'freescout_user_id' => $freescout_user_id ] : [];
+		$audit_context = $freescout_user_id !== null ? [
+			'freescout_user_id' => $freescout_user_id,
+			'mailbox_key'       => 'all',
+		] : [ 'mailbox_key' => 'all' ];
 		$this->audit( 'access_evaluated', $active ? 'active' : 'inactive', $audit_context );
 
 		return rest_ensure_response(
 			[
 				'subject'           => $subject,
 				'active'            => $active,
-				'managed_mailboxes' => $active ? [ self::MAILBOX_KEY ] : [],
+				'managed_mailboxes' => $managed_mailboxes,
 				'evaluated_at'      => gmdate( DATE_ATOM ),
 			]
 		);
@@ -137,10 +155,20 @@ final class FreeScoutIntegration extends Base {
 			return $valid;
 		}
 
-		$agent   = $body['agent'];
-		$user_id = $this->resolve_subject( (string) $agent['issuer'], (string) $agent['subject'] );
-		if ( $user_id <= 0 || ! user_can( $user_id, self::REQUIRED_CAPABILITY ) ) {
-			$this->audit( 'sidebar_denied', 'unauthorized', [ 'freescout_user_id' => absint( $agent['freescoutUserId'] ) ] );
+		$agent       = $body['agent'];
+		$mailbox_key = (string) $body['mailboxKey'];
+		$mapping     = self::MAILBOX_MAPPINGS[ $mailbox_key ] ?? null;
+		$policy      = $mapping['sidebar_policy'] ?? self::DEFAULT_SIDEBAR['sidebar_policy'];
+		$user_id     = $this->resolve_subject( (string) $agent['issuer'], (string) $agent['subject'] );
+		if ( $user_id <= 0 || ( $mapping !== null && ! user_can( $user_id, $mapping['required_capability'] ) ) ) {
+			$this->audit(
+				'sidebar_denied',
+				'unauthorized',
+				[
+					'freescout_user_id' => absint( $agent['freescoutUserId'] ),
+					'mailbox_key'       => $mailbox_key,
+				]
+				);
 			return rest_ensure_response( $this->sidebar_response( 'unauthorized', $this->renderer->state( 'Je Rondo-toegang voor deze mailbox is niet actief.' ) ) );
 		}
 
@@ -149,22 +177,36 @@ final class FreeScoutIntegration extends Base {
 		try {
 			$match = $this->matcher->match( $body['customerEmails'], 'sidebar', $user_id );
 			if ( $match['status'] === 'ambiguous' && ! empty( $match['candidate_ids'] ) ) {
-				$this->audit( 'sidebar_match', 'ambiguous', [ 'freescout_user_id' => absint( $agent['freescoutUserId'] ) ] );
+				$this->audit(
+					'sidebar_match',
+					'ambiguous',
+					[
+						'freescout_user_id' => absint( $agent['freescoutUserId'] ),
+						'mailbox_key'       => $mailbox_key,
+					]
+					);
 				return rest_ensure_response(
 					$this->sidebar_response(
 						'ambiguous',
-						$this->renderer->render_switcher( $match['candidate_ids'] )
+						$this->renderer->render_switcher( $match['candidate_ids'], $policy, $user_id )
 					)
 				);
 			}
 			if ( $match['status'] !== 'exact' || empty( $match['person_id'] ) ) {
 				$public_status = 'no_match';
 				$message       = 'Geen gekoppeld Rondo-profiel gevonden.';
-				$this->audit( 'sidebar_match', $match['status'], [ 'freescout_user_id' => absint( $agent['freescoutUserId'] ) ] );
+				$this->audit(
+					'sidebar_match',
+					$match['status'],
+					[
+						'freescout_user_id' => absint( $agent['freescoutUserId'] ),
+						'mailbox_key'       => $mailbox_key,
+					]
+					);
 				return rest_ensure_response( $this->sidebar_response( $public_status, $this->renderer->state( $message ) ) );
 			}
 
-			$html = $this->renderer->render( (int) $match['person_id'] );
+			$html = $this->renderer->render( (int) $match['person_id'], $policy, $user_id );
 			$this->audit(
 				'sidebar_match',
 				'exact',
@@ -172,6 +214,7 @@ final class FreeScoutIntegration extends Base {
 					'freescout_user_id' => absint( $agent['freescoutUserId'] ),
 					'person_id'         => (int) $match['person_id'],
 					'latency_ms'        => (int) round( ( microtime( true ) - $started ) * 1000 ),
+					'mailbox_key'       => $mailbox_key,
 				]
 			);
 			return rest_ensure_response( $this->sidebar_response( 'ok', $html ) );
@@ -209,7 +252,14 @@ final class FreeScoutIntegration extends Base {
 
 		$match = $this->matcher->match( $body['customerEmails'], 'integration' );
 		if ( $match['status'] !== 'exact' || empty( $match['person_id'] ) ) {
-			$this->audit( 'activity_match', $match['status'], [ 'conversation_id' => $conversation_id ] );
+			$this->audit(
+				'activity_match',
+				$match['status'],
+				[
+					'conversation_id' => $conversation_id,
+					'mailbox_key'     => (string) $body['mailboxKey'],
+				]
+				);
 			return rest_ensure_response(
 				[
 					'status'          => $match['status'],
@@ -240,7 +290,8 @@ final class FreeScoutIntegration extends Base {
 
 	/** @return true|\WP_Error */
 	private function validate_sidebar_body( array $body ) {
-		if ( ! $this->valid_version( $body ) || (string) ( $body['mailboxKey'] ?? '' ) !== self::MAILBOX_KEY ) {
+		$mailbox_key = (string) ( $body['mailboxKey'] ?? '' );
+		if ( ! $this->valid_version( $body ) || ( $mailbox_key !== self::DEFAULT_SIDEBAR['key'] && ! isset( self::MAILBOX_MAPPINGS[ $mailbox_key ] ) ) ) {
 			return $this->error( 'rondo_freescout_sidebar_schema_invalid', 'De sidebar request is ongeldig.', 400 );
 		}
 		foreach ( [ 'conversationId', 'conversationNumber', 'customerId' ] as $field ) {
@@ -262,7 +313,7 @@ final class FreeScoutIntegration extends Base {
 	/** @return true|\WP_Error */
 	private function validate_activity_body( array $body ) {
 		$event_types = [ 'conversation_created', 'conversation_customer_changed', 'customer_replied', 'user_replied' ];
-		if ( ! $this->valid_version( $body ) || ! in_array( (string) ( $body['eventType'] ?? '' ), $event_types, true ) || (string) ( $body['mailboxKey'] ?? '' ) !== self::MAILBOX_KEY ) {
+		if ( ! $this->valid_version( $body ) || ! in_array( (string) ( $body['eventType'] ?? '' ), $event_types, true ) || ! isset( self::MAILBOX_MAPPINGS[ (string) ( $body['mailboxKey'] ?? '' ) ] ) ) {
 			return $this->error( 'rondo_freescout_activity_schema_invalid', 'De activiteit request is ongeldig.', 400 );
 		}
 		if ( absint( $body['conversationId'] ?? 0 ) <= 0 || absint( $body['customerId'] ?? 0 ) <= 0 || ! is_array( $body['customerEmails'] ?? null ) || count( $body['customerEmails'] ) > 10 ) {
@@ -328,14 +379,31 @@ final class FreeScoutIntegration extends Base {
 	}
 
 	/** @return array<string,mixed> */
-	private function mailbox_mapping(): array {
-		return [
-			'key'                 => self::MAILBOX_KEY,
-			'label'               => 'Ledenadministratie',
-			'required_capability' => self::REQUIRED_CAPABILITY,
-			'sidebar_policy'      => self::SIDEBAR_POLICY,
-			'enabled'             => true,
-		];
+	private function mailbox_mappings(): array {
+		$mappings = [];
+		foreach ( self::MAILBOX_MAPPINGS as $key => $mapping ) {
+			$mappings[] = array_merge(
+				[
+					'key'     => $key,
+					'enabled' => true,
+				],
+				$mapping
+			);
+		}
+
+		return $mappings;
+	}
+
+	/** @return string[] */
+	private function managed_mailboxes_for_user( int $user_id ): array {
+		$managed = [];
+		foreach ( self::MAILBOX_MAPPINGS as $key => $mapping ) {
+			if ( user_can( $user_id, $mapping['required_capability'] ) ) {
+				$managed[] = $key;
+			}
+		}
+
+		return $managed;
 	}
 
 	/** @return array<string,mixed> */
@@ -406,7 +474,14 @@ final class FreeScoutIntegration extends Base {
 			foreach ( $activities as $activity ) {
 				$this->hide_activity( $activity, $body, $match['status'] );
 			}
-			$this->audit( 'activity_match', $match['status'], [ 'conversation_id' => $conversation_id ] );
+			$this->audit(
+				'activity_match',
+				$match['status'],
+				[
+					'conversation_id' => $conversation_id,
+					'mailbox_key'     => (string) $body['mailboxKey'],
+				]
+				);
 			return rest_ensure_response(
 				[
 					'status'          => $match['status'],
@@ -484,6 +559,7 @@ final class FreeScoutIntegration extends Base {
 			[
 				'conversation_id' => absint( $body['conversationId'] ),
 				'person_id'       => $person_id,
+				'mailbox_key'     => (string) $body['mailboxKey'],
 			]
 		);
 
@@ -524,6 +600,7 @@ final class FreeScoutIntegration extends Base {
 				'conversation_id' => absint( $body['conversationId'] ),
 				'old_person_id'   => $old_person_id,
 				'new_person_id'   => $person_id,
+				'mailbox_key'     => (string) $body['mailboxKey'],
 			]
 		);
 
@@ -543,6 +620,7 @@ final class FreeScoutIntegration extends Base {
 			[
 				'conversation_id' => absint( $body['conversationId'] ),
 				'old_person_id'   => (int) $comment->comment_post_ID,
+				'mailbox_key'     => (string) $body['mailboxKey'],
 			]
 		);
 	}
@@ -556,7 +634,7 @@ final class FreeScoutIntegration extends Base {
 			update_comment_meta( $comment_id, self::ACTIVITY_META_EVENT_ID, absint( $body['eventId'] ?? 0 ) );
 		}
 		update_comment_meta( $comment_id, self::ACTIVITY_META_CUSTOMER, absint( $body['customerId'] ) );
-		update_comment_meta( $comment_id, self::ACTIVITY_META_MAILBOX, self::MAILBOX_KEY );
+		update_comment_meta( $comment_id, self::ACTIVITY_META_MAILBOX, sanitize_key( (string) $body['mailboxKey'] ) );
 		update_comment_meta( $comment_id, self::ACTIVITY_META_STATE, sanitize_key( $state ) );
 		update_comment_meta( $comment_id, self::ACTIVITY_META_UPDATED, gmdate( DATE_ATOM ) );
 	}
@@ -611,7 +689,7 @@ final class FreeScoutIntegration extends Base {
 					'event'       => $event,
 					'outcome'     => str_contains( $event, 'denied' ) ? 'denied' : 'processed',
 					'reason'      => $reason,
-					'mailbox_key' => self::MAILBOX_KEY,
+					'mailbox_key' => sanitize_key( (string) ( $context['mailbox_key'] ?? '' ) ),
 					'occurred_at' => gmdate( DATE_ATOM ),
 				],
 				$context
