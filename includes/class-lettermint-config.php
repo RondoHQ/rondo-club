@@ -10,6 +10,8 @@
 
 namespace Rondo\Notifications;
 
+use Rondo\Data\CredentialEncryption;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -71,8 +73,7 @@ class LettermintConfig {
 			return trim( $env );
 		}
 
-		$option = get_option( self::OPTION_API_TOKEN, '' );
-		return is_string( $option ) ? trim( $option ) : '';
+		return trim( CredentialEncryption::get_secret_option( self::OPTION_API_TOKEN ) );
 	}
 
 	/**
@@ -96,8 +97,8 @@ class LettermintConfig {
 			return trim( $env );
 		}
 
-		$option = get_option( self::OPTION_TEAM_API_TOKEN, '' );
-		if ( is_string( $option ) && trim( $option ) !== '' ) {
+		$option = CredentialEncryption::get_secret_option( self::OPTION_TEAM_API_TOKEN );
+		if ( trim( $option ) !== '' ) {
 			return trim( $option );
 		}
 
@@ -197,8 +198,7 @@ class LettermintConfig {
 			return trim( $env );
 		}
 
-		$option = get_option( self::OPTION_WEBHOOK_SECRET, '' );
-		return is_string( $option ) ? trim( $option ) : '';
+		return trim( CredentialEncryption::get_secret_option( self::OPTION_WEBHOOK_SECRET ) );
 	}
 
 	/**

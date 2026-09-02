@@ -22,6 +22,16 @@ class FinanceSettings extends Base {
 	 * Register finance settings REST routes.
 	 */
 	public function register_routes() {
+		register_rest_route(
+			'rondo/v1',
+			'/finance/credential-file/(?P<type>apple|google)',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'upload_credential_file' ],
+				'permission_callback' => [ $this, 'check_financieel_permission' ],
+			]
+		);
+
 		// Finance settings (financieel capability required).
 		register_rest_route(
 			'rondo/v1',
@@ -328,6 +338,38 @@ class FinanceSettings extends Base {
 		}
 
 		return rest_ensure_response( $finance_config->get_all_settings() );
+	}
+
+	/** Store an Apple or Google credential file encrypted. */
+	public function upload_credential_file( $request ) {
+		$files = $request->get_file_params();
+		$file  = $files['file'] ?? null;
+		$type  = (string) $request->get_param( 'type' );
+		if ( ! is_array( $file ) || (int) ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) !== UPLOAD_ERR_OK ) {
+			return new \WP_Error( 'rondo_credential_upload_failed', __( 'Het bestand kon niet worden geüpload.', 'rondo' ), [ 'status' => 400 ] );
+		}
+
+		$tmp_name = (string) ( $file['tmp_name'] ?? '' );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$contents = $tmp_name !== '' ? file_get_contents( $tmp_name ) : false;
+		if ( $contents === false || ! \Rondo\Data\PrivateCredentialStorage::store( $type, $contents, (string) ( $file['name'] ?? '' ) ) ) {
+			return new \WP_Error( 'rondo_credential_invalid', __( 'Het bestand is ongeldig of kon niet versleuteld worden opgeslagen.', 'rondo' ), [ 'status' => 400 ] );
+		}
+
+		if ( $type === \Rondo\Data\PrivateCredentialStorage::APPLE ) {
+			delete_option( 'rondo_membership_pass_apple_cert_path' );
+			update_option( 'rondo_membership_pass_apple_cert_attachment_id', 0, false );
+		} else {
+			delete_option( 'rondo_membership_pass_google_service_account_path' );
+			update_option( 'rondo_membership_pass_google_service_account_attachment_id', 0, false );
+		}
+
+		return rest_ensure_response(
+			[
+				'configured' => true,
+				'filename'   => \Rondo\Data\PrivateCredentialStorage::filename( $type ),
+			]
+		);
 	}
 
 	/**

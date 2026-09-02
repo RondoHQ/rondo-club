@@ -276,6 +276,7 @@ function rondo_init() {
 	}
 
 	// Core classes - always needed for WordPress integration
+	\Rondo\Data\SecretMigration::run();
 	new PostTypes();
 	new Taxonomies();
 	new \Rondo\Fields\FieldSchema();

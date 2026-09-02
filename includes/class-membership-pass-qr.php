@@ -7,6 +7,7 @@
 
 namespace Rondo\Passes;
 
+use Rondo\Data\CredentialEncryption;
 use Rondo\Fees\SeasonKey;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -289,7 +290,7 @@ class MembershipPassQr {
 	 * @return string|\WP_Error
 	 */
 	private function get_or_create_secret() {
-		$secret = (string) get_option( self::OPTION_JWT_SECRET, '' );
+		$secret = CredentialEncryption::get_secret_option( self::OPTION_JWT_SECRET );
 		if ( strlen( $secret ) >= 32 ) {
 			return $secret;
 		}
@@ -300,7 +301,7 @@ class MembershipPassQr {
 			return new \WP_Error( 'membership_pass_secret_failed', 'Kon geen geheime sleutel genereren.', [ 'status' => 500 ] );
 		}
 
-		update_option( self::OPTION_JWT_SECRET, $secret, false );
+		CredentialEncryption::update_secret_option( self::OPTION_JWT_SECRET, $secret );
 		return $secret;
 	}
 

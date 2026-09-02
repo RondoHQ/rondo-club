@@ -20,7 +20,7 @@ score: 5/5 must-haves verified
 |---|-------|--------|----------|
 | 1 | Gravity SMTP plugin is deactivated on production | VERIFIED | `wp plugin list` on production: `gravitysmtp` status=inactive v2.1.3 |
 | 2 | Lettermint plugin is activated on production | VERIFIED | `wp plugin list` on production: `lettermint` status=active v1.4.2 |
-| 3 | API token is configured in the `lettermint_api_token` WordPress option | VERIFIED | `wp option get lettermint_api_token` returns `lm_kM8kzftXArgOagC05QOy3BVeVFz0ixfQ` |
+| 3 | API token is configured in the `lettermint_api_token` WordPress option | VERIFIED | `wp option get lettermint_api_token` returns `[REDACTED]` |
 | 4 | DNS records (DKIM, bounce CNAME, DMARC) are verified in the Lettermint dashboard | VERIFIED (human) | User checkpoint approved in Task 2 of plan execution; dashboard showed svawc.nl domain as verified |
 | 5 | A test email sent from WordPress appears in the Lettermint activity log | VERIFIED (human) | User confirmed delivery in Lettermint dashboard and inbox (joost@joost.blog) in Task 4 checkpoint |
 
@@ -34,7 +34,7 @@ This phase involved no code artifacts — it was entirely production server oper
 |----------|----------|--------|---------|
 | `gravitysmtp` plugin | inactive on production | VERIFIED | Confirmed via `wp plugin list`: status=inactive, v2.1.3 |
 | `lettermint` plugin | active on production | VERIFIED | Confirmed via `wp plugin list`: status=active, v1.4.2 |
-| `lettermint_api_token` WP option | non-empty `lm_` token | VERIFIED | Value: `lm_kM8kzftXArgOagC05QOy3BVeVFz0ixfQ` |
+| `lettermint_api_token` WP option | non-empty `lm_` token | VERIFIED | Value: `[REDACTED]` |
 | `lettermint_enable_logs` WP option | value `1` | VERIFIED | `wp option get lettermint_enable_logs` returns `1` |
 
 ### Key Link Verification

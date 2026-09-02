@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- API-tokens, integratiewachtwoorden en interne signing-secrets worden centraal met sodium versleuteld opgeslagen; bestaande plaintext-instellingen worden automatisch gemigreerd zonder bestaande versleutelde OAuth- en betaalsleutels onleesbaar te maken.
+- Apple Wallet-certificaten en Google Wallet-serviceaccounts worden versleuteld opgeslagen en alleen tijdelijk met bestandsrechten `0600` ontsloten; nieuwe uploads zijn geen publieke WordPress-media meer.
 - Mislukte toernooi-betaallinks worden voortaan automatisch met oplopende tussenpozen opnieuw aangemaakt; deelnemers en coördinatoren hoeven geen herstelknop meer te gebruiken.
 - Toernooi-PDF's gebruiken het ingestelde clublogo en de clubkleuren uit de financiële instellingen.
 - De digitale pas op **Mijn gegevens** gebruikt exact dezelfde ingestelde achtergrondkleur als Apple Wallet en Google Wallet; sponsor- en Businessclubpassen blijven wit.
@@ -53,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- De publiek vastgelegde Lettermint-token is uit de verificatiedocumentatie verwijderd en de achterhaalde plaintext-optie van de uitgeschakelde Lettermint-plugin wordt bij migratie gewist.
 - De eerste FreeScout-aanmelding kan de actuele Rondo-toegang controleren voordat een lokaal FreeScout-gebruikers-ID bestaat; ongeldige niet-lege ID's blijven geweigerd.
 - Productiedeploys schakelen automatisch over op een gevalideerde archiefoverdracht wanneer een hostingplatform rsync-schrijfbewerkingen blokkeert.
 - OpenID Connect-discovery gebruikt een `/oauth`-issuerpad, zodat een door de host gereserveerde map `.well-known` de metadata niet kan blokkeren.

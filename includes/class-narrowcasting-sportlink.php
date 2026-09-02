@@ -9,6 +9,7 @@ namespace Rondo\Narrowcasting;
 
 use DateTimeImmutable;
 use Exception;
+use Rondo\Data\CredentialEncryption;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -110,7 +111,7 @@ class SportlinkMatchday {
 
 		$changed = false;
 		if ( $client_id !== '' && ! hash_equals( $this->client_id(), $client_id ) ) {
-			update_option( self::OPTION_CLIENT_ID, $client_id, false );
+			CredentialEncryption::update_secret_option( self::OPTION_CLIENT_ID, $client_id );
 			$changed = true;
 		}
 
@@ -597,7 +598,7 @@ class SportlinkMatchday {
 
 	/** Stored server-only credential. */
 	private function client_id(): string {
-		return trim( (string) get_option( self::OPTION_CLIENT_ID, '' ) );
+		return trim( CredentialEncryption::get_secret_option( self::OPTION_CLIENT_ID ) );
 	}
 
 	/** Club relation code used to identify home and away fixtures. */
