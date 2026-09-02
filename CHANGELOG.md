@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- De Rondo Integration-module kan live, mailboxspecifieke ledeninformatie ophalen via ondertekende FreeScout-services met replaybeveiliging, exacte e-mailmatching, actuele agentrechten en een vast privacy-allowlist voor Ledenadministratie.
+- FreeScout-conversaties kunnen idempotent als native Rondo-activiteit worden gemaakt en bij een expliciete klantwijziging veilig worden verplaatst, verborgen of hersteld zonder e-mailadressen op te slaan.
+- Beheerders kunnen de bewaartermijn voor de FreeScout integratie-audit instellen op 90 tot 730 dagen; een serverinstelling blijft leidend en vergrendelt het veld.
 - Toernooicoördinatoren kunnen na publicatie per team de actuele kaderleden synchroniseren of de opdracht handmatig herverdelen; nieuwe kaderleden krijgen één uitnodiging, verwijderde kaderleden verliezen direct toegang en iedere wijziging wordt gelogd.
 - Toernooicoördinatoren kunnen bij publicatie in één keer alle teams met actief Rondo-kader selecteren; de controle toont vooraf hoeveel teams en kaderleden worden uitgenodigd en welke teams worden overgeslagen.
 - Toernooi-inschrijvingen kiezen hun contactpersoon met één klik uit het toegewezen Rondo-kader; naam, e-mailadres en mobiel nummer komen uit het gekoppelde persoonsprofiel.
