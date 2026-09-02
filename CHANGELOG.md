@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- De Rondo-sidebar ondersteunt een generiek `basis.v1`-beleid voor iedere door de FreeScout-beheerder geselecteerde mailbox; geldige Rondo-identiteit bepaalt de profieltoegang, terwijl financiële gegevens beperkt blijven tot aangewezen mailboxbeleid en financiële rechten.
+- De FreeScout-sidebar toont openstaande contributiefacturen uitsluitend aan de exact gekoppelde Rondo-gebruiker met `financieel_read` of `financieel`; de nieuwe Contributie-mailboxmapping vereist `financieel` en bewaart geen factuurgegevens in FreeScout.
 - De FreeScout-sidebar toont bij een gedeeld e-mailadres alle toegankelijke Rondo-profielen in een compacte keuzelijst en wisselt binnen hetzelfde iframe tussen hun volledige profielkaarten.
 - Gepubliceerde inkomende en verzonden FreeScout-antwoorden verschijnen afzonderlijk en idempotent in de Rondo-tijdlijn, zonder berichttekst; verzonden antwoorden gebruiken de bestaande subjectbinding voor de auteur.
 - De Rondo Integration-module kan live, mailboxspecifieke ledeninformatie ophalen via ondertekende FreeScout-services met replaybeveiliging, exacte e-mailmatching, actuele agentrechten en een vast privacy-allowlist voor Ledenadministratie.

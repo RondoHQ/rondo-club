@@ -18,8 +18,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/** Render the fixed ledenadministratie.v1 field policy. */
+/** Render the approved FreeScout sidebar field policies. */
 final class SidebarRenderer {
+	private const SUPPORTED_POLICIES = [ 'basis.v1', 'ledenadministratie.v2', 'contributie.v1' ];
+	private const FINANCE_POLICIES   = [ 'ledenadministratie.v2', 'contributie.v1' ];
 
 	private const PERSON_FIELDS = [
 		'first_name',
@@ -46,7 +48,10 @@ final class SidebarRenderer {
 		'onboarding_email_lid_sent',
 	];
 
-	public function render( int $person_id ): string {
+	public function render( int $person_id, string $policy, int $viewer_user_id ): string {
+		if ( ! in_array( $policy, self::SUPPORTED_POLICIES, true ) || $viewer_user_id <= 0 || get_current_user_id() !== $viewer_user_id ) {
+			return $this->state( 'Deze sidebarweergave wordt niet ondersteund.' );
+		}
 		$person = get_post( $person_id );
 		if ( ! $person || $person->post_type !== 'person' || $person->post_status !== 'publish' ) {
 			return $this->state( 'Geen gekoppeld Rondo-profiel gevonden.' );
@@ -70,6 +75,9 @@ final class SidebarRenderer {
 		$html .= $this->details( 'Contact', $this->contact_rows( $fields, $is_deceased ) );
 		$html .= $this->details( 'Huishouden', $this->household_rows( (array) ( $fields['relationships'] ?? [] ) ) );
 		$html .= $this->details( 'Proces', $this->process_rows( $person_id, $fields ) );
+		if ( in_array( $policy, self::FINANCE_POLICIES, true ) ) {
+			$html .= $this->details( 'Openstaande contributie', $this->invoice_rows( $person_id, $viewer_user_id ), true );
+		}
 		$html .= $this->details( 'Open taken', $this->todo_rows( $person_id ) );
 		$html .= '<p><a href="' . esc_url( home_url( '/people/' . $person_id ) ) . '">Open in Rondo</a></p>';
 		$html .= '<p><small>Live uit Rondo · ' . esc_html( wp_date( 'd-m-Y H:i' ) ) . '</small></p>';
@@ -79,7 +87,7 @@ final class SidebarRenderer {
 	}
 
 	/** Render all accessible exact-email matches with an in-frame profile switcher. */
-	public function render_switcher( array $person_ids ): string {
+	public function render_switcher( array $person_ids, string $policy, int $viewer_user_id ): string {
 		$profiles = [];
 		foreach ( array_values( array_unique( array_map( 'absint', $person_ids ) ) ) as $person_id ) {
 			$person = get_post( $person_id );
@@ -89,7 +97,7 @@ final class SidebarRenderer {
 			$profiles[] = [
 				'id'   => $person_id,
 				'name' => get_the_title( $person_id ),
-				'html' => $this->render( $person_id ),
+				'html' => $this->render( $person_id, $policy, $viewer_user_id ),
 			];
 		}
 		if ( $profiles === [] ) {
@@ -323,6 +331,137 @@ final class SidebarRenderer {
 		}
 
 		return $rows;
+	}
+
+	/**
+	 * Return a minimal contribution-invoice summary for the exact OIDC-bound viewer.
+	 *
+	 * @return array<string,string>
+	 */
+	private function invoice_rows( int $person_id, int $viewer_user_id ): array {
+		if ( get_current_user_id() !== $viewer_user_id
+			|| ( ! user_can( $viewer_user_id, 'financieel_read' ) && ! user_can( $viewer_user_id, 'financieel' ) )
+		) {
+			return [];
+		}
+
+		$invoice_ids = get_posts(
+			[
+				'post_type'              => 'rondo_invoice',
+				'post_status'            => [ 'rondo_sent', 'rondo_overdue' ],
+				'posts_per_page'         => -1,
+				'fields'                 => 'ids',
+				'orderby'                => 'date',
+				'order'                  => 'DESC',
+				'no_found_rows'          => true,
+				'update_post_term_cache' => false,
+				'meta_query'             => [
+					'relation' => 'AND',
+					[
+						'key'     => 'person',
+						'value'   => $person_id,
+						'compare' => '=',
+						'type'    => 'NUMERIC',
+					],
+					[
+						'key'     => 'invoice_type',
+						'value'   => 'membership',
+						'compare' => '=',
+					],
+				],
+			]
+		);
+		if ( $invoice_ids === [] ) {
+			return [];
+		}
+
+		update_meta_cache( 'post', $invoice_ids );
+		$rows              = [];
+		$total_outstanding = 0.0;
+		foreach ( $invoice_ids as $invoice_id ) {
+			$invoice_id = (int) $invoice_id;
+			if ( get_post_meta( $invoice_id, '_invoice_kind', true ) === 'credit' ) {
+				continue;
+			}
+
+			$total       = max( 0.0, (float) Fields::get_for_post( $invoice_id, 'total_amount' ) );
+			$outstanding = max( 0.0, $total - $this->paid_installment_principal( $invoice_id ) );
+			if ( $outstanding <= 0.0 ) {
+				continue;
+			}
+
+			$total_outstanding += $outstanding;
+			$number             = (string) Fields::get_for_post( $invoice_id, 'invoice_number' );
+			$label              = $number !== '' ? 'Factuur ' . $number : 'Factuur';
+			$value              = $this->format_money( $outstanding ) . ' open van ' . $this->format_money( $total );
+			$installments       = $this->installment_summary( $invoice_id );
+			if ( $installments !== '' ) {
+				$value .= ' · ' . $installments;
+			}
+			$due_date = $this->next_due_date( $invoice_id );
+			if ( $due_date !== '' ) {
+				$value .= ' · vervalt ' . $this->format_date( $due_date );
+			}
+			if ( get_post_status( $invoice_id ) === 'rondo_overdue' || ( $due_date !== '' && $due_date < wp_date( 'Y-m-d' ) ) ) {
+				$value .= ' · te laat';
+			}
+			$value .= ' · <a href="' . esc_url( home_url( '/financien/facturen/' . $invoice_id ) ) . '">Open</a>';
+			$this->add_row( $rows, $label, $value );
+		}
+
+		return $rows === [] ? [] : array_merge( [ 'Totaal open' => $this->format_money( $total_outstanding ) ], $rows );
+	}
+
+	private function paid_installment_principal( int $invoice_id ): float {
+		$principal = 0.0;
+		$count     = (int) get_post_meta( $invoice_id, '_installment_count', true );
+		for ( $number = 1; $number <= $count; $number++ ) {
+			if ( get_post_meta( $invoice_id, '_installment_' . $number . '_status', true ) === 'betaald' ) {
+				$principal += (float) get_post_meta( $invoice_id, '_installment_' . $number . '_amount', true );
+			}
+		}
+
+		return $principal;
+	}
+
+	private function installment_summary( int $invoice_id ): string {
+		$count = (int) get_post_meta( $invoice_id, '_installment_count', true );
+		$plan  = (string) get_post_meta( $invoice_id, '_installment_plan', true );
+		if ( $count <= 1 || ! in_array( $plan, [ 'quarterly_3', 'monthly_8' ], true ) ) {
+			return '';
+		}
+
+		$paid = 0;
+		for ( $number = 1; $number <= $count; $number++ ) {
+			if ( get_post_meta( $invoice_id, '_installment_' . $number . '_status', true ) === 'betaald' ) {
+				++$paid;
+			}
+		}
+
+		return $paid . '/' . $count . ' termijnen betaald';
+	}
+
+	private function next_due_date( int $invoice_id ): string {
+		$count = (int) get_post_meta( $invoice_id, '_installment_count', true );
+		for ( $number = 1; $number <= $count; $number++ ) {
+			if ( get_post_meta( $invoice_id, '_installment_' . $number . '_status', true ) === 'betaald' ) {
+				continue;
+			}
+			$due = (string) get_post_meta( $invoice_id, '_installment_' . $number . '_due_date', true );
+			if ( $due !== '' ) {
+				return $this->wire_date( $due );
+			}
+		}
+
+		return $this->wire_date( (string) Fields::get_for_post( $invoice_id, 'due_date' ) );
+	}
+
+	private function wire_date( string $date ): string {
+		return (string) ( Formatter::for_wire( 'rondo_invoice', [ 'due_date' => $date ] )['due_date'] ?? '' );
+	}
+
+	private function format_money( float $amount ): string {
+		return '€ ' . number_format_i18n( $amount, 2 );
 	}
 
 	/** @return string[] */
