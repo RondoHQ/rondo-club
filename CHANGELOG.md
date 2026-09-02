@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Productiedeploys schakelen automatisch over op een gevalideerde archiefoverdracht wanneer een hostingplatform rsync-schrijfbewerkingen blokkeert.
 - OpenID Connect-discovery gebruikt een `/oauth`-issuerpad, zodat een door de host gereserveerde map `.well-known` de metadata niet kan blokkeren.
 - Het clublogo in toernooi-PDF's wordt op een vaste kophoogte geschaald, zodat de inhoud direct op de eerste pagina begint.
 - De Sportlink-rol `Assistent-trainer/coach` stelt, net als de overige actieve stafrollen, het volledige gezin vrij van verplichte inschrijftaken.
