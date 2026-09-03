@@ -63,27 +63,38 @@ final class SidebarRenderer {
 		$is_deceased = CommunicationPolicy::is_deceased( $person_id );
 		$badges      = $this->badges( $fields, $is_deceased );
 		$teams       = $this->current_teams( (array) ( $fields['work_history'] ?? [] ) );
+		$finance     = in_array( $policy, self::FINANCE_POLICIES, true ) ? $this->invoice_rows( $person_id, $viewer_user_id ) : [];
+		$member_id   = 'rondo-member-' . $person_id;
+		$contact_id  = 'rondo-contact-' . $person_id;
+		$process_id  = 'rondo-process-' . $person_id;
 
-		$html  = '<section class="rondo-sidebar">';
-		$html .= '<header class="rondo-highlight"><h2>' . esc_html( $name ) . '</h2>';
-		if ( $badges !== [] ) {
-			$html .= '<p>' . implode( ' · ', array_map( 'esc_html', $badges ) ) . '</p>';
+		$html  = '<section class="rondo-sidebar" data-rondo-card aria-label="' . esc_attr( 'Rondo-profiel van ' . $name ) . '">';
+		$html .= '<div class="rondo-heading"><strong>Rondo</strong><span class="rondo-mailbox-badge">' . esc_html( $this->mailbox_label( $policy ) ) . '</span></div>';
+		if ( $finance !== [] ) {
+			$html .= '<section class="rondo-alert rondo-alert--finance"><h3>Openstaande contributie</h3>' . $this->row_list( $finance ) . '</section>';
 		}
-		$html .= $this->summary_lines( $fields, $teams );
-		$html .= '</header>';
-		$html .= $this->details( 'Lidmaatschap', $this->membership_rows( $fields ), true );
-		$html .= $this->details( 'Contact', $this->contact_rows( $fields, $is_deceased ) );
-		$html .= $this->details( 'Huishouden', $this->household_rows( (array) ( $fields['relationships'] ?? [] ) ) );
-		$html .= $this->details( 'Proces', $this->process_rows( $person_id, $fields ) );
-		if ( in_array( $policy, self::FINANCE_POLICIES, true ) ) {
-			$html .= $this->details( 'Openstaande contributie', $this->invoice_rows( $person_id, $viewer_user_id ), true );
-		}
-		$html .= $this->details( 'Open taken', $this->todo_rows( $person_id ) );
-		$html .= '<p><a href="' . esc_url( home_url( '/people/' . $person_id ) ) . '">Open in Rondo</a></p>';
-		$html .= '<p><small>Live uit Rondo · ' . esc_html( wp_date( 'd-m-Y H:i' ) ) . '</small></p>';
+		$html .= '<div class="rondo-tabs" role="tablist" aria-label="Rondo-profielinformatie">';
+		$html .= '<button type="button" class="rondo-tab is-active" role="tab" aria-selected="true" aria-controls="' . esc_attr( $member_id ) . '" data-rondo-tab="member">Lid</button>';
+		$html .= '<button type="button" class="rondo-tab" role="tab" aria-selected="false" aria-controls="' . esc_attr( $contact_id ) . '" data-rondo-tab="contact">Contact</button>';
+		$html .= '<button type="button" class="rondo-tab" role="tab" aria-selected="false" aria-controls="' . esc_attr( $process_id ) . '" data-rondo-tab="process">Proces</button>';
+		$html .= '</div>';
+		$html .= '<div id="' . esc_attr( $member_id ) . '" class="rondo-tab-panel is-active" role="tabpanel" data-rondo-tab-panel="member">';
+		$html .= $this->section( 'Lidmaatschap', $this->membership_rows( $fields, $badges ) );
+		$html .= $this->section( 'Sport en team', $this->sport_rows( $fields, $teams ) );
+		$html .= $this->section( 'Huishouden', $this->household_rows( (array) ( $fields['relationships'] ?? [] ) ) );
+		$html .= '</div>';
+		$html .= '<div id="' . esc_attr( $contact_id ) . '" class="rondo-tab-panel" role="tabpanel" data-rondo-tab-panel="contact" hidden>';
+		$html .= $this->section( 'Contactgegevens', $this->contact_rows( $fields, $is_deceased ) );
+		$html .= '</div>';
+		$html .= '<div id="' . esc_attr( $process_id ) . '" class="rondo-tab-panel" role="tabpanel" data-rondo-tab-panel="process" hidden>';
+		$html .= $this->section( 'Ledenprocessen', $this->process_rows( $person_id, $fields ) );
+		$html .= $this->section( 'Open werk', $this->todo_rows( $person_id ) );
+		$html .= '</div>';
+		$html .= '<div class="rondo-actions"><a class="rondo-action rondo-action--primary" href="' . esc_url( home_url( '/people/' . $person_id ) ) . '">Open in Rondo</a></div>';
+		$html .= '<p class="rondo-note">Live uit Rondo · ' . esc_html( wp_date( 'd-m-Y H:i' ) ) . '</p>';
 		$html .= '</section>';
 
-		return wp_kses_post( $html );
+		return wp_kses( $html, $this->allowed_html() );
 	}
 
 	/** Render all accessible exact-email matches with an in-frame profile switcher. */
@@ -115,21 +126,7 @@ final class SidebarRenderer {
 			$html .= '<div id="rondo-profile-' . esc_attr( (string) $index ) . '" data-rondo-profile-panel' . ( $index > 0 ? ' hidden' : '' ) . '>' . $profile['html'] . '</div>';
 		}
 
-		$allowed_html                                    = wp_kses_allowed_html( 'post' );
-		$allowed_html['select']                          = [
-			'id'                          => true,
-			'class'                       => true,
-			'data-rondo-profile-switcher' => true,
-			'aria-label'                  => true,
-		];
-		$allowed_html['option']                          = [
-			'value'    => true,
-			'selected' => true,
-		];
-		$allowed_html['div']['data-rondo-profile-panel'] = true;
-		$allowed_html['div']['hidden']                   = true;
-
-		return wp_kses( $html, $allowed_html );
+		return wp_kses( $html, $this->allowed_html() );
 	}
 
 	public function state( string $message ): string {
@@ -156,19 +153,22 @@ final class SidebarRenderer {
 		return $badges;
 	}
 
-	private function summary_lines( array $fields, array $teams ): string {
+	/** @return array<string,string> */
+	private function sport_rows( array $fields, array $teams ): array {
 		$rows = [];
-		$this->add_row( $rows, 'Lidsoort', $fields['type_lid'] ?? '' );
-		$this->add_row( $rows, 'KNVB-ID', $fields['knvb_id'] ?? '' );
 		$this->add_row( $rows, 'Team', implode( ', ', $teams ) );
 		$this->add_row( $rows, 'Spelactiviteit', $fields['spelactiviteit'] ?? '' );
+		$this->add_row( $rows, 'Overschrijving', ! empty( $fields['wacht_op_overschrijving'] ) ? 'In behandeling' : '' );
 
-		return $this->row_list( $rows );
+		return $rows;
 	}
 
 	/** @return array<string,string> */
-	private function membership_rows( array $fields ): array {
-		$rows      = [];
+	private function membership_rows( array $fields, array $badges ): array {
+		$rows = [];
+		$this->add_row( $rows, 'Status', $this->badge_markup( $badges ) );
+		$this->add_row( $rows, 'Lidsoort', $fields['type_lid'] ?? '' );
+		$this->add_row( $rows, 'KNVB-ID', $fields['knvb_id'] ?? '' );
 		$birthdate = (string) ( $fields['birthdate'] ?? '' );
 		if ( $birthdate !== '' ) {
 			$age = $this->age( $birthdate );
@@ -480,21 +480,21 @@ final class SidebarRenderer {
 		return array_values( array_unique( array_filter( $teams ) ) );
 	}
 
-	private function details( string $label, array $rows, bool $open = false ): string {
+	private function section( string $label, array $rows ): string {
 		if ( $rows === [] ) {
 			return '';
 		}
 
-		return '<details' . ( $open ? ' open' : '' ) . '><summary>' . esc_html( $label ) . '</summary>' . $this->row_list( $rows ) . '</details>';
+		return '<section class="rondo-section"><h3>' . esc_html( $label ) . '</h3>' . $this->row_list( $rows ) . '</section>';
 	}
 
 	private function row_list( array $rows ): string {
 		if ( $rows === [] ) {
 			return '';
 		}
-		$html = '<dl>';
+		$html = '<dl class="rondo-rows">';
 		foreach ( $rows as $label => $value ) {
-			$html .= '<dt><strong>' . esc_html( (string) $label ) . '</strong></dt><dd>' . wp_kses_post( (string) $value ) . '</dd>';
+			$html .= '<dt>' . esc_html( (string) $label ) . '</dt><dd>' . wp_kses_post( (string) $value ) . '</dd>';
 		}
 
 		return $html . '</dl>';
@@ -521,5 +521,71 @@ final class SidebarRenderer {
 		$timestamp = strtotime( $date );
 
 		return $timestamp ? wp_date( 'd-m-Y', $timestamp ) : '';
+	}
+
+	private function mailbox_label( string $policy ): string {
+		if ( $policy === 'ledenadministratie.v2' ) {
+			return 'Ledenadministratie';
+		}
+		if ( $policy === 'contributie.v1' ) {
+			return 'Contributie';
+		}
+
+		return 'Profiel';
+	}
+
+	private function badge_tone( string $badge ): string {
+		if ( $badge === 'Actief' ) {
+			return 'success';
+		}
+		if ( $badge === 'Wacht op overschrijving' ) {
+			return 'warning';
+		}
+
+		return 'muted';
+	}
+
+	private function badge_markup( array $badges ): string {
+		$html = '';
+		foreach ( $badges as $badge ) {
+			$html .= '<span class="rondo-badge rondo-badge--' . esc_attr( $this->badge_tone( (string) $badge ) ) . '">' . esc_html( (string) $badge ) . '</span>';
+		}
+
+		return $html;
+	}
+
+	/** @return array<string,array<string,bool>> */
+	private function allowed_html(): array {
+		$allowed = wp_kses_allowed_html( 'post' );
+		foreach ( [ 'section', 'header', 'div' ] as $tag ) {
+			$allowed[ $tag ]['class']                    = true;
+			$allowed[ $tag ]['id']                       = true;
+			$allowed[ $tag ]['role']                     = true;
+			$allowed[ $tag ]['aria-label']               = true;
+			$allowed[ $tag ]['hidden']                   = true;
+			$allowed[ $tag ]['data-rondo-card']          = true;
+			$allowed[ $tag ]['data-rondo-tab-panel']     = true;
+			$allowed[ $tag ]['data-rondo-profile-panel'] = true;
+		}
+		$allowed['button'] = [
+			'type'           => true,
+			'class'          => true,
+			'role'           => true,
+			'aria-selected'  => true,
+			'aria-controls'  => true,
+			'data-rondo-tab' => true,
+		];
+		$allowed['select'] = [
+			'id'                          => true,
+			'class'                       => true,
+			'data-rondo-profile-switcher' => true,
+			'aria-label'                  => true,
+		];
+		$allowed['option'] = [
+			'value'    => true,
+			'selected' => true,
+		];
+
+		return $allowed;
 	}
 }

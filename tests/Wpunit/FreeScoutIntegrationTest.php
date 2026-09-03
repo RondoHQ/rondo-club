@@ -246,6 +246,12 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->assertSame( 'ok', $data['status'] );
 		$this->assertStringContainsString( 'Jan van Test', $data['html'] );
 		$this->assertStringContainsString( 'KNVB123', $data['html'] );
+		$this->assertStringContainsString( 'data-rondo-card', $data['html'] );
+		$this->assertStringContainsString( 'data-rondo-tab="member"', $data['html'] );
+		$this->assertStringContainsString( 'data-rondo-tab="contact"', $data['html'] );
+		$this->assertStringContainsString( 'data-rondo-tab="process"', $data['html'] );
+		$this->assertStringContainsString( 'rondo-mailbox-badge', $data['html'] );
+		$this->assertStringContainsString( 'Open in Rondo', $data['html'] );
 		$this->assertStringNotContainsString( 'Privé financieel veld', $data['html'] );
 		$this->assertStringNotContainsString( '987', $data['html'] );
 		$this->assertStringNotContainsString( '<script', strtolower( $data['html'] ) );
@@ -340,6 +346,7 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->assertStringContainsString( 'C2026-123', $with_finance['html'] );
 		$this->assertStringContainsString( '€ 80.00', $with_finance['html'] );
 		$this->assertStringContainsString( '1/3 termijnen betaald', $with_finance['html'] );
+		$this->assertStringContainsString( 'rondo-alert--finance', $with_finance['html'] );
 		$this->assertStringContainsString( '/financien/facturen/' . $invoice_id, $with_finance['html'] );
 		$this->assertStringNotContainsString( 'F-PRIVATE', $with_finance['html'] );
 		$this->assertStringNotContainsString( '999', $with_finance['html'] );

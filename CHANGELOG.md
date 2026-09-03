@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- De FreeScout-sidebar gebruikt nu het afgesproken compacte kaartontwerp met mailboxlabel, statusbadges en tabbladen voor lid-, contact- en procesinformatie; openstaande contributie blijft als opvallend actieblok zichtbaar.
 - API-tokens, integratiewachtwoorden en interne signing-secrets worden centraal met sodium versleuteld opgeslagen; bestaande plaintext-instellingen worden automatisch gemigreerd zonder bestaande versleutelde OAuth- en betaalsleutels onleesbaar te maken.
 - Apple Wallet-certificaten en Google Wallet-serviceaccounts worden versleuteld opgeslagen en alleen tijdelijk met bestandsrechten `0600` ontsloten; nieuwe uploads zijn geen publieke WordPress-media meer.
 - Mislukte toernooi-betaallinks worden voortaan automatisch met oplopende tussenpozen opnieuw aangemaakt; deelnemers en coördinatoren hoeven geen herstelknop meer te gebruiken.
