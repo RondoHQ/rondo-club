@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Sportlink-overschrijvingsverzoeken in FreeScout kunnen via hun gevalideerde relatiecode direct het juiste Rondo-profiel tonen, zonder de berichtinhoud naar Rondo te sturen.
 - De FreeScout-sidebar toont voor gebruikers met ledenadministratie- of financiële rechten een directe, persoonsgebonden Sportlink-link wanneer een geldig KNVB-ID beschikbaar is.
 - Gebruikers met financiële schrijfrechten kunnen zich ook via Rondo bij FreeScout aanmelden; financiële leesrechten alleen geven geen toegang tot de Contributie-mailbox.
 - De Rondo-sidebar ondersteunt een generiek `basis.v1`-beleid voor iedere door de FreeScout-beheerder geselecteerde mailbox; geldige Rondo-identiteit bepaalt de profieltoegang, terwijl financiële gegevens beperkt blijven tot aangewezen mailboxbeleid en financiële rechten.
