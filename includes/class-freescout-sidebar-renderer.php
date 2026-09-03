@@ -76,7 +76,7 @@ final class SidebarRenderer {
 		$html .= '<div class="rondo-tabs" role="tablist" aria-label="Rondo-profielinformatie">';
 		$html .= '<button type="button" class="rondo-tab is-active" role="tab" aria-selected="true" aria-controls="' . esc_attr( $member_id ) . '" data-rondo-tab="member">Lid</button>';
 		$html .= '<button type="button" class="rondo-tab" role="tab" aria-selected="false" aria-controls="' . esc_attr( $contact_id ) . '" data-rondo-tab="contact">Contact</button>';
-		$html .= '<button type="button" class="rondo-tab" role="tab" aria-selected="false" aria-controls="' . esc_attr( $process_id ) . '" data-rondo-tab="process">Proces</button>';
+		$html .= '<button type="button" class="rondo-tab" role="tab" aria-selected="false" aria-controls="' . esc_attr( $process_id ) . '" data-rondo-tab="process">Acties</button>';
 		$html .= '</div>';
 		$html .= '<div id="' . esc_attr( $member_id ) . '" class="rondo-tab-panel is-active" role="tabpanel" data-rondo-tab-panel="member">';
 		$html .= $this->section( 'Lidmaatschap', $this->membership_rows( $fields, $badges ) );
@@ -90,7 +90,13 @@ final class SidebarRenderer {
 		$html .= $this->section( 'Ledenprocessen', $this->process_rows( $person_id, $fields ) );
 		$html .= $this->section( 'Open werk', $this->todo_rows( $person_id ) );
 		$html .= '</div>';
-		$html .= '<div class="rondo-actions"><a class="rondo-action rondo-action--primary" href="' . esc_url( home_url( '/people/' . $person_id ) ) . '">Open in Rondo</a></div>';
+		$html .= '<div class="rondo-actions"><a class="rondo-action rondo-action--primary" href="' . esc_url( home_url( '/people/' . $person_id ) ) . '">Open in Rondo</a>';
+
+		$sportlink_url = $this->sportlink_url( (string) ( $fields['knvb_id'] ?? '' ), $viewer_user_id );
+		if ( $sportlink_url !== '' ) {
+			$html .= '<a class="rondo-action rondo-action--secondary" href="' . esc_url( $sportlink_url ) . '">Open in Sportlink</a>';
+		}
+		$html .= '</div>';
 		$html .= '<p class="rondo-note">Live uit Rondo · ' . esc_html( wp_date( 'd-m-Y H:i' ) ) . '</p>';
 		$html .= '</section>';
 
@@ -532,6 +538,20 @@ final class SidebarRenderer {
 		}
 
 		return 'Profiel';
+	}
+
+	private function sportlink_url( string $knvb_id, int $viewer_user_id ): string {
+		$knvb_id = strtoupper( trim( $knvb_id ) );
+		if ( get_current_user_id() !== $viewer_user_id
+			|| ! preg_match( '/^[A-Z0-9]{4,20}$/', $knvb_id )
+			|| ( ! user_can( $viewer_user_id, 'ledenadministratie' )
+				&& ! user_can( $viewer_user_id, 'financieel' )
+				&& ! user_can( $viewer_user_id, 'financieel_read' ) )
+		) {
+			return '';
+		}
+
+		return 'https://club.sportlink.com/member/member-details/' . rawurlencode( $knvb_id ) . '/general';
 	}
 
 	private function badge_tone( string $badge ): string {
