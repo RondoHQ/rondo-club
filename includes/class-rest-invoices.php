@@ -897,6 +897,8 @@ class Invoices extends Base {
 			return $payload;
 		}
 
+		$payload = $this->add_discipline_admin_fee( $payload );
+
 		$invoice_number = InvoiceNumbering::generate_next( $payload['invoice_type'] );
 		$post_id        = wp_insert_post(
 			[
@@ -921,6 +923,42 @@ class Invoices extends Base {
 
 		$invoice = get_post( $post_id );
 		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
+	 * Add the configured administration fee to a new discipline invoice.
+	 *
+	 * Existing fee rows are preserved so copied invoices do not receive the fee twice.
+	 * Credit invoices never receive a positive administration surcharge.
+	 *
+	 * @param array $payload Normalized invoice payload.
+	 * @return array
+	 */
+	private function add_discipline_admin_fee( array $payload ): array {
+		if ( $payload['invoice_type'] !== 'discipline' || $payload['invoice_kind'] !== 'normal' ) {
+			return $payload;
+		}
+
+		foreach ( $payload['line_items'] as $item ) {
+			$description = strtolower( trim( (string) ( $item['description'] ?? '' ) ) );
+			if ( empty( $item['discipline_case'] ) && $description === 'administratiekosten' ) {
+				return $payload;
+			}
+		}
+
+		$admin_fee = ( new FinanceConfig() )->get_admin_fee();
+		if ( $admin_fee <= 0 ) {
+			return $payload;
+		}
+
+		$payload['line_items'][]  = [
+			'discipline_case' => null,
+			'description'     => 'Administratiekosten',
+			'amount'          => $admin_fee,
+		];
+		$payload['total_amount'] += $admin_fee;
+
+		return $payload;
 	}
 
 	/**
@@ -2456,7 +2494,6 @@ class Invoices extends Base {
 		$email_subject       = sanitize_text_field( (string) $request->get_param( 'email_subject' ) );
 		$email_body_override = wp_kses_post( (string) $request->get_param( 'email_body_override' ) );
 		$custom_fields       = $request->get_param( 'custom_fields' );
-		$finance_config      = new FinanceConfig();
 
 		// Optional future automatic send date. Only kept when today or later.
 		$scheduled_send_date = self::normalize_scheduled_send_date( (string) $request->get_param( 'scheduled_send_date' ) );
