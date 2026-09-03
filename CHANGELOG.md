@@ -70,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Nieuwe tuchtzaakfacturen krijgen de ingestelde administratiekosten weer automatisch als aparte regelpost.
 - Foutmeldingen bij bulkacties op facturen tonen voortaan het herkenbare factuurnummer in plaats van het interne WordPress-recordnummer.
 - Tijdlijnmomenten bevatten nu expliciet hun UTC-tijdzone en geïmporteerde FreeScout-datums gebruiken de clubtijdzone, zodat relatieve tijden niet verschuiven.
 - De publiek vastgelegde Lettermint-token is uit de verificatiedocumentatie verwijderd en de achterhaalde plaintext-optie van de uitgeschakelde Lettermint-plugin wordt bij migratie gewist.

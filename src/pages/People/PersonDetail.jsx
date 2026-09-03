@@ -740,6 +740,7 @@ export default function PersonDetail() {
     try {
       await createInvoice.mutateAsync({
         person_id: parseInt(id),
+        invoice_type: 'discipline',
         line_items: lineItems,
       });
       setSelectedCaseIds(new Set());
