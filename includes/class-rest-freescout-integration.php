@@ -175,7 +175,9 @@ final class FreeScoutIntegration extends Base {
 		$previous_user_id = get_current_user_id();
 		wp_set_current_user( $user_id );
 		try {
-			$match = $this->matcher->match( $body['customerEmails'], 'sidebar', $user_id );
+			$match = isset( $body['personReference'] )
+				? $this->matcher->match_knvb_id( (string) $body['personReference']['value'], 'sidebar', $user_id )
+				: $this->matcher->match( $body['customerEmails'], 'sidebar', $user_id );
 			if ( $match['status'] === 'ambiguous' && ! empty( $match['candidate_ids'] ) ) {
 				$this->audit(
 					'sidebar_match',
@@ -302,12 +304,33 @@ final class FreeScoutIntegration extends Base {
 		if ( ! isset( $body['customerEmails'] ) || ! is_array( $body['customerEmails'] ) || count( $body['customerEmails'] ) > 10 || ! is_array( $body['agent'] ?? null ) ) {
 			return $this->error( 'rondo_freescout_sidebar_schema_invalid', 'De sidebar request is ongeldig.', 400 );
 		}
+		if ( array_key_exists( 'personReference', $body ) && ! $this->valid_person_reference( $body['personReference'] ) ) {
+			return $this->error( 'rondo_freescout_sidebar_schema_invalid', 'De sidebar request is ongeldig.', 400 );
+		}
 		$agent = $body['agent'];
 		if ( absint( $agent['freescoutUserId'] ?? 0 ) <= 0 || ! $this->valid_subject( (string) ( $agent['subject'] ?? '' ) ) || (string) ( $agent['issuer'] ?? '' ) !== OidcAuthorizationService::issuer() ) {
 			return $this->error( 'rondo_freescout_agent_invalid', 'De gekoppelde Rondo-gebruiker is ongeldig.', 403 );
 		}
 
 		return true;
+	}
+
+	/** Accept only the closed, minimal Sportlink transfer reference contract. */
+	private function valid_person_reference( mixed $reference ): bool {
+		if ( ! is_array( $reference ) || count( $reference ) !== 3 ) {
+			return false;
+		}
+		$keys = array_keys( $reference );
+		sort( $keys );
+		if ( $keys !== [ 'source', 'type', 'value' ] ) {
+			return false;
+		}
+		$value = (string) $reference['value'];
+
+		return $reference['type'] === 'knvb_id'
+			&& $reference['source'] === 'sportlink_transfer_request'
+			&& $value === strtoupper( trim( $value ) )
+			&& preg_match( '/^[A-Z0-9]{4,20}$/D', $value ) === 1;
 	}
 
 	/** @return true|\WP_Error */

@@ -1,6 +1,6 @@
 <?php
 /**
- * Exact customer-email matching shared by FreeScout integration callers.
+ * Exact person-identifier matching shared by FreeScout integration callers.
  *
  * @package Rondo\Integrations\FreeScout
  */
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/** Match only exact canonical Rondo email fields. */
+/** Match only exact canonical Rondo identifiers. */
 final class PersonMatcher {
 
 	/**
@@ -53,6 +53,50 @@ final class PersonMatcher {
 			]
 		);
 		$candidates = array_values( array_unique( array_map( 'intval', $query->posts ) ) );
+
+		return $this->result_for_candidates( $candidates, $scope, $user_id );
+	}
+
+	/**
+	 * Match one validated Sportlink relation code against the canonical KNVB ID.
+	 *
+	 * @return array{status:string,person_id:?int,candidate_count:int,candidate_ids:int[]}
+	 */
+	public function match_knvb_id( string $knvb_id, string $scope = 'integration', int $user_id = 0 ): array {
+		$knvb_id = strtoupper( trim( sanitize_text_field( $knvb_id ) ) );
+		if ( ! preg_match( '/^[A-Z0-9]{4,20}$/D', $knvb_id ) ) {
+			return $this->result( 'no_match', null, [] );
+		}
+
+		$query      = new \WP_Query(
+			[
+				'post_type'        => 'person',
+				'post_status'      => 'publish',
+				'posts_per_page'   => 25,
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+				'meta_query'       => [
+					[
+						'key'     => 'knvb-id',
+						'value'   => $knvb_id,
+						'compare' => '=',
+					],
+				],
+			]
+		);
+		$candidates = array_values( array_unique( array_map( 'intval', $query->posts ) ) );
+
+		return $this->result_for_candidates( $candidates, $scope, $user_id );
+	}
+
+	/**
+	 * Apply the same row-level visibility and uniqueness rules to every identifier.
+	 *
+	 * @param int[] $candidates Candidate person IDs.
+	 * @return array{status:string,person_id:?int,candidate_count:int,candidate_ids:int[]}
+	 */
+	private function result_for_candidates( array $candidates, string $scope, int $user_id ): array {
 
 		if ( $scope === 'sidebar' ) {
 			$visible = array_values(
