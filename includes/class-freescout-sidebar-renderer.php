@@ -472,15 +472,11 @@ final class SidebarRenderer {
 			$number             = (string) Fields::get_for_post( $invoice_id, 'invoice_number' );
 			$label              = $number !== '' ? 'Factuur ' . $number : 'Factuur';
 			$installments       = $this->installment_summary( $invoice_id );
-			$due_date           = $this->next_due_date( $invoice_id );
 			$invoices[]         = [
 				'label'        => $label,
 				'url'          => home_url( '/financien/facturen/' . $invoice_id ),
-				'total'        => $total,
 				'outstanding'  => $outstanding,
 				'installments' => $installments,
-				'due_date'     => $due_date,
-				'overdue'      => get_post_status( $invoice_id ) === 'rondo_overdue' || ( $due_date !== '' && $due_date < wp_date( 'Y-m-d' ) ),
 			];
 		}
 
@@ -491,25 +487,22 @@ final class SidebarRenderer {
 	}
 
 	private function invoice_summary_markup( array $summary ): string {
-		$html  = '<section class="rondo-alert rondo-alert--finance"><h3>Openstaande contributie</h3>';
-		$html .= $this->row_list( [ 'Totaal open' => $this->format_money( (float) $summary['total_outstanding'] ) ] );
+		$html  = '<section class="rondo-alert rondo-alert--finance">';
+		$html .= '<div class="rondo-finance-summary"><h3>Openstaande facturen</h3>';
+		$html .= '<div class="rondo-finance-total"><strong>' . esc_html( $this->format_money( (float) $summary['total_outstanding'] ) ) . '</strong><span>Totaal open</span></div></div>';
+		$html .= '<div class="rondo-invoice-list">';
 		foreach ( (array) $summary['invoices'] as $invoice ) {
-			$html .= '<div class="rondo-invoice">';
-			$html .= '<a class="rondo-invoice-link" href="' . esc_url( (string) $invoice['url'] ) . '">' . esc_html( (string) $invoice['label'] ) . '</a>';
-			$rows  = [ 'Totaal bedrag' => $this->format_money( (float) $invoice['total'] ) ];
-			if ( (float) $invoice['outstanding'] < (float) $invoice['total'] ) {
-				$rows['Nog open'] = $this->format_money( (float) $invoice['outstanding'] );
-			}
+			$label = (string) $invoice['label'];
+			$html .= '<a class="rondo-invoice" href="' . esc_url( (string) $invoice['url'] ) . '" aria-label="' . esc_attr( 'Open ' . $label ) . '">';
+			$html .= '<span class="rondo-invoice-copy"><strong>' . esc_html( $label ) . '</strong>';
 			if ( (string) $invoice['installments'] !== '' ) {
-				$rows['Termijnen'] = (string) $invoice['installments'];
+				$html .= '<span>' . esc_html( (string) $invoice['installments'] ) . '</span>';
 			}
-			if ( (string) $invoice['due_date'] !== '' ) {
-				$rows['Vervalt'] = $this->format_date( (string) $invoice['due_date'] ) . ( ! empty( $invoice['overdue'] ) ? ' · te laat' : '' );
-			}
-			$html .= $this->row_list( $rows ) . '</div>';
+			$html .= '</span><strong class="rondo-invoice-amount">' . esc_html( $this->format_money( (float) $invoice['outstanding'] ) ) . '</strong>';
+			$html .= '<span class="rondo-invoice-chevron" aria-hidden="true">›</span></a>';
 		}
 
-		return $html . '</section>';
+		return $html . '</div></section>';
 	}
 
 	private function paid_installment_principal( int $invoice_id ): float {
@@ -539,25 +532,6 @@ final class SidebarRenderer {
 		}
 
 		return $paid . '/' . $count . ' termijnen betaald';
-	}
-
-	private function next_due_date( int $invoice_id ): string {
-		$count = (int) get_post_meta( $invoice_id, '_installment_count', true );
-		for ( $number = 1; $number <= $count; $number++ ) {
-			if ( get_post_meta( $invoice_id, '_installment_' . $number . '_status', true ) === 'betaald' ) {
-				continue;
-			}
-			$due = (string) get_post_meta( $invoice_id, '_installment_' . $number . '_due_date', true );
-			if ( $due !== '' ) {
-				return $this->wire_date( $due );
-			}
-		}
-
-		return $this->wire_date( (string) Fields::get_for_post( $invoice_id, 'due_date' ) );
-	}
-
-	private function wire_date( string $date ): string {
-		return (string) ( Formatter::for_wire( 'rondo_invoice', [ 'due_date' => $date ] )['due_date'] ?? '' );
 	}
 
 	private function format_money( float $amount ): string {
