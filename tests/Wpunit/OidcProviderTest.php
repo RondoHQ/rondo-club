@@ -148,6 +148,25 @@ final class OidcProviderTest extends RondoTestCase {
 		$this->assertSame( 'access_denied', $error->get_error_data()['oauth_error'] );
 	}
 
+	public function test_finance_user_is_eligible_but_read_only_finance_user_is_denied(): void {
+		$finance_id   = $this->createEligibleUser( 'finance@example.test' );
+		$finance_user = get_userdata( $finance_id );
+		$finance_user->set_role( 'subscriber' );
+		$finance_user->add_cap( 'financieel' );
+
+		$identity = OidcIdentity::resolve( $finance_id, false );
+
+		$this->assertIsArray( $identity );
+		$this->assertSame( $finance_id, $identity['user_id'] );
+
+		$read_id   = $this->createEligibleUser( 'finance-read@example.test' );
+		$read_user = get_userdata( $read_id );
+		$read_user->set_role( 'subscriber' );
+		$read_user->add_cap( 'financieel_read' );
+
+		$this->assertWPError( OidcIdentity::resolve( $read_id, false ) );
+	}
+
 	public function test_dedicated_email_link_proves_exact_address_once_without_oauth_parameters(): void {
 		$user_id = $this->createEligibleUser( 'verify@example.test' );
 		$client  = $this->createClient();

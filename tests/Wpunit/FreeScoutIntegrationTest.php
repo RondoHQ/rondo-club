@@ -250,8 +250,11 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->assertStringContainsString( 'data-rondo-tab="member"', $data['html'] );
 		$this->assertStringContainsString( 'data-rondo-tab="contact"', $data['html'] );
 		$this->assertStringContainsString( 'data-rondo-tab="process"', $data['html'] );
+		$this->assertStringContainsString( '>Acties</button>', $data['html'] );
 		$this->assertStringContainsString( 'rondo-mailbox-badge', $data['html'] );
 		$this->assertStringContainsString( 'Open in Rondo', $data['html'] );
+		$this->assertStringContainsString( 'Open in Sportlink', $data['html'] );
+		$this->assertStringContainsString( 'https://club.sportlink.com/member/member-details/KNVB123/general', $data['html'] );
 		$this->assertStringNotContainsString( 'Privé financieel veld', $data['html'] );
 		$this->assertStringNotContainsString( '987', $data['html'] );
 		$this->assertStringNotContainsString( '<script', strtolower( $data['html'] ) );
@@ -295,6 +298,35 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->assertStringContainsString( 'Basic member', $data['html'] );
 		$this->assertStringNotContainsString( 'Openstaande contributie', $data['html'] );
 		$this->assertStringNotContainsString( 'BASIC-HIDDEN', $data['html'] );
+	}
+
+	public function test_sportlink_action_requires_an_allowed_capability_and_valid_knvb_id(): void {
+		$this->createPerson(
+			[ 'post_title' => 'Sportlink member' ],
+			[
+				'email_1' => 'sportlink@example.test',
+				'knvb_id' => 'SQJG27J',
+			]
+		);
+
+		get_userdata( $this->agent_id )->remove_cap( 'ledenadministratie' );
+		$without_capability = $this->signed_request( 'sidebar', $this->sidebar_body( [ 'sportlink@example.test' ], 'basis' ) )->get_data();
+		$this->assertStringNotContainsString( 'Open in Sportlink', $without_capability['html'] );
+
+		get_userdata( $this->agent_id )->add_cap( 'financieel' );
+		$with_finance = $this->signed_request( 'sidebar', $this->sidebar_body( [ 'sportlink@example.test' ], 'basis' ) )->get_data();
+		$this->assertStringContainsString( 'https://club.sportlink.com/member/member-details/SQJG27J/general', $with_finance['html'] );
+
+		$invalid_id = $this->createPerson(
+			[ 'post_title' => 'Invalid Sportlink member' ],
+			[
+				'email_1' => 'invalid-sportlink@example.test',
+				'knvb_id' => '../bad',
+			]
+		);
+		$invalid    = $this->signed_request( 'sidebar', $this->sidebar_body( [ 'invalid-sportlink@example.test' ], 'basis' ) )->get_data();
+		$this->assertStringNotContainsString( 'Open in Sportlink', $invalid['html'] );
+		$this->assertSame( 'publish', get_post_status( $invalid_id ) );
 	}
 
 	public function test_sidebar_rejects_an_unknown_policy_key(): void {
