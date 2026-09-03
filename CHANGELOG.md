@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- De FreeScout-sidebar toont voor gebruikers met ledenadministratie- of financiële rechten een directe, persoonsgebonden Sportlink-link wanneer een geldig KNVB-ID beschikbaar is.
+- Gebruikers met financiële schrijfrechten kunnen zich ook via Rondo bij FreeScout aanmelden; financiële leesrechten alleen geven geen toegang tot de Contributie-mailbox.
 - De Rondo-sidebar ondersteunt een generiek `basis.v1`-beleid voor iedere door de FreeScout-beheerder geselecteerde mailbox; geldige Rondo-identiteit bepaalt de profieltoegang, terwijl financiële gegevens beperkt blijven tot aangewezen mailboxbeleid en financiële rechten.
 - De FreeScout-sidebar toont openstaande contributiefacturen uitsluitend aan de exact gekoppelde Rondo-gebruiker met `financieel_read` of `financieel`; de nieuwe Contributie-mailboxmapping vereist `financieel` en bewaart geen factuurgegevens in FreeScout.
 - De FreeScout-sidebar toont bij een gedeeld e-mailadres alle toegankelijke Rondo-profielen in een compacte keuzelijst en wisselt binnen hetzelfde iframe tussen hun volledige profielkaarten.
@@ -47,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Het tabblad **Proces** in de FreeScout-sidebar heet voortaan **Acties**, zodat duidelijker is dat het onboardingstatussen en open werk bevat.
 - De FreeScout-sidebar gebruikt nu het afgesproken compacte kaartontwerp met mailboxlabel, statusbadges en tabbladen voor lid-, contact- en procesinformatie; openstaande contributie blijft als opvallend actieblok zichtbaar.
 - API-tokens, integratiewachtwoorden en interne signing-secrets worden centraal met sodium versleuteld opgeslagen; bestaande plaintext-instellingen worden automatisch gemigreerd zonder bestaande versleutelde OAuth- en betaalsleutels onleesbaar te maken.
 - Apple Wallet-certificaten en Google Wallet-serviceaccounts worden versleuteld opgeslagen en alleen tijdelijk met bestandsrechten `0600` ontsloten; nieuwe uploads zijn geen publieke WordPress-media meer.
