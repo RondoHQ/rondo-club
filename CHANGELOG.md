@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- De FreeScout-sidebar toont openstaande contributiefacturen als rustige, volledig klikbare regels met het openstaande bedrag, zonder dubbele randen, herhaalde totaalvelden of vervaldatum.
 - De ledenweergave in de FreeScout-sidebar gebruikt kortere labels, zet spelactiviteit direct onder lidsoort en toont WhatsApp als herkenbaar icoon.
 
 - Openstaande contributie toont het open totaal één keer, maakt het factuurnummer zelf klikbaar en zet bedrag, termijninformatie en vervaldatum overzichtelijk onder elkaar; adressen staan op twee regels en **Rondo-account** gebruikt voortaan **Ja**.
