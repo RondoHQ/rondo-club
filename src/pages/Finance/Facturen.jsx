@@ -114,6 +114,14 @@ function getInvoicePlanLabel(invoice) {
   return PLAN_OPTIONS.find((option) => option.value === invoice.installment_plan)?.label || invoice.installment_plan;
 }
 
+function getBulkActionError(invoiceId, invoiceNumberById, error) {
+  return {
+    id: invoiceId,
+    invoiceNumber: invoiceNumberById.get(invoiceId) || invoiceId,
+    message: error?.response?.data?.message || error.message,
+  };
+}
+
 export default function Facturen() {
   useDocumentTitle('Facturen');
 
@@ -203,6 +211,10 @@ export default function Facturen() {
   // Fetch all invoices — client-side filtering via DataTable
   // refetchOnMount ensures fresh data when navigating back after create/send actions
   const { data: invoices, isLoading, error } = useInvoices({}, { refetchOnMount: 'always' });
+  const invoiceNumberById = useMemo(
+    () => new Map((invoices || []).map((invoice) => [invoice.id, invoice.invoice_number])),
+    [invoices],
+  );
 
   const handleSelectAll = useCallback((visibleDraftIds) => {
     setSelectedIds((prev) => {
@@ -228,7 +240,7 @@ export default function Facturen() {
       try {
         await sendInvoice.mutateAsync(ids[i]);
       } catch (err) {
-        errors.push({ id: ids[i], message: err?.response?.data?.message || err.message });
+        errors.push(getBulkActionError(ids[i], invoiceNumberById, err));
       }
       setBulkProgress({ action: 'send', done: i + 1, total: ids.length, errors: [...errors] });
     }
@@ -253,7 +265,7 @@ export default function Facturen() {
       try {
         await deleteInvoice.mutateAsync(ids[i]);
       } catch (err) {
-        errors.push({ id: ids[i], message: err?.response?.data?.message || err.message });
+        errors.push(getBulkActionError(ids[i], invoiceNumberById, err));
       }
       setBulkProgress({ action: 'delete', done: i + 1, total: ids.length, errors: [...errors] });
     }
@@ -275,7 +287,7 @@ export default function Facturen() {
       try {
         await scheduleInvoice.mutateAsync({ id: ids[i], scheduledSendDate });
       } catch (err) {
-        errors.push({ id: ids[i], message: err?.response?.data?.message || err.message });
+        errors.push(getBulkActionError(ids[i], invoiceNumberById, err));
       }
       setBulkProgress({ action: 'schedule', done: i + 1, total: ids.length, errors: [...errors] });
     }
@@ -736,7 +748,7 @@ export default function Facturen() {
             </p>
             {bulkProgress.errors.map((err) => (
               <p key={err.id} className="mt-1 text-red-600 dark:text-red-400">
-                Factuur {err.id}: {err.message}
+                Factuur {err.invoiceNumber}: {err.message}
               </p>
             ))}
             <button
