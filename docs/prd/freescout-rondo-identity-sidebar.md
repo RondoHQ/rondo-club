@@ -1873,6 +1873,12 @@ durable OIDC subject binding and requires `financieel_read` or `financieel` befo
 amount. The Contributie mailbox mapping itself requires `financieel`. No invoice data is persisted
 in FreeScout, and the existing customer-field sync is not used by the sidebar.
 
+**Result, 2026-09-03, sidebar design:** the live member card now follows the approved compact
+sidebar mock. It separates membership, contact and process information into keyboard-accessible
+tabs, keeps open contribution as a prominent action block, uses configured club colors and retains
+the in-frame profile selector for shared addresses. The Rondo response remains script-free;
+FreeScout owns the constrained tab and profile-switch interactions.
+
 ### Phase 4: automatic provisioning in the Rondo Integration module
 
 - Extend the same custom module with the FreeScout login listener.
