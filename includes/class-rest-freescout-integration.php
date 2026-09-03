@@ -177,7 +177,7 @@ final class FreeScoutIntegration extends Base {
 		try {
 			$match = isset( $body['personReference'] )
 				? $this->matcher->match_knvb_id( (string) $body['personReference']['value'], 'sidebar', $user_id )
-				: $this->matcher->match( $body['customerEmails'], 'sidebar', $user_id );
+				: $this->matcher->match( $body['customerEmails'], 'sidebar', $user_id, (string) ( $body['fromName'] ?? '' ) );
 			if ( $match['status'] === 'ambiguous' && ! empty( $match['candidate_ids'] ) ) {
 				$this->audit(
 					'sidebar_match',
@@ -305,6 +305,11 @@ final class FreeScoutIntegration extends Base {
 			return $this->error( 'rondo_freescout_sidebar_schema_invalid', 'De sidebar request is ongeldig.', 400 );
 		}
 		if ( array_key_exists( 'personReference', $body ) && ! $this->valid_person_reference( $body['personReference'] ) ) {
+			return $this->error( 'rondo_freescout_sidebar_schema_invalid', 'De sidebar request is ongeldig.', 400 );
+		}
+		if ( array_key_exists( 'fromName', $body )
+			&& ( ! is_string( $body['fromName'] ) || mb_strlen( $body['fromName'] ) > 200 || preg_match( '/[\x00-\x1F\x7F]/', $body['fromName'] ) )
+		) {
 			return $this->error( 'rondo_freescout_sidebar_schema_invalid', 'De sidebar request is ongeldig.', 400 );
 		}
 		$agent = $body['agent'];

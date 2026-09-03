@@ -277,6 +277,47 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->assertStringContainsString( 'hidden', $data['html'] );
 	}
 
+	public function test_sidebar_shared_email_prefers_the_exact_sender_name(): void {
+		$this->createPerson( [ 'post_title' => 'Maaike Netten' ], [ 'email_1' => 'family@example.test' ] );
+		$this->createPerson( [ 'post_title' => 'Tibbe Smit' ], [ 'email_1' => 'family@example.test' ] );
+		$body             = $this->sidebar_body( [ 'family@example.test' ] );
+		$body['fromName'] = 'MÁÁIKE   NETTEN';
+
+		$data = $this->signed_request( 'sidebar', $body )->get_data();
+
+		$this->assertSame( 'ok', $data['status'] );
+		$this->assertStringContainsString( 'Maaike Netten', $data['html'] );
+		$this->assertStringNotContainsString( 'Tibbe Smit', $data['html'] );
+		$this->assertStringNotContainsString( 'data-rondo-profile-switcher', $data['html'] );
+	}
+
+	public function test_sidebar_shared_email_prefers_the_only_active_person(): void {
+		$this->createPerson(
+			[ 'post_title' => 'Former member' ],
+			[
+				'email_1'       => 'status@example.test',
+				'former_member' => true,
+			]
+		);
+		$this->createPerson( [ 'post_title' => 'Active member' ], [ 'email_1' => 'status@example.test' ] );
+
+		$data = $this->signed_request( 'sidebar', $this->sidebar_body( [ 'status@example.test' ] ) )->get_data();
+
+		$this->assertSame( 'ok', $data['status'] );
+		$this->assertStringContainsString( 'Active member', $data['html'] );
+		$this->assertStringNotContainsString( 'Former member', $data['html'] );
+	}
+
+	public function test_sidebar_rejects_an_invalid_sender_name(): void {
+		$body             = $this->sidebar_body( [ 'member@example.test' ] );
+		$body['fromName'] = "Naam\nInjected";
+
+		$response = $this->signed_request( 'sidebar', $body );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'rondo_freescout_sidebar_schema_invalid', $response->as_error()->get_error_code() );
+	}
+
 	public function test_sidebar_matches_a_validated_sportlink_relation_code_before_customer_email(): void {
 		$this->createPerson( [ 'post_title' => 'Shared sender decoy' ], [ 'email_1' => 'no-reply@sportlinkservices.nl' ] );
 		$this->createPerson(
@@ -351,9 +392,12 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$person_id      = $this->createPerson(
 			[ 'post_title' => 'Sidebar member' ],
 			[
-				'email_1'       => 'sidebar-details@example.test',
-				'mobile_1'      => '06 12345678',
-				'addresses'     => [
+				'email_1'        => 'sidebar-details@example.test',
+				'mobile_1'       => '06 12345678',
+				'type_lid'       => 'Bondslid',
+				'spelactiviteit' => 'Veld - Algemeen',
+				'birthdate'      => '2010-07-09',
+				'addresses'      => [
 					[
 						'address_label' => 'Home',
 						'street_name'   => 'Dorpsstraat',
@@ -362,13 +406,13 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 						'city'          => 'Wijchen',
 					],
 				],
-				'work_history'  => [
+				'work_history'   => [
 					[
 						'team_id'    => $team_id,
 						'is_current' => true,
 					],
 				],
-				'relationships' => [
+				'relationships'  => [
 					[
 						'related_person_id'  => $parent_id,
 						'relationship_label' => 'Ouder/verzorger',
@@ -397,9 +441,14 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->assertSame( 'ok', $data['status'] );
 		$this->assertStringContainsString( 'href="' . home_url( '/teams/' . $team_id ) . '">AWC O19-2</a>', $data['html'] );
 		$this->assertStringContainsString( 'href="' . home_url( '/people/' . $parent_id ) . '">Ouder Test</a>', $data['html'] );
-		$this->assertStringContainsString( '<dt>Ouder/verzorger</dt>', $data['html'] );
+		$this->assertStringContainsString( '<dt>Ouder / Verz.</dt>', $data['html'] );
 		$this->assertStringContainsString( 'https://wa.me/31612345678', $data['html'] );
+		$this->assertStringContainsString( 'rondo-inline-action--whatsapp', $data['html'] );
+		$this->assertStringContainsString( 'aria-label="Open WhatsApp"', $data['html'] );
 		$this->assertStringContainsString( 'Dorpsstraat 12<br>6601 AA Wijchen', $data['html'] );
+		$this->assertStringContainsString( '<dt>Geb. datum</dt>', $data['html'] );
+		$this->assertStringNotContainsString( '<dt>Geboortedatum</dt>', $data['html'] );
+		$this->assertLessThan( strpos( $data['html'], '<dt>Spelactiviteit</dt>' ), strpos( $data['html'], '<dt>Lidsoort</dt>' ) );
 		$this->assertStringContainsString( '<dt>Rondo-account</dt><dd>Ja</dd>', $data['html'] );
 		$this->assertStringNotContainsString( 'Digitale pas', $data['html'] );
 		$this->assertStringContainsString( '<h3>Inschrijftaken</h3>', $data['html'] );
