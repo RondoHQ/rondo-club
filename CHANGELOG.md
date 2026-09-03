@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Sportlink-overschrijvingsverzoeken in FreeScout kunnen via hun gevalideerde relatiecode direct het juiste Rondo-profiel tonen, zonder de berichtinhoud naar Rondo te sturen.
+- De FreeScout-sidebar linkt ouders/verzorgers en actuele teams rechtstreeks naar hun Rondo-pagina, biedt WhatsApp naast mobiele nummers en toont de vrijwilligersplicht plus komende en recente inschrijftaken op **Acties**.
 - De FreeScout-sidebar toont voor gebruikers met ledenadministratie- of financiële rechten een directe, persoonsgebonden Sportlink-link wanneer een geldig KNVB-ID beschikbaar is.
 - Gebruikers met financiële schrijfrechten kunnen zich ook via Rondo bij FreeScout aanmelden; financiële leesrechten alleen geven geen toegang tot de Contributie-mailbox.
 - De Rondo-sidebar ondersteunt een generiek `basis.v1`-beleid voor iedere door de FreeScout-beheerder geselecteerde mailbox; geldige Rondo-identiteit bepaalt de profieltoegang, terwijl financiële gegevens beperkt blijven tot aangewezen mailboxbeleid en financiële rechten.
@@ -50,6 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Openstaande contributie toont het open totaal één keer, maakt het factuurnummer zelf klikbaar en zet bedrag, termijninformatie en vervaldatum overzichtelijk onder elkaar; adressen staan op twee regels en **Rondo-account** gebruikt voortaan **Ja**.
+- De onduidelijke samenvatting **Digitale pas** is uit de FreeScout-sidebar verwijderd.
 - Het tabblad **Proces** in de FreeScout-sidebar heet voortaan **Acties**, zodat duidelijker is dat het onboardingstatussen en open werk bevat.
 - De FreeScout-sidebar gebruikt nu het afgesproken compacte kaartontwerp met mailboxlabel, statusbadges en tabbladen voor lid-, contact- en procesinformatie; openstaande contributie blijft als opvallend actieblok zichtbaar.
 - API-tokens, integratiewachtwoorden en interne signing-secrets worden centraal met sodium versleuteld opgeslagen; bestaande plaintext-instellingen worden automatisch gemigreerd zonder bestaande versleutelde OAuth- en betaalsleutels onleesbaar te maken.
