@@ -944,7 +944,7 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
                 ))}
               </select>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Alleen actuele spelers van dit team krijgen twee gastpassen op Mijn gegevens.
+                Alleen actuele spelers en stafleden van dit team krijgen twee gastpassen op Mijn gegevens.
                 Zonder selectie zijn gastpassen uitgeschakeld.
               </p>
             </div>
