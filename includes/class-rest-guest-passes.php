@@ -63,7 +63,7 @@ class GuestPasses extends Base {
 	/** Return eligibility and both stable slots. */
 	public function get_mine() {
 		$host_person_id = $this->service->get_current_host_person_id();
-		$eligible       = $this->service->is_eligible_player( $host_person_id );
+		$eligible       = $this->service->is_eligible_host( $host_person_id );
 		$team_id        = $this->service->get_eligible_team_id();
 		return rest_ensure_response(
 			[

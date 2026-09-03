@@ -4,6 +4,7 @@ namespace Tests\Wpunit;
 
 use Rondo\Access\AdmissionService;
 use Rondo\Config\ClubConfig;
+use Rondo\Core\VolunteerStatus;
 use Rondo\Fields\Fields;
 use Rondo\Passes\GuestPassService;
 use Rondo\Passes\MembershipPassQr;
@@ -108,20 +109,32 @@ class GuestPassTest extends RondoTestCase {
 		$this->assertSame( [], $response->get_data()['slots'] );
 	}
 
+	public function test_current_staff_member_can_use_guest_passes(): void {
+		[ $user_id, $person_id ] = $this->create_awc_one_staff_member();
+		wp_set_current_user( $user_id );
+
+		$service = new GuestPassService();
+		$this->assertTrue( $service->is_eligible_host( $person_id ) );
+
+		$slot = $service->ensure_slot( $person_id, 1 );
+		$this->assertNotWPError( $slot );
+		$this->assertSame( 1, $slot['slot'] );
+	}
+
 	public function test_eligibility_uses_the_configured_team_id_and_is_disabled_without_it(): void {
 		[ , $person_id, $team_id ] = $this->create_awc_one_player();
 		$service                   = new GuestPassService();
-		$this->assertTrue( $service->is_eligible_player( $person_id ) );
+		$this->assertTrue( $service->is_eligible_host( $person_id ) );
 
 		delete_option( ClubConfig::OPTION_GUEST_PASS_TEAM_ID );
-		$this->assertFalse( $service->is_eligible_player( $person_id ) );
+		$this->assertFalse( $service->is_eligible_host( $person_id ) );
 
 		$other_team_id = $this->createOrganization( [ 'post_title' => 'AWC 1' ] );
 		ClubConfig::update_guest_pass_team_id( $other_team_id );
-		$this->assertFalse( $service->is_eligible_player( $person_id ) );
+		$this->assertFalse( $service->is_eligible_host( $person_id ) );
 
 		ClubConfig::update_guest_pass_team_id( $team_id );
-		$this->assertTrue( $service->is_eligible_player( $person_id ) );
+		$this->assertTrue( $service->is_eligible_host( $person_id ) );
 	}
 
 	public function test_guest_identity_is_removed_after_thirty_days_but_count_remains(): void {
@@ -155,19 +168,29 @@ class GuestPassTest extends RondoTestCase {
 
 	/** @return array{0:int,1:int,2:int} */
 	private function create_awc_one_player(): array {
+		return $this->create_awc_one_team_member( 'Speler', 'Speler' );
+	}
+
+	/** @return array{0:int,1:int,2:int} */
+	private function create_awc_one_staff_member(): array {
+		return $this->create_awc_one_team_member( VolunteerStatus::get_staff_roles()[0], 'Staflid' );
+	}
+
+	/** @return array{0:int,1:int,2:int} */
+	private function create_awc_one_team_member( string $job_title, string $last_name ): array {
 		$user_id = $this->createRondoUser();
 		$team_id = $this->createOrganization( [ 'post_title' => 'AWC 1' ] );
 		$person  = $this->createPerson(
-			[ 'post_title' => 'AWC 1 Speler' ],
+			[ 'post_title' => 'AWC 1 ' . $last_name ],
 			[
 				'type_lid'     => 'Bondslid',
 				'first_name'   => 'AWC',
-				'last_name'    => 'Speler',
+				'last_name'    => $last_name,
 				'work_history' => [
 					[
 						'team'        => $team_id,
 						'entity_type' => 'team',
-						'job_title'   => 'Speler',
+						'job_title'   => $job_title,
 						'is_current'  => true,
 					],
 				],

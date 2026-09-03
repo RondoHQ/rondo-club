@@ -1,6 +1,6 @@
 <?php
 /**
- * Reusable guest-pass slots for players of the configured team.
+ * Reusable guest-pass slots for players and staff of the configured team.
  *
  * @package Rondo\Passes
  */
@@ -39,8 +39,8 @@ class GuestPassService {
 		return ClubConfig::get_guest_pass_team_name();
 	}
 
-	/** Check whether a person currently plays for the configured team. */
-	public function is_eligible_player( int $person_id ): bool {
+	/** Check whether a person currently plays or serves as staff for the configured team. */
+	public function is_eligible_host( int $person_id ): bool {
 		$eligible_team_id = $this->get_eligible_team_id();
 		if ( $eligible_team_id <= 0 ) {
 			return false;
@@ -54,8 +54,13 @@ class GuestPassService {
 			return false;
 		}
 
-		$player_roles = array_map( [ $this, 'normalize' ], VolunteerStatus::get_player_roles() );
-		$work_history = Fields::get_for_post( $person_id, 'work_history' );
+		$eligible_roles = array_unique(
+			array_map(
+				[ $this, 'normalize' ],
+				array_merge( VolunteerStatus::get_player_roles(), VolunteerStatus::get_staff_roles() )
+			)
+		);
+		$work_history   = Fields::get_for_post( $person_id, 'work_history' );
 		if ( ! is_array( $work_history ) ) {
 			return false;
 		}
@@ -71,12 +76,17 @@ class GuestPassService {
 			}
 
 			$job_title = $this->normalize( (string) ( $position['job_title'] ?? '' ) );
-			if ( $job_title !== '' && in_array( $job_title, $player_roles, true ) ) {
+			if ( $job_title !== '' && in_array( $job_title, $eligible_roles, true ) ) {
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	/** Backward-compatible alias for older callers. */
+	public function is_eligible_player( int $person_id ): bool {
+		return $this->is_eligible_host( $person_id );
 	}
 
 	/** Return both fixed slots, including virtual slots that have not been created yet. */
@@ -91,8 +101,8 @@ class GuestPassService {
 
 	/** Create a slot on first use and keep its identity stable afterwards. */
 	public function ensure_slot( int $host_person_id, int $slot ) {
-		if ( ! $this->is_eligible_player( $host_person_id ) ) {
-			return new \WP_Error( 'rondo_guest_pass_ineligible', 'Alleen actuele spelers van het ingestelde gastpasteam kunnen gastpassen gebruiken.', [ 'status' => 403 ] );
+		if ( ! $this->is_eligible_host( $host_person_id ) ) {
+			return new \WP_Error( 'rondo_guest_pass_ineligible', 'Alleen actuele spelers en stafleden van het ingestelde gastpasteam kunnen gastpassen gebruiken.', [ 'status' => 403 ] );
 		}
 		if ( $slot < 1 || $slot > self::SLOT_LIMIT ) {
 			return new \WP_Error( 'rondo_guest_pass_invalid_slot', 'Ongeldig gastslot.', [ 'status' => 400 ] );
@@ -158,8 +168,8 @@ class GuestPassService {
 		if ( $pass_id <= 0 ) {
 			return $this->ensure_slot( $host_person_id, $slot );
 		}
-		if ( ! $this->is_eligible_player( $host_person_id ) ) {
-			return new \WP_Error( 'rondo_guest_pass_ineligible', 'Alleen actuele spelers van het ingestelde gastpasteam kunnen gastpassen gebruiken.', [ 'status' => 403 ] );
+		if ( ! $this->is_eligible_host( $host_person_id ) ) {
+			return new \WP_Error( 'rondo_guest_pass_ineligible', 'Alleen actuele spelers en stafleden van het ingestelde gastpasteam kunnen gastpassen gebruiken.', [ 'status' => 403 ] );
 		}
 
 		$version = max( 1, (int) Fields::get_for_post( $pass_id, 'pass_version' ) ) + 1;
@@ -198,8 +208,8 @@ class GuestPassService {
 		}
 
 		$host_person_id = (int) Fields::get_for_post( $pass_id, 'host_person_id' );
-		if ( ! $this->is_eligible_player( $host_person_id ) ) {
-			return new \WP_Error( 'rondo_guest_pass_host_ineligible', 'Deze speler kan momenteel geen gastpassen gebruiken.', [ 'status' => 403 ] );
+		if ( ! $this->is_eligible_host( $host_person_id ) ) {
+			return new \WP_Error( 'rondo_guest_pass_host_ineligible', 'Deze speler of dit staflid kan momenteel geen gastpassen gebruiken.', [ 'status' => 403 ] );
 		}
 
 		$updated = Fields::update_many_for_post(
@@ -250,8 +260,8 @@ class GuestPassService {
 		if ( $data['status'] !== 'active' || $data['guest_name'] === '' ) {
 			return new \WP_Error( 'rondo_guest_pass_unclaimed', 'Deze gastpas is nog niet geregistreerd.', [ 'status' => 403 ] );
 		}
-		if ( ! $this->is_eligible_player( $data['host_person_id'] ) ) {
-			return new \WP_Error( 'rondo_guest_pass_host_ineligible', 'De speler kan momenteel geen gastpassen gebruiken.', [ 'status' => 403 ] );
+		if ( ! $this->is_eligible_host( $data['host_person_id'] ) ) {
+			return new \WP_Error( 'rondo_guest_pass_host_ineligible', 'De speler of het staflid kan momenteel geen gastpassen gebruiken.', [ 'status' => 403 ] );
 		}
 		if ( get_post_type( $event_id ) !== 'rondo_access_event' ) {
 			return new \WP_Error( 'rondo_guest_pass_event_required', 'Selecteer eerst een wedstrijd.', [ 'status' => 422 ] );

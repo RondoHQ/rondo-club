@@ -50,7 +50,7 @@ class PublicGuestPassPage {
 		}
 
 		$pass = $this->service->get_pass_data( (int) $slot['id'] );
-		if ( $pass === null || ! $this->service->is_eligible_player( $pass['host_person_id'] ) ) {
+		if ( $pass === null || ! $this->service->is_eligible_host( $pass['host_person_id'] ) ) {
 			$this->render_error( 'Deze gastpas is momenteel niet beschikbaar.' );
 		}
 

@@ -134,7 +134,7 @@ class MembershipPassGoogle {
 	public function get_add_to_wallet_url_for_guest( int $guest_pass_id ) {
 		$guest_service = new GuestPassService();
 		$guest         = $guest_service->get_pass_data( $guest_pass_id );
-		if ( $guest === null || $guest['status'] !== 'active' || ! $guest_service->is_eligible_player( $guest['host_person_id'] ) ) {
+		if ( $guest === null || $guest['status'] !== 'active' || ! $guest_service->is_eligible_host( $guest['host_person_id'] ) ) {
 			return new \WP_Error( 'rondo_guest_pass_unavailable', 'Deze gastpas is niet beschikbaar.' );
 		}
 
