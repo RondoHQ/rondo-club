@@ -16,6 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** Resolve the narrow identity Rondo may expose to first-party OIDC clients. */
 final class OidcIdentity {
+	private const DEFAULT_FREESCOUT_CAPABILITIES = [ 'ledenadministratie', 'financieel' ];
 
 	public const META_SUBJECT         = 'rondo_oidc_subject';
 	public const META_VERIFIED_EMAIL  = 'rondo_oidc_verified_email';
@@ -183,7 +184,7 @@ final class OidcIdentity {
 		}
 
 		$is_admin     = user_can( $user_id, 'manage_options' );
-		$capabilities = (array) apply_filters( 'rondo_oidc_freescout_capabilities', [ 'ledenadministratie' ] );
+		$capabilities = (array) apply_filters( 'rondo_oidc_freescout_capabilities', self::DEFAULT_FREESCOUT_CAPABILITIES );
 		$has_access   = $is_admin;
 		foreach ( $capabilities as $capability ) {
 			if ( is_string( $capability ) && $capability !== '' && user_can( $user_id, $capability ) ) {
