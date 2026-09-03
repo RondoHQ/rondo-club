@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- De FreeScout-sidebar kiest bij een gedeeld e-mailadres automatisch de unieke persoon met dezelfde afzendernaam, of anders het enige actieve lid.
 - Sportlink-overschrijvingsverzoeken in FreeScout kunnen via hun gevalideerde relatiecode direct het juiste Rondo-profiel tonen, zonder de berichtinhoud naar Rondo te sturen.
 - De FreeScout-sidebar linkt ouders/verzorgers en actuele teams rechtstreeks naar hun Rondo-pagina, biedt WhatsApp naast mobiele nummers en toont de vrijwilligersplicht plus komende en recente inschrijftaken op **Acties**.
 - De FreeScout-sidebar toont voor gebruikers met ledenadministratie- of financiële rechten een directe, persoonsgebonden Sportlink-link wanneer een geldig KNVB-ID beschikbaar is.
@@ -50,6 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - De nieuwe rol Rondo Kaderlijst geeft toegang tot de volledige kaderlijst zonder de algemene ledenlijst of andere kaderpagina's te openen.
 
 ### Changed
+
+- De ledenweergave in de FreeScout-sidebar gebruikt kortere labels, zet spelactiviteit direct onder lidsoort en toont WhatsApp als herkenbaar icoon.
 
 - Openstaande contributie toont het open totaal één keer, maakt het factuurnummer zelf klikbaar en zet bedrag, termijninformatie en vervaldatum overzichtelijk onder elkaar; adressen staan op twee regels en **Rondo-account** gebruikt voortaan **Ja**.
 - De onduidelijke samenvatting **Digitale pas** is uit de FreeScout-sidebar verwijderd.

@@ -8,6 +8,8 @@
 namespace Rondo\Integrations\FreeScout;
 
 use Rondo\Core\AccessControl;
+use Rondo\Fields\Fields;
+use Rondo\Fields\Formatter;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -21,7 +23,7 @@ final class PersonMatcher {
 	 *
 	 * @return array{status:string,person_id:?int,candidate_count:int,candidate_ids:int[]}
 	 */
-	public function match( array $emails, string $scope = 'integration', int $user_id = 0 ): array {
+	public function match( array $emails, string $scope = 'integration', int $user_id = 0, string $from_name = '' ): array {
 		$emails = $this->normalize_emails( $emails );
 		if ( $emails === [] ) {
 			return $this->result( 'no_match', null, [] );
@@ -54,7 +56,7 @@ final class PersonMatcher {
 		);
 		$candidates = array_values( array_unique( array_map( 'intval', $query->posts ) ) );
 
-		return $this->result_for_candidates( $candidates, $scope, $user_id );
+		return $this->result_for_candidates( $candidates, $scope, $user_id, $from_name );
 	}
 
 	/**
@@ -96,7 +98,7 @@ final class PersonMatcher {
 	 * @param int[] $candidates Candidate person IDs.
 	 * @return array{status:string,person_id:?int,candidate_count:int,candidate_ids:int[]}
 	 */
-	private function result_for_candidates( array $candidates, string $scope, int $user_id ): array {
+	private function result_for_candidates( array $candidates, string $scope, int $user_id, string $from_name = '' ): array {
 
 		if ( $scope === 'sidebar' ) {
 			$visible = array_values(
@@ -115,6 +117,16 @@ final class PersonMatcher {
 			return $this->result( 'exact', $candidates[0], $candidates );
 		}
 		if ( count( $candidates ) > 1 ) {
+			$name_matches = $this->name_matches( $candidates, $from_name );
+			if ( count( $name_matches ) === 1 ) {
+				return $this->result( 'exact', $name_matches[0], $name_matches );
+			}
+
+			$active = array_values( array_filter( $candidates, [ $this, 'is_active' ] ) );
+			if ( count( $active ) === 1 ) {
+				return $this->result( 'exact', $active[0], $active );
+			}
+
 			return $this->result( 'ambiguous', null, $candidates );
 		}
 
@@ -136,6 +148,43 @@ final class PersonMatcher {
 		}
 
 		return array_values( array_unique( $normalized ) );
+	}
+
+	/** @param int[] $candidate_ids
+	 * @return int[]
+	 */
+	private function name_matches( array $candidate_ids, string $from_name ): array {
+		$from_name = $this->normalize_name( $from_name );
+		if ( $from_name === '' ) {
+			return [];
+		}
+
+		return array_values(
+			array_filter(
+				$candidate_ids,
+				fn( int $person_id ): bool => $this->normalize_name( get_the_title( $person_id ) ) === $from_name
+			)
+		);
+	}
+
+	private function normalize_name( string $name ): string {
+		$name = mb_strtolower( remove_accents( sanitize_text_field( $name ) ) );
+		$name = preg_replace( '/[^\p{L}\p{N}]+/u', ' ', $name );
+
+		return trim( preg_replace( '/\s+/u', ' ', (string) $name ) );
+	}
+
+	private function is_active( int $person_id ): bool {
+		if ( (bool) Fields::get_for_post( $person_id, 'former_member' ) ) {
+			return false;
+		}
+
+		$lid_tot = Formatter::for_wire(
+			'person',
+			[ 'lid_tot' => Fields::get_for_post( $person_id, 'lid_tot' ) ]
+		)['lid_tot'] ?? '';
+
+		return $lid_tot === '' || $lid_tot >= wp_date( 'Y-m-d' );
 	}
 
 	/** @param int[] $candidate_ids

@@ -168,7 +168,6 @@ final class SidebarRenderer {
 			$teams
 		);
 		$this->add_row( $rows, 'Team', implode( ', ', $team_links ) );
-		$this->add_row( $rows, 'Spelactiviteit', $fields['spelactiviteit'] ?? '' );
 		$this->add_row( $rows, 'Overschrijving', ! empty( $fields['wacht_op_overschrijving'] ) ? 'In behandeling' : '' );
 
 		return $rows;
@@ -179,11 +178,12 @@ final class SidebarRenderer {
 		$rows = [];
 		$this->add_row( $rows, 'Status', $this->badge_markup( $badges ) );
 		$this->add_row( $rows, 'Lidsoort', $fields['type_lid'] ?? '' );
+		$this->add_row( $rows, 'Spelactiviteit', $fields['spelactiviteit'] ?? '' );
 		$this->add_row( $rows, 'KNVB-ID', $fields['knvb_id'] ?? '' );
 		$birthdate = (string) ( $fields['birthdate'] ?? '' );
 		if ( $birthdate !== '' ) {
 			$age = $this->age( $birthdate );
-			$this->add_row( $rows, 'Geboortedatum', $this->format_date( $birthdate ) . ( $age !== null ? ' (' . $age . ' jaar)' : '' ) );
+			$this->add_row( $rows, 'Geb. datum', $this->format_date( $birthdate ) . ( $age !== null ? ' (' . $age . ' jaar)' : '' ) );
 		}
 		$this->add_row( $rows, 'Leeftijdsgroep', $fields['leeftijdsgroep'] ?? '' );
 		$this->add_row( $rows, 'Lid sinds', $this->format_date( (string) ( $fields['lid_sinds'] ?? '' ) ) );
@@ -216,7 +216,7 @@ final class SidebarRenderer {
 				if ( ! $is_deceased && $is_mobile ) {
 					$whatsapp_url = $this->whatsapp_url( $value );
 					if ( $whatsapp_url !== '' ) {
-						$markup .= ' <a class="rondo-inline-action" href="' . esc_url( $whatsapp_url ) . '">WhatsApp</a>';
+						$markup .= ' <a class="rondo-inline-action rondo-inline-action--whatsapp" href="' . esc_url( $whatsapp_url ) . '" aria-label="Open WhatsApp"><span class="screen-reader-text">WhatsApp</span></a>';
 					}
 				}
 				$this->add_row( $rows, $label, $markup );
@@ -263,7 +263,7 @@ final class SidebarRenderer {
 			if ( $label === '' ) {
 				$label = trim( (string) ( $relationship['relationship_label'] ?? '' ) );
 			}
-			$label  = $label !== '' ? $label : 'Relatie';
+			$label  = $this->relationship_label( $label !== '' ? $label : 'Relatie' );
 			$status = Fields::get_for_post( $person_id, 'former_member' ) ? 'Oud-lid' : 'Actief';
 			$teams  = $this->current_teams( (array) Fields::get_for_post( $person_id, 'work_history' ) );
 			$value  = '<a href="' . esc_url( home_url( '/people/' . $person_id ) ) . '">' . esc_html( get_the_title( $person_id ) ) . '</a> · ' . esc_html( $status );
@@ -639,6 +639,12 @@ final class SidebarRenderer {
 		return preg_match( '/^\d{8,15}$/', $digits ) ? 'https://wa.me/' . $digits : '';
 	}
 
+	private function relationship_label( string $label ): string {
+		$normalized = strtolower( preg_replace( '/\s+/', '', remove_accents( $label ) ) );
+
+		return in_array( $normalized, [ 'ouder/verzorger', 'ouder-verzorger', 'ouderofverzorger' ], true ) ? 'Ouder / Verz.' : $label;
+	}
+
 	private function mailbox_label( string $policy ): string {
 		if ( $policy === 'ledenadministratie.v2' ) {
 			return 'Ledenadministratie';
@@ -697,7 +703,7 @@ final class SidebarRenderer {
 			$allowed[ $tag ]['data-rondo-tab-panel']     = true;
 			$allowed[ $tag ]['data-rondo-profile-panel'] = true;
 		}
-		$allowed['button'] = [
+		$allowed['button']              = [
 			'type'           => true,
 			'class'          => true,
 			'role'           => true,
@@ -705,16 +711,18 @@ final class SidebarRenderer {
 			'aria-controls'  => true,
 			'data-rondo-tab' => true,
 		];
-		$allowed['select'] = [
+		$allowed['select']              = [
 			'id'                          => true,
 			'class'                       => true,
 			'data-rondo-profile-switcher' => true,
 			'aria-label'                  => true,
 		];
-		$allowed['option'] = [
+		$allowed['option']              = [
 			'value'    => true,
 			'selected' => true,
 		];
+		$allowed['a']['aria-label']     = true;
+		$allowed['span']['aria-hidden'] = true;
 
 		return $allowed;
 	}
