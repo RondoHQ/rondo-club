@@ -9,6 +9,7 @@ use Rondo\Identity\OidcIdentity;
 use Rondo\Integrations\FreeScout\Config;
 use Rondo\Integrations\FreeScout\PersonMatcher;
 use Rondo\REST\FreeScoutIntegration;
+use Rondo\REST\MemberShifts;
 use Tests\Support\RondoTestCase;
 
 /** Covers the signed FreeScout sidebar, access, configuration and activity contracts. */
@@ -28,7 +29,7 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->previous_https = isset( $_SERVER['HTTPS'] ) ? (string) $_SERVER['HTTPS'] : null;
 		$_SERVER['HTTPS']     = 'on';
 		add_filter( 'rondo_freescout_signing_keys', [ $this, 'signing_keys' ] );
-		$this->server = $this->bootRestControllers( [ FreeScoutIntegration::class ] );
+		$this->server = $this->bootRestControllers( [ FreeScoutIntegration::class, MemberShifts::class ] );
 
 		$this->agent_id  = self::factory()->user->create(
 			[
@@ -338,6 +339,73 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		}
 	}
 
+	public function test_sidebar_links_related_records_and_formats_contact_and_action_details(): void {
+		$team_id        = self::factory()->post->create(
+			[
+				'post_type'   => 'team',
+				'post_status' => 'publish',
+				'post_title'  => 'AWC O19-2',
+			]
+		);
+		$parent_id      = $this->createPerson( [ 'post_title' => 'Ouder Test' ] );
+		$person_id      = $this->createPerson(
+			[ 'post_title' => 'Sidebar member' ],
+			[
+				'email_1'       => 'sidebar-details@example.test',
+				'mobile_1'      => '06 12345678',
+				'addresses'     => [
+					[
+						'address_label' => 'Home',
+						'street_name'   => 'Dorpsstraat',
+						'house_number'  => '12',
+						'postal_code'   => '6601 AA',
+						'city'          => 'Wijchen',
+					],
+				],
+				'work_history'  => [
+					[
+						'team_id'    => $team_id,
+						'is_current' => true,
+					],
+				],
+				'relationships' => [
+					[
+						'related_person_id'  => $parent_id,
+						'relationship_label' => 'Ouder/verzorger',
+					],
+				],
+			]
+		);
+		$linked_user_id = self::factory()->user->create( [ 'role' => 'rondo_user' ] );
+		update_user_meta( $linked_user_id, 'rondo_linked_person_id', $person_id );
+
+		$shift_start = current_datetime()->modify( '+2 days' );
+		$shift_id    = self::factory()->post->create(
+			[
+				'post_type'   => 'dienst_shift',
+				'post_status' => 'publish',
+				'post_title'  => 'Terreinonderhoud',
+			]
+		);
+		update_post_meta( $shift_id, 'start_datetime', $shift_start->format( 'Y-m-d H:i:s' ) );
+		update_post_meta( $shift_id, 'end_datetime', $shift_start->modify( '+2 hours' )->format( 'Y-m-d H:i:s' ) );
+		update_post_meta( $shift_id, 'status', 'open' );
+		update_post_meta( $shift_id, 'assigned_persons', [ $person_id ] );
+
+		$data = $this->signed_request( 'sidebar', $this->sidebar_body( [ 'sidebar-details@example.test' ] ) )->get_data();
+
+		$this->assertSame( 'ok', $data['status'] );
+		$this->assertStringContainsString( 'href="' . home_url( '/teams/' . $team_id ) . '">AWC O19-2</a>', $data['html'] );
+		$this->assertStringContainsString( 'href="' . home_url( '/people/' . $parent_id ) . '">Ouder Test</a>', $data['html'] );
+		$this->assertStringContainsString( '<dt>Ouder/verzorger</dt>', $data['html'] );
+		$this->assertStringContainsString( 'https://wa.me/31612345678', $data['html'] );
+		$this->assertStringContainsString( 'Dorpsstraat 12<br>6601 AA Wijchen', $data['html'] );
+		$this->assertStringContainsString( '<dt>Rondo-account</dt><dd>Ja</dd>', $data['html'] );
+		$this->assertStringNotContainsString( 'Digitale pas', $data['html'] );
+		$this->assertStringContainsString( '<h3>Inschrijftaken</h3>', $data['html'] );
+		$this->assertStringContainsString( 'Terreinonderhoud', $data['html'] );
+	}
+
 	public function test_basic_sidebar_works_for_an_exact_bound_rondo_user(): void {
 		$person_id  = $this->createPerson( [ 'post_title' => 'Basic member' ], [ 'email_1' => 'basic@example.test' ] );
 		$invoice_id = self::factory()->post->create(
@@ -441,7 +509,10 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->assertStringContainsString( '€ 80.00', $with_finance['html'] );
 		$this->assertStringContainsString( '1/3 termijnen betaald', $with_finance['html'] );
 		$this->assertStringContainsString( 'rondo-alert--finance', $with_finance['html'] );
-		$this->assertStringContainsString( '/financien/facturen/' . $invoice_id, $with_finance['html'] );
+		$this->assertStringContainsString( '<a class="rondo-invoice-link" href="' . home_url( '/financien/facturen/' . $invoice_id ) . '">Factuur C2026-123</a>', $with_finance['html'] );
+		$this->assertStringContainsString( '<dt>Totaal bedrag</dt><dd>€ 120.00</dd>', $with_finance['html'] );
+		$this->assertStringContainsString( '<dt>Nog open</dt><dd>€ 80.00</dd>', $with_finance['html'] );
+		$this->assertStringNotContainsString( '>Open</a>', $with_finance['html'] );
 		$this->assertStringNotContainsString( 'F-PRIVATE', $with_finance['html'] );
 		$this->assertStringNotContainsString( '999', $with_finance['html'] );
 	}
