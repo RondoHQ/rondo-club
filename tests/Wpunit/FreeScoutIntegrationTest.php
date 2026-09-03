@@ -548,19 +548,20 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		Fields::update_for_post( $manual_invoice_id, 'total_amount', 999 );
 
 		$without_finance = $this->signed_request( 'sidebar', $this->sidebar_body( [ 'finance@example.test' ] ) )->get_data();
-		$this->assertStringNotContainsString( 'Openstaande contributie', $without_finance['html'] );
+		$this->assertStringNotContainsString( 'Openstaande facturen', $without_finance['html'] );
 		$this->assertStringNotContainsString( 'C2026-123', $without_finance['html'] );
 
 		get_userdata( $this->agent_id )->add_cap( 'financieel_read' );
 		$with_finance = $this->signed_request( 'sidebar', $this->sidebar_body( [ 'finance@example.test' ] ) )->get_data();
-		$this->assertStringContainsString( 'Openstaande contributie', $with_finance['html'] );
+		$this->assertStringContainsString( 'Openstaande facturen', $with_finance['html'] );
 		$this->assertStringContainsString( 'C2026-123', $with_finance['html'] );
-		$this->assertStringContainsString( '€ 80.00', $with_finance['html'] );
+		$this->assertSame( 2, substr_count( $with_finance['html'], '€ 80.00' ) );
 		$this->assertStringContainsString( '1/3 termijnen betaald', $with_finance['html'] );
 		$this->assertStringContainsString( 'rondo-alert--finance', $with_finance['html'] );
-		$this->assertStringContainsString( '<a class="rondo-invoice-link" href="' . home_url( '/financien/facturen/' . $invoice_id ) . '">Factuur C2026-123</a>', $with_finance['html'] );
-		$this->assertStringContainsString( '<dt>Totaal bedrag</dt><dd>€ 120.00</dd>', $with_finance['html'] );
-		$this->assertStringContainsString( '<dt>Nog open</dt><dd>€ 80.00</dd>', $with_finance['html'] );
+		$this->assertStringContainsString( '<a class="rondo-invoice" href="' . home_url( '/financien/facturen/' . $invoice_id ) . '" aria-label="Open Factuur C2026-123">', $with_finance['html'] );
+		$this->assertStringContainsString( '<strong class="rondo-invoice-amount">€ 80.00</strong>', $with_finance['html'] );
+		$this->assertStringNotContainsString( 'Totaal bedrag', $with_finance['html'] );
+		$this->assertStringNotContainsString( 'Vervalt', $with_finance['html'] );
 		$this->assertStringNotContainsString( '>Open</a>', $with_finance['html'] );
 		$this->assertStringNotContainsString( 'F-PRIVATE', $with_finance['html'] );
 		$this->assertStringNotContainsString( '999', $with_finance['html'] );
