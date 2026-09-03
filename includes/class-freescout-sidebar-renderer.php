@@ -8,10 +8,10 @@
 namespace Rondo\Integrations\FreeScout;
 
 use Rondo\Core\AccessControl;
+use Rondo\Core\PhoneNormalizer;
 use Rondo\Fields\Fields;
 use Rondo\Fields\Formatter;
 use Rondo\Fields\RestFields;
-use Rondo\Passes\MembershipPassService;
 use Rondo\People\CommunicationPolicy;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -63,7 +63,7 @@ final class SidebarRenderer {
 		$is_deceased = CommunicationPolicy::is_deceased( $person_id );
 		$badges      = $this->badges( $fields, $is_deceased );
 		$teams       = $this->current_teams( (array) ( $fields['work_history'] ?? [] ) );
-		$finance     = in_array( $policy, self::FINANCE_POLICIES, true ) ? $this->invoice_rows( $person_id, $viewer_user_id ) : [];
+		$finance     = in_array( $policy, self::FINANCE_POLICIES, true ) ? $this->invoice_summary( $person_id, $viewer_user_id ) : [];
 		$member_id   = 'rondo-member-' . $person_id;
 		$contact_id  = 'rondo-contact-' . $person_id;
 		$process_id  = 'rondo-process-' . $person_id;
@@ -71,7 +71,7 @@ final class SidebarRenderer {
 		$html  = '<section class="rondo-sidebar" data-rondo-card aria-label="' . esc_attr( 'Rondo-profiel van ' . $name ) . '">';
 		$html .= '<div class="rondo-heading"><strong>Rondo</strong><span class="rondo-mailbox-badge">' . esc_html( $this->mailbox_label( $policy ) ) . '</span></div>';
 		if ( $finance !== [] ) {
-			$html .= '<section class="rondo-alert rondo-alert--finance"><h3>Openstaande contributie</h3>' . $this->row_list( $finance ) . '</section>';
+			$html .= $this->invoice_summary_markup( $finance );
 		}
 		$html .= '<div class="rondo-tabs" role="tablist" aria-label="Rondo-profielinformatie">';
 		$html .= '<button type="button" class="rondo-tab is-active" role="tab" aria-selected="true" aria-controls="' . esc_attr( $member_id ) . '" data-rondo-tab="member">Lid</button>';
@@ -88,6 +88,7 @@ final class SidebarRenderer {
 		$html .= '</div>';
 		$html .= '<div id="' . esc_attr( $process_id ) . '" class="rondo-tab-panel" role="tabpanel" data-rondo-tab-panel="process" hidden>';
 		$html .= $this->section( 'Ledenprocessen', $this->process_rows( $person_id, $fields ) );
+		$html .= $this->section( 'Inschrijftaken', $this->shift_rows( $person_id ) );
 		$html .= $this->section( 'Open werk', $this->todo_rows( $person_id ) );
 		$html .= '</div>';
 		$html .= '<div class="rondo-actions"><a class="rondo-action rondo-action--primary" href="' . esc_url( home_url( '/people/' . $person_id ) ) . '">Open in Rondo</a>';
@@ -161,8 +162,12 @@ final class SidebarRenderer {
 
 	/** @return array<string,string> */
 	private function sport_rows( array $fields, array $teams ): array {
-		$rows = [];
-		$this->add_row( $rows, 'Team', implode( ', ', $teams ) );
+		$rows       = [];
+		$team_links = array_map(
+			static fn( array $team ): string => '<a href="' . esc_url( $team['url'] ) . '">' . esc_html( $team['name'] ) . '</a>',
+			$teams
+		);
+		$this->add_row( $rows, 'Team', implode( ', ', $team_links ) );
 		$this->add_row( $rows, 'Spelactiviteit', $fields['spelactiviteit'] ?? '' );
 		$this->add_row( $rows, 'Overschrijving', ! empty( $fields['wacht_op_overschrijving'] ) ? 'In behandeling' : '' );
 
@@ -200,14 +205,21 @@ final class SidebarRenderer {
 			}
 		}
 		foreach ( [
-			'mobile_1'    => 'Mobiel',
-			'mobile_2'    => 'Mobiel 2',
-			'telephone_1' => 'Telefoon',
-			'telephone_2' => 'Telefoon 2',
-		] as $field => $label ) {
+			'mobile_1'    => [ 'Mobiel', true ],
+			'mobile_2'    => [ 'Mobiel 2', true ],
+			'telephone_1' => [ 'Telefoon', false ],
+			'telephone_2' => [ 'Telefoon 2', false ],
+		] as $field => [ $label, $is_mobile ] ) {
 			$value = (string) ( $fields[ $field ] ?? '' );
 			if ( $value !== '' ) {
-				$this->add_row( $rows, $label, $is_deceased ? $value : '<a href="tel:' . esc_attr( preg_replace( '/[^0-9+]/', '', $value ) ) . '">' . esc_html( $value ) . '</a>' );
+				$markup = $is_deceased ? esc_html( $value ) : '<a href="tel:' . esc_attr( preg_replace( '/[^0-9+]/', '', $value ) ) . '">' . esc_html( $value ) . '</a>';
+				if ( ! $is_deceased && $is_mobile ) {
+					$whatsapp_url = $this->whatsapp_url( $value );
+					if ( $whatsapp_url !== '' ) {
+						$markup .= ' <a class="rondo-inline-action" href="' . esc_url( $whatsapp_url ) . '">WhatsApp</a>';
+					}
+				}
+				$this->add_row( $rows, $label, $markup );
 			}
 		}
 		$addresses = array_values( array_filter( (array) ( $fields['addresses'] ?? [] ), 'is_array' ) );
@@ -220,9 +232,12 @@ final class SidebarRenderer {
 			if ( ! is_array( $address ) ) {
 				continue;
 			}
-			$label = (string) ( $address['address_label'] ?? 'Adres' );
-			$parts = array_filter( [ $address['street_name'] ?? '', $address['house_number'] ?? '', $address['house_number_addition'] ?? '', $address['postal_code'] ?? '', $address['city'] ?? '' ] );
-			$this->add_row( $rows, ucfirst( $label ), implode( ' ', array_map( 'strval', $parts ) ) );
+			$raw_label   = trim( (string) ( $address['address_label'] ?? '' ) );
+			$label       = $raw_label === '' || strtolower( $raw_label ) === 'home' ? 'Adres' : ucfirst( $raw_label );
+			$street_line = trim( implode( ' ', array_filter( array_map( 'strval', [ $address['street_name'] ?? '', $address['house_number'] ?? '', $address['house_number_addition'] ?? '' ] ) ) ) );
+			$city_line   = trim( implode( ' ', array_filter( array_map( 'strval', [ $address['postal_code'] ?? '', $address['city'] ?? '' ] ) ) ) );
+			$value       = esc_html( $street_line ) . ( $street_line !== '' && $city_line !== '' ? '<br>' : '' ) . esc_html( $city_line );
+			$this->add_row( $rows, $label, $value );
 		}
 
 		return $rows;
@@ -244,10 +259,21 @@ final class SidebarRenderer {
 			if ( ! $related || $related->post_type !== 'person' || $related->post_status !== 'publish' ) {
 				continue;
 			}
-			$label  = (string) ( $relationship['relationship_name'] ?? $relationship['relationship_label'] ?? 'Relatie' );
+			$label = trim( (string) ( $relationship['relationship_name'] ?? '' ) );
+			if ( $label === '' ) {
+				$label = trim( (string) ( $relationship['relationship_label'] ?? '' ) );
+			}
+			$label  = $label !== '' ? $label : 'Relatie';
 			$status = Fields::get_for_post( $person_id, 'former_member' ) ? 'Oud-lid' : 'Actief';
 			$teams  = $this->current_teams( (array) Fields::get_for_post( $person_id, 'work_history' ) );
-			$value  = get_the_title( $person_id ) . ' · ' . $status . ( $teams !== [] ? ' · ' . implode( ', ', $teams ) : '' );
+			$value  = '<a href="' . esc_url( home_url( '/people/' . $person_id ) ) . '">' . esc_html( get_the_title( $person_id ) ) . '</a> · ' . esc_html( $status );
+			if ( $teams !== [] ) {
+				$team_links = array_map(
+					static fn( array $team ): string => '<a href="' . esc_url( $team['url'] ) . '">' . esc_html( $team['name'] ) . '</a>',
+					$teams
+				);
+				$value     .= ' · ' . implode( ', ', $team_links );
+			}
 			$this->add_row( $rows, $label, $value );
 			++$count;
 		}
@@ -271,20 +297,66 @@ final class SidebarRenderer {
 				);
 			$linked_user_id = isset( $users[0] ) ? (int) $users[0] : 0;
 		}
-		$this->add_row( $rows, 'Rondo-account', $linked_user_id > 0 ? 'Gekoppeld' : '' );
+		$this->add_row( $rows, 'Rondo-account', $linked_user_id > 0 ? 'Ja' : '' );
 		$this->add_row( $rows, 'Welkomstmail', get_post_meta( $person_id, '_welcome_email_sent_at', true ) ? 'Verstuurd' : '' );
-		$pass = MembershipPassService::get_person_pass_summary( $person_id );
-		if ( is_array( $pass ) ) {
-			$wallets = [];
-			foreach ( (array) ( $pass['wallets'] ?? [] ) as $name => $wallet ) {
-				if ( ! empty( $wallet['available'] ) ) {
-					$wallets[] = ucfirst( (string) $name );
-				}
-			}
-			$this->add_row( $rows, 'Digitale pas', (string) ( $pass['label'] ?? '' ) . ( $wallets !== [] ? ' · ' . implode( ', ', $wallets ) : '' ) );
-		}
 
 		return $rows;
+	}
+
+	/** @return array<string,string> */
+	private function shift_rows( int $person_id ): array {
+		$request = new \WP_REST_Request( 'GET', '/rondo/v1/people/' . $person_id . '/shifts' );
+		$request->set_param( 'person_id', $person_id );
+		$response = rest_do_request( $request );
+		if ( $response->is_error() ) {
+			return [];
+		}
+
+		$data        = (array) $response->get_data();
+		$obligations = array_values( array_filter( (array) ( $data['obligations'] ?? [] ), 'is_array' ) );
+		$required    = 0;
+		$exempt      = 0;
+		foreach ( $obligations as $obligation ) {
+			if ( ! empty( $obligation['exemption'] ) ) {
+				++$exempt;
+				continue;
+			}
+			$required += absint( $obligation['required_count'] ?? 0 );
+		}
+
+		$rows = [];
+		if ( $required > 0 ) {
+			$this->add_row( $rows, 'Plicht', $required . ' ' . ( $required === 1 ? 'inschrijftaak' : 'inschrijftaken' ) );
+		} elseif ( $exempt > 0 ) {
+			$this->add_row( $rows, 'Plicht', 'Vrijgesteld' );
+		}
+
+		$upcoming = array_values( array_filter( (array) ( $data['upcoming'] ?? [] ), 'is_array' ) );
+		$recent   = array_values( array_filter( (array) ( $data['recent'] ?? [] ), 'is_array' ) );
+		$this->add_row( $rows, 'Komend', $this->shift_list_markup( $upcoming, false ) );
+		$this->add_row( $rows, 'Recent', $this->shift_list_markup( $recent, true ) );
+
+		return $rows;
+	}
+
+	private function shift_list_markup( array $shifts, bool $show_status ): string {
+		$items = [];
+		foreach ( array_slice( $shifts, 0, 3 ) as $shift ) {
+			$title = trim( (string) ( $shift['dienst_type_name'] ?? '' ) );
+			if ( $title === '' ) {
+				$title = trim( (string) ( $shift['title'] ?? '' ) );
+			}
+			$date = $this->format_datetime( (string) ( $shift['start_datetime'] ?? '' ) );
+			$item = trim( $date . ( $date !== '' && $title !== '' ? ' · ' : '' ) . $title );
+			if ( $show_status && ! empty( $shift['status'] ) ) {
+				$item .= ' · ' . ucfirst( (string) $shift['status'] );
+			}
+			if ( $item !== '' ) {
+				$items[] = esc_html( $item );
+			}
+		}
+
+		return implode( '<br>', $items );
 	}
 
 	/** @return array<string,string> */
@@ -342,9 +414,9 @@ final class SidebarRenderer {
 	/**
 	 * Return a minimal contribution-invoice summary for the exact OIDC-bound viewer.
 	 *
-	 * @return array<string,string>
+	 * @return array{total_outstanding:float,invoices:array<int,array<string,mixed>>}|array{}
 	 */
-	private function invoice_rows( int $person_id, int $viewer_user_id ): array {
+	private function invoice_summary( int $person_id, int $viewer_user_id ): array {
 		if ( get_current_user_id() !== $viewer_user_id
 			|| ( ! user_can( $viewer_user_id, 'financieel_read' ) && ! user_can( $viewer_user_id, 'financieel' ) )
 		) {
@@ -382,7 +454,7 @@ final class SidebarRenderer {
 		}
 
 		update_meta_cache( 'post', $invoice_ids );
-		$rows              = [];
+		$invoices          = [];
 		$total_outstanding = 0.0;
 		foreach ( $invoice_ids as $invoice_id ) {
 			$invoice_id = (int) $invoice_id;
@@ -399,23 +471,45 @@ final class SidebarRenderer {
 			$total_outstanding += $outstanding;
 			$number             = (string) Fields::get_for_post( $invoice_id, 'invoice_number' );
 			$label              = $number !== '' ? 'Factuur ' . $number : 'Factuur';
-			$value              = $this->format_money( $outstanding ) . ' open van ' . $this->format_money( $total );
 			$installments       = $this->installment_summary( $invoice_id );
-			if ( $installments !== '' ) {
-				$value .= ' · ' . $installments;
-			}
-			$due_date = $this->next_due_date( $invoice_id );
-			if ( $due_date !== '' ) {
-				$value .= ' · vervalt ' . $this->format_date( $due_date );
-			}
-			if ( get_post_status( $invoice_id ) === 'rondo_overdue' || ( $due_date !== '' && $due_date < wp_date( 'Y-m-d' ) ) ) {
-				$value .= ' · te laat';
-			}
-			$value .= ' · <a href="' . esc_url( home_url( '/financien/facturen/' . $invoice_id ) ) . '">Open</a>';
-			$this->add_row( $rows, $label, $value );
+			$due_date           = $this->next_due_date( $invoice_id );
+			$invoices[]         = [
+				'label'        => $label,
+				'url'          => home_url( '/financien/facturen/' . $invoice_id ),
+				'total'        => $total,
+				'outstanding'  => $outstanding,
+				'installments' => $installments,
+				'due_date'     => $due_date,
+				'overdue'      => get_post_status( $invoice_id ) === 'rondo_overdue' || ( $due_date !== '' && $due_date < wp_date( 'Y-m-d' ) ),
+			];
 		}
 
-		return $rows === [] ? [] : array_merge( [ 'Totaal open' => $this->format_money( $total_outstanding ) ], $rows );
+		return $invoices === [] ? [] : [
+			'total_outstanding' => $total_outstanding,
+			'invoices'          => $invoices,
+		];
+	}
+
+	private function invoice_summary_markup( array $summary ): string {
+		$html  = '<section class="rondo-alert rondo-alert--finance"><h3>Openstaande contributie</h3>';
+		$html .= $this->row_list( [ 'Totaal open' => $this->format_money( (float) $summary['total_outstanding'] ) ] );
+		foreach ( (array) $summary['invoices'] as $invoice ) {
+			$html .= '<div class="rondo-invoice">';
+			$html .= '<a class="rondo-invoice-link" href="' . esc_url( (string) $invoice['url'] ) . '">' . esc_html( (string) $invoice['label'] ) . '</a>';
+			$rows  = [ 'Totaal bedrag' => $this->format_money( (float) $invoice['total'] ) ];
+			if ( (float) $invoice['outstanding'] < (float) $invoice['total'] ) {
+				$rows['Nog open'] = $this->format_money( (float) $invoice['outstanding'] );
+			}
+			if ( (string) $invoice['installments'] !== '' ) {
+				$rows['Termijnen'] = (string) $invoice['installments'];
+			}
+			if ( (string) $invoice['due_date'] !== '' ) {
+				$rows['Vervalt'] = $this->format_date( (string) $invoice['due_date'] ) . ( ! empty( $invoice['overdue'] ) ? ' · te laat' : '' );
+			}
+			$html .= $this->row_list( $rows ) . '</div>';
+		}
+
+		return $html . '</section>';
 	}
 
 	private function paid_installment_principal( int $invoice_id ): float {
@@ -470,7 +564,7 @@ final class SidebarRenderer {
 		return '€ ' . number_format_i18n( $amount, 2 );
 	}
 
-	/** @return string[] */
+	/** @return array<int,array{id:int,name:string,url:string}> */
 	private function current_teams( array $work_history ): array {
 		$teams = [];
 		foreach ( $work_history as $row ) {
@@ -479,11 +573,15 @@ final class SidebarRenderer {
 			}
 			$team_id = absint( $row['team_id'] ?? $row['team'] ?? 0 );
 			if ( $team_id > 0 && get_post_type( $team_id ) === 'team' && get_post_status( $team_id ) === 'publish' ) {
-				$teams[] = get_the_title( $team_id );
+				$teams[ $team_id ] = [
+					'id'   => $team_id,
+					'name' => get_the_title( $team_id ),
+					'url'  => home_url( '/teams/' . $team_id ),
+				];
 			}
 		}
 
-		return array_values( array_unique( array_filter( $teams ) ) );
+		return array_values( $teams );
 	}
 
 	private function section( string $label, array $rows ): string {
@@ -527,6 +625,18 @@ final class SidebarRenderer {
 		$timestamp = strtotime( $date );
 
 		return $timestamp ? wp_date( 'd-m-Y', $timestamp ) : '';
+	}
+
+	private function format_datetime( string $datetime ): string {
+		$timestamp = strtotime( $datetime );
+
+		return $timestamp ? wp_date( 'd-m-Y H:i', $timestamp ) : '';
+	}
+
+	private function whatsapp_url( string $mobile ): string {
+		$digits = preg_replace( '/\D/', '', (string) PhoneNormalizer::normalize( $mobile ) );
+
+		return preg_match( '/^\d{8,15}$/', $digits ) ? 'https://wa.me/' . $digits : '';
 	}
 
 	private function mailbox_label( string $policy ): string {
