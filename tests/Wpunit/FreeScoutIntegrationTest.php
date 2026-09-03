@@ -276,6 +276,68 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->assertStringContainsString( 'hidden', $data['html'] );
 	}
 
+	public function test_sidebar_matches_a_validated_sportlink_relation_code_before_customer_email(): void {
+		$this->createPerson( [ 'post_title' => 'Shared sender decoy' ], [ 'email_1' => 'no-reply@sportlinkservices.nl' ] );
+		$this->createPerson(
+			[ 'post_title' => 'Transfer member' ],
+			[
+				'email_1' => 'transfer-member@example.test',
+				'knvb_id' => 'LXCX82K',
+			]
+		);
+		$body                    = $this->sidebar_body( [ 'no-reply@sportlinkservices.nl' ] );
+		$body['personReference'] = [
+			'type'   => 'knvb_id',
+			'value'  => 'LXCX82K',
+			'source' => 'sportlink_transfer_request',
+		];
+
+		$response = $this->signed_request( 'sidebar', $body );
+		$data     = $response->get_data();
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'ok', $data['status'] );
+		$this->assertStringContainsString( 'Transfer member', $data['html'] );
+		$this->assertStringNotContainsString( 'Shared sender decoy', $data['html'] );
+		$this->assertStringContainsString( 'https://club.sportlink.com/member/member-details/LXCX82K/general', $data['html'] );
+	}
+
+	public function test_sidebar_rejects_untrusted_person_reference_contracts(): void {
+		$invalid_references = [
+			null,
+			[
+				'type'   => 'knvb_id',
+				'value'  => '../bad',
+				'source' => 'sportlink_transfer_request',
+			],
+			[
+				'type'   => 'knvb_id',
+				'value'  => 'LXCX82K',
+				'source' => 'email_body',
+			],
+			[
+				'type'   => 'email',
+				'value'  => 'LXCX82K',
+				'source' => 'sportlink_transfer_request',
+			],
+			[
+				'type'   => 'knvb_id',
+				'value'  => 'LXCX82K',
+				'source' => 'sportlink_transfer_request',
+				'extra'  => true,
+			],
+		];
+
+		foreach ( $invalid_references as $reference ) {
+			$body                    = $this->sidebar_body( [ 'member@example.test' ] );
+			$body['personReference'] = $reference;
+			$response                = $this->signed_request( 'sidebar', $body );
+
+			$this->assertSame( 400, $response->get_status() );
+			$this->assertSame( 'rondo_freescout_sidebar_schema_invalid', $response->as_error()->get_error_code() );
+		}
+	}
+
 	public function test_basic_sidebar_works_for_an_exact_bound_rondo_user(): void {
 		$person_id  = $this->createPerson( [ 'post_title' => 'Basic member' ], [ 'email_1' => 'basic@example.test' ] );
 		$invoice_id = self::factory()->post->create(
@@ -405,6 +467,17 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->assertSame( 'no_match', $matcher->match( [ '123@members.rondo.invalid', 'not-an-email' ] )['status'] );
 		$this->assertSame( 'inaccessible', $matcher->match( [ 'real@example.test' ], 'sidebar', 0 )['status'] ?? 'no_match' );
 		$this->assertSame( 'publish', get_post_status( $person_id ) );
+	}
+
+	public function test_matcher_requires_a_unique_valid_knvb_id(): void {
+		$person_id = $this->createPerson( [ 'post_title' => 'Sportlink member' ], [ 'knvb_id' => 'LXCX82K' ] );
+		$matcher   = new PersonMatcher();
+
+		$this->assertSame( $person_id, $matcher->match_knvb_id( 'lxcx82k' )['person_id'] );
+		$this->assertSame( 'no_match', $matcher->match_knvb_id( '../bad' )['status'] );
+
+		$this->createPerson( [ 'post_title' => 'Duplicate Sportlink member' ], [ 'knvb_id' => 'LXCX82K' ] );
+		$this->assertSame( 'ambiguous', $matcher->match_knvb_id( 'LXCX82K' )['status'] );
 	}
 
 	public function test_activity_is_idempotent_and_customer_changes_move_hide_and_restore_it(): void {
