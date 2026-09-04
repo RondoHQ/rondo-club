@@ -99,23 +99,7 @@ final class RequestAuthenticator {
 
 	/** @return string[]|\WP_Error */
 	private function signing_keys() {
-		$keys = [];
-		foreach ( [ 'RONDO_FREESCOUT_SIGNING_KEY', 'RONDO_FREESCOUT_SIGNING_KEY_PREVIOUS' ] as $name ) {
-			$value = defined( $name ) ? constant( $name ) : getenv( $name );
-			if ( is_string( $value ) && trim( $value ) !== '' ) {
-				$keys[] = trim( $value );
-			}
-		}
-
-		/**
-		 * Filter signing keys for test and managed-host integration.
-		 *
-		 * Production keys must remain server-side and must never be returned by an API.
-		 *
-		 * @param string[] $keys Current and previous signing keys.
-		 */
-		$keys = (array) apply_filters( 'rondo_freescout_signing_keys', $keys );
-		$keys = array_values( array_unique( array_filter( array_map( 'strval', $keys ), static fn( string $key ): bool => strlen( $key ) >= 32 ) ) );
+		$keys = Config::signing_keys();
 
 		if ( $keys === [] ) {
 			return $this->error( 'rondo_freescout_signing_key_missing', 'De FreeScout signing key is niet geconfigureerd.', 503 );
