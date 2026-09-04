@@ -665,11 +665,11 @@ class Api extends Base {
 					'callback'            => [ $this, 'update_club_config' ],
 					'permission_callback' => [ $this, 'check_admin_permission' ],
 					'args'                => [
-						'club_name'                      => [
+						'club_name'                       => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'guest_pass_team_id'             => [
+						'guest_pass_team_id'              => [
 							'required'          => false,
 							'sanitize_callback' => 'absint',
 							'validate_callback' => static function ( $param ): bool {
@@ -677,31 +677,31 @@ class Api extends Base {
 								return $team_id === 0 || get_post_type( $team_id ) === 'team';
 							},
 						],
-						'volunteer_signup_info'          => [
+						'volunteer_signup_info'           => [
 							'required'          => false,
 							'sanitize_callback' => 'wp_kses_post',
 						],
-						'volunteer_second_half_opens'    => [
+						'volunteer_second_half_opens'     => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'iva_approval_email_subject'     => [
+						'iva_approval_email_subject'      => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'iva_approval_email_body'        => [
+						'iva_approval_email_body'         => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_textarea_field',
 						],
-						'freescout_url'                  => [
+						'freescout_url'                   => [
 							'required'          => false,
 							'sanitize_callback' => 'esc_url_raw',
 						],
-						'freescout_api_key'              => [
+						'freescout_api_key'               => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'freescout_audit_retention_days' => [
+						'freescout_audit_retention_days'  => [
 							'required'          => false,
 							'sanitize_callback' => 'absint',
 							'validate_callback' => static function ( $param ): bool {
@@ -709,34 +709,38 @@ class Api extends Base {
 								return $days >= 90 && $days <= 730;
 							},
 						],
-						'lettermint_api_token'           => [
+						'freescout_realtime_provisioning' => [
+							'required'          => false,
+							'sanitize_callback' => 'rest_sanitize_boolean',
+						],
+						'lettermint_api_token'            => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_team_api_token'      => [
+						'lettermint_team_api_token'       => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_project_id'          => [
+						'lettermint_project_id'           => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_route_id'            => [
+						'lettermint_route_id'             => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_from_email'          => [
+						'lettermint_from_email'           => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_email',
 							'validate_callback' => function ( $param ) {
 								return $param === null || $param === '' || is_email( $param );
 							},
 						],
-						'lettermint_from_name'           => [
+						'lettermint_from_name'            => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_webhook_secret'      => [
+						'lettermint_webhook_secret'       => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
@@ -1999,6 +2003,22 @@ class Api extends Base {
 				__( 'De bewaartermijn is ongeldig of door de serverconfiguratie vergrendeld.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
+		}
+
+		$freescout_provisioning = $request->get_param( 'freescout_realtime_provisioning' );
+		if ( $freescout_provisioning !== null ) {
+			$was_enabled = \Rondo\Integrations\FreeScout\Config::provisioning_events_enabled();
+			$enabled     = rest_sanitize_boolean( $freescout_provisioning );
+			if ( ! \Rondo\Integrations\FreeScout\Config::update_provisioning_events( $enabled ) ) {
+				return new \WP_Error(
+					'rondo_freescout_provisioning_locked',
+					__( 'Realtime FreeScout-toegang wordt door de serverconfiguratie beheerd.', 'rondo' ),
+					[ 'status' => 400 ]
+				);
+			}
+			if ( $enabled && ! $was_enabled ) {
+				do_action( 'rondo_freescout_provisioning_enabled' );
+			}
 		}
 
 		$lettermint_api_token = $request->get_param( 'lettermint_api_token' );

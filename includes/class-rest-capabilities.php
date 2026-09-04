@@ -581,6 +581,7 @@ class Capabilities extends Base {
 				continue;
 			}
 
+			$freescout_access_changed = false;
 			foreach ( $desired_caps as $cap => $enabled ) {
 				if ( ! in_array( $cap, $allowed_caps, true ) ) {
 					continue;
@@ -595,12 +596,17 @@ class Capabilities extends Base {
 
 				if ( $enabled && ! $has_cap ) {
 					$role_obj->add_cap( $cap );
+					$freescout_access_changed = $freescout_access_changed || in_array( $cap, [ 'ledenadministratie', 'financieel' ], true );
 				} elseif ( ! $enabled && $has_cap ) {
 					$role_obj->remove_cap( $cap );
+					$freescout_access_changed = $freescout_access_changed || in_array( $cap, [ 'ledenadministratie', 'financieel' ], true );
 				}
 			}
 
 			\Rondo\Core\UserRoles::sync_role_capabilities( $slug );
+			if ( $freescout_access_changed ) {
+				do_action( 'rondo_freescout_role_access_changed', $slug );
+			}
 		}
 
 		// Return fresh matrix state.

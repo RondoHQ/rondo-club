@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Wijzigingen in Rondo-rollen en -rechten kunnen direct een privacy-minimaal, ondertekend FreeScout-event versturen; een duurzame wachtrij met herstartveilige retries en een uurlijkse herstelronde houdt mailboxtoegang actueel.
 - De FreeScout-sidebar kiest bij een gedeeld e-mailadres automatisch de unieke persoon met dezelfde afzendernaam, of anders het enige actieve lid.
 - Sportlink-overschrijvingsverzoeken in FreeScout kunnen via hun gevalideerde relatiecode direct het juiste Rondo-profiel tonen, zonder de berichtinhoud naar Rondo te sturen.
 - De FreeScout-sidebar linkt ouders/verzorgers en actuele teams rechtstreeks naar hun Rondo-pagina, biedt WhatsApp naast mobiele nummers en toont de vrijwilligersplicht plus komende en recente inschrijftaken op **Acties**.
