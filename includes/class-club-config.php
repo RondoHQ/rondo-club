@@ -415,6 +415,8 @@ class ClubConfig {
 			'freescout_url'                         => self::get_freescout_url(),
 			'freescout_has_api_key'                 => self::has_freescout_api_key(),
 			'freescout_audit_retention'             => \Rondo\Integrations\FreeScout\Config::retention_status(),
+			'freescout_realtime_provisioning'       => \Rondo\Integrations\FreeScout\Config::provisioning_status(),
+			'freescout_provisioning_queue'          => \Rondo\Integrations\FreeScout\ProvisioningEvents::health(),
 			'lettermint_project_id'                 => self::get_lettermint_project_id(),
 			'lettermint_route_id'                   => self::get_lettermint_route_id(),
 			'lettermint_from_email'                 => self::get_lettermint_from_email(),

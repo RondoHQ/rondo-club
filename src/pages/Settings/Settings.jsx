@@ -1275,6 +1275,7 @@ function FreeScoutConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loading
     freescout_url: '',
     freescout_api_key: '',
     freescout_audit_retention_days: 365,
+    freescout_realtime_provisioning: false,
   });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -1284,6 +1285,7 @@ function FreeScoutConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loading
       freescout_url: clubConfig?.freescout_url || '',
       freescout_api_key: '',
       freescout_audit_retention_days: clubConfig?.freescout_audit_retention?.retention_days || 365,
+      freescout_realtime_provisioning: clubConfig?.freescout_realtime_provisioning?.enabled || false,
     });
   }, [clubConfig]);
 
@@ -1304,6 +1306,9 @@ function FreeScoutConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loading
       }
       if (!clubConfig?.freescout_audit_retention?.locked) {
         payload.freescout_audit_retention_days = Number(formData.freescout_audit_retention_days);
+      }
+      if (!clubConfig?.freescout_realtime_provisioning?.locked) {
+        payload.freescout_realtime_provisioning = formData.freescout_realtime_provisioning;
       }
       const response = await prmApi.updateClubConfig(payload);
       setClubConfig(response.data || null);
@@ -1388,6 +1393,32 @@ function FreeScoutConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loading
         {!clubConfig?.freescout_audit_retention?.valid && (
           <p className="text-sm text-red-600 dark:text-red-400 mt-1">
             {clubConfig?.freescout_audit_retention?.message}
+          </p>
+        )}
+      </div>
+
+      <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+        <label className="flex items-start gap-3">
+          <input
+            type="checkbox"
+            checked={formData.freescout_realtime_provisioning}
+            onChange={(e) => setFormData((prev) => ({ ...prev, freescout_realtime_provisioning: e.target.checked }))}
+            className="mt-1"
+            disabled={!isAdmin || clubConfig?.freescout_realtime_provisioning?.locked}
+          />
+          <span>
+            <span className="block font-medium text-gray-900 dark:text-gray-100">Realtime FreeScout-toegang</span>
+            <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+              Stuur gewijzigde Rondo-rechten direct naar FreeScout; de uurlijkse controle blijft als vangnet actief.
+            </span>
+          </span>
+        </label>
+        {clubConfig?.freescout_realtime_provisioning?.locked && (
+          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Deze instelling wordt door de serverconfiguratie beheerd.</p>
+        )}
+        {clubConfig?.freescout_provisioning_queue && (
+          <p className={`mt-2 text-xs ${clubConfig.freescout_provisioning_queue.unresolved > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
+            Wachtrij: {clubConfig.freescout_provisioning_queue.pending} open, {clubConfig.freescout_provisioning_queue.unresolved} langdurig mislukt.
           </p>
         )}
       </div>

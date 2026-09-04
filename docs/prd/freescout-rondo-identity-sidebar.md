@@ -1,6 +1,6 @@
 # FreeScout sidebar, Rondo identity and mailbox provisioning
 
-**Status:** Identity, live sidebar and activity delivery implemented; managed provisioning remains phased, updated 2026-09-02<br>
+**Status:** Identity, live sidebar, activity delivery and managed provisioning implemented; pilot validation remains, updated 2026-09-04<br>
 **Scope:** Rondo Club and one custom Rondo Integration FreeScout module<br>
 **Milestone type:** product specification; Phases 1 and 2 were separately approved, and later phases require separate approval
 
@@ -1890,6 +1890,15 @@ FreeScout owns the constrained tab and profile-switch interactions.
 - Add the private `rondo_integration_event` post queue, bounded WordPress-cron worker,
   event-UUID idempotency and unresolved-failure health reporting.
 - Add hourly repair and nightly audit.
+
+**Result, 2026-09-04:** implemented with an administrator-controlled Rondo sender and the existing
+hourly FreeScout reconciliation as repair path. Relevant role or capability changes are coalesced
+per opaque subject and client in a private native WordPress queue, delivered in bounded batches and
+retried durably. FreeScout verifies timestamp, nonce, HMAC and the minimal UUID/issuer/subject
+schema, then reloads authoritative desired access from Rondo and changes only module-managed
+mailbox relations. Processed UUIDs provide durable idempotency and follow Rondo's signed retention
+period. Neither queue stores names, email addresses, capability values or mailbox lists. Phase 5
+real-user grant and revocation validation remains a separate rollout step.
 
 ### Phase 5: pilot and sync cutover
 
