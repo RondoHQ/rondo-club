@@ -243,6 +243,39 @@ class HouseholdMembershipPassTest extends RondoTestCase {
 		$this->assertFalse( $verify->invoke( null, $person_id, 'google', $args['_wallet_token'] ) );
 	}
 
+	public function test_wallet_access_uses_the_personal_household_for_an_age_group_scoped_user(): void {
+		$person_id = $this->createPerson(
+			[ 'post_title' => 'Wedstrijdzaken zonder leeftijdsgroep' ],
+			[ 'type-lid' => 'Bondslid' ]
+		);
+		$stranger  = $this->createPerson(
+			[ 'post_title' => 'Andere persoon zonder leeftijdsgroep' ],
+			[ 'type-lid' => 'Bondslid' ]
+		);
+		$user_id   = $this->createRondoUser( [ 'user_login' => 'wallet_age_group_scope' ] );
+		$role      = 'rondo_wallet_age_group_scope';
+
+		add_role( $role, 'Wallet leeftijdsgroep', [ 'read' => true ] );
+		( new \WP_User( $user_id ) )->add_role( $role );
+		update_option( 'rondo_age_group_access', [ $role => [ 'Senioren' ] ] );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+		AccessControl::flush_visible_person_ids_cache();
+		wp_set_current_user( $user_id );
+
+		try {
+			$can_access = ( new \ReflectionClass( MembershipPassService::class ) )->getMethod( 'current_user_can_access_person_pass' );
+			$can_access->setAccessible( true );
+
+			$this->assertSame( [ 'Senioren' ], AccessControl::get_permitted_age_groups( $user_id ) );
+			$this->assertTrue( $can_access->invoke( null, $person_id ) );
+			$this->assertFalse( $can_access->invoke( null, $stranger ) );
+		} finally {
+			delete_option( 'rondo_age_group_access' );
+			remove_role( $role );
+			AccessControl::flush_visible_person_ids_cache();
+		}
+	}
+
 	public function test_wallet_admin_post_action_bypasses_the_backend_redirect(): void {
 		global $pagenow;
 

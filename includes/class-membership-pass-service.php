@@ -309,8 +309,7 @@ class MembershipPassService {
 			wp_die( esc_html__( 'Deze walletlink is niet meer geldig. Ververs Mijn gegevens en probeer opnieuw.', 'rondo' ), '', [ 'response' => 403 ] );
 		}
 
-		$access_control = new AccessControl();
-		if ( ! $access_control->user_can_access_post( $person_id ) ) {
+		if ( ! self::current_user_can_access_person_pass( $person_id ) ) {
 			wp_die( esc_html__( 'Je hebt geen toegang tot deze ledenpas.', 'rondo' ), '', [ 'response' => 403 ] );
 		}
 
@@ -492,6 +491,11 @@ class MembershipPassService {
 	/** Verify a wallet token for the current user and login session. */
 	private static function verify_wallet_token( int $person_id, string $wallet, string $token ): bool {
 		return $token !== '' && hash_equals( self::create_wallet_token( $person_id, $wallet ), $token );
+	}
+
+	/** A wallet action belongs to the user's personal household, independent of staff scope. */
+	private static function current_user_can_access_person_pass( int $person_id ): bool {
+		return in_array( $person_id, AccessControl::get_visible_person_ids(), true );
 	}
 
 	private static function nonce_action( int $person_id, string $wallet ): string {
