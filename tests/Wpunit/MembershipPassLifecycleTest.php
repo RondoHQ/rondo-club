@@ -50,6 +50,55 @@ class MembershipPassLifecycleTest extends RondoTestCase {
 		$this->assertWPError( ( new MembershipPassQr() )->issue_for_person( $expired_id ) );
 	}
 
+	public function test_inactive_members_can_only_use_their_active_sponsor_pass(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		foreach ( [ 'awc_sponsor', 'businessclub' ] as $variant ) {
+			foreach ( [ [ 'former_member' => true ], [ 'lid-tot' => '20200101' ] ] as $inactive_fields ) {
+				$person_id  = $this->createPerson( [], array_merge( [ 'type-lid' => 'Bondslid' ], $inactive_fields ) );
+				$sponsor_id = self::factory()->post->create(
+					[
+						'post_type'   => 'rondo_sponsor',
+						'post_status' => 'publish',
+					]
+					);
+				Fields::update_for_post( $sponsor_id, 'sponsor_role', $variant );
+				Relations::set_contacts(
+					$sponsor_id,
+					[
+						[
+							'person_id'     => $person_id,
+							'receives_pass' => true,
+						],
+					]
+					);
+				$this->assertSame( $variant, MembershipPassService::get_person_pass_summary( $person_id )['type'] );
+				$this->assertSame( 'sponsor', MembershipPassService::resolve_person_pass_selection( $person_id )['member_tier'] );
+				$this->assertSame( '', MembershipPassService::get_person_standard_member_tier( $person_id ) );
+				$this->assertFalse( MembershipPassService::person_has_pass_type( $person_id, 'bondslid' ) );
+				$qr = new MembershipPassQr();
+				$this->assertWPError( $qr->issue_for_person( $person_id, [ 'member_tier' => 'bondslid' ] ) );
+				$issued = $qr->issue_for_person( $person_id, [ 'member_tier' => 'sponsor' ] );
+				$this->assertNotWPError( $issued );
+				$request = new \WP_REST_Request( 'POST', '/rondo/v1/membership-passes/verify' );
+				$request->set_param( 'token', $issued['token'] );
+				$result = ( new MembershipPasses() )->verify_qr_token( $request )->get_data();
+				$this->assertTrue( $result['valid'] );
+				$this->assertNull( $result['reason'] );
+				Relations::set_contacts(
+					$sponsor_id,
+					[
+						[
+							'person_id'     => $person_id,
+							'receives_pass' => false,
+						],
+					]
+					);
+				$this->assertFalse( ( new MembershipPasses() )->verify_qr_token( $request )->get_data()['valid'] );
+				$this->assertNull( MembershipPassService::get_person_pass_summary( $person_id ) );
+			}
+		}
+	}
+
 	public function test_old_pass_stays_revoked_after_membership_is_reactivated(): void {
 		$person_id = $this->createPerson(
 			[ 'post_title' => 'Herintredend lid' ],

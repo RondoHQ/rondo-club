@@ -164,10 +164,6 @@ class MembershipPassService {
 
 	/** Resolve pass eligibility tier for one person. */
 	public static function get_person_member_tier( int $person_id ): string {
-		if ( self::get_person_membership_status( $person_id )['status'] !== 'active' ) {
-			return '';
-		}
-
 		if ( SponsorStatus::is_sponsor( $person_id ) ) {
 			return self::get_sponsor_pass_variant( $person_id ) !== '' ? 'sponsor' : '';
 		}
@@ -177,6 +173,10 @@ class MembershipPassService {
 
 	/** Resolve the regular membership tier without sponsor precedence. */
 	public static function get_person_standard_member_tier( int $person_id ): string {
+		if ( self::get_person_membership_status( $person_id )['status'] !== 'active' ) {
+			return '';
+		}
+
 		$type_lid = strtolower( trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'type_lid' ) ) );
 		if ( $type_lid === 'bondslid' ) {
 			return 'bondslid';
@@ -190,10 +190,6 @@ class MembershipPassService {
 
 	/** Resolve and validate the tier requested by a wallet generator. */
 	public static function resolve_person_member_tier( int $person_id, string $requested_tier = '' ): string {
-		if ( self::get_person_membership_status( $person_id )['status'] !== 'active' ) {
-			return '';
-		}
-
 		if ( $requested_tier === '' ) {
 			return self::get_person_member_tier( $person_id );
 		}
@@ -267,10 +263,6 @@ class MembershipPassService {
 
 	/** Whether the exact pass type still grants access. */
 	public static function person_has_pass_type( int $person_id, string $pass_type ): bool {
-		if ( self::get_person_membership_status( $person_id )['status'] !== 'active' ) {
-			return false;
-		}
-
 		if ( in_array( $pass_type, [ 'bondslid', 'verenigingslid' ], true ) ) {
 			return self::get_person_standard_member_tier( $person_id ) === $pass_type;
 		}
