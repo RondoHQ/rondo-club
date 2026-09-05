@@ -21,7 +21,7 @@ import {
   Contributie, DisciplineCasesList,
   FinanceDashboard, Betaalstatistieken, Facturen, FactuurDetail, FactuurNieuw, RelationshipTypes,
   CustomFields, Login, Profile, ProfileIva, ProfileVog,
-  MembershipPassScanner,
+  MembershipPassScanner, AccessStatistics,
   ClothingPage,
   VrijwilligersDashboard, VrijwilligersStatistieken, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten, VrijwilligersAanmeldingen,
   VrijwilligersDienstForm, VrijwilligersDienstTypeForm, VrijwilligersSjablonen, VrijwilligersSjabloonForm,
@@ -650,6 +650,8 @@ const router = createBrowserRouter([
           { path: 'profile', element: <Profile /> },
           { path: 'profile/vog', element: <ProfileVog /> },
           { path: 'profile/iva', element: <ProfileIva /> },
+
+          { path: 'toegangsstatistieken', element: <ToegangscontroleRoute><AccessStatistics /></ToegangscontroleRoute> },
 
           // Membership pass scanner
           {

@@ -36,6 +36,23 @@ class AccessEvents extends Base {
 	public function register_routes(): void {
 		register_rest_route(
 			'rondo/v1',
+			'/access-events',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_events' ],
+				'permission_callback' => [ $this, 'check_admin_or_toegangscontrole_permission' ],
+				'args'                => [
+					'page' => [
+						'type'    => 'integer',
+						'minimum' => 1,
+						'default' => 1,
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
 			'/access-events/matches',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -93,6 +110,30 @@ class AccessEvents extends Base {
 						'validate_callback' => static fn( $value ): bool => is_numeric( $value ) && (int) $value > 0,
 					],
 				],
+			]
+		);
+	}
+
+	/** List stored matches without consulting or changing the Sportlink feed. */
+	public function get_events( $request ) {
+		$query = new \WP_Query(
+			[
+				'post_type'      => 'rondo_access_event',
+				'post_status'    => 'publish',
+				'posts_per_page' => 25,
+				'paged'          => (int) $request->get_param( 'page' ),
+				'meta_key'       => 'starts_at',
+				'orderby'        => [
+					'meta_value' => 'DESC',
+					'ID'         => 'DESC',
+				],
+			]
+		);
+
+		return rest_ensure_response(
+			[
+				'events'      => array_map( fn( $post ) => $this->admissions->format_event( $post->ID ), $query->posts ),
+				'total_pages' => (int) $query->max_num_pages,
 			]
 		);
 	}

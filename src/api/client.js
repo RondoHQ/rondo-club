@@ -231,6 +231,7 @@ export const prmApi = {
     api.get(`/rondo/v1/membership-passes/people/${personId}/qr-token`, { params }),
   verifyMembershipPassQrToken: (token) =>
     api.post('/rondo/v1/membership-passes/verify', { token }),
+  getAccessEvents: (params) => api.get('/rondo/v1/access-events', { params }),
   getAccessEventMatches: () => api.get('/rondo/v1/access-events/matches'),
   selectAccessEvent: (sourceId) => api.post('/rondo/v1/access-events/select', { source_id: sourceId }),
   scanAccessEvent: (eventId, token) => api.post(`/rondo/v1/access-events/${eventId}/scan`, { token }),

@@ -60,3 +60,5 @@ export const TournamentsList = lazy(() => import('@/pages/Tournaments/Tournament
 export const TournamentDetail = lazy(() => import('@/pages/Tournaments/TournamentDetail'));
 export const MyTournaments = lazy(() => import('@/pages/Tournaments/MyTournaments'));
 export const TournamentEntry = lazy(() => import('@/pages/Tournaments/TournamentEntry'));
+
+export const AccessStatistics = lazy(() => import('@/pages/AccessStatistics'));
