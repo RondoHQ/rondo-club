@@ -182,13 +182,13 @@ class MembershipPasses extends Base {
 		$current_version = MembershipPassService::get_pass_version( $person_id );
 		$pass_type       = isset( $payload['pass_type'] ) ? sanitize_key( (string) $payload['pass_type'] ) : MembershipPassService::get_person_pass_type( $person_id );
 		$has_pass_right  = MembershipPassService::person_has_pass_type( $person_id, $pass_type );
-		$valid           = $status['status'] === 'active' && $has_pass_right && $token_version === $current_version;
+		$valid           = $has_pass_right && $token_version === $current_version;
 		$reason          = null;
 		if ( $token_version !== $current_version ) {
 			$reason = 'revoked';
-		} elseif ( $status['status'] === 'former' ) {
+		} elseif ( ! $has_pass_right && $status['status'] === 'former' ) {
 			$reason = 'former';
-		} elseif ( $status['status'] === 'expired' ) {
+		} elseif ( ! $has_pass_right && $status['status'] === 'expired' ) {
 			$reason = 'expired';
 		} elseif ( ! $has_pass_right ) {
 			$reason = 'no_pass_right';
