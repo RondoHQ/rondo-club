@@ -57,3 +57,14 @@ export function useScanAccessEvent() {
     },
   });
 }
+
+export function useAccessEvents(page) {
+  return useQuery({
+    queryKey: ['access-events', page],
+    queryFn: async () => {
+      const response = await prmApi.getAccessEvents({ page });
+      return response.data;
+    },
+    refetchInterval: 5_000,
+  });
+}

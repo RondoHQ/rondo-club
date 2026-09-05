@@ -87,6 +87,7 @@ const navigation = [
   { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true },
   { name: 'Betaalstatistieken', href: '/financien/betaalstatistieken', icon: TrendingUp, indent: true, requiresFinancieel: true },
+  { name: 'Toegangsstatistieken', href: '/toegangsstatistieken', icon: ChartPie, requiresToegangscontrole: true },
   { name: 'Lidpas Scanner', href: '/lidpas-scanner', icon: QrCode, requiresToegangscontrole: true, mobileOnly: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare, requiresKader: true },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare, requiresKader: true },
@@ -758,6 +759,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback, showFeedbackIntro, 
     if (path.startsWith('/teams')) return 'Teams';
     if (path.startsWith('/commissies')) return 'Commissies';
     if (path.startsWith('/todos')) return 'Taken';
+    if (path.startsWith('/toegangsstatistieken')) return 'Toegangsstatistieken';
     if (path.startsWith('/lidpas-scanner')) return 'Lidpas Scanner';
     if (path.startsWith('/feedback')) return 'Feedback';
     if (path.startsWith('/settings')) return 'Instellingen';

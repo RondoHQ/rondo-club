@@ -73,6 +73,39 @@ class AccessEventTest extends RondoTestCase {
 		$this->assertSame( 200, $server->dispatch( $request )->get_status() );
 	}
 
+	public function test_archive_is_read_only_paginated_and_permission_protected(): void {
+		$server           = $this->bootRestControllers( [ AccessEvents::class ] );
+		$service          = new AdmissionService( false );
+		$old              = $this->home_match();
+		$old['id']        = 'archived-match';
+		$old['starts_at'] = '2020-01-01T14:00:00+01:00';
+		$event            = $service->select_match( $old );
+		$service->record_admission( $event['id'], 12345, 'bondslid' );
+		for ( $i = 0; $i < 25; ++$i ) {
+			$match       = $this->home_match();
+			$match['id'] = 'archive-page-' . $i;
+			$service->select_match( $match );
+		}
+		$request = new \WP_REST_Request( 'GET', '/rondo/v1/access-events' );
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'rondo_user' ] ) );
+		$this->assertSame( 403, $server->dispatch( $request )->get_status() );
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'rondo_toegangscontrole' ] ) );
+		$response = $server->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertCount( 25, $response->get_data()['events'] );
+		$this->assertSame( 2, $response->get_data()['total_pages'] );
+		$request->set_param( 'page', 2 );
+		$data = $server->dispatch( $request )->get_data();
+		$this->assertCount( 1, $data['events'] );
+		$this->assertSame( $event['id'], $data['events'][0]['id'] );
+		$this->assertArrayNotHasKey( 'person_id', $data['events'][0] );
+		$stats = $server->dispatch( new \WP_REST_Request( 'GET', '/rondo/v1/access-events/' . $event['id'] . '/stats' ) );
+		$this->assertSame( 1, $stats->get_data()['total'] );
+		$this->assertSame( 26, (int) wp_count_posts( 'rondo_access_event' )->publish );
+		$request->set_param( 'page', 0 );
+		$this->assertSame( 400, $server->dispatch( $request )->get_status() );
+	}
+
 	/** @return array<string,mixed> */
 	private function home_match(): array {
 		return [
