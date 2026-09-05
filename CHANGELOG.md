@@ -72,6 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Google Wallet-passen openen weer zonder fout over een ontbrekend seizoen; het ongebruikte seizoensargument is verwijderd.
+
 - Leden met een leeftijdsgroepgebonden stafrol kunnen hun eigen ledenpas en die van minderjarige kinderen weer openen via **Mijn gegevens**.
 - Nieuwe tuchtzaakfacturen krijgen de ingestelde administratiekosten weer automatisch als aparte regelpost.
 - Foutmeldingen bij bulkacties op facturen tonen voortaan het herkenbare factuurnummer in plaats van het interne WordPress-recordnummer.

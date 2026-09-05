@@ -102,7 +102,7 @@ class MembershipPassGoogle {
 
 		try {
 			$this->ensure_class( $service, $class_id );
-			$this->upsert_object( $service, $object_id, $class_id, $card_title, $person_name, $member_type, $team_name, $functions, $company_name, $knvb_id, $season, $qr_result['token'], $member_tier, $sponsor_pass_variant );
+			$this->upsert_object( $service, $object_id, $class_id, $card_title, $person_name, $member_type, $team_name, $functions, $company_name, $knvb_id, $qr_result['token'], $member_tier, $sponsor_pass_variant );
 		} catch ( \Throwable $e ) {
 			return new \WP_Error( 'membership_pass_google_api_error', 'Google Wallet API fout: ' . $e->getMessage() );
 		}
@@ -238,12 +238,11 @@ class MembershipPassGoogle {
 	 * @param string        $functions Functions label.
 	 * @param string        $company_name Company name.
 	 * @param string        $knvb_id KNVB ID.
-	 * @param string        $season Season key.
 	 * @param string        $qr_payload QR payload.
 	 * @param string        $member_tier Resolved pass tier.
 	 * @param string        $sponsor_pass_variant Sponsor pass variant.
 	 */
-	private function upsert_object( Walletobjects $service, string $object_id, string $class_id, string $card_title, string $person_name, string $member_type, string $team_name, string $functions, string $company_name, string $knvb_id, string $season, string $qr_payload, string $member_tier, string $sponsor_pass_variant ) {
+	private function upsert_object( Walletobjects $service, string $object_id, string $class_id, string $card_title, string $person_name, string $member_type, string $team_name, string $functions, string $company_name, string $knvb_id, string $qr_payload, string $member_tier, string $sponsor_pass_variant ) {
 		$text_modules = array_map(
 			static function ( array $module ): TextModuleData {
 				return new TextModuleData( $module );
