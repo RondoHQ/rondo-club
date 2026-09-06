@@ -1,22 +1,11 @@
-import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
-import QRCode from 'qrcode';
+import { usePassQr } from '@/hooks/usePassQr';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { prmApi } from '@/api/client';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { getMembershipPassPresentation } from './membershipPassUtils';
-
-const QR_OPTIONS = {
-  width: 1024,
-  margin: 2,
-  errorCorrectionLevel: 'M',
-  color: {
-    dark: '#111827',
-    light: '#ffffff',
-  },
-};
 
 function PassError({ message }) {
   return (
@@ -40,8 +29,6 @@ export default function MembershipPass() {
   const role = searchParams.get('role') || '';
   const numericPersonId = Number.parseInt(personId, 10);
   const validPersonId = Number.isInteger(numericPersonId) && numericPersonId > 0;
-  const [qrDataUrl, setQrDataUrl] = useState('');
-  const [qrError, setQrError] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['membership-pass-qr', numericPersonId, role],
@@ -54,25 +41,7 @@ export default function MembershipPass() {
   });
 
   const token = data?.token || '';
-  useEffect(() => {
-    let cancelled = false;
-    setQrDataUrl('');
-    setQrError(false);
-
-    if (!token) return undefined;
-
-    QRCode.toDataURL(token, QR_OPTIONS)
-      .then((url) => {
-        if (!cancelled) setQrDataUrl(url);
-      })
-      .catch(() => {
-        if (!cancelled) setQrError(true);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
+  const { url: qrDataUrl, error: qrError } = usePassQr(token);
 
   if (!validPersonId) return <PassError message="Deze pas kon niet worden gevonden." />;
   if (isLoading) return <ContentLoadingSpinner />;

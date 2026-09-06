@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Rondo Mobile Spike (development only)
  * Description: Opt-in, read-only native login experiment. Never loaded by the theme.
- * Version: 0.1.0
+ * Version: 0.2.0
  *
  * @package Rondo\MobileSpike
  */
@@ -80,6 +80,8 @@ final class Plugin {
 			[
 				'protocol' => 'rondo-mobile-spike-v1',
 				'club_url' => untrailingslashit( home_url() ),
+				'timezone' => wp_timezone_string(),
+				'logo_url' => wp_get_attachment_image_url( ( new \Rondo\Config\FinanceConfig() )->get_club_logo_id(), 'thumbnail' ) ?: '',
 			]
 			);
 	}
@@ -215,6 +217,9 @@ final class Plugin {
 		$routes = [
 			'me'        => '/rondo/v1/user/me',
 			'household' => '/rondo/v1/people/household',
+			'my-shifts' => '/rondo/v1/my-shifts',
+			'calendar'  => '/rondo/v1/shifts/calendar',
+			'pass'      => '/rondo/v1/membership-passes/people/%d/qr-token',
 		];
 		$key    = $request->get_param( 'resource' );
 		if ( ! is_string( $key ) || ! isset( $routes[ $key ] ) ) {
@@ -223,7 +228,42 @@ final class Plugin {
 		$previous = get_current_user_id();
 		try {
 			wp_set_current_user( $user->ID );
-			$response = rest_do_request( new \WP_REST_Request( 'GET', $routes[ $key ] ) );
+			$inner = new \WP_REST_Request( 'GET', $routes[ $key ] );
+			if ( $key === 'calendar' ) {
+				// Never forward caller-selected views or arbitrary query parameters.
+				$month = $request->get_param( 'month' );
+				if ( ! is_string( $month ) || ! preg_match( '/^20[0-9]{2}-(0[1-9]|1[0-2])$/', $month ) ) {
+					return self::error( 'invalid_month', 400 );
+				}
+				$start = new \DateTimeImmutable( $month . '-01', wp_timezone() );
+				$inner->set_param( 'from', $start->format( 'Y-m-d' ) );
+				$inner->set_param( 'to', $start->format( 'Y-m-t' ) );
+				$inner->set_param( 'view', 'signup' );
+			}
+			if ( $key === 'pass' ) {
+				$id   = $request->get_param( 'person_id' );
+				$role = $request->get_param( 'role' ) ?? '';
+				if ( ! is_scalar( $id ) || ! ctype_digit( (string) $id ) || (int) $id <= 0 || ! is_string( $role ) || strlen( $role ) > 200 ) {
+					return self::error( 'invalid_pass', 400 );
+				}
+				// Even administrators can only open passes offered in their personal household.
+				$household = rest_do_request( new \WP_REST_Request( 'GET', $routes['household'] ) );
+				$allowed   = false;
+				if ( $household->get_status() === 200 ) {
+					foreach ( $household->get_data() as $person ) {
+						if ( (int) $person['id'] === (int) $id && ! empty( $person['membership_pass'] ) ) {
+							$allowed = true;
+							break;
+						}
+					}
+				}
+				if ( ! $allowed ) {
+					return self::error( 'pass_forbidden', 403 );
+				}
+				$inner = new \WP_REST_Request( 'GET', sprintf( $routes['pass'], (int) $id ) );
+				$inner->set_param( 'role', $role );
+			}
+			$response = rest_do_request( $inner );
 			$response->header( 'Cache-Control', 'no-store' );
 			return $response;
 		} finally {

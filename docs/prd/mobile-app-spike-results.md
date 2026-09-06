@@ -1,6 +1,6 @@
 # Capacitor-proef: resultaten en vervolg
 
-Datum: 6 september 2026. Status: ontwikkelproef 0.1.0; native simulatorlogin geslaagd, fysieke toestelproef nog open.
+Datum: 6 september 2026. Status: ontwikkelproef 0.2.0; native simulatorlogin geslaagd, fysieke toestelproef nog open.
 Branch: `codex/capacitor-login-spike`. Geen productie-installatie of store-upload uitgevoerd.
 
 ## Gebouwd
@@ -13,8 +13,11 @@ Branch: `codex/capacitor-login-spike`. Geen productie-installatie of store-uploa
   REST-controllers leest; geen nieuwe productie-authenticatie of uitbreiding van FreeScout OIDC.
 - Automatische controles in CI en instructies in `mobile/README.md`.
 
-De proef heeft een eigen vereenvoudigd verbindingsscherm; de goedgekeurde releasevoorstellen voor
-passen en de vrijwilligerskalender blijven de basis voor de volgende schermimplementatie.
+De volgende bouwstap voegt Start, Passen met QR-detail en bestaande paskeuzes, Mijn gegevens,
+Vrijwillig met maandkalender, Mijn diensten, dienstdetail en Meer/Mijn clubs toe. Na feedback is de
+kop één compacte regel met clublogo en Rondo. Clubwissel staat alleen onder Meer. De leesroutes
+gebruiken de bestaande serverrechten; wijzigen, aanmelden/afmelden en Wallet toevoegen openen
+voorlopig de vaste clubpagina in de systeembrowser, zonder mobiele tokens of nonces in die URL.
 
 ## Gecontroleerd op deze Mac
 
@@ -96,8 +99,36 @@ centrale clublijst en stabiele installatie-identiteit volgen in het productieont
    annuleren, koude terugkeer, verlopen sessies, offline herstel en echte e-mailterugkeer testen.
 2. De proef uitbreiden met veilige blijvende sessies en geverifieerde terugkeerlinks, inclusief
    annulering, koude start, e-maillink, offline herstel en gelijktijdige verversing.
-3. Na die technische controle de afgesproken eerste-release-schermen aansluiten: Start, Passen,
-   Vrijwillig met maandkalender en Meer. Clubwissel blijft uitsluitend onder Meer.
+3. De gebouwde leesschermen aanvullen met native schrijfhandelingen, directe Wallet-overdracht,
+   gastpassen, volledige contributiebediening en capabilitygestuurde navigatie.
 
 De totale technische proef uit het releaseplan is dus **nog niet afgerond**. Deze branch is een
 reviewbaar begin en mag niet als store- of productierijpe app worden gepresenteerd.
+
+## Bouwstap 0.2.0: ledenoverzicht en kalender
+
+De lokale proefclub bevat één fictief gekoppeld lid en 36 testdiensten over meerdere dagen,
+waarvan één eigen inschrijving. Dit zijn opgeslagen WordPress-testrecords; de app bevat geen
+hardgecodeerde voorbeeldpassen of diensten. Proefclub Beta heeft nog steeds geen eigen backend.
+
+De kalender telt `can_signup`-diensten, niet het aantal open plekken. Eigen inschrijvingen worden
+apart gemarkeerd en tellen niet mee als beschikbare dienst. De datumweergave gebruikt de
+clubtijdzone; diensttijden volgen de bestaande lokale WordPress-datetimevelden.
+
+De adapter accepteert uitsluitend een valide maand en forceert `view=signup`. QR-passen zijn
+extra begrensd tot de persoonlijke huishoudrespons, ook voor beheerders. De bestaande QR-route
+blijft beslissen over pasrecht en rolkeuze. Er worden geen willekeurige routes of schrijfacties
+via de bearer-sessie doorgestuurd. De QR-rendering wordt gedeeld met de webpas.
+
+Gecontroleerd: 13 mobiele JavaScript-tests, 11 mobiele PHP-tests met 91 assertions, mobiele lint,
+PHP-codingstandaarden en web/mobiele builds. Native simulatorcontrole omvat Start, Passen,
+pasdetail met QR en de kalender op beide platformen. Native screenshots zijn bekeken. Datumselectie, dienstdetail, maandwissel, Mijn diensten en
+uitloggen via Meer/Mijn clubs zijn daarna op beide simulators doorlopen. De eerste vervolgflow
+vereiste correctie van de tests (expliciete tabkeuze en scrollen naar de dienstkaart); de volledige
+herhaling is op beide platformen geslaagd.
+Runtime dependency-audit bevat geen meldingen; de React Router-dependency is voor dit afzonderlijke
+mobiele pakket bijgewerkt naar 7.18.3. De bestaande web-router is ongewijzigd.
+
+De proefsessie blijft maximaal vijf minuten geldig en wordt niet duurzaam opgeslagen. Deze
+bouwstap is geen bewijs voor fysieke toestellen, offline gebruik, productieauthenticatie, een
+store-release of native schrijf-/Walletacties.

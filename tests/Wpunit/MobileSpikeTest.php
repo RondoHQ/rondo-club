@@ -4,6 +4,8 @@ namespace Tests\Wpunit;
 
 use Rondo\MobileSpike\Plugin;
 use Rondo\REST\People;
+use Rondo\REST\MemberShifts;
+use Rondo\REST\MembershipPasses;
 use Rondo\REST\UserSettings;
 use Tests\Support\RondoTestCase;
 
@@ -20,7 +22,7 @@ final class MobileSpikeTest extends RondoTestCase {
 		if ( ! Plugin::enabled() ) {
 			$this->markTestSkipped( 'Use WP_ENVIRONMENT_TYPE=local for the development-only mobile spike tests.' );
 		}
-		$this->bootRestControllers( [ UserSettings::class, People::class, Plugin::class ] );
+		$this->bootRestControllers( [ UserSettings::class, People::class, MemberShifts::class, MembershipPasses::class, Plugin::class ] );
 	}
 
 	private function params(): array {
@@ -64,9 +66,12 @@ final class MobileSpikeTest extends RondoTestCase {
 		return $response->get_data()['access_token'];
 	}
 
-	private function read( string $token, string $resource = 'me', string $method = 'GET' ): \WP_REST_Response {
+	private function read( string $token, string $resource = 'me', string $method = 'GET', array $params = [] ): \WP_REST_Response {
 		$request = new \WP_REST_Request( $method, '/' . Plugin::NS . '/read' );
 		$request->set_param( 'resource', $resource );
+		foreach ( $params as $key => $value ) {
+			$request->set_param( $key, $value );
+		}
 		$request->set_header( 'Authorization', 'Bearer ' . $token );
 		return rest_do_request( $request );
 	}
@@ -104,6 +109,65 @@ final class MobileSpikeTest extends RondoTestCase {
 			$this->assertSame( $fallback, $plugin->login_redirect( $fallback, $invalid, $user ) );
 		}
 		$this->assertSame( $fallback, $plugin->login_redirect( $fallback, $requested, new \WP_Error( 'failed' ) ) );
+	}
+
+	public function test_member_calendar_forces_signup_view_and_one_valid_month(): void {
+		$user   = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$person = $this->createPerson();
+		update_user_meta( $user, 'rondo_linked_person_id', $person );
+		$token = $this->session( $user );
+		$month = current_datetime()->format( 'Y-m' );
+		wp_set_current_user( 0 );
+		$result = $this->read(
+			$token,
+			'calendar',
+			'GET',
+			[
+				'month' => $month,
+				'view'  => 'manage',
+				'from'  => '2000-01-01',
+			]
+			);
+		$this->assertSame( 200, $result->get_status() );
+		$this->assertSame( 'signup', $result->get_data()['view'] );
+		$this->assertSame( $month . '-01', $result->get_data()['from'] );
+		$this->assertSame( current_datetime()->format( 'Y-m-t' ), $result->get_data()['to'] );
+		$this->assertSame( 0, get_current_user_id() );
+		foreach ( [ '', '2026-13', '2026-2', '2026-01/../../', [ '2026-01' ] ] as $invalid ) {
+			$this->assertSame( 400, $this->read( $token, 'calendar', 'GET', [ 'month' => $invalid ] )->get_status() );
+		}
+		$this->assertSame( 200, $this->read( $token, 'my-shifts' )->get_status() );
+		$this->assertSame( $person, $this->read( $token, 'my-shifts' )->get_data()['person_id'] );
+	}
+
+	public function test_pass_read_is_limited_to_personal_household_even_for_an_admin(): void {
+		$user     = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$person   = $this->createPerson( [], [ 'type-lid' => 'Bondslid' ] );
+		$stranger = $this->createPerson( [], [ 'type-lid' => 'Bondslid' ] );
+		update_user_meta( $user, 'rondo_linked_person_id', $person );
+		$token = $this->session( $user );
+		wp_set_current_user( 0 );
+		$result = $this->read( $token, 'pass', 'GET', [ 'person_id' => $person ] );
+		$this->assertSame( 200, $result->get_status() );
+		$this->assertArrayHasKey( 'token', $result->get_data() );
+		$this->assertSame( 'no-store', $result->get_headers()['Cache-Control'] );
+		$this->assertSame( 403, $this->read( $token, 'pass', 'GET', [ 'person_id' => $stranger ] )->get_status() );
+		$this->assertSame( 400, $this->read( $token, 'pass', 'GET', [ 'person_id' => '../1' ] )->get_status() );
+		$this->assertSame(
+			400,
+			$this->read(
+			$token,
+			'pass',
+			'GET',
+			[
+				'person_id' => $person,
+				'role'      => [],
+			]
+			)->get_status()
+			);
+		\Rondo\Fields\Fields::update_for_post( $person, 'former_member', true );
+		$this->assertSame( 403, $this->read( $token, 'pass', 'GET', [ 'person_id' => $person ] )->get_status() );
+		$this->assertSame( 0, get_current_user_id() );
 	}
 
 	public function test_exchange_rejects_wrong_verifier_and_replay(): void {

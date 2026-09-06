@@ -4,6 +4,8 @@ import { App } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { LoginSession, validateClubs } from './auth.mjs';
 import { request } from './transport.mjs';
+import MemberApp from './MemberApp';
+import { safeClubLogo } from './member-model.mjs';
 import './style.css';
 
 const clubs = validateClubs(JSON.parse(import.meta.env.VITE_SPIKE_CLUBS || '[]'));
@@ -77,7 +79,9 @@ export default function MobileSpike() {
       if (generation !== auth.generation) return;
       if (metadata.protocol !== 'rondo-mobile-spike-v1' || metadata.club_url !== club.url) throw new Error('Deze club is nog niet beschikbaar voor de proef.');
       if (!Capacitor.isNativePlatform()) throw new Error('Open de geïnstalleerde proefapp om in te loggen.');
-      const url = await auth.start(club);
+      const selected = { ...club, timeZone: metadata.timezone, logoUrl: safeClubLogo(metadata.logo_url, club) };
+      setClub(selected);
+      const url = await auth.start(selected);
       await Browser.open({ url });
       setScreen('login');
     } catch (failure) {
@@ -96,9 +100,8 @@ export default function MobileSpike() {
   }
 
   const results = clubs.filter((item) => item.name.toLocaleLowerCase('nl').includes(search.toLocaleLowerCase('nl')));
-  return <main>
-    <header><span className="wordmark">rondo<span>●</span></span><span className="badge">Technische proef</span></header>
-    {club && <p className="club">{club.name}</p>}
+  return <main className={profile ? 'member-shell' : ''}>
+    <header><div className="header-brand">{club && <ClubLogo key={club.id} club={club} />}<span className="wordmark">rondo<span>●</span></span></div><span className="badge">Proefversie</span></header>
     {error && <p role="alert" className="error">{error}</p>}
     {screen === 'clubs' && <section>
       <p className="eyebrow">Jouw club, dichtbij</p><h1>Welkom bij Rondo</h1><p>Kies je club om in te loggen en je eigen gegevens te bekijken.</p>
@@ -108,9 +111,13 @@ export default function MobileSpike() {
     </section>}
     {screen === 'confirm' && <section><h1>Inloggen bij {club.name}</h1><p>Je logt in via de website van je club. Daarna keer je terug naar Rondo.</p><p className="domain">{new URL(club.url).hostname}</p><button disabled={busy} onClick={login}>{busy ? 'Club controleren…' : 'Inloggen bij mijn club'}</button><button className="secondary" onClick={reset}>Terug naar clubkeuze</button></section>}
     {screen === 'login' && <section><h1>Rond je aanmelding af</h1><p>Gebruik het geopende browservenster. Na toestemming kom je terug in deze app.</p><button className="secondary" onClick={() => { auth.clear(); setBusy(false); setScreen('confirm'); }}>Aanmelding annuleren</button></section>}
-    {screen === 'home' && <section><p className="eyebrow">Je bent ingelogd</p><h1>Hallo, {profile?.name}</h1><p>Je gegevens zijn opgehaald bij {club.name} met je bestaande clubrechten.</p><div className="info">Deze eerste proef controleert de verbinding en je aanmelding. Passen en de vrijwilligerskalender volgen daarna.</div></section>}
-    {screen === 'more' && <section><h1>Meer</h1><button className="secondary" onClick={logout}>Mijn clubs · uitloggen en wisselen</button></section>}
-    {profile && <nav aria-label="Hoofdnavigatie"><button className={screen === 'home' ? 'active' : ''} onClick={() => setScreen('home')}>Start</button><button className={screen === 'more' ? 'active' : ''} onClick={() => setScreen('more')}>Meer</button></nav>}
+    {profile && auth.session && <MemberApp session={auth.session} profile={profile} logout={logout} onExpired={() => { auth.clear(); setProfile(null); setScreen('confirm'); setError('Je proefsessie is verlopen. Log opnieuw in.'); }} />}
     <footer>Proefversie · sessie maximaal vijf minuten</footer>
   </main>;
+}
+
+function ClubLogo({ club }) {
+  const [failed, setFailed] = useState(false);
+  const initials = club.name.split(/\s+/).slice(0, 2).map((word) => word[0]).join('');
+  return <span className="club-logo" title={club.name}>{club.logoUrl && !failed ? <img src={club.logoUrl} alt={club.name} onError={() => setFailed(true)} /> : <span role="img" aria-label={club.name}>{initials}</span>}</span>;
 }

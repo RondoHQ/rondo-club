@@ -63,8 +63,9 @@ Tabs en Android-terug gebruiken dezelfde React-routegeschiedenis, zonder dubbele
 navigatiebalk. Capacitor verzorgt de koppeling met de telefoonfuncties.
 
 Clubwissel staat uitsluitend onder **Meer → Mijn clubs**, omdat gebruikers dit weinig nodig hebben.
-De schermkop toont op hoofdschermen alleen de clubnaam en het logo, zonder dropdownpijl of
-klikactie. Bij eerste aanmelding blijft clubkeuze onderdeel van de onboarding.
+Bijgesteld na de simulatorproef: de schermkop toont het clublogo links en Rondo ernaast,
+zonder aparte clubnaamregel, dropdownpijl of klikactie. De clubnaam blijft als toegankelijke
+logobeschrijving en onder Mijn clubs beschikbaar. Bij eerste aanmelding blijft clubkeuze onderdeel van de onboarding.
 
 ### Vrijwilligersdiensten: kalender als ingang
 
