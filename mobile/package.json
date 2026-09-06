@@ -18,6 +18,7 @@
     "@capacitor/core": "8.5.1",
     "@capacitor/ios": "8.5.1",
     "@tanstack/react-query": "5.90.16",
+    "i18n-iso-countries": "7.14.0",
     "qrcode": "1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
