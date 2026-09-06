@@ -101,10 +101,22 @@ vendor/bin/phpcs mobile/spike-plugin/rondo-mobile-spike.php tests/Wpunit/MobileS
 CI runs the JavaScript contract tests and native asset sync, plus the PHP integration tests in
 an explicitly local environment. Sync is not native compilation or device testing.
 
+For Android builds on this Mac, use Java 21 explicitly (the current Android Studio bundles Java 25):
+
+```sh
+cd mobile/android
+JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./gradlew assembleDebug
+```
+
+Local HTTPS fixtures use a disposable CA trusted only by test simulators. A temporary Android
+`src/debug` network-security override is local test instrumentation, not part of the repository
+or a release build. Never add its key, certificate or trust override to a production package.
+
 ## Required follow-up before choosing a production auth implementation
 
-1. Install iOS platform/simulator components and Android Studio/SDK/JDK; run on real iPhone and
-   Android with two HTTPS test clubs. Test browser cancellation, warm/cold callback, real email
+1. Native simulator builds and local password login now work on iOS 26.2 and Android API 36;
+   see `docs/prd/mobile-app-spike-results.md` for evidence. Run on real iPhone and Android
+   with two independent HTTPS test clubs. Test browser cancellation, warm/cold callback, real email
    return, timeout, airplane mode and switching clubs during requests.
 2. Implement and test approved Keychain/Keystore storage, rotating per-device refresh tokens,
    reuse detection, concurrent refresh and revocation. This spike deliberately does not persist
