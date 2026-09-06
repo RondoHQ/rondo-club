@@ -17,7 +17,7 @@ import {
   toDateTimeInput,
 } from './tournamentFormatters';
 import TournamentOperations from './TournamentOperations';
-import { allEligibleTournamentAssignments, tournamentAssignmentCounts } from './tournamentSelections';
+import { allEligibleTournamentAssignments, currentTournamentTeams, tournamentAssignmentCounts } from './tournamentSelections';
 
 const emptyTournament = {
   name: '',
@@ -254,7 +254,7 @@ function PublishPanel({ tournament }) {
   const optionsQuery = useTournamentAssignmentOptions(true);
   const publishTournament = usePublishTournament();
   const [selected, setSelected] = useState({});
-  const teams = optionsQuery.data || [];
+  const teams = currentTournamentTeams(optionsQuery.data);
   const eligibleTeamCount = teams.filter((team) => team.assignees.length > 0).length;
   const skippedTeamCount = teams.length - eligibleTeamCount;
   const allEligibleSelected = eligibleTeamCount > 0 && Object.keys(selected).length === eligibleTeamCount;

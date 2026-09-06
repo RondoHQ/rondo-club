@@ -3,10 +3,26 @@ import test from 'node:test';
 
 import {
   allEligibleTournamentAssignments,
+  currentTournamentTeams,
   tournamentAssignmentDelta,
   tournamentAssignmentCounts,
   tournamentAssignmentNeedsSync,
 } from '../../src/pages/Tournaments/tournamentSelections.js';
+
+test('invitation list and select all exclude teams without current players, even with staff', () => {
+  const options = [
+    { id: 10, player_count: 12, assignees: [{ user_id: 1 }] },
+    { id: 20, player_count: 0, assignees: [{ user_id: 2 }] },
+    { id: 30, player_count: 8, assignees: [] },
+    { id: 40, player_count: 0, assignees: [] },
+  ];
+  const teams = currentTournamentTeams(options);
+
+  assert.deepEqual(teams.map((team) => team.id), [10, 30]);
+  assert.deepEqual(allEligibleTournamentAssignments(teams), { 10: [1] });
+  assert.deepEqual(currentTournamentTeams(), []);
+  assert.equal(options.length, 4, 'existing registration staff options remain available');
+});
 
 test('select all includes every eligible team and all of its staff', () => {
   const selected = allEligibleTournamentAssignments([
