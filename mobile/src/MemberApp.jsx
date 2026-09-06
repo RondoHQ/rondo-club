@@ -92,7 +92,7 @@ function PassDetail() {
 function PassContent({ personId, role, label, wallets }) {
   const { requestWallet, onExpired } = useContext(MemberContext);
   const query = useResource('pass', { person_id: String(personId), role });
-  return <QueryState query={query}>{(data) => <><PassCard data={data} label={label} /><p className="caption">Je pas wordt bij iedere scan gecontroleerd op geldigheid.</p><WalletAction key={`${personId}:${role}`} personId={personId} role={role} wallets={wallets} requestWallet={requestWallet} onExpired={onExpired} /></>}</QueryState>;
+  return <QueryState query={query}>{(data) => <><WalletAction key={`${personId}:${role}`} personId={personId} role={role} wallets={wallets} requestWallet={requestWallet} onExpired={onExpired} /><PassCard data={data} label={label} /><p className="caption">Je pas wordt bij iedere scan gecontroleerd op geldigheid.</p></>}</QueryState>;
 }
 
 function PassCard({ data, label }) {

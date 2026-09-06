@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Rondo Mobile Spike (development only)
  * Description: Opt-in native member login experiment. Never loaded by the theme.
- * Version: 0.7.0
+ * Version: 0.7.1
  *
  * @package Rondo\MobileSpike
  */
