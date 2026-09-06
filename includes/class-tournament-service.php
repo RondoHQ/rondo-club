@@ -10,6 +10,7 @@ namespace Rondo\Tournaments;
 use DateTimeImmutable;
 use Rondo\Core\VolunteerStatus;
 use Rondo\Fields\Fields;
+use Rondo\REST\Teams;
 use Rondo\Users\UserProvisioning;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -343,6 +344,7 @@ final class TournamentService {
 	public function assignment_options(): array {
 		$teams      = [];
 		$candidates = $this->kader_candidates_by_team();
+		$counts     = Teams::get_all_member_counts( true );
 		$team_ids   = get_posts(
 			[
 				'post_type'        => 'team',
@@ -362,11 +364,12 @@ final class TournamentService {
 				continue;
 			}
 			$teams[] = [
-				'id'         => $team_id,
-				'name'       => html_entity_decode( get_the_title( $team_id ), ENT_QUOTES, 'UTF-8' ),
-				'age_group'  => $age_group,
-				'age_number' => $this->age_number( $age_group ),
-				'assignees'  => array_values( $candidates[ $team_id ] ?? [] ),
+				'id'           => $team_id,
+				'name'         => html_entity_decode( get_the_title( $team_id ), ENT_QUOTES, 'UTF-8' ),
+				'age_group'    => $age_group,
+				'age_number'   => $this->age_number( $age_group ),
+				'player_count' => (int) ( $counts[ $team_id ]['players'] ?? 0 ),
+				'assignees'    => array_values( $candidates[ $team_id ] ?? [] ),
 			];
 		}
 

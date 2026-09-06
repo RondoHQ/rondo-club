@@ -1,3 +1,7 @@
+export function currentTournamentTeams(teams = []) {
+  return teams.filter((team) => Number(team.player_count) > 0);
+}
+
 export function allEligibleTournamentAssignments(teams = []) {
   return Object.fromEntries(
     teams

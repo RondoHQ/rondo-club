@@ -85,6 +85,34 @@ class TournamentWorkflowTest extends RondoTestCase {
 		$this->assertSame( [ $kader_id ], array_column( $team['assignees'], 'user_id' ) );
 	}
 
+	public function test_assignment_options_count_current_players_without_requiring_accounts(): void {
+		$team_id  = $this->createOrganization( [ 'post_title' => 'AWC O15-1' ] );
+		$empty_id = $this->createOrganization( [ 'post_title' => 'AWC JO16-2' ] );
+		$kader_id = $this->createRondoUser();
+		$this->link_user( $kader_id, [ $this->position( $empty_id, 'team', 'Trainer' ) ] );
+
+		$player_id = $this->createPerson();
+		Fields::update_for_post( $player_id, 'work_history', [ $this->position( $team_id, 'team', 'Teamspeler' ) ] );
+		$former_id = $this->createPerson();
+		Fields::update_for_post( $former_id, 'former_member', true );
+		Fields::update_for_post( $former_id, 'work_history', [ $this->position( $empty_id, 'team', 'Teamspeler' ) ] );
+		$expired_id            = $this->createPerson();
+		$expired               = $this->position( $empty_id, 'team', 'Keeper' );
+		$expired['end_date']   = '2021-01-01';
+		$expired['is_current'] = false;
+		Fields::update_for_post( $expired_id, 'work_history', [ $expired ] );
+
+		$options = array_column( $this->service->assignment_options(), null, 'id' );
+		$this->assertSame( 1, $options[ $team_id ]['player_count'] );
+		$this->assertSame( 0, $options[ $empty_id ]['player_count'] );
+		$this->assertSame( [ $kader_id ], array_column( $options[ $empty_id ]['assignees'], 'user_id' ) );
+
+		Fields::update_for_post( $player_id, 'work_history', [ $this->position( $empty_id, 'team', 'Keeper' ) ] );
+		$options = array_column( $this->service->assignment_options(), null, 'id' );
+		$this->assertSame( 0, $options[ $team_id ]['player_count'] );
+		$this->assertSame( 1, $options[ $empty_id ]['player_count'] );
+	}
+
 	public function test_shared_entry_supports_multiple_tournament_teams_and_one_contact(): void {
 		$admin_id        = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		$team_id         = $this->createOrganization( [ 'post_title' => 'AWC O15-1' ] );
