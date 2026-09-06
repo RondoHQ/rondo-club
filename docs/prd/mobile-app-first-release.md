@@ -62,6 +62,10 @@ capability-configuratie de tabs bepalen; maak geen afzonderlijk app-product per 
 Tabs en Android-terug gebruiken dezelfde React-routegeschiedenis, zonder dubbele web- en native
 navigatiebalk. Capacitor verzorgt de koppeling met de telefoonfuncties.
 
+Clubwissel staat uitsluitend onder **Meer → Mijn clubs**, omdat gebruikers dit weinig nodig hebben.
+De schermkop toont op hoofdschermen alleen de clubnaam en het logo, zonder dropdownpijl of
+klikactie. Bij eerste aanmelding blijft clubkeuze onderdeel van de onboarding.
+
 ### Vrijwilligersdiensten: kalender als ingang
 
 Bijgesteld op 6 september 2026 na feedback: er zijn tientallen beschikbare diensten. De ingang
