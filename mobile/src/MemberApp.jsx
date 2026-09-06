@@ -5,19 +5,18 @@ import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { usePassQr } from '../../src/hooks/usePassQr';
-import { request } from './transport.mjs';
 import { availableShifts, calendarIndex, clubPage, clubNow, dateLabel, monthDays, moveMonth, personName, shiftTime, upcomingShifts } from './member-model.mjs';
 
 const MemberContext = createContext(null);
 
 function useResource(resource, params = {}) {
-  const { session, onExpired } = useContext(MemberContext);
+  const { session, onExpired, read } = useContext(MemberContext);
   return useQuery({
     queryKey: [session.club.id, resource, params],
     queryFn: async ({ signal }) => {
       signal.throwIfAborted();
       try {
-        const data = await request(session.club, `/read?${new URLSearchParams({ resource, ...params })}`, { token: session.token });
+        const data = await read(`/read?${new URLSearchParams({ resource, ...params })}`);
         signal.throwIfAborted();
         return data;
       } catch (error) {
@@ -143,7 +142,7 @@ function ShiftDetail() {
 
 function More() {
   const { logout, profile } = useContext(MemberContext);
-  return <section><h1>Meer</h1><p>{profile.name}</p><Link className="action-card" to="/gegevens"><strong>Mijn gegevens</strong><span>›</span></Link><Link className="action-card" to="/clubs"><strong>Mijn clubs</strong><span>›</span></Link><div className="panel"><h2>Over deze proef</h2><p>Je bekijkt gegevens van je club. Wijzigingen en Wallet toevoegen lopen via de clubsite.</p><p>De proefsessie duurt maximaal vijf minuten. Na het sluiten van de app log je opnieuw in.</p></div><button className="secondary" onClick={logout}>Uitloggen</button></section>;
+  return <section><h1>Meer</h1><p>{profile.name}</p><Link className="action-card" to="/gegevens"><strong>Mijn gegevens</strong><span>›</span></Link><Link className="action-card" to="/clubs"><strong>Mijn clubs</strong><span>›</span></Link><div className="panel"><h2>Over deze proef</h2><p>Je bekijkt gegevens van je club. Wijzigingen en Wallet toevoegen lopen via de clubsite.</p><p>Je blijft maximaal 30 dagen aangemeld op dit toestel. Via Uitloggen verwijder je je opgeslagen aanmelding.</p></div><button className="secondary" onClick={logout}>Uitloggen</button></section>;
 }
 
 function Clubs() {
@@ -168,11 +167,11 @@ function Navigation() {
   return <nav aria-label="Hoofdnavigatie">{[['/', '⌂', 'Start'], ['/passen', '▣', 'Passen'], ['/vrijwillig', '▦', 'Vrijwillig'], ['/meer', '☰', 'Meer']].map(([path, icon, label]) => <NavLink key={path} to={path} end={path === '/'}><span aria-hidden="true">{icon}</span>{label}</NavLink>)}</nav>;
 }
 
-export default function MemberApp({ session, profile, logout, onExpired }) {
+export default function MemberApp({ session, profile, logout, onExpired, read }) {
   // One cache and route history per authenticated session; never share across clubs or logins.
   const [client] = useState(() => new QueryClient());
   const now = clubNow(session.club.timeZone);
   const today = now.slice(0, 10);
   useEffect(() => () => { client.cancelQueries(); client.clear(); }, [client]);
-  return <QueryClientProvider client={client}><MemberContext.Provider value={{ session, profile, logout, onExpired, today, now }}><MemoryRouter><Routes><Route path="/" element={<Home />} /><Route path="/passen" element={<Passes />} /><Route path="/passen/:personId" element={<PassDetail />} /><Route path="/gegevens" element={<Household />} /><Route path="/vrijwillig" element={<Volunteers />} /><Route path="/vrijwillig/dienst/:shiftId" element={<ShiftDetail />} /><Route path="/meer" element={<More />} /><Route path="/clubs" element={<Clubs />} /></Routes><Navigation /></MemoryRouter></MemberContext.Provider></QueryClientProvider>;
+  return <QueryClientProvider client={client}><MemberContext.Provider value={{ session, profile, logout, onExpired, read, today, now }}><MemoryRouter><Routes><Route path="/" element={<Home />} /><Route path="/passen" element={<Passes />} /><Route path="/passen/:personId" element={<PassDetail />} /><Route path="/gegevens" element={<Household />} /><Route path="/vrijwillig" element={<Volunteers />} /><Route path="/vrijwillig/dienst/:shiftId" element={<ShiftDetail />} /><Route path="/meer" element={<More />} /><Route path="/clubs" element={<Clubs />} /></Routes><Navigation /></MemoryRouter></MemberContext.Provider></QueryClientProvider>;
 }

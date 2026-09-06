@@ -1,6 +1,6 @@
 # Capacitor-proef: resultaten en vervolg
 
-Datum: 6 september 2026. Status: ontwikkelproef 0.2.0; native simulatorlogin geslaagd, fysieke toestelproef nog open.
+Datum: 6 september 2026. Status: ontwikkelproef 0.3.0; native simulatorlogin geslaagd, fysieke toestelproef nog open.
 Branch: `codex/capacitor-login-spike`. Geen productie-installatie of store-upload uitgevoerd.
 
 ## Gebouwd
@@ -8,12 +8,13 @@ Branch: `codex/capacitor-login-spike`. Geen productie-installatie of store-uploa
 - Apart React/Capacitor-appstartpunt met lokaal verpakte assets en native iOS/Android-projecten.
 - Clubzoeken en bevestigen uit een vooraf ingestelde HTTPS-clublijst; standaardlijst leeg.
 - Browserlogin via bestaande WordPress-login, expliciete toestemming, S256 PKCE en state.
-- Vijf minuten geldige sessie in appgeheugen, intrekking en clubwissel onder Meer.
+- Vijf minuten geldige toegangstokens in appgeheugen; veilige sessieopslag sinds 0.3.0,
+  intrekking en clubwissel onder Meer.
 - Losse ontwikkelplugin die alleen eigen profiel en toegestane huishoudgegevens via bestaande
   REST-controllers leest; geen nieuwe productie-authenticatie of uitbreiding van FreeScout OIDC.
 - Automatische controles in CI en instructies in `mobile/README.md`.
 
-De volgende bouwstap voegt Start, Passen met QR-detail en bestaande paskeuzes, Mijn gegevens,
+Bouwstap 0.2.0 voegt Start, Passen met QR-detail en bestaande paskeuzes, Mijn gegevens,
 Vrijwillig met maandkalender, Mijn diensten, dienstdetail en Meer/Mijn clubs toe. Na feedback is de
 kop één compacte regel met clublogo en Rondo. Clubwissel staat alleen onder Meer. De leesroutes
 gebruiken de bestaande serverrechten; wijzigen, aanmelden/afmelden en Wallet toevoegen openen
@@ -84,10 +85,10 @@ Deze proef valideert de basisverbinding en serverrechten, inclusief native compi
 in beide simulators. Een fysieke iPhone/Android-login en terugkeer uit een echte e-mailapp zijn
 nog niet getest; de lokale proef gebruikt een fictief account met wachtwoord.
 
-Sessies en de PKCE-verifier staan uitsluitend in werkgeheugen. Er zijn geen refresh tokens,
-Keychain/Keystore-opslag, refreshrotatie, hergebruikdetectie, achtergrondprivacy of geverifieerde
-Universal Links/App Links. Een koude appstart vraagt opnieuw inloggen. Dit zijn expliciete
-vervolgwerkzaamheden, geen eigenschappen die de bovenstaande tests aantonen.
+Bouwstap 0.3.0 voegt blijvende sessies toe; de resultaten staan hieronder. De PKCE-verifier voor
+een lopende browseraanmelding blijft in werkgeheugen: een koude callback tijdens die aanmelding
+vereist een nieuwe login. Achtergrondprivacy en geverifieerde Universal Links/App Links zijn
+nog niet gebouwd. Fysieke toestelcontrole, backups en herinstallatie zijn nog open.
 
 Het clubregister is voor deze proef een buildconfiguratie. Meerdere clubs kunnen geselecteerd
 worden, maar sessies worden niet tegelijk bewaard: wisselen logt eerst uit. Een operationele
@@ -97,7 +98,7 @@ centrale clublijst en stabiele installatie-identiteit volgen in het productieont
 
 1. Twee onafhankelijke HTTPS-testclubs instellen en op fysieke iPhone/Android controleren;
    annuleren, koude terugkeer, verlopen sessies, offline herstel en echte e-mailterugkeer testen.
-2. De proef uitbreiden met veilige blijvende sessies en geverifieerde terugkeerlinks, inclusief
+2. Blijvende sessies onafhankelijk beoordelen en geverifieerde terugkeerlinks bouwen, inclusief
    annulering, koude start, e-maillink, offline herstel en gelijktijdige verversing.
 3. De gebouwde leesschermen aanvullen met native schrijfhandelingen, directe Wallet-overdracht,
    gastpassen, volledige contributiebediening en capabilitygestuurde navigatie.
@@ -132,3 +133,35 @@ mobiele pakket bijgewerkt naar 7.18.3. De bestaande web-router is ongewijzigd.
 De proefsessie blijft maximaal vijf minuten geldig en wordt niet duurzaam opgeslagen. Deze
 bouwstap is geen bewijs voor fysieke toestellen, offline gebruik, productieauthenticatie, een
 store-release of native schrijf-/Walletacties.
+
+## Bouwstap 0.3.0: blijvend aangemeld en websitebranding
+
+De app gebruikt het exacte woordmerk, de Figtree-lettertypen en de kleuren uit de Rondo-website.
+Het clublogo staat links in de compacte header. Native appiconen en opstartschermen gebruiken
+het bestaande Rondo-logo, zonder wijziging van het bronlogo.
+
+Een aanmelding blijft maximaal 30 dagen geldig vanaf login. Alleen de roterende refreshcode,
+clubidentiteit en vervaltijd staan in de native beveiligde opslag. Toegangstokens blijven maximaal
+vijf minuten in geheugen; persoonsgegevens en QR-codes worden niet bewust opgeslagen. iOS gebruikt
+Keychain zonder synchronisatie/toesteloverdracht; Android gebruikt AES-GCM met een Keystore-sleutel
+en een bestand dat van backups is uitgesloten.
+
+Uitloggen verwijdert eerst de actieve aanmelding. Zonder netwerk blijft het intrekkingsverzoek
+versleuteld bewaard tot een volgende start. Tot die bevestiging of de absolute vervaltijd kan de
+serverfamilie nog geldig zijn. Opslagfouten tonen expliciet dat uitloggen niet is afgerond.
+Refreshverzoeken lopen één voor één; hergebruik van een oude code trekt ook nieuwere tokens in.
+
+Gecontroleerd: 21 mobiele JavaScript-tests en 14 mobiele PHP-tests met 107 assertions, inclusief
+parallelle verversing, uitloggen tijdens verversing, offline herstel/uitloggen, opslagfouten,
+hergebruikdetectie, wachtwoordwijziging, ingetrokken rechten en absolute vervaltijd.
+Beide native builds slagen. Op iPhone én Android: login, twee volledige procesherstarts zonder
+opnieuw inloggen, passen en kalender, uitloggen en herstart zonder sessie geslaagd. Screenshots
+van de nieuwe branding zijn bekeken. Op Android is daarna de lokale testverbinding onderbroken:
+herstart toont herstel zonder persoonsgegevens, opnieuw proberen na herstel van de verbinding
+herstelt de login, en offline uitloggen blijft na herstart uitgelogd. De versleutelde Android-opslag
+is apart gecontroleerd op afwezigheid van leesbare refreshvelden en club-URL; dit vervangt geen
+onafhankelijke cryptografische audit.
+
+De eerste iPhone-controle vond ontbrekende Keychain-rechten in de ongetekende simulatorbuild.
+Simulator-only entitlements en lokale signing herstellen dit. De volledige herhaling is geslaagd;
+fysieke toestellen moeten hun echte rechten uit Apple-provisioning krijgen.
