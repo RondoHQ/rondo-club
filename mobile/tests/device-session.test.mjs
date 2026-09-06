@@ -103,3 +103,97 @@ test('logout reports storage failure instead of claiming durable logout', async 
   await assert.rejects(auth.logout(), /Vault failed/);
   assert.equal(auth.session, null);
 });
+
+test('pending login survives process death and resumes the identical PKCE request', async () => {
+  const env = setup(async () => assert.fail('No token request during pending restore'), null);
+  const original = await env.auth.start(club);
+  const fresh = new DeviceSession({ vault: env.vault, request: env.auth.request, clubs: [club], now: () => now + 60000 });
+  assert.equal(await fresh.restore(), null);
+  assert.equal(await fresh.resumeLogin(), original);
+  assert.equal(fresh.pending.club.url, club.url);
+  assert.deepEqual(Object.keys(env.stored().pending).sort(), ['clubId', 'clubUrl', 'createdAt', 'state', 'verifier']);
+});
+
+test('cold callback consumes persisted verifier before exchange; duplicate delivery exchanges once', async () => {
+  let calls = 0;
+  const env = setup(async (_, path, options) => {
+    assert.equal(path, '/token');
+    assert.equal(env.stored(), null);
+    assert.equal(options.data.code_verifier, verifier);
+    calls++;
+    return pair();
+  }, null);
+  await env.auth.start(club);
+  const { verifier, state } = env.auth.pending;
+  const fresh = new DeviceSession({ vault: env.vault, request: env.auth.request, clubs: [club], now: () => now });
+  await fresh.restore();
+  const url = `club.rondo.spike://oauth/callback?state=${state}&code=${'c'.repeat(43)}`;
+  await Promise.all([fresh.finish(url), fresh.finish(url)]);
+  assert.equal(calls, 1);
+  assert.equal(env.stored().pending, null);
+  assert.ok(env.stored().active);
+});
+
+test('cancel removes pending login durably and rejects a later callback after restart', async () => {
+  const env = setup(async () => assert.fail('Cancelled login must not exchange'), null);
+  await env.auth.start(club);
+  const url = `club.rondo.spike://oauth/callback?state=${env.auth.pending.state}&code=${'c'.repeat(43)}`;
+  await env.auth.logout();
+  const fresh = new DeviceSession({ vault: env.vault, request: env.auth.request, clubs: [club], now: () => now });
+  await fresh.restore();
+  await assert.rejects(fresh.finish(url));
+  assert.equal(env.stored(), null);
+});
+
+test('denied browser consent clears pending state; unrelated callback leaves it intact', async () => {
+  const env = setup(async () => assert.fail('Denied login must not exchange'), null);
+  await env.auth.start(club);
+  const { state } = env.auth.pending;
+  await assert.rejects(env.auth.finish(`club.rondo.spike://oauth/callback?state=${'x'.repeat(43)}&error=access_denied`));
+  assert.ok(env.stored().pending);
+  await assert.rejects(env.auth.finish(`club.rondo.spike://oauth/callback?state=${state}&error=access_denied`), { code: 'login_cancelled' });
+  assert.equal(env.stored(), null);
+});
+
+test('expired or unreviewed saved login cannot restore or produce a browser URL', async () => {
+  for (const mutate of [(pending) => { pending.createdAt = now - 600000; }, (pending) => { pending.clubUrl = 'https://other.test'; }]) {
+    const env = setup(async () => assert.fail('No network request for invalid pending login'), null);
+    await env.auth.start(club);
+    const stored = env.stored();
+    mutate(stored.pending);
+    await env.vault.write({ value: JSON.stringify(stored) });
+    const fresh = new DeviceSession({ vault: env.vault, request: env.auth.request, clubs: [club], now: () => now });
+    assert.equal(await fresh.restore(), null);
+    assert.equal(fresh.pending, null);
+    await assert.rejects(fresh.resumeLogin(), { status: 401 });
+    assert.equal(env.stored(), null);
+  }
+});
+
+test('vault failure prevents starting browser login', async () => {
+  const env = setup(async () => assert.fail('No network request'), null);
+  env.vault.write = async () => { throw new Error('Vault unavailable'); };
+  await assert.rejects(env.auth.start(club), /Vault unavailable/);
+  assert.equal(env.auth.pending, null);
+});
+
+
+test('cancelling while pending storage is in flight cannot reopen login after restart', async () => {
+  const env = setup(async () => assert.fail('No network request'), null);
+  const write = env.vault.write;
+  let release;
+  const blocked = new Promise((resolve) => { release = resolve; });
+  let started;
+  const writing = new Promise((resolve) => { started = resolve; });
+  env.vault.write = async (value) => { started(); await blocked; await write(value); };
+  const login = env.auth.start(club);
+  await writing;
+  const cancelled = env.auth.logout();
+  const rejected = assert.rejects(login, { status: 401 });
+  release();
+  await Promise.all([rejected, cancelled]);
+  const fresh = new DeviceSession({ vault: env.vault, request: env.auth.request, clubs: [club], now: () => now });
+  assert.equal(await fresh.restore(), null);
+  assert.equal(fresh.pending, null);
+  assert.equal(env.stored(), null);
+});

@@ -27,11 +27,15 @@ export function validateClubs(input) {
 
 export async function beginLogin(club, now = Date.now()) {
   const verifier = randomValue();
-  const challenge = base64url(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))));
   const pending = { club, verifier, state: randomValue(), createdAt: now };
-  const url = new URL('/wp-admin/admin-post.php', club.url);
+  return { pending, url: await authorizationUrl(pending) };
+}
+
+export async function authorizationUrl(pending) {
+  const challenge = base64url(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pending.verifier))));
+  const url = new URL('/wp-admin/admin-post.php', pending.club.url);
   url.search = new URLSearchParams({ action: 'rondo_mobile_spike_authorize', client_id: CLIENT_ID, redirect_uri: CALLBACK, response_type: 'code', scope: 'rondo:spike:read', state: pending.state, code_challenge: challenge, code_challenge_method: 'S256' });
-  return { pending, url: url.href };
+  return url.href;
 }
 
 export function readCallback(value, pending, now = Date.now()) {
@@ -41,7 +45,7 @@ export function readCallback(value, pending, now = Date.now()) {
   const params = url.searchParams;
   for (const key of ['state', 'code', 'error']) if (params.getAll(key).length > 1) throw new Error('Dubbele aanmeldparameters.');
   if (params.get('state') !== pending.state) throw new Error('Deze aanmelding hoort niet bij deze app-sessie.');
-  if (params.has('error')) throw new Error('Aanmelding geannuleerd.');
+  if (params.has('error')) throw Object.assign(new Error('Aanmelding geannuleerd.'), { code: 'login_cancelled' });
   const code = params.get('code');
   if (!/^[A-Za-z0-9_-]{43}$/.test(code || '')) throw new Error('De aanmeldcode ontbreekt of is ongeldig.');
   return { grant_type: 'authorization_code', client_id: CLIENT_ID, redirect_uri: CALLBACK, code, code_verifier: pending.verifier };

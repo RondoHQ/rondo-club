@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Rondo Mobile Spike (development only)
  * Description: Opt-in, read-only native login experiment. Never loaded by the theme.
- * Version: 0.2.0
+ * Version: 0.4.0
  *
  * @package Rondo\MobileSpike
  */
@@ -38,6 +38,8 @@ final class Plugin {
 		add_action( 'admin_post_nopriv_rondo_mobile_spike_authorize', [ $this, 'authorize' ] );
 		add_action( 'rondo_mobile_spike_cleanup', 'delete_option' );
 		add_filter( 'login_redirect', [ $this, 'login_redirect' ], 20, 3 );
+		add_filter( 'magic_login_create_login_link', [ $this, 'magic_login_link' ], 20, 3 );
+		add_filter( 'magic_login_redirect', [ $this, 'magic_login_redirect' ], PHP_INT_MAX, 2 );
 	}
 
 	/** Preserve only this validated local authorization request after the WordPress login POST. */
@@ -45,18 +47,54 @@ final class Plugin {
 		if ( ! self::enabled() || ! $user instanceof \WP_User || ! is_string( $requested ) ) {
 			return $redirect;
 		}
+		return self::authorization_destination( $requested ) ?: $redirect;
+	}
+
+	/** Only the exact, validated local mobile authorization action is a return destination. */
+	private static function authorization_destination( $requested ): string {
+		if ( ! is_string( $requested ) ) {
+			return '';
+		}
 		$parts = wp_parse_url( $requested );
 		$base  = wp_parse_url( admin_url( 'admin-post.php' ) );
 		foreach ( [ 'scheme', 'host', 'port', 'path', 'user', 'pass', 'fragment' ] as $key ) {
 			if ( ( $parts[ $key ] ?? null ) !== ( $base[ $key ] ?? null ) ) {
-				return $redirect;
+				return '';
 			}
 		}
 		parse_str( $parts['query'] ?? '', $params );
 		if ( ( $params['action'] ?? '' ) !== 'rondo_mobile_spike_authorize' || is_wp_error( self::validate( $params ) ) ) {
-			return $redirect;
+			return '';
 		}
 		return $requested;
+	}
+
+	/** Preserve the app destination when Rondo's unified email flow creates its Magic Login link. */
+	public function magic_login_link( $url, $user, $context ) {
+		if ( ! self::enabled() || $context !== 'email' || ! $user instanceof \WP_User || ! is_string( $url ) ) {
+			return $url;
+		}
+		// The provider already validates its request nonce, CAPTCHA and throttling before link creation.
+		$requested = isset( $_POST['redirect_to'] ) ? wp_unslash( $_POST['redirect_to'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$return    = self::authorization_destination( $requested );
+		if ( $return === '' ) {
+			return $url;
+		}
+		$parts = wp_parse_url( $url );
+		$base  = wp_parse_url( wp_login_url() );
+		foreach ( [ 'scheme', 'host', 'port', 'path', 'user', 'pass', 'fragment' ] as $key ) {
+			if ( ( $parts[ $key ] ?? null ) !== ( $base[ $key ] ?? null ) ) {
+				return $url;
+			}
+		}
+		// Preserve the provider-issued token and its encoding convention, changing only the destination.
+		return add_query_arg( 'redirect_to', rawurlencode( $return ), $url );
+	}
+
+	/** Apply the same narrow return validation after the provider's own redirect rules. */
+	public function magic_login_redirect( $redirect, $user ) {
+		$requested = isset( $_REQUEST['redirect_to'] ) ? wp_unslash( $_REQUEST['redirect_to'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return $this->login_redirect( $redirect, $requested, $user );
 	}
 
 	public function routes(): void {

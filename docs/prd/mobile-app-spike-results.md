@@ -1,6 +1,6 @@
 # Capacitor-proef: resultaten en vervolg
 
-Datum: 6 september 2026. Status: ontwikkelproef 0.3.1; native simulatorlogin geslaagd, fysieke toestelproef nog open.
+Datum: 6 september 2026. Status: ontwikkelproef 0.4.0; native simulatorlogin geslaagd, fysieke toestelproef nog open.
 Branch: `codex/capacitor-login-spike`. Geen productie-installatie of store-upload uitgevoerd.
 
 ## Gebouwd
@@ -83,11 +83,10 @@ uitvoerpad slaagde inclusief screenshot en uitloggen.
 
 Deze proef valideert de basisverbinding en serverrechten, inclusief native compilatie en login
 in beide simulators. Een fysieke iPhone/Android-login en terugkeer uit een echte e-mailapp zijn
-nog niet getest; de lokale proef gebruikt een fictief account met wachtwoord.
+nog niet getest; de lokale proef gebruikt fictieve accounts en lokaal opgevangen e-mail.
 
-Bouwstap 0.3.0 voegt blijvende sessies toe; de resultaten staan hieronder. De PKCE-verifier voor
-een lopende browseraanmelding blijft in werkgeheugen: een koude callback tijdens die aanmelding
-vereist een nieuwe login. Achtergrondprivacy en geverifieerde Universal Links/App Links zijn
+Bouwstap 0.3.0 voegt blijvende sessies toe; 0.4.0 bewaart ook een lopende browseraanmelding
+maximaal tien minuten in de beveiligde toestelopslag. Achtergrondprivacy en geverifieerde Universal Links/App Links zijn
 nog niet gebouwd. Fysieke toestelcontrole, backups en herinstallatie zijn nog open.
 
 Het clubregister is voor deze proef een buildconfiguratie. Meerdere clubs kunnen geselecteerd
@@ -175,3 +174,31 @@ logo's op de eigen clubhost. De gekozen afbeelding blijft behouden na sessiehers
 
 Gecontroleerd in beide native simulators: kalender met het opgegeven vrijstaande SVG-logo en
 hetzelfde logo na herstart. Mobiele tests/lint en mobiele, web- en documentatiebuilds slagen.
+
+## Bouwstap 0.4.0: e-mailaanmelding en terugkeer na afsluiten
+
+De bestaande Magic Login 2.8.1-provider is in de lokale fixture geactiveerd. Het fictieve bestaande
+lid vraagt via het echte loginformulier een e-maillink aan. Rondo's bestaande activatieservice
+maakte die link met de homepage als bestemming; de ontwikkelplugin behoudt nu uitsluitend de
+exact gevalideerde mobiele autorisatiebestemming. Providercontroles en andere webbestemmingen
+blijven intact. Alle testmail is lokaal opgevangen, zonder uitgaande bezorging.
+
+De app bewaart clubidentiteit, PKCE-verifier, state en starttijd maximaal tien minuten in de
+bestaande beveiligde toestelopslag. Een koude start herstelt die gegevens voordat een terugkeerlink
+wordt verwerkt. Annuleren verwijdert ze definitief; een geldige callback verbruikt ze vóór de
+codewissel. Dubbele OS-meldingen delen één wissel. Bij een verloren codewisselantwoord is opnieuw
+inloggen nodig.
+
+Gecontroleerd: 28 mobiele JavaScript-tests, 15 mobiele WordPress/MySQL-tests met 122 assertions,
+44 bestaande activatieservicetests met 138 assertions, mobiele lint en PHP-codingstandaarden.
+iOS- en Android-native builds slagen. Op beide simulators is via het formulier een testmail
+opgevangen, de app volledig afgesloten en de opgevangen link in de systeembrowser geopend.
+Na Verbinden start de app met het juiste fictieve lid; een volgende procesherstart behoudt de
+sessie en toont de kalender. Ook een onafgemaakte login herstellen, annuleren en opnieuw starten
+is op beide platformen geslaagd. Screenshots van beide platformen zijn bekeken.
+
+De testautomatisering moest eerst Safari- en Chrome-introductiemeldingen sluiten en een Android-
+link correct quoten; daarna slaagden de volledige terugkeerflows. Dit is bewijs voor opgevangen
+e-maillinks in de systeembrowser, niet voor aflevering of terugkeer uit een echte Mail/Gmail-app.
+Nieuwe-accountactivatie, huishoudkeuze tijdens activatie, fysieke toestellen en geverifieerde
+HTTPS-terugkeerlinks blijven open. De proefplugin blijft geblokkeerd buiten local/development.

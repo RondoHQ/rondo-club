@@ -1,6 +1,6 @@
 # Rondo Capacitor login spike
 
-Development experiment, version **0.3.1**. This is not the first app release and is not ready
+Development experiment, version **0.4.0**. This is not the first app release and is not ready
 for TestFlight, Google Play, or production installation. The agreed screen design remains in
 `docs/prd/mobile-app-first-release.md`.
 
@@ -101,8 +101,7 @@ REST callbacks. Refresh families and durable offline revocation are described be
 
 `DeviceSession` serializes vault writes and coalesces refresh requests. Startup validates the saved
 club against the compiled directory, rotates its refresh token and saves the replacement before
-publishing access. Five-minute access tokens, personal responses, QR codes and pending PKCE
-verifiers stay in memory. A network error retains the encrypted login for retry; invalid grants
+publishing access. Five-minute access tokens, personal responses and QR codes stay in memory. A network error retains the encrypted login for retry; invalid grants
 require a new login. There is no offline personal-data mode.
 
 The local `RondoSessionVault` bridge supports only read/write/clear for one bounded record. iOS
@@ -135,6 +134,25 @@ xcodebuild -project mobile/ios/App/App.xcodeproj -scheme App \
 `Simulator.entitlements` applies only to simulator SDK builds. Physical builds need real
 team-prefixed entitlements from Apple provisioning. An unsigned simulator build compiles but
 cannot access Keychain (`-34018`); do not replace secure storage to bypass this error.
+
+## Email login and unfinished authorization (0.4.0)
+
+The existing club login remains responsible for account authentication. When Magic Login is
+installed, the development plugin preserves a strictly validated mobile authorization destination
+in an existing account's email link and its final redirect. Provider token creation, nonce,
+throttling and email/account eligibility remain in the existing provider and Rondo activation flow.
+Other destinations are unchanged. No new mail sender or production authentication hook is added.
+
+Before opening the system browser, the app saves the reviewed club ID/origin, PKCE verifier,
+state and creation time in the same native vault. This pending attempt expires after ten minutes.
+Startup restores it before processing a native launch URL; the app can also reopen the same
+inlog window or cancel. Cancellation and valid denials erase it durably. Wrong-state callbacks
+cannot cancel it. Successful callbacks consume it before the code exchange; duplicate native
+notifications share that exchange. A lost exchange response requires a fresh login.
+
+Only an existing linked account is covered. New-account activation, household-selection journeys,
+physical devices and a real Mail/Gmail application return still require separate verification.
+The callback remains the experimental private scheme, not a verified Universal Link/App Link.
 
 ## Website branding
 

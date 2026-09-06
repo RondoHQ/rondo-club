@@ -115,6 +115,42 @@ final class MobileSpikeTest extends RondoTestCase {
 		}
 	}
 
+	public function test_magic_email_keeps_only_the_validated_mobile_return_and_provider_token(): void {
+		$plugin      = new Plugin();
+		$user        = self::factory()->user->create_and_get( [ 'role' => 'subscriber' ] );
+		$return      = add_query_arg( array_merge( $this->params(), [ 'action' => 'rondo_mobile_spike_authorize' ] ), admin_url( 'admin-post.php' ) );
+		$link        = add_query_arg(
+			[
+				'magic-login' => '1',
+				'token'       => 'fixture-token',
+				'redirect_to' => rawurlencode( home_url( '/' ) ),
+			],
+			wp_login_url()
+			);
+		$old_post    = $_POST; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Save test fixture globals.
+		$old_request = $_REQUEST; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Save test fixture globals.
+		try {
+			$_POST['redirect_to'] = $return;
+			$result               = $plugin->magic_login_link( $link, $user, 'email' );
+			parse_str( wp_parse_url( $result, PHP_URL_QUERY ), $params );
+			$this->assertSame( 'fixture-token', $params['token'] );
+			$this->assertSame( $return, $params['redirect_to'] );
+			$_REQUEST['redirect_to'] = $return;
+			$this->assertSame( $return, $plugin->magic_login_redirect( home_url( '/profile' ), $user ) );
+			$this->assertSame( $link, $plugin->magic_login_link( $link, $user, 'sms' ) );
+			$this->assertSame( 'https://other.test/login', $plugin->magic_login_link( 'https://other.test/login', $user, 'email' ) );
+			foreach ( [ home_url( '/' ), 'https://other.test/', $return . '#fragment', add_query_arg( 'redirect_uri', 'https://other.test/', $return ), [ $return ] ] as $invalid ) {
+				$_POST['redirect_to']    = $invalid;
+				$_REQUEST['redirect_to'] = $invalid;
+				$this->assertSame( $link, $plugin->magic_login_link( $link, $user, 'email' ) );
+				$this->assertSame( home_url( '/profile' ), $plugin->magic_login_redirect( home_url( '/profile' ), $user ) );
+			}
+		} finally {
+			$_POST    = $old_post;
+			$_REQUEST = $old_request;
+		}
+	}
+
 	private function session( int $user_id ): string {
 		$code = Plugin::issue( $this->params(), $user_id );
 		$this->assertIsString( $code );

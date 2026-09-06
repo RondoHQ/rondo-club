@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.50.0] - 2026-09-06
+
+### Added
+
+- Development-only mobile login resumption: pending PKCE state survives process termination in native secure storage for ten minutes, with explicit resume/cancel controls and durable one-time callback consumption.
+- Tests for cold callbacks, duplicate delivery, cancellation, expiry, directory changes and storage failures.
+
+### Fixed
+
+- Existing-account Magic Login emails retain the strictly validated mobile authorization destination through Rondo's existing email flow; other login destinations and provider checks remain unchanged.
+
 ## [35.49.1] - 2026-09-06
 
 ### Changed
