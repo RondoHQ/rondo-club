@@ -333,3 +333,10 @@ References: [Apple PassKit](https://developer.apple.com/documentation/passkit/pk
 and [Google save links](https://developers.google.com/wallet/generic/web).
 
 Native validation: both simulators exercised the matching button and invalid-provider error. iOS also rejected an intentionally corrupt pass through the actual PassKit bridge. All temporary invalid Wallet configuration was removed afterwards.
+
+
+A subsequent signed-pass test succeeded on 6 September: the existing AWC server signed one clearly
+marked synthetic pass, keeping its private key on that server. A local fixture delivered only that
+pass after the normal adapter checks. The real native add sheet, cancellation, addition and the
+saved pass in Apple's Wallet app were verified. This does not establish production mobile login or
+live member-pass issuance. See [signed-pass test evidence](../docs/prd/mobile-wallet-test.md).
