@@ -1,8 +1,13 @@
-# Rondo Capacitor login spike
+# Rondo Capacitor app experiments and AWC pilot
 
-Development experiment, version **0.7.0**. This is not the first app release and is not ready
+Default development experiment, version **0.8.0**. This is not the first app release and is not ready
 for TestFlight, Google Play, or production installation. The agreed screen design remains in
 `docs/prd/mobile-app-first-release.md`.
+
+The separate opt-in AWC pilot is prepared with `npm run prepare:pilot --prefix mobile`.
+Its live activation, verified links and signing gates are documented in
+[`docs/prd/mobile-awc-pilot.md`](../docs/prd/mobile-awc-pilot.md). The default simulator build
+and development adapter retain their existing isolation.
 
 ## What this milestone implements
 

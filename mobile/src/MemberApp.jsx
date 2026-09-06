@@ -5,6 +5,7 @@ import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { getMembershipPassBackground, getMembershipPassPresentation } from '../../src/pages/Household/membershipPassUtils';
+import { PILOT } from './deployment.mjs';
 import { canChangeShifts } from './auth.mjs';
 import ProfileEditor from './ProfileEditor';
 import WalletAction from './WalletAction';
@@ -118,7 +119,7 @@ function PassLogo({ url }) {
 
 function Household() {
   const household = useResource('household');
-  return <section><h1>Mijn gegevens</h1><QueryState query={household}>{(people) => people.length ? people.map((person) => <article className="panel" key={person.id}><p className="eyebrow">{person.household_role === 'self' ? 'Jij' : 'Je gezin'}</p><h2>{personName(person)}</h2>{person.fields?.email_1 && <p>{person.fields.email_1}</p>}{person.fields?.mobile_1 && <p>{person.fields.mobile_1}</p>}<div className="household-actions">{person.household_role === 'self' && <Link className="text-link" to="/gegevens/wijzigen">Gegevens wijzigen →</Link>}{person.membership_pass && <Link className="text-link" to={`/passen/${person.id}`}>Pas bekijken →</Link>}</div></article>) : <p className="empty">Je account is nog niet gekoppeld aan een lid. Neem contact op met je club.</p>}</QueryState><ExternalAction page="profile">Gezinsgegevens en contributie bij je club</ExternalAction></section>;
+  return <section><h1>Mijn gegevens</h1><QueryState query={household}>{(people) => people.length ? people.map((person) => <article className="panel" key={person.id}><p className="eyebrow">{person.household_role === 'self' ? 'Jij' : 'Je gezin'}</p><h2>{personName(person)}</h2>{person.fields?.email_1 && <p>{person.fields.email_1}</p>}{person.fields?.mobile_1 && <p>{person.fields.mobile_1}</p>}<div className="household-actions">{!PILOT && person.household_role === 'self' && <Link className="text-link" to="/gegevens/wijzigen">Gegevens wijzigen →</Link>}{person.membership_pass && <Link className="text-link" to={`/passen/${person.id}`}>Pas bekijken →</Link>}</div></article>) : <p className="empty">Je account is nog niet gekoppeld aan een lid. Neem contact op met je club.</p>}</QueryState>{!PILOT && <ExternalAction page="profile">Gezinsgegevens en contributie bij je club</ExternalAction>}</section>;
 }
 
 function Volunteers() {
@@ -230,6 +231,7 @@ function ShiftActions({ shift, own, canCancel, ready, refresh }) {
     } finally { running.current = false; if (alive.current) setBusy(false); }
   }
 
+  if (PILOT) return <p className="empty">In deze pilot kun je diensten bekijken. Aanmelden en afmelden komen later.</p>;
   if (!canChangeShifts(session.scope)) return <article className="panel"><p>Log opnieuw in en geef toestemming om jezelf via de app aan te melden en af te melden.</p><button onClick={logout}>Opnieuw inloggen</button></article>;
   return <div className="shift-actions" aria-busy={busy}>
     {message && <p role="status" className="positive">{message}</p>}
@@ -247,7 +249,7 @@ function ShiftActions({ shift, own, canCancel, ready, refresh }) {
 
 function More() {
   const { logout, profile } = useContext(MemberContext);
-  return <section><h1>Meer</h1><p>{profile.name}</p><Link className="action-card" to="/gegevens"><strong>Mijn gegevens</strong><span>›</span></Link><Link className="action-card" to="/clubs"><strong>Mijn clubs</strong><span>›</span></Link><div className="panel"><h2>Over deze proef</h2><p>Je bekijkt gegevens van je club en kunt je aanmelden en afmelden voor vrijwilligersdiensten. Je kunt je eigen contactgegevens en het gezinsadres wijzigen. Je kunt je pas ook toevoegen aan Wallet als je club dit aanbiedt.</p><p>Je blijft maximaal 30 dagen aangemeld op dit toestel. Via Uitloggen verwijder je je opgeslagen aanmelding.</p></div><button className="secondary" onClick={logout}>Uitloggen</button></section>;
+  return <section><h1>Meer</h1><p>{profile.name}</p><Link className="action-card" to="/gegevens"><strong>Mijn gegevens</strong><span>›</span></Link><Link className="action-card" to="/clubs"><strong>Mijn clubs</strong><span>›</span></Link><div className="panel"><h2>Over deze proef</h2><p>{PILOT ? 'Je bekijkt de echte AWC-gegevens van jou en je gezin en kunt je beschikbare passen toevoegen aan Wallet. Gegevens wijzigen en diensten boeken zijn in deze pilot uitgeschakeld.' : 'Je bekijkt gegevens van je club en kunt je aanmelden en afmelden voor vrijwilligersdiensten. Je kunt je eigen contactgegevens en het gezinsadres wijzigen. Je kunt je pas ook toevoegen aan Wallet als je club dit aanbiedt.'}</p><p>Je blijft maximaal {PILOT ? 7 : 30} dagen aangemeld op dit toestel. Via Uitloggen verwijder je je opgeslagen aanmelding.</p></div><button className="secondary" onClick={logout}>Uitloggen</button></section>;
 }
 
 function Clubs() {
@@ -278,5 +280,5 @@ export default function MemberApp({ session, profile, logout, onExpired, read, c
   const now = clubNow(session.club.timeZone);
   const today = now.slice(0, 10);
   useEffect(() => () => { client.cancelQueries(); client.clear(); }, [client]);
-  return <QueryClientProvider client={client}><MemberContext.Provider value={{ session, profile, logout, onExpired, read, changeShift, changeProfile, requestWallet, today, now }}><MemoryRouter><Routes><Route path="/" element={<Home />} /><Route path="/passen" element={<Passes />} /><Route path="/passen/:personId" element={<PassDetail />} /><Route path="/gegevens" element={<Household />} /><Route path="/gegevens/wijzigen" element={<Profile />} /><Route path="/vrijwillig" element={<Volunteers />} /><Route path="/vrijwillig/dienst/:shiftId" element={<ShiftDetail />} /><Route path="/meer" element={<More />} /><Route path="/clubs" element={<Clubs />} /></Routes><Navigation /></MemoryRouter></MemberContext.Provider></QueryClientProvider>;
+  return <QueryClientProvider client={client}><MemberContext.Provider value={{ session, profile, logout, onExpired, read, changeShift, changeProfile, requestWallet, today, now }}><MemoryRouter><Routes><Route path="/" element={<Home />} /><Route path="/passen" element={<Passes />} /><Route path="/passen/:personId" element={<PassDetail />} /><Route path="/gegevens" element={<Household />} />{!PILOT && <Route path="/gegevens/wijzigen" element={<Profile />} />}<Route path="/vrijwillig" element={<Volunteers />} /><Route path="/vrijwillig/dienst/:shiftId" element={<ShiftDetail />} /><Route path="/meer" element={<More />} /><Route path="/clubs" element={<Clubs />} /></Routes><Navigation /></MemoryRouter></MemberContext.Provider></QueryClientProvider>;
 }

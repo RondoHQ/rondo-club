@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.54.0] - 2026-09-06
+
+### Added
+
+- Separately prepared AWC pilot builds with verified HTTPS callbacks, a fixed club directory, read-only member screens and Wallet export.
+- Opt-in pilot adapter with pinned tester account/person pairs, a pilot deadline, seven-day device sessions, isolated credentials, policy revocation and token/Wallet rate limits.
+- Reusable authorization runtime and pilot regression tests; the original experiment remains blocked on production.
+
 ## [35.53.1] - 2026-09-06
 
 ### Fixed
