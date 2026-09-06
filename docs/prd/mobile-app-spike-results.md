@@ -1,6 +1,6 @@
 # Capacitor-proef: resultaten en vervolg
 
-Datum: 6 september 2026. Status: ontwikkelproef 0.3.0; native simulatorlogin geslaagd, fysieke toestelproef nog open.
+Datum: 6 september 2026. Status: ontwikkelproef 0.3.1; native simulatorlogin geslaagd, fysieke toestelproef nog open.
 Branch: `codex/capacitor-login-spike`. Geen productie-installatie of store-upload uitgevoerd.
 
 ## Gebouwd
@@ -165,3 +165,13 @@ onafhankelijke cryptografische audit.
 De eerste iPhone-controle vond ontbrekende Keychain-rechten in de ongetekende simulatorbuild.
 Simulator-only entitlements en lokale signing herstellen dit. De volledige herhaling is geslaagd;
 fysieke toestellen moeten hun echte rechten uit Apple-provisioning krijgen.
+
+## Bouwstap 0.3.1: vrijstaand AWC-logo
+
+Het clublogo heeft geen achtergrond, kader, afgeronde hoeken of binnenruimte meer. Voor AWC
+is expliciet `https://www.svawc.nl/wp-content/uploads/2024/02/awc-logo.svg` gekozen. De proefclub
+gebruikt deze URL via het vooraf gecontroleerde clubregister; API-metadata blijft beperkt tot
+logo's op de eigen clubhost. De gekozen afbeelding blijft behouden na sessieherstel.
+
+Gecontroleerd in beide native simulators: kalender met het opgegeven vrijstaande SVG-logo en
+hetzelfde logo na herstart. Mobiele tests/lint en mobiele, web- en documentatiebuilds slagen.

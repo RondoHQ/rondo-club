@@ -1,6 +1,6 @@
 # Rondo Capacitor login spike
 
-Development experiment, version **0.3.0**. This is not the first app release and is not ready
+Development experiment, version **0.3.1**. This is not the first app release and is not ready
 for TestFlight, Google Play, or production installation. The agreed screen design remains in
 `docs/prd/mobile-app-first-release.md`.
 
@@ -190,3 +190,9 @@ or a release build. Never add its key, certificate or trust override to a produc
 Official references: [environment setup](https://capacitorjs.com/docs/getting-started/environment-setup),
 [Browser](https://capacitorjs.com/docs/apis/browser), [App callbacks](https://capacitorjs.com/docs/apis/app),
 [native HTTP](https://capacitorjs.com/docs/apis/http), [native OAuth guidance](https://www.rfc-editor.org/rfc/rfc8252).
+
+Club logos have no frame, background or inner padding. A reviewed directory entry may provide
+`logoUrl` with an explicit public HTTPS image URL, including a separate official club website.
+AWC uses `https://www.svawc.nl/wp-content/uploads/2024/02/awc-logo.svg`; the local Alpha fixture
+uses that same configured image. Without an override, the API's same-origin logo remains the fallback.
+The reviewed logo is restored from the build directory, not from persisted session metadata.

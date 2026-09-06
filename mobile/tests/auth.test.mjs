@@ -22,6 +22,11 @@ test('club directory rejects untrusted URLs, duplicates and credentials', () => 
   }
   assert.throws(() => validateClubs([club, club]));
   assert.deepEqual(validateClubs([club]), [club]);
+  const logoUrl = 'https://www.svawc.nl/wp-content/uploads/2024/02/awc-logo.svg';
+  assert.equal(validateClubs([{ ...club, logoUrl }])[0].logoUrl, logoUrl);
+  for (const unsafe of ['http://logos.test/club.svg', 'https://user:secret@logos.test/club.svg', 'javascript:alert(1)']) {
+    assert.throws(() => validateClubs([{ ...club, logoUrl: unsafe }]));
+  }
 });
 
 test('callback rejects another scheme, state, duplicates, code and expired login', async () => {
