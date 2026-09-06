@@ -1,6 +1,6 @@
 # Capacitor-proef: resultaten en vervolg
 
-Datum: 6 september 2026. Status: ontwikkelproef 0.5.0; native simulatorlogin geslaagd, fysieke toestelproef nog open.
+Datum: 6 september 2026. Status: ontwikkelproef 0.6.0; native simulatorlogin geslaagd, fysieke toestelproef nog open.
 Branch: `codex/capacitor-login-spike`. Geen productie-installatie of store-upload uitgevoerd.
 
 ## Gebouwd
@@ -250,3 +250,22 @@ gecontroleerd op niet-herhalen; die specifieke timing is niet in de simulator na
 
 De iPhone-controle met een opnieuw aangeboden ongeldige terugkeerlink en daarna een volledige
 procesherstart slaagt: het lid blijft aangemeld.
+
+## Bouwstap 0.6.0: eigen contactgegevens wijzigen
+
+Mijn gegevens bevat nu telefoonnummers, woonadres en e-mailadressen wijzigen. De app gebruikt de
+bestaande profielservices, inclusief validatie, gezinsdoorwerking, wijzigingslog en blokkade voor
+oud-leden. E-mailadressen wijzigen pas na verificatie via de bestaande clubpagina. De app toont de
+openstaande aanvraag en laat annuleren en verwijderen van een tweede adres expliciet bevestigen.
+
+Profieltoestemming is apart vastgelegd: oude sessies behouden hun eerdere rechten tot opnieuw
+inloggen. De adapter accepteert uitsluitend vastgelegde acties voor het gekoppelde lid. De app
+slaat geen formuliergegevens op het toestel op en herhaalt een onzekere wijziging niet vanzelf.
+
+Gecontroleerd met 35 mobiele tests en 21 WordPress/MySQL-tests (208 assertions), plus geslaagde
+web-, app- en native builds. Beide simulators doorlopen profieltoestemming, telefoonwijziging met
+herstart en een e-mailaanvraag. iPhone doorloopt adreswijziging en annuleren; Android doorloopt de
+lokaal opgevangen verificatielink met controle na herstart en herstel na verbindingsverlies vóór
+verzending. De database-uitkomsten zijn apart teruggelezen. Gezinsdoorwerking en oud-lidblokkades
+zijn in PHP getest. Fysieke toestellen, echte mailboxen en Sportlink-synchronisatie blijven buiten
+deze lokale proef.

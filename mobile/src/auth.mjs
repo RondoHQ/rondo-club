@@ -1,5 +1,8 @@
 export const READ_SCOPE = 'rondo:spike:read';
 export const MEMBER_SCOPE = `${READ_SCOPE} rondo:spike:volunteer`;
+export const PROFILE_SCOPE = `${MEMBER_SCOPE} rondo:spike:profile`;
+export const VALID_SCOPES = [READ_SCOPE, MEMBER_SCOPE, PROFILE_SCOPE];
+export const canChangeShifts = (scope) => scope === MEMBER_SCOPE || scope === PROFILE_SCOPE;
 export const CLIENT_ID = 'rondo-mobile-spike';
 export const CALLBACK = 'club.rondo.spike://oauth/callback';
 export const API_PATH = '/wp-json/rondo-mobile-spike/v1';
@@ -29,7 +32,7 @@ export function validateClubs(input) {
 
 export async function beginLogin(club, now = Date.now()) {
   const verifier = randomValue();
-  const pending = { club, verifier, state: randomValue(), createdAt: now, scope: MEMBER_SCOPE };
+  const pending = { club, verifier, state: randomValue(), createdAt: now, scope: PROFILE_SCOPE };
   return { pending, url: await authorizationUrl(pending) };
 }
 

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Rondo Mobile Spike (development only)
  * Description: Opt-in native member login experiment. Never loaded by the theme.
- * Version: 0.5.0
+ * Version: 0.6.0
  *
  * @package Rondo\MobileSpike
  */
@@ -15,16 +15,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** Narrow development adapter; no change to the confidential FreeScout OIDC provider. */
 final class Plugin {
-	public const CLIENT       = 'rondo-mobile-spike';
-	public const CALLBACK     = 'club.rondo.spike://oauth/callback';
-	public const SCOPE        = 'rondo:spike:read';
-	public const MEMBER_SCOPE = 'rondo:spike:read rondo:spike:volunteer';
-	public const NS           = 'rondo-mobile-spike/v1';
-	private const CODE        = 'rondo_mobile_code_';
-	private const SESSION     = 'rondo_mobile_session_';
-	private const FAMILY      = 'rondo_mobile_family_';
-	private const REFRESH     = 'rondo_mobile_refresh_';
-	private const DEVICE_TTL  = 30 * DAY_IN_SECONDS;
+	public const CLIENT        = 'rondo-mobile-spike';
+	public const CALLBACK      = 'club.rondo.spike://oauth/callback';
+	public const SCOPE         = 'rondo:spike:read';
+	public const MEMBER_SCOPE  = 'rondo:spike:read rondo:spike:volunteer';
+	public const PROFILE_SCOPE = 'rondo:spike:read rondo:spike:volunteer rondo:spike:profile';
+	public const NS            = 'rondo-mobile-spike/v1';
+	private const CODE         = 'rondo_mobile_code_';
+	private const SESSION      = 'rondo_mobile_session_';
+	private const FAMILY       = 'rondo_mobile_family_';
+	private const REFRESH      = 'rondo_mobile_refresh_';
+	private const DEVICE_TTL   = 30 * DAY_IN_SECONDS;
 
 	public static function enabled(): bool {
 		return defined( 'RONDO_MOBILE_SPIKE' ) && RONDO_MOBILE_SPIKE === true && in_array( wp_get_environment_type(), [ 'local', 'development' ], true );
@@ -100,11 +101,12 @@ final class Plugin {
 
 	public function routes(): void {
 		foreach ( [
-			'config' => 'GET',
-			'token'  => 'POST',
-			'read'   => 'GET',
-			'shift'  => 'POST',
-			'revoke' => 'POST',
+			'config'  => 'GET',
+			'token'   => 'POST',
+			'read'    => 'GET',
+			'shift'   => 'POST',
+			'profile' => 'POST',
+			'revoke'  => 'POST',
 		] as $route => $method ) {
 			register_rest_route(
 				self::NS,
@@ -141,7 +143,7 @@ final class Plugin {
 				return self::error( 'invalid_request', 400 );
 			}
 		}
-		if ( ! in_array( $params['scope'] ?? '', [ self::SCOPE, self::MEMBER_SCOPE ], true ) ) {
+		if ( ! in_array( $params['scope'] ?? '', [ self::SCOPE, self::MEMBER_SCOPE, self::PROFILE_SCOPE ], true ) ) {
 			return self::error( 'invalid_request', 400 );
 		}
 		foreach ( [ 'state', 'code_challenge' ] as $key ) {
@@ -193,8 +195,11 @@ final class Plugin {
 			exit;
 		}
 		echo '<!doctype html><html lang="nl"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Rondo Proef verbinden</title><body><main><h1>Rondo Proef verbinden</h1><p>Je geeft de proefapp toegang om je eigen gegevens bij deze club te lezen. Je blijft op dit apparaat maximaal 30 dagen ingelogd, totdat je uitlogt of de club je toegang intrekt.</p><form method="post">';
-		if ( $params['scope'] === self::MEMBER_SCOPE ) {
+		if ( in_array( $params['scope'], [ self::MEMBER_SCOPE, self::PROFILE_SCOPE ], true ) ) {
 			echo '<p>Je geeft ook toestemming om jezelf via de app aan te melden en af te melden voor vrijwilligersdiensten, volgens de regels van je club.</p>';
+		}
+		if ( $params['scope'] === self::PROFILE_SCOPE ) {
+			echo '<p>Je geeft toestemming om je eigen telefoonnummers, e-mailadressen en het woonadres van je gezin te wijzigen. Een nieuw e-mailadres wordt pas actief nadat je de verificatielink hebt geopend.</p>';
 		}
 		wp_nonce_field( 'rondo_mobile_spike_authorize' );
 		foreach ( [ 'action', 'client_id', 'redirect_uri', 'scope', 'response_type', 'code_challenge_method', 'state', 'code_challenge' ] as $key ) {
@@ -333,6 +338,7 @@ final class Plugin {
 		$routes = [
 			'me'        => '/rondo/v1/user/me',
 			'household' => '/rondo/v1/people/household',
+			'profile'   => '/rondo/v1/people/household',
 			'my-shifts' => '/rondo/v1/my-shifts',
 			'calendar'  => '/rondo/v1/shifts/calendar',
 			'pass'      => '/rondo/v1/membership-passes/people/%d/qr-token',
@@ -380,6 +386,25 @@ final class Plugin {
 				$inner->set_param( 'role', $role );
 			}
 			$response = rest_do_request( $inner );
+			if ( $key === 'profile' && $response->get_status() === 200 ) {
+				$person_id = (int) get_user_meta( $user->ID, 'rondo_linked_person_id', true );
+				$person    = null;
+				foreach ( $response->get_data() as $item ) {
+					if ( (int) $item['id'] === $person_id && $item['household_role'] === 'self' ) {
+						$person = $item;
+						break;
+					}
+				}
+				$editable = \Rondo\Users\MemberProfileService::linked_person_id( $user->ID );
+				return self::response(
+					[
+						'person'          => $person,
+						'can_edit'        => $person !== null && ! is_wp_error( $editable ),
+						'readonly_reason' => is_wp_error( $editable ) ? $editable->get_error_message() : '',
+						'pending_email'   => $person ? \Rondo\Users\MemberProfileService::pending_email_change( $user->ID, $person_id ) : null,
+					]
+				);
+			}
 			$response->header( 'Cache-Control', 'no-store' );
 			return $response;
 		} finally {
@@ -395,7 +420,7 @@ final class Plugin {
 			return self::error( 'invalid_token', 401 );
 		}
 		$family = ! empty( $data['family'] ) ? get_option( self::FAMILY . $data['family'] ) : null;
-		if ( ! is_array( $family ) || ( $family['scope'] ?? self::SCOPE ) !== self::MEMBER_SCOPE ) {
+		if ( ! is_array( $family ) || ! in_array( $family['scope'] ?? self::SCOPE, [ self::MEMBER_SCOPE, self::PROFILE_SCOPE ], true ) ) {
 			return self::error( 'consent_required', 403 );
 		}
 		$params = $request->get_json_params();
@@ -414,6 +439,62 @@ final class Plugin {
 			$inner = new \WP_REST_Request( 'POST', sprintf( '/rondo/v1/shifts/%d/%s', (int) $id, $action ) );
 			$inner->set_param( 'force_overlap', $force );
 			$response = rest_do_request( $inner );
+			$response->header( 'Cache-Control', 'no-store' );
+			return $response;
+		} finally {
+			wp_set_current_user( $previous );
+		}
+	}
+
+	/** Fixed self-service operations only. Existing profile services own validation and household effects. */
+	public function profile( \WP_REST_Request $request ) {
+		$data = self::load( self::SESSION, self::bearer( $request ) );
+		$user = $data ? self::user( $data ) : null;
+		if ( ! $user ) {
+			return self::error( 'invalid_token', 401 );
+		}
+		$family = ! empty( $data['family'] ) ? get_option( self::FAMILY . $data['family'] ) : null;
+		if ( ! is_array( $family ) || ( $family['scope'] ?? self::SCOPE ) !== self::PROFILE_SCOPE ) {
+			return self::error( 'consent_required', 403 );
+		}
+		$params = $request->get_json_params();
+		$routes = [
+			'phones'        => [ 'POST', '/user/profile-phones', [ 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2' ] ],
+			'address'       => [ 'POST', '/user/household-address', [ 'street_name', 'house_number', 'house_number_addition', 'postal_code', 'city', 'state', 'country', 'country_code' ] ],
+			'email_request' => [ 'POST', '/user/profile-email/request', [ 'slot', 'email' ] ],
+			'email_cancel'  => [ 'DELETE', '/user/profile-email/pending', [] ],
+			'email_remove'  => [ 'DELETE', '/user/profile-email/secondary', [] ],
+		];
+		if ( ! is_array( $params ) || array_diff( array_keys( $params ), [ 'action', 'values' ] ) || ! is_string( $params['action'] ?? null ) || ! isset( $routes[ $params['action'] ] ) || ! is_array( $params['values'] ?? null ) ) {
+			return self::error( 'invalid_profile_request', 400 );
+		}
+		[ $method, $path, $fields ] = $routes[ $params['action'] ];
+		$values                     = $params['values'];
+		// Require complete field groups: a missing phone slot must never accidentally clear it.
+		if ( array_diff( array_keys( $values ), $fields ) || array_diff( $fields, array_keys( $values ) ) ) {
+			return self::error( 'invalid_profile_request', 400 );
+		}
+		foreach ( $values as $value ) {
+			if ( ! is_string( $value ) || strlen( $value ) > 254 ) {
+				return self::error( 'invalid_profile_request', 400 );
+			}
+		}
+		$previous = get_current_user_id();
+		try {
+			wp_set_current_user( $user->ID );
+			$person_id = \Rondo\Users\MemberProfileService::linked_person_id( $user->ID );
+			if ( is_wp_error( $person_id ) ) {
+				$response = rest_convert_error_to_response( $person_id );
+			} else {
+				// Ignore all caller-selected targets. Even pending email operations use the linked person.
+				if ( str_starts_with( $params['action'], 'email_' ) ) {
+					$values['person_id'] = $person_id;
+				}
+				$inner = new \WP_REST_Request( $method, '/rondo/v1' . $path );
+				$inner->set_header( 'Content-Type', 'application/json' );
+				$inner->set_body( wp_json_encode( $values ) );
+				$response = rest_do_request( $inner );
+			}
 			$response->header( 'Cache-Control', 'no-store' );
 			return $response;
 		} finally {

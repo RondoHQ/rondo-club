@@ -5,7 +5,8 @@ import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { getMembershipPassBackground, getMembershipPassPresentation } from '../../src/pages/Household/membershipPassUtils';
-import { MEMBER_SCOPE } from './auth.mjs';
+import { canChangeShifts } from './auth.mjs';
+import ProfileEditor from './ProfileEditor';
 import { usePassQr } from '../../src/hooks/usePassQr';
 import { availableShifts, calendarIndex, clubPage, clubNow, dateLabel, monthDays, moveMonth, personName, safeClubLogo, shiftTime, upcomingShifts } from './member-model.mjs';
 
@@ -115,7 +116,7 @@ function PassLogo({ url }) {
 
 function Household() {
   const household = useResource('household');
-  return <section><h1>Mijn gegevens</h1><QueryState query={household}>{(people) => people.length ? people.map((person) => <article className="panel" key={person.id}><p className="eyebrow">{person.household_role === 'self' ? 'Jij' : 'Je gezin'}</p><h2>{personName(person)}</h2>{person.fields?.email_1 && <p>{person.fields.email_1}</p>}{person.fields?.mobile_1 && <p>{person.fields.mobile_1}</p>}{person.membership_pass && <Link className="text-link" to={`/passen/${person.id}`}>Pas bekijken →</Link>}</article>) : <p className="empty">Je account is nog niet gekoppeld aan een lid. Neem contact op met je club.</p>}</QueryState><ExternalAction page="profile">Gegevens en contributie bij je club</ExternalAction></section>;
+  return <section><h1>Mijn gegevens</h1><QueryState query={household}>{(people) => people.length ? people.map((person) => <article className="panel" key={person.id}><p className="eyebrow">{person.household_role === 'self' ? 'Jij' : 'Je gezin'}</p><h2>{personName(person)}</h2>{person.fields?.email_1 && <p>{person.fields.email_1}</p>}{person.fields?.mobile_1 && <p>{person.fields.mobile_1}</p>}{person.household_role === 'self' && <Link className="text-link" to="/gegevens/wijzigen">Gegevens wijzigen →</Link>}{person.membership_pass && <Link className="text-link" to={`/passen/${person.id}`}>Pas bekijken →</Link>}</article>) : <p className="empty">Je account is nog niet gekoppeld aan een lid. Neem contact op met je club.</p>}</QueryState><ExternalAction page="profile">Gezinsgegevens en contributie bij je club</ExternalAction></section>;
 }
 
 function Volunteers() {
@@ -155,6 +156,18 @@ function ShiftDetail() {
     const own = shift.is_signed_up || Boolean(assignment);
     return <><p className="eyebrow">{dateLabel(shift.start_datetime)}</p><h1>{shift.dienst_type_name || shift.title}</h1><article className="panel"><h2>{shiftTime(shift)}</h2><p>{own ? 'Je bent aangemeld voor deze dienst.' : shift.can_signup ? `${shift.spots_remaining < 0 ? 'Er zijn' : shift.spots_remaining} plekken beschikbaar.` : 'Aanmelden is momenteel niet mogelijk.'}</p>{shift.signup_opens_at && <p>Inschrijven opent op {dateLabel(shift.signup_opens_at)}.</p>}</article><ShiftActions key={shift.id} shift={shift} own={own} canCancel={assignment?.can_cancel ?? shift.can_cancel} ready={mine.isSuccess} refresh={async () => { await Promise.all([calendar.refetch({ throwOnError: true }), mine.refetch({ throwOnError: true })]); }} /></>;
   }}</QueryState></section>;
+}
+
+function Profile() {
+  const query = useResource('profile');
+  const { session, logout, onExpired, changeProfile } = useContext(MemberContext);
+  const client = useQueryClient();
+  async function refresh() {
+    // Read the authoritative result before enabling another profile write.
+    await query.refetch({ throwOnError: true });
+    await client.invalidateQueries({ predicate: (entry) => entry.queryKey[1] !== 'profile' });
+  }
+  return <QueryState query={query}>{(data) => <ProfileEditor data={data} session={session} logout={logout} onExpired={onExpired} changeProfile={changeProfile} refresh={refresh} />}</QueryState>;
 }
 
 function ShiftActions({ shift, own, canCancel, ready, refresh }) {
@@ -215,7 +228,7 @@ function ShiftActions({ shift, own, canCancel, ready, refresh }) {
     } finally { running.current = false; if (alive.current) setBusy(false); }
   }
 
-  if (session.scope !== MEMBER_SCOPE) return <article className="panel"><p>Log opnieuw in en geef toestemming om jezelf via de app aan te melden en af te melden.</p><button onClick={logout}>Opnieuw inloggen</button></article>;
+  if (!canChangeShifts(session.scope)) return <article className="panel"><p>Log opnieuw in en geef toestemming om jezelf via de app aan te melden en af te melden.</p><button onClick={logout}>Opnieuw inloggen</button></article>;
   return <div className="shift-actions" aria-busy={busy}>
     {message && <p role="status" className="positive">{message}</p>}
     {error && <p role="alert" className="error">{error}</p>}
@@ -232,7 +245,7 @@ function ShiftActions({ shift, own, canCancel, ready, refresh }) {
 
 function More() {
   const { logout, profile } = useContext(MemberContext);
-  return <section><h1>Meer</h1><p>{profile.name}</p><Link className="action-card" to="/gegevens"><strong>Mijn gegevens</strong><span>›</span></Link><Link className="action-card" to="/clubs"><strong>Mijn clubs</strong><span>›</span></Link><div className="panel"><h2>Over deze proef</h2><p>Je bekijkt gegevens van je club en kunt je aanmelden en afmelden voor vrijwilligersdiensten. Gegevens wijzigen en Wallet toevoegen lopen via de clubsite.</p><p>Je blijft maximaal 30 dagen aangemeld op dit toestel. Via Uitloggen verwijder je je opgeslagen aanmelding.</p></div><button className="secondary" onClick={logout}>Uitloggen</button></section>;
+  return <section><h1>Meer</h1><p>{profile.name}</p><Link className="action-card" to="/gegevens"><strong>Mijn gegevens</strong><span>›</span></Link><Link className="action-card" to="/clubs"><strong>Mijn clubs</strong><span>›</span></Link><div className="panel"><h2>Over deze proef</h2><p>Je bekijkt gegevens van je club en kunt je aanmelden en afmelden voor vrijwilligersdiensten. Je kunt je eigen contactgegevens en het gezinsadres wijzigen. Wallet toevoegen loopt via de clubsite.</p><p>Je blijft maximaal 30 dagen aangemeld op dit toestel. Via Uitloggen verwijder je je opgeslagen aanmelding.</p></div><button className="secondary" onClick={logout}>Uitloggen</button></section>;
 }
 
 function Clubs() {
@@ -257,11 +270,11 @@ function Navigation() {
   return <nav aria-label="Hoofdnavigatie">{[['/', '⌂', 'Start'], ['/passen', '▣', 'Passen'], ['/vrijwillig', '▦', 'Vrijwillig'], ['/meer', '☰', 'Meer']].map(([path, icon, label]) => <NavLink key={path} to={path} end={path === '/'}><span aria-hidden="true">{icon}</span>{label}</NavLink>)}</nav>;
 }
 
-export default function MemberApp({ session, profile, logout, onExpired, read, changeShift }) {
+export default function MemberApp({ session, profile, logout, onExpired, read, changeShift, changeProfile }) {
   // One cache and route history per authenticated session; never share across clubs or logins.
   const [client] = useState(() => new QueryClient());
   const now = clubNow(session.club.timeZone);
   const today = now.slice(0, 10);
   useEffect(() => () => { client.cancelQueries(); client.clear(); }, [client]);
-  return <QueryClientProvider client={client}><MemberContext.Provider value={{ session, profile, logout, onExpired, read, changeShift, today, now }}><MemoryRouter><Routes><Route path="/" element={<Home />} /><Route path="/passen" element={<Passes />} /><Route path="/passen/:personId" element={<PassDetail />} /><Route path="/gegevens" element={<Household />} /><Route path="/vrijwillig" element={<Volunteers />} /><Route path="/vrijwillig/dienst/:shiftId" element={<ShiftDetail />} /><Route path="/meer" element={<More />} /><Route path="/clubs" element={<Clubs />} /></Routes><Navigation /></MemoryRouter></MemberContext.Provider></QueryClientProvider>;
+  return <QueryClientProvider client={client}><MemberContext.Provider value={{ session, profile, logout, onExpired, read, changeShift, changeProfile, today, now }}><MemoryRouter><Routes><Route path="/" element={<Home />} /><Route path="/passen" element={<Passes />} /><Route path="/passen/:personId" element={<PassDetail />} /><Route path="/gegevens" element={<Household />} /><Route path="/gegevens/wijzigen" element={<Profile />} /><Route path="/vrijwillig" element={<Volunteers />} /><Route path="/vrijwillig/dienst/:shiftId" element={<ShiftDetail />} /><Route path="/meer" element={<More />} /><Route path="/clubs" element={<Clubs />} /></Routes><Navigation /></MemoryRouter></MemberContext.Provider></QueryClientProvider>;
 }

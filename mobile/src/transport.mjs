@@ -28,6 +28,11 @@ export async function request(club, path, { method = 'GET', data, token } = {}) 
       if (error.code === 'consent_required') error.message = 'Log opnieuw in en geef toestemming om je diensten via de app te wijzigen.';
       error.canForce = error.code === 'overlap_warning' && result.data?.data?.can_force === true;
     }
+    if (path === '/profile') {
+      const profileErrors = ['rondo_profile_not_linked', 'rondo_profile_readonly', 'rondo_former_member_readonly', 'rondo_invalid_phone', 'rondo_incomplete_address', 'rondo_invalid_country', 'rondo_invalid_postal_code', 'rondo_no_address_targets', 'rondo_profile_unchanged', 'rondo_invalid_email_slot', 'rondo_invalid_email', 'rondo_email_unchanged', 'rondo_duplicate_email', 'rondo_email_rate_limited', 'rondo_email_send_failed', 'rondo_no_secondary_email'];
+      if (profileErrors.includes(error.code) && typeof result.data?.message === 'string') error.message = result.data.message.slice(0, 600);
+      if (error.code === 'consent_required') error.message = 'Log opnieuw in en geef toestemming om je gegevens via de app te wijzigen.';
+    }
     throw error;
   }
   return result.data;

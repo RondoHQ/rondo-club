@@ -1,4 +1,4 @@
-import { CLIENT_ID, LOGIN_TTL, MEMBER_SCOPE, READ_SCOPE, LoginSession, authorizationUrl, beginLogin, readCallback } from './auth.mjs';
+import { CLIENT_ID, LOGIN_TTL, PROFILE_SCOPE, VALID_SCOPES, canChangeShifts, READ_SCOPE, LoginSession, authorizationUrl, beginLogin, readCallback } from './auth.mjs';
 
 const validToken = (value) => /^[A-Za-z0-9_-]{43}$/.test(value || '');
 const empty = () => ({ version: 1, active: null, pending: null, revocations: [] });
@@ -36,7 +36,7 @@ export class DeviceSession extends LoginSession {
   }
   pendingFrom(record) {
     const club = this.clubFor(record);
-    if (!club || ![undefined, READ_SCOPE, MEMBER_SCOPE].includes(record.scope) || !validToken(record.verifier) || !validToken(record.state) || !Number.isFinite(record.createdAt) || record.createdAt > this.now() || this.now() - record.createdAt >= LOGIN_TTL) return null;
+    if (!club || ![undefined, ...VALID_SCOPES].includes(record.scope) || !validToken(record.verifier) || !validToken(record.state) || !Number.isFinite(record.createdAt) || record.createdAt > this.now() || this.now() - record.createdAt >= LOGIN_TTL) return null;
     return { club, verifier: record.verifier, state: record.state, createdAt: record.createdAt, scope: record.scope || READ_SCOPE };
   }
   async resumeLogin() {
@@ -79,7 +79,7 @@ export class DeviceSession extends LoginSession {
     if (remaining.length !== this.state.revocations.length) await this.save({ ...this.state, revocations: remaining });
   }
   async accept(club, pair, generation) {
-    if (![undefined, READ_SCOPE, MEMBER_SCOPE].includes(pair.scope) || pair.token_type !== 'Bearer' || !validToken(pair.access_token) || !validToken(pair.refresh_token) || !Number.isFinite(pair.expires_in) || pair.expires_in <= 0 || pair.expires_in > 300 || !Number.isFinite(pair.refresh_expires_at) || pair.refresh_expires_at * 1000 <= this.now() || pair.refresh_expires_at * 1000 > this.now() + 31 * 86400000) throw new Error('Ongeldig sessieantwoord.');
+    if (![undefined, ...VALID_SCOPES].includes(pair.scope) || pair.token_type !== 'Bearer' || !validToken(pair.access_token) || !validToken(pair.refresh_token) || !Number.isFinite(pair.expires_in) || pair.expires_in <= 0 || pair.expires_in > 300 || !Number.isFinite(pair.refresh_expires_at) || pair.refresh_expires_at * 1000 <= this.now() || pair.refresh_expires_at * 1000 > this.now() + 31 * 86400000) throw new Error('Ongeldig sessieantwoord.');
     const active = { clubId: club.id, clubUrl: club.url, refreshToken: pair.refresh_token, expiresAt: pair.refresh_expires_at * 1000 };
     try {
       await this.save({ ...this.state, active, pending: null });
@@ -174,15 +174,21 @@ export class DeviceSession extends LoginSession {
     return result;
   }
   async changeShift(shiftId, action, forceOverlap = false) {
+    return this.write('/shift', { shift_id: shiftId, action, force_overlap: forceOverlap }, canChangeShifts);
+  }
+  async changeProfile(action, values = {}) {
+    return this.write('/profile', { action, values }, (scope) => scope === PROFILE_SCOPE);
+  }
+  async write(path, data, allowed) {
     if (this.writing) throw new Error('Je vorige wijziging wordt nog verwerkt.');
     this.writing = true;
     const generation = this.generation;
     try {
       const session = await this.token();
       if (generation !== this.generation) throw expired();
-      if (session.scope !== MEMBER_SCOPE) throw Object.assign(new Error('Log opnieuw in om je diensten via de app te wijzigen.'), { code: 'consent_required', status: 403 });
-      // Never retry a POST automatically: a lost response may already have changed the signup.
-      const result = await this.request(session.club, '/shift', { method: 'POST', token: session.token, data: { shift_id: shiftId, action, force_overlap: forceOverlap } });
+      if (!allowed(session.scope)) throw Object.assign(new Error('Log opnieuw in en geef toestemming voor deze wijziging via de app.'), { code: 'consent_required', status: 403 });
+      // A lost response may already have saved the change. Never retry or queue a write.
+      const result = await this.request(session.club, path, { method: 'POST', token: session.token, data });
       if (generation !== this.generation) throw expired();
       return result;
     } finally { this.writing = false; }
