@@ -253,6 +253,46 @@ class MemberProfileServiceTest extends RondoTestCase {
 		$this->assertContains( $child_id . ':street_name', $pending );
 	}
 
+	public function test_household_address_defaults_empty_dutch_country_values(): void {
+		[ $user_id, $person_id ] = $this->linked_member( 'country-default@example.com' );
+
+		$result = MemberProfileService::update_household_address(
+			$user_id,
+			[
+				'street_name'  => 'Nieuweweg',
+				'house_number' => '12',
+				'postal_code'  => '6602bb',
+				'city'         => 'Wijchen',
+				'country'      => '',
+				'country_code' => '',
+			]
+		);
+
+		$this->assertIsArray( $result );
+		$address = Fields::get_for_post( $person_id, 'addresses' )[0];
+		$this->assertSame( 'Nederland', $address['country'] );
+		$this->assertSame( 'NL', $address['country_code'] );
+	}
+
+	public function test_household_address_rejects_missing_foreign_country_code(): void {
+		[ $user_id ] = $this->linked_member( 'country-code@example.com' );
+
+		$result = MemberProfileService::update_household_address(
+			$user_id,
+			[
+				'street_name'  => 'Rue Neuve',
+				'house_number' => '12',
+				'postal_code'  => '1000',
+				'city'         => 'Brussel',
+				'country'      => 'Belgie',
+				'country_code' => '',
+			]
+		);
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'rondo_invalid_country', $result->get_error_code() );
+	}
+
 	public function test_former_member_cannot_use_self_service_edits(): void {
 		[ $user_id, $person_id ] = $this->linked_member( 'former@example.com' );
 		Fields::update_for_post( $person_id, 'former_member', true );

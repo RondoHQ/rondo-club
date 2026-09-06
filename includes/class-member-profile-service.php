@@ -224,6 +224,13 @@ final class MemberProfileService {
 			return $person_id;
 		}
 
+		$country      = sanitize_text_field( trim( (string) ( $input['country'] ?? '' ) ) );
+		$country      = $country !== '' ? $country : 'Nederland';
+		$country_code = strtoupper( sanitize_text_field( trim( (string) ( $input['country_code'] ?? '' ) ) ) );
+		if ( $country_code === '' && in_array( strtolower( $country ), [ 'nederland', 'netherlands' ], true ) ) {
+			$country_code = 'NL';
+		}
+
 		$address = [
 			'address_label'         => 'Home',
 			'street_name'           => sanitize_text_field( (string) ( $input['street_name'] ?? '' ) ),
@@ -232,11 +239,14 @@ final class MemberProfileService {
 			'postal_code'           => strtoupper( sanitize_text_field( (string) ( $input['postal_code'] ?? '' ) ) ),
 			'city'                  => sanitize_text_field( (string) ( $input['city'] ?? '' ) ),
 			'state'                 => sanitize_text_field( (string) ( $input['state'] ?? '' ) ),
-			'country'               => sanitize_text_field( (string) ( $input['country'] ?? 'Nederland' ) ),
-			'country_code'          => strtoupper( sanitize_text_field( (string) ( $input['country_code'] ?? 'NL' ) ) ),
+			'country'               => $country,
+			'country_code'          => $country_code,
 		];
 		if ( $address['street_name'] === '' || $address['house_number'] === '' || $address['postal_code'] === '' || $address['city'] === '' ) {
 			return new \WP_Error( 'rondo_incomplete_address', 'Vul straat, huisnummer, postcode en plaats in.', [ 'status' => 400 ] );
+		}
+		if ( $address['country'] === '' || ! preg_match( '/^[A-Z]{2,3}$/', $address['country_code'] ) ) {
+			return new \WP_Error( 'rondo_invalid_country', 'Vul een land en een geldige landcode in.', [ 'status' => 400 ] );
 		}
 		if ( $address['country_code'] === 'NL' && ! preg_match( '/^[1-9][0-9]{3}\s?[A-Z]{2}$/', $address['postal_code'] ) ) {
 			return new \WP_Error( 'rondo_invalid_postal_code', 'Vul een geldige Nederlandse postcode in.', [ 'status' => 400 ] );

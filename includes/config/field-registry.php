@@ -916,20 +916,24 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
             'country' => 
             array (
               'canonical_name' => 'country',
+              'default_value' => 'Nederland',
               'key' => 'field_address_country',
               'label' => 'Country',
               'name' => 'country',
+              'required' => true,
               'storage_name' => 'country',
               'type' => 'text',
             ),
             'country_code' => 
             array (
               'canonical_name' => 'country_code',
+              'default_value' => 'NL',
               'key' => 'field_address_country_code',
               'label' => 'Country Code',
               'maxlength' => 3,
               'name' => 'country_code',
               'placeholder' => 'e.g. NL',
+              'required' => true,
               'storage_name' => 'country_code',
               'type' => 'text',
             ),

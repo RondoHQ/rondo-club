@@ -3,6 +3,22 @@ import { useForm, Controller } from 'react-hook-form';
 import { X, ChevronDown } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
+const DEFAULT_COUNTRY = 'Nederland';
+const DEFAULT_COUNTRY_CODE = 'NL';
+
+function isDutchCountry(country) {
+  return ['Nederland', 'Netherlands'].includes(String(country || '').trim());
+}
+
+function countryDefaults(country, countryCode) {
+  const normalizedCountry = String(country || '').trim() || DEFAULT_COUNTRY;
+  const normalizedCode = String(countryCode || '').trim().toUpperCase();
+  return {
+    country: normalizedCountry,
+    countryCode: normalizedCode || (isDutchCountry(normalizedCountry) ? DEFAULT_COUNTRY_CODE : ''),
+  };
+}
+
 // Comprehensive list of countries
 const COUNTRIES = [
   'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Australia', 'Austria',
@@ -17,7 +33,7 @@ const COUNTRIES = [
   'Kyrgyzstan', 'Laos', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia', 'Libya', 'Liechtenstein', 'Lithuania', 'Luxembourg',
   'Madagascar', 'Malawi', 'Malaysia', 'Maldives', 'Mali', 'Malta', 'Marshall Islands', 'Mauritania', 'Mauritius', 'Mexico',
   'Micronesia', 'Moldova', 'Monaco', 'Mongolia', 'Montenegro', 'Morocco', 'Mozambique', 'Myanmar', 'Namibia', 'Nauru',
-  'Nepal', 'Netherlands', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Korea', 'North Macedonia', 'Norway', 'Oman',
+  'Nepal', 'Nederland', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Korea', 'North Macedonia', 'Norway', 'Oman',
   'Pakistan', 'Palau', 'Palestine', 'Panama', 'Papua New Guinea', 'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal',
   'Qatar', 'Romania', 'Russia', 'Rwanda', 'Saint Kitts and Nevis', 'Saint Lucia', 'Saint Vincent and the Grenadines', 'Samoa', 'San Marino', 'Sao Tome and Principe',
   'Saudi Arabia', 'Senegal', 'Serbia', 'Seychelles', 'Sierra Leone', 'Singapore', 'Slovakia', 'Slovenia', 'Solomon Islands', 'Somalia',
@@ -30,7 +46,7 @@ const COUNTRIES = [
 /**
  * Searchable country selector component
  */
-function SearchableCountrySelector({ value, onChange, disabled }) {
+function SearchableCountrySelector({ value, onChange, disabled, required = false }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const inputRef = useRef(null);
@@ -102,6 +118,7 @@ function SearchableCountrySelector({ value, onChange, disabled }) {
           placeholder="Land zoeken..."
           className="input pr-8"
           disabled={disabled}
+          required={required}
         />
         {value && !isOpen ? (
           <button
@@ -159,7 +176,7 @@ export default function AddressEditModal({
   const isEditing = !!address;
   const isOnline = useOnlineStatus();
 
-  const { register, handleSubmit, reset, control } = useForm({
+  const { register, handleSubmit, reset, control, setValue } = useForm({
     defaultValues: {
       address_label: '',
       street_name: '',
@@ -168,8 +185,8 @@ export default function AddressEditModal({
       postal_code: '',
       city: '',
       state: '',
-      country: 'Netherlands',
-      country_code: '',
+      country: DEFAULT_COUNTRY,
+      country_code: DEFAULT_COUNTRY_CODE,
     },
   });
 
@@ -177,6 +194,7 @@ export default function AddressEditModal({
   useEffect(() => {
     if (isOpen) {
       if (address) {
+        const defaults = countryDefaults(address.country, address.country_code);
         reset({
           address_label: address.address_label || '',
           street_name: address.street_name || '',
@@ -185,8 +203,8 @@ export default function AddressEditModal({
           postal_code: address.postal_code || '',
           city: address.city || '',
           state: address.state || '',
-          country: address.country || 'Netherlands',
-          country_code: address.country_code || '',
+          country: defaults.country,
+          country_code: defaults.countryCode,
         });
       } else {
         reset({
@@ -197,8 +215,8 @@ export default function AddressEditModal({
           postal_code: '',
           city: '',
           state: '',
-          country: 'Netherlands',
-          country_code: '',
+          country: DEFAULT_COUNTRY,
+          country_code: DEFAULT_COUNTRY_CODE,
         });
       }
     }
@@ -207,6 +225,7 @@ export default function AddressEditModal({
   if (!isOpen) return null;
 
   const handleFormSubmit = (data) => {
+    const defaults = countryDefaults(data.country, data.country_code);
     onSubmit({
       address_label: data.address_label || '',
       street_name: data.street_name || '',
@@ -215,8 +234,8 @@ export default function AddressEditModal({
       postal_code: data.postal_code || '',
       city: data.city || '',
       state: data.state || '',
-      country: data.country || '',
-      country_code: data.country_code || '',
+      country: defaults.country,
+      country_code: defaults.countryCode,
     });
   };
 
@@ -321,8 +340,16 @@ export default function AddressEditModal({
                   render={({ field }) => (
                     <SearchableCountrySelector
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(country) => {
+                        field.onChange(country);
+                        if (isDutchCountry(country)) {
+                          setValue('country_code', DEFAULT_COUNTRY_CODE, { shouldValidate: true });
+                        } else {
+                          setValue('country_code', '', { shouldValidate: true });
+                        }
+                      }}
                       disabled={isLoading}
+                      required
                     />
                   )}
                 />
@@ -331,8 +358,8 @@ export default function AddressEditModal({
               <div>
                 <label className="label">Landcode</label>
                 <input
-                  {...register('country_code')}
-                  className="input"
+                  {...register('country_code', { required: true, pattern: /^[A-Za-z]{2,3}$/ })}
+                  className="input uppercase"
                   placeholder="bijv. NL"
                   maxLength={3}
                   disabled={isLoading}
