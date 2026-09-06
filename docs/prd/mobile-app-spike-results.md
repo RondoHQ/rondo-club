@@ -1,6 +1,6 @@
 # Capacitor-proef: resultaten en vervolg
 
-Datum: 6 september 2026. Status: ontwikkelproef 0.4.0; native simulatorlogin geslaagd, fysieke toestelproef nog open.
+Datum: 6 september 2026. Status: ontwikkelproef 0.4.1; native simulatorlogin geslaagd, fysieke toestelproef nog open.
 Branch: `codex/capacitor-login-spike`. Geen productie-installatie of store-upload uitgevoerd.
 
 ## Gebouwd
@@ -202,3 +202,18 @@ link correct quoten; daarna slaagden de volledige terugkeerflows. Dit is bewijs 
 e-maillinks in de systeembrowser, niet voor aflevering of terugkeer uit een echte Mail/Gmail-app.
 Nieuwe-accountactivatie, huishoudkeuze tijdens activatie, fysieke toestellen en geverifieerde
 HTTPS-terugkeerlinks blijven open. De proefplugin blijft geblokkeerd buiten local/development.
+
+## Bouwstap 0.4.1: clubstyling op de ledenpas
+
+De ledenpas gebruikt nu de door de bestaande pasroute geleverde achtergrondkleur, met dezelfde
+fallback en pasvariantbepaling als de webpas. Het algemene Rondo-kleurverloop is verwijderd.
+Het vrijstaande clublogo vervangt het tijdelijke pictogram. Sponsorvarianten krijgen donkere
+tekst op hun lichte achtergrond; businessclubpassen behouden hun eigen serverlogo. Gewone
+passen gebruiken bij voorkeur het vooraf gekozen clublogo, waaronder de opgegeven AWC-SVG.
+Functie/team of bedrijf volgen dezelfde variantkeuze als de webpas; KNVB-ID verschijnt voor
+gewone leden wanneer beschikbaar.
+
+De 28 bestaande mobiele tests, lint en web/mobiele builds slagen. De ledenpas met clubgroen,
+AWC-logo en geladen QR is op beide native simulators gecontroleerd. De fixture bevat een gewone
+ledenpas; sponsor- en businessclubpassen zijn in deze stap niet met echte accounts doorlopen.
+Er zijn geen productiegegevens of productie-instellingen aangepast.

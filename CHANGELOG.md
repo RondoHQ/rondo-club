@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.50.1] - 2026-09-06
+
+### Fixed
+
+- Mobile membership passes use the club's server-provided Wallet background instead of a Rondo gradient, sharing color fallbacks and pass-type presentation with the web pass. Sponsor passes retain light styling and businessclub logos; normal passes use the reviewed club logo without a frame or padding.
+
 ## [35.50.0] - 2026-09-06
 
 ### Added
