@@ -395,12 +395,13 @@ class Teams extends Base {
 	 * multi-second aggregate query.
 	 * Results are cached in a static variable for the duration of the request.
 	 *
+	 * @param bool $refresh Recalculate after work-history changes within the request.
 	 * @return array<int, array{total: int, players: int, staff: int}> Map of entity_id => counts.
 	 */
-	public static function get_all_member_counts() {
+	public static function get_all_member_counts( bool $refresh = false ) {
 		static $counts = null;
 
-		if ( $counts !== null ) {
+		if ( $counts !== null && ! $refresh ) {
 			return $counts;
 		}
 
