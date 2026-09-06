@@ -1,11 +1,12 @@
-export const READ_SCOPE = 'rondo:spike:read';
+import { PILOT, AUTHORIZE_ACTION } from './deployment.mjs';
+export const READ_SCOPE = PILOT ? 'rondo:pilot:read' : 'rondo:spike:read';
 export const MEMBER_SCOPE = `${READ_SCOPE} rondo:spike:volunteer`;
 export const PROFILE_SCOPE = `${MEMBER_SCOPE} rondo:spike:profile`;
-export const VALID_SCOPES = [READ_SCOPE, MEMBER_SCOPE, PROFILE_SCOPE];
-export const canChangeShifts = (scope) => scope === MEMBER_SCOPE || scope === PROFILE_SCOPE;
-export const CLIENT_ID = 'rondo-mobile-spike';
-export const CALLBACK = 'club.rondo.spike://oauth/callback';
-export const API_PATH = '/wp-json/rondo-mobile-spike/v1';
+export const VALID_SCOPES = PILOT ? [READ_SCOPE] : [READ_SCOPE, MEMBER_SCOPE, PROFILE_SCOPE];
+export const canChangeShifts = (scope) => !PILOT && (scope === MEMBER_SCOPE || scope === PROFILE_SCOPE);
+export const CLIENT_ID = PILOT ? 'rondo-awc-pilot' : 'rondo-mobile-spike';
+export const CALLBACK = PILOT ? 'https://rondo.svawc.nl/rondo-app/callback' : 'club.rondo.spike://oauth/callback';
+export const API_PATH = PILOT ? '/wp-json/rondo-mobile-pilot/v1' : '/wp-json/rondo-mobile-spike/v1';
 export const LOGIN_TTL = 10 * 60 * 1000;
 
 const base64url = (bytes) => btoa(String.fromCharCode(...bytes)).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
@@ -32,14 +33,14 @@ export function validateClubs(input) {
 
 export async function beginLogin(club, now = Date.now()) {
   const verifier = randomValue();
-  const pending = { club, verifier, state: randomValue(), createdAt: now, scope: PROFILE_SCOPE };
+  const pending = { club, verifier, state: randomValue(), createdAt: now, scope: PILOT ? READ_SCOPE : PROFILE_SCOPE };
   return { pending, url: await authorizationUrl(pending) };
 }
 
 export async function authorizationUrl(pending) {
   const challenge = base64url(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pending.verifier))));
   const url = new URL('/wp-admin/admin-post.php', pending.club.url);
-  url.search = new URLSearchParams({ action: 'rondo_mobile_spike_authorize', client_id: CLIENT_ID, redirect_uri: CALLBACK, response_type: 'code', scope: pending.scope || READ_SCOPE, state: pending.state, code_challenge: challenge, code_challenge_method: 'S256' });
+  url.search = new URLSearchParams({ action: AUTHORIZE_ACTION, client_id: CLIENT_ID, redirect_uri: CALLBACK, response_type: 'code', scope: pending.scope || READ_SCOPE, state: pending.state, code_challenge: challenge, code_challenge_method: 'S256' });
   return url.href;
 }
 

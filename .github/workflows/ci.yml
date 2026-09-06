@@ -39,6 +39,7 @@ jobs:
       - run: npm ci --prefix mobile
       - run: npm test --prefix mobile
       - run: npm run sync --prefix mobile
+      - run: npm run prepare:pilot --prefix mobile
 
   php:
     name: PHP coding standards

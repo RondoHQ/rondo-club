@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
-import { Browser } from '@capacitor/browser';
+import { openLoginBrowser, closeLoginBrowser } from './login-browser.mjs';
+import { PILOT, PILOT_CLUBS, PROTOCOL } from './deployment.mjs';
 import { validateClubs } from './auth.mjs';
 import { request } from './transport.mjs';
 import { DeviceSession } from './device-session.mjs';
@@ -10,7 +11,7 @@ import MemberApp from './MemberApp';
 import { safeClubLogo } from './member-model.mjs';
 import './style.css';
 
-const clubs = validateClubs(JSON.parse(import.meta.env.VITE_SPIKE_CLUBS || '[]'));
+const clubs = validateClubs(PILOT ? PILOT_CLUBS : JSON.parse(import.meta.env.VITE_SPIKE_CLUBS || '[]'));
 const auth = new DeviceSession({ vault, request, clubs });
 
 export default function MobileSpike() {
@@ -33,6 +34,7 @@ export default function MobileSpike() {
 
   const startup = useRef(null);
   const callbackSeen = useRef(false);
+  const finishCallback = useRef(null);
 
   const showPendingOrClubs = useCallback(() => {
     setProfile(null);
@@ -45,7 +47,7 @@ export default function MobileSpike() {
   const loadHome = useCallback(async (session, generation) => {
     const [me, metadata] = await Promise.all([auth.read('/read?resource=me'), request(session.club, '/config')]);
     if (!alive.current || generation !== auth.generation) return;
-    if (metadata.protocol !== 'rondo-mobile-spike-v1' || metadata.club_url !== session.club.url) throw new Error('Deze club is nog niet beschikbaar voor de proef.');
+    if (metadata.protocol !== PROTOCOL || metadata.club_url !== session.club.url) throw new Error('Deze club is nog niet beschikbaar voor de proef.');
     const selected = { ...session.club, timeZone: metadata.timezone, logoUrl: session.club.logoUrl || safeClubLogo(metadata.logo_url, session.club) };
     auth.session.club = selected;
     setClub(selected);
@@ -96,7 +98,7 @@ export default function MobileSpike() {
         // An existing authenticated session takes precedence when no login is pending.
         if (!auth.pending && auth.session) { await loadHome(auth.session, generation); return; }
         const session = await auth.finish(url);
-        if (Capacitor.getPlatform() === 'ios') await Browser.close().catch(() => {});
+        await closeLoginBrowser().catch(() => {});
         await loadHome(session, generation);
       } catch (failure) {
         if (!alive.current || (generation !== undefined && generation !== auth.generation && failure.code !== 'login_cancelled')) return;
@@ -107,14 +109,20 @@ export default function MobileSpike() {
         setError(failure.message);
       } finally { if (alive.current) setBusy(false); }
     }
+    finishCallback.current = handle;
     App.addListener('appUrlOpen', ({ url }) => handle(url)).then((value) => {
       if (!alive.current) value.remove();
       else listener = value;
     });
     App.getLaunchUrl().then((value) => { if (value?.url) handle(value.url); });
     restore(startup.current);
-    return () => { alive.current = false; listener?.remove(); };
+    return () => { alive.current = false; finishCallback.current = null; listener?.remove(); };
   }, [loadHome, restore, showPendingOrClubs]);
+
+  async function openLoginWindow(url) {
+    const callback = await openLoginBrowser(url);
+    if (callback && alive.current) await finishCallback.current?.(callback);
+  }
 
   async function login() {
     setBusy(true);
@@ -123,13 +131,13 @@ export default function MobileSpike() {
     try {
       const metadata = await request(club, '/config');
       if (generation !== auth.generation) return;
-      if (metadata.protocol !== 'rondo-mobile-spike-v1' || metadata.club_url !== club.url) throw new Error('Deze club is nog niet beschikbaar voor de proef.');
+      if (metadata.protocol !== PROTOCOL || metadata.club_url !== club.url) throw new Error('Deze club is nog niet beschikbaar voor de proef.');
       if (!Capacitor.isNativePlatform()) throw new Error('Open de geïnstalleerde proefapp om in te loggen.');
       const selected = { ...club, timeZone: metadata.timezone, logoUrl: club.logoUrl || safeClubLogo(metadata.logo_url, club) };
       setClub(selected);
       const url = await auth.start(selected);
       setScreen('login');
-      await Browser.open({ url });
+      await openLoginWindow(url);
     } catch (failure) {
       setError(failure.message);
     } finally { setBusy(false); }
@@ -138,7 +146,7 @@ export default function MobileSpike() {
   async function resumeLogin() {
     setBusy(true);
     setError('');
-    try { await Browser.open({ url: await auth.resumeLogin() }); }
+    try { await openLoginWindow(await auth.resumeLogin()); }
     catch (failure) { setError(failure.message); if (!auth.pending) setScreen('confirm'); }
     finally { setBusy(false); }
   }
@@ -150,7 +158,7 @@ export default function MobileSpike() {
     setError('');
     try {
       await auth.logout();
-      if (Capacitor.getPlatform() === 'ios') await Browser.close().catch(() => {});
+      await closeLoginBrowser().catch(() => {});
       reset();
     } catch { setScreen('recover'); setError('Uitloggen is niet afgerond. Probeer opnieuw om je opgeslagen aanmelding te verwijderen.'); }
     finally { setBusy(false); }
@@ -158,7 +166,7 @@ export default function MobileSpike() {
 
   const results = clubs.filter((item) => item.name.toLocaleLowerCase('nl').includes(search.toLocaleLowerCase('nl')));
   return <main className={profile ? 'member-shell' : ''}>
-    <header><div className="header-brand">{club && <ClubLogo key={club.id} club={club} />}<img className="rondo-wordmark" src="./brand/rondo-wordmark.svg" alt="Rondo" /></div><span className="badge">Proefversie</span></header>
+    <header><div className="header-brand">{club && <ClubLogo key={club.id} club={club} />}<img className="rondo-wordmark" src="./brand/rondo-wordmark.svg" alt="Rondo" /></div><span className="badge">{PILOT ? 'AWC pilot' : 'Proefversie'}</span></header>
     {error && <p role="alert" className="error">{error}</p>}
     {screen === 'restoring' && <p role="status">Je aanmelding controleren…</p>}
     {screen === 'recover' && <section><h1>Aanmelding controleren</h1><p>Maak verbinding met je club om verder te gaan, of log uit op dit toestel.</p><button disabled={busy} onClick={() => restore()}>Opnieuw proberen</button><button disabled={busy} className="secondary" onClick={logout}>Uitloggen op dit toestel</button></section>}
