@@ -4,8 +4,9 @@ import { MemoryRouter, NavLink, Link, Route, Routes, useLocation, useNavigate, u
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
+import { getMembershipPassBackground, getMembershipPassPresentation } from '../../src/pages/Household/membershipPassUtils';
 import { usePassQr } from '../../src/hooks/usePassQr';
-import { availableShifts, calendarIndex, clubPage, clubNow, dateLabel, monthDays, moveMonth, personName, shiftTime, upcomingShifts } from './member-model.mjs';
+import { availableShifts, calendarIndex, clubPage, clubNow, dateLabel, monthDays, moveMonth, personName, safeClubLogo, shiftTime, upcomingShifts } from './member-model.mjs';
 
 const MemberContext = createContext(null);
 
@@ -93,8 +94,22 @@ function PassContent({ personId, role, label, walletAvailable }) {
 function PassCard({ data, label }) {
   const { session } = useContext(MemberContext);
   const qr = usePassQr(data.token);
-  const detail = data.pass?.role_label || data.person?.company_name || data.person?.team;
-  return <article className="member-pass" aria-label="Digitale pas"><div className="pass-heading"><span>{session.club.name}</span><span aria-hidden="true">▣</span></div><p className="eyebrow">{label}</p><h1>{data.person?.name}</h1>{detail && <p>{detail}</p>}<div className="qr-panel">{qr.error ? <p role="alert">De QR-code kon niet worden gemaakt. Open je pas opnieuw.</p> : qr.url ? <img src={qr.url} alt={`QR-code van de pas van ${data.person?.name}`} /> : <p role="status">QR-code laden…</p>}</div>{data.expires_at && <p>Geldig tot {dateLabel(data.expires_at)}</p>}</article>;
+  const presentation = getMembershipPassPresentation(data.payload?.pass_type);
+  const logo = (!presentation.businessclub && session.club.logoUrl) || safeClubLogo(data.pass?.logo_url, session.club);
+  const detail = presentation.sponsor ? data.person?.company_name : data.pass?.role_label || data.person?.team;
+  const backgroundColor = getMembershipPassBackground(data.payload?.pass_type, data.pass?.background_color);
+  return <article className={`member-pass${presentation.sponsor ? ' sponsor-pass' : ''}`} style={{ backgroundColor }} aria-label="Digitale pas">
+    <div className="pass-heading"><span>{session.club.name}</span>{logo && <PassLogo key={logo} url={logo} />}</div>
+    <p className="eyebrow">{label}</p><h1>{data.person?.name}</h1>{detail && <p>{detail}</p>}
+    {!presentation.sponsor && data.person?.knvb_id && <p>KNVB-ID: {data.person.knvb_id}</p>}
+    <div className="qr-panel">{qr.error ? <p role="alert">De QR-code kon niet worden gemaakt. Open je pas opnieuw.</p> : qr.url ? <img src={qr.url} alt={`QR-code van de pas van ${data.person?.name}`} /> : <p role="status">QR-code laden…</p>}</div>
+    {data.expires_at && <p>Geldig tot {dateLabel(data.expires_at)}</p>}
+  </article>;
+}
+
+function PassLogo({ url }) {
+  const [failed, setFailed] = useState(false);
+  return failed ? null : <img className="pass-logo" src={url} alt="" onError={() => setFailed(true)} />;
 }
 
 function Household() {

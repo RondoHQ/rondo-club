@@ -1,6 +1,6 @@
 # Rondo Capacitor login spike
 
-Development experiment, version **0.4.0**. This is not the first app release and is not ready
+Development experiment, version **0.4.1**. This is not the first app release and is not ready
 for TestFlight, Google Play, or production installation. The agreed screen design remains in
 `docs/prd/mobile-app-first-release.md`.
 
@@ -214,3 +214,10 @@ Club logos have no frame, background or inner padding. A reviewed directory entr
 AWC uses `https://www.svawc.nl/wp-content/uploads/2024/02/awc-logo.svg`; the local Alpha fixture
 uses that same configured image. Without an override, the API's same-origin logo remains the fallback.
 The reviewed logo is restored from the build directory, not from persisted session metadata.
+
+Membership pass cards use `pass.background_color` from the existing QR response and share the
+web pass's color fallback and pass-type presentation helpers. Sponsor cards use dark text on
+the light server background; businessclub passes retain their specific `pass.logo_url` rather
+than the general club logo. Normal passes prefer the reviewed club logo, then a same-origin
+server logo. Logos render without a frame or padding and disappear on image failure. General
+Rondo branding remains on the surrounding app, not as a forced gradient on the membership card.

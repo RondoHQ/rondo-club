@@ -5,7 +5,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { prmApi } from '@/api/client';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { getMembershipPassPresentation } from './membershipPassUtils';
+import { getMembershipPassBackground, getMembershipPassPresentation } from './membershipPassUtils';
 
 function PassError({ message }) {
   return (
@@ -58,7 +58,7 @@ export default function MembershipPass() {
     ? 'border-gray-200 bg-white text-gray-950'
     : 'border-white/25 text-white';
   const cardBackgroundStyle = {
-    backgroundColor: data.pass?.background_color || (presentation.sponsor ? '#ffffff' : '#006935'),
+    backgroundColor: getMembershipPassBackground(data.payload.pass_type, data.pass?.background_color),
   };
   const mutedStyle = presentation.sponsor ? 'text-gray-500' : 'text-white/75';
 
