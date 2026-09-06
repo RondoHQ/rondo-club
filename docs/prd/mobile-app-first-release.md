@@ -48,7 +48,7 @@ bevoegde kaderfuncties blijven bereikbaar via Meer.
 | 5. Passen | Eigen en toegestane gezinspassen; lid/sponsor/rolkeuze waar nodig | Pas openen | Geen recht op pas: uitleg vanuit club; geen lege Wallet-knop |
 | 6. Pasdetail | Club, naam, pastype, grote QR-code, geldigheid indien bekend | Toevoegen aan Apple of Google Wallet | Ongeldige/verlopen pas: verversen of club benaderen |
 | 7. Mijn gegevens | Bestaand huishouden, contactgegevens, toegestane wijzigingen, contributiestatus | Gegevens wijzigen of betaling openen | Rechten en alleen-lezen oud-leden blijven leidend |
-| 8. Vrijwillig | Bestaande eigen diensten en beschikbare inschrijvingen | Dienst bekijken/aanmelden | Vol, gesloten of gewijzigd: actuele servermelding, verversen |
+| 8. Vrijwillig | Maandkalender met aantallen beschikbare diensten per dag; aparte weergave Mijn diensten | Datum kiezen, dan dienst bekijken/aanmelden | Geen aanbod op gekozen dag; vol, gesloten of gewijzigd: actuele servermelding |
 | 9. Dienstdetail | Datum, tijd, plaats, uitleg en bestaande aan-/afmeldacties | Inschrijving bevestigen | Geen nieuwe annuleringsregels in de app introduceren |
 | 10. Meer | Profiel, club wisselen, meldingen, hulp/privacy, accountverwijdering; bestaande bevoegde functies | Instelling of clubfunctie openen | Alleen beschikbare functies tonen |
 | 11. Clubs beheren | Opgeslagen clubs, actief/inloggen nodig, club toevoegen/verwijderen | Club wisselen | Verwijderen legt uit dat lidmaatschap behouden blijft |
@@ -61,6 +61,22 @@ vrijwilligersfunctionaliteit vervangt Mijn gegevens de tab Vrijwillig. Laat een 
 capability-configuratie de tabs bepalen; maak geen afzonderlijk app-product per club.
 Tabs en Android-terug gebruiken dezelfde React-routegeschiedenis, zonder dubbele web- en native
 navigatiebalk. Capacitor verzorgt de koppeling met de telefoonfuncties.
+
+### Vrijwilligersdiensten: kalender als ingang
+
+Bijgesteld op 6 september 2026 na feedback: er zijn tientallen beschikbare diensten. De ingang
+is daarom een maandkalender, met maandnavigatie en per datum het aantal diensten waarvoor de
+gebruiker zich nog kan aanmelden. Dit aantal telt diensten, niet de resterende plekken.
+Een afzonderlijke markering toont dagen met eigen inschrijvingen. Onder de kalender verschijnen
+uitsluitend de diensten van de gekozen datum, op tijd gesorteerd, met type, tijdvak, locatie en
+resterende plekken. Een lege datum geeft een concrete lege toestand.
+
+Binnen Vrijwillig wisselt de gebruiker tussen Beschikbaar en Mijn diensten. Mijn diensten toont
+de eigen komende inschrijvingen chronologisch. Na aanmelden werken kalenderaantallen en eigen
+inschrijvingen samen bij; reeds ingeschreven diensten worden niet als nieuwe aanmeldoptie aangeboden.
+Kalender en detail gebruiken dezelfde serverregels voor rechten, inschrijfvensters en capaciteit.
+Bij gelijktijdige aanmeldingen blijft de serverbeslissing leidend. Het klikvoorstel bevat fictieve
+diensten en vormt geen bewijs van actuele beschikbaarheid.
 
 ### Concreet schermverloop
 
