@@ -136,7 +136,57 @@ class VolunteerStatisticsTest extends RondoTestCase {
 		$this->assertSame( $this->season, $data['season'] );
 		$this->assertArrayHasKey( 'summary', $data );
 		$this->assertArrayHasKey( 'obligation_progress', $data );
+		$this->assertArrayHasKey( 'account_trend', $data );
+		foreach ( $data['account_trend'] as $point ) {
+			$this->assertSame( [ 'date', 'count', 'cumulative' ], array_keys( $point ) );
+		}
 		$this->assertArrayNotHasKey( 'people', $data );
+	}
+
+	public function test_account_trend_groups_utc_registrations_by_local_day_across_seasons(): void {
+		update_option( 'timezone_string', 'Europe/Amsterdam' );
+		$statistics = new VolunteerStatistics();
+		$before     = $statistics->for_season( $this->season )['account_trend'];
+		$counts     = array_column( $before, 'count', 'date' );
+		$total      = array_sum( $counts );
+
+		foreach ( [ '2001-06-30 21:30:00', '2001-06-30 22:30:00', '2001-07-01 00:30:00' ] as $registered ) {
+			self::factory()->user->create( [ 'user_registered' => $registered ] );
+		}
+
+		$trend  = $statistics->for_season( $this->season )['account_trend'];
+		$actual = array_column( $trend, 'count', 'date' );
+		$this->assertSame( ( $counts['2001-06-30'] ?? 0 ) + 1, $actual['2001-06-30'] );
+		$this->assertSame( ( $counts['2001-07-01'] ?? 0 ) + 2, $actual['2001-07-01'] );
+		$this->assertSame( $total + 3, end( $trend )['cumulative'] );
+		$this->assertSame( $trend, $statistics->for_season( '2001-2002' )['account_trend'] );
+
+		$cumulative = 0;
+		$previous   = '';
+		foreach ( $trend as $point ) {
+			$cumulative += $point['count'];
+			$this->assertSame( $cumulative, $point['cumulative'] );
+			$this->assertGreaterThan( $previous, $point['date'] );
+			$previous = $point['date'];
+		}
+	}
+
+	public function test_account_trend_excludes_deleted_invalid_and_future_registrations(): void {
+		$statistics = new VolunteerStatistics();
+		$before     = $statistics->for_season( $this->season )['account_trend'];
+
+		$deleted = self::factory()->user->create( [ 'user_registered' => '2001-01-01 12:00:00' ] );
+		wp_delete_user( $deleted );
+		self::factory()->user->create( [ 'user_registered' => '0000-00-00 00:00:00' ] );
+		self::factory()->user->create( [ 'user_registered' => gmdate( 'Y-m-d H:i:s', time() + DAY_IN_SECONDS ) ] );
+
+		$this->assertSame( $before, $statistics->for_season( $this->season )['account_trend'] );
+	}
+
+	public function test_statistics_route_denies_members_without_volunteer_permission(): void {
+		wp_set_current_user( $this->createRondoUser() );
+		$response = $this->server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/volunteer-statistics' ) );
+		$this->assertSame( 403, $response->get_status() );
 	}
 
 	public function test_statistics_ignore_stale_person_ids_in_cached_eligibility(): void {

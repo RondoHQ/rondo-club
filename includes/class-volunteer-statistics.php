@@ -124,6 +124,7 @@ final class VolunteerStatistics {
 			'summary'                  => $summary,
 			'by_task_type'             => $types,
 			'signup_trend'             => $trend,
+			'account_trend'            => $this->account_trend( $now ),
 			'undated_assignments'      => $undated_signups,
 			'assignment_distribution'  => $this->assignment_distribution( $assignments_by_person ),
 			'obligation_progress'      => $this->obligation_progress( $season ),
@@ -249,9 +250,36 @@ final class VolunteerStatistics {
 	}
 
 	/**
-	 * Build cumulative signup trend points.
+	 * Build the all-time account creation trend from existing site users.
 	 *
-	 * @param array<string, int> $daily Daily current-signup counts.
+	 * WordPress stores user_registered in UTC; group days in the site timezone.
+	 * Only aggregate counts leave this service, never account identifiers.
+	 *
+	 * @return array<int, array{date:string,count:int,cumulative:int}>
+	 */
+	private function account_trend( \DateTimeImmutable $now ): array {
+		$daily = [];
+		$users = get_users( [ 'fields' => [ 'user_registered' ] ] );
+		$utc   = new \DateTimeZone( 'UTC' );
+
+		foreach ( $users as $user ) {
+			$value      = (string) $user->user_registered;
+			$registered = \DateTimeImmutable::createFromFormat( '!Y-m-d H:i:s', $value, $utc );
+			if ( ! $registered || $registered->format( 'Y-m-d H:i:s' ) !== $value || $value === '0000-00-00 00:00:00' || $registered > $now ) {
+				continue;
+			}
+
+			$date           = wp_date( 'Y-m-d', $registered->getTimestamp() );
+			$daily[ $date ] = ( $daily[ $date ] ?? 0 ) + 1;
+		}
+
+		return $this->build_trend( $daily );
+	}
+
+	/**
+	 * Build cumulative trend points.
+	 *
+	 * @param array<string, int> $daily Daily counts.
 	 * @return array<int, array{date:string,count:int,cumulative:int}>
 	 */
 	private function build_trend( array $daily ): array {
