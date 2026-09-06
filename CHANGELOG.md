@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.48.0] - 2026-09-06
+
+### Added
+
+- Mobile development screens for Start, personal and household passes with QR detail, a volunteer month calendar, own duties, duty detail, household details, and More with club switching. The calendar counts eligible duties per day and marks existing signups.
+- Narrow development-only read adapters for personal passes and member calendars, using the existing REST permissions and signup rules. Actions that write data or add Wallet passes open fixed club pages in the system browser.
+
+### Changed
+
+- Browser and mobile passes share QR rendering; mobile route history and query data are discarded when the app session ends.
+
 ## [35.47.1] - 2026-09-06
 
 ### Fixed

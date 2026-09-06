@@ -1,6 +1,6 @@
 # Rondo Capacitor login spike
 
-Development experiment, version **0.1.0**. This is not the first app release and is not ready
+Development experiment, version **0.2.0**. This is not the first app release and is not ready
 for TestFlight, Google Play, or production installation. The agreed screen design remains in
 `docs/prd/mobile-app-first-release.md`.
 
@@ -10,9 +10,16 @@ for TestFlight, Google Play, or production installation. The agreed screen desig
 - Build-time allowlisted HTTPS clubs, search and confirmation, passive club heading.
 - Browser login with a public client, S256 PKCE, state, fixed callback and one-use code.
 - A five-minute **memory-only** session; closing the app requires signing in again.
-- Read-only adapter dispatching to the existing `user/me` and `people/household` REST routes.
+- Read-only adapter dispatching to existing profile, household, personal pass, own-duty and member-calendar REST routes.
   Their permission callbacks and data filters remain authoritative. Tokens cannot authenticate
   arbitrary WordPress endpoints or writes. No global cookie/nonce or OIDC changes.
+- Start, Passen with QR detail and server-provided pass choices, Vrijwillig with month navigation
+  and counts of eligible duties, My duties, duty detail, My details and More. A compact passive
+  header shows the configured club logo beside Rondo; no separate club-name row or switcher.
+- Query cache and route history are scoped to a single in-memory login. Android back uses that
+  route history. Returning from the system browser refreshes the current club's data.
+- External write/Wallet actions open fixed `/vrijwillig` or `/mijn-gegevens` club pages, with no
+  app credentials in the URL. Native signup, cancellation, editing and Wallet delivery are later work.
 - Explicit logout/revocation and club switching under **Meer → Mijn clubs**.
 - Tests for wrong club/state/verifier, replay, expiry, revocation, password/access changes,
   household filtering, caller restoration and stale responses after logout.
@@ -72,6 +79,9 @@ This prototype does not implement a durable installation UUID or a signed club r
 | `POST /wp-json/rondo-mobile-spike/v1/token` | Exchange exact client, callback, code and verifier for five-minute token |
 | `GET /wp-json/rondo-mobile-spike/v1/read?resource=me` | Existing current-user response |
 | `GET /wp-json/rondo-mobile-spike/v1/read?resource=household` | Existing permission-filtered household response |
+| `GET /wp-json/rondo-mobile-spike/v1/read?resource=my-shifts` | Original current member's duties |
+| `GET /wp-json/rondo-mobile-spike/v1/read?resource=calendar&month=YYYY-MM` | One month, forced member/signup view |
+| `GET /wp-json/rondo-mobile-spike/v1/read?resource=pass&person_id=…&role=…` | Original QR route, restricted to personal household passes even for admins |
 | `POST /wp-json/rondo-mobile-spike/v1/revoke` | Revoke the supplied bearer token, idempotently |
 
 Client ID: `rondo-mobile-spike`; scope: `rondo:spike:read`; callback:
@@ -124,8 +134,9 @@ or a release build. Never add its key, certificate or trust override to a produc
 3. Replace the experimental adapter with reviewed production native authorization, verified
    HTTPS callbacks, stable installation identity and the mobile config/API adapter. Retain all
    existing web and FreeScout contracts.
-4. Reuse the agreed member UI, including passes and the full volunteer calendar. This milestone
-   has only connection/login/profile proof screens; it does not duplicate those feature screens.
+4. Complete the member workflows: native write actions, direct Wallet delivery, full profile and
+   contribution controls, guest passes and configurable capability navigation. The read screens
+   reuse server contracts; browser and app share `src/hooks/usePassQr.js`.
 5. Add remaining release work: background snapshot privacy, Android back behavior, Wallet/payment
    handoffs, push, accessibility/device verification, store metadata, reviewer access and accounts.
 

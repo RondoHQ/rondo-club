@@ -19,6 +19,9 @@ export async function request(club, path, { method = 'GET', data, token } = {}) 
   if (result.status < 200 || result.status >= 300) {
     const error = new Error(result.status === 401 ? 'Je sessie is verlopen. Log opnieuw in.' : 'De club kan deze aanvraag niet verwerken. Probeer opnieuw.');
     error.status = result.status;
+    error.code = result.data?.code;
+    if (error.code === 'no_person') error.message = 'Je account is nog niet gekoppeld aan een lid. Neem contact op met je club.';
+    if (error.code === 'pass_forbidden' || result.status === 403) error.message = 'Je hebt geen toegang tot deze gegevens. Neem contact op met je club.';
     throw error;
   }
   return result.data;
