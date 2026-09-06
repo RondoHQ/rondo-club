@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Space and wrap the mobile household action links independently so profile editing and pass access do not run together.
 - Remove the province input from the mobile address form while preserving its existing stored value when saving an address.
+- Replace separate country/name inputs with a Dutch country dropdown that derives the ISO country code automatically, including existing English names and three-letter codes.
 
 ## [35.52.0] - 2026-09-06
 
