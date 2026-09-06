@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MEMBER_SCOPE, READ_SCOPE } from '../src/auth.mjs';
+import { MEMBER_SCOPE, PROFILE_SCOPE, READ_SCOPE } from '../src/auth.mjs';
 import { DeviceSession } from '../src/device-session.mjs';
 
 const club = { id: 'a', name: 'Test club', url: 'https://club.example.test' };
@@ -249,4 +249,53 @@ test('legacy pending authorization resumes with read-only consent', async () => 
   const fresh = new DeviceSession({ vault: env.vault, request: env.auth.request, clubs: [club], now: () => now });
   await fresh.restore();
   assert.equal(new URL(await fresh.resumeLogin()).searchParams.get('scope'), READ_SCOPE);
+});
+
+
+test('profile consent is separate from old volunteer consent and survives a cold restore', async () => {
+  for (const scope of [READ_SCOPE, MEMBER_SCOPE]) {
+    const env = setup(async (_, path) => { assert.equal(path, '/token'); return { ...pair(), scope }; });
+    await env.auth.restore();
+    await assert.rejects(env.auth.changeProfile('email_cancel'), { code: 'consent_required' });
+  }
+  const env = setup(async (_, path, options) => {
+    if (path === '/token') return { ...pair(), scope: PROFILE_SCOPE };
+    assert.equal(path, '/profile');
+    assert.deepEqual(options.data, { action: 'email_cancel', values: {} });
+    return { success: true };
+  });
+  await env.auth.restore();
+  assert.deepEqual(await env.auth.changeProfile('email_cancel'), { success: true });
+});
+
+test('profile writes are never retried, block concurrent duty writes, and reject late logout results', async () => {
+  let release;
+  let count = 0;
+  const env = setup(async (_, path) => {
+    if (path === '/token') return { ...pair(), scope: PROFILE_SCOPE };
+    if (path === '/revoke') return {};
+    count++;
+    return new Promise((resolve) => { release = () => resolve({ success: true }); });
+  });
+  await env.auth.restore();
+  const writing = env.auth.changeProfile('phones', { mobile_1: '+31612345678' });
+  await new Promise((resolve) => setImmediate(resolve));
+  await assert.rejects(env.auth.changeShift(12, 'signup'), /vorige wijziging/);
+  await env.auth.logout();
+  release();
+  await assert.rejects(writing, { status: 401 });
+  assert.equal(count, 1);
+  assert.equal(env.auth.session, null);
+});
+
+test('profile write response loss is surfaced once without resending or storing the form', async () => {
+  let count = 0;
+  const env = setup(async (_, path) => {
+    if (path === '/token') return { ...pair(), scope: PROFILE_SCOPE };
+    count++; throw new Error('Lost response after storage');
+  });
+  await env.auth.restore();
+  await assert.rejects(env.auth.changeProfile('email_request', { slot: 'secondary', email: 'new@example.test' }), /Lost response/);
+  assert.equal(count, 1);
+  assert.equal(JSON.stringify(env.stored()).includes('new@example.test'), false);
 });

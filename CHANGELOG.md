@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.52.0] - 2026-09-06
+
+### Added
+
+- Development-only native editing of the member's own phone numbers, verified email addresses and household home address, using the existing profile services and audit trail.
+- Separate profile consent without upgrading old device sessions, strict self-only field groups, server-driven read-only states and readback after uncertain write responses.
+- Profile contract tests for consent, foreign targets, validation, household address propagation, email verification/cancellation and logout or connection-loss races.
+
 ## [35.51.0] - 2026-09-06
 
 ### Added

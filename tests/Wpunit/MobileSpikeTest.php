@@ -5,6 +5,9 @@ namespace Tests\Wpunit;
 use Rondo\MobileSpike\Plugin;
 use Rondo\REST\People;
 use Rondo\REST\MemberShifts;
+use Rondo\REST\MemberProfile;
+use Rondo\Fields\Fields;
+use Rondo\Users\MemberProfileService;
 use Rondo\REST\MembershipPasses;
 use Rondo\REST\UserSettings;
 use Tests\Support\RondoTestCase;
@@ -22,7 +25,7 @@ final class MobileSpikeTest extends RondoTestCase {
 		if ( ! Plugin::enabled() ) {
 			$this->markTestSkipped( 'Use WP_ENVIRONMENT_TYPE=local for the development-only mobile spike tests.' );
 		}
-		$this->bootRestControllers( [ UserSettings::class, People::class, MemberShifts::class, MembershipPasses::class, Plugin::class ] );
+		$this->bootRestControllers( [ UserSettings::class, People::class, MemberShifts::class, MemberProfile::class, MembershipPasses::class, Plugin::class ] );
 	}
 
 	private function params(): array {
@@ -401,6 +404,197 @@ final class MobileSpikeTest extends RondoTestCase {
 		$this->assertSame( [ $other ], get_post_meta( $shift, 'assigned_persons', true ) );
 		$this->assertSame( 'open', get_post_meta( $shift, 'status', true ) );
 		$this->assertSame( 0, get_current_user_id() );
+	}
+
+	private function change_profile( string $token, string $action, array $values = [], array $extra = [] ): \WP_REST_Response {
+		$request = new \WP_REST_Request( 'POST', '/' . Plugin::NS . '/profile' );
+		$request->set_header( 'Authorization', 'Bearer ' . $token );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body(
+			wp_json_encode(
+			array_merge(
+			[
+				'action' => $action,
+				'values' => $values,
+			],
+			$extra
+			)
+			)
+			);
+		return rest_do_request( $request );
+	}
+
+	public function test_profile_scope_is_explicit_and_old_families_cannot_gain_it_by_refresh(): void {
+		$user = $this->createRondoUser();
+		foreach ( [ Plugin::SCOPE, Plugin::MEMBER_SCOPE ] as $scope ) {
+			$pair = $this->exchange( Plugin::issue( array_merge( $this->params(), [ 'scope' => $scope ] ), $user ) )->get_data();
+			$pair = $this->refresh_token( $pair['refresh_token'], [ 'scope' => Plugin::PROFILE_SCOPE ] )->get_data();
+			$this->assertSame( $scope, $pair['scope'] );
+			$response = $this->change_profile( $pair['access_token'], 'email_cancel' );
+			$this->assertSame( 403, $response->get_status() );
+			$this->assertSame( 'consent_required', $response->get_data()['code'] );
+		}
+		$this->assertSame( 401, $this->change_profile( '', 'email_cancel' )->get_status() );
+	}
+
+	public function test_profile_phones_are_self_only_validated_and_readonly_when_membership_changes(): void {
+		$user  = $this->createRondoUser();
+		$self  = $this->createPerson( [], [ 'mobile_2' => '+31622222222' ] );
+		$other = $this->createPerson( [], [ 'mobile_1' => '+31633333333' ] );
+		update_user_meta( $user, 'rondo_linked_person_id', $self );
+		\Rondo\Core\AccessControl::flush_visible_person_ids_cache();
+		$pair = $this->exchange( Plugin::issue( array_merge( $this->params(), [ 'scope' => Plugin::PROFILE_SCOPE ] ), $user ) )->get_data();
+		$pair = $this->refresh_token( $pair['refresh_token'] )->get_data();
+		$this->assertSame( Plugin::PROFILE_SCOPE, $pair['scope'] );
+		$token  = $pair['access_token'];
+		$values = [
+			'mobile_1'    => '06 12345678',
+			'mobile_2'    => '+31622222222',
+			'telephone_1' => '',
+			'telephone_2' => '',
+		];
+		wp_set_current_user( 0 );
+		foreach ( [ [ 'mobile_1' => '+31612345678' ], array_merge( $values, [ 'person_id' => $other ] ), array_merge( $values, [ 'mobile_1' => [] ] ) ] as $invalid ) {
+			$this->assertSame( 400, $this->change_profile( $token, 'phones', $invalid )->get_status() );
+		}
+		$this->assertSame( 400, $this->change_profile( $token, 'phones', $values, [ 'person_id' => $other ] )->get_status() );
+		$this->assertSame( 400, $this->change_profile( $token, '../profile-change-log', [] )->get_status() );
+		$this->assertSame( 'rondo_invalid_phone', $this->change_profile( $token, 'phones', array_merge( $values, [ 'mobile_1' => '123' ] ) )->get_data()['code'] );
+		$result = $this->change_profile( $token, 'phones', $values );
+		$this->assertSame( 200, $result->get_status() );
+		$this->assertTrue( $result->get_data()['success'] );
+		$this->assertSame( [ $self ], $result->get_data()['affected'] );
+		$this->assertSame( 'no-store', $result->get_headers()['Cache-Control'] );
+		$this->assertSame( '+31612345678', Fields::get_for_post( $self, 'mobile_1' ) );
+		$this->assertSame( '+31622222222', Fields::get_for_post( $self, 'mobile_2' ) );
+		$this->assertSame( '+31633333333', Fields::get_for_post( $other, 'mobile_1' ) );
+		$profile = $this->read( $token, 'profile', 'GET', [ 'person_id' => $other ] )->get_data();
+		$this->assertSame( $self, $profile['person']['id'] );
+		$this->assertTrue( $profile['can_edit'] );
+		$this->assertSame( 0, get_current_user_id() );
+		Fields::update_for_post( $self, 'former_member', true );
+		$this->assertFalse( $this->read( $token, 'profile' )->get_data()['can_edit'] );
+		$this->assertSame( 'rondo_former_member_readonly', $this->change_profile( $token, 'phones', $values )->get_data()['code'] );
+		$this->assertSame( 403, $this->change_profile( $token, 'email_cancel' )->get_status() );
+		$this->assertSame( '+31612345678', Fields::get_for_post( $self, 'mobile_1' ) );
+		$this->assertSame( 0, get_current_user_id() );
+	}
+
+	public function test_profile_address_reuses_household_rules_and_preserves_other_addresses(): void {
+		$user  = $this->createRondoUser();
+		$work  = [
+			'address_label' => 'Work',
+			'street_name'   => 'Kantoorstraat',
+			'house_number'  => '2',
+			'postal_code'   => '1234 AB',
+			'city'          => 'Teststad',
+			'country'       => 'Nederland',
+			'country_code'  => 'NL',
+		];
+		$self  = $this->createPerson( [], [ 'addresses' => [ $work ] ] );
+		$child = $this->createPerson(
+			[],
+			[
+				'birthdate'     => gmdate( 'Y-m-d', strtotime( '-10 years' ) ),
+				'relationships' => [
+					[
+						'related_person'    => $self,
+						'relationship_type' => \Rondo\Data\InverseRelationships::TYPE_PARENT,
+					],
+				],
+			]
+			);
+		$other = $this->createPerson( [], [ 'addresses' => [ $work ] ] );
+		Fields::update_for_post(
+			$self,
+			'relationships',
+			[
+				[
+					'related_person'    => $child,
+					'relationship_type' => \Rondo\Data\InverseRelationships::TYPE_CHILD,
+				],
+			]
+			);
+		update_user_meta( $user, 'rondo_linked_person_id', $self );
+		\Rondo\Core\AccessControl::flush_visible_person_ids_cache();
+		$pair    = $this->exchange( Plugin::issue( array_merge( $this->params(), [ 'scope' => Plugin::PROFILE_SCOPE ] ), $user ) )->get_data();
+		$address = [
+			'street_name'           => 'Proefstraat',
+			'house_number'          => '10',
+			'house_number_addition' => 'A',
+			'postal_code'           => '1234ab',
+			'city'                  => 'Teststad',
+			'state'                 => 'Gelderland',
+			'country'               => 'Nederland',
+			'country_code'          => 'NL',
+		];
+		wp_set_current_user( 0 );
+		$this->assertSame( 'rondo_invalid_postal_code', $this->change_profile( $pair['access_token'], 'address', array_merge( $address, [ 'postal_code' => 'bad' ] ) )->get_data()['code'] );
+		$result = $this->change_profile( $pair['access_token'], 'address', $address );
+		$this->assertSame( 200, $result->get_status() );
+		$this->assertEqualsCanonicalizing( [ $self, $child ], $result->get_data()['affected'] );
+		$this->assertSame( '1234 AB', Fields::get_for_post( $child, 'addresses' )[0]['postal_code'] );
+		$this->assertSame( 'Kantoorstraat', Fields::get_for_post( $self, 'addresses' )[1]['street_name'] );
+		$this->assertSame( 'Kantoorstraat', Fields::get_for_post( $other, 'addresses' )[0]['street_name'] );
+		$this->assertSame( 0, get_current_user_id() );
+	}
+
+	public function test_profile_email_stays_pending_until_verified_and_cancelled_links_cannot_apply(): void {
+		$user = $this->createRondoUser();
+		$self = $this->createPerson( [], [ 'email_1' => 'old@example.test' ] );
+		update_user_meta( $user, 'rondo_linked_person_id', $self );
+		\Rondo\Core\AccessControl::flush_visible_person_ids_cache();
+		$pair       = $this->exchange( Plugin::issue( array_merge( $this->params(), [ 'scope' => Plugin::PROFILE_SCOPE ] ), $user ) )->get_data();
+		$token      = $pair['access_token'];
+		$mail_token = '';
+		$capture    = static function ( $return, $atts ) use ( &$mail_token ) {
+			if ( preg_match( '#email-wijzigen/([a-f0-9]{64})#', (string) $atts['message'], $matches ) ) {
+				$mail_token = $matches[1];
+			}
+			return true;
+		};
+		add_filter( 'pre_wp_mail', $capture, 10, 2 );
+		try {
+			wp_set_current_user( 0 );
+			$this->assertSame(
+				200,
+				$this->change_profile(
+				$token,
+				'email_request',
+				[
+					'slot'  => 'primary',
+					'email' => 'new@example.test',
+				]
+				)->get_status()
+				);
+			$this->assertSame( 'old@example.test', Fields::get_for_post( $self, 'email_1' ) );
+			$pending = $this->read( $token, 'profile' )->get_data()['pending_email'];
+			$this->assertSame( 'new@example.test', $pending['email'] );
+			$this->assertArrayNotHasKey( 'token_hash', $pending );
+			$this->assertSame( 200, $this->change_profile( $token, 'email_cancel' )->get_status() );
+			$this->assertNull( $this->read( $token, 'profile' )->get_data()['pending_email'] );
+			$this->assertWPError( MemberProfileService::verify_email_token( $mail_token ) );
+			$this->assertSame(
+				200,
+				$this->change_profile(
+				$token,
+				'email_request',
+				[
+					'slot'  => 'secondary',
+					'email' => 'second@example.test',
+				]
+				)->get_status()
+				);
+			$this->assertIsArray( MemberProfileService::verify_email_token( $mail_token ) );
+			$this->assertSame( 'second@example.test', $this->read( $token, 'profile' )->get_data()['person']['fields']['email_2'] );
+			$this->assertNull( $this->read( $token, 'profile' )->get_data()['pending_email'] );
+			$this->assertSame( 200, $this->change_profile( $token, 'email_remove' )->get_status() );
+			$this->assertSame( '', Fields::get_for_post( $self, 'email_2' ) );
+			$this->assertSame( 'old@example.test', Fields::get_for_post( $self, 'email_1' ) );
+			$this->assertSame( 0, get_current_user_id() );
+		} finally {
+			remove_filter( 'pre_wp_mail', $capture, 10 );
+		}
 	}
 
 	public function test_exchange_rejects_wrong_verifier_and_replay(): void {
