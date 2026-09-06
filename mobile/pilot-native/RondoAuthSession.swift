@@ -20,7 +20,7 @@ public class RondoAuthSession: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationP
     @objc public func open(_ call: CAPPluginCall) {
         guard let value = call.getString("url"), value.utf8.count <= 8192,
               let parts = URLComponents(string: value), let url = parts.url,
-              parts.scheme == "https", parts.host == "rondo.svawc.nl", parts.port == nil,
+              parts.scheme == "https", let host = parts.host, ["rondo.svawc.nl", "demo.rondo.club"].contains(host), parts.port == nil,
               parts.user == nil, parts.password == nil, parts.fragment == nil,
               parts.path == "/wp-admin/admin-post.php",
               parts.queryItems?.filter({ $0.name == "action" }).map({ $0.value }) == ["rondo_mobile_pilot_authorize"] else {
@@ -35,7 +35,7 @@ public class RondoAuthSession: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationP
             }
             self.anchor = window
             self.pendingCall = call
-            let session = ASWebAuthenticationSession(url: url, callback: .https(host: "rondo.svawc.nl", path: "/rondo-app/callback")) { [weak self] callback, error in
+            let session = ASWebAuthenticationSession(url: url, callback: .https(host: host, path: "/rondo-app/callback")) { [weak self] callback, error in
                 DispatchQueue.main.async {
                     guard let self = self, let pending = self.pendingCall, pending === call else { return }
                     self.pendingCall = nil; self.authentication = nil; self.anchor = nil

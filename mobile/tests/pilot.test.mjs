@@ -34,3 +34,18 @@ test('compiled pilot device session refuses writes before sending any request', 
   await assert.rejects(session.changeProfile('phones', { mobile_1: '0612345678' }));
   assert.equal(calls, 0);
 });
+
+test('demo login pins its own callback and rejects cross-club callbacks and unknown origins', async () => {
+  const auth = await pilotModule('auth.mjs');
+  const club = { id: 'demo', name: 'Rondo Demo', url: 'https://demo.rondo.club' };
+  const { pending, url } = await auth.beginLogin(club);
+  const callback = 'https://demo.rondo.club/rondo-app/callback';
+  assert.equal(new URL(url).searchParams.get('redirect_uri'), callback);
+  assert.equal(new URL(url).origin, club.url);
+  const result = `${callback}?state=${pending.state}&code=${'c'.repeat(43)}`;
+  assert.equal(auth.readCallback(result, pending).redirect_uri, callback);
+  assert.throws(() => auth.readCallback(result.replace('demo.rondo.club', 'rondo.svawc.nl'), pending));
+  const awc = await auth.beginLogin({ id: 'awc', name: 'AWC', url: 'https://rondo.svawc.nl' });
+  assert.throws(() => auth.readCallback(result.replace(pending.state, awc.pending.state), awc.pending));
+  await assert.rejects(auth.beginLogin({ ...club, url: 'https://other.example.test' }));
+});

@@ -8,7 +8,7 @@ AWC account email/login. No invitations or login email have been sent.
 
 ## First pilot scope
 
-One Rondo app for clubs remains the product direction. This restricted build lists only AWC and
+One Rondo app for clubs remains the product direction. The first restricted build lists only AWC and
 has its own `club.rondo.pilot` app ID, secure storage identity and server protocol. Members can
 view their own household, calendar and existing duties, show available passes and add their real
 passes to Apple/Google Wallet. The app has no profile-edit or signup/cancel actions; the server
@@ -98,3 +98,13 @@ authentication session after successful exchange. This still requires signed phy
 The generated iPhone target requires iOS 17.4 and includes an app-level privacy manifest for the
 app-private UserDefaults reinstall marker (CA92.1). App Store privacy/export declarations and the
 final archive privacy report still require review; this manifest does not assert a data-collection policy.
+
+## Synthetic demo club (0.9.0 / build 13)
+
+The pilot directory includes AWC and Rondo Demo. The demo uses the same read-only protocol with a separately pinned `https://demo.rondo.club/rondo-app/callback`. Client callback validation uses the club from the pending login; a callback from the other club is rejected even if its state matches. Both domains are included in native association declarations and the iOS authentication-session allowlist. The existing AWC client identifier is retained for protocol compatibility; token audiences remain site-specific.
+
+The generated `rondo-demo-pilot` plugin extends the pilot's shared policy implementation. It requires the exact demo origin, demo mode, `RONDO_MOBILE_DEMO === true`, and the separate `rondo_mobile_demo` option with the same explicit tester-pair, expiry and epoch schema. Only an allowlisted subscriber marked as a synthetic review user and linked to the marked fixture parent may authorize. Removing these attributes invalidates current access and refresh requests. The AWC plugin still accepts only AWC and its original opt-in configuration.
+
+The demo presents synthetic household, calendar and QR-pass data. Its Wallet issuers are not configured. The app labels this club as demo data and explains that member edits and duty bookings remain unavailable. The public shared demo login is not automatically granted native access.
+
+The build preparation command emits both isolated plugin packages plus the native project. Install and explicitly enable only the package for the selected site. Publish the generated Apple association file on that site's own `.well-known/apple-app-site-association` path with JSON content type and no redirects. Review credentials belong only in private operator storage and Apple's review fields after native login verification; never put them in the app bundle or repository.

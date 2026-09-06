@@ -1,4 +1,4 @@
-import { PILOT, AUTHORIZE_ACTION } from './deployment.mjs';
+import { PILOT, AUTHORIZE_ACTION, PILOT_CLUBS } from './deployment.mjs';
 export const READ_SCOPE = PILOT ? 'rondo:pilot:read' : 'rondo:spike:read';
 export const MEMBER_SCOPE = `${READ_SCOPE} rondo:spike:volunteer`;
 export const PROFILE_SCOPE = `${MEMBER_SCOPE} rondo:spike:profile`;
@@ -7,6 +7,12 @@ export const canChangeShifts = (scope) => !PILOT && (scope === MEMBER_SCOPE || s
 export const CLIENT_ID = PILOT ? 'rondo-awc-pilot' : 'rondo-mobile-spike';
 export const CALLBACK = PILOT ? 'https://rondo.svawc.nl/rondo-app/callback' : 'club.rondo.spike://oauth/callback';
 export const API_PATH = PILOT ? '/wp-json/rondo-mobile-pilot/v1' : '/wp-json/rondo-mobile-spike/v1';
+export function callbackFor(club) {
+  if (!PILOT) return CALLBACK;
+  const known = PILOT_CLUBS.find((entry) => entry.id === club?.id && entry.url === club?.url);
+  if (!known) throw new Error('Onbekende club.');
+  return `${known.url}/rondo-app/callback`;
+}
 export const LOGIN_TTL = 10 * 60 * 1000;
 
 const base64url = (bytes) => btoa(String.fromCharCode(...bytes)).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
@@ -40,13 +46,14 @@ export async function beginLogin(club, now = Date.now()) {
 export async function authorizationUrl(pending) {
   const challenge = base64url(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pending.verifier))));
   const url = new URL('/wp-admin/admin-post.php', pending.club.url);
-  url.search = new URLSearchParams({ action: AUTHORIZE_ACTION, client_id: CLIENT_ID, redirect_uri: CALLBACK, response_type: 'code', scope: pending.scope || READ_SCOPE, state: pending.state, code_challenge: challenge, code_challenge_method: 'S256' });
+  url.search = new URLSearchParams({ action: AUTHORIZE_ACTION, client_id: CLIENT_ID, redirect_uri: callbackFor(pending.club), response_type: 'code', scope: pending.scope || READ_SCOPE, state: pending.state, code_challenge: challenge, code_challenge_method: 'S256' });
   return url.href;
 }
 
 export function readCallback(value, pending, now = Date.now()) {
   const url = new URL(value);
-  if (`${url.protocol}//${url.host}${url.pathname}` !== CALLBACK || url.username || url.password || url.hash) throw new Error('Onbekende terugkeerlink.');
+  const callback = callbackFor(pending?.club);
+  if (`${url.protocol}//${url.host}${url.pathname}` !== callback || url.username || url.password || url.hash) throw new Error('Onbekende terugkeerlink.');
   if (!pending || now - pending.createdAt > LOGIN_TTL || now < pending.createdAt) throw new Error('De aanmelding is verlopen. Log opnieuw in.');
   const params = url.searchParams;
   for (const key of ['state', 'code', 'error']) if (params.getAll(key).length > 1) throw new Error('Dubbele aanmeldparameters.');
@@ -54,7 +61,7 @@ export function readCallback(value, pending, now = Date.now()) {
   if (params.has('error')) throw Object.assign(new Error('Aanmelding geannuleerd.'), { code: 'login_cancelled' });
   const code = params.get('code');
   if (!/^[A-Za-z0-9_-]{43}$/.test(code || '')) throw new Error('De aanmeldcode ontbreekt of is ongeldig.');
-  return { grant_type: 'authorization_code', client_id: CLIENT_ID, redirect_uri: CALLBACK, code, code_verifier: pending.verifier };
+  return { grant_type: 'authorization_code', client_id: CLIENT_ID, redirect_uri: callback, code, code_verifier: pending.verifier };
 }
 
 // Invalid callbacks do not consume someone else's pending login.
