@@ -1,6 +1,6 @@
 # Rondo Capacitor login spike
 
-Development experiment, version **0.2.0**. This is not the first app release and is not ready
+Development experiment, version **0.3.0**. This is not the first app release and is not ready
 for TestFlight, Google Play, or production installation. The agreed screen design remains in
 `docs/prd/mobile-app-first-release.md`.
 
@@ -9,7 +9,8 @@ for TestFlight, Google Play, or production installation. The agreed screen desig
 - Separate, locally packaged React build with Capacitor 8.5.1 iOS and Android projects.
 - Build-time allowlisted HTTPS clubs, search and confirmation, passive club heading.
 - Browser login with a public client, S256 PKCE, state, fixed callback and one-use code.
-- A five-minute **memory-only** session; closing the app requires signing in again.
+- Five-minute access tokens in memory; native secure storage and rotating refresh tokens restore
+  the active club after a process restart for up to 30 days from login.
 - Read-only adapter dispatching to existing profile, household, personal pass, own-duty and member-calendar REST routes.
   Their permission callbacks and data filters remain authoritative. Tokens cannot authenticate
   arbitrary WordPress endpoints or writes. No global cookie/nonce or OIDC changes.
@@ -41,7 +42,7 @@ npm run android --prefix mobile
 ```
 
 Capacitor reads `mobile/capacitor.config.json`. There is no `server.url`, service worker,
-remote HTML, embedded client secret, or persistent credential store. Generated platform source
+remote HTML, embedded client secret, or browser credential-storage fallback. Generated platform source
 is tracked; web assets are copied by `sync` and ignored in Git. Native IDs are deliberately
 `club.rondo.spike`, separate from the future released app. Use a separate signing profile for
 this experiment. Never commit signing keys, provisioning credentials or local SDK paths.
@@ -76,13 +77,13 @@ This prototype does not implement a durable installation UUID or a signed club r
 | `GET /wp-json/rondo-mobile-spike/v1/config` | Protocol and canonical club origin |
 | `GET /wp-admin/admin-post.php?action=rondo_mobile_spike_authorize&…` | Validate client/redirect/PKCE, then existing WordPress login and consent |
 | `POST` to the same authorization action | Cookie-authenticated consent with WordPress nonce; two-minute one-use code |
-| `POST /wp-json/rondo-mobile-spike/v1/token` | Exchange exact client, callback, code and verifier for five-minute token |
+| `POST /wp-json/rondo-mobile-spike/v1/token` | Code/PKCE exchange or refresh rotation; five-minute access, absolute 30-day device session |
 | `GET /wp-json/rondo-mobile-spike/v1/read?resource=me` | Existing current-user response |
 | `GET /wp-json/rondo-mobile-spike/v1/read?resource=household` | Existing permission-filtered household response |
 | `GET /wp-json/rondo-mobile-spike/v1/read?resource=my-shifts` | Original current member's duties |
 | `GET /wp-json/rondo-mobile-spike/v1/read?resource=calendar&month=YYYY-MM` | One month, forced member/signup view |
 | `GET /wp-json/rondo-mobile-spike/v1/read?resource=pass&person_id=…&role=…` | Original QR route, restricted to personal household passes even for admins |
-| `POST /wp-json/rondo-mobile-spike/v1/revoke` | Revoke the supplied bearer token, idempotently |
+| `POST /wp-json/rondo-mobile-spike/v1/revoke` | Revoke a device family using access or refresh token, idempotently |
 
 Client ID: `rondo-mobile-spike`; scope: `rondo:spike:read`; callback:
 `club.rondo.spike://oauth/callback`. This is a private-use callback for the experiment, **not**
@@ -94,8 +95,54 @@ A unique WordPress option atomically claims each consumed code, with a scheduled
 Sessions are transients and expire even if cleanup is delayed. Revocation or a changed password
 invalidates a session; removing the `read` capability also blocks it. Closing a browser login
 session alone does not revoke the app token. Other role changes take effect through the original
-REST callbacks. Offline logout clears app memory; server revocation may fail and then the token
-expires within five minutes. There is no durable retry queue in this milestone.
+REST callbacks. Refresh families and durable offline revocation are described below.
+
+## Persistent device sessions (0.3.0)
+
+`DeviceSession` serializes vault writes and coalesces refresh requests. Startup validates the saved
+club against the compiled directory, rotates its refresh token and saves the replacement before
+publishing access. Five-minute access tokens, personal responses, QR codes and pending PKCE
+verifiers stay in memory. A network error retains the encrypted login for retry; invalid grants
+require a new login. There is no offline personal-data mode.
+
+The local `RondoSessionVault` bridge supports only read/write/clear for one bounded record. iOS
+uses a nonsynchronizing Keychain item with `WhenUnlockedThisDeviceOnly` and a reinstall marker.
+Android uses AES-256-GCM with a nonexportable Keystore key and an AtomicFile in `noBackupFilesDir`.
+Neither implementation falls back to browser storage. Capacitor bridge logging is disabled even
+in debug builds, keeping plugin arguments and results out of logs.
+
+WordPress stores hashed refresh-token keys and an opaque device-session family in options with
+autoload disabled. Atomic claims prevent replay; reusing a consumed refresh token revokes the
+whole family, including later access tokens. Password changes, removed read access, club audience
+mismatch and absolute expiry invalidate access. Families expire 30 days from login, without sliding
+extension. Consumed hashes and claims remain until expiry for reuse detection and cron cleanup.
+Production scaling, rate limits and account-facing device management still need review.
+
+Logout invalidates in-flight reads immediately and durably removes the active login before network
+revocation. Offline revocations stay encrypted for the next startup; the server family may remain
+valid until that retry or its absolute expiry. Storage errors are reported as incomplete logout.
+A lost refresh response requires fresh login after retry rejection; there is no replay grace period.
+
+Simulator Keychain access requires local signing (no developer account needed):
+
+```sh
+xcodebuild -project mobile/ios/App/App.xcodeproj -scheme App \
+  -destination 'generic/platform=iOS Simulator' -configuration Debug \
+  -derivedDataPath /private/tmp/rondo-spike-simulator \
+  CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- build
+```
+
+`Simulator.entitlements` applies only to simulator SDK builds. Physical builds need real
+team-prefixed entitlements from Apple provisioning. An unsigned simulator build compiles but
+cannot access Keychain (`-34018`); do not replace secure storage to bypass this error.
+
+## Website branding
+
+The compact header uses the website's actual `rondo-wordmark.svg`, with the club logo on its left.
+Figtree 600/700/800 headings and the navy `#001B60`, teal `#00908B`, purple `#993399`, surface and
+border palette match the Rondo website. The native launcher and splash images are rendered from
+its unchanged `rondo-logo.svg`, centered with padding for platform masks. Fonts are bundled with
+their OFL license, without remote requests.
 
 ## Verification
 
@@ -128,16 +175,16 @@ or a release build. Never add its key, certificate or trust override to a produc
    see `docs/prd/mobile-app-spike-results.md` for evidence. Run on real iPhone and Android
    with two independent HTTPS test clubs. Test browser cancellation, warm/cold callback, real email
    return, timeout, airplane mode and switching clubs during requests.
-2. Implement and test approved Keychain/Keystore storage, rotating per-device refresh tokens,
-   reuse detection, concurrent refresh and revocation. This spike deliberately does not persist
-   credentials. Its successful tests provide **no evidence** for those unimplemented guarantees.
+2. Independently review the native vaults and refresh protocol on physical devices, including
+   uninstall/reinstall, locked device, backup/restore and concurrent requests. See the results document
+   for simulator and contract evidence; this is still development-only authentication.
 3. Replace the experimental adapter with reviewed production native authorization, verified
    HTTPS callbacks, stable installation identity and the mobile config/API adapter. Retain all
    existing web and FreeScout contracts.
 4. Complete the member workflows: native write actions, direct Wallet delivery, full profile and
    contribution controls, guest passes and configurable capability navigation. The read screens
    reuse server contracts; browser and app share `src/hooks/usePassQr.js`.
-5. Add remaining release work: background snapshot privacy, Android back behavior, Wallet/payment
+5. Add remaining release work: background snapshot privacy, Wallet/payment
    handoffs, push, accessibility/device verification, store metadata, reviewer access and accounts.
 
 Official references: [environment setup](https://capacitorjs.com/docs/getting-started/environment-setup),

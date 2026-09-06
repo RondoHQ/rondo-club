@@ -1,6 +1,7 @@
 {
   "appId": "club.rondo.spike",
   "appName": "Rondo Proef",
+  "loggingBehavior": "none",
   "webDir": "dist",
   "ios": { "path": "ios" },
   "android": { "path": "android" }

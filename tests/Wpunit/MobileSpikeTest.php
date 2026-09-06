@@ -57,6 +57,64 @@ final class MobileSpikeTest extends RondoTestCase {
 		return rest_do_request( $request );
 	}
 
+	private function refresh_token( string $token, array $overrides = [] ): \WP_REST_Response {
+		return $this->exchange(
+			'',
+			array_merge(
+			[
+				'grant_type'    => 'refresh_token',
+				'refresh_token' => $token,
+			],
+			$overrides
+			)
+			);
+	}
+
+	public function test_refresh_rotation_and_reuse_revoke_the_device_family(): void {
+		$user  = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		$first = $this->exchange( Plugin::issue( $this->params(), $user ) )->get_data();
+		$this->assertSame( 300, $first['expires_in'] );
+		$second = $this->refresh_token( $first['refresh_token'] );
+		$this->assertSame( 200, $second->get_status() );
+		$pair = $second->get_data();
+		$this->assertNotSame( $first['refresh_token'], $pair['refresh_token'] );
+		$this->assertSame( $first['refresh_expires_at'], $pair['refresh_expires_at'] );
+		$this->assertSame( 200, $this->read( $pair['access_token'] )->get_status() );
+		$this->assertSame( 400, $this->refresh_token( $first['refresh_token'] )->get_status() );
+		$this->assertSame( 401, $this->read( $pair['access_token'] )->get_status() );
+		$this->assertSame( 400, $this->refresh_token( $pair['refresh_token'] )->get_status() );
+	}
+
+	public function test_refresh_revoke_works_without_a_live_access_token(): void {
+		$user    = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		$pair    = $this->exchange( Plugin::issue( $this->params(), $user ) )->get_data();
+		$request = new \WP_REST_Request( 'POST', '/' . Plugin::NS . '/revoke' );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( [ 'refresh_token' => $pair['refresh_token'] ] ) );
+		$this->assertSame( 200, rest_do_request( $request )->get_status() );
+		$this->assertSame( 401, $this->read( $pair['access_token'] )->get_status() );
+		$this->assertSame( 400, $this->refresh_token( $pair['refresh_token'] )->get_status() );
+	}
+
+	public function test_refresh_requires_client_password_permissions_audience_and_absolute_expiry(): void {
+		foreach ( [ 'client', 'password', 'permission', 'audience', 'expiry' ] as $change ) {
+			$user       = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+			$pair       = $this->exchange( Plugin::issue( $this->params(), $user ) )->get_data();
+			$record     = get_option( 'rondo_mobile_refresh_' . hash( 'sha256', $pair['refresh_token'] ) );
+			$family_key = 'rondo_mobile_family_' . $record['family'];
+			if ( $change === 'password' ) {
+				wp_set_password( 'changed-password', $user );
+			} elseif ( $change === 'permission' ) {
+				( new \WP_User( $user ) )->set_role( '' );
+			} elseif ( $change === 'audience' || $change === 'expiry' ) {
+				$family = get_option( $family_key );
+				$family[ $change === 'audience' ? 'audience' : 'expires_at' ] = $change === 'audience' ? 'https://other.test' : time() - 1;
+				update_option( $family_key, $family );
+			}
+			$this->assertSame( 400, $this->refresh_token( $pair['refresh_token'], $change === 'client' ? [ 'client_id' => 'other' ] : [] )->get_status(), $change );
+		}
+	}
+
 	private function session( int $user_id ): string {
 		$code = Plugin::issue( $this->params(), $user_id );
 		$this->assertIsString( $code );

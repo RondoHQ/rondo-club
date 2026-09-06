@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <!-- Simulator only. Device builds obtain the real team-prefixed identifier from provisioning. -->
+  <key>application-identifier</key><string>club.rondo.spike</string>
+  <key>keychain-access-groups</key><array><string>club.rondo.spike</string></array>
+</dict></plist>

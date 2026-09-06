@@ -15,12 +15,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** Narrow development adapter; no change to the confidential FreeScout OIDC provider. */
 final class Plugin {
-	public const CLIENT   = 'rondo-mobile-spike';
-	public const CALLBACK = 'club.rondo.spike://oauth/callback';
-	public const SCOPE    = 'rondo:spike:read';
-	public const NS       = 'rondo-mobile-spike/v1';
-	private const CODE    = 'rondo_mobile_code_';
-	private const SESSION = 'rondo_mobile_session_';
+	public const CLIENT      = 'rondo-mobile-spike';
+	public const CALLBACK    = 'club.rondo.spike://oauth/callback';
+	public const SCOPE       = 'rondo:spike:read';
+	public const NS          = 'rondo-mobile-spike/v1';
+	private const CODE       = 'rondo_mobile_code_';
+	private const SESSION    = 'rondo_mobile_session_';
+	private const FAMILY     = 'rondo_mobile_family_';
+	private const REFRESH    = 'rondo_mobile_refresh_';
+	private const DEVICE_TTL = 30 * DAY_IN_SECONDS;
 
 	public static function enabled(): bool {
 		return defined( 'RONDO_MOBILE_SPIKE' ) && RONDO_MOBILE_SPIKE === true && in_array( wp_get_environment_type(), [ 'local', 'development' ], true );
@@ -147,7 +150,7 @@ final class Plugin {
 			wp_redirect( self::CALLBACK . '?' . http_build_query( $query, '', '&', PHP_QUERY_RFC3986 ) ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- Fixed private-use callback, no input-controlled destination.
 			exit;
 		}
-		echo '<!doctype html><html lang="nl"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Rondo Proef verbinden</title><body><main><h1>Rondo Proef verbinden</h1><p>Je geeft de proefapp vijf minuten toegang om je eigen gegevens bij deze club te lezen.</p><form method="post">';
+		echo '<!doctype html><html lang="nl"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Rondo Proef verbinden</title><body><main><h1>Rondo Proef verbinden</h1><p>Je geeft de proefapp toegang om je eigen gegevens bij deze club te lezen. Je blijft op dit apparaat maximaal 30 dagen ingelogd, totdat je uitlogt of de club je toegang intrekt.</p><form method="post">';
 		wp_nonce_field( 'rondo_mobile_spike_authorize' );
 		foreach ( [ 'action', 'client_id', 'redirect_uri', 'scope', 'response_type', 'code_challenge_method', 'state', 'code_challenge' ] as $key ) {
 			echo '<input type="hidden" name="' . esc_attr( $key ) . '" value="' . esc_attr( (string) $params[ $key ] ) . '">';
@@ -175,6 +178,9 @@ final class Plugin {
 
 	public function token( \WP_REST_Request $request ) {
 		$params = $request->get_json_params() ?: [];
+		if ( ( $params['grant_type'] ?? '' ) === 'refresh_token' ) {
+			return $this->refresh( $params );
+		}
 		if ( ( $params['grant_type'] ?? null ) !== 'authorization_code' || ( $params['client_id'] ?? null ) !== self::CLIENT || ( $params['redirect_uri'] ?? null ) !== self::CALLBACK || ! is_string( $params['code_verifier'] ?? null ) || ! preg_match( '/^[A-Za-z0-9._~-]{43,128}$/', $params['code_verifier'] ) ) {
 			return self::error( 'invalid_grant', 400 );
 		}
@@ -190,21 +196,83 @@ final class Plugin {
 		}
 		wp_schedule_single_event( time() + 600, 'rondo_mobile_spike_cleanup', [ $lock ] );
 		delete_transient( self::CODE . hash( 'sha256', $code ) );
+		$family = bin2hex( random_bytes( 32 ) );
+		$data   = [
+			'user_id'    => $data['user_id'],
+			'password'   => $data['password'],
+			'expires_at' => time() + self::DEVICE_TTL,
+			'audience'   => untrailingslashit( home_url() ),
+		];
+		if ( ! add_option( self::FAMILY . $family, $data, '', false ) ) {
+			return self::error( 'session_unavailable', 503 );
+		}
+		wp_schedule_single_event( $data['expires_at'], 'rondo_mobile_spike_cleanup', [ self::FAMILY . $family ] );
+		return self::pair( $family, $data );
+	}
+
+	private static function pair( string $family, array $data ) {
+		$refresh = self::base64url( random_bytes( 32 ) );
+		$key     = self::REFRESH . hash( 'sha256', $refresh );
+		if ( ! add_option(
+			$key,
+			[
+				'family'     => $family,
+				'expires_at' => $data['expires_at'],
+				'audience'   => $data['audience'],
+			],
+			'',
+			false
+			) ) {
+			delete_option( self::FAMILY . $family );
+			return self::error( 'session_unavailable', 503 );
+		}
+		wp_schedule_single_event( $data['expires_at'], 'rondo_mobile_spike_cleanup', [ $key ] );
+		$ttl   = min( 300, $data['expires_at'] - time() );
 		$token = self::store(
 			self::SESSION,
 			[
+				'family'   => $family,
 				'user_id'  => $data['user_id'],
 				'password' => $data['password'],
 			],
-			300
+			$ttl
 			);
 		return self::response(
 			[
-				'access_token' => $token,
-				'token_type'   => 'Bearer',
-				'expires_in'   => 300,
+				'access_token'       => $token,
+				'token_type'         => 'Bearer',
+				'expires_in'         => $ttl,
+				'refresh_token'      => $refresh,
+				'refresh_expires_at' => $data['expires_at'],
 			]
 			);
+	}
+
+	private static function refresh_record( $token ): ?array {
+		if ( ! is_string( $token ) || ! preg_match( '/^[A-Za-z0-9_-]{43}$/', $token ) ) {
+			return null;
+		}
+		$data = get_option( self::REFRESH . hash( 'sha256', $token ) );
+		return is_array( $data ) && $data['expires_at'] > time() && $data['audience'] === untrailingslashit( home_url() ) ? $data : null;
+	}
+
+	private function refresh( array $params ) {
+		if ( ( $params['client_id'] ?? '' ) !== self::CLIENT ) {
+			return self::error( 'invalid_grant', 400 );
+		}
+		$record = self::refresh_record( $params['refresh_token'] ?? null );
+		$data   = $record ? get_option( self::FAMILY . $record['family'] ) : false;
+		if ( ! is_array( $data ) || $data['expires_at'] <= time() || $data['audience'] !== untrailingslashit( home_url() ) || ! self::user( $data ) ) {
+			return self::error( 'invalid_grant', 400 );
+		}
+		$claim = 'rondo_mobile_rotated_' . hash( 'sha256', $params['refresh_token'] );
+		if ( ! add_option( $claim, true, '', false ) ) {
+			// Keep consumed-token hashes until the absolute expiry so reuse revokes the whole device session.
+			delete_option( self::FAMILY . $record['family'] );
+			return self::error( 'invalid_grant', 400 );
+		}
+		wp_schedule_single_event( $record['expires_at'], 'rondo_mobile_spike_cleanup', [ $claim ] );
+		return self::pair( $record['family'], $data );
 	}
 
 	/** Dispatch only fixed reads through existing REST permission callbacks and field filters. */
@@ -272,7 +340,14 @@ final class Plugin {
 	}
 
 	public function revoke( \WP_REST_Request $request ): \WP_REST_Response {
-		$token = self::bearer( $request );
+		$token   = self::bearer( $request );
+		$data    = self::load( self::SESSION, $token );
+		$refresh = self::refresh_record( ( $request->get_json_params() ?: [] )['refresh_token'] ?? null );
+		foreach ( [ $data, $refresh ] as $record ) {
+			if ( ! empty( $record['family'] ) ) {
+				delete_option( self::FAMILY . $record['family'] );
+			}
+		}
 		if ( $token !== '' ) {
 			delete_transient( self::SESSION . hash( 'sha256', $token ) );
 		}
@@ -284,6 +359,12 @@ final class Plugin {
 	}
 
 	private static function user( array $data ): ?\WP_User {
+		if ( isset( $data['family'] ) ) {
+			$family = get_option( self::FAMILY . $data['family'] );
+			if ( ! is_array( $family ) || $family['expires_at'] <= time() || $family['audience'] !== untrailingslashit( home_url() ) ) {
+				return null;
+			}
+		}
 		$user = get_userdata( (int) $data['user_id'] );
 		return $user instanceof \WP_User && user_can( $user, 'read' ) && hash_equals( $data['password'], wp_hash( $user->user_pass ) ) ? $user : null;
 	}
