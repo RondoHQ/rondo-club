@@ -288,3 +288,13 @@ builds en codecontroles slagen. De lokale proefclub bevat geen echte Wallet-sleu
 richten zich op beschikbaarheid en foutafhandeling met ontbrekende/ongeldige instellingen; een
 werkende ondertekende pas opslaan in Wallet blijft te controleren met goedgekeurde testinstellingen
 en een geschikt toestel. Er is geen productie-uitrol of store-upload gedaan.
+
+
+## Echte Apple Wallet-test met bestaand certificaat
+
+Op 6 september is de eerste echte Apple Wallet-overdracht uitgevoerd met een op de AWC-server
+ondertekende synthetische testpas. De privésleutel is op de server gebleven. Het native toevoegscherm,
+annuleren en toevoegen zijn gecontroleerd; de pas is daarna zichtbaar in de afzonderlijke Wallet-app.
+De lokale proefclub houdt de knop beschikbaar voor dezelfde handmatige test. De testpas heeft een
+uniek testserienummer en geeft geen toegang tot de club. Details en grenzen staan in
+[de Wallet-test](mobile-wallet-test.md). De productieclub gebruikt de mobiele ontwikkelplugin niet.
