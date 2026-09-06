@@ -15,3 +15,5 @@ h1,h2,h3{font-family:Figtree,system-ui,sans-serif}body{background:linear-gradien
 .household-actions{display:flex;flex-wrap:wrap;gap:4px 20px}
 
 .profile-editor select{display:block;width:100%;min-height:48px;border:1px solid #bac9d5;border-radius:12px;background:white;color:#001B60;font:inherit;font-size:16px;padding:14px;margin-top:7px}.profile-editor select:focus-visible{outline:3px solid #227ac0;outline-offset:3px}
+
+.wallet-action{margin-bottom:16px}

@@ -45,5 +45,5 @@ export default function WalletAction({ personId, role, wallets, requestWallet, o
   if (!provider) return <p className="caption">Open de iPhone- of Android-app om je pas aan Wallet toe te voegen.</p>;
   if (!wallets[provider]?.available) return <p className="caption">{`${label} is nog niet beschikbaar bij je club.`}</p>;
   if (!supported) return <p className="caption">{`${label} is niet beschikbaar op dit toestel. Je kunt de QR-code in de app gebruiken.`}</p>;
-  return <div><button disabled={busy} onClick={add}>{busy ? 'Wallet openen…' : `Toevoegen aan ${label}`}</button>{error && <p role="alert" className="error">{error}</p>}{message && <p role="status">{message}</p>}</div>;
+  return <div className="wallet-action"><button disabled={busy} onClick={add}>{busy ? 'Wallet openen…' : `Toevoegen aan ${label}`}</button>{error && <p role="alert" className="error">{error}</p>}{message && <p role="status">{message}</p>}</div>;
 }
