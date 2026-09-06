@@ -1,10 +1,11 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
 import { MemoryRouter, NavLink, Link, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { getMembershipPassBackground, getMembershipPassPresentation } from '../../src/pages/Household/membershipPassUtils';
+import { MEMBER_SCOPE } from './auth.mjs';
 import { usePassQr } from '../../src/hooks/usePassQr';
 import { availableShifts, calendarIndex, clubPage, clubNow, dateLabel, monthDays, moveMonth, personName, safeClubLogo, shiftTime, upcomingShifts } from './member-model.mjs';
 
@@ -137,7 +138,7 @@ function Volunteers() {
       const day = index.get(date);
       return <button key={date} className={`calendar-day ${date === today ? 'today' : ''}`} aria-pressed={date === selected} aria-label={`${dateLabel(date)}: ${day?.available || 0} beschikbare diensten${day?.mine ? ', eigen dienst' : ''}`} onClick={() => update({ date })}><strong>{Number(date.slice(8))}</strong><small>{day?.available ? day.available : '\u00a0'}</small>{day?.mine && <i aria-hidden="true" />}</button>;
     })}</div><p className="calendar-legend">Aantal = beschikbare diensten · ● = eigen dienst</p><h2 className="selected-date">{dateLabel(selected)}</h2>{shifts.length ? shifts.map((shift) => <ShiftCard key={shift.id} shift={shift} />) : <p className="empty">Geen beschikbare diensten op deze dag.</p>}</>;
-  }}</QueryState></>}<ExternalAction page="volunteer">Aanmelden of afmelden bij je club</ExternalAction></section>;
+  }}</QueryState></>}</section>;
 }
 
 function ShiftDetail() {
@@ -150,14 +151,88 @@ function ShiftDetail() {
   return <section><Link className="back-link" to={`/vrijwillig?month=${date.slice(0, 7)}&date=${date}`}>‹ Kalender</Link><QueryState query={calendar}>{(data) => {
     const shift = data.days?.flatMap((day) => day.shifts).find((item) => String(item.id) === shiftId) || mine.data?.shifts?.find((item) => String(item.id) === shiftId);
     if (!shift) return <p className="empty">Deze dienst is niet meer beschikbaar. Bekijk de kalender voor het actuele aanbod.</p>;
-    const own = shift.is_signed_up || mine.data?.shifts?.some((item) => item.id === shift.id && ['open', 'vol'].includes(item.status));
-    return <><p className="eyebrow">{dateLabel(shift.start_datetime)}</p><h1>{shift.dienst_type_name || shift.title}</h1><article className="panel"><h2>{shiftTime(shift)}</h2><p>{own ? 'Je bent aangemeld voor deze dienst.' : shift.can_signup ? `${shift.spots_remaining < 0 ? 'Er zijn' : shift.spots_remaining} plekken beschikbaar.` : 'Aanmelden is momenteel niet mogelijk.'}</p>{shift.signup_opens_at && <p>Inschrijven opent op {dateLabel(shift.signup_opens_at)}.</p>}</article><ExternalAction page="volunteer">{own ? 'Inschrijving bekijken bij je club' : 'Dienst bekijken bij je club'}</ExternalAction></>;
+    const assignment = mine.data?.shifts?.find((item) => item.id === shift.id && ['open', 'vol'].includes(item.status));
+    const own = shift.is_signed_up || Boolean(assignment);
+    return <><p className="eyebrow">{dateLabel(shift.start_datetime)}</p><h1>{shift.dienst_type_name || shift.title}</h1><article className="panel"><h2>{shiftTime(shift)}</h2><p>{own ? 'Je bent aangemeld voor deze dienst.' : shift.can_signup ? `${shift.spots_remaining < 0 ? 'Er zijn' : shift.spots_remaining} plekken beschikbaar.` : 'Aanmelden is momenteel niet mogelijk.'}</p>{shift.signup_opens_at && <p>Inschrijven opent op {dateLabel(shift.signup_opens_at)}.</p>}</article><ShiftActions key={shift.id} shift={shift} own={own} canCancel={assignment?.can_cancel ?? shift.can_cancel} ready={mine.isSuccess} refresh={async () => { await Promise.all([calendar.refetch({ throwOnError: true }), mine.refetch({ throwOnError: true })]); }} /></>;
   }}</QueryState></section>;
+}
+
+function ShiftActions({ shift, own, canCancel, ready, refresh }) {
+  const { session, changeShift, logout, onExpired } = useContext(MemberContext);
+  const queryClient = useQueryClient();
+  const [confirmation, setConfirmation] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [overlap, setOverlap] = useState(false);
+  const [needsCheck, setNeedsCheck] = useState(false);
+  const alive = useRef(true);
+  const running = useRef(false);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+
+  async function verify() {
+    if (running.current) return;
+    running.current = true;
+    setBusy(true);
+    try {
+      await refresh();
+      if (alive.current) { setNeedsCheck(false); setError(''); setConfirmation(null); setOverlap(false); }
+    } catch { if (alive.current) setError('Je inschrijving kon nog niet worden gecontroleerd. Probeer opnieuw zodra je verbinding hebt.'); }
+    finally { running.current = false; if (alive.current) setBusy(false); }
+  }
+
+  async function submit(force = false) {
+    if (running.current || !confirmation) return;
+    running.current = true;
+    setBusy(true);
+    setError('');
+    setMessage('');
+    setOverlap(false);
+    let saved = false;
+    try {
+      const result = await changeShift(shift.id, confirmation, force);
+      saved = confirmation === 'signup' ? result.signed_up === true || result.already_signed_up === true : result.cancelled === true;
+      if (!saved) throw new Error('Geen geldige bevestiging ontvangen.');
+      if (!alive.current) { await queryClient.invalidateQueries(); return; }
+      setMessage(confirmation === 'signup' ? 'Je bent aangemeld voor deze dienst.' : 'Je bent afgemeld voor deze dienst.');
+      setConfirmation(null);
+      await queryClient.invalidateQueries({}, { throwOnError: true });
+    } catch (failure) {
+      if (!alive.current) return;
+      if (failure.status === 401) { onExpired(); return; }
+      if (failure.code === 'overlap_warning' && failure.canForce) {
+        setOverlap(true);
+        setError(failure.message);
+      } else if (saved || !failure.status) {
+        setNeedsCheck(true);
+        setError(saved ? 'De wijziging is opgeslagen, maar je overzicht kon niet worden vernieuwd.' : 'Geen bevestiging ontvangen. Controleer eerst je inschrijving voordat je opnieuw probeert.');
+      } else {
+        setConfirmation(null);
+        setError(failure.message);
+        // A capacity, certificate or deadline check may have changed since the calendar loaded.
+        queryClient.invalidateQueries();
+      }
+    } finally { running.current = false; if (alive.current) setBusy(false); }
+  }
+
+  if (session.scope !== MEMBER_SCOPE) return <article className="panel"><p>Log opnieuw in en geef toestemming om jezelf via de app aan te melden en af te melden.</p><button onClick={logout}>Opnieuw inloggen</button></article>;
+  return <div className="shift-actions" aria-busy={busy}>
+    {message && <p role="status" className="positive">{message}</p>}
+    {error && <p role="alert" className="error">{error}</p>}
+    {needsCheck ? <button disabled={busy} onClick={verify}>Controleer mijn inschrijving</button> : !ready ? <button disabled={busy} onClick={verify}>Controleer mijn inschrijving</button> : confirmation ? <article className="panel">
+      <h2>{overlap ? 'Toch aanmelden?' : confirmation === 'signup' ? 'Aanmelden voor deze dienst?' : 'Afmelden voor deze dienst?'}</h2>
+      <p>{dateLabel(shift.start_datetime)} · {shiftTime(shift)}</p>
+      {confirmation === 'signup' && shift.signup_is_final_after_grace && <p>Je kunt je binnen 30 minuten nog afmelden. Daarna staat je aanmelding vast; neem voor wijzigingen contact op met de vrijwilligerscoördinator.</p>}
+      {confirmation === 'cancel' && <p>Je plek komt weer beschikbaar voor iemand anders.</p>}
+      <button disabled={busy} onClick={() => submit(overlap)}>{busy ? 'Bezig…' : overlap ? 'Toch aanmelden' : confirmation === 'signup' ? 'Bevestig aanmelding' : 'Bevestig afmelding'}</button>
+      <button disabled={busy} className="secondary" onClick={() => { setConfirmation(null); setOverlap(false); setError(''); }}>Terug</button>
+    </article> : own ? canCancel === true ? <button disabled={busy || !ready} className="secondary" onClick={() => { setConfirmation('cancel'); setMessage(''); setError(''); }}>Afmelden voor deze dienst</button> : <p>Afmelden via de app is niet meer mogelijk. Neem contact op met de vrijwilligerscoördinator.</p> : shift.can_signup === true ? <button disabled={busy || !ready} onClick={() => { setConfirmation('signup'); setMessage(''); setError(''); }}>Aanmelden voor deze dienst</button> : null}
+  </div>;
 }
 
 function More() {
   const { logout, profile } = useContext(MemberContext);
-  return <section><h1>Meer</h1><p>{profile.name}</p><Link className="action-card" to="/gegevens"><strong>Mijn gegevens</strong><span>›</span></Link><Link className="action-card" to="/clubs"><strong>Mijn clubs</strong><span>›</span></Link><div className="panel"><h2>Over deze proef</h2><p>Je bekijkt gegevens van je club. Wijzigingen en Wallet toevoegen lopen via de clubsite.</p><p>Je blijft maximaal 30 dagen aangemeld op dit toestel. Via Uitloggen verwijder je je opgeslagen aanmelding.</p></div><button className="secondary" onClick={logout}>Uitloggen</button></section>;
+  return <section><h1>Meer</h1><p>{profile.name}</p><Link className="action-card" to="/gegevens"><strong>Mijn gegevens</strong><span>›</span></Link><Link className="action-card" to="/clubs"><strong>Mijn clubs</strong><span>›</span></Link><div className="panel"><h2>Over deze proef</h2><p>Je bekijkt gegevens van je club en kunt je aanmelden en afmelden voor vrijwilligersdiensten. Gegevens wijzigen en Wallet toevoegen lopen via de clubsite.</p><p>Je blijft maximaal 30 dagen aangemeld op dit toestel. Via Uitloggen verwijder je je opgeslagen aanmelding.</p></div><button className="secondary" onClick={logout}>Uitloggen</button></section>;
 }
 
 function Clubs() {
@@ -182,11 +257,11 @@ function Navigation() {
   return <nav aria-label="Hoofdnavigatie">{[['/', '⌂', 'Start'], ['/passen', '▣', 'Passen'], ['/vrijwillig', '▦', 'Vrijwillig'], ['/meer', '☰', 'Meer']].map(([path, icon, label]) => <NavLink key={path} to={path} end={path === '/'}><span aria-hidden="true">{icon}</span>{label}</NavLink>)}</nav>;
 }
 
-export default function MemberApp({ session, profile, logout, onExpired, read }) {
+export default function MemberApp({ session, profile, logout, onExpired, read, changeShift }) {
   // One cache and route history per authenticated session; never share across clubs or logins.
   const [client] = useState(() => new QueryClient());
   const now = clubNow(session.club.timeZone);
   const today = now.slice(0, 10);
   useEffect(() => () => { client.cancelQueries(); client.clear(); }, [client]);
-  return <QueryClientProvider client={client}><MemberContext.Provider value={{ session, profile, logout, onExpired, read, today, now }}><MemoryRouter><Routes><Route path="/" element={<Home />} /><Route path="/passen" element={<Passes />} /><Route path="/passen/:personId" element={<PassDetail />} /><Route path="/gegevens" element={<Household />} /><Route path="/vrijwillig" element={<Volunteers />} /><Route path="/vrijwillig/dienst/:shiftId" element={<ShiftDetail />} /><Route path="/meer" element={<More />} /><Route path="/clubs" element={<Clubs />} /></Routes><Navigation /></MemoryRouter></MemberContext.Provider></QueryClientProvider>;
+  return <QueryClientProvider client={client}><MemberContext.Provider value={{ session, profile, logout, onExpired, read, changeShift, today, now }}><MemoryRouter><Routes><Route path="/" element={<Home />} /><Route path="/passen" element={<Passes />} /><Route path="/passen/:personId" element={<PassDetail />} /><Route path="/gegevens" element={<Household />} /><Route path="/vrijwillig" element={<Volunteers />} /><Route path="/vrijwillig/dienst/:shiftId" element={<ShiftDetail />} /><Route path="/meer" element={<More />} /><Route path="/clubs" element={<Clubs />} /></Routes><Navigation /></MemoryRouter></MemberContext.Provider></QueryClientProvider>;
 }

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.51.0] - 2026-09-06
+
+### Added
+
+- Development-only native signup/cancellation for the current member's volunteer duties, with explicit browser consent, duty confirmation, overlap confirmation and server-driven cancellation availability.
+- Narrow write adapter retaining existing member permissions, certificate/pool requirements, capacity locks, signup windows, cancellation deadlines and email scheduling. Old read-only sessions remain read-only after refresh.
+- Tests for scope isolation, own-person writes, capacity, overlap, certificates, pool membership, cancellation deadlines, duplicate submissions, lost responses and logout races.
+
+### Fixed
+
+- Previously handled native launch URLs no longer displace an authenticated session when no login is pending.
+
 ## [35.50.1] - 2026-09-06
 
 ### Fixed

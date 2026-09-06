@@ -1,6 +1,6 @@
 # Rondo Capacitor login spike
 
-Development experiment, version **0.4.1**. This is not the first app release and is not ready
+Development experiment, version **0.5.0**. This is not the first app release and is not ready
 for TestFlight, Google Play, or production installation. The agreed screen design remains in
 `docs/prd/mobile-app-first-release.md`.
 
@@ -13,14 +13,14 @@ for TestFlight, Google Play, or production installation. The agreed screen desig
   the active club after a process restart for up to 30 days from login.
 - Read-only adapter dispatching to existing profile, household, personal pass, own-duty and member-calendar REST routes.
   Their permission callbacks and data filters remain authoritative. Tokens cannot authenticate
-  arbitrary WordPress endpoints or writes. No global cookie/nonce or OIDC changes.
+  arbitrary WordPress endpoints. Separately consented member sessions can use only their own shift signup/cancel routes. No global cookie/nonce or OIDC changes.
 - Start, Passen with QR detail and server-provided pass choices, Vrijwillig with month navigation
   and counts of eligible duties, My duties, duty detail, My details and More. A compact passive
   header shows the configured club logo beside Rondo; no separate club-name row or switcher.
 - Query cache and route history are scoped to a single in-memory login. Android back uses that
   route history. Returning from the system browser refreshes the current club's data.
-- External write/Wallet actions open fixed `/vrijwillig` or `/mijn-gegevens` club pages, with no
-  app credentials in the URL. Native signup, cancellation, editing and Wallet delivery are later work.
+- Profile/Wallet actions open the fixed `/mijn-gegevens` club page, with no
+  app credentials in the URL. Profile editing and direct Wallet delivery are later work.
 - Explicit logout/revocation and club switching under **Meer → Mijn clubs**.
 - Tests for wrong club/state/verifier, replay, expiry, revocation, password/access changes,
   household filtering, caller restoration and stale responses after logout.
@@ -83,9 +83,10 @@ This prototype does not implement a durable installation UUID or a signed club r
 | `GET /wp-json/rondo-mobile-spike/v1/read?resource=my-shifts` | Original current member's duties |
 | `GET /wp-json/rondo-mobile-spike/v1/read?resource=calendar&month=YYYY-MM` | One month, forced member/signup view |
 | `GET /wp-json/rondo-mobile-spike/v1/read?resource=pass&person_id=…&role=…` | Original QR route, restricted to personal household passes even for admins |
+| `POST /wp-json/rondo-mobile-spike/v1/shift` | Consented current member signup/cancel; fixed routes and no person selection |
 | `POST /wp-json/rondo-mobile-spike/v1/revoke` | Revoke a device family using access or refresh token, idempotently |
 
-Client ID: `rondo-mobile-spike`; scope: `rondo:spike:read`; callback:
+Client ID: `rondo-mobile-spike`; scope: `rondo:spike:read` with optional `rondo:spike:volunteer`; callback:
 `club.rondo.spike://oauth/callback`. This is a private-use callback for the experiment, **not**
 the planned verified Universal Link/App Link. The OS registrations are in the iOS plist and
 Android manifest. Interception cannot redeem a code without its verifier, but verified HTTPS
@@ -199,7 +200,7 @@ or a release build. Never add its key, certificate or trust override to a produc
 3. Replace the experimental adapter with reviewed production native authorization, verified
    HTTPS callbacks, stable installation identity and the mobile config/API adapter. Retain all
    existing web and FreeScout contracts.
-4. Complete the member workflows: native write actions, direct Wallet delivery, full profile and
+4. Complete the member workflows: remaining native write actions, direct Wallet delivery, full profile and
    contribution controls, guest passes and configurable capability navigation. The read screens
    reuse server contracts; browser and app share `src/hooks/usePassQr.js`.
 5. Add remaining release work: background snapshot privacy, Wallet/payment
@@ -221,3 +222,23 @@ the light server background; businessclub passes retain their specific `pass.log
 than the general club logo. Normal passes prefer the reviewed club logo, then a same-origin
 server logo. Logos render without a frame or padding and disappear on image failure. General
 Rondo branding remains on the surrounding app, not as a forced gradient on the membership card.
+
+## Member signup and cancellation (0.5.0)
+
+New logins request `rondo:spike:read rondo:spike:volunteer`; the browser consent explicitly explains
+self-service signup/cancellation. Old read-only families stay read-only, including after refresh.
+The scope is bound to the authorization code and device family, returned with each token pair,
+and retained in pending authorization. Legacy pending records resume with the original read scope.
+
+The sole write adapter is `POST /shift`, JSON `{shift_id, action, force_overlap}`. `action` is
+`signup` or `cancel`; `force_overlap` is a boolean and can only be true for signup. Other keys,
+person selection and arbitrary paths are rejected. It dispatches to the existing current member
+routes, retaining eligibility, certificates, pool, capacity locks, signup windows, deadlines,
+confirmation-mail scheduling and permission callbacks. It restores the original caller afterwards.
+
+The app confirms the chosen duty before writing. Overlap requires a separate explicit choice;
+late signup displays the existing 30-minute correction rule. Only `can_signup`/`can_cancel` allow
+actions. One write runs at a time and POSTs are never retried automatically. A missing response
+requires checking the current signup before retry. Successful writes invalidate member caches.
+No native profile/admin/payment/Wallet writes are added. Tests and simulators use synthetic local
+records and captured mail; the plugin still refuses staging/production.

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { MEMBER_SCOPE, READ_SCOPE } from '../src/auth.mjs';
 import { DeviceSession } from '../src/device-session.mjs';
 
 const club = { id: 'a', name: 'Test club', url: 'https://club.example.test' };
@@ -111,7 +112,7 @@ test('pending login survives process death and resumes the identical PKCE reques
   assert.equal(await fresh.restore(), null);
   assert.equal(await fresh.resumeLogin(), original);
   assert.equal(fresh.pending.club.url, club.url);
-  assert.deepEqual(Object.keys(env.stored().pending).sort(), ['clubId', 'clubUrl', 'createdAt', 'state', 'verifier']);
+  assert.deepEqual(Object.keys(env.stored().pending).sort(), ['clubId', 'clubUrl', 'createdAt', 'scope', 'state', 'verifier']);
 });
 
 test('cold callback consumes persisted verifier before exchange; duplicate delivery exchanges once', async () => {
@@ -196,4 +197,56 @@ test('cancelling while pending storage is in flight cannot reopen login after re
   assert.equal(await fresh.restore(), null);
   assert.equal(fresh.pending, null);
   assert.equal(env.stored(), null);
+});
+
+
+test('old read-only device sessions cannot write or gain consent by refreshing', async () => {
+  const env = setup(async (_, path) => { assert.equal(path, '/token'); return pair(); });
+  await env.auth.restore();
+  assert.equal(env.auth.session.scope, READ_SCOPE);
+  await assert.rejects(env.auth.changeShift(12, 'signup'), { code: 'consent_required' });
+});
+
+test('member writes never retry a lost response and block simultaneous submissions', async () => {
+  let release;
+  let writes = 0;
+  const env = setup(async (_, path) => {
+    if (path === '/token') return { ...pair(), scope: MEMBER_SCOPE };
+    writes++;
+    return new Promise((_, reject) => { release = () => reject(new Error('Connection lost')); });
+  });
+  await env.auth.restore();
+  const first = env.auth.changeShift(12, 'signup');
+  await new Promise((resolve) => setImmediate(resolve));
+  await assert.rejects(env.auth.changeShift(12, 'signup'), /vorige wijziging/);
+  release();
+  await assert.rejects(first, /Connection lost/);
+  assert.equal(writes, 1);
+});
+
+test('logout during a member write never publishes its late result', async () => {
+  let release;
+  const env = setup(async (_, path) => {
+    if (path === '/token') return { ...pair(), scope: MEMBER_SCOPE };
+    if (path === '/revoke') return {};
+    return new Promise((resolve) => { release = () => resolve({ signed_up: true }); });
+  });
+  await env.auth.restore();
+  const writing = env.auth.changeShift(12, 'signup');
+  await new Promise((resolve) => setImmediate(resolve));
+  await env.auth.logout();
+  release();
+  await assert.rejects(writing, { status: 401 });
+  assert.equal(env.auth.session, null);
+});
+
+test('legacy pending authorization resumes with read-only consent', async () => {
+  const env = setup(async () => assert.fail('No request expected'), null);
+  await env.auth.start(club);
+  const stored = env.stored();
+  delete stored.pending.scope;
+  await env.vault.write({ value: JSON.stringify(stored) });
+  const fresh = new DeviceSession({ vault: env.vault, request: env.auth.request, clubs: [club], now: () => now });
+  await fresh.restore();
+  assert.equal(new URL(await fresh.resumeLogin()).searchParams.get('scope'), READ_SCOPE);
 });

@@ -1,3 +1,5 @@
+export const READ_SCOPE = 'rondo:spike:read';
+export const MEMBER_SCOPE = `${READ_SCOPE} rondo:spike:volunteer`;
 export const CLIENT_ID = 'rondo-mobile-spike';
 export const CALLBACK = 'club.rondo.spike://oauth/callback';
 export const API_PATH = '/wp-json/rondo-mobile-spike/v1';
@@ -27,14 +29,14 @@ export function validateClubs(input) {
 
 export async function beginLogin(club, now = Date.now()) {
   const verifier = randomValue();
-  const pending = { club, verifier, state: randomValue(), createdAt: now };
+  const pending = { club, verifier, state: randomValue(), createdAt: now, scope: MEMBER_SCOPE };
   return { pending, url: await authorizationUrl(pending) };
 }
 
 export async function authorizationUrl(pending) {
   const challenge = base64url(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pending.verifier))));
   const url = new URL('/wp-admin/admin-post.php', pending.club.url);
-  url.search = new URLSearchParams({ action: 'rondo_mobile_spike_authorize', client_id: CLIENT_ID, redirect_uri: CALLBACK, response_type: 'code', scope: 'rondo:spike:read', state: pending.state, code_challenge: challenge, code_challenge_method: 'S256' });
+  url.search = new URLSearchParams({ action: 'rondo_mobile_spike_authorize', client_id: CLIENT_ID, redirect_uri: CALLBACK, response_type: 'code', scope: pending.scope || READ_SCOPE, state: pending.state, code_challenge: challenge, code_challenge_method: 'S256' });
   return url.href;
 }
 

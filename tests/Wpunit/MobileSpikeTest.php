@@ -264,6 +264,145 @@ final class MobileSpikeTest extends RondoTestCase {
 		$this->assertSame( 0, get_current_user_id() );
 	}
 
+	private function change_shift( string $token, array $params ): \WP_REST_Response {
+		$request = new \WP_REST_Request( 'POST', '/' . Plugin::NS . '/shift' );
+		$request->set_header( 'Authorization', 'Bearer ' . $token );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( $params ) );
+		return rest_do_request( $request );
+	}
+
+	private function mobile_shift( array $assigned = [] ): int {
+		$shift = self::factory()->post->create(
+			[
+				'post_type'   => 'dienst_shift',
+				'post_status' => 'publish',
+				'post_title'  => 'Mobiele testdienst',
+			]
+			);
+		$start = current_datetime()->modify( '+2 days' );
+		foreach ( [
+			'start_datetime'   => $start->format( 'Y-m-d H:i:s' ),
+			'end_datetime'     => $start->modify( '+2 hours' )->format( 'Y-m-d H:i:s' ),
+			'status'           => 'open',
+			'capacity'         => 2,
+			'assigned_persons' => $assigned,
+		] as $key => $value ) {
+			update_post_meta( $shift, $key, $value );
+		}
+		return $shift;
+	}
+
+	public function test_member_writes_require_explicit_consent_and_ignore_scope_upgrade_requests(): void {
+		$user = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$pair = $this->exchange( Plugin::issue( $this->params(), $user ) )->get_data();
+		$this->assertSame( Plugin::SCOPE, $pair['scope'] );
+		$refreshed = $this->refresh_token( $pair['refresh_token'], [ 'scope' => Plugin::MEMBER_SCOPE ] )->get_data();
+		$this->assertSame( Plugin::SCOPE, $refreshed['scope'] );
+		$response = $this->change_shift(
+			$refreshed['access_token'],
+			[
+				'shift_id' => 1,
+				'action'   => 'signup',
+			]
+			);
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertSame( 'consent_required', $response->get_data()['code'] );
+		$this->assertSame(
+			401,
+			$this->change_shift(
+			'',
+			[
+				'shift_id' => 1,
+				'action'   => 'signup',
+			]
+			)->get_status()
+			);
+	}
+
+	public function test_member_signup_cancel_reuses_capacity_deadline_overlap_and_current_person_rules(): void {
+		$user   = $this->createRondoUser();
+		$person = $this->createPerson();
+		$other  = $this->createPerson();
+		update_user_meta( $user, 'rondo_linked_person_id', $person );
+		$params = array_merge( $this->params(), [ 'scope' => Plugin::MEMBER_SCOPE ] );
+		$pair   = $this->exchange( Plugin::issue( $params, $user ) )->get_data();
+		$this->assertSame( Plugin::MEMBER_SCOPE, $pair['scope'] );
+		$pair = $this->refresh_token( $pair['refresh_token'] )->get_data();
+		$this->assertSame( Plugin::MEMBER_SCOPE, $pair['scope'] );
+		$token   = $pair['access_token'];
+		$shift   = $this->mobile_shift( [ $other ] );
+		$guarded = $this->mobile_shift();
+		$type    = self::factory()->post->create(
+			[
+				'post_type'   => 'dienst_type',
+				'post_status' => 'publish',
+			]
+			);
+		update_post_meta( $guarded, 'dienst_type_id', $type );
+		foreach ( [ 'vog_required', 'iva_required', 'required_pool' ] as $requirement ) {
+			update_post_meta( $type, $requirement, $requirement === 'required_pool' ? 999999 : true );
+			$denied = $this->change_shift(
+				$token,
+				[
+					'shift_id'      => $guarded,
+					'action'        => 'signup',
+					'force_overlap' => true,
+				]
+				);
+			$this->assertSame( 403, $denied->get_status() );
+			$this->assertSame( $requirement === 'required_pool' ? 'pool_membership_required' : $requirement, $denied->get_data()['code'] );
+			$this->assertSame( [], get_post_meta( $guarded, 'assigned_persons', true ) );
+			delete_post_meta( $type, $requirement );
+		}
+
+		wp_set_current_user( 0 );
+		$body = [
+			'shift_id' => $shift,
+			'action'   => 'signup',
+		];
+		foreach ( [ [ 'person_id' => $other ], [ 'action' => 'cancellation' ], [ 'force_overlap' => 'true' ], [ 'shift_id' => '../1' ] ] as $extra ) {
+			$this->assertSame( 400, $this->change_shift( $token, array_merge( $body, $extra ) )->get_status() );
+		}
+		update_post_meta( $shift, 'capacity', 1 );
+		$this->assertSame( 'shift_full', $this->change_shift( $token, $body )->get_data()['code'] );
+		update_post_meta( $shift, 'capacity', 2 );
+		$this->assertTrue( $this->change_shift( $token, $body )->get_data()['signed_up'] );
+		$this->assertSame( [ $other, $person ], get_post_meta( $shift, 'assigned_persons', true ) );
+		$this->assertSame( 'vol', get_post_meta( $shift, 'status', true ) );
+		$this->assertTrue( $this->change_shift( $token, $body )->get_data()['already_signed_up'] );
+		$overlap      = $this->mobile_shift();
+		$overlap_body = [
+			'shift_id' => $overlap,
+			'action'   => 'signup',
+		];
+		$this->assertSame( 'overlap_warning', $this->change_shift( $token, $overlap_body )->get_data()['code'] );
+		$this->assertTrue( $this->change_shift( $token, $overlap_body + [ 'force_overlap' => true ] )->get_data()['signed_up'] );
+		$this->assertTrue(
+			$this->change_shift(
+			$token,
+			[
+				'shift_id' => $overlap,
+				'action'   => 'cancel',
+			]
+			)->get_data()['cancelled']
+			);
+		update_post_meta( $shift, '_shift_signup_at_' . $person, time() - HOUR_IN_SECONDS );
+		$cancel = [
+			'shift_id' => $shift,
+			'action'   => 'cancel',
+		];
+		$this->assertSame( 'shift_cancel_deadline_passed', $this->change_shift( $token, $cancel )->get_data()['code'] );
+		$this->assertSame( [ $other, $person ], get_post_meta( $shift, 'assigned_persons', true ) );
+		update_post_meta( $shift, '_shift_signup_at_' . $person, time() );
+		$response = $this->change_shift( $token, $cancel );
+		$this->assertTrue( $response->get_data()['cancelled'] );
+		$this->assertSame( 'no-store', $response->get_headers()['Cache-Control'] );
+		$this->assertSame( [ $other ], get_post_meta( $shift, 'assigned_persons', true ) );
+		$this->assertSame( 'open', get_post_meta( $shift, 'status', true ) );
+		$this->assertSame( 0, get_current_user_id() );
+	}
+
 	public function test_exchange_rejects_wrong_verifier_and_replay(): void {
 		$user = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		$code = Plugin::issue( $this->params(), $user );

@@ -22,6 +22,12 @@ export async function request(club, path, { method = 'GET', data, token } = {}) 
     error.code = result.data?.code;
     if (error.code === 'no_person') error.message = 'Je account is nog niet gekoppeld aan een lid. Neem contact op met je club.';
     if (error.code === 'pass_forbidden' || result.status === 403) error.message = 'Je hebt geen toegang tot deze gegevens. Neem contact op met je club.';
+    if (path === '/shift') {
+      const memberErrors = ['overlap_warning', 'shift_full', 'shift_closed', 'shift_busy', 'shift_cancel_deadline_passed', 'signup_not_open_yet', 'not_eligible', 'invalid_shift', 'vog_required', 'iva_required', 'pool_membership_required', 'no_person'];
+      if (memberErrors.includes(error.code) && typeof result.data?.message === 'string') error.message = result.data.message.slice(0, 600);
+      if (error.code === 'consent_required') error.message = 'Log opnieuw in en geef toestemming om je diensten via de app te wijzigen.';
+      error.canForce = error.code === 'overlap_warning' && result.data?.data?.can_force === true;
+    }
     throw error;
   }
   return result.data;
