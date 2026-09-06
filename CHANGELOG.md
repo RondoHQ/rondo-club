@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.47.0] - 2026-09-06
+
+### Added
+
+- An additive demo-only CLI fixture set provides a fictional household, regular and sponsor pass examples, and 48 volunteer shifts without replacing existing demo data.
+
 ## [35.46.2] - 2026-09-06
 
 ### Fixed
