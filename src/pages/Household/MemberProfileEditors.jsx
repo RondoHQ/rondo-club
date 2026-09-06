@@ -198,7 +198,14 @@ function homeAddress(people) {
     const addresses = person.fields?.addresses;
     if (!Array.isArray(addresses)) continue;
     const home = addresses.find((address) => String(address.address_label || '').toLowerCase() === 'home');
-    if (home) return { ...EMPTY_ADDRESS, ...home };
+    if (home) {
+      const address = { ...EMPTY_ADDRESS, ...home };
+      if (!String(address.country || '').trim()) address.country = EMPTY_ADDRESS.country;
+      if (!String(address.country_code || '').trim() && ['Nederland', 'Netherlands'].includes(address.country)) {
+        address.country_code = EMPTY_ADDRESS.country_code;
+      }
+      return address;
+    }
   }
   return EMPTY_ADDRESS;
 }

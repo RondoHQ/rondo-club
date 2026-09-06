@@ -70,6 +70,33 @@ class RestFieldsContractTest extends RondoTestCase {
 		$this->assertSame( 'Piet', $data['fields']['first_name'] );
 	}
 
+	public function test_address_country_and_country_code_cannot_be_empty(): void {
+		$person_id = $this->createPerson();
+		$request   = new \WP_REST_Request( 'POST', '/wp/v2/people/' . $person_id );
+		$request->set_body_params(
+			[
+				'fields' => [
+					'addresses' => [
+						[
+							'address_label' => 'Home',
+							'street_name'   => 'Nieuweweg',
+							'house_number'  => '12',
+							'postal_code'   => '6602 BB',
+							'city'          => 'Wijchen',
+							'country'       => '',
+							'country_code'  => '',
+						],
+					],
+				],
+			]
+		);
+
+		$response = rest_do_request( $request );
+
+		$this->assertSame( 400, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertSame( 'fields.addresses.0.country', $response->get_data()['data']['field'] );
+	}
+
 	public function test_empty_null_false_zero_and_projection_shapes_are_stable(): void {
 		$person_id = $this->createPerson(
 			[],
