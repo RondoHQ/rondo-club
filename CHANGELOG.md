@@ -5,10 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.47.0] - 2026-09-06
+
+### Added
+
+- Isolated Capacitor 0.1.0 development experiment for club selection, browser login with PKCE, and short read-only sessions. Includes native project scaffolds, a separately installed development-only WordPress adapter, and contract tests; not enabled on production.
+
 ## [35.46.0] - 2026-09-06
 
 ### Added
-- Isolated Capacitor 0.1.0 development experiment for club selection, browser login with PKCE, and short read-only sessions. Includes native project scaffolds, a separately installed development-only WordPress adapter, and contract tests; not enabled on production.
+
+- De vrijwilligersstatistieken tonen een cumulatieve grafiek van aangemaakte Rondo-accounts over alle seizoenen, inclusief het aantal nieuwe accounts van vandaag.
 
 ## [35.45.1] - 2026-09-06
 

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -165,7 +165,8 @@ function CoverageBars({ taskTypes }) {
   );
 }
 
-function SignupTrend({ points, undatedAssignments, generatedAt }) {
+function CumulativeTrend({ points, generatedAt, singular, plural, emptyMessage, children }) {
+  const gradientId = useId();
   const todayDate = generatedAt?.slice(0, 10) || '';
   const todayCount = points.find((point) => point.date === todayDate)?.count || 0;
 
@@ -202,9 +203,9 @@ function SignupTrend({ points, undatedAssignments, generatedAt }) {
     return (
       <div>
         <p className="text-sm text-gray-600 dark:text-gray-300">
-          Vandaag: <strong className="text-gray-900 dark:text-gray-100">0 inschrijvingen</strong>
+          Vandaag: <strong className="text-gray-900 dark:text-gray-100">0 {plural}</strong>
         </p>
-        <EmptyState message="Er zijn nog geen inschrijfmomenten vastgelegd." />
+        <EmptyState message={emptyMessage} />
       </div>
     );
   }
@@ -216,16 +217,16 @@ function SignupTrend({ points, undatedAssignments, generatedAt }) {
     <div>
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 text-sm">
         <p className="text-gray-600 dark:text-gray-300">
-          Vandaag: <strong className="text-gray-900 dark:text-gray-100">{numberFormat.format(todayCount)} {todayCount === 1 ? 'inschrijving' : 'inschrijvingen'}</strong>
+          Vandaag: <strong className="text-gray-900 dark:text-gray-100">{numberFormat.format(todayCount)} {todayCount === 1 ? singular : plural}</strong>
         </p>
         <p className="text-gray-500 dark:text-gray-400">
           In grafiek: <strong className="font-medium text-gray-700 dark:text-gray-200">{numberFormat.format(last.cumulative)}</strong>
         </p>
       </div>
       <div className="h-60">
-        <svg viewBox={`0 0 ${chart.width} ${chart.height}`} className="w-full h-full" role="img" aria-label={`Cumulatieve ontwikkeling van inschrijvingen. Vandaag ${todayCount}.`}>
+        <svg viewBox={`0 0 ${chart.width} ${chart.height}`} className="w-full h-full" role="img" aria-label={`Cumulatieve ontwikkeling van ${plural}. Vandaag ${todayCount}.`}>
           <defs>
-            <linearGradient id="signup-area" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#0047FF" stopOpacity="0.25" />
               <stop offset="100%" stopColor="#0047FF" stopOpacity="0" />
             </linearGradient>
@@ -238,7 +239,7 @@ function SignupTrend({ points, undatedAssignments, generatedAt }) {
           ))}
           <line x1={chart.margins.left} y1={chart.margins.top} x2={chart.margins.left} y2={chart.baseline} stroke="currentColor" className="text-gray-300 dark:text-gray-600" />
           <line x1={chart.margins.left} y1={chart.baseline} x2={chart.width - chart.margins.right} y2={chart.baseline} stroke="currentColor" className="text-gray-300 dark:text-gray-600" />
-          <polygon points={chart.area} fill="url(#signup-area)" />
+          <polygon points={chart.area} fill={`url(#${gradientId})`} />
           <polyline points={chart.line} fill="none" stroke="#0047FF" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" />
           {chart.coordinates.map((point) => (
             <circle key={point.date} cx={point.x} cy={point.y} r={point.date === todayDate ? 5 : 4} fill="#0047FF">
@@ -250,11 +251,7 @@ function SignupTrend({ points, undatedAssignments, generatedAt }) {
           {first.x !== last.x && <text x={last.x} y={chart.height - 6} textAnchor="end" className="fill-gray-500 dark:fill-gray-400 text-[12px]">{last.date === todayDate ? 'Vandaag' : formatDate(last.date)}</text>}
         </svg>
       </div>
-      {undatedAssignments > 0 && (
-        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-          {numberFormat.format(undatedAssignments)} huidige {undatedAssignments === 1 ? 'inschrijving heeft' : 'inschrijvingen hebben'} geen vastgelegd inschrijfmoment en staat daarom niet in deze lijn.
-        </p>
-      )}
+      {children}
     </div>
   );
 }
@@ -456,7 +453,29 @@ export default function VrijwilligersStatistieken() {
       </div>
 
       <Panel title="Ontwikkeling van de inschrijvingen" description="Cumulatief aantal huidige inschrijvingen op basis van het vastgelegde inschrijfmoment.">
-        <SignupTrend points={data.signup_trend} undatedAssignments={data.undated_assignments} generatedAt={data.generated_at} />
+        <CumulativeTrend
+          points={data.signup_trend}
+          generatedAt={data.generated_at}
+          singular="inschrijving"
+          plural="inschrijvingen"
+          emptyMessage="Er zijn nog geen inschrijfmomenten vastgelegd."
+        >
+          {data.undated_assignments > 0 && (
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              {numberFormat.format(data.undated_assignments)} huidige {data.undated_assignments === 1 ? 'inschrijving heeft' : 'inschrijvingen hebben'} geen vastgelegd inschrijfmoment en staat daarom niet in deze lijn.
+            </p>
+          )}
+        </CumulativeTrend>
+      </Panel>
+
+      <Panel title="Ontwikkeling van Rondo-accounts" description="Cumulatief aantal bestaande Rondo-accounts op aanmaakdatum, over alle seizoenen. Verwijderde accounts tellen niet mee.">
+        <CumulativeTrend
+          points={data.account_trend || []}
+          generatedAt={data.generated_at}
+          singular="account"
+          plural="accounts"
+          emptyMessage="Er zijn nog geen aanmaakdatums van accounts vastgelegd."
+        />
       </Panel>
 
       <div className="grid gap-6 xl:grid-cols-2">
