@@ -5,6 +5,118 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.55.0] - 2026-09-06
+
+### Added
+
+- The native pilot includes the dedicated synthetic demo club, with a pinned HTTPS login callback and separately enabled read-only review-account gateway.
+
+## [35.54.0] - 2026-09-06
+
+### Added
+
+- Separately prepared AWC pilot builds with verified HTTPS callbacks, a fixed club directory, read-only member screens and Wallet export.
+- Opt-in pilot adapter with pinned tester account/person pairs, a pilot deadline, seven-day device sessions, isolated credentials, policy revocation and token/Wallet rate limits.
+- Reusable authorization runtime and pilot regression tests; the original experiment remains blocked on production.
+
+## [35.53.1] - 2026-09-06
+
+### Fixed
+
+- Place the native Wallet button above the membership pass so it is visible without scrolling.
+
+## [35.53.0] - 2026-09-06
+
+### Added
+
+- Development-only direct membership-pass export to Apple Wallet and Google Wallet from the native app, reusing the club's existing generators, pass choices and personal-household access rules.
+- In-memory Apple PassKit presentation and an allowlisted Google save-link handoff, with provider availability, bounded payloads and no automatic request retries.
+
+## [35.52.1] - 2026-09-06
+
+### Fixed
+
+- Space and wrap the mobile household action links independently so profile editing and pass access do not run together.
+- Remove the province input from the mobile address form while preserving its existing stored value when saving an address.
+- Replace separate country/name inputs with a Dutch country dropdown that derives the ISO country code automatically, including existing English names and three-letter codes.
+
+## [35.52.0] - 2026-09-06
+
+### Added
+
+- Development-only native editing of the member's own phone numbers, verified email addresses and household home address, using the existing profile services and audit trail.
+- Separate profile consent without upgrading old device sessions, strict self-only field groups, server-driven read-only states and readback after uncertain write responses.
+- Profile contract tests for consent, foreign targets, validation, household address propagation, email verification/cancellation and logout or connection-loss races.
+
+## [35.51.0] - 2026-09-06
+
+### Added
+
+- Development-only native signup/cancellation for the current member's volunteer duties, with explicit browser consent, duty confirmation, overlap confirmation and server-driven cancellation availability.
+- Narrow write adapter retaining existing member permissions, certificate/pool requirements, capacity locks, signup windows, cancellation deadlines and email scheduling. Old read-only sessions remain read-only after refresh.
+- Tests for scope isolation, own-person writes, capacity, overlap, certificates, pool membership, cancellation deadlines, duplicate submissions, lost responses and logout races.
+
+### Fixed
+
+- Previously handled native launch URLs no longer displace an authenticated session when no login is pending.
+
+## [35.50.1] - 2026-09-06
+
+### Fixed
+
+- Mobile membership passes use the club's server-provided Wallet background instead of a Rondo gradient, sharing color fallbacks and pass-type presentation with the web pass. Sponsor passes retain light styling and businessclub logos; normal passes use the reviewed club logo without a frame or padding.
+
+## [35.50.0] - 2026-09-06
+
+### Added
+
+- Development-only mobile login resumption: pending PKCE state survives process termination in native secure storage for ten minutes, with explicit resume/cancel controls and durable one-time callback consumption.
+- Tests for cold callbacks, duplicate delivery, cancellation, expiry, directory changes and storage failures.
+
+### Fixed
+
+- Existing-account Magic Login emails retain the strictly validated mobile authorization destination through Rondo's existing email flow; other login destinations and provider checks remain unchanged.
+
+## [35.49.1] - 2026-09-06
+
+### Changed
+
+- Mobile club logos render without a frame, background or inner padding. Reviewed club-directory entries can select the club's official HTTPS logo, including AWC's specified SVG, independently of the API origin.
+
+## [35.49.0] - 2026-09-06
+
+### Added
+
+- Development-only mobile session restoration with iOS Keychain and Android Keystore storage, rotating refresh tokens with an absolute 30-day expiry, reuse detection, and durable offline logout with queued revocation.
+- Session lifecycle tests for concurrent refresh, logout races, vault/network failures, expiry, changed permissions and server revocation.
+
+### Changed
+
+- The compact mobile header uses the website's real wordmark, Figtree headings and brand palette beside the club logo. Native launcher and splash artwork use the Rondo logo.
+- Native bridge logging is disabled to keep credentials out of plugin logs. Simulator-only iOS entitlements support the real Keychain with local signing.
+
+## [35.48.0] - 2026-09-06
+
+### Added
+
+- Mobile development screens for Start, personal and household passes with QR detail, a volunteer month calendar, own duties, duty detail, household details, and More with club switching. The calendar counts eligible duties per day and marks existing signups.
+- Narrow development-only read adapters for personal passes and member calendars, using the existing REST permissions and signup rules. Actions that write data or add Wallet passes open fixed club pages in the system browser.
+
+### Changed
+
+- Browser and mobile passes share QR rendering; mobile route history and query data are discarded when the app session ends.
+
+## [35.47.1] - 2026-09-06
+
+### Fixed
+
+- The development-only mobile spike preserves its validated local authorization URL after the WordPress login form POST, so a first login can return to the app. Other login redirects remain unchanged.
+
+## [35.47.0] - 2026-09-06
+
+### Added
+
+- Isolated Capacitor 0.1.0 development experiment for club selection, browser login with PKCE, and short read-only sessions. Includes native project scaffolds, a separately installed development-only WordPress adapter, and contract tests; not enabled on production.
 ## [35.46.2] - 2026-09-06
 
 ### Fixed

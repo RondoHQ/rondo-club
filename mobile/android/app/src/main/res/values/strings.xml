@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Rondo Proef</string>
+    <string name="title_activity_main">Rondo Proef</string>
+    <string name="package_name">club.rondo.spike</string>
+    <string name="custom_url_scheme">club.rondo.spike</string>
+</resources>
