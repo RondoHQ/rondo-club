@@ -166,7 +166,7 @@ export default function MobileSpike() {
 
   const results = clubs.filter((item) => item.name.toLocaleLowerCase('nl').includes(search.toLocaleLowerCase('nl')));
   return <main className={profile ? 'member-shell' : ''}>
-    <header><div className="header-brand">{club && <ClubLogo key={club.id} club={club} />}<img className="rondo-wordmark" src="./brand/rondo-wordmark.svg" alt="Rondo" /></div><span className="badge">{PILOT ? 'AWC pilot' : 'Proefversie'}</span></header>
+    <header><div className="header-brand">{club && <ClubLogo key={club.id} club={club} />}<img className="rondo-wordmark" src="./brand/rondo-wordmark.svg" alt="Rondo" /></div><span className="badge">{PILOT ? (club?.id === 'demo' ? 'Demodata' : 'Pilot') : 'Proefversie'}</span></header>
     {error && <p role="alert" className="error">{error}</p>}
     {screen === 'restoring' && <p role="status">Je aanmelding controleren…</p>}
     {screen === 'recover' && <section><h1>Aanmelding controleren</h1><p>Maak verbinding met je club om verder te gaan, of log uit op dit toestel.</p><button disabled={busy} onClick={() => restore()}>Opnieuw proberen</button><button disabled={busy} className="secondary" onClick={logout}>Uitloggen op dit toestel</button></section>}

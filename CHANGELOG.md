@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.55.0] - 2026-09-06
+
+### Added
+
+- The native pilot includes the dedicated synthetic demo club, with a pinned HTTPS login callback and separately enabled read-only review-account gateway.
+
 ## [35.54.0] - 2026-09-06
 
 ### Added
