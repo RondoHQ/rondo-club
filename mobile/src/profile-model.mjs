@@ -1,5 +1,5 @@
 export const PHONE_LABELS = { mobile_1: 'Mobiel', mobile_2: 'Mobiel 2', telephone_1: 'Telefoon', telephone_2: 'Telefoon 2' };
-export const ADDRESS_LABELS = { street_name: 'Straat', house_number: 'Huisnummer', house_number_addition: 'Toevoeging', postal_code: 'Postcode', city: 'Plaats', state: 'Provincie', country: 'Land', country_code: 'Landcode' };
+export const ADDRESS_LABELS = { street_name: 'Straat', house_number: 'Huisnummer', house_number_addition: 'Toevoeging', postal_code: 'Postcode', city: 'Plaats', country: 'Land', country_code: 'Landcode' };
 
 export function phoneValues(fields = {}) {
   return Object.fromEntries(Object.keys(PHONE_LABELS).map((field) => [field, fields[field] || '']));
@@ -7,7 +7,8 @@ export function phoneValues(fields = {}) {
 
 export function homeAddress(fields = {}) {
   const home = fields.addresses?.find((address) => String(address.address_label || '').trim().toLowerCase() === 'home') || {};
-  const values = Object.fromEntries(Object.keys(ADDRESS_LABELS).map((field) => [field, home[field] || '']));
+  // Preserve existing province data for the complete address payload without showing an editor.
+  const values = { state: home.state || '', ...Object.fromEntries(Object.keys(ADDRESS_LABELS).map((field) => [field, home[field] || ''])) };
   if (!values.country.trim()) values.country = 'Nederland';
   if (!values.country_code.trim() && ['nederland', 'netherlands'].includes(values.country.toLowerCase())) values.country_code = 'NL';
   return values;

@@ -11,3 +11,5 @@ h2{font-size:20px;line-height:1.3;letter-spacing:-.3px;margin:26px 0 14px}a{colo
 h1,h2,h3{font-family:Figtree,system-ui,sans-serif}body{background:linear-gradient(180deg,#F7FBFF 0%,#fff 100%)}.rondo-wordmark{display:block;width:108px;height:38px;object-fit:contain}.member-shell .rondo-wordmark{width:98px;height:34px}.member-pass .eyebrow{color:rgba(255,255,255,.75)}.member-pass.sponsor-pass{color:#030712;border:1px solid #e5e7eb}.member-pass.sponsor-pass p{color:#6b7280}.member-pass .qr-panel p{color:#3D4E6A}.date-tile{background:#EDF4F8}.calendar-day[aria-pressed=true]{background:#00908B}.calendar-day i{background:#993399}
 
 .profile-editor fieldset{border:0;padding:0;margin:0;min-width:0}.profile-editor label{margin:16px 0}.profile-editor input{display:block;margin-top:7px;font-size:16px}.profile-editor dt{font-size:13px;color:#3D4E6A}.profile-editor dd{margin:0 0 12px;overflow-wrap:anywhere}.profile-editor h1{overflow-wrap:anywhere}
+
+.household-actions{display:flex;flex-wrap:wrap;gap:4px 20px}

@@ -1,6 +1,6 @@
 # Rondo Capacitor login spike
 
-Development experiment, version **0.6.0**. This is not the first app release and is not ready
+Development experiment, version **0.6.1**. This is not the first app release and is not ready
 for TestFlight, Google Play, or production installation. The agreed screen design remains in
 `docs/prd/mobile-app-first-release.md`.
 
@@ -291,3 +291,5 @@ reads verified persisted phone/address values and pending/verified email states.
 before delivery exercised the readback-only error state and recovery; actual loss of a response after
 storage is covered by the client unit test. No physical device, real mailbox or local Sportlink sync
 was used. Shared-service household propagation and former-member rejection are covered in PHP.
+
+Version 0.6.1 separates the household action links with a wrapping gap and removes the province input. Existing `state` data remains in the complete address payload so saving another address field does not clear it.
