@@ -1,0 +1,29 @@
+# Synthetic Alpha fixture only. Start with a login that explicitly granted volunteer consent.
+appId: club.rondo.spike
+---
+- launchApp:
+    stopApp: true
+- assertVisible: "Hallo, Proeflid"
+- tapOn: "Vrijwillig"
+- tapOn: "woensdag 9 september: 3 beschikbare diensten"
+- swipe:
+    direction: UP
+- swipe:
+    direction: UP
+- tapOn: "Keukendienst.*"
+- tapOn: "Aanmelden voor deze dienst"
+- assertVisible: "Aanmelden voor deze dienst?"
+- scrollUntilVisible:
+    element:
+      text: "Bevestig aanmelding"
+    direction: DOWN
+- tapOn: "Bevestig aanmelding"
+- assertVisible: "Afmelden voor deze dienst"
+- takeScreenshot: signup-confirmed
+- tapOn: "Afmelden voor deze dienst"
+- assertVisible: "Afmelden voor deze dienst?"
+- tapOn: "Bevestig afmelding"
+- assertVisible: "Aanmelden voor deze dienst"
+- takeScreenshot: cancellation-confirmed
+- tapOn: "Vrijwillig"
+- assertVisible: "woensdag 9 september: 3 beschikbare diensten"

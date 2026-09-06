@@ -1,6 +1,6 @@
 # Capacitor-proef: resultaten en vervolg
 
-Datum: 6 september 2026. Status: ontwikkelproef 0.4.1; native simulatorlogin geslaagd, fysieke toestelproef nog open.
+Datum: 6 september 2026. Status: ontwikkelproef 0.5.0; native simulatorlogin geslaagd, fysieke toestelproef nog open.
 Branch: `codex/capacitor-login-spike`. Geen productie-installatie of store-upload uitgevoerd.
 
 ## Gebouwd
@@ -99,7 +99,7 @@ centrale clublijst en stabiele installatie-identiteit volgen in het productieont
    annuleren, koude terugkeer, verlopen sessies, offline herstel en echte e-mailterugkeer testen.
 2. Blijvende sessies onafhankelijk beoordelen en geverifieerde terugkeerlinks bouwen, inclusief
    annulering, koude start, e-maillink, offline herstel en gelijktijdige verversing.
-3. De gebouwde leesschermen aanvullen met native schrijfhandelingen, directe Wallet-overdracht,
+3. De gebouwde leesschermen en eigen diensthandelingen aanvullen met overige native schrijfhandelingen, directe Wallet-overdracht,
    gastpassen, volledige contributiebediening en capabilitygestuurde navigatie.
 
 De totale technische proef uit het releaseplan is dus **nog niet afgerond**. Deze branch is een
@@ -217,3 +217,36 @@ De 28 bestaande mobiele tests, lint en web/mobiele builds slagen. De ledenpas me
 AWC-logo en geladen QR is op beide native simulators gecontroleerd. De fixture bevat een gewone
 ledenpas; sponsor- en businessclubpassen zijn in deze stap niet met echte accounts doorlopen.
 Er zijn geen productiegegevens of productie-instellingen aangepast.
+
+## Bouwstap 0.5.0: eigen diensten aanmelden en afmelden
+
+Een nieuwe aanmelding vraagt expliciet toestemming om eigen diensten via de app te wijzigen.
+Die toestemming staat in de autorisatiecode en de serverfamilie; bestaande leessessies blijven
+ook na verversen alleen-lezen. De app toont daarvoor Opnieuw inloggen. Een nieuwe, begrensde
+POST-adapter accepteert alleen dienst-ID, signup/cancel en een boolean voor expliciet bevestigde
+overlap. Persoonskeuze, beheerdersacties en willekeurige routes zijn niet mogelijk.
+
+De originele WordPress-routes blijven beslissen over capaciteit, overlappende tijden, VOG/IVA,
+poollidmaatschap, inschrijfvensters en afmeldtermijnen. Ook de slotvergrendeling en mailplanning
+blijven intact. De app bevestigt dienst/datum/tijd, toont zo nodig de 30-minutenregel en biedt een
+aparte keuze bij overlap. Onzekere antwoorden worden niet automatisch opnieuw verstuurd; eerst
+volgt een controle van de actuele inschrijving. Na opslaan worden de ledenoverzichten vernieuwd.
+
+Gecontroleerd: 32 mobiele tests en 17 WordPress/MySQL-tests met 157 assertions, lint en builds.
+Op beide simulators is de overstap van alleen-lezen naar expliciet toegestane diensthandelingen
+doorlopen. Via de app is fictief lid 13 op testdienst 21 aangemeld en afgemeld. Een afzonderlijke
+WordPress-read bevestigde na iedere handeling de aanwezige respectievelijk verwijderde relatie;
+na afloop was ook de aanmeldtijd verwijderd. De kalender toont weer drie beschikbare diensten.
+
+De iPhone-test bracht een opnieuw aangeboden oude terugkeerlink aan het licht die het ingelogde
+scherm kon verdringen. De app geeft nu een bestaande sessie voorrang als geen login meer loopt.
+De testomgeving bevat uitsluitend fictieve leden en diensten; mail is lokaal opgevangen en cron
+staat uit. Er is niets naar productie of een appstore uitgerold.
+
+Aanvullend: op Android is de verbinding vóór een bevestiging onderbroken. De app bood uitsluitend
+Controleer mijn inschrijving; na herstel kwam de juiste, niet-aangemelde status terug. De server
+bleef zonder testinschrijving. Een verloren antwoord na mogelijke opslag is in de clienttest
+gecontroleerd op niet-herhalen; die specifieke timing is niet in de simulator nagebootst.
+
+De iPhone-controle met een opnieuw aangeboden ongeldige terugkeerlink en daarna een volledige
+procesherstart slaagt: het lid blijft aangemeld.

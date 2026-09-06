@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Rondo Mobile Spike (development only)
- * Description: Opt-in, read-only native login experiment. Never loaded by the theme.
- * Version: 0.4.1
+ * Description: Opt-in native member login experiment. Never loaded by the theme.
+ * Version: 0.5.0
  *
  * @package Rondo\MobileSpike
  */
@@ -15,15 +15,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** Narrow development adapter; no change to the confidential FreeScout OIDC provider. */
 final class Plugin {
-	public const CLIENT      = 'rondo-mobile-spike';
-	public const CALLBACK    = 'club.rondo.spike://oauth/callback';
-	public const SCOPE       = 'rondo:spike:read';
-	public const NS          = 'rondo-mobile-spike/v1';
-	private const CODE       = 'rondo_mobile_code_';
-	private const SESSION    = 'rondo_mobile_session_';
-	private const FAMILY     = 'rondo_mobile_family_';
-	private const REFRESH    = 'rondo_mobile_refresh_';
-	private const DEVICE_TTL = 30 * DAY_IN_SECONDS;
+	public const CLIENT       = 'rondo-mobile-spike';
+	public const CALLBACK     = 'club.rondo.spike://oauth/callback';
+	public const SCOPE        = 'rondo:spike:read';
+	public const MEMBER_SCOPE = 'rondo:spike:read rondo:spike:volunteer';
+	public const NS           = 'rondo-mobile-spike/v1';
+	private const CODE        = 'rondo_mobile_code_';
+	private const SESSION     = 'rondo_mobile_session_';
+	private const FAMILY      = 'rondo_mobile_family_';
+	private const REFRESH     = 'rondo_mobile_refresh_';
+	private const DEVICE_TTL  = 30 * DAY_IN_SECONDS;
 
 	public static function enabled(): bool {
 		return defined( 'RONDO_MOBILE_SPIKE' ) && RONDO_MOBILE_SPIKE === true && in_array( wp_get_environment_type(), [ 'local', 'development' ], true );
@@ -102,6 +103,7 @@ final class Plugin {
 			'config' => 'GET',
 			'token'  => 'POST',
 			'read'   => 'GET',
+			'shift'  => 'POST',
 			'revoke' => 'POST',
 		] as $route => $method ) {
 			register_rest_route(
@@ -132,13 +134,15 @@ final class Plugin {
 		foreach ( [
 			'client_id'             => self::CLIENT,
 			'redirect_uri'          => self::CALLBACK,
-			'scope'                 => self::SCOPE,
 			'response_type'         => 'code',
 			'code_challenge_method' => 'S256',
 		] as $key => $value ) {
 			if ( ( $params[ $key ] ?? null ) !== $value ) {
 				return self::error( 'invalid_request', 400 );
 			}
+		}
+		if ( ! in_array( $params['scope'] ?? '', [ self::SCOPE, self::MEMBER_SCOPE ], true ) ) {
+			return self::error( 'invalid_request', 400 );
 		}
 		foreach ( [ 'state', 'code_challenge' ] as $key ) {
 			if ( ! is_string( $params[ $key ] ?? null ) || ! preg_match( '/^[A-Za-z0-9_-]{43}$/', $params[ $key ] ) ) {
@@ -189,6 +193,9 @@ final class Plugin {
 			exit;
 		}
 		echo '<!doctype html><html lang="nl"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Rondo Proef verbinden</title><body><main><h1>Rondo Proef verbinden</h1><p>Je geeft de proefapp toegang om je eigen gegevens bij deze club te lezen. Je blijft op dit apparaat maximaal 30 dagen ingelogd, totdat je uitlogt of de club je toegang intrekt.</p><form method="post">';
+		if ( $params['scope'] === self::MEMBER_SCOPE ) {
+			echo '<p>Je geeft ook toestemming om jezelf via de app aan te melden en af te melden voor vrijwilligersdiensten, volgens de regels van je club.</p>';
+		}
 		wp_nonce_field( 'rondo_mobile_spike_authorize' );
 		foreach ( [ 'action', 'client_id', 'redirect_uri', 'scope', 'response_type', 'code_challenge_method', 'state', 'code_challenge' ] as $key ) {
 			echo '<input type="hidden" name="' . esc_attr( $key ) . '" value="' . esc_attr( (string) $params[ $key ] ) . '">';
@@ -209,6 +216,7 @@ final class Plugin {
 				'user_id'   => $user_id,
 				'password'  => wp_hash( $user->user_pass ),
 				'challenge' => $params['code_challenge'],
+				'scope'     => $params['scope'],
 			],
 			120
 			);
@@ -238,6 +246,7 @@ final class Plugin {
 		$data   = [
 			'user_id'    => $data['user_id'],
 			'password'   => $data['password'],
+			'scope'      => $data['scope'] ?? self::SCOPE,
 			'expires_at' => time() + self::DEVICE_TTL,
 			'audience'   => untrailingslashit( home_url() ),
 		];
@@ -282,6 +291,7 @@ final class Plugin {
 				'expires_in'         => $ttl,
 				'refresh_token'      => $refresh,
 				'refresh_expires_at' => $data['expires_at'],
+				'scope'              => $data['scope'] ?? self::SCOPE,
 			]
 			);
 	}
@@ -369,6 +379,40 @@ final class Plugin {
 				$inner = new \WP_REST_Request( 'GET', sprintf( $routes['pass'], (int) $id ) );
 				$inner->set_param( 'role', $role );
 			}
+			$response = rest_do_request( $inner );
+			$response->header( 'Cache-Control', 'no-store' );
+			return $response;
+		} finally {
+			wp_set_current_user( $previous );
+		}
+	}
+
+	/** Only the consented member's own signup/cancel routes; never administrative assignment. */
+	public function shift( \WP_REST_Request $request ) {
+		$data = self::load( self::SESSION, self::bearer( $request ) );
+		$user = $data ? self::user( $data ) : null;
+		if ( ! $user ) {
+			return self::error( 'invalid_token', 401 );
+		}
+		$family = ! empty( $data['family'] ) ? get_option( self::FAMILY . $data['family'] ) : null;
+		if ( ! is_array( $family ) || ( $family['scope'] ?? self::SCOPE ) !== self::MEMBER_SCOPE ) {
+			return self::error( 'consent_required', 403 );
+		}
+		$params = $request->get_json_params();
+		if ( ! is_array( $params ) || array_diff( array_keys( $params ), [ 'shift_id', 'action', 'force_overlap' ] ) ) {
+			return self::error( 'invalid_shift_request', 400 );
+		}
+		$id     = $params['shift_id'] ?? null;
+		$action = $params['action'] ?? '';
+		$force  = $params['force_overlap'] ?? false;
+		if ( ! is_scalar( $id ) || is_bool( $id ) || ! ctype_digit( (string) $id ) || (int) $id <= 0 || ! in_array( $action, [ 'signup', 'cancel' ], true ) || ! is_bool( $force ) || ( $action === 'cancel' && $force ) ) {
+			return self::error( 'invalid_shift_request', 400 );
+		}
+		$previous = get_current_user_id();
+		try {
+			wp_set_current_user( $user->ID );
+			$inner = new \WP_REST_Request( 'POST', sprintf( '/rondo/v1/shifts/%d/%s', (int) $id, $action ) );
+			$inner->set_param( 'force_overlap', $force );
 			$response = rest_do_request( $inner );
 			$response->header( 'Cache-Control', 'no-store' );
 			return $response;

@@ -92,6 +92,9 @@ export default function MobileSpike() {
         if (!alive.current) return;
         generation = auth.generation;
         selected = auth.pending?.club;
+        // iOS can offer a previously handled launch URL again after rebuilding its WebView.
+        // An existing authenticated session takes precedence when no login is pending.
+        if (!auth.pending && auth.session) { await loadHome(auth.session, generation); return; }
         const session = await auth.finish(url);
         if (Capacitor.getPlatform() === 'ios') await Browser.close().catch(() => {});
         await loadHome(session, generation);
@@ -167,7 +170,7 @@ export default function MobileSpike() {
     </section>}
     {screen === 'confirm' && <section><h1>Inloggen bij {club.name}</h1><p>Je logt in via de website van je club. Daarna keer je terug naar Rondo.</p><p className="domain">{new URL(club.url).hostname}</p><button disabled={busy} onClick={login}>{busy ? 'Club controleren…' : 'Inloggen bij mijn club'}</button><button className="secondary" onClick={reset}>Terug naar clubkeuze</button></section>}
     {screen === 'login' && <section><h1>Rond je aanmelding af</h1><p>Log in via de website van je club. Gebruik je een e-maillink? Open die op dit toestel en kies daarna Verbinden.</p><p>Je kunt de app tussendoor sluiten. Je aanmelding blijft tien minuten beschikbaar.</p><button disabled={busy} onClick={resumeLogin}>Inlogvenster opnieuw openen</button><button disabled={busy} className="secondary" onClick={logout}>Aanmelding annuleren</button></section>}
-    {profile && auth.session && <MemberApp session={auth.session} profile={profile} logout={logout} read={(path) => auth.read(path)} onExpired={() => { setProfile(null); setScreen('recover'); setError('Je aanmelding is verlopen. Log opnieuw in.'); }} />}
+    {profile && auth.session && <MemberApp session={auth.session} profile={profile} logout={logout} read={(path) => auth.read(path)} changeShift={(id, action, force) => auth.changeShift(id, action, force)} onExpired={() => { setProfile(null); setScreen('recover'); setError('Je aanmelding is verlopen. Log opnieuw in.'); }} />}
     <footer>Proefversie{profile ? ' · aangemeld op dit toestel' : ''}</footer>
   </main>;
 }
