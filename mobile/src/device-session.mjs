@@ -1,7 +1,7 @@
-import { CLIENT_ID, LoginSession, readCallback } from './auth.mjs';
+import { CLIENT_ID, LOGIN_TTL, LoginSession, authorizationUrl, beginLogin, readCallback } from './auth.mjs';
 
 const validToken = (value) => /^[A-Za-z0-9_-]{43}$/.test(value || '');
-const empty = () => ({ version: 1, active: null, revocations: [] });
+const empty = () => ({ version: 1, active: null, pending: null, revocations: [] });
 const expired = () => Object.assign(new Error('Je aanmelding is verlopen. Log opnieuw in.'), { status: 401 });
 
 // All vault mutations and rotations are serialized. Logout invalidates in-flight reads immediately.
@@ -9,9 +9,48 @@ export class DeviceSession extends LoginSession {
   state = empty();
   queue = Promise.resolve();
   refreshing = null;
+  callbackInFlight = null;
   constructor({ vault, request, clubs, now = Date.now }) {
     super();
     Object.assign(this, { vault, request, clubs, now });
+  }
+  clear() {
+    super.clear();
+    this.callbackInFlight = null;
+  }
+  async start(club) {
+    if (!this.clubs.some((entry) => entry.id === club.id && entry.url === club.url)) throw new Error('Onbekende club.');
+    this.clear();
+    const generation = this.generation;
+    return this.exclusive(async () => {
+      if (this.state.active) throw new Error('Log eerst uit voordat je een nieuwe aanmelding start.');
+      const login = await beginLogin(club, this.now());
+      if (generation !== this.generation) throw expired();
+      const { verifier, state, createdAt } = login.pending;
+      await this.save({ ...this.state, pending: { clubId: club.id, clubUrl: club.url, verifier, state, createdAt } });
+      if (generation !== this.generation) throw expired();
+      this.pending = login.pending;
+      return login.url;
+    });
+  }
+  pendingFrom(record) {
+    const club = this.clubFor(record);
+    if (!club || !validToken(record.verifier) || !validToken(record.state) || !Number.isFinite(record.createdAt) || record.createdAt > this.now() || this.now() - record.createdAt >= LOGIN_TTL) return null;
+    return { club, verifier: record.verifier, state: record.state, createdAt: record.createdAt };
+  }
+  async resumeLogin() {
+    const generation = this.generation;
+    return this.exclusive(async () => {
+      const pending = this.pendingFrom(this.state.pending);
+      if (!pending || generation !== this.generation) {
+        this.pending = null;
+        await this.save({ ...this.state, pending: null });
+        throw expired();
+      }
+      const url = await authorizationUrl(pending);
+      if (generation !== this.generation) throw expired();
+      return url;
+    });
   }
   exclusive(operation) {
     const next = this.queue.then(operation);
@@ -25,7 +64,7 @@ export class DeviceSession extends LoginSession {
     return this.clubFor(record) && validToken(record.refreshToken) && Number.isFinite(record.expiresAt) && record.expiresAt > this.now();
   }
   async save(next) {
-    if (next.active || next.revocations.length) await this.vault.write({ value: JSON.stringify(next) });
+    if (next.active || next.pending || next.revocations.length) await this.vault.write({ value: JSON.stringify(next) });
     else await this.vault.clear();
     this.state = next;
   }
@@ -42,7 +81,7 @@ export class DeviceSession extends LoginSession {
     if (pair.token_type !== 'Bearer' || !validToken(pair.access_token) || !validToken(pair.refresh_token) || !Number.isFinite(pair.expires_in) || pair.expires_in <= 0 || pair.expires_in > 300 || !Number.isFinite(pair.refresh_expires_at) || pair.refresh_expires_at * 1000 <= this.now() || pair.refresh_expires_at * 1000 > this.now() + 31 * 86400000) throw new Error('Ongeldig sessieantwoord.');
     const active = { clubId: club.id, clubUrl: club.url, refreshToken: pair.refresh_token, expiresAt: pair.refresh_expires_at * 1000 };
     try {
-      await this.save({ ...this.state, active });
+      await this.save({ ...this.state, active, pending: null });
     } catch (error) {
       this.session = null;
       await this.request(club, '/revoke', { method: 'POST', data: { refresh_token: pair.refresh_token } }).catch(() => {});
@@ -53,29 +92,43 @@ export class DeviceSession extends LoginSession {
     return this.session;
   }
   async finish(url) {
-    const data = readCallback(url, this.pending);
+    if (this.callbackInFlight?.url === url && this.callbackInFlight.generation === this.generation) return this.callbackInFlight.promise;
+    let data;
+    try { data = readCallback(url, this.pending, this.now()); }
+    catch (error) {
+      if (error.code === 'login_cancelled') await this.logout();
+      throw error;
+    }
     const club = this.pending.club;
     const generation = this.generation;
     this.pending = null;
-    return this.exclusive(async () => {
+    const promise = this.exclusive(async () => {
       if (generation !== this.generation) throw expired();
+      // Consume durably before exchange, so killing the process cannot replay a callback.
+      await this.save({ ...this.state, pending: null });
       const pair = await this.request(club, '/token', { method: 'POST', data });
-      // Persist even if logout started during exchange: the queued logout then revokes this family.
+      // A queued logout revokes any family issued while it was in flight.
       return this.accept(club, pair, generation);
     });
+    this.callbackInFlight = { url, generation, promise };
+    return promise;
   }
   async restore() {
+    const generation = this.generation;
     return this.exclusive(async () => {
       const { value } = await this.vault.read();
       const stored = value ? JSON.parse(value) : empty();
       if (stored.version !== 1 || !Array.isArray(stored.revocations)) throw new Error('De opgeslagen aanmelding kan niet worden gelezen. Log uit om opnieuw te beginnen.');
-      this.state = stored;
+      this.state = { ...stored, pending: stored.pending || null };
+      if (generation !== this.generation) throw expired();
+      this.pending = !this.state.active ? this.pendingFrom(this.state.pending) : null;
+      if (this.state.pending && !this.pending) await this.save({ ...this.state, pending: null });
       await this.flush();
       if (!this.validRecord(this.state.active)) {
         await this.save({ ...this.state, active: null });
         return null;
       }
-      return this.rotate(this.generation);
+      return this.rotate(generation);
     });
   }
   async rotate(generation) {
@@ -122,9 +175,10 @@ export class DeviceSession extends LoginSession {
   async logout() {
     this.clear();
     return this.exclusive(async () => {
+      this.pending = null;
       // If startup could not read the vault, explicit logout can still erase it.
       const revocations = [...this.state.revocations, ...(this.state.active ? [this.state.active] : [])].filter((record) => this.validRecord(record));
-      await this.save({ version: 1, active: null, revocations });
+      await this.save({ version: 1, active: null, pending: null, revocations });
       // Durably signed out before attempting a network request; offline revocations survive restart.
       await this.flush();
     });

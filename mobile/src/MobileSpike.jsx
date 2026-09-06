@@ -31,59 +31,87 @@ export default function MobileSpike() {
     setClub(null);
   }, []);
 
+  const startup = useRef(null);
+  const callbackSeen = useRef(false);
+
+  const showPendingOrClubs = useCallback(() => {
+    setProfile(null);
+    if (auth.pending) {
+      setClub(auth.pending.club);
+      setScreen('login');
+    } else reset();
+  }, [reset]);
+
+  const loadHome = useCallback(async (session, generation) => {
+    const [me, metadata] = await Promise.all([auth.read('/read?resource=me'), request(session.club, '/config')]);
+    if (!alive.current || generation !== auth.generation) return;
+    if (metadata.protocol !== 'rondo-mobile-spike-v1' || metadata.club_url !== session.club.url) throw new Error('Deze club is nog niet beschikbaar voor de proef.');
+    const selected = { ...session.club, timeZone: metadata.timezone, logoUrl: session.club.logoUrl || safeClubLogo(metadata.logo_url, session.club) };
+    auth.session.club = selected;
+    setClub(selected);
+    setProfile(me);
+    setError('');
+    setScreen('home');
+  }, []);
+
+  const restore = useCallback(async (initialization) => {
+    setBusy(true);
+    setError('');
+    setProfile(null);
+    setScreen('restoring');
+    try {
+      const pending = initialization || auth.restore();
+      if (!initialization) startup.current = pending;
+      const session = await pending;
+      // The callback handler owns completion when a native URL arrived during startup.
+      if (initialization && callbackSeen.current) return;
+      if (session) await loadHome(session, auth.generation);
+      else showPendingOrClubs();
+    } catch (failure) {
+      if (!alive.current) return;
+      setScreen(failure.status === 401 ? 'clubs' : 'recover');
+      if (failure.status === 401) setClub(null);
+      setError(failure.message);
+    } finally { if (alive.current) setBusy(false); }
+  }, [loadHome, showPendingOrClubs]);
+
   useEffect(() => {
     alive.current = true;
     let listener;
+    const seen = new Set();
+    startup.current = auth.restore();
     async function handle(url) {
-      if (!alive.current) return;
+      if (!alive.current || seen.has(url)) return;
+      seen.add(url);
+      callbackSeen.current = true;
+      let generation;
+      let selected;
+      setBusy(true);
       try {
+        await startup.current;
+        if (!alive.current) return;
+        generation = auth.generation;
+        selected = auth.pending?.club;
         const session = await auth.finish(url);
         if (Capacitor.getPlatform() === 'ios') await Browser.close().catch(() => {});
-        const generation = auth.generation;
-        const me = await auth.read('/read?resource=me');
-        if (!alive.current || generation !== auth.generation) return;
-        setClub(session.club);
-        setProfile(me);
-        setError('');
-        setScreen('home');
+        await loadHome(session, generation);
       } catch (failure) {
-        if (alive.current) setError(failure.message);
-      } finally {
-        if (alive.current) setBusy(false);
-      }
+        if (!alive.current || (generation !== undefined && generation !== auth.generation && failure.code !== 'login_cancelled')) return;
+        if (failure.code === 'login_cancelled') showPendingOrClubs();
+        else if (auth.pending) showPendingOrClubs();
+        else if (!auth.session) { setClub(selected || null); setScreen(selected ? 'confirm' : 'recover'); }
+        else { setProfile(null); setScreen('recover'); }
+        setError(failure.message);
+      } finally { if (alive.current) setBusy(false); }
     }
     App.addListener('appUrlOpen', ({ url }) => handle(url)).then((value) => {
       if (!alive.current) value.remove();
       else listener = value;
     });
-    // A cold start has no in-memory verifier and must ask for a new login.
     App.getLaunchUrl().then((value) => { if (value?.url) handle(value.url); });
+    restore(startup.current);
     return () => { alive.current = false; listener?.remove(); };
-  }, []);
-
-  const restore = useCallback(async () => {
-    setBusy(true);
-    setError('');
-    setScreen('restoring');
-    try {
-      const session = await auth.restore();
-      if (!session) { reset(); return; }
-      const generation = auth.generation;
-      const [me, metadata] = await Promise.all([auth.read('/read?resource=me'), request(session.club, '/config')]);
-      if (!alive.current || generation !== auth.generation) return;
-      session.club = { ...session.club, timeZone: metadata.timezone, logoUrl: session.club.logoUrl || safeClubLogo(metadata.logo_url, session.club) };
-      setClub(session.club);
-      setProfile(me);
-      setScreen('home');
-    } catch (failure) {
-      setProfile(null);
-      setScreen(failure.status === 401 ? 'clubs' : 'recover');
-      if (failure.status === 401) setClub(null);
-      setError(failure.message);
-    } finally { setBusy(false); }
-  }, [reset]);
-
-  useEffect(() => { restore(); }, [restore]);
+  }, [loadHome, restore, showPendingOrClubs]);
 
   async function login() {
     setBusy(true);
@@ -97,12 +125,19 @@ export default function MobileSpike() {
       const selected = { ...club, timeZone: metadata.timezone, logoUrl: club.logoUrl || safeClubLogo(metadata.logo_url, club) };
       setClub(selected);
       const url = await auth.start(selected);
-      await Browser.open({ url });
       setScreen('login');
+      await Browser.open({ url });
     } catch (failure) {
       setError(failure.message);
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
+  }
+
+  async function resumeLogin() {
+    setBusy(true);
+    setError('');
+    try { await Browser.open({ url: await auth.resumeLogin() }); }
+    catch (failure) { setError(failure.message); if (!auth.pending) setScreen('confirm'); }
+    finally { setBusy(false); }
   }
 
   async function logout() {
@@ -110,8 +145,11 @@ export default function MobileSpike() {
     setBusy(true);
     setScreen('restoring');
     setError('');
-    try { await auth.logout(); reset(); }
-    catch { setScreen('recover'); setError('Uitloggen is niet afgerond. Probeer opnieuw om je opgeslagen aanmelding te verwijderen.'); }
+    try {
+      await auth.logout();
+      if (Capacitor.getPlatform() === 'ios') await Browser.close().catch(() => {});
+      reset();
+    } catch { setScreen('recover'); setError('Uitloggen is niet afgerond. Probeer opnieuw om je opgeslagen aanmelding te verwijderen.'); }
     finally { setBusy(false); }
   }
 
@@ -120,7 +158,7 @@ export default function MobileSpike() {
     <header><div className="header-brand">{club && <ClubLogo key={club.id} club={club} />}<img className="rondo-wordmark" src="./brand/rondo-wordmark.svg" alt="Rondo" /></div><span className="badge">Proefversie</span></header>
     {error && <p role="alert" className="error">{error}</p>}
     {screen === 'restoring' && <p role="status">Je aanmelding controleren…</p>}
-    {screen === 'recover' && <section><h1>Aanmelding controleren</h1><p>Maak verbinding met je club om verder te gaan, of log uit op dit toestel.</p><button disabled={busy} onClick={restore}>Opnieuw proberen</button><button disabled={busy} className="secondary" onClick={logout}>Uitloggen op dit toestel</button></section>}
+    {screen === 'recover' && <section><h1>Aanmelding controleren</h1><p>Maak verbinding met je club om verder te gaan, of log uit op dit toestel.</p><button disabled={busy} onClick={() => restore()}>Opnieuw proberen</button><button disabled={busy} className="secondary" onClick={logout}>Uitloggen op dit toestel</button></section>}
     {screen === 'clubs' && <section>
       <p className="eyebrow">Jouw club, dichtbij</p><h1>Welkom bij Rondo</h1><p>Kies je club om in te loggen en je eigen gegevens te bekijken.</p>
       <label htmlFor="search">Zoek je club</label><input id="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Naam van je club" />
@@ -128,7 +166,7 @@ export default function MobileSpike() {
       {!results.length && <p>{clubs.length ? 'Geen club gevonden. Probeer een andere naam.' : 'Er is nog geen testclub ingesteld voor deze proefversie.'}</p>}
     </section>}
     {screen === 'confirm' && <section><h1>Inloggen bij {club.name}</h1><p>Je logt in via de website van je club. Daarna keer je terug naar Rondo.</p><p className="domain">{new URL(club.url).hostname}</p><button disabled={busy} onClick={login}>{busy ? 'Club controleren…' : 'Inloggen bij mijn club'}</button><button className="secondary" onClick={reset}>Terug naar clubkeuze</button></section>}
-    {screen === 'login' && <section><h1>Rond je aanmelding af</h1><p>Gebruik het geopende browservenster. Na toestemming kom je terug in deze app.</p><button className="secondary" onClick={() => { auth.clear(); setBusy(false); setScreen('confirm'); }}>Aanmelding annuleren</button></section>}
+    {screen === 'login' && <section><h1>Rond je aanmelding af</h1><p>Log in via de website van je club. Gebruik je een e-maillink? Open die op dit toestel en kies daarna Verbinden.</p><p>Je kunt de app tussendoor sluiten. Je aanmelding blijft tien minuten beschikbaar.</p><button disabled={busy} onClick={resumeLogin}>Inlogvenster opnieuw openen</button><button disabled={busy} className="secondary" onClick={logout}>Aanmelding annuleren</button></section>}
     {profile && auth.session && <MemberApp session={auth.session} profile={profile} logout={logout} read={(path) => auth.read(path)} onExpired={() => { setProfile(null); setScreen('recover'); setError('Je aanmelding is verlopen. Log opnieuw in.'); }} />}
     <footer>Proefversie{profile ? ' · aangemeld op dit toestel' : ''}</footer>
   </main>;
