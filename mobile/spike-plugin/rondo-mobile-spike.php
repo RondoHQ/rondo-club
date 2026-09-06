@@ -34,6 +34,26 @@ final class Plugin {
 		add_action( 'admin_post_rondo_mobile_spike_authorize', [ $this, 'authorize' ] );
 		add_action( 'admin_post_nopriv_rondo_mobile_spike_authorize', [ $this, 'authorize' ] );
 		add_action( 'rondo_mobile_spike_cleanup', 'delete_option' );
+		add_filter( 'login_redirect', [ $this, 'login_redirect' ], 20, 3 );
+	}
+
+	/** Preserve only this validated local authorization request after the WordPress login POST. */
+	public function login_redirect( $redirect, $requested, $user ) {
+		if ( ! self::enabled() || ! $user instanceof \WP_User || ! is_string( $requested ) ) {
+			return $redirect;
+		}
+		$parts = wp_parse_url( $requested );
+		$base  = wp_parse_url( admin_url( 'admin-post.php' ) );
+		foreach ( [ 'scheme', 'host', 'port', 'path', 'user', 'pass', 'fragment' ] as $key ) {
+			if ( ( $parts[ $key ] ?? null ) !== ( $base[ $key ] ?? null ) ) {
+				return $redirect;
+			}
+		}
+		parse_str( $parts['query'] ?? '', $params );
+		if ( ( $params['action'] ?? '' ) !== 'rondo_mobile_spike_authorize' || is_wp_error( self::validate( $params ) ) ) {
+			return $redirect;
+		}
+		return $requested;
 	}
 
 	public function routes(): void {

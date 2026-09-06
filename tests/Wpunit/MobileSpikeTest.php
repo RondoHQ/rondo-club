@@ -85,6 +85,27 @@ final class MobileSpikeTest extends RondoTestCase {
 		}
 	}
 
+	public function test_login_post_preserves_only_valid_local_authorization_redirect(): void {
+		$user      = self::factory()->user->create_and_get( [ 'role' => 'subscriber' ] );
+		$params    = array_merge( $this->params(), [ 'action' => 'rondo_mobile_spike_authorize' ] );
+		$requested = add_query_arg( $params, admin_url( 'admin-post.php' ) );
+		$fallback  = home_url( '/' );
+		$plugin    = new Plugin();
+		$this->assertSame( $requested, apply_filters( 'login_redirect', $fallback, $requested, $user ) );
+		foreach ( [
+			add_query_arg( $params, 'https://attacker.test/wp-admin/admin-post.php' ),
+			add_query_arg( $params, home_url( '/other.php' ) ),
+			add_query_arg( 'action', 'other', $requested ),
+			add_query_arg( 'code_challenge_method', 'plain', $requested ),
+			add_query_arg( 'redirect_uri', 'https://attacker.test', $requested ),
+			$requested . '#unexpected',
+			$fallback,
+		] as $invalid ) {
+			$this->assertSame( $fallback, $plugin->login_redirect( $fallback, $invalid, $user ) );
+		}
+		$this->assertSame( $fallback, $plugin->login_redirect( $fallback, $requested, new \WP_Error( 'failed' ) ) );
+	}
+
 	public function test_exchange_rejects_wrong_verifier_and_replay(): void {
 		$user = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		$code = Plugin::issue( $this->params(), $user );
