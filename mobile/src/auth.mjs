@@ -10,13 +10,18 @@ const randomValue = () => base64url(crypto.getRandomValues(new Uint8Array(32)));
 export function validateClubs(input) {
   if (!Array.isArray(input)) throw new Error('Ongeldige clublijst.');
   const ids = new Set();
-  return input.map(({ id, name, url }) => {
+  return input.map(({ id, name, url, logoUrl }) => {
     const parsed = new URL(url);
     if (!id || !name || ids.has(id) || parsed.protocol !== 'https:' || parsed.username || parsed.password || parsed.search || parsed.hash || parsed.pathname !== '/') {
       throw new Error('De clublijst bevat een ongeldige of dubbele club.');
     }
+    let logo;
+    if (logoUrl) {
+      logo = new URL(logoUrl);
+      if (logo.protocol !== 'https:' || logo.username || logo.password || logo.hash) throw new Error('Ongeldig clublogo in de clublijst.');
+    }
     ids.add(id);
-    return Object.freeze({ id, name, url: parsed.origin });
+    return Object.freeze({ id, name, url: parsed.origin, ...(logo ? { logoUrl: logo.href } : {}) });
   });
 }
 

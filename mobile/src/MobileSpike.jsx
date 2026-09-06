@@ -71,7 +71,7 @@ export default function MobileSpike() {
       const generation = auth.generation;
       const [me, metadata] = await Promise.all([auth.read('/read?resource=me'), request(session.club, '/config')]);
       if (!alive.current || generation !== auth.generation) return;
-      session.club = { ...session.club, timeZone: metadata.timezone, logoUrl: safeClubLogo(metadata.logo_url, session.club) };
+      session.club = { ...session.club, timeZone: metadata.timezone, logoUrl: session.club.logoUrl || safeClubLogo(metadata.logo_url, session.club) };
       setClub(session.club);
       setProfile(me);
       setScreen('home');
@@ -94,7 +94,7 @@ export default function MobileSpike() {
       if (generation !== auth.generation) return;
       if (metadata.protocol !== 'rondo-mobile-spike-v1' || metadata.club_url !== club.url) throw new Error('Deze club is nog niet beschikbaar voor de proef.');
       if (!Capacitor.isNativePlatform()) throw new Error('Open de geïnstalleerde proefapp om in te loggen.');
-      const selected = { ...club, timeZone: metadata.timezone, logoUrl: safeClubLogo(metadata.logo_url, club) };
+      const selected = { ...club, timeZone: metadata.timezone, logoUrl: club.logoUrl || safeClubLogo(metadata.logo_url, club) };
       setClub(selected);
       const url = await auth.start(selected);
       await Browser.open({ url });
