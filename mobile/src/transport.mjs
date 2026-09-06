@@ -22,6 +22,11 @@ export async function request(club, path, { method = 'GET', data, token } = {}) 
     error.code = result.data?.code;
     if (error.code === 'no_person') error.message = 'Je account is nog niet gekoppeld aan een lid. Neem contact op met je club.';
     if (error.code === 'pass_forbidden' || result.status === 403) error.message = 'Je hebt geen toegang tot deze gegevens. Neem contact op met je club.';
+    if (path === '/wallet') {
+      if (error.code === 'wallet_unavailable') error.message = 'Wallet is nog niet beschikbaar bij je club.';
+      if (error.code === 'wallet_failed') error.message = 'Je club kon de Wallet-pas niet maken. Probeer later opnieuw.';
+      if (error.code === 'membership_pass_choice_required') error.message = 'Kies eerst welke pas je wilt toevoegen.';
+    }
     if (path === '/shift') {
       const memberErrors = ['overlap_warning', 'shift_full', 'shift_closed', 'shift_busy', 'shift_cancel_deadline_passed', 'signup_not_open_yet', 'not_eligible', 'invalid_shift', 'vog_required', 'iva_required', 'pool_membership_required', 'no_person'];
       if (memberErrors.includes(error.code) && typeof result.data?.message === 'string') error.message = result.data.message.slice(0, 600);

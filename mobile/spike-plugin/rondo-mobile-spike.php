@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Rondo Mobile Spike (development only)
  * Description: Opt-in native member login experiment. Never loaded by the theme.
- * Version: 0.6.1
+ * Version: 0.7.0
  *
  * @package Rondo\MobileSpike
  */
@@ -106,6 +106,7 @@ final class Plugin {
 			'read'    => 'GET',
 			'shift'   => 'POST',
 			'profile' => 'POST',
+			'wallet'  => 'POST',
 			'revoke'  => 'POST',
 		] as $route => $method ) {
 			register_rest_route(
@@ -328,6 +329,99 @@ final class Plugin {
 		return self::pair( $record['family'], $data );
 	}
 
+	/** Keep native QR and Wallet access limited to the same personal household. */
+	private static function pass_access( \WP_REST_Request $request ) {
+		$id   = $request->get_param( 'person_id' );
+		$role = $request->get_param( 'role' ) ?? '';
+		if ( ! is_scalar( $id ) || ! ctype_digit( (string) $id ) || (int) $id <= 0 || ! is_string( $role ) || strlen( $role ) > 200 ) {
+			return self::error( 'invalid_pass', 400 );
+		}
+		// Even administrators can only open passes offered in their personal household.
+		$household = rest_do_request( new \WP_REST_Request( 'GET', '/rondo/v1/people/household' ) );
+		$allowed   = false;
+		if ( $household->get_status() === 200 ) {
+			foreach ( $household->get_data() as $person ) {
+				if ( (int) $person['id'] === (int) $id && ! empty( $person['membership_pass'] ) ) {
+					$allowed = true;
+					break;
+				}
+			}
+		}
+		if ( ! $allowed ) {
+			return self::error( 'pass_forbidden', 403 );
+		}
+		return true;
+	}
+
+	/** Export one existing eligible pass; provider credentials remain on the club server. */
+	public function wallet( \WP_REST_Request $request ) {
+		$data = self::load( self::SESSION, self::bearer( $request ) );
+		$user = $data ? self::user( $data ) : null;
+		if ( ! $user ) {
+			return self::error( 'invalid_token', 401 );
+		}
+		$params = $request->get_json_params();
+		if ( ! is_array( $params ) || array_diff( array_keys( $params ), [ 'person_id', 'role', 'provider' ] ) || ! in_array( $params['provider'] ?? '', [ 'apple', 'google' ], true ) ) {
+			return self::error( 'invalid_wallet', 400 );
+		}
+		$previous = get_current_user_id();
+		try {
+			wp_set_current_user( $user->ID );
+			$input = new \WP_REST_Request( 'POST' );
+			$input->set_body_params( $params );
+			$access = self::pass_access( $input );
+			$id     = (int) ( $params['person_id'] ?? 0 );
+			if ( is_wp_error( $access ) ) {
+				return $access;
+			}
+			if ( ! in_array( $id, \Rondo\Core\AccessControl::get_visible_person_ids(), true ) ) {
+				return self::error( 'pass_forbidden', 403 );
+			}
+			$selection = \Rondo\Passes\MembershipPassService::resolve_person_pass_selection( $id, $params['role'] ?? '' );
+			if ( $selection === null ) {
+				return self::error( 'membership_pass_choice_required', 400 );
+			}
+			$options  = [
+				'work'        => $selection['work'],
+				'member_tier' => $selection['member_tier'],
+			];
+			$provider = $params['provider'];
+			$service  = $provider === 'apple' ? new \Rondo\Passes\MembershipPassApple() : new \Rondo\Passes\MembershipPassGoogle();
+			if ( ! $service->is_configured() ) {
+				return self::error( 'wallet_unavailable', 409 );
+			}
+			$result = $provider === 'apple' ? $service->generate_for_person( $id, $options ) : $service->get_add_to_wallet_url_for_person( $id, $options );
+			if ( is_wp_error( $result ) ) {
+				// Provider exceptions may contain credential paths or API diagnostics.
+				return self::error( 'wallet_failed', 502 );
+			}
+			if ( $provider === 'google' ) {
+				if ( ! is_string( $result ) || ! preg_match( '~^https://pay\.google\.com/gp/v/save/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$~D', $result ) || strlen( $result ) > 65536 ) {
+					return self::error( 'wallet_failed', 502 );
+				}
+				return self::response(
+					[
+						'provider' => 'google',
+						'url'      => $result,
+					]
+					);
+			}
+			if ( ! is_array( $result ) || ! is_string( $result['content'] ?? null ) || strlen( $result['content'] ) > 4 * 1024 * 1024 ) {
+				return self::error( 'wallet_failed', 502 );
+			}
+			return self::response(
+				[
+					'provider' => 'apple',
+					'content'  => base64_encode( $result['content'] ),
+				]
+				);
+		} catch ( \Throwable $error ) {
+			return self::error( 'wallet_failed', 502 );
+		} finally {
+			wp_set_current_user( $previous );
+		}
+	}
+
 	/** Dispatch only fixed reads through existing REST permission callbacks and field filters. */
 	public function read( \WP_REST_Request $request ) {
 		$data = self::load( self::SESSION, self::bearer( $request ) );
@@ -363,25 +457,12 @@ final class Plugin {
 				$inner->set_param( 'view', 'signup' );
 			}
 			if ( $key === 'pass' ) {
-				$id   = $request->get_param( 'person_id' );
-				$role = $request->get_param( 'role' ) ?? '';
-				if ( ! is_scalar( $id ) || ! ctype_digit( (string) $id ) || (int) $id <= 0 || ! is_string( $role ) || strlen( $role ) > 200 ) {
-					return self::error( 'invalid_pass', 400 );
+				$access = self::pass_access( $request );
+				if ( is_wp_error( $access ) ) {
+					return $access;
 				}
-				// Even administrators can only open passes offered in their personal household.
-				$household = rest_do_request( new \WP_REST_Request( 'GET', $routes['household'] ) );
-				$allowed   = false;
-				if ( $household->get_status() === 200 ) {
-					foreach ( $household->get_data() as $person ) {
-						if ( (int) $person['id'] === (int) $id && ! empty( $person['membership_pass'] ) ) {
-							$allowed = true;
-							break;
-						}
-					}
-				}
-				if ( ! $allowed ) {
-					return self::error( 'pass_forbidden', 403 );
-				}
+				$id    = $request->get_param( 'person_id' );
+				$role  = $request->get_param( 'role' ) ?? '';
 				$inner = new \WP_REST_Request( 'GET', sprintf( $routes['pass'], (int) $id ) );
 				$inner->set_param( 'role', $role );
 			}

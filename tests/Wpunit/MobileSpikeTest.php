@@ -267,6 +267,43 @@ final class MobileSpikeTest extends RondoTestCase {
 		$this->assertSame( 0, get_current_user_id() );
 	}
 
+	private function wallet_request( string $token, array $params, string $method = 'POST' ): \WP_REST_Response {
+		$request = new \WP_REST_Request( $method, '/' . Plugin::NS . '/wallet' );
+		$request->set_header( 'Authorization', 'Bearer ' . $token );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( $params ) );
+		return rest_do_request( $request );
+	}
+
+	public function test_wallet_export_requires_session_personal_household_and_fixed_provider(): void {
+		$user     = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$person   = $this->createPerson( [], [ 'type-lid' => 'Bondslid' ] );
+		$stranger = $this->createPerson( [], [ 'type-lid' => 'Bondslid' ] );
+		update_user_meta( $user, 'rondo_linked_person_id', $person );
+		$token  = $this->session( $user );
+		$params = [
+			'person_id' => $person,
+			'provider'  => 'apple',
+			'role'      => '',
+		];
+		wp_set_current_user( 0 );
+		$this->assertSame( 401, $this->wallet_request( '', $params )->get_status() );
+		$this->assertSame( 404, $this->wallet_request( $token, $params, 'GET' )->get_status() );
+		$this->assertSame( 403, $this->wallet_request( $token, array_merge( $params, [ 'person_id' => $stranger ] ) )->get_status() );
+		foreach ( [ [ 'provider' => 'https://evil.test' ], [ 'provider' => [] ], [ 'person_id' => '../1' ], [ 'role' => [] ], [ 'url' => 'https://evil.test' ], [ 'member_tier' => 'sponsor' ] ] as $invalid ) {
+			$this->assertSame( 400, $this->wallet_request( $token, array_merge( $params, $invalid ) )->get_status() );
+		}
+		foreach ( [ 'apple', 'google' ] as $provider ) {
+			$result = $this->wallet_request( $token, array_merge( $params, [ 'provider' => $provider ] ) );
+			$this->assertSame( 409, $result->get_status() );
+			$this->assertSame( 'wallet_unavailable', $result->get_data()['code'] );
+			$this->assertSame( 0, get_current_user_id() );
+		}
+		Fields::update_for_post( $person, 'former_member', true );
+		$this->assertSame( 403, $this->wallet_request( $token, $params )->get_status() );
+		$this->assertSame( 0, get_current_user_id() );
+	}
+
 	private function change_shift( string $token, array $params ): \WP_REST_Response {
 		$request = new \WP_REST_Request( 'POST', '/' . Plugin::NS . '/shift' );
 		$request->set_header( 'Authorization', 'Bearer ' . $token );

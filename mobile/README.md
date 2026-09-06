@@ -1,6 +1,6 @@
 # Rondo Capacitor login spike
 
-Development experiment, version **0.6.1**. This is not the first app release and is not ready
+Development experiment, version **0.7.0**. This is not the first app release and is not ready
 for TestFlight, Google Play, or production installation. The agreed screen design remains in
 `docs/prd/mobile-app-first-release.md`.
 
@@ -20,8 +20,8 @@ for TestFlight, Google Play, or production installation. The agreed screen desig
 - Query cache and route history are scoped to a single in-memory login. Android back uses that
   route history. Returning from the system browser refreshes the current club's data.
 - Own contact details and household address can be edited natively after profile consent.
-  Wallet and remaining household/contribution actions open the fixed `/mijn-gegevens` club page
-  without app credentials in the URL.
+  Wallet uses the club generators directly. Remaining household/contribution actions open the fixed
+  `/mijn-gegevens` club page without app credentials in the URL.
 - Explicit logout/revocation and club switching under **Meer → Mijn clubs**.
 - Tests for wrong club/state/verifier, replay, expiry, revocation, password/access changes,
   household filtering, caller restoration and stale responses after logout.
@@ -201,7 +201,7 @@ or a release build. Never add its key, certificate or trust override to a produc
 3. Replace the experimental adapter with reviewed production native authorization, verified
    HTTPS callbacks, stable installation identity and the mobile config/API adapter. Retain all
    existing web and FreeScout contracts.
-4. Complete the member workflows: remaining household actions, direct Wallet delivery and
+4. Complete the member workflows: remaining household actions and
    contribution controls, guest passes and configurable capability navigation. The read screens
    reuse server contracts; browser and app share `src/hooks/usePassQr.js`.
 5. Add remaining release work: background snapshot privacy, Wallet/payment
@@ -279,7 +279,7 @@ in component memory only. Writes share one session guard with volunteer actions;
 queued or retried automatically. After an uncertain response, controls require a fresh profile
 read before allowing another submission. Logout rejects stale write results.
 
-Wallet, contribution and separate child/other-parent editing remain on the club site. The adapter
+Contribution and separate child/other-parent editing remain on the club site. The adapter
 still requires local/development opt-in, and all test email is captured locally.
 
 Validation for 0.6.0: 35 mobile JavaScript tests and 21 focused WordPress/MySQL tests (208 assertions)
@@ -295,3 +295,41 @@ was used. Shared-service household propagation and former-member rejection are c
 Version 0.6.1 separates the household action links with a wrapping gap and removes the province input. Existing `state` data remains in the complete address payload so saving another address field does not clear it.
 
 The address form uses a single Dutch country dropdown from pinned `i18n-iso-countries` data. Selecting a country sets its name and two-letter ISO code together. Existing Dutch/English names and three-letter codes are resolved on opening; unknown values require an explicit selection. Neither province nor country code has a separate input.
+
+
+## Direct Wallet handoff (0.7.0)
+
+The pass detail shows only the device's provider: Apple on iOS, Google on Android. An unconfigured
+provider has a short explanation; QR access remains available. Apple's `canAddPasses()` is checked
+before offering its button. A browser preview cannot export a native Wallet pass.
+
+`POST /wallet` accepts exactly `person_id`, `role` and `provider` (`apple` or `google`). The existing
+read scope permits exporting an already accessible pass. The adapter checks the current token,
+personal household (including for admins), visible-person access and the existing selected-pass
+resolver, then calls the original Apple/Google generator. Entitlement, role, branding, pass version
+and QR rules stay in those services. The route is development-only and never authenticates arbitrary
+REST routes. Provider diagnostics are replaced by bounded, generic errors.
+
+Apple responses contain base64 pass bytes (maximum 4 MiB decoded), kept only in process memory.
+The narrow `RondoWallet` plugin uses `PKPass(data:)` and `PKAddPassesViewController`. No signing key,
+pass file, clipboard content or additional Keychain record is created on the phone. Closing Apple's
+sheet is not reported as a successful save. Google responses contain only an exact
+`https://pay.google.com/gp/v/save/<signed JWT>` URL, validated on server and client before opening
+Capacitor Browser. Rondo bearer/refresh tokens are never included in that link. Google completes
+the add flow; returning to Rondo does not assert that the pass was saved.
+
+Export is an explicit, serialized POST with no automatic retry or offline queue, since the Google
+generator may create/update its Wallet object. Logout or leaving the pass screen discards a late
+result. Responses use `Cache-Control: no-store`; exports are excluded from the query cache and vault.
+Wallet passes already saved by a member remain in their Wallet after Rondo logout; existing server
+entitlement/version checks still govern scans.
+
+The local fixture contains no real Apple signing certificate or Google issuer credentials. Tests
+cover access denial, invalid input, missing configuration, safe handoff data, provider failures and
+late/logout responses. Successfully adding a signed pass to a real Wallet still requires an approved
+test issuer/certificate and device validation. Do not copy production keys into this fixture.
+
+References: [Apple PassKit](https://developer.apple.com/documentation/passkit/pkaddpassesviewcontroller)
+and [Google save links](https://developers.google.com/wallet/generic/web).
+
+Native validation: both simulators exercised the matching button and invalid-provider error. iOS also rejected an intentionally corrupt pass through the actual PassKit bridge. All temporary invalid Wallet configuration was removed afterwards.
