@@ -299,3 +299,35 @@ test('profile write response loss is surfaced once without resending or storing 
   assert.equal(count, 1);
   assert.equal(JSON.stringify(env.stored()).includes('new@example.test'), false);
 });
+
+
+test('Wallet export uses the existing pass read consent, never persists a pass and never retries', async () => {
+  let count = 0;
+  const env = setup(async (_, path, options) => {
+    if (path === '/token') return { ...pair(), scope: READ_SCOPE };
+    assert.equal(path, '/wallet');
+    assert.equal(options.method, 'POST');
+    assert.deepEqual(options.data, { person_id: 12, role: 'member', provider: 'apple' });
+    count++;
+    throw new Error('Response lost');
+  });
+  await env.auth.restore();
+  await assert.rejects(env.auth.requestWallet(12, 'member', 'apple'), /Response lost/);
+  assert.equal(count, 1);
+  assert.equal(JSON.stringify(env.stored()).includes('person_id'), false);
+});
+
+test('Wallet response arriving after logout is discarded before handoff', async () => {
+  let release;
+  const env = setup(async (_, path) => {
+    if (path === '/token') return pair();
+    if (path === '/revoke') return {};
+    return new Promise((resolve) => { release = () => resolve({ provider: 'apple', content: 'YWJj' }); });
+  });
+  await env.auth.restore();
+  const exporting = env.auth.requestWallet(12, '', 'apple');
+  await new Promise((resolve) => setImmediate(resolve));
+  await env.auth.logout();
+  release();
+  await assert.rejects(exporting, { status: 401 });
+});

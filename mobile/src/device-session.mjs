@@ -176,6 +176,9 @@ export class DeviceSession extends LoginSession {
   async changeShift(shiftId, action, forceOverlap = false) {
     return this.write('/shift', { shift_id: shiftId, action, force_overlap: forceOverlap }, canChangeShifts);
   }
+  async requestWallet(personId, role, provider) {
+    return this.write('/wallet', { person_id: personId, role, provider }, (scope) => VALID_SCOPES.includes(scope));
+  }
   async changeProfile(action, values = {}) {
     return this.write('/profile', { action, values }, (scope) => scope === PROFILE_SCOPE);
   }

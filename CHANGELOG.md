@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.53.0] - 2026-09-06
+
+### Added
+
+- Development-only direct membership-pass export to Apple Wallet and Google Wallet from the native app, reusing the club's existing generators, pass choices and personal-household access rules.
+- In-memory Apple PassKit presentation and an allowlisted Google save-link handoff, with provider availability, bounded payloads and no automatic request retries.
+
 ## [35.52.1] - 2026-09-06
 
 ### Fixed

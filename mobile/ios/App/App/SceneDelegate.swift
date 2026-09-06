@@ -1,6 +1,7 @@
 import UIKit
 import Capacitor
 import Security
+import PassKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
@@ -91,5 +92,53 @@ public class RondoSessionVault: CAPPlugin, CAPBridgedPlugin {
 class RondoBridgeController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(RondoSessionVault())
+        bridge?.registerPluginInstance(RondoWallet())
+    }
+}
+
+// Signed pass bytes stay in memory and are validated by PassKit before presentation.
+@objc(RondoWallet)
+public class RondoWallet: CAPPlugin, CAPBridgedPlugin, PKAddPassesViewControllerDelegate {
+    public let identifier = "RondoWallet"
+    public let jsName = "RondoWallet"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "available", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "add", returnType: CAPPluginReturnPromise)
+    ]
+    private var pending: CAPPluginCall?
+
+    @objc public func available(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            call.resolve(["available": PKAddPassesViewController.canAddPasses()])
+        }
+    }
+
+    @objc public func add(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            guard self.pending == nil,
+                  PKAddPassesViewController.canAddPasses(),
+                  let presenter = self.bridge?.viewController,
+                  presenter.viewIfLoaded?.window != nil,
+                  presenter.presentedViewController == nil else {
+                call.reject("Apple Wallet kan nu niet worden geopend."); return
+            }
+            guard let content = call.getString("content"), content.utf8.count <= 5592408,
+                  let data = Data(base64Encoded: content), !data.isEmpty, data.count <= 4 * 1024 * 1024,
+                  let pass = try? PKPass(data: data),
+                  let controller = PKAddPassesViewController(pass: pass) else {
+                call.reject("De club heeft geen geldige Apple Wallet-pas teruggestuurd."); return
+            }
+            self.pending = call
+            controller.delegate = self
+            presenter.present(controller, animated: true)
+        }
+    }
+
+    public func addPassesViewControllerDidFinish(_ controller: PKAddPassesViewController) {
+        controller.dismiss(animated: true) {
+            // Closing the sheet can mean cancellation; never claim that a pass was saved.
+            self.pending?.resolve()
+            self.pending = nil
+        }
     }
 }

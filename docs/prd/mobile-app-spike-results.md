@@ -1,6 +1,6 @@
 # Capacitor-proef: resultaten en vervolg
 
-Datum: 6 september 2026. Status: ontwikkelproef 0.6.0; native simulatorlogin geslaagd, fysieke toestelproef nog open.
+Datum: 6 september 2026. Status: ontwikkelproef 0.7.0; native simulatorlogin geslaagd, fysieke toestelproef nog open.
 Branch: `codex/capacitor-login-spike`. Geen productie-installatie of store-upload uitgevoerd.
 
 ## Gebouwd
@@ -269,3 +269,22 @@ lokaal opgevangen verificatielink met controle na herstart en herstel na verbind
 verzending. De database-uitkomsten zijn apart teruggelezen. Gezinsdoorwerking en oud-lidblokkades
 zijn in PHP getest. Fysieke toestellen, echte mailboxen en Sportlink-synchronisatie blijven buiten
 deze lokale proef.
+
+
+## Wallet vanuit de app (0.7.0)
+
+De pasdetailpagina biedt nu Apple Wallet op iPhone en Google Wallet op Android aan, als de club
+die provider heeft ingesteld. De nieuwe ontwikkelroute controleert opnieuw de eigen huishoudkring,
+zichtbare personen en bestaande paskeuze. De originele clubgenerator maakt de pas met dezelfde
+rechten, styling en QR-versie.
+
+Apple-pasgegevens gaan uitsluitend via het appgeheugen naar PassKit; Google gebruikt uitsluitend
+de gecontroleerde, ondertekende Google-save-URL. Geen automatisch herhalen, offline wachtrij of
+opslag in de appcache. Een late reactie na uitloggen of het verlaten van de pas wordt genegeerd.
+De app beweert niet dat een pas is opgeslagen na het sluiten van Wallet.
+
+43 JavaScript-tests en 22 WordPress/MySQL-tests (228 assertions) slagen. De web-, mobiele en native
+builds en codecontroles slagen. De lokale proefclub bevat geen echte Wallet-sleutels. Native testen
+richten zich op beschikbaarheid en foutafhandeling met ontbrekende/ongeldige instellingen; een
+werkende ondertekende pas opslaan in Wallet blijft te controleren met goedgekeurde testinstellingen
+en een geschikt toestel. Er is geen productie-uitrol of store-upload gedaan.
