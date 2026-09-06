@@ -1,7 +1,13 @@
 # Rondo Mobile — iPhone and Android app design
 
-**Status:** Proposed design
+**Status:** Earlier technical exploration; see the current release proposal below
 **Date:** 2026-08-30
+**Current plan (2026-09-06):** [First release, screens and delivery gates](mobile-app-first-release.md)
+and [Central Wallet service and existing-pass preservation](central-wallet-service.md).
+Those documents take precedence for scope, club onboarding and architectural decisions. The
+React Native recommendation below is superseded by the user's choice of Capacitor on 2026-09-06;
+implementation has not been approved. Its hosted-WebView/cookie protocol is historical exploration,
+not the authentication design for the packaged Capacitor app.
 **Scope:** One App Store / Google Play app that can connect to any compatible Rondo Club install
 **Primary decision:** Build a thin native shell around the hosted Rondo web app, with the club's
 domain as a saved setting and native support for authentication, notifications, deep links, camera,
