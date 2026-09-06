@@ -248,6 +248,7 @@ async function buildKaderlijst(refresh = false) {
   const teamsById = new Map(teams.map((team) => [team.id, team]));
 
   const rows = [];
+  const seenRowIds = new Set();
   people.forEach((person) => {
     if (isTruthy(person?.fields?.former_member)) return;
 
@@ -274,8 +275,13 @@ async function buildKaderlijst(refresh = false) {
       const teamName = team?.name || fallbackTeamName;
       if (!teamName) return;
 
+      // Multiple current history entries can describe the same staff assignment.
+      const rowId = `${teamId || 'no-team'}-${person.id}-${role}`;
+      if (seenRowIds.has(rowId)) return;
+      seenRowIds.add(rowId);
+
       rows.push({
-        id: `${teamId || 'no-team'}-${person.id}-${role}`,
+        id: rowId,
         personId: person.id,
         teamId: team?.id || null,
         teamName,

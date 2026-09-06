@@ -98,6 +98,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Isolated Capacitor 0.1.0 development experiment for club selection, browser login with PKCE, and short read-only sessions. Includes native project scaffolds, a separately installed development-only WordPress adapter, and contract tests; not enabled on production.
 
+## [35.46.1] - 2026-09-06
+
+### Fixed
+
+- De kaderlijst toont dezelfde persoon, hetzelfde team en dezelfde functie één keer wanneer meerdere actuele functiehistoriekregels dezelfde inzet beschrijven.
+
 ## [35.46.0] - 2026-09-06
 
 ### Added
