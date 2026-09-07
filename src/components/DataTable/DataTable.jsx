@@ -67,7 +67,7 @@ export default function DataTable({
   filters: controlledFilters,
   onFilterChange: controlledOnFilterChange,
   onClearFilters: controlledOnClearFilters,
-  // Optional row className function: (rowData, index) => string
+  // Optional row className function: (rowData, index, previousRowData) => string
   rowClassName,
 }) {
   const isControlled = controlledFilters !== undefined;
@@ -234,7 +234,8 @@ export default function DataTable({
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {rows.map((row, index) => {
-                const extraClass = rowClassName ? rowClassName(row.original, index) : '';
+                const previousRow = rows[index - 1]?.original;
+                const extraClass = rowClassName ? rowClassName(row.original, index, previousRow) : '';
                 return (
                 <tr
                   key={row.id}
@@ -254,7 +255,7 @@ export default function DataTable({
                           meta.className || '',
                         ].join(' ')}
                       >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {flexRender(cell.column.columnDef.cell, { ...cell.getContext(), previousRow })}
                       </td>
                     );
                   })}
