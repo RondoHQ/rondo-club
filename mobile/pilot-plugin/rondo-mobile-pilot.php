@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Rondo AWC Mobile Pilot
  * Description: Explicitly enabled, allowlisted, read-only native AWC pilot. Never loaded by the theme.
- * Version: 0.9.1
+ * Version: 0.9.2
  *
  * @package Rondo\MobilePilot
  */

@@ -26,7 +26,7 @@ assert.equal(login.status, 302);
 const consent = await request(url);
 assert.equal(consent.status, 200);
 const html = await consent.text();
-assert.ok(html.includes('Rondo Proef verbinden'));
+assert.ok(html.includes('Verbinden met Rondo'));
 const nonce = html.match(/name="_wpnonce" value="([^"]+)"/)?.[1];
 assert.ok(nonce, 'Consent includes a nonce');
 const params = new URL(url).searchParams;
