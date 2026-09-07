@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.59.0] - 2026-09-07
+
+### Added
+
+- Personal My Team contact rosters for current trainers, coaches, and team managers, including their players and parents/guardians, with a team selector for multiple assignments (scoped implementation of feedback #11647).
+- A contact-only endpoint that exposes no account registration or volunteer-task information and does not grant access to general person records. Team rosters are excluded from offline API caching.
+
 ## [35.58.0] - 2026-09-07
 
 ### Added

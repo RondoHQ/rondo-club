@@ -10,6 +10,7 @@ export const SponsorList = lazy(() => import('@/pages/Sponsors/SponsorList'));
 export const SponsorDetail = lazy(() => import('@/pages/Sponsors/SponsorDetail'));
 export const TeamsList = lazy(() => import('@/pages/Teams/TeamsList'));
 export const TeamDetail = lazy(() => import('@/pages/Teams/TeamDetail'));
+export const MyTeam = lazy(() => import('@/pages/Teams/MyTeam'));
 export const Kaderlijst = lazy(() => import('@/pages/Teams/Kaderlijst'));
 export const CommissiesList = lazy(() => import('@/pages/Commissies/CommissiesList'));
 export const CommissieDetail = lazy(() => import('@/pages/Commissies/CommissieDetail'));

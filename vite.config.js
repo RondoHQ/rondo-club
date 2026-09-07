@@ -67,6 +67,11 @@ export default defineConfig({
             },
           },
           {
+            // Contact rosters must always recheck the current coaching assignment.
+            urlPattern: /\/wp-json\/rondo\/v1\/my-teams(?:[/?]|$)/i,
+            handler: 'NetworkOnly',
+          },
+          {
             urlPattern: /\/wp-json\/.*/i,
             handler: 'NetworkFirst',
             options: {
