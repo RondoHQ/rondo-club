@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.55.2] - 2026-09-07
+
+### Changed
+
+- Make the Kaderlijst easier to scan with a compact age-group column, a combined full-name column, and clear separators between teams.
+
+### Fixed
+
+- Keep Kaderlijst group labels and team separators aligned with the visible rows after filtering or sorting.
+
 ## [35.55.1] - 2026-09-07
 
 ### Fixed

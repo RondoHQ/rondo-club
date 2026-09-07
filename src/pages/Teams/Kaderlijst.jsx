@@ -17,6 +17,19 @@ const AGE_GROUP_ORDER = {
   Senioren: 2,
 };
 const FETCH_CONCURRENCY = 4;
+
+function isSameTeam(row, previousRow) {
+  return previousRow?.ageGroup === row.ageGroup
+    && previousRow?.yearGroup === row.yearGroup
+    && previousRow?.teamId === row.teamId
+    && previousRow?.teamName === row.teamName;
+}
+
+function rosterRowClassName(row, index, previousRow) {
+  if (index === 0 || isSameTeam(row, previousRow)) return '';
+  return 'border-t-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800';
+}
+
 const ROLE_SORT_ORDER = {
   'trainer/coach': 0,
   'assistenttrainer/coach': 1,
@@ -376,16 +389,7 @@ export default function Kaderlijst() {
       return collator.compare(a.firstName, b.firstName);
     });
 
-    return sortedRows.map((row, index) => {
-      const prev = sortedRows[index - 1];
-
-      return {
-        ...row,
-        ageGroupDisplay: prev && prev.ageGroup === row.ageGroup ? '' : row.ageGroup,
-        yearGroupDisplay: prev && prev.yearGroup === row.yearGroup ? '' : row.yearGroup,
-        teamDisplay: prev && prev.teamName === row.teamName ? '' : row.teamName,
-      };
-    });
+    return sortedRows;
   }, [data?.rows, data?.teams, roleSettings?.player_roles]);
 
   const ageGroupOptions = useMemo(() => {
@@ -407,18 +411,18 @@ export default function Kaderlijst() {
       id: 'age_group',
       header: 'Leeftijdsgroep',
       accessorFn: (row) => row.ageGroup,
-      cell: ({ row }) => <span className="font-medium text-gray-900 dark:text-gray-100">{row.original.ageGroupDisplay}</span>,
+      cell: ({ row, previousRow }) => <span className="font-medium text-gray-900 dark:text-gray-100">{previousRow?.ageGroup === row.original.ageGroup ? '' : row.original.ageGroup}</span>,
       filterType: FILTER_TYPES.SELECT,
       filterLabel: 'Leeftijdsgroep',
       filterOptions: ageGroupOptions,
       sortable: false,
-      size: 150,
+      size: 160,
     }),
     createColumn({
       id: 'year_group',
       header: 'Jaarlaag',
       accessorFn: (row) => row.yearGroup,
-      cell: ({ row }) => <span className="font-medium text-gray-900 dark:text-gray-100">{row.original.yearGroupDisplay}</span>,
+      cell: ({ row, previousRow }) => <span className="font-medium text-gray-900 dark:text-gray-100">{previousRow?.ageGroup === row.original.ageGroup && previousRow?.yearGroup === row.original.yearGroup ? '' : row.original.yearGroup}</span>,
       filterType: FILTER_TYPES.SELECT,
       filterLabel: 'Jaarlaag',
       filterOptions: yearGroupOptions,
@@ -429,12 +433,12 @@ export default function Kaderlijst() {
       id: 'team',
       header: 'Team',
       accessorFn: (row) => row.teamName,
-      cell: ({ row }) => (
-        row.original.teamDisplay && row.original.hasTeamLink ? (
+      cell: ({ row, previousRow }) => isSameTeam(row.original, previousRow) ? null : (
+        row.original.hasTeamLink ? (
           <Link to={`/teams/${row.original.teamId}`} className="font-medium text-gray-900 dark:text-gray-100 hover:text-electric-cyan dark:hover:text-electric-cyan">
-            {row.original.teamDisplay}
+            {row.original.teamName}
           </Link>
-        ) : row.original.teamDisplay
+        ) : row.original.teamName
       ),
       filterType: FILTER_TYPES.TEXT,
       filterLabel: 'Team',
@@ -442,39 +446,21 @@ export default function Kaderlijst() {
       size: 180,
     }),
     createColumn({
-      id: 'first_name',
-      header: 'Voornaam',
-      accessorFn: (row) => row.firstName,
-      cell: ({ row }) => (
+      id: 'name',
+      header: 'Naam',
+      accessorFn: (row) => [row.firstName, row.surname].filter(Boolean).join(' '),
+      cell: ({ row, getValue }) => (
         <Link to={`/people/${row.original.personId}`} className="font-medium text-gray-900 dark:text-gray-100 hover:text-electric-cyan dark:hover:text-electric-cyan">
-          {row.original.firstName}
+          {getValue()}
         </Link>
       ),
       filterType: FILTER_TYPES.TEXT,
-      filterLabel: 'Voornaam',
-      sortingFn: (rowA, rowB) => {
-        const firstNameCompare = collator.compare(rowA.original.firstName, rowB.original.firstName);
-        return firstNameCompare !== 0 ? firstNameCompare : collator.compare(rowA.original.lastName, rowB.original.lastName);
-      },
-      size: 140,
-    }),
-    createColumn({
-      id: 'surname',
-      header: 'Achternaam',
-      accessorFn: (row) => row.lastName,
-      cell: ({ row }) => (
-        <Link to={`/people/${row.original.personId}`} className="font-medium text-gray-900 dark:text-gray-100 hover:text-electric-cyan dark:hover:text-electric-cyan">
-          {row.original.surname}
-        </Link>
-      ),
-      filterType: FILTER_TYPES.TEXT,
-      filterFn: (row, _columnId, value) => row.original.surname.toLocaleLowerCase('nl').includes(String(value || '').toLocaleLowerCase('nl')),
-      filterLabel: 'Achternaam',
+      filterLabel: 'Naam',
       sortingFn: (rowA, rowB) => {
         const surnameCompare = collator.compare(rowA.original.lastName, rowB.original.lastName);
         return surnameCompare !== 0 ? surnameCompare : collator.compare(rowA.original.firstName, rowB.original.firstName);
       },
-      size: 180,
+      // Leave the name column flexible so it receives spare table width.
     }),
     createColumn({
       id: 'role',
@@ -529,6 +515,7 @@ export default function Kaderlijst() {
         storageKey="kaderlijst"
         data={rosterRows}
         columns={columns}
+        rowClassName={rosterRowClassName}
         isLoading={isLoading}
         toolbarEnd={(
           <button
