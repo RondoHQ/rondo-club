@@ -409,24 +409,19 @@ export default function Kaderlijst() {
 
   const columns = useMemo(() => [
     createColumn({
-      id: 'group',
-      header: 'Groep',
+      // Keep age-group filtering available without a visible group column.
+      id: 'age_group_filter',
+      header: 'Leeftijdsgroep',
       accessorFn: (row) => row.ageGroup,
-      cell: ({ row, previousRow }) => (
-        <span className="font-medium text-gray-900 dark:text-gray-100">
-          {previousRow?.ageGroup === row.original.ageGroup && previousRow?.yearGroup === row.original.yearGroup
-            ? ''
-            : [row.original.ageGroup, row.original.yearGroup].filter(Boolean).join(' · ')}
-        </span>
-      ),
       filterType: FILTER_TYPES.SELECT,
       filterLabel: 'Leeftijdsgroep',
       filterOptions: ageGroupOptions,
       sortable: false,
-      size: 180,
+      defaultHidden: true,
+      enableHiding: false,
     }),
     createColumn({
-      // Retain the separate year filter without rendering a second group column.
+      // Keep year filtering available without a visible year column.
       id: 'year_group_filter',
       header: 'Jaarlaag',
       accessorFn: (row) => row.yearGroup,
