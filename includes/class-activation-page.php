@@ -242,8 +242,9 @@ class ActivationPage {
 	 * @param string $email Address behind the token.
 	 */
 	private function render_person_picker( string $token, string $email ) {
-		$persons   = ActivationService::persons_for_email( $email );
-		$available = array_filter( $persons, fn( $id ) => ! ActivationService::has_account( $id ) );
+		$persons       = ActivationService::persons_for_email( $email );
+		$available     = array_values( array_filter( $persons, fn( $id ) => ! ActivationService::has_account( $id ) ) );
+		$youth_persons = array_filter( $available, fn( $id ) => GuardianAccountService::is_youth_person( (int) $id ) );
 
 		$this->open( 'Account activeren' );
 
@@ -257,35 +258,45 @@ class ActivationPage {
 			$this->close();
 			return;
 		}
+		$single_identity = count( $available ) === 1 && empty( $youth_persons );
 		?>
 	<div class="card">
-		<h2>Wie ben je?</h2>
-		<p>Kies wie dit account gaat gebruiken. Ben je de ouder of verzorger van een jeugdlid? Dan koppelen we het account waar mogelijk meteen aan jouw eigen gegevens.</p>
-		<form method="post" action="<?php echo esc_url( ActivationService::activation_url( $token ) ); ?>">
+		<?php if ( $single_identity ) : ?>
+			<p>Je maakt een account aan voor <strong><?php echo esc_html( get_the_title( $available[0] ) ); ?></strong>.</p>
+		<?php else : ?>
+			<h2>Voor wie maak je een account?</h2>
+			<p>Kies hieronder wie gaat inloggen.</p>
+		<?php endif; ?>
+		<form class="activation-picker" method="post" action="<?php echo esc_url( ActivationService::activation_url( $token ) ); ?>">
 			<?php wp_nonce_field( self::NONCE_ACTION ); ?>
-			<?php foreach ( $available as $index => $person_id ) : ?>
-				<div style="margin:0 0 18px;padding:14px;border:1px solid #cbd5e1;border-radius:8px;">
-					<label>
-						<input type="radio" name="identity" value="self:<?php echo esc_attr( $person_id ); ?>" <?php checked( 0, $index ); ?> required />
-						Ik ben <?php echo esc_html( get_the_title( $person_id ) ); ?>
-					</label>
-					<?php if ( GuardianAccountService::is_youth_person( (int) $person_id ) ) : ?>
-						<br />
-						<label style="display:inline-block;margin-top:10px;">
-							<input type="radio" name="identity" value="guardian:<?php echo esc_attr( $person_id ); ?>" />
-							Ik ben ouder/verzorger van <?php echo esc_html( get_the_title( $person_id ) ); ?>
+			<?php if ( $single_identity ) : ?>
+				<input type="hidden" name="identity" value="self:<?php echo esc_attr( $available[0] ); ?>" />
+			<?php else : ?>
+				<?php foreach ( $available as $index => $person_id ) : ?>
+					<div class="activation-person">
+						<label class="activation-choice">
+							<input type="radio" name="identity" value="self:<?php echo esc_attr( $person_id ); ?>" <?php checked( 0, $index ); ?> required />
+							<span><strong>Voor mezelf</strong><span class="activation-choice-detail">Ik ben <?php echo esc_html( get_the_title( $person_id ) ); ?></span></span>
 						</label>
-					<?php endif; ?>
+						<?php if ( in_array( $person_id, $youth_persons, true ) ) : ?>
+							<label class="activation-choice">
+								<input type="radio" name="identity" value="guardian:<?php echo esc_attr( $person_id ); ?>" />
+								<span><strong>Voor mij als ouder/verzorger</strong><span class="activation-choice-detail">Van <?php echo esc_html( get_the_title( $person_id ) ); ?></span></span>
+							</label>
+						<?php endif; ?>
+					</div>
+				<?php endforeach; ?>
+			<?php endif; ?>
+			<?php if ( ! empty( $youth_persons ) ) : ?>
+				<div class="activation-guardian-field">
+					<label for="rondo-guardian-name">Jouw volledige naam</label>
+					<input type="text" id="rondo-guardian-name" name="guardian_name" maxlength="120" autocomplete="name" aria-describedby="rondo-guardian-help" />
+					<p id="rondo-guardian-help" class="activation-help">Vul je eigen voor- en achternaam in, niet die van je kind.</p>
 				</div>
-			<?php endforeach; ?>
-			<p>
-				<label for="rondo-guardian-name">Jouw volledige naam <span style="font-weight:normal;">(alleen als ouder/verzorger)</span></label><br />
-				<input type="text" id="rondo-guardian-name" name="guardian_name" maxlength="120" autocomplete="name"
-					style="width:100%;padding:12px;font-size:16px;border:1px solid #cbd5e1;border-radius:8px;margin-top:6px;" />
-			</p>
-			<button type="submit" class="btn-primary">Account aanmaken</button>
+			<?php endif; ?>
+			<button type="submit" class="btn btn-primary activation-submit">Account aanmaken</button>
 		</form>
-		<p class="error-hint">Deze link werkt één keer. Wil je daarna nog een account aanmaken voor iemand anders op dit adres, vraag dan een nieuwe link aan.</p>
+		<p class="activation-help">Deze link werkt één keer. Voor een volgend account vraag je een nieuwe link aan.</p>
 	</div>
 		<?php
 		$this->close();
@@ -324,7 +335,7 @@ class ActivationPage {
 			$branding['logo_url'],
 			get_theme_file_uri( '/public/images/og-account-activation.png' )
 		);
-		echo '<div class="container">';
+		echo '<div class="container activation-page">';
 		PublicPageChrome::header_card( $heading );
 	}
 
