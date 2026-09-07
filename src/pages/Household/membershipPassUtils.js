@@ -43,3 +43,9 @@ export function buildDigitalPassPath(personId, role = '') {
   const params = new URLSearchParams({ role });
   return `${path}?${params.toString()}`;
 }
+
+// Keep web and native pass backgrounds aligned with the server's Wallet styling.
+export function getMembershipPassBackground(passType, backgroundColor) {
+  if (typeof backgroundColor === 'string' && /^#[a-f0-9]{6}$/i.test(backgroundColor)) return backgroundColor;
+  return getMembershipPassPresentation(passType).sponsor ? '#ffffff' : '#006935';
+}

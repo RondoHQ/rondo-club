@@ -1,0 +1,38 @@
+# Synthetic Alpha fixture only. Requires a login with explicit profile consent.
+# Choose a changed fictitious number; independently restore fixture fields after the run.
+appId: club.rondo.spike
+---
+- launchApp:
+    stopApp: true
+- assertVisible: "Hallo, Proeflid"
+- tapOn: "Meer"
+- tapOn: "Mijn gegevens"
+- tapOn: "Gegevens wijzigen.*"
+- tapOn: "Telefoonnummers wijzigen"
+- tapOn: "Mobiel"
+- eraseText
+- inputText: "+31612345626"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: "Done"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
+- scrollUntilVisible:
+    element: "Opslaan"
+    direction: DOWN
+- tapOn: "Opslaan"
+- assertVisible: "Je gegevens zijn opgeslagen."
+- assertVisible: "+31612345626"
+- takeScreenshot: phone-saved
+- stopApp
+- launchApp
+- assertVisible: "Hallo, Proeflid"
+- tapOn: "Meer"
+- tapOn: "Mijn gegevens"
+- assertVisible: "+31612345626"
+- tapOn: "Gegevens wijzigen.*"
