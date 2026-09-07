@@ -109,6 +109,29 @@ class TeamMatchesTest extends RondoTestCase {
 		$this->assertNull( ( new TeamMatches() )->resolve_team( $this->team_id, $this->directory() ) );
 	}
 
+	public function test_local_team_mapping_ignores_wordpress_smart_apostrophes(): void {
+		$id        = $this->createOrganization(
+			[ 'post_title' => "Mini's" ],
+			[
+				'publicteamid' => 'CT123',
+				'activiteit'   => 'Veld - Zaterdag',
+			]
+			);
+		$directory = [
+			[
+				'teamcode'       => -1,
+				'lokaleteamcode' => 101,
+				'teamnaam'       => "Mini's",
+				'spelsoort'      => 'Veld Zaterdag',
+				'teamsoort'      => 'lokaal',
+				'local_names'    => true,
+			],
+		];
+		$team      = ( new TeamMatches() )->resolve_team( $id, $directory );
+		$this->assertSame( 101, $team['lokaleteamcode'] );
+		$this->assertSame( [ 101 ], $team['ids'] );
+	}
+
 	public function test_full_season_merges_results_and_filters_unrelated_local_fixtures(): void {
 		$year            = (int) substr( TeamMatches::season()['key'], 0, 4 );
 		$this->programme = [ $this->fixture( '100' ), $this->fixture( '101', 51 ), $this->fixture( 'other', 700 ), $this->fixture( 'old', 123, ( $year - 1 ) . '-05-01' ) ];
