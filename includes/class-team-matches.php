@@ -27,7 +27,7 @@ class TeamMatches {
 
 	/** Match names exactly, ignoring presentation-only whitespace and case. */
 	private static function name_key( string $value ): string {
-		return mb_strtolower( trim( preg_replace( '/\s+/u', ' ', html_entity_decode( $value, ENT_QUOTES, 'UTF-8' ) ) ) );
+		return mb_strtolower( trim( preg_replace( '/\s+/u', ' ', str_replace( [ '’', '‘' ], "'", html_entity_decode( $value, ENT_QUOTES, 'UTF-8' ) ) ) ) );
 	}
 
 	/** Read the club directory without ever exposing the server credential. */
