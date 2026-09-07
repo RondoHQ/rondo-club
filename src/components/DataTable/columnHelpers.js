@@ -3,6 +3,7 @@
  */
 export const FILTER_TYPES = {
   SELECT: 'select',
+  MULTI_SELECT: 'multi_select',
   TEXT: 'text',
   BOOLEAN: 'boolean',
 };
@@ -17,7 +18,7 @@ export const FILTER_TYPES = {
  * @param {function} [config.accessorFn] - Custom accessor function: (row) => value
  * @param {function} [config.cell] - Custom cell renderer: ({ row, getValue }) => ReactNode
  * @param {string} [config.filterType] - One of FILTER_TYPES values, or null/undefined for no filter
- * @param {Array<{value: string, label: string}>} [config.filterOptions] - Options for SELECT filter
+ * @param {Array<{value: string, label: string}>} [config.filterOptions] - Options for SELECT/MULTI_SELECT filters; multi-select values are comma-separated strings
  * @param {function} [config.filterFn] - Custom TanStack filter function (overrides default)
  * @param {function} [config.sortingFn] - Custom TanStack sorting function
  * @param {function} [config.getFilterLabel] - Returns display label for active filter chip: (value) => string
@@ -80,6 +81,8 @@ export function createColumn({
   } else if (filterType === FILTER_TYPES.SELECT || filterType === FILTER_TYPES.BOOLEAN) {
     // Exact-match: empty value = no filter, otherwise compare strictly
     def.filterFn = (row, colId, value) => !value || row.getValue(colId) === value;
+  } else if (filterType === FILTER_TYPES.MULTI_SELECT) {
+    def.filterFn = (row, colId, value) => !value || value.split(',').includes(row.getValue(colId));
   } else if (filterType === FILTER_TYPES.TEXT) {
     def.filterFn = 'includesString';
   }

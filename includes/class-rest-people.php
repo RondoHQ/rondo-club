@@ -552,7 +552,7 @@ class People extends Base {
 						},
 					],
 					'leeftijdsgroep'            => [
-						'description'       => 'Filter by age group',
+						'description'       => 'Filter by one or more comma-separated age groups (matches any selected group)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					],
@@ -2209,11 +2209,32 @@ class People extends Base {
 			}
 		}
 
-		// Leeftijdsgroep (age group) - select filter
+		// Resolve selected age groups through the native, access-scoped post query.
 		if ( ! empty( $leeftijdsgroep ) ) {
-			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} lg ON p.ID = lg.post_id AND lg.meta_key = 'leeftijdsgroep'";
-			$where_clauses[]  = 'lg.meta_value = %s';
-			$prepare_values[] = $leeftijdsgroep;
+			$age_groups = array_values( array_unique( array_filter( array_map( 'trim', explode( ',', $leeftijdsgroep ) ) ) ) );
+			$age_ids    = empty( $age_groups ) ? [] : get_posts(
+				[
+					'post_type'        => 'person',
+					'post_status'      => 'publish',
+					'posts_per_page'   => -1,
+					'fields'           => 'ids',
+					'suppress_filters' => false,
+					'meta_query'       => [
+						[
+							'key'     => 'leeftijdsgroep',
+							'value'   => $age_groups,
+							'compare' => 'IN',
+						],
+					],
+				]
+			);
+			if ( empty( $age_ids ) ) {
+				$where_clauses[] = '1 = 0';
+			} else {
+				$id_placeholders = implode( ', ', array_fill( 0, count( $age_ids ), '%d' ) );
+				$where_clauses[] = "p.ID IN ($id_placeholders)";
+				$prepare_values  = array_merge( $prepare_values, $age_ids );
+			}
 		}
 
 		// Datum foto (photo date) - missing filter

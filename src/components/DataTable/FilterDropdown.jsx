@@ -17,6 +17,7 @@ const VIEWPORT_MARGIN = 12; // keep panel this far from viewport edges
  * section fall into a default "Overige" group at the bottom. Within a section,
  * controls render in source order:
  *   SELECT  → <select> with options
+ *   MULTI_SELECT → checkboxes with a comma-separated filter value
  *   TEXT    → <input type="text">
  *   BOOLEAN → toggle switch
  */
@@ -117,6 +118,33 @@ function renderControl(col, filters, onFilterChange) {
   const meta = col.meta;
   const value = filters[col.id] || '';
   const label = meta.filterLabel || (typeof col.header === 'string' ? col.header : col.id);
+
+  if (meta.filterType === FILTER_TYPES.MULTI_SELECT) {
+    const selected = value ? value.split(',') : [];
+    return (
+      <fieldset key={col.id}>
+        <legend className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+          {label}
+        </legend>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Kies één of meer; leeg betekent alle.</p>
+        <div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-2 space-y-1">
+          {meta.filterOptions.map((opt) => (
+            <label key={opt.value} className="flex items-center gap-2 px-1 py-1 text-sm text-gray-700 dark:text-gray-200 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selected.includes(opt.value)}
+                onChange={(e) => onFilterChange(col.id, (e.target.checked
+                  ? [...selected, opt.value]
+                  : selected.filter(item => item !== opt.value)).join(','))}
+                className="rounded border-gray-300 text-electric-cyan focus:ring-electric-cyan"
+              />
+              {opt.label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    );
+  }
 
   if (meta.filterType === FILTER_TYPES.SELECT) {
     return (
