@@ -1071,8 +1071,9 @@ export default function PeopleList() {
       filterSection: 'Persoon',
     }),
     createColumn({
-      id: 'leeftijdsgroep', header: 'Leeftijdsgroep', filterType: FILTER_TYPES.SELECT,
+      id: 'leeftijdsgroep', header: 'Leeftijdsgroep', filterType: FILTER_TYPES.MULTI_SELECT,
       filterOptions: filterOptions?.age_groups?.map(opt => ({ value: opt.value, label: `${opt.value} (${opt.count})` })) || [],
+      getFilterLabel: (val) => val.split(',').join(', '),
       filterSection: 'Persoon',
     }),
     createColumn({
@@ -1183,8 +1184,9 @@ export default function PeopleList() {
     if (typeLid && !validTypeValues.includes(typeLid)) {
       setTypeLid('');
     }
-    if (leeftijdsgroep && !validAgeValues.includes(leeftijdsgroep)) {
-      setLeeftijdsgroep('');
+    const validSelectedAges = leeftijdsgroep.split(',').filter(value => validAgeValues.includes(value)).join(',');
+    if (leeftijdsgroep !== validSelectedAges) {
+      setLeeftijdsgroep(validSelectedAges);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterOptions, filterOptionsLoading]);
