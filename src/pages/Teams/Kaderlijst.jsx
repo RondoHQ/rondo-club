@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { RefreshCw, Users } from 'lucide-react';
+import { SiWhatsapp } from '@icons-pack/react-simple-icons';
 import { prmApi, wpApi } from '@/api/client';
 import { DataTable, createColumn, FILTER_TYPES } from '@/components/DataTable';
 import { useVolunteerRoleSettings } from '@/hooks/useVolunteerRoleSettings';
@@ -460,7 +461,8 @@ export default function Kaderlijst() {
         const surnameCompare = collator.compare(rowA.original.lastName, rowB.original.lastName);
         return surnameCompare !== 0 ? surnameCompare : collator.compare(rowA.original.firstName, rowB.original.firstName);
       },
-      // Leave the name column flexible so it receives spare table width.
+      size: 180,
+      className: 'whitespace-normal!',
     }),
     createColumn({
       id: 'role',
@@ -475,15 +477,31 @@ export default function Kaderlijst() {
       id: 'mobile',
       header: 'Mobiel',
       accessorFn: (row) => row.mobile,
-      cell: ({ row }) => (
-        row.original.mobile
-          ? <a href={`tel:${formatPhoneForTel(row.original.mobile)}`} className="hover:text-electric-cyan dark:hover:text-electric-cyan">{formatPhoneForDisplay(row.original.mobile)}</a>
-          : ''
-      ),
+      cell: ({ row }) => {
+        if (!row.original.mobile) return null;
+        const phone = formatPhoneForTel(row.original.mobile);
+        const whatsappPhone = phone.replace(/\D/g, '').replace(/^00/, '');
+
+        return (
+          <div className="flex items-center gap-2">
+            <a href={`tel:${phone}`} className="hover:text-electric-cyan dark:hover:text-electric-cyan">{formatPhoneForDisplay(row.original.mobile)}</a>
+            <a
+              href={`https://wa.me/${whatsappPhone}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Stuur ${row.getValue('name')} een WhatsApp-bericht`}
+              title="WhatsApp"
+              className="inline-flex shrink-0 items-center justify-center rounded p-1 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+            >
+              <SiWhatsapp className="w-4 h-4" aria-hidden="true" />
+            </a>
+          </div>
+        );
+      },
       filterType: FILTER_TYPES.TEXT,
       filterLabel: 'Mobiel',
       sortable: false,
-      size: 160,
+      size: 190,
     }),
     createColumn({
       id: 'email',
@@ -497,7 +515,7 @@ export default function Kaderlijst() {
       filterType: FILTER_TYPES.TEXT,
       filterLabel: 'Email',
       sortable: false,
-      size: 220,
+      // Keep spare width at the end of the table, after the contact details.
     }),
   ], [ageGroupOptions, yearGroupOptions]);
 
