@@ -34,6 +34,20 @@ class Teams extends Base {
 	 * Register custom REST routes for teams domain
 	 */
 	public function register_routes() {
+		register_rest_route(
+			'rondo/v1',
+			'/my-teams',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => static function () {
+					$response = rest_ensure_response( \Rondo\Teams\MyTeam::rosters() );
+					$response->header( 'Cache-Control', 'private, no-store' );
+					return $response;
+				},
+				'permission_callback' => static fn(): bool => is_user_logged_in() && ! empty( \Rondo\Teams\MyTeam::teams_for_user() ),
+			]
+		);
+
 		// People by company
 		register_rest_route(
 			'rondo/v1',

@@ -106,6 +106,7 @@ export const prmApi = {
   extendTournamentDeadline: (id, internalDeadline) => api.patch(`/rondo/v1/tournaments/${id}/deadline`, { internal_deadline: internalDeadline }),
   getTournamentEntries: (id) => api.get(`/rondo/v1/tournaments/${id}/entries`),
   getMyTournamentEntries: () => api.get('/rondo/v1/tournament-entries/mine'),
+  getMyTeams: () => api.get('/rondo/v1/my-teams'),
   getTournamentEntry: (id) => api.get(`/rondo/v1/tournament-entries/${id}`),
   saveTournamentEntryDraft: (id, data) => api.patch(`/rondo/v1/tournament-entries/${id}/draft`, data),
   submitTournamentEntry: (id, data) => api.post(`/rondo/v1/tournament-entries/${id}/submit`, data),

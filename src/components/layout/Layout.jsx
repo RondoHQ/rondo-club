@@ -61,6 +61,7 @@ import { canAccessFeature } from '@/utils/featureToggles';
 const navigation = [
   { name: 'Mijn inschrijftaken', href: '/vrijwillig?tab=mine', icon: HeartHandshake, personal: true },
   { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, requiresLinkedPerson: true, personal: true },
+  { name: 'Mijn team', href: '/mijn-team', icon: Shield, requiresMyTeams: true, personal: true },
   { name: 'Ruimtes', href: '/rooms', icon: CalendarDays, personal: true, requiresFeature: 'rooms' },
   { name: 'Mijn toernooien', href: '/mijn-toernooien', icon: Trophy, personal: true, requiresTournamentAssignments: true },
   { name: 'Dashboard', href: '/', icon: Home, requiresKader: true },
@@ -217,6 +218,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.mobileOnly && !mobile) return false;
     if (item.requiresFeature && !canAccessFeature(item.requiresFeature, isAdmin)) return false;
     if (item.requiresLinkedPerson && !currentUser?.linked_person_id) return false;
+    if (item.requiresMyTeams && !currentUser?.has_my_teams) return false;
     if (isAdmin) return true;
     if (item.adminOnly && !isAdmin) return false;
     if (item.requiresFairplay && !canAccessFairplay) return false;
