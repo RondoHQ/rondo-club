@@ -1,0 +1,99 @@
+import { PILOT, AUTHORIZE_ACTION, PILOT_CLUBS } from './deployment.mjs';
+export const READ_SCOPE = PILOT ? 'rondo:pilot:read' : 'rondo:spike:read';
+export const MEMBER_SCOPE = `${READ_SCOPE} rondo:spike:volunteer`;
+export const PROFILE_SCOPE = `${MEMBER_SCOPE} rondo:spike:profile`;
+export const VALID_SCOPES = PILOT ? [READ_SCOPE] : [READ_SCOPE, MEMBER_SCOPE, PROFILE_SCOPE];
+export const canChangeShifts = (scope) => !PILOT && (scope === MEMBER_SCOPE || scope === PROFILE_SCOPE);
+export const CLIENT_ID = PILOT ? 'rondo-awc-pilot' : 'rondo-mobile-spike';
+export const CALLBACK = PILOT ? 'https://rondo.svawc.nl/rondo-app/callback' : 'club.rondo.spike://oauth/callback';
+export const API_PATH = PILOT ? '/wp-json/rondo-mobile-pilot/v1' : '/wp-json/rondo-mobile-spike/v1';
+export function callbackFor(club) {
+  if (!PILOT) return CALLBACK;
+  const known = PILOT_CLUBS.find((entry) => entry.id === club?.id && entry.url === club?.url);
+  if (!known) throw new Error('Onbekende club.');
+  return `${known.url}/rondo-app/callback`;
+}
+export const LOGIN_TTL = 10 * 60 * 1000;
+
+const base64url = (bytes) => btoa(String.fromCharCode(...bytes)).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
+const randomValue = () => base64url(crypto.getRandomValues(new Uint8Array(32)));
+
+// Club endpoints come only from the build's reviewed directory, never a callback or QR URL.
+export function validateClubs(input) {
+  if (!Array.isArray(input)) throw new Error('Ongeldige clublijst.');
+  const ids = new Set();
+  return input.map(({ id, name, url, logoUrl }) => {
+    const parsed = new URL(url);
+    if (!id || !name || ids.has(id) || parsed.protocol !== 'https:' || parsed.username || parsed.password || parsed.search || parsed.hash || parsed.pathname !== '/') {
+      throw new Error('De clublijst bevat een ongeldige of dubbele club.');
+    }
+    let logo;
+    if (logoUrl) {
+      logo = new URL(logoUrl);
+      if (logo.protocol !== 'https:' || logo.username || logo.password || logo.hash) throw new Error('Ongeldig clublogo in de clublijst.');
+    }
+    ids.add(id);
+    return Object.freeze({ id, name, url: parsed.origin, ...(logo ? { logoUrl: logo.href } : {}) });
+  });
+}
+
+export async function beginLogin(club, now = Date.now()) {
+  const verifier = randomValue();
+  const pending = { club, verifier, state: randomValue(), createdAt: now, scope: PILOT ? READ_SCOPE : PROFILE_SCOPE };
+  return { pending, url: await authorizationUrl(pending) };
+}
+
+export async function authorizationUrl(pending) {
+  const challenge = base64url(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pending.verifier))));
+  const url = new URL('/wp-admin/admin-post.php', pending.club.url);
+  url.search = new URLSearchParams({ action: AUTHORIZE_ACTION, client_id: CLIENT_ID, redirect_uri: callbackFor(pending.club), response_type: 'code', scope: pending.scope || READ_SCOPE, state: pending.state, code_challenge: challenge, code_challenge_method: 'S256' });
+  return url.href;
+}
+
+export function readCallback(value, pending, now = Date.now()) {
+  const url = new URL(value);
+  const callback = callbackFor(pending?.club);
+  if (`${url.protocol}//${url.host}${url.pathname}` !== callback || url.username || url.password || url.hash) throw new Error('Onbekende terugkeerlink.');
+  if (!pending || now - pending.createdAt > LOGIN_TTL || now < pending.createdAt) throw new Error('De aanmelding is verlopen. Log opnieuw in.');
+  const params = url.searchParams;
+  for (const key of ['state', 'code', 'error']) if (params.getAll(key).length > 1) throw new Error('Dubbele aanmeldparameters.');
+  if (params.get('state') !== pending.state) throw new Error('Deze aanmelding hoort niet bij deze app-sessie.');
+  if (params.has('error')) throw Object.assign(new Error('Aanmelding geannuleerd.'), { code: 'login_cancelled' });
+  const code = params.get('code');
+  if (!/^[A-Za-z0-9_-]{43}$/.test(code || '')) throw new Error('De aanmeldcode ontbreekt of is ongeldig.');
+  return { grant_type: 'authorization_code', client_id: CLIENT_ID, redirect_uri: callback, code, code_verifier: pending.verifier };
+}
+
+// Invalid callbacks do not consume someone else's pending login.
+export class LoginSession {
+  pending = null;
+  session = null;
+  generation = 0;
+
+  clear() {
+    this.generation += 1;
+    this.pending = null;
+    this.session = null;
+  }
+
+  async start(club) {
+    this.clear();
+    const generation = this.generation;
+    const login = await beginLogin(club);
+    if (generation !== this.generation) throw new Error('Aanmelding geannuleerd.');
+    this.pending = login.pending;
+    return login.url;
+  }
+
+  async finish(url, exchange) {
+    const payload = readCallback(url, this.pending);
+    const pending = this.pending;
+    const generation = this.generation;
+    this.pending = null; // Consume before awaiting: duplicate native events cannot exchange twice.
+    const token = await exchange(pending.club, payload);
+    if (generation !== this.generation) throw new Error('Aanmelding geannuleerd.');
+    if (token.token_type !== 'Bearer' || !/^[A-Za-z0-9_-]{43}$/.test(token.access_token || '') || !Number.isFinite(token.expires_in) || token.expires_in <= 0 || token.expires_in > 300) throw new Error('Ongeldig sessieantwoord.');
+    this.session = { club: pending.club, token: token.access_token, expiresAt: Date.now() + token.expires_in * 1000 };
+    return this.session;
+  }
+}

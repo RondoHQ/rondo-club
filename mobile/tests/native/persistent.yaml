@@ -1,0 +1,32 @@
+# Local synthetic fixture only: app signed out, browser already signed in as Proeflid.
+# Run with Maestro against the separate automated test simulator/emulator.
+appId: club.rondo.spike
+---
+- launchApp:
+    stopApp: true
+- tapOn: "Proefclub Alpha.*"
+- tapOn: "Inloggen bij mijn club"
+- tapOn: "Verbinden"
+- assertVisible: "Hallo, Proeflid"
+- takeScreenshot: branded-start
+- stopApp
+- launchApp
+- assertVisible: "Hallo, Proeflid"
+- assertNotVisible: "Inloggen bij mijn club"
+- tapOn: "Vrijwillig"
+- assertVisible: "Beschikbaar"
+- takeScreenshot: branded-calendar
+- stopApp
+- launchApp
+- assertVisible: "Hallo, Proeflid"
+- tapOn: "Passen"
+- tapOn: "Proeflid Rondo.*"
+- assertVisible: "QR-code van de pas van Proeflid Rondo"
+- takeScreenshot: branded-pass
+- tapOn: "Meer"
+- tapOn: "Uitloggen"
+- assertVisible: "Welkom bij Rondo"
+- stopApp
+- launchApp
+- assertVisible: "Welkom bij Rondo"
+- assertNotVisible: "Hallo, Proeflid"
