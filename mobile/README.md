@@ -355,3 +355,7 @@ The generated `rondo-demo-pilot` plugin extends the pilot's shared policy implem
 The demo presents synthetic household, calendar and QR-pass data. Its Wallet issuers are not configured. The app labels this club as demo data and explains that member edits and duty bookings remain unavailable. The public shared demo login is not automatically granted native access.
 
 The build preparation command emits both isolated plugin packages plus the native project. Install and explicitly enable only the package for the selected site. Publish the generated Apple association file on that site's own `.well-known/apple-app-site-association` path with JSON content type and no redirects. Review credentials belong only in private operator storage and Apple's review fields after native login verification; never put them in the app bundle or repository.
+
+### Coexistence with Novamira OAuth
+
+The pilot handles Novamira’s invalid-issuer response only when a live pilot access token validates for the exact GET read or POST wallet/revoke route. It never establishes a global WordPress identity; the gateway still validates the tester pair, policy, expiry and household before each operation. Other routes, methods, tokens and authentication errors keep their original rejection. The Novamira plugin and its OAuth credentials are unchanged. This server correction is compatible with native build 13.

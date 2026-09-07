@@ -93,6 +93,53 @@ final class MobilePilotTest extends RondoTestCase {
 		return $response->get_data();
 	}
 
+	public function test_valid_pilot_token_is_not_rejected_by_another_oauth_issuer(): void {
+		$pair     = $this->pair();
+		$previous = $_SERVER;
+		$query    = $GLOBALS['wp']->query_vars;
+		$error    = new \WP_Error( 'rest_oauth_error', 'Invalid OAuth token.', [ 'status' => 401 ] );
+		$reject   = static fn() => $error;
+		add_filter( 'rest_authentication_errors', $reject, 5 );
+		try {
+			wp_set_current_user( 0 );
+			$_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $pair['access_token'];
+			foreach ( [
+				'read'   => 'GET',
+				'wallet' => 'POST',
+				'revoke' => 'POST',
+			] as $route => $method ) {
+				$GLOBALS['wp']->query_vars['rest_route'] = '/' . Plugin::NS . '/' . $route;
+				$_SERVER['REQUEST_METHOD']               = $method;
+				$this->assertNotWPError( rest_get_server()->check_authentication() );
+				$this->assertSame( 0, get_current_user_id() );
+			}
+			foreach ( [ '/wp/v2/users', '/rondo/v1/user/me', '/' . Plugin::NS . '/read/extra', '/' . Plugin::NS . '/profile', '/' . Plugin::NS . '/token' ] as $route ) {
+				$GLOBALS['wp']->query_vars['rest_route'] = $route;
+				$this->assertSame( $error, rest_get_server()->check_authentication() );
+			}
+			$GLOBALS['wp']->query_vars['rest_route'] = '/' . Plugin::NS . '/read';
+			$_SERVER['REQUEST_METHOD']               = 'POST';
+			$this->assertSame( $error, rest_get_server()->check_authentication() );
+			$_SERVER['REQUEST_METHOD']     = 'GET';
+			$_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . str_repeat( 'z', 43 );
+			$this->assertSame( $error, rest_get_server()->check_authentication() );
+			$_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $pair['access_token'];
+			$this->post( 'revoke', [ 'refresh_token' => $pair['refresh_token'] ], $pair['access_token'] );
+			$this->assertSame( $error, rest_get_server()->check_authentication() );
+		} finally {
+			remove_filter( 'rest_authentication_errors', $reject, 5 );
+			$_SERVER                   = $previous;
+			$GLOBALS['wp']->query_vars = $query;
+		}
+	}
+
+	public function test_pilot_does_not_override_other_authentication_errors(): void {
+		$plugin = new Plugin();
+		foreach ( [ new \WP_Error( 'rest_oauth_error', 'Forbidden.', [ 'status' => 403 ] ), new \WP_Error( 'rest_cookie_invalid_nonce', 'Invalid nonce.', [ 'status' => 403 ] ), null, true ] as $result ) {
+			$this->assertSame( $result, $plugin->authenticate_pilot_request( $result ) );
+		}
+	}
+
 	private function read( string $token, array $params = [] ): \WP_REST_Response {
 		$request = new \WP_REST_Request( 'GET', '/' . Plugin::NS . '/read' );
 		$request->set_header( 'Authorization', 'Bearer ' . $token );
