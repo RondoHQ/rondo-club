@@ -10,6 +10,7 @@ import { formatCurrency, formatPersonName, parseFieldDate } from '@/utils/format
 import { format } from '@/utils/dateFormat';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import AnchoredPopover from '@/components/AnchoredPopover';
+import TeamCalendarActions from '@/components/TeamCalendarActions';
 import ParentRelationshipModal from '@/components/ParentRelationshipModal';
 import { useAddHouseholdParent } from '@/hooks/useMemberProfile';
 import { useCreateGuestPassSlot, useMyGuestPasses, useReplaceGuestPassSlot } from '@/hooks/useGuestPasses';
@@ -465,6 +466,20 @@ function PersonCard({ person, isParent, householdPeople, linkedPersonId, onAddPa
         {membershipPass ? <MembershipPassActions membershipPass={membershipPass} personId={person.id} /> : null}
       </div>
 
+      {person.teams?.length > 0 ? (
+        <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+          <h3 className="flex items-center gap-3 text-sm font-medium text-gray-900 dark:text-gray-100"><Users className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" aria-hidden="true" />Teams</h3>
+          <ul className="mt-3 space-y-4">
+            {person.teams.map((team) => (
+              <li key={team.id} className="min-w-0 space-y-2">
+                <p className="text-sm font-medium break-words text-gray-900 dark:text-gray-100">{team.name}</p>
+                <TeamCalendarActions calendarUrl={team.calendar_url} teamName={team.name} compact />
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Abonneer je op de teamagenda om wedstrijdwijzigingen te ontvangen. Je kunt de ICS-link ook delen.</p>
+        </div>
+      ) : null}
       <ContributionStatus contribution={person.contribution} />
 
       {profileEditorAnchor ? (

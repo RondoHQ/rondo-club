@@ -103,6 +103,17 @@ class ParentRelationshipRestTest extends RondoTestCase {
 		);
 		$this->link_parent_to_child( $current_parent, $child );
 		$this->link_parent_to_child( $other_parent, $child );
+		$team = $this->createOrganization( [ 'post_title' => 'AWC 1' ] );
+		Fields::update_for_post(
+			$other_parent,
+			'work_history',
+			[
+				[
+					'team'      => $team,
+					'job_title' => 'Trainer',
+				],
+			]
+			);
 		$private_invoice = self::factory()->post->create(
 			[
 				'post_type'   => 'rondo_invoice',
@@ -135,6 +146,85 @@ class ParentRelationshipRestTest extends RondoTestCase {
 		$this->assertArrayNotHasKey( 'knvb_id', $people[ $other_parent ]['fields'] );
 		$this->assertNull( $people[ $other_parent ]['membership_pass'] );
 		$this->assertNull( $people[ $other_parent ]['contribution'] );
+		$this->assertSame( [ $team ], array_column( $people[ $other_parent ]['teams'], 'id' ) );
+		$this->assertSame( \Rondo\Teams\TeamMatches::calendar_url( $team ), $people[ $other_parent ]['teams'][0]['calendar_url'] );
+		$this->assertArrayNotHasKey( 'work_history', $people[ $other_parent ]['fields'] );
+	}
+
+	public function test_household_teams_include_current_roles_only_and_keep_person_scope(): void {
+		$parent   = $this->createPerson();
+		$child    = $this->createPerson( [], [ 'birthdate' => gmdate( 'Y-m-d', strtotime( '-10 years' ) ) ] );
+		$outsider = $this->createPerson();
+		$this->link_parent_to_child( $parent, $child );
+		$team       = $this->createOrganization( [ 'post_title' => 'AWC 2' ] );
+		$child_team = $this->createOrganization( [ 'post_title' => 'AWC JO11-1' ] );
+		$old        = $this->createOrganization();
+		$future     = $this->createOrganization();
+		$committee  = $this->createOrganization( [ 'post_type' => 'commissie' ] );
+		$draft      = $this->createOrganization( [ 'post_status' => 'draft' ] );
+		Fields::update_for_post(
+			$parent,
+			'work_history',
+			[
+				[
+					'team'       => $team,
+					'job_title'  => 'Speler',
+					'start_date' => '2020-01-01',
+				],
+				[
+					'team'      => $team,
+					'job_title' => 'Trainer',
+				],
+				[
+					'team'       => $old,
+					'end_date'   => '2020-01-01',
+					'is_current' => true,
+				],
+				[
+					'team'       => $future,
+					'start_date' => '2099-01-01',
+					'is_current' => true,
+				],
+				[ 'team' => $committee ],
+				[ 'team' => $draft ],
+				[
+					'team_name_text' => 'External club',
+					'entity_type'    => 'external_team',
+				],
+			]
+			);
+		Fields::update_for_post(
+			$child,
+			'work_history',
+			[
+				[
+					'team'     => $child_team,
+					'end_date' => current_datetime()->format( 'Y-m-d' ),
+				],
+			]
+			);
+		Fields::update_for_post( $outsider, 'work_history', [ [ 'team' => $team ] ] );
+		$user = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		update_user_meta( $user, 'rondo_linked_person_id', $parent );
+		AccessControl::flush_visible_person_ids_cache();
+		wp_set_current_user( $user );
+		$response = $this->request( 'GET', '/rondo/v1/people/household' );
+		$this->assertSame( 200, $response->get_status() );
+		$people = array_column( $response->get_data(), null, 'id' );
+		$this->assertCount( 2, $people );
+		$this->assertArrayNotHasKey( $outsider, $people );
+		$this->assertSame(
+			[
+				[
+					'id'           => $team,
+					'name'         => 'AWC 2',
+					'calendar_url' => \Rondo\Teams\TeamMatches::calendar_url( $team ),
+				],
+			],
+			$people[ $parent ]['teams']
+			);
+		$this->assertSame( [ $child_team ], array_column( $people[ $child ]['teams'], 'id' ) );
+		$this->assertArrayNotHasKey( 'work_history', $people[ $parent ]['fields'] );
 	}
 
 	public function test_parent_can_add_a_new_other_parent_to_own_minor_child(): void {

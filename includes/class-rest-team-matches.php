@@ -60,7 +60,7 @@ class TeamMatches extends Base {
 		if ( is_wp_error( $feed ) ) {
 			return $feed;
 		}
-		$feed['calendar_url'] = add_query_arg( 'token', MatchService::token( $id ), rest_url( 'rondo/v1/teams/' . $id . '/matches.ics' ) );
+		$feed['calendar_url'] = MatchService::calendar_url( $id );
 		return rest_ensure_response( $feed );
 	}
 
