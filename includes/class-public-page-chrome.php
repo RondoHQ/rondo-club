@@ -270,6 +270,96 @@ class PublicPageChrome {
 			margin-top: 1rem;
 		}
 
+		.activation-page {
+			line-height: 1.5;
+		}
+
+		.activation-page .header-card {
+			padding: 1.25rem;
+		}
+
+		.activation-page .club-logo {
+			width: 3.5rem;
+			height: 3.5rem;
+		}
+
+		.activation-page h2 {
+			font-size: 1.125rem;
+			color: #0f172a;
+			text-transform: none;
+			letter-spacing: normal;
+			margin-bottom: 0.5rem;
+		}
+
+		.activation-picker,
+		.activation-person + .activation-person,
+		.activation-guardian-field {
+			margin-top: 1rem;
+		}
+
+		.activation-choice {
+			display: flex;
+			align-items: flex-start;
+			gap: 0.75rem;
+			padding: 0.875rem;
+			border: 1px solid #cbd5e1;
+			border-radius: 8px;
+			cursor: pointer;
+			overflow-wrap: anywhere;
+		}
+
+		.activation-choice + .activation-choice {
+			margin-top: 0.5rem;
+		}
+
+		.activation-choice-detail {
+			display: block;
+			font-size: 0.875rem;
+			color: #475569;
+		}
+
+		.activation-choice:has(input:checked) {
+			border-color: var(--accent-color);
+			background: var(--accent-background-color);
+		}
+
+		.activation-choice input {
+			flex: 0 0 auto;
+			width: 1.125rem;
+			height: 1.125rem;
+			margin-top: 0.1875rem;
+			accent-color: var(--accent-color);
+		}
+
+		.activation-picker:not(:has(input[value^="guardian:"]:checked)) .activation-guardian-field {
+			display: none;
+		}
+
+		.activation-guardian-field label {
+			display: block;
+			font-weight: 600;
+			margin-bottom: 0.375rem;
+		}
+
+		.activation-guardian-field input {
+			width: 100%;
+			padding: 0.75rem;
+			font: inherit;
+			border: 1px solid #cbd5e1;
+			border-radius: 8px;
+		}
+
+		.activation-page :is(input, button):focus-visible {
+			outline: 2px solid var(--accent-color);
+			outline-offset: 3px;
+		}
+
+		.activation-help {
+			margin-top: 0.75rem;
+			font-size: 0.875rem;
+			color: #475569;
+		}
+
 		.success-card {
 			text-align: center;
 			padding: 2rem 1.5rem;
