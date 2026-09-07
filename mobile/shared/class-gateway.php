@@ -207,18 +207,10 @@ abstract class Gateway {
 			wp_redirect( static::CALLBACK . '?' . http_build_query( $query, '', '&', PHP_QUERY_RFC3986 ) ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- Fixed private-use callback, no input-controlled destination.
 			exit;
 		}
-		echo '<!doctype html><html lang="nl"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Rondo Proef verbinden</title><body><main><h1>Rondo Proef verbinden</h1><p>Je geeft de proefapp toegang om je eigen gegevens en die van je gezin bij deze club te lezen en je beschikbare passen aan Wallet toe te voegen. Je blijft op dit apparaat maximaal ' . (int) ( static::DEVICE_TTL / DAY_IN_SECONDS ) . ' dagen ingelogd, totdat je uitlogt of de club je toegang intrekt.</p><form method="post">';
-		if ( in_array( $params['scope'], [ static::MEMBER_SCOPE, static::PROFILE_SCOPE ], true ) ) {
-			echo '<p>Je geeft ook toestemming om jezelf via de app aan te melden en af te melden voor vrijwilligersdiensten, volgens de regels van je club.</p>';
-		}
-		if ( $params['scope'] === static::PROFILE_SCOPE ) {
-			echo '<p>Je geeft toestemming om je eigen telefoonnummers, e-mailadressen en het woonadres van je gezin te wijzigen. Een nieuw e-mailadres wordt pas actief nadat je de verificatielink hebt geopend.</p>';
-		}
-		wp_nonce_field( static::ACTION );
-		foreach ( [ 'action', 'client_id', 'redirect_uri', 'scope', 'response_type', 'code_challenge_method', 'state', 'code_challenge' ] as $key ) {
-			echo '<input type="hidden" name="' . esc_attr( $key ) . '" value="' . esc_attr( (string) $params[ $key ] ) . '">';
-		}
-		echo '<button name="decision" value="approve">Verbinden</button> <button name="decision" value="deny">Annuleren</button></form></main></body></html>';
+		$club_name = \Rondo\Config\ClubConfig::get_club_name();
+		$club_logo = wp_get_attachment_image_url( ( new \Rondo\Config\FinanceConfig() )->get_club_logo_id(), 'thumbnail' ) ?: '';
+		$brand_url = is_dir( __DIR__ . '/brand' ) ? plugins_url( 'brand', __FILE__ ) : get_theme_file_uri( 'mobile/public/brand' );
+		require __DIR__ . '/consent.php';
 		exit;
 	}
 

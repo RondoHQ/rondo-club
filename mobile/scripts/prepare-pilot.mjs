@@ -68,11 +68,12 @@ const plugin = join(root, 'rondo-awc-pilot');
 await mkdir(plugin);
 await cp(join(source, 'shared'), join(plugin, 'shared'), { recursive: true });
 await cp(join(source, 'pilot-plugin'), join(plugin, 'pilot-plugin'), { recursive: true });
-await writeFile(join(plugin, 'rondo-awc-pilot.php'), "<?php\n/**\n * Plugin Name: Rondo AWC Pilot\n * Description: Explicitly enabled native AWC pilot.\n * Version: 0.9.1\n */\nrequire_once __DIR__ . '/pilot-plugin/rondo-mobile-pilot.php';\n");
+await writeFile(join(plugin, 'rondo-awc-pilot.php'), "<?php\n/**\n * Plugin Name: Rondo AWC Pilot\n * Description: Explicitly enabled native AWC pilot.\n * Version: 0.9.2\n */\nrequire_once __DIR__ . '/pilot-plugin/rondo-mobile-pilot.php';\n");
 const demoPlugin = join(root, 'rondo-demo-pilot');
 await mkdir(demoPlugin);
 for (const folder of ['shared', 'pilot-plugin', 'demo-plugin']) await cp(join(source, folder), join(demoPlugin, folder), { recursive: true });
-await writeFile(join(demoPlugin, 'rondo-demo-pilot.php'), "<?php\n/**\n * Plugin Name: Rondo Demo Pilot\n * Version: 0.9.1\n */\nrequire_once __DIR__ . '/demo-plugin/rondo-mobile-demo.php';\n");
+await writeFile(join(demoPlugin, 'rondo-demo-pilot.php'), "<?php\n/**\n * Plugin Name: Rondo Demo Pilot\n * Version: 0.9.2\n */\nrequire_once __DIR__ . '/demo-plugin/rondo-mobile-demo.php';\n");
+for (const destination of [plugin, demoPlugin]) await cp(join(source, 'public/brand'), join(destination, 'shared/brand'), { recursive: true });
 // Non-secret association files can be generated only from supplied real signing identities.
 const team = process.env.RONDO_APPLE_TEAM_ID;
 const fingerprint = process.env.RONDO_ANDROID_CERT_SHA256;
