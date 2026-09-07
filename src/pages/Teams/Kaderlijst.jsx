@@ -409,26 +409,33 @@ export default function Kaderlijst() {
 
   const columns = useMemo(() => [
     createColumn({
-      id: 'age_group',
-      header: 'Leeftijdsgroep',
+      id: 'group',
+      header: 'Groep',
       accessorFn: (row) => row.ageGroup,
-      cell: ({ row, previousRow }) => <span className="font-medium text-gray-900 dark:text-gray-100">{previousRow?.ageGroup === row.original.ageGroup ? '' : row.original.ageGroup}</span>,
+      cell: ({ row, previousRow }) => (
+        <span className="font-medium text-gray-900 dark:text-gray-100">
+          {previousRow?.ageGroup === row.original.ageGroup && previousRow?.yearGroup === row.original.yearGroup
+            ? ''
+            : [row.original.ageGroup, row.original.yearGroup].filter(Boolean).join(' · ')}
+        </span>
+      ),
       filterType: FILTER_TYPES.SELECT,
       filterLabel: 'Leeftijdsgroep',
       filterOptions: ageGroupOptions,
       sortable: false,
-      size: 160,
+      size: 180,
     }),
     createColumn({
-      id: 'year_group',
+      // Retain the separate year filter without rendering a second group column.
+      id: 'year_group_filter',
       header: 'Jaarlaag',
       accessorFn: (row) => row.yearGroup,
-      cell: ({ row, previousRow }) => <span className="font-medium text-gray-900 dark:text-gray-100">{previousRow?.ageGroup === row.original.ageGroup && previousRow?.yearGroup === row.original.yearGroup ? '' : row.original.yearGroup}</span>,
       filterType: FILTER_TYPES.SELECT,
       filterLabel: 'Jaarlaag',
       filterOptions: yearGroupOptions,
       sortable: false,
-      size: 120,
+      defaultHidden: true,
+      enableHiding: false,
     }),
     createColumn({
       id: 'team',
