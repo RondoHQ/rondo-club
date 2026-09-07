@@ -807,6 +807,7 @@ class People extends Base {
 			$people[]       = [
 				'id'                   => $post->ID,
 				'household_role'       => $role,
+				'teams'                => $this->personal_team_memberships( (int) $post->ID ),
 				'can_add_parent'       => (bool) ( $context['can_add_parent'][ $post->ID ] ?? false ),
 				'fields'               => \Rondo\Fields\RestFields::for_post_fields( 'person', $post->ID, $visible_fields ),
 				'membership_pass'      => $role === 'other_parent' ? null : MembershipPassService::get_person_pass_summary( (int) $post->ID ),
@@ -816,6 +817,35 @@ class People extends Base {
 		}
 
 		return rest_ensure_response( $people );
+	}
+
+	/** Return only current team names and public fixture links for an already-scoped household person. */
+	private function personal_team_memberships( int $person_id ): array {
+		$teams = [];
+		$today = current_datetime()->format( 'Ymd' );
+		foreach ( \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' ) ?: [] as $position ) {
+			$team_id = (int) ( $position['team'] ?? 0 );
+			if ( ! $team_id || isset( $teams[ $team_id ] ) ) {
+				continue;
+			}
+			$start = str_replace( '-', '', (string) ( $position['start_date'] ?? '' ) );
+			$end   = str_replace( '-', '', (string) ( $position['end_date'] ?? '' ) );
+			// Explicit dates take precedence over an outdated is_current flag.
+			if ( ( $start !== '' && $start > $today ) || ( $end !== '' && $end < $today ) ) {
+				continue;
+			}
+			$team = get_post( $team_id );
+			if ( ! $team || $team->post_type !== 'team' || $team->post_status !== 'publish' ) {
+				continue;
+			}
+			$teams[ $team_id ] = [
+				'id'           => $team_id,
+				'name'         => html_entity_decode( get_the_title( $team_id ), ENT_QUOTES, 'UTF-8' ),
+				'calendar_url' => \Rondo\Teams\TeamMatches::calendar_url( $team_id ),
+			];
+		}
+		usort( $teams, static fn( array $a, array $b ): int => strnatcasecmp( $a['name'], $b['name'] ) );
+		return array_values( $teams );
 	}
 
 	/** Build the narrowly scoped data graph behind the personal household page. */

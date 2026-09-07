@@ -235,6 +235,11 @@ class TeamMatches {
 		return array_intersect_key( $cache, array_flip( [ 'season', 'matched', 'matches', 'stale', 'updated_at' ] ) );
 	}
 
+	/** Reuse the same shareable subscription URL on team and household pages. */
+	public static function calendar_url( int $team_id ): string {
+		return add_query_arg( 'token', self::token( $team_id ), rest_url( 'rondo/v1/teams/' . $team_id . '/matches.ics' ) );
+	}
+
 	/** A stable, team-scoped capability link usable without WordPress cookies. */
 	public static function token( int $team_id ): string {
 		return hash_hmac( 'sha256', 'team-matches|' . $team_id . '|' . (string) Fields::get_for_post( $team_id, 'publicteamid' ), wp_salt( 'auth' ) );
