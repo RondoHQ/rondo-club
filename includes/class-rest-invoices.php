@@ -1655,10 +1655,26 @@ class Invoices extends Base {
 			);
 		}
 
-		update_post_meta( $invoice_id, '_scheduled_send_date', $ymd );
-		update_post_meta( $invoice_id, '_scheduled_send_by_user_id', get_current_user_id() );
+		$this->set_invoice_schedule( $invoice_id, $ymd );
 
 		return rest_ensure_response( $this->format_invoice_detail( get_post( $invoice_id ) ) );
+	}
+
+	/**
+	 * Save a validated send date and start the configured payment term on that day.
+	 *
+	 * @param int    $invoice_id Invoice post ID.
+	 * @param string $ymd Validated send date in Ymd format.
+	 */
+	private function set_invoice_schedule( int $invoice_id, string $ymd ): void {
+		$send_date = \DateTimeImmutable::createFromFormat( '!Ymd', $ymd, wp_timezone() );
+		$term_days = ( new FinanceConfig() )->get_payment_term_days();
+		$due_date  = $send_date->modify( "+{$term_days} days" )->format( 'Ymd' );
+
+		update_post_meta( $invoice_id, '_scheduled_send_date', $ymd );
+		update_post_meta( $invoice_id, '_scheduled_send_by_user_id', get_current_user_id() );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'due_date', $due_date );
+		$this->clear_pdf( $invoice_id );
 	}
 
 	/**
@@ -2654,8 +2670,9 @@ class Invoices extends Base {
 
 		// Optional scheduled automatic send date.
 		if ( ! empty( $payload['scheduled_send_date'] ) ) {
-			update_post_meta( $invoice_id, '_scheduled_send_date', $payload['scheduled_send_date'] );
-			update_post_meta( $invoice_id, '_scheduled_send_by_user_id', get_current_user_id() );
+			if ( $payload['scheduled_send_date'] !== get_post_meta( $invoice_id, '_scheduled_send_date', true ) ) {
+				$this->set_invoice_schedule( $invoice_id, $payload['scheduled_send_date'] );
+			}
 		} else {
 			delete_post_meta( $invoice_id, '_scheduled_send_date' );
 			delete_post_meta( $invoice_id, '_scheduled_send_by_user_id' );
