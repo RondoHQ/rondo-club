@@ -125,6 +125,10 @@ final class MyTeam {
 
 	/** Explicit dates take precedence over stale flags; the end date is inclusive. */
 	private static function is_current( array $position ): bool {
+		if ( \Rondo\Core\WorkHistory::is_inactive_without_end_date( $position ) ) {
+			return false;
+		}
+
 		$today = current_datetime()->format( 'Ymd' );
 		foreach ( [ 'start_date', 'end_date' ] as $key ) {
 			$value = str_replace( '-', '', trim( (string) ( $position[ $key ] ?? '' ) ) );

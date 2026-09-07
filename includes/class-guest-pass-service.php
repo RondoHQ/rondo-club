@@ -352,6 +352,10 @@ class GuestPassService {
 	}
 
 	private function position_is_current( array $position ): bool {
+		if ( \Rondo\Core\WorkHistory::is_inactive_without_end_date( $position ) ) {
+			return false;
+		}
+
 		$today = wp_date( 'Y-m-d' );
 		$start = $this->normalize_date( (string) ( $position['start_date'] ?? '' ) );
 		$end   = $this->normalize_date( (string) ( $position['end_date'] ?? '' ) );

@@ -825,7 +825,7 @@ class People extends Base {
 		$today = current_datetime()->format( 'Ymd' );
 		foreach ( \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' ) ?: [] as $position ) {
 			$team_id = (int) ( $position['team'] ?? 0 );
-			if ( ! $team_id || isset( $teams[ $team_id ] ) ) {
+			if ( ! $team_id || isset( $teams[ $team_id ] ) || \Rondo\Core\WorkHistory::is_inactive_without_end_date( $position ) ) {
 				continue;
 			}
 			$start = str_replace( '-', '', (string) ( $position['start_date'] ?? '' ) );

@@ -109,8 +109,9 @@ class ParentRelationshipRestTest extends RondoTestCase {
 			'work_history',
 			[
 				[
-					'team'      => $team,
-					'job_title' => 'Trainer',
+					'team'       => $team,
+					'job_title'  => 'Trainer',
+					'is_current' => true,
 				],
 			]
 			);
@@ -170,10 +171,12 @@ class ParentRelationshipRestTest extends RondoTestCase {
 					'team'       => $team,
 					'job_title'  => 'Speler',
 					'start_date' => '2020-01-01',
+					'is_current' => true,
 				],
 				[
-					'team'      => $team,
-					'job_title' => 'Trainer',
+					'team'       => $team,
+					'job_title'  => 'Trainer',
+					'is_current' => true,
 				],
 				[
 					'team'       => $old,

@@ -329,6 +329,10 @@ class Commissies extends Base {
 						}
 					}
 
+					if ( \Rondo\Core\WorkHistory::is_inactive_without_end_date( $job ) ) {
+						$is_current = false;
+					}
+
 					if ( $is_current ) {
 						$current[] = $person_data;
 					} else {

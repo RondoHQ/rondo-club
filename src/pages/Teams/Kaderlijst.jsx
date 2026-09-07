@@ -135,6 +135,7 @@ function isTruthy(value) {
 }
 
 function isCurrentJob(job) {
+  if (!job?.end_date && [false, 0, '0'].includes(job?.is_current)) return false;
   const hasEndDate = !!job?.end_date;
   const endDate = hasEndDate ? new Date(job.end_date) : null;
   const today = new Date();

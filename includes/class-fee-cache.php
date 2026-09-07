@@ -39,7 +39,7 @@ class FeeCache {
 	/**
 	 * Increment when cached eligibility semantics change.
 	 */
-	private const CACHE_VERSION = 2;
+	private const CACHE_VERSION = 3;
 
 	/**
 	 * Deferred full-fee calculator callable.

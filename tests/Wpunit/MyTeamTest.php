@@ -101,6 +101,7 @@ class MyTeamTest extends RondoTestCase {
 				'work_history'  => [ $this->position( $this->team_id ) ],
 				'former_member' => true,
 			],
+			[ 'work_history' => [ $this->position( $this->team_id, 'Teamspeler', [ 'is_current' => false ] ) ] ],
 			[ 'work_history' => [ $this->position( $this->team_id, 'Teamspeler', [ 'end_date' => '2000-01-01' ] ) ] ],
 			[ 'work_history' => [ $this->position( $this->team_id, 'Teamspeler', [ 'start_date' => '2099-01-01' ] ) ] ],
 		] as $fields ) {
