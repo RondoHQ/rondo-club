@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ChevronDown, Plus, Search, Trash2, X } from 'lucide-react';
+import { addDays, format, parseISO } from 'date-fns';
 import { useSearch } from '@/hooks/useDashboard';
 import { useFinanceSettings } from '@/hooks/useFinanceSettings';
 import RichTextEditor from '@/components/RichTextEditor';
@@ -452,7 +453,13 @@ export default function InvoiceDraftForm({
             className="input mt-1"
             value={scheduledSendDate}
             min={formatDateForInput(new Date())}
-            onChange={(e) => setScheduledSendDate(e.target.value)}
+            onChange={(e) => {
+              const sendDate = e.target.value;
+              setScheduledSendDate(sendDate);
+              if (sendDate) {
+                setDueDate(format(addDays(parseISO(sendDate), financeSettings?.payment_term_days ?? 14), 'yyyy-MM-dd'));
+              }
+            }}
           />
           <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
             Laat leeg om direct te versturen. Met een datum blijft de factuur een concept en wordt hij op die dag automatisch verstuurd.
