@@ -280,6 +280,7 @@ export const prmApi = {
   updateClothingSettings: (data) => api.post('/rondo/v1/clothing/settings', data),
   
   // Team-specific
+  getTeamMatches: (teamId) => api.get(`/rondo/v1/teams/${teamId}/matches`),
   getTeamPeople: (teamId) => api.get(`/rondo/v1/teams/${teamId}/people`),
   setTeamLogo: (teamId, mediaId) => api.post(`/rondo/v1/teams/${teamId}/logo`, { media_id: mediaId }),
 

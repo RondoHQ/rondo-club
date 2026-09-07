@@ -350,6 +350,7 @@ function rondo_init() {
 		new Api();
 		new People();
 		new Teams();
+		new \Rondo\REST\TeamMatches();
 		new RESTSponsors();
 		new Commissies();
 		new Todos();

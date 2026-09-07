@@ -10,12 +10,14 @@ import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
+import TeamMatches from './TeamMatches';
 
 export default function TeamDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showShareModal, setShowShareModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
   
   const { data: team, isLoading, error } = useQuery({
     queryKey: ['team', id],
@@ -65,7 +67,10 @@ export default function TeamDetail() {
   });
 
   const handleRefresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['teams', parseInt(id, 10)] });
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['team', id] }),
+      queryClient.invalidateQueries({ queryKey: ['team-matches', id] }),
+    ]);
   };
 
   // Update document title with team's name - MUST be called before early returns
@@ -156,6 +161,17 @@ export default function TeamDetail() {
         </div>
       </div>
       
+      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700" role="tablist" aria-label="Teamoverzicht">
+        {[['overview', 'Overzicht'], ['matches', 'Wedstrijden']].map(([value, label]) => (
+          <button key={value} id={`team-tab-${value}`} role="tab" aria-selected={activeTab === value} aria-controls={`team-panel-${value}`} onClick={() => setActiveTab(value)} className={`px-4 py-3 text-sm font-medium border-b-2 ${activeTab === value ? 'border-electric-cyan text-electric-cyan' : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {activeTab === 'matches' ? (
+        <div id="team-panel-matches" role="tabpanel" aria-labelledby="team-tab-matches"><TeamMatches teamId={id} /></div>
+      ) : (
+      <div id="team-panel-overview" role="tabpanel" aria-labelledby="team-tab-overview" className="space-y-6">
       {/* Subsidiaries */}
       {childTeams.length > 0 && (
         <div className="card p-6">
@@ -305,6 +321,9 @@ export default function TeamDetail() {
             ))}
           </div>
         </div>
+      )}
+
+      </div>
       )}
 
       <ShareModal

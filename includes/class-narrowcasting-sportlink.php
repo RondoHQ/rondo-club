@@ -337,7 +337,7 @@ class SportlinkMatchday {
 	 *
 	 * @return array|\WP_Error
 	 */
-	private function request( string $endpoint, array $params ) {
+	public function request( string $endpoint, array $params ) {
 		$params['client_id'] = $this->client_id();
 		$url                 = add_query_arg( $params, self::API_BASE . $endpoint );
 		$response            = wp_safe_remote_get(
@@ -406,7 +406,7 @@ class SportlinkMatchday {
 	}
 
 	/** Convert one Sportlink row without member or credential data. */
-	private function normalize_fixture( array $row, bool $include_result ): ?array {
+	public function normalize_fixture( array $row, bool $include_result ): ?array {
 		$starts_at = $this->fixture_datetime( $row );
 		if ( ! $starts_at ) {
 			return null;
