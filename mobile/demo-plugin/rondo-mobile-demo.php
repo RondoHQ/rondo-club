@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Rondo Demo Mobile Pilot
  * Description: Read-only synthetic review account access on the dedicated demo site.
- * Version: 0.9.0
+ * Version: 0.9.1
  *
  * @package Rondo\MobileDemo
  */

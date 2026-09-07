@@ -620,7 +620,7 @@ abstract class Gateway {
 	}
 
 	protected static function bearer( \WP_REST_Request $request ): string {
-		return preg_match( '/^Bearer ([A-Za-z0-9_-]{43})$/', $request->get_header( 'authorization' ), $match ) ? $match[1] : '';
+		return preg_match( '/^Bearer ([A-Za-z0-9_-]{43})$/', (string) $request->get_header( 'authorization' ), $match ) ? $match[1] : '';
 	}
 
 	protected static function user( array $data ): ?\WP_User {

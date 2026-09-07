@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Rondo AWC Mobile Pilot
  * Description: Explicitly enabled, allowlisted, read-only native AWC pilot. Never loaded by the theme.
- * Version: 0.9.0
+ * Version: 0.9.1
  *
  * @package Rondo\MobilePilot
  */
@@ -39,7 +39,36 @@ class Plugin extends \Rondo\Mobile\Gateway {
 			return;
 		}
 		add_filter( 'rest_post_dispatch', [ $this, 'no_store' ], 10, 3 );
+		add_filter( 'rest_authentication_errors', [ $this, 'authenticate_pilot_request' ], 6 );
 		add_action( 'parse_request', [ $this, 'callback_fallback' ], 0 );
+	}
+
+	/** A valid pilot credential belongs to our routes, not Novamira's OAuth issuer. */
+	public function authenticate_pilot_request( $result ) {
+		if ( ! is_wp_error( $result ) || $result->get_error_codes() !== [ 'rest_oauth_error' ] || ( $result->get_error_data()['status'] ?? null ) !== 401 || ! static::enabled() ) {
+			return $result;
+		}
+		$route  = $GLOBALS['wp']->query_vars['rest_route'] ?? '';
+		$method = $_SERVER['REQUEST_METHOD'] ?? '';
+		$routes = [
+			'/' . static::NS . '/read'   => 'GET',
+			'/' . static::NS . '/wallet' => 'POST',
+			'/' . static::NS . '/revoke' => 'POST',
+		];
+		if ( ! isset( $routes[ $route ] ) || $routes[ $route ] !== $method ) {
+			return $result;
+		}
+		$request = new \WP_REST_Request( $method, $route );
+		$request->set_headers( rest_get_server()->get_headers( $_SERVER ) );
+		$data = static::load( static::SESSION, static::bearer( $request ) );
+		if ( ! $data || ! static::user( $data ) ) {
+			return $result;
+		}
+		// Never establish a global identity; the gateway checks each request and scopes its inner reads.
+		if ( ! headers_sent() ) {
+			header_remove( 'WWW-Authenticate' );
+		}
+		return null;
 	}
 
 	public function no_store( $response, $server, $request ) {
