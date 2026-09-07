@@ -405,6 +405,10 @@ class VolunteerEligibilityService {
 				continue;
 			}
 
+			if ( \Rondo\Core\WorkHistory::is_inactive_without_end_date( $job ) ) {
+				continue;
+			}
+
 			// Only count CURRENT positions: is_current flag, no end_date, or end_date in future.
 			if ( ! empty( $job['is_current'] ) ) {
 				return true;

@@ -308,6 +308,10 @@ class VolunteerStatus {
 	 * @return bool True if the position is current.
 	 */
 	public static function is_position_current( array $position ): bool {
+		if ( \Rondo\Core\WorkHistory::is_inactive_without_end_date( $position ) ) {
+			return false;
+		}
+
 		// Check is_current flag first
 		if ( ! empty( $position['is_current'] ) ) {
 			return true;

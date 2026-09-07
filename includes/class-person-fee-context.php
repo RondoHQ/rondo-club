@@ -53,6 +53,10 @@ class PersonFeeContext {
 	 * @return bool True when the row is considered current.
 	 */
 	private function is_current_work_history_entry( array $job, int $today ): bool {
+		if ( \Rondo\Core\WorkHistory::is_inactive_without_end_date( $job ) ) {
+			return false;
+		}
+
 		if ( ! empty( $job['is_current'] ) ) {
 			if ( ! empty( $job['end_date'] ) ) {
 				$end_date = strtotime( (string) $job['end_date'] );

@@ -152,6 +152,7 @@ class Api extends Base {
 		$generation       = (string) get_option( self::KADERLIJST_CACHE_GENERATION_OPTION, '1' );
 		$player_roles     = \Rondo\Core\VolunteerStatus::get_player_roles();
 		$cache_dimensions = [
+			'status_rule'  => 2,
 			'generation'   => $generation,
 			'date'         => current_time( 'Ymd' ),
 			'player_roles' => array_values( $player_roles ),
@@ -177,8 +178,8 @@ class Api extends Base {
 	 * job_title is not a player role. Excludes former members.
 	 *
 	 * A job is "current" when its end date is empty or today-or-later — the same
-	 * rule the client applies (`isCurrentJob`), which ignores the `is_current`
-	 * flag. Player rows are dropped here for the same reason the client hides them:
+	 * rule the client applies (`isCurrentJob`). Explicitly inactive undated roles
+	 * are excluded. Player rows are dropped here for the same reason the client hides them:
 	 * they are not kader. A player who is also a coach still qualifies on the coach
 	 * row. The team is deliberately optional — the old list showed teamless
 	 * coordinator functies too, and they are re-derived from the role text client-side.
@@ -221,7 +222,22 @@ class Api extends Base {
 			...array_merge( $player_roles, [ $today ] )
 		);
 
-		return array_map( 'intval', (array) $wpdb->get_col( $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Prepared above.
+		$player_roles  = array_map( 'strtolower', $player_roles );
+		$candidate_ids = array_map( 'intval', (array) $wpdb->get_col( $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Prepared above.
+		update_meta_cache( 'post', $candidate_ids );
+		return array_values(
+			array_filter(
+				$candidate_ids,
+				function ( int $person_id ) use ( $player_roles ): bool {
+					foreach ( \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' ) ?: [] as $job ) {
+						if ( ! empty( $job['job_title'] ) && ! in_array( strtolower( $job['job_title'] ), $player_roles, true ) && $this->is_current_job( $job ) ) {
+							return true;
+						}
+					}
+					return false;
+				}
+			)
+		);
 	}
 
 	/**
@@ -341,13 +357,16 @@ class Api extends Base {
 	/**
 	 * Whether a work_history row is current. Mirrors the client's `isCurrentJob`:
 	 * current when the end date is empty, or a parseable date that is today or
-	 * later. The `is_current` flag is deliberately ignored — the client ignores it
-	 * too (both of its branches reduce to the same end-date test).
+	 * later. An explicitly inactive row without an end date remains historical.
 	 *
 	 * @param array $job Work history row.
 	 * @return bool
 	 */
 	private function is_current_job( array $job ): bool {
+		if ( \Rondo\Core\WorkHistory::is_inactive_without_end_date( $job ) ) {
+			return false;
+		}
+
 		$end_date = trim( (string) ( $job['end_date'] ?? '' ) );
 
 		if ( $end_date === '' ) {

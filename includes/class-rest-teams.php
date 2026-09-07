@@ -246,6 +246,10 @@ class Teams extends Base {
 						}
 					}
 
+					if ( \Rondo\Core\WorkHistory::is_inactive_without_end_date( $job ) ) {
+						$is_current = false;
+					}
+
 					if ( $is_current ) {
 						$current[]    = $person_data;
 						$former_match = null;
@@ -459,7 +463,7 @@ class Teams extends Base {
 				$entity_id = isset( $job['team'] ) ? (int) $job['team'] : 0;
 				$end_date  = preg_replace( '/\D/', '', (string) ( $job['end_date'] ?? '' ) );
 
-				if ( $entity_id <= 0 || ( $end_date !== '' && $end_date < $today ) ) {
+				if ( $entity_id <= 0 || \Rondo\Core\WorkHistory::is_inactive_without_end_date( $job ) || ( $end_date !== '' && $end_date < $today ) ) {
 					continue;
 				}
 

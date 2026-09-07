@@ -108,6 +108,10 @@ class RoleFinder {
 	 * @return bool
 	 */
 	private static function is_current_work_history_entry( array $entry ): bool {
+		if ( \Rondo\Core\WorkHistory::is_inactive_without_end_date( $entry ) ) {
+			return false;
+		}
+
 		if ( ! empty( $entry['is_current'] ) ) {
 			return true;
 		}
