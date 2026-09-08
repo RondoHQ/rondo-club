@@ -257,6 +257,31 @@ class PublicPageChrome {
 			color: #1e293b;
 		}
 
+		.activation-benefits {
+			list-style: none;
+			display: grid;
+			gap: 0.75rem;
+			margin-top: 0.75rem;
+		}
+
+		.activation-benefits li {
+			display: flex;
+			align-items: flex-start;
+			gap: 0.75rem;
+		}
+
+		.activation-benefits [aria-hidden] {
+			flex: 0 0 1.5rem;
+			text-align: center;
+		}
+
+		.activation-email-help {
+			display: block;
+			margin-top: 0.375rem;
+			font-size: 0.875rem;
+			color: #475569;
+		}
+
 		.activation-email-field {
 			margin-top: 1.25rem;
 		}

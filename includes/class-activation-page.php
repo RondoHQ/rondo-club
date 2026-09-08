@@ -197,23 +197,32 @@ class ActivationPage {
 	 * @param string $error Optional error to show above the form.
 	 */
 	private function render_email_form( string $error = '' ) {
-		$this->open( 'Account activeren' );
+		$branding = PublicPageChrome::branding();
+		$this->open( 'Activeer je ' . $branding['name'] . '-account' );
 		?>
 	<div class="card">
-		<p>Vul het e-mailadres in dat bij de club bekend is, dit is hetzelfde mailadres waarop je onze nieuwsbrieven krijgt en waarmee je inlogt in de Voetbal.nl app. We sturen je dan een link om je account te activeren.</p>
+		<p>Met je account kun je:</p>
+		<ul class="activation-benefits" role="list">
+			<li><span aria-hidden="true">✏️</span><span>Je adres, telefoonnummer en e-mailadres bekijken en aanpassen.</span></li>
+			<li><span aria-hidden="true">🙋</span><span>Je inschrijven voor vrijwilligerstaken.</span></li>
+			<li><span aria-hidden="true">🪪</span><span>Je digitale ledenpas vinden.</span></li>
+		</ul>
 		<?php if ( $error ) : ?>
 			<p class="error-hint"><?php echo esc_html( $error ); ?></p>
 		<?php endif; ?>
 		<form method="post" action="<?php echo esc_url( home_url( '/activeren' ) ); ?>">
 			<?php wp_nonce_field( self::NONCE_ACTION ); ?>
 			<p class="activation-email-field">
-				<label for="rondo-activation-email" class="activation-email-label">E-mailadres</label><br />
-				<input type="email" id="rondo-activation-email" name="email" required autocomplete="email"
+				<label for="rondo-activation-email" class="activation-email-label">E-mailadres</label>
+				<span id="rondo-activation-email-help" class="activation-email-help">Gebruik het e-mailadres waarop je nieuwsbrieven van <?php echo esc_html( $branding['name'] ); ?> ontvangt.</span>
+				<input type="email" id="rondo-activation-email" name="email" required autocomplete="email" aria-describedby="rondo-activation-email-help"
 					oninvalid="this.setCustomValidity(this.validity.valueMissing ? 'Vul je e-mailadres in.' : 'Vul een geldig e-mailadres in.')"
 					oninput="this.setCustomValidity('')"
 					style="width:100%;padding:12px;font-size:16px;border:1px solid #cbd5e1;border-radius:8px;margin-top:6px;" />
 			</p>
+			<p class="activation-help">Ben je ouder of verzorger? Via de activatielink kun je kiezen voor een eigen ouderaccount.</p>
 			<button type="submit" class="btn btn-primary activation-submit">Stuur mij een activatielink</button>
+			<p class="activation-help">Je ontvangt een e-mail met een link om verder te gaan.</p>
 		</form>
 	</div>
 		<?php
