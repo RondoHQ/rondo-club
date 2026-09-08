@@ -95,7 +95,7 @@ class ActivationPage {
 		}
 
 		if ( ActivationService::is_rate_limited( $email, $ip ) ) {
-			$this->render_confirmation();
+			$this->render_confirmation( $email );
 			return;
 		}
 
@@ -107,7 +107,7 @@ class ActivationPage {
 		// goes out. Delivering the mail takes an API round-trip; doing that first would
 		// make a known address measurably slower than an unknown one, which is an
 		// enumeration oracle no matter how identical the HTML is.
-		$this->render_confirmation();
+		$this->render_confirmation( $email );
 		self::flush_response();
 
 		if ( ! empty( $persons ) ) {
@@ -231,14 +231,20 @@ class ActivationPage {
 
 	/**
 	 * Deliberately says nothing about whether the address was found.
+	 *
+	 * @param string $email The submitted email address.
 	 */
-	private function render_confirmation() {
+	private function render_confirmation( string $email ) {
+		$branding = PublicPageChrome::branding();
 		$this->open( 'Account activeren' );
 		?>
-	<div class="card">
+	<div class="card activation-confirmation">
 		<h2>Kijk in je mailbox</h2>
-		<p>Als dit e-mailadres bij ons bekend is, hebben we een e-mail gestuurd met de juiste link om je account te activeren of direct in te loggen.</p>
-		<p class="confirmation-help">Geen mail ontvangen? Zoek in je spam-map naar een bericht van <?php echo esc_html( ActivationService::ACTIVATION_FROM_EMAIL ); ?>. Ook daar niets? Neem dan contact op met de ledenadministratie.</p>
+		<p>Als <strong><?php echo esc_html( $email ); ?></strong> bij <?php echo esc_html( $branding['name'] ); ?> bekend is, ontvang je daar een e-mail. Klik op de link in die e-mail om je account te activeren of in te loggen.</p>
+		<h2 class="confirmation-help">Geen e-mail ontvangen?</h2>
+		<p>Kijk in je spammap naar een bericht van <strong><?php echo esc_html( ActivationService::ACTIVATION_FROM_EMAIL ); ?></strong>. Controleer ook of je het juiste e-mailadres hebt ingevuld.</p>
+		<a class="btn btn-secondary activation-submit" href="<?php echo esc_url( home_url( '/activeren' ) ); ?>">Ander e-mailadres gebruiken</a>
+		<p class="confirmation-help">Kom je er niet uit? <a href="<?php echo esc_url( 'mailto:' . ActivationService::ACTIVATION_FROM_EMAIL ); ?>">Mail de ledenadministratie</a>.</p>
 	</div>
 		<?php
 		$this->close();

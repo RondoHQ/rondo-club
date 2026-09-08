@@ -374,7 +374,7 @@ class PublicPageChrome {
 			border-radius: 8px;
 		}
 
-		.activation-page :is(input, button):focus-visible {
+		.activation-page :is(input, button, a):focus-visible {
 			outline: 2px solid var(--accent-color);
 			outline-offset: 3px;
 		}
@@ -383,6 +383,15 @@ class PublicPageChrome {
 			margin-top: 0.75rem;
 			font-size: 0.875rem;
 			color: #475569;
+		}
+
+		.activation-confirmation {
+			overflow-wrap: anywhere;
+		}
+
+		.activation-confirmation .btn {
+			text-align: center;
+			text-decoration: none;
 		}
 
 		.success-card {

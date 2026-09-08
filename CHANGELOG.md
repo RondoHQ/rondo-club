@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.59.5] - 2026-09-08
+
+### Changed
+
+- Show the submitted email address on the activation confirmation screen, with an option to use another address and a direct membership administration contact link, while preserving the same response for known and unknown addresses.
+
 ## [35.59.4] - 2026-09-08
 
 ### Changed
