@@ -327,21 +327,25 @@ class ActivationService {
 	public static function send_activation_email( string $email, string $token ): bool {
 		$branding = PublicPageChrome::branding();
 		$url      = self::activation_url( $token );
-		$subject  = sprintf( 'Activeer je account bij %s', $branding['name'] );
+		$subject  = sprintf( 'Activeer je Rondo-account bij %s', $branding['name'] );
 
-		$body = '<p>Hallo,</p>'
-			. '<p>Er is een account aangevraagd voor dit e-mailadres. Klik op de knop hieronder om je account te activeren en een wachtwoord in te stellen.</p>'
-			. '<p>Deze link is twee uur geldig. Heb je dit niet zelf aangevraagd, dan hoef je niets te doen — er gebeurt niets zonder dat je op de link klikt.</p>';
+		$body = '<p>Rondo is de online clubomgeving van ' . esc_html( $branding['name'] ) . '. Met je account kun je:</p>'
+			. '<ul role="list" style="list-style:none;padding:0;margin:16px 0;">'
+			. '<li style="margin:0 0 12px;"><span aria-hidden="true">✏️</span> Je adres, telefoonnummer en e-mailadres bekijken en aanpassen.</li>'
+			. '<li style="margin:0 0 12px;"><span aria-hidden="true">🙋</span> Je inschrijven voor vrijwilligerstaken.</li>'
+			. '<li style="margin:0;"><span aria-hidden="true">🪪</span> Je digitale ledenpas vinden.</li>'
+			. '</ul>'
+			. '<p>Klik hieronder om je account te activeren. Op de volgende pagina bevestig je voor wie je het account aanmaakt. Daarna stel je een wachtwoord in.</p>'
+			. EmailTemplate::render_cta_button( $url, 'Account activeren' )
+			. '<p style="margin:24px 0 0;">Deze link is twee uur geldig.</p>'
+			. '<p>Heb je geen account aangevraagd? Dan kun je deze e-mail negeren.</p>';
 
 		$html = EmailTemplate::render(
 			[
 				'brand_name' => $branding['name'],
 				'preheader'  => $subject,
-				'eyebrow'    => 'Account',
-				'heading'    => $subject,
+				'heading'    => sprintf( 'Welkom bij Rondo van %s', $branding['name'] ),
 				'body_html'  => $body,
-				'cta_url'    => $url,
-				'cta_label'  => 'Account activeren',
 			]
 		);
 
