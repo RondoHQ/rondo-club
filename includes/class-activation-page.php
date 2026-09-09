@@ -257,11 +257,12 @@ class ActivationPage {
 	 * @param string $email Address behind the token.
 	 */
 	private function render_person_picker( string $token, string $email ) {
-		$persons       = ActivationService::persons_for_email( $email );
-		$available     = array_values( array_filter( $persons, fn( $id ) => ! ActivationService::has_account( $id ) ) );
-		$youth_persons = array_filter( $available, fn( $id ) => GuardianAccountService::is_youth_person( (int) $id ) );
+		$persons         = ActivationService::persons_for_email( $email );
+		$available       = array_values( array_filter( $persons, fn( $id ) => ! ActivationService::has_account( $id ) ) );
+		$youth_persons   = array_filter( $available, fn( $id ) => GuardianAccountService::is_youth_person( (int) $id ) );
+		$single_identity = count( $available ) === 1 && empty( $youth_persons );
 
-		$this->open( 'Account activeren' );
+		$this->open( $single_identity ? 'Activeer je Rondo-account' : 'Account activeren' );
 
 		if ( empty( $available ) ) {
 			?>
@@ -273,7 +274,6 @@ class ActivationPage {
 			$this->close();
 			return;
 		}
-		$single_identity = count( $available ) === 1 && empty( $youth_persons );
 		?>
 	<div class="card">
 		<?php if ( $single_identity ) : ?>
@@ -311,7 +311,11 @@ class ActivationPage {
 			<?php endif; ?>
 			<button type="submit" class="btn btn-primary activation-submit">Account aanmaken</button>
 		</form>
-		<p class="activation-help">Deze link werkt één keer. Voor een volgend account vraag je een nieuwe link aan.</p>
+		<?php if ( $single_identity ) : ?>
+			<p class="activation-help">Daarna stel je een wachtwoord in waarmee je voortaan inlogt.</p>
+		<?php else : ?>
+			<p class="activation-help">Deze link werkt één keer. Voor een volgend account vraag je een nieuwe link aan.</p>
+		<?php endif; ?>
 	</div>
 		<?php
 		$this->close();
