@@ -358,7 +358,7 @@ class ActivationServiceTest extends RondoTestCase {
 
 		$this->assertFalse( ActivationService::has_account( $person_id ) );
 		$this->assertIsArray( $mail );
-		$this->assertStringStartsWith( 'Activeer je account bij ', $mail['subject'] );
+		$this->assertStringStartsWith( 'Activeer je Rondo-account bij ', $mail['subject'] );
 		$this->assertStringContainsString( '/activeren/', $mail['message'] );
 	}
 
@@ -382,7 +382,7 @@ class ActivationServiceTest extends RondoTestCase {
 		$this->assertFalse( ActivationService::has_account( $anne ) );
 		$this->assertFalse( ActivationService::has_account( $bram ) );
 		$this->assertIsArray( $mail );
-		$this->assertStringStartsWith( 'Activeer je account bij ', $mail['subject'] );
+		$this->assertStringStartsWith( 'Activeer je Rondo-account bij ', $mail['subject'] );
 	}
 
 	public function test_magic_login_request_combines_existing_login_and_household_activation(): void {
