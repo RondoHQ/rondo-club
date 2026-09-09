@@ -1542,6 +1542,37 @@ function rondo_login_styles() {
 			transform: translateY(1px);
 		}
 
+		/* Keep password generation secondary to saving, using the club branding. */
+		.login .button.wp-generate-pw {
+			background: #ffffff;
+			border: 1px solid <?php echo esc_attr( $brand_color_border ); ?>;
+			border-radius: 8px;
+			box-shadow: none;
+			color: <?php echo esc_attr( $brand_color_dark ); ?>;
+			font-size: 15px;
+			font-weight: 600;
+			line-height: 1.5;
+			padding: 10px 20px;
+			width: 100%;
+			min-height: 44px;
+			height: auto;
+			margin-bottom: 12px;
+			white-space: normal;
+		}
+
+		.login .button.wp-generate-pw:hover {
+			background: <?php echo esc_attr( $brand_color_lightest ); ?>;
+			border-color: <?php echo esc_attr( $brand_color ); ?>;
+			color: <?php echo esc_attr( $brand_color_darkest ); ?>;
+		}
+
+		.login .button.wp-generate-pw:focus-visible {
+			border-color: <?php echo esc_attr( $brand_color ); ?>;
+			outline: 2px solid <?php echo esc_attr( $brand_color ); ?>;
+			outline-offset: 3px;
+			box-shadow: none;
+		}
+
 		/* Remember me is always on (see rondo_force_remember_me), so hide the checkbox */
 		.login .forgetmenot {
 			display: none;
