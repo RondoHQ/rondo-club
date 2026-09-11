@@ -300,6 +300,7 @@ function rondo_init() {
 	// Immutable member self-service audit trail and its 24-month retention job.
 	new \Rondo\Users\ProfileChangeLog();
 	new \Rondo\Users\ActivationLog();
+	new \Rondo\VOG\VogSubmissions();
 	new \Rondo\Sponsors\ActivityLog();
 	new \Rondo\Integrations\FreeScout\ProvisioningEvents();
 
@@ -367,6 +368,7 @@ function rondo_init() {
 		new RESTUsers();
 		new RESTReminders();
 		new RESTVog();
+		new \Rondo\REST\VogSubmissions();
 		new RESTVolunteer();
 		new RESTMemberShifts();
 		new \Rondo\Volunteer\ShiftDayCopier();

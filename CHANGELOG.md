@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.60.0] - 2026-09-11
+
+### Added
+
+- Guided VOG uploads from the member profile, including original PDFs, scan PDFs, and ordered JPG/PNG pages with previews and clear instructions for incorrect uploads.
+- Official Justid GAAV validation of unchanged digital originals, conservative identity and screening-rule matching, and a coordinator review queue with explicit paper-original checks.
+- Private temporary document storage, access checks, bounded retries, expiring submissions, and administrator-configured automatic approval rules that remain disabled until configured.
+
+### Changed
+
+- Approved VOG submissions update the existing VOG date and modification timestamp for Sportlink reverse sync; pending or rejected uploads preserve the previous valid registration.
+
 ## [35.59.8] - 2026-09-09
 
 ### Fixed

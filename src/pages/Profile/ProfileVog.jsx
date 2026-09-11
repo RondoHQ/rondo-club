@@ -1,3 +1,4 @@
+import VogUpload from '@/components/VogUpload';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { FileCheck, CheckCircle2, AlertTriangle, ArrowLeft } from 'lucide-react';
@@ -25,6 +26,7 @@ export default function ProfileVog() {
     queryKey: ['vog', 'me'],
     queryFn: async () => (await prmApi.getMyVog()).data,
     staleTime: 60 * 1000,
+    refetchInterval: query => ['checking', 'technical'].includes(query.state.data?.submission?.status) ? 10000 : false,
   });
 
   if (error?.response?.status === 404) {
@@ -40,6 +42,8 @@ export default function ProfileVog() {
       </div>
     );
   }
+
+  if (error) return <div className="card p-5" role="alert">Je VOG-gegevens konden niet worden geladen. Probeer het later opnieuw.</div>;
 
   const status = vog?.status || 'missing';
   const cfg    = STATUS_CONFIG[status] || STATUS_CONFIG.missing;
@@ -109,6 +113,8 @@ export default function ProfileVog() {
           </div>
         </div>
       )}
+
+      {vog?.can_upload && <VogUpload submission={vog.submission} />}
 
       <div className="card p-5 text-sm text-gray-600 dark:text-gray-400 space-y-2">
         <h2 className="font-semibold text-gray-900 dark:text-gray-100">Wat is een VOG?</h2>
