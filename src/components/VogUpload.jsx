@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { Upload } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 
@@ -10,6 +11,7 @@ export default function VogUpload({ submission }) {
   const [previews, setPreviews] = useState([]);
   const [error, setError] = useState('');
   const input = useRef(null);
+  const fileHintId = useId();
   const client = useQueryClient();
   const clearFiles = () => {
     setFiles([]);
@@ -87,9 +89,15 @@ export default function VogUpload({ submission }) {
           {source === 'digital' ? 'We sturen de originele PDF naar de officiële validatiedienst van Justid en vergelijken de gegevens met je profiel.' : 'De VOG-coördinator bekijkt je upload. Voor goedkeuring is de originele digitale PDF of controle van het echte papieren origineel nodig.'}
           {' '}Na afronding verwijderen we je upload. Openstaande uploads zijn maximaal 30 dagen beschikbaar. Bewaar zelf je origineel.
         </p>
-        <label className="block text-sm">{source === 'digital' ? 'Originele PDF (maximaal 10 MB en vijf pagina’s)' : 'Eén PDF of maximaal vijf JPG/PNG-foto’s (samen maximaal 10 MB)'}
-          <input ref={input} type="file" accept={source === 'digital' ? '.pdf,image/jpeg,image/png' : '.pdf,.jpg,.jpeg,.png'} multiple={source !== 'digital'} onChange={choose} className="block w-full mt-2 text-sm" />
-        </label>
+        <div className="space-y-2">
+          <input ref={input} type="file" accept={source === 'digital' ? '.pdf,image/jpeg,image/png' : '.pdf,.jpg,.jpeg,.png'} multiple={source !== 'digital'} onChange={choose} className="hidden" />
+          <button type="button" className="btn-secondary inline-flex items-center gap-2" aria-describedby={fileHintId} onClick={() => input.current?.click()}>
+            <Upload className="h-4 w-4" aria-hidden="true" />
+            {source === 'digital' ? 'PDF kiezen' : 'Bestanden kiezen'}
+          </button>
+          <p id={fileHintId} className="text-sm text-gray-600 dark:text-gray-300">{source === 'digital' ? 'Originele PDF (maximaal 10 MB en vijf pagina’s)' : 'Eén PDF of maximaal vijf JPG/PNG-foto’s (samen maximaal 10 MB)'}</p>
+          <p className="text-sm text-gray-500" role="status">{files.length === 0 ? 'Nog geen bestand gekozen.' : `${files.length} ${files.length === 1 ? 'bestand' : 'bestanden'} gekozen.`}</p>
+        </div>
         {source !== 'digital' && <p className="text-sm text-gray-500">Zorg dat alle pagina’s scherp, volledig en zonder afgesneden randen zichtbaar zijn.</p>}
         {files.length > 0 && <ol className="space-y-2">{files.map((file, index) => (
           <li key={`${file.name}-${index}`} className="flex flex-wrap items-center gap-2 text-sm border rounded p-2">
