@@ -1,6 +1,6 @@
 # VOG uploaden en automatisch controleren
 
-**Status:** Uitgewerkt voorstel; nog niet geïmplementeerd.
+**Status:** Geïmplementeerd in 35.60.0; automatische clubregels standaard leeg.
 **Datum:** 11 september 2026.
 **Basis:** Rondo Club `main` op `95209387`.
 
@@ -256,14 +256,18 @@ voorgestelde maximale bewaartermijn, zichtbaar bij de upload. Daarna verloopt de
 inzending, wordt het bestand verwijderd en moet zo nodig opnieuw worden ingeleverd.
 Een dagelijkse WordPress-crontaak ruimt ook verweesde bestanden op; leesroutes
 weigeren toegang na de deadline, ook wanneer cron achterloopt. Controleer bij
-uitrol dat de tijdelijke map niet via backups langer wordt bewaard dan dit beleid.
+uitrol ook het backupbeleid: de applicatie maakt geen backups van deze map, maar
+hostingbackups vallen buiten deze bewaartermijn en moeten apart worden beoordeeld.
+De uploadtekst belooft daarom maximaal 30 dagen beschikbaarheid in Rondo;
+verwijdering van verlopen bestanden gebeurt tijdens de dagelijkse opruimtaak.
 Bewaar het minimale controleresultaat zolang die VOG-registratie nodig is; koppel
 opruimen aan bestaande persoonsverwijdering en privacyprocessen.
 
 Een nieuwe inzending vervangt alleen de vorige nog lopende inzending, niet de
 goedgekeurde datum. Per persoon wordt opslag/goedkeuring geserialiseerd met
-hercontrole onder een lock, inclusief herstel na time-outs; gebruik native
-WordPress-opslag voor die coördinatie. Beperk uploads en retries per account.
+hercontrole onder een kernel-bestandslock in dezelfde private directory. Een
+proces dat stopt laat de lock automatisch los; inzendstatus en herstelpogingen
+staan in native WordPress-opslag. Beperk uploads en retries per account.
 Dubbele bestandshashes leveren dezelfde lopende uitslag, zolang context en
 persoon overeenkomen. Cache een uitslag niet als toestemming voor een ander lid.
 

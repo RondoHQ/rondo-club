@@ -91,6 +91,12 @@ jobs:
       - name: Resolve download paths
         run: echo "WP_TARBALL=$RUNNER_TEMP/wordpress.tar.gz" >> "$GITHUB_ENV"
 
+      - name: Install and test the isolated VOG reader
+        run: |
+          python3 -m pip install --no-compile --only-binary=:all: --platform manylinux2014_x86_64 --python-version 314 --implementation cp --abi abi3 --require-hashes --target vendor/vog-python -r bin/vog/requirements-linux.txt
+          python3 tests/python/test_vog_reader.py
+          python3 tests/python/make_vog_fixture.py /tmp/rondo-vog-synthetic.pdf
+
       - name: Restore the WordPress tarball
         id: wp-cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6

@@ -1,3 +1,4 @@
+import VogApprovalRules from '@/components/VogApprovalRules';
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { prmApi, wpApi } from '@/api/client';
@@ -68,6 +69,7 @@ export default function VOGSettings() {
 
   return (
     <div className="space-y-6">
+      <VogApprovalRules />
       <div>
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
           VOG instellingen

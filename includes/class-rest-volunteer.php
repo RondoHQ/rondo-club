@@ -826,6 +826,8 @@ class Volunteer extends Base {
 				'expires_at'             => $expires_at,
 				'needs_renewal_reminder' => $needs_renewal_reminder,
 				'validity_years'         => 3,
+				'can_upload'             => \Rondo\VOG\VogSubmissions::eligible( $person_id, $user_id ),
+				'submission'             => \Rondo\VOG\VogSubmissions::payload( \Rondo\VOG\VogSubmissions::latest_id( $person_id ) ),
 				'profile_texts'          => ( new \Rondo\VOG\VOGEmail() )->get_profile_texts(),
 			]
 		);

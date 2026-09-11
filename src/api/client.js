@@ -524,6 +524,18 @@ export const prmApi = {
   getMyIva: () => api.get('/rondo/v1/iva/me'),
   getIvaCertificate: (personId) => api.get(`/rondo/v1/iva/${personId}/certificate`, { responseType: 'blob' }),
   getMyVog: () => api.get('/rondo/v1/vog/me'),
+  uploadVog: (files, source) => {
+    const data = new FormData();
+    files.forEach(file => data.append('files[]', file));
+    data.append('source', source);
+    return api.post('/rondo/v1/vog/upload', data, { timeout: 60000, headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  getVogSubmissions: (page = 1) => api.get('/rondo/v1/vog/submissions', { params: { page } }),
+  reviewVog: (id, data) => api.post(`/rondo/v1/vog/submissions/${id}/review`, data),
+  retryVog: (id) => api.post(`/rondo/v1/vog/submissions/${id}/retry`, {}, { timeout: 60000 }),
+  getVogFile: (id, fileId) => api.get(`/rondo/v1/vog/submissions/${id}/files/${fileId}`, { responseType: 'blob' }),
+  getVogRules: () => api.get('/rondo/v1/vog/approval-rules'),
+  saveVogRules: (rules) => api.post('/rondo/v1/vog/approval-rules', { rules }),
   uploadMyIva: (file, datumIva) => {
     const fd = new FormData();
     fd.append('certificaat', file);

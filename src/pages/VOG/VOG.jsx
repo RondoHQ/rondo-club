@@ -2,10 +2,12 @@ import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import TabButton from '@/components/TabButton';
 import VOGList from './VOGList';
 import VOGUpcoming from './VOGUpcoming';
+import VOGReview from './VOGReview';
 
 const TABS = [
   { id: 'overzicht', label: 'Overzicht' },
   { id: 'binnenkort', label: 'Binnenkort' },
+  { id: 'beoordelen', label: 'Te beoordelen' },
 ];
 
 export default function VOG() {
@@ -37,6 +39,7 @@ export default function VOG() {
       {/* Tab content */}
       {activeTab === 'overzicht' && <VOGList />}
       {activeTab === 'binnenkort' && <VOGUpcoming />}
+      {activeTab === 'beoordelen' && <VOGReview />}
     </div>
   );
 }
