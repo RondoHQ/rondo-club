@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.60.2] - 2026-09-11
+
+### Fixed
+
+- Replace the unstyled VOG file input with a visible Dutch file-picker button and upload icon, separating file limits from the action and showing the selection count.
+
 ## [35.60.1] - 2026-09-11
 
 ### Fixed
