@@ -1066,7 +1066,7 @@ export default function FactuurDetail() {
               )}
               <button
                 onClick={handleSend}
-                disabled={isPending}
+                disabled={isPending || invoice.scheduled_send_pending}
                 className="btn-primary gap-2"
               >
                 {sendInvoice.isPending ? (
@@ -1115,7 +1115,7 @@ export default function FactuurDetail() {
                 </div>
                 <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                   {invoice.scheduled_send_date
-                    ? `Deze factuur wordt automatisch verstuurd op ${format(parseYmd(invoice.scheduled_send_date), 'd MMMM yyyy')}. Je kunt hem ook nu al handmatig versturen.`
+                    ? `Deze factuur wordt automatisch verstuurd op ${format(parseYmd(invoice.scheduled_send_date), 'd MMMM yyyy')}.${invoice.scheduled_send_pending ? ' Annuleer eerst de inplanning als je hem nu wilt versturen.' : ''}`
                     : 'De factuur blijft een concept en wordt op de gekozen dag automatisch verstuurd.'}
                 </p>
               </div>

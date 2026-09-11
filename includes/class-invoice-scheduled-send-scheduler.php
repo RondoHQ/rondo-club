@@ -7,9 +7,9 @@
  * each, attributing the send to the user who scheduled it.
  *
  * The invoice stays a plain `rondo_draft` while queued — the schedule is just a
- * post meta value — so nothing about the existing draft/send flow changes. A
- * manual "Verstuur nu" send clears the schedule; the daily sweep sends whatever
- * is still a draft once its date arrives.
+ * post meta value. Manual sending respects future dates; sending early requires
+ * cancelling the schedule first. The daily sweep sends drafts once their date
+ * arrives, and a successful send clears the schedule.
  *
  * Idempotency:
  *   - Transient lock prevents concurrent sweeper runs (5-minute TTL)

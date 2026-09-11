@@ -215,6 +215,11 @@ export default function Facturen() {
     () => new Map((invoices || []).map((invoice) => [invoice.id, invoice.invoice_number])),
     [invoices],
   );
+  const sendableSelectedIds = (invoices || [])
+    .filter((invoice) => selectedIds.has(invoice.id) && invoice.status === 'draft' && !invoice.scheduled_send_pending)
+    .map((invoice) => invoice.id);
+  const scheduledSelectedCount = (invoices || [])
+    .filter((invoice) => selectedIds.has(invoice.id) && invoice.scheduled_send_pending).length;
 
   const handleSelectAll = useCallback((visibleDraftIds) => {
     setSelectedIds((prev) => {
@@ -231,7 +236,8 @@ export default function Facturen() {
   }, []);
 
   const handleBulkSend = async () => {
-    const ids = Array.from(selectedIds);
+    const ids = sendableSelectedIds;
+    if (ids.length === 0) return;
     setBulkSending(true);
     setBulkProgress({ action: 'send', done: 0, total: ids.length, errors: [] });
 
@@ -246,7 +252,7 @@ export default function Facturen() {
     }
 
     setBulkSending(false);
-    setSelectedIds(new Set());
+    setSelectedIds((prev) => new Set([...prev].filter((id) => !ids.includes(id))));
     queryClient.invalidateQueries({ queryKey: ['invoices'] });
   };
 
@@ -644,10 +650,15 @@ export default function Facturen() {
           <div className="mb-4 flex items-center gap-3 rounded-lg bg-electric-cyan/10 dark:bg-electric-cyan/5 border border-electric-cyan/20 px-4 py-3">
             <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
               {selectedIds.size} {selectedIds.size === 1 ? 'factuur' : 'facturen'} geselecteerd
+              {scheduledSelectedCount > 0 && (
+                <span className="block text-sm font-normal">
+                  {scheduledSelectedCount} {scheduledSelectedCount === 1 ? 'factuur blijft' : 'facturen blijven'} ingepland en {scheduledSelectedCount === 1 ? 'wordt' : 'worden'} niet nu verstuurd.
+                </span>
+              )}
             </span>
             <button
               onClick={handleBulkSend}
-              disabled={bulkBusy}
+              disabled={bulkBusy || sendableSelectedIds.length === 0}
               className="btn-primary gap-2 text-sm py-1.5 px-3"
             >
               {bulkSending ? (
@@ -658,7 +669,7 @@ export default function Facturen() {
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  Verstuur {selectedIds.size === 1 ? 'factuur' : 'alle'}
+                  Verstuur {sendableSelectedIds.length} {sendableSelectedIds.length === 1 ? 'factuur' : 'facturen'} nu
                 </>
               )}
             </button>
