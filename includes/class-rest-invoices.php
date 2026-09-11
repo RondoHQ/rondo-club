@@ -1446,6 +1446,15 @@ class Invoices extends Base {
 			);
 		}
 
+		// Enforce the schedule before creating payment links, PDFs, or sending mail.
+		if ( ! $is_test_send && $this->is_invoice_send_pending( $invoice_id ) ) {
+			return new \WP_Error(
+				'invoice_send_scheduled',
+				__( 'Deze factuur staat ingepland voor een toekomstige datum. Annuleer eerst de inplanning als je de factuur nu wilt versturen.', 'rondo' ),
+				[ 'status' => 409 ]
+			);
+		}
+
 		// Create payment link + QR code BEFORE PDF generation so QR is embedded in PDF.
 		// Membership invoices use the public payment page (/betaling/{token}) for plan selection,
 		// so skip direct Mollie/Rabobank payment link creation — it would overwrite the token URL.
@@ -1605,6 +1614,17 @@ class Invoices extends Base {
 		// Return updated invoice detail
 		$invoice = get_post( $invoice_id );
 		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
+	 * Whether a draft must wait for its send date in the WordPress site timezone.
+	 *
+	 * @param int $invoice_id Invoice post ID.
+	 * @return bool
+	 */
+	private function is_invoice_send_pending( int $invoice_id ): bool {
+		$scheduled = (string) get_post_meta( $invoice_id, '_scheduled_send_date', true );
+		return get_post_status( $invoice_id ) === 'rondo_draft' && $scheduled > current_time( 'Ymd' );
 	}
 
 	/**
@@ -2361,32 +2381,33 @@ class Invoices extends Base {
 		}
 
 		return [
-			'id'                  => $post->ID,
-			'invoice_number'      => \Rondo\Fields\Fields::get_for_post( $post->ID, 'invoice_number' ),
-			'person'              => $this->get_invoice_person_summary( $post->ID ),
-			'customer_name'       => (string) get_post_meta( $post->ID, '_customer_name', true ),
-			'customer_attention'  => (string) get_post_meta( $post->ID, '_customer_attention', true ),
-			'customer_email'      => (string) get_post_meta( $post->ID, '_customer_email', true ),
-			'customer_cc_email'   => (string) get_post_meta( $post->ID, '_customer_cc_email', true ),
-			'customer_address'    => (string) get_post_meta( $post->ID, '_customer_address', true ),
-			'invoice_kind'        => get_post_meta( $post->ID, '_invoice_kind', true ) ?: 'normal',
-			'total_amount'        => (float) \Rondo\Fields\Fields::get_for_post( $post->ID, 'total_amount' ),
-			'status'              => $status,
-			'post_status'         => $post->post_status,
-			'sent_date'           => get_post_meta( $post->ID, 'sent_date', true ) ?: null,
-			'due_date'            => get_post_meta( $post->ID, 'due_date', true ) ?: null,
-			'scheduled_send_date' => get_post_meta( $post->ID, '_scheduled_send_date', true ) ?: null,
-			'payment_link'        => $payment_link,
-			'payment_account'     => $this->get_invoice_payment_account( $post->ID ),
-			'created'             => $post->post_date,
-			'invoice_type'        => \Rondo\Fields\Fields::get_for_post( $post->ID, 'invoice_type' ) ?: null,
-			'installment_plan'    => get_post_meta( $post->ID, '_installment_plan', true ) ?: null,
-			'installment_count'   => (int) get_post_meta( $post->ID, '_installment_count', true ) ?: null,
-			'paid_installments'   => $this->count_paid_installments( $post->ID ),
-			'paid_at'             => $paid_at,
-			'reminder_sent_at'    => $reminder_sent_at,
-			'reminder_count'      => $reminder_count,
-			'sent_by'             => $this->get_user_summary_by_id( $sent_by_user_id ?: $last_sent_by_user_id ),
+			'id'                     => $post->ID,
+			'invoice_number'         => \Rondo\Fields\Fields::get_for_post( $post->ID, 'invoice_number' ),
+			'person'                 => $this->get_invoice_person_summary( $post->ID ),
+			'customer_name'          => (string) get_post_meta( $post->ID, '_customer_name', true ),
+			'customer_attention'     => (string) get_post_meta( $post->ID, '_customer_attention', true ),
+			'customer_email'         => (string) get_post_meta( $post->ID, '_customer_email', true ),
+			'customer_cc_email'      => (string) get_post_meta( $post->ID, '_customer_cc_email', true ),
+			'customer_address'       => (string) get_post_meta( $post->ID, '_customer_address', true ),
+			'invoice_kind'           => get_post_meta( $post->ID, '_invoice_kind', true ) ?: 'normal',
+			'total_amount'           => (float) \Rondo\Fields\Fields::get_for_post( $post->ID, 'total_amount' ),
+			'status'                 => $status,
+			'post_status'            => $post->post_status,
+			'sent_date'              => get_post_meta( $post->ID, 'sent_date', true ) ?: null,
+			'due_date'               => get_post_meta( $post->ID, 'due_date', true ) ?: null,
+			'scheduled_send_date'    => get_post_meta( $post->ID, '_scheduled_send_date', true ) ?: null,
+			'scheduled_send_pending' => $this->is_invoice_send_pending( $post->ID ),
+			'payment_link'           => $payment_link,
+			'payment_account'        => $this->get_invoice_payment_account( $post->ID ),
+			'created'                => $post->post_date,
+			'invoice_type'           => \Rondo\Fields\Fields::get_for_post( $post->ID, 'invoice_type' ) ?: null,
+			'installment_plan'       => get_post_meta( $post->ID, '_installment_plan', true ) ?: null,
+			'installment_count'      => (int) get_post_meta( $post->ID, '_installment_count', true ) ?: null,
+			'paid_installments'      => $this->count_paid_installments( $post->ID ),
+			'paid_at'                => $paid_at,
+			'reminder_sent_at'       => $reminder_sent_at,
+			'reminder_count'         => $reminder_count,
+			'sent_by'                => $this->get_user_summary_by_id( $sent_by_user_id ?: $last_sent_by_user_id ),
 		];
 	}
 
