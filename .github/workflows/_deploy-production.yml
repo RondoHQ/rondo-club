@@ -71,7 +71,8 @@ jobs:
 
       - name: Package isolated VOG reader for production Linux
         if: hashFiles('bin/vog/requirements-linux.txt') != ''
-        run: python3 -m pip install --no-compile --only-binary=:all: --platform manylinux2014_x86_64 --python-version 314 --implementation cp --abi abi3 --require-hashes --target vendor/vog-python -r bin/vog/requirements-linux.txt
+        run: |
+          python3 -m pip install --no-compile --only-binary=:all: --platform manylinux2014_x86_64 --python-version 314 --implementation cp --abi abi3 --require-hashes --target vendor/vog-python -r bin/vog/requirements-linux.txt
 
       - name: Package release
         run: |
