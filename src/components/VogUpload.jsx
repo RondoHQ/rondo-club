@@ -11,11 +11,14 @@ export default function VogUpload({ submission }) {
   const [error, setError] = useState('');
   const input = useRef(null);
   const client = useQueryClient();
+  const clearFiles = () => {
+    setFiles([]);
+    if (input.current) input.current.value = '';
+  };
   const upload = useMutation({
     mutationFn: () => prmApi.uploadVog(files, source),
     onSuccess: async () => {
-      setFiles([]);
-      if (input.current) input.current.value = '';
+      clearFiles();
       await refreshVog(client);
     },
   });
@@ -30,14 +33,17 @@ export default function VogUpload({ submission }) {
     setError('');
     upload.reset();
     if (selected.length > 5 || selected.reduce((sum, file) => sum + file.size, 0) > 10 * 1024 * 1024) {
+      clearFiles();
       setError('Kies maximaal vijf bestanden, samen maximaal 10 MB.');
       return;
     }
     if (selected.some(file => !['application/pdf', 'image/jpeg', 'image/png'].includes(file.type))) {
+      clearFiles();
       setError('Kies een PDF, JPG of PNG. Andere fotoformaten worden nog niet ondersteund.');
       return;
     }
     if (selected.some(file => file.type === 'application/pdf') && selected.length !== 1) {
+      clearFiles();
       setError('Kies één PDF of meerdere foto’s.');
       return;
     }
@@ -65,7 +71,7 @@ export default function VogUpload({ submission }) {
       <h2 className="font-semibold">VOG inleveren</h2>
       <fieldset disabled={upload.isPending} className="space-y-3">
         <legend className="text-sm mb-2">Wat wil je inleveren?</legend>
-        <label className="flex items-start gap-2 text-sm"><input type="radio" name="vog-source" checked={source === 'digital'} onChange={() => { setSource('digital'); setFiles([]); }} className="mt-1" />PDF uit MijnOverheid uploaden</label>
+        <label className="flex items-start gap-2 text-sm"><input type="radio" name="vog-source" checked={source === 'digital'} onChange={() => { setSource('digital'); clearFiles(); }} className="mt-1" />PDF uit MijnOverheid uploaden</label>
         <label className="flex items-start gap-2 text-sm"><input type="radio" name="vog-source" checked={source !== 'digital'} onChange={() => setSource('unknown')} className="mt-1" />Ik heb een papieren VOG of een foto/scan</label>
         {source !== 'digital' && (
           <div className="space-y-3">
