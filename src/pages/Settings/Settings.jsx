@@ -14,6 +14,7 @@ import { canAccessFeature } from '@/utils/featureToggles';
 import { decodeHtml } from '@/utils/formatters';
 
 const TrainingSettings = lazy(() => import('@/pages/Training/TrainingSettings'));
+const OnboardingSimulation = lazy(() => import('@/pages/Settings/OnboardingSimulation'));
 
 const KADERLIJST_CAPABILITY = 'kaderlijst';
 
@@ -3975,11 +3976,12 @@ function WelkomstmailTab({
         </p>
       </div>
 
-      <div className="flex items-end gap-6 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex flex-wrap items-end gap-6 border-b border-gray-200 dark:border-gray-700">
         <TabButton label="Account aanmaken" isActive={activeSubTab === 'account'} onClick={() => setActiveSubTab('account')} />
         <TabButton label="Nieuw lid" isActive={activeSubTab === 'lid'} onClick={() => setActiveSubTab('lid')} />
         <TabButton label="Nieuwe vrijwilliger" isActive={activeSubTab === 'vrijwilliger'} onClick={() => setActiveSubTab('vrijwilliger')} />
         <TabButton label="IVA-goedkeuring" isActive={activeSubTab === 'iva'} onClick={() => setActiveSubTab('iva')} />
+        <TabButton label="Onboarding simulatie" isActive={activeSubTab === 'simulation'} onClick={() => setActiveSubTab('simulation')} />
       </div>
 
       {activeSubTab === 'account' && (
@@ -3991,6 +3993,10 @@ function WelkomstmailTab({
           saved={saved}
           handleSave={handleSave}
         />
+      )}
+
+      {activeSubTab === 'simulation' && (
+        <Suspense fallback={<p>Simulatie laden…</p>}><OnboardingSimulation /></Suspense>
       )}
 
       {activeSubTab === 'lid' && (

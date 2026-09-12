@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class VOGRequirement {
 
 	/** Cached list of people for the filtered VOG overviews. */
-	private const CACHE_KEY = 'rondo_vog_required_people_v1';
+	private const CACHE_KEY = 'rondo_vog_required_people_v2';
 
 	/** Request-local copy of the cached person IDs. */
 	private static ?array $required_person_ids = null;
