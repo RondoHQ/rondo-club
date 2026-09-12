@@ -373,10 +373,11 @@ Een succesvolle oude verzending blijft historie als het adres later wordt verwij
 `wp_mail()`-succes betekent acceptatie voor verzending, niet bewezen bezorging. Bij
 een crash nadat de maildienst heeft geaccepteerd maar vóór de lokale registratie is
 exact-eenmalige verzending zonder medewerking van die dienst niet te garanderen.
-Verifieer daarom ondersteuning voor idempotentie/berichtstatus bij het werkelijke
-mailkanaal. Bij een onzekere uitkomst: toon **Verzendstatus controleren**, herstel via
-de verzendregistratie en herhaal niet blind. Noteer een expliciet besluit als de
-maildienst deze garantie niet kan leveren.
+Lettermint ondersteunt idempotentie gedurende 24 uur vanaf de eerste aanvraag; de
+huidige Rondo-mailer gebruikt dit nog niet. Zie hoofdstuk 10 voor de gecontroleerde
+beperking en benodigde koppeling. Bij een onzekere uitkomst: toon **Verzendstatus
+controleren**, herstel via de verzendregistratie en herhaal niet blind. Een eigen
+blijvende registratie blijft nodig nadat de providertermijn verstrijkt.
 
 Leg ontvangers en inhoud vast zodra een verzending begint. Een instellingwijziging
 of nieuw adres halverwege creëert geen tweede batch. Dit voorkomt dubbele of
@@ -527,10 +528,164 @@ vastgelegde hoofdlijn niet en mogen niet onzichtbaar als productbeleid worden in
 
 | Beslispunt | Nodig vóór | Voorstel / consequentie |
 |---|---|---|
-| Precies welke inschrijving telt als nieuw, en welk sync-moment is betrouwbaar? | Fase 1/2 | Eerst volledige sync en eventuele voorinschrijving/overschrijving onderzoeken; geen oude import als nieuw lid behandelen |
+| Precies welke inschrijving telt als nieuw? | Fase 1/2 | Voorinschrijving, toekomstige ingangsdatum en wachten op overschrijving vereisen nog een productregel; technische inventarisatie in hoofdstuk 10 toont dat een apart voltooiingssignaal nodig is |
 | Betrouwbaar bewijs van stoppen en terugkeer | Fase 1/2/3 | Productkeuze staat vast: opnieuw verwelkomen; technische detectie moet tijdelijke sync-gaten en seizoenswisselingen uitsluiten |
 | Gecombineerde mail en verschillende ontvangerregels | Fase 3 | Ledenmail omvat ouderadressen; vrijwilligers-/VOG-mail alleen onder 18. Voorstel: één gecombineerde mail per toegestane ontvanger, met alleen ledenblokken voor eventuele andere ledenmailontvangers |
 | Welkomstmail bij VOG in controle of opnieuw aanleveren | Fase 3 | Eigen bewerkbare tekst nodig die de werkelijke vervolgstap beschrijft |
 | Vernieuwing binnenkort en aanvraag al actief | Fase 4 | Bestaande geldigheids-/vernieuwingsgrenzen centraal gebruiken; actuele aanvraag voorkomt een dubbele start |
 | Kledingtekst bij terugkeer | Fase 3/5 | Werkvoorraad wordt heropend met historie; tekst moet beoordeling van benodigde kleding beloven, geen automatisch nieuw volledig pakket |
 | Definitie en bediening van langere onderbreking | Fase 1/6 | Achterstallige welkomstmails eerst beoordelen is gekozen; bepaal tijdsgrens en bediening binnen persoon-/bestaande beheerpagina's |
+
+## 10. Technische inventarisatie — 12 september 2026
+
+**Conclusie:** de bestaande functies bieden bruikbare bouwstenen, maar de huidige
+verzending kan nog niet betrouwbaar automatisch worden ingeschakeld. Vooral complete
+syncgegevens, alle bronadressen en blijvende verzendregistratie ontbreken als gedeeld
+contract. Deze inventarisatie verandert geen software of productie-instellingen.
+
+### Sync: 24 uur wachten bewijst niet dat alle gegevens binnen zijn
+
+De live crontab van de Rondo Sync-service bevat onderstaande planning. Dit bevestigt
+de ingestelde frequentie, niet dat iedere uitvoering daadwerkelijk is geslaagd. De
+tijden zijn de crontabwaarden; de servertijdzone is hierbij niet apart geverifieerd.
+
+| Pipeline | Ingestelde uitvoering |
+|---|---|
+| Mensen en ouders | Dagelijks 08:00, 11:00, 14:00 en 17:00 |
+| Functies, recente selectie | Dagelijks 07:30, 10:30, 13:30 en 16:30 |
+| Teams | Zondag 06:00 |
+| Functies, volledige selectie | Zondag 01:00 |
+
+`rondo-sync/pipelines/sync-people.js`, `sync-functions.js`, `sync-teams.js` en
+`sync-all.js` verwerken verschillende delen van de benodigde gegevens. Alleen een
+persoon opslaan of 24 uur laten verstrijken bewijst dus niet dat ouderrelaties,
+teamfuncties en commissiefuncties compleet zijn.
+
+Ook bestaande tijdstempels zijn onvoldoende:
+
+- `prepare-rondo-club-members.js` vertaalt `MemberSince`, `RelationEnd` en de
+  lidsoort naar onder meer `lid_sinds`, `lid_tot` en `former_member`. Een bevestigde
+  opeenvolging van lidmaatschapsperiodes wordt daarbij niet als aparte historie bewaard.
+- `submit-rondo-club-sync.js` kan een bestaande ouderpersoon als lid hergebruiken;
+  de WordPress-aanmaakdatum is daardoor geen lidmaatschapsstart. Ontbreken in de
+  bron kan bovendien tot `former_member` leiden zonder bewijs van echte uitschrijving.
+- `lib/rondo-club-db.js` bewaart `created_at`, actualiseert `last_seen` en vervangt
+  brongegevens vóór succesvolle verwerking in WordPress. Deze waarden bewijzen geen
+  afgeronde import. De sync heeft bovendien een pad dat een fout als `skipped`
+  teruggeeft zonder die in de algemene foutenlijst op te nemen.
+- `rondo_fields_saved_post` in `includes/class-fields.php` is een bruikbaar
+  wijzigingssignaal, maar wordt alleen bij gewijzigde velden uitgevoerd en markeert
+  geen voltooide sync. `vrijwilliger_sinds` is alleen een datum en wordt niet bij
+  iedere echte terugkeer opnieuw gezet.
+
+**Implementatievoorstel:** laat Sync via een geauthenticeerd contract per persoon
+melden welke relevante bronnen succesvol verwerkt zijn, met stabiele uitvoeringssleutel
+en waarnemingstijd. Ongewijzigde personen moeten dat signaal eveneens kunnen krijgen.
+WordPress beheert vervolgens de uitgangspopulatie, lidmaatschaps-/vrijwilligersrondes
+en planning. Ontbrekende dekking houdt verzending tegen en betekent niet 'geen rol'.
+Een fout bij een niet relevante foto- of nieuwsbriefstap hoeft geen blokkade te zijn.
+Zowel de volledige als de afzonderlijke pipelines moeten dit contract ondersteunen.
+
+Leg bij de eerste volledige waarneming bestaande leden/vrijwilligers als uitgangssituatie
+vast zonder welkomstmail. Gebruik voor terugkeer aantoonbare beëindiging en een nieuwe
+periode; alleen verdwijnen en terugkomen in een import mag geen ronde openen. De
+concrete bronvoorwaarden voor voorinschrijving/overschrijving blijven een beslispunt.
+
+Corrigeer vóór automatische rolselectie de gedeelde datumlogica in
+`includes/class-volunteer-status.php`: expliciete begin-/einddatums moeten vóór een
+verouderd `is_current` gelden; een toekomstige rol mag niet alvast activeren.
+
+### Ontvangers: bewaar ook een ouderadres zonder oudernaam
+
+`rondo-sync/steps/prepare-rondo-club-parents.js` slaat bij de eerste waarneming van
+een mailbox de ouder over wanneer `NameParent1`/`NameParent2` ontbreekt, ook bij een
+geldig `EmailAddressParent1`/`EmailAddressParent2`. Alleen de bestaande gekoppelde
+ouderpersonen verzamelen voldoet daardoor niet aan 'alle opgegeven adressen'. Ouders
+worden bovendien per mailbox samengevoegd; een mailbox is geen unieke natuurlijke persoon.
+
+**Implementatievoorstel:** behoud deze opgegeven contactadressen met hun bron en
+koppeling aan het kind in het native veldcontract, ook zonder oudernaam. Verzin daarvoor
+geen ouderidentiteit. Eén gedeelde ontvangerservice combineert eigen `email_1`/`email_2`,
+deze bronadressen en de toegestane ouderrelaties, valideert en ontdubbelt per persoon.
+Voor vrijwilligers/VOG bepaalt de geboortedatum of ouderadressen mogen meedoen; een
+onbekende leeftijd is geen bewijs van minderjarigheid. De omgang met ontbrekende
+geboortedatums moet zichtbaar zijn in de simulatie.
+
+`includes/class-activation-service.php` zoekt nu alleen gepubliceerde personen via
+`email_1`/`email_2`. Een uitsluitend bij het kind bewaard ouderadres zou daar dus nog
+niet kunnen activeren. Breid ontvangerverzameling en activatiekoppeling samen uit, met
+e-mailbewijs en behoud van de bestaande account-/kindkeuze. Gebruik geen synthetische
+WordPress-gebruikersadressen uit `ContactEmailRouter` als mailontvangers.
+
+De bestaande `PersonCommunicationPolicy` dekt overlijden, geldigheid en ontdubbeling
+van eigen adressen, maar raadpleegt niet de Lettermint-suppressieregistratie. Neem
+bekende blokkades mee in de nieuwe verzending en toon het betreffende adresprobleem;
+maak zo'n adres niet automatisch opnieuw verzendbaar.
+
+### Mailkanaal: ondersteuning aanwezig, koppeling nog niet
+
+Productie heeft een geconfigureerde Lettermint-integratie; alleen de aanwezigheid van
+configuratie is gecontroleerd, zonder tokenwaarden te tonen of een testmail te sturen.
+De geïnstalleerde SDK biedt `EmailEndpoint::idempotencyKey()` en retourneert een
+berichtnummer en status. `includes/class-lettermint-mailer.php` gebruikt die sleutel
+niet en gooit het resultaat van `send()` weg. Een exception wordt `false`, zonder
+onderscheid tussen aantoonbaar niet verzonden en mogelijk al geaccepteerd.
+
+Lettermint bewaart een sleutel per project gedurende **24 uur vanaf eerste gebruik**.
+Dezelfde sleutel en identieke inhoud leveren binnen die termijn hetzelfde resultaat
+zonder nieuwe verzending. Afwijkende inhoud of een gelijktijdige aanvraag geeft een
+conflict; na 24 uur wordt de sleutel als nieuw behandeld. Dit is onafhankelijk van
+de gekozen wachttijd vóór de welkomstmail.
+Bron: [Lettermint: idempotency](https://lettermint.co/docs/platform/emails/idempotency),
+gecontroleerd op 12 september 2026.
+
+**Benodigde koppeling:** leg vóór de eerste aanvraag per ontvanger een blijvende
+verzendsleutel, exclusieve claim en volledige onveranderlijke payload vast, inclusief
+metadata. Gebruik expliciet de SDK-methode voor de API-sleutel; een willekeurige extra
+mailheader via de huidige mailer is hiervoor geen bewezen koppeling. Bewaar daarna
+berichtnummer, acceptatiestatus, pogingstijden en foutsoort. Herhaal een onzekere
+aanvraag uitsluitend met dezelfde sleutel/payload binnen de providertermijn; zet een
+onzekere oudere aanvraag op **Verzendstatus controleren**. Nieuwe sleutels of gewijzigde
+inhoud mogen de bescherming niet omzeilen. Als het vereiste transport ontbreekt, mag
+deze automatische stroom niet ongemerkt terugvallen op een ander mailkanaal.
+
+`includes/class-lettermint-webhook.php` handelt nu hard bounces en spamklachten af,
+bewaart suppressies en maakt daarvoor algemene taken. De nieuwe mailstromen moeten
+via expliciete persoon-, ronde- en verzendmetadata hun eigen uitkomst bijwerken en
+problemen op de persoon-/VOG-pagina tonen. Alleen zoeken op ontvangeradres is onvoldoende
+bij een gedeelde oudermailbox. Behoud de bestaande taakafhandeling voor andere
+mailstromen. Verwerk herhaalde en verkeerd geordende callbacks zonder een succes terug
+te zetten naar 'opnieuw verzenden'. Acceptatie is nog geen bewezen bezorging.
+
+### Productieplanning: externe WordPress-trigger nog te verifiëren
+
+De live WordPress-configuratie heeft `DISABLE_WP_CRON=true` en tijdzone
+`Europe/Amsterdam`. Bij de gerichte inspectie van onboarding-/VOG-hooks was alleen
+de dagelijkse `rondo_vog_cleanup` geregistreerd; geen nieuwe onboarding- of
+VOG-herinneringsscheduler. Dit is geen volledige inventaris van alle WordPress-cron.
+
+De hosting-shell biedt geen `crontab`-commando. Daardoor is de externe aansturing van
+WordPress-cron nog niet vastgesteld; dit bewijst niet dat deze ontbreekt of defect is.
+Controleer vóór inschakelen de hostingplanner en een werkelijk uitgevoerde, onschuldige
+controleactie. Een geregistreerde WordPress-hook alleen is onvoldoende bewijs.
+
+### Afgebakende eerste bouwstap en bewijs
+
+Begin met het voltooiingscontract tussen Sync en Club, de uitgangspopulatie en rondes,
+het behoud van alle bronadressen, en de gedeelde ontvanger-/verzendregistratie. Kies
+hiervoor definitieve native opslagcontracten en toets de exclusieve claim met werkelijk
+gelijktijdige verwerking; een 'uniek' postmeta-kenmerk alleen bewijst geen exclusiviteit.
+Voeg vervolgens een simulatie toe met kandidaat, reden, brondekking, geplande tijd,
+ontvangers, blokkades en geselecteerde mailblokken. De simulatie verstuurt niets.
+
+Minimaal te bewijzen vóór fase 2: herhaalde en gedeeltelijk mislukte imports, hergebruik
+van een ouderpersoon, tijdelijke bronafwezigheid, echte terugkeer, rollen met toekomstige
+datums, ouderadres zonder naam, twee kinderen met dezelfde mailbox, gedeeltelijke
+mailacceptatie, crash na acceptatie, providertermijn verstreken en herhaalde callbacks.
+Test handmatig verzenden en cron tegen dezelfde claim. De simulatie en deze tests zijn
+tijdens deze inventarisatie nog niet gebouwd of uitgevoerd.
+
+De fases in hoofdstuk 8 beschrijven bouwvolgorde. Vrijwilligersmails die VOG- of
+kledingopvolging beloven mogen pas worden ingeschakeld wanneer ook die werkvoorraden
+en bijbehorende flows gereed zijn. Een code-release is geen toestemming om bestaande
+personen alsnog automatisch te mailen.
