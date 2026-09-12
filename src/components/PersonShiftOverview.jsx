@@ -50,12 +50,9 @@ export default function PersonShiftOverview({ overview, isLoading }) {
         <p className="text-sm text-gray-500 dark:text-gray-400">Inschrijftaken konden niet worden geladen.</p>
       ) : (
         <div className="space-y-3">
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <p className="font-medium text-gray-900 dark:text-gray-100">
-              {exempt ? 'Vrijgesteld' : required > 0 ? `${completed} van ${required} afgerond` : 'Geen inschrijftaken vereist'}
-            </p>
-            <span className="text-sm text-gray-500 dark:text-gray-400">{overview.season}</span>
-          </div>
+          <p className="font-medium text-gray-900 dark:text-gray-100">
+            {exempt ? 'Vrijgesteld' : required > 0 ? `${completed} van ${required} afgerond` : 'Geen inschrijftaken vereist'}
+          </p>
           {upcoming.length > 0 ? (
             <div>
               <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">Eerstvolgende inschrijftaak</p>

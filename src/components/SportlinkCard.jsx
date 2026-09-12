@@ -31,7 +31,7 @@ export default function SportlinkCard({ fieldData, metaData, primaryTeam }) {
 
   // Field configuration with Dutch labels
   const fields = [
-    { key: 'knvb_id', label: 'KNVB ID', value: knvbId, type: 'text' },
+    { key: 'knvb_id', label: 'Bondsnummer', value: knvbId, type: 'text' },
     { key: 'lid_sinds', label: 'Lid sinds', value: lidSinds, type: 'date' },
     { key: 'vrijwilliger_sinds', label: 'Vrijwilliger sinds', value: vrijwilligerSinds, type: 'date', showWhenEmpty: true },
     { key: 'lid_tot', label: 'Lid tot', value: lidTot, type: 'date' },
@@ -99,7 +99,7 @@ export default function SportlinkCard({ fieldData, metaData, primaryTeam }) {
     }
   }
 
-  const primaryKeys = ['type_lid', 'lid_sinds', 'lid_tot', 'team'];
+  const primaryKeys = ['knvb_id', 'type_lid', 'lid_sinds', 'lid_tot', 'team'];
   const renderFields = (selectedFields) => (
     <dl className="space-y-2">
         {selectedFields.map((field) => {
