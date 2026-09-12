@@ -11,6 +11,7 @@ use Rondo\Core\AccessControl;
 use Rondo\Fields\Fields;
 use Rondo\Fields\Formatter;
 use Rondo\Fields\Registry;
+use Rondo\Sponsors\Relations;
 use Rondo\Users\GuardianAccountService;
 use Rondo\Users\UserProvisioning;
 use Rondo\Volunteer\ShiftEmailScheduler;
@@ -136,6 +137,17 @@ final class PersonMergeService {
 			return $update_result;
 		}
 
+		foreach ( $plan['sponsor_updates'] as $sponsor_id => $contacts ) {
+			$result = Fields::update_many_for_post( $sponsor_id, [ 'contacts' => $contacts ] );
+			Relations::flush_cache();
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+			if ( Relations::normalize_contacts( (array) Fields::get_for_post( $sponsor_id, 'contacts' ) ) !== $contacts ) {
+				return new \WP_Error( 'rondo_person_merge_sponsor_failed', __( 'Een sponsorkoppeling kon niet worden overgezet. Het dubbele profiel is nog niet verwijderd.', 'rondo' ), [ 'status' => 500 ] );
+			}
+		}
+
 		$this->move_person_references( $duplicate_id, $primary_id );
 		$this->move_linked_account( $duplicate_id, $primary_id );
 		$this->move_comments( $duplicate_id, $primary_id );
@@ -201,7 +213,7 @@ final class PersonMergeService {
 
 	/**
 	 * @param array<string,string> $resolutions Conflict choices.
-	 * @return array{updates: array<string,mixed>, conflicts: array<int,array<string,mixed>>, blocking_conflicts: array<int,array<string,mixed>>, automatic_changes: string[]}
+	 * @return array{updates: array<string,mixed>, sponsor_updates: array<int,array>, conflicts: array<int,array<string,mixed>>, blocking_conflicts: array<int,array<string,mixed>>, automatic_changes: string[]}
 	 */
 	private function build_plan( int $primary_id, int $duplicate_id, array $resolutions ): array {
 		$primary   = Fields::all_for_post( $primary_id );
@@ -292,8 +304,11 @@ final class PersonMergeService {
 			$blocking[] = $account_block;
 		}
 
+		$sponsor_updates = $this->plan_sponsor_references( $primary_id, $duplicate_id, $blocking );
+
 		return [
 			'updates'            => $updates,
+			'sponsor_updates'    => $sponsor_updates,
 			'conflicts'          => $conflicts,
 			'blocking_conflicts' => $blocking,
 			'automatic_changes'  => array_values( array_unique( $automatic ) ),
@@ -540,6 +555,7 @@ final class PersonMergeService {
 	/** @return array<string,int> */
 	private function reference_summary( int $person_id ): array {
 		return [
+			'sponsors'      => count( Relations::for_person( $person_id ) ),
 			'relationships' => count( (array) Fields::get_for_post( $person_id, 'relationships' ) ),
 			'comments'      => (int) get_comments(
 				[
@@ -648,6 +664,86 @@ final class PersonMergeService {
 			$ids[] = $forward;
 		}
 		return array_values( array_unique( $ids ) );
+	}
+
+	/**
+	 * Plan company-owned contacts before any writes, preserving external IDs and pass choices.
+	 *
+	 * @param array $blocking Merge conflicts shared by preview and execution.
+	 * @return array<int,array>
+	 */
+	private function plan_sponsor_references( int $primary_id, int $duplicate_id, array &$blocking ): array {
+		Relations::flush_cache();
+		$relations   = array_merge( Relations::for_person( $primary_id ), Relations::for_person( $duplicate_id ) );
+		$sponsor_ids = array_unique( array_column( $relations, 'sponsor_id' ) );
+		$updates     = [];
+		$pass_owners = [];
+
+		foreach ( $sponsor_ids as $sponsor_id ) {
+			$contacts  = (array) Fields::get_for_post( $sponsor_id, 'contacts' );
+			$primary   = null;
+			$duplicate = null;
+			foreach ( $contacts as $index => $contact ) {
+				if ( (int) $contact['person_id'] === $primary_id ) {
+					$primary = $index;
+				} elseif ( (int) $contact['person_id'] === $duplicate_id ) {
+					$duplicate = $index;
+				}
+			}
+
+			if ( $duplicate !== null ) {
+				if ( $primary === null ) {
+					$contacts[ $duplicate ]['person_id'] = $primary_id;
+				} else {
+					foreach ( [ 'sponsit_person_id', 'contact_role' ] as $field ) {
+						$kept  = (string) ( $contacts[ $primary ][ $field ] ?? '' );
+						$moved = (string) ( $contacts[ $duplicate ][ $field ] ?? '' );
+						if ( $kept !== '' && $moved !== '' && $kept !== $moved ) {
+							$blocking[] = [
+								'field'           => 'sponsor_contacts_' . $sponsor_id . '_' . $field,
+								'label'           => get_the_title( $sponsor_id ),
+								'primary_value'   => $kept,
+								'duplicate_value' => $moved,
+								'message'         => __( 'De sponsorcontacten hebben verschillende rollen of Sponsit-ID’s. Los dit eerst op bij de sponsor.', 'rondo' ),
+							];
+						} elseif ( $kept === '' ) {
+							$contacts[ $primary ][ $field ] = $moved;
+						}
+					}
+					foreach ( [ 'is_primary', 'receives_pass', 'is_primary_pass' ] as $field ) {
+						$contacts[ $primary ][ $field ] = ! empty( $contacts[ $primary ][ $field ] ) || ! empty( $contacts[ $duplicate ][ $field ] );
+					}
+					unset( $contacts[ $duplicate ] );
+				}
+				$contacts = Relations::normalize_contacts( array_values( $contacts ) );
+				if ( is_wp_error( $contacts ) ) {
+					$blocking[] = [
+						'field'   => 'sponsor_contacts_' . $sponsor_id,
+						'label'   => get_the_title( $sponsor_id ),
+						'message' => $contacts->get_error_message(),
+					];
+					continue;
+				}
+				$updates[ $sponsor_id ] = $contacts;
+			}
+
+			foreach ( $contacts as $contact ) {
+				if ( (int) $contact['person_id'] === $primary_id && ! empty( $contact['receives_pass'] ) && ! empty( $contact['is_primary_pass'] ) ) {
+					$pass_owners[] = get_the_title( $sponsor_id );
+				}
+			}
+		}
+
+		if ( $updates && count( $pass_owners ) > 1 ) {
+			$blocking[] = [
+				'field'   => 'sponsor_primary_pass',
+				'label'   => __( 'Primaire sponsorpas', 'rondo' ),
+				/* translators: %s: sponsor company names. */
+				'message' => sprintf( __( 'Beide profielen hebben een primaire sponsorpas. Kies eerst één primaire pas bij de sponsors: %s.', 'rondo' ), implode( ', ', $pass_owners ) ),
+			];
+		}
+
+		return $updates;
 	}
 
 	private function move_person_references( int $source_id, int $target_id ): void {
