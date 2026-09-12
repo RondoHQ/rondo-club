@@ -125,17 +125,19 @@ class MyTeamTest extends RondoTestCase {
 					'can_view_contacts' => true,
 					'players'           => [
 						[
-							'id'        => $player,
-							'name'      => 'Lange van der Spelersnaam',
-							'emails'    => [ 'speler@example.org' ],
-							'phones'    => [ '0612345678' ],
-							'thumbnail' => null,
-							'parents'   => [
+							'id'            => $player,
+							'name'          => 'Lange van der Spelersnaam',
+							'emails'        => [ 'speler@example.org' ],
+							'phones'        => [ '0612345678' ],
+							'mobile_phones' => [ '06 1234 5678' ],
+							'thumbnail'     => null,
+							'parents'       => [
 								[
-									'id'     => $parent,
-									'name'   => 'Ouder',
-									'emails' => [ 'ouder@example.org' ],
-									'phones' => [ '024 123 4567' ],
+									'id'            => $parent,
+									'name'          => 'Ouder',
+									'emails'        => [ 'ouder@example.org' ],
+									'phones'        => [ '024 123 4567' ],
+									'mobile_phones' => [],
 								],
 							],
 						],
@@ -513,6 +515,7 @@ class MyTeamTest extends RondoTestCase {
 				'first_name'    => 'Staflid',
 				'email_1'       => 'staff@example.org',
 				'mobile_1'      => '0612345678',
+				'mobile_2'      => '+32470123456',
 				'work_history'  => [
 					$this->position( $this->team_id, 'Trainer' ),
 					$this->position( $this->team_id, 'Materialman' ),
@@ -560,12 +563,13 @@ class MyTeamTest extends RondoTestCase {
 			$this->assertSame(
 				[
 					[
-						'id'        => $staff,
-						'name'      => 'Staflid',
-						'emails'    => [ 'staff@example.org' ],
-						'phones'    => [ '0612345678' ],
-						'thumbnail' => get_the_post_thumbnail_url( $staff, 'thumbnail' ),
-						'roles'     => [ 'Trainer', 'Materialman' ],
+						'id'            => $staff,
+						'name'          => 'Staflid',
+						'emails'        => [ 'staff@example.org' ],
+						'phones'        => [ '0612345678', '+32470123456' ],
+						'mobile_phones' => [ '0612345678', '+32470123456' ],
+						'thumbnail'     => get_the_post_thumbnail_url( $staff, 'thumbnail' ),
+						'roles'         => [ 'Trainer', 'Materialman' ],
 					],
 				],
 				$teams[0]['staff']

@@ -1,21 +1,48 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronDown, Mail, Phone, Users } from 'lucide-react';
+import { SiWhatsapp } from '@icons-pack/react-simple-icons';
 import { prmApi } from '@/api/client';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import TabButton from '@/components/TabButton';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { formatPhoneForTel, isDutchMobilePhone } from '@/utils/formatters';
+
+function whatsappNumber(phone) {
+  return formatPhoneForTel(phone).replace(/\D/g, '').replace(/^00/, '');
+}
 
 function ContactDetails({ person }) {
+  const mobileNumbers = new Set((person.mobile_phones || []).map(whatsappNumber));
+
   return (
     <div className="min-w-0 space-y-1 text-sm">
-      {person.phones.map((phone) => (
-        <a key={phone} href={`tel:${phone.replace(/[^+0-9]/g, '')}`} className="flex min-h-11 items-center gap-2 text-bright-cobalt hover:underline dark:text-electric-cyan">
-          <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span className="min-w-0 [overflow-wrap:anywhere]">{phone}</span>
-        </a>
-      ))}
+      {person.phones.map((phone) => {
+        const number = whatsappNumber(phone);
+        const isMobile = mobileNumbers.has(number) || isDutchMobilePhone(phone);
+
+        return (
+          <div key={phone} className="flex items-center gap-2">
+            <a href={`tel:${formatPhoneForTel(phone)}`} className="flex min-h-11 min-w-0 items-center gap-2 text-bright-cobalt hover:underline dark:text-electric-cyan">
+              <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="min-w-0 [overflow-wrap:anywhere]">{phone}</span>
+            </a>
+            {isMobile && number ? (
+              <a
+                href={`https://wa.me/${number}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Stuur ${person.name} een WhatsApp-bericht op ${phone}`}
+                title="WhatsApp"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded text-green-600 hover:bg-green-50 hover:text-green-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 dark:text-green-400 dark:hover:bg-green-950 dark:hover:text-green-300"
+              >
+                <SiWhatsapp className="h-5 w-5" aria-hidden="true" />
+              </a>
+            ) : null}
+          </div>
+        );
+      })}
       {person.emails.map((email) => (
         <a key={email} href={`mailto:${email}`} className="flex min-h-11 items-center gap-2 text-bright-cobalt hover:underline dark:text-electric-cyan">
           <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
