@@ -65,8 +65,15 @@ het opnieuw starten van de automatisering mag oude rondes niet alsnog activeren.
 - Een herhaalde sync mag dit moment niet verschuiven of een tweede mail plannen.
 - Maak onderscheid tussen een nieuwe inschrijving en het voor het eerst importeren
   van een al bestaand lid. Een technische migratie of herstelimport is geen inschrijving.
-- Bevestig vóór implementatie welk sync-signaal aangeeft dat de relevante gegevens
-  volledig zijn verwerkt. Een tussentijdse person-save bewijst dat niet.
+- Laat de sync nieuwe leden gericht volledig controleren: persoonsgegevens,
+  oudercontacten en team-/vrijwilligersfuncties moeten succesvol zijn opgehaald én
+  opgeslagen. Wacht hiervoor niet op de wekelijkse teamsync. Dit is een gemaakte
+  productkeuze; het voltooiingscontract wordt in fase 1 geïmplementeerd.
+- Een expliciet gecontroleerde lege uitkomst, zoals geen functies, telt als compleet.
+  Een nog niet uitgevoerde controle of fout telt als incompleet. Een tussentijdse
+  person-save bewijst geen volledigheid.
+- Verstuur alleen als zowel de 24-uurswachttijd voorbij is als de gerichte controle
+  volledig is afgerond. Een onvolledige controle houdt de mail tegen.
 - Een vertraagd proces stuurt nooit vóór de 24 uur voorbij zijn. Bewaar tijden in UTC
   en toon ze in de clubtijdzone, ook rond zomer-/wintertijd.
 
@@ -585,6 +592,13 @@ WordPress beheert vervolgens de uitgangspopulatie, lidmaatschaps-/vrijwilligersr
 en planning. Ontbrekende dekking houdt verzending tegen en betekent niet 'geen rol'.
 Een fout bij een niet relevante foto- of nieuwsbriefstap hoeft geen blokkade te zijn.
 Zowel de volledige als de afzonderlijke pipelines moeten dit contract ondersteunen.
+
+**Gekozen werkwijze:** start voor nieuwe leden een gerichte volledige controle van
+de benodigde gegevens, zonder op de reguliere wekelijkse teamsync te wachten. Het
+voltooiingssignaal bevestigt per onderdeel zowel ophalen als opslaan, inclusief een
+succesvol gecontroleerde lege uitkomst. Een ontbrekende of mislukte stap blokkeert
+verzending, ook na 24 uur. Hoe Sync deze gerichte controle uitvoert en hervat, wordt
+binnen fase 1 uitgewerkt; de keuze activeert nog geen sync of productiemails.
 
 Leg bij de eerste volledige waarneming bestaande leden/vrijwilligers als uitgangssituatie
 vast zonder welkomstmail. Gebruik voor terugkeer aantoonbare beëindiging en een nieuwe
