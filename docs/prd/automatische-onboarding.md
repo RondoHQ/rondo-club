@@ -1,6 +1,6 @@
 # Automatische onboarding van leden en vrijwilligers
 
-**Status:** Uitvoerbaar voorstel op basis van de gemaakte productkeuzes; nog niet geïmplementeerd of ingeschakeld.
+**Status:** Eerste bouwmijlpaal van fase 1 geïmplementeerd: niet-verzendend fundament en proefweergave. Automatische onboarding is nog niet ingeschakeld; fase 1 als geheel is nog niet afgerond.
 **Datum:** 12 september 2026.
 **Volgorde:** Eerst leden, daarna vrijwilligers met VOG- en kledingopvolging.
 
@@ -466,6 +466,25 @@ niet ongecontroleerd over in automatische selectie. Los alleen de noodzakelijke
 gedeelde logica met gerichte regressietests op; geen brede rollenherindeling.
 
 ## 8. Uitvoeringsfasen en acceptatie
+
+### Voortgang eerste bouwmijlpaal (35.73.0)
+
+Beschikbaar: beheerder-proefweergave bij de bestaande e-mailinstellingen, gedeelde
+ontvangerselectie met de 18-jaarsgrens, intern observatiecontract, uitgangssituatie en
+bevestigde ledenovergangen, private rondes en blijvende verzendreservering per adres.
+De proefweergave toont huidige personen met blokkades en een inventaris van mailblokken;
+het is nog geen complete mailpreview. De ouderimport ondersteunt de gekozen vervangende
+naam; expliciete roldatums winnen van een verouderd `is_current`.
+
+Nog nodig binnen het fundament: gerichte Sync-uitvoering met bewezen bronstatussen,
+de eerste registratie van de uitgangspopulatie, vrijwilligers-terugkeerrondes en
+volledige inhoud-/accountselectie. De productie-proefweergave toont zonder bevestigde
+observaties terecht geen vastgestelde instroom of verzendtijd. De verzendreservering
+is nog niet verbonden met Lettermint, retries of webhooks. Er is geen verzendscheduler
+toegevoegd en de bestaande handmatige mailroute blijft in deze eerste stap intact.
+
+Fase 1 mag pas als afgerond gelden wanneer de volledige onderstaande acceptatie
+is bewezen; deze eerste bouwmijlpaal geeft geen vrijgave voor automatische mails.
 
 ### Fase 1 — Fundament en simulatie
 

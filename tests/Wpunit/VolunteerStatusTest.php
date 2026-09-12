@@ -243,6 +243,60 @@ class VolunteerStatusTest extends RondoTestCase {
 		$this->assertTrue( VolunteerStatus::is_position_current( [ 'end_date' => $tomorrow->format( 'Y-m-d' ) ] ) );
 	}
 
+	public function test_explicit_dates_override_stale_current_flags(): void {
+		$future = current_datetime()->modify( '+1 day' )->format( 'Y-m-d' );
+		$past   = current_datetime()->modify( '-1 day' )->format( 'Y-m-d' );
+		$this->assertFalse(
+			VolunteerStatus::is_position_current(
+			[
+				'start_date' => $future,
+				'is_current' => true,
+			]
+			)
+			);
+		$this->assertFalse(
+			VolunteerStatus::is_position_current(
+			[
+				'end_date'   => $past,
+				'is_current' => true,
+			]
+			)
+			);
+		$this->assertFalse(
+			VolunteerStatus::is_position_current(
+			[
+				'end_date'   => current_datetime()->format( 'Y-m-d' ),
+				'is_current' => true,
+			]
+			)
+			);
+		$this->assertTrue(
+			VolunteerStatus::is_position_current(
+			[
+				'start_date' => $past,
+				'end_date'   => $future,
+				'is_current' => false,
+			]
+			)
+			);
+		$this->assertFalse(
+			VolunteerStatus::is_position_current(
+			[
+				'is_current' => false,
+				'team'       => 1,
+			]
+			)
+			);
+		$this->assertFalse(
+			VolunteerStatus::is_position_current(
+			[
+				'start_date' => '2026-02-31',
+				'is_current' => true,
+			]
+			)
+			);
+	}
+
 	/**
 	 * A committee role ending today no longer grants an exemption, even though
 	 * the native field layer returns its date in compact storage format.

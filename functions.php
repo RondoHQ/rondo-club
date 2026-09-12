@@ -309,6 +309,10 @@ function rondo_init() {
 	$is_rest  = rondo_is_rest_request();
 	$is_cron  = defined( 'DOING_CRON' ) && DOING_CRON;
 
+	// Non-sending onboarding records; no scheduler or mail hooks are registered.
+	add_action( 'init', [ \Rondo\Onboarding\Foundation::class, 'register' ] );
+	add_action( 'init', [ \Rondo\Onboarding\Dispatch::class, 'register' ] );
+
 	// Classes needed for content creation/editing (admin, REST, or cron)
 	if ( $is_admin || $is_rest || $is_cron ) {
 		new \Rondo\Narrowcasting\SportlinkMatchday();
@@ -353,6 +357,7 @@ function rondo_init() {
 		new Teams();
 		new \Rondo\REST\TeamMatches();
 		new \Rondo\REST\Training();
+		new \Rondo\REST\Onboarding();
 		new RESTSponsors();
 		new Commissies();
 		new Todos();

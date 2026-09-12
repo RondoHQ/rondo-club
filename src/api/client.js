@@ -394,6 +394,7 @@ export const prmApi = {
   getProvisioningSettings: () => api.get('/rondo/v1/provisioning/settings'),
   updateProvisioningSettings: (data) => api.post('/rondo/v1/provisioning/settings', data),
   getOnboardingEmailSettings: (type) => api.get(`/rondo/v1/onboarding/email-settings/${type}`),
+  getOnboardingSimulation: (params) => api.get('/rondo/v1/onboarding/simulation', { params }),
   updateOnboardingEmailSettings: (type, data) => api.post(`/rondo/v1/onboarding/email-settings/${type}`, data),
 
   // Club configuration (admin only)

@@ -296,10 +296,8 @@ class VolunteerStatus {
 	/**
 	 * Check if a position is currently active.
 	 *
-	 * A position is current if:
-	 * - is_current flag is true, OR
-	 * - end_date is empty/null, OR
-	 * - end_date is in the future (positions ending today are NOT considered current)
+	 * Explicit dates take precedence over is_current. Future starts and positions
+	 * ending today are not current; undated explicit inactive rows stay historical.
 	 *
 	 * Accepts both the compact Ymd storage format and the canonical Y-m-d wire
 	 * format used by work_history dates.
@@ -308,32 +306,29 @@ class VolunteerStatus {
 	 * @return bool True if the position is current.
 	 */
 	public static function is_position_current( array $position ): bool {
+		$today      = current_datetime()->format( 'Ymd' );
+		$start_date = trim( (string) ( $position['start_date'] ?? '' ) );
+		if ( $start_date !== '' ) {
+			$start = self::normalize_work_history_date( $start_date );
+			if ( $start === null || $start > $today ) {
+				return false;
+			}
+		}
+		$end_date = trim( (string) ( $position['end_date'] ?? '' ) );
+		if ( $end_date !== '' ) {
+			$end = self::normalize_work_history_date( $end_date );
+			return $end !== null && $end > $today;
+		}
 		if ( \Rondo\Core\WorkHistory::is_inactive_without_end_date( $position ) ) {
 			return false;
 		}
 
-		// Check is_current flag first
+		// Only undated positions may fall back to the source flag.
 		if ( ! empty( $position['is_current'] ) ) {
 			return true;
 		}
 
-		// Check end_date
-		$end_date = trim( (string) ( $position['end_date'] ?? '' ) );
-
-		// No end date means position is still active
-		if ( empty( $end_date ) ) {
-			// But only if there's a start date (to filter out empty rows)
-			return ! empty( $position['start_date'] ) || ! empty( $position['team'] );
-		}
-
-		$normalized_end_date = self::normalize_work_history_date( $end_date );
-		if ( $normalized_end_date === null ) {
-			return false;
-		}
-
-		// Use tomorrow's date so positions ending today are no longer current.
-		$cutoff = current_datetime()->modify( '+1 day' )->format( 'Ymd' );
-		return $normalized_end_date >= $cutoff;
+		return $start_date !== '' || ! empty( $position['team'] );
 	}
 
 	/**
