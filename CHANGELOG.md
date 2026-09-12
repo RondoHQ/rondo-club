@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.62.0] - 2026-09-12
+
+### Added
+
+- Automatically queue manually uploaded profile photos for Sportlink, with visible pending, sending and confirmed status and an inclusive 1 July through 31 October window in Europe/Amsterdam.
+- Administrator-only, revision-bound photo export, claim and confirmation endpoints plus a paginated pending queue for the existing five-minute reverse sync.
+
+### Fixed
+
+- Protect manually uploaded Rondo photos from stale Sportlink imports and stop automatic retries after an uncertain photo upload.
+
 ## [35.61.0] - 2026-09-12
 
 ### Added
