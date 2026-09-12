@@ -14,6 +14,7 @@ const REFERENCE_LABELS = {
   todos: 'taken',
   invoices: 'facturen',
   cases: 'tuchtzaken',
+  sponsors: 'sponsorkoppelingen',
 };
 
 function PersonSummary({ person, selected, onSelect, label }) {

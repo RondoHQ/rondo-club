@@ -3,12 +3,187 @@
 namespace Tests\Wpunit;
 
 use Rondo\Data\PersonMergeService;
+use Rondo\Fields\Fields;
 use Rondo\REST\People;
+use Rondo\Sponsors\Relations;
 use Rondo\Users\UserProvisioning;
 use Tests\Support\RondoTestCase;
 use WP_REST_Request;
 
 class PersonMergeTest extends RondoTestCase {
+
+	public function test_merge_moves_active_and_archived_sponsor_contacts_and_preserves_passes(): void {
+		$primary_id   = $this->createPerson();
+		$duplicate_id = $this->createPerson();
+		$other_id     = $this->createPerson();
+		$company_id   = $this->createMergeSponsor(
+			[
+				[
+					'person_id'         => $other_id,
+					'is_primary'        => true,
+					'sponsit_person_id' => 'other-id',
+				],
+				[
+					'person_id'         => $duplicate_id,
+					'receives_pass'     => true,
+					'is_primary_pass'   => true,
+					'sponsit_person_id' => 'source-id',
+				],
+			]
+		);
+		$archived_id  = $this->createMergeSponsor(
+			[
+				[
+					'person_id'         => $duplicate_id,
+					'contact_role'      => 'Penningmeester',
+					'sponsit_person_id' => 'archived-id',
+				],
+			],
+			'draft'
+			);
+		$before       = Fields::get_for_post( $company_id, 'contacts' );
+		$archived     = Fields::get_for_post( $archived_id, 'contacts' );
+		$service      = new PersonMergeService();
+
+		$this->assertFalse( Relations::is_sponsor_contact( $primary_id ) );
+		$preview = $service->preview( $primary_id, $duplicate_id );
+		$this->assertSame( 2, $preview['references']['sponsors'] );
+		$this->assertSame( [], $preview['blocking_conflicts'] );
+		$this->assertSame( $before, Fields::get_for_post( $company_id, 'contacts' ) );
+
+		$result = $service->merge( $primary_id, $duplicate_id, [], 1 );
+		$this->assertIsArray( $result );
+		$before[1]['person_id']   = $primary_id;
+		$archived[0]['person_id'] = $primary_id;
+		$this->assertSame( $before, Fields::get_for_post( $company_id, 'contacts' ) );
+		$this->assertSame( $archived, Fields::get_for_post( $archived_id, 'contacts' ) );
+		$this->assertSame( [], Relations::for_person( $duplicate_id ) );
+		$this->assertCount( 2, Relations::for_person( $primary_id ) );
+		$this->assertTrue( Relations::is_sponsor_contact( $primary_id ) );
+		$this->assertSame( 'businessclub', Relations::pass_variant_for_person( $primary_id ) );
+		$this->assertSame( 'trash', get_post_status( $duplicate_id ) );
+	}
+
+	public function test_merge_combines_matching_contacts_at_the_same_sponsor(): void {
+		$primary_id            = $this->createPerson();
+		$duplicate_id          = $this->createPerson();
+		$company_id            = $this->createMergeSponsor(
+			[
+				[
+					'person_id'         => $duplicate_id,
+					'is_primary'        => true,
+					'receives_pass'     => true,
+					'is_primary_pass'   => true,
+					'sponsit_person_id' => 'source-id',
+				],
+				[
+					'person_id'         => $primary_id,
+					'sponsit_person_id' => 'source-id',
+				],
+			]
+		);
+		$expected              = Fields::get_for_post( $company_id, 'contacts' )[0];
+		$expected['person_id'] = $primary_id;
+
+		$result = ( new PersonMergeService() )->merge( $primary_id, $duplicate_id, [], 1 );
+		$this->assertIsArray( $result );
+		$this->assertSame( [ $expected ], Fields::get_for_post( $company_id, 'contacts' ) );
+		$this->assertFalse( metadata_exists( 'post', $company_id, 'contacts_1_person_id' ) );
+		$this->assertSame( 'businessclub', Relations::pass_variant_for_person( $primary_id ) );
+	}
+
+	public function test_conflicting_sponsor_source_ids_or_roles_block_before_writes(): void {
+		foreach ( [ 'sponsit_person_id', 'contact_role' ] as $field ) {
+			$primary_id   = $this->createPerson();
+			$duplicate_id = $this->createPerson( [], [ 'nickname' => 'Must not be copied' ] );
+			$company_id   = $this->createMergeSponsor(
+				[
+					[
+						'person_id' => $primary_id,
+						$field      => 'primary-value',
+					],
+					[
+						'person_id' => $duplicate_id,
+						$field      => 'duplicate-value',
+					],
+				]
+			);
+			$before       = Fields::get_for_post( $company_id, 'contacts' );
+			$service      = new PersonMergeService();
+			$preview      = $service->preview( $primary_id, $duplicate_id );
+			$this->assertSame( 'sponsor_contacts_' . $company_id . '_' . $field, $preview['blocking_conflicts'][0]['field'] );
+			$result = $service->merge( $primary_id, $duplicate_id, [], 1 );
+			$this->assertWPError( $result );
+			$this->assertSame( 'rondo_person_merge_blocked', $result->get_error_code() );
+			$this->assertSame( 'publish', get_post_status( $duplicate_id ) );
+			$this->assertEmpty( Fields::get_for_post( $primary_id, 'nickname' ) );
+			$this->assertSame( $before, Fields::get_for_post( $company_id, 'contacts' ) );
+		}
+	}
+
+	public function test_merge_does_not_silently_replace_either_primary_sponsor_pass(): void {
+		$primary_id        = $this->createPerson();
+		$duplicate_id      = $this->createPerson();
+		$primary_company   = $this->createMergeSponsor(
+			[
+				[
+					'person_id'       => $primary_id,
+					'receives_pass'   => true,
+					'is_primary_pass' => true,
+				],
+			]
+			);
+		$duplicate_company = $this->createMergeSponsor(
+			[
+				[
+					'person_id'       => $duplicate_id,
+					'receives_pass'   => true,
+					'is_primary_pass' => true,
+				],
+			]
+			);
+		$service           = new PersonMergeService();
+		$preview           = $service->preview( $primary_id, $duplicate_id );
+		$this->assertSame( 'sponsor_primary_pass', $preview['blocking_conflicts'][0]['field'] );
+		$result = $service->merge( $primary_id, $duplicate_id, [], 1 );
+		$this->assertWPError( $result );
+		$this->assertSame( 'publish', get_post_status( $duplicate_id ) );
+		$this->assertSame( $primary_company, Relations::pass_relationship_for_person( $primary_id )['sponsor_id'] );
+		$this->assertSame( $duplicate_company, Relations::pass_relationship_for_person( $duplicate_id )['sponsor_id'] );
+	}
+
+	private function createMergeSponsor( array $contacts, string $status = 'publish' ): int {
+		$id = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_sponsor',
+				'post_status' => $status,
+				'post_title'  => 'Merge sponsor',
+			]
+			);
+		Fields::update_for_post( $id, 'sponsor_role', 'businessclub' );
+		$this->assertTrue( Relations::set_contacts( $id, $contacts ) );
+		return $id;
+	}
+
+	public function test_failed_sponsor_write_keeps_the_duplicate_recoverable(): void {
+		$primary_id   = $this->createPerson();
+		$duplicate_id = $this->createPerson();
+		$company_id   = $this->createMergeSponsor( [ [ 'person_id' => $duplicate_id ] ] );
+		$skip_write   = static function ( $check, $object_id, $meta_key ) use ( $company_id ) {
+			return $object_id === $company_id && $meta_key === 'contacts_0_person_id' ? true : $check;
+		};
+		add_filter( 'update_post_metadata', $skip_write, 10, 3 );
+		try {
+			$result = ( new PersonMergeService() )->merge( $primary_id, $duplicate_id, [], 1 );
+		} finally {
+			remove_filter( 'update_post_metadata', $skip_write, 10 );
+		}
+		$this->assertWPError( $result );
+		$this->assertSame( 'rondo_person_merge_sponsor_failed', $result->get_error_code() );
+		$this->assertSame( 'publish', get_post_status( $duplicate_id ) );
+		$this->assertSame( $duplicate_id, Fields::get_for_post( $company_id, 'contacts' )[0]['person_id'] );
+		$this->assertEmpty( get_post_meta( $duplicate_id, '_rondo_merged_into_person_id', true ) );
+	}
 
 	public function test_preview_and_merge_combine_member_and_sponsor_profiles(): void {
 		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
