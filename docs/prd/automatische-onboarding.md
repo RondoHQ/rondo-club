@@ -509,6 +509,13 @@ Dit blijft een niet-verzendende stap. Afzonderlijke functie-/team-/persoonsimpor
 melden hun gedeeltelijke dekking niet als volledig. De gedeelde verzendroute,
 vrijwilligers-terugkeerrondes, volledige mailinhoud en accounts blijven vervolgstappen.
 
+Productieverificatie op 13 september 2026: een verse zoekactie met 26 geslaagde
+deelzoekacties registreerde 1.087 bestaande Sportlink-identiteiten als uitgangspopulatie.
+De volledige bronroute controleerde één bevestigd bestaand lid: alle vijf onderdelen
+compleet, geen openstaande broncontrole, geen welkomstronde en geen verzendregistratie.
+Een afzonderlijke API-controle bevestigde deze uitkomst en het behoud van de eerder
+gecontroleerde identiteit, lidmaatschapsgegevens, relaties en functiehistorie.
+
 ### Fase 1 — Fundament en simulatie
 
 Inventariseer de benodigde sync-signalen, ouderadresbronnen, mailkanaalgaranties,
