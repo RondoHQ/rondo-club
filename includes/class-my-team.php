@@ -105,8 +105,9 @@ final class MyTeam {
 					continue;
 				}
 				if ( $player === null ) {
-					$player            = self::contact( $person->ID );
-					$player['parents'] = [];
+					$player              = self::contact( $person->ID );
+					$player['thumbnail'] = get_the_post_thumbnail_url( $person->ID, 'thumbnail' ) ?: null;
+					$player['parents']   = [];
 					foreach ( $parents->find_parents( $person->ID ) as $parent_id ) {
 						if ( self::is_published_person( $parent_id ) ) {
 							$player['parents'][] = self::contact( $parent_id );

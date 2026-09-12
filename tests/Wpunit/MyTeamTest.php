@@ -121,11 +121,12 @@ class MyTeamTest extends RondoTestCase {
 					'name'    => 'JO13-1',
 					'players' => [
 						[
-							'id'      => $player,
-							'name'    => 'Lange van der Spelersnaam',
-							'emails'  => [ 'speler@example.org' ],
-							'phones'  => [ '0612345678' ],
-							'parents' => [
+							'id'        => $player,
+							'name'      => 'Lange van der Spelersnaam',
+							'emails'    => [ 'speler@example.org' ],
+							'phones'    => [ '0612345678' ],
+							'thumbnail' => null,
+							'parents'   => [
 								[
 									'id'     => $parent,
 									'name'   => 'Ouder',
@@ -155,6 +156,42 @@ class MyTeamTest extends RondoTestCase {
 		$this->assertSame( 404, rest_do_request( new \WP_REST_Request( 'POST', '/rondo/v1/my-teams' ) )->get_status() );
 		delete_user_meta( $this->user_id, 'rondo_linked_person_id' );
 		$this->assertSame( 403, $this->request()->get_status() );
+	}
+
+	public function test_player_thumbnail_is_returned_without_exposing_parent_photos(): void {
+		wp_set_current_user( 1 );
+		$parent     = $this->createPerson( [], [ 'first_name' => 'Ouder' ] );
+		$player     = $this->createPerson(
+			[],
+			[
+				'first_name'    => 'Speler',
+				'work_history'  => [ $this->position( $this->team_id ) ],
+				'relationships' => [
+					[
+						'related_person'    => $parent,
+						'relationship_type' => InverseRelationships::TYPE_PARENT,
+					],
+				],
+			]
+		);
+		$image      = wp_upload_bits( 'team-player.gif', null, base64_decode( 'R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==' ) );
+		$attachment = self::factory()->attachment->create_upload_object( $image['file'], $player );
+		set_post_thumbnail( $player, $attachment );
+		set_post_thumbnail( $parent, $attachment );
+		wp_set_current_user( $this->user_id );
+
+		$response = $this->request();
+		$contact  = $response->get_data()[0]['players'][0];
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( $player, $contact['id'] );
+		$this->assertNotEmpty( $contact['thumbnail'] );
+		$this->assertSame( wp_get_attachment_image_url( $attachment, 'thumbnail' ), $contact['thumbnail'] );
+		$this->assertSame( $parent, $contact['parents'][0]['id'] );
+		$this->assertArrayNotHasKey( 'thumbnail', $contact['parents'][0] );
+		$this->assertFalse( \Rondo\Core\AccessControl::can_view_person( $player, $this->user_id ) );
+
+		delete_post_thumbnail( $player );
+		$this->assertNull( $this->request()->get_data()[0]['players'][0]['thumbnail'] );
 	}
 
 	public function test_only_coaching_roles_grant_access(): void {
