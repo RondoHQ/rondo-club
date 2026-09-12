@@ -40,6 +40,7 @@ import TodoItem from '@/components/TodoItem.jsx';
 import TabButton from '@/components/TabButton.jsx';
 import { useClothingPersonProfile } from '@/hooks/useClothing';
 
+const PhotoCropModal = lazy(() => import('@/components/PhotoCropModal'));
 const PersonMergeModal = lazy(() => import('@/components/PersonMergeModal'));
 
 function ParentSyncBadge({ status }) {
@@ -178,7 +179,10 @@ export default function PersonDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: person, isLoading, error } = usePerson(id, {
-    refetchInterval: (query) => query.state.data?.parent_sync_statuses?.some(status => status.state === 'pending') ? 10000 : false,
+    refetchInterval: (query) => (
+      query.state.data?.parent_sync_statuses?.some(status => status.state === 'pending')
+      || ['pending', 'sending'].includes(query.state.data?.photo_sync_status?.state)
+    ) ? 10000 : false,
   });
   const { data: timeline } = usePersonTimeline(id);
   const deleteNote = useDeleteNote();
@@ -250,6 +254,7 @@ export default function PersonDetail() {
 
   const [activeTab, setActiveTab] = useState('profile');
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [photoToCrop, setPhotoToCrop] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState(null); // null | 'success' | 'error'
   const [syncErrorMessage, setSyncErrorMessage] = useState('');
@@ -815,23 +820,18 @@ export default function PersonDetail() {
       return;
     }
 
+    setPhotoToCrop(file);
+    event.target.value = '';
+  };
+
+  const saveCroppedPhoto = async (file) => {
     setIsUploadingPhoto(true);
-
     try {
-      // Upload the file using the new endpoint that properly names files
       await prmApi.uploadPersonPhoto(id, file);
-
-      // Invalidate queries to refresh person data
-      queryClient.invalidateQueries({ queryKey: ['person', id] });
-      queryClient.invalidateQueries({ queryKey: ['people'] });
-    } catch {
-      alert('Foto kon niet worden geüpload. Probeer het opnieuw.');
+      queryClient.invalidateQueries({ queryKey: peopleKeys.all });
+      setPhotoToCrop(null);
     } finally {
       setIsUploadingPhoto(false);
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
     }
   };
 
@@ -1394,28 +1394,42 @@ export default function PersonDetail() {
             {/* Upload overlay */}
             {canEditPhoto && (
               <>
-                <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center cursor-pointer"
-                     onClick={() => fileInputRef.current?.click()}
+                <button
+                  type="button"
+                  aria-label="Profielfoto wijzigen"
+                  disabled={isUploadingPhoto || person.photo_sync_status?.state === 'sending'}
+                  className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/50 focus:bg-black/50 transition-all duration-200 flex items-center justify-center cursor-pointer disabled:cursor-wait"
+                  onClick={() => fileInputRef.current?.click()}
                 >
                   {isUploadingPhoto ? (
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
                   ) : (
-                    <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity" />
                   )}
-                </div>
+                </button>
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
                   onChange={handlePhotoUpload}
                   className="hidden"
-                  disabled={isUploadingPhoto}
+                  disabled={isUploadingPhoto || person.photo_sync_status?.state === 'sending'}
                 />
               </>
             )}
           </div>
 
           <div className="flex-1 space-y-3">
+            {person.photo_sync_status && (
+              <p role="status" className="text-sm text-gray-600 dark:text-gray-300">
+                {person.photo_sync_status.message}
+              </p>
+            )}
+            {canEditPhoto && fields.knvb_id && !fields.former_member && fields.person_type !== 'contact' && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Foto’s kunnen van 1 juli tot en met 31 oktober naar Sportlink worden verstuurd.
+              </p>
+            )}
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-brand-gradient">
                 {person.name}
@@ -2290,6 +2304,17 @@ export default function PersonDetail() {
             todo={editingTodo}
           />
           
+          {photoToCrop && canEditPhoto && (
+            <Suspense fallback={null}>
+              <PhotoCropModal
+                file={photoToCrop}
+                isSaving={isUploadingPhoto}
+                onClose={() => setPhotoToCrop(null)}
+                onSave={saveCroppedPhoto}
+              />
+            </Suspense>
+          )}
+
           {canEditContact && (
             <ContactEditModal
               isOpen={showContactModal}

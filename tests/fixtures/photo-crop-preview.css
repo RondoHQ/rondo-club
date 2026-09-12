@@ -1,0 +1,5 @@
+@import '../../src/index.css';
+
+/* Include component classes when building with the fixture directory as Vite's root. */
+@source '../../src/components/PhotoCropModal.jsx';
+@source './photo-crop-preview.jsx';
