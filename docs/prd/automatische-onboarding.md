@@ -26,6 +26,10 @@ hieronder zijn voorgestelde beginwaarden voor de bewerkbare mailblokken.
 | Bediening | Planning, uitstellen, resultaat en fouten op de persoonspagina |
 | Uitstellen | Beheerder kiest een nieuwe datum en tijd |
 | Ledenontvangers | Alle opgegeven adressen van het lid en de ouders/verzorgers, ontdubbeld per lid |
+| Vrijwilligers- en VOG-mailontvangers | Alle eigen adressen; bij vrijwilligers jonger dan 18 ook opgegeven ouderadressen, steeds ontdubbeld |
+| Herinschrijving | Opnieuw een ledenwelkomstmail na 24 uur bij een echte nieuwe inschrijving; geen nieuwe ronde bij seizoenswisseling |
+| Terugkerende vrijwilliger | Na aantoonbaar stoppen en opnieuw beginnen een nieuwe vrijwilligerswelkomstmail na 24 uur |
+| Nieuw lid meteen vrijwilliger | Eén gecombineerde mail met ledeninformatie en relevante vrijwilligersblokken; alle blokken bewerkbaar |
 | Ledenaanhef | `Beste {first_name} en eventuele ouders/verzorgers,` |
 | Accountactivatie | Vaste knop naar `/activeren`; geen kortlevende tokenlink in de welkomstmail |
 | Vrijwilligersinhoud | Alleen toepasselijke blokken, bepaald bij verzending |
@@ -33,17 +37,24 @@ hieronder zijn voorgestelde beginwaarden voor de bewerkbare mailblokken.
 | VOG-opvolging | Op de bestaande VOG-pagina, zonder algemene taken |
 | VOG-herinneringen | Eerste na 14 dagen, tweede na nog eens 14 dagen; maximaal twee per aanvraagronde |
 | Herinneringsinstellingen | Wachttijd, interval, maximum, onderwerp en tekst aanpasbaar via Instellingen → VOG |
+| Gewijzigde termijnen/maxima | Alleen voor nieuwe aanvraagrondes; lopende rondes behouden hun oorspronkelijke afspraken |
+| Bestaande VOG-aanvragen bij inschakelen | Handmatige opvolging; geen automatische herinneringen voor die rondes |
+| Afwijzing / opnieuw aanleveren | Direct één mail met toelichting en vervolgstap; geen nieuwe herinneringsreeks |
 | Kledingopvolging | Tab **Te regelen** op de bestaande Kleding-pagina |
 | Kledingdoelgroep | Trainers, assistent-trainers, keeperstrainers, leiders en teammanagers |
 | Kledingpakket | De geselecteerde leiders en teammanagers krijgen hetzelfde pakket als trainers |
 | Kleding afronden | Handmatig met **Kleding geregeld**; uitgiftes zichtbaar, reden verplicht bij geen uitgifte |
+| Kleding bij terugkeer | Nieuwe werkvoorraadvermelding met eerdere uitgiftes; coördinator bepaalt wat nodig is |
+| Kleding zonder VOG-plicht | Direct **Kleding regelen** zodra de overige kledingvoorwaarden zijn vervuld |
+| Hervatten na langere onderbreking | Achterstallige welkomstmails eerst laten beoordelen; herinneringen hervatten zonder inhaalslag |
 
 ### Uitroluitgangspunt
 
 Bij het inschakelen worden bestaande leden niet automatisch alsnog verwelkomd. Ook
 bestaande vrijwilligers en kledinghistorie worden niet als nieuwe onboarding behandeld.
-Open VOG-werk blijft wel zichtbaar. Automatische mails naar die bestaande werkvoorraad
-vereisen een afzonderlijk gekozen startbeleid, zie de beslispunten in hoofdstuk 9.
+Open VOG-werk blijft zichtbaar en wordt handmatig opgevolgd. Automatische herinneringen
+gelden alleen voor nieuwe aanvraagrondes na inschakeling. Leg dit per ronde vast;
+het opnieuw starten van de automatisering mag oude rondes niet alsnog activeren.
 
 ## 2. Leden: herkenning, planning en verzending
 
@@ -78,13 +89,17 @@ uitstelstatus opnieuw. Overleden personen worden niet benaderd. Een beëindigde 
 niet toepasselijke inschrijving wordt niet alsnog verwelkomd.
 
 Wordt het nieuwe lid tijdens de wachttijd vrijwilliger, dan vervalt de gewone
-ledenmail en neemt de vrijwilligersroute over. De vrijwilligersmail is niet eerder
+ledenmail en neemt de vrijwilligersroute over met één gecombineerde welkomstmail:
+ledeninformatie plus de relevante vrijwilligersblokken. Ook de ledenblokken in deze
+mail zijn via de instellingen bewerkbaar. De gecombineerde mail is niet eerder
 verschuldigd dan 24 uur na herkenning als vrijwilliger. Wie de ledenmail al heeft
 ontvangen en later vrijwilliger wordt, kan vervolgens één vrijwilligersmail krijgen.
 
 Een reeds verstuurde mail wordt niet opnieuw verstuurd door een extra functie, een
-gewijzigd adres of een tweede team. Terugkeer na een onderbreking is een apart
-beslispunt; niet automatisch als eerste onboarding behandelen.
+gewijzigd adres of een tweede team. Bij een echte herinschrijving na beëindigd
+lidmaatschap begint wel een nieuwe ledenwelkomstronde, met opnieuw 24 uur wachttijd.
+Een seizoenswisseling telt niet als herinschrijving. Behoud eerdere verzendingen als
+historie. Een herstelimport of tijdelijke sync-fout bewijst geen beëindiging/terugkeer.
 
 ### Ontvangers van de ledenmail
 
@@ -123,14 +138,33 @@ dat iedere ouder of iedere andere ontvanger al een eigen account heeft.
 
 Gebruik de huidige rollenregistratie om nieuwe vrijwilligers te herkennen. Een extra
 functie of team bij een bestaande vrijwilliger veroorzaakt geen tweede onboarding.
+Wie aantoonbaar stopt en later opnieuw vrijwilliger wordt, krijgt wel een nieuwe
+welkomstronde na 24 uur, met inhoud passend bij de dan actuele functies. Bewaar de
+vorige ronde; overschrijf niet slechts de oude verstuurdatum. Een tijdelijke ontbrekende
+rol tijdens een sync is geen bewezen onderbreking van het vrijwilligerswerk.
 De VOG-status en kledingvoorwaarden worden opnieuw bepaald bij verzending. Een
 lopende VOG-aanvraag moet bij de huidige aanvraagronde horen, niet bij een oude ronde.
+
+### Ontvangers van vrijwilligers- en VOG-mails
+
+Gebruik alle geldige eigen e-mailadressen van de vrijwilliger. Voeg bij vrijwilligers
+jonger dan 18 de opgegeven adressen van vastgestelde ouders/verzorgers toe. Ontdubbel
+de verzameling volgens hetzelfde beleid als bij leden en leg het resultaat per adres
+vast. Controleer leeftijd en relaties opnieuw vóór verzending; voeg geen ouderadressen
+automatisch toe als de leeftijd niet betrouwbaar vastgesteld kan worden.
+
+Kies accountblokken per ontvangercontext: de aanwezigheid van het vrijwilligersaccount
+betekent niet dat de ouder ook een account heeft. De ledenmail houdt haar eerder
+afgesproken ruimere ontvangerregel. De precieze toepassing op een gecombineerde mail
+moet worden vastgelegd, zodat die geen vrijwilligers-/VOG-informatie naar een volgens
+deze regel uitgesloten ontvanger stuurt; zie hoofdstuk 9.
 
 ### Instellingen
 
 Maak in de bestaande e-mailinstellingen een herkenbare sectie
 **Vrijwilligerswelkomstmail**. Onderwerp, introductie, alle VOG-varianten,
-kledingvarianten, accountblokken en afsluiting zijn afzonderlijk bewerkbaar. Toon
+kledingvarianten, accountblokken en afsluiting zijn afzonderlijk bewerkbaar. Voeg
+voor de gecombineerde welkomstmail ook afzonderlijk bewerkbare ledeninformatie toe. Toon
 welke voorwaarde ieder blok activeert en bied een voorbeeld per situatie zonder te
 verzenden. Voorgestelde variabelen zoals clubnaam, contactadres en URL zijn getypeerde,
 ondersteunde invulvelden; behandel ze niet als willekeurige uitvoerbare templatecode.
@@ -227,9 +261,15 @@ telt niet als verstuurde herinnering en wordt zichtbaar. Bij meerdere ontvangers
 telt één herinneringsronde, niet iedere afzonderlijke e-mail, tegen het maximum;
 succesvolle ontvangers krijgen geen kopie wanneer alleen een ander adres faalde.
 
-Bij 'Opnieuw aanleveren' start niet automatisch een nieuwe reeks van twee
-aanvraagherinneringen. De toelichting en eventuele verdere opvolging horen bij die
-aparte toestand; de definitieve werkwijze is een beslispunt.
+Bewaar wachttijd, interval en maximum bij het openen van een aanvraagronde. Wijzigingen
+in de instellingen gelden alleen voor daarna geopende rondes. Bewerkbare teksten
+gelden voor nog niet begonnen verzendingen, zoals beschreven bij de mailinstellingen.
+
+Bij afwijzing of **Opnieuw aanleveren** gaat direct één e-mail met de toelichting en
+de concrete vervolgstap uit. Deze melding hoort bij de betreffende beoordelingsuitkomst;
+een herhaalde verwerking van dezelfde uitkomst stuurt haar niet nogmaals. Gebruik de
+afgesproken VOG-ontvangers en bewerkbare mailtekst. Start geen nieuwe Justis-aanvraag
+of reeks aanvraagherinneringen. Eventuele verdere opvolging gebeurt vanuit de VOG-pagina.
 
 ## 5. Kleding-pagina als werkvoorraad
 
@@ -262,6 +302,13 @@ inactieve historische rol moeten correct worden verwerkt. Meerdere teams of roll
 leveren één actieve kledingopvolging per persoon op. Een nieuwe functie na eerdere
 afronding veroorzaakt niet automatisch een nieuwe uitgifte.
 
+Een echte terugkeer als vrijwilliger opent wel een nieuwe vermelding wanneer de
+actuele functie binnen de kledingselectie valt. Toon eerdere uitgiftes en eerdere
+afronding. De coördinator bepaalt wat nog nodig is; dit is geen automatische toezegging
+van een compleet nieuw pakket. Pas de bewerkbare kledingtekst in de welkomstmail bij
+terugkeer daarop aan. Een extra team/functie tijdens doorlopend vrijwilligerswerk
+blijft onderdeel van dezelfde opvolging.
+
 ### Statussen en bediening
 
 | Status | Betekenis / bediening |
@@ -287,7 +334,8 @@ kleding wordt niet automatisch ingenomen.
 
 Een ontbrekende VOG verhindert alleen wanneer die voor de actuele situatie vereist
 is; een vrijgestelde functie mag niet eindeloos op een niet vereiste VOG wachten.
-Leg dit randgeval expliciet vast vóór het activeren van de kledingwerkvoorraad.
+Zonder VOG-plicht volgt direct **Kleding regelen** zodra de overige kledingvoorwaarden
+zijn vervuld. Er is daarvoor geen afzonderlijke handmatige vrijgave nodig.
 
 ## 6. Betrouwbare technische uitvoering
 
@@ -311,7 +359,8 @@ opdracht om tijdens de planningsfase nieuwe infrastructuur aan te maken.
 
 ### Bescherming tegen dubbele uitvoering
 
-Bewaar een stabiele sleutel per persoon, onboardingtype/aanvraagronde, berichtsoort,
+Bewaar een stabiele sleutel per persoon, lidmaatschaps-/vrijwilligerswelkomstronde
+of VOG-aanvraagronde, berichtsoort,
 herinneringsnummer en genormaliseerd adres. Handmatige verzending en cron gebruiken
 dezelfde registratie en dezelfde exclusieve claim. Een losse controle op een
 sent-timestamp gevolgd door `wp_mail()` is onvoldoende bij twee gelijktijdige acties.
@@ -389,7 +438,8 @@ controle, zodat die de wachttijd, status en ontdubbeling niet kan omzeilen.
 **Gereed wanneer:** vóór 24 uur niets uitgaat; uitstellen werkt; alle unieke adressen
 één logische mail krijgen; stoppen/overgaan naar vrijwilliger vóór verzending werkt;
 gedeeltelijk falen veilig kan worden hersteld; wijzigingen in rollen vlak vóór
-verzending effect hebben. Vrijwilligersverzending blijft uit totdat fase 3 gereed is.
+verzending effect hebben; echte herinschrijving een nieuwe ronde opent terwijl een
+seizoenswisseling dat niet doet. Vrijwilligersverzending blijft uit totdat fase 3 gereed is.
 
 ### Fase 3 — Vrijwilligersmail en blokinstellingen
 
@@ -399,7 +449,9 @@ probeer vrij geschreven HTML niet blind in betekenisvolle blokken op te delen.
 
 **Gereed wanneer:** alle blokken bewerkbaar zijn; iedere VOG-/account-/kledingvariant
 juist wordt gekozen; meerdere rollen geen dubbele mail opleveren; een reeds
-verwelkomd lid later correct als vrijwilliger kan worden verwelkomd. Verwijder daarna
+verwelkomd lid later correct als vrijwilliger kan worden verwelkomd; een echte terugkeer
+een nieuwe ronde opent; de jonger-dan-18-grens de juiste ontvangers oplevert; gelijktijdige
+leden-/vrijwilligersinstroom één gecombineerde mail oplevert. Verwijder daarna
 de losse onboardingnavigatie en bied voor de oude URL een passende doorverwijzing.
 
 ### Fase 4 — VOG-werkvoorraad en opvolgmails
@@ -414,6 +466,10 @@ beoordeling herinneringen stoppen; maximaal twee logische herinneringen uitgaan;
 mislukkingen geen succesvolle ontvangers opnieuw mailen; 'Opvolging nodig' zichtbaar
 blijft; ook meer dan 100 personen bereikbaar zijn.
 
+Test daarnaast dat bestaande aanvraagrondes bij inschakelen handmatig blijven,
+gewijzigde termijnen/maxima alleen nieuwe rondes beïnvloeden en een beoordelingsuitkomst
+één toelichtingsmail veroorzaakt zonder een nieuwe herinneringsreeks.
+
 ### Fase 5 — Kledingwerkvoorraad
 
 Voeg de instelbare functie-selectie en **Te regelen** toe, met status, notitie,
@@ -425,6 +481,10 @@ gedeeltelijke uitgifte niet automatisch afrondt; **Kleding geregeld** wordt gelo
 geen uitgifte een reden vereist; functie- of VOG-wijzigingen de open werkvoorraad
 correct aanpassen zonder eerdere kledinghistorie te veranderen.
 
+Test terugkeer met eerdere kledinguitgifte: opnieuw één werkvoorraadvermelding,
+zichtbare historie en handmatige beslissing. Test dat ontbreken van VOG-plicht
+direct **Kleding regelen** oplevert zonder extra vrijgave.
+
 ### Fase 6 — Gecontroleerd inschakelen
 
 Controleer de productieconfiguratie, ingestelde teksten, ontvangers en simulatieresultaat.
@@ -433,7 +493,16 @@ verzendregistratie en de geauthenticeerde persoon-, VOG- en kledingpagina's. Een
 geslaagde build of HTTP-respons alleen is geen bewijs van een werkende gebruikersflow.
 
 Uitschakelen stopt toekomstige automatische verzending; behoud planning/historie en
-werkvoorraden. Een herstart haalt geen hele gemiste herinneringsreeks tegelijk in.
+werkvoorraden. Na een langere pauze of storing moeten achterstallige welkomstmails
+eerst worden beoordeeld. Ze blijven geblokkeerd totdat een bevoegde beheerder de
+betreffende kandidaten heeft beoordeeld en vrijgegeven of laten vervallen. Deze
+uitzondering bij herstel verandert niets aan de normale automatische 24-uursroute.
+
+Herinneringen van automatisch gevolgde rondes hervatten zonder inhaalslag: geen
+reeks gemiste mails achter elkaar, behoud van maximum en minstens het afgesproken
+interval vóór de volgende herinnering. Oude handmatige rondes blijven handmatig.
+De grens voor een 'langere onderbreking' en de concrete beoordeling op de bestaande
+pagina's moeten in fase 1/6 nog worden vastgelegd.
 
 ### Checks per implementatiemijlpaal
 
@@ -459,14 +528,9 @@ vastgelegde hoofdlijn niet en mogen niet onzichtbaar als productbeleid worden in
 | Beslispunt | Nodig vóór | Voorstel / consequentie |
 |---|---|---|
 | Precies welke inschrijving telt als nieuw, en welk sync-moment is betrouwbaar? | Fase 1/2 | Eerst volledige sync en eventuele voorinschrijving/overschrijving onderzoeken; geen oude import als nieuw lid behandelen |
-| Vrijwilligers- en VOG-mailontvangers | Fase 3/4 | 'Alle adressen, ontdubbeld' is expliciet voor de ledenmail gekozen; bevestig of dit ook ouderadressen bij volwassen vrijwilligers moet omvatten |
-| Nieuw lid wordt meteen vrijwilliger | Fase 3 | Gewone ledenmail vervalt volgens het ontwerp; bepalen hoe noodzakelijke ledeninformatie toch wordt aangeboden |
-| Terugkerend lid of vrijwilliger | Fase 2/3 | Bestaande verzendhistorie behouden; een nieuwe welkomstronde alleen volgens expliciet beleid |
+| Betrouwbaar bewijs van stoppen en terugkeer | Fase 1/2/3 | Productkeuze staat vast: opnieuw verwelkomen; technische detectie moet tijdelijke sync-gaten en seizoenswisselingen uitsluiten |
+| Gecombineerde mail en verschillende ontvangerregels | Fase 3 | Ledenmail omvat ouderadressen; vrijwilligers-/VOG-mail alleen onder 18. Voorstel: één gecombineerde mail per toegestane ontvanger, met alleen ledenblokken voor eventuele andere ledenmailontvangers |
 | Welkomstmail bij VOG in controle of opnieuw aanleveren | Fase 3 | Eigen bewerkbare tekst nodig die de werkelijke vervolgstap beschrijft |
 | Vernieuwing binnenkort en aanvraag al actief | Fase 4 | Bestaande geldigheids-/vernieuwingsgrenzen centraal gebruiken; actuele aanvraag voorkomt een dubbele start |
-| Bestaande VOG-werkvoorraad bij inschakelen | Fase 4/6 | Zichtbaar houden; oude datums niet automatisch een nieuwe herinneringsgolf laten starten |
-| Mailmoment na afwijzen/opnieuw aanleveren | Fase 4 | Concrete toelichting één keer versturen; geen automatische nieuwe Justis-aanvraag of onbeperkte herinneringsreeks |
-| Gewijzigde reminderinstellingen tijdens een ronde | Fase 4 | Voorstel: geldende termijn/maximum per ronde vastleggen; gewijzigde tekst voor nog niet begonnen mails gebruiken |
-| Nieuwe kledingfunctie na eerdere afronding; bestaande kleding bij start | Fase 5 | Geen automatische dubbele uitgifte; expliciet start-/heropenbeleid bepalen |
-| Kleding bij een functie zonder VOG-plicht | Fase 5 | Voorstel: direct 'Kleding regelen' als overige voorwaarden voldoen |
-| Pauzeren en opnieuw starten na lange uitval | Fase 6 | Eerst kandidaten en achterstand tonen; oud geworden onboarding niet stilzwijgend alsnog versturen |
+| Kledingtekst bij terugkeer | Fase 3/5 | Werkvoorraad wordt heropend met historie; tekst moet beoordeling van benodigde kleding beloven, geen automatisch nieuw volledig pakket |
+| Definitie en bediening van langere onderbreking | Fase 1/6 | Achterstallige welkomstmails eerst beoordelen is gekozen; bepaal tijdsgrens en bediening binnen persoon-/bestaande beheerpagina's |
