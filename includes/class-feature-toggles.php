@@ -31,11 +31,6 @@ final class FeatureToggles {
 	 */
 	public static function definitions(): array {
 		return [
-			'training'      => [
-				'label'       => __( 'Trainingsschema', 'rondo' ),
-				'description' => __( 'Trainingsvelden, weekschema’s en trainingstijden per team. Alle schemaversies zijn altijd openbaar via de API, ook bij Uit of Alleen admins.', 'rondo' ),
-				'default'     => self::ADMIN_ONLY,
-			],
 			'rooms'         => [
 				'label'       => __( 'Ruimtes', 'rondo' ),
 				'description' => __( 'Ruimtereserveringen en reserveringsgestuurde presentaties.', 'rondo' ),

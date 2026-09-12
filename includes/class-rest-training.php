@@ -1,13 +1,13 @@
 <?php
 /**
- * Training schedule API. Schedule reads are public; management remains feature-gated.
+ * Training schedule API. Schedule reads are public; management requires its own capability.
  *
  * @package Rondo\REST
  */
 
 namespace Rondo\REST;
 
-use Rondo\Config\FeatureToggles;
+use Rondo\Core\UserRoles;
 use Rondo\Training\Schedules;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -32,14 +32,14 @@ final class Training extends Base {
 			[ '/training/active', 'GET', 'active', false ],
 			[ '/training/settings', 'GET', 'settings', true ],
 			[ '/training/settings', 'PUT', 'update_settings', true ],
-		] as [ $route, $method, $callback, $admin ] ) {
+		] as [ $route, $method, $callback, $management ] ) {
 			register_rest_route(
 				'rondo/v1',
 				$route,
 				[
 					'methods'             => $method,
 					'callback'            => [ $this, $callback ],
-					'permission_callback' => [ $this, $admin ? 'can_manage' : 'can_read' ],
+					'permission_callback' => [ $this, $management ? 'can_manage' : 'can_read' ],
 				]
 				);
 		}
@@ -50,7 +50,7 @@ final class Training extends Base {
 	}
 
 	public function can_manage(): bool {
-		return FeatureToggles::can_access( 'training' ) && current_user_can( 'manage_options' );
+		return UserRoles::can_manage_training();
 	}
 
 	private function response( $result ) {

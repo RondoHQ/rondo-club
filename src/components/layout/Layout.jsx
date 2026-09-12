@@ -73,7 +73,7 @@ const navigation = [
   { name: 'Sponsoren', href: '/sponsors', icon: Building2, requiresSponsors: true },
   { name: 'Teams', href: '/teams', icon: Shield, requiresKader: true },
   { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true, requiresKaderlijst: true },
-  { name: 'Trainingsschema', href: '/trainingsschema', icon: CalendarDays, indent: true, requiresKader: true, requiresFeature: 'training' },
+  { name: 'Trainingsschema', href: '/trainingsschema', icon: CalendarDays, indent: true, requiresTrainingView: true },
   { name: 'Toernooien', href: '/toernooien', icon: Trophy, requiresTournamentManager: true },
   { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true, requiresFeature: 'clothing' },
   { name: 'Commissies', href: '/commissies', icon: UsersRound, requiresKader: true },
@@ -232,6 +232,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresNarrowcasting && !canAccessNarrowcasting) return false;
     if (item.requiresSponsors && !canManageSponsors) return false;
     if (item.requiresKaderlijst && !canAccessKaderlijst) return false;
+    if (item.requiresTrainingView && !isKader && !currentUser?.can_manage_training) return false;
     if (item.requiresTournamentManager && !canManageTournaments) return false;
     if (item.requiresTournamentAssignments && !hasTournamentAssignments && !canManageTournaments) return false;
     if (item.requiresKader && !isKader) return false;
@@ -241,7 +242,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const personalNav = visibleNav.filter((item) => item.personal);
   const clubNav = visibleNav
     .filter((item) => !item.personal)
-    .map((item) => (item.requiresKaderlijst && !isKader ? { ...item, indent: false } : item));
+    .map((item) => ((item.requiresKaderlijst || item.requiresTrainingView) && !isKader ? { ...item, indent: false } : item));
 
   const navGroups = [];
   for (const item of clubNav) {

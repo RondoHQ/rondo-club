@@ -22,6 +22,7 @@ class UserRoles {
 	const FINANCIEEL_READ_CAPABILITY    = 'financieel_read';
 	const TOEGANG_CAPABILITY            = 'toegangscontrole';
 	const CLOTHING_CAPABILITY           = 'manage_clothing';
+	const TRAINING_CAPABILITY           = 'manage_training';
 	const LEDENADMINISTRATIE_CAPABILITY = 'ledenadministratie';
 	const SPONSORBEHEER_CAPABILITY      = 'sponsorbeheer';
 	const NARROWCASTING_CAPABILITY      = 'narrowcasting';
@@ -37,7 +38,7 @@ class UserRoles {
 	 * installs must also receive; add_role() does not touch existing roles.
 	 */
 	const ROLES_VERSION_OPTION = 'rondo_roles_version';
-	const ROLES_VERSION        = 12;
+	const ROLES_VERSION        = 13;
 
 	/** Generic WordPress write capabilities removed from non-admin Rondo roles. */
 	private const LEGACY_GENERIC_WRITE_CAPS = [
@@ -196,6 +197,17 @@ class UserRoles {
 			|| user_can( $user_id, self::NARROWCASTING_CAPABILITY )
 			|| user_can( $user_id, self::ACCOMMODATIE_CAPABILITY )
 			|| user_can( $user_id, self::VRIJWILLIGERS_CAPABILITY );
+	}
+
+	/**
+	 * Whether the user may manage training schedules and their settings.
+	 *
+	 * @param int|null $user_id User ID, defaults to the current user.
+	 * @return bool True for training managers and administrators.
+	 */
+	public static function can_manage_training( $user_id = null ): bool {
+		$user_id = $user_id ?? get_current_user_id();
+		return $user_id && ( user_can( $user_id, self::TRAINING_CAPABILITY ) || user_can( $user_id, 'manage_options' ) );
 	}
 
 	/**
@@ -385,6 +397,7 @@ class UserRoles {
 	 * Version 9: accommodation managers and room-domain capabilities are introduced.
 	 * Version 11: the isolated Kaderlijst role and capability are introduced.
 	 * Version 12: sponsor managers gain read access to the sponsor activity log.
+	 * Version 13: administrators gain the dedicated training management capability.
 	 */
 	public function maybe_upgrade_roles() {
 		$installed_version = (int) get_option( self::ROLES_VERSION_OPTION, 0 );
@@ -423,6 +436,10 @@ class UserRoles {
 				$role->add_cap( self::KADERLIJST_CAPABILITY );
 			}
 
+			if ( $installed_version < 13 && $slug === 'administrator' ) {
+				$role->add_cap( self::TRAINING_CAPABILITY );
+			}
+
 			self::sync_role_capabilities( $slug );
 		}
 
@@ -453,6 +470,7 @@ class UserRoles {
 			$admin_role->add_cap( self::FINANCIEEL_READ_CAPABILITY );
 			$admin_role->add_cap( self::TOEGANG_CAPABILITY );
 			$admin_role->add_cap( self::CLOTHING_CAPABILITY );
+			$admin_role->add_cap( self::TRAINING_CAPABILITY );
 			$admin_role->add_cap( self::LEDENADMINISTRATIE_CAPABILITY );
 			$admin_role->add_cap( self::SPONSORBEHEER_CAPABILITY );
 			$admin_role->add_cap( self::NARROWCASTING_CAPABILITY );
@@ -667,6 +685,7 @@ class UserRoles {
 			$admin_role->remove_cap( self::FINANCIEEL_READ_CAPABILITY );
 			$admin_role->remove_cap( self::TOEGANG_CAPABILITY );
 			$admin_role->remove_cap( self::CLOTHING_CAPABILITY );
+			$admin_role->remove_cap( self::TRAINING_CAPABILITY );
 			$admin_role->remove_cap( self::LEDENADMINISTRATIE_CAPABILITY );
 			$admin_role->remove_cap( self::SPONSORBEHEER_CAPABILITY );
 			$admin_role->remove_cap( self::NARROWCASTING_CAPABILITY );
