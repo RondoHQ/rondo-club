@@ -1266,10 +1266,10 @@ export default function PersonDetail() {
               <img
                 src={person.thumbnail}
                 alt={person.name}
-                className="w-22 h-22 rounded-full object-cover"
+                className="w-28 h-28 rounded-full object-cover"
               />
             ) : (
-              <div className="w-22 h-22 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+              <div className="w-28 h-28 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
                 <span className="text-3xl font-medium text-gray-500 dark:text-gray-300">
                   {person.name?.[0] || fields.company_name?.[0] || '?'}
                 </span>
@@ -1309,11 +1309,11 @@ export default function PersonDetail() {
               <h1 className="break-words text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
                 {person.name}
                 {isDeceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
+                {fields.company_name && personalName && (
+                  <span className="font-normal text-gray-600 dark:text-gray-300"> – {fields.company_name}</span>
+                )}
               </h1>
             </div>
-            {fields.company_name && personalName && (
-              <p className="text-base text-gray-600 dark:text-gray-300">{fields.company_name}</p>
-            )}
             {groupedPositions.length > 0 && (
               <p className="text-base text-gray-600 dark:text-gray-300">
                 {groupedPositions.map((group, groupIdx) => (
@@ -1344,26 +1344,26 @@ export default function PersonDetail() {
             {fields.nickname && (
               <p className="text-gray-500 dark:text-gray-400">&quot;{fields.nickname}&quot;</p>
             )}
-            {(getGenderSymbol(fields.gender) || fields.pronouns || age !== null || formattedDeathDate || hasValidLidTot) && (
-              <p className="text-gray-500 dark:text-gray-400 text-sm inline-flex items-center flex-wrap">
-                {getGenderSymbol(fields.gender) && <span>{getGenderSymbol(fields.gender)}</span>}
-                {getGenderSymbol(fields.gender) && fields.pronouns && <span>&nbsp;—&nbsp;</span>}
-                {fields.pronouns && <span>{fields.pronouns}</span>}
-                {(getGenderSymbol(fields.gender) || fields.pronouns) && age !== null && <span>&nbsp;—&nbsp;</span>}
-                {isDeceased && formattedDeathDate && (
-                  <span>Overleden op {formattedDeathDate}{age !== null ? `, ${age} jaar` : ''}</span>
-                )}
-                {!isDeceased && age !== null && formattedBirthdate && <span>{age} jaar ({formattedBirthdate})</span>}
-                {!isDeceased && age !== null && !formattedBirthdate && <span>{age} jaar</span>}
-                {hasValidLidTot && (
-                  <>
-                    {(getGenderSymbol(fields.gender) || fields.pronouns || age !== null) && <span>&nbsp;—&nbsp;</span>}
-                    <span>Lid tot: {formattedLidTot}</span>
-                  </>
-                )}
-              </p>
-            )}
-            <div className="flex flex-wrap items-center gap-2 empty:hidden">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 empty:hidden">
+              {(getGenderSymbol(fields.gender) || fields.pronouns || age !== null || formattedDeathDate || hasValidLidTot) && (
+                <p className="text-gray-500 dark:text-gray-400 text-sm inline-flex items-center flex-wrap">
+                  {getGenderSymbol(fields.gender) && <span>{getGenderSymbol(fields.gender)}</span>}
+                  {getGenderSymbol(fields.gender) && fields.pronouns && <span>&nbsp;—&nbsp;</span>}
+                  {fields.pronouns && <span>{fields.pronouns}</span>}
+                  {(getGenderSymbol(fields.gender) || fields.pronouns) && age !== null && <span>&nbsp;—&nbsp;</span>}
+                  {isDeceased && formattedDeathDate && (
+                    <span>Overleden op {formattedDeathDate}{age !== null ? `, ${age} jaar` : ''}</span>
+                  )}
+                  {!isDeceased && age !== null && formattedBirthdate && <span>{age} jaar ({formattedBirthdate})</span>}
+                  {!isDeceased && age !== null && !formattedBirthdate && <span>{age} jaar</span>}
+                  {hasValidLidTot && (
+                    <>
+                      {(getGenderSymbol(fields.gender) || fields.pronouns || age !== null) && <span>&nbsp;—&nbsp;</span>}
+                      <span>Lid tot: {formattedLidTot}</span>
+                    </>
+                  )}
+                </p>
+              )}
               {fields.former_member && (
                 <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
                   {isCurrentParent ? 'Oud-lid · ouder/verzorger' : 'Oud-lid'}
