@@ -486,6 +486,29 @@ toegevoegd en de bestaande handmatige mailroute blijft in deze eerste stap intac
 Fase 1 mag pas als afgerond gelden wanneer de volledige onderstaande acceptatie
 is bewezen; deze eerste bouwmijlpaal geeft geen vrijgave voor automatische mails.
 
+### Voortgang gerichte broncontrole (35.75.0)
+
+De reguliere ledenimport registreert na een volledig geslaagde Sportlink-zoekactie
+de uitgangspopulatie en controleert nieuwe of gewijzigde bronrecords gericht, maximaal
+tien per run. Niet-afgeronde controles blijven bewaard. Alle vijf onderdelen moeten
+succesvol zijn opgehaald én opgeslagen; expliciet lege resultaten tellen alleen mee
+als de bronrespons volledig was. Onbekende lidstatussen, overschrijving, opslagfouten,
+ontbrekende relaties of functiemappings blijven blokkeren. De broncombinatie
+`Status=insync`, `StatusDescription=Definitief`, `MemberStatus=ACTIVE` met een geldige
+lidsoort en ingangsdatum is in de productiecache geverifieerd. De vier strikte
+Sportlink-detailcontroles zijn daarnaast met echte antwoorden gelezen.
+
+De eerste definitieve waarneming van een identiteit die pas na de uitgangspopulatie
+verschijnt kan nu een ronde openen, mits de ingangsdatum niet vóór die uitgangssituatie
+ligt. Oudere herstelimports en herhaalde imports worden niet als nieuw verwelkomd.
+Bestaande definitieve leden houden de eis van bewezen beëindiging en latere nieuwe
+start. Een bronstatus voor voorinschrijving is nog niet bewezen; onbekende waarden
+blijven daarom geblokkeerd totdat definitieve inschrijving expliciet vaststaat.
+
+Dit blijft een niet-verzendende stap. Afzonderlijke functie-/team-/persoonsimports
+melden hun gedeeltelijke dekking niet als volledig. De gedeelde verzendroute,
+vrijwilligers-terugkeerrondes, volledige mailinhoud en accounts blijven vervolgstappen.
+
 ### Fase 1 — Fundament en simulatie
 
 Inventariseer de benodigde sync-signalen, ouderadresbronnen, mailkanaalgaranties,

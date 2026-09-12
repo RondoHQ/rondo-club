@@ -19,7 +19,7 @@ export default function OnboardingSimulation() {
     <section className="space-y-4" aria-label="Onboarding simulatie">
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-950 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-100">
         <h3 className="font-semibold text-blue-950 dark:text-blue-100">Proefweergave — er worden geen e-mails verstuurd</h3>
-        <p className="mt-1 text-sm">Bekijk de ontvangers, beschikbare mailblokken en ontbrekende gegevens per persoon. Dit is nog geen volledige e-mailpreview. De gerichte broncontrole vanuit Sync en de verzending worden in volgende stappen aangesloten.</p>
+        <p className="mt-1 text-sm">Bekijk de ontvangers, beschikbare mailblokken en ontbrekende gegevens per persoon. Sync controleert nieuwe en gewijzigde leden gericht tijdens de ledenimport. Dit is nog geen volledige e-mailpreview; automatische verzending staat uit.</p>
       </div>
       <form className="flex flex-wrap gap-2" onSubmit={(event) => { event.preventDefault(); setSearch(input.trim()); setPage(1); }}>
         <label className="sr-only" htmlFor="onboarding-search">Zoek een persoon</label>

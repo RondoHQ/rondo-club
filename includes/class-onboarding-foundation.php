@@ -73,7 +73,7 @@ final class Foundation {
 			return new \WP_Error( 'onboarding_contract', 'Onvolledige of onbekende observatievelden.', [ 'status' => 400 ] );
 		}
 		if ( ! is_string( $input['observation_id'] ) || ! preg_match( '/^[a-zA-Z0-9_-]{8,100}$/D', $input['observation_id'] )
-			|| ! in_array( $input['membership_state'], [ 'not_member', 'preregistration', 'definitive', 'ended' ], true )
+			|| ! in_array( $input['membership_state'], [ 'unknown', 'not_member', 'preregistration', 'definitive', 'ended' ], true )
 			|| ! is_string( $input['observed_at'] ) || ! preg_match( '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})$/D', $input['observed_at'] )
 			|| ! is_array( $input['coverage'] ) || count( $input['coverage'] ) !== count( self::COVERAGE )
 			|| array_diff( self::COVERAGE, array_keys( $input['coverage'] ) )
@@ -108,6 +108,9 @@ final class Foundation {
 					return new \WP_Error( 'onboarding_changed', 'De gegevens zijn na de controle gewijzigd.', [ 'status' => 409 ] );
 				}
 				$complete = ! in_array( false, $input['coverage'], true );
+				if ( $complete && $input['membership_state'] === 'unknown' ) {
+					return new \WP_Error( 'onboarding_evidence', 'De bron bevestigt de lidstatus nog niet.', [ 'status' => 409 ] );
+				}
 				if ( ! $complete ) {
 					$state                     = $input + [
 						'input_hash' => $hash,
@@ -135,7 +138,13 @@ final class Foundation {
 				];
 				$state['end_date'] = $end ? $end->format( 'Y-m-d' ) : null;
 				$new               = $previous && $input['membership_state'] === 'definitive' && in_array( $previous['membership_state'], [ 'not_member', 'preregistration', 'ended' ], true );
-				if ( $new && $previous['membership_state'] === 'ended' && ( ! $previous['end_date'] || $start->format( 'Y-m-d' ) <= $previous['end_date'] ) ) {
+				if ( ! in_array( $previous['membership_state'] ?? 'unknown', [ 'definitive', 'ended', 'not_member', 'preregistration' ], true ) && $input['membership_state'] === 'definitive' && $start ) {
+					$new = Sources::is_new_registration( $input['knvb_id'], $start );
+				}
+				if ( $new ) {
+					$state['baseline'] = false;
+				}
+				if ( $new && ( $previous['membership_state'] ?? '' ) === 'ended' && ( ! $previous['end_date'] || $start->format( 'Y-m-d' ) <= $previous['end_date'] ) ) {
 					return new \WP_Error( 'onboarding_rejoin', 'Geen nieuwe ingangsdatum na de bevestigde beëindiging.', [ 'status' => 409 ] );
 				}
 				if ( $new ) {
@@ -188,8 +197,11 @@ final class Foundation {
 		$round      = (int) ( $state['round_id'] ?? 0 );
 		$due        = $round ? (int) get_post_meta( $round, '_onboarding_due', true ) : 0;
 		$blockers   = [];
-		$start      = Recipients::date( (string) Fields::get_for_post( $person_id, 'lid_sinds' ) );
-		$end        = Recipients::date( (string) Fields::get_for_post( $person_id, 'lid_tot' ) );
+		if ( Sources::is_pending( (string) Fields::get_for_post( $person_id, 'knvb_id' ) ) ) {
+			$blockers[] = 'Er staat een nieuwe gerichte broncontrole open.';
+		}
+		$start = Recipients::date( (string) Fields::get_for_post( $person_id, 'lid_sinds' ) );
+		$end   = Recipients::date( (string) Fields::get_for_post( $person_id, 'lid_tot' ) );
 		if ( $due && $start ) {
 			$due = max( $due, $start->getTimestamp() + DAY_IN_SECONDS );
 		}
@@ -259,7 +271,7 @@ final class Foundation {
 			'blockers'        => $blockers,
 			'roles'           => array_values( array_unique( $roles ) ),
 			'blocks'          => $blocks,
-			'limitations'     => [ 'Gerichte broncontrole vanuit Sync wordt nog aangesloten.', 'Mailblokken, accountcontext en verzendherstel worden in volgende bouwstappen voltooid.' ],
+			'limitations'     => [ 'Mailblokken, accountcontext en verzendherstel worden in volgende bouwstappen voltooid.' ],
 		];
 	}
 }
