@@ -179,7 +179,10 @@ export default function PersonDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: person, isLoading, error } = usePerson(id, {
-    refetchInterval: (query) => query.state.data?.parent_sync_statuses?.some(status => status.state === 'pending') ? 10000 : false,
+    refetchInterval: (query) => (
+      query.state.data?.parent_sync_statuses?.some(status => status.state === 'pending')
+      || ['pending', 'sending'].includes(query.state.data?.photo_sync_status?.state)
+    ) ? 10000 : false,
   });
   const { data: timeline } = usePersonTimeline(id);
   const deleteNote = useDeleteNote();
@@ -1394,7 +1397,7 @@ export default function PersonDetail() {
                 <button
                   type="button"
                   aria-label="Profielfoto wijzigen"
-                  disabled={isUploadingPhoto}
+                  disabled={isUploadingPhoto || person.photo_sync_status?.state === 'sending'}
                   className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/50 focus:bg-black/50 transition-all duration-200 flex items-center justify-center cursor-pointer disabled:cursor-wait"
                   onClick={() => fileInputRef.current?.click()}
                 >
@@ -1410,13 +1413,23 @@ export default function PersonDetail() {
                   accept="image/*"
                   onChange={handlePhotoUpload}
                   className="hidden"
-                  disabled={isUploadingPhoto}
+                  disabled={isUploadingPhoto || person.photo_sync_status?.state === 'sending'}
                 />
               </>
             )}
           </div>
 
           <div className="flex-1 space-y-3">
+            {person.photo_sync_status && (
+              <p role="status" className="text-sm text-gray-600 dark:text-gray-300">
+                {person.photo_sync_status.message}
+              </p>
+            )}
+            {canEditPhoto && fields.knvb_id && !fields.former_member && fields.person_type !== 'contact' && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Foto’s kunnen van 1 juli tot en met 31 oktober naar Sportlink worden verstuurd.
+              </p>
+            )}
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-brand-gradient">
                 {person.name}
