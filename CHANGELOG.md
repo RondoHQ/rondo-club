@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.61.0] - 2026-09-12
+
+### Added
+
+- Crop profile photos before saving with a square preview, dragging, two-finger pinch zoom, a zoom slider, keyboard positioning, reset and cancellation. Saving exports a JPEG up to 800 × 800 pixels without enlarging small crops.
+
+### Fixed
+
+- Make the profile photo edit control accessible by keyboard and refresh the person photo after saving.
+
 ## [35.60.4] - 2026-09-12
 
 ### Fixed
