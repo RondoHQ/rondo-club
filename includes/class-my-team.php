@@ -205,8 +205,9 @@ final class MyTeam {
 	/** An explicit allowlist; never serialize a general person or user response. */
 	private static function contact( int $person_id ): array {
 		$contact = self::identity( $person_id ) + [
-			'emails' => [],
-			'phones' => [],
+			'emails'        => [],
+			'phones'        => [],
+			'mobile_phones' => [],
 		];
 		foreach ( [ 'email_1', 'email_2', 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2' ] as $field ) {
 			$value = trim( (string) Fields::get_for_post( $person_id, $field ) );
@@ -217,9 +218,13 @@ final class MyTeam {
 			$key                          = $is_email ? 'emails' : 'phones';
 			$identity                     = $is_email ? strtolower( $value ) : preg_replace( '/[^+0-9]/', '', $value );
 			$contact[ $key ][ $identity ] = $value;
+			if ( str_starts_with( $field, 'mobile' ) ) {
+				$contact['mobile_phones'][ $identity ] = $value;
+			}
 		}
-		$contact['emails'] = array_values( $contact['emails'] );
-		$contact['phones'] = array_values( $contact['phones'] );
+		$contact['emails']        = array_values( $contact['emails'] );
+		$contact['phones']        = array_values( $contact['phones'] );
+		$contact['mobile_phones'] = array_values( $contact['mobile_phones'] );
 		return $contact;
 	}
 }
