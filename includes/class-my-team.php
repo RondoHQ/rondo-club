@@ -84,8 +84,9 @@ final class MyTeam {
 		$by_team = [];
 		foreach ( $teams as $team ) {
 			$by_team[ $team['id'] ] = $team + [
-				'players' => [],
-				'staff'   => [],
+				'calendar_url' => TeamMatches::calendar_url( $team['id'] ),
+				'players'      => [],
+				'staff'        => [],
 			];
 		}
 		$people       = get_posts(

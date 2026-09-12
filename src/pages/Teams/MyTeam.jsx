@@ -1,4 +1,5 @@
 import TeamTraining from '@/components/TeamTraining';
+import TeamCalendarActions from '@/components/TeamCalendarActions';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronDown, Mail, Phone, Users } from 'lucide-react';
@@ -218,6 +219,13 @@ export default function MyTeam() {
             >
               {teams.length === 1 ? <h2 id="my-team-name" className="text-xl font-semibold text-gray-900 dark:text-gray-100">{team.name}</h2> : null}
               <TeamTraining teamId={team.id} variant="roster" />
+              {team.calendar_url ? (
+                <section aria-label="Teamagenda" className="space-y-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                  <h2 className="font-semibold text-gray-900 dark:text-gray-100">Teamagenda</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Abonneer je op de wedstrijden van {team.name} om wedstrijdwijzigingen te ontvangen. Je kunt de agendalink ook delen.</p>
+                  <TeamCalendarActions calendarUrl={team.calendar_url} teamName={team.name} compact />
+                </section>
+              ) : null}
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Staf</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{(team.staff || []).length} {(team.staff || []).length === 1 ? 'staflid' : 'stafleden'}</p>
