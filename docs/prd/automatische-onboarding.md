@@ -20,7 +20,7 @@ hieronder zijn voorgestelde beginwaarden voor de bewerkbare mailblokken.
 
 | Onderdeel | Afspraak |
 |---|---|
-| Ledenwelkomstmail | Automatisch, minimaal 24 uur na herkenning als nieuw lid in Rondo |
+| Ledenwelkomstmail | Automatisch, minimaal 24 uur na de ingangsdatum of eerste betrouwbare herkenning als nieuw lid in Rondo, afhankelijk van welke later is |
 | Vrijwilligerswelkomstmail | Automatisch, minimaal 24 uur na herkenning als nieuwe vrijwilliger |
 | Handmatige vrijgave | Geen verplicht vinkje of goedkeuring |
 | Bediening | Planning, uitstellen, resultaat en fouten op de persoonspagina |
@@ -62,8 +62,11 @@ het opnieuw starten van de automatisering mag oude rondes niet alsnog activeren.
 
 ### Herkenning
 
-- Leg het eerste betrouwbare herkenningsmoment vast; baseer de wachttijd niet op
-  `lid_sinds`, omdat die datum uit Sportlink komt en in het verleden kan liggen.
+- Leg het eerste betrouwbare herkenningsmoment vast. Start de 24-uurswachttijd op
+  de ingangsdatum van het lidmaatschap, of bij dit herkenningsmoment als dat later is.
+  Een toekomstige ingangsdatum stelt de start dus uit; een ingangsdatum in het
+  verleden verkort de wachttijd na herkenning niet. Gebruik `lid_sinds` niet als
+  enige basis, omdat die datum uit Sportlink komt en in het verleden kan liggen.
 - Een herhaalde sync mag dit moment niet verschuiven of een tweede mail plannen.
 - Maak onderscheid tussen een nieuwe inschrijving en het voor het eerst importeren
   van een al bestaand lid. Een technische migratie of herstelimport is geen inschrijving.
@@ -550,7 +553,7 @@ vastgelegde hoofdlijn niet en mogen niet onzichtbaar als productbeleid worden in
 
 | Beslispunt | Nodig vóór | Voorstel / consequentie |
 |---|---|---|
-| Precies welke inschrijving telt als nieuw? | Fase 1/2 | Voorinschrijving, toekomstige ingangsdatum en wachten op overschrijving vereisen nog een productregel; technische inventarisatie in hoofdstuk 10 toont dat een apart voltooiingssignaal nodig is |
+| Voorinschrijving en wachten op overschrijving | Fase 1/2 | De start bij een toekomstige ingangsdatum is gekozen: de latere van ingangsdatum en eerste betrouwbare herkenning. Bepaal nog hoe een voorinschrijving of openstaande overschrijving meetelt; hoofdstuk 10 beschrijft het benodigde voltooiingssignaal |
 | Betrouwbaar bewijs van stoppen en terugkeer | Fase 1/2/3 | Productkeuze staat vast: opnieuw verwelkomen; technische detectie moet tijdelijke sync-gaten en seizoenswisselingen uitsluiten |
 | Gecombineerde mail en verschillende ontvangerregels | Fase 3 | Ledenmail omvat ouderadressen; vrijwilligers-/VOG-mail alleen onder 18. Voorstel: één gecombineerde mail per toegestane ontvanger, met alleen ledenblokken voor eventuele andere ledenmailontvangers |
 | Welkomstmail bij VOG in controle of opnieuw aanleveren | Fase 3 | Eigen bewerkbare tekst nodig die de werkelijke vervolgstap beschrijft |
