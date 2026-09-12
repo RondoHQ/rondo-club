@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import PhotoCropModal from '../../src/components/PhotoCropModal';
-import '../../src/index.css';
+import './photo-crop-preview.css';
 
 export default function Fixture() {
   const [file, setFile] = useState(null);
