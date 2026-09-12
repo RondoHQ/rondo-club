@@ -72,6 +72,7 @@ const navigation = [
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
   { name: 'Sponsoren', href: '/sponsors', icon: Building2, requiresSponsors: true },
   { name: 'Teams', href: '/teams', icon: Shield, requiresKader: true },
+  { name: 'Trainingsschema', href: '/trainingsschema', icon: CalendarDays, requiresFeature: 'training' },
   { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true, requiresKaderlijst: true },
   { name: 'Toernooien', href: '/toernooien', icon: Trophy, requiresTournamentManager: true },
   { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true, requiresFeature: 'clothing' },

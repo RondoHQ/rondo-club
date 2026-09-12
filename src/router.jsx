@@ -28,7 +28,7 @@ import {
   VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig, Household, MembershipPass,
   TaakuitlegList, TaakuitlegForm,
   Narrowcasting, NarrowcastingDisplay, PresentationSender,
-  Rooms,
+  Rooms, Training,
   TournamentsList, TournamentDetail, MyTournaments, TournamentEntry,
 } from './lazyPages';
 
@@ -636,6 +636,7 @@ const router = createBrowserRouter([
             ),
           },
           { path: 'presenteren', element: <FeatureRoute feature="narrowcasting"><PresentationSender /></FeatureRoute> },
+          { path: 'trainingsschema', element: <FeatureRoute feature="training"><Training /></FeatureRoute> },
           { path: 'rooms', element: <FeatureRoute feature="rooms"><Rooms /></FeatureRoute> },
 
           // Settings routes — kader only

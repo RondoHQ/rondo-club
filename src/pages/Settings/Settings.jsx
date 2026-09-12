@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, UserPlus, Wrench, AlertCircle, Wallet, Award, Mail, X, Plus, Trash2, SlidersHorizontal } from 'lucide-react';
 import { APP_NAME } from '@/constants/app';
@@ -13,11 +13,14 @@ import { useClothingSettings, useUpdateClothingSettings } from '@/hooks/useCloth
 import { canAccessFeature } from '@/utils/featureToggles';
 import { decodeHtml } from '@/utils/formatters';
 
+const TrainingSettings = lazy(() => import('@/pages/Training/TrainingSettings'));
+
 const KADERLIJST_CAPABILITY = 'kaderlijst';
 
 // Tab configuration (no icons - using TabButton component)
 const TABS = [
   { id: 'appearance', label: 'Club' },
+  { id: 'training', label: 'Training', adminOnly: true, requiresFeature: 'training' },
   { id: 'connections', label: 'Koppelingen' },
   { id: 'clothing', label: 'Kleding', requiresClothing: true, requiresFeature: 'clothing' },
   { id: 'financieel', label: 'Financieel', requiresFinancieel: true },
@@ -507,6 +510,8 @@ export default function Settings() {
   // Render tab content
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'training':
+        return <Suspense fallback={<p>Trainingsinstellingen laden…</p>}><TrainingSettings /></Suspense>;
       case 'appearance':
         return (
           <AppearanceTab

@@ -352,6 +352,7 @@ function rondo_init() {
 		new People();
 		new Teams();
 		new \Rondo\REST\TeamMatches();
+		new \Rondo\REST\Training();
 		new RESTSponsors();
 		new Commissies();
 		new Todos();

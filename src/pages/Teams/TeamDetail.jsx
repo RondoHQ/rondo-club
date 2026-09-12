@@ -11,6 +11,7 @@ import CustomFieldsSection from '@/components/CustomFieldsSection';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
 import TeamMatches from './TeamMatches';
+import TeamTraining from '@/components/TeamTraining';
 
 export default function TeamDetail() {
   const { id } = useParams();
@@ -172,6 +173,7 @@ export default function TeamDetail() {
         <div id="team-panel-matches" role="tabpanel" aria-labelledby="team-tab-matches"><TeamMatches teamId={id} /></div>
       ) : (
       <div id="team-panel-overview" role="tabpanel" aria-labelledby="team-tab-overview" className="space-y-6">
+      <TeamTraining teamId={id} />
       {/* Subsidiaries */}
       {childTeams.length > 0 && (
         <div className="card p-6">

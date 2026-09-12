@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.70.0] - 2026-09-12
+
+### Added
+
+- Plan weekly training blocks by dragging teams or standalone sessions across named pitches and quarter/half/full pitch allocations, with configurable age-group defaults and per-team overrides.
+- Create and copy independent schedule versions such as regular and bad-weather schedules, select an active version for Team and Mijn team, and retrieve every saved version through the API using a stable identifier.
+- Gate the complete training feature and API behind an admin-only feature toggle by default, with server-side overlap checks, stale-write protection, and recoverable deletion of inactive schedules.
+
 ## [35.69.2] - 2026-09-12
 
 ### Changed
