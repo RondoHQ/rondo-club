@@ -1,8 +1,8 @@
 import { lazy, Suspense, useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Trash2, Mail, Phone,
-  MapPin, Building2, Plus, Pencil, MessageCircle, X, Camera,
+  Trash2, Mail, Phone,
+  MapPin, Plus, Pencil, MessageCircle, X, Camera, Download,
   CheckSquare2, StickyNote, ExternalLink, Gavel,
   ContactRound, UsersRound, HandHeart, Handshake, AlertCircle
 } from 'lucide-react';
@@ -141,6 +141,7 @@ export default function PersonDetail() {
   const [selectedCaseIds, setSelectedCaseIds] = useState(new Set());
 
   const [activeTab, setActiveTab] = useState('profile');
+  const isFullWidthTab = activeTab === 'work' || activeTab === 'timeline';
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [photoToCrop, setPhotoToCrop] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -1222,23 +1223,6 @@ export default function PersonDetail() {
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-        <button
-          onClick={() => {
-            if (window.history.state && window.history.length > 1) {
-              navigate(-1);
-            } else {
-              navigate('/people');
-            }
-          }}
-          aria-label="Terug"
-          className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
-        >
-          <ArrowLeft className="w-4 h-4 md:mr-2" />
-          <span className="hidden md:inline">Terug</span>
-        </button>
-      </div>
       {syncErrorMessage && (
         <p className="text-sm text-red-600 dark:text-red-400">{syncErrorMessage}</p>
       )}
@@ -1272,7 +1256,6 @@ export default function PersonDetail() {
         <PersonHeaderActions
           key={id}
           onEdit={canEditPeople ? () => { setPersonEditError(''); setPersonBeingEdited(person); } : undefined}
-          onExport={handleExportVCard}
           onMerge={isAdmin ? () => setShowMergeModal(true) : undefined}
           onSync={canSyncFromSportlink && fields.knvb_id ? handleSyncFromSportlink : undefined}
           isSyncing={isSyncing}
@@ -1417,8 +1400,7 @@ export default function PersonDetail() {
                 <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />Financiële blokkade
               </p>
             )}
-            {sortedSocialLinks.length > 0 && (
-              <div className="flex items-center gap-3 mt-4">
+              <div className="flex flex-wrap items-center gap-3 mt-4">
                 {sortedSocialLinks.map((contact, index) => {
                     // Ensure URL has protocol
                     let url = contact.contact_value;
@@ -1477,8 +1459,10 @@ export default function PersonDetail() {
                       </a>
                     );
                 })}
+                <button type="button" onClick={handleExportVCard} className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Exporteer vCard" title="Exporteer vCard">
+                  <Download className="h-5 w-5" aria-hidden="true" />
+                </button>
               </div>
-            )}
           </div>
         </div>
       </div>
@@ -1499,9 +1483,9 @@ export default function PersonDetail() {
       </div>
 
       {/* Tab Content */}
-      <div className={activeTab === 'profile' ? 'person-profile-layout grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6' : 'grid grid-cols-1 lg:grid-cols-3 gap-6'}>
+      <div className={activeTab === 'profile' ? 'person-profile-layout grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6' : isFullWidthTab ? 'person-profile-layout' : 'grid grid-cols-1 lg:grid-cols-3 gap-6'}>
         {/* Main content */}
-        <div className={activeTab === 'profile' ? 'contents' : 'lg:col-span-2 min-w-0 space-y-6'}>
+        <div className={activeTab === 'profile' ? 'contents' : isFullWidthTab ? 'min-w-0 space-y-6' : 'lg:col-span-2 min-w-0 space-y-6'}>
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="contents">
@@ -1886,67 +1870,47 @@ export default function PersonDetail() {
 
         {/* Work Tab */}
         {activeTab === 'work' && (
-          <div className="columns-1 md:columns-2 gap-6">
-            {/* Work history - spans both columns */}
-          <div className="card p-6 mb-6 [column-span:all]">
-            <h2 className="font-semibold text-brand-gradient mb-4">Functiegeschiedenis</h2>
+          <section className="card p-6" aria-label="Functiegeschiedenis">
+            <h2 className="mb-4 font-semibold text-gray-900 dark:text-gray-100">Functiegeschiedenis</h2>
             {sortedWorkHistory?.length > 0 ? (
-              <div className="space-y-4">
+              <ul>
                 {sortedWorkHistory.map((job) => {
                   const teamData = job.team_id ? teamMap[job.team_id] : null;
-                  const originalIndex = job.originalIndex;
                   const startDate = parseFieldDate(job.start_date);
                   const endDate = parseFieldDate(job.end_date);
 
                   return (
-                    <div key={originalIndex} className="flex items-start">
-                      {teamData?.logo ? (
-                        <img
-                          src={teamData.logo}
-                          alt={teamData.name}
-                          className="w-20 h-20 rounded-lg object-contain mr-3 flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-20 h-20 bg-white rounded-lg flex items-center justify-center mr-3 flex-shrink-0 border border-gray-200">
-                          <Building2 className="w-10 h-10 text-gray-500" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium">{job.job_title}</p>
+                    <li key={job.originalIndex} className="grid grid-cols-1 gap-x-6 gap-y-1 border-b border-gray-100 py-2 text-sm last:border-b-0 dark:border-gray-700 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_11rem]">
+                      <p className="min-w-0 break-words font-medium text-gray-900 dark:text-gray-100">{job.job_title}</p>
+                      <div className="min-w-0 break-words empty:hidden sm:empty:block">
                         {job.team_id && teamData && (
                           <Link
                             to={`/${teamData.type === 'commissie' ? 'commissies' : 'teams'}/${job.team_id}`}
-                            className="text-sm text-electric-cyan hover:underline"
+                            className="text-electric-cyan hover:underline"
                           >
                             {teamData.name}
                           </Link>
                         )}
                         {!job.team_id && job.team_name_text && (
-                          <p className="text-sm text-gray-700 dark:text-gray-300">
-                            {job.team_name_text}
-                          </p>
-                        )}
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {startDate && format(startDate, 'MMM yyyy')}
-                          {' - '}
-                          {job.is_current ? 'Heden' : endDate ? format(endDate, 'MMM yyyy') : ''}
-                        </p>
-                        {job.description && (
-                          <p className="text-sm text-gray-600 mt-1">{job.description}</p>
+                          <span className="text-gray-700 dark:text-gray-300">{job.team_name_text}</span>
                         )}
                       </div>
-                    </div>
+                      <p className="text-gray-500 dark:text-gray-400 sm:text-right">
+                        {startDate && format(startDate, 'MMM yyyy')}
+                        {' - '}
+                        {job.is_current ? 'Heden' : endDate ? format(endDate, 'MMM yyyy') : ''}
+                      </p>
+                      {job.description && (
+                        <p className="min-w-0 break-words text-gray-600 dark:text-gray-400 sm:col-span-3">{job.description}</p>
+                      )}
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             ) : (
-              <p className="text-sm text-gray-500 text-center py-4">
-                Nog geen functiegeschiedenis.
-              </p>
+              <p className="py-4 text-center text-sm text-gray-500">Nog geen functiegeschiedenis.</p>
             )}
-          </div>
-          
-          </div>
+          </section>
         )}
 
         {/* Discipline Cases Tab */}
@@ -1973,8 +1937,8 @@ export default function PersonDetail() {
 
         </div>
 
-        {/* Profile column 3; other tabs retain their desktop sidebar. */}
-        <div className={activeTab === 'profile' ? 'min-w-0 md:col-span-2 xl:col-span-1' : 'hidden lg:block'}>
+        {/* Profile column 3 and sidebar on the remaining detail tabs. */}
+        {!isFullWidthTab && <div className={activeTab === 'profile' ? 'min-w-0 md:col-span-2 xl:col-span-1' : 'hidden lg:block'}>
           <div className={activeTab === 'profile' ? 'space-y-6' : 'sticky top-6 space-y-6'}>
             {activeTab === 'profile' ? <PersonShiftOverview overview={shiftOverview} isLoading={isShiftOverviewLoading} /> : <FinancesCard personId={parseInt(id)} />}
 
@@ -2017,11 +1981,11 @@ export default function PersonDetail() {
               <AccountCard key={id} personId={id} personData={person} />
             )}
           </div>
-        </div>
+        </div>}
       </div>
 
-      {/* Other tabs retain quick access to tasks on mobile. */}
-      {activeTab !== 'profile' && <button
+      {/* Match mobile task access to the tabs with a sidebar. */}
+      {activeTab !== 'profile' && !isFullWidthTab && <button
         onClick={() => setShowMobileTodos(true)}
         className="fixed bottom-6 right-6 z-40 lg:hidden bg-electric-cyan hover:bg-bright-cobalt text-white rounded-full p-4 shadow-lg transition-colors"
         title="Taken bekijken"
@@ -2035,7 +1999,7 @@ export default function PersonDetail() {
       </button>}
 
       {/* Mobile Todos Slide-up Panel */}
-      {showMobileTodos && (
+      {showMobileTodos && !isFullWidthTab && (
         <div className="fixed inset-0 z-50 lg:hidden">
           {/* Backdrop */}
           <div

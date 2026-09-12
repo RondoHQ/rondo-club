@@ -1,20 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
-import { Download, Ellipsis, GitMerge, Pencil, RefreshCw } from 'lucide-react';
+import { Ellipsis, GitMerge, Pencil, RefreshCw } from 'lucide-react';
 
 const iconButtonClass = 'inline-flex h-9 w-9 items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11';
 const actionClass = 'flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-200 dark:hover:bg-gray-700';
 
-export default function PersonHeaderActions({ onEdit, onExport, onMerge, onSync, isSyncing }) {
+export default function PersonHeaderActions({ onEdit, onMerge, onSync, isSyncing }) {
   const menuRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
     const closeOutside = (event) => {
-      if (!menuRef.current?.contains(event.target)) menuRef.current.open = false;
+      if (menuRef.current && !menuRef.current.contains(event.target)) menuRef.current.open = false;
     };
     const closeOnEscape = (event) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && menuRef.current) {
         menuRef.current.open = false;
         menuRef.current.querySelector('summary').focus();
       }
@@ -40,7 +40,7 @@ export default function PersonHeaderActions({ onEdit, onExport, onMerge, onSync,
           <Pencil className="h-4 w-4" aria-hidden="true" />
         </button>
       )}
-      <details ref={menuRef} onToggle={(event) => setIsOpen(event.currentTarget.open)} className="relative">
+      {(onSync || onMerge) && <details ref={menuRef} onToggle={(event) => setIsOpen(event.currentTarget.open)} className="relative">
         <summary className={`${iconButtonClass} cursor-pointer list-none [&::-webkit-details-marker]:hidden`} aria-label="Meer persoonsacties" title="Meer acties">
           <Ellipsis className="h-4 w-4" aria-hidden="true" />
         </summary>
@@ -51,16 +51,13 @@ export default function PersonHeaderActions({ onEdit, onExport, onMerge, onSync,
               {isSyncing ? 'Bezig met verversen…' : 'Ververs uit Sportlink'}
             </button>
           )}
-          <button type="button" onClick={() => runAction(onExport)} className={actionClass}>
-            <Download className="h-4 w-4 shrink-0" aria-hidden="true" />Exporteer vCard
-          </button>
           {onMerge && (
             <button type="button" onClick={() => runAction(onMerge)} className={actionClass}>
               <GitMerge className="h-4 w-4 shrink-0" aria-hidden="true" />Persoon samenvoegen
             </button>
           )}
         </div>
-      </details>
+      </details>}
     </div>
   );
 }

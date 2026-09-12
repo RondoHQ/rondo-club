@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.65.2] - 2026-09-12
+
+### Changed
+
+- Display role history as compact text rows with aligned role, team or committee, and period columns; remove decorative role images.
+- Give Roles and Timeline the full content width without the task/account sidebar or its mobile task button, using the same plain cards as the profile.
+- Move vCard export beside the external service links in the person header, remove the redundant Back button and hide the More actions menu when no actions remain.
+
 ## [35.65.1] - 2026-09-12
 
 ### Changed
