@@ -3277,6 +3277,7 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
 'season' => [ 'canonical_name' => 'season', 'name' => 'season', 'storage_name' => 'season', 'key' => 'field_training_season', 'label' => 'season', 'type' => 'text' ],
 'revision' => [ 'canonical_name' => 'revision', 'name' => 'revision', 'storage_name' => 'revision', 'key' => 'field_training_revision', 'label' => 'revision', 'type' => 'number', 'default_value' => 0 ],
 'blocks' => [ 'canonical_name' => 'blocks', 'name' => 'blocks', 'storage_name' => 'blocks', 'key' => 'field_training_blocks', 'label' => 'blocks', 'type' => 'repeater', 'sub_fields' => [
+'age_group_id' => [ 'canonical_name' => 'age_group_id', 'name' => 'age_group_id', 'storage_name' => 'age_group_id', 'key' => 'field_training_age_group_id', 'label' => 'age_group_id', 'type' => 'text', 'default_value' => '' ],
 'block_id' => [ 'canonical_name' => 'block_id', 'name' => 'block_id', 'storage_name' => 'block_id', 'key' => 'field_training_block_id', 'label' => 'block_id', 'type' => 'text' ],
 'label' => [ 'canonical_name' => 'label', 'name' => 'label', 'storage_name' => 'label', 'key' => 'field_training_label', 'label' => 'label', 'type' => 'text' ],
 'team_ids' => [ 'canonical_name' => 'team_ids', 'name' => 'team_ids', 'storage_name' => 'team_ids', 'key' => 'field_training_team_ids', 'label' => 'team_ids', 'type' => 'relationship', 'post_type' => ['team'], 'return_format' => 'id' ],
