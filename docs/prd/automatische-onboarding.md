@@ -24,6 +24,7 @@ hieronder zijn voorgestelde beginwaarden voor de bewerkbare mailblokken.
 | Vrijwilligerswelkomstmail | Automatisch, minimaal 24 uur na herkenning als nieuwe vrijwilliger |
 | Handmatige vrijgave | Geen verplicht vinkje of goedkeuring |
 | Bediening | Planning, uitstellen, resultaat en fouten op de persoonspagina |
+| Onzekere verzending | Registreer iedere verzending per adres; controleer bij twijfel eerst de verzendstatus en verstuur niet blind opnieuw |
 | Uitstellen | Beheerder kiest een nieuwe datum en tijd |
 | Ledenontvangers | Alle opgegeven adressen van het lid en de ouders/verzorgers, ontdubbeld per lid |
 | Ontbrekende oudernaam | Importeer het opgegeven ouderadres met de vervangende naam `Ouder van {voornaam kind}` |
@@ -374,6 +375,11 @@ opdracht om tijdens de planningsfase nieuwe infrastructuur aan te maken.
 
 ### Bescherming tegen dubbele uitvoering
 
+**Gemaakte keuze:** registreer iedere verzending per adres. Een onzekere uitkomst
+wordt eerst gecontroleerd voordat een nieuwe verzending mag plaatsvinden. Als de
+uitkomst niet kan worden vastgesteld, blijft **Verzendstatus controleren** staan;
+onzekerheid is geen bewijs dat de mail niet is verstuurd.
+
 Bewaar een stabiele sleutel per persoon, lidmaatschaps-/vrijwilligerswelkomstronde
 of VOG-aanvraagronde, berichtsoort,
 herinneringsnummer en genormaliseerd adres. Handmatige verzending en cron gebruiken
@@ -382,7 +388,8 @@ sent-timestamp gevolgd door `wp_mail()` is onvoldoende bij twee gelijktijdige ac
 
 Leg het resultaat per adres vast, inclusief poging, gebruikte template, tijdstip en
 fout. Stel de totale mailstatus samen uit die resultaten. Herhaal alleen nog niet
-succesvol afgehandelde ontvangers en controleer daarbij nog steeds actuele voorwaarden.
+succesvol afgehandelde ontvangers waarvoor opnieuw proberen veilig is vastgesteld,
+en controleer daarbij nog steeds actuele voorwaarden.
 Een succesvolle oude verzending blijft historie als het adres later wordt verwijderd.
 
 `wp_mail()`-succes betekent acceptatie voor verzending, niet bewezen bezorging. Bij
