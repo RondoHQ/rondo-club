@@ -1515,15 +1515,16 @@ export default function PersonDetail() {
                 {canEditContact && (
                   <button
                     onClick={() => setShowContactModal(true)}
-                    className="btn-tertiary text-sm"
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                    aria-label="Contactgegevens bewerken"
+                    title="Contactgegevens bewerken"
                   >
-                    <Pencil className="w-4 h-4 md:mr-1" />
-                    <span>Bewerken</span>
+                    <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" aria-hidden="true" />
                   </button>
                 )}
               </div>
             {contactItems.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-0">
                 {contactItems.map((contact, index) => {
                   const Icon = contact.type === 'email' ? Mail : Phone;
                   const isEmail = contact.type === 'email';

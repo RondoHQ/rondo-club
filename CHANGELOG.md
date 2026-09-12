@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.65.1] - 2026-09-12
+
+### Changed
+
+- Compact person contact rows and use an icon-only contact edit control matching the address pencil.
+- Keep the bondsnummer visible above the Sportlink disclosure and omit the season from the shift summary.
+
+### Fixed
+
+- Balance the spacing above and below the divider between VOG and IVA documents.
+
 ## [35.65.0] - 2026-09-12
 
 ### Changed

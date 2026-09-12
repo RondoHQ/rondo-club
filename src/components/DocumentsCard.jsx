@@ -12,7 +12,7 @@ export default function DocumentsCard({ fieldData, personId, canAccessVog, canVi
       <h2 className="mb-4 flex items-center gap-2 font-semibold text-gray-900 dark:text-gray-100">
         <FileCheck className="w-5 h-5 shrink-0 text-bright-cobalt" aria-hidden="true" />Documenten
       </h2>
-      <div className="divide-y divide-gray-200 dark:divide-gray-700 [&>section+section]:pt-4 [&>section+section]:mt-4">
+      <div className="[&>section+section]:border-t [&>section+section]:border-gray-200 dark:[&>section+section]:border-gray-700 [&>section+section]:pt-4 [&>section+section]:mt-4">
         {showVog && <VOGCard key={personId} fieldData={fieldData} personId={personId} onUpdateField={onUpdateField} isUpdating={isUpdating} />}
         {hasIva && <IvaCard fieldData={fieldData} personId={personId} canViewCertificate={canViewCertificate} />}
       </div>
