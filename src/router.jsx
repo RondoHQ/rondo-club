@@ -8,6 +8,7 @@ import { PageLoadingSpinner, ContentLoadingSpinner } from '@/components/LoadingS
 import { Shield } from 'lucide-react';
 import App from './App';
 import { canAccessFeature } from '@/utils/featureToggles';
+import { canAccessFootball } from '@/utils/footballAccess';
 
 // Direct import for Dashboard (no lazy loading)
 import Dashboard from '@/pages/Dashboard';
@@ -15,7 +16,7 @@ import Dashboard from '@/pages/Dashboard';
 // Lazy-loaded page components (separate file for fast refresh compatibility)
 import {
   PeopleList, PeopleAnniversaries, PeopleOnboarding, ProfileChangeLog, PersonDetail, SponsorList, SponsorDetail, TeamsList, TeamDetail,
-  Kaderlijst, MyTeam,
+  Kaderlijst, MyTeam, Football,
   CommissiesList, CommissieDetail, TodosList,
   FeedbackList, FeedbackDetail, Settings, VOG,
   Contributie, DisciplineCasesList,
@@ -307,6 +308,7 @@ const router = createBrowserRouter([
             ),
           },
           { path: 'people/:id', element: <KaderOrVrijwilligRedirect><PersonDetail /></KaderOrVrijwilligRedirect> },
+          { path: 'voetbal', element: <CapabilityRoute checkAccess={canAccessFootball}><Football /></CapabilityRoute> },
           { path: 'sponsors', element: <SponsorRoute><SponsorList /></SponsorRoute> },
           { path: 'sponsors/new', element: <SponsorRoute><SponsorDetail /></SponsorRoute> },
           { path: 'sponsors/:id', element: <SponsorRoute><SponsorDetail /></SponsorRoute> },
