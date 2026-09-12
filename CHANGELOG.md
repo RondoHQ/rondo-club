@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.65.0] - 2026-09-12
+
+### Changed
+
+- Simplify the person header with a plain name, smaller photo and consistent role badges; retain distinct financial and membership warnings.
+- Place a subtle icon-only edit action at the top right and group Sportlink refresh, vCard export and administrator-only merging under More actions.
+- Move person type into collapsed management settings in the person editor. Preserve edit permissions and submit only changed identity fields.
+
 ## [35.64.1] - 2026-09-12
 
 ### Changed

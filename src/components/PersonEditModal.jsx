@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useId, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, Upload, FileCode, AlertCircle } from 'lucide-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -13,10 +13,42 @@ export default function PersonEditModal({
   isLoading,
   person = null, // Pass person data for editing
   prefillData = null, // Pass prefillData for pre-filling from external context (e.g., meeting attendee)
-  initialPersonType = 'contact'
+  initialPersonType = 'contact',
+  canEditPersonType = false,
+  submitError = ''
 }) {
   const isEditing = !!person;
   const isOnline = useOnlineStatus();
+  const dialogId = useId();
+  const dialogRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousFocus = document.activeElement;
+    dialogRef.current?.querySelector('input[name="first_name"]')?.focus();
+    return () => {
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
+  }, [isOpen]);
+
+  const handleDialogKeyDown = (event) => {
+    if (event.key === 'Escape' && !isLoading) {
+      event.stopPropagation();
+      onClose();
+    }
+    if (event.key !== 'Tab') return;
+    const controls = [...dialogRef.current.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), summary')]
+      .filter(element => element.getClientRects().length > 0);
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
+  };
   
   // vCard import state
   const [dragActive, setDragActive] = useState(false);
@@ -208,13 +240,14 @@ export default function PersonEditModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={dialogId} onKeyDown={handleDialogKeyDown} className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+          <h2 id={dialogId} className="text-lg font-semibold text-gray-900 dark:text-gray-50">
             {isEditing ? 'Persoon bewerken' : 'Contact toevoegen'}
           </h2>
           <button
             onClick={onClose}
+            aria-label="Persoonvenster sluiten"
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             disabled={isLoading}
           >
@@ -298,8 +331,9 @@ export default function PersonEditModal({
             )}
 
             <div>
-              <label className="label">Bedrijfsnaam</label>
+              <label className="label" htmlFor={`${dialogId}-company`}>Bedrijfsnaam</label>
               <input
+                id={`${dialogId}-company`}
                 {...register('company_name')}
                 className="input"
                 placeholder="Voorbeeld BV"
@@ -311,17 +345,17 @@ export default function PersonEditModal({
             </div>
 
             {/* Name fields */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div>
-                <label className="label">Voornaam</label>
+                <label className="label" htmlFor={`${dialogId}-first`}>Voornaam</label>
                 <input
+                  id={`${dialogId}-first`}
                   {...register('first_name', {
                     validate: (value) => Boolean(value?.trim() || getValues('company_name')?.trim()) || 'Vul een voornaam of bedrijfsnaam in',
                   })}
                   className="input"
                   placeholder="Jan"
                   disabled={isLoading}
-                  autoFocus
                 />
                 {errors.first_name && (
                   <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.first_name.message}</p>
@@ -329,8 +363,9 @@ export default function PersonEditModal({
               </div>
 
               <div>
-                <label className="label">Tussenvoegsel</label>
+                <label className="label" htmlFor={`${dialogId}-infix`}>Tussenvoegsel</label>
                 <input
+                  id={`${dialogId}-infix`}
                   {...register('infix')}
                   className="input"
                   placeholder="van de"
@@ -339,8 +374,9 @@ export default function PersonEditModal({
               </div>
 
               <div>
-                <label className="label">Achternaam</label>
+                <label className="label" htmlFor={`${dialogId}-last`}>Achternaam</label>
                 <input
+                  id={`${dialogId}-last`}
                   {...register('last_name')}
                   className="input"
                   placeholder="Jansen"
@@ -351,8 +387,9 @@ export default function PersonEditModal({
 
             {/* Nickname */}
             <div>
-              <label className="label">Bijnaam</label>
+              <label className="label" htmlFor={`${dialogId}-nickname`}>Bijnaam</label>
               <input
+                id={`${dialogId}-nickname`}
                 {...register('nickname')}
                 className="input"
                 placeholder="Jansen"
@@ -360,25 +397,12 @@ export default function PersonEditModal({
               />
             </div>
 
-            {isEditing && (
-              <div>
-                <label className="label">Persoonstype</label>
-                <select
-                  {...register('person_type')}
-                  className="input"
-                  disabled={isLoading}
-                >
-                  <option value="member">Lid / ouder</option>
-                  <option value="contact">Contact</option>
-                </select>
-              </div>
-            )}
-
             {/* Gender and Pronouns */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label">Geslacht</label>
+                <label className="label" htmlFor={`${dialogId}-gender`}>Geslacht</label>
                 <select
+                  id={`${dialogId}-gender`}
                   {...register('gender')}
                   className="input"
                   disabled={isLoading}
@@ -392,8 +416,9 @@ export default function PersonEditModal({
                 </select>
               </div>
               <div>
-                <label className="label">Voornaamwoorden</label>
+                <label className="label" htmlFor={`${dialogId}-pronouns`}>Voornaamwoorden</label>
                 <input
+                  id={`${dialogId}-pronouns`}
                   {...register('pronouns')}
                   type="text"
                   className="input"
@@ -402,6 +427,21 @@ export default function PersonEditModal({
                 />
               </div>
             </div>
+
+            {isEditing && canEditPersonType && (
+              <details className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+                <summary className="cursor-pointer text-sm text-gray-600 dark:text-gray-300">Beheerinstellingen</summary>
+                <div className="mt-3">
+                  <label className="label" htmlFor={`${dialogId}-type`}>Persoonstype</label>
+                  <select id={`${dialogId}-type`} {...register('person_type')} className="input" disabled={isLoading}>
+                    <option value="member">Lid / ouder</option>
+                    <option value="contact">Contact</option>
+                  </select>
+                </div>
+              </details>
+            )}
+
+            {submitError && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{submitError}</p>}
 
             {/* Email - only editable when creating */}
             {!isEditing && (

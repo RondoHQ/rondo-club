@@ -2,9 +2,9 @@ import { lazy, Suspense, useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Trash2, Mail, Phone,
-  MapPin, Building2, Plus, Pencil, MessageCircle, X, Camera, Download,
-  CheckSquare2, StickyNote, ExternalLink, Gavel, RefreshCw,
-  GitMerge, ContactRound, UsersRound
+  MapPin, Building2, Plus, Pencil, MessageCircle, X, Camera,
+  CheckSquare2, StickyNote, ExternalLink, Gavel,
+  ContactRound, UsersRound, HandHeart, Handshake, AlertCircle
 } from 'lucide-react';
 import { peopleKeys, usePerson, usePersonTimeline, useDeleteNote, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, useAddParentRelationship, usePeopleByIds } from '@/hooks/usePeople';
 import TimelineView from '@/components/Timeline/TimelineView';
@@ -27,6 +27,7 @@ import DocumentsCard from '@/components/DocumentsCard';
 import PersonShiftOverview from '@/components/PersonShiftOverview';
 import SportlinkCard from '@/components/SportlinkCard';
 import PhotoSyncIndicator from '@/components/PhotoSyncIndicator';
+import PersonHeaderActions from '@/components/PersonHeaderActions';
 import AccountCard from '@/components/AccountCard';
 import PersonSponsorRelationsCard from '@/components/PersonSponsorRelationsCard';
 import SponsorRelationshipModal from '@/components/SponsorRelationshipModal';
@@ -44,6 +45,7 @@ import { useClothingPersonProfile } from '@/hooks/useClothing';
 
 const PhotoCropModal = lazy(() => import('@/components/PhotoCropModal'));
 const PersonMergeModal = lazy(() => import('@/components/PersonMergeModal'));
+const PersonEditModal = lazy(() => import('@/components/PersonEditModal'));
 
 function ParentSyncBadge({ status }) {
   if (!status) return null;
@@ -162,7 +164,8 @@ export default function PersonDetail() {
   const [editingRelationship, setEditingRelationship] = useState(null);
   const [editingRelationshipIndex, setEditingRelationshipIndex] = useState(null);
   const [showAddressModal, setShowAddressModal] = useState(false);
-  const [isSavingPersonType, setIsSavingPersonType] = useState(false);
+  const [showPersonEditModal, setShowPersonEditModal] = useState(false);
+  const [personEditError, setPersonEditError] = useState('');
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
   const [editingAddressIndex, setEditingAddressIndex] = useState(null);
@@ -244,15 +247,21 @@ export default function PersonDetail() {
     }
   };
 
-  const handlePersonTypeChange = async (personType) => {
-    setIsSavingPersonType(true);
+  const handleSavePerson = async (data) => {
+    if (!canEditPeople) return;
+    setPersonEditError('');
+    const editableKeys = ['first_name', 'infix', 'last_name', 'nickname', 'company_name', 'gender', 'pronouns'];
+    if (canEditAllPeople) editableKeys.push('person_type');
+    const changedFields = Object.fromEntries(editableKeys
+      .filter(key => (data[key] ?? '') !== (person.fields?.[key] ?? (key === 'person_type' ? 'member' : '')))
+      .map(key => [key, data[key]]));
     try {
-      const fieldData = sanitizePersonFields(person.fields, { person_type: personType });
-      await updatePerson.mutateAsync({ id, data: { fields: fieldData } });
-    } catch {
-      alert('Persoonstype kon niet worden opgeslagen. Probeer het opnieuw.');
-    } finally {
-      setIsSavingPersonType(false);
+      if (Object.keys(changedFields).length) {
+        await updatePerson.mutateAsync({ id, data: { fields: sanitizePersonFields(person.fields, changedFields) } });
+      }
+      setShowPersonEditModal(false);
+    } catch (error) {
+      setPersonEditError(error.response?.data?.message || 'Persoon kon niet worden opgeslagen. Probeer het opnieuw.');
     }
   };
 
@@ -1229,33 +1238,14 @@ export default function PersonDetail() {
           <ArrowLeft className="w-4 h-4 md:mr-2" />
           <span className="hidden md:inline">Terug</span>
         </button>
-        <div className="flex gap-2">
-          {canSyncFromSportlink && fields['knvb_id'] && (
-            <button
-              onClick={handleSyncFromSportlink}
-              disabled={isSyncing}
-              className="btn-tertiary"
-            >
-              <RefreshCw className={`w-4 h-4 md:mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span className="hidden md:inline">
-                {syncStatus === 'success' ? 'Bijgewerkt!' : syncStatus === 'error' ? 'Fout' : 'Ververs uit Sportlink'}
-              </span>
-            </button>
-          )}
-          <button onClick={handleExportVCard} className="btn-tertiary">
-            <Download className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">Exporteer vCard</span>
-          </button>
-          {isAdmin ? (
-            <button onClick={() => setShowMergeModal(true)} className="btn-tertiary" aria-label="Persoon samenvoegen">
-              <GitMerge className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">Samenvoegen</span>
-            </button>
-          ) : null}
-        </div>
       </div>
       {syncErrorMessage && (
         <p className="text-sm text-red-600 dark:text-red-400">{syncErrorMessage}</p>
+      )}
+      {(isSyncing || syncStatus === 'success') && (
+        <p role="status" className="text-sm text-gray-600 dark:text-gray-300">
+          {isSyncing ? 'Sportlink wordt ververst…' : 'Bijgewerkt uit Sportlink.'}
+        </p>
       )}
       
       {isFormerMember && (
@@ -1277,18 +1267,26 @@ export default function PersonDetail() {
       )}
 
       {/* Profile header */}
-      <div className={`card p-6 relative ${fields['financiele_blokkade'] ? 'bg-red-50 dark:bg-red-950/30' : fields.former_member ? 'bg-gray-50 dark:bg-gray-900/30' : ''}`}>
+      <div className="card person-profile-header p-6">
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <PersonHeaderActions
+          key={id}
+          onEdit={canEditPeople ? () => { setPersonEditError(''); setShowPersonEditModal(true); } : undefined}
+          onExport={handleExportVCard}
+          onMerge={isAdmin ? () => setShowMergeModal(true) : undefined}
+          onSync={canSyncFromSportlink && fields.knvb_id ? handleSyncFromSportlink : undefined}
+          isSyncing={isSyncing}
+        />
+        <div className="flex flex-col items-start gap-5 sm:flex-row sm:gap-6">
           <div className="relative group shrink-0">
             {person.thumbnail ? (
               <img
                 src={person.thumbnail}
                 alt={person.name}
-                className="w-28 h-28 rounded-full object-cover"
+                className="w-22 h-22 rounded-full object-cover"
               />
             ) : (
-              <div className="w-28 h-28 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+              <div className="w-22 h-22 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
                 <span className="text-3xl font-medium text-gray-500 dark:text-gray-300">
                   {person.name?.[0] || fields.company_name?.[0] || '?'}
                 </span>
@@ -1323,61 +1321,15 @@ export default function PersonDetail() {
             <PhotoSyncIndicator status={person.photo_sync_status} knvbId={fields.knvb_id} hasPhoto={!!person.thumbnail} />
           </div>
 
-          <div className="flex-1 space-y-3">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-brand-gradient">
+          <div className="min-w-0 flex-1 space-y-3 sm:pr-24">
+            <div>
+              <h1 className="break-words text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
                 {person.name}
                 {isDeceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
               </h1>
-              {fields.former_member && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300">
-                  {isCurrentParent ? 'Oud-lid · ouder/verzorger' : 'Oud-lid'}
-                </span>
-              )}
-              {fields.person_type === 'contact' && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
-                  Contact
-                </span>
-              )}
-              {isSponsorPerson && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300">
-                  Sponsorcontact
-                </span>
-              )}
-              {!fields.former_member && hasValidLidTot && new Date(fields['lid_tot']) > new Date() && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-                  Afmelding in de toekomst
-                </span>
-              )}
-              {fields.wacht_op_overschrijving && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-                  Wacht op overschrijving
-                </span>
-              )}
-              {fields['huidig_vrijwilliger'] && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-electric-cyan text-white dark:bg-electric-cyan dark:text-white">
-                  Vrijwilliger
-                </span>
-              )}
             </div>
             {fields.company_name && personalName && (
               <p className="text-base text-gray-600 dark:text-gray-300">{fields.company_name}</p>
-            )}
-            {canEditAllPeople && (
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-                <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                  <span>Persoonstype</span>
-                  <select
-                    value={fields.person_type || 'member'}
-                    onChange={(event) => handlePersonTypeChange(event.target.value)}
-                    className="input py-1 text-sm w-auto"
-                    disabled={isSavingPersonType}
-                  >
-                    <option value="member">Lid / ouder</option>
-                    <option value="contact">Contact</option>
-                  </select>
-                </label>
-              </div>
             )}
             {groupedPositions.length > 0 && (
               <p className="text-base text-gray-600 dark:text-gray-300">
@@ -1409,7 +1361,7 @@ export default function PersonDetail() {
             {fields.nickname && (
               <p className="text-gray-500 dark:text-gray-400">&quot;{fields.nickname}&quot;</p>
             )}
-            {(getGenderSymbol(fields.gender) || fields.pronouns || age !== null || formattedDeathDate || fields['financiele_blokkade'] || fields['lid_tot']) && (
+            {(getGenderSymbol(fields.gender) || fields.pronouns || age !== null || formattedDeathDate || hasValidLidTot) && (
               <p className="text-gray-500 dark:text-gray-400 text-sm inline-flex items-center flex-wrap">
                 {getGenderSymbol(fields.gender) && <span>{getGenderSymbol(fields.gender)}</span>}
                 {getGenderSymbol(fields.gender) && fields.pronouns && <span>&nbsp;—&nbsp;</span>}
@@ -1420,18 +1372,49 @@ export default function PersonDetail() {
                 )}
                 {!isDeceased && age !== null && formattedBirthdate && <span>{age} jaar ({formattedBirthdate})</span>}
                 {!isDeceased && age !== null && !formattedBirthdate && <span>{age} jaar</span>}
-                {fields['financiele_blokkade'] && (
-                  <>
-                    {(getGenderSymbol(fields.gender) || fields.pronouns || age !== null) && <span>&nbsp;—&nbsp;</span>}
-                    <span className="text-red-600 dark:text-red-400 font-medium">Financiële blokkade</span>
-                  </>
-                )}
                 {hasValidLidTot && (
                   <>
-                    {(getGenderSymbol(fields.gender) || fields.pronouns || age !== null || fields['financiele_blokkade']) && <span>&nbsp;—&nbsp;</span>}
+                    {(getGenderSymbol(fields.gender) || fields.pronouns || age !== null) && <span>&nbsp;—&nbsp;</span>}
                     <span>Lid tot: {formattedLidTot}</span>
                   </>
                 )}
+              </p>
+            )}
+            <div className="flex flex-wrap items-center gap-2 empty:hidden">
+              {fields.former_member && (
+                <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                  {isCurrentParent ? 'Oud-lid · ouder/verzorger' : 'Oud-lid'}
+                </span>
+              )}
+              {fields.person_type === 'contact' && (
+                <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                  Contact
+                </span>
+              )}
+              {isSponsorPerson && (
+                <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                  <Handshake className="h-3.5 w-3.5" aria-hidden="true" />Sponsorcontact
+                </span>
+              )}
+              {!fields.former_member && hasValidLidTot && new Date(fields['lid_tot']) > new Date() && (
+                <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                  Afmelding in de toekomst
+                </span>
+              )}
+              {fields.wacht_op_overschrijving && (
+                <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                  Wacht op overschrijving
+                </span>
+              )}
+              {fields['huidig_vrijwilliger'] && (
+                <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                  <HandHeart className="h-3.5 w-3.5" aria-hidden="true" />Vrijwilliger
+                </span>
+              )}
+            </div>
+            {fields.financiele_blokkade && (
+              <p className="flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">
+                <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />Financiële blokkade
               </p>
             )}
             {sortedSocialLinks.length > 0 && (
@@ -2178,6 +2161,20 @@ export default function PersonDetail() {
             todo={editingTodo}
           />
           
+          {showPersonEditModal && canEditPeople && (
+            <Suspense fallback={null}>
+              <PersonEditModal
+                key={id}
+                isOpen
+                onClose={() => setShowPersonEditModal(false)}
+                onSubmit={handleSavePerson}
+                isLoading={updatePerson.isPending}
+                person={person}
+                canEditPersonType={canEditAllPeople}
+                submitError={personEditError}
+              />
+            </Suspense>
+          )}
           {photoToCrop && canEditPhoto && (
             <Suspense fallback={null}>
               <PhotoCropModal
