@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.63.0] - 2026-09-12
+
+### Added
+
+- Show an IVA / Sociale Hygiëne card below Sportlink on person profiles only when a certificate is attached, with approval status, completion date and protected certificate access.
+
+### Changed
+
+- Replace profile photo sync text and the seasonal upload notice with a small green check or amber waiting icon on the photo. Hide the icon for unlinked profiles and keep the detailed status accessible on the icon.
+
 ## [35.62.0] - 2026-09-12
 
 ### Added

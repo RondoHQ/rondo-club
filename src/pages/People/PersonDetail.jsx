@@ -25,6 +25,8 @@ import CustomFieldsSection from '@/components/CustomFieldsSection';
 import FinancesCard from '@/components/FinancesCard';
 import VOGCard from '@/components/VOGCard';
 import SportlinkCard from '@/components/SportlinkCard';
+import IvaCard from '@/components/IvaCard';
+import PhotoSyncIndicator from '@/components/PhotoSyncIndicator';
 import AccountCard from '@/components/AccountCard';
 import PersonSponsorRelationsCard from '@/components/PersonSponsorRelationsCard';
 import SponsorRelationshipModal from '@/components/SponsorRelationshipModal';
@@ -1377,7 +1379,7 @@ export default function PersonDetail() {
       <div className={`card p-6 relative ${fields['financiele_blokkade'] ? 'bg-red-50 dark:bg-red-950/30' : fields.former_member ? 'bg-gray-50 dark:bg-gray-900/30' : ''}`}>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="relative group">
+          <div className="relative group shrink-0">
             {person.thumbnail ? (
               <img
                 src={person.thumbnail}
@@ -1417,19 +1419,10 @@ export default function PersonDetail() {
                 />
               </>
             )}
+            <PhotoSyncIndicator status={person.photo_sync_status} knvbId={fields.knvb_id} hasPhoto={!!person.thumbnail} />
           </div>
 
           <div className="flex-1 space-y-3">
-            {person.photo_sync_status && (
-              <p role="status" className="text-sm text-gray-600 dark:text-gray-300">
-                {person.photo_sync_status.message}
-              </p>
-            )}
-            {canEditPhoto && fields.knvb_id && !fields.former_member && fields.person_type !== 'contact' && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Foto’s kunnen van 1 juli tot en met 31 oktober naar Sportlink worden verstuurd.
-              </p>
-            )}
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-brand-gradient">
                 {person.name}
@@ -1795,10 +1788,15 @@ export default function PersonDetail() {
             <PersonShiftOverview overview={shiftOverview} isLoading={isShiftOverviewLoading} />
             </div>
 
-            {/* Column 2: Sportlink, Account, Relaties, VOG */}
+            {/* Column 2: Sportlink, IVA, Relaties, VOG */}
             <div className="space-y-6">
             {/* Sportlink Card */}
             <SportlinkCard fieldData={person?.fields} metaData={person?.meta} primaryTeam={sportlinkPrimaryTeam} />
+            <IvaCard
+              fieldData={person?.fields}
+              personId={person.id}
+              canViewCertificate={isAdmin || currentUser?.can_access_vrijwilligers || Number(currentUser?.linked_person_id) === person.id}
+            />
 
             {/* Keep the card available for editable people so the first relationship can be added. */}
             {(canEditPeople || canManageSponsors || sortedRelationships?.length > 0 || person?.sponsor_relationships?.length > 0) && (
