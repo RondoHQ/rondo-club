@@ -37,6 +37,7 @@ hieronder zijn voorgestelde beginwaarden voor de bewerkbare mailblokken.
 | Ledenaanhef | Onder 18: `Beste {first_name} en eventuele ouders/verzorgers,`; vanaf 18: `Beste {first_name},` |
 | Accountactivatie | Vaste knop naar `/activeren`; geen kortlevende tokenlink in de welkomstmail |
 | Vrijwilligersinhoud | Alleen toepasselijke blokken, bepaald bij verzending |
+| VOG ter beoordeling | Welkomstmail gaat door met een bewerkbaar blok dat ontvangst en lopende controle bevestigt; beoordeling houdt de mail niet tegen |
 | Mailinstellingen | Onderwerp en alle blokken afzonderlijk bewerkbaar; voorbeeld van de complete mail |
 | VOG-opvolging | Op de bestaande VOG-pagina, zonder algemene taken |
 | VOG-herinneringen | Eerste na 14 dagen, tweede na nog eens 14 dagen; maximaal twee per aanvraagronde |
@@ -221,6 +222,7 @@ de instellingen bewerkbaar en gebruik voor andere clubs hun eigen invulling.
 | Welkom | Altijd | Beste {first_name},<br><br>Wat fijn dat je vrijwilliger bent geworden bij {club_naam}! Bedankt dat je je wilt inzetten voor onze club. |
 | VOG ontbreekt | VOG vereist, geen geldige registratie en geen actuele aanvraag | Voor jouw functie vragen we een Verklaring Omtrent het Gedrag (VOG). Je ontvangt apart uitleg over de gratis aanvraag via de club. Heb je al een VOG? Neem dan contact op met onze VOG-coördinator om te bespreken of je die kunt gebruiken. |
 | VOG-aanvraag loopt | Huidige aanvraag bij Justis klaargezet | Voor jouw VOG loopt al een aanvraag. Volg de instructies die je daarvoor ontvangt. Zodra je de VOG hebt ontvangen, kun je deze uploaden in Rondo. |
+| VOG in controle / ter beoordeling | VOG ontvangen en in automatische controle of wachtend op menselijke beoordeling | We hebben je VOG ontvangen en controleren deze. Je hoeft nu niets te doen. |
 | VOG geldig | VOG vereist en geldig geregistreerd | Er staat al een geldige VOG voor je geregistreerd. Hiervoor hoef je nu niets te doen. |
 | VOG vernieuwen | Vernieuwing nodig, nog geen actuele aanvraag | Je VOG moet worden vernieuwd. Je ontvangt apart uitleg over de gratis aanvraag via de club. |
 | Kleding, VOG nog nodig | Geselecteerde kledingfunctie, vereiste VOG nog niet in orde | Voor jouw functie krijg je kleding van de club. Zodra je VOG in orde is, verschijnt dit bij de kledingcoördinator. Die neemt contact met je op over het ophalen. |
@@ -234,10 +236,15 @@ leiders en teammanagers. De accounttekst belooft niet aan iedere vrijwilliger ee
 VOG-uploadactie als die niet van toepassing is. Dit zijn redactionele voorstellen.
 
 Bij geen VOG-plicht wordt het VOG-blok weggelaten. Bij meerdere rollen kiest Rondo
-één toepasselijke variant, zonder dubbele blokken. Een inzending die al wordt
-gecontroleerd of opnieuw moet worden aangeleverd mag geen onjuiste tekst over een
-nieuwe aanvraag activeren. Voor die twee situaties moeten nog eigen bewerkbare
-teksten worden afgestemd; ze mogen niet stilzwijgend onder 'aanvraag loopt' vallen.
+één toepasselijke variant, zonder dubbele blokken. Bij een ontvangen VOG in controle
+of ter beoordeling gaat de welkomstmail door zodra de overige verzendvoorwaarden
+zijn vervuld, met het hierboven gekozen bewerkbare ontvangst-/controleblok. Wacht
+niet op de beoordelingsuitkomst en vraag in dit blok niet opnieuw om een upload.
+Dit geldt ook voor een gecombineerde leden-/vrijwilligersmail.
+
+Een inzending die opnieuw moet worden aangeleverd mag geen onjuiste tekst over een
+nieuwe aanvraag activeren. Voor die situatie moet nog een eigen bewerkbare tekst
+worden afgestemd; deze mag niet stilzwijgend onder 'aanvraag loopt' vallen.
 
 ## 4. VOG-pagina als werkvoorraad
 
@@ -495,7 +502,9 @@ probeer vrij geschreven HTML niet blind in betekenisvolle blokken op te delen.
 juist wordt gekozen; meerdere rollen geen dubbele mail opleveren; een reeds
 verwelkomd lid later correct als vrijwilliger kan worden verwelkomd; een echte terugkeer
 een nieuwe ronde opent; de jonger-dan-18-grens de juiste ontvangers oplevert; gelijktijdige
-leden-/vrijwilligersinstroom één gecombineerde mail oplevert. Verwijder daarna
+leden-/vrijwilligersinstroom één gecombineerde mail oplevert. Test dat een VOG in
+controle/beoordeling de welkomstmail niet tegenhoudt en het ontvangst-/controleblok
+oplevert, zonder nieuwe aanvraag- of uploadinstructie. Verwijder daarna
 de losse onboardingnavigatie en bied voor de oude URL een passende doorverwijzing.
 
 ### Fase 4 — VOG-werkvoorraad en opvolgmails
@@ -573,7 +582,7 @@ vastgelegde hoofdlijn niet en mogen niet onzichtbaar als productbeleid worden in
 |---|---|---|
 | Bronbewijs van definitieve inschrijving | Fase 1/2 | Productkeuze staat vast: geen onboarding tijdens voorinschrijving. Verifieer welk brongegeven de definitieve inschrijving bevestigt; wacht minimaal 24 uur vanaf de latere van ingangsdatum/herkenning en verstuur niet zolang de overschrijving openstaat |
 | Betrouwbaar bewijs van stoppen en terugkeer | Fase 1/2/3 | Productkeuze staat vast: opnieuw verwelkomen; technische detectie moet tijdelijke sync-gaten en seizoenswisselingen uitsluiten |
-| Welkomstmail bij VOG in controle of opnieuw aanleveren | Fase 3 | Eigen bewerkbare tekst nodig die de werkelijke vervolgstap beschrijft |
+| Welkomstmail bij VOG opnieuw aanleveren | Fase 3 | Eigen bewerkbare tekst nodig die de werkelijke vervolgstap beschrijft; voor VOG in controle/beoordeling zijn doorgaan met de welkomstmail en het ontvangst-/controleblok al gekozen |
 | Vernieuwing binnenkort en aanvraag al actief | Fase 4 | Bestaande geldigheids-/vernieuwingsgrenzen centraal gebruiken; actuele aanvraag voorkomt een dubbele start |
 | Kledingtekst bij terugkeer | Fase 3/5 | Werkvoorraad wordt heropend met historie; tekst moet beoordeling van benodigde kleding beloven, geen automatisch nieuw volledig pakket |
 | Definitie en bediening van langere onderbreking | Fase 1/6 | Achterstallige welkomstmails eerst beoordelen is gekozen; bepaal tijdsgrens en bediening binnen persoon-/bestaande beheerpagina's |
