@@ -2,6 +2,7 @@
 
 namespace Tests\Wpunit;
 
+use Rondo\Core\AccessControl;
 use Rondo\Core\VolunteerStatus;
 use Rondo\Data\InverseRelationships;
 use Rondo\Fields\Fields;
@@ -18,6 +19,7 @@ class MyTeamTest extends RondoTestCase {
 
 	protected function set_up(): void {
 		parent::set_up();
+		AccessControl::flush_visible_person_ids_cache();
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
 		$this->team_id  = $this->createOrganization( [ 'post_title' => 'JO13-1' ] );
 		$this->coach_id = $this->createPerson(
@@ -140,7 +142,13 @@ class MyTeamTest extends RondoTestCase {
 					],
 				],
 			],
-			$response->get_data()
+			array_map(
+				static function ( array $team ): array {
+					unset( $team['staff'] );
+					return $team;
+				},
+				$response->get_data()
+			)
 		);
 		// Team contacts must not expand access to general person records.
 		$this->assertFalse( \Rondo\Core\AccessControl::can_view_person( $player, $this->user_id ) );
@@ -328,6 +336,249 @@ class MyTeamTest extends RondoTestCase {
 				$this->assertSame( [ 'id', 'name', 'thumbnail' ], array_keys( $teammate ) );
 			}
 		}
+	}
+
+	private function link_children( array $child_ids ): void {
+		Fields::update_for_post(
+			$this->coach_id,
+			'relationships',
+			array_map(
+				static fn( int $id ): array => [
+					'related_person'    => $id,
+					'relationship_type' => InverseRelationships::TYPE_CHILD,
+				],
+				$child_ids
+			)
+		);
+		// Each HTTP request starts with a fresh household scope.
+		AccessControl::flush_visible_person_ids_cache();
+	}
+
+	public function test_parent_sees_child_teams_without_contacts_or_general_teammate_access(): void {
+		wp_set_current_user( 1 );
+		Fields::update_for_post( $this->coach_id, 'work_history', [] );
+		$second   = $this->createOrganization( [ 'post_title' => 'JO13-2' ] );
+		$children = [];
+		foreach ( [ $this->team_id, $second, $this->team_id ] as $team_id ) {
+			$children[] = $this->createPerson(
+				[],
+				[
+					'birthdate'    => current_datetime()->modify( '-12 years' )->format( 'Y-m-d' ),
+					'work_history' => [ $this->position( $team_id ) ],
+				]
+			);
+		}
+		$player = $this->createPerson(
+			[],
+			[
+				'first_name'   => 'Teamgenoot',
+				'email_1'      => 'private@example.org',
+				'mobile_1'     => '0612345678',
+				'work_history' => [ $this->position( $this->team_id ), $this->position( $second ) ],
+			]
+		);
+		$this->link_children( $children );
+		wp_set_current_user( $this->user_id );
+		$response = $this->request();
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'private, no-store', $response->get_headers()['Cache-Control'] );
+		$this->assertSame( [ $this->team_id, $second ], array_column( $response->get_data(), 'id' ) );
+		foreach ( $response->get_data() as $team ) {
+			$this->assertFalse( $team['can_view_contacts'] );
+			$this->assertContains( $player, array_column( $team['players'], 'id' ) );
+			foreach ( $team['players'] as $teammate ) {
+				$this->assertSame( [ 'id', 'name', 'thumbnail' ], array_keys( $teammate ) );
+			}
+		}
+		$this->assertTrue( ( new UserSettings() )->get_current_user_data( $this->user_id )['has_my_teams'] );
+		$this->assertFalse( AccessControl::can_view_person( $player, $this->user_id ) );
+
+		// Former membership does not erase parenthood, but cannot grant staff rights.
+		Fields::update_for_post( $this->coach_id, 'work_history', [ $this->position( $this->team_id, 'Trainer' ) ] );
+		Fields::update_for_post( $this->coach_id, 'former_member', true );
+		$this->assertSame( [ false, false ], array_column( $this->request()->get_data(), 'can_view_contacts' ) );
+		$this->link_children( [] );
+		$this->assertSame( 403, $this->request()->get_status() );
+		$this->assertFalse( ( new UserSettings() )->get_current_user_data( $this->user_id )['has_my_teams'] );
+	}
+
+	public function test_parent_contact_rights_come_only_from_own_current_coaching_role(): void {
+		wp_set_current_user( 1 );
+		$second             = $this->createOrganization( [ 'post_title' => 'JO13-2' ] );
+		$child_coached_team = $this->createOrganization( [ 'post_title' => 'JO13-3' ] );
+		$child              = $this->createPerson(
+			[],
+			[
+				'birthdate'    => current_datetime()->modify( '-12 years' )->format( 'Y-m-d' ),
+				'email_1'      => 'child@example.org',
+				'work_history' => [
+					$this->position( $this->team_id ),
+					$this->position( $second ),
+					$this->position( $second, 'Trainer' ),
+					$this->position( $child_coached_team, 'Trainer' ),
+				],
+			]
+		);
+		$this->link_children( [ $child ] );
+		wp_set_current_user( $this->user_id );
+		$teams = $this->request()->get_data();
+		$this->assertSame( [ $this->team_id, $second ], array_column( $teams, 'id' ) );
+		$this->assertSame( [ true, false ], array_column( $teams, 'can_view_contacts' ) );
+		$this->assertSame( [ 'child@example.org' ], $teams[0]['players'][0]['emails'] );
+		$this->assertSame( [ 'id', 'name', 'thumbnail' ], array_keys( $teams[1]['players'][0] ) );
+		Fields::update_for_post( $this->coach_id, 'work_history', [] );
+		$this->assertSame( [ false, false ], array_column( $this->request()->get_data(), 'can_view_contacts' ) );
+	}
+
+	public function test_parent_scope_excludes_adult_unknown_former_unpublished_and_unrelated_children(): void {
+		wp_set_current_user( 1 );
+		Fields::update_for_post( $this->coach_id, 'work_history', [] );
+		$minor_birthdate = current_datetime()->modify( '-12 years' )->format( 'Y-m-d' );
+		foreach ( [
+			[ 'birthdate' => current_datetime()->modify( '-18 years' )->format( 'Y-m-d' ) ],
+			[ 'birthdate' => null ],
+			[ 'former_member' => true ],
+		] as $fields ) {
+			$child = $this->createPerson(
+				[],
+				$fields + [
+					'birthdate'    => $minor_birthdate,
+					'work_history' => [ $this->position( $this->team_id ) ],
+				]
+				);
+			$this->link_children( [ $child ] );
+			wp_set_current_user( $this->user_id );
+			$this->assertSame( 403, $this->request()->get_status() );
+		}
+		$child = $this->createPerson(
+			[ 'post_status' => 'draft' ],
+			[
+				'birthdate'    => $minor_birthdate,
+				'work_history' => [ $this->position( $this->team_id ) ],
+			]
+			);
+		$this->link_children( [ $child ] );
+		$this->assertSame( 403, $this->request()->get_status() );
+		wp_update_post(
+			[
+				'ID'          => $child,
+				'post_status' => 'publish',
+			]
+			);
+		Fields::update_for_post(
+			$this->coach_id,
+			'relationships',
+			[
+				[
+					'related_person'    => $child,
+					'relationship_type' => InverseRelationships::TYPE_PARENT,
+				],
+			]
+			);
+		AccessControl::flush_visible_person_ids_cache();
+		$this->assertSame( 403, $this->request()->get_status() );
+		$this->link_children( [] );
+		$this->assertSame( 403, $this->request()->get_status() );
+	}
+
+	public function test_child_assignments_must_be_current_and_team_published(): void {
+		wp_set_current_user( 1 );
+		Fields::update_for_post( $this->coach_id, 'work_history', [] );
+		$child = $this->createPerson( [], [ 'birthdate' => current_datetime()->modify( '-12 years' )->format( 'Y-m-d' ) ] );
+		$this->link_children( [ $child ] );
+		wp_set_current_user( $this->user_id );
+		foreach ( [ [ 'is_current' => false ], [ 'end_date' => '2000-01-01' ], [ 'start_date' => '2099-01-01' ] ] as $dates ) {
+			Fields::update_for_post( $child, 'work_history', [ $this->position( $this->team_id, 'Teamspeler', $dates ) ] );
+			$this->assertSame( 403, $this->request()->get_status() );
+		}
+		Fields::update_for_post( $child, 'work_history', [ $this->position( $this->team_id ) ] );
+		$this->assertSame( 200, $this->request()->get_status() );
+		wp_update_post(
+			[
+				'ID'          => $this->team_id,
+				'post_status' => 'draft',
+			]
+			);
+		$this->assertSame( 403, $this->request()->get_status() );
+	}
+
+	public function test_staff_contacts_are_available_to_players_and_parents_only_in_the_staff_team(): void {
+		wp_set_current_user( 1 );
+		$second     = $this->createOrganization( [ 'post_title' => 'JO13-2' ] );
+		$unrelated  = $this->createOrganization( [ 'post_title' => 'JO13-3' ] );
+		$parent     = $this->createPerson( [], [ 'email_1' => 'staff-parent@example.org' ] );
+		$staff      = $this->createPerson(
+			[],
+			[
+				'first_name'    => 'Staflid',
+				'email_1'       => 'staff@example.org',
+				'mobile_1'      => '0612345678',
+				'work_history'  => [
+					$this->position( $this->team_id, 'Trainer' ),
+					$this->position( $this->team_id, 'Materialman' ),
+					$this->position( $this->team_id, 'Trainer' ),
+					$this->position( $this->team_id, 'Leider', [ 'end_date' => '2000-01-01' ] ),
+					$this->position( $second ),
+				],
+				'relationships' => [
+					[
+						'related_person'    => $parent,
+						'relationship_type' => InverseRelationships::TYPE_PARENT,
+					],
+				],
+			]
+		);
+		$image      = wp_upload_bits( 'team-staff.gif', null, base64_decode( 'R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==' ) );
+		$attachment = self::factory()->attachment->create_upload_object( $image['file'], $staff );
+		set_post_thumbnail( $staff, $attachment );
+		foreach ( [
+			[ 'work_history' => [ $this->position( $unrelated, 'Trainer' ) ] ],
+			[ 'work_history' => [ $this->position( $this->team_id, '' ) ] ],
+			[ 'work_history' => [ $this->position( $this->team_id, 'Trainer', [ 'is_current' => false ] ) ] ],
+			[ 'work_history' => [ $this->position( $this->team_id, 'Trainer', [ 'start_date' => '2099-01-01' ] ) ] ],
+			[
+				'former_member' => true,
+				'work_history'  => [ $this->position( $this->team_id, 'Trainer' ) ],
+			],
+		] as $fields ) {
+			$this->createPerson( [], $fields );
+		}
+		$this->createPerson( [ 'post_status' => 'draft' ], [ 'work_history' => [ $this->position( $this->team_id, 'Trainer' ) ] ] );
+		$child = $this->createPerson(
+			[],
+			[
+				'birthdate'    => current_datetime()->modify( '-12 years' )->format( 'Y-m-d' ),
+				'work_history' => [ $this->position( $this->team_id ), $this->position( $second ) ],
+			]
+		);
+		foreach ( [ 'player', 'parent' ] as $viewer ) {
+			Fields::update_for_post( $this->coach_id, 'work_history', $viewer === 'player' ? [ $this->position( $this->team_id ), $this->position( $second ) ] : [] );
+			$this->link_children( $viewer === 'parent' ? [ $child ] : [] );
+			wp_set_current_user( $this->user_id );
+			$teams = $this->request()->get_data();
+			$this->assertSame( [ $this->team_id, $second ], array_column( $teams, 'id' ) );
+			$this->assertSame(
+				[
+					[
+						'id'        => $staff,
+						'name'      => 'Staflid',
+						'emails'    => [ 'staff@example.org' ],
+						'phones'    => [ '0612345678' ],
+						'thumbnail' => get_the_post_thumbnail_url( $staff, 'thumbnail' ),
+						'roles'     => [ 'Trainer', 'Materialman' ],
+					],
+				],
+				$teams[0]['staff']
+			);
+			$this->assertSame( [], $teams[1]['staff'] );
+			$players = array_column( $teams[1]['players'], null, 'id' );
+			$this->assertSame( [ 'id', 'name', 'thumbnail' ], array_keys( $players[ $staff ] ) );
+			$this->assertFalse( AccessControl::can_view_person( $staff, $this->user_id ) );
+			$this->assertSame( [ false, false ], array_column( $teams, 'can_view_contacts' ) );
+		}
+		Fields::update_for_post( $staff, 'work_history', [ $this->position( $second ) ] );
+		$this->assertSame( [], $this->request()->get_data()[0]['staff'] );
+		wp_delete_attachment( $attachment, true );
 	}
 
 	public function test_non_current_player_assignments_do_not_grant_roster_access(): void {

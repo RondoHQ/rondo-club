@@ -1,12 +1,13 @@
 <?php
 /**
- * Team rosters with contact access scoped to current coaching assignments.
+ * Household team rosters with staff contacts and coaching-scoped player contacts.
  *
  * @package Rondo\Teams
  */
 
 namespace Rondo\Teams;
 
+use Rondo\Core\AccessControl;
 use Rondo\Core\VolunteerStatus;
 use Rondo\Fields\Fields;
 use Rondo\Volunteer\VolunteerEligibilityService;
@@ -35,35 +36,41 @@ final class MyTeam {
 	public static function teams_for_user( ?int $user_id = null ): array {
 		$user_id   = $user_id ?? get_current_user_id();
 		$person_id = $user_id > 0 ? (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) : 0;
-		if ( ! self::is_published_person( $person_id ) || Fields::get_for_post( $person_id, 'former_member' ) ) {
+		if ( ! self::is_published_person( $person_id ) ) {
 			return [];
 		}
 
 		$teams        = [];
 		$player_roles = array_map( [ self::class, 'normalize_role' ], VolunteerStatus::get_player_roles() );
-		foreach ( Fields::get_for_post( $person_id, 'work_history' ) ?: [] as $position ) {
-			$role     = self::normalize_role( $position['job_title'] ?? '' );
-			$is_staff = in_array( $role, self::STAFF_ROLES, true );
-			if ( ! self::is_current( $position ) || ( ! $is_staff && ! in_array( $role, $player_roles, true ) ) ) {
+		// Reuse the personal household boundary: self and linked minor children only.
+		foreach ( AccessControl::get_visible_person_ids( $user_id ) as $member_id ) {
+			if ( ! self::is_published_person( $member_id ) || Fields::get_for_post( $member_id, 'former_member' ) ) {
 				continue;
 			}
-			$team_id = (int) ( $position['team'] ?? 0 );
-			$team    = get_post( $team_id );
-			if ( ! $team || $team->post_type !== 'team' || $team->post_status !== 'publish' ) {
-				continue;
+			foreach ( Fields::get_for_post( $member_id, 'work_history' ) ?: [] as $position ) {
+				$role     = self::normalize_role( $position['job_title'] ?? '' );
+				$is_staff = $member_id === $person_id && in_array( $role, self::STAFF_ROLES, true );
+				if ( ! self::is_current( $position ) || ( ! $is_staff && ! in_array( $role, $player_roles, true ) ) ) {
+					continue;
+				}
+				$team_id = (int) ( $position['team'] ?? 0 );
+				$team    = get_post( $team_id );
+				if ( ! $team || $team->post_type !== 'team' || $team->post_status !== 'publish' ) {
+					continue;
+				}
+				$teams[ $team_id ] = [
+					'id'                => $team_id,
+					'name'              => html_entity_decode( get_the_title( $team_id ), ENT_QUOTES, 'UTF-8' ),
+					'can_view_contacts' => $is_staff || ( $teams[ $team_id ]['can_view_contacts'] ?? false ),
+				];
 			}
-			$teams[ $team_id ] = [
-				'id'                => $team_id,
-				'name'              => html_entity_decode( get_the_title( $team_id ), ENT_QUOTES, 'UTF-8' ),
-				'can_view_contacts' => $is_staff || ( $teams[ $team_id ]['can_view_contacts'] ?? false ),
-			];
 		}
 		usort( $teams, static fn( array $a, array $b ): int => strnatcasecmp( $a['name'], $b['name'] ) );
 		return $teams;
 	}
 
 	/**
-	 * Return player identities, adding contacts only in teams the user coaches.
+	 * Return player identities and staff contacts, adding player contacts for coaches.
 	 *
 	 * This grants no general person access. The internal roster scan bypasses the
 	 * household query filter only after resolving current team assignments. Both
@@ -76,7 +83,10 @@ final class MyTeam {
 		}
 		$by_team = [];
 		foreach ( $teams as $team ) {
-			$by_team[ $team['id'] ] = $team + [ 'players' => [] ];
+			$by_team[ $team['id'] ] = $team + [
+				'players' => [],
+				'staff'   => [],
+			];
 		}
 		$people       = get_posts(
 			[
@@ -104,9 +114,22 @@ final class MyTeam {
 			}
 			$player         = null;
 			$player_contact = null;
+			$staff_contact  = null;
 			foreach ( Fields::get_for_post( $person->ID, 'work_history' ) ?: [] as $position ) {
 				$team_id = (int) ( $position['team'] ?? 0 );
-				if ( ! isset( $by_team[ $team_id ] ) || ! self::is_current( $position ) || ! in_array( self::normalize_role( $position['job_title'] ?? '' ), $player_roles, true ) ) {
+				$role    = trim( $position['job_title'] ?? '' );
+				if ( ! isset( $by_team[ $team_id ] ) || ! self::is_current( $position ) || $role === '' ) {
+					continue;
+				}
+				// Staff contacts are available to every viewer of this team, never their parents' contacts.
+				if ( ! in_array( self::normalize_role( $role ), $player_roles, true ) ) {
+					if ( $staff_contact === null ) {
+						$staff_contact              = self::contact( $person->ID );
+						$staff_contact['thumbnail'] = get_the_post_thumbnail_url( $person->ID, 'thumbnail' ) ?: null;
+					}
+					$roles                                       = $by_team[ $team_id ]['staff'][ $person->ID ]['roles'] ?? [];
+					$roles[]                                     = $role;
+					$by_team[ $team_id ]['staff'][ $person->ID ] = $staff_contact + [ 'roles' => array_values( array_unique( $roles ) ) ];
 					continue;
 				}
 				if ( $player === null ) {
@@ -132,6 +155,7 @@ final class MyTeam {
 		}
 		foreach ( $by_team as &$team ) {
 			usort( $team['players'], static fn( array $a, array $b ): int => strnatcasecmp( $a['name'], $b['name'] ) );
+			usort( $team['staff'], static fn( array $a, array $b ): int => strnatcasecmp( $a['name'], $b['name'] ) );
 		}
 		unset( $team );
 		return array_values( $by_team );
