@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.69.0] - 2026-09-12
+
+### Added
+
+- Include the current playing teams of linked minor children in Mijn team, with player names and photos for parents. Player and parent contact details still require the viewer's own current coaching role in that team.
+- Show each team's current staff with photos, roles, and expandable contact details for everyone who can view that team, including players and parents.
+
 ## [35.68.0] - 2026-09-12
 
 ### Added

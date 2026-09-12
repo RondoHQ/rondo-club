@@ -29,20 +29,20 @@ function ContactDetails({ person }) {
   );
 }
 
-function PlayerPhoto({ player }) {
+function MemberPhoto({ person }) {
   const [failedThumbnail, setFailedThumbnail] = useState(null);
-  const nameParts = player.name.trim().split(/\s+/).filter(Boolean);
+  const nameParts = person.name.trim().split(/\s+/).filter(Boolean);
   const initials = [nameParts[0]?.[0], nameParts.length > 1 ? nameParts.at(-1)?.[0] : ''].join('').toUpperCase() || '?';
 
-  if (player.thumbnail && player.thumbnail !== failedThumbnail) {
+  if (person.thumbnail && person.thumbnail !== failedThumbnail) {
     return (
       <img
-        src={player.thumbnail}
+        src={person.thumbnail}
         alt=""
         width={64}
         height={64}
         loading="lazy"
-        onError={() => setFailedThumbnail(player.thumbnail)}
+        onError={() => setFailedThumbnail(person.thumbnail)}
         className="h-16 w-16 shrink-0 rounded-xl bg-gray-100 object-cover dark:bg-gray-700"
       />
     );
@@ -55,23 +55,24 @@ function PlayerPhoto({ player }) {
   );
 }
 
-function PlayerIdentity({ player, children }) {
+function MemberIdentity({ person, children }) {
   return (
     <>
-      <PlayerPhoto player={player} />
+      <MemberPhoto person={person} />
       <span className="min-w-0 flex-1">
-        <span className="block font-semibold text-gray-900 [overflow-wrap:anywhere] dark:text-gray-100">{player.name}</span>
+        <span className="block font-semibold text-gray-900 [overflow-wrap:anywhere] dark:text-gray-100">{person.name}</span>
+        {person.roles?.length ? <span className="mt-1 block text-sm text-gray-500 dark:text-gray-400">{person.roles.join(', ')}</span> : null}
         {children}
       </span>
     </>
   );
 }
 
-function PlayerCard({ player, canViewContacts }) {
+function MemberCard({ person, canViewContacts, isStaff = false }) {
   if (!canViewContacts) {
     return (
       <article className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-        <PlayerIdentity player={player} />
+        <MemberIdentity person={person} />
       </article>
     );
   }
@@ -79,28 +80,28 @@ function PlayerCard({ player, canViewContacts }) {
   return (
     <details className="group overflow-hidden rounded-xl border border-gray-200 bg-white open:border-bright-cobalt dark:border-gray-700 dark:bg-gray-800 dark:open:border-electric-cyan">
       <summary className="flex cursor-pointer list-none items-center gap-4 p-4 hover:bg-gray-50 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-bright-cobalt dark:hover:bg-gray-700/50 dark:focus-visible:outline-electric-cyan [&::-webkit-details-marker]:hidden">
-        <PlayerIdentity player={player}>
+        <MemberIdentity person={person}>
           <span className="mt-1 block text-sm text-bright-cobalt dark:text-electric-cyan">
             <span className="group-open:hidden">Contactgegevens</span>
             <span className="hidden group-open:inline">Contactgegevens sluiten</span>
           </span>
-        </PlayerIdentity>
+        </MemberIdentity>
         <ChevronDown className="h-5 w-5 shrink-0 text-gray-500 group-open:rotate-180 group-open:text-bright-cobalt dark:text-gray-400 dark:group-open:text-electric-cyan" aria-hidden="true" />
       </summary>
       <div className="grid gap-5 border-t border-gray-200 p-4 sm:grid-cols-2 xl:grid-cols-3 dark:border-gray-700">
         <div className="min-w-0">
-          <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">Speler</p>
-          <p className="mb-2 text-sm font-semibold text-gray-900 [overflow-wrap:anywhere] dark:text-gray-100">{player.name}</p>
-          <ContactDetails person={player} />
+          <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">{isStaff ? 'Staf' : 'Speler'}</p>
+          <p className="mb-2 text-sm font-semibold text-gray-900 [overflow-wrap:anywhere] dark:text-gray-100">{person.name}</p>
+          <ContactDetails person={person} />
         </div>
-        {player.parents.map((parent) => (
+        {(person.parents || []).map((parent) => (
           <div key={parent.id} className="min-w-0 border-t border-gray-200 pt-4 sm:border-0 sm:pt-0 dark:border-gray-700">
             <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">Ouder/verzorger</p>
             <p className="mb-2 text-sm font-semibold text-gray-900 [overflow-wrap:anywhere] dark:text-gray-100">{parent.name}</p>
             <ContactDetails person={parent} />
           </div>
         ))}
-        {player.parents.length === 0 ? <p className="text-sm text-gray-500 dark:text-gray-400">Geen ouders/verzorgers gekoppeld.</p> : null}
+        {!isStaff && person.parents.length === 0 ? <p className="text-sm text-gray-500 dark:text-gray-400">Geen ouders/verzorgers gekoppeld.</p> : null}
       </div>
     </details>
   );
@@ -143,14 +144,14 @@ export default function MyTeam() {
       <div>
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Mijn team</h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          {team?.can_view_contacts === true ? 'Je spelers en hun contactgegevens bij elkaar.' : 'De spelers van je team bij elkaar.'}
+          De spelers en staf van je team bij elkaar.
         </p>
       </div>
 
       {error ? (
         <div className="card space-y-3 p-6" role="alert">
           <p className="text-sm text-red-600 dark:text-red-400">
-            {error.response?.status === 403 ? 'Je hebt geen actuele teamfunctie meer. Neem bij vragen contact op met een beheerder.' : 'Je team kon niet worden geladen.'}
+            {error.response?.status === 403 ? 'Je hebt geen toegang meer tot een actueel team. Neem bij vragen contact op met een beheerder.' : 'Je team kon niet worden geladen.'}
           </p>
           <button type="button" onClick={() => refetch()} className="btn-secondary">Opnieuw proberen</button>
         </div>
@@ -187,13 +188,22 @@ export default function MyTeam() {
               tabIndex={teams.length > 1 ? 0 : undefined}
               className="space-y-4"
             >
+              {teams.length === 1 ? <h2 id="my-team-name" className="text-xl font-semibold text-gray-900 dark:text-gray-100">{team.name}</h2> : null}
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <h2 id="my-team-name" className="text-xl font-semibold text-gray-900 dark:text-gray-100">{teams.length > 1 ? 'Spelers' : team.name}</h2>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Staf</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{(team.staff || []).length} {(team.staff || []).length === 1 ? 'staflid' : 'stafleden'}</p>
+              </div>
+              {(team.staff || []).length === 0 ? <div className="card p-6 text-sm text-gray-600 dark:text-gray-400">Er is nog geen actuele staf aan dit team gekoppeld.</div> : null}
+              <div className="space-y-3">
+                {(team.staff || []).map((person) => <MemberCard key={person.id} person={person} canViewContacts isStaff />)}
+              </div>
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pt-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Spelers</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{team.players.length} {team.players.length === 1 ? 'speler' : 'spelers'}</p>
               </div>
               {team.players.length === 0 ? <div className="card p-6 text-sm text-gray-600 dark:text-gray-400">Er zijn nog geen actuele spelers aan dit team gekoppeld.</div> : null}
               <div className="space-y-3">
-                {team.players.map((player) => <PlayerCard key={player.id} player={player} canViewContacts={team.can_view_contacts === true} />)}
+                {team.players.map((player) => <MemberCard key={player.id} person={player} canViewContacts={team.can_view_contacts === true} />)}
               </div>
             </section>
           ) : (
