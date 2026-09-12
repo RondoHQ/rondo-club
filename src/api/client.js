@@ -293,6 +293,7 @@ export const prmApi = {
   // Photo uploads with proper naming
   uploadPersonPhoto: (personId, file) => {
     const formData = new FormData();
+    formData.append('source', 'manual');
     formData.append('file', file);
     return api.post(`/rondo/v1/people/${personId}/photo`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },

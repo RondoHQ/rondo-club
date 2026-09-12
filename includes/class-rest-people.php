@@ -13,6 +13,7 @@ use Rondo\Finance\MembershipContributionSummary;
 use Rondo\Fields\Registry;
 use Rondo\Passes\MembershipPassService;
 use Rondo\People\ParentRelationshipService;
+use Rondo\People\PhotoSync;
 use Rondo\Sponsors\Relations as SponsorRelations;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -211,6 +212,52 @@ class People extends Base {
 							return is_numeric( $param );
 						},
 					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/photo-sync-jobs',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => static function ( $request ) {
+					return PhotoSync::pending( (int) $request['page'], (int) $request['per_page'] );
+				},
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'page'     => [
+						'type'    => 'integer',
+						'minimum' => 1,
+						'default' => 1,
+					],
+					'per_page' => [
+						'type'    => 'integer',
+						'minimum' => 1,
+						'maximum' => 100,
+						'default' => 50,
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/people/(?P<person_id>\d+)/photo-sync-job',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => static function ( $request ) {
+						return PhotoSync::job( (int) $request['person_id'], rest_sanitize_boolean( $request->get_param( 'include_file' ) ) );
+					},
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => static function ( $request ) {
+						return PhotoSync::transition( (int) $request['person_id'], (array) $request->get_json_params() );
+					},
+					'permission_callback' => [ $this, 'check_admin_permission' ],
 				],
 			]
 		);
@@ -946,6 +993,37 @@ class People extends Base {
 	 * @return WP_REST_Response|WP_Error Response with attachment info or error.
 	 */
 	public function upload_person_photo( $request ) {
+		$person_id = (int) $request['person_id'];
+		$source    = $request->get_param( 'source' ) ?: 'manual';
+		if ( ! in_array( $source, [ 'manual', 'sportlink' ], true ) ) {
+			return new \WP_Error( 'invalid_source', 'Onbekende fotobron.', [ 'status' => 400 ] );
+		}
+		if ( $source === 'sportlink' && ! current_user_can( 'manage_options' ) ) {
+			return new \WP_Error( 'forbidden_source', 'Alleen de beheerder mag Sportlink-foto’s importeren.', [ 'status' => 403 ] );
+		}
+		return PhotoSync::locked(
+			$person_id,
+			function () use ( $request, $person_id, $source ) {
+				if ( $source === 'sportlink' && PhotoSync::protects_photo( $person_id ) ) {
+					return rest_ensure_response(
+						[
+							'success' => true,
+							'skipped' => true,
+							'reason'  => 'manual_photo_protected',
+						]
+						);
+				}
+				$status = PhotoSync::status( $person_id );
+				if ( $source === 'manual' && ( $status['state'] ?? '' ) === 'sending' ) {
+					return PhotoSync::error( 'sending', 'Wacht op de controle van de lopende fotoverzending.' );
+				}
+				return $this->store_person_photo( $request, $source );
+			}
+		);
+	}
+
+	/** Store one photo under the per-person lock. */
+	private function store_person_photo( $request, string $source ) {
 		$person_id = (int) $request->get_param( 'person_id' );
 
 		// Verify person exists
@@ -961,6 +1039,9 @@ class People extends Base {
 		}
 
 		$file = $files['file'];
+		if ( (int) ( $file['size'] ?? 0 ) > 5 * MB_IN_BYTES ) {
+			return new \WP_Error( 'photo_too_large', 'Afbeelding moet kleiner zijn dan 5 MB.', [ 'status' => 400 ] );
+		}
 
 		// Validate file type
 		$allowed_types = [ 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp' ];
@@ -1004,7 +1085,12 @@ class People extends Base {
 		}
 
 		// Set as featured image
-		set_post_thumbnail( $person_id, $attachment_id );
+		if ( ! set_post_thumbnail( $person_id, $attachment_id ) ) {
+			return new \WP_Error( 'photo_not_saved', 'De profielfoto kon niet worden ingesteld.', [ 'status' => 500 ] );
+		}
+		if ( $source === 'manual' ) {
+			PhotoSync::queue( $person_id, (int) $attachment_id );
+		}
 
 		return rest_ensure_response(
 			[
@@ -1150,6 +1236,7 @@ class People extends Base {
 
 		$data['linked_user_id']        = $linked_user_id ?: null;
 		$data['welcome_email_sent_at'] = get_post_meta( $post->ID, '_welcome_email_sent_at', true ) ?: null;
+		$data['photo_sync_status']     = PhotoSync::status( (int) $post->ID );
 		$data['parent_sync_statuses']  = ( new ParentRelationshipService() )->get_sync_statuses( (int) $post->ID );
 
 		// Expose linked user roles for admin AccountCard.
