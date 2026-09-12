@@ -93,8 +93,8 @@ export default function VOGCard({ fieldData, personId, onUpdateField, isUpdating
           {hasValidVogDate ? `Afgegeven op ${format(new Date(vogDate), 'd MMM yyyy')}` : 'Geen VOG geregistreerd'}
         </span>
         {onUpdateField && (
-          <button type="button" onClick={() => setEditing(!editing)} aria-expanded={editing} className="btn-tertiary text-sm" aria-label={editing ? 'VOG bewerken sluiten' : 'VOG bewerken'}>
-            <Pencil className="w-3.5 h-3.5" aria-hidden="true" />{editing ? 'Sluiten' : 'Bewerken'}
+          <button type="button" onClick={() => setEditing(!editing)} aria-expanded={editing} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded" aria-label={editing ? 'VOG bewerken sluiten' : 'VOG bewerken'} title={editing ? 'VOG bewerken sluiten' : 'VOG bewerken'}>
+            <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" aria-hidden="true" />
           </button>
         )}
       </div>
