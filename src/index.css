@@ -352,13 +352,23 @@ button, [role="tab"], [role="button"], summary {
 }
 
 /* Person profiles group related information without repeating the brand stripe. */
-.person-profile-layout .card {
+.person-profile-layout .card,
+.person-profile-header {
   border-radius: 0.625rem;
   box-shadow: none;
 }
 
-.person-profile-layout .card::before {
+.person-profile-layout .card::before,
+.person-profile-header::before {
   display: none;
+}
+
+.person-profile-header {
+  overflow: visible;
+}
+
+.person-profile-header:hover {
+  box-shadow: none;
 }
 
 .person-profile-layout h2.text-brand-gradient {
