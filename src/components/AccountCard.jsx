@@ -95,8 +95,12 @@ export default function AccountCard({ personId, personData }) {
   };
 
   return (
-    <div className="card p-6">
-      <h2 className="font-semibold text-brand-gradient mb-3">Account</h2>
+    <details className="card p-6">
+      <summary className="cursor-pointer text-sm text-gray-900 dark:text-gray-100">
+        <span className="font-semibold">Account</span>
+        <span className="ml-2 text-gray-500 dark:text-gray-400">{linkedUserId ? 'Aangemaakt' : 'Niet aangemaakt'}</span>
+      </summary>
+      <div className="mt-4">
 
       {linkedUserId ? (
         /* Already provisioned */
@@ -199,6 +203,7 @@ export default function AccountCard({ personId, personData }) {
           )}
         </div>
       )}
-    </div>
+      </div>
+    </details>
   );
 }

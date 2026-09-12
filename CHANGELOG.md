@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.64.0] - 2026-09-12
+
+### Changed
+
+- Simplify person profiles with three columns on wide screens, two on tablets and one on mobile. Merge addresses into contact details, move relations left, and group membership and documents in the middle.
+- Combine VOG and attached IVA certificates in one Documents card with shared status badges labelled “Geldig”; show VOG date controls only after choosing to edit.
+- Summarize shift obligations and the next signup, with family breakdown and nonempty history behind Details. Show completed progress using the existing family-aware attribution calculator.
+- Collapse Sportlink details and account administration, compact empty tasks, and remove decorative stripes and gradient card titles on the Profile tab.
+
 ## [35.63.0] - 2026-09-12
 
 ### Added

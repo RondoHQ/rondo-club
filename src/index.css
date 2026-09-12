@@ -351,6 +351,22 @@ button, [role="tab"], [role="button"], summary {
   box-shadow: none;
 }
 
+/* Person profiles group related information without repeating the brand stripe. */
+.person-profile-layout .card {
+  border-radius: 0.625rem;
+  box-shadow: none;
+}
+
+.person-profile-layout .card::before {
+  display: none;
+}
+
+.person-profile-layout h2.text-brand-gradient {
+  @apply text-gray-900 dark:text-gray-100;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(0.5rem); }
   to { opacity: 1; transform: translateY(0); }

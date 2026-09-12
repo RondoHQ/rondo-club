@@ -624,14 +624,16 @@ class MemberShifts extends Base {
 			$units      = $gezin_unit ? [ $gezin_unit ] : [];
 		}
 
+		$units       = ( new VolunteerObligationCalculator() )->decorate_units( $units, $season );
 		$obligations = array_map(
 			function ( array $obligation ) use ( $season ): array {
 				$obligation = $this->add_unit_exemption( $obligation, $season );
 				return [
-					'kind'           => (string) ( $obligation['kind'] ?? '' ),
-					'required_count' => (int) ( $obligation['required_count'] ?? 0 ),
-					'child_count'    => (int) ( $obligation['child_count'] ?? 0 ),
-					'exemption'      => $obligation['exemption'] ?? null,
+					'kind'            => (string) ( $obligation['kind'] ?? '' ),
+					'required_count'  => (int) ( $obligation['required_count'] ?? 0 ),
+					'completed_count' => (int) ( $obligation['completed_count'] ?? 0 ),
+					'child_count'     => (int) ( $obligation['child_count'] ?? 0 ),
+					'exemption'       => $obligation['exemption'] ?? null,
 				];
 			},
 			$units

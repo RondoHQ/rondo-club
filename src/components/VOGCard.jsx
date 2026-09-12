@@ -1,7 +1,7 @@
-import { useRef } from 'react';
-import { ShieldCheck, ShieldAlert, ShieldX, Mail, FileCheck, Bell, CalendarDays } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Mail, FileCheck, Bell, CalendarDays, Pencil } from 'lucide-react';
+import DocumentStatusBadge from '@/components/DocumentStatusBadge';
 import { format } from '@/utils/dateFormat';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { isValidDate } from '@/utils/formatters';
 
 /**
@@ -41,17 +41,18 @@ function DateField({ icon: Icon, label, value, fieldName, onUpdateField, isUpdat
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <Icon className={`w-4 h-4 flex-shrink-0 ${hasValue ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'}`} />
       <span className="text-gray-600 dark:text-gray-400 whitespace-nowrap flex-1">
         {label}
       </span>
       <input
+        aria-label={label}
         ref={inputRef}
         type="date"
         key={value || ''}
         defaultValue={value || ''}
-        className="px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-gray-100 w-[160px] shrink-0"
+        className="px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-gray-100 w-[160px] max-w-full"
         disabled={isUpdating || !personId}
         onChange={save}
         onBlur={save}
@@ -65,20 +66,7 @@ function DateField({ icon: Icon, label, value, fieldName, onUpdateField, isUpdat
  * Shows VOG information only for current volunteers
  */
 export default function VOGCard({ fieldData, personId, onUpdateField, isUpdating }) {
-  const { data: currentUser } = useCurrentUser();
-
-  // Hide card if user doesn't have VOG capability
-  if (!currentUser?.can_access_vog) {
-    return null;
-  }
-
-  // Check if person is a current volunteer (auto-calculated field)
-  const isVolunteer = fieldData?.['huidig_vrijwilliger'] === true || fieldData?.['huidig_vrijwilliger'] === '1';
-
-  // If not a volunteer, don't show the card
-  if (!isVolunteer) {
-    return null;
-  }
+  const [editing, setEditing] = useState(false);
 
   const vogDate = fieldData?.vog_datum || fieldData?.['datum_vog'];
   const vogStatus = calculateVogStatus(vogDate);
@@ -89,104 +77,86 @@ export default function VOGCard({ fieldData, personId, onUpdateField, isUpdating
   const reminderSentDate = fieldData?.vog_reminder_sent_date;
   const hasValidVogDate = !!(vogDate && isValidDate(vogDate));
 
-  // Determine which icon to show
-  function getStatusIcon(status) {
-    switch (status) {
-      case 'valid':
-        return ShieldCheck;
-      case 'expired':
-        return ShieldAlert;
-      default:
-        return ShieldX;
-    }
-  }
-  const StatusIcon = getStatusIcon(vogStatus.status);
-
-  const statusColorClass = {
-    valid: 'text-green-600 dark:text-green-400',
-    expired: 'text-amber-600 dark:text-amber-400',
-    missing: 'text-red-600 dark:text-red-400',
-  }[vogStatus.status];
-
-  const bgColorClass = {
-    valid: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
-    expired: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800',
-    missing: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
-  }[vogStatus.status];
-
   return (
-    <div className="card p-6 mb-4">
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-4">
-        <StatusIcon className={`w-5 h-5 ${statusColorClass}`} />
-        <h2 className="font-semibold text-brand-gradient">VOG Status</h2>
+    <section aria-label="VOG">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">VOG</h3>
+        <DocumentStatusBadge status={vogStatus.status} />
       </div>
-
-      {/* Status Banner */}
-      <div className={`flex items-center gap-2 p-3 mb-3 border rounded-lg ${bgColorClass}`}>
-        <StatusIcon className={`w-5 h-5 ${statusColorClass} flex-shrink-0`} />
-        <div>
-          <span className={`font-medium ${statusColorClass}`}>
-            {vogStatus.label}
-          </span>
-        </div>
-      </div>
-
-      {/* VOG Date (editable) */}
-      <div className="space-y-2 text-sm mb-3">
-        <DateField
-          icon={CalendarDays}
-          label="Datum VOG:"
-          value={vogDate}
-          fieldName="datum_vog"
-          onUpdateField={onUpdateField}
-          isUpdating={isUpdating}
-          personId={personId}
-        />
-      </div>
-
-      {/* Show process status when VOG is missing or expired */}
-      {(vogStatus.status === 'missing' || vogStatus.status === 'expired') && (
-        <div className="space-y-2 text-sm">
-          <DateField
-            icon={Mail}
-            label="E-mail verzonden:"
-            value={emailSentDate}
-            fieldName="vog_email_sent_date"
-            onUpdateField={onUpdateField}
-            isUpdating={isUpdating}
-            personId={personId}
-          />
-          <DateField
-            icon={FileCheck}
-            label="Justis aanvraag:"
-            value={justisSubmittedDate}
-            fieldName="vog_justis_submitted_date"
-            onUpdateField={onUpdateField}
-            isUpdating={isUpdating}
-            personId={personId}
-          />
-          <DateField
-            icon={Bell}
-            label="Herinnering:"
-            value={reminderSentDate}
-            fieldName="vog_reminder_sent_date"
-            onUpdateField={onUpdateField}
-            isUpdating={isUpdating}
-            personId={personId}
-          />
-        </div>
-      )}
-
-      {/* Show expiry date when valid */}
       {vogStatus.status === 'valid' && hasValidVogDate && (
-        <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-          <span>Geldig tot: </span>
-          <span className="text-gray-900 dark:text-gray-100">
-            {format(new Date(new Date(vogDate).setFullYear(new Date(vogDate).getFullYear() + 3)), 'd MMM yyyy')}
-          </span>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          Geldig tot {format(new Date(new Date(vogDate).setFullYear(new Date(vogDate).getFullYear() + 3)), 'd MMMM yyyy')}
+        </p>
+      )}
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm text-gray-500 dark:text-gray-400">
+          {hasValidVogDate ? `Afgegeven op ${format(new Date(vogDate), 'd MMM yyyy')}` : 'Geen VOG geregistreerd'}
+        </span>
+        {onUpdateField && (
+          <button type="button" onClick={() => setEditing(!editing)} aria-expanded={editing} className="btn-tertiary text-sm" aria-label={editing ? 'VOG bewerken sluiten' : 'VOG bewerken'}>
+            <Pencil className="w-3.5 h-3.5" aria-hidden="true" />{editing ? 'Sluiten' : 'Bewerken'}
+          </button>
+        )}
+      </div>
+      {editing && (
+        <div className="mt-3 space-y-3">
+          {/* VOG Date (editable) */}
+          <div className="space-y-2 text-sm mb-3">
+            <DateField
+              icon={CalendarDays}
+              label="Datum VOG:"
+              value={vogDate}
+              fieldName="datum_vog"
+              onUpdateField={onUpdateField}
+              isUpdating={isUpdating}
+              personId={personId}
+            />
+          </div>
+
+          {/* Show process status when VOG is missing or expired */}
+          {(vogStatus.status === 'missing' || vogStatus.status === 'expired') && (
+            <div className="space-y-2 text-sm">
+              <DateField
+                icon={Mail}
+                label="E-mail verzonden:"
+                value={emailSentDate}
+                fieldName="vog_email_sent_date"
+                onUpdateField={onUpdateField}
+                isUpdating={isUpdating}
+                personId={personId}
+              />
+              <DateField
+                icon={FileCheck}
+                label="Justis aanvraag:"
+                value={justisSubmittedDate}
+                fieldName="vog_justis_submitted_date"
+                onUpdateField={onUpdateField}
+                isUpdating={isUpdating}
+                personId={personId}
+              />
+              <DateField
+                icon={Bell}
+                label="Herinnering:"
+                value={reminderSentDate}
+                fieldName="vog_reminder_sent_date"
+                onUpdateField={onUpdateField}
+                isUpdating={isUpdating}
+                personId={personId}
+              />
+            </div>
+          )}
         </div>
       )}
-    </div>
+      {!editing && vogStatus.status !== 'valid' && (emailSentDate || justisSubmittedDate || reminderSentDate) && (
+        <details className="mt-3 text-sm">
+          <summary className="cursor-pointer text-bright-cobalt dark:text-electric-cyan">Aanvraagstatus</summary>
+          <dl className="mt-2 space-y-2">
+            {[["E-mail verzonden", emailSentDate], ["Justis aanvraag", justisSubmittedDate], ["Herinnering", reminderSentDate]].filter(([, value]) => value && isValidDate(value)).map(([label, value]) => (
+              <div key={label} className="flex flex-wrap justify-between gap-2"><dt className="text-gray-500 dark:text-gray-400">{label}</dt><dd>{format(new Date(value), 'd MMM yyyy')}</dd></div>
+            ))}
+          </dl>
+        </details>
+      )}
+    </section>
   );
 }

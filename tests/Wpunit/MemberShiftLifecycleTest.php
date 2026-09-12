@@ -132,6 +132,9 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		update_post_meta( $second_child, 'leeftijdsgroep', 'Onder 9' );
 		$this->link_parent_child( $parent_id, $first_child );
 		$this->link_parent_child( $parent_id, $second_child );
+		$completed_shift = $this->shift( [ $parent_id ], -1 );
+		update_post_meta( $completed_shift, 'start_datetime', substr( SeasonKey::current(), 0, 4 ) . '-08-01 10:00:00' );
+		update_post_meta( $completed_shift, 'status', 'voltooid' );
 		VolunteerEligibilityService::invalidate_cache();
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
 
@@ -146,6 +149,8 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertSame( 'gezin', $data['obligations'][0]['kind'] );
 		$this->assertSame( 2, $data['obligations'][0]['child_count'] );
 		$this->assertSame( 3, $data['obligations'][0]['required_count'] );
+		$this->assertSame( 1, $data['obligations'][0]['completed_count'], 'Completed shifts by the parent count toward the shared family duty.' );
+		$this->assertSame( [], $data['recent'], 'Family progress must not depend on the child having recent shifts.' );
 	}
 
 	public function test_recent_signups_returns_at_most_ten_shifts_with_names_in_signup_order(): void {
