@@ -636,8 +636,11 @@ const router = createBrowserRouter([
             ),
           },
           { path: 'presenteren', element: <FeatureRoute feature="narrowcasting"><PresentationSender /></FeatureRoute> },
-          { path: 'trainingsschema', element: <FeatureRoute feature="training"><Training /></FeatureRoute> },
+          { path: 'trainingsschema', element: <Training /> },
           { path: 'rooms', element: <FeatureRoute feature="rooms"><Rooms /></FeatureRoute> },
+
+          // Training management also supports accounts without general kader access.
+          { path: 'settings/training', element: <CapabilityRoute checkAccess={(user) => user?.can_manage_training}><Settings tab="training" /></CapabilityRoute> },
 
           // Settings routes — kader only
           { path: 'settings/notifications', element: <Navigate to="/profile" replace /> },

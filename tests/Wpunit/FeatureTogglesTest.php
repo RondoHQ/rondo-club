@@ -27,7 +27,6 @@ class FeatureTogglesTest extends RondoTestCase {
 	public function test_defaults_preserve_existing_features_and_keep_rooms_off(): void {
 		$this->assertSame(
 			[
-				'training'      => FeatureToggles::ADMIN_ONLY,
 				'rooms'         => FeatureToggles::OFF,
 				'clothing'      => FeatureToggles::ON,
 				'narrowcasting' => FeatureToggles::ON,

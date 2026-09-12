@@ -20,7 +20,7 @@ const KADERLIJST_CAPABILITY = 'kaderlijst';
 // Tab configuration (no icons - using TabButton component)
 const TABS = [
   { id: 'appearance', label: 'Club' },
-  { id: 'training', label: 'Training', adminOnly: true, requiresFeature: 'training' },
+  { id: 'training', label: 'Training', requiresTraining: true },
   { id: 'connections', label: 'Koppelingen' },
   { id: 'clothing', label: 'Kleding', requiresClothing: true, requiresFeature: 'clothing' },
   { id: 'financieel', label: 'Financieel', requiresFinancieel: true },
@@ -50,7 +50,7 @@ const ADMIN_SUBTABS = [
   { id: 'systeem', label: 'Systeem', icon: Wrench },
 ];
 
-export default function Settings() {
+export default function Settings({ tab: presetTab }) {
   const { tab: urlTab, subtab: urlSubtab } = useParams();
   const navigate = useNavigate();
   const config = window.rondoConfig || {};
@@ -62,7 +62,7 @@ export default function Settings() {
   const userId = config.userId;
 
   // Get active tab from URL or default to 'appearance'
-  const activeTab = urlTab || 'appearance';
+  const activeTab = presetTab || urlTab || 'appearance';
   // Get active subtab for tabs that support subtabs.
   const activeSubtab = urlSubtab || (activeTab === 'admin' ? 'users' : activeTab === 'connections' ? 'api-access' : activeTab === 'financieel' ? 'organization' : null);
 
@@ -93,6 +93,8 @@ export default function Settings() {
   
   // Filter tabs based on capabilities.
   const visibleTabs = TABS.filter((tab) => {
+    if (!currentUser?.is_kader && tab.id !== 'training') return false;
+    if (tab.requiresTraining && !currentUser?.can_manage_training) return false;
     if (tab.adminOnly && !isAdmin) return false;
     if (tab.requiresFeature && !canAccessFeature(tab.requiresFeature, isAdmin)) return false;
     if (tab.requiresClothing && !canAccessClothing) return false;

@@ -2,7 +2,7 @@
 
 namespace Tests\Wpunit;
 
-use Rondo\Config\FeatureToggles;
+use Rondo\Core\UserRoles;
 use Rondo\Fields\Fields;
 use Rondo\Training\Schedules;
 use Tests\Support\RondoTestCase;
@@ -91,7 +91,7 @@ class TrainingSchedulesTest extends RondoTestCase {
 		$schedule   = $this->create( [ $this->block() ] );
 		$subscriber = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		foreach ( [ 'admin_only', 'off', 'on' ] as $state ) {
-			FeatureToggles::update( [ 'training' => $state ] );
+			update_option( 'rondo_feature_toggles', [ 'training' => $state ] );
 			$controller = new \Rondo\REST\Training();
 			$this->assertNotFalse( has_action( 'rest_api_init', [ $controller, 'register_routes' ] ) );
 			$this->server = $this->bootRestControllers( [ \Rondo\REST\Training::class ] );
@@ -100,7 +100,7 @@ class TrainingSchedulesTest extends RondoTestCase {
 				foreach ( [ '/schedules', '/schedules/' . $schedule['id'], '/active' ] as $route ) {
 					$this->assertSame( 200, $this->request( 'GET', $route )->get_status(), $state . ': ' . $route );
 				}
-				if ( $user_id !== $this->admin_id || $state === 'off' ) {
+				if ( $user_id !== $this->admin_id ) {
 					foreach ( [ [ 'GET', '/settings' ], [ 'PUT', '/settings' ], [ 'POST', '/schedules' ], [ 'PUT', '/schedules/' . $schedule['id'] ], [ 'DELETE', '/schedules/' . $schedule['id'] ], [ 'POST', '/schedules/' . $schedule['id'] . '/copy' ], [ 'POST', '/schedules/' . $schedule['id'] . '/activate' ] ] as [ $method, $route ] ) {
 						$this->assertContains( $this->request( $method, $route, [] )->get_status(), [ 401, 403 ], $state . ': ' . $method . ' ' . $route );
 					}
@@ -108,6 +108,85 @@ class TrainingSchedulesTest extends RondoTestCase {
 					$this->assertSame( 200, $this->request( 'GET', '/settings' )->get_status() );
 				}
 			}
+		}
+	}
+
+	public function test_training_capability_allows_complete_management_and_revocation_blocks_writes(): void {
+		$user_id = $this->createRondoUser();
+		$user    = new \WP_User( $user_id );
+		$user->add_cap( UserRoles::TRAINING_CAPABILITY );
+		wp_set_current_user( $user_id );
+		update_option( 'rondo_feature_toggles', [ 'training' => 'off' ] );
+		$data = ( new \Rondo\REST\UserSettings() )->get_current_user_data( $user_id );
+		$this->assertTrue( $data['can_manage_training'] );
+		$this->assertFalse( $data['is_admin'] );
+		$this->assertFalse( $data['is_kader'] );
+		$this->assertFalse( current_user_can( 'manage_options' ) );
+		$settings = $this->request( 'GET', '/settings' )->get_data();
+		$this->assertContains( $this->team_id, array_column( $settings['teams'], 'id' ) );
+		$this->assertSame( 200, $this->request( 'PUT', '/settings', $settings['settings'] )->get_status() );
+		$schedule         = $this->create( [ $this->block() ] );
+		$schedule['name'] = 'Avondtraining';
+		$this->assertSame(
+			200,
+			$this->request(
+			'PUT',
+			'/schedules/' . $schedule['id'],
+			[
+				'name'     => 'Avondtraining',
+				'season'   => $schedule['season'],
+				'revision' => 1,
+				'blocks'   => [ $this->block() ],
+			]
+			)->get_status()
+			);
+		$copy = $this->request( 'POST', '/schedules/' . $schedule['id'] . '/copy', [ 'name' => 'Slecht weer' ] );
+		$this->assertSame( 200, $copy->get_status() );
+		$this->assertSame( 200, $this->request( 'POST', '/schedules/' . $copy->get_data()['id'] . '/activate', [ 'revision' => 1 ] )->get_status() );
+		$this->assertSame( 200, $this->request( 'DELETE', '/schedules/' . $schedule['id'], [ 'revision' => 2 ] )->get_status() );
+		$user->remove_cap( UserRoles::TRAINING_CAPABILITY );
+		$this->assertFalse( ( new \Rondo\REST\UserSettings() )->get_current_user_data( $user_id )['can_manage_training'] );
+		$this->assertSame( 403, $this->request( 'GET', '/settings' )->get_status() );
+		$this->assertSame( 403, $this->request( 'POST', '/schedules', [] )->get_status() );
+		$this->assertSame( 200, $this->request( 'GET', '/active' )->get_status() );
+	}
+
+	public function test_training_capability_is_assignable_through_the_role_matrix(): void {
+		$controller = new \Rondo\REST\Capabilities();
+		$matrix     = $controller->get_capability_matrix()->get_data();
+		$this->assertSame( 'Trainingsschema beheren', $matrix['capability_labels'][ UserRoles::TRAINING_CAPABILITY ] );
+		$this->assertNotContains( UserRoles::TRAINING_CAPABILITY, $matrix['management_capabilities'] );
+		$role     = get_role( UserRoles::ROLE_NAME );
+		$original = $role->has_cap( UserRoles::TRAINING_CAPABILITY );
+		$user_id  = $this->createRondoUser();
+		try {
+			foreach ( [ true, false ] as $enabled ) {
+				$request = new \WP_REST_Request();
+				$request->set_param( 'roles', [ UserRoles::ROLE_NAME => [ 'capabilities' => [ UserRoles::TRAINING_CAPABILITY => $enabled ] ] ] );
+				$this->assertSame( 200, $controller->update_capability_matrix( $request )->get_status() );
+				$this->assertSame( $enabled, UserRoles::can_manage_training( $user_id ) );
+			}
+		} finally {
+			$role->add_cap( UserRoles::TRAINING_CAPABILITY, $original );
+		}
+	}
+
+	public function test_role_upgrade_grants_training_only_to_admins_and_preserves_assignments(): void {
+		$admin = get_role( 'administrator' );
+		$admin->remove_cap( UserRoles::TRAINING_CAPABILITY );
+		update_option( UserRoles::ROLES_VERSION_OPTION, 12 );
+		$roles = new UserRoles();
+		$roles->maybe_upgrade_roles();
+		$this->assertTrue( $admin->has_cap( UserRoles::TRAINING_CAPABILITY ) );
+		foreach ( UserRoles::get_role_slugs() as $slug ) {
+			$this->assertFalse( get_role( $slug )->has_cap( UserRoles::TRAINING_CAPABILITY ), $slug );
+		}
+		$admin->remove_cap( UserRoles::TRAINING_CAPABILITY );
+		try {
+			$roles->maybe_upgrade_roles();
+			$this->assertFalse( $admin->has_cap( UserRoles::TRAINING_CAPABILITY ) );
+		} finally {
+			$admin->add_cap( UserRoles::TRAINING_CAPABILITY );
 		}
 	}
 
@@ -378,7 +457,6 @@ class TrainingSchedulesTest extends RondoTestCase {
 		$config                           = Schedules::settings();
 		$config['age_groups'][0]['color'] = '#b3de69';
 		$this->assertSame( 200, $this->request( 'PUT', '/settings', $config )->get_status() );
-		FeatureToggles::update( [ 'training' => 'on' ] );
 		wp_set_current_user( 0 );
 		foreach ( [ $one['id'], $two['id'] ] as $id ) {
 			$this->assertSame( '#b3de69', $this->request( 'GET', '/schedules/' . $id )->get_data()['schedule']['blocks'][0]['color'] );

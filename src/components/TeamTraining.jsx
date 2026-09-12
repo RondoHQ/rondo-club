@@ -1,10 +1,8 @@
-import { useActiveTraining, useTrainingAccess } from '@/hooks/useTraining';
+import { useActiveTraining } from '@/hooks/useTraining';
 import { TRAINING_DAYS, fieldPart, toMinutes, toTime } from '@/utils/training';
 
 export default function TeamTraining({ teamId }) {
-  const { available } = useTrainingAccess();
   const { data, isLoading, error, refetch } = useActiveTraining();
-  if (!available) return null;
   const blocks = (data?.schedule?.blocks || []).filter((block) => block.team_ids.includes(Number(teamId))).sort((a, b) => a.day - b.day || toMinutes(a.start) - toMinutes(b.start));
   return (
     <section className="card p-5 space-y-3" aria-label="Trainingstijden">
