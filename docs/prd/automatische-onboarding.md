@@ -21,6 +21,7 @@ hieronder zijn voorgestelde beginwaarden voor de bewerkbare mailblokken.
 | Onderdeel | Afspraak |
 |---|---|
 | Ledenwelkomstmail | Automatisch, minimaal 24 uur na de ingangsdatum of eerste betrouwbare herkenning als nieuw lid in Rondo, afhankelijk van welke later is |
+| Openstaande overschrijving | Houd de welkomstmail tegen totdat de overschrijving is afgerond |
 | Vrijwilligerswelkomstmail | Automatisch, minimaal 24 uur na herkenning als nieuwe vrijwilliger |
 | Handmatige vrijgave | Geen verplicht vinkje of goedkeuring |
 | Bediening | Planning, uitstellen, resultaat en fouten op de persoonspagina |
@@ -79,6 +80,9 @@ het opnieuw starten van de automatisering mag oude rondes niet alsnog activeren.
   person-save bewijst geen volledigheid.
 - Verstuur alleen als zowel de 24-uurswachttijd voorbij is als de gerichte controle
   volledig is afgerond. Een onvolledige controle houdt de mail tegen.
+- Houd de welkomstmail ook tegen zolang een overschrijving openstaat. Controleer
+  vóór verzending dat deze is afgerond; daarnaast blijven de afgesproken wachttijd
+  en volledige gegevenscontrole gelden.
 - Een vertraagd proces stuurt nooit vóór de 24 uur voorbij zijn. Bewaar tijden in UTC
   en toon ze in de clubtijdzone, ook rond zomer-/wintertijd.
 
@@ -553,7 +557,7 @@ vastgelegde hoofdlijn niet en mogen niet onzichtbaar als productbeleid worden in
 
 | Beslispunt | Nodig vóór | Voorstel / consequentie |
 |---|---|---|
-| Voorinschrijving en wachten op overschrijving | Fase 1/2 | De start bij een toekomstige ingangsdatum is gekozen: de latere van ingangsdatum en eerste betrouwbare herkenning. Bepaal nog hoe een voorinschrijving of openstaande overschrijving meetelt; hoofdstuk 10 beschrijft het benodigde voltooiingssignaal |
+| Voorinschrijving | Fase 1/2 | Bepaal nog wanneer een voorinschrijving als echte inschrijving telt. Toekomstige ingangsdatum en overschrijving zijn gekozen: wacht minimaal 24 uur vanaf de latere van ingangsdatum/herkenning en verstuur niet zolang de overschrijving openstaat |
 | Betrouwbaar bewijs van stoppen en terugkeer | Fase 1/2/3 | Productkeuze staat vast: opnieuw verwelkomen; technische detectie moet tijdelijke sync-gaten en seizoenswisselingen uitsluiten |
 | Gecombineerde mail en verschillende ontvangerregels | Fase 3 | Ledenmail omvat ouderadressen; vrijwilligers-/VOG-mail alleen onder 18. Voorstel: één gecombineerde mail per toegestane ontvanger, met alleen ledenblokken voor eventuele andere ledenmailontvangers |
 | Welkomstmail bij VOG in controle of opnieuw aanleveren | Fase 3 | Eigen bewerkbare tekst nodig die de werkelijke vervolgstap beschrijft |
@@ -621,7 +625,9 @@ binnen fase 1 uitgewerkt; de keuze activeert nog geen sync of productiemails.
 Leg bij de eerste volledige waarneming bestaande leden/vrijwilligers als uitgangssituatie
 vast zonder welkomstmail. Gebruik voor terugkeer aantoonbare beëindiging en een nieuwe
 periode; alleen verdwijnen en terugkomen in een import mag geen ronde openen. De
-concrete bronvoorwaarden voor voorinschrijving/overschrijving blijven een beslispunt.
+concrete bronvoorwaarden voor voorinschrijving blijven een beslispunt. Voor
+overschrijving is gekozen dat de welkomstmail op afronding wacht; verifieer bij
+implementatie welk brongegeven die afronding betrouwbaar bevestigt.
 
 Corrigeer vóór automatische rolselectie de gedeelde datumlogica in
 `includes/class-volunteer-status.php`: expliciete begin-/einddatums moeten vóór een
