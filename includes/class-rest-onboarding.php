@@ -4,6 +4,7 @@
 namespace Rondo\REST;
 
 use Rondo\Onboarding\Foundation;
+use Rondo\Onboarding\Sources;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -16,6 +17,23 @@ final class Onboarding extends Base {
 	}
 
 	public function register_routes(): void {
+		foreach ( [
+			'sources'        => 'ingest',
+			'sources/finish' => 'finish',
+		] as $path => $method ) {
+			register_rest_route(
+				'rondo/v1',
+				'/onboarding/' . $path,
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'callback'            => static function ( $request ) use ( $method ) {
+						$input = $request->get_json_params();
+						return is_array( $input ) ? rest_ensure_response( Sources::$method( $input ) ) : new \WP_Error( 'onboarding_contract', 'Een JSON-object is vereist.', [ 'status' => 400 ] );
+					},
+				]
+				);
+		}
 		register_rest_route(
 			'rondo/v1',
 			'/onboarding/simulation',
@@ -45,7 +63,8 @@ final class Onboarding extends Base {
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'permission_callback' => [ $this, 'check_admin_permission' ],
 				'callback'            => static function ( $request ) {
-					$result = Foundation::observe( (int) $request['id'], $request->get_json_params() ?: [] );
+					$input  = $request->get_json_params();
+					$result = is_array( $input ) ? Foundation::observe( (int) $request['id'], $input ) : new \WP_Error( 'onboarding_contract', 'Een JSON-object is vereist.', [ 'status' => 400 ] );
 					return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 				},
 			]
