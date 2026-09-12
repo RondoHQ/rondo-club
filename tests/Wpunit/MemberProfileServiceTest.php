@@ -357,6 +357,94 @@ class MemberProfileServiceTest extends RondoTestCase {
 		$this->assertSame( '', Fields::get_for_post( $other_id, 'mobile_1' ) );
 	}
 
+	public function test_household_photo_upload_is_scoped_and_reuses_manual_photo_storage(): void {
+		$server                  = $this->bootRestControllers( [ \Rondo\REST\People::class ] );
+		[ $user_id, $parent_id ] = $this->linked_member( 'photo-parent@example.com' );
+		$child_id                = $this->add_minor_child( $parent_id, 'Foto Kind', 'photo-child@example.com' );
+		$other_id                = $this->createPerson();
+		$adult_id                = $this->add_minor_child( $parent_id, 'Volwassen Kind', 'adult-photo@example.com' );
+		Fields::update_for_post( $adult_id, 'birthdate', gmdate( 'Y-m-d', strtotime( '-20 years' ) ) );
+		AccessControl::flush_visible_person_ids_cache();
+
+		foreach ( [ $other_id, $adult_id ] as $id ) {
+			$response = $server->dispatch( new \WP_REST_Request( 'POST', '/rondo/v1/people/' . $id . '/household-photo' ) );
+			$this->assertSame( 403, $response->get_status() );
+		}
+		// Existing management uploads remain unavailable to a plain member.
+		$response = $server->dispatch( new \WP_REST_Request( 'POST', '/rondo/v1/people/' . $parent_id . '/photo' ) );
+		$this->assertSame( 403, $response->get_status() );
+
+		foreach ( [ $parent_id, $child_id ] as $id ) {
+			$path  = wp_tempnam( 'household-photo.png' );
+			$image = imagecreatetruecolor( 40, 40 );
+			imagepng( $image, $path );
+			$request = new \WP_REST_Request( 'POST', '/rondo/v1/people/' . $id . '/household-photo' );
+			$request->set_param( 'source', 'sportlink' );
+			$request->set_file_params(
+				[
+					'file' => [
+						'name'     => 'photo.png',
+						'type'     => 'image/png',
+						'size'     => filesize( $path ),
+						'tmp_name' => $path,
+						'error'    => 0,
+					],
+				]
+				);
+			$response = $server->dispatch( $request );
+			$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+			$attachment_id = (int) get_post_thumbnail_id( $id );
+			try {
+				$this->assertGreaterThan( 0, $attachment_id );
+				$this->assertNotEmpty( get_post_meta( $id, \Rondo\People\PhotoSync::META, true ) );
+				$household = $server->dispatch( new \WP_REST_Request( 'GET', '/rondo/v1/people/household' ) )->get_data();
+				$record    = array_values( array_filter( $household, static fn( $person ) => $person['id'] === $id ) )[0];
+				$this->assertTrue( $record['can_edit_photo'] );
+				$this->assertNotEmpty( $record['thumbnail'] );
+			} finally {
+				wp_delete_attachment( $attachment_id, true );
+			}
+		}
+
+		Fields::update_for_post( $parent_id, 'datum_overlijden', '2026-01-01' );
+		$response = $server->dispatch( new \WP_REST_Request( 'POST', '/rondo/v1/people/' . $parent_id . '/household-photo' ) );
+		$this->assertSame( 403, $response->get_status() );
+		Fields::update_for_post( $parent_id, 'datum_overlijden', null );
+		Fields::update_for_post(
+			$child_id,
+			'relationships',
+			[
+				[
+					'related_person'    => $parent_id,
+					'relationship_type' => InverseRelationships::TYPE_PARENT,
+				],
+				[
+					'related_person'    => $other_id,
+					'relationship_type' => InverseRelationships::TYPE_PARENT,
+				],
+			]
+			);
+		AccessControl::flush_visible_person_ids_cache();
+		$household = $server->dispatch( new \WP_REST_Request( 'GET', '/rondo/v1/people/household' ) )->get_data();
+		$other     = array_values( array_filter( $household, static fn( $person ) => $person['id'] === $other_id ) )[0];
+		$this->assertSame( 'other_parent', $other['household_role'] );
+		$this->assertFalse( $other['can_edit_photo'] );
+		$this->assertNull( $other['thumbnail'] );
+		$this->assertNull( $other['photo_sync_status'] );
+		$response = $server->dispatch( new \WP_REST_Request( 'POST', '/rondo/v1/people/' . $other_id . '/household-photo' ) );
+		$this->assertSame( 403, $response->get_status() );
+		get_user_by( 'id', $user_id )->set_role( 'administrator' );
+		$response = $server->dispatch( new \WP_REST_Request( 'POST', '/rondo/v1/people/' . $other_id . '/household-photo' ) );
+		$this->assertSame( 403, $response->get_status() );
+
+		Fields::update_for_post( $child_id, 'former_member', true );
+		$response = $server->dispatch( new \WP_REST_Request( 'POST', '/rondo/v1/people/' . $child_id . '/household-photo' ) );
+		$this->assertSame( 403, $response->get_status() );
+		wp_set_current_user( 0 );
+		$response = $server->dispatch( new \WP_REST_Request( 'POST', '/rondo/v1/people/' . $parent_id . '/household-photo' ) );
+		$this->assertSame( 401, $response->get_status() );
+	}
+
 	private function linked_member( string $email ): array {
 		$person_id = $this->createPerson(
 			[ 'post_title' => 'Test Lid' ],

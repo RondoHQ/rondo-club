@@ -280,6 +280,19 @@ class People extends Base {
 			]
 		);
 
+		register_rest_route(
+			'rondo/v1',
+			'/people/(?P<person_id>\d+)/household-photo',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'permission_callback' => fn( $request ) => $this->can_edit_household_photo( (int) $request['person_id'] ),
+				'callback'            => function ( $request ) {
+					$request->set_param( 'source', 'manual' );
+					return $this->upload_person_photo( $request );
+				},
+			]
+		);
+
 		// Sharing endpoints
 		register_rest_route(
 			'rondo/v1',
@@ -854,6 +867,9 @@ class People extends Base {
 			$people[]       = [
 				'id'                   => $post->ID,
 				'household_role'       => $role,
+				'thumbnail'            => $role === 'other_parent' ? null : ( get_the_post_thumbnail_url( $post->ID, 'medium' ) ?: null ),
+				'can_edit_photo'       => $role !== 'other_parent' && $this->can_edit_household_photo( (int) $post->ID ),
+				'photo_sync_status'    => $role === 'other_parent' ? null : PhotoSync::status( (int) $post->ID ),
 				'teams'                => $this->personal_team_memberships( (int) $post->ID ),
 				'can_add_parent'       => (bool) ( $context['can_add_parent'][ $post->ID ] ?? false ),
 				'fields'               => \Rondo\Fields\RestFields::for_post_fields( 'person', $post->ID, $visible_fields ),
@@ -864,6 +880,17 @@ class People extends Base {
 		}
 
 		return rest_ensure_response( $people );
+	}
+
+	/** Allow photo self-service only for a writable person in the personal household. */
+	public function can_edit_household_photo( int $person_id ): bool {
+		if ( ! is_user_logged_in() || ! in_array( $person_id, \Rondo\Core\AccessControl::get_visible_person_ids(), true ) ) {
+			return false;
+		}
+		$person = get_post( $person_id );
+		return $person && $person->post_type === 'person' && $person->post_status === 'publish'
+			&& ! \Rondo\People\CommunicationPolicy::is_deceased( $person_id )
+			&& ! (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' );
 	}
 
 	/** Return only current team names and public fixture links for an already-scoped household person. */

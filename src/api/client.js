@@ -291,6 +291,13 @@ export const prmApi = {
   setCommissieLogo: (commissieId, mediaId) => api.post(`/rondo/v1/commissies/${commissieId}/logo`, { media_id: mediaId }),
 
   // Photo uploads with proper naming
+  uploadHouseholdPhoto: (personId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/rondo/v1/people/${personId}/household-photo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
   uploadPersonPhoto: (personId, file) => {
     const formData = new FormData();
     formData.append('source', 'manual');
