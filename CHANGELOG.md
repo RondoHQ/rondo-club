@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.67.0] - 2026-09-12
+
+### Added
+
+- Show player photos in Mijn team, with initials when a photo is missing or cannot load, using thumbnails scoped to the coach's current players.
+
+### Changed
+
+- Redesign Mijn team as a compact player list with expandable player and parent/guardian contact details, and use the existing profile tabs to switch between teams.
+
 ## [35.66.0] - 2026-09-12
 
 ### Added

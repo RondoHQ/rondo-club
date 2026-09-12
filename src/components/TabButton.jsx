@@ -15,12 +15,14 @@
 /**
  * TabButton component displays a navigation tab with consistent styling.
  * Optionally shows an item count badge after the label.
+ * Additional native button props support accessible tab lists without duplicating styles.
  *
  * @param {TabButtonProps} props
  */
-export default function TabButton({ label, isActive, onClick, count }) {
+export default function TabButton({ label, isActive, onClick, count, ...buttonProps }) {
   return (
     <button
+      {...buttonProps}
       type="button"
       onClick={onClick}
       className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
