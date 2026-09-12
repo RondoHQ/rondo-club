@@ -1,15 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import { exportPhotoCrop, photoCropRect } from '@/utils/photoCrop';
+import { beginPhotoGesture, movePhotoGesture, exportPhotoCrop, photoCropRect } from '@/utils/photoCrop';
+
+const initialCrop = { zoom: 1, position: { x: 0.5, y: 0.5 } };
 
 export default function PhotoCropModal({ file, onClose, onSave, isSaving }) {
   const dialogRef = useRef(null);
   const imageRef = useRef(null);
-  const dragRef = useRef(null);
+  const viewportRef = useRef(null);
+  const pointersRef = useRef(new Map());
+  const gestureRef = useRef(null);
+  const cropRef = useRef(initialCrop);
   const [source, setSource] = useState('');
   const [dimensions, setDimensions] = useState(null);
-  const [zoom, setZoom] = useState(1);
-  const [position, setPosition] = useState({ x: 0.5, y: 0.5 });
+  const [crop, setCrop] = useState(initialCrop);
+  const { zoom, position } = crop;
   const [error, setError] = useState('');
   const [isPreparing, setIsPreparing] = useState(false);
   const busy = isSaving || isPreparing;
@@ -45,16 +50,27 @@ export default function PhotoCropModal({ file, onClose, onSave, isSaving }) {
     }
   };
 
+  const rebase = () => {
+    gestureRef.current = dimensions ? beginPhotoGesture(dimensions, cropRef.current,
+      [...pointersRef.current.values()], viewportRef.current.getBoundingClientRect()) : null;
+  };
+
+  const updateCrop = (next, rebaseGesture = true) => {
+    // Pointer events can arrive before React renders the preceding movement.
+    cropRef.current = next;
+    setCrop(next);
+    if (rebaseGesture) rebase();
+  };
+
   const move = (event) => {
-    const drag = dragRef.current;
-    if (!drag || busy) return;
-    const scale = drag.rect.size / drag.width;
-    const spanX = dimensions.width - drag.rect.size;
-    const spanY = dimensions.height - drag.rect.size;
-    setPosition({
-      x: spanX ? Math.max(0, Math.min(1, drag.position.x - (event.clientX - drag.x) * scale / spanX)) : 0.5,
-      y: spanY ? Math.max(0, Math.min(1, drag.position.y - (event.clientY - drag.y) * scale / spanY)) : 0.5,
-    });
+    if (busy || !gestureRef.current || !pointersRef.current.has(event.pointerId)) return;
+    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    updateCrop(movePhotoGesture(dimensions, gestureRef.current, [...pointersRef.current.values()]), false);
+  };
+
+  const endPointer = (event) => {
+    if (!pointersRef.current.delete(event.pointerId)) return;
+    rebase();
   };
 
   return (
@@ -71,8 +87,9 @@ export default function PhotoCropModal({ file, onClose, onSave, isSaving }) {
         </button>
       </div>
       <div className="space-y-4 p-4">
-        <p className="text-sm text-gray-600 dark:text-gray-300">Sleep de foto en zoom in tot het gezicht goed zichtbaar is. Alleen deze uitsnede wordt opgeslagen.</p>
+        <p className="text-sm text-gray-600 dark:text-gray-300">Sleep de foto en zoom met twee vingers of de schuifbalk tot het gezicht goed zichtbaar is. Alleen deze uitsnede wordt opgeslagen.</p>
         <div
+          ref={viewportRef}
           className="relative mx-auto aspect-square w-full max-w-72 touch-none overflow-hidden rounded-lg bg-gray-100 outline-offset-4 focus-visible:outline-2 focus-visible:outline-cyan-600 dark:bg-gray-900"
           role="group"
           aria-label="Uitsnede van de foto; gebruik de pijltjestoetsen om te verschuiven"
@@ -80,19 +97,22 @@ export default function PhotoCropModal({ file, onClose, onSave, isSaving }) {
           onKeyDown={(event) => {
             if (busy || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
             event.preventDefault();
-            setPosition(current => ({
+            const current = cropRef.current.position;
+            updateCrop({ zoom: cropRef.current.zoom, position: {
               x: Math.max(0, Math.min(1, current.x + (event.key === 'ArrowLeft' ? 0.02 : event.key === 'ArrowRight' ? -0.02 : 0))),
               y: Math.max(0, Math.min(1, current.y + (event.key === 'ArrowUp' ? 0.02 : event.key === 'ArrowDown' ? -0.02 : 0))),
-            }));
+            } });
           }}
           onPointerDown={(event) => {
-            if (!rect || busy) return;
+            if (!rect || busy || event.button !== 0 || pointersRef.current.size >= 2) return;
             event.currentTarget.setPointerCapture(event.pointerId);
-            dragRef.current = { x: event.clientX, y: event.clientY, width: event.currentTarget.getBoundingClientRect().width, position, rect };
+            pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+            rebase();
           }}
           onPointerMove={move}
-          onPointerUp={() => { dragRef.current = null; }}
-          onPointerCancel={() => { dragRef.current = null; }}
+          onPointerUp={endPointer}
+          onPointerCancel={endPointer}
+          onLostPointerCapture={endPointer}
         >
           {source && (
             <img
@@ -114,9 +134,9 @@ export default function PhotoCropModal({ file, onClose, onSave, isSaving }) {
         </div>
         <div>
           <label htmlFor="photo-crop-zoom" className="mb-1 flex justify-between text-sm font-medium">Inzoomen <span>{zoom.toFixed(1)}×</span></label>
-          <input id="photo-crop-zoom" type="range" min="1" max="4" step="0.05" value={zoom} onChange={event => setZoom(Number(event.target.value))} disabled={busy || !rect} className="w-full accent-cyan-600" />
+          <input id="photo-crop-zoom" type="range" min="1" max="4" step="0.05" value={zoom} onChange={event => updateCrop({ ...cropRef.current, zoom: Number(event.target.value) })} disabled={busy || !rect} className="w-full accent-cyan-600" />
         </div>
-        <button type="button" className="text-sm underline disabled:opacity-50" disabled={busy} onClick={() => { setZoom(1); setPosition({ x: 0.5, y: 0.5 }); }}>Uitsnede herstellen</button>
+        <button type="button" className="text-sm underline disabled:opacity-50" disabled={busy} onClick={() => updateCrop(initialCrop)}>Uitsnede herstellen</button>
         {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
       <div className="flex justify-end gap-3 border-t border-gray-200 p-4 dark:border-gray-700">
