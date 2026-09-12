@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.74.0] - 2026-09-12
+
+### Added
+- Empty Voetbal landing page with a collapsible menu for Teams, Kaderlijst, Trainingsschema, Toernooien, Toegangsstatistieken and Tuchtzaken.
+
+### Changed
+- Move Commissies between Relaties and Sponsoren, and Jubilarissen under Vrijwilligers while preserving existing page permissions.
+- Keep accessible submenu items standalone when their parent is hidden by permissions.
+
 ## [35.73.3] - 2026-09-12
 
 ### Changed

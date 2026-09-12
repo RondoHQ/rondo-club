@@ -56,6 +56,8 @@ export function useRouteTitle(customTitle = null) {
         } else {
           title = 'People';
         }
+      } else if (path === '/voetbal' || path === '/voetbal/') {
+        title = 'Voetbal';
       } else if (path.startsWith('/teams')) {
         if (path === '/teams' || path === '/teams/') {
           title = 'Teams';

@@ -38,7 +38,8 @@ import {
   History,
   CalendarDays,
   Trophy,
-  TrendingUp
+  TrendingUp,
+  Goal
 } from 'lucide-react';
 
 // Wordmark URLs from theme directory.
@@ -57,6 +58,7 @@ import { useVOGCount } from '@/hooks/useVOGCount';
 import { useDisciplineCasesCount } from '@/hooks/useDisciplineCases';
 import { prmApi } from '@/api/client';
 import { canAccessFeature } from '@/utils/featureToggles';
+import { canAccessFootball } from '@/utils/footballAccess';
 
 const navigation = [
   { name: 'Mijn inschrijftaken', href: '/vrijwillig?tab=mine', icon: HeartHandshake, personal: true },
@@ -68,16 +70,18 @@ const navigation = [
   { name: 'Relaties', href: '/people', icon: Users, requiresKader: true },
   { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
   { name: 'Wijzigingslog', href: '/people/wijzigingslog', icon: History, indent: true, requiresLedenadministratie: true },
-  { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true, requiresKader: true },
-  { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
+  { name: 'Commissies', href: '/commissies', icon: UsersRound, requiresKader: true },
   { name: 'Sponsoren', href: '/sponsors', icon: Building2, requiresSponsors: true },
-  { name: 'Teams', href: '/teams', icon: Shield, requiresKader: true },
+  { name: 'Voetbal', href: '/voetbal', icon: Goal, requiresFootball: true },
+  { name: 'Teams', href: '/teams', icon: Shield, indent: true, requiresKader: true },
   { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true, requiresKaderlijst: true },
   { name: 'Trainingsschema', href: '/trainingsschema', icon: CalendarDays, indent: true, requiresTrainingView: true },
-  { name: 'Toernooien', href: '/toernooien', icon: Trophy, requiresTournamentManager: true },
+  { name: 'Toernooien', href: '/toernooien', icon: Trophy, indent: true, requiresTournamentManager: true },
+  { name: 'Toegangsstatistieken', href: '/toegangsstatistieken', icon: ChartPie, indent: true, requiresToegangscontrole: true },
+  { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
   { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true, requiresFeature: 'clothing' },
-  { name: 'Commissies', href: '/commissies', icon: UsersRound, requiresKader: true },
   { name: 'Vrijwilligers', href: '/vrijwilligers', icon: HeartHandshake, requiresVrijwilligers: true },
+  { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true, requiresKader: true },
   { name: 'VOG', href: '/vrijwilligers/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'IVA', href: '/vrijwilligers/iva', icon: Wine, indent: true, requiresVrijwilligers: true },
   { name: 'Beheer inschrijftaken', href: '/vrijwilligers/diensten', icon: CalendarClock, indent: true, requiresVrijwilligers: true },
@@ -89,7 +93,6 @@ const navigation = [
   { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true },
   { name: 'Betaalstatistieken', href: '/financien/betaalstatistieken', icon: TrendingUp, indent: true, requiresFinancieel: true },
-  { name: 'Toegangsstatistieken', href: '/toegangsstatistieken', icon: ChartPie, requiresToegangscontrole: true },
   { name: 'Lidpas Scanner', href: '/lidpas-scanner', icon: QrCode, requiresToegangscontrole: true, mobileOnly: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare, requiresKader: true },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare, requiresKader: true },
@@ -212,8 +215,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
     return location.pathname === hrefPath || location.pathname.startsWith(`${hrefPath}/`);
   };
 
-  // Filter to the items this user may see, then group each top-level item
-  // with its following indented sub-items into a collapsible section.
+  // Filter to the items this user may see.
   const visibleNav = navigation.filter((item) => {
     // Enforce mobile-only items regardless of role.
     if (item.mobileOnly && !mobile) return false;
@@ -222,6 +224,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresMyTeams && !currentUser?.has_my_teams) return false;
     if (isAdmin) return true;
     if (item.adminOnly && !isAdmin) return false;
+    if (item.requiresFootball && !canAccessFootball(currentUser)) return false;
     if (item.requiresFairplay && !canAccessFairplay) return false;
     if (item.requiresVOG && !canAccessVOG) return false;
     if (item.requiresFinancieel && !canAccessFinancieel) return false;
@@ -240,18 +243,22 @@ function Sidebar({ mobile = false, onClose, stats }) {
   });
 
   const personalNav = visibleNav.filter((item) => item.personal);
-  const clubNav = visibleNav
-    .filter((item) => !item.personal)
-    .map((item) => ((item.requiresKaderlijst || item.requiresTrainingView) && !isKader ? { ...item, indent: false } : item));
-
-  const navGroups = [];
-  for (const item of clubNav) {
-    if (item.indent && navGroups.length > 0) {
-      navGroups[navGroups.length - 1].children.push(item);
+  // Group before filtering so a hidden parent cannot attach its children to
+  // an unrelated section. Accessible children without a parent stay standalone.
+  const visibleItems = new Set(visibleNav);
+  const clubGroups = [];
+  for (const item of navigation.filter((item) => !item.personal)) {
+    if (item.indent && clubGroups.length > 0) {
+      clubGroups[clubGroups.length - 1].children.push(item);
     } else {
-      navGroups.push({ parent: item, children: [] });
+      clubGroups.push({ parent: item, children: [] });
     }
   }
+  const navGroups = clubGroups.flatMap(({ parent, children }) => {
+    const visibleChildren = children.filter((item) => visibleItems.has(item));
+    if (visibleItems.has(parent)) return [{ parent, children: visibleChildren }];
+    return visibleChildren.map((item) => ({ parent: { ...item, indent: false }, children: [] }));
+  });
 
   // Renders a single nav entry (section header, disabled item, or link).
   const renderItem = (item) => {
@@ -760,6 +767,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback, showFeedbackIntro, 
     if (path.startsWith('/contributie')) return 'Contributie';
     if (path.startsWith('/vog')) return 'VOG';
     if (path.startsWith('/tuchtzaken')) return 'Tuchtzaken';
+    if (path === '/voetbal' || path === '/voetbal/') return 'Voetbal';
     if (path.startsWith('/teams')) return 'Teams';
     if (path.startsWith('/trainingsschema')) return 'Trainingsschema';
     if (path.startsWith('/commissies')) return 'Commissies';
