@@ -275,6 +275,115 @@ class TrainingSchedulesTest extends RondoTestCase {
 		$this->assertSame( 400, $this->request( 'PUT', '/settings', $config )->get_status() );
 	}
 
+	public function test_eighths_and_three_quarters_round_trip_and_check_collisions(): void {
+		$blocks = [];
+		for ( $i = 0; $i < 8; ++$i ) {
+			$blocks[] = $this->block(
+				[
+					'size'     => 0.5,
+					'offset'   => $i / 2,
+					'team_ids' => [],
+					'label'    => 'Keepers ' . $i,
+				]
+				);
+		}
+		$schedule = $this->create( $blocks );
+		$this->assertCount( 8, $schedule['blocks'] );
+		$this->assertSame( 0.5, $schedule['blocks'][1]['size'] );
+		$this->assertSame( 0.5, $schedule['blocks'][1]['offset'] );
+		$this->assertEquals( 0.5, get_post_meta( $schedule['id'], 'blocks_1_offset', true ) );
+		$blocks[1]['offset'] = 0;
+		$this->assertSame( 'rondo_training_conflict', Schedules::validate_blocks( $blocks )->get_error_code() );
+		foreach ( [ 0, 1 ] as $offset ) {
+			$this->assertIsArray(
+				Schedules::validate_blocks(
+				[
+					$this->block(
+					[
+						'size'   => 3,
+						'offset' => $offset,
+					]
+					),
+					$this->block(
+					[
+						'size'     => 1,
+						'offset'   => $offset ? 0 : 3,
+						'label'    => 'Keepers',
+						'team_ids' => [],
+					]
+						),
+				]
+				)
+				);
+		}
+		$copy = $this->request( 'POST', '/schedules/' . $schedule['id'] . '/copy', [ 'name' => 'Kopie' ] );
+		$this->assertSame( 200, $copy->get_status() );
+		$this->assertSame( $schedule['blocks'], $copy->get_data()['blocks'] );
+		$this->assertSame( 200, $this->request( 'POST', '/schedules/' . $schedule['id'] . '/activate', [ 'revision' => 1 ] )->get_status() );
+	}
+
+	public function test_colors_inherit_from_teams_allow_standalone_groups_and_update_all_versions(): void {
+		$config               = Schedules::settings();
+		$config['age_groups'] = [
+			[
+				'id'       => 'o8',
+				'name'     => 'O8',
+				'duration' => 75,
+				'size'     => 0.5,
+				'color'    => '#FFFFB3',
+			],
+			[
+				'id'       => 'keepers',
+				'name'     => 'Keepers',
+				'duration' => 60,
+				'size'     => 3,
+				'color'    => '#123456',
+			],
+		];
+		$config['teams']      = [
+			[
+				'team_id'      => $this->team_id,
+				'age_group_id' => 'o8',
+				'duration'     => null,
+				'size'         => 0.5,
+			],
+		];
+		$this->assertSame( 200, $this->request( 'PUT', '/settings', $config )->get_status() );
+		$one = $this->create(
+			[
+				$this->block(),
+				$this->block(
+				[
+					'team_ids'     => [],
+					'label'        => 'Keeperstraining',
+					'day'          => 2,
+					'age_group_id' => 'keepers',
+				]
+				),
+			]
+			);
+		$this->assertSame( '#ffffb3', $one['blocks'][0]['color'] );
+		$this->assertSame( '#123456', $one['blocks'][1]['color'] );
+		$this->assertSame( 'keepers', get_post_meta( $one['id'], 'blocks_1_age_group_id', true ) );
+		$this->assertSame( 'field_training_age_group_id', get_post_meta( $one['id'], '_blocks_1_age_group_id', true ) );
+		$two                              = $this->request( 'POST', '/schedules/' . $one['id'] . '/copy', [ 'name' => 'Ander weer' ] )->get_data();
+		$config                           = Schedules::settings();
+		$config['age_groups'][0]['color'] = '#b3de69';
+		$this->assertSame( 200, $this->request( 'PUT', '/settings', $config )->get_status() );
+		FeatureToggles::update( [ 'training' => 'on' ] );
+		wp_set_current_user( 0 );
+		foreach ( [ $one['id'], $two['id'] ] as $id ) {
+			$this->assertSame( '#b3de69', $this->request( 'GET', '/schedules/' . $id )->get_data()['schedule']['blocks'][0]['color'] );
+		}
+		wp_set_current_user( $this->admin_id );
+		$config                           = Schedules::settings();
+		$config['age_groups'][0]['color'] = 'red; background: url(https://example.org)';
+		$this->assertSame( 400, $this->request( 'PUT', '/settings', $config )->get_status() );
+		$config = Schedules::settings();
+		array_pop( $config['age_groups'] );
+		$this->assertSame( 409, $this->request( 'PUT', '/settings', $config )->get_status() );
+	}
+
 	public function test_invalid_fields_and_times_are_rejected(): void {
 		$changes = [
 			[ 'start' => '24:00' ],
@@ -283,7 +392,20 @@ class TrainingSchedulesTest extends RondoTestCase {
 			[ 'duration' => '60' ],
 			[ 'day' => 8 ],
 			[ 'offset' => 1 ],
-			[ 'size' => 3 ],
+			[ 'size' => 1.5 ],
+			[
+				'size'   => 0.5,
+				'offset' => 0.25,
+			],
+			[
+				'size'   => 0.5,
+				'offset' => '0.5',
+			],
+			[
+				'size'   => 3,
+				'offset' => 2,
+			],
+			[ 'age_group_id' => 'unknown' ],
 			[ 'pitch_id' => 'unknown' ],
 			[
 				'label'    => '',

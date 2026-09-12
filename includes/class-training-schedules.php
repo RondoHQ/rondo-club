@@ -54,13 +54,16 @@ final class Schedules {
 		if ( ! self::exists( $id ) ) {
 			return self::error( 'Trainingsschema niet gevonden.', 404 );
 		}
-		$fields = Fields::all_for_post( $id );
-		$blocks = $fields['blocks'] ?: [];
+		$settings = self::settings();
+		$fields   = Fields::all_for_post( $id );
+		$blocks   = $fields['blocks'] ?: [];
 		foreach ( $blocks as &$block ) {
 			// Native time storage includes seconds; the API consistently returns HH:mm.
-			$block['start']      = substr( $block['start'], 0, 5 );
-			$block['team_ids']   = array_map( 'intval', $block['team_ids'] ?: [] );
-			$block['team_names'] = array_map( static fn( $team_id ) => html_entity_decode( get_the_title( $team_id ), ENT_QUOTES, 'UTF-8' ), $block['team_ids'] );
+			$block['age_group_id'] = $block['age_group_id'] ?: '';
+			$block['color']        = self::block_color( $block, $settings );
+			$block['start']        = substr( $block['start'], 0, 5 );
+			$block['team_ids']     = array_map( 'intval', $block['team_ids'] ?: [] );
+			$block['team_names']   = array_map( static fn( $team_id ) => html_entity_decode( get_the_title( $team_id ), ENT_QUOTES, 'UTF-8' ), $block['team_ids'] );
 		}
 		unset( $block );
 		return [
@@ -70,6 +73,22 @@ final class Schedules {
 			'revision' => (int) $fields['revision'],
 			'blocks'   => $blocks,
 		];
+	}
+
+	/** Colors are derived on read so changes apply to every version. */
+	public static function block_color( array $block, array $settings ): string {
+		$groups   = array_column( $settings['age_groups'], null, 'id' );
+		$teams    = array_column( $settings['teams'], 'age_group_id', 'team_id' );
+		$group_id = $block['age_group_id'] ?? '';
+		if ( ! $group_id ) {
+			foreach ( $block['team_ids'] as $team_id ) {
+				if ( ! empty( $teams[ $team_id ] ) ) {
+					$group_id = $teams[ $team_id ];
+					break;
+				}
+			}
+		}
+		return $groups[ $group_id ]['color'] ?? '#cffafe';
 	}
 
 	public static function feed(): array {
@@ -112,7 +131,7 @@ final class Schedules {
 	}
 
 	private static function size_valid( $value ): bool {
-		return in_array( $value, [ 1, 2, 4 ], true );
+		return in_array( $value, [ 0.5, 1, 2, 3, 4 ], true );
 	}
 
 	/** Validate the whole settings document before changing any persisted setting. */
@@ -141,11 +160,12 @@ final class Schedules {
 		$pitch_ids = array_column( $data['pitches'], 'id' );
 		$seen      = [];
 		foreach ( $data['age_groups'] as &$group ) {
-			if ( ! is_array( $group ) || array_diff( array_keys( $group ), [ 'id', 'name', 'duration', 'size' ] ) || ! self::valid_id( $group['id'] ?? null ) || ! self::valid_text( $group['name'] ?? null ) || isset( $seen[ $group['id'] ] ) || ! self::duration_valid( $group['duration'] ?? null ) || ! self::size_valid( $group['size'] ?? null ) ) {
-				return self::error( 'Controleer de leeftijdslagen: unieke naam/identifier, duur van 15–360 minuten in kwartieren en een kwart, half of heel veld.' );
+			if ( ! is_array( $group ) || array_diff( array_keys( $group ), [ 'id', 'name', 'duration', 'size', 'color' ] ) || ! self::valid_id( $group['id'] ?? null ) || ! self::valid_text( $group['name'] ?? null ) || isset( $seen[ $group['id'] ] ) || ! self::duration_valid( $group['duration'] ?? null ) || ! self::size_valid( $group['size'] ?? null ) || ( isset( $group['color'] ) && ( ! is_string( $group['color'] ) || preg_match( '/^#[0-9a-fA-F]{6}$/D', $group['color'] ) !== 1 ) ) ) {
+				return self::error( 'Controleer de leeftijdslagen: unieke naam/identifier, duur van 15–360 minuten in kwartieren, een geldige veldgrootte en een kleur zoals #b3de69.' );
 			}
 			$seen[ $group['id'] ] = true;
 			$group['name']        = sanitize_text_field( $group['name'] );
+			$group['color']       = strtolower( $group['color'] ?? '#cffafe' );
 		}
 		unset( $group );
 		$group_ids = array_column( $data['age_groups'], 'id' );
@@ -158,6 +178,9 @@ final class Schedules {
 		}
 		foreach ( self::posts() as $post ) {
 			foreach ( Fields::get_for_post( $post->ID, 'blocks' ) ?: [] as $block ) {
+				if ( ! empty( $block['age_group_id'] ) && ! in_array( $block['age_group_id'], $group_ids, true ) ) {
+					return self::error( 'Deze leeftijdslaag wordt nog gebruikt door een trainingsblok.', 409 );
+				}
 				if ( ! in_array( $block['pitch_id'], $pitch_ids, true ) ) {
 					return self::error( 'Dit veld wordt nog gebruikt in schema “' . get_the_title( $post ) . '”. Verplaats of verwijder eerst die blokken.', 409 );
 				}
@@ -182,7 +205,7 @@ final class Schedules {
 		$validated = [];
 		foreach ( $blocks as $index => $block ) {
 			$prefix = 'Blok ' . ( $index + 1 ) . ': ';
-			if ( ! is_array( $block ) || array_diff( array_keys( $block ), [ 'block_id', 'label', 'team_ids', 'pitch_id', 'day', 'start', 'duration', 'size', 'offset' ] ) ) {
+			if ( ! is_array( $block ) || array_diff( array_keys( $block ), [ 'block_id', 'label', 'team_ids', 'pitch_id', 'day', 'start', 'duration', 'size', 'offset', 'age_group_id' ] ) ) {
 				return self::error( $prefix . 'onbekende velden.' );
 			}
 			if ( ! self::valid_id( $block['block_id'] ?? null ) || isset( $seen[ $block['block_id'] ] ) || ! is_string( $block['label'] ?? null ) || mb_strlen( $block['label'] ) > 100 ) {
@@ -197,6 +220,10 @@ final class Schedules {
 					return self::error( $prefix . 'team bestaat niet of is niet actief.' );
 				}
 			}
+			$block['age_group_id'] = $block['age_group_id'] ?? '';
+			if ( ! is_string( $block['age_group_id'] ) || ( $block['age_group_id'] !== '' && ! in_array( $block['age_group_id'], array_column( self::settings()['age_groups'], 'id' ), true ) ) ) {
+				return self::error( $prefix . 'kies een bestaande leeftijdslaag.' );
+			}
 			$block['label'] = sanitize_text_field( $block['label'] );
 			if ( $block['label'] === '' && ! $block['team_ids'] ) {
 				return self::error( $prefix . 'kies een team of vul een omschrijving in.' );
@@ -207,8 +234,8 @@ final class Schedules {
 			if ( ! is_string( $block['start'] ?? null ) || preg_match( '/^(?:[01]\d|2[0-3]):(?:00|15|30|45)$/D', $block['start'] ) !== 1 || ! self::duration_valid( $block['duration'] ?? null ) || self::minutes( $block['start'] ) + $block['duration'] > 1440 ) {
 				return self::error( $prefix . 'kies kwartieren en een duur van 15–360 minuten, binnen dezelfde dag.' );
 			}
-			if ( ! self::size_valid( $block['size'] ?? null ) || ! is_int( $block['offset'] ?? null ) || $block['offset'] < 0 || $block['offset'] + $block['size'] > 4 || $block['offset'] % $block['size'] !== 0 ) {
-				return self::error( $prefix . 'kies een kwart (A–D), half (AB/CD) of heel veld.' );
+			if ( ! self::size_valid( $block['size'] ?? null ) || ! is_numeric( $block['offset'] ?? null ) || is_string( $block['offset'] ) || $block['offset'] < 0 || $block['offset'] + $block['size'] > 4 || fmod( (float) $block['offset'], $block['size'] === 3 ? 1.0 : (float) $block['size'] ) !== 0.0 ) {
+				return self::error( $prefix . 'kies een achtste, kwart, half, driekwart of heel veld met een passend velddeel.' );
 			}
 			foreach ( $validated as $other ) {
 				if ( $other['day'] !== $block['day'] || self::minutes( $other['start'] ) >= self::minutes( $block['start'] ) + $block['duration'] || self::minutes( $block['start'] ) >= self::minutes( $other['start'] ) + $other['duration'] ) {

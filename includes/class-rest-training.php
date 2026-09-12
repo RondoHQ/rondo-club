@@ -120,7 +120,7 @@ final class Training extends Base {
 					return $source;
 				}
 				foreach ( $source['blocks'] as &$block ) {
-					unset( $block['team_names'] );
+					unset( $block['team_names'], $block['color'] );
 				}
 				unset( $block );
 				return Schedules::save(
@@ -151,7 +151,7 @@ final class Training extends Base {
 				}
 				$blocks    = array_map(
 				static function ( $block ) {
-					unset( $block['team_names'] );
+					unset( $block['team_names'], $block['color'] );
 					return $block;
 				},
 				$schedule['blocks']

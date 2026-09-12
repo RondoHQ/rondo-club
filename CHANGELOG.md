@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.71.0] - 2026-09-12
+
+### Added
+- Eighth and three-quarter pitch allocations in training settings, block editing, dragging, and the API, preserving existing quarter-based values.
+- Configurable age-group colors across all training versions, including color groups for standalone keeper sessions and derived colors in API responses.
+
+### Fixed
+- Readable training settings and day headings in dark mode, with contrasting text on colored blocks.
+
+
 ## [35.70.2] - 2026-09-12
 
 ### Changed
