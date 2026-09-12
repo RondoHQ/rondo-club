@@ -33,7 +33,7 @@ final class Schedules {
 			);
 	}
 
-	/** Private CPTs are exposed exclusively through the feature-gated controller. */
+	/** Private CPTs are exposed exclusively through the dedicated training controller. */
 	public static function posts(): array {
 		return get_posts(
 			[

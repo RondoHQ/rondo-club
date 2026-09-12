@@ -1,6 +1,6 @@
 <?php
 /**
- * Training schedule API. All versions share the same feature gate.
+ * Training schedule API. Schedule reads are public; management remains feature-gated.
  *
  * @package Rondo\REST
  */
@@ -17,9 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class Training extends Base {
 	public function __construct() {
 		parent::__construct();
-		if ( FeatureToggles::is_available( 'training' ) ) {
-			add_action( 'rest_api_init', [ $this, 'register_routes' ] );
-		}
+		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 
 	public function register_routes(): void {
@@ -48,11 +46,11 @@ final class Training extends Base {
 	}
 
 	public function can_read(): bool {
-		return FeatureToggles::can_access( 'training' );
+		return true;
 	}
 
 	public function can_manage(): bool {
-		return $this->can_read() && current_user_can( 'manage_options' );
+		return FeatureToggles::can_access( 'training' ) && current_user_can( 'manage_options' );
 	}
 
 	private function response( $result ) {
