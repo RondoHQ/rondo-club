@@ -164,7 +164,7 @@ export default function PersonDetail() {
   const [editingRelationship, setEditingRelationship] = useState(null);
   const [editingRelationshipIndex, setEditingRelationshipIndex] = useState(null);
   const [showAddressModal, setShowAddressModal] = useState(false);
-  const [showPersonEditModal, setShowPersonEditModal] = useState(false);
+  const [personBeingEdited, setPersonBeingEdited] = useState(null);
   const [personEditError, setPersonEditError] = useState('');
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
@@ -248,18 +248,18 @@ export default function PersonDetail() {
   };
 
   const handleSavePerson = async (data) => {
-    if (!canEditPeople) return;
+    if (!canEditPeople || personBeingEdited?.id !== person.id) return;
     setPersonEditError('');
     const editableKeys = ['first_name', 'infix', 'last_name', 'nickname', 'company_name', 'gender', 'pronouns'];
     if (canEditAllPeople) editableKeys.push('person_type');
     const changedFields = Object.fromEntries(editableKeys
-      .filter(key => (data[key] ?? '') !== (person.fields?.[key] ?? (key === 'person_type' ? 'member' : '')))
+      .filter(key => (data[key] ?? '') !== (personBeingEdited.fields?.[key] ?? (key === 'person_type' ? 'member' : '')))
       .map(key => [key, data[key]]));
     try {
       if (Object.keys(changedFields).length) {
         await updatePerson.mutateAsync({ id, data: { fields: sanitizePersonFields(person.fields, changedFields) } });
       }
-      setShowPersonEditModal(false);
+      setPersonBeingEdited(null);
     } catch (error) {
       setPersonEditError(error.response?.data?.message || 'Persoon kon niet worden opgeslagen. Probeer het opnieuw.');
     }
@@ -1271,7 +1271,7 @@ export default function PersonDetail() {
 
         <PersonHeaderActions
           key={id}
-          onEdit={canEditPeople ? () => { setPersonEditError(''); setShowPersonEditModal(true); } : undefined}
+          onEdit={canEditPeople ? () => { setPersonEditError(''); setPersonBeingEdited(person); } : undefined}
           onExport={handleExportVCard}
           onMerge={isAdmin ? () => setShowMergeModal(true) : undefined}
           onSync={canSyncFromSportlink && fields.knvb_id ? handleSyncFromSportlink : undefined}
@@ -2161,15 +2161,15 @@ export default function PersonDetail() {
             todo={editingTodo}
           />
           
-          {showPersonEditModal && canEditPeople && (
+          {personBeingEdited?.id === person.id && canEditPeople && (
             <Suspense fallback={null}>
               <PersonEditModal
                 key={id}
                 isOpen
-                onClose={() => setShowPersonEditModal(false)}
+                onClose={() => setPersonBeingEdited(null)}
                 onSubmit={handleSavePerson}
                 isLoading={updatePerson.isPending}
-                person={person}
+                person={personBeingEdited}
                 canEditPersonType={canEditAllPeople}
                 submitError={personEditError}
               />
