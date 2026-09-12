@@ -3273,6 +3273,21 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
       ),
       'kind' => 'post',
     ),
+    'rondo_training' => [ 'kind' => 'post', 'fields' => [
+'season' => [ 'canonical_name' => 'season', 'name' => 'season', 'storage_name' => 'season', 'key' => 'field_training_season', 'label' => 'season', 'type' => 'text' ],
+'revision' => [ 'canonical_name' => 'revision', 'name' => 'revision', 'storage_name' => 'revision', 'key' => 'field_training_revision', 'label' => 'revision', 'type' => 'number', 'default_value' => 0 ],
+'blocks' => [ 'canonical_name' => 'blocks', 'name' => 'blocks', 'storage_name' => 'blocks', 'key' => 'field_training_blocks', 'label' => 'blocks', 'type' => 'repeater', 'sub_fields' => [
+'block_id' => [ 'canonical_name' => 'block_id', 'name' => 'block_id', 'storage_name' => 'block_id', 'key' => 'field_training_block_id', 'label' => 'block_id', 'type' => 'text' ],
+'label' => [ 'canonical_name' => 'label', 'name' => 'label', 'storage_name' => 'label', 'key' => 'field_training_label', 'label' => 'label', 'type' => 'text' ],
+'team_ids' => [ 'canonical_name' => 'team_ids', 'name' => 'team_ids', 'storage_name' => 'team_ids', 'key' => 'field_training_team_ids', 'label' => 'team_ids', 'type' => 'relationship', 'post_type' => ['team'], 'return_format' => 'id' ],
+'pitch_id' => [ 'canonical_name' => 'pitch_id', 'name' => 'pitch_id', 'storage_name' => 'pitch_id', 'key' => 'field_training_pitch_id', 'label' => 'pitch_id', 'type' => 'text' ],
+'day' => [ 'canonical_name' => 'day', 'name' => 'day', 'storage_name' => 'day', 'key' => 'field_training_day', 'label' => 'day', 'type' => 'number' ],
+'start' => [ 'canonical_name' => 'start', 'name' => 'start', 'storage_name' => 'start', 'key' => 'field_training_start', 'label' => 'start', 'type' => 'time_picker', 'return_format' => 'H:i', 'display_format' => 'H:i' ],
+'duration' => [ 'canonical_name' => 'duration', 'name' => 'duration', 'storage_name' => 'duration', 'key' => 'field_training_duration', 'label' => 'duration', 'type' => 'number' ],
+'size' => [ 'canonical_name' => 'size', 'name' => 'size', 'storage_name' => 'size', 'key' => 'field_training_size', 'label' => 'size', 'type' => 'number' ],
+'offset' => [ 'canonical_name' => 'offset', 'name' => 'offset', 'storage_name' => 'offset', 'key' => 'field_training_offset', 'label' => 'offset', 'type' => 'number' ],
+] ],
+] ],
     'rondo_room' =>
     array (
       'fields' =>

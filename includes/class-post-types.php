@@ -30,6 +30,7 @@ class PostTypes {
 		'discipline_case'      => [ 'discipline_case', 'discipline_cases' ],
 		'rondo_invoice'        => [ 'invoice', 'invoices' ],
 		'rondo_room'           => [ 'room', 'rooms' ],
+		'rondo_training'       => [ 'training_schedule', 'training_schedules' ],
 		'rondo_room_booking'   => [ 'room_booking', 'room_bookings' ],
 		'rondo_tournament'     => [ 'tournament', 'tournaments' ],
 		'rondo_tourn_entry'    => [ 'tournament_entry', 'tournament_entries' ],
@@ -115,6 +116,22 @@ class PostTypes {
 		$this->register_invoice_statuses();
 		$this->register_invoice_post_type();
 		$this->register_room_post_type();
+		register_post_type(
+			'rondo_training',
+			array_merge(
+				[
+					'label'              => 'Trainingsschema’s',
+					'public'             => false,
+					'publicly_queryable' => false,
+					'show_ui'            => false,
+					'show_in_rest'       => false,
+					'query_var'          => false,
+					'rewrite'            => false,
+					'supports'           => [ 'title', 'author' ],
+				],
+				self::capability_args( 'rondo_training' )
+			)
+		);
 		$this->register_room_booking_post_type();
 		$this->register_tournament_post_type();
 		$this->register_tournament_entry_post_type();

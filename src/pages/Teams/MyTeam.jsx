@@ -1,3 +1,4 @@
+import TeamTraining from '@/components/TeamTraining';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronDown, Mail, Phone, Users } from 'lucide-react';
@@ -216,6 +217,7 @@ export default function MyTeam() {
               className="space-y-4"
             >
               {teams.length === 1 ? <h2 id="my-team-name" className="text-xl font-semibold text-gray-900 dark:text-gray-100">{team.name}</h2> : null}
+              <TeamTraining teamId={team.id} />
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Staf</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{(team.staff || []).length} {(team.staff || []).length === 1 ? 'staflid' : 'stafleden'}</p>
