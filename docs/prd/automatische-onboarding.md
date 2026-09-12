@@ -26,6 +26,7 @@ hieronder zijn voorgestelde beginwaarden voor de bewerkbare mailblokken.
 | Bediening | Planning, uitstellen, resultaat en fouten op de persoonspagina |
 | Uitstellen | Beheerder kiest een nieuwe datum en tijd |
 | Ledenontvangers | Alle opgegeven adressen van het lid en de ouders/verzorgers, ontdubbeld per lid |
+| Ontbrekende oudernaam | Importeer het opgegeven ouderadres met de vervangende naam `Ouder van {voornaam kind}` |
 | Vrijwilligers- en VOG-mailontvangers | Alle eigen adressen; bij vrijwilligers jonger dan 18 ook opgegeven ouderadressen, steeds ontdubbeld |
 | Herinschrijving | Opnieuw een ledenwelkomstmail na 24 uur bij een echte nieuwe inschrijving; geen nieuwe ronde bij seizoenswisseling |
 | Terugkerende vrijwilliger | Na aantoonbaar stoppen en opnieuw beginnen een nieuwe vrijwilligerswelkomstmail na 24 uur |
@@ -115,6 +116,13 @@ relaties via de bestaande gegevens- en toegangsregels. Gebruik geen afgeleide
 verwantschap op basis van alleen een gedeeld e-mailadres. Neem ook een tweede
 opgegeven adres mee. Leg in de technische inventarisatie vast hoe Sportlink-
 ouderslots en zelfstandige ouderrecords samenkomen, zodat geen bron wordt gemist.
+
+Ontbreekt de oudernaam bij een geldig opgegeven ouderadres, importeer de ouder dan
+met de vervangende naam **Ouder van {voornaam kind}**, bijvoorbeeld **Ouder van Emma**.
+Het ontbreken van de naam mag het adres niet meer uitsluiten. Gebruik een beschikbare
+echte oudernaam vóór deze vervangende naam en overschrijf een bekende echte naam niet
+met de vervangende naam. De koppeling aan het kind blijft gebaseerd op het opgegeven
+ouderslot, niet op de gegenereerde naam.
 
 Normaliseer witruimte en hoofdletters volgens het bestaande communicatiebeleid en
 ontdubbel per lid. Verander geen provider-specifieke punten of plus-adressering.
@@ -617,18 +625,22 @@ geldig `EmailAddressParent1`/`EmailAddressParent2`. Alleen de bestaande gekoppel
 ouderpersonen verzamelen voldoet daardoor niet aan 'alle opgegeven adressen'. Ouders
 worden bovendien per mailbox samengevoegd; een mailbox is geen unieke natuurlijke persoon.
 
-**Implementatievoorstel:** behoud deze opgegeven contactadressen met hun bron en
-koppeling aan het kind in het native veldcontract, ook zonder oudernaam. Verzin daarvoor
-geen ouderidentiteit. Eén gedeelde ontvangerservice combineert eigen `email_1`/`email_2`,
-deze bronadressen en de toegestane ouderrelaties, valideert en ontdubbelt per persoon.
+**Gekozen oplossing:** sla een ouder met een geldig opgegeven adres niet langer over
+bij een ontbrekende naam. Gebruik **Ouder van {voornaam kind}** als vervangende naam
+in de ouderimport en behoud het adres en de bronkoppeling aan het kind. Een echte
+oudernaam heeft voorrang; de vervangende naam is geen bewijs van identiteit. Eén
+gedeelde ontvangerservice combineert eigen `email_1`/`email_2` en de toegestane
+ouderadressen/-relaties, valideert en ontdubbelt per persoon. De bestaande samenvoeging
+op mailbox mag geen dubbele ouderrecords veroorzaken door verschillende kindnamen.
 Voor vrijwilligers/VOG bepaalt de geboortedatum of ouderadressen mogen meedoen; een
 onbekende leeftijd is geen bewijs van minderjarigheid. De omgang met ontbrekende
 geboortedatums moet zichtbaar zijn in de simulatie.
 
 `includes/class-activation-service.php` zoekt nu alleen gepubliceerde personen via
-`email_1`/`email_2`. Een uitsluitend bij het kind bewaard ouderadres zou daar dus nog
-niet kunnen activeren. Breid ontvangerverzameling en activatiekoppeling samen uit, met
-e-mailbewijs en behoud van de bestaande account-/kindkeuze. Gebruik geen synthetische
+`email_1`/`email_2`. Door het adres bij de geïmporteerde ouder te bewaren kan deze
+bestaande zoekroute worden gebruikt. Verifieer bij implementatie de activatie van zo'n
+ouder, met e-mailbewijs en behoud van de bestaande account-/kindkeuze. Een uitsluitend
+bij het kind bewaard adres zou deze zoekroute nog missen. Gebruik geen synthetische
 WordPress-gebruikersadressen uit `ContactEmailRouter` als mailontvangers.
 
 De bestaande `PersonCommunicationPolicy` dekt overlijden, geldigheid en ontdubbeling
@@ -694,7 +706,8 @@ ontvangers, blokkades en geselecteerde mailblokken. De simulatie verstuurt niets
 
 Minimaal te bewijzen vóór fase 2: herhaalde en gedeeltelijk mislukte imports, hergebruik
 van een ouderpersoon, tijdelijke bronafwezigheid, echte terugkeer, rollen met toekomstige
-datums, ouderadres zonder naam, twee kinderen met dezelfde mailbox, gedeeltelijke
+datums, ouderadres met vervangende naam en werkende activatie, voorrang van een echte
+oudernaam, twee kinderen met dezelfde mailbox, gedeeltelijke
 mailacceptatie, crash na acceptatie, providertermijn verstreken en herhaalde callbacks.
 Test handmatig verzenden en cron tegen dezelfde claim. De simulatie en deze tests zijn
 tijdens deze inventarisatie nog niet gebouwd of uitgevoerd.
