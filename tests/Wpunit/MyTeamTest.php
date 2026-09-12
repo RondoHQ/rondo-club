@@ -2,6 +2,7 @@
 
 namespace Tests\Wpunit;
 
+use Rondo\Core\VolunteerStatus;
 use Rondo\Data\InverseRelationships;
 use Rondo\Fields\Fields;
 use Rondo\REST\Teams;
@@ -117,9 +118,10 @@ class MyTeamTest extends RondoTestCase {
 		$this->assertSame(
 			[
 				[
-					'id'      => $this->team_id,
-					'name'    => 'JO13-1',
-					'players' => [
+					'id'                => $this->team_id,
+					'name'              => 'JO13-1',
+					'can_view_contacts' => true,
+					'players'           => [
 						[
 							'id'        => $player,
 							'name'      => 'Lange van der Spelersnaam',
@@ -194,14 +196,145 @@ class MyTeamTest extends RondoTestCase {
 		$this->assertNull( $this->request()->get_data()[0]['players'][0]['thumbnail'] );
 	}
 
-	public function test_only_coaching_roles_grant_access(): void {
+	public function test_only_coaching_roles_grant_contact_access(): void {
 		foreach ( [ 'Trainer', 'Coach', 'Trainer/coach', 'Hoofdtrainer', 'Assistent-trainer', 'Assistent-trainer/coach', 'Assistent-coach', 'Leider', 'Teamleider', ' teammanager ' ] as $role ) {
 			Fields::update_for_post( $this->coach_id, 'work_history', [ $this->position( $this->team_id, $role ) ] );
 			$this->assertSame( 200, $this->request()->get_status(), $role );
+			$this->assertTrue( $this->request()->get_data()[0]['can_view_contacts'], $role );
 		}
-		foreach ( [ 'Teamspeler', 'Scheidsrechter', 'Coördinator', 'Materiaalman', 'Oud-trainer', '' ] as $role ) {
+		foreach ( VolunteerStatus::get_player_roles() as $role ) {
+			Fields::update_for_post( $this->coach_id, 'work_history', [ $this->position( $this->team_id, $role ) ] );
+			$this->assertSame( 200, $this->request()->get_status(), $role );
+			$this->assertFalse( $this->request()->get_data()[0]['can_view_contacts'], $role );
+		}
+		foreach ( [ 'Scheidsrechter', 'Coördinator', 'Materiaalman', 'Oud-trainer', '' ] as $role ) {
 			Fields::update_for_post( $this->coach_id, 'work_history', [ $this->position( $this->team_id, $role ) ] );
 			$this->assertSame( 403, $this->request()->get_status(), $role );
+		}
+	}
+
+	public function test_players_receive_only_teammate_names_and_photos(): void {
+		wp_set_current_user( 1 );
+		Fields::update_for_post( $this->coach_id, 'work_history', [ $this->position( $this->team_id ) ] );
+		$parent     = $this->createPerson(
+			[],
+			[
+				'first_name' => 'Ouder',
+				'email_1'    => 'ouder@example.org',
+			]
+			);
+		$player     = $this->createPerson(
+			[],
+			[
+				'first_name'    => 'Speler',
+				'email_1'       => 'private@example.org',
+				'mobile_1'      => '0612345678',
+				'work_history'  => [ $this->position( $this->team_id ) ],
+				'relationships' => [
+					[
+						'related_person'    => $parent,
+						'relationship_type' => InverseRelationships::TYPE_PARENT,
+					],
+				],
+			]
+		);
+		$image      = wp_upload_bits( 'teammate.gif', null, base64_decode( 'R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==' ) );
+		$attachment = self::factory()->attachment->create_upload_object( $image['file'], $player );
+		set_post_thumbnail( $player, $attachment );
+		$other_team = $this->createOrganization( [ 'post_title' => 'JO15-1' ] );
+		$this->createPerson(
+			[],
+			[
+				'first_name'   => 'Andere speler',
+				'work_history' => [ $this->position( $other_team ) ],
+			]
+			);
+		wp_set_current_user( $this->user_id );
+
+		$request = new \WP_REST_Request( 'GET', '/rondo/v1/my-teams' );
+		$request->set_param( 'can_view_contacts', true );
+		$request->set_param( 'team_id', $other_team );
+		$request->set_param( 'user_id', 1 );
+		$response = rest_do_request( $request );
+		$team     = $response->get_data()[0];
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'private, no-store', $response->get_headers()['Cache-Control'] );
+		$this->assertSame( [ $this->team_id ], array_column( $response->get_data(), 'id' ) );
+		$this->assertFalse( $team['can_view_contacts'] );
+		$this->assertSame(
+			[
+				[
+					'id'        => $this->coach_id,
+					'name'      => 'Coach',
+					'thumbnail' => null,
+				],
+				[
+					'id'        => $player,
+					'name'      => 'Speler',
+					'thumbnail' => wp_get_attachment_image_url( $attachment, 'thumbnail' ),
+				],
+			],
+			$team['players']
+		);
+		$this->assertNotEmpty( $team['players'][1]['thumbnail'] );
+		$this->assertTrue( ( new UserSettings() )->get_current_user_data( $this->user_id )['has_my_teams'] );
+		$this->assertFalse( \Rondo\Core\AccessControl::can_view_person( $player, $this->user_id ) );
+		$this->assertFalse( \Rondo\Core\AccessControl::can_view_person( $parent, $this->user_id ) );
+	}
+
+	public function test_contact_access_is_per_team_even_for_players_shared_between_teams(): void {
+		wp_set_current_user( 1 );
+		$second = $this->createOrganization( [ 'post_title' => 'JO13-2' ] );
+		$player = $this->createPerson(
+			[],
+			[
+				'first_name' => 'Speler',
+				'email_1'    => 'private@example.org',
+			]
+			);
+		$roles  = [
+			$this->position( $this->team_id ),
+			$this->position( $this->team_id, 'Trainer' ),
+			$this->position( $second ),
+		];
+		foreach ( [ $roles, array_reverse( $roles ) ] as $assignments ) {
+			Fields::update_for_post( $this->coach_id, 'work_history', $assignments );
+			foreach ( [ [ $this->team_id, $second ], [ $second, $this->team_id ] ] as $team_ids ) {
+				Fields::update_for_post( $player, 'work_history', array_map( fn( int $id ): array => $this->position( $id ), $team_ids ) );
+				wp_set_current_user( $this->user_id );
+				$teams    = $this->request()->get_data();
+				$contacts = array_column( $teams[0]['players'], null, 'id' );
+				$basic    = array_column( $teams[1]['players'], null, 'id' );
+				$this->assertTrue( $teams[0]['can_view_contacts'] );
+				$this->assertFalse( $teams[1]['can_view_contacts'] );
+				$this->assertSame( [ 'private@example.org' ], $contacts[ $player ]['emails'] );
+				$this->assertSame(
+					[
+						'id'        => $player,
+						'name'      => 'Speler',
+						'thumbnail' => null,
+					],
+					$basic[ $player ]
+					);
+			}
+		}
+
+		// A player with an expired coaching role keeps only the basic roster.
+		$roles[1] = $this->position( $this->team_id, 'Trainer', [ 'end_date' => '2000-01-01' ] );
+		Fields::update_for_post( $this->coach_id, 'work_history', $roles );
+		foreach ( $this->request()->get_data() as $team ) {
+			$this->assertFalse( $team['can_view_contacts'] );
+			foreach ( $team['players'] as $teammate ) {
+				$this->assertSame( [ 'id', 'name', 'thumbnail' ], array_keys( $teammate ) );
+			}
+		}
+	}
+
+	public function test_non_current_player_assignments_do_not_grant_roster_access(): void {
+		foreach ( [ [ 'is_current' => false ], [ 'end_date' => '2000-01-01' ], [ 'start_date' => '2099-01-01' ] ] as $dates ) {
+			Fields::update_for_post( $this->coach_id, 'work_history', [ $this->position( $this->team_id, 'Teamspeler', $dates ) ] );
+			$this->assertSame( 403, $this->request()->get_status() );
+			$this->assertFalse( ( new UserSettings() )->get_current_user_data( $this->user_id )['has_my_teams'] );
 		}
 	}
 
