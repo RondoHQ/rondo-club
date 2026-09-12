@@ -28,13 +28,13 @@ hieronder zijn voorgestelde beginwaarden voor de bewerkbare mailblokken.
 | Bediening | Planning, uitstellen, resultaat en fouten op de persoonspagina |
 | Onzekere verzending | Registreer iedere verzending per adres; controleer bij twijfel eerst de verzendstatus en verstuur niet blind opnieuw |
 | Uitstellen | Beheerder kiest een nieuwe datum en tijd |
-| Ledenontvangers | Alle opgegeven adressen van het lid en de ouders/verzorgers, ontdubbeld per lid |
+| Ledenontvangers | Alle eigen adressen van het lid; alleen bij leden jonger dan 18 ook opgegeven ouder-/verzorgeradressen, ontdubbeld per lid |
 | Ontbrekende oudernaam | Importeer het opgegeven ouderadres met de vervangende naam `Ouder van {voornaam kind}` |
 | Vrijwilligers- en VOG-mailontvangers | Alle eigen adressen; bij vrijwilligers jonger dan 18 ook opgegeven ouderadressen, steeds ontdubbeld |
 | Herinschrijving | Opnieuw een ledenwelkomstmail na 24 uur bij een echte nieuwe inschrijving; geen nieuwe ronde bij seizoenswisseling |
 | Terugkerende vrijwilliger | Na aantoonbaar stoppen en opnieuw beginnen een nieuwe vrijwilligerswelkomstmail na 24 uur |
 | Nieuw lid meteen vrijwilliger | Eén gecombineerde mail met ledeninformatie en relevante vrijwilligersblokken; alle blokken bewerkbaar |
-| Ledenaanhef | `Beste {first_name} en eventuele ouders/verzorgers,` |
+| Ledenaanhef | Onder 18: `Beste {first_name} en eventuele ouders/verzorgers,`; vanaf 18: `Beste {first_name},` |
 | Accountactivatie | Vaste knop naar `/activeren`; geen kortlevende tokenlink in de welkomstmail |
 | Vrijwilligersinhoud | Alleen toepasselijke blokken, bepaald bij verzending |
 | Mailinstellingen | Onderwerp en alle blokken afzonderlijk bewerkbaar; voorbeeld van de complete mail |
@@ -123,15 +123,20 @@ historie. Een herstelimport of tijdelijke sync-fout bewijst geen beëindiging/te
 
 ### Ontvangers van de ledenmail
 
-Verzamel geldige, opgegeven adressen van het lid en de vastgestelde ouder-/verzorger-
-relaties via de bestaande gegevens- en toegangsregels. Gebruik geen afgeleide
+Verzamel alle geldige, opgegeven eigen adressen van het lid. Voeg alleen bij leden
+jonger dan 18 de opgegeven adressen van vastgestelde ouder-/verzorgerrelaties toe.
+Bij volwassen nieuwe leden ontvangen ouders geen onboardingmail; gebruik uitsluitend
+de eigen adressen van het lid. Controleer leeftijd en relaties vóór verzending en
+voeg bij een onbekende leeftijd niet automatisch ouderadressen toe. Gebruik de
+bestaande gegevens- en toegangsregels en geen afgeleide
 verwantschap op basis van alleen een gedeeld e-mailadres. Neem ook een tweede
 opgegeven adres mee. Leg in de technische inventarisatie vast hoe Sportlink-
 ouderslots en zelfstandige ouderrecords samenkomen, zodat geen bron wordt gemist.
 
 Ontbreekt de oudernaam bij een geldig opgegeven ouderadres, importeer de ouder dan
 met de vervangende naam **Ouder van {voornaam kind}**, bijvoorbeeld **Ouder van Emma**.
-Het ontbreken van de naam mag het adres niet meer uitsluiten. Gebruik een beschikbare
+Het ontbreken van de naam mag een volgens de leeftijdsregel toegestaan ouderadres
+niet meer uitsluiten. Gebruik een beschikbare
 echte oudernaam vóór deze vervangende naam en overschrijf een bekende echte naam niet
 met de vervangende naam. De koppeling aan het kind blijft gebaseerd op het opgegeven
 ouderslot, niet op de gegenereerde naam.
@@ -146,11 +151,15 @@ niet in To/CC zien en een fout per adres kan worden afgehandeld.
 
 Behoud de ingestelde inhoud over contributie, kleding, trainingen/wedstrijden en
 vrijwilligerswerk als startpunt; overschrijf bestaande clubteksten niet stilzwijgend.
-De afgesproken introductie is:
+De afgesproken introductie voor leden jonger dan 18 is:
 
 > Beste {first_name} en eventuele ouders/verzorgers,
 >
 > Welkom bij AWC! We zijn blij dat {first_name} lid is geworden.
+
+Spreek volwassen leden rechtstreeks aan met **Beste {first_name},** en verwijs in
+hun mail niet naar ouders/verzorgers. De toelichting op ouderaccounts hieronder
+verschijnt alleen in de mail voor minderjarige leden.
 
 Voeg een knop **Activeer je Rondo-account** toe naar de vaste clubpagina `/activeren`:
 
@@ -181,10 +190,10 @@ vast. Controleer leeftijd en relaties opnieuw vóór verzending; voeg geen ouder
 automatisch toe als de leeftijd niet betrouwbaar vastgesteld kan worden.
 
 Kies accountblokken per ontvangercontext: de aanwezigheid van het vrijwilligersaccount
-betekent niet dat de ouder ook een account heeft. De ledenmail houdt haar eerder
-afgesproken ruimere ontvangerregel. De precieze toepassing op een gecombineerde mail
-moet worden vastgelegd, zodat die geen vrijwilligers-/VOG-informatie naar een volgens
-deze regel uitgesloten ontvanger stuurt; zie hoofdstuk 9.
+betekent niet dat de ouder ook een account heeft. Leden-, vrijwilligers- en VOG-mails
+gebruiken dezelfde leeftijdsgrens voor ouderadressen. Ook de gecombineerde welkomstmail
+gaat vanaf 18 uitsluitend naar eigen adressen, zodat die geen informatie naar een volgens
+deze regel uitgesloten ontvanger stuurt.
 
 ### Instellingen
 
@@ -469,8 +478,9 @@ verzendservice met de 24-uursplanning en pas ontvangers, aanhef en activatieknop
 Behoud bestaande clubinhoud. Verbind de bestaande handmatige verzendroute met dezelfde
 controle, zodat die de wachttijd, status en ontdubbeling niet kan omzeilen.
 
-**Gereed wanneer:** vóór 24 uur niets uitgaat; uitstellen werkt; alle unieke adressen
-één logische mail krijgen; stoppen/overgaan naar vrijwilliger vóór verzending werkt;
+**Gereed wanneer:** vóór 24 uur niets uitgaat; uitstellen werkt; alle unieke toegestane
+adressen één logische mail krijgen; vanaf 18 geen ouderadressen worden toegevoegd;
+stoppen/overgaan naar vrijwilliger vóór verzending werkt;
 gedeeltelijk falen veilig kan worden hersteld; wijzigingen in rollen vlak vóór
 verzending effect hebben; echte herinschrijving een nieuwe ronde opent terwijl een
 seizoenswisseling dat niet doet. Vrijwilligersverzending blijft uit totdat fase 3 gereed is.
@@ -563,7 +573,6 @@ vastgelegde hoofdlijn niet en mogen niet onzichtbaar als productbeleid worden in
 |---|---|---|
 | Bronbewijs van definitieve inschrijving | Fase 1/2 | Productkeuze staat vast: geen onboarding tijdens voorinschrijving. Verifieer welk brongegeven de definitieve inschrijving bevestigt; wacht minimaal 24 uur vanaf de latere van ingangsdatum/herkenning en verstuur niet zolang de overschrijving openstaat |
 | Betrouwbaar bewijs van stoppen en terugkeer | Fase 1/2/3 | Productkeuze staat vast: opnieuw verwelkomen; technische detectie moet tijdelijke sync-gaten en seizoenswisselingen uitsluiten |
-| Gecombineerde mail en verschillende ontvangerregels | Fase 3 | Ledenmail omvat ouderadressen; vrijwilligers-/VOG-mail alleen onder 18. Voorstel: één gecombineerde mail per toegestane ontvanger, met alleen ledenblokken voor eventuele andere ledenmailontvangers |
 | Welkomstmail bij VOG in controle of opnieuw aanleveren | Fase 3 | Eigen bewerkbare tekst nodig die de werkelijke vervolgstap beschrijft |
 | Vernieuwing binnenkort en aanvraag al actief | Fase 4 | Bestaande geldigheids-/vernieuwingsgrenzen centraal gebruiken; actuele aanvraag voorkomt een dubbele start |
 | Kledingtekst bij terugkeer | Fase 3/5 | Werkvoorraad wordt heropend met historie; tekst moet beoordeling van benodigde kleding beloven, geen automatisch nieuw volledig pakket |
@@ -653,7 +662,7 @@ oudernaam heeft voorrang; de vervangende naam is geen bewijs van identiteit. Eé
 gedeelde ontvangerservice combineert eigen `email_1`/`email_2` en de toegestane
 ouderadressen/-relaties, valideert en ontdubbelt per persoon. De bestaande samenvoeging
 op mailbox mag geen dubbele ouderrecords veroorzaken door verschillende kindnamen.
-Voor vrijwilligers/VOG bepaalt de geboortedatum of ouderadressen mogen meedoen; een
+Voor leden-, vrijwilligers- en VOG-mails bepaalt de geboortedatum of ouderadressen mogen meedoen; een
 onbekende leeftijd is geen bewijs van minderjarigheid. De omgang met ontbrekende
 geboortedatums moet zichtbaar zijn in de simulatie.
 
@@ -728,7 +737,8 @@ ontvangers, blokkades en geselecteerde mailblokken. De simulatie verstuurt niets
 Minimaal te bewijzen vóór fase 2: herhaalde en gedeeltelijk mislukte imports, hergebruik
 van een ouderpersoon, tijdelijke bronafwezigheid, echte terugkeer, rollen met toekomstige
 datums, ouderadres met vervangende naam en werkende activatie, voorrang van een echte
-oudernaam, twee kinderen met dezelfde mailbox, gedeeltelijke
+oudernaam, twee kinderen met dezelfde mailbox, geen ouderontvangers bij volwassen
+leden (ook bij een gecombineerde mail), de overgang naar 18 jaar vóór verzending, gedeeltelijke
 mailacceptatie, crash na acceptatie, providertermijn verstreken en herhaalde callbacks.
 Test handmatig verzenden en cron tegen dezelfde claim. De simulatie en deze tests zijn
 tijdens deze inventarisatie nog niet gebouwd of uitgevoerd.
