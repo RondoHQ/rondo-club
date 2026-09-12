@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useMemo, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, Building2, ReceiptEuro, ImagePlus, LoaderCircle, Monitor, Pencil, UserRoundPlus, X, Link2, Share2, RotateCcw, Check } from 'lucide-react';
+import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck, Building2, ReceiptEuro, ImagePlus, LoaderCircle, Monitor, Pencil, UserRoundPlus, X, Link2, Share2, RotateCcw, Check, Camera, UserRound, ChevronDown } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useUpdateSponsorNarrowcastingPreference, useUploadSponsorLogo } from '@/hooks/useSponsors';
@@ -11,6 +11,8 @@ import { format } from '@/utils/dateFormat';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import AnchoredPopover from '@/components/AnchoredPopover';
 import TeamCalendarActions from '@/components/TeamCalendarActions';
+import PhotoCropModal from '@/components/PhotoCropModal';
+import PhotoSyncIndicator from '@/components/PhotoSyncIndicator';
 import ParentRelationshipModal from '@/components/ParentRelationshipModal';
 import { useAddHouseholdParent } from '@/hooks/useMemberProfile';
 import { useCreateGuestPassSlot, useMyGuestPasses, useReplaceGuestPassSlot } from '@/hooks/useGuestPasses';
@@ -406,6 +408,73 @@ function SponsorCard({ organization }) {
   );
 }
 
+function ProfileSection({ title, icon: Icon, children, defaultOpen = false }) {
+  return (
+    <details open={defaultOpen} className="group border-t border-gray-200 dark:border-gray-700">
+      <summary className="flex cursor-pointer list-none items-center gap-3 py-4 text-sm font-medium text-gray-900 focus-visible:outline-2 focus-visible:outline-bright-cobalt dark:text-gray-100 [&::-webkit-details-marker]:hidden">
+        <Icon className="h-4 w-4 text-gray-400" aria-hidden="true" />
+        <span className="flex-1">{title}</span>
+        <ChevronDown className="h-4 w-4 text-gray-400 transition-transform group-open:rotate-180" aria-hidden="true" />
+      </summary>
+      <div className="pb-5">{children}</div>
+    </details>
+  );
+}
+
+function ProfilePhoto({ person, name }) {
+  const fileRef = useRef(null);
+  const [file, setFile] = useState(null);
+  const [error, setError] = useState('');
+  const queryClient = useQueryClient();
+  const upload = useMutation({
+    mutationFn: (photo) => prmApi.uploadHouseholdPhoto(person.id, photo),
+    onSuccess: () => {
+      setFile(null);
+      queryClient.invalidateQueries({ queryKey: ['household'] });
+      queryClient.invalidateQueries({ queryKey: ['people'] });
+      queryClient.invalidateQueries({ queryKey: ['current-user'] });
+    },
+  });
+  const selectPhoto = (event) => {
+    const selected = event.target.files?.[0];
+    event.target.value = '';
+    if (!selected) return;
+    setError('');
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(selected.type)) {
+      setError('Kies een JPG-, PNG-, WebP- of GIF-foto.');
+    } else if (selected.size > 5 * 1024 * 1024) {
+      setError('De foto mag maximaal 5 MB zijn.');
+    } else {
+      setFile(selected);
+    }
+  };
+
+  return (
+    <div className="row-span-2 w-28 sm:row-span-1 sm:w-36">
+      <div className="relative w-24 sm:w-28">
+        {person.thumbnail ? (
+          <img src={person.thumbnail} alt={`Profielfoto van ${name}`} className="aspect-square w-full rounded-2xl object-cover" />
+        ) : (
+          <div className="flex aspect-square items-center justify-center rounded-2xl bg-gray-100 text-gray-400 dark:bg-gray-700"><UserRound className="h-12 w-12" aria-hidden="true" /></div>
+        )}
+        <PhotoSyncIndicator status={person.photo_sync_status} knvbId={person.fields?.knvb_id} hasPhoto={Boolean(person.thumbnail)} />
+      </div>
+      {person.can_edit_photo ? (
+        <>
+          <button type="button" className="mt-2 inline-flex items-center gap-1.5 rounded text-sm font-medium text-bright-cobalt focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bright-cobalt disabled:opacity-50 dark:text-electric-cyan" onClick={() => fileRef.current?.click()} disabled={upload.isPending || person.photo_sync_status?.state === 'sending'} aria-describedby={`photo-help-${person.id}`}>
+            <Camera className="h-4 w-4" aria-hidden="true" />{person.thumbnail ? 'Foto wijzigen' : 'Foto toevoegen'}
+          </button>
+          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" aria-label={`Foto kiezen voor ${name}`} onChange={selectPhoto} />
+          <p id={`photo-help-${person.id}`} className="mt-1 max-w-36 text-xs text-gray-500 dark:text-gray-400">JPG, PNG, WebP of GIF · max. 5 MB</p>
+        </>
+      ) : null}
+      {error ? <p role="alert" className="mt-2 max-w-40 text-xs text-red-600 dark:text-red-400">{error}</p> : null}
+      {upload.isSuccess ? <p role="status" className="mt-2 text-xs text-green-700 dark:text-green-300">Foto opgeslagen</p> : null}
+      {file ? <PhotoCropModal file={file} onClose={() => setFile(null)} onSave={(photo) => upload.mutateAsync(photo)} isSaving={upload.isPending} /> : null}
+    </div>
+  );
+}
+
 function PersonCard({ person, isParent, householdPeople, linkedPersonId, onAddParent }) {
   const [profileEditorAnchor, setProfileEditorAnchor] = useState(null);
   const closeProfileEditor = useCallback(() => setProfileEditorAnchor(null), []);
@@ -421,16 +490,19 @@ function PersonCard({ person, isParent, householdPeople, linkedPersonId, onAddPa
 
   return (
     <div className="card max-w-3xl p-5">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="min-w-0">
+      <div className="mb-6 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:gap-x-5">
+        <ProfilePhoto person={person} name={name} />
+        <div className="min-w-0 flex-1">
           {isSelf && sponsorOrganization ? (
             <Eyebrow>{isParent ? 'Contactpersoon en ouder' : 'Contactpersoon'}</Eyebrow>
           ) : null}
-          <h2 className={`${isSelf && sponsorOrganization ? 'mt-0.5 ' : ''}break-words font-semibold text-gray-900 dark:text-gray-100`}>
+          <h2 className={`${isSelf && sponsorOrganization ? 'mt-0.5 ' : ''}break-words text-xl font-semibold text-gray-900 dark:text-gray-100`}>
             {name}
           </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{relationshipLabel}</p>
+          {person.teams?.length ? <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">{person.teams.map((team) => team.name).join(' · ')}</p> : null}
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="col-start-2 flex items-center gap-2 sm:col-start-3">
           {isSelf || person.household_role === 'child' ? (
             <button
               type="button"
@@ -444,31 +516,39 @@ function PersonCard({ person, isParent, householdPeople, linkedPersonId, onAddPa
               Wijzigen
             </button>
           ) : null}
-          <span className="inline-block rounded bg-cyan-100 px-2 py-0.5 text-xs font-medium text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
-            {relationshipLabel}
-          </span>
         </div>
       </div>
 
-      <div className="grid gap-x-8 sm:grid-cols-2">
-        <Detail icon={Mail} label="E-mail" value={fields.email_1} />
-        <Detail icon={Mail} label="E-mail (2e)" value={fields.email_2} />
-        <Detail icon={Smartphone} label="Mobiel" value={fields.mobile_1} />
-        <Detail icon={Smartphone} label="Mobiel (2e)" value={fields.mobile_2} />
-        <Detail icon={Phone} label="Telefoon" value={fields.telephone_1} />
-        <Detail icon={Phone} label="Telefoon (2e)" value={fields.telephone_2} />
-        <Detail icon={MapPin} label="Adres" value={firstAddress(fields.addresses)} />
-        <Detail icon={Calendar} label="Geboortedatum" value={formatFieldDate(fields.birthdate)} />
-        <Detail icon={Users} label="Leeftijdsgroep" value={fields.leeftijdsgroep} />
-        <Detail icon={IdCard} label="KNVB-ID" value={fields['knvb_id']} />
-        <Detail icon={Calendar} label="Lid sinds" value={formatFieldDate(fields['lid_sinds'])} />
-        <Detail icon={ShieldCheck} label="VOG afgegeven" value={formatFieldDate(fields['datum_vog'])} />
-        {membershipPass ? <MembershipPassActions membershipPass={membershipPass} personId={person.id} /> : null}
-      </div>
+      <ProfileSection title="Contactgegevens" icon={Mail} defaultOpen>
+        <div className="grid gap-x-8 sm:grid-cols-2">
+          <Detail icon={Mail} label="E-mail" value={fields.email_1} />
+          <Detail icon={Mail} label="E-mail (2e)" value={fields.email_2} />
+          <Detail icon={Smartphone} label="Mobiel" value={fields.mobile_1} />
+          <Detail icon={Smartphone} label="Mobiel (2e)" value={fields.mobile_2} />
+          <Detail icon={Phone} label="Telefoon" value={fields.telephone_1} />
+          <Detail icon={Phone} label="Telefoon (2e)" value={fields.telephone_2} />
+          <Detail icon={MapPin} label="Adres" value={firstAddress(fields.addresses)} />
+        </div>
+      </ProfileSection>
+      {person.household_role !== 'other_parent' ? (
+        <ProfileSection title="Lidmaatschap" icon={IdCard}>
+          <div className="grid gap-x-8 sm:grid-cols-2">
+            <Detail icon={Calendar} label="Geboortedatum" value={formatFieldDate(fields.birthdate)} />
+            <Detail icon={Users} label="Leeftijdsgroep" value={fields.leeftijdsgroep} />
+            <Detail icon={IdCard} label="KNVB-ID" value={fields['knvb_id']} />
+            <Detail icon={Calendar} label="Lid sinds" value={formatFieldDate(fields['lid_sinds'])} />
+            <Detail icon={ShieldCheck} label="VOG afgegeven" value={formatFieldDate(fields['datum_vog'])} />
+          </div>
+        </ProfileSection>
+      ) : null}
+      {membershipPass ? (
+        <ProfileSection title={membershipPass.label || 'Ledenpas'} icon={IdCard}>
+          <MembershipPassActions membershipPass={membershipPass} personId={person.id} />
+        </ProfileSection>
+      ) : null}
 
       {person.teams?.length > 0 ? (
-        <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
-          <h3 className="flex items-center gap-3 text-sm font-medium text-gray-900 dark:text-gray-100"><Users className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" aria-hidden="true" />Teams</h3>
+        <ProfileSection title="Teamagenda’s" icon={Calendar}>
           <ul className="mt-3 space-y-4">
             {person.teams.map((team) => (
               <li key={team.id} className="min-w-0 space-y-2">
@@ -478,7 +558,7 @@ function PersonCard({ person, isParent, householdPeople, linkedPersonId, onAddPa
             ))}
           </ul>
           <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Abonneer je op de teamagenda om wedstrijdwijzigingen te ontvangen. Je kunt de ICS-link ook delen.</p>
-        </div>
+        </ProfileSection>
       ) : null}
       <ContributionStatus contribution={person.contribution} />
 
@@ -641,9 +721,11 @@ export default function Household() {
   const { data: currentUser } = useCurrentUser();
   const addHouseholdParent = useAddHouseholdParent();
   const [parentEditorChildId, setParentEditorChildId] = useState(null);
+  const [selectedPersonId, setSelectedPersonId] = useState(null);
 
   const { data: people = [], isLoading, isError } = useQuery({
     queryKey: ['household'],
+    refetchInterval: (query) => query.state.data?.some((person) => ['pending', 'sending'].includes(person.photo_sync_status?.state)) ? 5000 : false,
     queryFn: async () => {
       const response = await prmApi.getHousehold();
       return response.data;
@@ -662,6 +744,8 @@ export default function Household() {
     [ordered],
   );
 
+  const selectedPerson = ordered.find((person) => person.id === selectedPersonId) || ordered[0];
+
   if (isLoading) return <ContentLoadingSpinner />;
 
   if (isError) {
@@ -675,12 +759,11 @@ export default function Household() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-3xl space-y-5">
       <div>
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Mijn gegevens</h1>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          Je eigen gegevens en die van je kinderen onder de 18, zoals ze bij de club bekend zijn.
-          Je kunt je contactgegevens en het woonadres van je gezin hier aanpassen en de contributiestatus bekijken.
+          Beheer je foto en contactgegevens, of bekijk je ledenpas.
         </p>
       </div>
 
@@ -692,21 +775,29 @@ export default function Household() {
         </div>
       ) : (
         <>
-          {ordered.map((person) => (
-            <Fragment key={person.id}>
-              <PersonCard
-                person={person}
-                isParent={currentUser?.is_parent === true}
-                householdPeople={editablePeople}
-                linkedPersonId={linkedPersonId}
-                onAddParent={setParentEditorChildId}
-              />
-              {person.household_role === 'self' ? <GuestPassesCard /> : null}
-              {person.household_role === 'self' && person.sponsor_organization?.can_edit_logo ? (
-                <SponsorCard organization={person.sponsor_organization} />
-              ) : null}
-            </Fragment>
-          ))}
+          {ordered.length > 1 ? (
+            <nav aria-label="Gezinslid kiezen" className="flex flex-wrap gap-2">
+              {ordered.map((person) => (
+                <button key={person.id} type="button" aria-pressed={person.id === selectedPerson.id} onClick={() => setSelectedPersonId(person.id)} className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bright-cobalt ${person.id === selectedPerson.id ? 'border-bright-cobalt bg-cyan-50 font-semibold text-bright-cobalt dark:border-electric-cyan dark:bg-cyan-900/20 dark:text-electric-cyan' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
+                  {person.thumbnail ? <img src={person.thumbnail} alt="" className="h-7 w-7 rounded-full object-cover" /> : <UserRound className="h-5 w-5" aria-hidden="true" />}
+                  {formatPersonName(person.fields?.first_name, person.fields?.infix, person.fields?.last_name)}
+                </button>
+              ))}
+            </nav>
+          ) : null}
+          <Fragment key={selectedPerson.id}>
+            <PersonCard
+              person={selectedPerson}
+              isParent={currentUser?.is_parent === true}
+              householdPeople={editablePeople}
+              linkedPersonId={linkedPersonId}
+              onAddParent={setParentEditorChildId}
+            />
+            {selectedPerson.household_role === 'self' ? <GuestPassesCard /> : null}
+            {selectedPerson.household_role === 'self' && selectedPerson.sponsor_organization?.can_edit_logo ? (
+              <SponsorCard organization={selectedPerson.sponsor_organization} />
+            ) : null}
+          </Fragment>
           <ParentRelationshipModal
             isOpen={parentEditorChildId !== null}
             onClose={() => setParentEditorChildId(null)}

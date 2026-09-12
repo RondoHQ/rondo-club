@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.66.0] - 2026-09-12
+
+### Added
+
+- Let members upload and crop their own profile photo and those of their minor children from Mijn gegevens, using household-scoped permissions and the existing Sportlink photo queue.
+
+### Changed
+
+- Simplify Mijn gegevens with a family member selector, prominent profile photo, and collapsible membership, wallet and team calendar sections; keep contact details and the selected person's contribution status visible.
+
 ## [35.65.3] - 2026-09-12
 
 ### Changed
