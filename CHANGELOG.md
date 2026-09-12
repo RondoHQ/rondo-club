@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.68.0] - 2026-09-12
+
+### Added
+
+- Give players access to Mijn team with teammate names and photos. Contact details and parent information remain available only in teams where the current user also has an active coaching or team-management role, enforced in the server response and interface.
+
 ## [35.67.0] - 2026-09-12
 
 ### Added

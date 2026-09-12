@@ -55,18 +55,36 @@ function PlayerPhoto({ player }) {
   );
 }
 
-function PlayerCard({ player }) {
+function PlayerIdentity({ player, children }) {
+  return (
+    <>
+      <PlayerPhoto player={player} />
+      <span className="min-w-0 flex-1">
+        <span className="block font-semibold text-gray-900 [overflow-wrap:anywhere] dark:text-gray-100">{player.name}</span>
+        {children}
+      </span>
+    </>
+  );
+}
+
+function PlayerCard({ player, canViewContacts }) {
+  if (!canViewContacts) {
+    return (
+      <article className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+        <PlayerIdentity player={player} />
+      </article>
+    );
+  }
+
   return (
     <details className="group overflow-hidden rounded-xl border border-gray-200 bg-white open:border-bright-cobalt dark:border-gray-700 dark:bg-gray-800 dark:open:border-electric-cyan">
       <summary className="flex cursor-pointer list-none items-center gap-4 p-4 hover:bg-gray-50 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-bright-cobalt dark:hover:bg-gray-700/50 dark:focus-visible:outline-electric-cyan [&::-webkit-details-marker]:hidden">
-        <PlayerPhoto player={player} />
-        <span className="min-w-0 flex-1">
-          <span className="block font-semibold text-gray-900 [overflow-wrap:anywhere] dark:text-gray-100">{player.name}</span>
+        <PlayerIdentity player={player}>
           <span className="mt-1 block text-sm text-bright-cobalt dark:text-electric-cyan">
             <span className="group-open:hidden">Contactgegevens</span>
             <span className="hidden group-open:inline">Contactgegevens sluiten</span>
           </span>
-        </span>
+        </PlayerIdentity>
         <ChevronDown className="h-5 w-5 shrink-0 text-gray-500 group-open:rotate-180 group-open:text-bright-cobalt dark:text-gray-400 dark:group-open:text-electric-cyan" aria-hidden="true" />
       </summary>
       <div className="grid gap-5 border-t border-gray-200 p-4 sm:grid-cols-2 xl:grid-cols-3 dark:border-gray-700">
@@ -124,7 +142,9 @@ export default function MyTeam() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Mijn team</h1>
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Je spelers en hun contactgegevens bij elkaar.</p>
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          {team?.can_view_contacts === true ? 'Je spelers en hun contactgegevens bij elkaar.' : 'De spelers van je team bij elkaar.'}
+        </p>
       </div>
 
       {error ? (
@@ -173,7 +193,7 @@ export default function MyTeam() {
               </div>
               {team.players.length === 0 ? <div className="card p-6 text-sm text-gray-600 dark:text-gray-400">Er zijn nog geen actuele spelers aan dit team gekoppeld.</div> : null}
               <div className="space-y-3">
-                {team.players.map((player) => <PlayerCard key={player.id} player={player} />)}
+                {team.players.map((player) => <PlayerCard key={player.id} player={player} canViewContacts={team.can_view_contacts === true} />)}
               </div>
             </section>
           ) : (

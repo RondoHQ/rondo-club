@@ -1,6 +1,6 @@
 <?php
 /**
- * Contact-only rosters for a user's current coaching assignments.
+ * Team rosters with contact access scoped to current coaching assignments.
  *
  * @package Rondo\Teams
  */
@@ -39,9 +39,12 @@ final class MyTeam {
 			return [];
 		}
 
-		$teams = [];
+		$teams        = [];
+		$player_roles = array_map( [ self::class, 'normalize_role' ], VolunteerStatus::get_player_roles() );
 		foreach ( Fields::get_for_post( $person_id, 'work_history' ) ?: [] as $position ) {
-			if ( ! self::is_current( $position ) || ! in_array( self::normalize_role( $position['job_title'] ?? '' ), self::STAFF_ROLES, true ) ) {
+			$role     = self::normalize_role( $position['job_title'] ?? '' );
+			$is_staff = in_array( $role, self::STAFF_ROLES, true );
+			if ( ! self::is_current( $position ) || ( ! $is_staff && ! in_array( $role, $player_roles, true ) ) ) {
 				continue;
 			}
 			$team_id = (int) ( $position['team'] ?? 0 );
@@ -50,8 +53,9 @@ final class MyTeam {
 				continue;
 			}
 			$teams[ $team_id ] = [
-				'id'   => $team_id,
-				'name' => html_entity_decode( get_the_title( $team_id ), ENT_QUOTES, 'UTF-8' ),
+				'id'                => $team_id,
+				'name'              => html_entity_decode( get_the_title( $team_id ), ENT_QUOTES, 'UTF-8' ),
+				'can_view_contacts' => $is_staff || ( $teams[ $team_id ]['can_view_contacts'] ?? false ),
 			];
 		}
 		usort( $teams, static fn( array $a, array $b ): int => strnatcasecmp( $a['name'], $b['name'] ) );
@@ -59,11 +63,11 @@ final class MyTeam {
 	}
 
 	/**
-	 * Return only player/parent contacts in the current user's assigned teams.
+	 * Return player identities, adding contacts only in teams the user coaches.
 	 *
 	 * This grants no general person access. The internal roster scan bypasses the
-	 * household query filter only after resolving coaching assignments; every row
-	 * is checked against those teams before the contact allowlist is applied.
+	 * household query filter only after resolving current team assignments. Both
+	 * player membership and contact access are checked separately for each team.
 	 */
 	public static function rosters(): array {
 		$teams = self::teams_for_user();
@@ -98,23 +102,32 @@ final class MyTeam {
 			if ( Fields::get_for_post( $person->ID, 'former_member' ) ) {
 				continue;
 			}
-			$player = null;
+			$player         = null;
+			$player_contact = null;
 			foreach ( Fields::get_for_post( $person->ID, 'work_history' ) ?: [] as $position ) {
 				$team_id = (int) ( $position['team'] ?? 0 );
 				if ( ! isset( $by_team[ $team_id ] ) || ! self::is_current( $position ) || ! in_array( self::normalize_role( $position['job_title'] ?? '' ), $player_roles, true ) ) {
 					continue;
 				}
 				if ( $player === null ) {
-					$player              = self::contact( $person->ID );
+					$player              = self::identity( $person->ID );
 					$player['thumbnail'] = get_the_post_thumbnail_url( $person->ID, 'thumbnail' ) ?: null;
-					$player['parents']   = [];
+				}
+				if ( ! $by_team[ $team_id ]['can_view_contacts'] ) {
+					$by_team[ $team_id ]['players'][ $person->ID ] = $player;
+					continue;
+				}
+				if ( $player_contact === null ) {
+					$player_contact              = self::contact( $person->ID );
+					$player_contact['thumbnail'] = $player['thumbnail'];
+					$player_contact['parents']   = [];
 					foreach ( $parents->find_parents( $person->ID ) as $parent_id ) {
 						if ( self::is_published_person( $parent_id ) ) {
-							$player['parents'][] = self::contact( $parent_id );
+							$player_contact['parents'][] = self::contact( $parent_id );
 						}
 					}
 				}
-				$by_team[ $team_id ]['players'][ $person->ID ] = $player;
+				$by_team[ $team_id ]['players'][ $person->ID ] = $player_contact;
 			}
 		}
 		foreach ( $by_team as &$team ) {
@@ -152,16 +165,22 @@ final class MyTeam {
 		return $person_id > 0 && get_post_type( $person_id ) === 'person' && get_post_status( $person_id ) === 'publish';
 	}
 
-	/** An explicit allowlist; never serialize a general person or user response. */
-	private static function contact( int $person_id ): array {
+	/** Minimal roster identity only; never read contact fields for player-only access. */
+	private static function identity( int $person_id ): array {
 		$parts = [];
 		foreach ( [ 'first_name', 'infix', 'last_name' ] as $field ) {
 			$parts[] = trim( (string) Fields::get_for_post( $person_id, $field ) );
 		}
-		$name    = implode( ' ', array_filter( $parts ) );
-		$contact = [
-			'id'     => $person_id,
-			'name'   => $name ?: html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' ),
+		$name = implode( ' ', array_filter( $parts ) );
+		return [
+			'id'   => $person_id,
+			'name' => $name ?: html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' ),
+		];
+	}
+
+	/** An explicit allowlist; never serialize a general person or user response. */
+	private static function contact( int $person_id ): array {
+		$contact = self::identity( $person_id ) + [
 			'emails' => [],
 			'phones' => [],
 		];
