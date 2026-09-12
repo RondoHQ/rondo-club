@@ -9,6 +9,7 @@ use Rondo\Fields\Fields;
 use Rondo\REST\Teams;
 use Rondo\REST\UserSettings;
 use Rondo\Teams\MyTeam;
+use Rondo\Teams\TeamMatches;
 use Tests\Support\RondoTestCase;
 
 class MyTeamTest extends RondoTestCase {
@@ -123,6 +124,7 @@ class MyTeamTest extends RondoTestCase {
 					'id'                => $this->team_id,
 					'name'              => 'JO13-1',
 					'can_view_contacts' => true,
+					'calendar_url'      => TeamMatches::calendar_url( $this->team_id ),
 					'players'           => [
 						[
 							'id'            => $player,
@@ -271,6 +273,7 @@ class MyTeamTest extends RondoTestCase {
 		$this->assertSame( 'private, no-store', $response->get_headers()['Cache-Control'] );
 		$this->assertSame( [ $this->team_id ], array_column( $response->get_data(), 'id' ) );
 		$this->assertFalse( $team['can_view_contacts'] );
+		$this->assertSame( TeamMatches::calendar_url( $this->team_id ), $team['calendar_url'] );
 		$this->assertSame(
 			[
 				[
@@ -385,6 +388,7 @@ class MyTeamTest extends RondoTestCase {
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertSame( 'private, no-store', $response->get_headers()['Cache-Control'] );
 		$this->assertSame( [ $this->team_id, $second ], array_column( $response->get_data(), 'id' ) );
+		$this->assertSame( array_map( [ TeamMatches::class, 'calendar_url' ], [ $this->team_id, $second ] ), array_column( $response->get_data(), 'calendar_url' ) );
 		foreach ( $response->get_data() as $team ) {
 			$this->assertFalse( $team['can_view_contacts'] );
 			$this->assertContains( $player, array_column( $team['players'], 'id' ) );

@@ -10,7 +10,6 @@ import { formatCurrency, formatPersonName, parseFieldDate } from '@/utils/format
 import { format } from '@/utils/dateFormat';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import AnchoredPopover from '@/components/AnchoredPopover';
-import TeamCalendarActions from '@/components/TeamCalendarActions';
 import PhotoCropModal from '@/components/PhotoCropModal';
 import PhotoSyncIndicator from '@/components/PhotoSyncIndicator';
 import ParentRelationshipModal from '@/components/ParentRelationshipModal';
@@ -547,19 +546,6 @@ function PersonCard({ person, isParent, householdPeople, linkedPersonId, onAddPa
         </ProfileSection>
       ) : null}
 
-      {person.teams?.length > 0 ? (
-        <ProfileSection title="Teamagenda’s" icon={Calendar}>
-          <ul className="mt-3 space-y-4">
-            {person.teams.map((team) => (
-              <li key={team.id} className="min-w-0 space-y-2">
-                <p className="text-sm font-medium break-words text-gray-900 dark:text-gray-100">{team.name}</p>
-                <TeamCalendarActions calendarUrl={team.calendar_url} teamName={team.name} compact />
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Abonneer je op de teamagenda om wedstrijdwijzigingen te ontvangen. Je kunt de ICS-link ook delen.</p>
-        </ProfileSection>
-      ) : null}
       <ContributionStatus contribution={person.contribution} />
 
       {profileEditorAnchor ? (
