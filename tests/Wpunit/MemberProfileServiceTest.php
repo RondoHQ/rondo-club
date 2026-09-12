@@ -431,6 +431,19 @@ class MemberProfileServiceTest extends RondoTestCase {
 		$this->assertFalse( $other['can_edit_photo'] );
 		$this->assertNull( $other['thumbnail'] );
 		$this->assertNull( $other['photo_sync_status'] );
+		$image      = wp_upload_bits( 'other-parent.gif', null, base64_decode( 'R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==' ) );
+		$attachment = self::factory()->attachment->create_upload_object( $image['file'], $other_id );
+		set_post_thumbnail( $other_id, $attachment );
+		try {
+			$household = $server->dispatch( new \WP_REST_Request( 'GET', '/rondo/v1/people/household' ) )->get_data();
+			$other     = array_values( array_filter( $household, static fn( $person ) => $person['id'] === $other_id ) )[0];
+			$this->assertSame( get_the_post_thumbnail_url( $other_id, 'medium' ), $other['thumbnail'] );
+			$this->assertNotEmpty( $other['thumbnail'] );
+			$this->assertFalse( $other['can_edit_photo'] );
+			$this->assertNull( $other['photo_sync_status'] );
+		} finally {
+			wp_delete_attachment( $attachment, true );
+		}
 		$response = $server->dispatch( new \WP_REST_Request( 'POST', '/rondo/v1/people/' . $other_id . '/household-photo' ) );
 		$this->assertSame( 403, $response->get_status() );
 		get_user_by( 'id', $user_id )->set_role( 'administrator' );

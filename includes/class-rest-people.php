@@ -867,7 +867,7 @@ class People extends Base {
 			$people[]       = [
 				'id'                   => $post->ID,
 				'household_role'       => $role,
-				'thumbnail'            => $role === 'other_parent' ? null : ( get_the_post_thumbnail_url( $post->ID, 'medium' ) ?: null ),
+				'thumbnail'            => get_the_post_thumbnail_url( $post->ID, 'medium' ) ?: null,
 				'can_edit_photo'       => $role !== 'other_parent' && $this->can_edit_household_photo( (int) $post->ID ),
 				'photo_sync_status'    => $role === 'other_parent' ? null : PhotoSync::status( (int) $post->ID ),
 				'teams'                => $this->personal_team_memberships( (int) $post->ID ),
