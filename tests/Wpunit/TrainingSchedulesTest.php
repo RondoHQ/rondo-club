@@ -87,29 +87,37 @@ class TrainingSchedulesTest extends RondoTestCase {
 		return $response->get_data();
 	}
 
-	public function test_all_routes_enforce_admin_only_and_off_including_identifiers(): void {
-		$schedule = $this->create( [ $this->block() ] );
-		foreach ( [ 0, self::factory()->user->create( [ 'role' => 'subscriber' ] ) ] as $user_id ) {
-			wp_set_current_user( $user_id );
-			foreach ( [ '/schedules', '/schedules/' . $schedule['id'], '/active', '/settings' ] as $route ) {
-				$this->assertContains( $this->request( 'GET', $route )->get_status(), [ 401, 403 ] );
+	public function test_reads_are_public_in_every_flag_state_and_management_remains_protected(): void {
+		$schedule   = $this->create( [ $this->block() ] );
+		$subscriber = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		foreach ( [ 'admin_only', 'off', 'on' ] as $state ) {
+			FeatureToggles::update( [ 'training' => $state ] );
+			$controller = new \Rondo\REST\Training();
+			$this->assertNotFalse( has_action( 'rest_api_init', [ $controller, 'register_routes' ] ) );
+			$this->server = $this->bootRestControllers( [ \Rondo\REST\Training::class ] );
+			foreach ( [ 0, $subscriber, $this->admin_id ] as $user_id ) {
+				wp_set_current_user( $user_id );
+				foreach ( [ '/schedules', '/schedules/' . $schedule['id'], '/active' ] as $route ) {
+					$this->assertSame( 200, $this->request( 'GET', $route )->get_status(), $state . ': ' . $route );
+				}
+				if ( $user_id !== $this->admin_id || $state === 'off' ) {
+					foreach ( [ [ 'GET', '/settings' ], [ 'PUT', '/settings' ], [ 'POST', '/schedules' ], [ 'PUT', '/schedules/' . $schedule['id'] ], [ 'DELETE', '/schedules/' . $schedule['id'] ], [ 'POST', '/schedules/' . $schedule['id'] . '/copy' ], [ 'POST', '/schedules/' . $schedule['id'] . '/activate' ] ] as [ $method, $route ] ) {
+						$this->assertContains( $this->request( $method, $route, [] )->get_status(), [ 401, 403 ], $state . ': ' . $method . ' ' . $route );
+					}
+				} else {
+					$this->assertSame( 200, $this->request( 'GET', '/settings' )->get_status() );
+				}
 			}
-			$this->assertContains( $this->request( 'POST', '/schedules', [] )->get_status(), [ 401, 403 ] );
 		}
-		wp_set_current_user( $this->admin_id );
-		FeatureToggles::update( [ 'training' => 'off' ] );
-		$this->assertSame( 403, $this->request( 'GET', '/schedules' )->get_status() );
-		$this->assertSame( 403, $this->request( 'PUT', '/settings', [] )->get_status() );
 	}
 
-	public function test_all_versions_have_stable_ids_and_are_public_only_when_enabled(): void {
+	public function test_all_versions_have_stable_ids_and_are_public_without_authentication(): void {
 		$one = $this->create( [ $this->block() ] );
 		$this->assertSame( 'Regulier', $one['name'] );
 		$two = $this->request( 'POST', '/schedules/' . $one['id'] . '/copy', [ 'name' => 'Slecht weer' ] )->get_data();
 		$this->assertNotSame( $one['id'], $two['id'] );
 		$this->assertSame( $one['blocks'], $two['blocks'] );
 		$this->assertSame( 200, $this->request( 'POST', '/schedules/' . $two['id'] . '/activate', [ 'revision' => 1 ] )->get_status() );
-		FeatureToggles::update( [ 'training' => 'on' ] );
 		wp_set_current_user( 0 );
 		$feed = $this->request( 'GET', '/schedules' );
 		$this->assertCount( 2, $feed->get_data()['schedules'] );
