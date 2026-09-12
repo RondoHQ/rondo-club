@@ -4,7 +4,7 @@ import {
   ArrowLeft, Trash2, Mail, Phone,
   MapPin, Building2, Plus, Pencil, MessageCircle, X, Camera, Download,
   CheckSquare2, StickyNote, ExternalLink, Gavel, RefreshCw,
-  CalendarClock, GitMerge
+  GitMerge, ContactRound, UsersRound
 } from 'lucide-react';
 import { peopleKeys, usePerson, usePersonTimeline, useDeleteNote, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, useAddParentRelationship, usePeopleByIds } from '@/hooks/usePeople';
 import TimelineView from '@/components/Timeline/TimelineView';
@@ -23,14 +23,14 @@ import ParentRelationshipModal from '@/components/ParentRelationshipModal';
 import AddressEditModal from '@/components/AddressEditModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import FinancesCard from '@/components/FinancesCard';
-import VOGCard from '@/components/VOGCard';
+import DocumentsCard from '@/components/DocumentsCard';
+import PersonShiftOverview from '@/components/PersonShiftOverview';
 import SportlinkCard from '@/components/SportlinkCard';
-import IvaCard from '@/components/IvaCard';
 import PhotoSyncIndicator from '@/components/PhotoSyncIndicator';
 import AccountCard from '@/components/AccountCard';
 import PersonSponsorRelationsCard from '@/components/PersonSponsorRelationsCard';
 import SponsorRelationshipModal from '@/components/SponsorRelationshipModal';
-import { format, formatStoredDateTime, parseYmd, differenceInYears } from '@/utils/dateFormat';
+import { format, parseYmd, differenceInYears } from '@/utils/dateFormat';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -57,122 +57,6 @@ function ParentSyncBadge({ status }) {
     <span className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[11px] font-medium ${presentation.classes}`} title={status.message || undefined}>
       {presentation.label}
     </span>
-  );
-}
-
-function PersonShiftItem({ shift }) {
-  const status = shift.no_show
-    ? { label: 'No-show', classes: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' }
-    : shift.status === 'voltooid'
-      ? { label: 'Voltooid', classes: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' }
-      : shift.status === 'geannuleerd'
-        ? { label: 'Geannuleerd', classes: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' }
-        : { label: 'Ingepland', classes: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300' };
-
-  return (
-    <li className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-            {decodeHtml(shift.dienst_type_name || shift.title)}
-          </p>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {formatStoredDateTime(shift.start_datetime, 'EEEE d MMMM yyyy, HH:mm')}
-            {shift.end_datetime ? ` – ${formatStoredDateTime(shift.end_datetime, 'HH:mm')}` : ''}
-          </p>
-        </div>
-        <span className={`shrink-0 rounded px-2 py-0.5 text-xs font-medium ${status.classes}`}>
-          {status.label}
-        </span>
-      </div>
-    </li>
-  );
-}
-
-function PersonShiftOverview({ overview, isLoading }) {
-  const upcoming = overview?.upcoming || [];
-  const recent = overview?.recent || [];
-  const obligations = overview?.obligations || [];
-  const activeObligations = obligations.filter((obligation) => !obligation.exemption);
-  const required = activeObligations.reduce((total, obligation) => total + obligation.required_count, 0);
-  const hasFamilyObligation = obligations.some((obligation) => obligation.kind === 'gezin');
-  const hasPersonalObligation = obligations.some((obligation) => obligation.kind === 'speler');
-
-  return (
-    <section className="card p-6">
-      <div className="mb-4 flex items-center gap-2">
-        <CalendarClock className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-        <h2 className="font-semibold text-brand-gradient">Inschrijftaken</h2>
-      </div>
-
-      {isLoading ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">Inschrijftaken laden…</p>
-      ) : (
-        <div className="space-y-6">
-          <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800/60">
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Vrijwilligersplicht {overview?.season ? `· ${overview.season}` : ''}
-            </p>
-            <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {required} {required === 1 ? 'inschrijftaak' : 'inschrijftaken'} vereist
-            </p>
-            {obligations.length === 0 ? (
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Geen persoonlijke of gezinsplicht.</p>
-            ) : (
-              <div className="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-300">
-                {obligations.map((obligation) => {
-                  const isFamily = obligation.kind === 'gezin';
-                  const label = isFamily
-                    ? `Gezin${obligation.child_count > 0 ? ` (${obligation.child_count} ${obligation.child_count === 1 ? 'kind' : 'kinderen'})` : ''}`
-                    : 'Persoonlijk';
-
-                  return (
-                    <p key={obligation.kind}>
-                      <span className="font-medium">{label}:</span>{' '}
-                      {obligation.exemption
-                        ? 'vrijgesteld'
-                        : `${obligation.required_count} ${obligation.required_count === 1 ? 'inschrijftaak' : 'inschrijftaken'}`}
-                    </p>
-                  );
-                })}
-                {hasFamilyObligation && (
-                  <p className="pt-1 text-xs text-gray-500 dark:text-gray-400">
-                    De gezinsplicht is gedeeld; inschrijftaken van gezinsleden tellen hierin mee.
-                    {hasPersonalObligation ? ' De persoonlijke plicht komt daar bovenop.' : ''}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Komend ({upcoming.length})
-            </h3>
-            {upcoming.length > 0 ? (
-              <ul className="space-y-2">
-                {upcoming.map((shift) => <PersonShiftItem key={shift.id} shift={shift} />)}
-              </ul>
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Geen komende inschrijftaken gepland.</p>
-            )}
-          </div>
-
-          <div>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Laatste 2 inschrijftaken
-            </h3>
-            {recent.length > 0 ? (
-              <ul className="space-y-2">
-                {recent.map((shift) => <PersonShiftItem key={shift.id} shift={shift} />)}
-              </ul>
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Nog geen eerdere inschrijftaken.</p>
-            )}
-          </div>
-        </div>
-      )}
-    </section>
   );
 }
 
@@ -1181,6 +1065,23 @@ export default function PersonDetail() {
     });
   }, [timeline]);
 
+
+  const renderProfileTodos = (todos) => todos.map((todo) => (
+    <TodoItem
+      key={todo.id}
+      todo={todo}
+      currentPersonId={parseInt(id, 10)}
+      onToggle={handleToggleTodo}
+      onEdit={canEditPeople ? (t) => {
+        setEditingTodo(t);
+        setShowTodoModal(true);
+      } : undefined}
+      onDelete={canEditPeople ? handleDeleteTodo : undefined}
+      onSendVerificationEmail={handleSendVerificationEmail}
+      verificationEmailSending={verificationTodoId === todo.id}
+    />
+  ));
+
   // Count of open (non-completed) todos for sidebar badge
   const openTodosCount = useMemo(() => {
     return sortedTodos.filter(todo => todo.status !== 'completed').length;
@@ -1615,26 +1516,26 @@ export default function PersonDetail() {
       </div>
 
       {/* Tab Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className={activeTab === 'profile' ? 'person-profile-layout grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6' : 'grid grid-cols-1 lg:grid-cols-3 gap-6'}>
         {/* Main content */}
-        <div className="lg:col-span-2 min-w-0 space-y-6">
+        <div className={activeTab === 'profile' ? 'contents' : 'lg:col-span-2 min-w-0 space-y-6'}>
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Column 1: Contactgegevens, Adressen, Custom Fields */}
-            <div className="space-y-6">
+          <div className="contents">
+            {/* Column 1: Contactgegevens, Relaties, Custom Fields */}
+            <div className="min-w-0 space-y-6">
             {/* Contact info - only show for living people */}
           {!isDeceased && (
             <div className="card p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-brand-gradient">Contactgegevens</h2>
+                <h2 className="flex items-center gap-2 font-semibold text-gray-900 dark:text-gray-100"><ContactRound className="w-5 h-5 shrink-0 text-bright-cobalt" aria-hidden="true" />Contactgegevens</h2>
                 {canEditContact && (
                   <button
                     onClick={() => setShowContactModal(true)}
                     className="btn-tertiary text-sm"
                   >
                     <Pencil className="w-4 h-4 md:mr-1" />
-                    <span className="hidden md:inline">Bewerken</span>
+                    <span>Bewerken</span>
                   </button>
                 )}
               </div>
@@ -1651,11 +1552,11 @@ export default function PersonDetail() {
                     <div key={index}>
                       <div className="flex items-center rounded-md -mx-2 px-2 py-1.5">
                         <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
-                        <div className="flex-1 min-w-0 flex items-center gap-2">
-                          <span className="text-sm text-gray-500 dark:text-gray-400">{contact.label}: </span>
+                        <div className="flex-1 min-w-0 flex items-center gap-2 break-words">
+                          <span className="sr-only">{contact.label}: </span>
                           <a
                             href={linkHref}
-                            className="text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light hover:underline"
+                            className="min-w-0 break-words text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light hover:underline"
                           >
                             {contact.type === 'email' ? contact.value : formatPhoneForDisplay(contact.value)}
                           </a>
@@ -1684,14 +1585,10 @@ export default function PersonDetail() {
                 </a>
               </div>
             )}
-            </div>
-          )}
-
-            {/* Addresses - only show for living people */}
-            {!isDeceased && (
-              <div className="card p-6">
+            {/* Addresses share the contact card and its existing edit permissions. */}
+              <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="font-semibold text-brand-gradient">Adressen</h2>
+                  <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">{fields.addresses?.length > 1 ? 'Adressen' : 'Adres'}</h3>
                   {canEditAddress && (
                     <button
                       onClick={() => {
@@ -1711,17 +1608,20 @@ export default function PersonDetail() {
                     {fields.addresses.map((address, index) => {
                       const addressLines = [
                         [address.street_name, address.house_number, address.house_number_addition].filter(Boolean).join(' '),
-                        [address.city, address.state, address.postal_code].filter(Boolean).join(', '),
+                        [address.postal_code, address.city, address.state].filter(Boolean).join(' '),
                         [address.country, address.country_code ? `(${address.country_code})` : null].filter(Boolean).join(' ')
                       ].filter(Boolean);
                       
+                      const isDutchAddress = address.country_code?.toUpperCase() === 'NL' || ['nederland', 'netherlands'].includes(address.country?.toLowerCase());
+                      const displayLines = isDutchAddress ? addressLines.slice(0, -1) : addressLines;
+                      const showAddressLabel = address.address_label && !(fields.addresses.length === 1 && isDutchAddress && address.address_label.toLowerCase() === 'home');
                       const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressLines.join(', '))}`;
 
                       return (
                         <div key={index} className="flex items-start group">
                           <MapPin className="w-4 h-4 text-gray-400 mt-1 mr-3 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
-                            {address.address_label && (
+                            {showAddressLabel && (
                               <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{address.address_label}</p>
                             )}
                             <a
@@ -1730,13 +1630,13 @@ export default function PersonDetail() {
                               rel="noopener noreferrer"
                               className="text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light hover:underline text-sm"
                             >
-                              {addressLines.map((line, i) => (
+                              {displayLines.map((line, i) => (
                                 <span key={i} className="block">{line}</span>
                               ))}
                             </a>
                           </div>
                           {canEditAddress && (
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                            <div className="flex items-center gap-1 ml-2">
                               <button
                                 onClick={() => {
                                   setEditingAddress(fields.addresses[index]);
@@ -1767,42 +1667,14 @@ export default function PersonDetail() {
                   </p>
                 )}
               </div>
-            )}
-
-            {/* Custom Fields */}
-            <CustomFieldsSection
-              postType="person"
-              postId={parseInt(id)}
-              fieldData={person?.fields}
-              onUpdate={canEditPeople ? (newFieldValues) => {
-                const fieldData = sanitizePersonFields(person.fields, newFieldValues);
-                updatePerson.mutateAsync({
-                  id,
-                  data: { fields: fieldData },
-                });
-              } : undefined}
-              isUpdating={updatePerson.isPending}
-              excludeLabelPrefixes={['Nikki']}
-            />
-
-            <PersonShiftOverview overview={shiftOverview} isLoading={isShiftOverviewLoading} />
             </div>
-
-            {/* Column 2: Sportlink, IVA, Relaties, VOG */}
-            <div className="space-y-6">
-            {/* Sportlink Card */}
-            <SportlinkCard fieldData={person?.fields} metaData={person?.meta} primaryTeam={sportlinkPrimaryTeam} />
-            <IvaCard
-              fieldData={person?.fields}
-              personId={person.id}
-              canViewCertificate={isAdmin || currentUser?.can_access_vrijwilligers || Number(currentUser?.linked_person_id) === person.id}
-            />
+          )}
 
             {/* Keep the card available for editable people so the first relationship can be added. */}
             {(canEditPeople || canManageSponsors || sortedRelationships?.length > 0 || person?.sponsor_relationships?.length > 0) && (
             <div className="card p-6">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold text-brand-gradient">Relaties</h2>
+                <h2 className="flex items-center gap-2 font-semibold text-gray-900 dark:text-gray-100"><UsersRound className="w-5 h-5 shrink-0 text-bright-cobalt" aria-hidden="true" />Relaties</h2>
                 {(canEditPeople || canManageSponsors) && (
                   <div className="flex items-center gap-2">
                     <button
@@ -1880,18 +1752,38 @@ export default function PersonDetail() {
             </div>
             )}
 
-            {/* VOG Card */}
-            <VOGCard
+            {/* Custom Fields */}
+            <CustomFieldsSection
+              postType="person"
+              postId={parseInt(id)}
               fieldData={person?.fields}
-              personId={parseInt(id)}
-              onUpdateField={(fieldName, value) => {
+              onUpdate={canEditPeople ? (newFieldValues) => {
+                const fieldData = sanitizePersonFields(person.fields, newFieldValues);
                 updatePerson.mutateAsync({
                   id,
-                  data: { fields: { [fieldName]: value || null } },
+                  data: { fields: fieldData },
                 });
-              }}
+              } : undefined}
+              isUpdating={updatePerson.isPending}
+              excludeLabelPrefixes={['Nikki']}
+            />
+
+            </div>
+
+            {/* Column 2: Lidmaatschap, Documenten, Financieel */}
+            <div className="min-w-0 space-y-6">
+            {/* Sportlink Card */}
+            <SportlinkCard fieldData={person?.fields} metaData={person?.meta} primaryTeam={sportlinkPrimaryTeam} />
+            <DocumentsCard
+              fieldData={person.fields}
+              personId={person.id}
+              canAccessVog={currentUser?.can_access_vog}
+              canViewCertificate={isAdmin || currentUser?.can_access_vrijwilligers || Number(currentUser?.linked_person_id) === person.id}
+              onUpdateField={(fieldName, value) => updatePerson.mutateAsync({ id, data: { fields: { [fieldName]: value || null } } })}
               isUpdating={updatePerson.isPending}
             />
+            <FinancesCard personId={parseInt(id)} />
+
             </div>
           </div>
         )}
@@ -2097,17 +1989,17 @@ export default function PersonDetail() {
 
         </div>
 
-        {/* Sidebar - always visible */}
-        <div className="hidden lg:block">
-          <div className="sticky top-6 space-y-6">
-            {/* Finances Card */}
-            <FinancesCard personId={parseInt(id)} />
+        {/* Profile column 3; other tabs retain their desktop sidebar. */}
+        <div className={activeTab === 'profile' ? 'min-w-0 md:col-span-2 xl:col-span-1' : 'hidden lg:block'}>
+          <div className={activeTab === 'profile' ? 'space-y-6' : 'sticky top-6 space-y-6'}>
+            {activeTab === 'profile' ? <PersonShiftOverview overview={shiftOverview} isLoading={isShiftOverviewLoading} /> : <FinancesCard personId={parseInt(id)} />}
 
             {/* Todos Card */}
             <div className="card p-6">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <h2 className="font-semibold text-brand-gradient">Taken</h2>
+                  <h2 className="flex items-center gap-2 font-semibold text-brand-gradient"><CheckSquare2 className="w-5 h-5 shrink-0 text-bright-cobalt" aria-hidden="true" />Taken</h2>
+                  {openTodosCount === 0 && <span className="text-sm text-gray-500 dark:text-gray-400">0 open</span>}
                   {openTodosCount > 0 && (
                     <span className="bg-cyan-100 text-bright-cobalt text-xs font-medium px-2 py-0.5 rounded-full">
                       {openTodosCount}
@@ -2127,41 +2019,25 @@ export default function PersonDetail() {
                   </button>
                 )}
               </div>
-              {sortedTodos.length > 0 ? (
-                <div className="space-y-2">
-                  {sortedTodos.map((todo) => (
-                    <TodoItem
-                      key={todo.id}
-                      todo={todo}
-                      currentPersonId={parseInt(id, 10)}
-                      onToggle={handleToggleTodo}
-                      onEdit={canEditPeople ? (t) => {
-                        setEditingTodo(t);
-                        setShowTodoModal(true);
-                      } : undefined}
-                      onDelete={canEditPeople ? handleDeleteTodo : undefined}
-                      onSendVerificationEmail={handleSendVerificationEmail}
-                      verificationEmailSending={verificationTodoId === todo.id}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 text-center py-4">
-                  Nog geen taken.
-                </p>
+              {openTodosCount > 0 && <div className="space-y-2">{renderProfileTodos(sortedTodos.filter(todo => todo.status !== 'completed'))}</div>}
+              {sortedTodos.some(todo => todo.status === 'completed') && (
+                <details className="mt-3 text-sm">
+                  <summary className="cursor-pointer text-gray-500 dark:text-gray-400">Afgeronde taken ({sortedTodos.length - openTodosCount})</summary>
+                  <div className="mt-3 space-y-2">{renderProfileTodos(sortedTodos.filter(todo => todo.status === 'completed'))}</div>
+                </details>
               )}
             </div>
 
             {/* Account Card (admin only, when account exists) */}
             {config.isAdmin && person?.linked_user_id && (
-              <AccountCard personId={id} personData={person} />
+              <AccountCard key={id} personId={id} personData={person} />
             )}
           </div>
         </div>
       </div>
 
-      {/* Mobile Todos FAB - visible on screens below lg */}
-      <button
+      {/* Other tabs retain quick access to tasks on mobile. */}
+      {activeTab !== 'profile' && <button
         onClick={() => setShowMobileTodos(true)}
         className="fixed bottom-6 right-6 z-40 lg:hidden bg-electric-cyan hover:bg-bright-cobalt text-white rounded-full p-4 shadow-lg transition-colors"
         title="Taken bekijken"
@@ -2172,7 +2048,7 @@ export default function PersonDetail() {
             {openTodosCount}
           </span>
         )}
-      </button>
+      </button>}
 
       {/* Mobile Todos Slide-up Panel */}
       {showMobileTodos && (

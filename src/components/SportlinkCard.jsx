@@ -99,17 +99,10 @@ export default function SportlinkCard({ fieldData, metaData, primaryTeam }) {
     }
   }
 
-  return (
-    <div className="card p-6 mb-4">
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-4">
-        <Database className="w-5 h-5 text-bright-cobalt" />
-        <h2 className="font-semibold text-brand-gradient">Sportlink</h2>
-      </div>
-
-      {/* Field list */}
-      <dl className="space-y-2">
-        {fields.map((field) => {
+  const primaryKeys = ['type_lid', 'lid_sinds', 'lid_tot', 'team'];
+  const renderFields = (selectedFields) => (
+    <dl className="space-y-2">
+        {selectedFields.map((field) => {
           // Skip fields without values (except boolean which we always render when visible)
           if (!field.value && field.type !== 'boolean' && !field.showWhenEmpty) {
             return null;
@@ -136,7 +129,19 @@ export default function SportlinkCard({ fieldData, metaData, primaryTeam }) {
             </div>
           );
         })}
-      </dl>
-    </div>
+    </dl>
+  );
+
+  return (
+    <section className="card p-6" aria-label="Lidmaatschap">
+      <h2 className="mb-4 flex items-center gap-2 font-semibold text-gray-900 dark:text-gray-100">
+        <Database className="w-5 h-5 shrink-0 text-bright-cobalt" aria-hidden="true" />Lidmaatschap
+      </h2>
+      {renderFields(fields.filter(field => primaryKeys.includes(field.key)))}
+      <details className="mt-4">
+        <summary className="cursor-pointer text-sm text-bright-cobalt dark:text-electric-cyan">Sportlink-gegevens</summary>
+        <div className="mt-3">{renderFields(fields.filter(field => !primaryKeys.includes(field.key)))}</div>
+      </details>
+    </section>
   );
 }
