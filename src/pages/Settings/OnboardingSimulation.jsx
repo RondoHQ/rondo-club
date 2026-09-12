@@ -18,7 +18,7 @@ export default function OnboardingSimulation() {
   return (
     <section className="space-y-4" aria-label="Onboarding simulatie">
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-950 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-100">
-        <h3 className="font-semibold">Proefweergave — er worden geen e-mails verstuurd</h3>
+        <h3 className="font-semibold text-blue-950 dark:text-blue-100">Proefweergave — er worden geen e-mails verstuurd</h3>
         <p className="mt-1 text-sm">Bekijk de ontvangers, beschikbare mailblokken en ontbrekende gegevens per persoon. Dit is nog geen volledige e-mailpreview. De gerichte broncontrole vanuit Sync en de verzending worden in volgende stappen aangesloten.</p>
       </div>
       <form className="flex flex-wrap gap-2" onSubmit={(event) => { event.preventDefault(); setSearch(input.trim()); setPage(1); }}>
@@ -30,7 +30,7 @@ export default function OnboardingSimulation() {
       {isPending ? <p role="status">Simulatie laden…</p> : null}
       {error ? <p role="alert" className="text-red-600">{error.response?.data?.message || 'De simulatie kon niet worden geladen.'}</p> : null}
       {data ? <>
-        <p className="text-sm text-gray-500">{data.total} personen gevonden. Nieuwe records staan bovenaan; dit betekent niet dat zij nieuwe leden zijn.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-300">{data.total} {data.total === 1 ? 'persoon' : 'personen'} gevonden. Nieuwe records staan bovenaan; dit betekent niet dat zij nieuwe leden zijn.</p>
         {data.people.length === 0 ? <p>Geen personen gevonden.</p> : null}
         {data.people.map((person) => <article key={person.person_id} className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
           <Link to={`/people/${person.person_id}`} className="font-semibold text-electric-cyan hover:underline">{person.name}</Link>
