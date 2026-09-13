@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.77.1] - 2026-09-13
+
+### Changed
+- Display confirmed Sportlink parent field labels as muted text without a colored badge background.
+
 ## [35.77.0] - 2026-09-13
 
 ### Added
