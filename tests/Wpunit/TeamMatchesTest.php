@@ -237,4 +237,39 @@ class TeamMatchesTest extends RondoTestCase {
 		$this->assertWPError( $result );
 		$this->assertSame( 503, $result->get_error_data()['status'] );
 	}
+
+	public function test_placeholder_cache_survives_outage_and_tracks_newly_scheduled_matches(): void {
+		$directory    = $this->directory();
+		$directory[0] = array_merge(
+			$directory[0],
+			[
+				'competitiesoort'    => 'regulier',
+				'kalespelsoort'      => 'VE',
+				'leeftijdscategorie' => 'Onder 12',
+				'competitienaam'     => 'Onder 12 (1e fase)',
+				'klasse'             => '1e klasse',
+				'speeldag'           => 'Zaterdag',
+			]
+			);
+		set_transient( 'rondo_team_match_directory', $directory, HOUR_IN_SECONDS );
+		$service = new TeamMatches();
+		$first   = $service->get_feed( $this->team_id );
+		$this->assertArrayHasKey( 'matchdays', $first );
+		if ( ! $first['matchdays'] ) {
+			$this->assertSame( [], $first['matchdays'] );
+			return; // Source season has no remaining dates; pure calendar tests use fixed dates.
+		}
+		$date = array_key_first( $first['matchdays'] );
+		$this->expire_cache();
+		$this->programme = [ $this->fixture( '100', 123, $date ) ];
+		$second          = $service->get_feed( $this->team_id );
+		$this->assertCount( 1, $second['matches'] );
+		$this->assertTrue( $second['matchdays'][ $date ]['cancelled'] );
+		$this->assertSame( 1, $second['matchdays'][ $date ]['sequence'] );
+		$this->expire_cache();
+		$this->fail = true;
+		$stale      = $service->get_feed( $this->team_id );
+		$this->assertTrue( $stale['stale'] );
+		$this->assertSame( $second['matchdays'], $stale['matchdays'] );
+	}
 }
