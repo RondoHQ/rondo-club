@@ -112,7 +112,7 @@ class TeamMatches {
 		if ( ! is_array( $cache ) || ( $cache['season'] ?? '' ) !== $season['key'] || ( $cache['identity'] ?? '' ) !== $identity ) {
 			$cache = [];
 		}
-		if ( ( $cache['retry_after'] ?? 0 ) > time() ) {
+		if ( ( $cache['retry_after'] ?? 0 ) > time() && ( isset( $cache['matchdays'] ) || ! empty( $cache['stale'] ) ) ) {
 			return $this->response( $cache );
 		}
 		$lock = 'rondo_team_matches_lock_' . $team_id;
@@ -137,6 +137,10 @@ class TeamMatches {
 					'stale'      => false,
 					'updated_at' => null,
 				];
+			}
+			$profile = $season['key'] === KnvbMatchdays::data()['season'] ? KnvbMatchdays::resolve( $team, $directory ) : null;
+			if ( is_wp_error( $profile ) ) {
+				return $this->failed_refresh( $team_id, $cache );
 			}
 			$today  = new DateTimeImmutable( 'today', wp_timezone() );
 			$monday = $today->modify( 'monday this week' );
@@ -208,6 +212,7 @@ class TeamMatches {
 				'identity'    => $identity,
 				'matched'     => true,
 				'matches'     => array_values( $items ),
+				'matchdays'   => KnvbMatchdays::reconcile( KnvbMatchdays::candidates( $profile, $season['key'] ), $items, $cache['matchdays'] ?? [], $today->format( 'Y-m-d' ) ),
 				'stale'       => false,
 				'updated_at'  => gmdate( DATE_RFC3339 ),
 				'retry_after' => time() + self::TTL,
@@ -232,7 +237,7 @@ class TeamMatches {
 
 	/** Expose only match data and freshness, never internal identity/cache keys. */
 	private function response( array $cache ): array {
-		return array_intersect_key( $cache, array_flip( [ 'season', 'matched', 'matches', 'stale', 'updated_at' ] ) );
+		return array_intersect_key( $cache, array_flip( [ 'season', 'matched', 'matches', 'matchdays', 'stale', 'updated_at' ] ) );
 	}
 
 	/** Reuse the same shareable subscription URL on team and household pages. */
@@ -270,6 +275,21 @@ class TeamMatches {
 			$lines[] = 'LOCATION:' . self::escape( $item['location'] );
 			$lines[] = 'DESCRIPTION:' . self::escape( implode( "\n", array_filter( [ $item['competition'], $item['status'], $item['pitch'] ? 'Veld: ' . $item['pitch'] : '', ! $item['time_known'] ? 'Aanvangstijd nog niet bekend.' : '' ] ) ) );
 			$lines[] = 'STATUS:' . ( $item['cancelled'] ? 'CANCELLED' : 'CONFIRMED' );
+			$lines[] = 'END:VEVENT';
+		}
+		foreach ( $feed['matchdays'] ?? [] as $item ) {
+			$stamp   = gmdate( 'Ymd\THis\Z', strtotime( $item['modified_at'] ) );
+			$lines[] = 'BEGIN:VEVENT';
+			$lines[] = 'UID:rondo-matchday-' . $team_id . '-' . $item['date'] . '@' . wp_parse_url( home_url(), PHP_URL_HOST );
+			$lines[] = 'DTSTAMP:' . $stamp;
+			$lines[] = 'LAST-MODIFIED:' . $stamp;
+			$lines[] = 'SEQUENCE:' . $item['sequence'];
+			$lines[] = 'DTSTART;VALUE=DATE:' . str_replace( '-', '', $item['date'] );
+			$lines[] = 'DTEND;VALUE=DATE:' . str_replace( '-', '', $item['end_date'] );
+			$lines[] = 'SUMMARY:' . self::escape( html_entity_decode( get_the_title( $team_id ), ENT_QUOTES, 'UTF-8' ) . ' - ' . $item['label'] . ' (voorlopig)' );
+			$lines[] = 'DESCRIPTION:' . self::escape( 'Nog geen wedstrijd ingepland. Tegenstander en aanvangstijd volgen zodra de wedstrijd is vastgesteld.' . "\nKNVB Oost 2026/27: " . $item['source_text'] . "\n" . KnvbMatchdays::data()['source'] );
+			$lines[] = 'STATUS:' . ( $item['cancelled'] ? 'CANCELLED' : 'TENTATIVE' );
+			$lines[] = 'TRANSP:TRANSPARENT';
 			$lines[] = 'END:VEVENT';
 		}
 		$lines[] = 'END:VCALENDAR';
