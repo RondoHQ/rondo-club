@@ -8,6 +8,7 @@
 namespace Rondo\Users;
 
 use Rondo\Fields\Fields;
+use Rondo\Data\InverseRelationships;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -68,6 +69,7 @@ final class ProfileChangeLog {
 			return new \WP_Error( 'rondo_empty_profile_change', 'Er zijn geen wijzigingen om vast te leggen.' );
 		}
 
+		$changes    = self::prepare_parent_sync( $changes, $type );
 		$person_ids = [];
 		$pending    = [];
 		foreach ( $changes as $change ) {
@@ -76,6 +78,9 @@ final class ProfileChangeLog {
 				continue;
 			}
 			$person_ids[] = $person_id;
+			foreach ( $change['parent_sync']['child_ids'] ?? [] as $child_id ) {
+				$pending[] = self::pending_key( $person_id, 'parent_' . $child_id . '_' . $change['field'] );
+			}
 			if ( ! empty( $change['sync'] ) && Fields::try_get_for_post( $person_id, 'knvb_id' ) ) {
 				$sync_fields = ! empty( $change['sync_fields'] ) && is_array( $change['sync_fields'] )
 					? $change['sync_fields']
@@ -109,6 +114,70 @@ final class ProfileChangeLog {
 		update_post_meta( $post_id, '_rondo_profile_change_sync_status', empty( $pending ) ? 'local_only' : 'pending' );
 
 		return (int) $post_id;
+	}
+
+	/** Snapshot the separate Sportlink parent-slot targets of an audited action. */
+	public static function prepare_parent_sync( array $changes, string $type = '' ): array {
+		$phone_fields = [ 'mobile_1', 'telephone_1', 'mobile_2', 'telephone_2' ];
+		$phone_done   = [];
+		foreach ( $changes as &$change ) {
+			unset( $change['parent_sync'] );
+			$person_id = (int) ( $change['person_id'] ?? 0 );
+			$field     = (string) ( $change['field'] ?? '' );
+			$is_phone  = in_array( $field, $phone_fields, true );
+			if ( $type === 'email_promoted' && $field === 'email_2' ) {
+				continue;
+			}
+			if ( ! $is_phone && ! in_array( $field, [ 'email_1', 'email_2' ], true ) ) {
+				continue;
+			}
+			$old = (string) ( $change['old'] ?? '' );
+			$new = (string) ( $change['new'] ?? '' );
+			if ( $is_phone ) {
+				if ( isset( $phone_done[ $person_id ] ) ) {
+					continue;
+				}
+				$phone_done[ $person_id ] = true;
+				$current                  = [];
+				foreach ( $phone_fields as $phone_field ) {
+					$current[ $phone_field ] = (string) Fields::try_get_for_post( $person_id, $phone_field );
+				}
+				$before = $current;
+				foreach ( $changes as $other ) {
+					if ( (int) $other['person_id'] === $person_id && in_array( $other['field'], $phone_fields, true ) ) {
+						$before[ $other['field'] ] = (string) $other['old'];
+					}
+				}
+				$old = (string) ( array_values( array_filter( $before ) )[0] ?? '' );
+				$new = (string) ( array_values( array_filter( $current ) )[0] ?? '' );
+			}
+			if ( $old === $new || ( ! $is_phone && $old === '' ) ) {
+				continue;
+			}
+			$child_ids = [];
+			foreach ( Fields::try_get_for_post( $person_id, 'relationships' ) ?: [] as $relationship ) {
+				$child_id = (int) ( $relationship['related_person'] ?? 0 );
+				if ( (int) ( $relationship['relationship_type'] ?? 0 ) !== InverseRelationships::TYPE_CHILD || get_post_type( $child_id ) !== 'person' || get_post_status( $child_id ) !== 'publish' || ! Fields::try_get_for_post( $child_id, 'knvb_id' ) || Fields::try_get_for_post( $child_id, 'former_member' ) ) {
+					continue;
+				}
+				foreach ( Fields::try_get_for_post( $child_id, 'relationships' ) ?: [] as $inverse ) {
+					if ( (int) ( $inverse['related_person'] ?? 0 ) === $person_id && (int) ( $inverse['relationship_type'] ?? 0 ) === InverseRelationships::TYPE_PARENT ) {
+						$child_ids[] = $child_id;
+						break;
+					}
+				}
+			}
+			if ( $child_ids ) {
+				$change['parent_sync'] = [
+					'child_ids' => array_values( array_unique( $child_ids ) ),
+					'kind'      => $is_phone ? 'phone' : 'email',
+					'old'       => $old,
+					'new'       => $new,
+				];
+			}
+		}
+		unset( $change );
+		return $changes;
 	}
 
 	/** Apply one rondo-sync callback to every matching pending audit action. */

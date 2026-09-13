@@ -139,6 +139,73 @@ class MemberProfileServiceTest extends RondoTestCase {
 		$this->assertSame( 'synced', get_post_meta( $result['log_id'], '_rondo_profile_change_sync_status', true ) );
 	}
 
+	public function test_parent_without_knvb_id_tracks_phone_sync_for_each_current_child(): void {
+		[ $user_id, $parent_id ] = $this->linked_member( 'parent-slots@example.com' );
+		$first                   = $this->add_minor_child( $parent_id, 'Eerste Kind', 'first@example.com' );
+		$second                  = $this->add_minor_child( $parent_id, 'Tweede Kind', 'second@example.com' );
+		$former                  = $this->add_minor_child( $parent_id, 'Oud Kind', 'former@example.com' );
+		foreach ( [ $first, $second, $former ] as $child_id ) {
+			Fields::update_for_post( $child_id, 'knvb_id', 'CHILD' . $child_id );
+		}
+		Fields::update_for_post( $former, 'former_member', true );
+		$result = MemberProfileService::update_phones( $user_id, [ 'mobile_1' => '+31612345678' ] );
+		$log_id = $result['log_id'];
+		$this->assertSame( 'pending', get_post_meta( $log_id, '_rondo_profile_change_sync_status', true ) );
+		$this->assertSame(
+			[ $parent_id . ':parent_' . $first . '_mobile_1', $parent_id . ':parent_' . $second . '_mobile_1' ],
+			get_post_meta( $log_id, '_rondo_profile_change_sync_pending', true )
+		);
+		$this->assertSame( 0, ProfileChangeLog::update_sync_status( $parent_id, [ 'mobile_1' ], 'synced' ) );
+		ProfileChangeLog::update_sync_status( $parent_id, [ 'parent_' . $first . '_mobile_1' ], 'synced' );
+		$this->assertSame( 'pending', get_post_meta( $log_id, '_rondo_profile_change_sync_status', true ) );
+		ProfileChangeLog::update_sync_status( $parent_id, [ 'parent_' . $second . '_mobile_1' ], 'synced' );
+		$this->assertSame( 'synced', get_post_meta( $log_id, '_rondo_profile_change_sync_status', true ) );
+	}
+
+	public function test_parent_email_tracks_children_even_with_distinct_child_email(): void {
+		[ , $parent_id ] = $this->linked_member( 'new-parent@example.com' );
+		$child_id        = $this->add_minor_child( $parent_id, 'Eigen Email Kind', 'child@example.com' );
+		Fields::update_for_post( $child_id, 'knvb_id', 'CHILDMAIL' );
+		$log_id = ProfileChangeLog::record(
+			'email_primary',
+			[
+				[
+					'person_id' => $parent_id,
+					'field'     => 'email_1',
+					'old'       => 'old-parent@example.com',
+					'new'       => 'new-parent@example.com',
+					'sync'      => true,
+				],
+			],
+			true,
+			get_current_user_id()
+		);
+		$this->assertSame( 'pending', get_post_meta( $log_id, '_rondo_profile_change_sync_status', true ) );
+		$this->assertSame( 'child@example.com', Fields::get_for_post( $child_id, 'email_1' ) );
+		$changes = get_post_meta( $log_id, '_rondo_profile_change_changes', true );
+		$this->assertSame( [ $child_id ], $changes[0]['parent_sync']['child_ids'] );
+	}
+
+	public function test_parent_phone_fallback_is_audited_without_sending_unused_phone_changes(): void {
+		[ $user_id, $parent_id ] = $this->linked_member( 'fallback@example.com' );
+		$child_id                = $this->add_minor_child( $parent_id, 'Fallback Kind', 'fallback-child@example.com' );
+		Fields::update_for_post( $child_id, 'knvb_id', 'FALLBACK' );
+		Fields::update_for_post( $parent_id, 'mobile_1', '+31611111111' );
+		$result = MemberProfileService::update_phones(
+			$user_id,
+			[
+				'mobile_1'    => '+31611111111',
+				'telephone_1' => '+31241234567',
+			]
+			);
+		$this->assertSame( 'local_only', get_post_meta( $result['log_id'], '_rondo_profile_change_sync_status', true ) );
+		$result  = MemberProfileService::update_phones( $user_id, [ 'telephone_1' => '+31241234567' ] );
+		$changes = get_post_meta( $result['log_id'], '_rondo_profile_change_changes', true );
+		$this->assertSame( 'pending', get_post_meta( $result['log_id'], '_rondo_profile_change_sync_status', true ) );
+		$this->assertSame( '+31611111111', $changes[0]['parent_sync']['old'] );
+		$this->assertSame( '+31241234567', $changes[0]['parent_sync']['new'] );
+	}
+
 	public function test_parent_can_update_minor_child_phones_without_changing_own_phones(): void {
 		[ $user_id, $parent_id ] = $this->linked_member( 'parent-phone@example.com' );
 		$child_id                = $this->add_minor_child( $parent_id, 'Kind Telefoon', 'child-phone@example.com' );
@@ -494,6 +561,16 @@ class MemberProfileServiceTest extends RondoTestCase {
 			'relationship_type' => InverseRelationships::TYPE_CHILD,
 		];
 		Fields::update_for_post( $parent_id, 'relationships', $relationships );
+		Fields::update_for_post(
+			$child_id,
+			'relationships',
+			[
+				[
+					'related_person'    => $parent_id,
+					'relationship_type' => InverseRelationships::TYPE_PARENT,
+				],
+			]
+			);
 		AccessControl::flush_visible_person_ids_cache();
 		return $child_id;
 	}
