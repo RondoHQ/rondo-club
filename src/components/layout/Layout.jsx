@@ -22,7 +22,6 @@ import {
   FileCheck,
   QrCode,
   Coins,
-  Gavel,
   Wallet,
   Receipt,
   Shirt,
@@ -59,6 +58,7 @@ import { useDisciplineCasesCount } from '@/hooks/useDisciplineCases';
 import { prmApi } from '@/api/client';
 import { canAccessFeature } from '@/utils/featureToggles';
 import { canAccessFootball } from '@/utils/footballAccess';
+import { canAccessFootballItem, footballNavigation } from '@/utils/footballNavigation';
 
 const navigation = [
   { name: 'Mijn inschrijftaken', href: '/vrijwillig?tab=mine', icon: HeartHandshake, personal: true },
@@ -73,12 +73,7 @@ const navigation = [
   { name: 'Commissies', href: '/commissies', icon: UsersRound, requiresKader: true },
   { name: 'Sponsoren', href: '/sponsors', icon: Building2, requiresSponsors: true },
   { name: 'Voetbal', href: '/voetbal', icon: Goal, requiresFootball: true },
-  { name: 'Teams', href: '/teams', icon: Shield, indent: true, requiresKader: true },
-  { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true, requiresKaderlijst: true },
-  { name: 'Trainingsschema', href: '/trainingsschema', icon: CalendarDays, indent: true, requiresTrainingView: true },
-  { name: 'Toernooien', href: '/toernooien', icon: Trophy, indent: true, requiresTournamentManager: true },
-  { name: 'Toegangsstatistieken', href: '/toegangsstatistieken', icon: ChartPie, indent: true, requiresToegangscontrole: true },
-  { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
+  ...footballNavigation.map((item) => ({ ...item, indent: true })),
   { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true, requiresFeature: 'clothing' },
   { name: 'Vrijwilligers', href: '/vrijwilligers', icon: HeartHandshake, requiresVrijwilligers: true },
   { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true, requiresKader: true },
@@ -108,7 +103,6 @@ function Sidebar({ mobile = false, onClose, stats }) {
   // Fetch current user for capability check
   const { data: currentUser } = useCurrentUser();
 
-  const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
   const canAccessVOG = currentUser?.can_access_vog ?? false;
   const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
   const canAccessToegangscontrole = currentUser?.can_access_toegangscontrole ?? false;
@@ -117,7 +111,6 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessVrijwilligers = currentUser?.can_access_vrijwilligers ?? false;
   const canAccessNarrowcasting = currentUser?.can_access_narrowcasting ?? false;
   const canManageSponsors = currentUser?.can_manage_sponsors ?? false;
-  const canAccessKaderlijst = currentUser?.can_access_kaderlijst ?? false;
   const canManageTournaments = currentUser?.can_manage_tournaments ?? false;
   const hasTournamentAssignments = currentUser?.has_tournament_assignments ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
@@ -206,15 +199,6 @@ function Sidebar({ mobile = false, onClose, stats }) {
     setCollapsedSections((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
-  // The section containing the current route always shows expanded.
-  const location = useLocation();
-  const isHrefActive = (href) => {
-    if (!href) return false;
-    const hrefPath = href.split('?')[0];
-    if (hrefPath === '/') return location.pathname === '/';
-    return location.pathname === hrefPath || location.pathname.startsWith(`${hrefPath}/`);
-  };
-
   // Filter to the items this user may see.
   const visibleNav = navigation.filter((item) => {
     // Enforce mobile-only items regardless of role.
@@ -222,10 +206,10 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresFeature && !canAccessFeature(item.requiresFeature, isAdmin)) return false;
     if (item.requiresLinkedPerson && !currentUser?.linked_person_id) return false;
     if (item.requiresMyTeams && !currentUser?.has_my_teams) return false;
+    if (item.capabilities) return canAccessFootballItem(item, currentUser);
     if (isAdmin) return true;
     if (item.adminOnly && !isAdmin) return false;
     if (item.requiresFootball && !canAccessFootball(currentUser)) return false;
-    if (item.requiresFairplay && !canAccessFairplay) return false;
     if (item.requiresVOG && !canAccessVOG) return false;
     if (item.requiresFinancieel && !canAccessFinancieel) return false;
     if (item.requiresToegangscontrole && !canAccessToegangscontrole) return false;
@@ -234,9 +218,6 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresVrijwilligers && !canAccessVrijwilligers) return false;
     if (item.requiresNarrowcasting && !canAccessNarrowcasting) return false;
     if (item.requiresSponsors && !canManageSponsors) return false;
-    if (item.requiresKaderlijst && !canAccessKaderlijst) return false;
-    if (item.requiresTrainingView && !isKader && !currentUser?.can_manage_training) return false;
-    if (item.requiresTournamentManager && !canManageTournaments) return false;
     if (item.requiresTournamentAssignments && !hasTournamentAssignments && !canManageTournaments) return false;
     if (item.requiresKader && !isKader) return false;
     return true;
@@ -342,9 +323,8 @@ function Sidebar({ mobile = false, onClose, stats }) {
             return <div key={parent.href || parent.name}>{renderItem(parent)}</div>;
           }
 
-          // Section with sub-items: collapsible, but always open when active.
-          const groupActive = isHrefActive(parent.href) || children.some((c) => isHrefActive(c.href));
-          const expanded = groupActive || !collapsedSections[parent.name];
+          // Respect the saved choice, including when this section is active.
+          const expanded = !collapsedSections[parent.name];
 
           return (
             <div key={parent.href || parent.name} className="space-y-1">
