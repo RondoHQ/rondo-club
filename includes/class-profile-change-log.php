@@ -62,9 +62,10 @@ final class ProfileChangeLog {
 	 * @param array  $changes Field changes.
 	 * @param bool   $verified Whether email ownership was verified.
 	 * @param int    $actor_id Acting user ID.
+	 * @param string $source Origin of the change: rondo or sportlink.
 	 * @return int|\WP_Error
 	 */
-	public static function record( string $type, array $changes, bool $verified, int $actor_id ) {
+	public static function record( string $type, array $changes, bool $verified, int $actor_id, string $source = 'rondo' ) {
 		if ( empty( $changes ) ) {
 			return new \WP_Error( 'rondo_empty_profile_change', 'Er zijn geen wijzigingen om vast te leggen.' );
 		}
@@ -106,6 +107,7 @@ final class ProfileChangeLog {
 		}
 
 		update_post_meta( $post_id, '_rondo_profile_change_type', sanitize_key( $type ) );
+		update_post_meta( $post_id, '_rondo_profile_change_source', $source === 'sportlink' ? 'sportlink' : 'rondo' );
 		update_post_meta( $post_id, '_rondo_profile_change_changes', array_values( $changes ) );
 		update_post_meta( $post_id, '_rondo_profile_change_person_ids', array_values( array_unique( $person_ids ) ) );
 		update_post_meta( $post_id, '_rondo_profile_change_verified', $verified ? '1' : '0' );
@@ -114,6 +116,48 @@ final class ProfileChangeLog {
 		update_post_meta( $post_id, '_rondo_profile_change_sync_status', empty( $pending ) ? 'local_only' : 'pending' );
 
 		return (int) $post_id;
+	}
+
+	/** Log only a successfully saved photo, never a protected/skipped import. */
+	public static function record_photo( int $person_id, int $before, int $after, string $source ) {
+		return self::record(
+			'photo',
+			[
+				[
+					'person_id'         => $person_id,
+					'person_name'       => get_the_title( $person_id ),
+					'field'             => 'photo',
+					'label'             => 'Profielfoto',
+					'old'               => $before ? 'Vorige foto' : 'Geen foto',
+					'new'               => 'Nieuwe foto opgeslagen',
+					'old_attachment_id' => $before,
+					'new_attachment_id' => $after,
+					'sync'              => false, // PhotoSync owns its own revision-bound queue.
+				],
+			],
+			false,
+			get_current_user_id(),
+			$source
+		);
+	}
+
+	/** Show photo delivery state without sending photos through the field-sync queue. */
+	private static function photo_status( array $changes, string $source ): string {
+		if ( $source === 'sportlink' ) {
+			return 'imported';
+		}
+		$change = $changes[0] ?? [];
+		$person = (int) ( $change['person_id'] ?? 0 );
+		if ( (int) get_post_thumbnail_id( $person ) !== (int) ( $change['new_attachment_id'] ?? 0 ) ) {
+			return 'superseded';
+		}
+		$status = \Rondo\People\PhotoSync::status( $person );
+		return match ( $status['state'] ?? '' ) {
+			'synced' => 'synced',
+			'review' => 'action_required',
+			'pending', 'waiting_window', 'sending' => 'pending',
+			default => 'local_only',
+		};
 	}
 
 	/** Snapshot the separate Sportlink parent-slot targets of an audited action. */
@@ -254,17 +298,22 @@ final class ProfileChangeLog {
 
 		$items = array_map(
 			static function ( $post ): array {
-				$author = get_userdata( (int) $post->post_author );
+				$author  = get_userdata( (int) $post->post_author );
+				$type    = (string) get_post_meta( $post->ID, '_rondo_profile_change_type', true );
+				$source  = get_post_meta( $post->ID, '_rondo_profile_change_source', true ) ?: 'rondo';
+				$changes = (array) get_post_meta( $post->ID, '_rondo_profile_change_changes', true );
 				return [
-					'id'          => (int) $post->ID,
-					'created_at'  => get_post_time( DATE_ATOM, true, $post ),
-					'type'        => (string) get_post_meta( $post->ID, '_rondo_profile_change_type', true ),
-					'label'       => get_the_title( $post ),
-					'actor'       => $author ? $author->display_name : 'Onbekend account',
-					'changes'     => (array) get_post_meta( $post->ID, '_rondo_profile_change_changes', true ),
-					'verified'    => get_post_meta( $post->ID, '_rondo_profile_change_verified', true ) === '1',
-					'sync_status' => (string) get_post_meta( $post->ID, '_rondo_profile_change_sync_status', true ),
-					'sync_errors' => (array) get_post_meta( $post->ID, '_rondo_profile_change_sync_errors', true ),
+					'id'           => (int) $post->ID,
+					'created_at'   => get_post_time( DATE_ATOM, true, $post ),
+					'type'         => $type,
+					'source'       => $source,
+					'source_label' => $source === 'sportlink' ? 'Sportlink/voetbal.nl' : 'Rondo',
+					'label'        => get_the_title( $post ),
+					'actor'        => $author ? $author->display_name : 'Onbekend account',
+					'changes'      => $changes,
+					'verified'     => get_post_meta( $post->ID, '_rondo_profile_change_verified', true ) === '1',
+					'sync_status'  => $type === 'photo' ? self::photo_status( $changes, $source ) : (string) get_post_meta( $post->ID, '_rondo_profile_change_sync_status', true ),
+					'sync_errors'  => (array) get_post_meta( $post->ID, '_rondo_profile_change_sync_errors', true ),
 				];
 			},
 			$query->posts
@@ -289,6 +338,7 @@ final class ProfileChangeLog {
 			'email_removed'   => 'Tweede e-mailadres verwijderd',
 			'phones'          => 'Telefoonnummers gewijzigd',
 			'address'         => 'Gezinsadres gewijzigd',
+			'photo'           => 'Profielfoto gewijzigd',
 			default           => 'Profielgegevens gewijzigd',
 		};
 	}

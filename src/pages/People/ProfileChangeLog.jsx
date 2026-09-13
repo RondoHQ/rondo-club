@@ -10,6 +10,8 @@ const STATUS = {
   failed: { label: 'Synchronisatie mislukt', icon: CircleAlert, classes: 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-200' },
   action_required: { label: 'Actie nodig', icon: CircleAlert, classes: 'bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-200' },
   local_only: { label: 'Alleen Rondo', icon: HardDrive, classes: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
+  imported: { label: 'Overgenomen in Rondo', icon: CheckCircle2, classes: 'bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-200' },
+  superseded: { label: 'Later vervangen', icon: HardDrive, classes: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
 };
 
 function StatusBadge({ value }) {
@@ -39,7 +41,7 @@ export default function ProfileChangeLog() {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Wijzigingslog leden</h1>
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Zelf door leden aangepaste contactgegevens en adressen. Logregels worden 24 maanden bewaard.</p>
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Contactgegevens en adressen die leden zelf aanpassen, en fotowijzigingen vanuit Rondo of Sportlink/voetbal.nl. Logregels worden 24 maanden bewaard.</p>
       </div>
       {isError ? <div className="card p-5 text-sm text-red-600">De wijzigingslog kon niet worden opgehaald.</div> : null}
       {!isError && data?.items?.length === 0 ? <div className="card p-5 text-sm text-gray-600">Er zijn nog geen wijzigingen vastgelegd.</div> : null}
@@ -48,7 +50,8 @@ export default function ProfileChangeLog() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="font-semibold text-gray-900 dark:text-gray-100">{item.label}</h2>
-              <p className="mt-1 text-xs text-gray-500">{new Date(item.created_at).toLocaleString('nl-NL')} door {item.actor}{item.verified ? ' · e-mailadres geverifieerd' : ''}</p>
+              <p className="mt-1 text-xs text-gray-500">{new Date(item.created_at).toLocaleString('nl-NL')}{item.source !== 'sportlink' ? ` door ${item.actor}` : ''}{item.verified ? ' · e-mailadres geverifieerd' : ''}</p>
+              <p className="mt-1 text-sm font-medium text-gray-700 dark:text-gray-300">Bron: {item.source_label || 'Rondo'}</p>
             </div>
             <StatusBadge value={item.sync_status} />
           </div>

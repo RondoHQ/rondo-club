@@ -1112,12 +1112,14 @@ class People extends Base {
 		}
 
 		// Set as featured image
+		$previous_attachment_id = (int) get_post_thumbnail_id( $person_id );
 		if ( ! set_post_thumbnail( $person_id, $attachment_id ) ) {
 			return new \WP_Error( 'photo_not_saved', 'De profielfoto kon niet worden ingesteld.', [ 'status' => 500 ] );
 		}
 		if ( $source === 'manual' ) {
 			PhotoSync::queue( $person_id, (int) $attachment_id );
 		}
+		\Rondo\Users\ProfileChangeLog::record_photo( $person_id, $previous_attachment_id, (int) $attachment_id, $source === 'sportlink' ? 'sportlink' : 'rondo' );
 
 		return rest_ensure_response(
 			[
