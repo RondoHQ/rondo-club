@@ -119,6 +119,59 @@ class People extends Base {
 			]
 		);
 
+		register_rest_route(
+			'rondo/v1',
+			'/people/parent-slot-observations',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'observe_parent_slots' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'observations' => [
+						'required' => true,
+						'type'     => 'array',
+						'minItems' => 1,
+						'maxItems' => 100,
+						'items'    => [
+							'type'       => 'object',
+							'required'   => [ 'person_id', 'knvb_id', 'observed_at', 'slots' ],
+							'properties' => [
+								'person_id'   => [
+									'type'    => 'integer',
+									'minimum' => 1,
+								],
+								'knvb_id'     => [
+									'type'      => 'string',
+									'minLength' => 1,
+								],
+								'observed_at' => [
+									'type'   => 'string',
+									'format' => 'date-time',
+								],
+								'slots'       => [
+									'type'     => 'array',
+									'minItems' => 2,
+									'maxItems' => 2,
+									'items'    => [
+										'type'       => 'object',
+										'required'   => [ 'slot', 'email', 'name' ],
+										'properties' => [
+											'slot'  => [
+												'type' => 'integer',
+												'enum' => [ 1, 2 ],
+											],
+											'email' => [ 'type' => 'string' ],
+											'name'  => [ 'type' => 'string' ],
+										],
+									],
+								],
+							],
+						],
+					],
+				],
+			]
+		);
+
 		// Guided, admin-only person merge. Preview and execution use the same
 		// service plan so the confirmation screen cannot drift from the write.
 		register_rest_route(
@@ -1187,6 +1240,24 @@ class People extends Base {
 		}
 
 		return new \WP_REST_Response( $result, 201 );
+	}
+
+	/** Import complete parent-slot observations; never acknowledge queued writes. */
+	public function observe_parent_slots( $request ) {
+		$service = new ParentRelationshipService();
+		$results = [];
+		foreach ( $request->get_param( 'observations' ) as $observation ) {
+			$slot_numbers = array_column( $observation['slots'], 'slot' );
+			sort( $slot_numbers );
+			if ( $slot_numbers !== [ 1, 2 ] ) {
+				return new \WP_Error( 'rondo_parent_observation_slots', 'Both distinct source slots are required.', [ 'status' => 400 ] );
+			}
+		}
+		foreach ( $request->get_param( 'observations' ) as $observation ) {
+			$result    = $service->observe_parent_slots( $observation['person_id'], $observation['knvb_id'], $observation['observed_at'], $observation['slots'] );
+			$results[] = [ 'person_id' => $observation['person_id'] ] + ( is_wp_error( $result ) ? [ 'error' => $result->get_error_code() ] : $result );
+		}
+		return rest_ensure_response( [ 'results' => $results ] );
 	}
 
 	/** Receive the verified Sportlink slot status from rondo-sync. */

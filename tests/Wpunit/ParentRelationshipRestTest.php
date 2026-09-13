@@ -60,6 +60,47 @@ class ParentRelationshipRestTest extends RondoTestCase {
 		$this->assertSame( 2, $person->get_data()['parent_sync_statuses'][0]['slot'] );
 	}
 
+	public function test_import_observation_endpoint_is_admin_only_and_requires_complete_slots(): void {
+		$child   = $this->createPerson(
+			[],
+			[
+				'first_name' => 'Kind',
+				'knvb_id'    => 'OBSREST1',
+			]
+			);
+		$payload = [
+			'observations' => [
+				[
+					'person_id'   => $child,
+					'knvb_id'     => 'OBSREST1',
+					'observed_at' => '2020-01-01T12:00:00Z',
+					'slots'       => [
+						[
+							'slot'  => 1,
+							'email' => '',
+							'name'  => '',
+						],
+						[
+							'slot'  => 2,
+							'email' => '',
+							'name'  => '',
+						],
+					],
+				],
+			],
+		];
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'subscriber' ] ) );
+		$this->assertSame( 403, $this->request( 'POST', '/rondo/v1/people/parent-slot-observations', $payload )->get_status() );
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$response = $this->request( 'POST', '/rondo/v1/people/parent-slot-observations', $payload );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $response->get_data()['results'][0]['observed'] );
+		$payload['observations'][0]['slots'][1]['slot'] = 1;
+		$this->assertSame( 400, $this->request( 'POST', '/rondo/v1/people/parent-slot-observations', $payload )->get_status() );
+		array_pop( $payload['observations'][0]['slots'] );
+		$this->assertSame( 400, $this->request( 'POST', '/rondo/v1/people/parent-slot-observations', $payload )->get_status() );
+	}
+
 	public function test_plain_member_cannot_add_parent(): void {
 		$user = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		wp_set_current_user( $user );
