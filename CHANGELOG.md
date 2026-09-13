@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.76.1] - 2026-09-13
+
+### Fixed
+- Track self-service parent contact changes through each linked child's Sportlink parent slot, including parents without their own KNVB ID.
+- Keep parent-slot completion separate from a parent's own membership synchronization and capture the effective parent phone change.
+
 ## [35.76.0] - 2026-09-13
 
 ### Added
