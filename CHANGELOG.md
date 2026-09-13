@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.77.0] - 2026-09-13
+
+### Added
+- Record successfully saved profile photos in the member change log with their source: Rondo or Sportlink/voetbal.nl.
+- Show photo delivery status separately from its original source, including photos later replaced in Rondo.
+
+### Fixed
+- Exclude protected, skipped Sportlink photo imports from the member change log.
+
 ## [35.76.1] - 2026-09-13
 
 ### Fixed

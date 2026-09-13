@@ -5,6 +5,7 @@ namespace Tests\Wpunit;
 use Rondo\Fields\Fields;
 use Rondo\People\PhotoSync;
 use Rondo\REST\People;
+use Rondo\Users\ProfileChangeLog;
 use Tests\Support\RondoTestCase;
 
 class PhotoSyncTest extends RondoTestCase {
@@ -59,6 +60,12 @@ class PhotoSyncTest extends RondoTestCase {
 		$this->assertSame( 'pending', get_post_meta( $id, PhotoSync::META, true )['state'] );
 		$attachment_id = (int) get_post_thumbnail_id( $id );
 		$this->assertGreaterThan( 0, $attachment_id );
+		$entries = ProfileChangeLog::recent()['items'];
+		$this->assertSame( 'photo', $entries[0]['type'] );
+		$this->assertSame( 'rondo', $entries[0]['source'] );
+		$this->assertSame( 'pending', $entries[0]['sync_status'] );
+		$this->assertSame( $attachment_id, $entries[0]['changes'][0]['new_attachment_id'] );
+		$this->assertSame( [], get_post_meta( $entries[0]['id'], '_rondo_profile_change_sync_pending', true ) );
 		try {
 			if ( PhotoSync::window()['open'] ) {
 				$job = PhotoSync::job( $id, true );
@@ -102,15 +109,62 @@ class PhotoSyncTest extends RondoTestCase {
 	public function test_import_cannot_replace_a_manual_photo_or_create_a_second_job(): void {
 		$id = $this->queued_person();
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
-		$before  = get_post_meta( $id, PhotoSync::META, true );
-		$server  = $this->bootRestControllers( [ People::class ] );
-		$request = new \WP_REST_Request( 'POST', '/rondo/v1/people/' . $id . '/photo' );
+		$before    = get_post_meta( $id, PhotoSync::META, true );
+		$log_count = ProfileChangeLog::recent()['total'];
+		$server    = $this->bootRestControllers( [ People::class ] );
+		$request   = new \WP_REST_Request( 'POST', '/rondo/v1/people/' . $id . '/photo' );
 		$request->set_param( 'source', 'sportlink' );
 		$response = $server->dispatch( $request );
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertTrue( $response->get_data()['skipped'] );
 		$this->assertSame( $before, get_post_meta( $id, PhotoSync::META, true ) );
 		$this->assertSame( $before['attachment_id'], (int) get_post_thumbnail_id( $id ) );
+		$this->assertSame( $log_count, ProfileChangeLog::recent()['total'] );
+	}
+
+	public function test_sportlink_photo_is_logged_as_import_and_failed_upload_adds_no_log(): void {
+		$id = $this->createPerson(
+			[],
+			[
+				'knvb_id'    => 'TEST123',
+				'first_name' => 'Test',
+			]
+			);
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$server  = $this->bootRestControllers( [ People::class ] );
+		$request = new \WP_REST_Request( 'POST', '/rondo/v1/people/' . $id . '/photo' );
+		$request->set_param( 'source', 'sportlink' );
+		$before = ProfileChangeLog::recent()['total'];
+		$this->assertGreaterThanOrEqual( 400, $server->dispatch( $request )->get_status() );
+		$this->assertSame( $before, ProfileChangeLog::recent()['total'] );
+		$path  = wp_tempnam( 'photo.png' );
+		$image = imagecreatetruecolor( 40, 40 );
+		imagepng( $image, $path );
+		$request->set_file_params(
+			[
+				'file' => [
+					'name'     => 'photo.png',
+					'type'     => 'image/png',
+					'size'     => filesize( $path ),
+					'tmp_name' => $path,
+					'error'    => 0,
+				],
+			]
+			);
+		$response = $server->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$attachment = (int) get_post_thumbnail_id( $id );
+		try {
+			$entry = ProfileChangeLog::recent()['items'][0];
+			$this->assertSame( $before + 1, ProfileChangeLog::recent()['total'] );
+			$this->assertSame( 'sportlink', $entry['source'] );
+			$this->assertSame( 'Sportlink/voetbal.nl', $entry['source_label'] );
+			$this->assertSame( 'imported', $entry['sync_status'] );
+			$this->assertSame( $attachment, $entry['changes'][0]['new_attachment_id'] );
+			$this->assertNull( PhotoSync::status( $id ) );
+		} finally {
+			wp_delete_attachment( $attachment, true );
+		}
 	}
 
 	public function test_stale_revision_and_wrong_identity_are_rejected(): void {
