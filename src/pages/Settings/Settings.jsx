@@ -15,6 +15,7 @@ import { decodeHtml } from '@/utils/formatters';
 
 const TrainingSettings = lazy(() => import('@/pages/Training/TrainingSettings'));
 const OnboardingSimulation = lazy(() => import('@/pages/Settings/OnboardingSimulation'));
+const OnboardingTemplates = lazy(() => import('@/pages/Settings/OnboardingTemplates'));
 
 const KADERLIJST_CAPABILITY = 'kaderlijst';
 
@@ -3982,6 +3983,7 @@ function WelkomstmailTab({
         <TabButton label="Nieuwe vrijwilliger" isActive={activeSubTab === 'vrijwilliger'} onClick={() => setActiveSubTab('vrijwilliger')} />
         <TabButton label="IVA-goedkeuring" isActive={activeSubTab === 'iva'} onClick={() => setActiveSubTab('iva')} />
         <TabButton label="Onboarding simulatie" isActive={activeSubTab === 'simulation'} onClick={() => setActiveSubTab('simulation')} />
+        <TabButton label="Welkomstmailblokken" isActive={activeSubTab === 'blocks'} onClick={() => setActiveSubTab('blocks')} />
       </div>
 
       {activeSubTab === 'account' && (
@@ -3997,6 +3999,10 @@ function WelkomstmailTab({
 
       {activeSubTab === 'simulation' && (
         <Suspense fallback={<p>Simulatie laden…</p>}><OnboardingSimulation /></Suspense>
+      )}
+
+      {activeSubTab === 'blocks' && (
+        <Suspense fallback={<p>Mailblokken laden…</p>}><OnboardingTemplates /></Suspense>
       )}
 
       {activeSubTab === 'lid' && (

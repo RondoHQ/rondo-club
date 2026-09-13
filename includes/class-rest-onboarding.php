@@ -5,6 +5,7 @@ namespace Rondo\REST;
 
 use Rondo\Onboarding\Foundation;
 use Rondo\Onboarding\Sources;
+use Rondo\Onboarding\Templates;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -17,6 +18,31 @@ final class Onboarding extends Base {
 	}
 
 	public function register_routes(): void {
+		register_rest_route(
+			'rondo/v1',
+			'/onboarding/templates',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'callback'            => static fn() => self::template_response( Templates::settings() ),
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'callback'            => static fn( $request ) => self::template_request( $request, 'save' ),
+				],
+			]
+		);
+		register_rest_route(
+			'rondo/v1',
+			'/onboarding/templates/preview',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'callback'            => static fn( $request ) => self::template_request( $request, 'preview' ),
+			]
+		);
 		foreach ( [
 			'sources'        => 'ingest',
 			'sources/finish' => 'finish',
@@ -84,6 +110,21 @@ final class Onboarding extends Base {
 				},
 			]
 			);
+	}
+
+	private static function template_request( $request, string $method ) {
+		$input  = $request->get_json_params();
+		$result = is_array( $input ) ? Templates::$method( $input ) : new \WP_Error( 'onboarding_contract', 'Een JSON-object is vereist.', [ 'status' => 400 ] );
+		return self::template_response( $result );
+	}
+
+	private static function template_response( $result ) {
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		$response = rest_ensure_response( $result );
+		$response->header( 'Cache-Control', 'no-store' );
+		return $response;
 	}
 
 	public function simulate( $request ) {

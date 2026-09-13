@@ -805,3 +805,24 @@ De fases in hoofdstuk 8 beschrijven bouwvolgorde. Vrijwilligersmails die VOG- of
 kledingopvolging beloven mogen pas worden ingeschakeld wanneer ook die werkvoorraden
 en bijbehorende flows gereed zijn. Een code-release is geen toestemming om bestaande
 personen alsnog automatisch te mailen.
+
+## 14. Mailblokken en voorbeeldweergave — 13 september 2026
+
+In versie 35.76.0 zijn de losse conceptblokken en een volledige voorbeeldmail per
+verzonnen situatie toegevoegd onder Instellingen → Beheer → E-mails →
+Welkomstmailblokken. Onderwerpen, aanhef, introducties, ledeninformatie, alle
+VOG-/kleding-/accountvarianten, knopteksten en afsluiting zijn bewerkbaar.
+De knoppen houden hun vaste activatie- en loginroute.
+
+Bestaande handmatige mails blijven ongewijzigd beschikbaar als tekstbron. Vrije
+clubteksten worden niet automatisch gesplitst. De vier blokken voor contributie,
+ledenkleding, trainingen/wedstrijden en vrijwilligerswerk moeten bewust worden
+gevuld of leeg gelaten vóór overschakelen. Teksten voor opnieuw aanleveren en
+kleding bij terugkeer staan als bewerkbaar voorstel klaar, niet als geactiveerd beleid.
+
+Het voorbeeld onderscheidt lid, vrijwilliger en gecombineerd, leeftijd, ontvanger,
+account van die ontvanger, VOG-situatie, kledingfunctie en terugkeer. Deze gekozen
+voorbeeldwaarden vervangen geen broncontrole of echte accountmatching. Opslaan
+bewaart uitsluitend een concept; voorbeeldweergave schrijft niets en verstuurt niets.
+Automatische verzending, vrijwilligersplanning en overschakelen van de bestaande
+handmatige route horen bij volgende stappen; fase 2/3 is hiermee niet afgerond.
