@@ -13,7 +13,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class ParentRelationshipService {
 
-	private const STATUS_META_KEY = '_rondo_parent_sync_statuses';
+	private const STATUS_META_KEY      = '_rondo_parent_sync_statuses';
+	private const OBSERVATION_META_KEY = '_rondo_parent_slot_observation';
 
 	/**
 	 * Whether a person currently has a parent role for a published,
@@ -265,11 +266,96 @@ final class ParentRelationshipService {
 
 	/** Return statuses as a stable list for REST consumers. */
 	public function get_sync_statuses( int $child_id ): array {
-		$statuses = get_post_meta( $child_id, self::STATUS_META_KEY, true );
-		if ( ! is_array( $statuses ) ) {
-			return [];
+		$statuses    = get_post_meta( $child_id, self::STATUS_META_KEY, true );
+		$statuses    = is_array( $statuses ) ? $statuses : [];
+		$observation = get_post_meta( $child_id, self::OBSERVATION_META_KEY, true );
+		if ( is_array( $observation ) ) {
+			$observed_at = strtotime( $observation['observed_at'] );
+			foreach ( $statuses as $parent_id => $status ) {
+				if ( $status['state'] === 'synced' && strtotime( $status['updated_at'] ) < $observed_at ) {
+					unset( $statuses[ $parent_id ] );
+				}
+			}
+			$parent_term = get_term_by( 'slug', 'parent', 'relationship_type' );
+			$rows        = $parent_term ? $this->parent_rows( Fields::get_for_post( $child_id, 'relationships' ) ?: [], (int) $parent_term->term_id ) : [];
+			$parent_ids  = array_map( [ $this, 'relationship_person_id' ], $rows );
+			foreach ( $observation['slots'] as $parent_id => $slot ) {
+				if ( ! isset( $statuses[ $parent_id ] ) && in_array( (int) $parent_id, $parent_ids, true ) && get_post_status( $parent_id ) === 'publish' ) {
+					$statuses[ $parent_id ] = [
+						'parent_id'  => (int) $parent_id,
+						'state'      => 'synced',
+						'slot'       => $slot,
+						'message'    => '',
+						'updated_at' => $observation['observed_at'],
+						'source'     => 'sportlink_import',
+					];
+				}
+			}
 		}
 		return array_values( $statuses );
+	}
+
+	/** Record source slots without completing any pending reverse-sync work. */
+	public function observe_parent_slots( int $child_id, string $knvb_id, string $observed_at, array $slots ) {
+		$timestamp = rest_parse_date( $observed_at );
+		if ( ! $timestamp || $timestamp > time() + 60 ) {
+			return new \WP_Error( 'rondo_parent_observation_date', 'Invalid observation date.', [ 'status' => 400 ] );
+		}
+		if ( get_post_type( $child_id ) !== 'person' || $knvb_id === '' || Fields::get_for_post( $child_id, 'knvb_id' ) !== $knvb_id ) {
+			return new \WP_Error( 'rondo_parent_observation_identity', 'Child identity does not match an active person.', [ 'status' => 409 ] );
+		}
+		if ( get_post_status( $child_id ) !== 'publish' || Fields::get_for_post( $child_id, 'former_member' ) ) {
+			return [
+				'observed' => false,
+				'reason'   => 'inactive',
+			];
+		}
+		$previous = get_post_meta( $child_id, self::OBSERVATION_META_KEY, true );
+		if ( is_array( $previous ) && strtotime( $previous['observed_at'] ) > $timestamp ) {
+			return [
+				'observed' => false,
+				'reason'   => 'stale',
+			];
+		}
+
+		$parent_term = get_term_by( 'slug', 'parent', 'relationship_type' );
+		$rows        = $parent_term ? $this->parent_rows( Fields::get_for_post( $child_id, 'relationships' ) ?: [], (int) $parent_term->term_id ) : [];
+		$parent_ids  = array_unique( array_map( [ $this, 'relationship_person_id' ], $rows ) );
+		$matches     = [];
+		foreach ( $slots as $source ) {
+			$email      = strtolower( trim( $source['email'] ) );
+			$candidates = [];
+			foreach ( $parent_ids as $parent_id ) {
+				if ( get_post_status( $parent_id ) !== 'publish' || get_post_type( $parent_id ) !== 'person' || $parent_id === $child_id || $email === '' ) {
+					continue;
+				}
+				$emails = array_map( static fn( $value ) => strtolower( trim( (string) $value ) ), [ Fields::get_for_post( $parent_id, 'email_1' ), Fields::get_for_post( $parent_id, 'email_2' ) ] );
+				if ( in_array( $email, $emails, true ) && ( trim( $source['name'] ) === '' || $this->names_match( $source['name'], $parent_id ) ) ) {
+					$candidates[] = $parent_id;
+				}
+			}
+			if ( count( $candidates ) === 1 ) {
+				$matches[ $candidates[0] ][] = (int) $source['slot'];
+			}
+		}
+		$resolved = [];
+		foreach ( $matches as $parent_id => $numbers ) {
+			if ( count( $numbers ) === 1 ) {
+				$resolved[ $parent_id ] = $numbers[0];
+			}
+		}
+		update_post_meta(
+			$child_id,
+			self::OBSERVATION_META_KEY,
+			[
+				'observed_at' => gmdate( 'c', $timestamp ),
+				'slots'       => $resolved,
+			]
+			);
+		return [
+			'observed' => true,
+			'matched'  => count( $resolved ),
+		];
 	}
 
 	private function validate_existing_parent( int $child_id, int $parent_id, array $parent_rows ) {

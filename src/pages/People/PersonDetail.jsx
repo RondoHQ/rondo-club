@@ -50,7 +50,7 @@ const PersonEditModal = lazy(() => import('@/components/PersonEditModal'));
 function ParentSyncBadge({ status }) {
   if (!status) return null;
   const presentation = status.state === 'synced'
-    ? { label: status.slot ? `Sportlink veld ${status.slot}` : 'In Sportlink', classes: 'text-gray-500 dark:text-gray-400' }
+    ? { label: status.slot ? `Sportlink veld ${status.slot}` : 'In Sportlink', classes: 'rounded px-1.5 py-0.5 bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' }
     : status.state === 'error'
       ? { label: 'Sportlink-sync mislukt', classes: 'rounded px-1.5 py-0.5 font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' }
       : { label: 'Wacht op Sportlink', classes: 'rounded px-1.5 py-0.5 font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' };

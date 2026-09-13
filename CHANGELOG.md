@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.79.0] - 2026-09-13
+
+### Added
+- Show Sportlink parent field numbers for existing imported relationships using complete, dated source observations.
+- Preserve pending or failed parent writes and newer confirmations when importing field numbers.
+
+### Changed
+- Give confirmed parent field labels a subtle light gray background.
+
 ## [35.78.0] - 2026-09-13
 
 ### Added
