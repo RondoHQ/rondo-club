@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.81.0] - 2026-09-14
+
+### Added
+- Add an explicit, permission-checked person choice for FreeScout activities when a customer email matches several people or the conversation customer changes.
+
+### Fixed
+- Preserve the original person, content and visibility of existing FreeScout activities during customer changes and repeated delivery. Unresolved new activities wait in the FreeScout queue instead of WordPress moderation.
+
 ## [35.80.2] - 2026-09-14
 
 ### Fixed
