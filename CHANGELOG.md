@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.80.1] - 2026-09-14
+
+### Fixed
+- Simplify VOG PDF selection to one PDF, without a redundant file count, numbering or reorder buttons. Keep ordering controls for multiple scan photos.
+- Identify GAAV validation requests as RondoClub to avoid the HTTP 403 returned for WordPress's default user agent.
+
 ## [35.80.0] - 2026-09-13
 
 ### Added
