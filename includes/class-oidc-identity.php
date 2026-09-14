@@ -9,6 +9,7 @@ namespace Rondo\Identity;
 
 use Rondo\Fields\Fields;
 use Rondo\Users\UserProvisioning;
+use Rondo\Core\UserRoles;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -185,7 +186,7 @@ final class OidcIdentity {
 
 		$is_admin     = user_can( $user_id, 'manage_options' );
 		$capabilities = (array) apply_filters( 'rondo_oidc_freescout_capabilities', self::DEFAULT_FREESCOUT_CAPABILITIES );
-		$has_access   = $is_admin;
+		$has_access   = $is_admin || UserRoles::has_rondo_role( $user );
 		foreach ( $capabilities as $capability ) {
 			if ( is_string( $capability ) && $capability !== '' && user_can( $user_id, $capability ) ) {
 				$has_access = true;

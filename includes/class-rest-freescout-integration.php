@@ -137,6 +137,7 @@ final class FreeScoutIntegration extends Base {
 			[
 				'subject'           => $subject,
 				'active'            => $active,
+				'sidebar_access'    => $user_id > 0,
 				'managed_mailboxes' => $managed_mailboxes,
 				'evaluated_at'      => gmdate( DATE_ATOM ),
 			]
