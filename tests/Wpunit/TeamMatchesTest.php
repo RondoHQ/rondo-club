@@ -54,12 +54,15 @@ class TeamMatchesTest extends RondoTestCase {
 	private function directory(): array {
 		return [
 			[
-				'teamcode'       => 123,
-				'lokaleteamcode' => -1,
-				'teamnaam'       => 'Club 2',
-				'spelsoort'      => 'Veld Algemeen/Zaterdag',
-				'teamsoort'      => 'bond',
-				'local_names'    => false,
+				'teamcode'           => 123,
+				'lokaleteamcode'     => -1,
+				'teamnaam'           => 'Club 2',
+				'spelsoort'          => 'Veld Algemeen/Zaterdag',
+				'teamsoort'          => 'bond',
+				'local_names'        => false,
+				'kalespelsoort'      => 'VE',
+				'competitiesoort'    => 'regulier',
+				'leeftijdscategorie' => 'Senioren',
 			],
 			[
 				'teamcode'       => 456,
@@ -99,6 +102,92 @@ class TeamMatchesTest extends RondoTestCase {
 		$cache                = get_post_meta( $this->team_id, '_rondo_team_matches_cache', true );
 		$cache['retry_after'] = 0;
 		update_post_meta( $this->team_id, '_rondo_team_matches_cache', $cache );
+	}
+
+	public function test_duration_uses_competition_metadata_and_includes_all_breaks(): void {
+		$base = $this->directory()[0];
+		foreach ( [
+			8  => 54,
+			9  => 54,
+			10 => 64,
+			11 => 79,
+			12 => 79,
+			13 => 75,
+			14 => 85,
+			15 => 85,
+			16 => 95,
+			17 => 95,
+			19 => 105,
+			20 => 105,
+			21 => 105,
+			23 => 105,
+		] as $age => $minutes ) {
+			$row = array_merge( $base, [ 'leeftijdscategorie' => 'Onder ' . $age ] );
+			$this->assertSame( $minutes, TeamMatches::duration_minutes( [ 'teamcode' => 123 ], [ $row ] ), 'O' . $age );
+		}
+		foreach ( [ [ 13, '2e divisie', 85 ], [ 13, 'Divisie 3', 75 ], [ 15, 'Divisie 3', 95 ], [ 15, 'Divisie 4', 85 ], [ 17, 'Divisie 1', 105 ], [ 17, 'Divisie 4', 95 ] ] as [ $age, $division, $minutes ] ) {
+			$row = array_merge(
+				$base,
+				[
+					'leeftijdscategorie' => 'Onder ' . $age,
+					'klasse'             => $division,
+				]
+				);
+			$this->assertSame( $minutes, TeamMatches::duration_minutes( [ 'teamcode' => 123 ], [ $row ] ) );
+		}
+		$row['geslacht'] = 'vrouw';
+		$row['klasse']   = 'Divisie 1';
+		$this->assertSame( 95, TeamMatches::duration_minutes( [ 'teamcode' => 123 ], [ $row ] ) );
+		$this->assertSame( 105, TeamMatches::duration_minutes( [ 'teamcode' => 123 ], [ $base ] ) );
+		foreach ( [ [ 'leeftijdscategorie' => 'Onder 7' ], [ 'competitienaam' => 'Vrouwen 30+ Toernooivorm 7x7' ], [ 'kalespelsoort' => 'ZA' ], [ 'teamsoort' => 'lokaal' ], [ 'competitienaam' => 'Onder 13 9x9' ] ] as $unsupported ) {
+			$this->assertNull( TeamMatches::duration_minutes( [ 'teamcode' => 123 ], [ array_merge( $base, $unsupported ) ] ) );
+		}
+		$this->assertNull( TeamMatches::duration_minutes( [ 'teamcode' => -1 ], [ $base ] ) );
+		$this->assertNull( TeamMatches::duration_minutes( [ 'teamcode' => 123 ], [ $base, $row ] ) );
+	}
+
+	public function test_existing_subscription_gains_end_time_and_one_revision(): void {
+		$directory                          = $this->directory();
+		$directory[0]['leeftijdscategorie'] = 'Onder 17';
+		set_transient( 'rondo_team_match_directory', $directory, HOUR_IN_SECONDS );
+		$this->programme = [ $this->fixture( '100' ) ];
+		$service         = new TeamMatches();
+		$service->get_feed( $this->team_id );
+		$legacy = get_post_meta( $this->team_id, '_rondo_team_matches_cache', true );
+		unset( $legacy['duration_version'], $legacy['matches'][0]['duration_minutes'] );
+		$legacy['matches'][0]['sequence']    = 4;
+		$legacy['matches'][0]['modified_at'] = '2026-07-01T00:00:00+00:00';
+		update_post_meta( $this->team_id, '_rondo_team_matches_cache', $legacy );
+		$before = TeamMatches::calendar( $this->team_id, $legacy );
+		$feed   = $service->get_feed( $this->team_id );
+		$this->assertSame( 95, $feed['matches'][0]['duration_minutes'] );
+		$this->assertSame( 5, $feed['matches'][0]['sequence'] );
+		$this->assertNotSame( $legacy['matches'][0]['modified_at'], $feed['matches'][0]['modified_at'] );
+		$calendar = TeamMatches::calendar( $this->team_id, $feed );
+		preg_match( '/UID:[^\r]+/', $before, $old_uid );
+		$this->assertStringContainsString( $old_uid[0], $calendar );
+		$this->assertStringContainsString( 'DTSTART:' . substr( TeamMatches::season()['key'], 0, 4 ) . '1020T130000Z', $calendar );
+		$this->assertStringContainsString( 'DTEND:' . substr( TeamMatches::season()['key'], 0, 4 ) . '1020T143500Z', $calendar );
+		$this->expire_cache();
+		$again = $service->get_feed( $this->team_id );
+		$this->assertSame( 5, $again['matches'][0]['sequence'] );
+		$this->assertSame( $feed['matches'][0]['modified_at'], $again['matches'][0]['modified_at'] );
+		$this->expire_cache();
+		$this->fail = true;
+		$this->assertSame( $calendar, TeamMatches::calendar( $this->team_id, $service->get_feed( $this->team_id ) ) );
+	}
+
+	public function test_unknown_kickoff_stays_all_day_and_end_time_uses_elapsed_minutes(): void {
+		$this->programme                        = [ $this->fixture( '100' ) ];
+		$feed                                   = ( new TeamMatches() )->get_feed( $this->team_id );
+		$feed['matches'][0]['starts_at']        = '2026-10-25T02:30:00+02:00';
+		$feed['matches'][0]['duration_minutes'] = 95;
+		$calendar                               = TeamMatches::calendar( $this->team_id, $feed );
+		$this->assertStringContainsString( 'DTSTART:20261025T003000Z', $calendar );
+		$this->assertStringContainsString( 'DTEND:20261025T020500Z', $calendar );
+		$feed['matches'][0]['time_known'] = false;
+		$this->assertStringNotContainsString( 'DTEND:', TeamMatches::calendar( $this->team_id, $feed ) );
+		$this->assertStringContainsString( 'DTSTART;VALUE=DATE:20261025', TeamMatches::calendar( $this->team_id, $feed ) );
 	}
 
 	public function test_resolves_identical_names_by_day_and_includes_linked_local_team(): void {

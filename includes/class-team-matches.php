@@ -11,8 +11,58 @@ use Rondo\Narrowcasting\SportlinkMatchday;
 
 class TeamMatches {
 
-	private const CACHE_KEY = '_rondo_team_matches_cache';
-	private const TTL       = 15 * MINUTE_IN_SECONDS;
+	private const CACHE_KEY        = '_rondo_team_matches_cache';
+	private const TTL              = 15 * MINUTE_IN_SECONDS;
+	private const DURATION_VERSION = 1;
+
+	/** Planned elapsed minutes, including maximum KNVB breaks (2026/27 rules). */
+	public static function duration_minutes( array $team, array $directory ): ?int {
+		$durations = [];
+		foreach ( $directory as $row ) {
+			if ( $team['teamcode'] <= 0 || (int) ( $row['teamcode'] ?? 0 ) !== $team['teamcode'] || ! empty( $row['local_names'] ) || ( $row['teamsoort'] ?? '' ) !== 'bond' || ( $row['competitiesoort'] ?? '' ) !== 'regulier' ) {
+				continue;
+			}
+			$competition = mb_strtolower( (string) ( $row['competitienaam'] ?? '' ) );
+			// Tournaments, small-sided senior football and futsal have different schedules.
+			if ( ( $row['kalespelsoort'] ?? '' ) !== 'VE' || preg_match( '/7\s*[xv]\s*7|9\s*[xv]\s*9|toernooi|walking|g-voetbal/i', $competition ) ) {
+				return null;
+			}
+			$age_text = (string) ( $row['leeftijdscategorie'] ?? '' ) . ' ' . $competition;
+			preg_match( '/(?:onder\s*|\b[jm]?o)(\d{1,2})\b/i', $age_text, $age_match );
+			$age = (int) ( $age_match[1] ?? 0 );
+			preg_match( '/(?:divisie\s*(\d+)|(\d+)e?\s+divisie)/i', (string) ( $row['klasse'] ?? '' ), $division_match );
+			$division = (int) ( ( $division_match[1] ?? '' ) ?: ( $division_match[2] ?? 0 ) );
+			$girls    = ( $row['geslacht'] ?? '' ) === 'vrouw';
+			$minutes  = [
+				8  => 54,
+				9  => 54,
+				10 => 64,
+				11 => 79,
+				12 => 79,
+				13 => 75,
+				14 => 85,
+				15 => 85,
+				16 => 95,
+				17 => 95,
+				19 => 105,
+				20 => 105,
+				21 => 105,
+				23 => 105,
+			][ $age ] ?? null;
+			if ( $age === 0 && str_contains( mb_strtolower( (string) ( $row['leeftijdscategorie'] ?? '' ) ), 'senior' ) ) {
+				$minutes = 105;
+			}
+			if ( ! $girls && $division > 0 && ( ( $age === 13 && $division <= 2 ) || ( in_array( $age, [ 15, 17 ], true ) && $division <= 3 ) ) ) {
+				$minutes += 10;
+			}
+			if ( $minutes === null ) {
+				return null;
+			}
+			$durations[] = $minutes;
+		}
+		$durations = array_unique( $durations );
+		return count( $durations ) === 1 ? reset( $durations ) : null;
+	}
 
 	/** Resolve the current season in the WordPress timezone. */
 	public static function season(): array {
@@ -112,7 +162,7 @@ class TeamMatches {
 		if ( ! is_array( $cache ) || ( $cache['season'] ?? '' ) !== $season['key'] || ( $cache['identity'] ?? '' ) !== $identity ) {
 			$cache = [];
 		}
-		if ( ( $cache['retry_after'] ?? 0 ) > time() && ( isset( $cache['matchdays'] ) || ! empty( $cache['stale'] ) ) ) {
+		if ( ( $cache['retry_after'] ?? 0 ) > time() && ( ( ( $cache['duration_version'] ?? 0 ) === self::DURATION_VERSION && isset( $cache['matchdays'] ) ) || ! empty( $cache['stale'] ) ) ) {
 			return $this->response( $cache );
 		}
 		$lock = 'rondo_team_matches_lock_' . $team_id;
@@ -142,11 +192,12 @@ class TeamMatches {
 			if ( is_wp_error( $profile ) ) {
 				return $this->failed_refresh( $team_id, $cache );
 			}
-			$today  = new DateTimeImmutable( 'today', wp_timezone() );
-			$monday = $today->modify( 'monday this week' );
-			$start  = new DateTimeImmutable( $season['start'], wp_timezone() );
-			$offset = (int) floor( (int) $monday->diff( $start )->format( '%r%a' ) / 7 );
-			$params = [
+			$duration = self::duration_minutes( $team, $directory );
+			$today    = new DateTimeImmutable( 'today', wp_timezone() );
+			$monday   = $today->modify( 'monday this week' );
+			$start    = new DateTimeImmutable( $season['start'], wp_timezone() );
+			$offset   = (int) floor( (int) $monday->diff( $start )->format( '%r%a' ) / 7 );
+			$params   = [
 				'teamcode'                  => $team['teamcode'],
 				'aantaldagen'               => 380,
 				'aantalregels'              => 500,
@@ -178,12 +229,13 @@ class TeamMatches {
 					if ( ! $item || $item['date'] < $season['start'] || $item['date'] >= $season['end'] ) {
 						continue;
 					}
-					$item['cancelled']    = $item['cancelled'] || preg_match( '/vervallen|geannuleerd|uitgesteld/i', $item['status'] ) === 1;
-					$item['home']         = in_array( (int) ( $row['thuisteamid'] ?? -1 ), $team['ids'], true );
-					$item['time_known']   = preg_match( '/^\d{1,2}:\d{2}$/', trim( (string) ( $row['aanvangstijd'] ?? '' ) ) ) === 1;
-					$item['competition']  = sanitize_text_field( (string) ( $row['competitiesoort'] ?? '' ) );
-					$item['location']     = implode( ', ', array_filter( [ $item['location'], sanitize_text_field( (string) ( $row['plaats'] ?? '' ) ) ] ) );
-					$items[ $item['id'] ] = $item;
+					$item['cancelled']        = $item['cancelled'] || preg_match( '/vervallen|geannuleerd|uitgesteld/i', $item['status'] ) === 1;
+					$item['home']             = in_array( (int) ( $row['thuisteamid'] ?? -1 ), $team['ids'], true );
+					$item['time_known']       = preg_match( '/^\d{1,2}:\d{2}$/', trim( (string) ( $row['aanvangstijd'] ?? '' ) ) ) === 1;
+					$item['competition']      = sanitize_text_field( (string) ( $row['competitiesoort'] ?? '' ) );
+					$item['duration_minutes'] = $duration;
+					$item['location']         = implode( ', ', array_filter( [ $item['location'], sanitize_text_field( (string) ( $row['plaats'] ?? '' ) ) ] ) );
+					$items[ $item['id'] ]     = $item;
 				}
 			}
 			$previous = array_column( $cache['matches'] ?? [], null, 'id' );
@@ -199,8 +251,12 @@ class TeamMatches {
 			}
 			foreach ( $items as $id => &$item ) {
 				$old = $previous[ $id ] ?? [];
+				// Retained history and cancellation tombstones also gain an end time once.
+				if ( ! array_key_exists( 'duration_minutes', $item ) ) {
+					$item['duration_minutes'] = $duration;
+				}
 				// Expiring logo URLs do not change a calendar event's revision.
-				$keys                = [ 'starts_at', 'home_team', 'away_team', 'location', 'pitch', 'status', 'cancelled', 'result', 'time_known', 'competition' ];
+				$keys                = [ 'starts_at', 'home_team', 'away_team', 'location', 'pitch', 'status', 'cancelled', 'result', 'time_known', 'competition', 'duration_minutes' ];
 				$changed             = array_intersect_key( $item, array_flip( $keys ) ) !== array_intersect_key( $old, array_flip( $keys ) );
 				$item['sequence']    = (int) ( $old['sequence'] ?? 0 ) + ( $old && $changed ? 1 : 0 );
 				$item['modified_at'] = $changed ? gmdate( DATE_RFC3339 ) : $old['modified_at'];
@@ -208,14 +264,15 @@ class TeamMatches {
 			unset( $item );
 			usort( $items, static fn( $a, $b ) => strcmp( $a['starts_at'], $b['starts_at'] ) );
 			$cache = [
-				'season'      => $season['key'],
-				'identity'    => $identity,
-				'matched'     => true,
-				'matches'     => array_values( $items ),
-				'matchdays'   => KnvbMatchdays::reconcile( KnvbMatchdays::candidates( $profile, $season['key'] ), $items, $cache['matchdays'] ?? [], $today->format( 'Y-m-d' ) ),
-				'stale'       => false,
-				'updated_at'  => gmdate( DATE_RFC3339 ),
-				'retry_after' => time() + self::TTL,
+				'duration_version' => self::DURATION_VERSION,
+				'season'           => $season['key'],
+				'identity'         => $identity,
+				'matched'          => true,
+				'matches'          => array_values( $items ),
+				'matchdays'        => KnvbMatchdays::reconcile( KnvbMatchdays::candidates( $profile, $season['key'] ), $items, $cache['matchdays'] ?? [], $today->format( 'Y-m-d' ) ),
+				'stale'            => false,
+				'updated_at'       => gmdate( DATE_RFC3339 ),
+				'retry_after'      => time() + self::TTL,
 			];
 			update_post_meta( $team_id, self::CACHE_KEY, $cache );
 			return $this->response( $cache );
@@ -271,9 +328,12 @@ class TeamMatches {
 			$lines[] = 'LAST-MODIFIED:' . $stamp;
 			$lines[] = 'SEQUENCE:' . $item['sequence'];
 			$lines[] = $item['time_known'] ? 'DTSTART:' . gmdate( 'Ymd\THis\Z', $start->getTimestamp() ) : 'DTSTART;VALUE=DATE:' . $start->format( 'Ymd' );
+			if ( $item['time_known'] && ! empty( $item['duration_minutes'] ) ) {
+				$lines[] = 'DTEND:' . gmdate( 'Ymd\THis\Z', $start->getTimestamp() + $item['duration_minutes'] * MINUTE_IN_SECONDS );
+			}
 			$lines[] = 'SUMMARY:' . self::escape( $summary );
 			$lines[] = 'LOCATION:' . self::escape( $item['location'] );
-			$lines[] = 'DESCRIPTION:' . self::escape( implode( "\n", array_filter( [ $item['competition'], $item['status'], $item['pitch'] ? 'Veld: ' . $item['pitch'] : '', ! $item['time_known'] ? 'Aanvangstijd nog niet bekend.' : '' ] ) ) );
+			$lines[] = 'DESCRIPTION:' . self::escape( implode( "\n", array_filter( [ $item['competition'], $item['status'], $item['pitch'] ? 'Veld: ' . $item['pitch'] : '', ! $item['time_known'] ? 'Aanvangstijd nog niet bekend.' : '', ! empty( $item['duration_minutes'] ) ? 'Geplande duur: ' . $item['duration_minutes'] . ' minuten inclusief rust en eventuele time-outs; exclusief blessuretijd en verlenging.' : 'Wedstrijdduur niet bekend.' ] ) ) );
 			$lines[] = 'STATUS:' . ( $item['cancelled'] ? 'CANCELLED' : 'CONFIRMED' );
 			$lines[] = 'END:VEVENT';
 		}
