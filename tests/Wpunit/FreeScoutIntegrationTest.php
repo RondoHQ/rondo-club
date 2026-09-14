@@ -189,8 +189,40 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 			]
 		);
 		$this->assertFalse( $inactive->get_data()['active'] );
+		$this->assertTrue( $inactive->get_data()['sidebar_access'] );
 		$this->assertSame( [], $inactive->get_data()['managed_mailboxes'] );
+
+		$agent->set_role( 'subscriber' );
+		$denied = $this->signed_request(
+			'access',
+			[
+				'version'         => 1,
+				'issuer'          => OidcAuthorizationService::issuer(),
+				'subject'         => $this->subject,
+				'freescoutUserId' => 44,
+			]
+		);
+		$this->assertFalse( $denied->get_data()['active'] );
+		$this->assertFalse( $denied->get_data()['sidebar_access'] );
 	}
+
+	public function test_basic_sidebar_preserves_member_visibility_and_denies_managed_policies(): void {
+		$agent = get_userdata( $this->agent_id );
+		$agent->remove_cap( 'ledenadministratie' );
+		$own = $this->signed_request( 'sidebar', $this->sidebar_body( [ 'agent@example.test' ], 'basis' ) )->get_data();
+		$this->assertSame( 'ok', $own['status'] );
+		$this->assertStringNotContainsString( 'Openstaande contributie', $own['html'] );
+
+		$this->createPerson( [ 'post_title' => 'Outside scope' ], [ 'email_1' => 'outside@example.test' ] );
+		$hidden = $this->signed_request( 'sidebar', $this->sidebar_body( [ 'outside@example.test' ], 'basis' ) )->get_data();
+		$this->assertSame( 'no_match', $hidden['status'] );
+		$this->assertStringNotContainsString( 'Outside scope', $hidden['html'] );
+		foreach ( [ 'ledenadministratie', 'contributie' ] as $mailbox ) {
+			$denied = $this->signed_request( 'sidebar', $this->sidebar_body( [ 'agent@example.test' ], $mailbox ) )->get_data();
+			$this->assertSame( 'unauthorized', $denied['status'] );
+		}
+	}
+
 
 	public function test_access_allows_missing_local_user_id_during_first_binding(): void {
 		$without_id = $this->signed_request(
