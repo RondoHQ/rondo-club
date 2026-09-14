@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Preserve the original person, content and visibility of existing FreeScout activities during customer changes and repeated delivery. Unresolved new activities wait in the FreeScout queue instead of WordPress moderation.
 
+## [35.80.2] - 2026-09-14
+
+### Fixed
+- Allow Rondo members with a linked profile to identify for the basic FreeScout sidebar through an existing active FreeScout account, independently of administrative mailbox permissions.
+- Expose basic sidebar eligibility separately from managed mailbox access while preserving person visibility, financial restrictions, and verified-email requirements.
+
 ## [35.80.1] - 2026-09-14
 
 ### Fixed
