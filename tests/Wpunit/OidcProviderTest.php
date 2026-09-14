@@ -167,6 +167,21 @@ final class OidcProviderTest extends RondoTestCase {
 		$this->assertWPError( OidcIdentity::resolve( $read_id, false ) );
 	}
 
+	public function test_rondo_member_can_identify_for_an_existing_freescout_account_without_managed_access(): void {
+		$user_id = $this->createEligibleUser( 'basic-agent@example.test' );
+		$user    = get_userdata( $user_id );
+		$user->set_role( 'rondo_user' );
+		$user->remove_cap( 'ledenadministratie' );
+
+		$this->assertIsArray( OidcIdentity::resolve( $user_id, false ) );
+		$this->assertFalse( user_can( $user_id, 'ledenadministratie' ) );
+		$this->assertFalse( user_can( $user_id, 'financieel' ) );
+		$this->assertSame( 'rondo_oidc_email_verification_required', OidcIdentity::resolve( $user_id )->get_error_code() );
+
+		delete_user_meta( $user_id, 'rondo_linked_person_id' );
+		$this->assertSame( 'rondo_oidc_person_unavailable', OidcIdentity::resolve( $user_id, false )->get_error_code() );
+	}
+
 	public function test_dedicated_email_link_proves_exact_address_once_without_oauth_parameters(): void {
 		$user_id = $this->createEligibleUser( 'verify@example.test' );
 		$client  = $this->createClient();
