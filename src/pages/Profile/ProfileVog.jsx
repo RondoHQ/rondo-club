@@ -1,4 +1,5 @@
 import VogUpload from '@/components/VogUpload';
+import VogSubmissionStatus from '@/components/VogSubmissionStatus';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { FileCheck, CheckCircle2, AlertTriangle, ArrowLeft } from 'lucide-react';
@@ -74,6 +75,8 @@ export default function ProfileVog() {
 
       {isLoading ? (
         <ContentLoadingSpinner />
+      ) : vog?.submission ? (
+        <VogSubmissionStatus submission={vog.submission} vog={vog} renewalText={profileTexts.renewal} />
       ) : (
         <div className="card p-5">
           <div className="flex items-start gap-3">
@@ -114,7 +117,21 @@ export default function ProfileVog() {
         </div>
       )}
 
-      {vog?.can_upload && <VogUpload submission={vog.submission} />}
+      {vog?.can_upload && (
+        !vog.submission || ['needs_original', 'rejected', 'expired', 'replaced'].includes(vog.submission.status) ? (
+          <div className="card p-5"><VogUpload /></div>
+        ) : (
+          <details key={`${vog.submission.id}-${vog.submission.status}`} className="card p-5">
+            <summary className="cursor-pointer font-medium text-bright-cobalt dark:text-electric-cyan focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
+              {vog.submission.status === 'approved' ? 'Nieuwe VOG inleveren' : 'Andere VOG inleveren'}
+            </summary>
+            <div className="pt-4 space-y-4">
+              {vog.submission.status !== 'approved' && <p className="text-sm text-gray-600 dark:text-gray-300">Alleen nodig als je een ander document wilt insturen. Een nieuwe upload vervangt je huidige inzending.</p>}
+              <VogUpload />
+            </div>
+          </details>
+        )
+      )}
 
       <div className="card p-5 text-sm text-gray-600 dark:text-gray-400 space-y-2">
         <h2 className="font-semibold text-gray-900 dark:text-gray-100">Wat is een VOG?</h2>

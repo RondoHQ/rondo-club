@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.82.2] - 2026-09-14
+
+### Fixed
+- Show one coherent member VOG status after submission, preserving prior validity without conflicting missing-VOG instructions. Keep replacement uploads collapsed during review and show the upload form when a new document is required.
+
 ## [35.82.1] - 2026-09-14
 
 ### Fixed
