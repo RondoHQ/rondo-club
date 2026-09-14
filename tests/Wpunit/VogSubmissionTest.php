@@ -31,7 +31,16 @@ class VogSubmissionTest extends RondoTestCase {
 		$this->reviewer = $this->createRondoUser();
 		get_user_by( 'id', $this->reviewer )->add_cap( 'vog' );
 		$this->server = $this->bootRestControllers( [ VogSubmissions::class ] );
-		delete_option( Store::RULES );
+		update_option(
+			Store::RULES,
+			[
+				[
+					'organization' => 'Testclub',
+					'function'     => 'Vrijwilliger',
+					'codes'        => [ '84' ],
+				],
+			]
+			);
 		wp_set_current_user( $this->member );
 	}
 
@@ -59,7 +68,16 @@ class VogSubmissionTest extends RondoTestCase {
 		file_put_contents( $path, '%PDF-synthetic' );
 		$this->paths[]  = $path;
 		$file['sha256'] = hash_file( 'sha256', $path );
-		$id             = Store::create( $this->person, $this->member, $source, [ $file ], [] );
+		$parsed         = $source === 'digital' ? [
+			'first_name' => 'Test',
+			'infix'      => 'van',
+			'last_name'  => 'Voorbeeld',
+			'birthdate'  => '1990-01-02',
+			'date'       => gmdate( 'Y-m-d' ),
+			'purpose'    => 'Vrijwilliger bij Testclub',
+			'codes'      => [ '84' ],
+		] : [];
+		$id             = Store::create( $this->person, $this->member, $source, [ $file ], $parsed );
 		$data           = Store::get( $id );
 		$data['status'] = $source === 'paper' ? 'waiting_paper' : 'review';
 		$data['code']   = $code;
@@ -73,12 +91,13 @@ class VogSubmissionTest extends RondoTestCase {
 			'/vog/submissions/' . $id . '/review',
 			array_merge(
 			[
-				'version'   => Store::get( $id )['version'],
-				'action'    => 'approve',
-				'method'    => 'gaav_manual',
-				'date'      => gmdate( 'Y-m-d' ),
-				'confirmed' => true,
-				'note'      => 'Origineel en inhoud gecontroleerd.',
+				'assessment_revision' => Store::payload( $id, true )['assessment']['revision'] ?? '',
+				'version'             => Store::get( $id )['version'],
+				'action'              => 'approve',
+				'method'              => 'gaav_manual',
+				'date'                => gmdate( 'Y-m-d' ),
+				'confirmed'           => true,
+				'note'                => 'Origineel en inhoud gecontroleerd.',
 			],
 			$extra
 			)
@@ -155,6 +174,9 @@ class VogSubmissionTest extends RondoTestCase {
 		wp_set_current_user( $this->reviewer );
 		$this->assertSame( 409, $this->approval( $id, [ 'version' => 0 ] )->get_status() );
 		Fields::update_for_post( $this->person, 'datum_vog', gmdate( 'Y-m-d' ) );
+		$data                   = Store::get( $id );
+		$data['parsed']['date'] = gmdate( 'Y-m-d', time() - DAY_IN_SECONDS );
+		Store::save( $id, $data );
 		$this->assertSame( 409, $this->approval( $id, [ 'date' => gmdate( 'Y-m-d', time() - DAY_IN_SECONDS ) ] )->get_status() );
 		update_user_meta( $this->member, 'rondo_linked_person_id', $this->createPerson() );
 		$this->assertSame( 409, $this->approval( $id )->get_status() );
@@ -209,6 +231,7 @@ class VogSubmissionTest extends RondoTestCase {
 	}
 
 	public function test_encrypted_pdf_automatic_approval_and_empty_rules_review(): void {
+		delete_option( Store::RULES );
 		if ( getenv( 'RONDO_TEST_PYTHON' ) && ! defined( 'RONDO_VOG_PYTHON' ) ) {
 			define( 'RONDO_VOG_PYTHON', getenv( 'RONDO_TEST_PYTHON' ) );
 		}
@@ -309,6 +332,7 @@ class VogSubmissionTest extends RondoTestCase {
 	}
 
 	public function test_rules_are_admin_only_and_empty_by_default(): void {
+		delete_option( Store::RULES );
 		$this->assertSame( [], get_option( Store::RULES, [] ) );
 		wp_set_current_user( $this->reviewer );
 		$this->assertSame( 403, $this->request( 'POST', '/vog/approval-rules', [ 'rules' => [] ] )->get_status() );
@@ -322,6 +346,222 @@ class VogSubmissionTest extends RondoTestCase {
 				'rules' => [
 					[
 						'organization' => '',
+						'function'     => 'Vrijwilliger',
+						'codes'        => [ '84' ],
+					],
+				],
+			]
+			)->get_status()
+			);
+	}
+
+	public function test_verified_names_require_evidence_and_remain_private(): void {
+		$id                           = $this->submission();
+		$data                         = Store::get( $id );
+		$data['parsed']['first_name'] = 'Test Volledige';
+		$data['parsed']['last_name']  = 'Geboortenaam';
+		Store::save( $id, $data );
+		wp_set_current_user( $this->reviewer );
+		$this->assertSame( 400, $this->approval( $id )->get_status() );
+		$this->assertSame(
+			400,
+			$this->approval(
+			$id,
+			[
+				'remember_identity'  => true,
+				'identity_method'    => 'guess',
+				'identity_confirmed' => true,
+			]
+			)->get_status()
+			);
+		$this->assertEmpty( get_post_meta( $this->person, Store::IDENTITY, true ) );
+		$this->assertSame(
+			200,
+			$this->approval(
+			$id,
+			[
+				'remember_identity'  => true,
+				'identity_method'    => 'original_id',
+				'identity_confirmed' => true,
+			]
+			)->get_status()
+			);
+		$verified = get_post_meta( $this->person, Store::IDENTITY, true );
+		$this->assertSame( 'Geboortenaam', $verified['names']['last_name'] );
+		$this->assertSame( $this->reviewer, $verified['reviewer'] );
+		$this->assertSame( 'original_id', $verified['method'] );
+		$this->assertArrayNotHasKey( 'birthdate', $verified );
+		$this->assertSame( 'Test', Fields::get_for_post( $this->person, 'first_name' ) );
+		$this->assertSame( 'Voorbeeld', Fields::get_for_post( $this->person, 'last_name' ) );
+		$this->assertSame( [], Store::get( $id )['parsed'] );
+		$this->assertTrue( Store::payload( $id )['identity_remembered'] );
+		$this->assertArrayNotHasKey( 'assessment', Store::payload( $id ) );
+		$this->assertArrayNotHasKey( 'identity_check', Store::payload( $id ) );
+		$this->assertSame( [], VogDocument::reasons( $data['parsed'], $this->person, get_option( Store::RULES ) ) );
+		$data['parsed']['first_name'] = 'Iemand Anders';
+		$this->assertFalse( VogDocument::assessment( $data['parsed'], $this->person, get_option( Store::RULES ) )['identity_matches'] );
+		$data['parsed']['first_name'] = 'Test Volledige';
+		Fields::update_for_post( $this->person, 'birthdate', '1991-01-02' );
+		$this->assertFalse( VogDocument::assessment( $data['parsed'], $this->person, get_option( Store::RULES ) )['identity_matches'] );
+	}
+
+	public function test_name_confirmation_without_remembering_does_not_create_alias(): void {
+		$id                           = $this->submission();
+		$data                         = Store::get( $id );
+		$data['parsed']['first_name'] = 'Test Volledige';
+		Store::save( $id, $data );
+		update_post_meta( $this->person, Store::IDENTITY, [ 'old_evidence' => true ] );
+		wp_set_current_user( $this->reviewer );
+		$this->assertSame(
+			200,
+			$this->approval(
+			$id,
+			[
+				'identity_method'    => 'verified_records',
+				'identity_confirmed' => true,
+			]
+			)->get_status()
+			);
+		$this->assertEmpty( get_post_meta( $this->person, Store::IDENTITY, true ) );
+		$this->assertFalse( Store::payload( $id )['identity_remembered'] );
+		$this->assertSame( 'verified_records', Store::get( $id )['identity_check']['method'] );
+	}
+
+	public function test_next_original_uses_verified_names_for_automatic_approval(): void {
+		$fixture = '/tmp/rondo-vog-synthetic.pdf';
+		if ( ! is_file( $fixture ) ) {
+			$this->markTestSkipped( 'Generate the synthetic PDF first.' );
+		}
+		Fields::update_for_post( $this->person, 'first_name', 'Roepnaam' );
+		$id = $this->submission();
+		wp_set_current_user( $this->reviewer );
+		$this->assertSame(
+			200,
+			$this->approval(
+			$id,
+			[
+				'identity_method'    => 'original_id',
+				'identity_confirmed' => true,
+				'remember_identity'  => true,
+			]
+			)->get_status()
+			);
+		$id   = $this->submission();
+		$data = Store::get( $id );
+		$path = Store::path( $data['files'][0] );
+		copy( $fixture, $path );
+		$data['files'][0]['sha256'] = hash_file( 'sha256', $path );
+		$data['status']             = 'checking';
+		Store::save( $id, $data );
+		$mock = static fn() => [
+			'response' => [ 'code' => 200 ],
+			'body'     => '{"response_code":0}',
+		];
+		add_filter( 'pre_http_request', $mock );
+		try {
+			Store::process( $id );
+		} finally {
+			remove_filter( 'pre_http_request', $mock );
+		}
+		$this->assertSame( 'approved', Store::get( $id )['status'] );
+		$this->assertSame( 'gaav_auto', Store::get( $id )['method'] );
+		$this->assertSame( 'Roepnaam', Fields::get_for_post( $this->person, 'first_name' ) );
+	}
+
+	public function test_digital_content_cannot_be_overridden_by_manual_confirmation(): void {
+		wp_set_current_user( $this->reviewer );
+		foreach ( [ 'missing_code', 'other_club', 'unreadable', 'future_date' ] as $failure ) {
+			$id   = $this->submission();
+			$data = Store::get( $id );
+			if ( $failure === 'missing_code' ) {
+				$data['parsed']['codes'] = [ '85' ]; }
+			if ( $failure === 'other_club' ) {
+				$data['parsed']['purpose'] = 'Vrijwilliger bij Andereclub'; }
+			if ( $failure === 'unreadable' ) {
+				$data['parsed'] = []; }
+			if ( $failure === 'future_date' ) {
+				$data['parsed']['date'] = gmdate( 'Y-m-d', time() + DAY_IN_SECONDS ); }
+			Store::save( $id, $data );
+			$this->assertSame(
+				400,
+				$this->approval(
+				$id,
+				[
+					'identity_method'    => 'original_id',
+					'identity_confirmed' => true,
+					'remember_identity'  => true,
+				]
+				)->get_status(),
+				$failure
+				);
+			$this->assertEmpty( Fields::get_for_post( $this->person, 'datum_vog' ) );
+			$this->assertEmpty( get_post_meta( $this->person, Store::IDENTITY, true ) );
+		}
+	}
+
+	public function test_review_rechecks_current_settings_and_identity(): void {
+		$id = $this->submission();
+		wp_set_current_user( $this->reviewer );
+		$revision = Store::payload( $id, true )['assessment']['revision'];
+		update_option( Store::RULES, [] );
+		$this->assertFalse( Store::payload( $id, true )['assessment']['content_passed'] );
+		$this->assertSame( 409, $this->approval( $id, [ 'assessment_revision' => $revision ] )->get_status() );
+		$revision = Store::payload( $id, true )['assessment']['revision'];
+		Fields::update_for_post( $this->person, 'first_name', 'Gewijzigd' );
+		$this->assertSame( 409, $this->approval( $id, [ 'assessment_revision' => $revision ] )->get_status() );
+		$this->assertEmpty( Fields::get_for_post( $this->person, 'datum_vog' ) );
+	}
+
+	public function test_inquiry_is_versioned_keeps_files_and_preserves_validity(): void {
+		$id = $this->submission();
+		Fields::update_for_post( $this->person, 'datum_vog', gmdate( 'Y-m-d' ) );
+		$params = [
+			'version' => Store::get( $id )['version'],
+			'action'  => 'inquire',
+			'note'    => 'Laat je originele identiteitsbewijs zien.',
+		];
+		$this->assertSame( 403, $this->request( 'POST', '/vog/submissions/' . $id . '/review', $params )->get_status() );
+		wp_set_current_user( $this->reviewer );
+		$response = $this->request( 'POST', '/vog/submissions/' . $id . '/review', $params );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'awaiting_member', $response->get_data()['status'] );
+		$this->assertSame( $params['note'], Store::payload( $id )['note'] );
+		$this->assertFileExists( Store::path( Store::get( $id )['files'][0] ) );
+		$this->assertSame( gmdate( 'Ymd' ), Fields::get_for_post( $this->person, 'datum_vog' ) );
+		$this->assertSame( '1', get_post_meta( $id, '_rondo_vog_active', true ) );
+		$this->assertSame( 409, $this->request( 'POST', '/vog/submissions/' . $id . '/review', $params )->get_status() );
+		$this->assertSame( 200, $this->approval( $id )->get_status() );
+	}
+
+	public function test_standard_rule_matches_case_and_spaces_but_requires_code_84(): void {
+		$id              = $this->submission();
+		$data            = Store::get( $id )['parsed'];
+		$data['purpose'] = ' VRIJWILLIGER  bij  TESTCLUB ';
+		$this->assertTrue( VogDocument::assessment( $data, $this->person, get_option( Store::RULES ) )['content_passed'] );
+		$data['codes'] = [ '85' ];
+		$this->assertFalse(
+			VogDocument::assessment(
+			$data,
+			$this->person,
+			[
+				[
+					'organization' => 'Testclub',
+					'function'     => 'Vrijwilliger',
+					'codes'        => [ '85' ],
+				],
+			]
+			)['content_passed']
+			);
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$this->assertSame(
+			400,
+			$this->request(
+			'POST',
+			'/vog/approval-rules',
+			[
+				'rules' => [
+					[
+						'organization' => '   ',
 						'function'     => 'Vrijwilliger',
 						'codes'        => [ '84' ],
 					],

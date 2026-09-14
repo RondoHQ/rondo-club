@@ -122,37 +122,98 @@ final class VogDocument {
 		return $d && $d->format( 'Y-m-d' ) === $date && $date <= wp_date( 'Y-m-d' ) && $date > wp_date( 'Y-m-d', strtotime( '-3 years' ) );
 	}
 
-	/** Explain content differences without changing anyone's person record. */
-	public static function reasons( array $data, int $person_id, array $rules ): array {
-		if ( ! $data ) {
-			return [ 'Gegevens niet volledig leesbaar; controleer het originele document.' ];
+	/** Profile values used to bind a verified name to the same person identity. */
+	public static function profile_identity( int $person_id ): array {
+		$identity = [];
+		foreach ( [ 'first_name', 'infix', 'last_name', 'birthdate' ] as $key ) {
+			$value = (string) Fields::get_for_post( $person_id, $key );
+			if ( $key === 'birthdate' && preg_match( '/^\d{8}$/', $value ) ) {
+				$value = substr( $value, 0, 4 ) . '-' . substr( $value, 4, 2 ) . '-' . substr( $value, 6, 2 );
+			}
+			$identity[ $key ] = $value;
 		}
-		$reasons = [];
+		return $identity;
+	}
+
+	public static function profile_hash( int $person_id ): string {
+		return hash( 'sha256', wp_json_encode( array_map( [ self::class, 'normalize' ], self::profile_identity( $person_id ) ) ) );
+	}
+
+	/** Recalculate from current profile and settings, including already queued uploads. */
+	public static function assessment( array $data, int $person_id, array $rules ): array {
+		$profile   = self::profile_identity( $person_id );
+		$verified  = get_post_meta( $person_id, VogSubmissions::IDENTITY, true );
+		$use_saved = is_array( $verified ) && ( $verified['profile_hash'] ?? '' ) === self::profile_hash( $person_id );
+		$rows      = [];
 		foreach ( [
 			'first_name' => 'Voornamen',
 			'infix'      => 'Tussenvoegsel',
 			'last_name'  => 'Achternaam',
 			'birthdate'  => 'Geboortedatum',
 		] as $key => $label ) {
-			$value = (string) Fields::get_for_post( $person_id, $key );
-			if ( $key === 'birthdate' && preg_match( '/^\d{8}$/', $value ) ) {
-				$value = substr( $value, 0, 4 ) . '-' . substr( $value, 4, 2 ) . '-' . substr( $value, 6, 2 );
-			}
-			if ( self::normalize( $value ) !== self::normalize( $data[ $key ] ?? '' ) || ( $key !== 'infix' && $value === '' ) ) {
-				$reasons[] = $label . ' komt niet eenduidig overeen met het lid.';
-			}
-		}
-		if ( ! self::valid_date( $data['date'] ) ) {
-			$reasons[] = 'De afgiftedatum valt buiten de clubtermijn of ligt in de toekomst.';
+			$expected = $use_saved && $key !== 'birthdate' ? (string) ( $verified['names'][ $key ] ?? '' ) : $profile[ $key ];
+			$rows[]   = [
+				'key'      => $key,
+				'label'    => $label,
+				'profile'  => $profile[ $key ],
+				'expected' => $expected,
+				'document' => (string) ( $data[ $key ] ?? '' ),
+				'matches'  => self::normalize( $expected ) === self::normalize( (string) ( $data[ $key ] ?? '' ) ) && ( $key === 'infix' || $expected !== '' ),
+			];
 		}
 		$matched = false;
+		$codes   = false;
 		foreach ( $rules as $rule ) {
-			if ( self::normalize( $data['purpose'] ) === self::normalize( $rule['function'] . ' bij ' . $rule['organization'] ) && ! array_diff( $rule['codes'], $data['codes'] ) ) {
+			if ( self::normalize( (string) ( $data['purpose'] ?? '' ) ) === self::normalize( $rule['function'] . ' bij ' . $rule['organization'] ) ) {
 				$matched = true;
+				$codes   = $codes || ! array_diff( array_unique( array_merge( [ '84' ], $rule['codes'] ) ), $data['codes'] ?? [] );
 			}
 		}
-		if ( ! $matched ) {
-			$reasons[] = 'Geen bevestigde clubregel voor deze organisatie, functie en screeningscodes.';
+		$checks = [
+			[
+				'key'    => 'document',
+				'label'  => 'VOG met volledig leesbare gegevens',
+				'passed' => ! empty( $data['first_name'] ) && ! empty( $data['last_name'] ) && ! empty( $data['birthdate'] ) && isset( $data['infix'] ) && ! empty( $data['purpose'] ) && ! empty( $data['date'] ) && ! empty( $data['codes'] ),
+			],
+			[
+				'key'    => 'organization',
+				'label'  => 'Organisatie en functie komen overeen met de VOG-instellingen',
+				'passed' => $matched,
+			],
+			[
+				'key'    => 'codes',
+				'label'  => 'Code 84 en eventuele aanvullende clubcodes aanwezig',
+				'passed' => in_array( '84', $data['codes'] ?? [], true ) && ( ! $matched || $codes ),
+			],
+			[
+				'key'    => 'date',
+				'label'  => 'Afgiftedatum binnen de clubtermijn',
+				'passed' => self::valid_date( (string) ( $data['date'] ?? '' ) ),
+			],
+		];
+		return [
+			'identity_rows'    => $rows,
+			'identity_matches' => ! in_array( false, array_column( $rows, 'matches' ), true ),
+			'verified_at'      => $use_saved ? ( $verified['checked_at'] ?? '' ) : '',
+			'content_checks'   => $checks,
+			'content_passed'   => ! in_array( false, array_column( $checks, 'passed' ), true ),
+			'revision'         => hash( 'sha256', wp_json_encode( [ $data, $profile, $verified, $rules ] ) ),
+		];
+	}
+
+	/** Explain content differences without changing anyone's person record. */
+	public static function reasons( array $data, int $person_id, array $rules ): array {
+		$assessment = self::assessment( $data, $person_id, $rules );
+		$reasons    = [];
+		foreach ( $assessment['identity_rows'] as $row ) {
+			if ( ! $row['matches'] ) {
+				$reasons[] = $row['label'] . ' komt niet eenduidig overeen met de gecontroleerde identiteit of het ledenprofiel.';
+			}
+		}
+		foreach ( $assessment['content_checks'] as $check ) {
+			if ( ! $check['passed'] ) {
+				$reasons[] = 'Niet bevestigd: ' . $check['label'] . '.';
+			}
 		}
 		return $reasons;
 	}

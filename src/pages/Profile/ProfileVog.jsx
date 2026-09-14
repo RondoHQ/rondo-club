@@ -26,7 +26,7 @@ export default function ProfileVog() {
     queryKey: ['vog', 'me'],
     queryFn: async () => (await prmApi.getMyVog()).data,
     staleTime: 60 * 1000,
-    refetchInterval: query => ['checking', 'technical'].includes(query.state.data?.submission?.status) ? 10000 : false,
+    refetchInterval: query => ['checking', 'technical'].includes(query.state.data?.submission?.status) ? 10000 : ['review', 'awaiting_member', 'waiting_paper', 'needs_original'].includes(query.state.data?.submission?.status) ? 30000 : false,
   });
 
   if (error?.response?.status === 404) {

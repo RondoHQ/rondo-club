@@ -10,10 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 final class VogSubmissions {
-	const TYPE   = 'rondo_vog_submission';
-	const META   = '_rondo_vog_submission';
-	const RULES  = 'rondo_vog_approval_rules';
-	const ACTIVE = [ 'checking', 'technical', 'review', 'needs_original', 'waiting_paper' ];
+	const TYPE     = 'rondo_vog_submission';
+	const META     = '_rondo_vog_submission';
+	const RULES    = 'rondo_vog_approval_rules';
+	const IDENTITY = '_rondo_vog_verified_identity';
+	const ACTIVE   = [ 'checking', 'technical', 'review', 'awaiting_member', 'needs_original', 'waiting_paper' ];
 
 	public function __construct() {
 		add_action( 'init', [ self::class, 'register' ] );
@@ -248,7 +249,7 @@ final class VogSubmissions {
 	}
 
 	/** Caller holds the person lock; no date can go backwards. */
-	public static function approve( int $id, array $data, string $date, string $method, int $reviewer ) {
+	public static function approve( int $id, array $data, string $date, string $method, int $reviewer, array $identity = [] ) {
 		if ( ! VogDocument::valid_date( $date ) ) {
 			return new \WP_Error( 'vog_date', 'Kies een geldige afgiftedatum binnen de clubtermijn.', [ 'status' => 400 ] );
 		}
@@ -257,6 +258,24 @@ final class VogSubmissions {
 			$path = self::path( $file );
 			if ( $data['code'] !== 0 || ! is_readable( $path ) || hash_file( 'sha256', $path ) !== ( $file['sha256'] ?? '' ) ) {
 				return new \WP_Error( 'vog_original_changed', 'Het originele bestand kan niet meer worden bevestigd. Lever het opnieuw in.', [ 'status' => 409 ] );
+			}
+			$rules      = get_option( self::RULES, [] );
+			$assessment = VogDocument::assessment( $data['parsed'], $data['person_id'], $rules );
+			if ( ! $assessment['content_passed'] ) {
+				return new \WP_Error( 'vog_content', 'De VOG voldoet niet aan de automatische inhoudelijke controles. Controleer de VOG-instellingen of doe navraag.', [ 'status' => 400 ] );
+			}
+			$identity_checked = $reviewer > 0 && ( $identity['confirmed'] ?? false ) === true && in_array( $identity['method'] ?? '', [ 'original_id', 'verified_records' ], true );
+			if ( ( ! $assessment['identity_matches'] || ! empty( $identity['remember'] ) ) && ! $identity_checked ) {
+				return new \WP_Error( 'vog_identity', 'Bevestig eerst de identiteit en hoe je die hebt gecontroleerd.', [ 'status' => 400 ] );
+			}
+			$data['rule_version'] = hash( 'sha256', wp_json_encode( $rules ) );
+			if ( $identity_checked ) {
+				$data['identity_check'] = [
+					'method'     => $identity['method'],
+					'reviewer'   => $reviewer,
+					'checked_at' => gmdate( 'c' ),
+					'remembered' => ( $identity['remember'] ?? false ) === true,
+				];
 			}
 		}
 		$old = (string) Fields::get_for_post( $data['person_id'], 'datum_vog' );
@@ -272,6 +291,21 @@ final class VogSubmissions {
 		if ( is_wp_error( $updated ) ) {
 			return $updated;
 		}
+		if ( ! empty( $data['identity_check']['remembered'] ) ) {
+			// Private workflow evidence, never writable through the person field API.
+			$verified = $data['identity_check'] + [
+				'names'        => array_intersect_key( $data['parsed'], array_flip( [ 'first_name', 'infix', 'last_name' ] ) ),
+				'profile_hash' => VogDocument::profile_hash( $data['person_id'] ),
+				'submission'   => $id,
+			];
+			update_post_meta( $data['person_id'], self::IDENTITY, $verified );
+			if ( get_post_meta( $data['person_id'], self::IDENTITY, true ) !== $verified ) {
+				return new \WP_Error( 'vog_identity_save', 'De gecontroleerde namen konden niet worden opgeslagen. Probeer het opnieuw.', [ 'status' => 500 ] );
+			}
+		} elseif ( ! empty( $data['identity_check'] ) ) {
+			// A new explicit check replaces prior evidence even when names are not retained.
+			delete_post_meta( $data['person_id'], self::IDENTITY );
+		}
 		$data['approved_date'] = $date;
 		$data['method']        = $method;
 		$data['reviewer']      = $reviewer;
@@ -285,8 +319,8 @@ final class VogSubmissions {
 		if ( ! $data ) {
 			return null;
 		}
-		$expired = $data['expires'] <= time() && in_array( $data['status'], self::ACTIVE, true );
-		$out     = [
+		$expired                        = $data['expires'] <= time() && in_array( $data['status'], self::ACTIVE, true );
+		$out                            = [
 			'id'            => $id,
 			'status'        => $expired ? 'expired' : $data['status'],
 			'version'       => $data['version'],
@@ -297,15 +331,24 @@ final class VogSubmissions {
 			'approved_date' => $data['approved_date'] ?? '',
 			'attempts'      => $data['attempts'],
 		];
+		$assessment                     = ! $expired && in_array( $data['status'], self::ACTIVE, true ) && $data['source'] === 'digital' && $data['code'] === 0
+			? VogDocument::assessment( $data['parsed'], $data['person_id'], get_option( self::RULES, [] ) ) : null;
+		$out['identity_check_required'] = $assessment && ! $assessment['identity_matches'];
+		$out['identity_remembered']     = ! empty( $data['identity_check']['remembered'] );
 		if ( $reviewer ) {
 			$out += [
-				'person_id' => $data['person_id'],
-				'name'      => get_the_title( $data['person_id'] ),
-				'code'      => $data['code'],
-				'parsed'    => $expired ? [] : $data['parsed'],
-				'reasons'   => $data['reason'],
-				'files'     => $expired ? [] : array_map( static fn( $f ) => [ 'type' => $f['type'] ], $data['files'] ),
+				'person_id'      => $data['person_id'],
+				'name'           => get_the_title( $data['person_id'] ),
+				'code'           => $data['code'],
+				'parsed'         => $expired ? [] : $data['parsed'],
+				'reasons'        => $data['reason'],
+				'files'          => $expired ? [] : array_map( static fn( $f ) => [ 'type' => $f['type'] ], $data['files'] ),
+				'assessment'     => $assessment,
+				'identity_check' => $data['identity_check'] ?? null,
 			];
+			if ( $assessment ) {
+				$out['reasons'] = VogDocument::reasons( $data['parsed'], $data['person_id'], get_option( self::RULES, [] ) );
+			}
 		}
 		return $out;
 	}

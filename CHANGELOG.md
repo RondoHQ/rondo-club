@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.82.0] - 2026-09-14
+
+### Added
+- Compare VOG identity fields with member details and let coordinators record an explicit identity check, optionally retaining verified legal names for future VOGs without changing member display names.
+- Add member-visible inquiries that keep submissions open, with clearer pending messages and approval receipts.
+
+### Changed
+- Simplify VOG settings to organization names with volunteer function and code 84 defaults. Automatically enforce organization, selected screening codes and issue date on digital approvals.
+- Recalculate review checks against current settings and identity; reject stale review decisions and stop using saved names when profile identity changes.
+
 ## [35.81.0] - 2026-09-14
 
 ### Added
