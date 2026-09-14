@@ -66,11 +66,14 @@ export default function VogUpload({ submission }) {
     <section className="card p-5 space-y-4">
       {submission && (
         <div className="rounded-lg bg-gray-50 dark:bg-gray-700 p-3 space-y-2" role="status">
-          <h2 className="font-semibold">{VOG_SUBMISSION_LABELS[submission.status] || 'In behandeling'}</h2>
+          <h2 className="font-semibold">{submission.status === 'review' && submission.identity_check_required ? 'We moeten je naam nog bevestigen' : VOG_SUBMISSION_LABELS[submission.status] || 'In behandeling'}</h2>
+          {submission.status === 'review' && <p className="text-sm">{submission.identity_check_required ? 'De naam of geboortedatum op je document wijkt af van de bekende gegevens. De VOG-coördinator moet nog controleren of het document bij jou hoort.' : 'De VOG-coördinator moet je inzending nog beoordelen.'} Je hoeft de VOG niet opnieuw te uploaden.</p>}
+          {submission.status === 'awaiting_member' && <p className="text-sm">Je inzending blijft open. Hieronder lees je wat de VOG-coördinator van je nodig heeft.</p>}
           {submission.status === 'needs_original' && <p className="text-sm">Download de oorspronkelijke PDF uit de Berichtenbox van MijnOverheid. Gebruik geen screenshot of afdruk naar PDF. Kom je er niet uit? De VOG-coördinator kan je helpen.</p>}
           {submission.status === 'waiting_paper' && <p className="text-sm">Neem het originele papieren document mee naar de VOG-coördinator. Een scan is nog geen goedkeuring.</p>}
           {submission.status === 'technical' && <p className="text-sm">{submission.attempts < 3 ? 'We proberen het automatisch opnieuw.' : 'De VOG-coördinator kan de controle opnieuw starten.'} Een eerder geldige VOG blijft geldig.</p>}
           {submission.status === 'approved' && <p className="text-sm">{submission.method === 'paper_original' ? 'Origineel op papier gecontroleerd.' : 'Digitaal gecontroleerd via Justid.'}</p>}
+          {submission.identity_remembered && <p className="text-sm">Je bevestigde namen worden gebruikt bij volgende VOG-controles. Je naam in de ledenlijst blijft gelijk.</p>}
           {submission.note && <p className="text-sm">{submission.note}</p>}
         </div>
       )}
