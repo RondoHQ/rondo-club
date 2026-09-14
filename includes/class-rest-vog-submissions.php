@@ -246,11 +246,20 @@ final class VogSubmissions extends Base {
 					return new \WP_Error( 'vog_changed', 'Deze inzending is gewijzigd, verlopen of niet meer gekoppeld. Ververs het overzicht.', [ 'status' => 409 ] );
 				}
 				$note = sanitize_textarea_field( (string) $request['note'] );
+				if ( $request['action'] === 'approve' && $note === '' ) {
+					$note = 'Je VOG is goedgekeurd.';
+				}
 				if ( mb_strlen( $note ) < 3 || mb_strlen( $note ) > 500 ) {
 					return new \WP_Error( 'vog_note', 'Geef een korte toelichting van 3 tot 500 tekens, zonder overbodige persoonsgegevens.', [ 'status' => 400 ] );
 				}
 				$data['note'] = $note;
-				if ( $request['action'] === 'reject' ) {
+				if ( $request['action'] === 'inquire' ) {
+					$data['status']      = 'awaiting_member';
+					$data['reviewer']    = get_current_user_id();
+					$data['reviewed_at'] = gmdate( 'c' );
+					wp_clear_scheduled_hook( 'rondo_vog_retry', [ $id ] );
+					Store::save( $id, $data );
+				} elseif ( $request['action'] === 'reject' ) {
 					$data['reviewer'] = get_current_user_id();
 					Store::finish( $id, $data, 'rejected' );
 				} elseif ( $request['action'] === 'approve' ) {
@@ -258,13 +267,30 @@ final class VogSubmissions extends Base {
 					if ( $request['confirmed'] !== true || ( $method !== 'paper_original' && $method !== 'gaav_manual' ) || ( $method === 'gaav_manual' && $data['code'] !== 0 ) || ( $method === 'paper_original' && $data['source'] !== 'paper' ) ) {
 						return new \WP_Error( 'vog_original', 'Controleer het originele papier of een digitaal document met bevestigde echtheid.', [ 'status' => 400 ] );
 					}
+					if ( $method === 'gaav_manual' ) {
+						$assessment = VogDocument::assessment( $data['parsed'], $data['person_id'], get_option( Store::RULES, [] ) );
+						if ( ! is_string( $request['assessment_revision'] ) || ! hash_equals( $assessment['revision'], $request['assessment_revision'] ) ) {
+							return new \WP_Error( 'vog_assessment_changed', 'De persoonsgegevens of VOG-instellingen zijn gewijzigd. Ververs de beoordeling.', [ 'status' => 409 ] );
+						}
+					}
 					$date   = $data['parsed']['date'] ?? (string) $request['date'];
-					$result = Store::approve( $id, $data, $date, $method, get_current_user_id() );
+					$result = Store::approve(
+						$id,
+						$data,
+						$date,
+						$method,
+						get_current_user_id(),
+						[
+							'method'    => $request['identity_method'],
+							'confirmed' => $request['identity_confirmed'] === true,
+							'remember'  => $request['remember_identity'] === true,
+						]
+						);
 					if ( is_wp_error( $result ) ) {
 						return $result;
 					}
 				} else {
-					return new \WP_Error( 'vog_action', 'Kies goedkeuren of afwijzen.', [ 'status' => 400 ] );
+					return new \WP_Error( 'vog_action', 'Kies goedkeuren, navraag doen of afwijzen.', [ 'status' => 400 ] );
 				}
 				return rest_ensure_response( Store::payload( $id ) );
 			}
@@ -306,10 +332,13 @@ final class VogSubmissions extends Base {
 				}
 			}
 			$clean[] = [
-				'organization' => sanitize_text_field( $rule['organization'] ),
-				'function'     => sanitize_text_field( $rule['function'] ),
+				'organization' => trim( sanitize_text_field( $rule['organization'] ) ),
+				'function'     => trim( sanitize_text_field( $rule['function'] ) ),
 				'codes'        => array_values( array_unique( $rule['codes'] ) ),
 			];
+			if ( end( $clean )['organization'] === '' || end( $clean )['function'] === '' ) {
+				return new \WP_Error( 'vog_rule', 'Vul een organisatienaam en functie in.', [ 'status' => 400 ] );
+			}
 		}
 		update_option( Store::RULES, $clean, false );
 		return $this->rules();
