@@ -601,41 +601,135 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 		$this->assertSame( 'ambiguous', $matcher->match_knvb_id( 'LXCX82K' )['status'] );
 	}
 
-	public function test_activity_is_idempotent_and_customer_changes_move_hide_and_restore_it(): void {
-		$first  = $this->createPerson( [ 'post_title' => 'First member' ], [ 'email_1' => 'first@example.test' ] );
-		$second = $this->createPerson( [ 'post_title' => 'Second member' ], [ 'email_1' => 'second@example.test' ] );
-		$body   = $this->activity_body( 'conversation_created', [ 'first@example.test' ] );
-
-		$created   = $this->signed_request( 'activity', $body )->get_data();
-		$confirmed = $this->signed_request( 'activity', $body )->get_data();
-		$this->assertSame( 'created', $created['status'] );
-		$this->assertSame( 'confirmed', $confirmed['status'] );
-		$this->assertSame( $created['activity_id'], $confirmed['activity_id'] );
+	public function test_activity_replays_and_customer_changes_preserve_the_original_pointer(): void {
+		$first = $this->createPerson( [ 'post_title' => 'First member' ], [ 'email_1' => 'first@example.test' ] );
+		$this->createPerson( [ 'post_title' => 'Second member' ], [ 'email_1' => 'second@example.test' ] );
+		$body          = $this->activity_body( 'conversation_created', [ 'first@example.test' ] );
+		$created       = $this->signed_request( 'activity', $body )->get_data();
+		$original      = get_comment( $created['activity_id'] )->to_array();
+		$original_meta = get_comment_meta( $created['activity_id'] );
+		foreach ( [ 'second@example.test', 'missing@example.test', 'first@example.test' ] as $email ) {
+			$changed = $this->signed_request( 'activity', $this->activity_body( 'conversation_customer_changed', [ $email ] ) )->get_data();
+			$this->assertSame( 'confirmed', $changed['status'] );
+			$replay = $this->signed_request( 'activity', $this->activity_body( 'conversation_created', [ $email ] ) )->get_data();
+			$this->assertSame( $created['activity_id'], $replay['activity_id'] );
+			$this->assertSame( $original, get_comment( $created['activity_id'] )->to_array() );
+			$this->assertSame( $original_meta, get_comment_meta( $created['activity_id'] ) );
+		}
 		$this->assertSame( $first, (int) get_comment( $created['activity_id'] )->comment_post_ID );
-
-		$moved = $this->signed_request( 'activity', $this->activity_body( 'conversation_customer_changed', [ 'second@example.test' ] ) )->get_data();
-		$this->assertSame( 'moved', $moved['status'] );
-		$this->assertSame( $second, (int) get_comment( $created['activity_id'] )->comment_post_ID );
-
-		$hidden = $this->signed_request( 'activity', $this->activity_body( 'conversation_customer_changed', [ 'missing@example.test' ] ) )->get_data();
-		$this->assertSame( 'no_match', $hidden['status'] );
-		$this->assertSame( '0', (string) get_comment( $created['activity_id'] )->comment_approved );
-
-		$restored = $this->signed_request( 'activity', $this->activity_body( 'conversation_customer_changed', [ 'second@example.test' ] ) )->get_data();
-		$this->assertSame( 'restored', $restored['status'] );
-		$this->assertSame( '1', (string) get_comment( $created['activity_id'] )->comment_approved );
-		$this->assertSame(
+		$this->assertCount(
 			1,
-			count(
 			get_comments(
 			[
 				'type'   => 'rondo_activity',
 				'status' => 'all',
 			]
 			)
+			);
+	}
+
+	public function test_shared_email_choice_releases_new_activity_and_survives_retries(): void {
+		$first = $this->createPerson( [ 'post_title' => 'Parent' ], [ 'email_1' => 'family@example.test' ] );
+		$this->createPerson( [ 'post_title' => 'Child' ], [ 'email_1' => 'family@example.test' ] );
+		$activity = $this->activity_body( 'conversation_created', [ 'family@example.test' ] );
+		$this->assertSame( 'needs_link', $this->signed_request( 'activity', $activity )->get_data()['status'] );
+		$this->assertCount(
+			0,
+			get_comments(
+			[
+				'type'   => 'rondo_activity',
+				'status' => 'all',
+			]
 			)
 			);
-		$this->assertStringNotContainsString( 'second@example.test', serialize( get_comment_meta( $created['activity_id'] ) ) );
+		$sidebar = $this->link_sidebar_body( $activity );
+		$link    = $this->signed_request( 'sidebar', $sidebar )->get_data()['activity_link'];
+		$this->assertCount( 2, $link['candidates'] );
+		$this->assertSame( 0, $link['person_id'] );
+		$sidebar['activityPersonId'] = $first;
+		$sidebar['activityContext']  = $link['context'];
+		$saved                       = $this->signed_request( 'activity_link', $sidebar );
+		$this->assertSame( 200, $saved->get_status(), wp_json_encode( $saved->get_data() ) );
+		$this->assertSame( $first, $saved->get_data()['activity_link']['person_id'] );
+		$this->signed_request( 'activity', array_merge( $activity, [ 'eventType' => 'conversation_customer_changed' ] ) );
+		$created = $this->signed_request( 'activity', $activity )->get_data();
+		$this->assertSame( 'created', $created['status'] );
+		$this->assertSame( $first, (int) get_comment( $created['activity_id'] )->comment_post_ID );
+		$this->assertSame( $created['activity_id'], $this->signed_request( 'activity', $activity )->get_data()['activity_id'] );
+		$this->assertSame( $first, $this->signed_request( 'sidebar', $this->link_sidebar_body( $activity ) )->get_data()['activity_link']['person_id'] );
+	}
+
+	public function test_choice_rejects_stale_customer_unrelated_person_and_unauthorized_agent(): void {
+		$first = $this->createPerson( [], [ 'email_1' => 'family@example.test' ] );
+		$this->createPerson( [], [ 'email_1' => 'family@example.test' ] );
+		$outside                  = $this->createPerson( [], [ 'email_1' => 'other@example.test' ] );
+		$body                     = $this->link_sidebar_body( $this->activity_body( 'conversation_created', [ 'family@example.test' ] ) );
+		$link                     = $this->signed_request( 'sidebar', $body )->get_data()['activity_link'];
+		$body['activityContext']  = $link['context'];
+		$body['activityPersonId'] = $outside;
+		$this->assertSame( 403, $this->signed_request( 'activity_link', $body )->get_status() );
+		$body['activityPersonId'] = $first;
+		++$body['customerId'];
+		$this->assertSame( 409, $this->signed_request( 'activity_link', $body )->get_status() );
+		--$body['customerId'];
+		get_userdata( $this->agent_id )->remove_cap( 'ledenadministratie' );
+		$this->assertSame( 403, $this->signed_request( 'activity_link', $body )->get_status() );
+	}
+
+	public function test_customer_change_requires_a_fresh_choice_even_for_a_unique_email(): void {
+		$first                      = $this->createPerson( [], [ 'email_1' => 'first@example.test' ] );
+		$second                     = $this->createPerson( [], [ 'email_1' => 'second@example.test' ] );
+		$activity                   = $this->activity_body( 'conversation_created', [ 'first@example.test' ] );
+		$created                    = $this->signed_request( 'activity', $activity )->get_data();
+		$activity['customerEmails'] = [ 'second@example.test' ];
+		++$activity['customerId'];
+		$activity['eventType'] = 'customer_replied';
+		$activity['eventId']   = 1234;
+		// Delivery may reach Rondo before the customer-change event does.
+		$this->assertSame( 'needs_link', $this->signed_request( 'activity', $activity )->get_data()['status'] );
+		$sidebar = $this->link_sidebar_body( $activity );
+		$link    = $this->signed_request( 'sidebar', $sidebar )->get_data()['activity_link'];
+		$this->assertSame( 'needs_link', $link['status'] );
+		$sidebar['activityPersonId'] = $second;
+		$sidebar['activityContext']  = $link['context'];
+		$this->assertSame( 'saved', $this->signed_request( 'activity_link', $sidebar )->get_data()['status'] );
+		$new = $this->signed_request( 'activity', $activity )->get_data();
+		$this->assertSame( $second, (int) get_comment( $new['activity_id'] )->comment_post_ID );
+		$this->assertSame( $first, (int) get_comment( $created['activity_id'] )->comment_post_ID );
+	}
+
+	public function test_saved_choice_is_revalidated_against_current_person_email(): void {
+		$first = $this->createPerson( [], [ 'email_1' => 'family@example.test' ] );
+		$this->createPerson( [], [ 'email_1' => 'family@example.test' ] );
+		$activity                 = $this->activity_body( 'conversation_created', [ 'family@example.test' ] );
+		$body                     = $this->link_sidebar_body( $activity );
+		$body['activityContext']  = $this->signed_request( 'sidebar', $body )->get_data()['activity_link']['context'];
+		$body['activityPersonId'] = $first;
+		$this->assertSame( 'saved', $this->signed_request( 'activity_link', $body )->get_data()['status'] );
+		Fields::update_for_post( $first, 'email_1', 'new@example.test' );
+		$this->assertSame( 'needs_link', $this->signed_request( 'activity', $activity )->get_data()['status'] );
+		$this->assertCount(
+			0,
+			get_comments(
+			[
+				'type'   => 'rondo_activity',
+				'status' => 'all',
+			]
+			)
+			);
+		$body['customerEmails'] = [ 'family@example.test', 'new@example.test' ];
+		$this->assertSame( 409, $this->signed_request( 'activity_link', $body )->get_status() );
+	}
+
+	private function link_sidebar_body( array $activity ): array {
+		return array_merge(
+			$this->sidebar_body( $activity['customerEmails'] ),
+			[
+				'instance'       => self::INSTANCE,
+				'conversationId' => $activity['conversationId'],
+				'customerId'     => $activity['customerId'],
+			]
+			);
 	}
 
 	public function test_reply_activities_are_distinct_idempotent_and_keep_message_content_out(): void {
@@ -673,11 +767,10 @@ class FreeScoutIntegrationTest extends RondoTestCase {
 			);
 		$this->assertCount( 3, $all );
 		$moved = $this->signed_request( 'activity', $this->activity_body( 'conversation_customer_changed', [ 'second@example.test' ] ) )->get_data();
-		$this->assertSame( 'moved', $moved['status'] );
-		$this->assertCount( 3, $moved['activity_ids'] );
+		$this->assertSame( 'confirmed', $moved['status'] );
 		foreach ( $all as $activity ) {
 			$this->assertSame( $first, (int) $activity->comment_post_ID );
-			$this->assertSame( $second, (int) get_comment( $activity->comment_ID )->comment_post_ID );
+			$this->assertSame( $first, (int) get_comment( $activity->comment_ID )->comment_post_ID );
 		}
 	}
 

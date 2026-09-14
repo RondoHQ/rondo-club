@@ -61,7 +61,7 @@ final class FreeScoutIntegration extends Base {
 	}
 
 	public function register_routes(): void {
-		foreach ( [ 'configuration', 'access', 'sidebar', 'activity' ] as $route ) {
+		foreach ( [ 'configuration', 'access', 'sidebar', 'activity', 'activity_link' ] as $route ) {
 			register_rest_route(
 				'rondo/v1',
 				'/integrations/freescout/' . $route,
@@ -144,7 +144,7 @@ final class FreeScoutIntegration extends Base {
 	}
 
 	/** Render a live mailbox-specific sidebar as the exact effective Rondo user. */
-	public function sidebar( \WP_REST_Request $request ) {
+	public function sidebar( \WP_REST_Request $request, bool $save_link = false ) {
 		$started = microtime( true );
 		$body    = $this->authenticator->authenticate( $request );
 		if ( is_wp_error( $body ) ) {
@@ -169,12 +169,27 @@ final class FreeScoutIntegration extends Base {
 					'mailbox_key'       => $mailbox_key,
 				]
 				);
+			if ( $save_link ) {
+				return $this->error( 'rondo_freescout_link_denied', 'Je mag deze activiteiten niet koppelen.', 403 );
+			}
 			return rest_ensure_response( $this->sidebar_response( 'unauthorized', $this->renderer->state( 'Je Rondo-toegang voor deze mailbox is niet actief.' ) ) );
 		}
 
 		$previous_user_id = get_current_user_id();
 		wp_set_current_user( $user_id );
 		try {
+			$link = $this->sidebar_activity_link( $body, $user_id, $save_link );
+			if ( is_wp_error( $link ) ) {
+				return $link;
+			}
+			if ( $save_link ) {
+				return rest_ensure_response(
+					[
+						'status'        => 'saved',
+						'activity_link' => $link,
+					]
+					);
+			}
 			$match = isset( $body['personReference'] )
 				? $this->matcher->match_knvb_id( (string) $body['personReference']['value'], 'sidebar', $user_id )
 				: $this->matcher->match( $body['customerEmails'], 'sidebar', $user_id, (string) ( $body['fromName'] ?? '' ) );
@@ -190,7 +205,8 @@ final class FreeScoutIntegration extends Base {
 				return rest_ensure_response(
 					$this->sidebar_response(
 						'ambiguous',
-						$this->renderer->render_switcher( $match['candidate_ids'], $policy, $user_id )
+						$this->renderer->render_switcher( $match['candidate_ids'], $policy, $user_id ),
+						$link
 					)
 				);
 			}
@@ -205,7 +221,7 @@ final class FreeScoutIntegration extends Base {
 						'mailbox_key'       => $mailbox_key,
 					]
 					);
-				return rest_ensure_response( $this->sidebar_response( $public_status, $this->renderer->state( $message ) ) );
+				return rest_ensure_response( $this->sidebar_response( $public_status, $this->renderer->state( $message ), $link ) );
 			}
 
 			$html = $this->renderer->render( (int) $match['person_id'], $policy, $user_id );
@@ -219,13 +235,129 @@ final class FreeScoutIntegration extends Base {
 					'mailbox_key'       => $mailbox_key,
 				]
 			);
-			return rest_ensure_response( $this->sidebar_response( 'ok', $html ) );
+			return rest_ensure_response( $this->sidebar_response( 'ok', $html, $link ) );
 		} finally {
 			wp_set_current_user( $previous_user_id );
 		}
 	}
 
-	/** Create, confirm, move, hide or restore an idempotent FreeScout activity pointer. */
+	/** Save a deliberate choice using the same signed agent and mailbox checks as the sidebar. */
+	public function activity_link( \WP_REST_Request $request ) {
+		return $this->sidebar( $request, true );
+	}
+
+	private function activity_link_key( string $instance, array $body ): string {
+		return 'rondo_fs_link_' . hash( 'sha256', $instance . '|' . $body['mailboxKey'] . '|' . absint( $body['conversationId'] ) );
+	}
+
+	private function activity_link_context( array $body ): string {
+		$emails = $this->matcher->normalize_emails( $body['customerEmails'] );
+		sort( $emails );
+		return hash_hmac( 'sha256', absint( $body['customerId'] ) . '|' . implode( '|', $emails ), wp_salt( 'auth' ) );
+	}
+
+	/** Resolve new activities only; a stored choice never changes an existing pointer. */
+	private function activity_match( string $instance, array $body ): array {
+		$match   = $this->matcher->match( $body['customerEmails'], 'integration' );
+		$key     = $this->activity_link_key( $instance, $body );
+		$stored  = get_option( $key, [] );
+		$context = $this->activity_link_context( $body );
+		if ( $stored !== [] ) {
+			$id = (int) ( $stored['person_id'] ?? 0 );
+			if ( ( $stored['context'] ?? '' ) === $context && in_array( $id, $match['candidate_ids'], true ) ) {
+				return [
+					'status'    => 'exact',
+					'person_id' => $id,
+				];
+			}
+			return [
+				'status'    => 'needs_link',
+				'person_id' => null,
+			];
+		}
+		// Do not overwrite a simultaneous explicit choice when recording the first delivery.
+		$id = $match['status'] === 'exact' ? (int) $match['person_id'] : 0;
+		if ( ! add_option(
+			$key,
+			[
+				'context'   => $context,
+				'person_id' => $id,
+			],
+			'',
+			false
+			) ) {
+			$stored = get_option( $key, [] );
+			$id     = (int) ( $stored['person_id'] ?? 0 );
+			return [
+				'status'    => ( $stored['context'] ?? '' ) === $context && in_array( $id, $match['candidate_ids'], true ) ? 'exact' : 'needs_link',
+				'person_id' => $id,
+			];
+		}
+		return $match;
+	}
+
+	/** Return only candidates visible to this agent; older modules can keep using the sidebar. */
+	private function sidebar_activity_link( array $body, int $user_id, bool $save ) {
+		if ( ! isset( self::MAILBOX_MAPPINGS[ $body['mailboxKey'] ] ) || empty( $body['instance'] ) ) {
+			return $save ? $this->error( 'rondo_freescout_link_unavailable', 'Activiteiten koppelen is hier niet beschikbaar.', 400 ) : null;
+		}
+		$instance = $this->registered_instance( (string) $body['instance'] );
+		if ( is_wp_error( $instance ) ) {
+			return $instance;
+		}
+		$match   = $this->matcher->match( $body['customerEmails'], 'sidebar', $user_id );
+		$key     = $this->activity_link_key( $instance, $body );
+		$context = $this->activity_link_context( $body );
+		$stored  = get_option( $key, [] );
+		if ( $save ) {
+			$id = $body['activityPersonId'] ?? null;
+			if ( ! is_int( $id ) || ! in_array( $id, $match['candidate_ids'], true ) ) {
+				return $this->error( 'rondo_freescout_link_invalid', 'Kies een beschikbaar profiel voor dit gesprek.', 403 );
+			}
+			if ( ! is_string( $body['activityContext'] ?? null ) || ! hash_equals( $context, $body['activityContext'] ) ) {
+				return $this->error( 'rondo_freescout_link_stale', 'De gesprekspartner is gewijzigd. Vernieuw de zijbalk en kies opnieuw.', 409 );
+			}
+			$stored = [
+				'context'     => $context,
+				'person_id'   => $id,
+				'selected_by' => $user_id,
+				'selected_at' => gmdate( DATE_ATOM ),
+			];
+			update_option( $key, $stored, false );
+			if ( get_option( $key ) !== $stored ) {
+				return $this->error( 'rondo_freescout_link_failed', 'De keuze kon niet worden opgeslagen. Probeer opnieuw.', 500 );
+			}
+			$this->audit(
+				'activity_link_selected',
+				'explicit',
+				[
+					'conversation_id' => absint( $body['conversationId'] ),
+					'person_id'       => $id,
+					'mailbox_key'     => $body['mailboxKey'],
+					'user_id'         => $user_id,
+				]
+				);
+		}
+		$id = $stored === [] && $match['status'] === 'exact' ? (int) $match['person_id'] : (int) ( $stored['person_id'] ?? 0 );
+		if ( ( $stored !== [] && ( $stored['context'] ?? '' ) !== $context ) || ! in_array( $id, $match['candidate_ids'], true ) ) {
+			$id = 0;
+		}
+		return [
+			'context'     => $context,
+			'customer_id' => absint( $body['customerId'] ),
+			'person_id'   => $id,
+			'status'      => $id > 0 ? 'linked' : 'needs_link',
+			'candidates'  => array_map(
+				static fn( int $candidate ): array => [
+					'id'   => $candidate,
+					'name' => get_the_title( $candidate ),
+				],
+				$match['candidate_ids']
+				),
+		];
+	}
+
+	/** Create or acknowledge an idempotent FreeScout activity pointer. */
 	public function activity( \WP_REST_Request $request ) {
 		$body = $this->authenticator->authenticate( $request );
 		if ( is_wp_error( $body ) ) {
@@ -252,7 +384,16 @@ final class FreeScoutIntegration extends Base {
 			return $existing;
 		}
 
-		$match = $this->matcher->match( $body['customerEmails'], 'integration' );
+		if ( $existing instanceof \WP_Comment ) {
+			return rest_ensure_response(
+				[
+					'status'          => 'confirmed',
+					'activity_id'     => (int) $existing->comment_ID,
+					'conversation_id' => $conversation_id,
+				]
+				);
+		}
+		$match = $this->activity_match( $instance, $body );
 		if ( $match['status'] !== 'exact' || empty( $match['person_id'] ) ) {
 			$this->audit(
 				'activity_match',
@@ -264,7 +405,7 @@ final class FreeScoutIntegration extends Base {
 				);
 			return rest_ensure_response(
 				[
-					'status'          => $match['status'],
+					'status'          => 'needs_link',
 					'activity_id'     => $existing instanceof \WP_Comment ? (int) $existing->comment_ID : null,
 					'conversation_id' => $conversation_id,
 				]
@@ -272,11 +413,7 @@ final class FreeScoutIntegration extends Base {
 		}
 
 		$person_id = (int) $match['person_id'];
-		if ( $existing instanceof \WP_Comment ) {
-			$result = $this->confirm_activity( $existing, $person_id, $body );
-		} else {
-			$result = $this->create_activity( $person_id, $instance, $body );
-		}
+		$result    = $this->create_activity( $person_id, $instance, $body );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
@@ -435,12 +572,13 @@ final class FreeScoutIntegration extends Base {
 	}
 
 	/** @return array<string,mixed> */
-	private function sidebar_response( string $status, string $html ): array {
+	private function sidebar_response( string $status, string $html, ?array $link = null ): array {
 		return [
-			'version'      => self::VERSION,
-			'status'       => $status,
-			'html'         => $html,
-			'generated_at' => gmdate( DATE_ATOM ),
+			'activity_link' => $link,
+			'version'       => self::VERSION,
+			'status'        => $status,
+			'html'          => $html,
+			'generated_at'  => gmdate( DATE_ATOM ),
 		];
 	}
 
@@ -494,65 +632,28 @@ final class FreeScoutIntegration extends Base {
 		return $matches[0] ?? null;
 	}
 
-	private function reconcile_conversation_activities( string $instance, array $body ): \WP_REST_Response|\WP_Error {
-		$conversation_id = absint( $body['conversationId'] );
-		$activities      = $this->find_conversation_activities( $instance, $conversation_id );
-		$match           = $this->matcher->match( $body['customerEmails'], 'integration' );
-		if ( $match['status'] !== 'exact' || empty( $match['person_id'] ) ) {
-			foreach ( $activities as $activity ) {
-				$this->hide_activity( $activity, $body, $match['status'] );
-			}
-			$this->audit(
-				'activity_match',
-				$match['status'],
+	private function reconcile_conversation_activities( string $instance, array $body ): \WP_REST_Response {
+		$key     = $this->activity_link_key( $instance, $body );
+		$stored  = get_option( $key, [] );
+		$context = $this->activity_link_context( $body );
+		// A late/retried customer-change event must not erase a choice already made for this customer.
+		if ( ( $stored['context'] ?? '' ) !== $context ) {
+			update_option(
+				$key,
 				[
-					'conversation_id' => $conversation_id,
-					'mailbox_key'     => (string) $body['mailboxKey'],
-				]
+					'context'   => $context,
+					'person_id' => 0,
+				],
+				false
 				);
-			return rest_ensure_response(
-				[
-					'status'          => $match['status'],
-					'activity_id'     => isset( $activities[0] ) ? (int) $activities[0]->comment_ID : null,
-					'conversation_id' => $conversation_id,
-				]
-			);
 		}
-
-		if ( $activities === [] ) {
-			$creation_body              = $body;
-			$creation_body['eventType'] = 'conversation_created';
-			$result                     = $this->create_activity( (int) $match['person_id'], $instance, $creation_body );
-			if ( is_wp_error( $result ) ) {
-				return $result;
-			}
-			return rest_ensure_response(
-				[
-					'status'          => $result['status'],
-					'activity_id'     => $result['activity_id'],
-					'conversation_id' => $conversation_id,
-				]
-			);
-		}
-
-		$statuses = [];
-		foreach ( $activities as $activity ) {
-			$result = $this->confirm_activity( $activity, (int) $match['person_id'], $body );
-			if ( is_wp_error( $result ) ) {
-				return $result;
-			}
-			$statuses[] = $result['status'];
-		}
-		$status = in_array( 'moved', $statuses, true ) ? 'moved' : ( in_array( 'restored', $statuses, true ) ? 'restored' : 'confirmed' );
-
 		return rest_ensure_response(
 			[
-				'status'          => $status,
-				'activity_id'     => (int) $activities[0]->comment_ID,
-				'activity_ids'    => array_map( fn( $activity ) => (int) $activity->comment_ID, $activities ),
-				'conversation_id' => $conversation_id,
+				'status'          => 'confirmed',
+				'activity_id'     => null,
+				'conversation_id' => absint( $body['conversationId'] ),
 			]
-		);
+			);
 	}
 
 	/** @return array{status:string,activity_id:int}|\WP_Error */
@@ -595,62 +696,6 @@ final class FreeScoutIntegration extends Base {
 			'status'      => 'created',
 			'activity_id' => (int) $id,
 		];
-	}
-
-	/** @return array{status:string,activity_id:int}|\WP_Error */
-	private function confirm_activity( \WP_Comment $comment, int $person_id, array $body ) {
-		$old_person_id = (int) $comment->comment_post_ID;
-		$was_hidden    = (string) $comment->comment_approved !== '1';
-		$instance      = (string) get_comment_meta( $comment->comment_ID, self::ACTIVITY_META_INSTANCE, true );
-		$is_reconcile  = (string) $body['eventType'] === 'conversation_customer_changed';
-		$event_type    = $is_reconcile ? (string) get_comment_meta( $comment->comment_ID, self::ACTIVITY_META_EVENT, true ) : (string) $body['eventType'];
-		$event_type    = $event_type !== '' ? $event_type : 'conversation_created';
-		$user_id       = $is_reconcile ? (int) $comment->user_id : $this->activity_actor_user_id( $body );
-		$result        = wp_update_comment(
-			[
-				'comment_ID'       => (int) $comment->comment_ID,
-				'comment_post_ID'  => $person_id,
-				'comment_content'  => $this->activity_content( $instance, absint( $body['conversationId'] ), (string) $body['subject'], $event_type, $user_id ),
-				'comment_approved' => 1,
-				'user_id'          => $user_id,
-			],
-			true
-		);
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
-		$this->update_activity_meta( (int) $comment->comment_ID, $instance, $body, 'matched' );
-		$status = $old_person_id !== $person_id ? 'moved' : ( $was_hidden ? 'restored' : 'confirmed' );
-		$this->audit(
-			'activity_' . $status,
-			'exact',
-			[
-				'conversation_id' => absint( $body['conversationId'] ),
-				'old_person_id'   => $old_person_id,
-				'new_person_id'   => $person_id,
-				'mailbox_key'     => (string) $body['mailboxKey'],
-			]
-		);
-
-		return [
-			'status'      => $status,
-			'activity_id' => (int) $comment->comment_ID,
-		];
-	}
-
-	private function hide_activity( \WP_Comment $comment, array $body, string $match_state ): void {
-		wp_set_comment_status( (int) $comment->comment_ID, 'hold' );
-		$instance = (string) get_comment_meta( $comment->comment_ID, self::ACTIVITY_META_INSTANCE, true );
-		$this->update_activity_meta( (int) $comment->comment_ID, $instance, $body, $match_state );
-		$this->audit(
-			'activity_hidden',
-			$match_state,
-			[
-				'conversation_id' => absint( $body['conversationId'] ),
-				'old_person_id'   => (int) $comment->comment_post_ID,
-				'mailbox_key'     => (string) $body['mailboxKey'],
-			]
-		);
 	}
 
 	private function update_activity_meta( int $comment_id, string $instance, array $body, string $state ): void {
