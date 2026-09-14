@@ -34,9 +34,14 @@ export default function VogUpload({ submission }) {
     const selected = Array.from(event.target.files || []);
     setError('');
     upload.reset();
+    if (source === 'digital' && selected.length > 0 && (selected.length !== 1 || selected[0].type !== 'application/pdf')) {
+      clearFiles();
+      setError('Kies één originele PDF uit MijnOverheid. Kies voor een foto of scan de andere optie.');
+      return;
+    }
     if (selected.length > 5 || selected.reduce((sum, file) => sum + file.size, 0) > 10 * 1024 * 1024) {
       clearFiles();
-      setError('Kies maximaal vijf bestanden, samen maximaal 10 MB.');
+      setError(source === 'digital' ? 'Kies een PDF van maximaal 10 MB.' : 'Kies maximaal vijf bestanden, samen maximaal 10 MB.');
       return;
     }
     if (selected.some(file => !['application/pdf', 'image/jpeg', 'image/png'].includes(file.type))) {
@@ -49,7 +54,6 @@ export default function VogUpload({ submission }) {
       setError('Kies één PDF of meerdere foto’s.');
       return;
     }
-    if (selected.some(file => file.type.startsWith('image/')) && source === 'digital') setSource('unknown');
     setFiles(selected);
   };
   const move = (index, direction) => setFiles(old => {
@@ -90,26 +94,28 @@ export default function VogUpload({ submission }) {
           {' '}Na afronding verwijderen we je upload. Openstaande uploads zijn maximaal 30 dagen beschikbaar. Bewaar zelf je origineel.
         </p>
         <div className="space-y-2">
-          <input ref={input} type="file" accept={source === 'digital' ? '.pdf,image/jpeg,image/png' : '.pdf,.jpg,.jpeg,.png'} multiple={source !== 'digital'} onChange={choose} className="hidden" />
+          <input ref={input} type="file" accept={source === 'digital' ? '.pdf' : '.pdf,.jpg,.jpeg,.png'} multiple={source !== 'digital'} onChange={choose} className="hidden" />
           <button type="button" className="btn-secondary inline-flex items-center gap-2" aria-describedby={fileHintId} onClick={() => input.current?.click()}>
             <Upload className="h-4 w-4" aria-hidden="true" />
             {source === 'digital' ? 'PDF kiezen' : 'Bestanden kiezen'}
           </button>
           <p id={fileHintId} className="text-sm text-gray-600 dark:text-gray-300">{source === 'digital' ? 'Originele PDF (maximaal 10 MB en vijf pagina’s)' : 'Eén PDF of maximaal vijf JPG/PNG-foto’s (samen maximaal 10 MB)'}</p>
-          <p className="text-sm text-gray-500" role="status">{files.length === 0 ? 'Nog geen bestand gekozen.' : `${files.length} ${files.length === 1 ? 'bestand' : 'bestanden'} gekozen.`}</p>
+          {(files.length === 0 || files.length > 1) && <p className="text-sm text-gray-500" role="status">{files.length === 0 ? 'Nog geen bestand gekozen.' : `${files.length} bestanden gekozen.`}</p>}
         </div>
         {source !== 'digital' && <p className="text-sm text-gray-500">Zorg dat alle pagina’s scherp, volledig en zonder afgesneden randen zichtbaar zijn.</p>}
-        {files.length > 0 && <ol className="space-y-2">{files.map((file, index) => (
+        {files.length > 0 && <ul className="space-y-2" aria-live="polite">{files.map((file, index) => (
           <li key={`${file.name}-${index}`} className="flex flex-wrap items-center gap-2 text-sm border rounded p-2">
             <div className="flex w-full items-center gap-3">
               {previews[index] && file.type.startsWith('image/') && <img src={previews[index]} alt={`Voorbeeld pagina ${index + 1}`} className="h-20 w-16 shrink-0 object-contain" />}
-              <span className="min-w-0 flex-1 break-words">{index + 1}. {file.name}{previews[index] && <a href={previews[index]} target="_blank" rel="noopener noreferrer" className="block underline mt-1">Voorbeeld openen</a>}</span>
+              <span className="min-w-0 flex-1 break-words">{files.length > 1 && `${index + 1}. `}{file.name}{previews[index] && <a href={previews[index]} target="_blank" rel="noopener noreferrer" className="block underline mt-1">Voorbeeld openen</a>}</span>
             </div>
-            <button type="button" disabled={index === 0} onClick={() => move(index, -1)} className="btn-secondary" aria-label={`Pagina ${index + 1} omhoog`}>↑</button>
-            <button type="button" disabled={index === files.length - 1} onClick={() => move(index, 1)} className="btn-secondary" aria-label={`Pagina ${index + 1} omlaag`}>↓</button>
+            {files.length > 1 && <>
+              <button type="button" disabled={index === 0} onClick={() => move(index, -1)} className="btn-secondary" aria-label={`Pagina ${index + 1} omhoog`}>↑</button>
+              <button type="button" disabled={index === files.length - 1} onClick={() => move(index, 1)} className="btn-secondary" aria-label={`Pagina ${index + 1} omlaag`}>↓</button>
+            </>}
             <button type="button" onClick={() => setFiles(old => old.filter((_, i) => i !== index))} className="btn-secondary">Verwijderen</button>
           </li>
-        ))}</ol>}
+        ))}</ul>}
         <button type="button" disabled={!files.length || upload.isPending} className="btn-primary" onClick={() => upload.mutate()}>{upload.isPending ? 'Bezig met verwerken…' : source === 'digital' ? 'Uploaden en controleren' : 'Scan inleveren voor beoordeling'}</button>
       </fieldset>
       {(error || upload.isError) && <p role="alert" className="text-sm text-red-700 dark:text-red-300">{error || upload.error?.response?.data?.message || 'Uploaden is niet gelukt. Probeer het opnieuw.'}</p>}

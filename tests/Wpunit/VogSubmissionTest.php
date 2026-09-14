@@ -268,6 +268,7 @@ class VogSubmissionTest extends RondoTestCase {
 		foreach ( [ [ 0, 0 ], [ '0', null ], [ false, null ], [ 8, null ], [ 2, 2 ] ] as [ $wire, $expected ] ) {
 			$mock = function ( $pre, $args, $url ) use ( $wire ) {
 				$this->assertSame( 'https://www.validatie.nl/api/valideer/', $url );
+				$this->assertSame( 'RondoClub/' . wp_get_theme()->get( 'Version' ) . ' (+' . home_url( '/' ) . ')', $args['user-agent'] );
 				$this->assertSame( 0, $args['redirection'] );
 				$this->assertTrue( $args['sslverify'] );
 				$this->assertStringContainsString( 'synthetic unchanged bytes', $args['body'] );

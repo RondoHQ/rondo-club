@@ -58,6 +58,8 @@ final class VogDocument {
 		$response = wp_remote_post(
 			'https://www.validatie.nl/api/valideer/',
 			[
+				// GAAV rejects the generic WordPress user agent; identify this client explicitly.
+				'user-agent'          => 'RondoClub/' . wp_get_theme()->get( 'Version' ) . ' (+' . home_url( '/' ) . ')',
 				'timeout'             => 15,
 				'redirection'         => 0,
 				'sslverify'           => true,
