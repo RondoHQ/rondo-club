@@ -13,6 +13,28 @@ use Tests\Support\RondoTestCase;
 class VolunteerStatusTest extends RondoTestCase {
 
 	/**
+	 * Sportlink's club referee title grants exemption only while the role is active.
+	 */
+	public function test_club_referee_role_exempts_active_but_not_ended_assignments(): void {
+		delete_option( VolunteerStatus::OPTION_STAFF_ROLES );
+		$person_id = $this->createPerson( [ 'post_title' => 'Verenigingsscheidsrechter' ] );
+		$position  = [
+			'team'        => $this->createOrganization(),
+			'entity_type' => 'team',
+			'job_title'   => 'Verenigingsscheidsrechter',
+			'start_date'  => '2020-01-01',
+			'end_date'    => '',
+			'is_current'  => true,
+		];
+		Fields::update_for_post( $person_id, 'work_history', [ $position ] );
+		$this->assertSame( VolunteerExemptionResolver::REASON_STAFF, VolunteerExemptionResolver::resolve( $person_id, '2026-2027' ) );
+
+		$position['end_date'] = '2020-12-31';
+		Fields::update_for_post( $person_id, 'work_history', [ $position ] );
+		$this->assertNull( VolunteerExemptionResolver::resolve( $person_id, '2026-2027' ) );
+	}
+
+	/**
 	 * Commissie remains the highest-priority reason when one history also has a staff role.
 	 */
 	public function test_commissie_reason_wins_over_staff_role_from_same_work_history(): void {
