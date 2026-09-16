@@ -193,7 +193,7 @@ class UserProvisioning {
 			$assigned_roles = [];
 			foreach ( $work_history as $job ) {
 				$job_title = $job['job_title'] ?? '';
-				if ( empty( $job_title ) ) {
+				if ( empty( $job_title ) || ! \Rondo\Core\VolunteerStatus::is_position_current( $job ) ) {
 					continue;
 				}
 				$roles = \Rondo\Config\FunctieCapabilityMap::get_roles_for_functie( $job_title );

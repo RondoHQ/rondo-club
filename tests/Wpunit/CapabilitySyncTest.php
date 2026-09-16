@@ -144,6 +144,97 @@ class CapabilitySyncTest extends RondoTestCase {
 		$this->assertNotContains( 'rondo_fairplay', (array) get_userdata( $fixture['user_id'] )->roles );
 	}
 
+	public function test_date_boundaries_apply_to_local_and_supplied_functions(): void {
+		$fixture = $this->create_linked_user_with_commissie( 'Coordinator' );
+		update_option( 'rondo_functie_capability_map', [ 'Coordinator' => [ 'rondo_vog' => true ] ] );
+		$sync = new CapabilitySync();
+		foreach ( [
+			[
+				'start_date' => '2099-01-01',
+				'is_current' => true,
+			],
+			[
+				'end_date'   => '2020-01-01',
+				'is_current' => true,
+			],
+			[
+				'end_date'   => current_datetime()->format( 'Y-m-d' ),
+				'is_current' => true,
+			],
+			[ 'is_current' => false ],
+		] as $dates ) {
+			Fields::update_for_post(
+				$fixture['person_id'],
+				'work_history',
+				[
+					array_merge(
+						[
+							'team'      => $fixture['commissie_id'],
+							'job_title' => 'Coordinator',
+						],
+						$dates
+				),
+				]
+				);
+			get_userdata( $fixture['user_id'] )->add_role( 'rondo_vog' );
+			$sync->sync_user_by_person_id( $fixture['person_id'] );
+			$this->assertNotContains( 'rondo_vog', $this->syncable_roles( $fixture['user_id'] ) );
+			$sync->sync_user_by_knvb_id( $fixture['knvb_id'], [ 'Coordinator' ] );
+			$this->assertNotContains( 'rondo_vog', $this->syncable_roles( $fixture['user_id'] ) );
+			$sync->sync_all( [ $fixture['knvb_id'] => [ 'Coordinator' ] ] );
+			$this->assertNotContains( 'rondo_vog', $this->syncable_roles( $fixture['user_id'] ) );
+		}
+		Fields::update_for_post(
+			$fixture['person_id'],
+			'work_history',
+			[
+				[
+					'team'       => $fixture['commissie_id'],
+					'job_title'  => 'Coordinator',
+					'start_date' => '2020-01-01',
+					'end_date'   => '2099-01-01',
+					'is_current' => false,
+				],
+			]
+			);
+		$sync->sync_user_by_person_id( $fixture['person_id'] );
+		$this->assertContains( 'rondo_vog', $this->syncable_roles( $fixture['user_id'] ) );
+	}
+
+	public function test_hourly_reconciliation_grants_and_revokes_without_sportlink_payload_and_respects_overrides(): void {
+		$fixture = $this->create_linked_user_with_commissie( 'Coordinator' );
+		$role    = \Rondo\Core\UserRoles::add_custom_role( 'Scheduled coordinator' );
+		update_option( 'rondo_age_group_access', [ $role => [ 'Onder 13' ] ] );
+		get_userdata( $fixture['user_id'] )->add_role( 'rondo_vog' );
+		update_option( 'rondo_functie_capability_map', [ 'Coordinator' => [ $role => true ] ] );
+		$this->assertSame( 'hourly', wp_get_schedule( 'rondo_reconcile_user_roles' ) );
+		do_action( 'rondo_reconcile_user_roles' );
+		$this->assertContains( $role, $this->syncable_roles( $fixture['user_id'] ) );
+		Fields::update_for_post(
+			$fixture['person_id'],
+			'work_history',
+			[
+				[
+					'team'       => $fixture['commissie_id'],
+					'job_title'  => 'Coordinator',
+					'end_date'   => '2020-01-01',
+					'is_current' => true,
+				],
+			]
+			);
+		do_action( 'rondo_reconcile_user_roles' );
+		$this->assertNotContains( $role, $this->syncable_roles( $fixture['user_id'] ) );
+		update_user_meta( $fixture['user_id'], CapabilitySync::META_MANUAL_GRANTS, wp_json_encode( [ $role ] ) );
+		do_action( 'rondo_reconcile_user_roles' );
+		$this->assertContains( $role, $this->syncable_roles( $fixture['user_id'] ) );
+		update_user_meta( $fixture['user_id'], CapabilitySync::META_MANUAL_REVOKES, wp_json_encode( [ $role ] ) );
+		do_action( 'rondo_reconcile_user_roles' );
+		$this->assertNotContains( $role, $this->syncable_roles( $fixture['user_id'] ) );
+		$this->assertContains( 'rondo_vog', $this->syncable_roles( $fixture['user_id'] ), 'Hourly reconciliation must not revoke unrelated roles.' );
+		\Rondo\Core\UserRoles::remove_custom_role( $role );
+		delete_option( 'rondo_age_group_access' );
+	}
+
 	/**
 	 * Create one provisioned user linked to a current commissie work-history row.
 	 *

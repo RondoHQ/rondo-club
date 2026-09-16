@@ -285,6 +285,7 @@ function rondo_init() {
 	new AccessControl();
 	new PersonDeletionGuard();
 	new UserRoles();
+	\Rondo\Users\CapabilitySync::register_hooks();
 	new LettermintMailer();
 	new DemoProtection();
 	// Must load on every request: core password-reset mail is addressed to user_email,

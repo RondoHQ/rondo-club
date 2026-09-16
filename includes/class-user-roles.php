@@ -357,6 +357,16 @@ class UserRoles {
 			$user->remove_role( $slug );
 		}
 
+		// Do not revive old person grants if this role name is recreated later.
+		foreach ( [ 'rondo_age_group_access', 'rondo_team_access' ] as $option ) {
+			$config = get_option( $option, [] );
+			$config = is_string( $config ) ? json_decode( $config, true ) : $config;
+			if ( is_array( $config ) && isset( $config[ $slug ] ) ) {
+				unset( $config[ $slug ] );
+				update_option( $option, $config );
+			}
+		}
+
 		// Remove the WP role definition.
 		remove_role( $slug );
 
