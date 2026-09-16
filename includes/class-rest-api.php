@@ -62,10 +62,8 @@ class Api extends Base {
 	 * `suppress_age_group` full-club fetch:
 	 *
 	 *   - Management (unrestricted) sees every kaderlid.
-	 *   - A coordinator sees kaderleden attached to a team whose current roster
-	 *     includes one of their permitted `leeftijdsgroep` values — i.e. the
-	 *     kader of the age groups they coordinate, not kader who merely share
-	 *     their own (adult) age group.
+	 *   - A coordinator sees the full club roster through this limited endpoint.
+	 *     General person and team detail access remain separately scoped.
 	 *   - A scoped member sees only kaderleden in their own household.
 	 *
 	 * @param \WP_REST_Request $request The request object.
@@ -77,7 +75,7 @@ class Api extends Base {
 		// The dedicated capability grants this narrow endpoint, not general person
 		// visibility. Its response is already limited to active kader and the fields
 		// rendered by the table.
-		if ( current_user_can( \Rondo\Core\UserRoles::KADERLIJST_CAPABILITY ) ) {
+		if ( current_user_can( \Rondo\Core\UserRoles::KADERLIJST_CAPABILITY ) || \Rondo\Core\AccessControl::has_coordinator_team_scope() ) {
 			return $this->cached_kaderlijst_response(
 				[ 'type' => 'all' ],
 				fn() => $this->build_kaderlijst_people( $this->kaderlijst_candidate_ids() ),
@@ -165,14 +163,39 @@ class Api extends Base {
 		if ( ! $refresh ) {
 			$cached = get_transient( $cache_key );
 			if ( is_array( $cached ) && isset( $cached['people'] ) && is_array( $cached['people'] ) ) {
-				return rest_ensure_response( $cached );
+				return $this->kaderlijst_response_with_teams( $cached );
 			}
 		}
 
 		$response = [ 'people' => $build_people() ];
 		set_transient( $cache_key, $response, self::KADERLIJST_CACHE_TTL );
 
-		return rest_ensure_response( $response );
+		return $this->kaderlijst_response_with_teams( $response );
+	}
+
+	/** Add only roster labels and per-user link permissions, outside the shared cache. */
+	private function kaderlijst_response_with_teams( array $data ): \WP_REST_Response {
+		$data['teams'] = [];
+		if ( \Rondo\Core\UserRoles::can_access_kaderlijst() ) {
+			$allowed = \Rondo\Core\AccessControl::visible_team_ids_or_null();
+			$teams   = get_posts(
+				[
+					'post_type'        => 'team',
+					'post_status'      => 'publish',
+					'posts_per_page'   => -1,
+					'suppress_filters' => true,
+				]
+			);
+			foreach ( $teams as $team ) {
+				$data['teams'][] = [
+					'id'         => (int) $team->ID,
+					'parent'     => (int) $team->post_parent,
+					'name'       => $team->post_title,
+					'can_access' => $allowed === null || in_array( (int) $team->ID, $allowed, true ),
+				];
+			}
+		}
+		return rest_ensure_response( $data );
 	}
 
 	/**

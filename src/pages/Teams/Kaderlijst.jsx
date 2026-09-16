@@ -4,11 +4,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { RefreshCw, Users } from 'lucide-react';
 import { SiWhatsapp } from '@icons-pack/react-simple-icons';
-import { prmApi, wpApi } from '@/api/client';
+import { prmApi } from '@/api/client';
 import { DataTable, createColumn, FILTER_TYPES } from '@/components/DataTable';
 import { useVolunteerRoleSettings } from '@/hooks/useVolunteerRoleSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { decodeHtml, formatPhoneForTel, formatPhoneForDisplay, getTeamName } from '@/utils/formatters';
+import { decodeHtml, formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
 
 const collator = new Intl.Collator('nl-NL', { numeric: true, sensitivity: 'base' });
 
@@ -17,7 +17,6 @@ const AGE_GROUP_ORDER = {
   Pupillen: 1,
   Senioren: 2,
 };
-const FETCH_CONCURRENCY = 4;
 
 function isSameTeam(row, previousRow) {
   return previousRow?.ageGroup === row.ageGroup
@@ -217,49 +216,14 @@ function getRowScopePriority(row) {
   return 2;
 }
 
-async function fetchAllTeams() {
-  const perPage = 100;
-  const params = {
-    per_page: perPage,
-    _fields: 'id,parent,title',
-  };
-
-  const firstResponse = await wpApi.getTeams({ ...params, page: 1 });
-  const totalPages = Number.parseInt(
-    firstResponse.headers['x-wp-totalpages'] || firstResponse.headers['X-WP-TotalPages'] || '1',
-    10,
-  ) || 1;
-
-  const allTeams = [...(firstResponse.data || [])];
-  if (totalPages > 1) {
-    const pageNumbers = Array.from({ length: totalPages - 1 }, (_, index) => index + 2);
-
-    for (let i = 0; i < pageNumbers.length; i += FETCH_CONCURRENCY) {
-      const batch = pageNumbers.slice(i, i + FETCH_CONCURRENCY);
-      const responses = await Promise.all(batch.map((page) => wpApi.getTeams({ ...params, page })));
-      responses.forEach((response) => {
-        allTeams.push(...(response.data || []));
-      });
-    }
-  }
-
-  return allTeams.map((team) => ({
-    id: team.id,
-    parent: team.parent || 0,
-    name: normalizeTeamNameForRoster(getTeamName(team)),
-  }));
-}
-
-async function fetchKaderPeople(refresh = false) {
-  // Scoped, kader-only person list. The server enforces visibility (management
-  // sees all kader, a coordinator sees the kader of the teams they coordinate,
-  // a member sees their own household) and returns only the rendered fields.
-  const response = await prmApi.getKaderlijstPeople(refresh ? { refresh: true } : {});
-  return Array.isArray(response.data?.people) ? response.data.people : [];
-}
-
 async function buildKaderlijst(refresh = false) {
-  const [teams, people] = await Promise.all([fetchAllTeams(), fetchKaderPeople(refresh)]);
+  // The roster includes all teams, with a separate permission for detail links.
+  const response = await prmApi.getKaderlijstPeople(refresh ? { refresh: true } : {});
+  const people = response.data?.people || [];
+  const teams = (response.data?.teams || []).map((team) => ({
+    ...team,
+    name: normalizeTeamNameForRoster(team.name),
+  }));
   const teamsById = new Map(teams.map((team) => [team.id, team]));
 
   const rows = [];
@@ -300,7 +264,7 @@ async function buildKaderlijst(refresh = false) {
         personId: person.id,
         teamId: team?.id || null,
         teamName,
-        hasTeamLink: !!team?.id,
+        hasTeamLink: !!team?.can_access,
         firstName: decodeHtml(firstName),
         infix: decodeHtml(infix),
         lastName: decodeHtml(lastName),

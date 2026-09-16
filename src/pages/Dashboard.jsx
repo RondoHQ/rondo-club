@@ -393,12 +393,12 @@ function TuchtzakenStatCard({ count }) {
 /**
  * Stats row component for the dashboard header.
  */
-function StatsRow({ stats }) {
+function StatsRow({ stats, canAccessTeams }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
       <StatCard title="Totaal leden" value={stats?.total_people || 0} icon={Users} href="/people" />
       <StatCard title="Vrijwilligers" value={stats?.total_volunteers || 0} icon={HeartHandshake} href="/people?vrijwilliger=1" />
-      <StatCard title="Teams" value={stats?.total_teams || 0} icon={Building2} href="/teams" />
+      {canAccessTeams && <StatCard title="Teams" value={stats?.total_teams || 0} icon={Building2} href="/teams" />}
       {stats?.vog_counts && (
         <VOGStatCard vogCounts={stats.vog_counts} />
       )}
@@ -458,7 +458,7 @@ export default function Dashboard() {
   if (isEmpty) {
     return (
       <div className="space-y-6">
-        <StatsRow stats={stats} />
+        <StatsRow stats={stats} canAccessTeams={data?.current_user?.can_access_teams} />
         <EmptyState />
       </div>
     );
@@ -474,7 +474,7 @@ export default function Dashboard() {
 
   // Card renderers
   const cardRenderers = {
-    stats: () => <StatsRow key="stats" stats={stats} />,
+    stats: () => <StatsRow key="stats" stats={stats} canAccessTeams={data?.current_user?.can_access_teams} />,
 
     reminders: () => (
       <DashboardCard
