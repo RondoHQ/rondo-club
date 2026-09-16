@@ -69,6 +69,18 @@ abstract class Base {
 		return in_array( $field, array_map( 'trim', $requested_fields ), true );
 	}
 
+	public function check_commissies_permission(): bool {
+		return \Rondo\Core\UserRoles::can_access_section( 'commissies' );
+	}
+
+	public function check_jubilarissen_permission(): bool {
+		return \Rondo\Core\UserRoles::can_access_section( 'jubilarissen' );
+	}
+
+	public function check_feedback_permission(): bool {
+		return \Rondo\Core\UserRoles::can_access_section( 'feedback' );
+	}
+
 	/**
 	 * Check if user is admin
 	 *

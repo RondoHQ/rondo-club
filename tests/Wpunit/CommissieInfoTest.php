@@ -18,6 +18,8 @@ class CommissieInfoTest extends RondoTestCase {
 
 	protected function set_up(): void {
 		parent::set_up();
+		get_role( 'rondo_bestuur' )->add_cap( 'commissies' );
+		UserRoles::sync_role_capabilities( 'rondo_bestuur' );
 
 		$this->server       = $this->bootRestControllers( [ Commissies::class, UserSettings::class ] );
 		$this->commissie_id = self::factory()->post->create(

@@ -80,6 +80,8 @@ class AbilitiesTest extends RondoTestCase {
 	}
 
 	public function test_searches_team_and_committee_titles_without_unregistered_meta_fields(): void {
+		get_role( 'rondo_ledenadministratie' )->add_cap( 'commissies' );
+		\Rondo\Core\UserRoles::sync_role_capabilities( 'rondo_ledenadministratie' );
 		$user_id = self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] );
 		wp_set_current_user( $user_id );
 

@@ -524,7 +524,12 @@ class Api extends Base {
 	private function get_dashboard_cache_key( int $user_id ): string {
 		$generation = (string) get_option( self::DASHBOARD_CACHE_GENERATION_OPTION, '1' );
 
-		return 'rondo_dashboard_' . $generation . '_' . $user_id;
+		// Scope changes must not expose payloads cached with broader permissions.
+		$access = [ \Rondo\Core\AccessControl::visible_team_ids_or_null( $user_id ) ];
+		foreach ( array_keys( \Rondo\Core\UserRoles::SECTION_CAPABILITIES ) as $cap ) {
+			$access[] = \Rondo\Core\UserRoles::can_access_section( $cap, $user_id );
+		}
+		return 'rondo_dashboard_' . $generation . '_' . $user_id . '_' . md5( wp_json_encode( $access ) );
 	}
 
 	/**
@@ -1192,10 +1197,11 @@ class Api extends Base {
 		// Query 1: Name field matches (highest priority, score: 60)
 		$name_matches = get_posts(
 			[
-				'post_type'      => 'team',
-				'posts_per_page' => 20,
-				'post_status'    => 'publish',
-				'meta_query'     => [
+				'post_type'        => 'team',
+				'suppress_filters' => false,
+				'posts_per_page'   => 20,
+				'post_status'      => 'publish',
+				'meta_query'       => [
 					[
 						'key'     => 'name',
 						'value'   => $query,
@@ -1215,10 +1221,11 @@ class Api extends Base {
 		// Query 2: General WordPress search (score: 20)
 		$general_company_matches = get_posts(
 			[
-				'post_type'      => 'team',
-				's'              => $query,
-				'posts_per_page' => 20,
-				'post_status'    => 'publish',
+				'post_type'        => 'team',
+				'suppress_filters' => false,
+				's'                => $query,
+				'posts_per_page'   => 20,
+				'post_status'      => 'publish',
 			]
 		);
 
@@ -1238,10 +1245,11 @@ class Api extends Base {
 
 			$team_custom_matches = get_posts(
 				[
-					'post_type'      => 'team',
-					'posts_per_page' => 20,
-					'post_status'    => 'publish',
-					'meta_query'     => $team_meta_query,
+					'post_type'        => 'team',
+					'suppress_filters' => false,
+					'posts_per_page'   => 20,
+					'post_status'      => 'publish',
+					'meta_query'       => $team_meta_query,
 				]
 			);
 
@@ -1363,9 +1371,10 @@ class Api extends Base {
 		$counts              = $this->get_dashboard_counts();
 		$total_people        = (int) $counts->total_people;
 		$total_volunteers    = (int) $counts->total_volunteers;
-		$open_feedback_count = (int) $counts->open_feedback_count;
-		$total_teams         = wp_count_posts( 'team' )->publish;
-		$total_commissies    = wp_count_posts( 'commissie' )->publish;
+		$open_feedback_count = \Rondo\Core\UserRoles::can_access_section( 'feedback' ) ? (int) $counts->open_feedback_count : 0;
+		$visible_teams       = \Rondo\Core\AccessControl::visible_team_ids_or_null();
+		$total_teams         = $visible_teams === null ? wp_count_posts( 'team' )->publish : count( $visible_teams );
+		$total_commissies    = \Rondo\Core\UserRoles::can_access_section( 'commissies' ) ? wp_count_posts( 'commissie' )->publish : 0;
 
 		// Recent people (exclude former members)
 		$recent_people = get_posts(
@@ -1397,13 +1406,16 @@ class Api extends Base {
 		$reminders_handler  = new \RONDO_Reminders();
 		$upcoming_reminders = $reminders_handler->get_upcoming_reminders( 14 );
 
-		// Anniversaries are visibility-scoped, so their cache must be per user.
-		$anniversary_cache_key  = 'rondo_anniversaries_365_' . get_current_user_id();
-		$upcoming_anniversaries = get_transient( $anniversary_cache_key );
-		if ( $upcoming_anniversaries === false ) {
-			$reminders_rest         = new Reminders();
-			$upcoming_anniversaries = $reminders_rest->get_upcoming_anniversaries_data( 365, 20 );
-			set_transient( $anniversary_cache_key, $upcoming_anniversaries, DAY_IN_SECONDS );
+		$upcoming_anniversaries = [];
+		if ( \Rondo\Core\UserRoles::can_access_section( 'jubilarissen' ) ) {
+			// Anniversaries are visibility-scoped, so their cache must be per user.
+			$anniversary_cache_key  = 'rondo_anniversaries_365_' . get_current_user_id();
+			$upcoming_anniversaries = get_transient( $anniversary_cache_key );
+			if ( $upcoming_anniversaries === false ) {
+				$reminders_rest         = new Reminders();
+				$upcoming_anniversaries = $reminders_rest->get_upcoming_anniversaries_data( 365, 20 );
+				set_transient( $anniversary_cache_key, $upcoming_anniversaries, DAY_IN_SECONDS );
+			}
 		}
 
 		// Get open/awaiting todos count (user-specific, can't consolidate)
@@ -1541,6 +1553,10 @@ class Api extends Base {
 				'Entity is not a team or commissie',
 				[ 'status' => 400 ]
 			);
+		}
+
+		if ( ! ( new \Rondo\Core\AccessControl() )->user_can_access_post( $id ) ) {
+			return new \WP_Error( 'rest_forbidden', 'Je hebt geen toegang tot dit onderdeel.', [ 'status' => 403 ] );
 		}
 
 		// Build response similar to WP REST API

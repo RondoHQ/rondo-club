@@ -96,6 +96,7 @@ export default function DashboardCustomizeModal({
   settings,
   onSave,
   isSaving,
+  canAccessAnniversaries = false,
 }) {
   const [cardOrder, setCardOrder] = useState(DEFAULT_DASHBOARD_CARDS);
   const [visibleCards, setVisibleCards] = useState(new Set(DEFAULT_DASHBOARD_CARDS));
@@ -199,9 +200,9 @@ export default function DashboardCustomizeModal({
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
             >
-              <SortableContext items={cardOrder} strategy={verticalListSortingStrategy}>
+              <SortableContext items={cardOrder.filter((id) => id !== 'anniversaries' || canAccessAnniversaries)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-2">
-                  {cardOrder.map((cardId) => (
+                  {cardOrder.filter((id) => id !== 'anniversaries' || canAccessAnniversaries).map((cardId) => (
                     <SortableCard
                       key={cardId}
                       id={cardId}

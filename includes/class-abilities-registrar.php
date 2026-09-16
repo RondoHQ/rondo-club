@@ -118,9 +118,7 @@ final class Registrar {
 			return false;
 		}
 
-		$allowed = $post->post_type === 'person'
-			? AccessControl::can_view_person( $post->ID )
-			: current_user_can( 'read_post', $post->ID );
+		$allowed = ( new AccessControl() )->user_can_access_post( $post->ID );
 
 		return $allowed;
 	}
