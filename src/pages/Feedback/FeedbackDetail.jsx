@@ -117,6 +117,8 @@ export default function FeedbackDetail() {
   useDocumentTitle(feedback?.title || 'Feedback');
 
   const isAdmin = currentUser?.is_admin ?? false;
+  const backUrl = currentUser?.can_access_feedback ? '/feedback' : '/';
+  const backLabel = currentUser?.can_access_feedback ? 'Terug naar feedback' : 'Terug naar start';
   const canEditFeedback = isAdmin || (currentUser?.id && feedback?.author?.id && currentUser.id === feedback.author.id);
 
   const handleEditSubmit = (data) => {
@@ -155,8 +157,8 @@ export default function FeedbackDetail() {
         <p className="text-red-600 dark:text-red-400">
           Failed to load feedback: {error.message}
         </p>
-        <Link to="/feedback" className="text-electric-cyan dark:text-electric-cyan hover:underline mt-4 inline-block">
-          Back to feedback list
+        <Link to={backUrl} className="text-electric-cyan dark:text-electric-cyan hover:underline mt-4 inline-block">
+          {backLabel}
         </Link>
       </div>
     );
@@ -166,8 +168,8 @@ export default function FeedbackDetail() {
     return (
       <div className="card p-8 text-center">
         <p className="text-gray-500 dark:text-gray-400">Feedback not found.</p>
-        <Link to="/feedback" className="text-electric-cyan dark:text-electric-cyan hover:underline mt-4 inline-block">
-          Back to feedback list
+        <Link to={backUrl} className="text-electric-cyan dark:text-electric-cyan hover:underline mt-4 inline-block">
+          {backLabel}
         </Link>
       </div>
     );
@@ -177,11 +179,11 @@ export default function FeedbackDetail() {
     <div className="space-y-6">
       {/* Back link */}
       <Link
-        to="/feedback"
+        to={backUrl}
         className="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
-        Back to feedback
+        {backLabel}
       </Link>
 
       {/* Needs Info banner */}

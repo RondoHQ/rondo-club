@@ -467,7 +467,8 @@ export default function Dashboard() {
   // Dashboard settings
   const visibleCards = dashboardSettings?.visible_cards || DEFAULT_DASHBOARD_CARDS;
   const cardOrder = dashboardSettings?.card_order || DEFAULT_DASHBOARD_CARDS;
-  const orderedVisibleCards = cardOrder.filter((cardId) => visibleCards.includes(cardId));
+  const orderedVisibleCards = cardOrder.filter((cardId) => visibleCards.includes(cardId)
+    && (cardId !== 'anniversaries' || data?.current_user?.can_access_jubilarissen));
 
   const dashboardTodos = openTodos || [];
 
@@ -624,6 +625,7 @@ export default function Dashboard() {
           isOpen={showCustomizeModal}
           onClose={closeCustomizeModal}
           settings={dashboardSettings}
+          canAccessAnniversaries={data?.current_user?.can_access_jubilarissen}
           onSave={handleSaveSettings}
           isSaving={updateDashboardSettings.isPending}
         />

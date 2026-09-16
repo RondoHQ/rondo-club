@@ -91,7 +91,7 @@ class Reminders extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_upcoming_anniversaries' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_jubilarissen_permission' ],
 				'args'                => [
 					'days_ahead' => [
 						'default'           => 365,

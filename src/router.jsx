@@ -290,7 +290,7 @@ const router = createBrowserRouter([
 
           // People routes — kader only (plain leden zien hun eigen gegevens via /profile of /vrijwillig)
           { path: 'people', element: <KaderOrVrijwilligRedirect><PeopleList /></KaderOrVrijwilligRedirect> },
-          { path: 'people/jubilarissen', element: <KaderOrVrijwilligRedirect><PeopleAnniversaries /></KaderOrVrijwilligRedirect> },
+          { path: 'people/jubilarissen', element: <CapabilityRoute checkAccess={(user) => user?.can_access_jubilarissen}><PeopleAnniversaries /></CapabilityRoute> },
           {
             path: 'people/onboarding',
             element: (
@@ -615,16 +615,16 @@ const router = createBrowserRouter([
             ),
           },
 
-          // Commissies routes — kader only
-          { path: 'commissies', element: <KaderOrVrijwilligRedirect><CommissiesList /></KaderOrVrijwilligRedirect> },
-          { path: 'commissies/:id', element: <KaderOrVrijwilligRedirect><CommissieDetail /></KaderOrVrijwilligRedirect> },
+          // Committee routes require the dedicated section capability.
+          { path: 'commissies', element: <CapabilityRoute checkAccess={(user) => user?.can_access_commissies}><CommissiesList /></CapabilityRoute> },
+          { path: 'commissies/:id', element: <CapabilityRoute checkAccess={(user) => user?.can_access_commissies}><CommissieDetail /></CapabilityRoute> },
 
           // Todos routes — kader only
           { path: 'todos', element: <KaderOrVrijwilligRedirect><TodosList /></KaderOrVrijwilligRedirect> },
 
-          // Feedback routes — kader only
-          { path: 'feedback', element: <KaderOrVrijwilligRedirect><FeedbackList /></KaderOrVrijwilligRedirect> },
-          { path: 'feedback/:id', element: <KaderOrVrijwilligRedirect><FeedbackDetail /></KaderOrVrijwilligRedirect> },
+          // The overview requires a capability; submitters may open their own thread.
+          { path: 'feedback', element: <CapabilityRoute checkAccess={(user) => user?.can_access_feedback}><FeedbackList /></CapabilityRoute> },
+          { path: 'feedback/:id', element: <FeedbackDetail /> },
 
           // Club TV content is available to narrowcasting and sponsor managers.
           {
