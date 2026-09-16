@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.84.0] - 2026-09-16
+
+### Added
+- Separate role capabilities for Commissies, Jubilarissen, and the Feedback overview, with server-side checks and matching navigation. Feedback submission and access to the submitter's own thread remain available to all signed-in users.
+
+### Fixed
+- Limit coordinator team lists, detail pages, search results, and record lookups to assigned year-group teams and personal Mijn team teams.
+- Exclude restricted section data from dashboard cards and cached summaries.
+
 ## [35.83.0] - 2026-09-16
 
 ### Added

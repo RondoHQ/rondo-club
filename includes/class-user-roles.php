@@ -32,13 +32,27 @@ class UserRoles {
 	const KADERLIJST_CAPABILITY         = 'kaderlijst';
 	const KADERLIJST_ROLE               = 'rondo_kaderlijst';
 
+	/** Independent section rights; never confer club-wide person access. */
+	public const SECTION_CAPABILITIES = [
+		'commissies'   => 'Commissies',
+		'jubilarissen' => 'Jubilarissen',
+		'feedback'     => 'Feedbackoverzicht',
+	];
+
+	/** Check one independently assignable section capability. */
+	public static function can_access_section( string $capability, ?int $user_id = null ): bool {
+		$user_id = $user_id ?? get_current_user_id();
+		return $user_id > 0 && isset( self::SECTION_CAPABILITIES[ $capability ] )
+			&& ( user_can( $user_id, 'manage_options' ) || user_can( $user_id, $capability ) );
+	}
+
 	/**
 	 * Option key holding the schema version of the registered roles.
 	 * Bump ROLES_VERSION whenever BASE_ROLES gains a capability that existing
 	 * installs must also receive; add_role() does not touch existing roles.
 	 */
 	const ROLES_VERSION_OPTION = 'rondo_roles_version';
-	const ROLES_VERSION        = 13;
+	const ROLES_VERSION        = 14;
 
 	/** Generic WordPress write capabilities removed from non-admin Rondo roles. */
 	private const LEGACY_GENERIC_WRITE_CAPS = [
@@ -139,7 +153,7 @@ class UserRoles {
 
 		$user = get_user_by( 'id', $user_id );
 
-		return $user && in_array( 'rondo_bestuur', (array) $user->roles, true );
+		return self::can_access_section( 'commissies', $user_id ) && $user && in_array( 'rondo_bestuur', (array) $user->roles, true );
 	}
 
 	/**
@@ -408,6 +422,7 @@ class UserRoles {
 	 * Version 11: the isolated Kaderlijst role and capability are introduced.
 	 * Version 12: sponsor managers gain read access to the sponsor activity log.
 	 * Version 13: administrators gain the dedicated training management capability.
+	 * Version 14: independent section rights; commissie reads leave the member baseline.
 	 */
 	public function maybe_upgrade_roles() {
 		$installed_version = (int) get_option( self::ROLES_VERSION_OPTION, 0 );
@@ -444,6 +459,12 @@ class UserRoles {
 
 			if ( $installed_version < 11 && $slug === 'administrator' ) {
 				$role->add_cap( self::KADERLIJST_CAPABILITY );
+			}
+
+			if ( $installed_version < 14 && $slug === 'administrator' ) {
+				foreach ( array_keys( self::SECTION_CAPABILITIES ) as $cap ) {
+					$role->add_cap( $cap );
+				}
 			}
 
 			if ( $installed_version < 13 && $slug === 'administrator' ) {
@@ -488,6 +509,9 @@ class UserRoles {
 			$admin_role->add_cap( self::VRIJWILLIGERS_CAPABILITY );
 			$admin_role->add_cap( self::IVA_APPROVE_CAPABILITY );
 			$admin_role->add_cap( self::KADERLIJST_CAPABILITY );
+			foreach ( array_keys( self::SECTION_CAPABILITIES ) as $cap ) {
+				$admin_role->add_cap( $cap );
+			}
 			self::sync_role_capabilities( 'administrator' );
 		}
 	}
@@ -527,8 +551,17 @@ class UserRoles {
 			$desired[] = 'upload_files';
 		} else {
 			// Core member surfaces: household people plus read-only club structure.
-			foreach ( [ 'person', 'team', 'commissie' ] as $post_type ) {
+			foreach ( [ 'person', 'team' ] as $post_type ) {
 				$desired = array_merge( $desired, self::cpt_capabilities( $post_type, 'read' ) );
+			}
+
+			foreach ( [
+				'commissies' => 'commissie',
+				'feedback'   => 'rondo_feedback',
+			] as $capability => $post_type ) {
+				if ( $role->has_cap( $capability ) ) {
+					$desired = array_merge( $desired, self::cpt_capabilities( $post_type, 'read' ) );
+				}
 			}
 
 			if ( $role->has_cap( self::FAIRPLAY_CAPABILITY ) ) {
@@ -703,6 +736,9 @@ class UserRoles {
 			$admin_role->remove_cap( self::VRIJWILLIGERS_CAPABILITY );
 			$admin_role->remove_cap( self::IVA_APPROVE_CAPABILITY );
 			$admin_role->remove_cap( self::KADERLIJST_CAPABILITY );
+			foreach ( array_keys( self::SECTION_CAPABILITIES ) as $capability ) {
+				$admin_role->remove_cap( $capability );
+			}
 		}
 
 		foreach ( self::get_all_roles() as $slug => $_ ) {

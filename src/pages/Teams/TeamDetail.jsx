@@ -96,7 +96,7 @@ export default function TeamDetail() {
   if (error || !team) {
     return (
       <div className="card p-6 text-center">
-        <p className="text-red-600 dark:text-red-400">Team kon niet worden geladen.</p>
+        <p className="text-red-600 dark:text-red-400">{error?.response?.status === 403 ? 'Je hebt geen toegang tot dit team.' : 'Team kon niet worden geladen.'}</p>
         <Link to="/teams" className="btn-tertiary mt-4">Terug naar teams</Link>
       </div>
     );

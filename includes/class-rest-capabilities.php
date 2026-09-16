@@ -497,6 +497,8 @@ class Capabilities extends Base {
 		$capability_labels[ \Rondo\Core\UserRoles::KADERLIJST_CAPABILITY ] = 'Kaderlijst';
 		$capability_labels[ \Rondo\Core\UserRoles::TRAINING_CAPABILITY ]   = 'Trainingsschema beheren';
 
+		$capability_labels = array_merge( $capability_labels, \Rondo\Core\UserRoles::SECTION_CAPABILITIES );
+
 		$wp_roles     = wp_roles();
 		$all_roles    = \Rondo\Core\UserRoles::get_all_roles();
 		$custom_slugs = array_keys( \Rondo\Core\UserRoles::get_custom_roles() );
@@ -565,6 +567,7 @@ class Capabilities extends Base {
 		$allowed_caps   = [ 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'narrowcasting', 'accommodatiebeheer', 'vrijwilligers', 'rondo_iva_approve' ];
 		$allowed_caps[] = \Rondo\Core\UserRoles::KADERLIJST_CAPABILITY;
 		$allowed_caps[] = \Rondo\Core\UserRoles::TRAINING_CAPABILITY;
+		$allowed_caps   = array_merge( $allowed_caps, array_keys( \Rondo\Core\UserRoles::SECTION_CAPABILITIES ) );
 		$valid_slugs    = array_keys( \Rondo\Core\UserRoles::get_all_roles() );
 		$valid_slugs[]  = 'administrator';
 
