@@ -50,6 +50,69 @@ class SectionAccessTest extends RondoTestCase {
 		wp_set_current_user( $this->user_id );
 	}
 
+	public function test_general_staff_needs_explicit_team_access(): void {
+		delete_option( 'rondo_age_group_access' );
+		$this->grant( 'jubilarissen' );
+		$team = $this->createOrganization( [ 'post_title' => 'Restricted team' ] );
+		$this->assertTrue( UserRoles::is_kader() );
+		$this->assertFalse( $this->request( '/rondo/v1/user/me' )->get_data()['can_access_teams'] );
+		$this->assertTrue( $this->request( '/rondo/v1/user/me' )->get_data()['can_access_dashboard'] );
+		foreach ( [ '/wp/v2/teams', '/wp/v2/teams/' . $team, '/rondo/v1/teams/' . $team . '/people', '/rondo/v1/entity/' . $team ] as $route ) {
+			$this->assertSame( 403, $this->request( $route )->get_status(), $route );
+		}
+		$this->assertSame( [], $this->request( '/rondo/v1/search', [ 'q' => 'Restricted' ] )->get_data()['teams'] );
+		$this->assertWPError( wp_get_ability( 'rondo/get-record' )->execute( [ 'id' => $team ] ) );
+		$this->assertSame( 200, $this->request( '/rondo/v1/anniversaries' )->get_status() );
+		$this->grant( 'teams' );
+		$this->assertTrue( $this->request( '/rondo/v1/user/me' )->get_data()['can_access_teams'] );
+		$this->assertSame( 200, $this->request( '/wp/v2/teams/' . $team )->get_status() );
+		$this->assertNull( AccessControl::visible_team_ids_or_null() );
+		get_role( $this->role )->remove_cap( 'teams' );
+		wp_set_current_user( 0 );
+		wp_set_current_user( $this->user_id );
+		$this->assertSame( 403, $this->request( '/wp/v2/teams/' . $team )->get_status() );
+	}
+
+	public function test_coordinator_reads_full_roster_without_opening_other_team_details(): void {
+		$assigned = $this->createOrganization( [ 'post_title' => 'JO11-1' ] );
+		$other    = $this->createOrganization( [ 'post_title' => 'JO19-1' ] );
+		update_option( 'rondo_team_access', [ $this->role => [ $assigned ] ] );
+		$coaches = [];
+		foreach ( [ $assigned, $other ] as $team ) {
+			$coaches[] = $this->createPerson(
+				[],
+				[
+					'first_name'   => 'Trainer',
+					'email_1'      => 'trainer@example.com',
+					'work_history' => [
+						[
+							'team'       => $team,
+							'job_title'  => 'Trainer',
+							'is_current' => true,
+						],
+					],
+				]
+			);
+		}
+		$data = $this->request( '/rondo/v1/kaderlijst/people' )->get_data();
+		$this->assertEqualsCanonicalizing( $coaches, array_column( $data['people'], 'id' ) );
+		$teams = array_column( $data['teams'], null, 'id' );
+		$this->assertTrue( $teams[ $assigned ]['can_access'] );
+		$this->assertFalse( $teams[ $other ]['can_access'] );
+		$this->assertSame( 'JO19-1', $teams[ $other ]['name'] );
+		$this->assertSame( [ 'id', 'parent', 'name', 'can_access' ], array_keys( $teams[ $other ] ) );
+		$this->assertSame( 403, $this->request( '/wp/v2/teams/' . $other )->get_status() );
+		$this->assertFalse( AccessControl::can_view_person( $coaches[1] ) );
+		$this->assertSame( 'trainer@example.com', $data['people'][0]['fields']['email_1'] );
+		// The shared people cache must not carry another viewer's team-link rights.
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$admin = $this->request( '/rondo/v1/kaderlijst/people' )->get_data();
+		$this->assertTrue( array_column( $admin['teams'], null, 'id' )[ $other ]['can_access'] );
+		wp_set_current_user( $this->user_id );
+		$again = $this->request( '/rondo/v1/kaderlijst/people' )->get_data();
+		$this->assertFalse( array_column( $again['teams'], null, 'id' )[ $other ]['can_access'] );
+	}
+
 	public function test_sections_are_independent_and_block_direct_reads(): void {
 		$committee = self::factory()->post->create(
 			[

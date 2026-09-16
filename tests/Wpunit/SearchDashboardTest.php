@@ -191,6 +191,7 @@ class SearchDashboardTest extends RondoTestCase {
 		// Membership administration is entitled to the whole club. A plain member
 		// sees only their own household, which would make this a scoping test.
 		$alice_id = self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] );
+		get_user_by( 'id', $alice_id )->add_cap( 'teams' );
 		wp_set_current_user( $alice_id );
 
 		// Create person
@@ -275,6 +276,7 @@ class SearchDashboardTest extends RondoTestCase {
 		// Membership administration is entitled to the whole club. A plain member
 		// sees only their own household, which would make this a scoping test.
 		$alice_id = self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] );
+		get_user_by( 'id', $alice_id )->add_cap( 'teams' );
 		wp_set_current_user( $alice_id );
 
 		// Create 3 persons
