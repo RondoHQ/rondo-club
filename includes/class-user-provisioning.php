@@ -187,28 +187,12 @@ class UserProvisioning {
 		// Set base Rondo role.
 		$user->set_role( \Rondo\Core\UserRoles::ROLE_NAME );
 
-		// Assign roles from work history Functies (Phase 204 integration).
-		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' );
-		if ( is_array( $work_history ) ) {
-			$assigned_roles = [];
-			foreach ( $work_history as $job ) {
-				$job_title = $job['job_title'] ?? '';
-				if ( empty( $job_title ) || ! \Rondo\Core\VolunteerStatus::is_position_current( $job ) ) {
-					continue;
-				}
-				$roles = \Rondo\Config\FunctieCapabilityMap::get_roles_for_functie( $job_title );
-				foreach ( $roles as $role_slug ) {
-					if ( ! in_array( $role_slug, $assigned_roles, true ) ) {
-						$user->add_role( $role_slug );
-						$assigned_roles[] = $role_slug;
-					}
-				}
-			}
-		}
-
-		// Bidirectional link (PROV-03).
+		// Bidirectional link (PROV-03), required before deriving roles from work history.
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
 		update_post_meta( $person_id, self::META_USER_ID, $user_id );
+
+		// Apply current function and committee roles before the account can be used.
+		( new CapabilitySync() )->sync_user_by_person_id( $person_id );
 
 		// Store KNVB ID on user (PROV-04).
 		$knvb_id = \Rondo\Fields\Fields::get_for_post( $person_id, 'knvb_id' );
