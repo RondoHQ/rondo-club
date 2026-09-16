@@ -244,7 +244,7 @@ function TodoCard({ todo, onToggle, onView }) {
 /**
  * Empty state shown when no data exists.
  */
-function EmptyState() {
+function EmptyState({ canAccessTeams }) {
   return (
     <div className="card p-12 text-center">
       <div className="flex justify-center mb-4">
@@ -264,13 +264,15 @@ function EmptyState() {
           <Plus className="w-5 h-5 mr-2" />
           Voeg je eerste lid toe
         </Link>
-        <Link
-          to="/teams/new"
-          className="inline-flex items-center px-6 py-3 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Voeg je eerste team toe
-        </Link>
+        {canAccessTeams && (
+          <Link
+            to="/teams/new"
+            className="inline-flex items-center px-6 py-3 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Voeg je eerste team toe
+          </Link>
+        )}
       </div>
     </div>
   );
@@ -459,7 +461,7 @@ export default function Dashboard() {
     return (
       <div className="space-y-6">
         <StatsRow stats={stats} canAccessTeams={data?.current_user?.can_access_teams} />
-        <EmptyState />
+        <EmptyState canAccessTeams={data?.current_user?.can_access_teams} />
       </div>
     );
   }
