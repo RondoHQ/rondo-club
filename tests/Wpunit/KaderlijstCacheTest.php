@@ -82,7 +82,7 @@ class KaderlijstCacheTest extends RondoTestCase {
 		$this->assertSame( 'Nieuw', $this->person_fields( $this->people(), $person_id )['first_name'] );
 	}
 
-	public function test_coordinator_caches_do_not_cross_age_group_scopes(): void {
+	public function test_coordinators_share_full_club_roster_across_age_groups(): void {
 		add_role( 'rondo_kader_scope_a', 'Kader scope A', [ 'read' => true ] );
 		add_role( 'rondo_kader_scope_b', 'Kader scope B', [ 'read' => true ] );
 		update_option(
@@ -101,10 +101,10 @@ class KaderlijstCacheTest extends RondoTestCase {
 		$this->create_player( 'Speler twaalf', 'Onder 12', $team_b );
 
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'rondo_kader_scope_a' ] ) );
-		$this->assertSame( [ $coach_a ], $this->person_ids( $this->people() ) );
+		$this->assertEqualsCanonicalizing( [ $coach_a, $coach_b ], $this->person_ids( $this->people() ) );
 
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'rondo_kader_scope_b' ] ) );
-		$this->assertSame( [ $coach_b ], $this->person_ids( $this->people() ) );
+		$this->assertEqualsCanonicalizing( [ $coach_a, $coach_b ], $this->person_ids( $this->people() ) );
 	}
 
 	public function test_player_role_setting_is_part_of_cache_identity(): void {

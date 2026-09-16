@@ -594,8 +594,8 @@ const router = createBrowserRouter([
           },
 
           // Teams routes — kader only
-          { path: 'teams', element: <KaderOrVrijwilligRedirect><TeamsList /></KaderOrVrijwilligRedirect> },
-          { path: 'teams/:id', element: <KaderOrVrijwilligRedirect><TeamDetail /></KaderOrVrijwilligRedirect> },
+          { path: 'teams', element: <CapabilityRoute checkAccess={(user) => user?.can_access_teams}><TeamsList /></CapabilityRoute> },
+          { path: 'teams/:id', element: <CapabilityRoute checkAccess={(user) => user?.can_access_teams || user?.has_my_teams}><TeamDetail /></CapabilityRoute> },
           { path: 'kaderlijst', element: <KaderlijstRoute><Kaderlijst /></KaderlijstRoute> },
           { path: 'toernooien', element: <TournamentManagerRoute><TournamentsList /></TournamentManagerRoute> },
           { path: 'toernooien/nieuw', element: <TournamentManagerRoute><TournamentDetail /></TournamentManagerRoute> },

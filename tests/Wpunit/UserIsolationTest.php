@@ -59,16 +59,16 @@ class UserIsolationTest extends RondoTestCase {
 	}
 
 	/**
-	 * Test that author can access their own team post.
+	 * Authorship alone does not grant team access.
 	 */
-	public function test_author_can_access_own_team_post(): void {
+	public function test_author_cannot_access_own_team_post_without_team_access(): void {
 		$alice_id = $this->createRondoUser( [ 'user_login' => 'alice' ] );
 
 		$team_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
 
-		$this->assertTrue(
+		$this->assertFalse(
 			$this->access_control->user_can_access_post( $team_id, $alice_id ),
-			'Alice should have access to her own team post'
+			'Authorship must not bypass explicit team permissions'
 		);
 	}
 

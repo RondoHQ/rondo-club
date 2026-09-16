@@ -34,6 +34,7 @@ class UserRoles {
 
 	/** Independent section rights; never confer club-wide person access. */
 	public const SECTION_CAPABILITIES = [
+		'teams'        => 'Alle teams',
 		'commissies'   => 'Commissies',
 		'jubilarissen' => 'Jubilarissen',
 		'feedback'     => 'Feedbackoverzicht',
@@ -52,7 +53,7 @@ class UserRoles {
 	 * installs must also receive; add_role() does not touch existing roles.
 	 */
 	const ROLES_VERSION_OPTION = 'rondo_roles_version';
-	const ROLES_VERSION        = 14;
+	const ROLES_VERSION        = 15;
 
 	/** Generic WordPress write capabilities removed from non-admin Rondo roles. */
 	private const LEGACY_GENERIC_WRITE_CAPS = [
@@ -92,7 +93,7 @@ class UserRoles {
 		'rondo_pool_schoonmaak'       => [ 'Rondo Schoonmaakpoule', [] ],
 		'rondo_pool_activiteiten'     => [ 'Rondo Activiteitenpoule', [] ],
 		'rondo_pool_werkploeg'        => [ 'Rondo Werkploeg terreinonderhoud', [] ],
-		'rondo_bestuur'               => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'accommodatiebeheer', 'vrijwilligers', 'rondo_iva_approve' ] ],
+		'rondo_bestuur'               => [ 'Rondo Bestuur', [ 'teams', 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'accommodatiebeheer', 'vrijwilligers', 'rondo_iva_approve' ] ],
 	];
 
 	/**
@@ -423,6 +424,7 @@ class UserRoles {
 	 * Version 12: sponsor managers gain read access to the sponsor activity log.
 	 * Version 13: administrators gain the dedicated training management capability.
 	 * Version 14: independent section rights; commissie reads leave the member baseline.
+	 * Version 15: full team access becomes explicit; board and admins retain it.
 	 */
 	public function maybe_upgrade_roles() {
 		$installed_version = (int) get_option( self::ROLES_VERSION_OPTION, 0 );
@@ -465,6 +467,10 @@ class UserRoles {
 				foreach ( array_keys( self::SECTION_CAPABILITIES ) as $cap ) {
 					$role->add_cap( $cap );
 				}
+			}
+
+			if ( $installed_version < 15 && in_array( $slug, [ 'administrator', 'rondo_bestuur' ], true ) ) {
+				$role->add_cap( 'teams' );
 			}
 
 			if ( $installed_version < 13 && $slug === 'administrator' ) {
