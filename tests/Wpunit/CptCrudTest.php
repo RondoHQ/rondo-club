@@ -130,7 +130,7 @@ class CptCrudTest extends RondoTestCase {
 		$this->assertSame( 'Protected Person', get_post( $person_id )->post_title );
 	}
 
-	public function test_plain_member_can_read_but_not_mutate_teams_and_commissies(): void {
+	public function test_plain_member_can_read_teams_but_cannot_read_commissies_or_mutate_either(): void {
 		$admin_id     = $this->user( 'administrator' );
 		$team_id      = self::factory()->post->create(
 			[
@@ -150,7 +150,7 @@ class CptCrudTest extends RondoTestCase {
 		wp_set_current_user( $user_id );
 
 		$this->assertSame( 200, $this->request( 'GET', '/wp/v2/teams/' . $team_id )->get_status() );
-		$this->assertSame( 200, $this->request( 'GET', '/wp/v2/commissies/' . $commissie_id )->get_status() );
+		$this->assertSame( 403, $this->request( 'GET', '/wp/v2/commissies/' . $commissie_id )->get_status() );
 		$this->assertDenied(
 			$this->request(
 			'POST',

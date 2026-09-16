@@ -56,7 +56,7 @@ class Commissies extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_member_counts' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_commissies_permission' ],
 			]
 		);
 
@@ -83,7 +83,7 @@ class Commissies extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_people_by_commissie' ],
-				'permission_callback' => '__return_true',
+				'permission_callback' => [ $this, 'check_commissies_permission' ],
 				'args'                => [
 					'commissie_id' => [
 						'validate_callback' => function ( $param ) {

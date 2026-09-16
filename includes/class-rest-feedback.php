@@ -37,9 +37,7 @@ class Feedback extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_feedback_list' ],
-					'permission_callback' => function () {
-						return is_user_logged_in();
-					},
+					'permission_callback' => [ $this, 'check_feedback_permission' ],
 					'args'                => $this->get_list_args(),
 				],
 				[
@@ -198,7 +196,7 @@ class Feedback extends Base {
 	 * Check if user can access a feedback post
 	 *
 	 * Permission callback for single-feedback operations.
-	 * All logged-in users can view all feedback.
+	 * Section readers can view feedback; submitters retain access to their own thread.
 	 *
 	 * @param \WP_REST_Request $request The REST request object.
 	 * @return bool True if user can access the feedback, false otherwise.
@@ -216,7 +214,7 @@ class Feedback extends Base {
 			return false;
 		}
 
-		return true;
+		return $this->check_feedback_permission() || (int) $feedback->post_author === get_current_user_id();
 	}
 
 	/**
@@ -226,7 +224,7 @@ class Feedback extends Base {
 	 * @return \WP_REST_Response Response containing feedback list with pagination headers.
 	 */
 	public function get_feedback_list( $request ) {
-		// Build query args — all logged-in users can see all feedback
+		// Build query args after the feedback section permission check.
 		$args = [
 			'post_type'      => 'rondo_feedback',
 			'post_status'    => 'publish',

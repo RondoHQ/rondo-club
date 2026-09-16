@@ -156,6 +156,7 @@ class AccessControl {
 	private static $visible_person_ids_cache = [];
 
 	public function __construct() {
+		add_filter( 'rest_pre_dispatch', [ $this, 'guard_section_routes' ], 10, 3 );
 		// Block person editing for users without the right capabilities
 		add_filter( 'map_meta_cap', [ $this, 'restrict_person_editing' ], 10, 4 );
 
@@ -176,6 +177,60 @@ class AccessControl {
 			);
 			add_filter( 'rest_prepare_' . $post_type, [ $this, 'filter_rest_single_access' ], 10, 3 );
 		}
+	}
+
+	/** Protect native and custom routes, including direct URLs and nested requests. */
+	public function guard_section_routes( $result, $server, $request ) {
+		$route = $request->get_route();
+		$deny  = preg_match( '#^/(?:wp/v2|rondo/v1)/commissies(?:/|$)#', $route )
+			&& ! UserRoles::can_access_section( 'commissies' );
+		if ( preg_match( '#^/wp/v2/feedback/?$#', $route ) && in_array( $request->get_method(), [ 'GET', 'HEAD' ], true ) ) {
+			$deny = ! UserRoles::can_access_section( 'feedback' );
+		}
+		if ( preg_match( '#^/wp/v2/feedback/(\d+)(?:/|$)#', $route, $matches ) ) {
+			$deny = ! $this->user_can_access_post( (int) $matches[1] );
+		}
+		// Signed fixture calendars have their own token gate and contain public match data.
+		$is_calendar = preg_match( '#^/rondo/v1/teams/\d+/matches\.ics$#', $route );
+		if ( ! $is_calendar && preg_match( '#^/(?:wp/v2|rondo/v1)/teams/(\d+)(?:/|$)#', $route, $matches ) ) {
+			$allowed = self::visible_team_ids_or_null();
+			$deny    = $allowed !== null && ! in_array( (int) $matches[1], $allowed, true );
+		}
+		return $deny
+			? new \WP_Error( 'rest_forbidden', 'Je hebt geen toegang tot dit onderdeel.', [ 'status' => rest_authorization_required_code() ] )
+			: $result;
+	}
+
+	/** Coordinator team scope; preserve existing broad access for other roles. */
+	public static function visible_team_ids_or_null( ?int $user_id = null ): ?array {
+		$user_id = $user_id ?? get_current_user_id();
+		$user    = get_userdata( $user_id );
+		if ( ! $user ) {
+			return [];
+		}
+		$ages = self::get_permitted_age_groups( $user_id );
+		if ( $ages === null ) {
+			return null;
+		}
+		$config = (array) get_option( 'rondo_team_access', [] );
+		$scoped = ! empty( $ages );
+		foreach ( $user->roles as $slug ) {
+			$role = get_role( $slug );
+			if ( $role && ! $role->has_cap( UserRoles::KADERLIJST_CAPABILITY ) && ! empty( $config[ $slug ] ) ) {
+				$scoped = true;
+			}
+		}
+		if ( ! $scoped ) {
+			return null;
+		}
+		return array_values(
+			array_unique(
+			array_merge(
+			self::get_permitted_team_ids( $user_id ),
+			array_column( \Rondo\Teams\MyTeam::teams_for_user( $user_id ), 'id' )
+			)
+			)
+			);
 	}
 
 	/**
@@ -1188,6 +1243,16 @@ class AccessControl {
 		if ( $post->post_type === 'person' ) {
 			return self::can_view_person( $post->ID, $user_id );
 		}
+		if ( $post->post_type === 'commissie' ) {
+			return UserRoles::can_access_section( 'commissies', $user_id );
+		}
+		if ( $post->post_type === 'team' ) {
+			$allowed = self::visible_team_ids_or_null( $user_id );
+			return $allowed === null || in_array( (int) $post->ID, $allowed, true );
+		}
+		if ( $post->post_type === 'rondo_feedback' ) {
+			return UserRoles::can_access_section( 'feedback', $user_id ) || (int) $post->post_author === $user_id;
+		}
 
 		if ( $post->post_type === 'rondo_todo' ) {
 			return in_array( (int) $post->ID, $this->get_visible_todo_ids( (int) $user_id ), true );
@@ -1198,6 +1263,16 @@ class AccessControl {
 		}
 
 		return user_can( $user_id, 'read_post', $post->ID );
+	}
+
+	/** Apply exclusions even when WordPress would otherwise prioritize post__in. */
+	private function exclude_query_ids( $query, array $hidden ): void {
+		$included = (array) $query->get( 'post__in' );
+		if ( $included ) {
+			$query->set( 'post__in', array_values( array_diff( $included, $hidden ) ) ?: [ 0 ] );
+		} else {
+			$query->set( 'post__not_in', array_values( array_unique( array_merge( (array) $query->get( 'post__not_in' ), $hidden ) ) ) );
+		}
 	}
 
 	/**
@@ -1213,6 +1288,49 @@ class AccessControl {
 
 		// Only filter our controlled post types
 		$post_type = $query->get( 'post_type' );
+
+		// Native REST search can query several types at once. Exclude forbidden
+		// structure records before pagination, without restricting internal reads.
+		$types = (array) $post_type;
+		if ( in_array( 'rondo_feedback', $types, true ) && ! UserRoles::can_access_section( 'feedback' ) ) {
+			$hidden = get_posts(
+				[
+					'post_type'      => 'rondo_feedback',
+					'post_status'    => 'any',
+					'posts_per_page' => -1,
+					'fields'         => 'ids',
+					'author__not_in' => [ get_current_user_id() ],
+				]
+				);
+			$this->exclude_query_ids( $query, $hidden );
+		}
+		if ( in_array( 'commissie', $types, true ) && ! UserRoles::can_access_section( 'commissies' ) ) {
+			$types = array_values( array_diff( $types, [ 'commissie' ] ) );
+			if ( ! $types ) {
+				$query->set( 'post__in', [ 0 ] );
+				return;
+			}
+			$query->set( 'post_type', $types );
+		}
+		if ( in_array( 'team', $types, true ) ) {
+			$allowed = self::visible_team_ids_or_null();
+			if ( $allowed !== null ) {
+				if ( count( $types ) === 1 ) {
+					$query->set( 'post__in', self::narrow_post_in( (array) $query->get( 'post__in' ), $allowed ?: [ 0 ] ) );
+				} else {
+					$hidden = get_posts(
+						[
+							'post_type'      => 'team',
+							'post_status'    => 'any',
+							'posts_per_page' => -1,
+							'fields'         => 'ids',
+							'post__not_in'   => $allowed,
+						]
+						);
+					$this->exclude_query_ids( $query, $hidden );
+				}
+			}
+		}
 
 		if ( ! $post_type || ! in_array( $post_type, $this->controlled_post_types, true ) ) {
 			return;
@@ -1260,6 +1378,12 @@ class AccessControl {
 	 * @return array Modified query arguments.
 	 */
 	public function filter_rest_query( $args, $request, $post_type ) {
+		if ( $post_type === 'team' ) {
+			$allowed = self::visible_team_ids_or_null();
+			if ( $allowed !== null ) {
+				$args['post__in'] = self::narrow_post_in( $args['post__in'] ?? [], $allowed ?: [ 0 ] );
+			}
+		}
 		if ( ! is_user_logged_in() ) {
 			// Not logged in - show nothing
 			$args['post__in'] = [ 0 ];

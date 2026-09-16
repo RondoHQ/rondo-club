@@ -70,13 +70,13 @@ const navigation = [
   { name: 'Relaties', href: '/people', icon: Users, requiresKader: true },
   { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
   { name: 'Wijzigingslog', href: '/people/wijzigingslog', icon: History, indent: true, requiresLedenadministratie: true },
-  { name: 'Commissies', href: '/commissies', icon: UsersRound, requiresKader: true },
+  { name: 'Commissies', href: '/commissies', icon: UsersRound, sectionCapability: 'can_access_commissies' },
   { name: 'Sponsoren', href: '/sponsors', icon: Building2, requiresSponsors: true },
   { name: 'Voetbal', href: '/voetbal', icon: Goal, requiresFootball: true },
   ...footballNavigation.map((item) => ({ ...item, indent: true })),
   { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true, requiresFeature: 'clothing' },
   { name: 'Vrijwilligers', href: '/vrijwilligers', icon: HeartHandshake, requiresVrijwilligers: true },
-  { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true, requiresKader: true },
+  { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true, sectionCapability: 'can_access_jubilarissen' },
   { name: 'VOG', href: '/vrijwilligers/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'IVA', href: '/vrijwilligers/iva', icon: Wine, indent: true, requiresVrijwilligers: true },
   { name: 'Beheer inschrijftaken', href: '/vrijwilligers/diensten', icon: CalendarClock, indent: true, requiresVrijwilligers: true },
@@ -90,7 +90,7 @@ const navigation = [
   { name: 'Betaalstatistieken', href: '/financien/betaalstatistieken', icon: TrendingUp, indent: true, requiresFinancieel: true },
   { name: 'Lidpas Scanner', href: '/lidpas-scanner', icon: QrCode, requiresToegangscontrole: true, mobileOnly: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare, requiresKader: true },
-  { name: 'Feedback', href: '/feedback', icon: MessageSquare, requiresKader: true },
+  { name: 'Feedback', href: '/feedback', icon: MessageSquare, sectionCapability: 'can_access_feedback' },
   { name: 'Club TV', href: '/narrowcasting', icon: MonitorPlay, requiresNarrowcasting: true, requiresFeature: 'narrowcasting' },
   { name: 'Instellingen', href: '/settings', icon: Settings, requiresKader: true },
 ];
@@ -206,6 +206,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresFeature && !canAccessFeature(item.requiresFeature, isAdmin)) return false;
     if (item.requiresLinkedPerson && !currentUser?.linked_person_id) return false;
     if (item.requiresMyTeams && !currentUser?.has_my_teams) return false;
+    if (item.sectionCapability && !currentUser?.[item.sectionCapability]) return false;
     if (item.capabilities) return canAccessFootballItem(item, currentUser);
     if (isAdmin) return true;
     if (item.adminOnly && !isAdmin) return false;

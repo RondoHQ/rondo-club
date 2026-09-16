@@ -3757,7 +3757,7 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, manage
           Capabilities
         </h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Beheer welke Rondo-capabilities aan elke rol zijn toegekend. Bij &quot;Ledendata&quot; kies je leeftijdsgroepen en teams. Leden zijn zichtbaar als hun leeftijdsgroep overeenkomt óf ze actueel speler zijn van een gekozen team.
+          Beheer welke Rondo-capabilities aan elke rol zijn toegekend. Bij &quot;Ledendata&quot; kies je leeftijdsgroepen en teams. Leden zijn zichtbaar als hun leeftijdsgroep overeenkomt óf ze actueel speler zijn van een gekozen team. Coördinatoren zien alleen de gekozen teams en hun eigen teams via Mijn team. Commissies, Jubilarissen en Feedbackoverzicht hebben elk een apart recht.
         </p>
       </div>
 
