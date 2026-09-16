@@ -175,6 +175,8 @@ export default function Settings({ tab: presetTab }) {
 
   // Age-group access state (admin only, fetched alongside capability matrix)
   const [ageGroupAccess, setAgeGroupAccess] = useState({});
+  const [teamAccess, setTeamAccess] = useState({});
+  const [availableAccessTeams, setAvailableAccessTeams] = useState([]);
   const [availableAgeGroups, setAvailableAgeGroups] = useState([]);
   const [ageGroupAccessLoading, setAgeGroupAccessLoading] = useState(false);
 
@@ -269,6 +271,8 @@ export default function Settings({ tab: presetTab }) {
       setCapabilityLabels(matrixRes.data?.capability_labels || {});
       setManagementCaps(matrixRes.data?.management_capabilities || []);
       setAgeGroupAccess(ageGroupRes.data?.roles || {});
+      setTeamAccess(ageGroupRes.data?.team_roles || {});
+      setAvailableAccessTeams(ageGroupRes.data?.available_teams || []);
       setAvailableAgeGroups(ageGroupRes.data?.available_age_groups || []);
     } catch (error) {
       setCapabilityMatrixMessage(error.response?.data?.message || 'Kon capability-matrix niet laden.');
@@ -387,8 +391,10 @@ export default function Settings({ tab: presetTab }) {
       setManagementCaps(matrixResponse.data?.management_capabilities || managementCaps);
 
       // Save age-group access config alongside
-      const ageGroupResponse = await prmApi.updateAgeGroupAccess({ roles: ageGroupAccess });
+      const ageGroupResponse = await prmApi.updateAgeGroupAccess({ roles: ageGroupAccess, team_roles: teamAccess });
       setAgeGroupAccess(ageGroupResponse.data?.roles || ageGroupAccess);
+      setTeamAccess(ageGroupResponse.data?.team_roles || {});
+      setAvailableAccessTeams(ageGroupResponse.data?.available_teams || []);
       if (ageGroupResponse.data?.available_age_groups) {
         setAvailableAgeGroups(ageGroupResponse.data.available_age_groups);
       }
@@ -609,6 +615,9 @@ export default function Settings({ tab: presetTab }) {
             handleCapabilityMatrixSave={handleCapabilityMatrixSave}
             ageGroupAccess={ageGroupAccess}
             setAgeGroupAccess={setAgeGroupAccess}
+            teamAccess={teamAccess}
+            setTeamAccess={setTeamAccess}
+            availableAccessTeams={availableAccessTeams}
             availableAgeGroups={availableAgeGroups}
             ageGroupAccessLoading={ageGroupAccessLoading}
             fetchCapabilityData={fetchCapabilityData}
@@ -2251,6 +2260,9 @@ function AdminTabWithSubtabs({
   handleCapabilityMatrixSave,
   ageGroupAccess,
   setAgeGroupAccess,
+  teamAccess,
+  setTeamAccess,
+  availableAccessTeams,
   availableAgeGroups,
   ageGroupAccessLoading,
   fetchCapabilityData,
@@ -2339,6 +2351,9 @@ function AdminTabWithSubtabs({
             handleSave={handleCapabilityMatrixSave}
             ageGroupAccess={ageGroupAccess}
             setAgeGroupAccess={setAgeGroupAccess}
+            teamAccess={teamAccess}
+            setTeamAccess={setTeamAccess}
+            availableAccessTeams={availableAccessTeams}
             availableAgeGroups={availableAgeGroups}
             ageGroupAccessLoading={ageGroupAccessLoading}
             refetchData={fetchCapabilityData}
@@ -3613,25 +3628,18 @@ function FunctiesTab({
 }
 
 // Capabilities Tab Component - Role × Capability matrix
-function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, managementCaps = [], loading, saving, message, handleSave, ageGroupAccess, setAgeGroupAccess, availableAgeGroups, ageGroupAccessLoading, refetchData }) {
+function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, managementCaps = [], loading, saving, message, handleSave, ageGroupAccess, setAgeGroupAccess, teamAccess, setTeamAccess, availableAccessTeams, availableAgeGroups, ageGroupAccessLoading, refetchData }) {
   const roleEntries = Object.entries(matrixState);
   const [openDropdownRole, setOpenDropdownRole] = useState(null);
   const [newRoleName, setNewRoleName] = useState('');
   const [creatingRole, setCreatingRole] = useState(false);
   const [deletingRole, setDeletingRole] = useState(null);
   const [roleActionMessage, setRoleActionMessage] = useState('');
-  const dropdownRef = useRef(null);
+  const accessEditorRef = useRef(null);
+  const [teamSearch, setTeamSearch] = useState('');
 
-  // Close dropdown on click outside
   useEffect(() => {
-    if (!openDropdownRole) return;
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setOpenDropdownRole(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    if (openDropdownRole) accessEditorRef.current?.scrollIntoView({ block: 'nearest' });
   }, [openDropdownRole]);
 
   const handleCheckboxChange = (roleSlug, capSlug, checked) => {
@@ -3656,6 +3664,12 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, manage
         delete next[roleSlug];
         return next;
       });
+      setTeamAccess(prev => {
+        const next = { ...prev };
+        delete next[roleSlug];
+        return next;
+      });
+      setOpenDropdownRole(null);
     }
   };
 
@@ -3678,12 +3692,27 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, manage
     });
   };
 
-  // Format selected age groups for display in cell
+  const handleTeamToggle = (roleSlug, teamId, checked) => {
+    setTeamAccess(prev => ({
+      ...prev,
+      [roleSlug]: checked
+        ? [...(prev[roleSlug] || []), teamId]
+        : (prev[roleSlug] || []).filter(id => id !== teamId),
+    }));
+  };
+
+  const selectedTeamIds = teamAccess[openDropdownRole] || [];
+  const accessTeamChoices = [
+    ...availableAccessTeams,
+    ...selectedTeamIds.filter(id => !availableAccessTeams.some(team => team.id === id))
+      .map(id => ({ id, name: `Team ${id} niet meer beschikbaar (verwijder selectie)` })),
+  ].filter(team => decodeHtml(team.name).toLowerCase().includes(teamSearch.toLowerCase()));
+
   const formatSelectedGroups = (roleSlug) => {
-    const selected = ageGroupAccess[roleSlug] || [];
-    if (selected.length === 0) return 'Geen leden';
-    if (selected.length <= 3) return selected.join(', ');
-    return `${selected.length} groepen`;
+    const groups = ageGroupAccess[roleSlug] || [];
+    const teams = teamAccess[roleSlug] || [];
+    if (!groups.length && !teams.length) return 'Geen extra leden';
+    return [groups.length ? `${groups.length} leeftijdsgroep${groups.length === 1 ? '' : 'en'}` : '', teams.length ? `${teams.length} team${teams.length === 1 ? '' : 's'}` : ''].filter(Boolean).join(', ');
   };
 
   const handleCreateRole = async () => {
@@ -3728,7 +3757,7 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, manage
           Capabilities
         </h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Beheer welke Rondo-capabilities aan elke rol zijn toegekend. De kolom &quot;Ledendata&quot; bepaalt welke leeftijdsgroepen zichtbaar zijn voor die rol.
+          Beheer welke Rondo-capabilities aan elke rol zijn toegekend. Bij &quot;Ledendata&quot; kies je leeftijdsgroepen en teams. Leden zijn zichtbaar als hun leeftijdsgroep overeenkomt óf ze actueel speler zijn van een gekozen team.
         </p>
       </div>
 
@@ -3789,7 +3818,6 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, manage
                     const hasMgmtCap = roleHasManagementCap(roleData);
                     const hasKaderlijstOnly = !hasMgmtCap && roleData.capabilities?.[KADERLIJST_CAPABILITY];
                     const isDropdownOpen = openDropdownRole === roleSlug;
-                    const selectedGroups = ageGroupAccess[roleSlug] || [];
                     const isCustom = roleData.is_custom;
 
                     return (
@@ -3831,43 +3859,16 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, manage
                           ) : hasKaderlijstOnly ? (
                             <span className="text-sm text-gray-400 dark:text-gray-500 italic">Alleen kaderlijst</span>
                           ) : (
-                            <div className="relative inline-block text-left" ref={isDropdownOpen ? dropdownRef : undefined}>
-                              <button
-                                type="button"
-                                onClick={() => setOpenDropdownRole(isDropdownOpen ? null : roleSlug)}
-                                className="inline-flex items-center justify-between w-full max-w-[11rem] px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-electric-cyan"
-                              >
-                                <span className="truncate">{formatSelectedGroups(roleSlug)}</span>
-                                <svg className={`ml-1.5 h-4 w-4 shrink-0 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                              </button>
-                              {isDropdownOpen && (
-                                <div className="absolute right-0 z-20 mt-1 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 ring-1 ring-black/5">
-                                  <div className="py-1 max-h-60 overflow-y-auto">
-                                    {availableAgeGroups.length === 0 ? (
-                                      <div className="px-3 py-2 text-sm text-gray-400 dark:text-gray-500">Geen leeftijdsgroepen beschikbaar</div>
-                                    ) : (
-                                      availableAgeGroups.map(group => (
-                                        <label
-                                          key={group}
-                                          className="flex items-center px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                                        >
-                                          <input
-                                            type="checkbox"
-                                            checked={selectedGroups.includes(group)}
-                                            onChange={(e) => handleAgeGroupToggle(roleSlug, group, e.target.checked)}
-                                            className="h-4 w-4 rounded text-electric-cyan focus:ring-electric-cyan border-gray-300"
-                                          />
-                                          <span className="ml-2 text-sm text-gray-700 dark:text-gray-200">{group}</span>
-                                        </label>
-                                      ))
-                                    )}
-                                  </div>
-                                  <div className="border-t border-gray-200 dark:border-gray-600 px-3 py-1.5">
-                                    <span className="text-xs text-gray-400 dark:text-gray-500">Geen selectie = geen leden</span>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
+                            <button
+                              type="button"
+                              aria-expanded={isDropdownOpen}
+                              aria-controls="role-member-access"
+                              aria-label={`Ledendata voor ${roleData.label}: ${formatSelectedGroups(roleSlug)}`}
+                              onClick={() => { setOpenDropdownRole(isDropdownOpen ? null : roleSlug); setTeamSearch(''); }}
+                              className="btn-secondary text-sm"
+                            >
+                              {formatSelectedGroups(roleSlug)}
+                            </button>
                           )}
                         </td>
                       </tr>
@@ -3877,6 +3878,47 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, manage
               </table>
             </div>
           </div>
+
+          {openDropdownRole && matrixState[openDropdownRole] && (
+            <section id="role-member-access" ref={accessEditorRef} aria-labelledby="role-member-access-title" className="rounded-md border border-gray-300 dark:border-gray-600 p-4 space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <h4 id="role-member-access-title" className="font-medium text-gray-900 dark:text-gray-100">
+                  Ledendata voor {matrixState[openDropdownRole].label}
+                </h4>
+                <button type="button" onClick={() => setOpenDropdownRole(null)} className="btn-secondary text-sm">Sluiten</button>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Kies leeftijdsgroepen, teams of beide. Zo blijven ook dispensatiespelers vindbaar. Zonder selectie geeft deze rol geen extra toegang tot leden.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <fieldset>
+                  <legend className="font-medium text-sm mb-2">Leeftijdsgroepen</legend>
+                  <div className="max-h-64 overflow-y-auto space-y-1">
+                    {availableAgeGroups.length === 0 && <p className="text-sm text-gray-600 dark:text-gray-300">Geen leeftijdsgroepen beschikbaar.</p>}
+                    {availableAgeGroups.map(group => (
+                      <label key={group} className="flex items-center gap-2 px-2 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                        <input type="checkbox" checked={(ageGroupAccess[openDropdownRole] || []).includes(group)} onChange={e => handleAgeGroupToggle(openDropdownRole, group, e.target.checked)} className="h-4 w-4 rounded text-electric-cyan focus:ring-electric-cyan border-gray-300" />
+                        <span className="text-sm">{group}</span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <fieldset>
+                  <legend className="font-medium text-sm mb-2">Teams</legend>
+                  <label htmlFor="member-access-team-search" className="sr-only">Teams zoeken</label>
+                  <input id="member-access-team-search" type="search" value={teamSearch} onChange={e => setTeamSearch(e.target.value)} placeholder="Teams zoeken…" className="input mb-2" />
+                  <div className="max-h-64 overflow-y-auto space-y-1">
+                    {accessTeamChoices.map(team => (
+                      <label key={team.id} className="flex items-center gap-2 px-2 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                        <input type="checkbox" checked={(teamAccess[openDropdownRole] || []).includes(team.id)} onChange={e => handleTeamToggle(openDropdownRole, team.id, e.target.checked)} className="h-4 w-4 rounded text-electric-cyan focus:ring-electric-cyan border-gray-300" />
+                        <span className="text-sm">{decodeHtml(team.name)}</span>
+                      </label>
+                    ))}
+                    {accessTeamChoices.length === 0 && <p className="text-sm text-gray-600 dark:text-gray-300">Geen teams gevonden.</p>}
+                  </div>
+                </fieldset>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Klik hieronder op Opslaan om de toegang bij te werken.</p>
+            </section>
+          )}
 
           <div className="flex items-center gap-4">
             <button

@@ -588,11 +588,101 @@ class AccessControl {
 	}
 
 	/**
+	 * Team IDs granted by the user's non-Kaderlijst roles.
+	 *
+	 * @param int|null $user_id User ID, defaults to the current user.
+	 * @return int[] Configured IDs; missing teams never yield players.
+	 */
+	public static function get_permitted_team_ids( $user_id = null ): array {
+		$user = get_userdata( $user_id ?? get_current_user_id() );
+		if ( ! $user ) {
+			return [];
+		}
+		$config = get_option( 'rondo_team_access', [] );
+		$config = is_array( $config ) ? $config : [];
+		$ids    = [];
+		foreach ( $user->roles as $slug ) {
+			$role = get_role( $slug );
+			if ( ! $role || $role->has_cap( UserRoles::KADERLIJST_CAPABILITY ) ) {
+				continue;
+			}
+			foreach ( (array) ( $config[ $slug ] ?? [] ) as $id ) {
+				if ( is_int( $id ) && $id > 0 && get_post_type( $id ) === 'team' && get_post_status( $id ) === 'publish' ) {
+					$ids[] = (int) $id;
+				}
+			}
+		}
+		return array_values( array_unique( $ids ) );
+	}
+
+	/**
+	 * Resolve current players of published teams, using the native field layer.
+	 *
+	 * Request-only cache varies with post/meta writes, player roles and the date.
+	 *
+	 * @param int[] $team_ids Configured team IDs.
+	 * @return int[] Player person IDs.
+	 */
+	private static function team_player_ids( array $team_ids ): array {
+		static $cache = [];
+		sort( $team_ids );
+		$player_roles = VolunteerStatus::get_player_roles();
+		$key          = md5( wp_json_encode( [ $team_ids, $player_roles, current_datetime()->format( 'Y-m-d' ), wp_cache_get_last_changed( 'posts' ) ] ) );
+		if ( isset( $cache[ $key ] ) ) {
+			return $cache[ $key ];
+		}
+		$teams   = get_posts(
+			[
+				'post_type'        => 'team',
+				'post_status'      => 'publish',
+				'post__in'         => $team_ids ?: [ 0 ],
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'suppress_filters' => true,
+			]
+		);
+		$players = [];
+		if ( $teams ) {
+			$candidates = get_posts(
+				[
+					'post_type'        => 'person',
+					'post_status'      => 'publish',
+					'posts_per_page'   => -1,
+					'fields'           => 'ids',
+					'suppress_filters' => true,
+					'meta_query'       => [
+						[
+							'key'     => 'work_history',
+							'value'   => 0,
+							'compare' => '>',
+							'type'    => 'NUMERIC',
+						],
+					],
+				]
+			);
+			update_meta_cache( 'post', $candidates );
+			foreach ( $candidates as $person_id ) {
+				foreach ( \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' ) ?: [] as $job ) {
+					if ( is_array( $job )
+						&& in_array( (int) ( $job['team'] ?? 0 ), $teams, true )
+						&& in_array( $job['job_title'] ?? '', $player_roles, true )
+						&& VolunteerStatus::is_position_current( $job ) ) {
+						$players[] = (int) $person_id;
+						break;
+					}
+				}
+			}
+		}
+		$cache[ $key ] = $players;
+		return $players;
+	}
+
+	/**
 	 * The single authority on "may this user see this person".
 	 *
 	 * Three tiers, in order:
 	 *   1. Management users (`get_permitted_age_groups()` → null) see everyone.
-	 *   2. Coordinators (a configured, non-empty list) see their own age groups.
+	 *   2. Coordinators see their own age groups and current players of assigned teams.
 	 *   3. Everyone else — plain members — see only themselves and their minor children.
 	 *
 	 * Every person-visibility decision must route through here: the REST collection
@@ -610,32 +700,25 @@ class AccessControl {
 			return false;
 		}
 
-		$permitted = self::get_permitted_age_groups( $user_id );
-
-		// Management: no restriction at all.
-		if ( $permitted === null ) {
+		$scope = self::person_scope( $user_id );
+		if ( $scope === null ) {
 			return true;
 		}
-
-		// Coordinator: restricted to configured age groups.
-		if ( ! empty( $permitted ) ) {
-			$age_group = get_post_meta( $person_id, 'leeftijdsgroep', true );
-			return in_array( $age_group, $permitted, true );
+		if ( isset( $scope['age_groups'] ) ) {
+			return in_array( \Rondo\Fields\Fields::get_for_post( $person_id, 'leeftijdsgroep' ), $scope['age_groups'], true );
 		}
-
-		// Plain member: self and minor children only.
-		return in_array( (int) $person_id, self::get_visible_person_ids( $user_id ), true );
+		return in_array( (int) $person_id, $scope['post__in'], true );
 	}
 
 	/**
 	 * Is this user scoped to their own household? True for plain members — the users
-	 * whose permitted age-group list is empty, meaning "see nobody" by default.
+	 * without age-group or team assignments, meaning household access only.
 	 *
 	 * @param int|null $user_id User ID (optional, defaults to current user).
 	 * @return bool
 	 */
 	public static function is_scoped_member( $user_id = null ) {
-		return self::get_permitted_age_groups( $user_id ) === [];
+		return self::get_permitted_age_groups( $user_id ) === [] && self::get_permitted_team_ids( $user_id ) === [];
 	}
 
 	/**
@@ -935,6 +1018,31 @@ class AccessControl {
 		// Management: no narrowing at all.
 		if ( $permitted === null ) {
 			return null;
+		}
+
+		$teams = self::get_permitted_team_ids( $user_id );
+		if ( $teams ) {
+			$visible = self::team_player_ids( $teams );
+			if ( $permitted ) {
+				$age_ids = get_posts(
+					[
+						'post_type'        => 'person',
+						'post_status'      => 'publish',
+						'posts_per_page'   => -1,
+						'fields'           => 'ids',
+						'suppress_filters' => true,
+						'meta_query'       => [
+							[
+								'key'     => 'leeftijdsgroep',
+								'value'   => $permitted,
+								'compare' => 'IN',
+							],
+						],
+					]
+				);
+				$visible = array_values( array_unique( array_merge( $visible, $age_ids ) ) );
+			}
+			return [ 'post__in' => $visible ?: [ 0 ] ];
 		}
 
 		// Coordinator: narrow to their configured age groups.

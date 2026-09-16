@@ -86,9 +86,10 @@ class Api extends Base {
 		}
 
 		$permitted = \Rondo\Core\AccessControl::get_permitted_age_groups();
+		$team_ids  = \Rondo\Core\AccessControl::get_permitted_team_ids();
 
 		// Scoped member: only their own household, and only if they are kader.
-		if ( is_array( $permitted ) && empty( $permitted ) ) {
+		if ( \Rondo\Core\AccessControl::is_scoped_member() ) {
 			$visible = \Rondo\Core\AccessControl::get_visible_person_ids();
 			$visible = array_values( array_unique( array_map( 'intval', $visible ) ) );
 			sort( $visible );
@@ -104,7 +105,7 @@ class Api extends Base {
 		}
 
 		// Coordinator: keep only kaderleden attached to a team they coordinate.
-		if ( is_array( $permitted ) && ! empty( $permitted ) ) {
+		if ( is_array( $permitted ) ) {
 			$permitted = array_values( array_unique( $permitted ) );
 			sort( $permitted, SORT_NATURAL );
 
@@ -112,10 +113,11 @@ class Api extends Base {
 				[
 					'type'       => 'age_groups',
 					'age_groups' => $permitted,
+					'team_ids'   => $team_ids,
 				],
-				function () use ( $permitted ) {
+				function () use ( $permitted, $team_ids ) {
 					$candidate_ids = $this->kaderlijst_candidate_ids();
-					$scoped_teams  = $this->teams_for_age_groups( $permitted );
+					$scoped_teams  = array_values( array_unique( array_merge( $this->teams_for_age_groups( $permitted ), $team_ids ) ) );
 					$candidate_ids = $this->filter_candidates_by_teams( $candidate_ids, $scoped_teams );
 
 					return $this->build_kaderlijst_people( $candidate_ids );

@@ -1433,7 +1433,11 @@ export default function PeopleList() {
       {Array.isArray(currentUser?.permitted_age_groups) && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
           <Info className="w-4 h-4 shrink-0" />
-          <span>Je ziet alleen leden uit de leeftijdsgroepen: {currentUser.permitted_age_groups.join(', ')}.</span>
+          <span>{currentUser.permitted_team_ids?.length
+            ? `Je ziet leden uit je toegewezen teams${currentUser.permitted_age_groups.length ? ` of leeftijdsgroepen: ${currentUser.permitted_age_groups.join(', ')}` : ''}.`
+            : currentUser.permitted_age_groups.length
+              ? `Je ziet alleen leden uit de leeftijdsgroepen: ${currentUser.permitted_age_groups.join(', ')}.`
+              : 'Je ziet je eigen gegevens en die van je minderjarige kinderen.'}</span>
         </div>
       )}
 
