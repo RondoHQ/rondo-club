@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.85.0] - 2026-09-16
+
+### Added
+- Explicit full-team access capability, assignable independently from general staff roles. Board members and administrators retain full access; coordinators retain assigned teams and personal Mijn team access.
+
+### Fixed
+- Hide and protect Teams for general staff without explicit team access, including direct URLs, search, and record reads.
+- Show coordinators the complete club-wide Kaderlijst with limited team labels and contact fields, linking only to accessible team details.
+
 ## [35.84.2] - 2026-09-16
 
 ### Fixed

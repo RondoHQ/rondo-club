@@ -190,6 +190,9 @@ class AccessControl {
 		if ( preg_match( '#^/wp/v2/feedback/(\d+)(?:/|$)#', $route, $matches ) ) {
 			$deny = ! $this->user_can_access_post( (int) $matches[1] );
 		}
+		if ( preg_match( '#^/(?:wp/v2|rondo/v1)/teams/?$#', $route ) ) {
+			$deny = ! self::can_access_teams();
+		}
 		// Signed fixture calendars have their own token gate and contain public match data.
 		$is_calendar = preg_match( '#^/rondo/v1/teams/\d+/matches\.ics$#', $route );
 		if ( ! $is_calendar && preg_match( '#^/(?:wp/v2|rondo/v1)/teams/(\d+)(?:/|$)#', $route, $matches ) ) {
@@ -201,36 +204,45 @@ class AccessControl {
 			: $result;
 	}
 
-	/** Coordinator team scope; preserve existing broad access for other roles. */
-	public static function visible_team_ids_or_null( ?int $user_id = null ): ?array {
+	/** Whether roles explicitly assign coordinator age groups or teams. */
+	public static function has_coordinator_team_scope( ?int $user_id = null ): bool {
 		$user_id = $user_id ?? get_current_user_id();
 		$user    = get_userdata( $user_id );
 		if ( ! $user ) {
-			return [];
+			return false;
 		}
-		$ages = self::get_permitted_age_groups( $user_id );
-		if ( $ages === null ) {
-			return null;
+		if ( ! empty( self::get_permitted_age_groups( $user_id ) ) ) {
+			return true;
 		}
 		$config = (array) get_option( 'rondo_team_access', [] );
-		$scoped = ! empty( $ages );
 		foreach ( $user->roles as $slug ) {
 			$role = get_role( $slug );
 			if ( $role && ! $role->has_cap( UserRoles::KADERLIJST_CAPABILITY ) && ! empty( $config[ $slug ] ) ) {
-				$scoped = true;
+				return true;
 			}
 		}
-		if ( ! $scoped ) {
+		return false;
+	}
+
+	/** General staff status alone never opens the Teams overview. */
+	public static function can_access_teams( ?int $user_id = null ): bool {
+		return UserRoles::can_access_section( 'teams', $user_id ) || self::has_coordinator_team_scope( $user_id );
+	}
+
+	/** Explicit full-team access, assigned coordinator teams, or personal Mijn team. */
+	public static function visible_team_ids_or_null( ?int $user_id = null ): ?array {
+		$user_id = $user_id ?? get_current_user_id();
+		if ( UserRoles::can_access_section( 'teams', $user_id ) ) {
 			return null;
 		}
 		return array_values(
 			array_unique(
-			array_merge(
-			self::get_permitted_team_ids( $user_id ),
-			array_column( \Rondo\Teams\MyTeam::teams_for_user( $user_id ), 'id' )
+				array_merge(
+					self::get_permitted_team_ids( $user_id ),
+					array_column( \Rondo\Teams\MyTeam::teams_for_user( $user_id ), 'id' )
+				)
 			)
-			)
-			);
+		);
 	}
 
 	/**

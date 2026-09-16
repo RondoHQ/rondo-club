@@ -141,6 +141,7 @@ class RelationshipsSharesTest extends RondoTestCase {
 	 */
 	public function test_team_people_endpoint_returns_employees(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel1' ] );
+		get_user_by( 'id', $alice_id )->add_cap( 'teams' );
 		wp_set_current_user( $alice_id );
 
 		// Create team "Acme Corp"
@@ -195,6 +196,7 @@ class RelationshipsSharesTest extends RondoTestCase {
 	 */
 	public function test_team_people_endpoint_distinguishes_current_former(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel2' ] );
+		get_user_by( 'id', $alice_id )->add_cap( 'teams' );
 		wp_set_current_user( $alice_id );
 
 		// Create team
@@ -261,6 +263,7 @@ class RelationshipsSharesTest extends RondoTestCase {
 	 */
 	public function test_team_people_endpoint_prefers_current_period_for_same_team(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel3' ] );
+		get_user_by( 'id', $alice_id )->add_cap( 'teams' );
 		wp_set_current_user( $alice_id );
 
 		$team_id = $this->createOrganization(
@@ -408,6 +411,7 @@ class RelationshipsSharesTest extends RondoTestCase {
 	public function test_teams_share_lifecycle(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_share5' ] );
 		$bob_id   = $this->createApprovedUser( [ 'user_login' => 'bob_share5' ] );
+		get_user_by( 'id', $alice_id )->add_cap( 'teams' );
 		wp_set_current_user( $alice_id );
 
 		// Create team as Alice

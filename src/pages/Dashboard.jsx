@@ -244,7 +244,7 @@ function TodoCard({ todo, onToggle, onView }) {
 /**
  * Empty state shown when no data exists.
  */
-function EmptyState() {
+function EmptyState({ canAccessTeams }) {
   return (
     <div className="card p-12 text-center">
       <div className="flex justify-center mb-4">
@@ -264,13 +264,15 @@ function EmptyState() {
           <Plus className="w-5 h-5 mr-2" />
           Voeg je eerste lid toe
         </Link>
-        <Link
-          to="/teams/new"
-          className="inline-flex items-center px-6 py-3 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Voeg je eerste team toe
-        </Link>
+        {canAccessTeams && (
+          <Link
+            to="/teams/new"
+            className="inline-flex items-center px-6 py-3 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Voeg je eerste team toe
+          </Link>
+        )}
       </div>
     </div>
   );
@@ -393,12 +395,12 @@ function TuchtzakenStatCard({ count }) {
 /**
  * Stats row component for the dashboard header.
  */
-function StatsRow({ stats }) {
+function StatsRow({ stats, canAccessTeams }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
       <StatCard title="Totaal leden" value={stats?.total_people || 0} icon={Users} href="/people" />
       <StatCard title="Vrijwilligers" value={stats?.total_volunteers || 0} icon={HeartHandshake} href="/people?vrijwilliger=1" />
-      <StatCard title="Teams" value={stats?.total_teams || 0} icon={Building2} href="/teams" />
+      {canAccessTeams && <StatCard title="Teams" value={stats?.total_teams || 0} icon={Building2} href="/teams" />}
       {stats?.vog_counts && (
         <VOGStatCard vogCounts={stats.vog_counts} />
       )}
@@ -458,8 +460,8 @@ export default function Dashboard() {
   if (isEmpty) {
     return (
       <div className="space-y-6">
-        <StatsRow stats={stats} />
-        <EmptyState />
+        <StatsRow stats={stats} canAccessTeams={data?.current_user?.can_access_teams} />
+        <EmptyState canAccessTeams={data?.current_user?.can_access_teams} />
       </div>
     );
   }
@@ -474,7 +476,7 @@ export default function Dashboard() {
 
   // Card renderers
   const cardRenderers = {
-    stats: () => <StatsRow key="stats" stats={stats} />,
+    stats: () => <StatsRow key="stats" stats={stats} canAccessTeams={data?.current_user?.can_access_teams} />,
 
     reminders: () => (
       <DashboardCard
