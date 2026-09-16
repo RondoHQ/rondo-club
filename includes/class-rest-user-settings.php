@@ -1209,6 +1209,7 @@ class UserSettings extends Base {
 			'is_admin'                      => $is_admin,
 			'has_extra_roles'               => $has_extra_roles,
 			'is_kader'                      => $is_kader,
+			'can_access_dashboard'          => $is_kader && \Rondo\Core\AccessControl::visible_team_ids_or_null( $user_id ) === null,
 			'can_access_commissies'         => \Rondo\Core\UserRoles::can_access_section( 'commissies', $user_id ),
 			'can_access_jubilarissen'       => \Rondo\Core\UserRoles::can_access_section( 'jubilarissen', $user_id ),
 			'can_access_feedback'           => \Rondo\Core\UserRoles::can_access_section( 'feedback', $user_id ),

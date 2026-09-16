@@ -66,7 +66,7 @@ const navigation = [
   { name: 'Mijn team', href: '/mijn-team', icon: Shield, requiresMyTeams: true, personal: true },
   { name: 'Ruimtes', href: '/rooms', icon: CalendarDays, personal: true, requiresFeature: 'rooms' },
   { name: 'Mijn toernooien', href: '/mijn-toernooien', icon: Trophy, personal: true, requiresTournamentAssignments: true },
-  { name: 'Dashboard', href: '/', icon: Home, requiresKader: true },
+  { name: 'Dashboard', href: '/', icon: Home, sectionCapability: 'can_access_dashboard' },
   { name: 'Relaties', href: '/people', icon: Users, requiresKader: true },
   { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
   { name: 'Wijzigingslog', href: '/people/wijzigingslog', icon: History, indent: true, requiresLedenadministratie: true },
