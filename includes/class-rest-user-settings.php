@@ -1233,6 +1233,7 @@ class UserSettings extends Base {
 			'can_access_vrijwilligers'      => current_user_can( 'vrijwilligers' ) || current_user_can( 'manage_options' ),
 			'can_access_person_notes'       => \Rondo\Core\AccessControl::can_access_person_notes(),
 			'permitted_age_groups'          => \Rondo\Core\AccessControl::get_permitted_age_groups(),
+			'permitted_team_ids'            => \Rondo\Core\AccessControl::get_permitted_team_ids(),
 			'profile_url'                   => admin_url( 'profile.php' ),
 			'admin_url'                     => admin_url(),
 			'linked_person_id'              => $person_id ?: null,

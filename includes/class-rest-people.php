@@ -2227,27 +2227,12 @@ class People extends Base {
 			$where_clauses[] = "(vog_hv.meta_value = '1')";
 		}
 
-		// Age-group access filtering
-		$permitted_age_groups = \Rondo\Core\AccessControl::get_permitted_age_groups( $current_user_id );
-
-		if ( $permitted_age_groups !== null ) {
-			if ( empty( $permitted_age_groups ) ) {
-				// Scoped member: their own household, nothing else.
-				$visible = \Rondo\Core\AccessControl::get_visible_person_ids( $current_user_id );
-
-				if ( empty( $visible ) ) {
-					$where_clauses[] = '1 = 0';
-				} else {
-					$id_placeholders = implode( ', ', array_fill( 0, count( $visible ), '%d' ) );
-					$where_clauses[] = "p.ID IN ($id_placeholders)";
-					$prepare_values  = array_merge( $prepare_values, $visible );
-				}
-			} else {
-				$ag_placeholders = implode( ', ', array_fill( 0, count( $permitted_age_groups ), '%s' ) );
-				$join_clauses[]  = "INNER JOIN {$wpdb->postmeta} ag ON p.ID = ag.post_id AND ag.meta_key = 'leeftijdsgroep'";
-				$where_clauses[] = "ag.meta_value IN ($ag_placeholders)";
-				$prepare_values  = array_merge( $prepare_values, $permitted_age_groups );
-			}
+		// Use the same age-group/team/household boundary as individual records.
+		$visible = \Rondo\Core\AccessControl::visible_person_ids_or_null( $current_user_id );
+		if ( $visible !== null ) {
+			$id_placeholders = implode( ', ', array_fill( 0, count( $visible ), '%d' ) );
+			$where_clauses[] = "p.ID IN ($id_placeholders)";
+			$prepare_values  = array_merge( $prepare_values, $visible );
 		}
 
 		// Ownership filter

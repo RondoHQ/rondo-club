@@ -19,10 +19,48 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Capability sync service class.
  *
- * No hooks registered in constructor — pure service class, instantiated
- * on-demand by REST API callbacks. PSR-4 autoloaded.
+ * REST callbacks and an hourly reconciliation share this service.
  */
 class CapabilitySync {
+
+	/** Scheduled reconciliation also processes date boundaries without a new sync payload. */
+	public static function register_hooks(): void {
+		add_action( 'rondo_reconcile_user_roles', [ self::class, 'reconcile_coordinator_roles' ] );
+		add_action(
+			'init',
+			static function () {
+				if ( ! wp_next_scheduled( 'rondo_reconcile_user_roles' ) ) {
+					wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', 'rondo_reconcile_user_roles' );
+				}
+			}
+		);
+		add_action( 'switch_theme', static fn() => wp_clear_scheduled_hook( 'rondo_reconcile_user_roles' ) );
+	}
+
+	/** Reconcile only scoped coordinator roles; leave unrelated account roles alone. */
+	public static function reconcile_coordinator_roles(): void {
+		$slugs = [];
+		foreach ( [ 'rondo_age_group_access', 'rondo_team_access' ] as $option ) {
+			$config = get_option( $option, [] );
+			$config = is_string( $config ) ? json_decode( $config, true ) : $config;
+			foreach ( is_array( $config ) ? $config : [] as $slug => $selection ) {
+				$role = get_role( $slug );
+				if ( ! $selection || ! $role || $role->has_cap( \Rondo\Core\UserRoles::KADERLIJST_CAPABILITY ) ) {
+					continue;
+				}
+				$management = false;
+				foreach ( \Rondo\Core\AccessControl::get_management_capabilities() as $cap ) {
+					$management = $management || $role->has_cap( $cap );
+				}
+				if ( ! $management ) {
+					$slugs[] = $slug;
+				}
+			}
+		}
+		if ( $slugs ) {
+			( new self() )->sync_all( [], array_values( array_unique( $slugs ) ) );
+		}
+	}
 
 	/**
 	 * User meta key for manually-granted roles (set by admin override).
@@ -50,9 +88,10 @@ class CapabilitySync {
 	 * @param int   $user_id       WordPress user ID.
 	 * @param array $functies      Array of Functie strings (active ones from Sportlink).
 	 * @param array $commissie_ids Array of commissie post IDs the user is active in.
+	 * @param array|null $role_scope Optional role slugs to reconcile, leaving all other roles untouched.
 	 * @return array|\WP_Error Result array with status and changes, or WP_Error.
 	 */
-	public function sync_user( int $user_id, array $functies, array $commissie_ids = [] ): array|\WP_Error {
+	public function sync_user( int $user_id, array $functies, array $commissie_ids = [], ?array $role_scope = null ): array|\WP_Error {
 		// Load the user.
 		$user = new \WP_User( $user_id );
 		if ( ! $user->exists() ) {
@@ -76,6 +115,10 @@ class CapabilitySync {
 		$syncable_roles = array_values(
 			array_diff( \Rondo\Core\UserRoles::get_role_slugs(), [ 'rondo_user' ] )
 		);
+
+		if ( $role_scope !== null ) {
+			$syncable_roles = array_values( array_intersect( $syncable_roles, $role_scope ) );
+		}
 
 		// Compute mapped roles from Functies via FunctieCapabilityMap.
 		$mapped_roles = [];
@@ -162,13 +205,14 @@ class CapabilitySync {
 	 *
 	 * If $knvb_functies_map is provided, reads functies from it for users whose linked
 	 * person has a KNVB ID; otherwise falls back to deriving functies from the linked
-	 * person's work_history canonical field (is_current entries only).
+	 * person's work_history canonical field (currently active entries).
 	 *
 	 * @param array $knvb_functies_map Optional map of knvb_id => string[] functies.
 	 *                                  Pass empty array to derive from native field work_history.
+	 * @param array|null $role_scope Optional restricted set of roles for scheduled coordinator reconciliation.
 	 * @return array Aggregated result: { total, synced, skipped, errors, details }.
 	 */
-	public function sync_all( array $knvb_functies_map = [] ): array {
+	public function sync_all( array $knvb_functies_map = [], ?array $role_scope = null ): array {
 		// Get all provisioned users (users who have a linked person in user meta).
 		// Using rondo_linked_person_id as the eligibility criterion covers all provisioned
 		// users, including those created before _rondo_knvb_id storage was introduced.
@@ -192,7 +236,7 @@ class CapabilitySync {
 		foreach ( $provisioned_users as $wp_user ) {
 			// Ensure every provisioned user has the base rondo_user role.
 			// Users provisioned before the role system may be missing it.
-			if ( ! in_array( 'rondo_user', $wp_user->roles, true ) && ! in_array( 'administrator', $wp_user->roles, true ) ) {
+			if ( $role_scope === null && ! in_array( 'rondo_user', $wp_user->roles, true ) && ! in_array( 'administrator', $wp_user->roles, true ) ) {
 				$wp_user->add_role( 'rondo_user' );
 			}
 
@@ -206,12 +250,12 @@ class CapabilitySync {
 
 			// Functies: prefer provided map (by KNVB ID if available), fall back to derived.
 			if ( ! empty( $knvb_functies_map ) && $knvb_id && isset( $knvb_functies_map[ $knvb_id ] ) ) {
-				$functies = (array) $knvb_functies_map[ $knvb_id ];
+				$functies = $this->filter_supplied_functies( $wp_user->ID, (array) $knvb_functies_map[ $knvb_id ] );
 			} else {
 				$functies = $derived['functies'];
 			}
 
-			$sync_result = $this->sync_user( $wp_user->ID, $functies, $commissie_ids );
+			$sync_result = $this->sync_user( $wp_user->ID, $functies, $commissie_ids, $role_scope );
 
 			if ( is_wp_error( $sync_result ) ) {
 				$result['errors'][] = [
@@ -300,14 +344,37 @@ class CapabilitySync {
 		// entry point consistent with sync_all() and sync_user_by_person_id().
 		$derived = $this->derive_from_work_history( $user_id );
 
-		return $this->sync_user( $user_id, $functies, $derived['commissie_ids'] );
+		return $this->sync_user( $user_id, $this->filter_supplied_functies( $user_id, $functies ), $derived['commissie_ids'] );
+	}
+
+	/**
+	 * Respect stored date boundaries without dropping new Sportlink functions.
+	 *
+	 * @param int      $user_id User ID.
+	 * @param string[] $functies Supplied active Sportlink functions.
+	 * @return string[] Functions not contradicted by stored history.
+	 */
+	private function filter_supplied_functies( int $user_id, array $functies ): array {
+		$person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+		$known     = [];
+		$active    = [];
+		foreach ( \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' ) ?: [] as $job ) {
+			if ( ! is_array( $job ) || empty( $job['job_title'] ) ) {
+				continue;
+			}
+			$known[] = $job['job_title'];
+			if ( \Rondo\Core\VolunteerStatus::is_position_current( $job ) ) {
+				$active[] = $job['job_title'];
+			}
+		}
+		return array_values( array_diff( $functies, array_diff( $known, $active ) ) );
 	}
 
 	/**
 	 * Derive functies and commissie IDs from a user's linked person's work_history canonical field.
 	 *
 	 * Reads the `work_history` repeater field on the linked person post and
-	 * returns job_title values and team (commissie) IDs for entries where is_current is truthy.
+	 * returns job titles and commissie IDs for date- and status-valid entries.
 	 *
 	 * @param int $user_id WordPress user ID.
 	 * @return array{ functies: string[], commissie_ids: int[] }
@@ -332,13 +399,13 @@ class CapabilitySync {
 		$functies      = [];
 		$commissie_ids = [];
 		foreach ( $work_history as $job ) {
-			if ( empty( $job['is_current'] ) ) {
+			if ( ! is_array( $job ) || ! \Rondo\Core\VolunteerStatus::is_position_current( $job ) ) {
 				continue;
 			}
 			if ( ! empty( $job['job_title'] ) ) {
 				$functies[] = $job['job_title'];
 			}
-			if ( ! empty( $job['team'] ) ) {
+			if ( ! empty( $job['team'] ) && get_post_type( (int) $job['team'] ) === 'commissie' ) {
 				$commissie_ids[] = (int) $job['team'];
 			}
 		}

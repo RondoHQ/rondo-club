@@ -1,6 +1,6 @@
 # Jaarlaagcoördinatoren: leden zoeken op leeftijdsgroep én team
 
-**Status:** Uitgewerkt voorstel; nog niet geïmplementeerd.
+**Status:** Geïmplementeerd in 35.83.0; productie-inrichting afzonderlijk te bevestigen.
 **Datum:** 16 september 2026.
 **Codebasis:** `main` op `e69eb66d`.
 **Componenten:** Rondo Club; controle van bestaande Sportlink-sync.
@@ -87,4 +87,4 @@ Een teamwisseling verandert de teamgrond voor toegang zodra de nieuwe relaties z
 6. Inventariseer vóór productie-inrichting de exacte functies, rollen, leeftijdsgroepen en team-ID's via de getypeerde Rondo-abilities waar die volstaan. Leg de concrete wijzigingen voor aan de beheerder voordat bestaande productierechten worden aangepast.
 7. Lever de implementatie via een aparte PR. Na merge en geslaagde productie-deploy: verifieer met een coördinatoraccount dat een dispensatiespeler via zoeken én Relaties vindbaar en te openen is, en een persoon buiten beide selecties ontoegankelijk blijft. Verifieer ook intrekking na het eindigen van de functie.
 
-Dit document wijzigt uitsluitend het plan. De huidige milestone bevat geen code, accountwijzigingen of productie-inrichting en vereist geen versieaanpassing of deploy.
+De implementatie gebruikt `team_roles` naast `roles` op het bestaande instellingenendpoint. De uurlijkse taak herberekent uitsluitend rollen met jaarlaag- of teamtoegang en behoudt andere rollen. Browsercontroles met fictieve gegevens bevestigen de teamkeuze, herladen, zoeken, profielen en CSV-export. De concrete rol-, functie- en teamkoppelingen op productie zijn nog niet gewijzigd.

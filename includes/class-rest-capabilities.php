@@ -626,7 +626,7 @@ class Capabilities extends Base {
 	public function get_age_group_access() {
 		global $wpdb;
 
-		// Current per-role config (default: empty = no restrictions).
+		// Current per-role config (empty grants no additional person access).
 		$raw = get_option( 'rondo_age_group_access', [] );
 		if ( is_string( $raw ) ) {
 			$raw = json_decode( $raw, true );
@@ -661,6 +661,22 @@ class Capabilities extends Base {
 			[
 				'roles'                => (object) $raw,
 				'available_age_groups' => array_values( $rows ),
+				'team_roles'           => (object) get_option( 'rondo_team_access', [] ),
+				'available_teams'      => array_map(
+					static fn( $team ) => [
+						'id'   => $team->ID,
+						'name' => get_the_title( $team ),
+					],
+					get_posts(
+						[
+							'post_type'      => 'team',
+							'post_status'    => 'publish',
+							'posts_per_page' => -1,
+							'orderby'        => 'title',
+							'order'          => 'ASC',
+						]
+						)
+				),
 			]
 		);
 	}
@@ -669,7 +685,7 @@ class Capabilities extends Base {
 	 * Update age-group access configuration.
 	 *
 	 * Accepts per-role arrays of permitted leeftijdsgroep values. Empty arrays
-	 * are removed (empty = no restriction for that role).
+	 * are removed (empty grants no additional age-group access).
 	 *
 	 * @param \WP_REST_Request $request The request object.
 	 * @return \WP_REST_Response|\WP_Error
@@ -706,13 +722,45 @@ class Capabilities extends Base {
 			// Sanitize values.
 			$sanitized = array_values( array_filter( array_map( 'sanitize_text_field', $age_groups ) ) );
 
-			// Only store non-empty arrays (empty = no restriction).
+			// Only store non-empty arrays.
 			if ( ! empty( $sanitized ) ) {
 				$config[ $slug ] = $sanitized;
 			}
 		}
 
+		// Validate both selections before persisting either. Omission preserves
+		// team access for clients using the original age-group-only contract.
+		$team_config = null;
+		if ( $request->has_param( 'team_roles' ) ) {
+			$submitted_teams = $request->get_param( 'team_roles' );
+			if ( ! is_array( $submitted_teams ) ) {
+				return new \WP_Error( 'invalid_team_access', 'Teamtoegang moet per rol worden opgegeven.', [ 'status' => 400 ] );
+			}
+			$team_config = [];
+			foreach ( $submitted_teams as $slug => $team_ids ) {
+				if ( ! in_array( $slug, $valid_slugs, true ) || ! is_array( $team_ids ) ) {
+					return new \WP_Error( 'invalid_team_access', 'Ongeldige rol of teamselectie.', [ 'status' => 400 ] );
+				}
+				foreach ( $team_ids as $team_id ) {
+					if ( ! is_int( $team_id ) || $team_id <= 0 || get_post_type( $team_id ) !== 'team' || get_post_status( $team_id ) !== 'publish' ) {
+						return new \WP_Error( 'invalid_team_access', 'Kies bestaande, gepubliceerde teams.', [ 'status' => 400 ] );
+					}
+				}
+				$role    = get_role( $slug );
+				$blocked = ! $role || $role->has_cap( \Rondo\Core\UserRoles::KADERLIJST_CAPABILITY );
+				foreach ( \Rondo\Core\AccessControl::get_management_capabilities() as $cap ) {
+					$blocked = $blocked || ( $role && $role->has_cap( $cap ) );
+				}
+				if ( $team_ids && ! $blocked ) {
+					$team_config[ $slug ] = array_values( array_unique( $team_ids ) );
+				}
+			}
+		}
+
 		update_option( 'rondo_age_group_access', $config );
+		if ( $team_config !== null ) {
+			update_option( 'rondo_team_access', $team_config );
+		}
 
 		// Return fresh state.
 		return $this->get_age_group_access();
