@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.83.0] - 2026-09-16
+
+### Added
+- Configure teams alongside age groups for coordinator roles. Current players of those teams, including dispensation players, share the same read scope across member lists, search, profiles, exports and record abilities.
+
+### Fixed
+- Respect assignment dates when assigning Sportlink roles and creating accounts. Reconcile scoped coordinator roles on linked accounts hourly so they can start or expire without a new Sportlink payload, while preserving manual overrides.
+- Remove stored person-access selections when deleting a custom role so recreating its name cannot restore old grants.
+
 ## [35.82.3] - 2026-09-14
 
 ### Fixed
