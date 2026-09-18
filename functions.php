@@ -339,6 +339,7 @@ function rondo_init() {
 
 		// Hourly member reminders and post-shift survey emails.
 		new \Rondo\Volunteer\ShiftEmailScheduler();
+		new \Rondo\Volunteer\WeekendVolunteerMail();
 
 		// Enforce the audited, mail-aware cancellation flow for assigned shifts.
 		new \Rondo\Volunteer\ShiftCancellationService();
@@ -1303,6 +1304,7 @@ function rondo_theme_deactivation() {
 	// Clear volunteer shift lifecycle hooks.
 	\Rondo\Volunteer\ShiftScheduler::unregister_cron();
 	\Rondo\Volunteer\ShiftEmailScheduler::unregister_cron();
+	\Rondo\Volunteer\WeekendVolunteerMail::unregister_cron();
 	\Rondo\Volunteer\ShiftTemplateExpander::unregister_cron();
 
 	// Remove custom user role (must call directly since switch_theme hook already fired)

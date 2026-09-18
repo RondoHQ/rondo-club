@@ -56,7 +56,7 @@ class ResolutionEmailSender {
 			)
 			: '';
 		$resolution_html = sprintf(
-			'<div style="margin:20px 0;padding:18px;border-radius:16px;background:#e7f6f2;border:1px solid #b8ded4;"><p style="margin:0 0 8px;color:#0f766e;font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Zo hebben we het opgelost</p>%s</div>',
+			'<div style="margin:20px 0;padding:18px;border-radius:16px;background:' . esc_attr( EmailTemplate::background_color() ) . ';border:1px solid ' . esc_attr( EmailTemplate::accent_color() ) . ';"><p style="margin:0 0 8px;color:' . esc_attr( EmailTemplate::accent_color() ) . ';font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Zo hebben we het opgelost</p>%s</div>',
 			EmailTemplate::format_plain_text( $resolution_summary )
 		);
 		$body_html       = sprintf(
