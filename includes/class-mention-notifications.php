@@ -87,7 +87,7 @@ class MentionNotifications {
 				'eyebrow'    => 'Melding',
 				'heading'    => 'Je bent genoemd',
 				'body_html'  => sprintf(
-					'<p style="margin:0 0 16px;color:#0f172a;font-size:16px;line-height:1.7;"><strong>%s</strong> noemde je in een notitie over <strong>%s</strong>.</p><blockquote style="margin:0;padding:16px 18px;border-left:4px solid #0f766e;background:#f8fafc;border-radius:0 16px 16px 0;color:#334155;">%s</blockquote>',
+					'<p style="margin:0 0 16px;color:#0f172a;font-size:16px;line-height:1.7;"><strong>%s</strong> noemde je in een notitie over <strong>%s</strong>.</p><blockquote style="margin:0;padding:16px 18px;border-left:4px solid ' . esc_attr( EmailTemplate::accent_color() ) . ';background:' . esc_attr( EmailTemplate::background_color() ) . ';border-radius:0 16px 16px 0;color:#334155;">%s</blockquote>',
 					esc_html( $author_name ),
 					esc_html( $post_title ),
 					esc_html( $preview )

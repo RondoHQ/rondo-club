@@ -439,7 +439,7 @@ class Lettermint extends Base {
 			'{voornaam}'            => 'Jan',
 			'{factuur_nummer}'      => 'C-2025-0042',
 			'{totaal_bedrag}'       => '&euro; 230,00',
-			'{betaallink}'          => '<a href="https://example.com/betaling/test" style="color:#0891b2;text-decoration:underline;">https://example.com/betaling/test</a>',
+			'{betaallink}'          => '<a href="https://example.com/betaling/test" style="color:' . esc_attr( EmailTemplate::accent_color() ) . ';text-decoration:underline;">https://example.com/betaling/test</a>',
 			'{betaalknop}'          => EmailTemplate::render_cta_button( 'https://example.com/betaling/test', 'Open betaallink' ),
 			'{qr_code}'             => $qr_code_html,
 			'{organisatie_naam}'    => esc_html( $org_name ),
