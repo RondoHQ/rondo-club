@@ -61,7 +61,7 @@ export default function VrijwilligersDienstForm() {
   const [canRetryNotifications, setCanRetryNotifications] = useState(false);
   const [addPersonOpen, setAddPersonOpen] = useState(false);
   const [personSearch, setPersonSearch] = useState('');
-  const [pendingPersonId, setPendingPersonId] = useState(null);
+  const [assignmentMode, setAssignmentMode] = useState('signup');
   const [overlapPrompt, setOverlapPrompt] = useState(null);
 
   const { data: types = [], isLoading: typesLoading } = useQuery({
@@ -221,8 +221,8 @@ export default function VrijwilligersDienstForm() {
   });
 
   const addAssigneeMutation = useMutation({
-    mutationFn: ({ personId, forceOverlap = false }) =>
-      prmApi.addShiftAssignee(id, { person_id: personId, force_overlap: forceOverlap }),
+    mutationFn: ({ personId, forceOverlap = false, mode }) =>
+      prmApi.addShiftAssignee(id, { person_id: personId, force_overlap: forceOverlap, assignment_mode: mode }),
     onSuccess: async (response) => {
       const data = response?.data || {};
       setAddPersonOpen(false);
@@ -230,18 +230,24 @@ export default function VrijwilligersDienstForm() {
       if (data.notification && data.notification.queued === false) {
         setFeedback({
           kind: 'warning',
-          message: 'Toegevoegd, maar deze persoon heeft geen e-mailadres — laat het diegene zelf even weten.',
+          message: data.assignment_mode === 'assigned'
+            ? 'Dienst toegewezen. Deze persoon kan zich niet zelf afmelden en heeft geen e-mailadres. Geef de toewijzing zelf door.'
+            : 'Toegevoegd, maar deze persoon heeft geen e-mailadres. Laat het diegene zelf even weten.',
         });
       } else {
-        setFeedback({ kind: 'success', message: 'Persoon toegevoegd. Die krijgt een bevestigingsmail.' });
+        setFeedback({ kind: 'success', message: data.already_assigned
+          ? 'Deze persoon was al ingedeeld. De bestaande indeling is behouden.'
+          : data.assignment_mode === 'assigned'
+            ? 'Dienst toegewezen. De persoon krijgt een toewijzingsmail en kan zich niet zelf afmelden.'
+            : 'Persoon toegevoegd. Die krijgt een bevestigingsmail.' });
       }
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shift', id] });
       await refreshShiftCalendars(queryClient);
     },
-    onError: (err) => {
+    onError: (err, variables) => {
       const data = err?.response?.data;
       if (data?.code === 'overlap_warning' && data?.data?.can_force) {
-        setOverlapPrompt({ personId: pendingPersonId, message: data.message });
+        setOverlapPrompt({ ...variables, message: data.message });
         return;
       }
       setFeedback({ kind: 'error', message: data?.message || err?.message || 'Toevoegen mislukt.' });
@@ -563,30 +569,54 @@ export default function VrijwilligersDienstForm() {
 
       {isEdit && !isCancelled && (
         <section className="card p-5">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="font-semibold text-gray-900 dark:text-gray-100">Iemand indelen</h2>
               <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                 Voor leden zonder account of e-mail, of als iemand het je persoonlijk laat weten.
-                De persoon krijgt een bevestiging en kan zich daarna gewoon zelf afmelden.
+                Bij indelen gelden de normale afmeldregels. Bij toewijzen kan de persoon zich niet zelf afmelden.
               </p>
             </div>
             {!addPersonOpen && (
-              <button
-                type="button"
-                onClick={() => {
-                  setFeedback(null);
-                  setAddPersonOpen(true);
-                }}
-                className="btn-tertiary inline-flex shrink-0 items-center gap-1.5 text-sm"
-              >
-                <UserPlus className="h-4 w-4" /> Toevoegen
-              </button>
+              <div className="flex flex-wrap gap-2">
+                {['signup', 'assigned'].map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => {
+                      setFeedback(null);
+                      setAssignmentMode(mode);
+                      setAddPersonOpen(true);
+                    }}
+                    className="btn-tertiary inline-flex items-center gap-1.5 text-sm"
+                  >
+                    <UserPlus className="h-4 w-4" /> {mode === 'assigned' ? 'Dienst toewijzen' : 'Indelen'}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 
           {addPersonOpen && (
             <div className="mt-4 space-y-3">
+              <fieldset disabled={addAssigneeMutation.isPending}>
+                <legend className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">Manier van indelen</legend>
+                <div className="flex flex-wrap gap-4">
+                  {['signup', 'assigned'].map((mode) => (
+                    <label key={mode} className="inline-flex items-center gap-2 text-sm text-gray-900 dark:text-gray-100">
+                      <input type="radio" name="assignment-mode" value={mode} checked={assignmentMode === mode} onChange={() => setAssignmentMode(mode)} />
+                      {mode === 'assigned' ? 'Dienst toewijzen' : 'Indelen'}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              {assignmentMode === 'assigned' && (
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  De persoon krijgt een toewijzingsmail, blijft verantwoordelijk en kan zich niet zelf afmelden.
+                  Vervanging of ruilen moet via de accommodatiemanager.{' '}
+                  <Link to={`/vrijwilligers/diensttypes/${existing?.fields?.dienst_type_id}`} className="text-bright-cobalt underline dark:text-electric-cyan">Toewijzingsmail aanpassen</Link>
+                </p>
+              )}
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">Zoek een lid</span>
                 <input
@@ -625,12 +655,11 @@ export default function VrijwilligersDienstForm() {
                             disabled={person.blocked || addAssigneeMutation.isPending}
                             onClick={() => {
                               setFeedback(null);
-                              setPendingPersonId(person.id);
-                              addAssigneeMutation.mutate({ personId: person.id });
+                              addAssigneeMutation.mutate({ personId: person.id, mode: assignmentMode });
                             }}
                             className="btn-tertiary shrink-0 text-xs disabled:cursor-not-allowed disabled:opacity-40"
                           >
-                            Indelen
+                            {assignmentMode === 'assigned' ? 'Toewijzen' : 'Indelen'}
                           </button>
                         )}
                       </li>
@@ -667,9 +696,9 @@ export default function VrijwilligersDienstForm() {
                 type="button"
                 className="btn-primary"
                 disabled={addAssigneeMutation.isPending}
-                onClick={() => addAssigneeMutation.mutate({ personId: overlapPrompt.personId, forceOverlap: true })}
+                onClick={() => addAssigneeMutation.mutate({ ...overlapPrompt, forceOverlap: true })}
               >
-                Toch indelen
+                {overlapPrompt.mode === 'assigned' ? 'Toch toewijzen' : 'Toch indelen'}
               </button>
             </div>
           </div>
@@ -688,7 +717,8 @@ export default function VrijwilligersDienstForm() {
             {assignedIds.map((pid) => (
               <li key={pid} className="py-2 flex items-center justify-between gap-3 text-sm">
                 <Link to={`/people/${pid}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline inline-flex items-center gap-1">
-                  {assignedPeopleLoading ? 'Naam laden…' : (assignedPeopleById.get(pid) || `Persoon ${pid}`)} <ExternalLink className="w-3 h-3" />
+                  {assignedPeopleLoading ? 'Naam laden…' : (assignedPeopleById.get(pid) || `Persoon ${pid}`)}
+                  {existing?.duty_assigned_person_ids?.includes(pid) && <span className="text-xs text-gray-600 dark:text-gray-300">(toegewezen)</span>} <ExternalLink className="w-3 h-3" />
                 </Link>
                 {!isCancelled && <button
                   type="button"

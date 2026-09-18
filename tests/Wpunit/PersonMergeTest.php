@@ -337,6 +337,8 @@ class PersonMergeTest extends RondoTestCase {
 			);
 		\Rondo\Fields\Fields::update_for_post( $shift_id, 'assigned_persons', [ $duplicate_id, $other_id ] );
 		update_post_meta( $shift_id, '_no_show_' . $duplicate_id, 1 );
+		update_post_meta( $shift_id, '_shift_assignment_mode_' . $duplicate_id, 'assigned' );
+		update_post_meta( $shift_id, '_shift_assignment_mode_' . $primary_id, 'signup' );
 
 		$todo_id = self::factory()->post->create(
 			[
@@ -392,6 +394,8 @@ class PersonMergeTest extends RondoTestCase {
 		$this->assertSame( [ $primary_id, $other_id ], array_map( 'intval', \Rondo\Fields\Fields::get_for_post( $shift_id, 'assigned_persons' ) ) );
 		$this->assertSame( 1, (int) get_post_meta( $shift_id, '_no_show_' . $primary_id, true ) );
 		$this->assertFalse( metadata_exists( 'post', $shift_id, '_no_show_' . $duplicate_id ) );
+		$this->assertSame( 'assigned', get_post_meta( $shift_id, '_shift_assignment_mode_' . $primary_id, true ) );
+		$this->assertFalse( metadata_exists( 'post', $shift_id, '_shift_assignment_mode_' . $duplicate_id ) );
 		$this->assertSame( [ $primary_id ], array_map( 'intval', \Rondo\Fields\Fields::get_for_post( $todo_id, 'related_persons' ) ) );
 		$this->assertSame( $primary_id, (int) \Rondo\Fields\Fields::get_for_post( $case_id, 'person' ) );
 		$this->assertSame( $primary_id, (int) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'person' ) );

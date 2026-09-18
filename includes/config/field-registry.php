@@ -400,6 +400,34 @@ Deze annulering is minder dan 48 uur voor aanvang doorgegeven. De inschrijftaak 
           'storage_name' => 'cancellation_last_minute_email_subject',
           'type' => 'text',
         ),
+        'assignment_email_subject' =>
+        array (
+          'canonical_name' => 'assignment_email_subject',
+          'default_value' => 'Dienst toegewezen: {dienst} op {datum}',
+          'instructions' => 'Variabelen: {naam}, {dienst}, {datum}, {tijd}, {eindtijd}, {medevrijwilligers}. Leeg gebruikt de standaardtekst.',
+          'key' => 'field_dienst_type_assignment_email_subject',
+          'label' => 'Onderwerp toewijzingsmail',
+          'name' => 'assignment_email_subject',
+          'storage_name' => 'assignment_email_subject',
+          'type' => 'text',
+        ),
+        'assignment_email_body' =>
+        array (
+          'canonical_name' => 'assignment_email_body',
+          'default_value' => 'Hoi {naam},
+
+Je bent ingedeeld voor {dienst} op {datum} van {tijd} tot {eindtijd}.
+
+Je bent zelf verantwoordelijk voor deze dienst. Je mag iemand anders regelen of onderling ruilen. Geef dit altijd door aan de accommodatiemanager. Je blijft eindverantwoordelijk voor de invulling van je dienst.
+
+Zelf afmelden via Rondo is voor deze toegewezen dienst niet mogelijk.',
+          'instructions' => 'Variabelen: {naam}, {dienst}, {datum}, {tijd}, {eindtijd}, {medevrijwilligers}. Leeg gebruikt de standaardtekst.',
+          'key' => 'field_dienst_type_assignment_email_body',
+          'label' => 'Tekst toewijzingsmail',
+          'name' => 'assignment_email_body',
+          'storage_name' => 'assignment_email_body',
+          'type' => 'textarea',
+        ),
         'color' => 
         array (
           'canonical_name' => 'color',

@@ -16,6 +16,8 @@ const EMPTY = {
   default_capacity: '1',
   color: '#6b7280',
   required_pool: 0,
+  assignment_email_subject: '',
+  assignment_email_body: '',
   reminder_email_subject: 'Herinnering: {dienst} op {datum}',
   reminder_email_body: 'Hoi {naam},\n\nDit is een herinnering voor je inschrijftaak {dienst} op {datum} van {tijd} tot {eindtijd}.\n\nJe voert deze inschrijftaak uit samen met {medevrijwilligers}.',
   cancellation_early_email_subject: 'Je inschrijftaak {dienst} op {datum} gaat niet door',
@@ -70,6 +72,8 @@ export default function VrijwilligersDienstTypeForm() {
       default_capacity: fields.default_capacity != null ? String(fields.default_capacity) : '1',
       color: fields.color || '#6b7280',
       required_pool: Number(fields.required_pool) || 0,
+      assignment_email_subject: fields.assignment_email_subject || '',
+      assignment_email_body: fields.assignment_email_body || '',
       reminder_email_subject: fields.reminder_email_subject || EMPTY.reminder_email_subject,
       reminder_email_body: fields.reminder_email_body || EMPTY.reminder_email_body,
       cancellation_early_email_subject: fields.cancellation_early_email_subject || EMPTY.cancellation_early_email_subject,
@@ -154,6 +158,8 @@ export default function VrijwilligersDienstTypeForm() {
               default_capacity: form.default_capacity === '' ? 0 : Number(form.default_capacity),
               color: form.color,
               required_pool: form.required_pool ? Number(form.required_pool) : null,
+              assignment_email_subject: form.assignment_email_subject,
+              assignment_email_body: form.assignment_email_body,
               reminder_email_subject: form.reminder_email_subject,
               reminder_email_body: form.reminder_email_body,
               cancellation_early_email_subject: form.cancellation_early_email_subject,
@@ -205,6 +211,34 @@ export default function VrijwilligersDienstTypeForm() {
             onChange={(v) => setForm({ ...form, sleutel_involved: v })}
           />
         </div>
+
+        <section className="border-t border-gray-200 dark:border-gray-700 pt-5 space-y-4">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Toewijzingsmail</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Deze mail volgt na ‘Dienst toewijzen’. Het lid kan zich niet zelf afmelden.
+              Laat een veld leeg voor de standaardtekst over verantwoordelijkheid, vervanging en ruilen via de accommodatiemanager.
+            </p>
+          </div>
+          <Field label="Onderwerp">
+            <input
+              type="text"
+              value={form.assignment_email_subject}
+              onChange={(e) => setForm({ ...form, assignment_email_subject: e.target.value })}
+              placeholder="Dienst toegewezen: {dienst} op {datum}"
+              className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
+            />
+          </Field>
+          <Field label="Tekst" hint="Variabelen: {naam}, {dienst}, {datum}, {tijd}, {eindtijd}, {medevrijwilligers}">
+            <textarea
+              rows={10}
+              value={form.assignment_email_body}
+              onChange={(e) => setForm({ ...form, assignment_email_body: e.target.value })}
+              placeholder="Leeg gebruikt de standaard toewijzingsmail."
+              className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
+            />
+          </Field>
+        </section>
 
         <section className="border-t border-gray-200 dark:border-gray-700 pt-5 space-y-4">
           <div>
