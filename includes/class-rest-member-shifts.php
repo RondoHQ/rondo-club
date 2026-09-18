@@ -1148,26 +1148,7 @@ class MemberShifts extends Base {
 	 * warning banners are relevant to the shifts in the requested result set.
 	 */
 	private function member_shift_block_reason( int $shift_id, int $person_id, array $blocks ): ?string {
-		$dienst_type_id = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
-		if ( $dienst_type_id <= 0 ) {
-			return null;
-		}
-
-		if ( (bool) get_post_meta( $dienst_type_id, 'vog_required', true ) && in_array( 'vog', $blocks, true ) ) {
-			return 'vog';
-		}
-
-		$requires_iva = (bool) get_post_meta( $dienst_type_id, 'iva_required', true );
-		if ( $requires_iva && ! (bool) get_post_meta( $shift_id, 'iva_waived', true ) && in_array( 'iva', $blocks, true ) ) {
-			return 'iva';
-		}
-
-		$required_pool = (int) get_post_meta( $dienst_type_id, 'required_pool', true );
-		if ( $required_pool > 0 && ! $this->person_is_pool_member( $person_id, $required_pool ) ) {
-			return 'pool';
-		}
-
-		return null;
+		return \Rondo\Volunteer\ShiftSignupEligibility::block_reason( $shift_id, $person_id, $blocks );
 	}
 
 	public function signup( \WP_REST_Request $request ) {
@@ -1696,28 +1677,13 @@ class MemberShifts extends Base {
 	 * @return true|\WP_Error True when the person may take the shift.
 	 */
 	private function assert_person_may_take_shift( int $person_id, int $shift_id ) {
-		$dienst_type_id = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
-		if ( $dienst_type_id <= 0 ) {
-			return true;
-		}
-
-		$blocks = $this->signup_blocks( $person_id );
-
-		if ( get_post_meta( $dienst_type_id, 'vog_required', true ) && in_array( 'vog', $blocks, true ) ) {
-			return new \WP_Error( 'vog_required', 'Voor deze inschrijftaak is een geldige VOG vereist.', [ 'status' => 403 ] );
-		}
-
-		$iva_waived = (bool) get_post_meta( $shift_id, 'iva_waived', true );
-		if ( ! $iva_waived && get_post_meta( $dienst_type_id, 'iva_required', true ) && in_array( 'iva', $blocks, true ) ) {
-			return new \WP_Error( 'iva_required', 'Voor deze inschrijftaak is een goedgekeurd IVA-certificaat of diploma Sociale Hygiëne vereist.', [ 'status' => 403 ] );
-		}
-
-		$required_pool = (int) get_post_meta( $dienst_type_id, 'required_pool', true );
-		if ( $required_pool > 0 && ! $this->person_is_pool_member( $person_id, $required_pool ) ) {
-			return new \WP_Error( 'pool_membership_required', 'Deze inschrijftaak is alleen beschikbaar voor leden van de bijbehorende vrijwilligerspool.', [ 'status' => 403 ] );
-		}
-
-		return true;
+		$reason = \Rondo\Volunteer\ShiftSignupEligibility::block_reason( $shift_id, $person_id );
+		$errors = [
+			'vog'  => [ 'vog_required', 'Voor deze inschrijftaak is een geldige VOG vereist.' ],
+			'iva'  => [ 'iva_required', 'Voor deze inschrijftaak is een goedgekeurd IVA-certificaat of diploma Sociale Hygiëne vereist.' ],
+			'pool' => [ 'pool_membership_required', 'Deze inschrijftaak is alleen beschikbaar voor leden van de bijbehorende vrijwilligerspool.' ],
+		];
+		return $reason === null ? true : new \WP_Error( $errors[ $reason ][0], $errors[ $reason ][1], [ 'status' => 403 ] );
 	}
 
 	/**
@@ -1725,19 +1691,7 @@ class MemberShifts extends Base {
 	 * Returns a subset of ['vog', 'iva'].
 	 */
 	private function signup_blocks( int $person_id ): array {
-		$blocks = [];
-
-		$datum_vog = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'datum_vog' );
-		// VOG validity = 3 years (existing convention from class-rest-vog.php).
-		if ( $datum_vog === '' || strtotime( $datum_vog . ' +3 years' ) < time() ) {
-			$blocks[] = 'vog';
-		}
-
-		if ( ! IvaStatus::is_valid( $person_id ) ) {
-			$blocks[] = 'iva';
-		}
-
-		return $blocks;
+		return \Rondo\Volunteer\ShiftSignupEligibility::signup_blocks( $person_id );
 	}
 
 	private function resolve_exemption_block( int $person_id, string $season ): ?array {
@@ -2006,23 +1960,5 @@ class MemberShifts extends Base {
 		}
 
 		return null;
-	}
-
-	private function person_is_pool_member( int $person_id, int $commissie_id ): bool {
-		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' );
-		if ( ! is_array( $work_history ) ) {
-			return false;
-		}
-
-		foreach ( $work_history as $position ) {
-			$team_id = (int) ( $position['team'] ?? 0 );
-			if ( $team_id !== $commissie_id ) {
-				continue;
-			}
-			if ( VolunteerStatus::is_position_current( $position ) ) {
-				return true;
-			}
-		}
-		return false;
 	}
 }
