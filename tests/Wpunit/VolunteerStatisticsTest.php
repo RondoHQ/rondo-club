@@ -3,6 +3,7 @@
 namespace Tests\Wpunit;
 
 use Rondo\Fees\SeasonKey;
+use Rondo\Fields\Fields;
 use Rondo\REST\Volunteer;
 use Rondo\Volunteer\VolunteerEligibilityService;
 use Rondo\Volunteer\VolunteerObligationCalculator;
@@ -137,10 +138,186 @@ class VolunteerStatisticsTest extends RondoTestCase {
 		$this->assertArrayHasKey( 'summary', $data );
 		$this->assertArrayHasKey( 'obligation_progress', $data );
 		$this->assertArrayHasKey( 'account_trend', $data );
+		$this->assertArrayHasKey( 'by_team', $data );
 		foreach ( $data['account_trend'] as $point ) {
 			$this->assertSame( [ 'date', 'count', 'cumulative' ], array_keys( $point ) );
 		}
 		$this->assertArrayNotHasKey( 'people', $data );
+	}
+
+	private function team_member( int $team_id, ?string $age = 'Senioren', array $position = [] ): int {
+		$person_id = $this->createPerson();
+		Fields::update_for_post(
+			$person_id,
+			'work_history',
+			[
+				array_merge(
+				[
+					'team'       => $team_id,
+					'job_title'  => 'Speler',
+					'is_current' => true,
+				],
+				$position
+			),
+			]
+			);
+		if ( $age !== null ) {
+			update_post_meta( $person_id, 'leeftijdsgroep', $age );
+		}
+		return $person_id;
+	}
+
+	public function test_team_overview_counts_unique_people_and_accounts_but_repeats_family_duties_per_child(): void {
+		$team_a   = $this->createOrganization( [ 'post_title' => 'JO12-2' ] );
+		$team_b   = $this->createOrganization( [ 'post_title' => 'JO12-10' ] );
+		$parent_a = $this->createPerson();
+		$parent_b = $this->createPerson();
+		$children = [ $this->team_member( $team_a, 'Onder 12' ), $this->team_member( $team_a, 'Onder 12' ), $this->team_member( $team_b, 'Onder 12' ) ];
+		foreach ( $children as $child ) {
+			Fields::update_for_post(
+				$child,
+				'relationships',
+				[
+					[
+						'related_person'    => $parent_a,
+						'relationship_type' => 2,
+					],
+					[
+						'related_person'    => $parent_b,
+						'relationship_type' => 2,
+					],
+				]
+				);
+		}
+		$positions = Fields::get_for_post( $children[0], 'work_history' );
+		Fields::update_for_post( $children[0], 'work_history', array_merge( $positions, $positions ) );
+		$user_a = $this->createRondoUser();
+		update_post_meta( $parent_a, '_rondo_wp_user_id', $user_a );
+		update_user_meta( $user_a, 'rondo_linked_person_id', $parent_a );
+		update_user_meta( $this->createRondoUser(), 'rondo_linked_person_id', $parent_b );
+		update_post_meta( $children[0], '_rondo_wp_user_id', $this->createRondoUser() );
+		$type  = $this->create_type( 'Bar', '#123456' );
+		$start = substr( $this->season, 0, 4 ) . '-09-01 10:00:00';
+		$this->create_shift( $type, $start, 2, [ $parent_a ] );
+		$completed = $this->create_shift( $type, $start, 2, [ $parent_b ], 'voltooid' );
+		update_post_meta( $completed, '_no_show_' . $parent_b, [ 'marked_at' => gmdate( 'c' ) ] );
+		$this->create_shift( $type, $start, 2, [ $children[0] ] );
+		$this->create_shift( $type, $start, 2, [ $parent_a ], 'geannuleerd' );
+		$this->create_shift( $type, '2001-09-01 10:00:00', 2, [ $parent_a ] );
+		VolunteerEligibilityService::invalidate_cache();
+
+		$data = ( new VolunteerStatistics() )->for_season( $this->season );
+		$this->assertSame(
+			[
+				[
+					'id'               => $team_a,
+					'name'             => 'JO12-2',
+					'people_count'     => 4,
+					'account_count'    => 3,
+					'required_count'   => 8,
+					'assignment_count' => 6,
+				],
+				[
+					'id'               => $team_b,
+					'name'             => 'JO12-10',
+					'people_count'     => 3,
+					'account_count'    => 2,
+					'required_count'   => 4,
+					'assignment_count' => 3,
+				],
+			],
+			$data['by_team']
+			);
+		$this->assertSame( 4, $data['obligation_progress']['total_required'] );
+		$this->assertSame( 3, $data['summary']['total_assignments'] );
+		$historical = ( new VolunteerStatistics() )->for_season( '2001-2002' )['by_team'];
+		$this->assertSame( 4, $historical[0]['people_count'] );
+		$this->assertSame( 3, $historical[0]['account_count'] );
+		$this->assertSame( 2, $historical[0]['assignment_count'] );
+	}
+
+	public function test_team_overview_excludes_historical_memberships_and_honours_exemptions(): void {
+		$team   = $this->createOrganization( [ 'post_title' => 'Team 1' ] );
+		$empty  = $this->createOrganization( [ 'post_title' => 'Team 2' ] );
+		$draft  = $this->createOrganization( [ 'post_status' => 'draft' ] );
+		$player = $this->team_member( $team );
+		$exempt = $this->team_member( $team );
+		$this->team_member( $team, null, [ 'job_title' => 'Trainer/coach' ] );
+		update_post_meta( $exempt, 'vrijgesteld_handmatig', '1' );
+		update_post_meta( $exempt, 'vrijstelling_seizoen', $this->season );
+		$this->team_member( $team, 'Senioren', [ 'end_date' => $this->now->modify( '-1 day' )->format( 'Y-m-d' ) ] );
+		$this->team_member( $team, 'Senioren', [ 'start_date' => $this->now->modify( '+1 day' )->format( 'Y-m-d' ) ] );
+		$this->team_member( $team, 'Senioren', [ 'is_current' => false ] );
+		$this->team_member( $draft );
+		$former = $this->team_member( $team );
+		update_post_meta( $former, 'former_member', '1' );
+		$trashed = $this->team_member( $team );
+		wp_trash_post( $trashed );
+		$deleted_user = $this->createRondoUser();
+		wp_delete_user( $deleted_user );
+		update_post_meta( $player, '_rondo_wp_user_id', $deleted_user );
+		$type = $this->create_type( 'Bar', '#123456' );
+		$this->create_shift( $type, substr( $this->season, 0, 4 ) . '-09-01 10:00:00', 2, [ $exempt ] );
+		VolunteerEligibilityService::invalidate_cache();
+
+		$rows = ( new VolunteerStatistics() )->for_season( $this->season )['by_team'];
+		$this->assertSame(
+			[
+				[
+					'id'               => $team,
+					'name'             => 'Team 1',
+					'people_count'     => 3,
+					'account_count'    => 0,
+					'required_count'   => 2,
+					'assignment_count' => 1,
+				],
+				[
+					'id'               => $empty,
+					'name'             => 'Team 2',
+					'people_count'     => 0,
+					'account_count'    => 0,
+					'required_count'   => 0,
+					'assignment_count' => 0,
+				],
+			],
+			$rows
+			);
+	}
+
+	public function test_team_overview_deduplicates_parents_who_are_also_team_members_and_shared_accounts(): void {
+		$team   = $this->createOrganization();
+		$parent = $this->team_member( $team, null );
+		$child  = $this->team_member( $team, 'Onder 12' );
+		Fields::update_for_post(
+			$child,
+			'relationships',
+			[
+				[
+					'related_person'    => $parent,
+					'relationship_type' => 2,
+				],
+			]
+			);
+		$user = $this->createRondoUser();
+		update_post_meta( $parent, '_rondo_wp_user_id', $user );
+		update_user_meta( $user, 'rondo_linked_person_id', $child );
+		VolunteerEligibilityService::invalidate_cache();
+		$row = ( new VolunteerStatistics() )->for_season( $this->season )['by_team'][0];
+		$this->assertSame( 2, $row['people_count'] );
+		$this->assertSame( 1, $row['account_count'] );
+	}
+
+	public function test_team_overview_is_available_to_board_and_volunteer_roles_without_team_access(): void {
+		$this->createOrganization();
+		foreach ( [ 'rondo_bestuur', 'rondo_vrijwilligers', 'administrator' ] as $role ) {
+			wp_set_current_user( $this->createRondoUser( [ 'role' => $role ] ) );
+			$response = $this->server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/volunteer-statistics' ) );
+			$this->assertSame( 200, $response->get_status(), $role );
+			$this->assertCount( 1, $response->get_data()['by_team'] );
+		}
+		wp_set_current_user( 0 );
+		$response = $this->server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/volunteer-statistics' ) );
+		$this->assertSame( 401, $response->get_status() );
 	}
 
 	public function test_account_trend_groups_utc_registrations_by_local_day_across_seasons(): void {

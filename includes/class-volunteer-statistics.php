@@ -8,7 +8,10 @@
 namespace Rondo\Volunteer;
 
 use Rondo\Core\PostTitle;
+use Rondo\Core\WorkHistory;
 use Rondo\Fees\SeasonKey;
+use Rondo\Fields\Fields;
+use Rondo\Users\UserProvisioning;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -116,6 +119,7 @@ final class VolunteerStatistics {
 		$types = $this->finalize_type_rows( $type_rows, $summary['total_assignments'] );
 		$trend = $this->build_trend( $daily_signups );
 		usort( $shortages, static fn( array $a, array $b ): int => strcmp( $a['start_datetime'], $b['start_datetime'] ) );
+		$partition = VolunteerExemptionResolver::partition_units( ( new VolunteerEligibilityService() )->get_eligible_units( $season ), $season );
 
 		return [
 			'season'                   => $season,
@@ -127,7 +131,8 @@ final class VolunteerStatistics {
 			'account_trend'            => $this->account_trend( $now ),
 			'undated_assignments'      => $undated_signups,
 			'assignment_distribution'  => $this->assignment_distribution( $assignments_by_person ),
-			'obligation_progress'      => $this->obligation_progress( $season ),
+			'obligation_progress'      => $this->obligation_progress( $season, $partition ),
+			'by_team'                  => $this->by_team( $partition, $assignments_by_person ),
 			'upcoming_shortages'       => array_slice( $shortages, 0, self::SHORTAGE_LIMIT ),
 			'upcoming_shortages_total' => count( $shortages ),
 			'shortage_window_days'     => self::SHORTAGE_WINDOW_DAYS,
@@ -328,11 +333,9 @@ final class VolunteerStatistics {
 	 *
 	 * @return array<string, int>
 	 */
-	private function obligation_progress( string $season ): array {
-		$units     = ( new VolunteerEligibilityService() )->get_eligible_units( $season );
-		$partition = VolunteerExemptionResolver::partition_units( $units, $season );
-		$active    = $partition['active'];
-		$exempt    = count( $partition['exempt'] );
+	private function obligation_progress( string $season, array $partition ): array {
+		$active = $partition['active'];
+		$exempt = count( $partition['exempt'] );
 
 		$calculator = new VolunteerObligationCalculator();
 		$aggregate  = $calculator->aggregate( $calculator->decorate_units( $active, $season ) );
@@ -349,6 +352,123 @@ final class VolunteerStatistics {
 			'total_completed' => (int) $aggregate['total_completed'],
 			'total_no_show'   => (int) $aggregate['total_no_show'],
 		];
+	}
+
+	/**
+	 * Current team members, account coverage and season duties, counted per member.
+	 *
+	 * Family requirements and assignments intentionally recur for every triggering
+	 * child. These rows must not be added together as unique club-wide totals.
+	 *
+	 * @param array $partition Active and exempt obligation units.
+	 * @param array $assignments_by_person Non-cancelled season assignments by person.
+	 * @return array<int, array<string, int|string>>
+	 */
+	private function by_team( array $partition, array $assignments_by_person ): array {
+		$required = [];
+		$assigned = [];
+		foreach ( [ 'active', 'exempt' ] as $group ) {
+			foreach ( $partition[ $group ] as $unit ) {
+				$count = array_sum( array_intersect_key( $assignments_by_person, array_flip( $unit['person_ids'] ) ) );
+				foreach ( $unit['trigger_person_ids'] as $person_id ) {
+					$required[ $person_id ] = ( $required[ $person_id ] ?? 0 ) + ( $group === 'active' ? (int) $unit['required_count'] : 0 );
+					$assigned[ $person_id ] = ( $assigned[ $person_id ] ?? 0 ) + $count;
+				}
+			}
+		}
+
+		// Accept both supported account-link directions, but never a deleted user.
+		$user_ids = array_map( 'intval', get_users( [ 'fields' => 'ID' ] ) );
+		update_meta_cache( 'user', $user_ids );
+		$users          = array_fill_keys( $user_ids, true );
+		$account_people = [];
+		foreach ( $user_ids as $user_id ) {
+			$person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+			if ( $person_id > 0 ) {
+				$account_people[ $person_id ][ $user_id ] = true;
+			}
+		}
+
+		$teams = [];
+		foreach ( get_posts(
+			[
+				'post_type'        => 'team',
+				'post_status'      => 'publish',
+				'numberposts'      => -1,
+				'suppress_filters' => true,
+			]
+			) as $team ) {
+			$teams[ $team->ID ] = [
+				'id'               => $team->ID,
+				'name'             => PostTitle::plain( $team->ID ),
+				'people_count'     => 0,
+				'account_count'    => 0,
+				'required_count'   => 0,
+				'assignment_count' => 0,
+			];
+		}
+		$people      = get_posts(
+			[
+				'post_type'        => 'person',
+				'post_status'      => 'publish',
+				'numberposts'      => -1,
+				'fields'           => 'ids',
+				'suppress_filters' => true,
+				'meta_query'       => [
+					[
+						'key'     => 'work_history',
+						'value'   => 0,
+						'compare' => '>',
+						'type'    => 'NUMERIC',
+					],
+				],
+			]
+		);
+		$eligibility = new VolunteerEligibilityService();
+		$today       = current_datetime()->format( 'Ymd' );
+		$team_people = [];
+		foreach ( $people as $person_id ) {
+			if ( ! VolunteerEligibilityService::is_active_member( $person_id ) ) {
+				continue;
+			}
+			$member_teams = [];
+			foreach ( Fields::get_for_post( $person_id, 'work_history' ) ?: [] as $position ) {
+				$team_id = (int) ( $position['team'] ?? 0 );
+				$start   = str_replace( '-', '', (string) ( $position['start_date'] ?? '' ) );
+				$end     = str_replace( '-', '', (string) ( $position['end_date'] ?? '' ) );
+				if ( ! isset( $teams[ $team_id ] ) || WorkHistory::is_inactive_without_end_date( $position )
+					|| ( $start !== '' && $start > $today ) || ( $end !== '' && $end < $today ) ) {
+					continue;
+				}
+				$member_teams[ $team_id ] = true;
+			}
+			if ( empty( $member_teams ) ) {
+				continue;
+			}
+
+			$family_ids = $this->valid_person_ids( array_merge( [ $person_id ], $eligibility->find_parents( $person_id ) ) );
+			foreach ( $member_teams as $team_id => $_ ) {
+				foreach ( $family_ids as $family_id ) {
+					$team_people[ $team_id ][ $family_id ] = true;
+				}
+				$teams[ $team_id ]['required_count']   += $required[ $person_id ] ?? 0;
+				$teams[ $team_id ]['assignment_count'] += $assigned[ $person_id ] ?? $assignments_by_person[ $person_id ] ?? 0;
+			}
+		}
+		foreach ( $team_people as $team_id => $members ) {
+			$team_accounts = [];
+			foreach ( $members as $person_id => $_ ) {
+				$team_accounts += $account_people[ $person_id ] ?? [];
+				$user_id        = (int) get_post_meta( $person_id, UserProvisioning::META_USER_ID, true );
+				if ( isset( $users[ $user_id ] ) ) {
+					$team_accounts[ $user_id ] = true;
+				}
+			}
+			$teams[ $team_id ]['people_count']  = count( $members );
+			$teams[ $team_id ]['account_count'] = count( $team_accounts );
+		}
+		usort( $teams, static fn( array $a, array $b ): int => strnatcasecmp( $a['name'], $b['name'] ) );
+		return $teams;
 	}
 
 	/**
