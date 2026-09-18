@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add “Dienst toewijzen” alongside regular coordinator signups, with a configurable task-type email and calendar attachment explaining responsibility, replacements and swaps.
 - Prevent members from cancelling explicitly assigned duties, including during the signup grace period, while keeping coordinator removal available and preserving existing signup rules.
 
+## [35.88.3] - 2026-09-18
+
+### Changed
+- Send volunteer recruitment emails every other Sunday at 19:00, starting 20 September 2026. Skip alternate Sundays even after an empty or missed round, and replace any previously scheduled off-week event.
+
 ## [35.88.2] - 2026-09-18
 
 ### Fixed
