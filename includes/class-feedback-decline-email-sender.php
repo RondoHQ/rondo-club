@@ -56,7 +56,7 @@ class DeclineEmailSender {
 			)
 			: '';
 		$reason_html  = sprintf(
-			'<div style="margin:20px 0;padding:18px;border-radius:16px;background:#fef6e7;border:1px solid #f0d9a8;"><p style="margin:0 0 8px;color:#92400e;font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Waarom we dit niet doen</p>%s</div>',
+			'<div style="margin:20px 0;padding:18px;border-radius:16px;background:' . esc_attr( EmailTemplate::background_color() ) . ';border:1px solid ' . esc_attr( EmailTemplate::accent_color() ) . ';"><p style="margin:0 0 8px;color:' . esc_attr( EmailTemplate::accent_color() ) . ';font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Waarom we dit niet doen</p>%s</div>',
 			EmailTemplate::format_plain_text( $decline_reason )
 		);
 		$body_html    = sprintf(

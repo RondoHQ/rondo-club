@@ -35,8 +35,7 @@ class EmailTemplate {
 		$accent_color  = self::accent_color( (string) ( $args['accent_color'] ?? '' ) );
 		$support_email = trim( (string) ( $args['support_email'] ?? '' ) );
 
-		$config           = new FinanceConfig();
-		$background_color = sanitize_hex_color( $config->get_accent_background_color() ) ?: '#f3f7f6';
+		$background_color = self::background_color();
 
 		if ( $body_html === '' ) {
 			$body_html = '<p style="margin:0;color:#0f172a;font-size:16px;line-height:1.7;">&nbsp;</p>';
@@ -67,10 +66,10 @@ class EmailTemplate {
 			$eyebrow !== '' ? '<p style="margin:0 0 10px;color:' . esc_attr( $accent_color ) . ';font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">' . esc_html( $eyebrow ) . '</p>' : '',
 			$heading !== '' ? '<h1 style="margin:0;color:#0f172a;font-size:26px;line-height:1.2;font-weight:800;">' . esc_html( $heading ) . '</h1>' : '',
 			$intro !== '' ? '<p style="margin:0 0 24px;color:#334155;font-size:16px;line-height:1.7;">' . esc_html( $intro ) . '</p>' : '',
-			'<div style="color:#0f172a;font-size:16px;line-height:1.7;">' . $body_html . '</div>',
+			'<div style="color:#0f172a;font-size:16px;line-height:1.7;">' . self::style_links( $body_html, $accent_color ) . '</div>',
 			$cta_html,
 			$support_html,
-			$footer_html,
+			self::style_links( $footer_html, $accent_color ),
 			esc_attr( $background_color )
 		);
 	}
@@ -81,11 +80,37 @@ class EmailTemplate {
 	 * @param string $fallback Optional accent for clubs without a configured color.
 	 * @return string
 	 */
-	private static function accent_color( string $fallback = '' ): string {
+	public static function accent_color( string $fallback = '' ): string {
 		$config = new FinanceConfig();
 		return sanitize_hex_color( $config->get_accent_color() )
 			?: sanitize_hex_color( $fallback )
 			?: '#0f766e';
+	}
+
+	/** Return the configured club background for email shells and callouts. */
+	public static function background_color(): string {
+		$config = new FinanceConfig();
+		return sanitize_hex_color( $config->get_accent_background_color() ) ?: '#f3f7f6';
+	}
+
+	/**
+	 * Apply the club accent inline to message links, preserving CTA text contrast.
+	 *
+	 * @param string $html         Email body or footer HTML.
+	 * @param string $accent_color Resolved email accent.
+	 * @return string
+	 */
+	private static function style_links( string $html, string $accent_color ): string {
+		$processor = new \WP_HTML_Tag_Processor( $html );
+		while ( $processor->next_tag( 'A' ) ) {
+			if ( $processor->get_attribute( 'data-rondo-email-button' ) === 'true' ) {
+				continue;
+			}
+			$style = (string) $processor->get_attribute( 'style' );
+			$style = preg_replace( '/(^|;)\s*color\s*:[^;]*(?=;|$)/i', '$1', $style );
+			$processor->set_attribute( 'style', rtrim( trim( $style ), ';' ) . ';color:' . $accent_color . ';' );
+		}
+		return $processor->get_updated_html();
 	}
 
 	/**
@@ -131,7 +156,7 @@ class EmailTemplate {
 		}
 
 		return sprintf(
-			'<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0 0;"><tr><td style="border-radius:999px;background:%1$s;"><a href="%2$s" style="display:inline-block;padding:14px 22px;font-size:15px;font-weight:700;line-height:1;text-decoration:none;color:#ffffff;">%3$s</a></td></tr></table>',
+			'<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0 0;"><tr><td style="border-radius:999px;background:%1$s;"><a href="%2$s" data-rondo-email-button="true" style="display:inline-block;padding:14px 22px;font-size:15px;font-weight:700;line-height:1;text-decoration:none;color:#ffffff;">%3$s</a></td></tr></table>',
 			esc_attr( self::accent_color( $accent_color ) ),
 			esc_url( $url ),
 			esc_html( $label )
@@ -176,7 +201,7 @@ class EmailTemplate {
 			}
 
 			$escaped = esc_html( $paragraph );
-			$linked  = str_replace( '<a ', '<a style="color:' . esc_attr( self::accent_color() ) . ';" ', make_clickable( $escaped ) );
+			$linked  = self::style_links( make_clickable( $escaped ), self::accent_color() );
 			$linked  = nl2br( $linked );
 
 			$html[] = '<p style="margin:0 0 16px;color:#0f172a;font-size:16px;line-height:1.7;">' . $linked . '</p>';

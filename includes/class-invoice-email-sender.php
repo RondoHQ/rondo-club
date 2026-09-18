@@ -294,7 +294,7 @@ class InvoiceEmailSender {
 
 		// Format payment link as HTML anchor or fallback text
 		$betaallink_text = ! empty( $payment_link )
-			? '<a href="' . esc_url( $payment_link ) . '" style="color:#0891b2;text-decoration:underline;">' . esc_html( $payment_link ) . '</a>'
+			? '<a href="' . esc_url( $payment_link ) . '" style="color:' . esc_attr( EmailTemplate::accent_color() ) . ';text-decoration:underline;">' . esc_html( $payment_link ) . '</a>'
 			: 'Neem contact op voor betaalinformatie.';
 
 		// Build inline QR code HTML via public URL (CID images are blocked by most email clients)

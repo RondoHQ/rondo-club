@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Apply the configured club accent to email buttons and links and the configured background color to the shared email shell.
 
+- Apply club branding to payment and VOG links, feedback callouts, mentions and digest sections, and wrap tournament assignment emails in the shared template.
+
 ## [35.87.0] - 2026-09-18
 
 ### Added

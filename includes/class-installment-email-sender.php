@@ -228,7 +228,7 @@ class InstallmentEmailSender {
 		}
 
 		// Format betaallink as styled HTML anchor.
-		$betaallink = '<a href="' . esc_url( $checkout_url ) . '" style="color:#0891b2;text-decoration:underline;">Betaal nu</a>';
+		$betaallink = '<a href="' . esc_url( $checkout_url ) . '" style="color:' . esc_attr( EmailTemplate::accent_color() ) . ';text-decoration:underline;">Betaal nu</a>';
 
 		// Build CTA button for {betaalknop} placeholder.
 		$betaalknop = EmailTemplate::render_cta_button( $checkout_url, 'Betaal nu' );
