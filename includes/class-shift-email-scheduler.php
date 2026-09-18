@@ -159,7 +159,7 @@ class ShiftEmailScheduler {
 				'body_html'    => $body_html,
 				'cta_url'      => home_url( '/vrijwillig' ),
 				'cta_label'    => 'Bekijk je inschrijftaken',
-				'accent_color' => '#0f766e',
+				'accent_color' => EmailTemplate::accent_color(),
 			]
 		);
 
@@ -315,7 +315,7 @@ class ShiftEmailScheduler {
 					'body_html'    => EmailTemplate::format_plain_text( $body ),
 					'cta_url'      => $is_last_minute ? '' : home_url( '/vrijwillig' ),
 					'cta_label'    => $is_last_minute ? '' : 'Kies een nieuwe inschrijftaak',
-					'accent_color' => '#b91c1c',
+					'accent_color' => EmailTemplate::accent_color(),
 				]
 			);
 
@@ -419,7 +419,7 @@ class ShiftEmailScheduler {
 				'body_html'    => EmailTemplate::format_plain_text( $body ),
 				'cta_url'      => $survey_url,
 				'cta_label'    => $is_survey ? 'Vul de enquête in' : '',
-				'accent_color' => '#0f766e',
+				'accent_color' => EmailTemplate::accent_color(),
 			]
 		);
 

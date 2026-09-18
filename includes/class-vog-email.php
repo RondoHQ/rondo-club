@@ -562,7 +562,7 @@ class VOGEmail {
 			);
 			$styled = preg_replace(
 				'/<a\s/',
-				'<a style="color:#0f766e;text-decoration:underline;" ',
+				'<a style="color:' . esc_attr( EmailTemplate::accent_color() ) . ';text-decoration:underline;" ',
 				$styled
 			);
 			return $styled;

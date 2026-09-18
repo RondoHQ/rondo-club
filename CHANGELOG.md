@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.88.0] - 2026-09-18
+
+### Added
+- Sunday evening volunteer emails for open Saturday and Sunday shifts two weeks later, personalized to outstanding player and family duties and current certificate/pool eligibility. Addresses are deduplicated, checked again before sending, and processed in batches of at most 25 per minute.
+
+## [35.87.1] - 2026-09-18
+
+### Changed
+- Use the configured club logo in the shared email header, sized to at most 64 pixels high and 160 pixels wide, place the email heading beside it, and remove the decorative accent stripe.
+
+- Apply the configured club accent to email buttons and links and the configured background color to the shared email shell.
+
+- Apply club branding to payment and VOG links, feedback callouts, mentions and digest sections, and wrap tournament assignment emails in the shared template.
+
 ## [35.87.0] - 2026-09-18
 
 ### Added

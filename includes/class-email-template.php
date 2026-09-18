@@ -7,6 +7,8 @@
 
 namespace Rondo\Notifications;
 
+use Rondo\Config\FinanceConfig;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -30,22 +32,16 @@ class EmailTemplate {
 		$footer_html   = (string) ( $args['footer_html'] ?? '' );
 		$cta_url       = trim( (string) ( $args['cta_url'] ?? '' ) );
 		$cta_label     = trim( (string) ( $args['cta_label'] ?? '' ) );
-		$accent_color  = trim( (string) ( $args['accent_color'] ?? '#0f766e' ) );
+		$accent_color  = self::accent_color( (string) ( $args['accent_color'] ?? '' ) );
 		$support_email = trim( (string) ( $args['support_email'] ?? '' ) );
+
+		$background_color = self::background_color();
 
 		if ( $body_html === '' ) {
 			$body_html = '<p style="margin:0;color:#0f172a;font-size:16px;line-height:1.7;">&nbsp;</p>';
 		}
 
-		$cta_html = '';
-		if ( $cta_url !== '' && $cta_label !== '' ) {
-			$cta_html = sprintf(
-				'<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0 0;"><tr><td style="border-radius:999px;background:%1$s;"><a href="%2$s" style="display:inline-block;padding:14px 22px;font-size:15px;font-weight:700;line-height:1;text-decoration:none;color:#ffffff;">%3$s</a></td></tr></table>',
-				esc_attr( $accent_color ),
-				esc_url( $cta_url ),
-				esc_html( $cta_label )
-			);
-		}
+		$cta_html = self::render_cta_button( $cta_url, $cta_label, $accent_color );
 
 		$support_html = '';
 		if ( $support_email !== '' && is_email( $support_email ) ) {
@@ -61,19 +57,85 @@ class EmailTemplate {
 		}
 
 		return sprintf(
-			'<!doctype html><html lang="nl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="x-apple-disable-message-reformatting"><title>%1$s</title></head><body style="margin:0;padding:0;background:#f3f7f6;color:#0f172a;"><div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">%2$s</div><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="background:linear-gradient(180deg,#e7f6f2 0%%,#f3f7f6 220px);"><tr><td style="padding:32px 16px;"><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="max-width:640px;margin:0 auto;"><tr><td style="padding:0 0 18px;"><a href="%3$s" style="font-size:14px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:%4$s;text-decoration:none;">%5$s</a></td></tr><tr><td style="background:#ffffff;border:1px solid #dbe4e1;border-radius:28px;padding:32px 28px;box-shadow:0 18px 45px rgba(15,23,42,0.08);"><div style="height:6px;width:84px;border-radius:999px;background:%4$s;margin:0 0 24px;"></div>%6$s%7$s%8$s%9$s%10$s%11$s</td></tr><tr><td style="padding:18px 8px 0;">%12$s</td></tr></table></td></tr></table></body></html>',
+			'<!doctype html><html lang="nl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="x-apple-disable-message-reformatting"><title>%1$s</title><style>a { color:%4$s; }</style></head><body style="font-family:Arial,Helvetica,sans-serif;margin:0;padding:0;background:%13$s;color:#0f172a;"><div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">%2$s</div><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" bgcolor="%13$s" style="font-family:Arial,Helvetica,sans-serif;background:%13$s;"><tr><td style="padding:32px 16px;"><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="max-width:640px;margin:0 auto;"><tr><td style="padding:0 0 24px;"><table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr><td style="vertical-align:middle;padding-right:16px;"><a href="%3$s" style="font-size:14px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:%4$s;text-decoration:none;">%5$s</a></td><td style="vertical-align:middle;">%7$s</td></tr></table></td></tr><tr><td style="background:#ffffff;border:1px solid #dbe4e1;border-radius:28px;padding:32px 28px;box-shadow:0 18px 45px rgba(15,23,42,0.08);">%6$s%8$s%9$s%10$s%11$s</td></tr><tr><td style="padding:18px 8px 0;">%12$s</td></tr></table></td></tr></table></body></html>',
 			esc_html( $heading !== '' ? $heading : $brand_name ),
 			esc_html( $preheader !== '' ? $preheader : $heading ),
 			esc_url( $brand_url ),
 			esc_attr( $accent_color ),
-			esc_html( $brand_name ),
+			self::render_brand( $brand_name ),
 			$eyebrow !== '' ? '<p style="margin:0 0 10px;color:' . esc_attr( $accent_color ) . ';font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">' . esc_html( $eyebrow ) . '</p>' : '',
-			$heading !== '' ? '<h1 style="margin:0 0 14px;color:#0f172a;font-size:30px;line-height:1.2;font-weight:800;">' . esc_html( $heading ) . '</h1>' : '',
+			$heading !== '' ? '<h1 style="margin:0;color:#0f172a;font-size:26px;line-height:1.2;font-weight:800;">' . esc_html( $heading ) . '</h1>' : '',
 			$intro !== '' ? '<p style="margin:0 0 24px;color:#334155;font-size:16px;line-height:1.7;">' . esc_html( $intro ) . '</p>' : '',
-			'<div style="color:#0f172a;font-size:16px;line-height:1.7;">' . $body_html . '</div>',
+			'<div style="color:#0f172a;font-size:16px;line-height:1.7;">' . self::style_links( $body_html, $accent_color ) . '</div>',
 			$cta_html,
 			$support_html,
-			$footer_html
+			self::style_links( $footer_html, $accent_color ),
+			esc_attr( $background_color )
+		);
+	}
+
+	/**
+	 * Use the configured club accent, with a caller or template fallback.
+	 *
+	 * @param string $fallback Optional accent for clubs without a configured color.
+	 * @return string
+	 */
+	public static function accent_color( string $fallback = '' ): string {
+		$config = new FinanceConfig();
+		return sanitize_hex_color( $config->get_accent_color() )
+			?: sanitize_hex_color( $fallback )
+			?: '#0f766e';
+	}
+
+	/** Return the configured club background for email shells and callouts. */
+	public static function background_color(): string {
+		$config = new FinanceConfig();
+		return sanitize_hex_color( $config->get_accent_background_color() ) ?: '#f3f7f6';
+	}
+
+	/**
+	 * Apply the club accent inline to message links, preserving CTA text contrast.
+	 *
+	 * @param string $html         Email body or footer HTML.
+	 * @param string $accent_color Resolved email accent.
+	 * @return string
+	 */
+	private static function style_links( string $html, string $accent_color ): string {
+		$processor = new \WP_HTML_Tag_Processor( $html );
+		while ( $processor->next_tag( 'A' ) ) {
+			if ( $processor->get_attribute( 'data-rondo-email-button' ) === 'true' ) {
+				continue;
+			}
+			$style = (string) $processor->get_attribute( 'style' );
+			$style = preg_replace( '/(^|;)\s*color\s*:[^;]*(?=;|$)/i', '$1', $style );
+			$processor->set_attribute( 'style', rtrim( trim( $style ), ';' ) . ';color:' . $accent_color . ';' );
+		}
+		return $processor->get_updated_html();
+	}
+
+	/**
+	 * Render the configured club logo, retaining the brand name as a fallback.
+	 *
+	 * @param string $brand_name Fallback name for clubs without a usable logo.
+	 * @return string
+	 */
+	private static function render_brand( string $brand_name ): string {
+		$config = new FinanceConfig();
+		$image  = wp_get_attachment_image_src( $config->get_club_logo_id(), 'medium' );
+		if ( ! $image || $image[1] <= 0 || $image[2] <= 0 ) {
+			return esc_html( $brand_name );
+		}
+
+		$scale  = min( 64 / $image[2], 160 / $image[1], 1 );
+		$width  = max( 1, (int) round( $image[1] * $scale ) );
+		$height = max( 1, (int) round( $image[2] * $scale ) );
+
+		return sprintf(
+			'<img src="%1$s" alt="%2$s" width="%3$d" height="%4$d" style="display:block;border:0;width:%3$dpx;height:%4$dpx;">',
+			esc_url( $image[0] ),
+			esc_attr( $config->get_display_name() ?: $brand_name ),
+			$width,
+			$height
 		);
 	}
 
@@ -82,7 +144,7 @@ class EmailTemplate {
 	 *
 	 * @param string $url          Button URL.
 	 * @param string $label        Button label text.
-	 * @param string $accent_color Hex color for the button background.
+	 * @param string $accent_color Fallback button color if no club accent is configured.
 	 * @return string HTML table element or empty string if URL/label missing.
 	 */
 	public static function render_cta_button( string $url, string $label, string $accent_color = '#0f766e' ): string {
@@ -94,8 +156,8 @@ class EmailTemplate {
 		}
 
 		return sprintf(
-			'<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0 0;"><tr><td style="border-radius:999px;background:%1$s;"><a href="%2$s" style="display:inline-block;padding:14px 22px;font-size:15px;font-weight:700;line-height:1;text-decoration:none;color:#ffffff;">%3$s</a></td></tr></table>',
-			esc_attr( $accent_color ),
+			'<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0 0;"><tr><td style="border-radius:999px;background:%1$s;"><a href="%2$s" data-rondo-email-button="true" style="display:inline-block;padding:14px 22px;font-size:15px;font-weight:700;line-height:1;text-decoration:none;color:#ffffff;">%3$s</a></td></tr></table>',
+			esc_attr( self::accent_color( $accent_color ) ),
 			esc_url( $url ),
 			esc_html( $label )
 		);
@@ -139,7 +201,7 @@ class EmailTemplate {
 			}
 
 			$escaped = esc_html( $paragraph );
-			$linked  = make_clickable( $escaped );
+			$linked  = self::style_links( make_clickable( $escaped ), self::accent_color() );
 			$linked  = nl2br( $linked );
 
 			$html[] = '<p style="margin:0 0 16px;color:#0f172a;font-size:16px;line-height:1.7;">' . $linked . '</p>';
