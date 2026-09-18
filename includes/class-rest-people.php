@@ -15,6 +15,7 @@ use Rondo\Passes\MembershipPassService;
 use Rondo\People\ParentRelationshipService;
 use Rondo\People\PhotoSync;
 use Rondo\Sponsors\Relations as SponsorRelations;
+use Rondo\Volunteer\PeopleShiftProgress;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -479,6 +480,14 @@ class People extends Base {
 				'callback'            => [ $this, 'get_filtered_people' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
+					'shift_status'              => [
+						'type' => 'string',
+						'enum' => PeopleShiftProgress::STATUSES,
+					],
+					'include_shift_progress'    => [
+						'type'    => 'boolean',
+						'default' => false,
+					],
 					'page'                      => [
 						'default'           => 1,
 						'validate_callback' => function ( $param ) {
@@ -2072,6 +2081,13 @@ class People extends Base {
 	public function get_filtered_people( $request ) {
 		global $wpdb;
 
+		$shift_status = (string) $request->get_param( 'shift_status' );
+		$with_shifts  = $shift_status !== '' || $request->get_param( 'include_shift_progress' );
+		if ( $with_shifts && ! PeopleShiftProgress::can_view() ) {
+			return new \WP_Error( 'rondo_shift_progress_forbidden', 'Alleen Bestuur en Vrijwilligers mogen dit overzicht bekijken.', [ 'status' => 403 ] );
+		}
+		$shift_progress = $with_shifts ? ( new PeopleShiftProgress() )->for_season() : [];
+
 		// Extract validated parameters
 		$page             = (int) $request->get_param( 'page' );
 		$per_page         = (int) $request->get_param( 'per_page' );
@@ -2742,8 +2758,8 @@ class People extends Base {
 					 $order_clause";
 
 		// Add pagination
-		$prepare_values[] = $per_page;
-		$prepare_values[] = $offset;
+		$prepare_values[] = $shift_status !== '' ? PHP_INT_MAX : $per_page;
+		$prepare_values[] = $shift_status !== '' ? 0 : $offset;
 		$paginated_sql    = $main_sql . ' LIMIT %d OFFSET %d';
 
 		// Prepare and execute main query
@@ -2764,6 +2780,19 @@ class People extends Base {
 			$prepared_count_sql = $count_sql;
 		}
 		$total = (int) $wpdb->get_var( $prepared_count_sql );
+
+		if ( $shift_status !== '' ) {
+			// Preserve the existing query's access rules and ordering, including
+			// wpdb placeholder escaping, then filter before paging/enrichment.
+			$results = array_values(
+				array_filter(
+					$results,
+					static fn( $row ) => ( $shift_progress[ (int) $row->ID ]['status'] ?? null ) === $shift_status
+				)
+			);
+			$total   = count( $results );
+			$results = array_slice( $results, $offset, $per_page );
+		}
 
 		// Format results
 		$is_scoped_member = \Rondo\Core\AccessControl::is_scoped_member();
@@ -2786,6 +2815,10 @@ class People extends Base {
 			$person['fields']          = \Rondo\Fields\RestFields::for_post( 'person', (int) $row->ID );
 			$person['characteristics'] = $this->get_person_characteristics( (int) $row->ID, $person['fields'] );
 
+			if ( $with_shifts ) {
+				$person['shift_progress'] = $shift_progress[ (int) $row->ID ] ?? null;
+			}
+
 			$people[] = $person;
 		}
 
@@ -2795,6 +2828,7 @@ class People extends Base {
 				'total'       => $total,
 				'page'        => $page,
 				'total_pages' => (int) ceil( $total / $per_page ),
+				...( $with_shifts ? [ 'shift_season' => \Rondo\Fees\SeasonKey::current() ] : [] ),
 			]
 		);
 	}

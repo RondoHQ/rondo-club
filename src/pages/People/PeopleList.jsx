@@ -19,6 +19,7 @@ import ColumnSettingsModal from './ColumnSettingsModal';
 import PersonEditModal from '@/components/PersonEditModal';
 import FloatingHorizontalScrollbar from '@/components/FloatingHorizontalScrollbar';
 import { getCurrentTeamId } from './peopleListUtils';
+import { SHIFT_COLUMNS, SHIFT_STATUS_LABELS, shiftColumnValue } from './shiftProgress';
 
 // Helper function to get first email from fixed fields
 function getFirstEmail(person) {
@@ -190,6 +191,17 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
           minWidth: `${width}px`,
           maxWidth: `${width}px`,
         } : {};
+
+        if (SHIFT_COLUMNS.includes(colId)) {
+          return (
+            <td key={colId} className="px-4 py-3 text-sm whitespace-nowrap tabular-nums" style={style}>
+              {shiftColumnValue(person.shift_progress, colId)}
+              {colId === 'shift_status' && person.shift_progress?.family && (
+                <span className="block text-xs text-gray-500 dark:text-gray-400">Inclusief gezin</span>
+              )}
+            </td>
+          );
+        }
 
         if (colId === 'first_name') {
           return (
@@ -652,6 +664,7 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, teams, onSubmit
 export default function PeopleList() {
   const { data: currentUser } = useCurrentUser();
   const navigate = useNavigate();
+  const canViewShiftProgress = currentUser?.can_view_people_shift_progress === true;
 
   // URL-based filter state for persistence on back navigation
   const [searchParams, setSearchParams] = useSearchParams();
@@ -685,6 +698,7 @@ export default function PeopleList() {
   const knvbBekend = searchParams.get('knvbBekend') || '';
   const isParent = searchParams.get('ouder') || '';
   const wachtOverschrijving = searchParams.get('wachtOverschrijving') || '';
+  const shiftStatus = canViewShiftProgress ? searchParams.get('inschrijftaken') || '' : '';
 
   // Helper to update URL params
   const updateSearchParams = useCallback((updates, { resetPage = true } = {}) => {
@@ -831,6 +845,10 @@ export default function PeopleList() {
     return 'first_name';
   }, [sortField]);
 
+  const includeShiftProgress = canViewShiftProgress && (
+    Boolean(shiftStatus) || preferences?.visible_columns?.some(id => SHIFT_COLUMNS.includes(id))
+  );
+
   const { data, isLoading, isFetching, error } = useFilteredPeople({
     page,
     perPage: 100,
@@ -862,6 +880,8 @@ export default function PeopleList() {
     knvbBekend: knvbBekend || null,
     isParent: isParent || null,
     wachtOverschrijving: wachtOverschrijving || null,
+    shiftStatus: shiftStatus || null,
+    includeShiftProgress,
   });
 
   // Extract data from response
@@ -934,7 +954,8 @@ export default function PeopleList() {
   //   lid_sinds_season → lid-sinds, type-lid
   const visibleColumns = useMemo(() => {
     let forced = [];
-    if (lidTotSeason === '1') forced = ['lid_sinds', 'lid_tot'];
+    if (shiftStatus) forced = ['first_name', 'last_name', ...SHIFT_COLUMNS];
+    else if (lidTotSeason === '1') forced = ['lid_sinds', 'lid_tot'];
     else if (lidSindsSeason === '1') forced = ['lid_sinds', 'type_lid'];
 
     if (!preferences?.visible_columns || !preferences?.column_order) {
@@ -946,7 +967,7 @@ export default function PeopleList() {
     // Filter column_order to only visible columns.
     const visibleSet = new Set(preferences.visible_columns);
     const cols = preferences.column_order.filter(colId =>
-      visibleSet.has(colId)
+      visibleSet.has(colId) && (canViewShiftProgress || !SHIFT_COLUMNS.includes(colId))
     );
 
     if (forced.length > 0) {
@@ -954,7 +975,7 @@ export default function PeopleList() {
     }
 
     return cols;
-  }, [preferences?.visible_columns, preferences?.column_order, lidTotSeason, lidSindsSeason]);
+  }, [preferences?.visible_columns, preferences?.column_order, lidTotSeason, lidSindsSeason, shiftStatus, canViewShiftProgress]);
 
   // Get column widths from preferences
   const columnWidths = preferences?.column_widths || {};
@@ -1111,7 +1132,13 @@ export default function PeopleList() {
       getFilterLabel: (val) => ({ '7': 'Laatste 7 dagen', '30': 'Laatste 30 dagen', '90': 'Laatste 90 dagen', '365': 'Laatste jaar' }[val] || val),
       filterSection: 'Administratief',
     }),
-  ], [availableBirthYears, filterOptions]);
+    ...(canViewShiftProgress ? [createColumn({
+      id: 'shift_status', header: 'Inschrijftaken', filterType: FILTER_TYPES.SELECT,
+      filterOptions: Object.entries(SHIFT_STATUS_LABELS).map(([value, label]) => ({ value, label })),
+      getFilterLabel: value => SHIFT_STATUS_LABELS[value] || value,
+      filterSection: 'Vrijwilliger & VOG',
+    })] : []),
+  ], [availableBirthYears, filterOptions, canViewShiftProgress]);
 
   // Close bulk dropdown when clicking outside
   useEffect(() => {
@@ -1131,6 +1158,7 @@ export default function PeopleList() {
   }, []);
 
   const filterValues = {
+    shift_status: shiftStatus,
     include_former: includeFormer,
     include_deceased: includeDeceased,
     lid_tot_future: lidTotFuture,
@@ -1204,6 +1232,7 @@ export default function PeopleList() {
 
   const setFilter = useCallback((colId, value) => {
     switch (colId) {
+      case 'shift_status': updateSearchParams({ inschrijftaken: value }); break;
       case 'include_former': setIncludeFormer(value); break;
       case 'include_deceased': setIncludeDeceased(value); break;
       case 'lid_tot_future': setLidTotFuture(value); break;
@@ -1359,6 +1388,8 @@ export default function PeopleList() {
         knvbBekend: knvbBekend || null,
         isParent: isParent || null,
         wachtOverschrijving: wachtOverschrijving || null,
+        shiftStatus: shiftStatus || null,
+        includeShiftProgress,
       });
 
       const allTeamIds = [...new Set(allPeople.map(getCurrentTeamId).filter(Boolean))];
@@ -1372,6 +1403,7 @@ export default function PeopleList() {
       }
 
       const headers = ['Voornaam', 'Achternaam', 'Organisatie', 'Email', 'Telefoon', 'Team', 'Adres', 'Postcode', 'Plaats', 'Land'];
+      if (includeShiftProgress) headers.push('Inschrijftaken', 'Ingepland', 'Afgerond', 'Vereist', 'Inclusief gezin');
       const rows = allPeople.map(person => {
         const teamId = getCurrentTeamId(person);
         const address = getPrimaryAddress(person);
@@ -1386,6 +1418,10 @@ export default function PeopleList() {
           address?.postal_code || '',
           address?.city || '',
           address?.country || '',
+          ...(includeShiftProgress ? [
+            ...SHIFT_COLUMNS.map(id => shiftColumnValue(person.shift_progress, id)),
+            person.shift_progress?.family ? 'Ja' : 'Nee',
+          ] : []),
         ];
       });
       const csv = buildCsv([headers, ...rows]);
@@ -1430,6 +1466,13 @@ export default function PeopleList() {
         />
 
       {/* Age-group restriction info banner */}
+      {includeShiftProgress && (
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Inschrijftaken {data?.shift_season ? `voor seizoen ${data.shift_season}` : 'voor het huidige seizoen'}. Gezinsdiensten tellen bij beide ouders mee.
+          Afgerond omvat ook toegekende diensten bij een late annulering; no-shows tellen niet mee.
+        </p>
+      )}
+
       {Array.isArray(currentUser?.permitted_age_groups) && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
           <Info className="w-4 h-4 shrink-0" />
