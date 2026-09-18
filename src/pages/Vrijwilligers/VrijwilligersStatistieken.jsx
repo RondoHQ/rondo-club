@@ -360,6 +360,40 @@ function EmptyState({ message }) {
   return <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">{message}</p>;
 }
 
+function TeamOverview({ teams }) {
+  if (teams.length === 0) {
+    return <EmptyState message="Er zijn nog geen teams om te tonen." />;
+  }
+
+  return (
+    <div className="overflow-x-auto" role="region" aria-label="Overzicht per team" tabIndex={0}>
+      <table className="w-full text-sm">
+        <caption className="sr-only">Teamleden, Rondo-accounts en diensten per team</caption>
+        <thead className="border-b border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300">
+          <tr>
+            <th scope="col" className="py-3 pr-4 text-left font-medium">Team</th>
+            <th scope="col" className="px-3 py-3 text-right font-medium">Aantal mensen</th>
+            <th scope="col" className="px-3 py-3 text-right font-medium">Aantal Rondo-accounts</th>
+            <th scope="col" className="px-3 py-3 text-right font-medium">In te schrijven diensten</th>
+            <th scope="col" className="pl-3 py-3 text-right font-medium">Ingeschreven diensten</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100 dark:divide-gray-700 text-gray-900 dark:text-gray-100">
+          {teams.map((team) => (
+            <tr key={team.id}>
+              <th scope="row" className="py-3 pr-4 text-left font-medium whitespace-nowrap">{team.name}</th>
+              <td className="px-3 py-3 text-right tabular-nums">{numberFormat.format(team.people_count)}</td>
+              <td className="px-3 py-3 text-right tabular-nums">{numberFormat.format(team.account_count)}</td>
+              <td className="px-3 py-3 text-right tabular-nums">{numberFormat.format(team.required_count)}</td>
+              <td className="pl-3 py-3 text-right tabular-nums">{numberFormat.format(team.assignment_count)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function VrijwilligersStatistieken() {
   useDocumentTitle('Vrijwilligersstatistieken');
   const queryClient = useQueryClient();
@@ -442,6 +476,14 @@ export default function VrijwilligersStatistieken() {
         <StatCard label="Uitgevoerd / komend" value={`${numberFormat.format(summary.completed_assignments)} / ${numberFormat.format(summary.upcoming_assignments)}`} sub="Huidige koppelingen" icon={CalendarClock} />
         <StatCard label="Gemiddeld" value={decimalFormat.format(summary.average_assignments_per_volunteer)} sub="Inschrijftaken per vrijwilliger" icon={ChartPie} />
       </section>
+
+      <Panel title="Overzicht per team" description="Huidige teamleden, inclusief staf, en hun gekoppelde ouders. Mensen en accounts tellen ieder één keer per team mee.">
+        <TeamOverview teams={data.by_team || []} />
+        <div className="mt-4 space-y-1 text-xs text-gray-500 dark:text-gray-400">
+          <p>In te schrijven diensten is de totale verplichting voor seizoen {data.season}, na vrijstellingen. Dit is niet het resterende aantal.</p>
+          <p>Ingeschreven diensten omvatten ook uitgevoerde diensten; geannuleerde diensten tellen niet mee. Gezinsdiensten tellen bij ieder kind mee, ook binnen hetzelfde team.</p>
+        </div>
+      </Panel>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <Panel title="Inschrijvingen per taaksoort" description="Verdeling van alle huidige koppelingen aan gepubliceerde inschrijftaken.">
