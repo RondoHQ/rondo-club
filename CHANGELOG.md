@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.87.0] - 2026-09-18
+
+### Added
+- Season-based Inschrijftaken filters and optional planned, completed, required, and status columns on Relaties, including shared family duties and CSV export; restricted to the Bestuur and Vrijwilligers roles in both the UI and API.
+
 ## [35.86.1] - 2026-09-18
 
 ### Changed
