@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [35.87.1] - 2026-09-18
 
 ### Changed
-- Use the configured club logo in the shared email header, sized to at most 64 pixels high and 160 pixels wide, and remove the decorative accent stripe above the heading.
+- Use the configured club logo in the shared email header, sized to at most 64 pixels high and 160 pixels wide, place the email heading beside it, and remove the decorative accent stripe.
 
 ## [35.87.0] - 2026-09-18
 
