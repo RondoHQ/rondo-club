@@ -228,6 +228,8 @@ export function buildFilteredPeopleParams(filters = {}) {
     wacht_op_overschrijving: filters.wachtOverschrijving || null,
     onboarding_new_members: filters.onboardingNewMembers || null,
     onboarding_new_volunteers: filters.onboardingNewVolunteers || null,
+    shift_status: filters.shiftStatus || null,
+    include_shift_progress: filters.includeShiftProgress || null,
   };
 }
 
