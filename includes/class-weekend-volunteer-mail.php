@@ -1,5 +1,5 @@
 <?php
-/** Sunday recruitment digest for the weekend thirteen/fourteen days later. */
+/** Fortnightly Sunday recruitment digest for the weekend thirteen/fourteen days later. */
 
 namespace Rondo\Volunteer;
 
@@ -11,9 +11,10 @@ use Rondo\Notifications\EmailTemplate;
 use Rondo\People\CommunicationPolicy;
 
 final class WeekendVolunteerMail {
-	const HOOK       = 'rondo_weekend_volunteer_mail';
-	const STATE      = 'rondo_weekend_volunteer_mail_state';
-	const BATCH_SIZE = 25;
+	const HOOK            = 'rondo_weekend_volunteer_mail';
+	const STATE           = 'rondo_weekend_volunteer_mail_state';
+	const BATCH_SIZE      = 25;
+	const FIRST_SEND_DATE = '2026-09-20';
 
 	public function __construct() {
 		// WordPress supplies an empty string for actions without arguments.
@@ -22,11 +23,25 @@ final class WeekendVolunteerMail {
 		add_action( self::HOOK, [ $this, 'run' ], 10, 0 );
 	}
 
-	/** Calendar arithmetic, rather than 604800 seconds, preserves 19:00 across DST. */
+	/** Calendar days preserve the fortnightly rhythm across DST and year boundaries. */
 	public static function next_sunday( \DateTimeImmutable $now ): \DateTimeImmutable {
-		$now  = $now->setTimezone( new \DateTimeZone( 'Europe/Amsterdam' ) );
+		$now   = $now->setTimezone( new \DateTimeZone( 'Europe/Amsterdam' ) );
+		$first = new \DateTimeImmutable( self::FIRST_SEND_DATE . ' 19:00:00', $now->getTimezone() );
+		if ( $now < $first ) {
+			return $first;
+		}
 		$next = $now->modify( 'sunday this week' )->setTime( 19, 0 );
-		return $next > $now ? $next : $next->modify( '+1 week' );
+		while ( $next <= $now || ! self::is_sending_sunday( $next ) ) {
+			$next = $next->modify( '+1 week' );
+		}
+		return $next;
+	}
+
+	/** A fixed anchor avoids drifting when a round is empty or a cron run is missed. */
+	private static function is_sending_sunday( \DateTimeImmutable $date ): bool {
+		$date  = $date->setTimezone( new \DateTimeZone( 'Europe/Amsterdam' ) )->setTime( 0, 0 );
+		$first = new \DateTimeImmutable( self::FIRST_SEND_DATE, $date->getTimezone() );
+		return $date >= $first && (int) $first->diff( $date )->days % 14 === 0;
 	}
 
 	/** Inclusive start, exclusive end in the club's local timezone. */
@@ -39,10 +54,16 @@ final class WeekendVolunteerMail {
 		return new \DateTimeImmutable( 'now', new \DateTimeZone( 'Europe/Amsterdam' ) );
 	}
 
-	/** Recover missing cron events during the Sunday evening delivery window. */
+	/** Recover missing cron events during an eligible Sunday evening delivery window. */
 	public function register_cron( ?\DateTimeImmutable $now = null ): void {
-		if ( wp_next_scheduled( self::HOOK ) ) {
-			return;
+		$scheduled = wp_next_scheduled( self::HOOK );
+		if ( $scheduled ) {
+			$date = new \DateTimeImmutable( '@' . $scheduled );
+			if ( self::is_sending_sunday( $date ) ) {
+				return;
+			}
+			// Replace a remaining weekly event on an off-week during deployment.
+			wp_unschedule_event( $scheduled, self::HOOK );
 		}
 		$now     = ( $now ?? self::now() )->setTimezone( new \DateTimeZone( 'Europe/Amsterdam' ) );
 		$state   = get_option( self::STATE, [] );
@@ -56,7 +77,7 @@ final class WeekendVolunteerMail {
 	}
 
 	private static function in_window( \DateTimeImmutable $now ): bool {
-		return $now->format( 'N' ) === '7' && $now->format( 'H:i' ) >= '19:00';
+		return self::is_sending_sunday( $now ) && $now->format( 'H:i' ) >= '19:00';
 	}
 
 	/** Primary addresses of responsible adults/players with an unplanned duty. */
@@ -201,14 +222,14 @@ final class WeekendVolunteerMail {
 					'body_html'   => $body,
 					'cta_url'     => home_url( '/vrijwillig' ),
 					'cta_label'   => 'Kies je dienst',
-					'footer_html' => '<p style="margin:0;color:#475569;font-size:13px;line-height:1.6;">Je ontvangt dit overzicht omdat je nog diensten moet inplannen. Zodra je alle diensten hebt ingepland, stopt deze wekelijkse mail.</p>',
+					'footer_html' => '<p style="margin:0;color:#475569;font-size:13px;line-height:1.6;">Je ontvangt dit overzicht omdat je nog diensten moet inplannen. Zodra je alle diensten hebt ingepland, stopt deze tweewekelijkse mail.</p>',
 				]
 			),
 		];
 	}
 
 	/**
-	 * Maximum 25 recipients per minute, with one durable attempt per address/week.
+	 * Maximum 25 recipients per minute, with one durable attempt per address/round.
 	 * A failed or uncertain send is recorded, never automatically retried: wp_mail
 	 * cannot prove that a provider did not accept a request before a timeout.
 	 */
@@ -235,7 +256,7 @@ final class WeekendVolunteerMail {
 			$season     = SeasonKey::current( $now->format( 'Y-m-d' ) );
 			$recipients = $this->recipients( $season );
 			if ( ( $state['date'] ?? '' ) !== $date ) {
-				// Last Sunday's callbacks can no longer enter the delivery window.
+				// The previous round's callbacks can no longer enter the delivery window.
 				if ( ! empty( $state['date'] ) ) {
 					delete_option( 'rondo_weekend_mail_lock_' . $state['date'] );
 				}
