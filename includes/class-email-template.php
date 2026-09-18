@@ -7,6 +7,8 @@
 
 namespace Rondo\Notifications;
 
+use Rondo\Config\FinanceConfig;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -61,12 +63,12 @@ class EmailTemplate {
 		}
 
 		return sprintf(
-			'<!doctype html><html lang="nl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="x-apple-disable-message-reformatting"><title>%1$s</title></head><body style="margin:0;padding:0;background:#f3f7f6;color:#0f172a;"><div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">%2$s</div><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="background:linear-gradient(180deg,#e7f6f2 0%%,#f3f7f6 220px);"><tr><td style="padding:32px 16px;"><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="max-width:640px;margin:0 auto;"><tr><td style="padding:0 0 18px;"><a href="%3$s" style="font-size:14px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:%4$s;text-decoration:none;">%5$s</a></td></tr><tr><td style="background:#ffffff;border:1px solid #dbe4e1;border-radius:28px;padding:32px 28px;box-shadow:0 18px 45px rgba(15,23,42,0.08);"><div style="height:6px;width:84px;border-radius:999px;background:%4$s;margin:0 0 24px;"></div>%6$s%7$s%8$s%9$s%10$s%11$s</td></tr><tr><td style="padding:18px 8px 0;">%12$s</td></tr></table></td></tr></table></body></html>',
+			'<!doctype html><html lang="nl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="x-apple-disable-message-reformatting"><title>%1$s</title></head><body style="margin:0;padding:0;background:#f3f7f6;color:#0f172a;"><div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">%2$s</div><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="background:linear-gradient(180deg,#e7f6f2 0%%,#f3f7f6 220px);"><tr><td style="padding:32px 16px;"><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%%" style="max-width:640px;margin:0 auto;"><tr><td style="padding:0 0 18px;"><a href="%3$s" style="font-size:14px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:%4$s;text-decoration:none;">%5$s</a></td></tr><tr><td style="background:#ffffff;border:1px solid #dbe4e1;border-radius:28px;padding:32px 28px;box-shadow:0 18px 45px rgba(15,23,42,0.08);">%6$s%7$s%8$s%9$s%10$s%11$s</td></tr><tr><td style="padding:18px 8px 0;">%12$s</td></tr></table></td></tr></table></body></html>',
 			esc_html( $heading !== '' ? $heading : $brand_name ),
 			esc_html( $preheader !== '' ? $preheader : $heading ),
 			esc_url( $brand_url ),
 			esc_attr( $accent_color ),
-			esc_html( $brand_name ),
+			self::render_brand( $brand_name ),
 			$eyebrow !== '' ? '<p style="margin:0 0 10px;color:' . esc_attr( $accent_color ) . ';font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">' . esc_html( $eyebrow ) . '</p>' : '',
 			$heading !== '' ? '<h1 style="margin:0 0 14px;color:#0f172a;font-size:30px;line-height:1.2;font-weight:800;">' . esc_html( $heading ) . '</h1>' : '',
 			$intro !== '' ? '<p style="margin:0 0 24px;color:#334155;font-size:16px;line-height:1.7;">' . esc_html( $intro ) . '</p>' : '',
@@ -74,6 +76,32 @@ class EmailTemplate {
 			$cta_html,
 			$support_html,
 			$footer_html
+		);
+	}
+
+	/**
+	 * Render the configured club logo, retaining the brand name as a fallback.
+	 *
+	 * @param string $brand_name Fallback name for clubs without a usable logo.
+	 * @return string
+	 */
+	private static function render_brand( string $brand_name ): string {
+		$config = new FinanceConfig();
+		$image  = wp_get_attachment_image_src( $config->get_club_logo_id(), 'medium' );
+		if ( ! $image || $image[1] <= 0 || $image[2] <= 0 ) {
+			return esc_html( $brand_name );
+		}
+
+		$scale  = min( 64 / $image[2], 160 / $image[1], 1 );
+		$width  = max( 1, (int) round( $image[1] * $scale ) );
+		$height = max( 1, (int) round( $image[2] * $scale ) );
+
+		return sprintf(
+			'<img src="%1$s" alt="%2$s" width="%3$d" height="%4$d" style="display:block;border:0;width:%3$dpx;height:%4$dpx;">',
+			esc_url( $image[0] ),
+			esc_attr( $config->get_display_name() ?: $brand_name ),
+			$width,
+			$height
 		);
 	}
 
