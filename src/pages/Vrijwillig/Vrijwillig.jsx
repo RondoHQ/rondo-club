@@ -271,9 +271,9 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
       ) : (
         <span
           className="text-xs text-gray-500 dark:text-gray-400"
-          title="Neem contact op met de vrijwilligerscoördinator"
+          title={shift.is_duty_assigned ? 'Geef vervanging of ruilen door aan de accommodatiemanager' : 'Neem contact op met de vrijwilligerscoördinator'}
         >
-          Afmelden niet meer mogelijk
+          {shift.is_duty_assigned ? 'Toegewezen dienst' : 'Afmelden niet meer mogelijk'}
         </span>
       )
     )
@@ -282,9 +282,9 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
       onClick={() => onCancel(shift.id)}
       disabled={cancelMutation.isLoading || !shift.can_cancel}
       className="text-xs px-3 py-1.5 rounded bg-emerald-100 text-emerald-800 hover:bg-red-100 hover:text-red-800 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-red-900/30 dark:hover:text-red-300 inline-flex items-center gap-1"
-      title={shift.can_cancel ? 'Klik om af te melden' : 'Afmelden kan alleen via de vrijwilligerscoördinator'}
+      title={shift.can_cancel ? 'Klik om af te melden' : shift.is_duty_assigned ? 'Toegewezen dienst: neem contact op met de accommodatiemanager' : 'Afmelden kan alleen via de vrijwilligerscoördinator'}
     >
-      <CheckCircle2 className="w-3.5 h-3.5" /> {shift.can_cancel ? 'Reeds aangemeld' : 'Aangemeld'}
+      <CheckCircle2 className="w-3.5 h-3.5" /> {shift.is_duty_assigned ? 'Toegewezen' : shift.can_cancel ? 'Reeds aangemeld' : 'Aangemeld'}
     </button>
   ) : (
     <button
@@ -351,6 +351,12 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
             <span>{isMine ? 'Je bent tot nu toe de enige aanmelding.' : volunteerLabel}</span>
           )}
         </p>
+        {shift.is_duty_assigned && ['open', 'vol'].includes(shift.status) && (
+          <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+            Deze dienst is aan je toegewezen. Je kunt je niet zelf afmelden.
+            Regel vervanging of ruil en geef dit door aan de accommodatiemanager; je blijft eindverantwoordelijk.
+          </p>
+        )}
         {shift.capacity > 0 && (
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {shift.assigned_count} van {shift.capacity} plekken bezet

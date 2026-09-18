@@ -3,6 +3,8 @@
 namespace Tests\Wpunit;
 
 use Rondo\REST\MemberShifts;
+use Rondo\Fields\Fields;
+use Rondo\Volunteer\ShiftEmailScheduler;
 use Tests\Support\RondoTestCase;
 use WP_REST_Request;
 
@@ -324,5 +326,155 @@ class ShiftAssignmentByCoordinatorTest extends RondoTestCase {
 		$this->assertNotEmpty( $match, 'a blocked person must still be listed' );
 		$this->assertTrue( $match[0]['blocked'] );
 		$this->assertNotEmpty( $match[0]['block_reason'] );
+	}
+
+	public function test_duty_assignment_blocks_self_cancellation_before_deadline_and_during_grace(): void {
+		foreach ( [ 14, 35 ] as $days ) {
+			$this->as_coordinator();
+			$shift_id = $this->create_shift( '+' . $days . ' days', 2 );
+			$response = $this->add_assignee( $shift_id, $this->person_id, [ 'assignment_mode' => 'assigned' ] );
+			$this->assertSame( 200, $response->get_status() );
+			$this->assertSame( 'assigned', $response->get_data()['assignment_mode'] );
+			$this->assertNotFalse( wp_next_scheduled( ShiftEmailScheduler::SIGNUP_CONFIRMATION_CRON_HOOK, [ $this->person_id ] ) );
+
+			$member = $this->createRondoUser();
+			update_user_meta( $member, 'rondo_linked_person_id', $this->person_id );
+			wp_set_current_user( $member );
+			$mine = rest_do_request( new WP_REST_Request( 'GET', '/rondo/v1/my-shifts' ) )->get_data()['shifts'];
+			$rows = array_values( array_filter( $mine, static fn( array $row ): bool => $row['id'] === $shift_id ) );
+			$this->assertTrue( $rows[0]['is_duty_assigned'] );
+			$this->assertFalse( $rows[0]['can_cancel'] );
+
+			// Retrying signup must neither unlock the duty nor reset its timestamp.
+			$this->assertSame( 200, rest_do_request( new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $shift_id . '/signup' ) )->get_status() );
+			$cancel = rest_do_request( new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $shift_id . '/cancel' ) );
+			$this->assertSame( 409, $cancel->get_status() );
+			$this->assertSame( 'shift_assignment_required', $cancel->get_data()['code'] );
+			$this->assertSame( [ $this->person_id ], get_post_meta( $shift_id, 'assigned_persons', true ) );
+
+			$this->as_coordinator();
+			$retry = $this->add_assignee( $shift_id, $this->person_id, [ 'assignment_mode' => 'signup' ] );
+			$this->assertTrue( $retry->get_data()['already_assigned'] );
+			$this->assertSame( 'assigned', $retry->get_data()['assignment_mode'] );
+		}
+	}
+
+	public function test_regular_indeling_keeps_cancellation_rights_and_cannot_be_silently_converted(): void {
+		$this->as_coordinator();
+		$this->add_assignee( $this->shift_id, $this->person_id );
+		$retry = $this->add_assignee( $this->shift_id, $this->person_id, [ 'assignment_mode' => 'assigned' ] );
+		$this->assertSame( 'signup', $retry->get_data()['assignment_mode'] );
+		$member = $this->createRondoUser();
+		update_user_meta( $member, 'rondo_linked_person_id', $this->person_id );
+		wp_set_current_user( $member );
+		$this->assertSame( 200, rest_do_request( new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $this->shift_id . '/cancel' ) )->get_status() );
+	}
+
+	public function test_coordinator_can_remove_a_duty_and_readd_without_a_lock_or_stale_email(): void {
+		$this->as_coordinator();
+		$this->add_assignee( $this->shift_id, $this->person_id, [ 'assignment_mode' => 'assigned' ] );
+		$remove = rest_do_request( new WP_REST_Request( 'DELETE', '/rondo/v1/shifts/' . $this->shift_id . '/assignees/' . $this->person_id ) );
+		$this->assertSame( 200, $remove->get_status() );
+		$this->assertSame( '', get_post_meta( $this->shift_id, '_shift_assignment_mode_' . $this->person_id, true ) );
+		$this->assertSame( 0, ( new ShiftEmailScheduler() )->send_signup_confirmation( $this->person_id ) );
+		$this->add_assignee( $this->shift_id, $this->person_id );
+		$this->assertSame( 'signup', get_post_meta( $this->shift_id, '_shift_assignment_mode_' . $this->person_id, true ) );
+	}
+
+	public function test_duty_mode_is_validated_and_requires_coordinator_permission(): void {
+		$this->as_coordinator();
+		$this->assertSame( 400, $this->add_assignee( $this->shift_id, $this->person_id, [ 'assignment_mode' => 'invalid' ] )->get_status() );
+		wp_set_current_user( $this->createRondoUser() );
+		$this->assertSame( 403, $this->add_assignee( $this->shift_id, $this->person_id, [ 'assignment_mode' => 'assigned' ] )->get_status() );
+		$this->assertSame( [], get_post_meta( $this->shift_id, 'assigned_persons', true ) );
+	}
+
+	public function test_assignment_mail_fields_roundtrip_with_native_storage_and_permissions(): void {
+		$this->as_coordinator();
+		$request = new WP_REST_Request( 'POST', '/wp/v2/dienst-types/' . $this->dienst_type_id );
+		$request->set_param(
+			'fields',
+			[
+				'assignment_email_subject' => 'Dienst {dienst}',
+				'assignment_email_body'    => "Hoi {naam},\n\nRegel vervanging.",
+			]
+			);
+		$response = rest_do_request( $request );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertSame( 'Dienst {dienst}', $response->get_data()['fields']['assignment_email_subject'] );
+		$this->assertSame( "Hoi {naam},\n\nRegel vervanging.", get_post_meta( $this->dienst_type_id, 'assignment_email_body', true ) );
+		$this->assertSame( 'field_dienst_type_assignment_email_body', get_post_meta( $this->dienst_type_id, '_assignment_email_body', true ) );
+		wp_set_current_user( $this->createRondoUser() );
+		$this->assertSame( 403, rest_do_request( $request )->get_status() );
+	}
+
+	public function test_mixed_signup_and_duty_mails_use_separate_templates_and_retry_only_failures(): void {
+		$this->as_coordinator();
+		$this->add_assignee( $this->shift_id, $this->person_id, [ 'assignment_mode' => 'assigned' ] );
+		$regular = $this->create_shift( '+15 days', 2 );
+		$this->add_assignee( $regular, $this->person_id );
+		Fields::update_for_post( $this->dienst_type_id, 'assignment_email_subject', 'Toegewezen: {dienst}' );
+		Fields::update_for_post( $this->dienst_type_id, 'assignment_email_body', "Hoi {naam},\n\nJe dienst is op {datum} van {tijd} tot {eindtijd}. <script>test</script>" );
+
+		$mail = [];
+		$fail = true;
+		add_filter(
+			'pre_wp_mail',
+			static function ( $result, $atts ) use ( &$mail, &$fail ) {
+				$atts['calendar'] = file_get_contents( $atts['attachments'][0] );
+				$mail[]           = $atts;
+				return ! ( $fail && str_starts_with( $atts['subject'], 'Toegewezen:' ) );
+			},
+			10,
+			2
+			);
+		wp_clear_scheduled_hook( ShiftEmailScheduler::SIGNUP_CONFIRMATION_CRON_HOOK, [ $this->person_id ] );
+		$scheduler = new ShiftEmailScheduler();
+		$this->assertSame( 1, $scheduler->send_signup_confirmation( $this->person_id ) );
+		$this->assertCount( 2, $mail );
+		$this->assertSame( 'Toegewezen: Kantinedienst', $mail[0]['subject'] );
+		$this->assertStringContainsString( 'Hoi Jan,', $mail[0]['message'] );
+		$this->assertStringNotContainsString( '<script>', $mail[0]['message'] );
+		$this->assertStringNotContainsString( '{datum}', $mail[0]['message'] );
+		$this->assertSame( 1, substr_count( $mail[0]['calendar'], 'BEGIN:VEVENT' ) );
+		$this->assertSame( 1, substr_count( $mail[1]['calendar'], 'BEGIN:VEVENT' ) );
+		$this->assertStringStartsWith( 'Bevestiging:', $mail[1]['subject'] );
+		$this->assertStringContainsString( 'Je aanmelding is bevestigd', $mail[1]['message'] );
+		$this->assertSame( '', get_post_meta( $this->shift_id, '_shift_email_assignment_sent_' . $this->person_id, true ) );
+		$this->assertGreaterThanOrEqual( time() + 14 * MINUTE_IN_SECONDS, wp_next_scheduled( ShiftEmailScheduler::SIGNUP_CONFIRMATION_CRON_HOOK, [ $this->person_id ] ) );
+
+		$fail = false;
+		$this->assertSame( 1, $scheduler->send_signup_confirmation( $this->person_id ) );
+		$this->assertCount( 3, $mail );
+		$this->assertNotEmpty( get_post_meta( $this->shift_id, '_shift_email_assignment_sent_' . $this->person_id, true ) );
+		$this->assertSame( 0, $scheduler->send_signup_confirmation( $this->person_id ) );
+		$this->assertCount( 3, $mail );
+	}
+
+	public function test_assignment_mail_defaults_explain_responsibility_and_cancellation_discards_notice(): void {
+		$this->as_coordinator();
+		$this->add_assignee( $this->shift_id, $this->person_id, [ 'assignment_mode' => 'assigned' ] );
+		Fields::update_for_post( $this->dienst_type_id, 'assignment_email_body', '' );
+		$mail = [];
+		add_filter(
+			'pre_wp_mail',
+			static function ( $result, $atts ) use ( &$mail ) {
+				$mail[] = $atts;
+				return true;
+			},
+			10,
+			2
+			);
+		$this->assertSame( 1, ( new ShiftEmailScheduler() )->send_signup_confirmation( $this->person_id ) );
+		$this->assertStringStartsWith( 'Dienst toegewezen:', $mail[0]['subject'] );
+		$this->assertStringContainsString( 'eindverantwoordelijk', $mail[0]['message'] );
+		$this->assertStringContainsString( 'accommodatiemanager', $mail[0]['message'] );
+		$this->assertStringContainsString( 'Zelf afmelden', $mail[0]['message'] );
+
+		$cancelled = $this->create_shift( '+15 days', 2 );
+		$this->add_assignee( $cancelled, $this->person_id, [ 'assignment_mode' => 'assigned' ] );
+		update_post_meta( $cancelled, 'status', 'geannuleerd' );
+		$this->assertSame( 0, ( new ShiftEmailScheduler() )->send_signup_confirmation( $this->person_id ) );
+		$this->assertCount( 1, $mail );
 	}
 }

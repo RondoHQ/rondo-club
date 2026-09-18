@@ -44,6 +44,8 @@ final class PersonMergeService {
 		'_shift_signup_guardian_name_',
 		'_shift_confirmation_queued_at_',
 		'_shift_email_confirmation_sent_',
+		'_shift_email_assignment_sent_',
+		'_shift_assignment_mode_',
 		'_shift_email_cancellation_sent_',
 		'_shift_email_reminder_sent_',
 		'_shift_email_survey_sent_',
@@ -874,7 +876,7 @@ final class PersonMergeService {
 				if ( ! metadata_exists( 'post', (int) $shift_id, $source_key ) ) {
 					continue;
 				}
-				if ( ! metadata_exists( 'post', (int) $shift_id, $target_key ) ) {
+				if ( ! metadata_exists( 'post', (int) $shift_id, $target_key ) || ( $prefix === '_shift_assignment_mode_' && get_post_meta( (int) $shift_id, $source_key, true ) === 'assigned' ) ) {
 					update_post_meta( (int) $shift_id, $target_key, get_post_meta( (int) $shift_id, $source_key, true ) );
 				}
 				delete_post_meta( (int) $shift_id, $source_key );

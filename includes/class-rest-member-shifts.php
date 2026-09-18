@@ -14,7 +14,7 @@
  *   GET  /rondo/v1/shifts/signups          — all shifts with current assignees
  *   GET  /rondo/v1/shifts/available       — open shifts the current user can sign up for
  *   POST /rondo/v1/shifts/{id}/signup     — add current user to a shift
- *   POST /rondo/v1/shifts/{id}/cancel     — remove current user from a shift (afmelden mag altijd)
+ *   POST /rondo/v1/shifts/{id}/cancel     — remove current user from a shift (subject to cancellation rules)
  *
  * All endpoints resolve the calling user to their linked `person` via
  * `rondo_linked_person_id` user meta — matches the v30.0 provisioning convention.
@@ -154,7 +154,8 @@ class MemberShifts extends Base {
 		foreach ( $assigned as $person_id ) {
 			$names[ $person_id ] = GuardianAccountService::display_name_for_person( $person_id );
 		}
-		$data['assigned_person_names'] = $names;
+		$data['assigned_person_names']    = $names;
+		$data['duty_assigned_person_ids'] = array_values( array_filter( $assigned, static fn( int $person_id ): bool => ShiftAssignments::is_duty_assignment( $post->ID, $person_id ) ) );
 		$response->set_data( $data );
 		return $response;
 	}
@@ -419,17 +420,22 @@ class MemberShifts extends Base {
 				'callback'            => [ $this, 'add_assignee' ],
 				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
 				'args'                => [
-					'id'            => [
+					'id'              => [
 						'required'          => true,
 						'sanitize_callback' => 'absint',
 					],
-					'person_id'     => [
+					'person_id'       => [
 						'required'          => true,
 						'sanitize_callback' => 'absint',
 					],
-					'force_overlap' => [
+					'force_overlap'   => [
 						'required' => false,
 						'default'  => false,
+					],
+					'assignment_mode' => [
+						'type'    => 'string',
+						'default' => 'signup',
+						'enum'    => [ 'signup', 'assigned' ],
 					],
 				],
 			]
@@ -904,6 +910,7 @@ class MemberShifts extends Base {
 			$summary['can_signup']                  = $opens_at === null && ! $summary['is_signed_up'] && $summary['spots_remaining'] !== 0;
 			$summary['fellow_volunteers']           = array_column( $fellow_volunteers, 'name' );
 			$summary['can_cancel']                  = $summary['is_signed_up'] && $this->can_member_cancel( $shift->ID, $person_id );
+			$summary['is_duty_assigned']            = ShiftAssignments::is_duty_assignment( $shift->ID, $person_id );
 			$cancel_deadline                        = $this->cancel_deadline_timestamp( $shift->ID );
 			$summary['signup_is_final_after_grace'] = $cancel_deadline !== null && time() > $cancel_deadline;
 			unset( $summary['assigned_person_ids'] );
@@ -1024,6 +1031,7 @@ class MemberShifts extends Base {
 				$summary['can_signup']                  = $opens_at === null && $summary['status'] === 'open' && ! $summary['is_signed_up'] && $summary['spots_remaining'] !== 0;
 				$summary['fellow_volunteers']           = array_column( $fellow_volunteers, 'name' );
 				$summary['can_cancel']                  = $summary['is_signed_up'] && $this->can_member_cancel( $shift->ID, $person_id );
+				$summary['is_duty_assigned']            = ShiftAssignments::is_duty_assignment( $shift->ID, $person_id );
 				$cancel_deadline                        = $this->cancel_deadline_timestamp( $shift->ID );
 				$summary['signup_is_final_after_grace'] = $cancel_deadline !== null && time() > $cancel_deadline;
 			}
@@ -1274,6 +1282,14 @@ class MemberShifts extends Base {
 					return new \WP_Error( 'shift_closed', 'Een geannuleerde of voltooide inschrijftaak kan niet meer worden afgemeld.', [ 'status' => 409 ] );
 				}
 
+				if ( ShiftAssignments::is_duty_assignment( $shift_id, $person_id ) ) {
+					return new \WP_Error(
+						'shift_assignment_required',
+						'Deze dienst is aan je toegewezen. Zelf afmelden is niet mogelijk. Regel vervanging of ruil en geef dit door aan de accommodatiemanager; je blijft eindverantwoordelijk.',
+						[ 'status' => 409 ]
+					);
+				}
+
 				if ( ! $this->can_member_cancel( $shift_id, $person_id ) ) {
 					return new \WP_Error(
 						'shift_cancel_deadline_passed',
@@ -1347,6 +1363,7 @@ class MemberShifts extends Base {
 	public function add_assignee( \WP_REST_Request $request ) {
 		$shift_id  = (int) $request->get_param( 'id' );
 		$person_id = (int) $request->get_param( 'person_id' );
+		$mode      = (string) ( $request->get_param( 'assignment_mode' ) ?? 'signup' );
 		$force     = filter_var( $request->get_param( 'force_overlap' ), FILTER_VALIDATE_BOOLEAN );
 
 		$shift = get_post( $shift_id );
@@ -1400,7 +1417,7 @@ class MemberShifts extends Base {
 
 		return $this->with_shift_write_lock(
 			$shift_id,
-			function () use ( $person_id, $shift_id ) {
+			function () use ( $person_id, $shift_id, $mode ) {
 				$status = (string) get_post_meta( $shift_id, 'status', true );
 				if ( ! in_array( $status, [ 'open', 'vol' ], true ) ) {
 					return new \WP_Error( 'shift_closed', 'Deze inschrijftaak staat niet meer open.', [ 'status' => 409 ] );
@@ -1415,6 +1432,7 @@ class MemberShifts extends Base {
 							'shift_id'         => $shift_id,
 							'person_id'        => $person_id,
 							'already_assigned' => true,
+							'assignment_mode'  => ShiftAssignments::is_duty_assignment( $shift_id, $person_id ) ? 'assigned' : 'signup',
 							'assigned_count'   => count( $assigned ),
 							'capacity'         => $capacity,
 							'status'           => $status,
@@ -1431,8 +1449,8 @@ class MemberShifts extends Base {
 				$user_id    = get_current_user_id();
 
 				update_post_meta( $shift_id, 'assigned_persons', $assigned );
-				// The member keeps the same cancellation rights as a self-signup:
-				// nobody should be stuck in a dienst somebody else planned for them.
+				// Keep the timestamp for reporting; explicit duty assignments cannot self-cancel.
+				update_post_meta( $shift_id, '_shift_assignment_mode_' . $person_id, $mode );
 				update_post_meta( $shift_id, '_shift_signup_at_' . $person_id, time() );
 				// Survives cancellation, unlike the signup timestamp, so the audit
 				// trail of who arranged this outlives the assignment itself.
@@ -1453,13 +1471,14 @@ class MemberShifts extends Base {
 
 				return rest_ensure_response(
 					[
-						'shift_id'       => $shift_id,
-						'person_id'      => $person_id,
-						'assigned'       => true,
-						'assigned_count' => count( $assigned ),
-						'capacity'       => $capacity,
-						'status'         => $new_status,
-						'notification'   => [
+						'shift_id'        => $shift_id,
+						'person_id'       => $person_id,
+						'assigned'        => true,
+						'assignment_mode' => $mode,
+						'assigned_count'  => count( $assigned ),
+						'capacity'        => $capacity,
+						'status'          => $new_status,
+						'notification'    => [
 							'queued' => $this->person_has_email( $person_id ),
 							'reason' => $this->person_has_email( $person_id ) ? null : 'no_email',
 						],
@@ -1607,6 +1626,7 @@ class MemberShifts extends Base {
 				delete_post_meta( $shift_id, '_shift_signup_at_' . $person_id );
 				delete_post_meta( $shift_id, '_shift_assigned_by_' . $person_id );
 				delete_post_meta( $shift_id, '_shift_assigned_at_' . $person_id );
+				delete_post_meta( $shift_id, '_shift_assignment_mode_' . $person_id );
 				GuardianAccountService::unmark_shift_signup( $shift_id, $person_id );
 				ShiftEmailScheduler::discard_signup_confirmation( $person_id, $shift_id );
 				if ( (string) get_post_meta( $shift_id, 'status', true ) === 'vol' ) {
@@ -1629,6 +1649,10 @@ class MemberShifts extends Base {
 	 * Determine whether a member may still cancel their own signup.
 	 */
 	private function can_member_cancel( int $shift_id, int $person_id ): bool {
+		if ( ShiftAssignments::is_duty_assignment( $shift_id, $person_id ) ) {
+			return false;
+		}
+
 		$start_at = $this->shift_start_timestamp( $shift_id );
 		if ( $start_at === null ) {
 			return false;
@@ -1921,6 +1945,7 @@ class MemberShifts extends Base {
 					$summary['fellow_volunteers']         = array_column( $fellow_volunteers, 'name' );
 					$summary['fellow_volunteer_contacts'] = $fellow_volunteers;
 					$summary['can_cancel']                = in_array( $summary['status'], [ 'open', 'vol' ], true ) && $this->can_member_cancel( $shift->ID, $person_id );
+					$summary['is_duty_assigned']          = ShiftAssignments::is_duty_assignment( $shift->ID, $person_id );
 				}
 				unset( $summary['assigned_person_ids'] );
 				$summary['no_show'] = (bool) get_post_meta( $shift->ID, '_no_show_' . $person_id, true );
