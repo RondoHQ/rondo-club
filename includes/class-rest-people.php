@@ -2757,42 +2757,41 @@ class People extends Base {
 					 WHERE $where_sql
 					 $order_clause";
 
+		// Add pagination
+		$prepare_values[] = $shift_status !== '' ? PHP_INT_MAX : $per_page;
+		$prepare_values[] = $shift_status !== '' ? 0 : $offset;
+		$paginated_sql    = $main_sql . ' LIMIT %d OFFSET %d';
+
+		// Prepare and execute main query
+		$prepared_sql = $wpdb->prepare( $paginated_sql, $prepare_values );
+		$results      = $wpdb->get_results( $prepared_sql );
+
+		// Count query (same joins/where, no order/limit)
+		// Need to rebuild prepare_values without the pagination values
+		$count_prepare_values = array_slice( $prepare_values, 0, -2 );
+		$count_sql            = "SELECT COUNT(DISTINCT p.ID)
+								 FROM {$wpdb->posts} p
+								 $join_sql
+								 WHERE $where_sql";
+
+		if ( ! empty( $count_prepare_values ) ) {
+			$prepared_count_sql = $wpdb->prepare( $count_sql, $count_prepare_values );
+		} else {
+			$prepared_count_sql = $count_sql;
+		}
+		$total = (int) $wpdb->get_var( $prepared_count_sql );
+
 		if ( $shift_status !== '' ) {
-			// Apply the computed duty filter to the access-controlled, sorted rows
-			// before pagination. Enrich only the requested page with person fields.
-			$prepared_sql = $prepare_values ? $wpdb->prepare( $main_sql, $prepare_values ) : $main_sql;
-			$results      = array_values(
+			// Preserve the existing query's access rules and ordering, including
+			// wpdb placeholder escaping, then filter before paging/enrichment.
+			$results = array_values(
 				array_filter(
-					$wpdb->get_results( $prepared_sql ),
+					$results,
 					static fn( $row ) => ( $shift_progress[ (int) $row->ID ]['status'] ?? null ) === $shift_status
 				)
 			);
-			$total        = count( $results );
-			$results      = array_slice( $results, $offset, $per_page );
-		} else {
-			// Add pagination
-			$prepare_values[] = $per_page;
-			$prepare_values[] = $offset;
-			$paginated_sql    = $main_sql . ' LIMIT %d OFFSET %d';
-
-			// Prepare and execute main query
-			$prepared_sql = $wpdb->prepare( $paginated_sql, $prepare_values );
-			$results      = $wpdb->get_results( $prepared_sql );
-
-			// Count query (same joins/where, no order/limit)
-			// Need to rebuild prepare_values without the pagination values
-			$count_prepare_values = array_slice( $prepare_values, 0, -2 );
-			$count_sql            = "SELECT COUNT(DISTINCT p.ID)
-									 FROM {$wpdb->posts} p
-									 $join_sql
-									 WHERE $where_sql";
-
-			if ( ! empty( $count_prepare_values ) ) {
-				$prepared_count_sql = $wpdb->prepare( $count_sql, $count_prepare_values );
-			} else {
-				$prepared_count_sql = $count_sql;
-			}
-			$total = (int) $wpdb->get_var( $prepared_count_sql );
+			$total   = count( $results );
+			$results = array_slice( $results, $offset, $per_page );
 		}
 
 		// Format results

@@ -208,6 +208,23 @@ class PeopleShiftProgressTest extends RondoTestCase {
 		$this->assertSame( 0, $data['people'][0]['shift_progress']['completed'] );
 	}
 
+	public function test_computed_filter_preserves_date_sorting_and_pagination(): void {
+		$a = $this->player( 'A' );
+		$b = $this->player( 'B' );
+		Fields::update_for_post( $a, 'lid_sinds', '2021-01-01' );
+		Fields::update_for_post( $b, 'lid_sinds', '2020-01-01' );
+		$data = $this->request(
+			[
+				'shift_status' => 'not_started',
+				'orderby'      => 'field_lid_sinds',
+				'order'        => 'asc',
+				'per_page'     => 1,
+			]
+			)->get_data();
+		$this->assertSame( $b, $data['people'][0]['id'] );
+		$this->assertSame( 2, $data['total_pages'] );
+	}
+
 	public function test_existing_age_group_filter_still_applies(): void {
 		$this->player( 'Senior' );
 		$this->assertSame(
