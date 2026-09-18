@@ -69,6 +69,32 @@ class WeekendVolunteerMailTest extends RondoTestCase {
 		return $id;
 	}
 
+	public function test_wordpress_init_schedules_mail_without_a_date_argument(): void {
+		WeekendVolunteerMail::unregister_cron();
+
+		// Replay only this service's init registration; core init already ran.
+		$original_init                = $GLOBALS['wp_filter']['init'];
+		$GLOBALS['wp_filter']['init'] = new \WP_Hook();
+		$mailer                       = new WeekendVolunteerMail();
+		try {
+			do_action( 'init' );
+		} finally {
+			$GLOBALS['wp_filter']['init'] = $original_init;
+			remove_action( WeekendVolunteerMail::HOOK, [ $mailer, 'run' ] );
+		}
+
+		$this->assertIsInt( wp_next_scheduled( WeekendVolunteerMail::HOOK ) );
+	}
+
+	public function test_wordpress_cron_callback_accepts_no_arguments(): void {
+		WeekendVolunteerMail::unregister_cron();
+
+		do_action( 'rondo_weekend_volunteer_mail' );
+
+		$this->assertIsInt( wp_next_scheduled( WeekendVolunteerMail::HOOK ) );
+		$this->assertEmpty( $this->mail );
+	}
+
 	public function test_schedule_preserves_local_evening_through_dst_and_year_boundary(): void {
 		foreach ( [
 			[ '2026-10-18 19:00:00', '2026-10-25T19:00:00+01:00' ],

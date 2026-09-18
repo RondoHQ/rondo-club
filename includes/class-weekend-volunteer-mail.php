@@ -16,8 +16,10 @@ final class WeekendVolunteerMail {
 	const BATCH_SIZE = 25;
 
 	public function __construct() {
-		add_action( 'init', [ $this, 'register_cron' ] );
-		add_action( self::HOOK, [ $this, 'run' ] );
+		// WordPress supplies an empty string for actions without arguments.
+		// Keep the optional test clock separate from hook arguments.
+		add_action( 'init', [ $this, 'register_cron' ], 10, 0 );
+		add_action( self::HOOK, [ $this, 'run' ], 10, 0 );
 	}
 
 	/** Calendar arithmetic, rather than 604800 seconds, preserves 19:00 across DST. */
