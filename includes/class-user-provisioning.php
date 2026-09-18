@@ -169,9 +169,11 @@ class UserProvisioning {
 		// Get person name fields.
 		$first_name = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '' );
 		$last_name  = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '' );
+		$company    = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
+		$name       = trim( $first_name . ' ' . $last_name ) ?: $company;
 
 		// Generate a unique username.
-		$username = $this->generate_username( $first_name, $last_name );
+		$username = $this->generate_username( $first_name, $last_name, $company, $person_id );
 
 		// Create the WordPress user.
 		$user_id = wp_create_user( $username, wp_generate_password( 24, true, true ), $wp_email );
@@ -204,7 +206,7 @@ class UserProvisioning {
 		wp_update_user(
 			[
 				'ID'           => $user_id,
-				'display_name' => trim( $first_name . ' ' . $last_name ),
+				'display_name' => $name ?: $username,
 				'first_name'   => $first_name,
 				'last_name'    => $last_name,
 			]
@@ -392,23 +394,32 @@ class UserProvisioning {
 	}
 
 	/**
-	 * Generate a unique WordPress username from first and last name.
+	 * Generate a unique login with a non-empty WordPress nicename.
 	 *
-	 * @param string $first First name.
-	 * @param string $last  Last name.
+	 * @param string $first     First name.
+	 * @param string $last      Last name.
+	 * @param string $company   Company name for contacts without a usable personal name.
+	 * @param int    $person_id Person ID for the final fallback.
 	 * @return string Unique username.
 	 */
-	private function generate_username( string $first, string $last ): string {
+	private function generate_username( string $first, string $last, string $company, int $person_id ): string {
 		$base = sanitize_user( strtolower( $first . '.' . $last ), true );
 
-		if ( empty( $base ) ) {
-			return 'gebruiker-' . uniqid();
+		// WordPress derives the nicename from the first 50 login characters. A dot
+		// survives sanitize_user(), but becomes an empty nicename in sanitize_title().
+		if ( empty( sanitize_title( substr( $base, 0, 50 ) ) ) ) {
+			$base = sanitize_title( sanitize_user( strtolower( $company ), true ) );
 		}
 
+		if ( empty( sanitize_title( substr( $base, 0, 50 ) ) ) ) {
+			$base = 'gebruiker-' . $person_id;
+		}
+
+		$base  = substr( $base, 0, 60 );
 		$login = $base;
 		$i     = 1;
 		while ( username_exists( $login ) ) {
-			$login = $base . $i;
+			$login = substr( $base, 0, 60 - strlen( (string) $i ) ) . $i;
 			++$i;
 		}
 
