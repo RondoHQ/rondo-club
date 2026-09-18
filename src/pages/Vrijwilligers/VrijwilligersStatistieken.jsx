@@ -12,7 +12,10 @@ import {
   Users,
 } from 'lucide-react';
 import { prmApi } from '@/api/client';
+import TabButton from '@/components/TabButton';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+
+const STATISTICS_TABS = [{ id: 'overview', label: 'Algemeen' }, { id: 'teams', label: 'Per team' }];
 
 const CHART_COLORS = ['#0047FF', '#00B8D9', '#7C3AED', '#F59E0B', '#10B981', '#EF4444', '#EC4899', '#64748B'];
 
@@ -361,8 +364,9 @@ function EmptyState({ message }) {
 }
 
 function TeamOverview({ teams }) {
-  if (teams.length === 0) {
-    return <EmptyState message="Er zijn nog geen teams om te tonen." />;
+  const populatedTeams = teams.filter((team) => team.people_count > 0);
+  if (populatedTeams.length === 0) {
+    return <EmptyState message="Er zijn geen teams met mensen om te tonen." />;
   }
 
   return (
@@ -379,7 +383,7 @@ function TeamOverview({ teams }) {
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-gray-700 text-gray-900 dark:text-gray-100">
-          {teams.map((team) => (
+          {populatedTeams.map((team) => (
             <tr key={team.id}>
               <th scope="row" className="py-3 pr-4 text-left font-medium whitespace-nowrap">{team.name}</th>
               <td className="px-3 py-3 text-right tabular-nums">{numberFormat.format(team.people_count)}</td>
@@ -399,6 +403,7 @@ export default function VrijwilligersStatistieken() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedSeason = searchParams.get('seizoen') || '';
+  const activeTab = searchParams.get('tab') === 'teams' ? 'teams' : 'overview';
 
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ['volunteer', 'statistics', selectedSeason || 'current'],
@@ -409,12 +414,25 @@ export default function VrijwilligersStatistieken() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const setSeason = (season) => {
-    if (season) {
-      setSearchParams({ seizoen: season });
-    } else {
-      setSearchParams({});
-    }
+  const updateSearchParam = (key, value) => {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      if (value) next.set(key, value);
+      else next.delete(key);
+      return next;
+    });
+  };
+  const setSeason = (season) => updateSearchParam('seizoen', season);
+  const setTab = (tab) => updateSearchParam('tab', tab === 'teams' ? tab : '');
+  const handleTabKeyDown = (event) => {
+    let nextTab;
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') nextTab = activeTab === 'teams' ? 'overview' : 'teams';
+    else if (event.key === 'Home') nextTab = 'overview';
+    else if (event.key === 'End') nextTab = 'teams';
+    else return;
+    event.preventDefault();
+    setTab(nextTab);
+    document.getElementById(`statistics-tab-${nextTab}`)?.focus();
   };
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['volunteer', 'statistics'] });
@@ -469,72 +487,95 @@ export default function VrijwilligersStatistieken() {
         </div>
       </header>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <StatCard label="Inschrijvingen" value={numberFormat.format(summary.total_assignments)} sub={`${numberFormat.format(summary.total_capacity)} beschikbare plekken`} icon={CalendarCheck} />
-        <StatCard label="Vrijwilligers" value={numberFormat.format(summary.unique_volunteers)} sub="Unieke ingeschreven personen" icon={Users} />
-        <StatCard label="Bezettingsgraad" value={`${decimalFormat.format(summary.fill_rate)}%`} sub="Over alle diensten dit seizoen" icon={Gauge} />
-        <StatCard label="Uitgevoerd / komend" value={`${numberFormat.format(summary.completed_assignments)} / ${numberFormat.format(summary.upcoming_assignments)}`} sub="Huidige koppelingen" icon={CalendarClock} />
-        <StatCard label="Gemiddeld" value={decimalFormat.format(summary.average_assignments_per_volunteer)} sub="Inschrijftaken per vrijwilliger" icon={ChartPie} />
-      </section>
-
-      <Panel title="Overzicht per team" description="Huidige teamleden, inclusief staf, en hun gekoppelde ouders. Mensen en accounts tellen ieder één keer per team mee.">
-        <TeamOverview teams={data.by_team || []} />
-        <div className="mt-4 space-y-1 text-xs text-gray-500 dark:text-gray-400">
-          <p>In te schrijven diensten is de totale verplichting voor seizoen {data.season}, na vrijstellingen. Dit is niet het resterende aantal.</p>
-          <p>Ingeschreven diensten omvatten ook uitgevoerde diensten; geannuleerde diensten tellen niet mee. Gezinsdiensten tellen bij ieder kind mee, ook binnen hetzelfde team.</p>
-        </div>
-      </Panel>
-
-      <div className="grid gap-6 xl:grid-cols-2">
-        <Panel title="Inschrijvingen per taaksoort" description="Verdeling van alle huidige koppelingen aan gepubliceerde inschrijftaken.">
-          <TaskTypeDonut taskTypes={data.by_task_type} total={summary.total_assignments} />
-        </Panel>
-        <Panel title="Bezettingsgraad per taaksoort" description="Ingeschreven vrijwilligers ten opzichte van het aantal beschikbare plekken.">
-          <CoverageBars taskTypes={data.by_task_type} />
-        </Panel>
+      <div className="flex gap-6 border-b border-gray-200 dark:border-gray-700" role="tablist" aria-label="Vrijwilligersstatistieken">
+        {STATISTICS_TABS.map((tab) => (
+          <TabButton
+            key={tab.id}
+            id={`statistics-tab-${tab.id}`}
+            role="tab"
+            label={tab.label}
+            isActive={activeTab === tab.id}
+            aria-selected={activeTab === tab.id}
+            aria-controls={`statistics-panel-${tab.id}`}
+            tabIndex={activeTab === tab.id ? 0 : -1}
+            onClick={() => setTab(tab.id)}
+            onKeyDown={handleTabKeyDown}
+          />
+        ))}
       </div>
 
-      <Panel title="Ontwikkeling van de inschrijvingen" description="Cumulatief aantal huidige inschrijvingen op basis van het vastgelegde inschrijfmoment.">
-        <CumulativeTrend
-          points={data.signup_trend}
-          generatedAt={data.generated_at}
-          singular="inschrijving"
-          plural="inschrijvingen"
-          emptyMessage="Er zijn nog geen inschrijfmomenten vastgelegd."
-        >
-          {data.undated_assignments > 0 && (
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              {numberFormat.format(data.undated_assignments)} huidige {data.undated_assignments === 1 ? 'inschrijving heeft' : 'inschrijvingen hebben'} geen vastgelegd inschrijfmoment en staat daarom niet in deze lijn.
-            </p>
-          )}
-        </CumulativeTrend>
-      </Panel>
+      <div id={`statistics-panel-${activeTab}`} role="tabpanel" aria-labelledby={`statistics-tab-${activeTab}`} className="space-y-6">
+        {activeTab === 'teams' ? (
+          <Panel title="Overzicht per team" description="Huidige teamleden, inclusief staf, en hun gekoppelde ouders. Mensen en accounts tellen ieder één keer per team mee.">
+            <TeamOverview teams={data.by_team || []} />
+            <div className="mt-4 space-y-1 text-xs text-gray-500 dark:text-gray-400">
+              <p>In te schrijven diensten is de totale verplichting voor seizoen {data.season}, na vrijstellingen. Dit is niet het resterende aantal.</p>
+              <p>Ingeschreven diensten omvatten ook uitgevoerde diensten; geannuleerde diensten tellen niet mee. Gezinsdiensten tellen bij ieder kind mee, ook binnen hetzelfde team.</p>
+            </div>
+          </Panel>
+        ) : (
+          <>
+            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+              <StatCard label="Inschrijvingen" value={numberFormat.format(summary.total_assignments)} sub={`${numberFormat.format(summary.total_capacity)} beschikbare plekken`} icon={CalendarCheck} />
+              <StatCard label="Vrijwilligers" value={numberFormat.format(summary.unique_volunteers)} sub="Unieke ingeschreven personen" icon={Users} />
+              <StatCard label="Bezettingsgraad" value={`${decimalFormat.format(summary.fill_rate)}%`} sub="Over alle diensten dit seizoen" icon={Gauge} />
+              <StatCard label="Uitgevoerd / komend" value={`${numberFormat.format(summary.completed_assignments)} / ${numberFormat.format(summary.upcoming_assignments)}`} sub="Huidige koppelingen" icon={CalendarClock} />
+              <StatCard label="Gemiddeld" value={decimalFormat.format(summary.average_assignments_per_volunteer)} sub="Inschrijftaken per vrijwilliger" icon={ChartPie} />
+            </section>
 
-      <Panel title="Ontwikkeling van Rondo-accounts" description="Cumulatief aantal bestaande Rondo-accounts op aanmaakdatum, over alle seizoenen. Verwijderde accounts tellen niet mee.">
-        <CumulativeTrend
-          points={data.account_trend || []}
-          generatedAt={data.generated_at}
-          singular="account"
-          plural="accounts"
-          emptyMessage="Er zijn nog geen aanmaakdatums van accounts vastgelegd."
-        />
-      </Panel>
+            <div className="grid gap-6 xl:grid-cols-2">
+              <Panel title="Inschrijvingen per taaksoort" description="Verdeling van alle huidige koppelingen aan gepubliceerde inschrijftaken.">
+                <TaskTypeDonut taskTypes={data.by_task_type} total={summary.total_assignments} />
+              </Panel>
+              <Panel title="Bezettingsgraad per taaksoort" description="Ingeschreven vrijwilligers ten opzichte van het aantal beschikbare plekken.">
+                <CoverageBars taskTypes={data.by_task_type} />
+              </Panel>
+            </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <Panel title="Spreiding over vrijwilligers" description="Hoeveel inschrijftaken de ingeschreven vrijwilligers op zich hebben genomen.">
-          <Distribution distribution={data.assignment_distribution} />
-        </Panel>
-        <Panel title="Voortgang vrijwilligersplicht" description={`Status van alle vrijwilligerseenheden in seizoen ${data.season}.`}>
-          <ObligationProgress progress={data.obligation_progress} />
-        </Panel>
+            <Panel title="Ontwikkeling van de inschrijvingen" description="Cumulatief aantal huidige inschrijvingen op basis van het vastgelegde inschrijfmoment.">
+              <CumulativeTrend
+                points={data.signup_trend}
+                generatedAt={data.generated_at}
+                singular="inschrijving"
+                plural="inschrijvingen"
+                emptyMessage="Er zijn nog geen inschrijfmomenten vastgelegd."
+              >
+                {data.undated_assignments > 0 && (
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    {numberFormat.format(data.undated_assignments)} huidige {data.undated_assignments === 1 ? 'inschrijving heeft' : 'inschrijvingen hebben'} geen vastgelegd inschrijfmoment en staat daarom niet in deze lijn.
+                  </p>
+                )}
+              </CumulativeTrend>
+            </Panel>
+
+            <Panel title="Ontwikkeling van Rondo-accounts" description="Cumulatief aantal bestaande Rondo-accounts op aanmaakdatum, over alle seizoenen. Verwijderde accounts tellen niet mee.">
+              <CumulativeTrend
+                points={data.account_trend || []}
+                generatedAt={data.generated_at}
+                singular="account"
+                plural="accounts"
+                emptyMessage="Er zijn nog geen aanmaakdatums van accounts vastgelegd."
+              />
+            </Panel>
+
+            <div className="grid gap-6 xl:grid-cols-2">
+              <Panel title="Spreiding over vrijwilligers" description="Hoeveel inschrijftaken de ingeschreven vrijwilligers op zich hebben genomen.">
+                <Distribution distribution={data.assignment_distribution} />
+              </Panel>
+              <Panel title="Voortgang vrijwilligersplicht" description={`Status van alle vrijwilligerseenheden in seizoen ${data.season}.`}>
+                <ObligationProgress progress={data.obligation_progress} />
+              </Panel>
+            </div>
+
+            <Panel
+              title="Komende inschrijftaken met open plekken"
+              description={`Gepubliceerde diensten in de komende ${data.shortage_window_days} dagen, gesorteerd op datum.`}
+            >
+              <Shortages shortages={data.upcoming_shortages} total={data.upcoming_shortages_total} windowDays={data.shortage_window_days} />
+            </Panel>
+          </>
+        )}
       </div>
-
-      <Panel
-        title="Komende inschrijftaken met open plekken"
-        description={`Gepubliceerde diensten in de komende ${data.shortage_window_days} dagen, gesorteerd op datum.`}
-      >
-        <Shortages shortages={data.upcoming_shortages} total={data.upcoming_shortages_total} windowDays={data.shortage_window_days} />
-      </Panel>
     </div>
   );
 }
