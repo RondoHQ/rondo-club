@@ -134,10 +134,10 @@ class EmailChannel extends Channel {
 
 		// Mentions section
 		if ( ! empty( $digest_data['mentions'] ) ) {
-			$html .= '<h3 style="margin:24px 0 10px;color:#2563eb;font-size:18px;line-height:1.3;">Je bent genoemd</h3>';
+			$html .= '<h3 style="margin:24px 0 10px;color:' . esc_attr( EmailTemplate::accent_color() ) . ';font-size:18px;line-height:1.3;">Je bent genoemd</h3>';
 			foreach ( $digest_data['mentions'] as $mention ) {
 				$html .= sprintf(
-					'<p style="margin: 5px 0; padding-left: 10px; border-left: 3px solid #2563eb;"><strong>%s</strong> mentioned you on <a href="%s">%s</a>:<br><em style="color: #666;">%s</em></p>',
+					'<p style="margin: 5px 0; padding-left: 10px; border-left: 3px solid ' . esc_attr( EmailTemplate::accent_color() ) . ';"><strong>%s</strong> mentioned you on <a href="%s">%s</a>:<br><em style="color: #666;">%s</em></p>',
 					esc_html( $mention['author'] ),
 					esc_url( $mention['post_url'] ),
 					esc_html( $mention['post_title'] ),
@@ -148,10 +148,10 @@ class EmailChannel extends Channel {
 
 		// Workspace activity section
 		if ( ! empty( $digest_data['workspace_activity'] ) ) {
-			$html .= '<h3 style="margin:24px 0 10px;color:#059669;font-size:18px;line-height:1.3;">Teamactiviteit</h3>';
+			$html .= '<h3 style="margin:24px 0 10px;color:' . esc_attr( EmailTemplate::accent_color() ) . ';font-size:18px;line-height:1.3;">Teamactiviteit</h3>';
 			foreach ( $digest_data['workspace_activity'] as $activity ) {
 				$html .= sprintf(
-					'<p style="margin: 5px 0; padding-left: 10px; border-left: 3px solid #059669;"><strong>%s</strong> added a note on <a href="%s">%s</a>:<br><em style="color: #666;">%s</em></p>',
+					'<p style="margin: 5px 0; padding-left: 10px; border-left: 3px solid ' . esc_attr( EmailTemplate::accent_color() ) . ';"><strong>%s</strong> added a note on <a href="%s">%s</a>:<br><em style="color: #666;">%s</em></p>',
 					esc_html( $activity['author'] ),
 					esc_url( $activity['post_url'] ),
 					esc_html( $activity['post_title'] ),

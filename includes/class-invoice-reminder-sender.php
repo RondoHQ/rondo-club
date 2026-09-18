@@ -193,10 +193,10 @@ class InvoiceReminderSender {
 		}
 
 		// Format betaallink as styled HTML anchor.
-		$betaallink = '<a href="' . esc_url( $payment_link ) . '" style="color:#0891b2;text-decoration:underline;">Betaal nu</a>';
+		$betaallink = '<a href="' . esc_url( $payment_link ) . '" style="color:' . esc_attr( EmailTemplate::accent_color() ) . ';text-decoration:underline;">Betaal nu</a>';
 
 		// Build CTA button for {betaalknop} placeholder.
-		$accent_color = $add_bcc ? '#b45309' : '#0f766e';
+		$accent_color = EmailTemplate::accent_color();
 		$betaalknop   = EmailTemplate::render_cta_button( $payment_link, 'Open betaallink', $accent_color );
 
 		// Read invoice fields.

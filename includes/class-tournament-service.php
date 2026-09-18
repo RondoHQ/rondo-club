@@ -10,6 +10,7 @@ namespace Rondo\Tournaments;
 use DateTimeImmutable;
 use Rondo\Core\VolunteerStatus;
 use Rondo\Fields\Fields;
+use Rondo\Notifications\EmailTemplate;
 use Rondo\REST\Teams;
 use Rondo\Users\UserProvisioning;
 
@@ -1327,13 +1328,20 @@ final class TournamentService {
 			$url     = home_url( '/mijn-toernooien/' . $entry['id'] );
 			$subject = sprintf( '%s: inschrijving voor %s', $tournament['name'], $entry['team_name'] );
 			$message = sprintf(
-				'<p>Hallo %s,</p><p>De inschrijving voor <strong>%s</strong> is aan het kader van <strong>%s</strong> toegewezen.</p><p>De interne deadline is <strong>%s</strong>.</p>%s<p><a href="%s">Open de inschrijving in Rondo</a></p>',
+				'<p>Hallo %s,</p><p>De inschrijving voor <strong>%s</strong> is aan het kader van <strong>%s</strong> toegewezen.</p><p>De interne deadline is <strong>%s</strong>.</p>%s',
 				esc_html( (string) ( $assignee['name'] ?? '' ) ),
 				esc_html( $tournament['name'] ),
 				esc_html( $entry['team_name'] ),
 				esc_html( wp_date( 'j F Y', strtotime( $tournament['internal_deadline'] ) ) ),
-				wpautop( wp_kses_post( $tournament['description'] ) ),
-				esc_url( $url )
+				wpautop( wp_kses_post( $tournament['description'] ) )
+			);
+			$message = EmailTemplate::render(
+				[
+					'heading'   => $subject,
+					'body_html' => $message,
+					'cta_url'   => $url,
+					'cta_label' => 'Open de inschrijving in Rondo',
+				]
 			);
 			$sent    = wp_mail( $email, $subject, $message, [ 'Content-Type: text/html; charset=UTF-8' ] );
 			if ( $sent ) {
