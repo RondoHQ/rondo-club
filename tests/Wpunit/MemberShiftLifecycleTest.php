@@ -443,6 +443,58 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertNotEmpty( get_post_meta( $shift_id, '_shift_email_reminder_2_sent_' . $person_id, true ) );
 	}
 
+	public function test_reminders_link_only_published_instructions_for_the_task_type(): void {
+		$now       = new \DateTimeImmutable( '2026-09-01 10:00:00', wp_timezone() );
+		$type_id   = $this->dienst_type();
+		$person_id = $this->mail_person( 'Anne', 'anne@example.com' );
+		$this->dated_shift( $type_id, [ $person_id ], $now->modify( '+14 days' ) );
+		$published = [];
+		foreach ( [
+			'Opening & afsluiting' => 'publish',
+			'Veilig werken'        => 'publish',
+			'Conceptuitleg'        => 'draft',
+			'Andere taak'          => 'publish',
+			'Afgeschermd'          => 'publish',
+		] as $title => $status ) {
+			$id = self::factory()->post->create(
+				[
+					'post_type'     => 'taakuitleg',
+					'post_status'   => $status,
+					'post_title'    => $title,
+					'post_password' => $title === 'Afgeschermd' ? 'test-only' : '',
+				]
+				);
+			Fields::update_for_post( $id, 'dienst_types', [ $title === 'Andere taak' ? $type_id + 999 : $type_id ] );
+			if ( in_array( $title, [ 'Opening & afsluiting', 'Veilig werken' ], true ) ) {
+				$published[] = $id;
+			}
+		}
+		// Cron sends without a signed-in administrator.
+		wp_set_current_user( 0 );
+		$scheduler = new ShiftEmailScheduler();
+		$this->assertSame( 1, $scheduler->run_sweep( $now ) );
+		$html = $this->sent_mail[0]['message'];
+		$this->assertStringContainsString( 'Taakuitleg', $html );
+		foreach ( $published as $id ) {
+			$this->assertStringContainsString( esc_url( \Rondo\Volunteer\PublicTaakuitlegPage::get_public_url( get_post( $id )->post_name ) ), $html );
+		}
+		$this->assertStringContainsString( 'Opening &amp; afsluiting', $html );
+		foreach ( [ 'Conceptuitleg', 'Andere taak', 'Afgeschermd' ] as $hidden ) {
+			$this->assertStringNotContainsString( $hidden, $html );
+		}
+		foreach ( $published as $id ) {
+			wp_update_post(
+				[
+					'ID'          => $id,
+					'post_status' => 'draft',
+				]
+				);
+		}
+		$this->assertSame( 1, $scheduler->run_sweep( $now->modify( '+7 days' ) ) );
+		$this->assertStringNotContainsString( '<h2>Taakuitleg</h2>', $this->sent_mail[1]['message'] );
+		$this->assertStringContainsString( 'Hoi Anne', $this->sent_mail[1]['message'] );
+	}
+
 	public function test_reminders_ignore_invalid_assignee_ids(): void {
 		$now       = new \DateTimeImmutable( '2026-09-01 10:00:00', wp_timezone() );
 		$type_id   = $this->dienst_type();

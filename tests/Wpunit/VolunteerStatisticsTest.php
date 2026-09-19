@@ -168,8 +168,10 @@ class VolunteerStatisticsTest extends RondoTestCase {
 	}
 
 	public function test_team_overview_counts_unique_people_and_accounts_but_repeats_family_duties_per_child(): void {
-		$team_a   = $this->createOrganization( [ 'post_title' => 'JO12-2' ] );
-		$team_b   = $this->createOrganization( [ 'post_title' => 'JO12-10' ] );
+		$team_a = $this->createOrganization( [ 'post_title' => 'JO12-2' ] );
+		$team_b = $this->createOrganization( [ 'post_title' => 'JO12-10' ] );
+		update_post_meta( $team_a, 'activiteit', 'Veld - Zaterdag' );
+		update_post_meta( $team_b, 'activiteit', 'Veld - Zondag' );
 		$parent_a = $this->createPerson();
 		$parent_b = $this->createPerson();
 		$children = [ $this->team_member( $team_a, 'Onder 12' ), $this->team_member( $team_a, 'Onder 12' ), $this->team_member( $team_b, 'Onder 12' ) ];
@@ -212,6 +214,7 @@ class VolunteerStatisticsTest extends RondoTestCase {
 				[
 					'id'               => $team_a,
 					'name'             => 'JO12-2',
+					'activiteit'       => 'Veld - Zaterdag',
 					'people_count'     => 4,
 					'account_count'    => 3,
 					'required_count'   => 8,
@@ -220,6 +223,7 @@ class VolunteerStatisticsTest extends RondoTestCase {
 				[
 					'id'               => $team_b,
 					'name'             => 'JO12-10',
+					'activiteit'       => 'Veld - Zondag',
 					'people_count'     => 3,
 					'account_count'    => 2,
 					'required_count'   => 4,
@@ -266,6 +270,7 @@ class VolunteerStatisticsTest extends RondoTestCase {
 				[
 					'id'               => $team,
 					'name'             => 'Team 1',
+					'activiteit'       => '',
 					'people_count'     => 3,
 					'account_count'    => 0,
 					'required_count'   => 2,
@@ -274,6 +279,7 @@ class VolunteerStatisticsTest extends RondoTestCase {
 				[
 					'id'               => $empty,
 					'name'             => 'Team 2',
+					'activiteit'       => '',
 					'people_count'     => 0,
 					'account_count'    => 0,
 					'required_count'   => 0,
