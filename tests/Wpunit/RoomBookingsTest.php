@@ -153,6 +153,156 @@ class RoomBookingsTest extends RondoTestCase {
 		$this->assertSame( 'rondo_room_context_forbidden', $denied->get_error_code() );
 	}
 
+	public function test_board_can_create_and_move_a_booking_outside_hours_but_not_ignore_conflicts_or_duration(): void {
+		$holder_id = $this->createRondoUser();
+		get_userdata( $holder_id )->add_role( 'rondo_bestuur' );
+		$room_id = $this->create_room();
+		$start   = current_datetime()->modify( '+1 day' )->setTime( 20, 0 );
+		Fields::update_for_post(
+			$room_id,
+			'opening_hours',
+			[
+				[
+					'day'        => (int) $start->format( 'N' ),
+					'start_time' => '09:00',
+					'end_time'   => '17:00',
+				],
+			]
+			);
+		$payload = [
+			'room_id'              => $room_id,
+			'start_datetime'       => $start->format( DATE_RFC3339 ),
+			'end_datetime'         => $start->modify( '+1 hour' )->format( DATE_RFC3339 ),
+			'purpose'              => 'Avondoverleg',
+			'booking_context_type' => 'board',
+		];
+		$server  = $this->bootRestControllers( [ Rooms::class, \Rondo\REST\UserSettings::class ] );
+		wp_set_current_user( $holder_id );
+		$me = $this->dispatch( $server, 'GET', '/rondo/v1/user/me' );
+		$this->assertSame( 200, $me->get_status() );
+		$this->assertTrue( $me->get_data()['can_book_rooms_outside_hours'] );
+		$request = new WP_REST_Request( 'POST', '/rondo/v1/rooms/bookings' );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( $payload ) );
+		$response = $server->dispatch( $request );
+		$this->assertSame( 201, $response->get_status() );
+		$booking  = $response->get_data();
+		$conflict = $this->service->create_booking( $payload, $holder_id );
+		$this->assertWPError( $conflict );
+		$this->assertSame( 'rondo_room_conflict', $conflict->get_error_code() );
+		$updated = $this->service->update_booking(
+			$booking['id'],
+			[
+				'start_datetime' => $start->modify( '+1 hour' )->format( DATE_RFC3339 ),
+				'end_datetime'   => $start->modify( '+2 hours' )->format( DATE_RFC3339 ),
+			],
+			$holder_id,
+			false
+			);
+		$this->assertIsArray( $updated );
+		$this->assertSame( $start->modify( '+1 hour' )->format( DATE_RFC3339 ), $updated['start_datetime'] );
+		Fields::update_for_post( $room_id, 'maximum_duration_minutes', 30 );
+		$denied = $this->service->create_booking( $payload, $holder_id );
+		$this->assertSame( 'rondo_room_duration_invalid', $denied->get_error_code() );
+		get_userdata( $holder_id )->remove_role( 'rondo_bestuur' );
+		$denied = $this->service->update_booking( $booking['id'], [ 'purpose' => 'Geen bestuursrol meer' ], $holder_id, false );
+		$this->assertSame( 'rondo_room_closed', $denied->get_error_code() );
+	}
+
+	public function test_opening_hours_exception_cannot_be_forged_or_borrowed_from_the_holder(): void {
+		$holder_id = $this->createRondoUser();
+		get_userdata( $holder_id )->add_role( 'rondo_bestuur' );
+		$start   = current_datetime()->modify( '+1 day' )->setTime( 20, 0 );
+		$room_id = $this->create_room();
+		Fields::update_for_post(
+			$room_id,
+			'opening_hours',
+			[
+				[
+					'day'        => (int) $start->format( 'N' ),
+					'start_time' => '09:00',
+					'end_time'   => '17:00',
+				],
+			]
+			);
+		$payload = [
+			'room_id'                      => $room_id,
+			'start_datetime'               => $start->format( DATE_RFC3339 ),
+			'end_datetime'                 => $start->modify( '+1 hour' )->format( DATE_RFC3339 ),
+			'purpose'                      => 'Avondoverleg',
+			'booking_context_type'         => 'board',
+			'holder_user_id'               => $holder_id,
+			'override_opening_hours'       => true,
+			'can_book_rooms_outside_hours' => true,
+		];
+		$server  = $this->bootRestControllers( [ Rooms::class, \Rondo\REST\UserSettings::class ] );
+		foreach ( [ 'rondo_user', 'rondo_accommodatiebeheerder', 'administrator' ] as $role ) {
+			$actor_id = self::factory()->user->create( [ 'role' => $role ] );
+			wp_set_current_user( $actor_id );
+			$this->assertFalse( $this->dispatch( $server, 'GET', '/rondo/v1/user/me' )->get_data()['can_book_rooms_outside_hours'] );
+			$request = new WP_REST_Request( 'POST', $role === 'rondo_user' ? '/rondo/v1/rooms/bookings' : '/rondo/v1/rooms/manage/bookings' );
+			$request->set_header( 'Content-Type', 'application/json' );
+			$request->set_body( wp_json_encode( $payload ) );
+			$response = $server->dispatch( $request );
+			$this->assertSame( 409, $response->get_status(), $role );
+			$this->assertSame( 'rondo_room_closed', $response->get_data()['code'] );
+		}
+	}
+
+	public function test_board_extension_outside_hours_preserves_conflicts_limits_and_current_role_checks(): void {
+		$holder_id = $this->createRondoUser();
+		$user      = get_userdata( $holder_id );
+		$user->add_role( 'rondo_bestuur' );
+		$room_id = $this->create_room();
+		$now     = current_datetime();
+		$start   = $now->setTime( (int) $now->format( 'H' ), (int) floor( (int) $now->format( 'i' ) / 15 ) * 15 );
+		$end     = $start->modify( '+30 minutes' );
+		Fields::update_for_post(
+			$room_id,
+			'opening_hours',
+			[
+				[
+					'day'        => (int) $now->modify( '+1 day' )->format( 'N' ),
+					'start_time' => '09:00',
+					'end_time'   => '17:00',
+				],
+			]
+			);
+		$payload = [
+			'room_id'              => $room_id,
+			'start_datetime'       => $start->format( DATE_RFC3339 ),
+			'end_datetime'         => $end->format( DATE_RFC3339 ),
+			'purpose'              => 'Actief overleg',
+			'booking_context_type' => 'board',
+			'holder_user_id'       => $holder_id,
+		];
+		$booking = $this->service->create_booking( $payload, $holder_id, true );
+		$this->assertIsArray( $booking );
+		$user->remove_role( 'rondo_bestuur' );
+		$denied = $this->service->extend_booking( $booking['id'], $holder_id );
+		$this->assertSame( 'rondo_room_extension_limit', $denied->get_error_code() );
+		$user->add_role( 'rondo_bestuur' );
+		$following = $this->service->create_booking(
+			array_merge(
+			$payload,
+			[
+				'start_datetime' => $end->format( DATE_RFC3339 ),
+				'end_datetime'   => $end->modify( '+1 hour' )->format( DATE_RFC3339 ),
+			]
+			),
+			$holder_id,
+			true
+			);
+		$this->assertIsArray( $following );
+		$denied = $this->service->extend_booking( $booking['id'], $holder_id );
+		$this->assertSame( 'rondo_room_conflict', $denied->get_error_code() );
+		$this->assertIsArray( $this->service->cancel_booking( $following['id'], $holder_id, 'Test vrijgave', true ) );
+		$this->assertIsArray( $this->service->extend_booking( $booking['id'], $holder_id ) );
+		Fields::update_for_post( $room_id, 'maximum_duration_minutes', 30 );
+		$denied = $this->service->extend_booking( $booking['id'], $holder_id );
+		$this->assertSame( 'rondo_room_extension_limit', $denied->get_error_code() );
+	}
+
 	public function test_blank_entity_type_uses_the_linked_commission_type(): void {
 		$holder_id    = $this->createRondoUser();
 		$commissie_id = self::factory()->post->create(
