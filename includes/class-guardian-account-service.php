@@ -50,6 +50,8 @@ class GuardianAccountService {
 		self::SHIFT_NAME_META_PREFIX,
 		'_shift_confirmation_queued_at_',
 		'_shift_email_confirmation_sent_',
+		'_shift_email_assignment_sent_',
+		'_shift_assignment_mode_',
 		'_shift_email_cancellation_sent_',
 		'_shift_email_reminder_sent_',
 		'_shift_email_survey_sent_',
@@ -372,7 +374,7 @@ class GuardianAccountService {
 				$source_key = $prefix . $source_person_id;
 				$target_key = $prefix . $target_person_id;
 				$value      = get_post_meta( $shift_id, $source_key, true );
-				if ( self::has_value( $value ) && ! self::has_value( get_post_meta( $shift_id, $target_key, true ) ) ) {
+				if ( self::has_value( $value ) && ( ! self::has_value( get_post_meta( $shift_id, $target_key, true ) ) || ( $prefix === '_shift_assignment_mode_' && $value === 'assigned' ) ) ) {
 					update_post_meta( $shift_id, $target_key, $value );
 					if ( $prefix === '_shift_confirmation_queued_at_' ) {
 						$queue_shift = (int) $shift_id;
