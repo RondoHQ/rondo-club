@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.93.0] - 2026-09-19
+
+### Added
+- Ingeschreven vrijwilligers krijgen automatisch een wijzigingsmail met de oude en nieuwe datum, tijden, soort taak en toelichting bij aanpassing van een toekomstige inschrijftaak. Mislukte verzendingen worden opnieuw geprobeerd; geannuleerde of inmiddels opnieuw gewijzigde taken sturen geen verouderde melding (feedback #10633).
+
 ## [35.92.0] - 2026-09-19
 
 ### Added
