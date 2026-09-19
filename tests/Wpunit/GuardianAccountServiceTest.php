@@ -159,6 +159,8 @@ class GuardianAccountServiceTest extends RondoTestCase {
 		);
 		update_post_meta( $shift_id, 'assigned_persons', [ $child_id ] );
 		update_post_meta( $shift_id, '_shift_signup_at_' . $child_id, 123456789 );
+		update_post_meta( $shift_id, '_shift_assignment_mode_' . $child_id, 'assigned' );
+		update_post_meta( $shift_id, '_shift_assignment_mode_' . $parent_id, 'signup' );
 		GuardianAccountService::mark_shift_signup( $shift_id, $child_id, $user_id );
 
 		$result = GuardianAccountService::relink( $user_id, $parent_id );
@@ -171,6 +173,8 @@ class GuardianAccountServiceTest extends RondoTestCase {
 		$this->assertSame( [ $parent_id ], array_map( 'intval', get_post_meta( $shift_id, 'assigned_persons', true ) ) );
 		$this->assertSame( 123456789, (int) get_post_meta( $shift_id, '_shift_signup_at_' . $parent_id, true ) );
 		$this->assertSame( '', get_post_meta( $shift_id, '_shift_signup_at_' . $child_id, true ) );
+		$this->assertSame( 'assigned', get_post_meta( $shift_id, '_shift_assignment_mode_' . $parent_id, true ) );
+		$this->assertSame( '', get_post_meta( $shift_id, '_shift_assignment_mode_' . $child_id, true ) );
 		$this->assertSame( $user_id, (int) get_post_meta( $shift_id, GuardianAccountService::SHIFT_USER_META_PREFIX . $parent_id, true ) );
 		$this->assertSame( '20260720', get_post_meta( $parent_id, 'datum-vog', true ) );
 		$this->assertSame( '', get_post_meta( $child_id, 'datum-vog', true ) );

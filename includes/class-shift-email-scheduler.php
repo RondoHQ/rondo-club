@@ -8,6 +8,8 @@
 namespace Rondo\Volunteer;
 
 use Rondo\Core\PostTitle;
+use Rondo\Fields\Fields;
+use Rondo\Fields\Registry;
 use Rondo\Notifications\EmailTemplate;
 use Rondo\Users\GuardianAccountService;
 
@@ -124,6 +126,22 @@ class ShiftEmailScheduler {
 			return 0;
 		}
 
+		// Explicit assignments each use their task type's template. Keep ordinary
+		// signups in the existing combined email, even when both kinds are queued.
+		$assignment_count = 0;
+		$signups          = [];
+		foreach ( $shifts as $shift ) {
+			if ( ShiftAssignments::is_duty_assignment( $shift['id'], $person_id ) ) {
+				$assignment_count += (int) $this->send_assignment_confirmation( $person_id, $shift );
+			} else {
+				$signups[] = $shift;
+			}
+		}
+		$shifts = $signups;
+		if ( empty( $shifts ) ) {
+			return $assignment_count;
+		}
+
 		$name = GuardianAccountService::greeting_name_for_person( $person_id );
 
 		$count   = count( $shifts );
@@ -181,7 +199,7 @@ class ShiftEmailScheduler {
 
 		if ( ! $sent ) {
 			self::schedule_signup_confirmation( $person_id, self::SIGNUP_CONFIRMATION_RETRY_SECONDS );
-			return 0;
+			return $assignment_count;
 		}
 
 		foreach ( $shifts as $shift ) {
@@ -190,7 +208,54 @@ class ShiftEmailScheduler {
 			do_action( 'rondo_shift_email_sent', $shift['id'], $person_id, 'confirmation' );
 		}
 
-		return $count;
+		return $count + $assignment_count;
+	}
+
+	/** Send the configurable duty notice with the same calendar attachment and retry policy. */
+	private function send_assignment_confirmation( int $person_id, array $shift ): bool {
+		$type_id = (int) Fields::get_for_post( $shift['id'], 'dienst_type_id' );
+		$vars    = $this->template_variables( $type_id, $person_id, ShiftAssignments::person_ids( $shift['id'] ), $shift['start'], $shift['end'] );
+		$parts   = [];
+		foreach ( [ 'subject', 'body' ] as $part ) {
+			$field          = 'assignment_email_' . $part;
+			$template       = (string) Fields::get_for_post( $type_id, $field );
+			$template       = trim( $template ) !== '' ? $template : Registry::resolve( 'dienst_type', $field )['default_value'];
+			$parts[ $part ] = $this->substitute_variables( $template, $vars );
+		}
+
+		$attachment = $this->create_signup_calendar_attachment( $person_id, [ $shift ] );
+		$body_html  = EmailTemplate::format_plain_text( $parts['body'] );
+		if ( $attachment ) {
+			$body_html .= '<p>In de bijlage staat een kalenderbestand waarmee je deze dienst aan je agenda kunt toevoegen.</p>';
+		}
+		$html = EmailTemplate::render(
+			[
+				'heading'   => $parts['subject'],
+				'preheader' => $parts['subject'],
+				'body_html' => $body_html,
+				'cta_url'   => home_url( '/vrijwillig?tab=mine' ),
+				'cta_label' => 'Bekijk je inschrijftaken',
+			]
+		);
+		$sent = wp_mail(
+			$this->get_person_email( $person_id ),
+			$parts['subject'],
+			$html,
+			[ 'Content-Type: text/html; charset=UTF-8', 'X-Rondo-Email-Tag: shift-duty-assignment' ],
+			$attachment ? [ $attachment ] : []
+		);
+		if ( $attachment ) {
+			wp_delete_file( $attachment );
+		}
+		if ( ! $sent ) {
+			self::schedule_signup_confirmation( $person_id, self::SIGNUP_CONFIRMATION_RETRY_SECONDS );
+			return false;
+		}
+
+		delete_post_meta( $shift['id'], self::signup_confirmation_queue_key( $person_id ) );
+		update_post_meta( $shift['id'], '_shift_email_assignment_sent_' . $person_id, current_time( 'mysql' ) );
+		do_action( 'rondo_shift_email_sent', $shift['id'], $person_id, 'assignment' );
+		return true;
 	}
 
 	/**

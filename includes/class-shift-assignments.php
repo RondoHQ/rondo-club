@@ -22,6 +22,11 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class ShiftAssignments {
 
+	/** Whether this person was explicitly assigned a duty that only a coordinator can remove. */
+	public static function is_duty_assignment( int $shift_id, int $person_id ): bool {
+		return get_post_meta( $shift_id, '_shift_assignment_mode_' . $person_id, true ) === 'assigned';
+	}
+
 	/**
 	 * Person IDs assigned to a shift: positive, unique, in signup order.
 	 *
