@@ -237,6 +237,7 @@ export default function Rooms() {
         <BookingForm
           rooms={activeRooms}
           memberContexts={contexts}
+          canBookOutsideHours={Boolean(currentUser?.can_book_rooms_outside_hours)}
           manager={bookingModal.manager}
           initialRoomId={bookingModal.roomId}
           booking={bookingModal.booking}
@@ -450,7 +451,7 @@ function ManagerView({ bookings, loading, date, setDate, view, setView, ...actio
   );
 }
 
-function BookingForm({ rooms, memberContexts, manager, initialRoomId, booking, onClose, onSaved }) {
+function BookingForm({ rooms, memberContexts, canBookOutsideHours, manager, initialRoomId, booking, onClose, onSaved }) {
   const initialStart = booking ? new Date(booking.start_datetime) : new Date();
   if (!booking) initialStart.setMinutes(Math.ceil(initialStart.getMinutes() / 15) * 15, 0, 0);
   const initialEnd = booking ? new Date(booking.end_datetime) : new Date(initialStart.getTime() + 60 * 60 * 1000);
@@ -608,6 +609,12 @@ function BookingForm({ rooms, memberContexts, manager, initialRoomId, booking, o
             <input type="time" step="900" className="input w-full" value={endTime} onChange={(event) => setEndTime(event.target.value)} required />
           </label>
         </div>
+
+        {canBookOutsideHours && bookingType === 'member_reservation' && (
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Als bestuurslid kun je ook buiten openingstijden reserveren. Regel zelf de toegang tot het gebouw. Een bestaande reservering blijft altijd voorgaan.
+          </p>
+        )}
 
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Doel</span>

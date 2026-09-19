@@ -20,8 +20,7 @@ final class BookingEligibility {
 	public static function for_user( int $user_id ): array {
 		$person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
 		$contexts  = $person_id > 0 ? self::for_person( $person_id ) : [];
-		$user      = get_userdata( $user_id );
-		if ( $user && in_array( 'rondo_bestuur', (array) $user->roles, true ) ) {
+		if ( self::is_board_member( $user_id ) ) {
 			$contexts[] = [
 				'type'                => 'board',
 				'commissie_id'        => null,
@@ -32,6 +31,12 @@ final class BookingEligibility {
 			usort( $contexts, static fn( array $left, array $right ): int => strnatcasecmp( $left['label'], $right['label'] ) );
 		}
 		return $contexts;
+	}
+
+	/** Board membership is an account role, not implied by management permissions. */
+	public static function is_board_member( int $user_id ): bool {
+		$user = get_userdata( $user_id );
+		return $user && in_array( 'rondo_bestuur', (array) $user->roles, true );
 	}
 
 	/** Return eligible contexts for a linked person. */
