@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.89.0] - 2026-09-19
+
+### Added
+- Read-only feedback discovery through the WordPress Abilities API and AI Connector MCP, with workflow status filters, pagination and the existing feedback overview permissions. Defaults to open items and includes triage details without author email addresses.
+
 ## [35.88.3] - 2026-09-18
 
 ### Changed
