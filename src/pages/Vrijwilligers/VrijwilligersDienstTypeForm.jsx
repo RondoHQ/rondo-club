@@ -244,7 +244,7 @@ export default function VrijwilligersDienstTypeForm() {
           <div>
             <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Herinneringsmail</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Deze tekst wordt 2 weken, 1 week en 2 dagen voor iedere inschrijftaak verstuurd.
+              Deze tekst wordt 2 weken, 1 week en 2 dagen voor iedere inschrijftaak verstuurd. Gepubliceerde taakuitleg die aan deze inschrijftaak is gekoppeld, wordt automatisch als link toegevoegd.
             </p>
           </div>
           <Field label="Onderwerp">

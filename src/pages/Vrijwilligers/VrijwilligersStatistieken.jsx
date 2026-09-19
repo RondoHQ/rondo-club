@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import TabButton from '@/components/TabButton';
+import { getSpeeldag } from '@/utils/teamDisplay';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 const STATISTICS_TABS = [{ id: 'overview', label: 'Algemeen' }, { id: 'teams', label: 'Per team' }];
@@ -385,7 +386,7 @@ function TeamOverview({ teams }) {
         <tbody className="divide-y divide-gray-100 dark:divide-gray-700 text-gray-900 dark:text-gray-100">
           {populatedTeams.map((team) => (
             <tr key={team.id}>
-              <th scope="row" className="py-3 pr-4 text-left font-medium whitespace-nowrap">{team.name}</th>
+              <th scope="row" className="py-3 pr-4 text-left font-medium whitespace-nowrap">{team.name}{team.activiteit && <span className="ml-2 font-normal text-gray-500 dark:text-gray-400">({getSpeeldag(team.activiteit)})</span>}</th>
               <td className="px-3 py-3 text-right tabular-nums">{numberFormat.format(team.people_count)}</td>
               <td className="px-3 py-3 text-right tabular-nums">{numberFormat.format(team.account_count)}</td>
               <td className="px-3 py-3 text-right tabular-nums">{numberFormat.format(team.required_count)}</td>
