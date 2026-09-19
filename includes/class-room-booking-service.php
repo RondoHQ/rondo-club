@@ -695,7 +695,7 @@ final class BookingService {
 				);
 			}
 			if ( ! $context ) {
-				return new \WP_Error( 'rondo_room_context_forbidden', __( 'De reserveringshouder heeft geen actuele vrijwilligersfunctie voor deze commissie of jaarlaag.', 'rondo' ), [ 'status' => 403 ] );
+				return new \WP_Error( 'rondo_room_context_forbidden', __( 'De reserveringshouder mag niet reserveren voor deze groep.', 'rondo' ), [ 'status' => 403 ] );
 			}
 		}
 
