@@ -15,7 +15,7 @@ class AbilitiesTest extends RondoTestCase {
 		$category = wp_get_ability_category( 'rondo-records' );
 		$this->assertNotNull( $category );
 
-		foreach ( [ 'rondo/search-records', 'rondo/get-record', 'rondo/get-field-schema' ] as $name ) {
+		foreach ( [ 'rondo/list-feedback', 'rondo/search-records', 'rondo/get-record', 'rondo/get-field-schema' ] as $name ) {
 			$ability = wp_get_ability( $name );
 			$this->assertNotNull( $ability, "Ability {$name} should be registered." );
 			$this->assertSame( 'rondo-records', $ability->get_category() );
@@ -198,7 +198,7 @@ class AbilitiesTest extends RondoTestCase {
 
 		$this->assertSame( 200, $discovery_response->get_status() );
 		$this->assertSame(
-			[ 'rondo/search-records', 'rondo/get-record', 'rondo/get-field-schema' ],
+			[ 'rondo/list-feedback', 'rondo/search-records', 'rondo/get-record', 'rondo/get-field-schema' ],
 			array_column( $discovery_response->get_data(), 'name' )
 		);
 
