@@ -5,16 +5,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { getTeamName } from '@/utils/formatters';
+import { getSpeeldag, teamNameCollator } from '@/utils/teamDisplay';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import InlineFieldInput from '@/components/InlineFieldInput';
 import SortableHeader from '@/components/SortableHeader';
 import { DataTableToolbar, ColumnSettingsPanel, useColumnVisibility, createColumn, FILTER_TYPES } from '@/components/DataTable';
-
-function getSpeeldag(activiteit) {
-  if (!activiteit) return '';
-  const parts = activiteit.split(/veld\s*-\s*/i);
-  return parts.length > 1 ? parts[parts.length - 1].trim() : activiteit;
-}
 
 function getGenderLabel(gender) {
   if (!gender) return '';
@@ -432,8 +427,8 @@ export default function TeamsList() {
       let valueA, valueB;
 
       if (sortField === 'name') {
-        valueA = (a.title?.rendered || a.title || '').toLowerCase();
-        valueB = (b.title?.rendered || b.title || '').toLowerCase();
+        valueA = getTeamName(a);
+        valueB = getTeamName(b);
       } else if (sortField === 'speeldag') {
         valueA = getSpeeldag(a.fields?.activiteit).toLowerCase();
         valueB = getSpeeldag(b.fields?.activiteit).toLowerCase();
@@ -469,15 +464,15 @@ export default function TeamsList() {
         valueA = String(valueA || '').toLowerCase();
         valueB = String(valueB || '').toLowerCase();
       } else {
-        valueA = (a.title?.rendered || a.title || '').toLowerCase();
-        valueB = (b.title?.rendered || b.title || '').toLowerCase();
+        valueA = getTeamName(a);
+        valueB = getTeamName(b);
       }
 
       if (!valueA && valueB) return sortOrder === 'asc' ? 1 : -1;
       if (valueA && !valueB) return sortOrder === 'asc' ? -1 : 1;
       if (!valueA && !valueB) return 0;
 
-      const comparison = valueA.localeCompare(valueB);
+      const comparison = sortField === 'name' ? teamNameCollator.compare(valueA, valueB) : valueA.localeCompare(valueB);
       return sortOrder === 'asc' ? comparison : -comparison;
     });
   }, [filteredTeams, sortField, sortOrder, listViewFields]);

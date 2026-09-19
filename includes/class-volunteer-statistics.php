@@ -401,6 +401,7 @@ final class VolunteerStatistics {
 			$teams[ $team->ID ] = [
 				'id'               => $team->ID,
 				'name'             => PostTitle::plain( $team->ID ),
+				'activiteit'       => (string) Fields::get_for_post( $team->ID, 'activiteit' ),
 				'people_count'     => 0,
 				'account_count'    => 0,
 				'required_count'   => 0,

@@ -476,12 +476,17 @@ class ShiftEmailScheduler {
 		$subject = $this->substitute_variables( $subject, $vars );
 		$body    = $this->substitute_variables( $body, $vars );
 
+		$body_html = EmailTemplate::format_plain_text( $body );
+		if ( ! $is_survey ) {
+			$body_html .= $this->instruction_links_html( $type_id );
+		}
+
 		$html = EmailTemplate::render(
 			[
 				'eyebrow'      => $is_survey ? 'Enquête inschrijftaak' : 'Herinnering inschrijftaak',
 				'heading'      => $subject,
 				'preheader'    => $subject,
-				'body_html'    => EmailTemplate::format_plain_text( $body ),
+				'body_html'    => $body_html,
 				'cta_url'      => $survey_url,
 				'cta_label'    => $is_survey ? 'Vul de enquête in' : '',
 				'accent_color' => EmailTemplate::accent_color(),
@@ -497,6 +502,29 @@ class ShiftEmailScheduler {
 
 		do_action( 'rondo_shift_email_sent', $shift_id, $person_id, $delivery );
 		return true;
+	}
+
+	/** Link only already-public instructions attached to this task type. */
+	private function instruction_links_html( int $type_id ): string {
+		$links = [];
+		foreach ( get_posts(
+			[
+				'post_type'        => 'taakuitleg',
+				'post_status'      => 'publish',
+				'numberposts'      => -1,
+				'orderby'          => 'title',
+				'order'            => 'ASC',
+				// Same public visibility as the /uitleg page, including in cron.
+				'suppress_filters' => true,
+			]
+		) as $instruction ) {
+			$types = array_map( 'intval', (array) Fields::get_for_post( $instruction->ID, 'dienst_types' ) );
+			if ( ! in_array( $type_id, $types, true ) || $instruction->post_name === '' || $instruction->post_password !== '' ) {
+				continue;
+			}
+			$links[] = sprintf( '<li><a href="%s">%s</a></li>', esc_url( PublicTaakuitlegPage::get_public_url( $instruction->post_name ) ), esc_html( PostTitle::plain( $instruction->ID ) ) );
+		}
+		return $links ? '<h2>Taakuitleg</h2><p>Lees voor je dienst de uitleg:</p><ul>' . implode( '', $links ) . '</ul>' : '';
 	}
 
 	private function template_variables(
