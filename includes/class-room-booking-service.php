@@ -347,7 +347,7 @@ final class BookingService {
 		$increment = max( 5, (int) $room['extension_increment_minutes'] );
 		$new_end   = ( new DateTimeImmutable( $before['effective_end_datetime'] ) )->add( new DateInterval( 'PT' . $increment . 'M' ) );
 		$maximum   = ( new DateTimeImmutable( $before['start_datetime'] ) )->add( new DateInterval( 'PT' . (int) $room['maximum_duration_minutes'] . 'M' ) );
-		if ( $new_end > $maximum || ! $this->within_opening_hours( $room, new DateTimeImmutable( $before['start_datetime'] ), $new_end ) ) {
+		if ( $new_end > $maximum || ( ! BookingEligibility::is_board_member( $actor_user_id ) && ! $this->within_opening_hours( $room, new DateTimeImmutable( $before['start_datetime'] ), $new_end ) ) ) {
 			return new \WP_Error( 'rondo_room_extension_limit', __( 'Deze reservering kan niet verder worden verlengd.', 'rondo' ), [ 'status' => 409 ] );
 		}
 
@@ -670,7 +670,7 @@ final class BookingService {
 		if ( is_wp_error( $start ) || is_wp_error( $end ) ) {
 			return is_wp_error( $start ) ? $start : $end;
 		}
-		$policy = $this->validate_interval( $room, $start, $end, $manager, $booking_type );
+		$policy = $this->validate_interval( $room, $start, $end, $manager, $booking_type, $actor_user_id );
 		if ( is_wp_error( $policy ) ) {
 			return $policy;
 		}
@@ -731,7 +731,7 @@ final class BookingService {
 		];
 	}
 
-	private function validate_interval( array $room, DateTimeImmutable $start, DateTimeImmutable $end, bool $manager, string $booking_type ) {
+	private function validate_interval( array $room, DateTimeImmutable $start, DateTimeImmutable $end, bool $manager, string $booking_type, int $actor_user_id ) {
 		if ( $end <= $start ) {
 			return new \WP_Error( 'rondo_room_interval_invalid', __( 'De eindtijd moet na de starttijd liggen.', 'rondo' ), [ 'status' => 400 ] );
 		}
@@ -741,7 +741,7 @@ final class BookingService {
 			/* translators: %d: booking interval in minutes. */
 			return new \WP_Error( 'rondo_room_interval_step_invalid', sprintf( __( 'Kies tijden op stappen van %d minuten.', 'rondo' ), $interval ), [ 'status' => 400 ] );
 		}
-		if ( $booking_type !== 'management_block' && ! $this->within_opening_hours( $room, $start, $end ) ) {
+		if ( $booking_type !== 'management_block' && ! BookingEligibility::is_board_member( $actor_user_id ) && ! $this->within_opening_hours( $room, $start, $end ) ) {
 			return new \WP_Error( 'rondo_room_closed', __( 'De gekozen tijd valt buiten de openingstijden van deze ruimte.', 'rondo' ), [ 'status' => 409 ] );
 		}
 		if ( ! $manager ) {
