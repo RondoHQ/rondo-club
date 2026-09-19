@@ -322,6 +322,11 @@ export default function VrijwilligersDienstForm() {
           });
         }}
       >
+        {isEdit && assignedIds.length > 0 && !isCancelled && (
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Bij een wijziging van de datum, tijden, soort taak of toelichting krijgen ingeschreven vrijwilligers automatisch een mail met de oude en nieuwe gegevens.
+          </p>
+        )}
         {isEdit && templateLink && (
           templateLink.customized ? (
             <div className="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300">
