@@ -153,7 +153,7 @@ export default function Rooms() {
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Ruimtes</h1>
           <p className="mt-1 text-gray-600 dark:text-gray-400">
-            Reserveer een clubruimte voor je commissie of jaarlaagoverleg.
+            Reserveer een clubruimte voor je commissie, het bestuur of een jaarlaagoverleg.
           </p>
         </div>
         {tab === 'availability' && contexts.length > 0 && (
@@ -296,7 +296,7 @@ function AvailabilityView({ rooms, bookings, date, setDate, loading, canBook, on
       </div>
       {!canBook && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
-          Je kunt de beschikbaarheid bekijken, maar reserveren kan alleen met een actuele vrijwilligersfunctie in een commissie of team.
+          Je kunt de beschikbaarheid bekijken, maar reserveren kan alleen met een bestuursrol of een actuele vrijwilligersfunctie in een commissie of team.
         </div>
       )}
       {loading ? <ContentLoadingSpinner /> : filteredRooms.length === 0 ? (
@@ -465,9 +465,9 @@ function BookingForm({ rooms, memberContexts, manager, initialRoomId, booking, o
   const [holderSearch, setHolderSearch] = useState('');
   const [presenterSearch, setPresenterSearch] = useState('');
   const [presenters, setPresenters] = useState(() => (booking?.authorized_presenter_user_ids || []).map((id) => ({ id, display_name: `Gebruiker ${id}` })));
-  const [contextKey, setContextKey] = useState(() => booking?.booking_context_type === 'commissie'
-    ? `commissie:${booking.commissie_id}`
-    : booking?.age_group_key ? `age_group:${booking.age_group_key}` : '');
+  const [contextKey, setContextKey] = useState(() => booking?.booking_context_type
+    ? contextValue({ ...booking, type: booking.booking_context_type })
+    : '');
   const selectableRooms = useMemo(
     () => rooms.filter((room) => bookingType === 'management_block' || room.booking_enabled || room.id === booking?.room_id),
     [booking?.room_id, bookingType, rooms],
@@ -570,7 +570,7 @@ function BookingForm({ rooms, memberContexts, manager, initialRoomId, booking, o
 
         {bookingType === 'member_reservation' && (
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Commissie of jaarlaag</span>
+            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Reserveren namens</span>
             <select className="input w-full" value={contextKey} onChange={(event) => setContextKey(event.target.value)} disabled={!contexts.length} required>
               {!contexts.length && <option value="">Geen kwalificerende groep</option>}
               {contexts.map((context) => <option key={contextValue(context)} value={contextValue(context)}>{context.label}</option>)}

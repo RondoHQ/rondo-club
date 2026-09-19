@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.94.0] - 2026-09-19
+
+### Added
+- Bestuursleden kunnen ruimtes reserveren namens Bestuur, op basis van de bestuursrol van de reserveringshouder en zonder een aparte commissie aan te maken (feedback #10642).
+
 ## [35.93.0] - 2026-09-19
 
 ### Added
