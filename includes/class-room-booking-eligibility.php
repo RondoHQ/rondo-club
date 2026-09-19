@@ -1,6 +1,6 @@
 <?php
 /**
- * Resolve the commissies and year groups for which one person may reserve a room.
+ * Resolve the groups for which one user may reserve a room.
  *
  * @package Rondo\Rooms
  */
@@ -19,7 +19,19 @@ final class BookingEligibility {
 	/** Return eligible contexts for a WordPress user. */
 	public static function for_user( int $user_id ): array {
 		$person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
-		return $person_id > 0 ? self::for_person( $person_id ) : [];
+		$contexts  = $person_id > 0 ? self::for_person( $person_id ) : [];
+		$user      = get_userdata( $user_id );
+		if ( $user && in_array( 'rondo_bestuur', (array) $user->roles, true ) ) {
+			$contexts[] = [
+				'type'                => 'board',
+				'commissie_id'        => null,
+				'age_group_key'       => null,
+				'eligibility_team_id' => null,
+				'label'               => __( 'Bestuur', 'rondo' ),
+			];
+			usort( $contexts, static fn( array $left, array $right ): int => strnatcasecmp( $left['label'], $right['label'] ) );
+		}
+		return $contexts;
 	}
 
 	/** Return eligible contexts for a linked person. */
@@ -91,6 +103,9 @@ final class BookingEligibility {
 	public static function match( int $user_id, string $type, int $commissie_id, string $age_group_key ): ?array {
 		$age_group_key = self::normalize_age_group( $age_group_key );
 		foreach ( self::for_user( $user_id ) as $context ) {
+			if ( $type === 'board' && $context['type'] === 'board' ) {
+				return $context;
+			}
 			if ( $type === 'commissie' && $context['type'] === 'commissie' && (int) $context['commissie_id'] === $commissie_id ) {
 				return $context;
 			}

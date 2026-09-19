@@ -77,6 +77,82 @@ class RoomBookingsTest extends RondoTestCase {
 		$this->assertSame( 'created', $this->service->activity( $booking['id'] )[0]['action'] );
 	}
 
+	public function test_board_role_can_book_without_a_commission_and_keeps_existing_booking_after_role_removal(): void {
+		$server    = $this->bootRestControllers( [ Rooms::class ] );
+		$holder_id = $this->createRondoUser();
+		$user      = get_userdata( $holder_id );
+		$user->add_role( 'rondo_bestuur' );
+		wp_set_current_user( $holder_id );
+		$contexts = $this->dispatch( $server, 'GET', '/rondo/v1/rooms/booking-contexts' );
+		$this->assertSame( 200, $contexts->get_status() );
+		$this->assertSame( [ 'board' ], array_column( $contexts->get_data(), 'type' ) );
+		$this->assertSame( 'Bestuur', $contexts->get_data()[0]['label'] );
+
+		$times   = $this->future_times();
+		$payload = [
+			'room_id'              => $this->create_room(),
+			'start_datetime'       => $times['start'],
+			'end_datetime'         => $times['end'],
+			'purpose'              => 'Bestuursoverleg',
+			'booking_context_type' => 'board',
+		];
+		$request = new WP_REST_Request( 'POST', '/rondo/v1/rooms/bookings' );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( $payload ) );
+		$response = $server->dispatch( $request );
+		$this->assertSame( 201, $response->get_status() );
+		$booking = $response->get_data();
+		$this->assertSame( 'board', $booking['booking_context_type'] );
+		$this->assertSame( 'Bestuur', $booking['context_label'] );
+		$this->assertEmpty( $booking['commissie_id'] );
+		$this->assertEmpty( $booking['age_group_key'] );
+		$this->assertEmpty( $booking['eligibility_team_id'] );
+
+		$user->remove_role( 'rondo_bestuur' );
+		$this->assertSame( [], BookingEligibility::for_user( $holder_id ) );
+		$updated = $this->service->update_booking( $booking['id'], [ 'purpose' => 'Bestaand overleg bijgewerkt' ], $holder_id, false );
+		$this->assertIsArray( $updated );
+		$this->assertSame( 'Bestuur', $updated['context_label'] );
+		$this->assertSame( 'Bestaand overleg bijgewerkt', $updated['purpose'] );
+		$denied = $this->service->create_booking( $payload, $holder_id );
+		$this->assertWPError( $denied );
+		$this->assertSame( 'rondo_room_context_forbidden', $denied->get_error_code() );
+	}
+
+	public function test_board_context_uses_holder_role_not_manager_or_admin_permissions(): void {
+		$manager_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$holder_id  = $this->createRondoUser();
+		$times      = $this->future_times();
+		$payload    = [
+			'room_id'              => $this->create_room(),
+			'start_datetime'       => $times['start'],
+			'end_datetime'         => $times['end'],
+			'purpose'              => 'Bestuursoverleg',
+			'holder_user_id'       => $holder_id,
+			'booking_context_type' => 'board',
+		];
+		$this->assertSame( [], BookingEligibility::for_user( $manager_id ) );
+		$this->assertSame( [], BookingEligibility::for_user( $holder_id ) );
+		$denied = $this->service->create_booking( $payload, $holder_id );
+		$this->assertWPError( $denied );
+		$this->assertSame( 'rondo_room_context_forbidden', $denied->get_error_code() );
+
+		get_userdata( $manager_id )->add_role( 'rondo_bestuur' );
+		$denied = $this->service->create_booking( $payload, $manager_id, true );
+		$this->assertWPError( $denied );
+		$this->assertSame( 'rondo_room_context_forbidden', $denied->get_error_code() );
+
+		get_userdata( $manager_id )->remove_role( 'rondo_bestuur' );
+		get_userdata( $holder_id )->add_role( 'rondo_bestuur' );
+		$booking = $this->service->create_booking( $payload, $manager_id, true );
+		$this->assertIsArray( $booking );
+		$this->assertSame( $holder_id, $booking['holder_user_id'] );
+		$this->assertSame( 'Bestuur', $booking['context_label'] );
+		$denied = $this->service->update_booking( $booking['id'], [ 'holder_user_id' => $manager_id ], $manager_id, true );
+		$this->assertWPError( $denied );
+		$this->assertSame( 'rondo_room_context_forbidden', $denied->get_error_code() );
+	}
+
 	public function test_blank_entity_type_uses_the_linked_commission_type(): void {
 		$holder_id    = $this->createRondoUser();
 		$commissie_id = self::factory()->post->create(
