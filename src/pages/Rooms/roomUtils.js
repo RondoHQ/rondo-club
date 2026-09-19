@@ -48,6 +48,7 @@ export function upsertAvailabilityBooking(bookings = [], booking, range) {
 }
 
 export function contextValue(context) {
+  if (context.type === 'board') return 'board';
   return context.type === 'commissie'
     ? `commissie:${context.commissie_id}`
     : `age_group:${context.age_group_key}`;

@@ -11,6 +11,13 @@ import {
 
 test('serializes server-derived booking contexts', () => {
   const commissie = { type: 'commissie', commissie_id: 42 };
+  const board = { type: 'board', commissie_id: null, age_group_key: null };
+  assert.equal(contextValue(board), 'board');
+  assert.deepEqual(contextPayload(board), {
+    booking_context_type: 'board',
+    commissie_id: null,
+    age_group_key: '',
+  });
   const ageGroup = { type: 'age_group', age_group_key: 'O12' };
 
   assert.equal(contextValue(commissie), 'commissie:42');
