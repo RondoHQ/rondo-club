@@ -222,7 +222,7 @@ final class WeekendVolunteerMail {
 					'body_html'   => $body,
 					'cta_url'     => home_url( '/vrijwillig' ),
 					'cta_label'   => 'Kies je dienst',
-					'footer_html' => '<p style="margin:0;color:#475569;font-size:13px;line-height:1.6;">Je ontvangt dit overzicht omdat je nog diensten moet inplannen. Zodra je alle diensten hebt ingepland, stopt deze tweewekelijkse mail.</p>',
+					'footer_html' => '<p style="margin:0 0 16px;color:#475569;font-size:14px;line-height:1.6;">Zelf kiezen werkt het fijnst: dan pak je een dienst die in je agenda past. Voldoe je niet aan het <a href="https://www.svawc.nl/vrijwilligers/">vrijwilligersbeleid</a>, dan kan het zijn dat je ingepland wordt. Je ontvangt daar een e-mail over. Kun je dan niet? Ruilen of vervanging regelen mag altijd.</p><p style="margin:0;color:#475569;font-size:13px;line-height:1.6;">Je ontvangt dit overzicht omdat je nog diensten moet inplannen. Zodra je alle diensten hebt ingepland, stopt deze tweewekelijkse mail.</p>',
 				]
 			),
 		];
