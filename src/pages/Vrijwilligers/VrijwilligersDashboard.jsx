@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { HeartHandshake, FileCheck, Wine, CalendarClock, UsersRound, Users, UserRoundCheck, AlertTriangle, RefreshCw, ChartPie } from 'lucide-react';
 import { prmApi } from '@/api/client';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 function StatCard({ label, value, sub, icon: Icon, href }) {
@@ -26,6 +27,7 @@ function StatCard({ label, value, sub, icon: Icon, href }) {
 export default function VrijwilligersDashboard() {
   useDocumentTitle('Vrijwilligers');
   const queryClient = useQueryClient();
+  const { data: currentUser } = useCurrentUser();
 
   const refreshMutation = useMutation({
     mutationFn: () => prmApi.refreshVolunteerCache(),
@@ -210,6 +212,7 @@ export default function VrijwilligersDashboard() {
           Snelle navigatie
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {currentUser?.can_view_people_shift_progress && <StatCard label="Nog in te delen" value="Indelen" sub="Open verplichtingen en toewijzen" icon={UsersRound} href="/vrijwilligers/indelen" />}
           <StatCard label="Statistieken" value="Bekijk" sub="Bezetting en voortgang" icon={ChartPie} href="/vrijwilligers/statistieken" />
           <StatCard label="VOG" value="Beheer" sub="Verklaring Omtrent Gedrag" icon={FileCheck} href="/vrijwilligers/vog" />
           <StatCard label="IVA / Sociale Hygiëne" value="Beheer" sub="Bewijs verantwoord schenken" icon={Wine} href="/vrijwilligers/iva" />
