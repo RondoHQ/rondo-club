@@ -67,8 +67,8 @@ export default defineConfig({
             },
           },
           {
-            // Contact rosters must always recheck the current coaching assignment.
-            urlPattern: /\/wp-json\/rondo\/v1\/my-teams(?:[/?]|$)/i,
+            // Contact rosters and private assignment worklists always need current access and data.
+            urlPattern: /\/wp-json\/rondo\/v1\/(?:my-teams|volunteer-assignments)(?:[/?]|$)/i,
             handler: 'NetworkOnly',
           },
           {
