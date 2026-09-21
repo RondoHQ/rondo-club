@@ -379,6 +379,7 @@ function rondo_init() {
 		new RESTVog();
 		new \Rondo\REST\VogSubmissions();
 		new RESTVolunteer();
+		new \Rondo\REST\VolunteerAssignments();
 		new RESTMemberShifts();
 		new \Rondo\Volunteer\ShiftDayCopier();
 		new RESTFees();

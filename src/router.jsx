@@ -24,7 +24,7 @@ import {
   CustomFields, Login, Profile, ProfileIva, ProfileVog,
   MembershipPassScanner, AccessStatistics,
   ClothingPage,
-  VrijwilligersDashboard, VrijwilligersStatistieken, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten, VrijwilligersAanmeldingen,
+  VrijwilligersDashboard, VrijwilligersIndelen, VrijwilligersStatistieken, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten, VrijwilligersAanmeldingen,
   VrijwilligersDienstForm, VrijwilligersDienstTypeForm, VrijwilligersSjablonen, VrijwilligersSjabloonForm,
   VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig, Household, MembershipPass,
   TaakuitlegList, TaakuitlegForm,
@@ -389,6 +389,14 @@ const router = createBrowserRouter([
               <VrijwilligersRoute>
                 <VrijwilligersDiensten />
               </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/indelen',
+            element: (
+              <CapabilityRoute checkAccess={(user) => user?.can_access_vrijwilligers && user?.can_view_people_shift_progress}>
+                <VrijwilligersIndelen />
+              </CapabilityRoute>
             ),
           },
           {
