@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.96.0] - 2026-09-21
+
+### Added
+- Privé-overzicht “Nog in te delen” voor vrijwilligersbeheerders en bestuur: filter op afgeronde en ingeplande diensten, toon gezinsverplichtingen één keer en wijs direct passende diensten toe met de bestaande toewijzingsmail.
+
 ## [35.95.1] - 2026-09-21
 
 ### Changed

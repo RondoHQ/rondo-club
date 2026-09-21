@@ -80,6 +80,7 @@ const navigation = [
   { name: 'VOG', href: '/vrijwilligers/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'IVA', href: '/vrijwilligers/iva', icon: Wine, indent: true, requiresVrijwilligers: true },
   { name: 'Beheer inschrijftaken', href: '/vrijwilligers/diensten', icon: CalendarClock, indent: true, requiresVrijwilligers: true },
+  { name: 'Nog in te delen', href: '/vrijwilligers/indelen', icon: UsersRound, indent: true, requiresVrijwilligers: true, requiresShiftProgress: true },
   { name: 'Aanmeldingen', href: '/vrijwilligers/aanmeldingen', icon: ClipboardList, indent: true, requiresVrijwilligers: true },
   { name: 'Taakuitleg', href: '/vrijwilligers/taakuitleg', icon: BookOpen, indent: true, requiresVrijwilligers: true },
   { name: 'Vrijstellingen', href: '/vrijwilligers/vrijstellingen', icon: UsersRound, indent: true, requiresVrijwilligers: true },
@@ -216,6 +217,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresToegangscontrole && !canAccessToegangscontrole) return false;
     if (item.requiresClothing && !canAccessClothing) return false;
     if (item.requiresLedenadministratie && !canAccessLedenadministratie) return false;
+    if (item.requiresShiftProgress && !currentUser?.can_view_people_shift_progress) return false;
     if (item.requiresVrijwilligers && !canAccessVrijwilligers) return false;
     if (item.requiresNarrowcasting && !canAccessNarrowcasting) return false;
     if (item.requiresSponsors && !canManageSponsors) return false;
