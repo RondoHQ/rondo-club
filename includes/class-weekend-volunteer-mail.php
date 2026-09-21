@@ -1,5 +1,5 @@
 <?php
-/** Fortnightly Sunday recruitment digest for the weekend thirteen/fourteen days later. */
+/** Fortnightly Sunday recruitment digest for the next three weekends. */
 
 namespace Rondo\Volunteer;
 
@@ -47,7 +47,7 @@ final class WeekendVolunteerMail {
 	/** Inclusive start, exclusive end in the club's local timezone. */
 	public static function weekend( \DateTimeImmutable $sunday ): array {
 		$sunday = $sunday->setTimezone( new \DateTimeZone( 'Europe/Amsterdam' ) )->setTime( 0, 0 );
-		return [ $sunday->modify( '+13 days' ), $sunday->modify( '+15 days' ) ];
+		return [ $sunday->modify( '+6 days' ), $sunday->modify( '+22 days' ) ];
 	}
 
 	private static function now(): \DateTimeImmutable {
@@ -150,7 +150,7 @@ final class WeekendVolunteerMail {
 			} catch ( \Exception $exception ) {
 				continue;
 			}
-			if ( $end <= $start || $start < $from || $start >= $until ) {
+			if ( $end <= $start || $start < $from || $start >= $until || (int) $start->format( 'N' ) < 6 ) {
 				continue;
 			}
 			$iva = (bool) Fields::get_for_post( $type, 'iva_required' ) && ! (bool) Fields::get_for_post( $post->ID, 'iva_waived' );
@@ -193,7 +193,7 @@ final class WeekendVolunteerMail {
 	/** Render the same branded template as the reviewed preview. No sending here. */
 	public function message( array $person_ids, array $shifts, \DateTimeImmutable $sunday ): array {
 		[ $saturday, $monday ] = self::weekend( $sunday );
-		$dates                 = self::date_label( $saturday ) . ' en ' . self::date_label( $monday->modify( '-1 day' ) );
+		$dates                 = self::date_label( $saturday ) . ' t/m ' . self::date_label( $monday->modify( '-1 day' ) );
 		$club                  = ( new FinanceConfig() )->get_display_name();
 		$names                 = array_values( array_unique( array_filter( array_map( static fn( $id ) => trim( (string) Fields::get_for_post( $id, 'first_name' ) ), $person_ids ) ) ) );
 		$greeting              = $names ? 'Hoi ' . implode( ' en ', $names ) . ',' : 'Hoi,';

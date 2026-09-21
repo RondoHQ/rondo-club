@@ -105,8 +105,31 @@ class WeekendVolunteerMailTest extends RondoTestCase {
 			$this->assertSame( $expected, WeekendVolunteerMail::next_sunday( new \DateTimeImmutable( $input, new \DateTimeZone( 'Europe/Amsterdam' ) ) )->format( 'c' ) );
 		}
 		[$start, $end] = WeekendVolunteerMail::weekend( $this->sunday );
-		$this->assertSame( '2026-10-03 00:00:00', $start->format( 'Y-m-d H:i:s' ) );
-		$this->assertSame( '2026-10-05 00:00:00', $end->format( 'Y-m-d H:i:s' ) );
+		$this->assertSame( '2026-09-26 00:00:00', $start->format( 'Y-m-d H:i:s' ) );
+		$this->assertSame( '2026-10-12 00:00:00', $end->format( 'Y-m-d H:i:s' ) );
+	}
+
+	public function test_next_three_weekends_are_included_across_dst_and_year_boundaries(): void {
+		$person = $this->player();
+		foreach ( [
+			[ '2026-10-04', [ '2026-10-10', '2026-10-11', '2026-10-17', '2026-10-18', '2026-10-24', '2026-10-25' ] ],
+			[ '2026-10-18', [ '2026-10-24', '2026-10-25', '2026-10-31', '2026-11-01', '2026-11-07', '2026-11-08' ] ],
+			[ '2026-12-27', [ '2027-01-02', '2027-01-03', '2027-01-09', '2027-01-10', '2027-01-16', '2027-01-17' ] ],
+		] as [$date, $weekends] ) {
+			$ids = [];
+			foreach ( $weekends as $day ) {
+				$ids[] = $this->shift( $day . ' 11:00:00' );
+			}
+			$sunday = new \DateTimeImmutable( $date . ' 19:00:00', new \DateTimeZone( 'Europe/Amsterdam' ) );
+			$rows   = $this->mailer->available_shifts( [ $person ], $sunday );
+			$this->assertSame( $weekends, array_map( static fn( $row ) => $row['start']->format( 'Y-m-d' ), $rows ) );
+			$message = $this->mailer->message( [ $person ], $rows, $sunday );
+			$this->assertSame( 3, substr_count( $message['html'], '>Zaterdag ' ) );
+			$this->assertSame( 3, substr_count( $message['html'], '>Zondag ' ) );
+			foreach ( $ids as $id ) {
+				wp_delete_post( $id, true );
+			}
+		}
 	}
 
 	public function test_weekend_only_current_capacity_grouping_and_certificate_pool_rules(): void {
@@ -114,7 +137,7 @@ class WeekendVolunteerMailTest extends RondoTestCase {
 		$this->shift();
 		$this->shift();
 		$this->shift( '2026-10-04 09:00:00' );
-		foreach ( [ '2026-10-02 23:00:00', '2026-10-05 00:00:00', '2026-09-26 11:00:00' ] as $outside ) {
+		foreach ( [ '2026-10-02 23:00:00', '2026-10-05 00:00:00', '2026-09-20 11:00:00', '2026-09-25 23:59:00', '2026-10-12 00:00:00', '2026-10-17 11:00:00' ] as $outside ) {
 			$this->shift( $outside );
 		}
 		$this->shift( '2026-10-03 08:00:00', [ $person ], 'open', 1 );
@@ -178,7 +201,7 @@ class WeekendVolunteerMailTest extends RondoTestCase {
 		$this->assertSame( 1, $this->mailer->run( $this->sunday ) );
 		$this->assertCount( 1, $this->mail );
 		$this->assertSame( [ 'shared@example.org' ], $this->mail[0]['to'] );
-		$this->assertStringContainsString( '3 oktober en 4 oktober', $this->mail[0]['subject'] );
+		$this->assertStringContainsString( '26 september t/m 11 oktober', $this->mail[0]['subject'] );
 		$this->assertStringContainsString( 'Hoi Anne,', $this->mail[0]['message'] );
 		$this->assertStringNotContainsString( '[voornaam]', $this->mail[0]['message'] );
 		$this->assertSame( 0, $this->mailer->run( $this->sunday->modify( '+2 minutes' ) ) );
