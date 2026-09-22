@@ -6,7 +6,7 @@ import { useMyTournamentEntries, useTournamentCoordinators } from '@/hooks/useTo
 import { formatTournamentDate, tournamentPaymentStatus, tournamentPaymentToneClasses } from './tournamentFormatters';
 
 export default function MyTournaments() {
-  useDocumentTitle('Mijn toernooien');
+  useDocumentTitle('Toernooien');
   const { data: entries = [], isLoading, error } = useMyTournamentEntries();
 
   const isEmpty = !isLoading && !error && entries.length === 0;
@@ -22,7 +22,7 @@ export default function MyTournaments() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Mijn toernooien</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Toernooien</h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
           Gedeelde inschrijfopdrachten van de teams waarvoor je kaderlid bent.
         </p>

@@ -152,7 +152,7 @@ export default function TournamentEntry() {
   return (
     <div className="space-y-6">
       <div>
-        <Link to="/mijn-toernooien" className="mb-3 inline-flex items-center text-sm text-bright-cobalt dark:text-electric-cyan"><ArrowLeft className="mr-1 h-4 w-4" />Mijn toernooien</Link>
+        <Link to="/mijn-toernooien" className="mb-3 inline-flex items-center text-sm text-bright-cobalt dark:text-electric-cyan"><ArrowLeft className="mr-1 h-4 w-4" />Toernooien</Link>
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{entry.tournament.name}</h1>
         <p className="mt-1 text-gray-600 dark:text-gray-400">{entry.team_name} · deadline {formatTournamentDate(entry.tournament.internal_deadline)}</p>
       </div>
