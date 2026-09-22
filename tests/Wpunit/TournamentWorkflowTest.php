@@ -66,7 +66,7 @@ class TournamentWorkflowTest extends RondoTestCase {
 		$this->assertTrue( TournamentAccess::can_manage( self::factory()->user->create( [ 'role' => 'administrator' ] ) ) );
 	}
 
-	public function test_assignment_options_only_include_current_team_kader_with_an_account(): void {
+	public function test_assignment_options_include_current_team_kader_with_and_without_accounts(): void {
 		$team_id  = $this->createOrganization( [ 'post_title' => 'AWC O15-1' ] );
 		$kader_id = $this->createRondoUser( [ 'display_name' => 'Actuele trainer' ] );
 		$this->link_user( $kader_id, [ $this->position( $team_id, 'team', 'Trainer' ) ] );
@@ -82,7 +82,8 @@ class TournamentWorkflowTest extends RondoTestCase {
 
 		$this->assertIsArray( $team );
 		$this->assertSame( 'O15', $team['age_group'] );
-		$this->assertSame( [ $kader_id ], array_column( $team['assignees'], 'user_id' ) );
+		$this->assertSame( [ $kader_id, 0 ], array_column( $team['assignees'], 'user_id' ) );
+		$this->assertSame( $person_without_account, $team['assignees'][1]['person_id'] );
 	}
 
 	public function test_assignment_options_count_current_players_without_requiring_accounts(): void {
@@ -635,6 +636,403 @@ class TournamentWorkflowTest extends RondoTestCase {
 		$this->assertIsArray( $draft );
 		$this->assertSame( 0, $draft['draft_team_entries'][0]['player_count'] );
 		$this->assertSame( 'open', $draft['registration_status'] );
+	}
+
+	public function test_invites_people_without_accounts_and_later_grants_only_the_linked_person_access(): void {
+		$server     = $this->bootRestControllers( [ Tournaments::class ] );
+		$admin      = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$team       = $this->createOrganization( [ 'post_title' => 'AWC O10-4' ] );
+		$person     = $this->pending_staff( $team, 'A trainer zonder account', 'gedeeld@example.test' );
+		$other      = $this->pending_staff( $team, 'B andere trainer', 'gedeeld@example.test' );
+		$tournament = $this->create_tournament( $admin );
+		$mails      = [];
+		$filter     = static function ( $return, $atts ) use ( &$mails ) {
+			$mails[] = $atts;
+			return true;
+		};
+		add_filter( 'pre_wp_mail', $filter, 10, 2 );
+		try {
+			$published = $this->service->publish(
+				$tournament['id'],
+				[
+					[
+						'team_id'    => $team,
+						'person_ids' => [ $person, $other ],
+					],
+				],
+				$admin
+				);
+			$this->assertIsArray( $published );
+			$entry = $published['entries'][0];
+			$this->assertCount( 2, $mails );
+			$this->assertStringContainsString( 'Je hebt nog geen Rondo-account', $mails[0]['message'] );
+			$this->assertStringContainsString( home_url( '/activeren/' ), $mails[0]['message'] );
+			$this->assertStringContainsString( '/mijn-toernooien/' . $entry['id'], $mails[0]['message'] );
+			$this->assertSame( [], $entry['assigned_user_ids'] );
+			$this->assertFalse( metadata_exists( 'post', $entry['id'], '_tournament_assigned_user_0' ) );
+			$this->assertSame( '2', get_post_meta( $entry['id'], 'assignment_snapshot', true ) );
+			$this->assertSame( $person, (int) get_post_meta( $entry['id'], 'assignment_snapshot_0_person_id', true ) );
+			$this->assertSame( '1', get_post_meta( $entry['id'], '_tournament_assigned_person_' . $person, true ) );
+
+			// Sharing the inbox never gives an unrelated account tournament access.
+			$unrelated = $this->createRondoUser( [ 'user_email' => 'gedeeld@example.test' ] );
+			$this->link_user( $unrelated, [] );
+			wp_set_current_user( $unrelated );
+			$this->assertFalse( TournamentAccess::has_assignments( $unrelated ) );
+			$this->assertSame( 403, $server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/tournament-entries/' . $entry['id'] ) )->get_status() );
+
+			$account = $this->createRondoUser( [ 'user_email' => 'eigen-account@example.test' ] );
+			update_user_meta( $account, 'rondo_linked_person_id', $person );
+			wp_set_current_user( $account );
+			$this->assertTrue( TournamentAccess::has_assignments( $account ) );
+			$this->assertTrue( TournamentAccess::is_assigned( $entry['id'], $account ) );
+			$this->assertSame( $entry['id'], $this->service->entries_for_user( $account )[0]['id'] );
+			$response = $server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/tournament-entries/' . $entry['id'] ) );
+			$this->assertSame( 200, $response->get_status() );
+			$this->assertSame( $person, $response->get_data()['contact_candidates'][0]['person_id'] );
+			$this->assertTrue( $response->get_data()['contact_candidates'][0]['is_current_user'] );
+			$this->assertTrue( $response->get_data()['assignees'][0]['invitation_sent'] );
+			$unchanged = $this->service->update_entry_people( $entry['id'], [ $person, $other ], 1, $admin );
+			$this->assertSame( 0, $unchanged['assignment_update']['email_sent_count'] );
+			$this->assertCount( 2, $mails );
+			// Relinking the same account cannot retain access via an old account index.
+			update_user_meta( $account, 'rondo_linked_person_id', $this->createPerson() );
+			$this->assertFalse( TournamentAccess::is_assigned( $entry['id'], $account ) );
+			$this->assertFalse( TournamentAccess::has_assignments( $account ) );
+		} finally {
+			remove_filter( 'pre_wp_mail', $filter, 10 );
+		}
+	}
+
+	public function test_additional_teams_preserve_submitted_entries_and_are_safe_to_retry(): void {
+		$admin      = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$team       = $this->createOrganization( [ 'post_title' => 'AWC O10-1' ] );
+		$user       = $this->createRondoUser();
+		$person     = $this->link_user( $user, [ $this->position( $team, 'team', 'Trainer' ) ] );
+		$tournament = $this->create_tournament( $admin );
+		$published  = $this->service->publish(
+			$tournament['id'],
+			[
+				[
+					'team_id'  => $team,
+					'user_ids' => [ $user ],
+				],
+			],
+			$admin
+			);
+		$entry      = $published['entries'][0];
+		$submitted  = $this->service->submit_entry(
+			$entry['id'],
+			[
+				'version'           => 1,
+				'contact_person_id' => $person,
+				'team_entries'      => [ [ 'player_count' => 10 ] ],
+			],
+			$user
+			);
+		$this->assertIsArray( $submitted );
+		$before     = Fields::all_for_post( $entry['id'] );
+		$extra_team = $this->createOrganization( [ 'post_title' => 'AWC O10-4' ] );
+		$pending    = $this->pending_staff( $extra_team, 'Nieuwe leider', 'leider@example.test' );
+		$selection  = [
+			[
+				'team_id'    => $extra_team,
+				'person_ids' => [ $pending ],
+			],
+		];
+		$mails      = [];
+		$filter     = static function ( $return, $atts ) use ( &$mails ) {
+			$mails[] = $atts;
+			return true;
+		};
+		add_filter( 'pre_wp_mail', $filter, 10, 2 );
+		try {
+			$added = $this->service->invite_teams( $tournament['id'], $selection, $admin );
+			$this->assertIsArray( $added );
+			$this->assertEqualsCanonicalizing( [ $team, $extra_team ], $added['tournament']['target_team_ids'] );
+			$this->assertCount( 2, $this->service->entries_for_tournament( $tournament['id'] ) );
+			$this->assertSame( $before, Fields::all_for_post( $entry['id'] ) );
+			$again = $this->service->invite_teams( $tournament['id'], $selection, $admin );
+			$this->assertSame( $added['entries'][0]['id'], $again['entries'][0]['id'] );
+			$this->assertCount( 1, $mails );
+			$this->assertTrue( $again['emails'][ $added['entries'][0]['id'] ][0]['existing'] );
+			$this->assertSame( $before, Fields::all_for_post( $entry['id'] ) );
+		} finally {
+			remove_filter( 'pre_wp_mail', $filter, 10 ); }
+	}
+
+	public function test_extra_invitation_route_is_manager_only_and_rejects_closed_or_invalid_batches(): void {
+		$server     = $this->bootRestControllers( [ Tournaments::class ] );
+		$admin      = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$tournament = $this->create_tournament( $admin );
+		Fields::update_for_post( $tournament['id'], 'lifecycle_status', 'open' );
+		$team      = $this->createOrganization( [ 'post_title' => 'AWC O10-4' ] );
+		$person    = $this->pending_staff( $team, 'Leider', 'leider@example.test' );
+		$selection = [
+			[
+				'team_id'    => $team,
+				'person_ids' => [ $person ],
+			],
+		];
+		$request   = new WP_REST_Request( 'POST', '/rondo/v1/tournaments/' . $tournament['id'] . '/invite' );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( [ 'assignments' => $selection ] ) );
+		wp_set_current_user( $this->createRondoUser() );
+		$this->assertSame( 403, $server->dispatch( $request )->get_status() );
+		wp_set_current_user( $admin );
+		$invalid = $this->service->invite_teams(
+			$tournament['id'],
+			array_merge(
+			$selection,
+			[
+				[
+					'team_id'    => $team,
+					'person_ids' => [ $this->createPerson() ],
+				],
+			]
+			),
+			$admin
+			);
+		$this->assertWPError( $invalid );
+		$this->assertSame( [], $this->service->entries_for_tournament( $tournament['id'] ) );
+		foreach ( [ 'draft', 'closed', 'archived' ] as $status ) {
+			Fields::update_for_post( $tournament['id'], 'lifecycle_status', $status );
+			$this->assertSame( 409, $server->dispatch( $request )->get_status() );
+		}
+		Fields::update_for_post( $tournament['id'], 'lifecycle_status', 'open' );
+		Fields::update_for_post( $tournament['id'], 'internal_deadline', '2020-01-01 23:59:59' );
+		$this->assertSame( 409, $server->dispatch( $request )->get_status() );
+		Fields::update_for_post( $tournament['id'], 'internal_deadline', current_datetime()->modify( '+5 days' )->format( 'Y-m-d H:i:s' ) );
+		$this->assertSame( 200, $server->dispatch( $request )->get_status() );
+		$other = $this->pending_staff( $team, 'Andere leider', 'andere@example.test' );
+		$this->assertWPError(
+			$this->service->invite_teams(
+			$tournament['id'],
+			[
+				[
+					'team_id'    => $team,
+					'person_ids' => [ $other ],
+				],
+			],
+			$admin
+			)
+			);
+	}
+
+	public function test_pending_assignment_can_be_added_and_revoked_before_account_creation(): void {
+		$server     = $this->bootRestControllers( [ Tournaments::class ] );
+		$admin      = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$team       = $this->createOrganization( [ 'post_title' => 'AWC O10-1' ] );
+		$user       = $this->createRondoUser();
+		$person     = $this->link_user( $user, [ $this->position( $team, 'team', 'Trainer' ) ] );
+		$pending    = $this->pending_staff( $team, 'Later account', 'later@example.test' );
+		$tournament = $this->create_tournament( $admin );
+		$published  = $this->service->publish(
+			$tournament['id'],
+			[
+				[
+					'team_id'  => $team,
+					'user_ids' => [ $user ],
+				],
+			],
+			$admin
+			);
+		$entry      = $published['entries'][0];
+		wp_set_current_user( $admin );
+		$request = new WP_REST_Request( 'PATCH', '/rondo/v1/tournament-entries/' . $entry['id'] . '/assignees' );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body(
+			wp_json_encode(
+			[
+				'version'    => 1,
+				'person_ids' => [ $person, $pending ],
+			]
+			)
+			);
+		$response = $server->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 1, $response->get_data()['assignment_update']['email_sent_count'] );
+		$removed = $this->service->update_entry_people( $entry['id'], [ $person ], $response->get_data()['version'], $admin );
+		$this->assertSame( [ $person ], $removed['assigned_person_ids'] );
+		$this->assertFalse( metadata_exists( 'post', $entry['id'], '_tournament_assigned_person_' . $pending ) );
+		$this->assertFalse( metadata_exists( 'post', $entry['id'], 'assignment_snapshot_1_person_id' ) );
+		$later = $this->createRondoUser();
+		update_user_meta( $later, 'rondo_linked_person_id', $pending );
+		$this->assertFalse( TournamentAccess::is_assigned( $entry['id'], $later ) );
+		$this->assertSame( [], $this->service->entries_for_user( $later ) );
+	}
+
+	public function test_failed_pending_invitation_can_be_retried_without_resending_successful_mail(): void {
+		$admin      = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$team       = $this->createOrganization( [ 'post_title' => 'AWC O10-1' ] );
+		$first      = $this->pending_staff( $team, 'Eerste', 'eerste@example.test' );
+		$second     = $this->pending_staff( $team, 'Tweede', 'tweede@example.test' );
+		$tournament = $this->create_tournament( $admin );
+		$fail       = static fn( $return, $atts ) => ! in_array( 'tweede@example.test', (array) $atts['to'], true );
+		add_filter( 'pre_wp_mail', $fail, 10, 2 );
+		$published  = $this->service->publish(
+			$tournament['id'],
+			[
+				[
+					'team_id'    => $team,
+					'person_ids' => [ $first, $second ],
+				],
+			],
+			$admin
+			);
+		remove_filter( 'pre_wp_mail', $fail, 10 );
+		$entry_id = $published['entries'][0]['id'];
+		$this->assertTrue( $published['emails'][ $entry_id ][0]['sent'] );
+		$this->assertFalse( $published['emails'][ $entry_id ][1]['sent'] );
+		$mails  = [];
+		$filter = static function ( $return, $atts ) use ( &$mails ) {
+			$mails[] = $atts;
+			return true;
+		};
+		add_filter( 'pre_wp_mail', $filter, 10, 2 );
+		try {
+			$retried = $this->service->update_entry_people( $entry_id, [ $first, $second ], 1, $admin );
+			$this->assertSame( 1, $retried['assignment_update']['email_sent_count'] );
+			$this->assertCount( 1, $mails );
+			$this->assertContains( 'tweede@example.test', (array) $mails[0]['to'] );
+			$this->assertTrue( $retried['assignees'][1]['invitation_sent'] );
+			$again = $this->service->update_entry_people( $entry_id, [ $first, $second ], $retried['version'], $admin );
+			$this->assertSame( 0, $again['assignment_update']['email_sent_count'] );
+			$this->assertCount( 1, $mails );
+		} finally {
+			remove_filter( 'pre_wp_mail', $filter, 10 ); }
+	}
+
+	public function test_legacy_invitation_receipts_are_respected_and_pending_payment_receipts_are_distinct(): void {
+		$admin      = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$team       = $this->createOrganization( [ 'post_title' => 'AWC O10-1' ] );
+		$user       = $this->createRondoUser();
+		$person     = $this->link_user( $user, [ $this->position( $team, 'team', 'Trainer' ) ] );
+		$first      = $this->pending_staff( $team, 'Pending 1', 'pending1@example.test' );
+		$second     = $this->pending_staff( $team, 'Pending 2', 'pending2@example.test' );
+		$tournament = $this->create_tournament( $admin );
+		$published  = $this->service->publish(
+			$tournament['id'],
+			[
+				[
+					'team_id'    => $team,
+					'person_ids' => [ $person, $first, $second ],
+				],
+			],
+			$admin
+			);
+		$entry_id   = $published['entries'][0]['id'];
+		delete_post_meta( $entry_id, '_tournament_assignment_email_sent_person_' . $person );
+		update_post_meta( $entry_id, '_tournament_assignment_email_sent_' . $user, current_time( 'mysql' ) );
+		$unchanged = $this->service->update_entry_people( $entry_id, [ $person, $first, $second ], 1, $admin );
+		$this->assertSame( 0, $unchanged['assignment_update']['email_sent_count'] );
+		$submitted = $this->service->submit_entry(
+			$entry_id,
+			[
+				'version'           => $unchanged['version'],
+				'contact_person_id' => $person,
+				'team_entries'      => [ [ 'player_count' => 10 ] ],
+			],
+			$user
+			);
+		$this->assertIsArray( $submitted );
+		$this->assertNotEmpty( get_post_meta( $entry_id, '_tournament_payment_email_sent_person_' . $first, true ) );
+		$this->assertNotEmpty( get_post_meta( $entry_id, '_tournament_payment_email_sent_person_' . $second, true ) );
+		$late_user = $this->createRondoUser();
+		update_user_meta( $late_user, 'rondo_linked_person_id', $first );
+		$result = \Rondo\Tournaments\TournamentPaymentEmail::send_initial( $entry_id );
+		$this->assertSame( 0, $result['sent_count'] );
+	}
+
+	public function test_normal_account_activation_reveals_the_invitation_without_sending_it_again(): void {
+		$admin      = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$team       = $this->createOrganization( [ 'post_title' => 'AWC O10-4' ] );
+		$person     = $this->pending_staff( $team, 'Nieuwe trainer', 'nieuwe-trainer@example.test' );
+		$tournament = $this->create_tournament( $admin );
+		$published  = $this->service->publish(
+			$tournament['id'],
+			[
+				[
+					'team_id'    => $team,
+					'person_ids' => [ $person ],
+				],
+			],
+			$admin
+			);
+		$entry_id   = $published['entries'][0]['id'];
+		$token      = \Rondo\Users\ActivationService::create_token( 'nieuwe-trainer@example.test' );
+		$url        = \Rondo\Users\ActivationService::activate( $token, $person );
+		$this->assertIsString( $url );
+		$account = (int) get_post_meta( $person, \Rondo\Users\UserProvisioning::META_USER_ID, true );
+		$this->assertGreaterThan( 0, $account );
+		$this->assertTrue( TournamentAccess::is_assigned( $entry_id, $account ) );
+		$this->assertSame( $entry_id, $this->service->entries_for_user( $account )[0]['id'] );
+		$this->assertTrue( $this->service->format_entry( $entry_id )['assignees'][0]['invitation_sent'] );
+	}
+
+	public function test_invalid_staff_and_missing_email_are_not_invited_and_lock_prevents_parallel_delivery(): void {
+		$admin   = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$team    = $this->createOrganization( [ 'post_title' => 'AWC O10-1' ] );
+		$person  = $this->pending_staff( $team, 'Trainer', 'trainer@example.test' );
+		$missing = $this->pending_staff( $team, 'Geen e-mail', '' );
+		$former  = $this->pending_staff( $team, 'Oud lid', 'oud@example.test' );
+		Fields::update_for_post( $former, 'former_member', true );
+		$ended = $this->pending_staff( $team, 'Oude trainer', 'oude-trainer@example.test' );
+		Fields::update_for_post(
+			$ended,
+			'work_history',
+			[
+				array_merge(
+				$this->position( $team, 'team', 'Trainer' ),
+				[
+					'is_current' => false,
+					'end_date'   => '2020-01-02',
+				]
+			),
+			]
+			);
+		$tournament = $this->create_tournament( $admin );
+		foreach ( [ $missing, $former, $ended ] as $invalid_id ) {
+			$this->assertWPError(
+				$this->service->publish(
+				$tournament['id'],
+				[
+					[
+						'team_id'    => $team,
+						'person_ids' => [ $invalid_id ],
+					],
+				],
+				$admin
+				)
+				);
+		}
+		add_option( 'rondo_tournament_write_lock_' . $tournament['id'], time(), '', false );
+		$blocked = $this->service->publish(
+			$tournament['id'],
+			[
+				[
+					'team_id'    => $team,
+					'person_ids' => [ $person ],
+				],
+			],
+			$admin
+			);
+		$this->assertWPError( $blocked );
+		$this->assertSame( 'rondo_tournament_write_locked', $blocked->get_error_code() );
+		$this->assertSame( [], $this->service->entries_for_tournament( $tournament['id'] ) );
+		delete_option( 'rondo_tournament_write_lock_' . $tournament['id'] );
+	}
+
+	private function pending_staff( int $team_id, string $name, string $email ): int {
+		return $this->createPerson(
+			[ 'post_title' => $name ],
+			[
+				'first_name'   => $name,
+				'email_1'      => $email,
+				'mobile_1'     => '0612345678',
+				'work_history' => [ $this->position( $team_id, 'team', 'Trainer' ) ],
+			]
+			);
 	}
 
 	private function create_tournament( int $actor_user_id ): array {

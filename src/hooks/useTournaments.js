@@ -71,13 +71,21 @@ export function useSendTournamentChangeNotification() {
 }
 
 export function usePublishTournament() {
+  return useTournamentInvitations(false);
+}
+
+export function useInviteTournamentTeams() {
+  return useTournamentInvitations(true);
+}
+
+function useTournamentInvitations(additional) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, assignments }) => (await prmApi.publishTournament(id, assignments)).data,
+    mutationFn: async ({ id, assignments }) => (await (additional ? prmApi.inviteTournamentTeams(id, assignments) : prmApi.publishTournament(id, assignments))).data,
     onSuccess: (result) => {
       const id = Number(result.tournament.id);
       queryClient.setQueryData(['tournaments', id], result.tournament);
-      queryClient.setQueryData(['tournaments', id, 'entries'], result.entries);
+      queryClient.invalidateQueries({ queryKey: ['tournaments', id, 'entries'] });
       queryClient.invalidateQueries({ queryKey: ['tournaments'] });
     },
   });
@@ -161,8 +169,8 @@ export function useSendTournamentPaymentReminder() {
 }
 
 export function useUpdateTournamentEntryAssignees() {
-  return useManagerEntryMutation(async ({ id, userIds, version }) => (
-    await prmApi.updateTournamentEntryAssignees(id, { user_ids: userIds, version })
+  return useManagerEntryMutation(async ({ id, personIds, version }) => (
+    await prmApi.updateTournamentEntryAssignees(id, { person_ids: personIds, version })
   ).data);
 }
 

@@ -60,7 +60,7 @@ final class TournamentPaymentEmail {
 
 		$recipients = array_values(
 			array_filter(
-				$fields['assignment_snapshot'] ?? [],
+				TournamentAssignees::resolve( $fields['assignment_snapshot'] ?? [] ),
 				static fn( $assignee ): bool => is_array( $assignee ) && is_email( sanitize_email( (string) ( $assignee['email'] ?? '' ) ) )
 			)
 		);
@@ -86,8 +86,8 @@ final class TournamentPaymentEmail {
 		foreach ( $recipients as $assignee ) {
 			$user_id  = (int) ( $assignee['user_id'] ?? 0 );
 			$email    = sanitize_email( (string) $assignee['email'] );
-			$sent_key = '_tournament_payment_email_sent_' . $user_id;
-			if ( $kind === 'initial' && get_post_meta( $entry_id, $sent_key, true ) ) {
+			$sent_key = TournamentAssignees::receipt_key( $assignee, 'payment' );
+			if ( $kind === 'initial' && TournamentAssignees::was_sent( $entry_id, $assignee, 'payment' ) ) {
 				$results[] = [
 					'user_id'  => $user_id,
 					'sent'     => true,

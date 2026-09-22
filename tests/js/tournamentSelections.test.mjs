@@ -11,8 +11,8 @@ import {
 
 test('invitation list and select all exclude teams without current players, even with staff', () => {
   const options = [
-    { id: 10, player_count: 12, assignees: [{ user_id: 1 }] },
-    { id: 20, player_count: 0, assignees: [{ user_id: 2 }] },
+    { id: 10, player_count: 12, assignees: [{ person_id: 1, email: 'trainer@example.test' }] },
+    { id: 20, player_count: 0, assignees: [{ person_id: 2, email: 'leider@example.test' }] },
     { id: 30, player_count: 8, assignees: [] },
     { id: 40, player_count: 0, assignees: [] },
   ];
@@ -26,9 +26,9 @@ test('invitation list and select all exclude teams without current players, even
 
 test('select all includes every eligible team and all of its staff', () => {
   const selected = allEligibleTournamentAssignments([
-    { id: 10, assignees: [{ user_id: 1 }, { user_id: 2 }] },
+    { id: 10, assignees: [{ person_id: 1, email: 'trainer@example.test' }, { person_id: 2, email: 'leider@example.test' }] },
     { id: 20, assignees: [] },
-    { id: 30, assignees: [{ user_id: 3 }] },
+    { id: 30, assignees: [{ person_id: 3, email: 'kader@example.test' }] },
   ]);
 
   assert.deepEqual(selected, { 10: [1, 2], 30: [3] });
@@ -59,6 +59,16 @@ test('assignment delta ignores order and counts added and removed staff', () => 
 test('assignment sync detects changed current staff details', () => {
   const current = [{ user_id: 1, person_id: 11, name: 'Trainer', role: 'Leider', email: 'oud@example.test', mobile: '06' }];
   const candidates = [{ user_id: 1, person_id: 11, name: 'Trainer', role: 'Trainer', email: 'nieuw@example.test', mobile: '06' }];
-  assert.equal(tournamentAssignmentNeedsSync(current, candidates, [1]), true);
-  assert.equal(tournamentAssignmentNeedsSync(candidates, candidates, [1]), false);
+  assert.equal(tournamentAssignmentNeedsSync(current, candidates, [11]), true);
+  assert.equal(tournamentAssignmentNeedsSync(candidates, candidates, [11]), false);
+});
+
+
+test('people without accounts remain distinct and unreachable staff are skipped', () => {
+  const selected = allEligibleTournamentAssignments([
+    { id: 10, assignees: [{ person_id: 31, user_id: 0, email: 'shared@example.test' }, { person_id: 32, user_id: 0, email: 'shared@example.test' }, { person_id: 33, user_id: 0, email: '' }] },
+    { id: 20, assignees: [{ person_id: 40, user_id: 0, email: '' }] },
+  ]);
+  assert.deepEqual(selected, { 10: [31, 32] });
+  assert.equal(tournamentAssignmentCounts(selected).assigneeCount, 2);
 });

@@ -5,11 +5,9 @@ import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   useDeleteTournament,
-  usePublishTournament,
   useSaveTournament,
   useSendTournamentChangeNotification,
   useTournament,
-  useTournamentAssignmentOptions,
 } from '@/hooks/useTournaments';
 import {
   formatTournamentDate,
@@ -17,7 +15,7 @@ import {
   toDateTimeInput,
 } from './tournamentFormatters';
 import TournamentOperations from './TournamentOperations';
-import { allEligibleTournamentAssignments, currentTournamentTeams, tournamentAssignmentCounts } from './tournamentSelections';
+import TournamentInvitations from './TournamentInvitations';
 
 const emptyTournament = {
   name: '',
@@ -250,78 +248,6 @@ function TournamentEditor({ tournament, onCancel }) {
   );
 }
 
-function PublishPanel({ tournament }) {
-  const optionsQuery = useTournamentAssignmentOptions(true);
-  const publishTournament = usePublishTournament();
-  const [selected, setSelected] = useState({});
-  const teams = currentTournamentTeams(optionsQuery.data);
-  const eligibleTeamCount = teams.filter((team) => team.assignees.length > 0).length;
-  const skippedTeamCount = teams.length - eligibleTeamCount;
-  const allEligibleSelected = eligibleTeamCount > 0 && Object.keys(selected).length === eligibleTeamCount;
-  const selectionCounts = tournamentAssignmentCounts(selected);
-
-  const toggleTeam = (team) => {
-    setSelected((current) => {
-      if (current[team.id]) {
-        const next = { ...current };
-        delete next[team.id];
-        return next;
-      }
-      return { ...current, [team.id]: team.assignees.map((assignee) => assignee.user_id) };
-    });
-  };
-
-  const toggleAssignee = (teamId, userId) => {
-    setSelected((current) => {
-      const ids = current[teamId] || [];
-      return { ...current, [teamId]: ids.includes(userId) ? ids.filter((id) => id !== userId) : [...ids, userId] };
-    });
-  };
-
-  const publish = async () => {
-    const assignments = Object.entries(selected).map(([teamId, userIds]) => ({ team_id: Number(teamId), user_ids: userIds }));
-    await publishTournament.mutateAsync({ id: tournament.id, assignments });
-  };
-
-  const toggleAllEligible = () => {
-    setSelected(allEligibleSelected ? {} : allEligibleTournamentAssignments(teams));
-  };
-
-  return (
-    <section className="card space-y-4 p-5">
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Teams en kader uitnodigen</h2>
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Publiceren maakt per gekozen Rondo-team één gedeelde inschrijfopdracht en mailt alle geselecteerde kaderleden.</p>
-      </div>
-      {optionsQuery.isLoading ? <ContentLoadingSpinner /> : null}
-      {!optionsQuery.isLoading ? <div className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-gray-700"><div><p className="font-medium text-gray-900 dark:text-gray-100">Open voor alle teams</p><p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Selecteert alle {eligibleTeamCount} teams met een actief kaderlid en wijst hun volledige actuele kader toe.</p>{skippedTeamCount > 0 ? <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{skippedTeamCount} teams zonder kaderlid met Rondo-account worden overgeslagen.</p> : null}</div><button type="button" className={allEligibleSelected ? 'btn-tertiary' : 'btn-primary'} disabled={eligibleTeamCount === 0} onClick={toggleAllEligible}>{allEligibleSelected ? 'Alles deselecteren' : 'Alle teams selecteren'}</button></div> : null}
-      <div className="grid gap-3 lg:grid-cols-2">
-        {teams.map((team) => {
-          const checked = Object.hasOwn(selected, team.id);
-          return (
-            <div key={team.id} className={`rounded-lg border p-4 ${checked ? 'border-electric-cyan bg-cyan-50/60 dark:bg-cyan-950/20' : 'border-gray-200 dark:border-gray-700'}`}>
-              <label className="flex cursor-pointer items-start gap-3">
-                <input type="checkbox" className="mt-1" checked={checked} disabled={team.assignees.length === 0} onChange={() => toggleTeam(team)} />
-                <span><span className="font-medium text-gray-900 dark:text-gray-100">{team.name}</span><span className="block text-xs text-gray-500">{team.age_group}</span></span>
-              </label>
-              {team.assignees.length === 0 ? <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">Geen actueel kaderlid met Rondo-account.</p> : null}
-              {checked ? <div className="mt-3 space-y-2 border-t border-gray-200 pt-3 dark:border-gray-700">{team.assignees.map((assignee) => (
-                <label key={assignee.user_id} className="flex cursor-pointer items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                  <input type="checkbox" className="mt-0.5" checked={(selected[team.id] || []).includes(assignee.user_id)} onChange={() => toggleAssignee(team.id, assignee.user_id)} />
-                  <span>{assignee.name}<span className="block text-xs text-gray-500">{assignee.role}</span></span>
-                </label>
-              ))}</div> : null}
-            </div>
-          );
-        })}
-      </div>
-      {publishTournament.error ? <ErrorNotice error={publishTournament.error} /> : null}
-      {selectionCounts.teamCount > 0 ? <p className="text-sm text-gray-600 dark:text-gray-300">Je publiceert voor {selectionCounts.teamCount} teams en mailt {selectionCounts.assigneeCount} kaderleden.</p> : null}
-      <div className="flex justify-end"><button type="button" className="btn-primary inline-flex items-center" disabled={publishTournament.isPending || selectionCounts.teamCount === 0 || selectionCounts.hasTeamWithoutAssignee} onClick={publish}><Send className="mr-2 h-4 w-4" />{publishTournament.isPending ? 'Publiceren…' : 'Publiceren en uitnodigen'}</button></div>
-    </section>
-  );
-}
-
 function DeleteTournamentPanel({ tournament }) {
   const navigate = useNavigate();
   const deleteTournament = useDeleteTournament();
@@ -363,6 +289,7 @@ export default function TournamentDetail() {
   const { id } = useParams();
   const isNew = !id || id === 'nieuw';
   const [editing, setEditing] = useState(false);
+  const [invitationResult, setInvitationResult] = useState('');
   const tournamentQuery = useTournament(isNew ? null : id);
   const tournament = tournamentQuery.data;
   useDocumentTitle(isNew ? 'Toernooi toevoegen' : tournament?.name || 'Toernooi');
@@ -381,7 +308,8 @@ export default function TournamentDetail() {
         {tournament && ['open', 'closed'].includes(tournament.lifecycle_status) && !editing ? <button type="button" className="btn-primary inline-flex items-center justify-center" onClick={() => setEditing(true)}><Pencil className="mr-2 h-4 w-4" />Toernooi wijzigen</button> : null}
       </div>
       {(isNew || tournament.lifecycle_status === 'draft' || editing) ? <TournamentEditor key={tournament?.id || 'new'} tournament={tournament} onCancel={() => setEditing(false)} /> : null}
-      {tournament?.lifecycle_status === 'draft' ? <PublishPanel tournament={tournament} /> : null}
+      {tournament?.lifecycle_status === 'draft' ? <TournamentInvitations tournament={tournament} onSent={setInvitationResult} /> : null}
+      {invitationResult ? <p role="status" className="text-sm text-gray-700 dark:text-gray-300">{invitationResult}</p> : null}
       {tournament && tournament.lifecycle_status !== 'draft' && !editing ? <TournamentOperations tournament={tournament} /> : null}
       {tournament ? <DeleteTournamentPanel tournament={tournament} /> : null}
     </div>
