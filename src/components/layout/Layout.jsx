@@ -65,7 +65,7 @@ const navigation = [
   { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, requiresLinkedPerson: true, personal: true },
   { name: 'Mijn team', href: '/mijn-team', icon: Shield, requiresMyTeams: true, personal: true },
   { name: 'Ruimtes', href: '/rooms', icon: CalendarDays, personal: true, requiresFeature: 'rooms' },
-  { name: 'Mijn toernooien', href: '/mijn-toernooien', icon: Trophy, personal: true, requiresTournamentAssignments: true },
+  { name: 'Mijn toernooien', href: '/mijn-toernooien', icon: Trophy, personal: true },
   { name: 'Dashboard', href: '/', icon: Home, sectionCapability: 'can_access_dashboard' },
   { name: 'Relaties', href: '/people', icon: Users, requiresKader: true },
   { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
@@ -112,8 +112,6 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessVrijwilligers = currentUser?.can_access_vrijwilligers ?? false;
   const canAccessNarrowcasting = currentUser?.can_access_narrowcasting ?? false;
   const canManageSponsors = currentUser?.can_manage_sponsors ?? false;
-  const canManageTournaments = currentUser?.can_manage_tournaments ?? false;
-  const hasTournamentAssignments = currentUser?.has_tournament_assignments ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
   const sidebarUserName = currentUser?.linked_person_name || currentUser?.name || '';
 
@@ -221,7 +219,6 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresVrijwilligers && !canAccessVrijwilligers) return false;
     if (item.requiresNarrowcasting && !canAccessNarrowcasting) return false;
     if (item.requiresSponsors && !canManageSponsors) return false;
-    if (item.requiresTournamentAssignments && !hasTournamentAssignments && !canManageTournaments) return false;
     if (item.requiresKader && !isKader) return false;
     return true;
   });

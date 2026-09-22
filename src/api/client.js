@@ -105,6 +105,7 @@ export const prmApi = {
   publishTournament: (id, assignments) => api.post(`/rondo/v1/tournaments/${id}/publish`, { assignments }),
   extendTournamentDeadline: (id, internalDeadline) => api.patch(`/rondo/v1/tournaments/${id}/deadline`, { internal_deadline: internalDeadline }),
   getTournamentEntries: (id) => api.get(`/rondo/v1/tournaments/${id}/entries`),
+  getTournamentCoordinators: () => api.get('/rondo/v1/tournaments/coordinators'),
   getMyTournamentEntries: () => api.get('/rondo/v1/tournament-entries/mine'),
   getMyTeams: () => api.get('/rondo/v1/my-teams'),
   getTournamentEntry: (id) => api.get(`/rondo/v1/tournament-entries/${id}`),
