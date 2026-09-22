@@ -158,7 +158,7 @@ final class TournamentChangeNotificationService {
 					'heading'   => get_the_title( $tournament_id ),
 					'body_html' => $body,
 					'cta_url'   => home_url( '/mijn-toernooien' ),
-					'cta_label' => 'Open Mijn toernooien',
+					'cta_label' => 'Open Toernooien',
 				]
 			);
 			$sent      = (bool) wp_mail( $recipient['email'], $subject, $html, [ 'Content-Type: text/html; charset=UTF-8' ] );
