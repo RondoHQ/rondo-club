@@ -59,6 +59,7 @@ export default function DataTableToolbar({
           <div ref={wrapperRef}>
             <button
               ref={buttonRef}
+              aria-label="Filter"
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className={`btn-tertiary ${
                 hasActiveFilters

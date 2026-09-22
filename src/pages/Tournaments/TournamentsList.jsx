@@ -20,10 +20,13 @@ export default function TournamentsList() {
             Organiseer teaminschrijvingen vanuit de actuele kaderbezetting.
           </p>
         </div>
+        <div className="flex flex-wrap gap-3">
+        <Link to="/toernooien/betalingen" className="btn-secondary">Toernooibetalingen</Link>
         <Link to="/toernooien/nieuw" className="btn-primary inline-flex items-center justify-center">
           <Plus className="mr-2 h-4 w-4" />
           Toernooi toevoegen
         </Link>
+        </div>
       </div>
 
       {error ? (
