@@ -1,13 +1,21 @@
 import { Link } from 'react-router-dom';
-import { CalendarDays, CheckCircle2, ClipboardList } from 'lucide-react';
+import { CalendarDays, CheckCircle2, ClipboardList, Mail, Phone } from 'lucide-react';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { useMyTournamentEntries } from '@/hooks/useTournaments';
+import { useMyTournamentEntries, useTournamentCoordinators } from '@/hooks/useTournaments';
 import { formatTournamentDate, tournamentPaymentStatus, tournamentPaymentToneClasses } from './tournamentFormatters';
 
 export default function MyTournaments() {
   useDocumentTitle('Mijn toernooien');
   const { data: entries = [], isLoading, error } = useMyTournamentEntries();
+
+  const isEmpty = !isLoading && !error && entries.length === 0;
+  const {
+    data: coordinators = [],
+    isLoading: coordinatorsLoading,
+    error: coordinatorsError,
+    refetch: refetchCoordinators,
+  } = useTournamentCoordinators(isEmpty);
 
   if (isLoading) return <ContentLoadingSpinner />;
 
@@ -22,11 +30,46 @@ export default function MyTournaments() {
 
       {error ? <div className="card p-6 text-sm text-red-600 dark:text-red-400">Je toernooien konden niet worden geladen.</div> : null}
 
-      {!error && entries.length === 0 ? (
-        <div className="card p-10 text-center">
-          <ClipboardList className="mx-auto h-10 w-10 text-gray-400" />
+      {isEmpty ? (
+        <div className="card px-5 py-8 text-center sm:p-10">
+          <ClipboardList aria-hidden="true" className="mx-auto h-10 w-10 text-gray-400" />
           <h2 className="mt-3 font-semibold text-gray-900 dark:text-gray-100">Geen openstaande toernooien</h2>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Er zijn nog geen toernooien waarvoor je je hier kunt inschrijven.</p>
+          <p className="mx-auto mt-2 max-w-2xl text-sm text-gray-600 dark:text-gray-400">
+            Er zijn nu geen toernooien waar je je voor in kunt schrijven. Als je graag wel aan een toernooi zou meedoen, neem dan contact op met de toernooicoördinator.
+          </p>
+          <div className="mx-auto mt-6 max-w-2xl border-t border-gray-200 pt-6 text-left dark:border-gray-700">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">Toernooicoördinatoren</h3>
+            {coordinatorsLoading ? <p role="status" className="mt-2 text-sm text-gray-600 dark:text-gray-400">Contactgegevens laden…</p> : null}
+            {coordinatorsError ? (
+              <div className="mt-2 text-sm">
+                <p role="alert" className="text-red-600 dark:text-red-400">De contactgegevens konden niet worden geladen.</p>
+                <button type="button" onClick={() => refetchCoordinators()} className="mt-2 min-h-11 text-bright-cobalt underline underline-offset-2 dark:text-electric-cyan">Opnieuw proberen</button>
+              </div>
+            ) : null}
+            {!coordinatorsLoading && !coordinatorsError && coordinators.length === 0 ? (
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Er zijn nog geen toernooicoördinatoren met contactgegevens vermeld in Rondo.</p>
+            ) : null}
+            <ul className="mt-3 divide-y divide-gray-200 dark:divide-gray-700">
+              {coordinators.map((coordinator) => (
+                <li key={coordinator.id} className="py-3 first:pt-0 last:pb-0">
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{coordinator.name}</p>
+                  <div className="mt-1 flex flex-col items-start text-sm">
+                    {coordinator.email ? (
+                      <a href={`mailto:${coordinator.email}`} className="inline-flex min-h-11 max-w-full items-center gap-2 text-bright-cobalt underline underline-offset-2 dark:text-electric-cyan">
+                        <Mail aria-hidden="true" className="h-4 w-4 shrink-0" /><span className="break-all">{coordinator.email}</span>
+                      </a>
+                    ) : null}
+                    {coordinator.phone ? (
+                      <a href={`tel:${coordinator.phone.replace(/[^+\d]/g, '')}`} className="inline-flex min-h-11 items-center gap-2 text-bright-cobalt underline underline-offset-2 dark:text-electric-cyan">
+                        <Phone aria-hidden="true" className="h-4 w-4 shrink-0" />{coordinator.phone}
+                      </a>
+                    ) : null}
+                    {!coordinator.email && !coordinator.phone ? <p className="mt-1 text-gray-600 dark:text-gray-400">Geen contactgegevens beschikbaar.</p> : null}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       ) : null}
 

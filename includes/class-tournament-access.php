@@ -28,7 +28,11 @@ final class TournamentAccess {
 			return true;
 		}
 
-		$person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+		return self::is_coordinator( (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) );
+	}
+
+	/** Whether a person has a current tournament coordinator role. */
+	public static function is_coordinator( int $person_id ): bool {
 		if ( get_post_type( $person_id ) !== 'person' ) {
 			return false;
 		}

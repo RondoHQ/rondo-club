@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.96.3] - 2026-09-22
+
+### Changed
+- Always show Mijn toernooien to signed-in users, including those without tournament assignments.
+- Show guidance and current tournament coordinator names, email addresses and phone numbers when the personal tournament list is empty.
+
 ## [35.96.2] - 2026-09-22
 
 ### Fixed

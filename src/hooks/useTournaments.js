@@ -96,6 +96,15 @@ export function useExtendTournamentDeadline() {
   });
 }
 
+export function useTournamentCoordinators(enabled = true) {
+  return useQuery({
+    queryKey: ['tournaments', 'coordinators'],
+    queryFn: async () => (await prmApi.getTournamentCoordinators()).data,
+    enabled,
+    staleTime: 60_000,
+  });
+}
+
 export function useMyTournamentEntries() {
   return useQuery({
     queryKey: ['tournament-entries', 'mine'],
