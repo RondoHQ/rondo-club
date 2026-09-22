@@ -112,6 +112,17 @@ final class Tournaments extends Base {
 		);
 		register_rest_route(
 			'rondo/v1',
+			'/tournaments/(?P<id>\d+)/invite',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'invite_teams' ],
+				'permission_callback' => [ $this, 'check_manager_permission' ],
+				'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
 			'/tournaments/(?P<id>\d+)/deadline',
 			[
 				'methods'             => \WP_REST_Server::EDITABLE,
@@ -306,6 +317,12 @@ final class Tournaments extends Base {
 		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 	}
 
+	public function invite_teams( $request ) {
+		$payload = $request->get_json_params() ?: [];
+		$result  = $this->service->invite_teams( absint( $request->get_param( 'id' ) ), is_array( $payload['assignments'] ?? null ) ? $payload['assignments'] : [], get_current_user_id() );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
 	public function send_change_notification( $request ) {
 		$payload = $request->get_json_params() ?: [];
 		$result  = $this->change_notifications->send(
@@ -358,9 +375,11 @@ final class Tournaments extends Base {
 
 	public function update_entry_assignees( $request ) {
 		$payload = $request->get_json_params() ?: [];
-		$result  = $this->service->update_entry_assignees(
+		$method  = array_key_exists( 'person_ids', $payload ) ? 'update_entry_people' : 'update_entry_assignees';
+		$key     = array_key_exists( 'person_ids', $payload ) ? 'person_ids' : 'user_ids';
+		$result  = $this->service->$method(
 			absint( $request->get_param( 'id' ) ),
-			is_array( $payload['user_ids'] ?? null ) ? $payload['user_ids'] : [],
+			is_array( $payload[ $key ] ?? null ) ? $payload[ $key ] : [],
 			absint( $payload['version'] ?? 0 ),
 			get_current_user_id()
 		);

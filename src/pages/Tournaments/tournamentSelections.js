@@ -5,8 +5,8 @@ export function currentTournamentTeams(teams = []) {
 export function allEligibleTournamentAssignments(teams = []) {
   return Object.fromEntries(
     teams
-      .filter((team) => team.assignees?.length > 0)
-      .map((team) => [team.id, team.assignees.map((assignee) => assignee.user_id)]),
+      .filter((team) => team.assignees?.some((assignee) => assignee.email))
+      .map((team) => [team.id, team.assignees.filter((assignee) => assignee.email).map((assignee) => assignee.person_id)]),
   );
 }
 
@@ -19,9 +19,9 @@ export function tournamentAssignmentCounts(selected = {}) {
   };
 }
 
-export function tournamentAssignmentDelta(currentUserIds = [], selectedUserIds = []) {
-  const current = new Set(currentUserIds.map(Number));
-  const selected = new Set(selectedUserIds.map(Number));
+export function tournamentAssignmentDelta(currentPersonIds = [], selectedPersonIds = []) {
+  const current = new Set(currentPersonIds.map(Number));
+  const selected = new Set(selectedPersonIds.map(Number));
   const addedCount = [...selected].filter((userId) => !current.has(userId)).length;
   const removedCount = [...current].filter((userId) => !selected.has(userId)).length;
   return {
@@ -31,14 +31,14 @@ export function tournamentAssignmentDelta(currentUserIds = [], selectedUserIds =
   };
 }
 
-export function tournamentAssignmentNeedsSync(currentAssignees = [], candidates = [], selectedUserIds = []) {
-  const currentByUser = new Map(currentAssignees.map((assignee) => [Number(assignee.user_id), assignee]));
-  const candidatesByUser = new Map(candidates.map((candidate) => [Number(candidate.user_id), candidate]));
-  return selectedUserIds.some((userId) => {
-    const current = currentByUser.get(Number(userId));
-    const candidate = candidatesByUser.get(Number(userId));
+export function tournamentAssignmentNeedsSync(currentAssignees = [], candidates = [], selectedPersonIds = []) {
+  const currentByPerson = new Map(currentAssignees.map((assignee) => [Number(assignee.person_id), assignee]));
+  const candidatesByPerson = new Map(candidates.map((candidate) => [Number(candidate.person_id), candidate]));
+  return selectedPersonIds.some((userId) => {
+    const current = currentByPerson.get(Number(userId));
+    const candidate = candidatesByPerson.get(Number(userId));
     if (!current || !candidate) return false;
-    return ['person_id', 'name', 'role', 'email', 'mobile'].some((field) => (
+    return ['user_id', 'name', 'role', 'email', 'mobile'].some((field) => (
       String(current[field] ?? '') !== String(candidate[field] ?? '')
     ));
   });

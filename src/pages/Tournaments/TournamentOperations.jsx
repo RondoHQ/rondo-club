@@ -29,6 +29,7 @@ import {
   tournamentPaymentStatus,
   tournamentPaymentToneClasses,
 } from './tournamentFormatters';
+import TournamentInvitations from './TournamentInvitations';
 import { tournamentAssignmentDelta, tournamentAssignmentNeedsSync } from './tournamentSelections';
 
 const tabs = [
@@ -208,9 +209,10 @@ function PlannerNote({ entry, archived }) {
 function AssignmentEditor({ entry, candidates, archived, onUpdated }) {
   const updateAssignees = useUpdateTournamentEntryAssignees();
   const [editing, setEditing] = useState(false);
-  const [selected, setSelected] = useState(() => entry.assigned_user_ids || []);
-  const delta = tournamentAssignmentDelta(entry.assigned_user_ids, selected);
+  const [selected, setSelected] = useState(() => entry.assigned_person_ids || []);
+  const delta = tournamentAssignmentDelta(entry.assigned_person_ids, selected);
   const needsSync = tournamentAssignmentNeedsSync(entry.assignees, candidates, selected);
+  const hasUnsent = entry.assignees.some((person) => !person.invitation_sent && selected.includes(person.person_id));
 
   const toggle = (userId) => {
     setSelected((current) => (
@@ -221,14 +223,14 @@ function AssignmentEditor({ entry, candidates, archived, onUpdated }) {
   };
 
   const cancel = () => {
-    setSelected(entry.assigned_user_ids || []);
+    setSelected(entry.assigned_person_ids || []);
     setEditing(false);
   };
 
   const save = async () => {
     const updated = await updateAssignees.mutateAsync({
       id: entry.id,
-      userIds: selected,
+      personIds: selected,
       version: entry.version,
     });
     setEditing(false);
@@ -238,30 +240,31 @@ function AssignmentEditor({ entry, candidates, archived, onUpdated }) {
   return (
     <div className="min-w-64">
       <div className="space-y-1">{entry.assignees.map((assignee) => (
-        <div key={assignee.user_id}>{assignee.name}<span className={`ml-1 text-xs ${assignee.email ? 'text-green-600' : 'text-red-600'}`}>{assignee.email ? 'e-mail aanwezig' : 'e-mail ontbreekt'}</span></div>
+        <div key={assignee.person_id}>{assignee.name}{!assignee.user_id ? <span className="block text-xs text-amber-700 dark:text-amber-300">Nog geen Rondo-account</span> : null}<span className={`ml-1 text-xs ${assignee.email ? 'text-green-600' : 'text-red-600'}`}>{assignee.email ? 'e-mail aanwezig' : 'e-mail ontbreekt'}</span></div>
       ))}</div>
       {!archived && !editing ? (
         <button type="button" className="mt-2 inline-flex items-center text-xs font-medium text-bright-cobalt disabled:text-gray-400 dark:text-electric-cyan" disabled={candidates.length === 0} onClick={() => setEditing(true)}>
           <Users className="mr-1 h-3.5 w-3.5" />Toewijzing wijzigen
         </button>
       ) : null}
-      {!archived && candidates.length === 0 ? <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">Geen actueel teamkader met Rondo-account gevonden.</p> : null}
+      {!archived && candidates.length === 0 ? <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">Geen actueel teamkader gevonden.</p> : null}
       {editing ? (
         <div className="mt-3 space-y-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-          <p className="text-xs text-gray-600 dark:text-gray-400">Nieuwe kaderleden krijgen direct een uitnodiging. Een verwijderd kaderlid verliest meteen toegang.</p>
-          <button type="button" className="text-xs font-medium text-bright-cobalt dark:text-electric-cyan" onClick={() => setSelected(candidates.map((candidate) => candidate.user_id))}>Alle actuele kaderleden selecteren</button>
+          <p className="text-xs text-gray-600 dark:text-gray-400">Nieuwe kaderleden krijgen direct een uitnodiging. Zonder account krijgen ze ook uitleg over account aanmaken. Een verwijderd kaderlid verliest meteen toegang.</p>
+          <button type="button" className="text-xs font-medium text-bright-cobalt dark:text-electric-cyan" onClick={() => setSelected(candidates.filter((candidate) => candidate.email || selected.includes(candidate.person_id)).map((candidate) => candidate.person_id))}>Alle actuele kaderleden selecteren</button>
           <div className="space-y-2">{candidates.map((candidate) => (
-            <label key={candidate.user_id} className="flex cursor-pointer items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <input type="checkbox" className="mt-0.5" checked={selected.includes(candidate.user_id)} onChange={() => toggle(candidate.user_id)} />
-              <span>{candidate.name}<span className="block text-xs text-gray-500">{candidate.role}</span></span>
+            <label key={candidate.person_id} className="flex cursor-pointer items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <input type="checkbox" className="mt-0.5" disabled={!candidate.email && !selected.includes(candidate.person_id)} checked={selected.includes(candidate.person_id)} onChange={() => toggle(candidate.person_id)} />
+              <span>{candidate.name}<span className="block text-xs text-gray-500">{candidate.role}{!candidate.user_id ? ' · Nog geen Rondo-account' : ''}{!candidate.email ? ' · E-mailadres ontbreekt' : ''}</span></span>
             </label>
           ))}</div>
           <p className="text-xs text-gray-500">{delta.addedCount} toegevoegd · {delta.removedCount} verwijderd</p>
+          {hasUnsent ? <p className="text-sm text-amber-800 dark:text-amber-200">Er zijn uitnodigingen die nog niet zijn verstuurd. Opslaan probeert deze opnieuw.</p> : null}
           {needsSync && !delta.changed ? <p className="text-xs text-gray-500">De actuele kadergegevens worden bijgewerkt.</p> : null}
           {entry.registration_status === 'open' ? <p className="text-xs text-gray-500">Een gekozen contactpersoon wordt gewist als die niet langer is toegewezen.</p> : null}
           {updateAssignees.error ? <p className="text-xs text-red-600">{errorMessage(updateAssignees.error)}</p> : null}
           <div className="flex flex-wrap gap-2">
-            <button type="button" className="btn-primary text-xs" disabled={(!delta.changed && !needsSync) || selected.length === 0 || updateAssignees.isPending} onClick={save}>{updateAssignees.isPending ? 'Opslaan…' : 'Toewijzing opslaan'}</button>
+            <button type="button" className="btn-primary text-xs" disabled={(!delta.changed && !needsSync && !hasUnsent) || selected.length === 0 || updateAssignees.isPending} onClick={save}>{updateAssignees.isPending ? 'Opslaan…' : hasUnsent && !delta.changed && !needsSync ? 'Uitnodigingen opnieuw proberen' : 'Toewijzing opslaan'}</button>
             <button type="button" className="btn-tertiary text-xs" disabled={updateAssignees.isPending} onClick={cancel}>Annuleren</button>
           </div>
         </div>
@@ -413,6 +416,8 @@ function CommunicationPanel({ tournament }) {
 
 export default function TournamentOperations({ tournament }) {
   const [activeTab, setActiveTab] = useState('overview');
+  const [inviting, setInviting] = useState(false);
+  const [invitationResult, setInvitationResult] = useState(null);
   const entriesQuery = useTournamentEntries(tournament.id);
   const assignmentOptionsQuery = useTournamentAssignmentOptions(activeTab === 'teams' && tournament.lifecycle_status !== 'archived');
   return (
@@ -423,6 +428,13 @@ export default function TournamentOperations({ tournament }) {
         </nav>
       </div>
       {activeTab === 'overview' ? <OverviewPanel tournament={tournament} /> : null}
+      {activeTab === 'teams' && tournament.lifecycle_status === 'open' ? (
+        <div className="space-y-4">
+          <button type="button" className="btn-tertiary inline-flex items-center" aria-expanded={inviting} onClick={() => setInviting((value) => !value)}><Users className="mr-2 h-4 w-4" />{inviting ? 'Uitnodigen sluiten' : 'Extra teams uitnodigen'}</button>
+          {inviting ? <TournamentInvitations tournament={tournament} additional onSent={setInvitationResult} /> : null}
+        </div>
+      ) : null}
+      {invitationResult ? <p role="status" className="text-sm text-gray-700 dark:text-gray-300">{invitationResult}</p> : null}
       {activeTab === 'teams' ? <TeamsPaymentsPanel tournament={tournament} entries={entriesQuery.data || []} assignmentOptions={assignmentOptionsQuery.data || []} isLoading={entriesQuery.isLoading || assignmentOptionsQuery.isLoading} error={entriesQuery.error || assignmentOptionsQuery.error} /> : null}
       {activeTab === 'communication' ? <CommunicationPanel tournament={tournament} /> : null}
     </div>

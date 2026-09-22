@@ -425,6 +425,10 @@ final class TournamentService {
 
 	/** Publish a tournament and create one shared entry per selected team. */
 	public function publish( int $tournament_id, array $assignments, int $actor_user_id ) {
+		return $this->with_tournament_lock( $tournament_id, fn() => $this->publish_locked( $tournament_id, $assignments, $actor_user_id ) );
+	}
+
+	private function publish_locked( int $tournament_id, array $assignments, int $actor_user_id ) {
 		$tournament = $this->format_tournament( $tournament_id, false );
 		if ( empty( $tournament ) ) {
 			return new \WP_Error( 'rondo_tournament_not_found', __( 'Toernooi niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
@@ -440,33 +444,14 @@ final class TournamentService {
 			return $payment_configuration;
 		}
 
-		$available_by_team = [];
-		foreach ( $this->assignment_options() as $team ) {
-			$available_by_team[ (int) $team['id'] ] = $team;
-		}
-
-		$prepared = [];
-		foreach ( $assignments as $assignment ) {
-			$team_id  = absint( $assignment['team_id'] ?? 0 );
-			$user_ids = array_values( array_unique( array_filter( array_map( 'absint', $assignment['user_ids'] ?? [] ) ) ) );
-			if ( ! isset( $available_by_team[ $team_id ] ) ) {
-				return new \WP_Error( 'rondo_tournament_team_invalid', __( 'Een geselecteerd team bestaat niet meer.', 'rondo' ), [ 'status' => 400 ] );
-			}
-			$allowed_ids = array_map( static fn( array $candidate ): int => (int) $candidate['user_id'], $available_by_team[ $team_id ]['assignees'] );
-			if ( empty( $user_ids ) || array_diff( $user_ids, $allowed_ids ) ) {
-				/* translators: %s: team name. */
-				$message = sprintf( __( 'Kies minimaal één actueel kaderlid voor %s.', 'rondo' ), $available_by_team[ $team_id ]['name'] );
-				return new \WP_Error( 'rondo_tournament_assignees_invalid', $message, [ 'status' => 400 ] );
-			}
-			$prepared[ $team_id ] = [
-				'team'     => $available_by_team[ $team_id ],
-				'user_ids' => $user_ids,
-			];
+		$prepared = $this->prepare_assignments( $assignments );
+		if ( is_wp_error( $prepared ) ) {
+			return $prepared;
 		}
 
 		$entry_results = [];
 		foreach ( $prepared as $team_id => $item ) {
-			$entry = $this->create_entry( $tournament_id, $item['team'], $item['user_ids'], $actor_user_id );
+			$entry = $this->create_entry( $tournament_id, $item['team'], $item['person_ids'], $actor_user_id );
 			if ( is_wp_error( $entry ) ) {
 				return $entry;
 			}
@@ -505,6 +490,111 @@ final class TournamentService {
 			'entries'    => $entry_results,
 			'emails'     => $email_results,
 		];
+	}
+
+	/** Validate the complete selection before creating entries or sending mail. */
+	private function prepare_assignments( array $assignments ) {
+		if ( empty( $assignments ) ) {
+			return new \WP_Error( 'rondo_tournament_assignments_required', __( 'Selecteer minimaal één team.', 'rondo' ), [ 'status' => 400 ] );
+		}
+		$available_by_team = [];
+		foreach ( $this->assignment_options() as $team ) {
+			$available_by_team[ (int) $team['id'] ] = $team;
+		}
+
+		$prepared = [];
+		foreach ( $assignments as $assignment ) {
+			$team_id = absint( $assignment['team_id'] ?? 0 );
+			if ( ! is_array( $assignment ) ) {
+				return new \WP_Error( 'rondo_tournament_assignees_invalid', __( 'Controleer de geselecteerde kaderleden.', 'rondo' ), [ 'status' => 400 ] );
+			}
+			$person_ids = $this->assignment_person_ids( $assignment, $available_by_team[ $team_id ]['assignees'] ?? [] );
+			if ( ! isset( $available_by_team[ $team_id ] ) ) {
+				return new \WP_Error( 'rondo_tournament_team_invalid', __( 'Een geselecteerd team bestaat niet meer.', 'rondo' ), [ 'status' => 400 ] );
+			}
+			$allowed_ids = array_map( static fn( array $candidate ): int => (int) $candidate['person_id'], $available_by_team[ $team_id ]['assignees'] );
+			if ( empty( $person_ids ) || array_diff( $person_ids, $allowed_ids ) ) {
+				/* translators: %s: team name. */
+				$message = sprintf( __( 'Kies minimaal één actueel kaderlid voor %s.', 'rondo' ), $available_by_team[ $team_id ]['name'] );
+				return new \WP_Error( 'rondo_tournament_assignees_invalid', $message, [ 'status' => 400 ] );
+			}
+			foreach ( $available_by_team[ $team_id ]['assignees'] as $candidate ) {
+				if ( in_array( (int) $candidate['person_id'], $person_ids, true ) && ! is_email( $candidate['email'] ) ) {
+					return new \WP_Error( 'rondo_tournament_email_missing', __( 'Vul eerst een e-mailadres in voor de geselecteerde kaderleden.', 'rondo' ), [ 'status' => 400 ] );
+				}
+			}
+			$prepared[ $team_id ] = [
+				'team'       => $available_by_team[ $team_id ],
+				'person_ids' => $person_ids,
+			];
+		}
+
+		return $prepared;
+	}
+
+	/** Keep older clients sending user_ids compatible with person-based invitations. */
+	private function assignment_person_ids( array $selection, array $candidates ): array {
+		if ( array_key_exists( 'person_ids', $selection ) ) {
+			return is_array( $selection['person_ids'] ) ? array_values( array_unique( array_filter( array_map( 'absint', $selection['person_ids'] ) ) ) ) : [];
+		}
+		$users   = is_array( $selection['user_ids'] ?? null ) ? $selection['user_ids'] : [];
+		$by_user = array_column( array_filter( $candidates, static fn( array $candidate ): bool => (int) $candidate['user_id'] > 0 ), 'person_id', 'user_id' );
+		return array_values( array_unique( array_map( static fn( $id ): int => (int) ( $by_user[ absint( $id ) ] ?? 0 ), $users ) ) );
+	}
+
+	/** Add teams after publication; existing team registrations are never replaced. */
+	public function invite_teams( int $tournament_id, array $assignments, int $actor_user_id ) {
+		return $this->with_tournament_lock(
+			$tournament_id,
+			function () use ( $tournament_id, $assignments, $actor_user_id ) {
+				$tournament = $this->format_tournament( $tournament_id, false );
+				if ( empty( $tournament ) ) {
+					return new \WP_Error( 'rondo_tournament_not_found', __( 'Toernooi niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+				}
+				if ( ! $this->deadline_is_open( $tournament ) ) {
+					return new \WP_Error( 'rondo_tournament_invitation_closed', __( 'Open het toernooi en verleng zo nodig de interne deadline voordat je extra teams uitnodigt.', 'rondo' ), [ 'status' => 409 ] );
+				}
+				$prepared = $this->prepare_assignments( $assignments );
+				if ( is_wp_error( $prepared ) ) {
+					return $prepared;
+				}
+				foreach ( $prepared as $team_id => $item ) {
+					$existing_id = $this->find_entry( $tournament_id, $team_id );
+					if ( $existing_id > 0 ) {
+						$existing_entry = $this->format_entry( $existing_id );
+						$current_ids    = $existing_entry['assigned_person_ids'];
+						if ( array_diff( $item['person_ids'], $current_ids ) || array_diff( $current_ids, $item['person_ids'] ) ) {
+							return new \WP_Error( 'rondo_tournament_team_already_invited', __( 'Dit team is al uitgenodigd. Gebruik Toewijzing wijzigen om kaderleden toe te voegen.', 'rondo' ), [ 'status' => 409 ] );
+						}
+					}
+				}
+				$entries    = [];
+				$emails     = [];
+				$target_ids = array_map( 'intval', $tournament['target_team_ids'] );
+				foreach ( $prepared as $team_id => $item ) {
+					$existing = $this->find_entry( $tournament_id, $team_id );
+					$entry    = $this->create_entry( $tournament_id, $item['team'], $item['person_ids'], $actor_user_id );
+					if ( is_wp_error( $entry ) ) {
+						return $entry;
+					}
+					$entries[]    = $entry;
+					$target_ids[] = $team_id;
+					// Persist each addition so a partial failure remains safely retryable.
+					Fields::update_for_post( $tournament_id, 'target_team_ids', array_values( array_unique( $target_ids ) ) );
+					if ( ! $existing ) {
+						Fields::update_for_post( $tournament_id, 'version', (int) Fields::get_for_post( $tournament_id, 'version' ) + 1 );
+						TournamentActivityLog::record( $tournament_id, 'tournament_teams_invited', $actor_user_id, [ 'team_id' => $team_id ] );
+					}
+					// Successful receipts are skipped, including when a request is retried.
+					$emails[ $entry['id'] ] = $this->send_assignment_emails( $entry, $tournament );
+				}
+				return [
+					'tournament' => $this->format_tournament( $tournament_id, true ),
+					'entries'    => $entries,
+					'emails'     => $emails,
+				];
+			}
+		);
 	}
 
 	/** Extend the internal response deadline for an open tournament. */
@@ -719,15 +809,11 @@ final class TournamentService {
 				'orderby'          => 'date',
 				'order'            => 'DESC',
 				'suppress_filters' => true,
-				'meta_query'       => [
-					[
-						'key'     => '_tournament_assigned_user_' . $user_id,
-						'compare' => 'EXISTS',
-					],
-				],
+				'meta_query'       => TournamentAccess::assignment_query( $user_id ),
 			]
 		);
 
+		$ids = array_filter( $ids, static fn( $id ): bool => TournamentAccess::is_assigned( (int) $id, $user_id ) );
 		return array_map( fn( int $id ): array => $this->format_entry( $id ), array_map( 'intval', $ids ) );
 	}
 
@@ -744,8 +830,12 @@ final class TournamentService {
 		$age_group     = (string) ( $fields['age_group_snapshot'] ?? '' );
 		$status        = (string) ( $fields['registration_status'] ?? 'open' );
 		$payment       = $this->payments->payment_summary( $entry_id, $fields );
-		$assignments   = array_values( $fields['assignment_snapshot'] ?? [] );
-		$contacts      = $this->contact_candidates( $assignments );
+		$assignments   = TournamentAssignees::resolve( array_values( $fields['assignment_snapshot'] ?? [] ) );
+		foreach ( $assignments as &$assignee ) {
+			$assignee['invitation_sent'] = TournamentAssignees::was_sent( $entry_id, $assignee, 'assignment' );
+		}
+		unset( $assignee );
+		$contacts = $this->contact_candidates( $assignments );
 		if ( $status === 'submitted' && in_array( $payment['payment_state'], [ 'error', 'expired' ], true ) ) {
 			TournamentPaymentRetryScheduler::schedule( $entry_id );
 		}
@@ -759,7 +849,8 @@ final class TournamentService {
 				'team_name'              => (string) ( $fields['team_name_snapshot'] ?? '' ),
 				'age_group'              => $age_group,
 				'age_number'             => $this->age_number( $age_group ),
-				'assigned_user_ids'      => array_values( array_map( static fn( array $row ): int => (int) ( $row['user_id'] ?? 0 ), $assignments ) ),
+				'assigned_user_ids'      => array_values( array_filter( array_map( static fn( array $row ): int => (int) ( $row['user_id'] ?? 0 ), $assignments ) ) ),
+				'assigned_person_ids'    => array_values( array_map( static fn( array $row ): int => (int) ( $row['person_id'] ?? 0 ), $assignments ) ),
 				'assignees'              => $assignments,
 				'contact_candidates'     => $contacts,
 				'contact_person_id'      => (int) ( $fields['contact_person_id'] ?? 0 ),
@@ -962,6 +1053,22 @@ final class TournamentService {
 
 	/** Replace the assigned team staff for one published tournament entry. */
 	public function update_entry_assignees( int $entry_id, array $user_ids, int $expected_version, int $actor_user_id ) {
+		$entry      = $this->format_entry( $entry_id );
+		$candidates = [];
+		foreach ( $this->assignment_options() as $team ) {
+			if ( $team['id'] === ( $entry['team_id'] ?? 0 ) ) {
+				$candidates = $team['assignees'];
+				break;
+			}
+		}
+		$person_ids = $this->assignment_person_ids( [ 'user_ids' => $user_ids ], $candidates );
+		if ( in_array( 0, $person_ids, true ) ) {
+			return new \WP_Error( 'rondo_tournament_assignees_invalid', __( 'Kies alleen actuele kaderleden van dit team.', 'rondo' ), [ 'status' => 400 ] );
+		}
+		return $this->update_entry_people( $entry_id, $person_ids, $expected_version, $actor_user_id );
+	}
+
+	public function update_entry_people( int $entry_id, array $person_ids, int $expected_version, int $actor_user_id ) {
 		$entry = $this->format_entry( $entry_id );
 		if ( empty( $entry ) ) {
 			return new \WP_Error( 'rondo_tournament_entry_not_found', __( 'Inschrijfopdracht niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
@@ -970,14 +1077,14 @@ final class TournamentService {
 			return new \WP_Error( 'rondo_tournament_assignment_readonly', __( 'De toewijzing van dit toernooi kan niet meer worden gewijzigd.', 'rondo' ), [ 'status' => 409 ] );
 		}
 
-		$user_ids = array_values( array_unique( array_filter( array_map( 'absint', $user_ids ) ) ) );
-		if ( empty( $user_ids ) ) {
+		$person_ids = array_values( array_unique( array_filter( array_map( 'absint', $person_ids ) ) ) );
+		if ( empty( $person_ids ) ) {
 			return new \WP_Error( 'rondo_tournament_assignees_required', __( 'Kies minimaal één actueel kaderlid.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
 		$result = $this->with_tournament_lock(
 			(int) $entry['tournament_id'],
-			function () use ( $actor_user_id, $entry_id, $expected_version, $user_ids ) {
+			function () use ( $actor_user_id, $entry_id, $expected_version, $person_ids ) {
 				$locked_entry = $this->format_entry( $entry_id );
 				if ( empty( $locked_entry ) ) {
 					return new \WP_Error( 'rondo_tournament_entry_not_found', __( 'Inschrijfopdracht niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
@@ -1003,22 +1110,27 @@ final class TournamentService {
 					)
 				);
 				$available   = is_array( $team_option ) ? array_values( $team_option['assignees'] ?? [] ) : [];
-				$allowed_ids = array_map( static fn( array $candidate ): int => (int) $candidate['user_id'], $available );
-				if ( array_diff( $user_ids, $allowed_ids ) ) {
-					return new \WP_Error( 'rondo_tournament_assignees_invalid', __( 'Kies alleen actuele kaderleden van dit team met een actief Rondo-account.', 'rondo' ), [ 'status' => 400 ] );
+				$allowed_ids = array_map( static fn( array $candidate ): int => (int) $candidate['person_id'], $available );
+				if ( array_diff( $person_ids, $allowed_ids ) ) {
+					return new \WP_Error( 'rondo_tournament_assignees_invalid', __( 'Kies alleen actuele kaderleden van dit team.', 'rondo' ), [ 'status' => 400 ] );
 				}
 
-				$previous_ids     = array_values( array_map( 'intval', $locked_entry['assigned_user_ids'] ) );
-				$added_ids        = array_values( array_diff( $user_ids, $previous_ids ) );
-				$removed_ids      = array_values( array_diff( $previous_ids, $user_ids ) );
-				$selected         = array_values(
+				$previous_ids = array_values( array_map( 'intval', $locked_entry['assigned_person_ids'] ) );
+				$added_ids    = array_values( array_diff( $person_ids, $previous_ids ) );
+				$removed_ids  = array_values( array_diff( $previous_ids, $person_ids ) );
+				$selected     = array_values(
 					array_filter(
 						$available,
-						static fn( array $candidate ): bool => in_array( (int) $candidate['user_id'], $user_ids, true )
+						static fn( array $candidate ): bool => in_array( (int) $candidate['person_id'], $person_ids, true )
 					)
 				);
+				foreach ( $selected as $candidate ) {
+					if ( in_array( (int) $candidate['person_id'], $added_ids, true ) && ! is_email( $candidate['email'] ) ) {
+						return new \WP_Error( 'rondo_tournament_email_missing', __( 'Vul eerst een e-mailadres in voor de geselecteerde kaderleden.', 'rondo' ), [ 'status' => 400 ] );
+					}
+				}
 				$snapshot_changed = $this->normalize_assignment_snapshots( $selected ) !== $this->normalize_assignment_snapshots( $locked_entry['assignees'] );
-				if ( empty( $added_ids ) && empty( $removed_ids ) && ! $snapshot_changed ) {
+				if ( empty( $added_ids ) && empty( $removed_ids ) && ! $snapshot_changed && ! array_filter( $locked_entry['assignees'], static fn( array $row ): bool => empty( $row['invitation_sent'] ) ) ) {
 					$locked_entry['assignment_update'] = [
 						'added_count'          => 0,
 						'removed_count'        => 0,
@@ -1044,22 +1156,13 @@ final class TournamentService {
 					}
 				}
 
+				$previous_snapshot = Fields::get_for_post( $entry_id, 'assignment_snapshot' ) ?: [];
 				Fields::update_many_for_post( $entry_id, $updates );
-				foreach ( $removed_ids as $user_id ) {
-					delete_post_meta( $entry_id, '_tournament_assigned_user_' . $user_id );
-				}
-				foreach ( $user_ids as $user_id ) {
-					update_post_meta( $entry_id, '_tournament_assigned_user_' . $user_id, 1 );
-				}
+				$this->index_assignments( $entry_id, $selected, $previous_snapshot );
 
 				$updated                  = $this->format_entry( $entry_id );
 				$email_entry              = $updated;
-				$email_entry['assignees'] = array_values(
-					array_filter(
-						$updated['assignees'],
-						static fn( array $assignee ): bool => in_array( (int) $assignee['user_id'], $added_ids, true )
-					)
-				);
+				$email_entry['assignees'] = array_values( array_filter( $updated['assignees'], static fn( array $row ): bool => in_array( (int) $row['person_id'], $added_ids, true ) || empty( $row['invitation_sent'] ) ) );
 				$email_results            = $this->send_assignment_emails( $email_entry, $updated['tournament'] );
 				$sent_count               = count( array_filter( $email_results, static fn( array $email ): bool => ! empty( $email['sent'] ) && empty( $email['existing'] ) ) );
 				$existing_count           = count( array_filter( $email_results, static fn( array $email ): bool => ! empty( $email['existing'] ) ) );
@@ -1069,14 +1172,15 @@ final class TournamentService {
 					'entry_assignments_updated',
 					$actor_user_id,
 					[
-						'added_user_ids'       => $added_ids,
-						'removed_user_ids'     => $removed_ids,
+						'added_person_ids'     => $added_ids,
+						'removed_person_ids'   => $removed_ids,
 						'snapshot_refreshed'   => $snapshot_changed,
 						'email_sent_count'     => $sent_count,
 						'email_existing_count' => $existing_count,
 						'email_failed_count'   => $failed_count,
 					]
 				);
+				$updated                      = $this->format_entry( $entry_id );
 				$updated['assignment_update'] = [
 					'added_count'          => count( $added_ids ),
 					'removed_count'        => count( $removed_ids ),
@@ -1143,6 +1247,9 @@ final class TournamentService {
 			]
 		);
 		delete_post_meta( $entry_id, '_tournament_payment_error' );
+		foreach ( $entry['assignees'] as $assignee ) {
+			delete_post_meta( $entry_id, TournamentAssignees::receipt_key( $assignee, 'payment' ) );
+		}
 		foreach ( $entry['assigned_user_ids'] as $user_id ) {
 			delete_post_meta( $entry_id, '_tournament_payment_email_sent_' . (int) $user_id );
 		}
@@ -1155,7 +1262,7 @@ final class TournamentService {
 		return $this->format_entry( $entry_id );
 	}
 
-	private function create_entry( int $tournament_id, array $team, array $user_ids, int $actor_user_id ) {
+	private function create_entry( int $tournament_id, array $team, array $person_ids, int $actor_user_id ) {
 		$existing = $this->find_entry( $tournament_id, (int) $team['id'] );
 		if ( $existing > 0 ) {
 			return $this->format_entry( $existing );
@@ -1178,7 +1285,7 @@ final class TournamentService {
 
 		$candidates = [];
 		foreach ( $team['assignees'] as $candidate ) {
-			if ( in_array( (int) $candidate['user_id'], $user_ids, true ) ) {
+			if ( in_array( (int) $candidate['person_id'], $person_ids, true ) ) {
 				$candidates[] = $candidate;
 			}
 		}
@@ -1195,12 +1302,23 @@ final class TournamentService {
 				'version'             => 1,
 			]
 		);
-		foreach ( $user_ids as $user_id ) {
-			update_post_meta( (int) $entry_id, '_tournament_assigned_user_' . $user_id, 1 );
-		}
-		TournamentActivityLog::record( (int) $entry_id, 'entry_created', $actor_user_id, [ 'assigned_user_count' => count( $user_ids ) ] );
+		$this->index_assignments( (int) $entry_id, $candidates );
+		TournamentActivityLog::record( (int) $entry_id, 'entry_created', $actor_user_id, [ 'assigned_person_count' => count( $person_ids ) ] );
 
 		return $this->format_entry( (int) $entry_id );
+	}
+
+	private function index_assignments( int $entry_id, array $assignments, array $previous = [] ): void {
+		foreach ( $previous as $assignee ) {
+			delete_post_meta( $entry_id, '_tournament_assigned_user_' . (int) ( $assignee['user_id'] ?? 0 ) );
+			delete_post_meta( $entry_id, '_tournament_assigned_person_' . (int) ( $assignee['person_id'] ?? 0 ) );
+		}
+		foreach ( $assignments as $assignee ) {
+			if ( (int) $assignee['user_id'] > 0 ) {
+				update_post_meta( $entry_id, '_tournament_assigned_user_' . (int) $assignee['user_id'], 1 );
+			}
+			update_post_meta( $entry_id, '_tournament_assigned_person_' . (int) $assignee['person_id'], 1 );
+		}
 	}
 
 	private function find_entry( int $tournament_id, int $team_id ): int {
@@ -1229,20 +1347,32 @@ final class TournamentService {
 	}
 
 	private function kader_candidates_by_team(): array {
-		$users   = get_users(
+		$person_ids = get_posts(
 			[
-				'fields'   => [ 'ID', 'display_name', 'user_email' ],
-				'meta_key' => 'rondo_linked_person_id',
-				'number'   => -1,
+				'post_type'        => 'person',
+				'post_status'      => 'publish',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'suppress_filters' => true,
+				'meta_query'       => [
+					[
+						'key'     => 'work_history',
+						'value'   => 0,
+						'compare' => '>',
+						'type'    => 'NUMERIC',
+					],
+				],
 			]
-		);
-		$by_team = [];
-
-		foreach ( $users as $user ) {
-			$person_id = (int) get_user_meta( (int) $user->ID, 'rondo_linked_person_id', true );
-			if ( get_post_type( $person_id ) !== 'person' || Fields::get_for_post( $person_id, 'former_member' ) ) {
+			);
+		$users      = TournamentAssignees::users_by_person( $person_ids );
+		$by_team    = [];
+		foreach ( $person_ids as $person_id ) {
+			$person_id = (int) $person_id;
+			if ( Fields::get_for_post( $person_id, 'former_member' ) ) {
 				continue;
 			}
+			$user = $users[ $person_id ] ?? null;
+
 			$roles_by_team = [];
 			foreach ( Fields::get_for_post( $person_id, 'work_history' ) ?: [] as $position ) {
 				if ( ! is_array( $position ) || ! VolunteerStatus::is_position_current( $position ) || ! VolunteerStatus::is_volunteer_position( $position ) ) {
@@ -1258,12 +1388,12 @@ final class TournamentService {
 				}
 			}
 
-			$name   = $this->person_name( $person_id, (string) $user->display_name );
-			$email  = sanitize_email( (string) ( UserProvisioning::contact_email( (int) $user->ID ) ?? '' ) );
+			$name   = $this->person_name( $person_id, $user ? (string) $user->display_name : get_the_title( $person_id ) );
+			$email  = TournamentAssignees::email( $person_id, $user ? (int) $user->ID : 0 );
 			$mobile = $this->person_mobile( $person_id );
 			foreach ( $roles_by_team as $team_id => $roles ) {
 				$by_team[ $team_id ][] = [
-					'user_id'   => (int) $user->ID,
+					'user_id'   => $user ? (int) $user->ID : 0,
 					'person_id' => $person_id,
 					'name'      => $name,
 					'role'      => implode( ', ', array_values( array_unique( $roles ) ) ),
@@ -1347,15 +1477,16 @@ final class TournamentService {
 		foreach ( $entry['assignees'] as $assignee ) {
 			$user_id = (int) ( $assignee['user_id'] ?? 0 );
 			$email   = sanitize_email( (string) ( $assignee['email'] ?? '' ) );
-			if ( $user_id <= 0 || ! is_email( $email ) ) {
+			if ( ! is_email( $email ) ) {
 				$results[] = [
-					'user_id' => $user_id,
-					'sent'    => false,
+					'user_id'   => $user_id,
+					'person_id' => (int) ( $assignee['person_id'] ?? 0 ),
+					'sent'      => false,
 				];
 				continue;
 			}
-			$sent_key = '_tournament_assignment_email_sent_' . $user_id;
-			if ( get_post_meta( $entry['id'], $sent_key, true ) ) {
+			$sent_key = TournamentAssignees::receipt_key( $assignee, 'assignment' );
+			if ( TournamentAssignees::was_sent( $entry['id'], $assignee, 'assignment' ) ) {
 				$results[] = [
 					'user_id'  => $user_id,
 					'sent'     => true,
@@ -1374,12 +1505,16 @@ final class TournamentService {
 				esc_html( wp_date( 'j F Y', strtotime( $tournament['internal_deadline'] ) ) ),
 				wpautop( wp_kses_post( $tournament['description'] ) )
 			);
+			if ( $user_id <= 0 ) {
+				$message .= '<p>Je hebt nog geen Rondo-account. Maak eerst een account aan om je team voor dit toernooi aan te melden. Gebruik het e-mailadres waarop je deze uitnodiging ontvangt en kies je eigen naam.</p><p>Na het aanmaken van je account vind je de uitnodiging onder <strong>Toernooien</strong>. Je kunt ook deze e-mail opnieuw openen en de inschrijving hieronder bekijken.</p>';
+				$message .= '<p><a href="' . esc_url( $url ) . '">Open de inschrijving na het aanmaken van je account</a></p>';
+			}
 			$message = EmailTemplate::render(
 				[
 					'heading'   => $subject,
 					'body_html' => $message,
-					'cta_url'   => $url,
-					'cta_label' => 'Open de inschrijving in Rondo',
+					'cta_url'   => $user_id > 0 ? $url : home_url( '/activeren/' ),
+					'cta_label' => $user_id > 0 ? 'Open de inschrijving in Rondo' : 'Rondo-account aanmaken',
 				]
 			);
 			$sent    = wp_mail( $email, $subject, $message, [ 'Content-Type: text/html; charset=UTF-8' ] );
@@ -1387,8 +1522,9 @@ final class TournamentService {
 				update_post_meta( $entry['id'], $sent_key, current_datetime()->format( 'Y-m-d H:i:s' ) );
 			}
 			$results[] = [
-				'user_id' => $user_id,
-				'sent'    => (bool) $sent,
+				'user_id'   => $user_id,
+				'person_id' => (int) ( $assignee['person_id'] ?? 0 ),
+				'sent'      => (bool) $sent,
 			];
 		}
 		return $results;
@@ -1467,7 +1603,7 @@ final class TournamentService {
 		$acquired = add_option( $key, time(), '', false );
 		if ( ! $acquired ) {
 			$locked_at = (int) get_option( $key, 0 );
-			if ( $locked_at > 0 && $locked_at < time() - 30 ) {
+			if ( $locked_at > 0 && $locked_at < time() - 600 ) {
 				delete_option( $key );
 				$acquired = add_option( $key, time(), '', false );
 			}

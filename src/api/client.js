@@ -102,6 +102,7 @@ export const prmApi = {
   sendTournamentChangeNotification: (id, data) => api.post(`/rondo/v1/tournaments/${id}/change-notification`, data),
   deleteTournament: (id) => api.delete(`/rondo/v1/tournaments/${id}`),
   getTournamentAssignmentOptions: () => api.get('/rondo/v1/tournaments/assignment-options'),
+  inviteTournamentTeams: (id, assignments) => api.post(`/rondo/v1/tournaments/${id}/invite`, { assignments }),
   publishTournament: (id, assignments) => api.post(`/rondo/v1/tournaments/${id}/publish`, { assignments }),
   extendTournamentDeadline: (id, internalDeadline) => api.patch(`/rondo/v1/tournaments/${id}/deadline`, { internal_deadline: internalDeadline }),
   getTournamentEntries: (id) => api.get(`/rondo/v1/tournaments/${id}/entries`),

@@ -21,6 +21,7 @@ final class TournamentActivityLog {
 		'tournament_created'                              => 'Toernooi aangemaakt',
 		'tournament_updated'                              => 'Toernooi bijgewerkt',
 		'tournament_published_updated'                    => 'Gepubliceerd toernooi bijgewerkt',
+		'tournament_teams_invited'                        => 'Extra team uitgenodigd',
 		'tournament_published'                            => 'Toernooi gepubliceerd',
 		'entry_created'                                   => 'Inschrijfopdracht aangemaakt',
 		'entry_assignments_updated'                       => 'Toewijzing bijgewerkt',
