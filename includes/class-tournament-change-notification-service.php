@@ -9,7 +9,6 @@ namespace Rondo\Tournaments;
 
 use Rondo\Fields\Fields;
 use Rondo\Notifications\EmailTemplate;
-use Rondo\Users\UserProvisioning;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -55,10 +54,10 @@ final class TournamentChangeNotificationService {
 		foreach ( $entry_ids as $entry_id ) {
 			$fields    = Fields::all_for_post( (int) $entry_id );
 			$team_name = (string) ( $fields['team_name_snapshot'] ?? '' );
-			foreach ( $fields['assignment_snapshot'] ?? [] as $assignee ) {
+			foreach ( TournamentAssignees::resolve( $fields['assignment_snapshot'] ?? [] ) as $assignee ) {
 				$user_id = (int) ( $assignee['user_id'] ?? 0 );
 				$user    = $user_id > 0 ? get_userdata( $user_id ) : false;
-				$email   = $user ? sanitize_email( (string) ( UserProvisioning::contact_email( $user_id ) ?? '' ) ) : '';
+				$email   = sanitize_email( (string) ( $assignee['email'] ?? '' ) );
 				$this->add_recipient(
 					$unique,
 					$invalid,

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.97.0] - 2026-09-22
+
+### Added
+- Invite additional teams to an open published tournament without changing existing registrations or payments.
+- Invite current team staff without a Rondo account, with account creation instructions and access to their existing invitation after normal account activation.
+
+### Changed
+- Select tournament staff by person, show missing accounts and email addresses, and preserve invitation receipts across account creation.
+- Retry failed invitations without resending successful invitations; include invited staff without accounts in tournament communication and payment emails.
+
 ## [35.96.4] - 2026-09-22
 
 ### Changed
