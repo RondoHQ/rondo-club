@@ -196,13 +196,15 @@ final class Schedules {
 		return (int) substr( $time, 0, 2 ) * 60 + (int) substr( $time, 3, 2 );
 	}
 
-	public static function validate_blocks( $blocks ) {
+	public static function validate_blocks( $blocks, array $existing_blocks = [] ) {
 		if ( ! is_array( $blocks ) || ! ( array_values( $blocks ) === $blocks ) || count( $blocks ) > 1000 ) {
 			return self::error( 'Een schema mag maximaal 1000 trainingsblokken bevatten.' );
 		}
-		$pitch_ids = array_column( self::settings()['pitches'], 'id' );
-		$seen      = [];
-		$validated = [];
+		// Only persisted links on the same block may retain an archived (draft) team.
+		$existing_teams = array_column( $existing_blocks, 'team_ids', 'block_id' );
+		$pitch_ids      = array_column( self::settings()['pitches'], 'id' );
+		$seen           = [];
+		$validated      = [];
 		foreach ( $blocks as $index => $block ) {
 			$prefix = 'Blok ' . ( $index + 1 ) . ': ';
 			if ( ! is_array( $block ) || array_diff( array_keys( $block ), [ 'block_id', 'label', 'team_ids', 'pitch_id', 'day', 'start', 'duration', 'size', 'offset', 'age_group_id' ] ) ) {
@@ -216,7 +218,8 @@ final class Schedules {
 				return self::error( $prefix . 'ongeldige teams.' );
 			}
 			foreach ( $block['team_ids'] as $team_id ) {
-				if ( ! is_int( $team_id ) || get_post_type( $team_id ) !== 'team' || get_post_status( $team_id ) !== 'publish' ) {
+				$retained = is_int( $team_id ) && get_post_status( $team_id ) === 'draft' && in_array( $team_id, $existing_teams[ $block['block_id'] ] ?? [], true );
+				if ( ! is_int( $team_id ) || get_post_type( $team_id ) !== 'team' || ( get_post_status( $team_id ) !== 'publish' && ! $retained ) ) {
 					return self::error( $prefix . 'team bestaat niet of is niet actief.' );
 				}
 			}
@@ -269,7 +272,7 @@ final class Schedules {
 		if ( ( $data['revision'] ?? null ) !== $revision ) {
 			return self::error( 'Dit schema is intussen gewijzigd. Vernieuw de pagina voordat je opnieuw opslaat.', 409 );
 		}
-		$blocks = self::validate_blocks( $data['blocks'] ?? null );
+		$blocks = self::validate_blocks( $data['blocks'] ?? null, $id ? Fields::get_for_post( $id, 'blocks' ) ?: [] : [] );
 		if ( is_wp_error( $blocks ) ) {
 			return $blocks;
 		}
