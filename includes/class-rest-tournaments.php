@@ -52,6 +52,15 @@ final class Tournaments extends Base {
 		);
 		register_rest_route(
 			'rondo/v1',
+			'/tournaments/coordinators',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_coordinators' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
+		);
+		register_rest_route(
+			'rondo/v1',
 			'/tournaments/assignment-options',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -320,6 +329,10 @@ final class Tournaments extends Base {
 			return new \WP_Error( 'rondo_tournament_not_found', __( 'Toernooi niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
 		}
 		return rest_ensure_response( $this->service->entries_for_tournament( $id ) );
+	}
+
+	public function get_coordinators() {
+		return rest_ensure_response( $this->service->coordinators() );
 	}
 
 	public function get_my_entries() {
