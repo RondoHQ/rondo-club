@@ -519,7 +519,7 @@ const router = createBrowserRouter([
           { path: 'mijn-gegevens', element: <Household /> },
           { path: 'mijn-team', element: <CapabilityRoute checkAccess={(user) => user?.has_my_teams}><MyTeam /></CapabilityRoute> },
           { path: 'mijn-gegevens/pas/:personId', element: <MembershipPass /> },
-          { path: 'mijn-toernooien', element: <TournamentAssignmentRoute><MyTournaments /></TournamentAssignmentRoute> },
+          { path: 'mijn-toernooien', element: <MyTournaments /> },
           { path: 'mijn-toernooien/:id', element: <TournamentAssignmentRoute><TournamentEntry /></TournamentAssignmentRoute> },
           // Legacy: /vrijwillig/profiel is verplaatst naar /profile/iva.
           { path: 'vrijwillig/profiel', element: <Navigate to="/profile/iva" replace /> },

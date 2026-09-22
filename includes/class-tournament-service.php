@@ -341,6 +341,45 @@ final class TournamentService {
 		];
 	}
 
+	/** Return the coordinator contact directory for signed-in members. */
+	public function coordinators(): array {
+		// This directory intentionally exposes only coordinator contact details,
+		// including for members without access to the full person record.
+		$person_ids = get_posts(
+			[
+				'post_type'        => 'person',
+				'post_status'      => 'publish',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'meta_query'       => [
+					[
+						'key'         => '^work_history_[0-9]+_job_title$',
+						'compare_key' => 'REGEXP',
+						'value'       => TournamentAccess::MANAGER_ROLE,
+						'compare'     => 'LIKE',
+					],
+				],
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+			]
+		);
+		$contacts   = [];
+		foreach ( $person_ids as $person_id ) {
+			$person_id = (int) $person_id;
+			if ( Fields::get_for_post( $person_id, 'former_member' ) || ! TournamentAccess::is_coordinator( $person_id ) ) {
+				continue;
+			}
+			$contacts[] = [
+				'id'    => $person_id,
+				'name'  => $this->person_name( $person_id, html_entity_decode( get_the_title( $person_id ), ENT_QUOTES, 'UTF-8' ) ),
+				'email' => sanitize_email( (string) ( Fields::get_for_post( $person_id, 'email_1' ) ?: Fields::get_for_post( $person_id, 'email_2' ) ) ),
+				'phone' => $this->person_mobile( $person_id ) ?: sanitize_text_field( (string) ( Fields::get_for_post( $person_id, 'telephone_1' ) ?: Fields::get_for_post( $person_id, 'telephone_2' ) ) ),
+			];
+		}
+		usort( $contacts, static fn( array $left, array $right ): int => strnatcasecmp( $left['name'], $right['name'] ) );
+		return $contacts;
+	}
+
 	/** Return team and kader options for the publication review. */
 	public function assignment_options(): array {
 		$teams      = [];
