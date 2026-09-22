@@ -56,9 +56,17 @@ final class TournamentAccess {
 			return false;
 		}
 
-		$assignments = Fields::get_for_post( $entry_id, 'assignment_snapshot' ) ?: [];
-		$assigned    = array_map( static fn( array $row ): int => (int) ( $row['user_id'] ?? 0 ), $assignments );
-		return in_array( $user_id, $assigned, true );
+		if ( get_post_status( $entry_id ) === 'trash' ) {
+			return false;
+		}
+		$person_id = self::linked_person( $user_id );
+		foreach ( Fields::get_for_post( $entry_id, 'assignment_snapshot' ) ?: [] as $row ) {
+			$assigned_person = (int) ( $row['person_id'] ?? 0 );
+			if ( $assigned_person > 0 ? $assigned_person === $person_id : (int) ( $row['user_id'] ?? 0 ) === $user_id ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** Whether a user may read one tournament entry. */
@@ -77,21 +85,45 @@ final class TournamentAccess {
 		$ids = get_posts(
 			[
 				'post_type'        => TournamentService::ENTRY_POST_TYPE,
-				'post_status'      => 'any',
-				'posts_per_page'   => 1,
+				'post_status'      => 'publish',
+				'posts_per_page'   => -1,
 				'fields'           => 'ids',
 				'no_found_rows'    => true,
 				'suppress_filters' => true,
-				'meta_query'       => [
-					[
-						'key'     => '_tournament_assigned_user_' . $user_id,
-						'compare' => 'EXISTS',
-					],
-				],
+				'meta_query'       => self::assignment_query( $user_id ),
 			]
 		);
 
-		return ! empty( $ids );
+		foreach ( $ids as $entry_id ) {
+			if ( self::is_assigned( (int) $entry_id, $user_id ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Include pending invitations once the normal account flow links this person. */
+	public static function assignment_query( int $user_id ): array {
+		$query     = [
+			'relation' => 'OR',
+			[
+				'key'     => '_tournament_assigned_user_' . $user_id,
+				'compare' => 'EXISTS',
+			],
+		];
+		$person_id = self::linked_person( $user_id );
+		if ( $person_id > 0 ) {
+			$query[] = [
+				'key'     => '_tournament_assigned_person_' . $person_id,
+				'compare' => 'EXISTS',
+			];
+		}
+		return $query;
+	}
+
+	private static function linked_person( int $user_id ): int {
+		$person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+		return get_post_type( $person_id ) === 'person' && get_post_status( $person_id ) === 'publish' && ! Fields::get_for_post( $person_id, 'former_member' ) ? $person_id : 0;
 	}
 
 	private static function normalize_role( string $role ): string {
