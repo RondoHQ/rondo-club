@@ -88,6 +88,7 @@ const navigation = [
   { name: 'Financiën', href: '/financien', icon: Wallet, requiresFinancieel: true },
   { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true },
+  { name: 'Toernooibetalingen', href: '/toernooien/betalingen', icon: Trophy, indent: true, requiresFinancieel: true },
   { name: 'Betaalstatistieken', href: '/financien/betaalstatistieken', icon: TrendingUp, indent: true, requiresFinancieel: true },
   { name: 'Lidpas Scanner', href: '/lidpas-scanner', icon: QrCode, requiresToegangscontrole: true, mobileOnly: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare, requiresKader: true },
@@ -740,6 +741,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback, showFeedbackIntro, 
     if (path.startsWith('/people/wijzigingslog')) return 'Wijzigingslog';
     if (path.startsWith('/people')) return 'Relaties';
     if (path.startsWith('/sponsors')) return 'Sponsoren';
+    if (path === '/toernooien/betalingen') return 'Toernooibetalingen';
     if (path === '/financien' || path === '/financien/') return 'Financiën';
     if (path.startsWith('/financien/contributie')) return 'Contributie';
     if (path.startsWith('/financien/facturen')) return 'Facturen';

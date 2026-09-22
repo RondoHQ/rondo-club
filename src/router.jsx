@@ -30,7 +30,7 @@ import {
   TaakuitlegList, TaakuitlegForm,
   Narrowcasting, NarrowcastingDisplay, PresentationSender,
   Rooms, Training,
-  TournamentsList, TournamentDetail, MyTournaments, TournamentEntry,
+  TournamentsList, TournamentDetail, MyTournaments, TournamentEntry, TournamentPayments,
 } from './lazyPages';
 
 // Page loader for Suspense fallback
@@ -605,6 +605,7 @@ const router = createBrowserRouter([
           { path: 'teams', element: <CapabilityRoute checkAccess={(user) => user?.can_access_teams}><TeamsList /></CapabilityRoute> },
           { path: 'teams/:id', element: <CapabilityRoute checkAccess={(user) => user?.can_access_teams || user?.has_my_teams}><TeamDetail /></CapabilityRoute> },
           { path: 'kaderlijst', element: <KaderlijstRoute><Kaderlijst /></KaderlijstRoute> },
+          { path: 'toernooien/betalingen', element: <CapabilityRoute checkAccess={(user) => user?.can_manage_tournaments || user?.can_access_financieel}><TournamentPayments /></CapabilityRoute> },
           { path: 'toernooien', element: <TournamentManagerRoute><TournamentsList /></TournamentManagerRoute> },
           { path: 'toernooien/nieuw', element: <TournamentManagerRoute><TournamentDetail /></TournamentManagerRoute> },
           { path: 'toernooien/:id', element: <TournamentManagerRoute><TournamentDetail /></TournamentManagerRoute> },

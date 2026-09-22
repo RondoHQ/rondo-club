@@ -95,6 +95,7 @@ export const prmApi = {
   getVersion: () => api.get('/rondo/v1/version'),
 
   // Tournaments
+  getTournamentPayments: () => api.get('/rondo/v1/tournaments/payments'),
   getTournaments: () => api.get('/rondo/v1/tournaments'),
   getTournament: (id) => api.get(`/rondo/v1/tournaments/${id}`),
   createTournament: (data) => api.post('/rondo/v1/tournaments', data),

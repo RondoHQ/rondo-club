@@ -48,6 +48,61 @@ final class TournamentService {
 		return array_map( fn( int $id ): array => $this->format_tournament( $id, true ), array_map( 'intval', $ids ) );
 	}
 
+	/** Read-only financial overview; deliberately excludes assignment/contact payloads and payment URLs. */
+	public function payment_overview(): array {
+		$entries    = get_posts(
+			[
+				'post_type'              => self::ENTRY_POST_TYPE,
+				'post_status'            => 'publish',
+				'posts_per_page'         => -1,
+				'orderby'                => [
+					'date' => 'DESC',
+					'ID'   => 'DESC',
+				],
+				'suppress_filters'       => true,
+				'update_post_term_cache' => false,
+				'meta_query'             => [
+					[
+						'key'   => 'registration_status',
+						'value' => 'submitted',
+					],
+				],
+			]
+		);
+		$rows       = [];
+		$statistics = new \Rondo\Finance\InvoiceStatistics();
+		foreach ( $entries as $entry ) {
+			$fields        = Fields::all_for_post( $entry->ID );
+			$tournament_id = (int) ( $fields['tournament_id'] ?? 0 );
+			if ( get_post_type( $tournament_id ) !== self::TOURNAMENT_POST_TYPE || ! in_array( get_post_status( $tournament_id ), [ 'draft', 'publish' ], true ) ) {
+				continue;
+			}
+			$payment    = $this->payments->payment_summary( $entry->ID, $fields );
+			$invoice_id = (int) $payment['invoice_id'];
+			$is_paid    = $payment['payment_state'] === 'paid';
+			$paid_at    = $is_paid && $invoice_id ? $statistics->get_fully_paid_at( $invoice_id ) : null;
+			$method     = $is_paid && $invoice_id ? (string) get_post_meta( $invoice_id, '_mollie_payment_method', true ) : '';
+			if ( $is_paid && $invoice_id && get_post_meta( $invoice_id, '_manually_marked_paid_at', true ) ) {
+				$method = 'manual';
+			}
+			$rows[] = [
+				'id'                    => (int) $entry->ID,
+				'tournament_id'         => $tournament_id,
+				'tournament_name'       => get_the_title( $tournament_id ),
+				'team_name'             => (string) ( $fields['team_name_snapshot'] ?? '' ),
+				'registration_status'   => 'submitted',
+				'registered_team_count' => (int) ( $fields['registered_team_count'] ?? 0 ),
+				'total_amount'          => (float) ( $fields['total_amount'] ?? 0 ),
+				'payment_state'         => $payment['payment_state'],
+				'paid_at'               => $paid_at ? $paid_at->format( DATE_ATOM ) : null,
+				'payment_method'        => $method ?: null,
+				'invoice_id'            => $invoice_id ?: null,
+				'invoice_number'        => $invoice_id ? (string) Fields::get_for_post( $invoice_id, 'invoice_number' ) : '',
+			];
+		}
+		return $rows;
+	}
+
 	/** Create a tournament or update its allowed operational fields. */
 	public function save_tournament( array $payload, int $actor_user_id, int $tournament_id = 0 ) {
 		$is_new             = $tournament_id <= 0;
