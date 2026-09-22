@@ -273,6 +273,105 @@ class TrainingSchedulesTest extends RondoTestCase {
 			);
 	}
 
+	public function test_archived_team_links_do_not_block_other_schedule_edits(): void {
+		$archived = $this->block();
+		$women_id = $this->createOrganization( [ 'post_title' => 'Recreanten vrouwen' ] );
+		$vr30_id  = $this->createOrganization( [ 'post_title' => 'VR30+1' ] );
+		$women    = $this->block(
+			[
+				'team_ids' => [ $women_id ],
+				'day'      => 2,
+				'start'    => '20:30',
+				'duration' => 90,
+				'offset'   => 2,
+			]
+			);
+		$schedule = $this->create( [ $archived, $women ] );
+		wp_update_post(
+			[
+				'ID'          => $this->team_id,
+				'post_status' => 'draft',
+			]
+			);
+		$women['size'] = 1;
+		$vr30          = $this->block(
+			[
+				'team_ids' => [ $vr30_id ],
+				'day'      => 2,
+				'start'    => '20:30',
+				'duration' => 90,
+				'size'     => 1,
+				'offset'   => 3,
+			]
+			);
+		$payload       = [
+			'name'     => $schedule['name'],
+			'season'   => $schedule['season'],
+			'revision' => 1,
+			'blocks'   => [ $archived, $women, $vr30 ],
+		];
+		$response      = $this->request( 'PUT', '/schedules/' . $schedule['id'], $payload );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		clean_post_cache( $schedule['id'] );
+		$reloaded = $this->request( 'GET', '/schedules/' . $schedule['id'] )->get_data()['schedule'];
+		$this->assertSame( 2, $reloaded['revision'] );
+		$this->assertSame( [ $this->team_id ], $reloaded['blocks'][0]['team_ids'] );
+		$this->assertSame( 'draft', get_post_status( $this->team_id ) );
+		$this->assertSame( 1, $reloaded['blocks'][1]['size'] );
+		$this->assertSame( 2, $reloaded['blocks'][1]['offset'] );
+		$this->assertSame( [ $vr30_id ], $reloaded['blocks'][2]['team_ids'] );
+		$this->assertSame( '20:30', $reloaded['blocks'][2]['start'] );
+		$this->assertSame( 90, $reloaded['blocks'][2]['duration'] );
+		$this->assertSame( 1, $reloaded['blocks'][2]['size'] );
+		$this->assertSame( 3, $reloaded['blocks'][2]['offset'] );
+
+		$payload['revision']            = 2;
+		$payload['blocks'][2]['offset'] = 2;
+		$this->assertSame( 409, $this->request( 'PUT', '/schedules/' . $schedule['id'], $payload )->get_status() );
+		$this->assertSame( 2, Schedules::schedule( $schedule['id'] )['revision'] );
+	}
+
+	public function test_archived_links_cannot_be_added_to_other_blocks_or_new_schedules(): void {
+		$block    = $this->block();
+		$schedule = $this->create( [ $block ] );
+		wp_update_post(
+			[
+				'ID'          => $this->team_id,
+				'post_status' => 'draft',
+			]
+			);
+		$payload = [
+			'name'     => 'Changed',
+			'season'   => '2026/27',
+			'revision' => 1,
+			'blocks'   => [ $block, $this->block( [ 'day' => 2 ] ) ],
+		];
+		$this->assertSame( 400, $this->request( 'PUT', '/schedules/' . $schedule['id'], $payload )->get_status() );
+		$payload['blocks'] = [ $this->block() ];
+		$this->assertSame( 400, $this->request( 'PUT', '/schedules/' . $schedule['id'], $payload )->get_status() );
+		$payload['revision'] = 0;
+		$payload['blocks']   = [ $block ];
+		$this->assertSame( 400, $this->request( 'POST', '/schedules', $payload )->get_status() );
+		$this->assertSame( 1, Schedules::schedule( $schedule['id'] )['revision'] );
+		$this->assertSame( 'Regulier', get_post( $schedule['id'] )->post_title );
+	}
+
+	public function test_trashed_or_deleted_teams_are_not_grandfathered(): void {
+		$block    = $this->block();
+		$schedule = $this->create( [ $block ] );
+		$payload  = [
+			'name'     => 'Changed',
+			'season'   => '2026/27',
+			'revision' => 1,
+			'blocks'   => [ $block ],
+		];
+		wp_trash_post( $this->team_id );
+		$this->assertSame( 400, $this->request( 'PUT', '/schedules/' . $schedule['id'], $payload )->get_status() );
+		wp_delete_post( $this->team_id, true );
+		$this->assertSame( 400, $this->request( 'PUT', '/schedules/' . $schedule['id'], $payload )->get_status() );
+		$this->assertSame( 1, Schedules::schedule( $schedule['id'] )['revision'] );
+	}
+
 	public function test_storage_uses_registered_numbered_rows_and_removes_stale_rows(): void {
 		$schedule = $this->create( [ $this->block(), $this->block( [ 'day' => 2 ] ) ] );
 		$id       = $schedule['id'];
