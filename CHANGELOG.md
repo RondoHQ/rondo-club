@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.100.0] - 2026-09-23
+
+### Added
+- Board dashboard with birthdays, upcoming membership anniversaries, season membership changes, upcoming volunteer shortages, VOG attention counts and personal tasks.
+- Board, coordinator and match-secretary responsibilities combine in one customizable dashboard, with each block retaining its existing permissions.
+
+### Fixed
+- VOG dashboard counts now respect person visibility and canonical dates.
+- Membership anniversaries accept native compact dates and include the final day of their window.
+- Board members retain their coordinator dashboard blocks when holding both roles.
+
 ## [35.99.0] - 2026-09-23
 
 ### Added

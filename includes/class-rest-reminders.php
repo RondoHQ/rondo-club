@@ -413,10 +413,10 @@ class Reminders extends Base {
 		// Collect preliminary results with just IDs (no WP_Post loading yet)
 		$preliminary = [];
 		foreach ( $person_ids as $person_id ) {
-			$member_since      = $meta_map[ $person_id ]['lid-sinds'] ?? '';
+			$member_since      = $this->normalize_iso_date_string( $meta_map[ $person_id ]['lid-sinds'] ?? '' );
 			$member_start_date = null;
 			if ( ! empty( $member_since ) ) {
-				$member_start_date = \DateTimeImmutable::createFromFormat( 'Y-m-d', $member_since, wp_timezone() );
+				$member_start_date = \DateTimeImmutable::createFromFormat( '!Y-m-d', $member_since, wp_timezone() );
 			}
 
 			if ( $member_start_date ) {
@@ -437,7 +437,7 @@ class Reminders extends Base {
 			if ( ! empty( $meta_map[ $person_id ]['huidig-vrijwilliger'] ) ) {
 				$vol_start = $volunteer_start_dates[ $person_id ] ?? '';
 				if ( ! empty( $vol_start ) ) {
-					$volunteer_start_date = \DateTimeImmutable::createFromFormat( 'Y-m-d', $vol_start, wp_timezone() );
+					$volunteer_start_date = \DateTimeImmutable::createFromFormat( '!Y-m-d', $vol_start, wp_timezone() );
 					if ( $volunteer_start_date ) {
 						foreach ( $milestones['volunteer'] as $milestone_years ) {
 							$anniversary_date = $this->calculate_anniversary_date( $volunteer_start_date, $milestone_years );

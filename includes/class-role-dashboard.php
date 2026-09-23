@@ -16,11 +16,14 @@ final class RoleDashboard {
 		$user_id     = $user_id ?? get_current_user_id();
 		$coordinator = $user_id > 0 && AccessControl::has_coordinator_team_scope( $user_id );
 		$secretary   = UserRoles::can_access_section( 'wedstrijdzaken', $user_id );
+		$user        = $user_id ? get_userdata( $user_id ) : false;
+		$board       = $user && in_array( 'rondo_bestuur', (array) $user->roles, true );
 		return [
+			'board'       => $board,
 			'coordinator' => $coordinator,
 			'secretary'   => $secretary,
-			'enabled'     => $coordinator || $secretary,
-			'can_access'  => $coordinator || $secretary || UserRoles::is_kader( $user_id ),
+			'enabled'     => $board || $coordinator || $secretary,
+			'can_access'  => $board || $coordinator || $secretary || UserRoles::is_kader( $user_id ),
 		];
 	}
 
@@ -86,7 +89,7 @@ final class RoleDashboard {
 			}
 		}
 		$birthdays = [];
-		if ( $context['coordinator'] ) {
+		if ( $context['coordinator'] || $context['board'] ) {
 			foreach ( ( new \RONDO_Reminders() )->get_upcoming_reminders( 6 ) as $birthday ) {
 				$id = (int) $birthday['id'];
 				if ( ! AccessControl::can_view_person( $id ) ) {
@@ -109,7 +112,7 @@ final class RoleDashboard {
 				$training[] = array_intersect_key( $block, array_flip( [ 'block_id', 'day', 'start', 'duration', 'pitch_id', 'size', 'offset' ] ) ) + [ 'team_ids' => $visible_ids ];
 			}
 		}
-		return [
+		return BoardDashboard::overview() + [
 			'context'               => $context,
 			'teams'                 => array_values( $teams ),
 			'birthdays'             => $birthdays,
@@ -122,17 +125,47 @@ final class RoleDashboard {
 		];
 	}
 
+	/** Blocks are composed once, with each existing section permission rechecked. */
+	public static function available_blocks(): array {
+		$context = self::context();
+		$blocks  = $context['board'] ? [ 'birthdays' ] : [ 'attention' ];
+		if ( $context['board'] ) {
+			if ( UserRoles::can_access_section( 'jubilarissen' ) ) {
+				$blocks[] = 'anniversaries';
+			}
+			$blocks[] = 'attention';
+			foreach ( [
+				'membership' => 'ledenadministratie',
+				'volunteers' => 'vrijwilligers',
+				'vog'        => 'vog',
+			] as $block => $capability ) {
+				if ( current_user_can( $capability ) ) {
+					$blocks[] = $block;
+				}
+			}
+		} elseif ( $context['coordinator'] ) {
+			$blocks[] = 'birthdays';
+		}
+		if ( $context['coordinator'] || $context['secretary'] ) {
+			$blocks[] = 'matches';
+		}
+		if ( $context['coordinator'] ) {
+			$blocks[] = 'teams';
+		}
+		return $blocks;
+	}
+
 	/** A separate preference namespace preserves the existing dashboard layout. */
 	public static function settings(): array {
-		$context   = self::context();
-		$available = array_merge( [ 'attention' ], $context['coordinator'] ? [ 'birthdays' ] : [], [ 'matches' ], $context['coordinator'] ? [ 'teams' ] : [] );
+		$available = self::available_blocks();
 		$saved     = get_user_meta( get_current_user_id(), 'rondo_role_dashboard_layout', true );
 		$order     = is_array( $saved ) ? array_values( array_intersect( $saved['order'] ?? [], $available ) ) : [];
 		$order     = array_values( array_unique( array_merge( $order, $available ) ) );
 		$hidden    = is_array( $saved ) ? $saved['hidden'] ?? [] : [];
 		return [
-			'order'  => $order,
-			'hidden' => array_values( array_intersect( $hidden, $available ) ),
+			'defaults' => $available,
+			'order'    => $order,
+			'hidden'   => array_values( array_intersect( $hidden, $available ) ),
 		];
 	}
 }
