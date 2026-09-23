@@ -139,6 +139,54 @@ final class VolunteerStatistics {
 		];
 	}
 
+	/** Lightweight next-month shortage summary, without account or obligation statistics. */
+	public function upcoming_shortages(): array {
+		$now    = current_datetime();
+		$shifts = get_posts(
+			[
+				'post_type'              => 'dienst_shift',
+				'post_status'            => 'publish',
+				'posts_per_page'         => -1,
+				'no_found_rows'          => true,
+				'update_post_term_cache' => false,
+				'meta_query'             => [
+					[
+						'key'     => 'start_datetime',
+						'value'   => [ $now->format( 'Y-m-d H:i:s' ), $now->modify( '+' . self::SHORTAGE_WINDOW_DAYS . ' days' )->format( 'Y-m-d H:i:s' ) ],
+						'compare' => 'BETWEEN',
+						'type'    => 'DATETIME',
+					],
+				],
+			]
+		);
+		$ids    = wp_list_pluck( $shifts, 'ID' );
+		update_meta_cache( 'post', $ids );
+		$rows = [];
+		foreach ( $ids as $id ) {
+			$status = (string) get_post_meta( $id, 'status', true );
+			$row    = $this->shortage_row(
+				(int) $id,
+				PostTitle::plain( (int) get_post_meta( $id, 'dienst_type_id', true ), 'Onbekende inschrijftaak' ),
+				$status ?: 'open',
+				$this->parse_datetime( (string) get_post_meta( $id, 'start_datetime', true ) ),
+				max( 1, (int) get_post_meta( $id, 'capacity', true ) ),
+				count( $this->valid_person_ids( ShiftAssignments::person_ids( $id ) ) ),
+				$now
+			);
+			if ( $row !== null ) {
+				$rows[] = $row;
+			}
+		}
+		usort( $rows, static fn( array $a, array $b ): int => strcmp( $a['start_datetime'], $b['start_datetime'] ) );
+		return [
+			'window_days'  => self::SHORTAGE_WINDOW_DAYS,
+			'total_shifts' => count( $rows ),
+			'open_spots'   => array_sum( array_column( $rows, 'spots_remaining' ) ),
+			'shifts'       => array_slice( $rows, 0, self::SHORTAGE_LIMIT ),
+			'generated_at' => $now->format( DATE_ATOM ),
+		];
+	}
+
 	/**
 	 * Normalize an optional season value.
 	 */

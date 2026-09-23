@@ -20,6 +20,8 @@ class UserProvisioningRolesTest extends RondoTestCase {
 		add_filter( 'pre_wp_mail', '__return_true' );
 		$this->role_slug = UserRoles::add_custom_role( 'Jubilarissen test' );
 		get_role( $this->role_slug )->add_cap( 'jubilarissen' );
+		// The board also grants jubilarissen; this marker isolates committee-derived access.
+		get_role( $this->role_slug )->add_cap( 'test_committee_access' );
 		update_option( 'rondo_functie_capability_map', [ 'Bestuurslid test' => [ 'rondo_bestuur' => true ] ] );
 	}
 
@@ -70,7 +72,7 @@ class UserProvisioningRolesTest extends RondoTestCase {
 		$this->assertContains( 'rondo_user', $user->roles );
 		$this->assertContains( 'rondo_bestuur', $user->roles );
 		$this->assertContains( $this->role_slug, $user->roles );
-		$this->assertTrue( user_can( $user, 'jubilarissen' ) );
+		$this->assertTrue( user_can( $user, 'test_committee_access' ) );
 	}
 
 	public function test_self_service_activation_grants_committee_access(): void {
@@ -80,7 +82,7 @@ class UserProvisioningRolesTest extends RondoTestCase {
 		$this->assertIsString( $url );
 		$user_id = (int) get_post_meta( $person_id, UserProvisioning::META_USER_ID, true );
 		$this->assertGreaterThan( 0, $user_id );
-		$this->assertTrue( user_can( $user_id, 'jubilarissen' ) );
+		$this->assertTrue( user_can( $user_id, 'test_committee_access' ) );
 	}
 
 	public function test_inactive_expired_and_future_memberships_do_not_grant_access(): void {
@@ -99,7 +101,7 @@ class UserProvisioningRolesTest extends RondoTestCase {
 			$this->assertIsArray( $result );
 			$user = get_userdata( $result['user_id'] );
 			$this->assertNotContains( $this->role_slug, $user->roles );
-			$this->assertFalse( user_can( $user, 'jubilarissen' ) );
+			$this->assertFalse( user_can( $user, 'test_committee_access' ) );
 			$this->assertContains( 'rondo_bestuur', $user->roles );
 		}
 	}

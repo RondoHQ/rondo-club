@@ -11,8 +11,10 @@ import { format, parseYmd, isValid } from '@/utils/dateFormat';
 import { toMinutes, toTime, fieldPart } from '@/utils/training';
 import { combineDashboardMatches, dashboardRoomLabel, moveDashboardBlock } from '@/utils/roleDashboard';
 
+import { BoardAnniversaries, BoardMembership, BoardVolunteers, BoardVog } from './BoardDashboardBlocks';
+
 const TodoModal = lazy(() => import('@/components/Timeline/TodoModal'));
-const LABELS = { attention: 'Aandacht nodig', birthdays: 'Verjaardagen', matches: 'Wedstrijden', teams: 'Mijn teams en trainingen' };
+const LABELS = { anniversaries: 'Jubilarissen', membership: 'Ledenontwikkeling', volunteers: 'Vrijwilligersbezetting', vog: 'VOG-aandachtspunten', attention: 'Aandacht nodig', birthdays: 'Verjaardagen', matches: 'Wedstrijden', teams: 'Mijn teams en trainingen' };
 const EMPTY = [];
 const panel = 'rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800';
 
@@ -25,22 +27,23 @@ function LoadError({ retry, children }) {
   return <p role="alert" className="text-sm text-red-700 dark:text-red-300">{children} <button className="underline" onClick={retry}>Opnieuw proberen</button></p>;
 }
 
-function LayoutEditor({ layout, onSave, pending, error }) {
-  const [draft, setDraft] = useState(layout);
+function LayoutEditor({ layout, labels, onSave, pending, error }) {
+  const [draft, setDraft] = useState({ order: layout.order, hidden: layout.hidden });
   return <div className={`${panel} mb-6 p-4`}>
     <h2 className="mb-3 font-semibold">Dashboard aanpassen</h2>
     <div className="space-y-2">{draft.order.map((id, index) => <div key={id} className="flex items-center gap-2">
-      <label className="flex min-w-0 flex-1 items-center gap-3"><input type="checkbox" checked={!draft.hidden.includes(id)} onChange={(event) => setDraft({ ...draft, hidden: event.target.checked ? draft.hidden.filter(value => value !== id) : [...draft.hidden, id] })} />{LABELS[id]}</label>
-      {[-1, 1].map(direction => <button key={direction} className="rounded p-2 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-700" disabled={direction < 0 ? index === 0 : index === draft.order.length - 1} aria-label={`${LABELS[id]} ${direction < 0 ? 'omhoog' : 'omlaag'}`} onClick={() => setDraft({ ...draft, order: moveDashboardBlock(draft.order, index, direction) })}>{direction < 0 ? <ArrowUp size={16} /> : <ArrowDown size={16} />}</button>)}
+      <label className="flex min-w-0 flex-1 items-center gap-3"><input type="checkbox" checked={!draft.hidden.includes(id)} onChange={(event) => setDraft({ ...draft, hidden: event.target.checked ? draft.hidden.filter(value => value !== id) : [...draft.hidden, id] })} />{labels[id]}</label>
+      {[-1, 1].map(direction => <button key={direction} className="rounded p-2 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-700" disabled={direction < 0 ? index === 0 : index === draft.order.length - 1} aria-label={`${labels[id]} ${direction < 0 ? 'omhoog' : 'omlaag'}`} onClick={() => setDraft({ ...draft, order: moveDashboardBlock(draft.order, index, direction) })}>{direction < 0 ? <ArrowUp size={16} /> : <ArrowDown size={16} />}</button>)}
     </div>)}</div>
     {error && <p role="alert" className="mt-3 text-sm text-red-700 dark:text-red-300">Opslaan mislukt. Je wijzigingen staan hier nog; probeer het opnieuw.</p>}
-    <div className="mt-4 flex flex-wrap justify-between gap-3"><button className="text-sm underline" onClick={() => setDraft({ order: Object.keys(LABELS).filter(id => layout.order.includes(id)), hidden: [] })}>Herstel standaard</button><button className="btn-primary" disabled={pending} onClick={() => onSave(draft)}>{pending ? 'Opslaan…' : 'Indeling opslaan'}</button></div>
+    <div className="mt-4 flex flex-wrap justify-between gap-3"><button className="text-sm underline" onClick={() => setDraft({ order: layout.defaults || layout.order, hidden: [] })}>Herstel standaard</button><button className="btn-primary" disabled={pending} onClick={() => onSave(draft)}>{pending ? 'Opslaan…' : 'Indeling opslaan'}</button></div>
   </div>;
 }
 
 export default function RoleDashboard({ user }) {
   const client = useQueryClient();
   const [customizing, setCustomizing] = useState(false);
+  const [allBirthdays, setAllBirthdays] = useState(false);
   const [birthdayTeam, setBirthdayTeam] = useState('all');
   const [matchScope, setMatchScope] = useState(user.dashboard_context.secretary ? 'home' : 'own');
   const todo = useTodoCompletion();
@@ -49,6 +52,9 @@ export default function RoleDashboard({ user }) {
   const data = workspace.data;
   const teams = data?.teams || EMPTY;
   const context = data?.context || user.dashboard_context;
+  const hasMatches = context.coordinator || context.secretary;
+  const attentionLabel = context.board ? (hasMatches ? 'Mijn taken en wedstrijdmeldingen' : 'Mijn taken') : LABELS.attention;
+  const labels = { ...LABELS, attention: attentionLabel };
   const club = useQuery({ queryKey: ['role-dashboard-matches', user.id, 'club'], queryFn: async () => (await api.get('/rondo/v1/dashboard/matches')).data, enabled: Boolean(context.secretary), staleTime: 60_000, refetchInterval: 60_000 });
   const teamFeeds = useQueries({ queries: context.coordinator && (!context.secretary || matchScope === 'own') ? teams.map(team => ({
     queryKey: ['role-dashboard-matches', user.id, team.id], queryFn: async () => (await api.get('/rondo/v1/dashboard/matches', { params: { team_id: team.id } })).data,
@@ -75,14 +81,19 @@ export default function RoleDashboard({ user }) {
   if (workspace.isPending) return <p className="p-6" role="status">Dashboard laden…</p>;
   if (workspace.isError) return <LoadError retry={() => workspace.refetch()}>Het dashboard kon niet worden geladen.</LoadError>;
   const visibleBlocks = data.layout.order.filter(id => !data.layout.hidden.includes(id));
-  const birthdays = data.birthdays.filter(person => birthdayTeam === 'all' || person.team_ids.includes(Number(birthdayTeam)));
+  const filteredBirthdays = data.birthdays.filter(person => birthdayTeam === 'all' || person.team_ids.includes(Number(birthdayTeam)));
+  const birthdays = context.board && !allBirthdays ? filteredBirthdays.slice(0, 6) : filteredBirthdays;
   const todayTraining = data.training.filter(block => block.day === data.day).sort((a, b) => a.start.localeCompare(b.start));
   const teamName = (id) => teams.find(team => team.id === id)?.name || '';
   const tasks = data.tasks || [];
 
   const sections = {
+    anniversaries: <BoardAnniversaries items={data.anniversaries || []} />,
+    membership: data.membership && <BoardMembership data={data.membership} />,
+    volunteers: data.volunteers && <BoardVolunteers data={data.volunteers} />,
+    vog: data.vog && <BoardVog data={data.vog} />,
     attention: <section aria-labelledby="dashboard-attention" className="lg:col-span-12">
-      <h2 id="dashboard-attention" className="mb-3 text-lg font-semibold">Aandacht nodig <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">{tasks.length} {tasks.length === 1 ? 'taak' : 'taken'}</span></h2>
+      <h2 id="dashboard-attention" className="mb-3 text-lg font-semibold">{attentionLabel} <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">{tasks.length} {tasks.length === 1 ? 'taak' : 'taken'}</span></h2>
       {todo.updateError && <p role="alert" className="mb-3 text-sm text-red-700 dark:text-red-300">De taak kon niet worden opgeslagen. Probeer het opnieuw.</p>}
       <div className={`${panel} divide-y divide-gray-100 px-4 dark:divide-gray-700`}>
         {tasks.map(task => <div key={task.id} className="flex flex-wrap items-start gap-3 py-3">
@@ -93,15 +104,17 @@ export default function RoleDashboard({ user }) {
         {cancellations.map(match => <div key={match.id} className="flex gap-3 py-3"><CalendarX size={18} className="mt-0.5 shrink-0 text-red-600 dark:text-red-300" /><div><p className="text-sm">{match.home_team} · {match.away_team} afgelast</p><p className="text-xs text-gray-500 dark:text-gray-400">{dateLabel(match.date, 'EEEE d MMM')} · {match.time}{attentionIncomplete ? ' · eerder opgehaald' : ''}</p></div></div>)}
         {attentionLoading && <p className="py-3 text-sm" role="status">Wedstrijdmeldingen laden…</p>}
         {attentionIncomplete && <p className="py-3 text-sm text-amber-800 dark:text-amber-200" role="status">Wedstrijdmeldingen zijn niet volledig actueel. <button className="underline" onClick={() => Promise.all(attentionSources.map(source => source.refetch()))}>Opnieuw proberen</button></p>}
-        {!tasks.length && !cancellations.length && <p className="py-4 text-sm text-gray-500 dark:text-gray-400">Geen open taken.{!attentionLoading && !attentionIncomplete ? ' Geen afgelastingen in het beschikbare programma.' : ''}</p>}
+        {!tasks.length && !cancellations.length && <p className="py-4 text-sm text-gray-500 dark:text-gray-400">Geen open taken.{hasMatches && !attentionLoading && !attentionIncomplete ? ' Geen afgelastingen in het beschikbare programma.' : ''}</p>}
       </div>
     </section>,
     birthdays: <section aria-labelledby="dashboard-birthdays" className="lg:col-span-12">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 id="dashboard-birthdays" className="flex items-center gap-2 text-lg font-semibold"><Cake size={20} className="text-electric-cyan" />Verjaardagen</h2>{teams.length > 0 && <select className="input !w-auto max-w-full" aria-label="Verjaardagen filteren op team" value={birthdayTeam} onChange={event => setBirthdayTeam(event.target.value)}><option value="all">Alle toegankelijke personen</option>{teams.map(team => <option key={team.id} value={team.id}>{team.name}</option>)}</select>}</div>
+      {context.board && <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">Vandaag en de komende zes dagen · {filteredBirthdays.length} {filteredBirthdays.length === 1 ? 'jarige' : 'jarigen'}</p>}
       <div className={`${panel} grid overflow-hidden sm:grid-cols-2 xl:grid-cols-3`}>{birthdays.length ? birthdays.map(birthday => <Link key={birthday.id} to={`/people/${birthday.id}`} className={`border-b border-gray-100 p-4 dark:border-gray-700 ${birthday.days_until === 0 ? 'bg-cyan-50 dark:bg-cyan-950/40' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
         <p className={`mb-3 text-xs ${birthday.days_until === 0 ? 'font-semibold text-cyan-800 dark:text-cyan-200' : 'text-gray-500 dark:text-gray-400'}`}>{birthday.days_until === 0 ? 'Vandaag jarig' : birthday.days_until === 1 ? 'Morgen' : dateLabel(birthday.next_occurrence, 'EEEE d MMM')}</p>
-        <div className="flex items-center gap-3"><PersonAvatar thumbnail={birthday.related_people?.[0]?.thumbnail} name={birthday.title} size="md" /><div className="min-w-0"><p className="text-sm font-semibold">{birthday.title}</p><p className="text-xs text-gray-500 dark:text-gray-400">{birthday.team_ids.map(teamName).filter(Boolean).join(', ')}{birthday.team_ids.length ? ' · ' : ''}wordt {Number(birthday.next_occurrence.slice(0, 4)) - Number(birthday.date_value.slice(0, 4))}</p></div></div>
+        <div className="flex items-center gap-3"><PersonAvatar thumbnail={birthday.related_people?.[0]?.thumbnail} name={birthday.title} size="md" /><div className="min-w-0"><p className="text-sm font-semibold">{birthday.title}</p><p className="text-xs text-gray-500 dark:text-gray-400">{birthday.team_ids.map(teamName).filter(Boolean).join(', ')}{birthday.team_ids.map(teamName).filter(Boolean).length ? ' · ' : ''}wordt {Number(birthday.next_occurrence.slice(0, 4)) - Number(birthday.date_value.slice(0, 4))}</p></div></div>
       </Link>) : <p className="p-4 text-sm text-gray-500 dark:text-gray-400 sm:col-span-2 xl:col-span-3">Geen verjaardagen in de komende zeven dagen.</p>}</div>
+      {context.board && filteredBirthdays.length > 6 && <button className="mt-3 text-sm text-cyan-800 underline underline-offset-4 dark:text-cyan-200" aria-expanded={allBirthdays} onClick={() => setAllBirthdays(value => !value)}>{allBirthdays ? 'Toon minder verjaardagen' : `Toon alle ${filteredBirthdays.length} verjaardagen`}</button>}
     </section>,
     matches: <section aria-labelledby="dashboard-matches" className={visibleBlocks.includes('teams') ? 'min-w-0 lg:col-span-8' : 'min-w-0 lg:col-span-12'}>
       <h2 id="dashboard-matches" className="text-lg font-semibold">Wedstrijden deze week</h2><p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{dateLabel(data.today, 'd MMM')}–{dateLabel(data.end_date, 'd MMM')} · tijd, veld en kleedkamers</p>
@@ -126,8 +139,8 @@ export default function RoleDashboard({ user }) {
   };
 
   return <div className="pb-6 text-gray-900 dark:text-gray-100">
-    <header className="mb-6 flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-semibold tracking-tight">Jouw dashboard</h1><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{dateLabel(data.today)}</p><p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{[context.coordinator && 'Coördinator', context.secretary && 'Wedstrijdsecretaris'].filter(Boolean).join(' · ')}</p></div><div className="flex gap-2"><button className="btn-secondary text-sm !text-cyan-800 dark:!text-cyan-200" onClick={refresh}>Verversen</button><button className="btn-secondary flex items-center gap-2 text-sm !text-cyan-800 dark:!text-cyan-200" aria-expanded={customizing} aria-controls="dashboard-layout" onClick={() => setCustomizing(value => !value)}><SlidersHorizontal size={16} />Aanpassen</button></div></header>
-    {customizing && <div id="dashboard-layout"><LayoutEditor layout={data.layout} onSave={save.mutate} pending={save.isPending} error={save.isError} /></div>}
+    <header className="mb-6 flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-semibold tracking-tight">{context.board ? 'Bestuursdashboard' : 'Jouw dashboard'}</h1><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{dateLabel(data.today)}</p><p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{[context.board && 'Bestuur', context.coordinator && 'Coördinator', context.secretary && 'Wedstrijdsecretaris'].filter(Boolean).join(' · ')}</p></div><div className="flex gap-2"><button className="btn-secondary text-sm !text-cyan-800 dark:!text-cyan-200" onClick={refresh}>Verversen</button><button className="btn-secondary flex items-center gap-2 text-sm !text-cyan-800 dark:!text-cyan-200" aria-expanded={customizing} aria-controls="dashboard-layout" onClick={() => setCustomizing(value => !value)}><SlidersHorizontal size={16} />Aanpassen</button></div></header>
+    {customizing && <div id="dashboard-layout"><LayoutEditor labels={labels} layout={data.layout} onSave={save.mutate} pending={save.isPending} error={save.isError} /></div>}
     {!visibleBlocks.length && <p className="py-8 text-sm text-gray-500 dark:text-gray-400">Alle blokken zijn verborgen. Kies ‘Aanpassen’ om ze weer te tonen.</p>}
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">{visibleBlocks.map(id => <Suspense key={id} fallback={null}>{sections[id]}</Suspense>)}</div>
     <CompleteTodoModal isOpen={todo.showCompleteModal} onClose={todo.closeCompleteModal} todo={todo.todoToComplete} onAwaiting={todo.handleMarkAwaiting} onComplete={todo.handleJustComplete} onCompleteAsActivity={todo.handleCompleteAsActivity} allowActivity={Boolean(todo.todoToComplete?.person_id)} hideAwaitingOption={todo.todoToComplete?.status === 'awaiting'} />

@@ -158,7 +158,7 @@ class RoleDashboardTest extends RondoTestCase {
 			'order'  => [ 'teams', 'matches', 'birthdays', 'attention' ],
 			'hidden' => [ 'birthdays' ],
 		];
-		$this->assertSame( $layout, $this->request( 'dashboard/layout', $layout )->get_data() );
+		$this->assertSame( $layout, array_intersect_key( $this->request( 'dashboard/layout', $layout )->get_data(), $layout ) );
 		$this->roles( [ $this->secretary ] );
 		$data = $this->request( 'dashboard/workspace' )->get_data();
 		$this->assertSame( [ 'matches', 'attention' ], $data['layout']['order'] );
