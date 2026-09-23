@@ -54,7 +54,7 @@ class UserRoles {
 	 * installs must also receive; add_role() does not touch existing roles.
 	 */
 	const ROLES_VERSION_OPTION = 'rondo_roles_version';
-	const ROLES_VERSION        = 16;
+	const ROLES_VERSION        = 17;
 
 	/** Generic WordPress write capabilities removed from non-admin Rondo roles. */
 	private const LEGACY_GENERIC_WRITE_CAPS = [
@@ -94,7 +94,7 @@ class UserRoles {
 		'rondo_pool_schoonmaak'       => [ 'Rondo Schoonmaakpoule', [] ],
 		'rondo_pool_activiteiten'     => [ 'Rondo Activiteitenpoule', [] ],
 		'rondo_pool_werkploeg'        => [ 'Rondo Werkploeg terreinonderhoud', [] ],
-		'rondo_bestuur'               => [ 'Rondo Bestuur', [ 'teams', 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'accommodatiebeheer', 'vrijwilligers', 'rondo_iva_approve' ] ],
+		'rondo_bestuur'               => [ 'Rondo Bestuur', [ 'jubilarissen', 'teams', 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'accommodatiebeheer', 'vrijwilligers', 'rondo_iva_approve' ] ],
 	];
 
 	/**
@@ -427,6 +427,7 @@ class UserRoles {
 	 * Version 14: independent section rights; commissie reads leave the member baseline.
 	 * Version 15: full team access becomes explicit; board and admins retain it.
 	 * Version 16: match-secretary dashboard access without additional person rights.
+	 * Version 17: board membership-anniversary access for its dashboard.
 	 */
 	public function maybe_upgrade_roles() {
 		$installed_version = (int) get_option( self::ROLES_VERSION_OPTION, 0 );
@@ -473,6 +474,10 @@ class UserRoles {
 
 			if ( $installed_version < 15 && in_array( $slug, [ 'administrator', 'rondo_bestuur' ], true ) ) {
 				$role->add_cap( 'teams' );
+			}
+
+			if ( $installed_version < 17 && $slug === 'rondo_bestuur' ) {
+				$role->add_cap( 'jubilarissen' );
 			}
 
 			if ( $installed_version < 16 && in_array( $slug, [ 'administrator', 'rondo_wedstrijdzaken' ], true ) ) {

@@ -1774,42 +1774,7 @@ class Api extends Base {
 	 * @return array Associative array with the three counts.
 	 */
 	private function get_vog_counts() {
-		global $wpdb;
-
-		$cutoff_date   = gmdate( 'Y-m-d', strtotime( '-3 years' ) );
-		$expired_date  = gmdate( 'Y-m-d', strtotime( '-3 years' ) );
-		$expiring_date = gmdate( 'Y-m-d', strtotime( '+30 days -3 years' ) );
-
-		$row = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT
-					SUM(CASE WHEN needs_vog = 1 AND (vjs.meta_value IS NULL OR vjs.meta_value = '') THEN 1 ELSE 0 END) AS not_submitted_to_justis,
-					SUM(CASE WHEN needs_vog = 1 AND (vjs.meta_value IS NOT NULL AND vjs.meta_value != '') THEN 1 ELSE 0 END) AS submitted_to_justis,
-					SUM(CASE WHEN expiring_soon = 1 THEN 1 ELSE 0 END) AS expiring_soon
-				FROM (
-					SELECT p.ID,
-						CASE WHEN (dv.meta_value IS NULL OR dv.meta_value = '' OR dv.meta_value <= %s) THEN 1 ELSE 0 END AS needs_vog,
-						CASE WHEN (dv.meta_value IS NOT NULL AND dv.meta_value != '' AND dv.meta_value > %s AND dv.meta_value <= %s) THEN 1 ELSE 0 END AS expiring_soon
-					FROM {$wpdb->posts} p
-					INNER JOIN {$wpdb->postmeta} hv ON p.ID = hv.post_id AND hv.meta_key = 'huidig-vrijwilliger' AND hv.meta_value = '1'
-					LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'
-					LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'
-					WHERE p.post_type = 'person'
-					AND p.post_status = 'publish'
-					AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')
-				) AS volunteers
-				LEFT JOIN {$wpdb->postmeta} vjs ON volunteers.ID = vjs.post_id AND vjs.meta_key = 'vog_justis_submitted_date'",
-				$cutoff_date,
-				$expired_date,
-				$expiring_date
-			)
-		);
-
-		return [
-			'not_submitted_to_justis' => (int) ( $row->not_submitted_to_justis ?? 0 ),
-			'submitted_to_justis'     => (int) ( $row->submitted_to_justis ?? 0 ),
-			'expiring_soon'           => (int) ( $row->expiring_soon ?? 0 ),
-		];
+		return \Rondo\Dashboard\BoardDashboard::vog_counts();
 	}
 
 	/**

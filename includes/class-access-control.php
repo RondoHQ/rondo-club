@@ -214,10 +214,13 @@ class AccessControl {
 		if ( ! empty( self::get_permitted_age_groups( $user_id ) ) ) {
 			return true;
 		}
-		$config = (array) get_option( 'rondo_team_access', [] );
+		$config     = (array) get_option( 'rondo_team_access', [] );
+		$age_config = get_option( 'rondo_age_group_access', [] );
+		$age_config = is_string( $age_config ) ? json_decode( $age_config, true ) : $age_config;
 		foreach ( $user->roles as $slug ) {
 			$role = get_role( $slug );
-			if ( $role && ! $role->has_cap( UserRoles::KADERLIJST_CAPABILITY ) && ! empty( $config[ $slug ] ) ) {
+			// Management access may bypass person filtering without erasing a second coordinator role.
+			if ( $role && ! $role->has_cap( UserRoles::KADERLIJST_CAPABILITY ) && ( ! empty( $config[ $slug ] ) || ! empty( $age_config[ $slug ] ) ) ) {
 				return true;
 			}
 		}
