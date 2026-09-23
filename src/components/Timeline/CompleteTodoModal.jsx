@@ -1,6 +1,6 @@
 import { Clock, CheckSquare, FileText, X } from 'lucide-react';
 
-export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, onComplete, onCompleteAsActivity, hideAwaitingOption = false }) {
+export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, onComplete, onCompleteAsActivity, hideAwaitingOption = false, allowActivity = true }) {
   if (!isOpen || !todo) return null;
 
   return (
@@ -50,7 +50,7 @@ export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, o
               </div>
             </button>
 
-            <button
+            {allowActivity && <button
               onClick={onCompleteAsActivity}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors text-left"
             >
@@ -59,7 +59,7 @@ export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, o
                 <p className="font-medium text-gray-900 dark:text-gray-50">Afronden & activiteit loggen</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Leg dit vast als activiteit op de tijdlijn</p>
               </div>
-            </button>
+            </button>}
           </div>
         </div>
 

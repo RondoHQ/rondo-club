@@ -506,6 +506,32 @@ class SportlinkMatchday {
 		return 'https://logoapi.voetbal.nl/logo.php?clubcode=' . rawurlencode( $club_code );
 	}
 
+	/** Seven club-local calendar days, using the independently refreshed programme cache. */
+	public function get_week_feed(): array {
+		$cache   = $this->cache();
+		$matches = [];
+		$today   = current_datetime()->setTime( 0, 0 );
+		foreach ( range( 0, 6 ) as $offset ) {
+			$day = $this->public_feed( $cache, $today->modify( "+{$offset} days" )->format( 'Y-m-d' ) );
+			foreach ( array_merge( $day['matches'], $day['cancellations'] ) as $match ) {
+				if ( ! isset( $matches[ $match['id'] ] ) ) {
+					$matches[ $match['id'] ] = $match;
+				}
+			}
+		}
+		$feeds       = [ $cache['feeds']['matches'] ?? [], $cache['feeds']['cancellations'] ?? [] ];
+		$oldest      = min( array_map( static fn( $feed ) => strtotime( $feed['fetched_at'] ?? '' ) ?: 0, $feeds ) );
+		$fresh_until = min( array_map( static fn( $feed ) => strtotime( $feed['fresh_until'] ?? '' ) ?: 0, $feeds ) );
+		usort( $matches, static fn( $a, $b ) => strcmp( $a['starts_at'], $b['starts_at'] ) );
+		return [
+			'matches'    => array_values( $matches ),
+			'configured' => $this->client_id() !== '' && $this->club_code() !== '',
+			'updated_at' => $oldest ? gmdate( DATE_RFC3339, $oldest ) : null,
+			'stale'      => $fresh_until < time(),
+			'expired'    => ! $oldest || time() - $oldest > DAY_IN_SECONDS,
+		];
+	}
+
 	/** Select one matchday, merge cancellations, and expose freshness metadata. */
 	private function public_feed( array $cache, ?string $target_date = null ): array {
 		if ( ! $target_date || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $target_date ) ) {

@@ -69,3 +69,4 @@ venv/
 target/
 .cache/
 tmp/
+.impeccable/review/

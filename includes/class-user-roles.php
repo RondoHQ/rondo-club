@@ -34,10 +34,11 @@ class UserRoles {
 
 	/** Independent section rights; never confer club-wide person access. */
 	public const SECTION_CAPABILITIES = [
-		'teams'        => 'Alle teams',
-		'commissies'   => 'Commissies',
-		'jubilarissen' => 'Jubilarissen',
-		'feedback'     => 'Feedbackoverzicht',
+		'wedstrijdzaken' => 'Wedstrijdprogramma op dashboard',
+		'teams'          => 'Alle teams',
+		'commissies'     => 'Commissies',
+		'jubilarissen'   => 'Jubilarissen',
+		'feedback'       => 'Feedbackoverzicht',
 	];
 
 	/** Check one independently assignable section capability. */
@@ -53,7 +54,7 @@ class UserRoles {
 	 * installs must also receive; add_role() does not touch existing roles.
 	 */
 	const ROLES_VERSION_OPTION = 'rondo_roles_version';
-	const ROLES_VERSION        = 15;
+	const ROLES_VERSION        = 16;
 
 	/** Generic WordPress write capabilities removed from non-admin Rondo roles. */
 	private const LEGACY_GENERIC_WRITE_CAPS = [
@@ -425,6 +426,7 @@ class UserRoles {
 	 * Version 13: administrators gain the dedicated training management capability.
 	 * Version 14: independent section rights; commissie reads leave the member baseline.
 	 * Version 15: full team access becomes explicit; board and admins retain it.
+	 * Version 16: match-secretary dashboard access without additional person rights.
 	 */
 	public function maybe_upgrade_roles() {
 		$installed_version = (int) get_option( self::ROLES_VERSION_OPTION, 0 );
@@ -471,6 +473,10 @@ class UserRoles {
 
 			if ( $installed_version < 15 && in_array( $slug, [ 'administrator', 'rondo_bestuur' ], true ) ) {
 				$role->add_cap( 'teams' );
+			}
+
+			if ( $installed_version < 16 && in_array( $slug, [ 'administrator', 'rondo_wedstrijdzaken' ], true ) ) {
+				$role->add_cap( 'wedstrijdzaken' );
 			}
 
 			if ( $installed_version < 13 && $slug === 'administrator' ) {

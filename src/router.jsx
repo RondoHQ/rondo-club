@@ -234,7 +234,7 @@ function KaderOrVrijwilligRedirect({ children }) {
 function DashboardRoute() {
   const { data: user, isLoading } = useCurrentUser();
   if (isLoading) return <PageLoadingSpinner />;
-  return user?.can_access_dashboard ? <Dashboard /> : <Navigate to="/people" replace />;
+  return user?.can_access_dashboard ? <Dashboard /> : <Navigate to={user?.is_kader ? '/people' : user?.is_sponsor && !user?.is_parent ? '/mijn-gegevens' : '/vrijwillig'} replace />;
 }
 
 function ProtectedRoute({ children }) {
@@ -292,7 +292,7 @@ const router = createBrowserRouter([
         element: <ProtectedLayout />,
         children: [
           // Persoonlijke landing voor accounts zonder kaderrol; kader ziet het dashboard.
-          { index: true, element: <KaderOrVrijwilligRedirect><DashboardRoute /></KaderOrVrijwilligRedirect> },
+          { index: true, element: <DashboardRoute /> },
 
           // People routes — kader only (plain leden zien hun eigen gegevens via /profile of /vrijwillig)
           { path: 'people', element: <KaderOrVrijwilligRedirect><PeopleList /></KaderOrVrijwilligRedirect> },
