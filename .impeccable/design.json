@@ -1,0 +1,396 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-23T11:50:35.523Z",
+  "title": "Design System: Rondo Club dashboard",
+  "extensions": {
+    "colorMeta": {
+      "electric-cyan": {
+        "role": "primary",
+        "displayName": "Electric cyan",
+        "canonical": "oklch(0.69 0.14 196)",
+        "tonalRamp": [
+          "oklch(0.15 0.14 196)",
+          "oklch(0.25 0.14 196)",
+          "oklch(0.35 0.14 196)",
+          "oklch(0.45 0.14 196)",
+          "oklch(0.55 0.14 196)",
+          "oklch(0.69 0.14 196)",
+          "oklch(0.79 0.14 196)",
+          "oklch(0.95 0.14 196)"
+        ]
+      },
+      "gray-900": {
+        "role": "neutral",
+        "displayName": "Neutral text and dark canvas",
+        "tonalRamp": [
+          "oklch(13% 0.028 261.692)",
+          "oklch(21% 0.034 264.665)",
+          "oklch(27.8% 0.033 256.848)",
+          "oklch(37.3% 0.034 259.733)",
+          "oklch(55.1% 0.027 264.364)",
+          "oklch(70.7% 0.022 261.325)",
+          "oklch(92.8% 0.006 264.531)",
+          "oklch(98.5% 0.002 247.839)"
+        ]
+      },
+      "electric-cyan-light": {
+        "role": "primary",
+        "displayName": "electric cyan light",
+        "tonalRamp": [
+          "oklch(0.15 0.14 196)",
+          "oklch(0.25 0.14 196)",
+          "oklch(0.35 0.14 196)",
+          "oklch(0.45 0.14 196)",
+          "oklch(0.55 0.14 196)",
+          "oklch(0.69 0.14 196)",
+          "oklch(0.79 0.14 196)",
+          "oklch(0.95 0.14 196)"
+        ]
+      },
+      "bright-cobalt": {
+        "role": "primary",
+        "displayName": "bright cobalt",
+        "tonalRamp": [
+          "oklch(0.15 0.19 264)",
+          "oklch(0.25 0.19 264)",
+          "oklch(0.35 0.19 264)",
+          "oklch(0.45 0.19 264)",
+          "oklch(0.55 0.19 264)",
+          "oklch(0.69 0.19 264)",
+          "oklch(0.79 0.19 264)",
+          "oklch(0.95 0.19 264)"
+        ]
+      },
+      "cyan-50": {
+        "role": "primary",
+        "displayName": "cyan 50",
+        "tonalRamp": [
+          "oklch(30.2% 0.056 229.695)",
+          "oklch(39.8% 0.07 227.392)",
+          "oklch(45% 0.085 224.283)",
+          "oklch(52% 0.105 223.128)",
+          "oklch(71.5% 0.143 215.221)",
+          "oklch(86.5% 0.127 207.078)",
+          "oklch(0.92 0.04 196)",
+          "oklch(0.96 0.02 196)"
+        ]
+      },
+      "cyan-200": {
+        "role": "primary",
+        "displayName": "cyan 200",
+        "tonalRamp": [
+          "oklch(30.2% 0.056 229.695)",
+          "oklch(39.8% 0.07 227.392)",
+          "oklch(45% 0.085 224.283)",
+          "oklch(52% 0.105 223.128)",
+          "oklch(71.5% 0.143 215.221)",
+          "oklch(86.5% 0.127 207.078)",
+          "oklch(0.92 0.04 196)",
+          "oklch(0.96 0.02 196)"
+        ]
+      },
+      "cyan-800": {
+        "role": "primary",
+        "displayName": "cyan 800",
+        "tonalRamp": [
+          "oklch(30.2% 0.056 229.695)",
+          "oklch(39.8% 0.07 227.392)",
+          "oklch(45% 0.085 224.283)",
+          "oklch(52% 0.105 223.128)",
+          "oklch(71.5% 0.143 215.221)",
+          "oklch(86.5% 0.127 207.078)",
+          "oklch(0.92 0.04 196)",
+          "oklch(0.96 0.02 196)"
+        ]
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "white",
+        "tonalRamp": [
+          "oklch(0.15 0 0)",
+          "oklch(0.25 0 0)",
+          "oklch(0.35 0 0)",
+          "oklch(0.45 0 0)",
+          "oklch(0.55 0 0)",
+          "oklch(0.69 0 0)",
+          "oklch(0.79 0 0)",
+          "oklch(0.95 0 0)"
+        ]
+      },
+      "gray-50": {
+        "role": "neutral",
+        "displayName": "gray 50",
+        "tonalRamp": [
+          "oklch(13% 0.028 261.692)",
+          "oklch(21% 0.034 264.665)",
+          "oklch(27.8% 0.033 256.848)",
+          "oklch(37.3% 0.034 259.733)",
+          "oklch(55.1% 0.027 264.364)",
+          "oklch(87.2% 0.01 258.338)",
+          "oklch(96.7% 0.003 264.542)",
+          "oklch(98.5% 0.002 247.839)"
+        ]
+      },
+      "gray-100": {
+        "role": "neutral",
+        "displayName": "gray 100",
+        "tonalRamp": [
+          "oklch(13% 0.028 261.692)",
+          "oklch(21% 0.034 264.665)",
+          "oklch(27.8% 0.033 256.848)",
+          "oklch(37.3% 0.034 259.733)",
+          "oklch(55.1% 0.027 264.364)",
+          "oklch(87.2% 0.01 258.338)",
+          "oklch(96.7% 0.003 264.542)",
+          "oklch(98.5% 0.002 247.839)"
+        ]
+      },
+      "gray-200": {
+        "role": "neutral",
+        "displayName": "gray 200",
+        "tonalRamp": [
+          "oklch(13% 0.028 261.692)",
+          "oklch(21% 0.034 264.665)",
+          "oklch(27.8% 0.033 256.848)",
+          "oklch(37.3% 0.034 259.733)",
+          "oklch(55.1% 0.027 264.364)",
+          "oklch(87.2% 0.01 258.338)",
+          "oklch(96.7% 0.003 264.542)",
+          "oklch(98.5% 0.002 247.839)"
+        ]
+      },
+      "gray-400": {
+        "role": "neutral",
+        "displayName": "gray 400",
+        "tonalRamp": [
+          "oklch(13% 0.028 261.692)",
+          "oklch(21% 0.034 264.665)",
+          "oklch(27.8% 0.033 256.848)",
+          "oklch(37.3% 0.034 259.733)",
+          "oklch(55.1% 0.027 264.364)",
+          "oklch(87.2% 0.01 258.338)",
+          "oklch(96.7% 0.003 264.542)",
+          "oklch(98.5% 0.002 247.839)"
+        ]
+      },
+      "gray-500": {
+        "role": "neutral",
+        "displayName": "gray 500",
+        "tonalRamp": [
+          "oklch(13% 0.028 261.692)",
+          "oklch(21% 0.034 264.665)",
+          "oklch(27.8% 0.033 256.848)",
+          "oklch(37.3% 0.034 259.733)",
+          "oklch(55.1% 0.027 264.364)",
+          "oklch(87.2% 0.01 258.338)",
+          "oklch(96.7% 0.003 264.542)",
+          "oklch(98.5% 0.002 247.839)"
+        ]
+      },
+      "gray-700": {
+        "role": "neutral",
+        "displayName": "gray 700",
+        "tonalRamp": [
+          "oklch(13% 0.028 261.692)",
+          "oklch(21% 0.034 264.665)",
+          "oklch(27.8% 0.033 256.848)",
+          "oklch(37.3% 0.034 259.733)",
+          "oklch(55.1% 0.027 264.364)",
+          "oklch(87.2% 0.01 258.338)",
+          "oklch(96.7% 0.003 264.542)",
+          "oklch(98.5% 0.002 247.839)"
+        ]
+      },
+      "gray-800": {
+        "role": "neutral",
+        "displayName": "gray 800",
+        "tonalRamp": [
+          "oklch(13% 0.028 261.692)",
+          "oklch(21% 0.034 264.665)",
+          "oklch(27.8% 0.033 256.848)",
+          "oklch(37.3% 0.034 259.733)",
+          "oklch(55.1% 0.027 264.364)",
+          "oklch(87.2% 0.01 258.338)",
+          "oklch(96.7% 0.003 264.542)",
+          "oklch(98.5% 0.002 247.839)"
+        ]
+      },
+      "red-700": {
+        "role": "primary",
+        "displayName": "red 700",
+        "tonalRamp": [
+          "oklch(25.8% 0.092 26.042)",
+          "oklch(39.6% 0.141 25.723)",
+          "oklch(44.4% 0.177 26.899)",
+          "oklch(50.5% 0.213 27.518)",
+          "oklch(63.7% 0.237 25.331)",
+          "oklch(80.8% 0.114 19.571)",
+          "oklch(93.6% 0.032 17.717)",
+          "oklch(97.1% 0.013 17.38)"
+        ]
+      },
+      "red-300": {
+        "role": "primary",
+        "displayName": "red 300",
+        "tonalRamp": [
+          "oklch(25.8% 0.092 26.042)",
+          "oklch(39.6% 0.141 25.723)",
+          "oklch(44.4% 0.177 26.899)",
+          "oklch(50.5% 0.213 27.518)",
+          "oklch(63.7% 0.237 25.331)",
+          "oklch(80.8% 0.114 19.571)",
+          "oklch(93.6% 0.032 17.717)",
+          "oklch(97.1% 0.013 17.38)"
+        ]
+      },
+      "amber-800": {
+        "role": "primary",
+        "displayName": "amber 800",
+        "tonalRamp": [
+          "oklch(27.9% 0.077 45.635)",
+          "oklch(41.4% 0.112 45.904)",
+          "oklch(47.3% 0.137 46.201)",
+          "oklch(55.5% 0.163 48.998)",
+          "oklch(76.9% 0.188 70.08)",
+          "oklch(87.9% 0.169 91.605)",
+          "oklch(96.2% 0.059 95.617)",
+          "oklch(98.7% 0.022 95.277)"
+        ]
+      },
+      "amber-200": {
+        "role": "primary",
+        "displayName": "amber 200",
+        "tonalRamp": [
+          "oklch(27.9% 0.077 45.635)",
+          "oklch(41.4% 0.112 45.904)",
+          "oklch(47.3% 0.137 46.201)",
+          "oklch(55.5% 0.163 48.998)",
+          "oklch(76.9% 0.188 70.08)",
+          "oklch(87.9% 0.169 91.605)",
+          "oklch(96.2% 0.059 95.617)",
+          "oklch(98.7% 0.022 95.277)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Page headline",
+        "purpose": "Plain Montserrat dashboard heading."
+      },
+      "title": {
+        "displayName": "Section title",
+        "purpose": "Dashboard block headings."
+      },
+      "body": {
+        "displayName": "Operational body",
+        "purpose": "Fixture rows and controls."
+      },
+      "label": {
+        "displayName": "Metadata",
+        "purpose": "Dates, counts, team context and data freshness."
+      }
+    },
+    "shadows": [
+      {
+        "name": "input-xs",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Incumbent input elevation; dashboard panels have no shadow."
+      }
+    ],
+    "motion": [
+      {
+        "name": "control-transition",
+        "value": "200ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Shared control color and hover movement; reduced motion disables base transitions."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "40rem"
+      },
+      {
+        "name": "lg",
+        "value": "64rem"
+      },
+      {
+        "name": "xl",
+        "value": "80rem"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Dashboard action",
+      "kind": "button",
+      "refersTo": "dashboard-action",
+      "description": "Outlined header control with corrected light-theme text.",
+      "html": "<button class=\"ds-action\">Verversen</button>",
+      "css": ".ds-action{font-family:var(--font-sans,ui-sans-serif,system-ui,sans-serif);font-size:.875rem;line-height:1.25rem;padding:.5rem 1rem;border:1px solid var(--color-electric-cyan,oklch(.69 .14 196));border-radius:.5rem;color:var(--color-cyan-800,oklch(45% .085 224.283));background:transparent;font-weight:500;cursor:pointer;transition:all 200ms ease-in-out}.ds-action:hover{background:color-mix(in oklch,var(--color-electric-cyan,oklch(.69 .14 196)) 10%,transparent);transform:translateY(-2px)}.ds-action:focus-visible{outline:2px solid var(--color-electric-cyan,oklch(.69 .14 196));outline-offset:2px}"
+    },
+    {
+      "name": "Primary save action",
+      "kind": "button",
+      "description": "Incumbent primary button used by the layout editor.",
+      "html": "<button class=\"ds-save\">Indeling opslaan</button>",
+      "css": ".ds-save{font-family:var(--font-sans,ui-sans-serif,system-ui,sans-serif);font-size:.875rem;line-height:1.25rem;padding:.5rem 1rem;border:0;border-radius:.5rem;background:linear-gradient(135deg,var(--color-electric-cyan,oklch(.69 .14 196)),var(--color-bright-cobalt,oklch(.55 .19 264)));color:white;font-weight:500;cursor:pointer;transition:all 200ms ease-in-out}.ds-save:hover{transform:translateY(-2px);box-shadow:0 10px 15px -3px rgb(6 182 212 / .5)}.ds-save:focus-visible{outline:2px solid var(--color-electric-cyan,oklch(.69 .14 196));outline-offset:2px}.ds-save:disabled{opacity:.5;cursor:not-allowed}"
+    },
+    {
+      "name": "Team filter",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Native select with the shared input treatment.",
+      "html": "<select class=\"ds-filter\" aria-label=\"Verjaardagen filteren op team\"><option>Alle toegankelijke personen</option><option>Mijn team</option></select>",
+      "css": ".ds-filter{font-family:var(--font-sans,ui-sans-serif,system-ui,sans-serif);font-size:.875rem;line-height:1.25rem;padding:.5rem 3.25rem .5rem .75rem;border:1px solid var(--color-gray-300,oklch(87.2% .01 258.338));border-radius:.5rem;background:transparent;color:var(--color-gray-900,oklch(21% .034 264.665));box-shadow:0 1px 2px rgb(0 0 0 / .05);max-width:100%}.ds-filter:focus-visible{outline:3px solid color-mix(in oklch,var(--color-cyan-300,oklch(86.5% .127 207.078)) 50%,transparent);border-color:var(--color-electric-cyan,oklch(.69 .14 196))}"
+    },
+    {
+      "name": "Scope navigation",
+      "kind": "nav",
+      "refersTo": "scope-navigation",
+      "description": "Selected scope gains a cyan underline; preview shows the selected state.",
+      "html": "<nav class=\"ds-scopes\" aria-label=\"Wedstrijdselectie\"><button class=\"ds-scope\" aria-pressed=\"true\">Thuiswedstrijden</button><button class=\"ds-scope\" aria-pressed=\"false\">Uitwedstrijden</button></nav>",
+      "css": ".ds-scopes{display:flex;flex-wrap:wrap;gap:1.25rem;border-bottom:1px solid var(--color-gray-200,oklch(92.8% .006 264.531))}.ds-scope{font-family:var(--font-sans,ui-sans-serif,system-ui,sans-serif);font-size:.875rem;line-height:1.25rem;padding:0 0 .75rem;background:transparent;border:0;border-bottom:2px solid transparent;color:var(--color-gray-500,oklch(55.1% .027 264.364));cursor:pointer}.ds-scope[aria-pressed=true]{border-bottom-color:var(--color-electric-cyan,oklch(.69 .14 196));color:var(--color-cyan-800,oklch(45% .085 224.283));font-weight:500}.ds-scope:focus-visible{outline:auto}"
+    },
+    {
+      "name": "Dashboard panel",
+      "kind": "card",
+      "refersTo": "dashboard-panel",
+      "description": "Flat panel, separate from the legacy decorative card class.",
+      "html": "<section class=\"ds-panel\"><h2>Mijn teams</h2><p>Teams binnen jouw verantwoordelijkheid</p></section>",
+      "css": ".ds-panel{font-family:var(--font-sans,ui-sans-serif,system-ui,sans-serif);font-size:.875rem;line-height:1.25rem;padding:1rem;border:1px solid var(--color-gray-200,oklch(92.8% .006 264.531));border-radius:.75rem;background:white;color:var(--color-gray-900,oklch(21% .034 264.665))}.ds-panel h2{font-family:var(--font-display,Montserrat,sans-serif);font-size:1.125rem;line-height:1.75rem;font-weight:600;margin:0}.ds-panel p{font-size:.75rem;line-height:1rem;color:var(--color-gray-500,oklch(55.1% .027 264.364));margin:.25rem 0 0}"
+    },
+    {
+      "name": "Today's birthday",
+      "kind": "custom",
+      "refersTo": "birthday-today",
+      "description": "Tonal entry in the birthday strip, using a fictional example.",
+      "html": "<a class=\"ds-birthday\" href=\"#person\"><span>Vandaag jarig</span><strong>Voorbeeldlid</strong></a>",
+      "css": ".ds-birthday{font-family:var(--font-sans,ui-sans-serif,system-ui,sans-serif);font-size:.875rem;line-height:1.25rem;display:block;padding:1rem;background:var(--color-cyan-50,oklch(.96 .02 196));color:var(--color-gray-900,oklch(21% .034 264.665));text-decoration:none}.ds-birthday span{display:block;margin-bottom:.75rem;font-size:.75rem;font-weight:600;color:var(--color-cyan-800,oklch(45% .085 224.283))}.ds-birthday strong{font-weight:600}.ds-birthday:focus-visible{outline:auto}"
+    }
+  ],
+  "narrative": {
+    "overview": "This records the existing Rondo visual system as used by the role dashboard. It is a compact Dutch operational interface with cyan accents, Montserrat headings, neutral panels and paired light/dark treatments; it does not establish a new brand identity.",
+    "keyCharacteristics": [
+      "Compact text hierarchy with generous separation between sections.",
+      "Thin borders and flat panels that keep operational rows legible.",
+      "Cyan selection cues and explicit written status feedback."
+    ],
+    "rules": [
+      {
+        "name": "The Paired Theme Rule",
+        "body": "Every dashboard surface and status label has a legible light and dark treatment.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do preserve paired light and dark colors for panels, labels and status messages.",
+      "Do use darker cyan for small action text on light backgrounds.",
+      "Do distinguish unavailable or stale information from a verified empty result."
+    ],
+    "donts": [
+      "Don't promote the dashboard's block order into a rule for every Rondo page.",
+      "Don't replace explanatory error or setup text with color alone.",
+      "Don't import the legacy decorative card treatment into the dashboard's flat panels by default."
+    ]
+  }
+}
