@@ -712,6 +712,7 @@ function SearchModal({ isOpen, onClose }) {
 }
 
 function Header({ onMenuClick, onOpenSearch, onOpenFeedback, showFeedbackIntro, onAcknowledgeFeedbackIntro }) {
+  const { data: currentUser } = useCurrentUser();
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -765,7 +766,9 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback, showFeedbackIntro, 
   const isDashboard = location.pathname === '/';
 
   const handleCustomizeClick = () => {
-    navigate('/?customize=true');
+    const next = new URLSearchParams(searchParams);
+    next.set('customize', 'true');
+    navigate(`/?${next}`);
   };
 
   return (
@@ -789,7 +792,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback, showFeedbackIntro, 
       </h1>
 
       {/* Dashboard customize button */}
-      {isDashboard && (
+      {isDashboard && (!currentUser?.dashboard_context?.enabled || searchParams.get('overzicht') === 'club') && (
         <button
           onClick={handleCustomizeClick}
           className="ml-3 flex items-center gap-1.5 px-2 py-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"

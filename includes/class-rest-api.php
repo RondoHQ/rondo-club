@@ -552,7 +552,9 @@ class Api extends Base {
 		foreach ( array_keys( \Rondo\Core\UserRoles::SECTION_CAPABILITIES ) as $cap ) {
 			$access[] = \Rondo\Core\UserRoles::can_access_section( $cap, $user_id );
 		}
-		return 'rondo_dashboard_' . $generation . '_' . $user_id . '_' . md5( wp_json_encode( $access ) );
+		$access[] = \Rondo\Core\AccessControl::visible_person_ids_or_null( $user_id );
+		$access[] = (array) get_userdata( $user_id )->allcaps;
+		return 'rondo_dashboard_v2_' . $generation . '_' . $user_id . '_' . md5( wp_json_encode( $access ) );
 	}
 
 	/**
@@ -583,6 +585,21 @@ class Api extends Base {
 	 * Register custom REST routes
 	 */
 	public function register_routes() {
+		foreach ( [
+			[ '/dashboard/workspace', 'GET', 'get_role_dashboard' ],
+			[ '/dashboard/matches', 'GET', 'get_dashboard_matches' ],
+			[ '/dashboard/layout', 'POST', 'save_role_dashboard_layout' ],
+		] as [ $route, $method, $callback ] ) {
+			register_rest_route(
+				'rondo/v1',
+				$route,
+				[
+					'methods'             => $method,
+					'callback'            => [ $this, $callback ],
+					'permission_callback' => static fn() => \Rondo\Dashboard\RoleDashboard::context()['enabled'],
+				]
+				);
+		}
 		// NOTE: Reminders, anniversaries, user settings, users, VOG, and fees routes
 		// have been extracted to dedicated controllers. See:
 		// - class-rest-reminders.php (Rondo\REST\Reminders)
@@ -1380,6 +1397,56 @@ class Api extends Base {
 	/**
 	 * Get dashboard summary
 	 */
+	public function get_role_dashboard() {
+		$data           = \Rondo\Dashboard\RoleDashboard::overview();
+		$data['tasks']  = $this->get_dashboard_todos( 10 );
+		$data['layout'] = \Rondo\Dashboard\RoleDashboard::settings();
+		return new \WP_REST_Response( $data, 200, [ 'Cache-Control' => 'no-store, private' ] );
+	}
+
+	/** Keep external match requests outside the personal dashboard response. */
+	public function get_dashboard_matches( $request ) {
+		if ( $request->has_param( 'team_id' ) && ( ! is_scalar( $request->get_param( 'team_id' ) ) || ! preg_match( '/^[1-9][0-9]*$/', (string) $request->get_param( 'team_id' ) ) ) ) {
+			return new \WP_Error( 'invalid_team', 'Kies een geldig team.', [ 'status' => 400 ] );
+		}
+		$team_id = absint( $request->get_param( 'team_id' ) );
+		if ( $team_id ) {
+			if ( ! in_array( $team_id, \Rondo\Dashboard\RoleDashboard::team_ids(), true ) ) {
+				return new \WP_Error( 'rest_forbidden', 'Je hebt geen toegang tot dit team.', [ 'status' => 403 ] );
+			}
+			$data = ( new \Rondo\Teams\TeamMatches() )->get_feed( $team_id );
+			if ( is_wp_error( $data ) ) {
+				return $data;
+			}
+			$today           = current_datetime()->format( 'Y-m-d' );
+			$end             = current_datetime()->modify( '+6 days' )->format( 'Y-m-d' );
+			$data['matches'] = array_values( array_filter( $data['matches'] ?? [], static fn( $match ) => $match['date'] >= $today && $match['date'] <= $end ) );
+			unset( $data['matchdays'] );
+		} else {
+			if ( ! \Rondo\Dashboard\RoleDashboard::context()['secretary'] ) {
+				return new \WP_Error( 'rest_forbidden', 'Je hebt geen toegang tot het clubprogramma.', [ 'status' => 403 ] );
+			}
+			$data = ( new \Rondo\Narrowcasting\SportlinkMatchday( false ) )->get_week_feed();
+		}
+		return new \WP_REST_Response( $data, 200, [ 'Cache-Control' => 'no-store, private' ] );
+	}
+
+	/** Store only validated presentation preferences; these never grant data access. */
+	public function save_role_dashboard_layout( $request ) {
+		$data      = $request->get_json_params();
+		$available = \Rondo\Dashboard\RoleDashboard::settings()['order'];
+		if ( ! is_array( $data ) || array_diff( array_keys( $data ), [ 'order', 'hidden' ] ) ) {
+			return new \WP_Error( 'invalid_layout', 'Ongeldige dashboardindeling.', [ 'status' => 400 ] );
+		}
+		foreach ( [ 'order', 'hidden' ] as $key ) {
+			if ( ! isset( $data[ $key ] ) || ! is_array( $data[ $key ] ) || array_filter( $data[ $key ], static fn( $value ) => ! is_string( $value ) ) || count( array_unique( $data[ $key ] ) ) !== count( $data[ $key ] ) || array_diff( $data[ $key ], $available ) ) {
+				return new \WP_Error( 'invalid_layout', 'Kies alleen beschikbare dashboardblokken.', [ 'status' => 400 ] );
+			}
+		}
+		update_user_meta( get_current_user_id(), 'rondo_role_dashboard_layout', $data );
+		return new \WP_REST_Response( \Rondo\Dashboard\RoleDashboard::settings(), 200, [ 'Cache-Control' => 'no-store, private' ] );
+	}
+
 	public function get_dashboard_summary( $request ) {
 		$user_id = get_current_user_id();
 
@@ -1427,7 +1494,7 @@ class Api extends Base {
 
 		// Upcoming reminders (birthday query now filtered in SQL)
 		$reminders_handler  = new \RONDO_Reminders();
-		$upcoming_reminders = $reminders_handler->get_upcoming_reminders( 14 );
+		$upcoming_reminders = array_values( array_filter( $reminders_handler->get_upcoming_reminders( 14 ), static fn( $item ) => \Rondo\Core\AccessControl::can_view_person( (int) $item['id'] ) ) );
 
 		$upcoming_anniversaries = [];
 		if ( \Rondo\Core\UserRoles::can_access_section( 'jubilarissen' ) ) {
@@ -1789,7 +1856,7 @@ class Api extends Base {
 		$todos = get_posts(
 			[
 				'post_type'        => 'rondo_todo',
-				'posts_per_page'   => $limit * 2, // Fetch extra to account for access filtering
+				'posts_per_page'   => -1, // Sort the complete personal set before limiting overdue work.
 				'post_status'      => 'rondo_open',
 				'suppress_filters' => false,
 				'orderby'          => 'date',
@@ -1812,6 +1879,9 @@ class Api extends Base {
 
 			$persons = [];
 			foreach ( $person_ids as $pid ) {
+				if ( ! \Rondo\Core\AccessControl::can_view_person( (int) $pid ) ) {
+					continue;
+				}
 				$persons[] = [
 					'id'        => (int) $pid,
 					'name'      => html_entity_decode( get_the_title( $pid ), ENT_QUOTES, 'UTF-8' ),
@@ -1849,9 +1919,6 @@ class Api extends Base {
 				'awaiting_since'   => $todo_dates['awaiting_since'],
 			];
 
-			if ( count( $formatted ) >= $limit ) {
-				break;
-			}
 		}
 
 		// Sort by due date (earliest first), nulls last
@@ -1871,7 +1938,7 @@ class Api extends Base {
 			}
 		);
 
-		return $formatted;
+		return array_slice( $formatted, 0, $limit );
 	}
 
 	/**

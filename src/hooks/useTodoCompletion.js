@@ -195,5 +195,6 @@ export function useTodoCompletion() {
     handleViewTodo,
     handleUpdateTodo,
     isUpdatingTodo: updateTodo.isPending,
+    updateError: updateTodo.error,
   };
 }

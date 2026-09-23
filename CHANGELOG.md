@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.99.0] - 2026-09-23
+
+### Added
+- Personal dashboard for year-group coordinators and match secretaries, combining roles without duplicate fixtures or a role switch.
+- Scoped birthdays, assigned teams and player counts, today's training, own tasks, and a seven-day match programme with cancellations, pitch, dressing rooms and freshness information.
+- Per-user block visibility and ordering, with server-side role checks on every data and preference request.
+
+### Changed
+- Existing match-secretary roles gain dashboard programme access without additional person, team-record or finance permissions.
+- Existing operational dashboard tools remain available through “Overige overzichten”. Birthdays remain a dashboard block without a separate navigation item.
+
+### Fixed
+- Dashboard birthday and task-person summaries respect record visibility, and overdue tasks are sorted before limiting the displayed list.
+
 ## [35.98.0] - 2026-09-22
 
 ### Added

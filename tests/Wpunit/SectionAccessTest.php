@@ -257,12 +257,12 @@ class SectionAccessTest extends RondoTestCase {
 		$this->assertSame( [ 'Onder 11' ], AccessControl::get_permitted_age_groups() );
 	}
 
-	public function test_dashboard_flag_hides_only_scoped_coordinator_dashboard(): void {
-		$this->assertFalse( $this->request( '/rondo/v1/user/me' )->get_data()['can_access_dashboard'] );
+	public function test_dashboard_flag_includes_scoped_coordinator_dashboard(): void {
+		$this->assertTrue( $this->request( '/rondo/v1/user/me' )->get_data()['can_access_dashboard'] );
 		delete_option( 'rondo_age_group_access' );
 		$team = $this->createOrganization();
 		update_option( 'rondo_team_access', [ $this->role => [ $team ] ] );
-		$this->assertFalse( $this->request( '/rondo/v1/user/me' )->get_data()['can_access_dashboard'] );
+		$this->assertTrue( $this->request( '/rondo/v1/user/me' )->get_data()['can_access_dashboard'] );
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'rondo_bestuur' ] ) );
 		$this->assertTrue( $this->request( '/rondo/v1/user/me' )->get_data()['can_access_dashboard'] );
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
