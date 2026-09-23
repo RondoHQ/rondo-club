@@ -63,6 +63,7 @@ export function useUpdateTodo() {
     mutationFn: ({ todoId, data }) => prmApi.updateTodo(todoId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['role-dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       // Also invalidate timeline since todos now appear there
       queryClient.invalidateQueries({ queryKey: ['people', 'timeline'] });
@@ -77,6 +78,7 @@ export function useDeleteTodo() {
     mutationFn: (todoId) => prmApi.deleteTodo(todoId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.invalidateQueries({ queryKey: ['role-dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       // Also invalidate timeline since todos now appear there
       queryClient.invalidateQueries({ queryKey: ['people', 'timeline'] });
