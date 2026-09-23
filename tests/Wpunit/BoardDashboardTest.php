@@ -63,39 +63,84 @@ class BoardDashboardTest extends RondoTestCase {
 	}
 
 	public function test_membership_counts_dates_through_today_and_includes_departed_former_members(): void {
-		$today = current_datetime()->format( 'Y-m-d' );
-		$start = substr( SeasonKey::current(), 0, 4 ) . '-07-01';
-		$this->createPerson( [], [ 'lid_sinds' => $start ] );
-		$this->createPerson(
+		$create_member = fn( array $post, array $fields ) => $this->createPerson(
+			$post,
+			array_merge(
+			[
+				'type_lid'       => 'Bondslid',
+				'spelactiviteit' => 'Veldvoetbal',
+			],
+			$fields
+			)
+			);
+		$today         = current_datetime()->format( 'Y-m-d' );
+		$start         = substr( SeasonKey::current(), 0, 4 ) . '-07-01';
+		$create_member( [], [ 'lid_sinds' => $start ] );
+		$create_member(
 			[],
 			[
 				'lid_sinds'     => $today,
 				'lid_tot'       => $today,
 				'former_member' => true,
+				'type_lid'      => 'Oud bondslid',
 			]
 			);
-		$this->createPerson(
+		$create_member(
 			[],
 			[
 				'lid_sinds' => '2000-01-01',
 				'lid_tot'   => current_datetime()->modify( '+1 day' )->format( 'Y-m-d' ),
 			]
 			);
-		$this->createPerson(
+		$create_member(
 			[],
 			[
 				'lid_sinds'     => '2000-01-01',
 				'lid_tot'       => '2001-01-01',
 				'former_member' => true,
+				'type_lid'      => 'Oud bondslid',
 			]
 			);
-		$this->createPerson( [], [ 'lid_sinds' => current_datetime()->modify( '+1 day' )->format( 'Y-m-d' ) ] );
+		$create_member( [], [ 'lid_sinds' => current_datetime()->modify( '+1 day' )->format( 'Y-m-d' ) ] );
 		$data = $this->workspace()['membership'];
 		$this->assertSame( 2, $data['joined'] );
 		$this->assertSame( 1, $data['left'] );
+		$this->assertSame( 0, $data['left_unknown'] );
 		$this->assertSame( 2, $data['active'] );
 		$this->assertSame( $start, $data['from'] );
 		$this->assertSame( $today, $data['to'] );
+	}
+
+	public function test_all_membership_figures_exclude_non_playing_and_non_association_members(): void {
+		$today = current_datetime()->format( 'Y-m-d' );
+		foreach ( [
+			[ 'Bondslid', 'Veldvoetbal', false ],
+			[ 'Oud bondslid', 'Zaalvoetbal', true ],
+			[ 'Bondslid', '', false ],
+			[ 'Bondslid', '-', false ],
+			[ 'Bondslid', '  ', false ],
+			[ 'Bondslid', null, false ],
+			[ 'Oud bondslid', '-', true ],
+			[ 'Verenigingslid', 'Veldvoetbal', false ],
+			[ 'Oud verenigingslid', 'Veldvoetbal', true ],
+			[ '', 'Veldvoetbal', false ],
+		] as [ $type, $activity, $former ] ) {
+			$this->createPerson(
+				[],
+				[
+					'type_lid'       => $type,
+					'spelactiviteit' => $activity,
+					'former_member'  => $former,
+					'lid_sinds'      => $today,
+					'lid_tot'        => $today,
+				]
+				);
+		}
+		$data = $this->workspace()['membership'];
+		$this->assertSame( 1, $data['active'] );
+		$this->assertSame( 2, $data['joined'] );
+		$this->assertSame( 2, $data['left'] );
+		$this->assertSame( 5, $data['left_unknown'] );
 	}
 
 	public function test_board_section_revocations_remove_both_data_and_saved_blocks(): void {
