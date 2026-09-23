@@ -835,16 +835,21 @@ class Feedback extends Base {
 	 * @return array Formatted feedback data.
 	 */
 	private function format_feedback( $post ) {
-		$author = get_user_by( 'id', $post->post_author );
+		$author    = get_user_by( 'id', $post->post_author );
+		$person_id = $author ? (int) get_user_meta( $author->ID, 'rondo_linked_person_id', true ) : 0;
+		if ( ! $person_id || get_post_type( $person_id ) !== 'person' || get_post_status( $person_id ) !== 'publish' || ! \Rondo\Core\AccessControl::can_view_person( $person_id ) ) {
+			$person_id = null;
+		}
 
 		return [
 			'id'       => $post->ID,
 			'title'    => $this->sanitize_text( $post->post_title ),
 			'content'  => $this->sanitize_rich_content( $post->post_content ),
 			'author'   => [
-				'id'    => $author ? (int) $author->ID : 0,
-				'name'  => $author ? $this->sanitize_text( $author->display_name ) : '',
-				'email' => $author ? sanitize_email( $author->user_email ) : '',
+				'id'        => $author ? (int) $author->ID : 0,
+				'name'      => $author ? $this->sanitize_text( $author->display_name ) : '',
+				'email'     => $author ? sanitize_email( $author->user_email ) : '',
+				'person_id' => $person_id,
 			],
 			'date'     => $post->post_date_gmt,
 			'modified' => $post->post_modified_gmt,
