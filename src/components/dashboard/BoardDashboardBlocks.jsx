@@ -30,10 +30,11 @@ export function BoardAnniversaries({ items }) {
 export function BoardMembership({ data }) {
   return <section aria-labelledby="dashboard-membership" className="lg:col-span-12">
     <h2 id="dashboard-membership" className="mb-1 text-lg font-semibold">Ledenontwikkeling</h2>
-    <p className={`mb-3 ${muted}`}>Seizoen {data.season} · {date(data.from)} t/m {date(data.to)}</p>
+    <p className={`mb-3 ${muted}`}>Alleen spelende bondsleden · Seizoen {data.season} · {date(data.from)} t/m {date(data.to)}</p>
     <dl className={`${panel} grid divide-y divide-gray-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0 dark:divide-gray-700`}>
-      {[['Actieve leden', data.active, 'Huidige ledenstand'], ['Instroom', data.joined, 'Lid geworden dit seizoen'], ['Uitstroom', data.left, 'Lidmaatschap geëindigd dit seizoen']].map(([label, value, description]) => <div key={label} className="p-4"><dt className="text-sm font-medium">{label}</dt><dd className="mt-2 text-2xl font-semibold tabular-nums">{number(value)}</dd><dd className={`mt-1 ${muted}`}>{description}</dd></div>)}
+      {[['Spelende bondsleden', data.active, 'Huidige ledenstand'], ['Instroom', data.joined, 'Lid geworden dit seizoen'], ['Uitstroom', data.left, data.left_unknown > 0 ? 'Bevestigd · telling onvolledig' : 'Lidmaatschap geëindigd dit seizoen']].map(([label, value, description]) => <div key={label} className="p-4"><dt className="text-sm font-medium">{label}</dt><dd className="mt-2 text-2xl font-semibold tabular-nums">{number(value)}</dd><dd className={`mt-1 ${muted}`}>{description}</dd></div>)}
     </dl>
+    {data.left_unknown > 0 && <p className={`mt-2 ${muted}`}>Bij {number(data.left_unknown)} {data.left_unknown === 1 ? 'uitgestroomd bondslid ontbreekt' : 'uitgestroomde bondsleden ontbreekt'} de spelactiviteit. {data.left_unknown === 1 ? 'Dit lid is' : 'Deze leden zijn'} niet meegeteld bij uitstroom.</p>}
   </section>;
 }
 

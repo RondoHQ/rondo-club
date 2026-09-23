@@ -63,14 +63,21 @@ final class BoardDashboard {
 		$start  = substr( $season, 0, 4 ) . '-07-01';
 		$today  = current_datetime()->format( 'Y-m-d' );
 		$data   = [
-			'season' => $season,
-			'from'   => $start,
-			'to'     => $today,
-			'active' => 0,
-			'joined' => 0,
-			'left'   => 0,
+			'season'       => $season,
+			'from'         => $start,
+			'to'           => $today,
+			'active'       => 0,
+			'joined'       => 0,
+			'left'         => 0,
+			'left_unknown' => 0,
 		];
 		foreach ( self::people() as $id ) {
+			$type     = strtolower( trim( (string) Fields::get_for_post( $id, 'type_lid' ) ) );
+			$activity = trim( (string) Fields::get_for_post( $id, 'spelactiviteit' ) );
+			// Retain former playing association members for season departures.
+			if ( ! in_array( $type, [ 'bondslid', 'oud bondslid' ], true ) ) {
+				continue;
+			}
 			$dates = Formatter::for_wire(
 				'person',
 				[
@@ -78,7 +85,14 @@ final class BoardDashboard {
 					'lid_tot'   => Fields::get_for_post( $id, 'lid_tot' ),
 				]
 				);
-			if ( ! Fields::get_for_post( $id, 'former_member' ) && ( ! $dates['lid_sinds'] || $dates['lid_sinds'] <= $today ) && ( ! $dates['lid_tot'] || $dates['lid_tot'] >= $today ) ) {
+			if ( $activity === '' || $activity === '-' ) {
+				// Without historical activity, a departed association member cannot be classified.
+				if ( $dates['lid_tot'] && $dates['lid_tot'] >= $start && $dates['lid_tot'] <= $today ) {
+					++$data['left_unknown'];
+				}
+				continue;
+			}
+			if ( $type === 'bondslid' && ! Fields::get_for_post( $id, 'former_member' ) && ( ! $dates['lid_sinds'] || $dates['lid_sinds'] <= $today ) && ( ! $dates['lid_tot'] || $dates['lid_tot'] >= $today ) ) {
 				++$data['active'];
 			}
 			foreach ( [
