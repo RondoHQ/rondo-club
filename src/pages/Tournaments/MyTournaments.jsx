@@ -1,12 +1,14 @@
 import { Link } from 'react-router-dom';
 import { CalendarDays, CheckCircle2, ClipboardList, Mail, Phone } from 'lucide-react';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useMyTournamentEntries, useTournamentCoordinators } from '@/hooks/useTournaments';
 import { formatTournamentDate, tournamentPaymentStatus, tournamentPaymentToneClasses } from './tournamentFormatters';
 
 export default function MyTournaments() {
   useDocumentTitle('Toernooien');
+  const { data: user } = useCurrentUser();
   const { data: entries = [], isLoading, error } = useMyTournamentEntries();
 
   const isEmpty = !isLoading && !error && entries.length === 0;
@@ -27,6 +29,13 @@ export default function MyTournaments() {
           Gedeelde inschrijfopdrachten van de teams waarvoor je kaderlid bent.
         </p>
       </div>
+
+      {user?.can_manage_tournaments || user?.can_access_financieel ? (
+        <div className="flex flex-wrap gap-3">
+          <Link to="/toernooien/betalingen" className="btn-secondary">Toernooibetalingen</Link>
+          {user?.can_manage_tournaments ? <Link to="/toernooien" className="btn-tertiary">Toernooien beheren</Link> : null}
+        </div>
+      ) : null}
 
       {error ? <div className="card p-6 text-sm text-red-600 dark:text-red-400">Je toernooien konden niet worden geladen.</div> : null}
 

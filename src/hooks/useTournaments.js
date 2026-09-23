@@ -1,6 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 
+export function useTournamentPayments() {
+  return useQuery({
+    queryKey: ['tournaments', 'payments'],
+    queryFn: async () => (await prmApi.getTournamentPayments()).data,
+    refetchInterval: 60_000,
+  });
+}
+
 export function useTournaments() {
   return useQuery({
     queryKey: ['tournaments'],

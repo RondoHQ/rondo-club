@@ -52,6 +52,15 @@ final class Tournaments extends Base {
 		);
 		register_rest_route(
 			'rondo/v1',
+			'/tournaments/payments',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_payments' ],
+				'permission_callback' => [ $this, 'check_payments_permission' ],
+			]
+		);
+		register_rest_route(
+			'rondo/v1',
 			'/tournaments/coordinators',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -267,6 +276,16 @@ final class Tournaments extends Base {
 
 	public function check_manager_permission(): bool {
 		return $this->check_user_approved() && TournamentAccess::can_manage();
+	}
+
+	public function check_payments_permission(): bool {
+		return $this->check_user_approved() && ( TournamentAccess::can_manage() || $this->check_financieel_read_permission() );
+	}
+
+	public function get_payments() {
+		$response = rest_ensure_response( $this->service->payment_overview() );
+		$response->header( 'Cache-Control', 'private, no-store' );
+		return $response;
 	}
 
 	public function check_entry_read( $request ): bool {
