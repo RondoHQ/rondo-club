@@ -443,7 +443,16 @@ export default function FeedbackDetail() {
               <User className="w-5 h-5 text-gray-400" />
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Submitted by</h3>
-                <p className="text-gray-700 dark:text-gray-300">{feedback.author.name}</p>
+                {feedback.author.person_id ? (
+                  <Link
+                    to={`/people/${feedback.author.person_id}`}
+                    className="text-electric-cyan hover:underline focus-visible:underline"
+                  >
+                    {feedback.author.name}
+                  </Link>
+                ) : (
+                  <p className="text-gray-700 dark:text-gray-300">{feedback.author.name}</p>
+                )}
               </div>
             </div>
           )}
