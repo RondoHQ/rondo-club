@@ -11,19 +11,19 @@ const date = value => {
   return isValid(parsed) ? format(parsed, 'd MMMM') : 'Datum onbekend';
 };
 
-export function BoardAnniversaries({ items }) {
-  return <section aria-labelledby="dashboard-anniversaries" className="lg:col-span-12">
+export function BoardAnniversaries({ items, compact = false }) {
+  return <section aria-labelledby="dashboard-anniversaries" className={compact ? "min-w-0 lg:col-span-6" : "min-w-0 lg:col-span-12"}>
     <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2"><h2 id="dashboard-anniversaries" className="text-lg font-semibold">Jubilarissen</h2><Link className={action} to="/people/jubilarissen">Alle jubilarissen</Link></div>
     <p className={`mb-3 ${muted}`}>Lidmaatschapsjubilea in de komende 90 dagen.</p>
-    <ul className={`${panel} divide-y divide-gray-100 px-4 dark:divide-gray-700`}>
-      {items.slice(0, 6).map(item => <li key={item.id}><Link to={`/people/${item.person.id}`} className="flex flex-wrap items-center gap-3 py-3 hover:underline">
+    <ul className={`${panel} divide-y divide-gray-100 px-3 dark:divide-gray-700`}>
+      {items.slice(0, 3).map(item => <li key={item.id}><Link to={`/people/${item.person.id}`} className="flex flex-wrap items-center gap-3 py-2 hover:underline">
         <PersonAvatar thumbnail={item.person.thumbnail} name={item.person.name} size="md" />
-        <div className="min-w-0 flex-1"><p className="text-sm font-semibold">{item.person.name}</p><p className={muted}>{item.title}</p></div>
-        <span className={`text-sm ${item.days_until === 0 ? 'font-semibold text-cyan-800 dark:text-cyan-200' : 'text-gray-500 dark:text-gray-400'}`}>{item.days_until === 0 ? 'Vandaag' : date(item.anniversary_date)}</span>
+        <div className="min-w-0 flex-1"><p className="text-sm font-semibold">{item.person.name}</p><p className="text-xs text-gray-500 dark:text-gray-400">{item.title}</p></div>
+        <span className={`text-xs ${item.days_until === 0 ? 'font-semibold text-cyan-800 dark:text-cyan-200' : 'text-gray-500 dark:text-gray-400'}`}>{item.days_until === 0 ? 'Vandaag' : date(item.anniversary_date)}</span>
       </Link></li>)}
       {!items.length && <li className={`py-4 ${muted}`}>Geen lidmaatschapsjubilea in de komende 90 dagen.</li>}
     </ul>
-    {items.length > 6 && <p className={`mt-2 ${muted}`}>De eerstvolgende 6 van {number(items.length)} jubilea. <Link className={action} to="/people/jubilarissen">Bekijk alle jubilarissen</Link></p>}
+    {items.length > 3 && <p className={`mt-2 ${muted}`}>De eerstvolgende 3 van {number(items.length)} jubilea. <Link className={action} to="/people/jubilarissen">Bekijk alle jubilarissen</Link></p>}
   </section>;
 }
 

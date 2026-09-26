@@ -6,6 +6,9 @@ use Rondo\Core\UserRoles;
 use Rondo\Dashboard\BoardDashboard;
 use Rondo\Fees\SeasonKey;
 use Rondo\REST\Api;
+use Rondo\REST\People;
+use Rondo\VOG\VOGEmail;
+use Rondo\VOG\VOGRequirement;
 use Rondo\REST\UserSettings;
 use Tests\Support\RondoTestCase;
 
@@ -205,18 +208,75 @@ class BoardDashboardTest extends RondoTestCase {
 		delete_option( 'rondo_age_group_access' );
 	}
 
-	public function test_vog_counts_canonical_dates_and_current_volunteers_only(): void {
-		$now = current_datetime();
+	public function test_vog_counts_match_overview_with_role_and_committee_exemptions(): void {
+		VOGRequirement::invalidate_cache();
+		$team      = $this->createOrganization();
+		$role      = [
+			'team'        => $team,
+			'entity_type' => 'team',
+			'job_title'   => 'Trainer',
+			'is_current'  => true,
+		];
+		$now       = current_datetime();
+		$dated_ids = [];
 		foreach ( [ null, $now->modify( '-3 years' )->format( 'Y-m-d' ), $now->modify( '+20 days -3 years' )->format( 'Y-m-d' ), $now->format( 'Y-m-d' ) ] as $index => $date ) {
-			$id = $this->createPerson( [], [ 'datum_vog' => $date ] );
+			$id = $this->createPerson(
+				[],
+				[
+					'datum_vog'    => $date,
+					'work_history' => [ $role ],
+				]
+				);
 			update_post_meta( $id, 'huidig-vrijwilliger', '1' );
+			if ( $date ) {
+				$dated_ids[ $id ] = $date;
+			}
 			if ( $index === 1 ) {
 				update_post_meta( $id, 'vog_justis_submitted_date', $now->format( 'Y-m-d' ) );
 			}
 		}
-		$id = $this->createPerson( [], [ 'former_member' => true ] );
+		$id = $this->createPerson(
+			[],
+			[
+				'former_member' => true,
+				'work_history'  => [ $role ],
+			]
+			);
 		update_post_meta( $id, 'huidig-vrijwilliger', '1' );
+		$commissie = self::factory()->post->create(
+			[
+				'post_type'   => 'commissie',
+				'post_status' => 'publish',
+			]
+			);
+		( new VOGEmail() )->update_exempt_roles( [ 'Omroepster' ] );
+		( new VOGEmail() )->update_exempt_commissies( [ $commissie ] );
+		foreach ( [ null, $now->modify( '+20 days -3 years' )->format( 'Y-m-d' ) ] as $date ) {
+			foreach ( [
+				[],
+				[ array_merge( $role, [ 'job_title' => 'Omroepster' ] ) ],
+				[
+					array_merge(
+					$role,
+					[
+						'team'        => $commissie,
+						'entity_type' => 'commissie',
+					]
+					),
+				],
+			] as $roles ) {
+				$id = $this->createPerson(
+					[],
+					[
+						'datum_vog'    => $date,
+						'work_history' => $roles,
+					]
+					);
+				update_post_meta( $id, 'huidig-vrijwilliger', '1' );
+			}
+		}
 		$this->createPerson();
+		VOGRequirement::invalidate_cache();
 		$this->assertSame(
 			[
 				'not_submitted_to_justis' => 1,
@@ -225,6 +285,44 @@ class BoardDashboardTest extends RondoTestCase {
 			],
 			$this->workspace()['vog']
 			);
+		$counts = BoardDashboard::vog_counts();
+		foreach ( [
+			'not_submitted' => 'not_submitted_to_justis',
+			'submitted'     => 'submitted_to_justis',
+			'soon'          => 'expiring_soon',
+		] as $status => $key ) {
+			$request = new \WP_REST_Request( 'GET' );
+			foreach ( [
+				'page'         => 1,
+				'per_page'     => 100,
+				'ownership'    => 'all',
+				'orderby'      => 'first_name',
+				'order'        => 'asc',
+				'vog_required' => '1',
+			] as $param => $value ) {
+				$request->set_param( $param, $value );
+			}
+			if ( $status === 'soon' ) {
+				$request->set_param( 'vog_expiring_within_days', 30 );
+			} else {
+				$request->set_param( 'vog_missing', '1' );
+				$request->set_param( 'vog_older_than_years', 3 );
+				$request->set_param( 'vog_justis_status', $status );
+			}
+			$response = ( new People() )->get_filtered_people( $request );
+			$this->assertSame( $counts[ $key ], $response->get_data()['total'], $key );
+			foreach ( $dated_ids as $id => $date ) {
+				update_post_meta( $id, 'datum-vog', $date );
+			}
+			$response = ( new People() )->get_filtered_people( $request );
+			$this->assertSame( $counts[ $key ], $response->get_data()['total'], $key . ' ISO storage' );
+			foreach ( $dated_ids as $id => $date ) {
+				update_post_meta( $id, 'datum-vog', str_replace( '-', '', $date ) );
+			}
+		}
+		delete_option( VOGEmail::OPTION_EXEMPT_ROLES );
+		delete_option( VOGEmail::OPTION_EXEMPT_COMMISSIES );
+		VOGRequirement::invalidate_cache();
 	}
 
 	public function test_upgrade_grants_board_anniversaries_once_without_granting_other_sections(): void {
