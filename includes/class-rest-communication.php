@@ -428,7 +428,7 @@ class Communication extends Base {
 			]
 			);
 		foreach ( $items as $item ) {
-			$planned_date = get_post_meta( $item->ID, 'planned_date', true );
+			$planned_date = $this->wire_date( get_post_meta( $item->ID, 'planned_date', true ) );
 			$status       = get_post_meta( $item->ID, 'status', true );
 			if ( $planned_date < wp_date( 'Y-m-d' ) ) {
 				continue;
@@ -637,12 +637,12 @@ class Communication extends Base {
 		if ( get_post_meta( $series_id, 'series_status', true ) !== 'active' ) {
 			return;
 		}
-		$start = get_post_meta( $series_id, 'start_date', true );
+		$start = $this->wire_date( get_post_meta( $series_id, 'start_date', true ) );
 		if ( ! $this->valid_date( $start ) ) {
 			return;
 		}
 		$frequency = get_post_meta( $series_id, 'recurrence', true );
-		$end       = get_post_meta( $series_id, 'end_date', true );
+		$end       = $this->wire_date( get_post_meta( $series_id, 'end_date', true ) );
 		$horizon   = wp_date( 'Y-m-d', strtotime( '+12 months' ) );
 		if ( $start > $horizon ) {
 			$horizon = $start;
@@ -730,7 +730,7 @@ class Communication extends Base {
 			]
 			);
 		foreach ( $posts as $post ) {
-			if ( $post->ID === $current_id || get_post_meta( $post->ID, 'planned_date', true ) < wp_date( 'Y-m-d' ) || ! in_array( get_post_meta( $post->ID, 'status', true ), [ 'concept', 'preparing', 'ready' ], true ) ) {
+			if ( $post->ID === $current_id || $this->wire_date( get_post_meta( $post->ID, 'planned_date', true ) ) < wp_date( 'Y-m-d' ) || ! in_array( get_post_meta( $post->ID, 'status', true ), [ 'concept', 'preparing', 'ready' ], true ) ) {
 				continue;
 			}
 			wp_update_post(
@@ -777,8 +777,8 @@ class Communication extends Base {
 			'channel'         => $fields['channel'] ?? '',
 			'google_docs_url' => $fields['google_docs_url'] ?? '',
 			'audience'        => $fields['audience'] ?? '',
-			'planned_date'    => $fields['planned_date'] ?? '',
-			'actual_date'     => $fields['actual_date'] ?? '',
+			'planned_date'    => $this->wire_date( $fields['planned_date'] ?? '' ),
+			'actual_date'     => $this->wire_date( $fields['actual_date'] ?? '' ),
 			'published_url'   => $fields['published_url'] ?? '',
 			'assignee_id'     => $assignee_id,
 			'assignee_name'   => $assignee_id ? ( get_userdata( $assignee_id )->display_name ?? 'Onbekend' ) : '',
@@ -823,5 +823,13 @@ class Communication extends Base {
 	private function valid_date( string $date ): bool {
 		$value = \DateTimeImmutable::createFromFormat( '!Y-m-d', $date );
 		return $value && $value->format( 'Y-m-d' ) === $date;
+	}
+
+	private function wire_date( $date ): string {
+		$date = (string) $date;
+		if ( preg_match( '/^(\d{4})(\d{2})(\d{2})$/', $date, $matches ) ) {
+			return $matches[1] . '-' . $matches[2] . '-' . $matches[3];
+		}
+		return $date;
 	}
 }
