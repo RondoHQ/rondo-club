@@ -68,7 +68,7 @@ export default defineConfig({
           },
           {
             // Contact rosters and private assignment worklists always need current access and data.
-            urlPattern: /\/wp-json\/rondo\/v1\/(?:my-teams|volunteer-assignments|tournaments\/payments)(?:[/?]|$)/i,
+            urlPattern: /\/wp-json\/rondo\/v1\/(?:app-access|my-teams|volunteer-assignments|tournaments\/payments)(?:[/?]|$)/i,
             handler: 'NetworkOnly',
           },
           {

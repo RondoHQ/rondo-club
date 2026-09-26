@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.103.0] - 2026-09-26
+
+### Added
+- Bestuur-only App access page for setting up the shared Laposta account in an authenticator app.
+- Administrator-only configuration with encrypted storage, on-demand QR display, strict URI validation and uncached credential responses.
+
 ## [35.102.0] - 2026-09-26
 
 ### Added

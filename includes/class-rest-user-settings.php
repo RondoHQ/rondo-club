@@ -1223,6 +1223,7 @@ class UserSettings extends Base {
 			'email'                          => \Rondo\Users\UserProvisioning::contact_email( $user_id ) ?: $user->user_email,
 			'avatar_url'                     => $avatar_url,
 			'is_admin'                       => $is_admin,
+			'can_access_app_access'          => \Rondo\Security\AppAccess::can_access( $user_id ),
 			'has_extra_roles'                => $has_extra_roles,
 			'is_kader'                       => $is_kader,
 			'can_access_dashboard'           => \Rondo\Dashboard\RoleDashboard::context( $user_id )['can_access'],
