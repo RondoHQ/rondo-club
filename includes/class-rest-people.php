@@ -2431,6 +2431,9 @@ class People extends Base {
 			$where_clauses[] = "(df.meta_value IS NULL OR df.meta_value = '')";
 		}
 
+		// Compare both native compact and legacy ISO VOG dates in the same shape.
+		$vog_date_sql = "REPLACE(dv.meta_value, '-', '')";
+
 		// Datum VOG filtering based on vog_type
 		if ( $vog_type === 'nieuw' ) {
 			// Only show people WITHOUT a VOG date
@@ -2439,22 +2442,22 @@ class People extends Base {
 		} elseif ( $vog_type === 'vernieuwing' && $vog_older_than_years !== null ) {
 			// Only show people WITH an expired VOG date
 			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'";
-			$cutoff_date      = gmdate( 'Y-m-d', strtotime( "-{$vog_older_than_years} years" ) );
-			$where_clauses[]  = "(dv.meta_value IS NOT NULL AND dv.meta_value != '' AND dv.meta_value <= %s)";
+			$cutoff_date      = gmdate( 'Ymd', strtotime( "-{$vog_older_than_years} years" ) );
+			$where_clauses[]  = "(dv.meta_value IS NOT NULL AND dv.meta_value != '' AND $vog_date_sql <= %s)";
 			$prepare_values[] = $cutoff_date;
 		} elseif ( $vog_missing === '1' && $vog_older_than_years !== null ) {
 			// Default: OR both conditions (show all needing VOG)
 			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'";
-			$cutoff_date      = gmdate( 'Y-m-d', strtotime( "-{$vog_older_than_years} years" ) );
-			$where_clauses[]  = "((dv.meta_value IS NULL OR dv.meta_value = '') OR (dv.meta_value <= %s))";
+			$cutoff_date      = gmdate( 'Ymd', strtotime( "-{$vog_older_than_years} years" ) );
+			$where_clauses[]  = "((dv.meta_value IS NULL OR dv.meta_value = '') OR ($vog_date_sql <= %s))";
 			$prepare_values[] = $cutoff_date;
 		} elseif ( $vog_missing === '1' ) {
 			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'";
 			$where_clauses[] = "(dv.meta_value IS NULL OR dv.meta_value = '')";
 		} elseif ( $vog_older_than_years !== null ) {
 			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'";
-			$cutoff_date      = gmdate( 'Y-m-d', strtotime( "-{$vog_older_than_years} years" ) );
-			$where_clauses[]  = "(dv.meta_value IS NOT NULL AND dv.meta_value != '' AND dv.meta_value <= %s)";
+			$cutoff_date      = gmdate( 'Ymd', strtotime( "-{$vog_older_than_years} years" ) );
+			$where_clauses[]  = "(dv.meta_value IS NOT NULL AND dv.meta_value != '' AND $vog_date_sql <= %s)";
 			$prepare_values[] = $cutoff_date;
 		} elseif ( $vog_expiring_within_days !== null ) {
 			// Find people whose VOG is still valid but will expire within N days.
@@ -2462,9 +2465,9 @@ class People extends Base {
 			// We want: today < expiry <= today + N days
 			// Which means: today - 3 years < datum-vog <= today + N days - 3 years
 			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'";
-			$expired_date     = gmdate( 'Y-m-d', strtotime( '-3 years' ) );
-			$expiring_date    = gmdate( 'Y-m-d', strtotime( "+{$vog_expiring_within_days} days -3 years" ) );
-			$where_clauses[]  = "(dv.meta_value IS NOT NULL AND dv.meta_value != '' AND dv.meta_value > %s AND dv.meta_value <= %s)";
+			$expired_date     = gmdate( 'Ymd', strtotime( '-3 years' ) );
+			$expiring_date    = gmdate( 'Ymd', strtotime( "+{$vog_expiring_within_days} days -3 years" ) );
+			$where_clauses[]  = "(dv.meta_value IS NOT NULL AND dv.meta_value != '' AND $vog_date_sql > %s AND $vog_date_sql <= %s)";
 			$prepare_values[] = $expired_date;
 			$prepare_values[] = $expiring_date;
 		}
