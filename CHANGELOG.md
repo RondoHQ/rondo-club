@@ -5,11 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [35.102.0] - 2026-09-26
+## [35.103.0] - 2026-09-26
 
 ### Added
 - Bestuur-only App access page for setting up the shared Laposta account in an authenticator app.
 - Administrator-only configuration with encrypted storage, on-demand QR display, strict URI validation and uncached credential responses.
+
+## [35.102.0] - 2026-09-26
+
+### Added
+- Club-configurable communication channels, with stable IDs, editable names and archiving that preserves existing items.
+- Multiple channels per communication item, independent completion checkboxes and dates, and automatic completion only after every channel is done.
+- Typed WordPress and MCP abilities to list, read, create and update communication items and recurring series, record channel completion and add club channels with administrator permission.
+
+### Fixed
+- Preserve recurring occurrence keys when editing items, preventing duplicate monthly items.
+- Keep communication search text clear of the magnifying-glass icon by using the shared leading-icon input spacing.
 
 ## [35.101.0] - 2026-09-26
 

@@ -6,6 +6,7 @@
 namespace Rondo\REST;
 
 use Rondo\Core\UserRoles;
+use Rondo\Config\ClubConfig;
 use Rondo\Fields\Fields;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -17,9 +18,8 @@ class Communication extends Base {
 	private const SERIES_TYPE  = 'rondo_comm_series';
 	private const COMMENT_TYPE = 'rondo_communication_note';
 	private const STATUSES     = [ 'concept', 'preparing', 'ready', 'sent', 'skipped', 'cancelled', 'paused' ];
-	private const CHANNELS     = [ 'whatsapp', 'newsletter', 'website' ];
 	private const RECURRENCES  = [ 'none', 'monthly', 'yearly' ];
-	private const COPY_FIELDS  = [ 'description', 'channel', 'google_docs_url', 'audience', 'assignee_id', 'attachments' ];
+	private const COPY_FIELDS  = [ 'description', 'channel_ids', 'google_docs_url', 'audience', 'assignee_id', 'attachments' ];
 
 	public function __construct() {
 		parent::__construct();
@@ -124,15 +124,17 @@ class Communication extends Base {
 	}
 
 	public function can_access_item( $request ) {
-		return $this->can_access() && self::ITEM_TYPE === get_post_type( (int) $request['id'] );
+		return $this->can_access() && self::ITEM_TYPE === get_post_type( (int) $request['id'] ) && get_post_status( (int) $request['id'] ) === 'publish';
 	}
 
 	public function can_access_series( $request ) {
 		return $this->can_access() && self::SERIES_TYPE === get_post_type( (int) $request['id'] );
 	}
 
-	public function index() {
-		$this->expand_active_series();
+	public function index( $request = null ) {
+		if ( ! $request || ! $request->get_param( 'read_only' ) ) {
+			$this->expand_active_series();
+		}
 		$posts = get_posts(
 			[
 				'post_type'        => self::ITEM_TYPE,
@@ -154,8 +156,9 @@ class Communication extends Base {
 
 		return rest_ensure_response(
 			[
-				'items' => array_map( [ $this, 'format_item' ], $posts ),
-				'users' => array_map(
+				'channels' => ClubConfig::get_communication_channels(),
+				'items'    => array_map( [ $this, 'format_item' ], $posts ),
+				'users'    => array_map(
 				static fn( $user ) => [
 					'id'   => $user->ID,
 					'name' => $user->display_name,
@@ -171,7 +174,10 @@ class Communication extends Base {
 	}
 
 	public function create( $request ) {
-		$data  = $request->get_json_params();
+		$data = $request->get_json_params();
+		if ( ! in_array( $data['status'] ?? 'concept', [ 'concept', 'preparing', 'ready' ], true ) ) {
+			return new \WP_Error( 'invalid_status', 'Nieuwe items beginnen met een open status.', [ 'status' => 400 ] );
+		}
 		$error = $this->validate_payload( $data );
 		if ( is_wp_error( $error ) ) {
 			return $error;
@@ -216,7 +222,7 @@ class Communication extends Base {
 		return new \WP_REST_Response( $this->format_item( get_post( $item_id ), true ), 201 );
 	}
 
-	public function update( $request ) {
+	private function update_item( $request ) {
 		$id      = (int) $request['id'];
 		$data    = $request->get_json_params();
 		$current = $this->format_item( get_post( $id ), true );
@@ -224,8 +230,22 @@ class Communication extends Base {
 			return new \WP_Error( 'communication_conflict', 'Dit item is intussen door iemand anders gewijzigd. Vernieuw de pagina en probeer opnieuw.', [ 'status' => 409 ] );
 		}
 
-		$merged = array_merge( $current, $data );
-		$error  = $this->validate_payload( $merged );
+		if ( isset( $data['status'] ) && $data['status'] !== $current['status'] && ( ! in_array( $current['status'], [ 'concept', 'preparing', 'ready' ], true ) || ! in_array( $data['status'], [ 'concept', 'preparing', 'ready' ], true ) ) ) {
+			return new \WP_Error( 'invalid_status_transition', 'Gebruik de kanaalcheckboxes of de bijbehorende actie om dit item af te handelen.', [ 'status' => 400 ] );
+		}
+		if ( isset( $data['channel'] ) && ! isset( $data['channel_ids'] ) ) {
+			$data['channel_ids'] = [ $data['channel'] ];
+		}
+		$merged                   = array_merge( $current, $data );
+		$merged['series_id']      = $current['series_id'];
+		$merged['occurrence_key'] = Fields::get_for_post( $id, 'occurrence_key' ) ?: '';
+		foreach ( $current['channels'] as $channel ) {
+			if ( ! empty( $channel['actual_date'] ) && is_array( $merged['channel_ids'] ) && ! in_array( $channel['channel_id'], $merged['channel_ids'], true ) ) {
+				return new \WP_Error( 'completed_channel', 'Maak het afvinken eerst ongedaan voordat je een afgerond kanaal verwijdert.', [ 'status' => 400 ] );
+			}
+		}
+
+		$error = $this->validate_payload( $merged, $current['channel_ids'] );
 		if ( is_wp_error( $error ) ) {
 			return $error;
 		}
@@ -237,8 +257,9 @@ class Communication extends Base {
 			]
 			);
 		$this->save_item_meta( $id, $merged );
+		$this->sync_completion( $id, $this->channel_rows( $id ) );
 		$changed = [];
-		foreach ( [ 'title', 'description', 'channel', 'google_docs_url', 'audience', 'planned_date', 'assignee_id', 'status', 'published_url', 'attachments' ] as $field ) {
+		foreach ( [ 'title', 'description', 'channel_ids', 'google_docs_url', 'audience', 'planned_date', 'assignee_id', 'status', 'published_url', 'attachments' ] as $field ) {
 			if ( ( $current[ $field ] ?? null ) !== ( $merged[ $field ] ?? null ) ) {
 				$changed[] = $field;
 			}
@@ -252,7 +273,7 @@ class Communication extends Base {
 		return rest_ensure_response( $this->format_item( get_post( $id ), true ) );
 	}
 
-	public function action( $request ) {
+	private function item_action( $request ) {
 		$id     = (int) $request['id'];
 		$data   = $request->get_json_params();
 		$action = sanitize_key( $data['action'] ?? '' );
@@ -260,27 +281,51 @@ class Communication extends Base {
 
 		switch ( $action ) {
 			case 'complete':
-				$error = $this->validate_payload( array_merge( $item, [ 'status' => 'sent' ] ) );
-				if ( is_wp_error( $error ) ) {
-					return $error;
-				}
-				$actual_date = sanitize_text_field( $data['actual_date'] ?? wp_date( 'Y-m-d' ) );
-				if ( ! $this->valid_date( $actual_date ) || $actual_date > wp_date( 'Y-m-d' ) ) {
-					return new \WP_Error( 'invalid_actual_date', 'De werkelijke datum moet vandaag of eerder zijn.', [ 'status' => 400 ] );
-				}
-				update_post_meta( $id, 'previous_open_status', $item['status'] );
-				update_post_meta( $id, 'status', 'sent' );
-				update_post_meta( $id, 'actual_date', $actual_date );
-				update_post_meta( $id, 'published_url', esc_url_raw( $data['published_url'] ?? '' ) );
-				update_post_meta( $id, 'completed_by', get_current_user_id() );
-				$this->audit( $id, 'completed', [ 'actual_date' => $actual_date ] );
-				break;
 			case 'reopen':
-				update_post_meta( $id, 'status', get_post_meta( $id, 'previous_open_status', true ) ?: 'ready' );
-				foreach ( [ 'actual_date', 'published_url', 'completed_by' ] as $key ) {
-					delete_post_meta( $id, $key );
+				if ( ! in_array( $item['status'], [ 'concept', 'preparing', 'ready', 'sent' ], true ) ) {
+					return new \WP_Error( 'item_closed', 'Herstel of hervat dit item voordat je een kanaal afvinkt.', [ 'status' => 400 ] );
 				}
-				$this->audit( $id, 'reopened' );
+				$channel_id = $data['channel_id'] ?? ( count( $item['channel_ids'] ) === 1 ? $item['channel_ids'][0] : '' );
+				if ( ! in_array( $channel_id, $item['channel_ids'], true ) ) {
+					return new \WP_Error( 'invalid_channel', 'Kies een kanaal van dit item.', [ 'status' => 400 ] );
+				}
+				$rows = $this->channel_rows( $id );
+				foreach ( $rows as &$row ) {
+					if ( $row['channel_id'] !== $channel_id || ( ( ! empty( $row['actual_date'] ) ) === ( $action === 'complete' ) && ! isset( $data['actual_date'] ) && ! isset( $data['published_url'] ) ) ) {
+						continue;
+					}
+					$original_row = $row;
+					if ( $action === 'complete' ) {
+						$error = $this->validate_payload( array_merge( $item, [ 'status' => 'sent' ] ), $item['channel_ids'] );
+						if ( is_wp_error( $error ) ) {
+							return $error;
+						}
+						$actual_date = $data['actual_date'] ?? ( $row['actual_date'] ?: wp_date( 'Y-m-d' ) );
+						if ( ! is_string( $actual_date ) || ! $this->valid_date( $actual_date ) || $actual_date > wp_date( 'Y-m-d' ) ) {
+							return new \WP_Error( 'invalid_actual_date', 'De werkelijke datum moet vandaag of eerder zijn.', [ 'status' => 400 ] );
+						}
+						$row['actual_date']   = $actual_date;
+						$row['completed_by']  = $row['completed_by'] ?: get_current_user_id();
+						$row['published_url'] = esc_url_raw( $data['published_url'] ?? $row['published_url'] ?? '' );
+					} else {
+						$row = $this->selection_rows( [ $channel_id ] )[0];
+					}
+					if ( $row === $original_row ) {
+						continue;
+					}
+					$this->audit(
+						$id,
+						$action === 'complete' ? 'channel_completed' : 'channel_reopened',
+						[
+							'channel_id'  => $channel_id,
+							'actual_date' => $row['actual_date'],
+						]
+						);
+				}
+				unset( $row );
+				Fields::update_for_post( $id, 'channels', $rows );
+				$this->sync_completion( $id, $rows );
+				wp_update_post( [ 'ID' => $id ] );
 				break;
 			case 'skip':
 			case 'cancel':
@@ -459,7 +504,98 @@ class Communication extends Base {
 			);
 	}
 
-	private function validate_payload( array $data ) {
+
+	/** Lazily read legacy single-channel records without changing production data. */
+	private function channel_rows( int $id ): array {
+		$rows = Fields::get_for_post( $id, 'channels' );
+		if ( is_array( $rows ) && $rows ) {
+			foreach ( $rows as &$row ) {
+				if ( array_key_exists( 'actual_date', $row ) ) {
+					$row['actual_date'] = $this->wire_date( $row['actual_date'] );
+				}
+			}
+			unset( $row );
+			return $rows;
+		}
+		$legacy = Fields::get_for_post( $id, 'channel' );
+		if ( ! $legacy ) {
+			return [];
+		}
+		$sent = get_post_type( $id ) === self::ITEM_TYPE && Fields::get_for_post( $id, 'status' ) === 'sent';
+		return [
+			[
+				'channel_id'    => $legacy,
+				'actual_date'   => $sent ? $this->wire_date( Fields::get_for_post( $id, 'actual_date' ) ) : '',
+				'completed_by'  => $sent ? (int) get_post_meta( $id, 'completed_by', true ) : 0,
+				'published_url' => $sent ? ( Fields::get_for_post( $id, 'published_url' ) ?: '' ) : '',
+			],
+		];
+	}
+
+	private function selected_channels( array $data ): array {
+		return $data['channel_ids'] ?? ( empty( $data['channel'] ) ? [] : [ $data['channel'] ] );
+	}
+
+	/** Retain completion only for channels that remain on this occurrence. */
+	private function selection_rows( array $ids, array $existing = [] ): array {
+		$existing = array_column( $existing, null, 'channel_id' );
+		return array_map(
+			static fn( $id ) => $existing[ $id ] ?? [
+				'channel_id'    => $id,
+				'actual_date'   => '',
+				'completed_by'  => 0,
+				'published_url' => '',
+			],
+			$ids
+			);
+	}
+
+	/** Overall completion is always derived from the channel checklist. */
+	private function sync_completion( int $id, array $rows ): void {
+		$status = Fields::get_for_post( $id, 'status' );
+		if ( in_array( $status, [ 'cancelled', 'skipped', 'paused' ], true ) ) {
+			return;
+		}
+		$dates    = array_filter( array_column( $rows, 'actual_date' ) );
+		$complete = count( $rows ) > 0 && count( $dates ) === count( $rows );
+		if ( $complete && $status !== 'sent' ) {
+			update_post_meta( $id, 'previous_open_status', $status );
+		}
+		$open_status = get_post_meta( $id, 'previous_open_status', true );
+		if ( ! in_array( $open_status, [ 'concept', 'preparing', 'ready' ], true ) ) {
+			$open_status = 'ready';
+		}
+		Fields::update_many_for_post(
+			$id,
+			[
+				'status'      => $complete ? 'sent' : ( $status === 'sent' ? $open_status : $status ),
+				'actual_date' => $complete ? max( $dates ) : '',
+			]
+			);
+	}
+
+	/** Serialize checklist edits so two channel completions cannot overwrite each other. */
+	private function with_item_lock( $request, string $method ) {
+		$key = 'rondo_comm_edit_' . (int) $request['id'];
+		if ( ! add_option( $key, time(), '', false ) ) {
+			return new \WP_Error( 'communication_busy', 'Dit item wordt al bijgewerkt. Probeer het opnieuw.', [ 'status' => 409 ] );
+		}
+		try {
+			return $this->$method( $request );
+		} finally {
+			delete_option( $key );
+		}
+	}
+
+	public function update( $request ) {
+		return $this->with_item_lock( $request, 'update_item' );
+	}
+
+	public function action( $request ) {
+		return $this->with_item_lock( $request, 'item_action' );
+	}
+
+	private function validate_payload( array $data, array $retained = [] ) {
 		if ( trim( (string) ( $data['title'] ?? '' ) ) === '' ) {
 			return new \WP_Error(
 				'title_required',
@@ -470,15 +606,31 @@ class Communication extends Base {
 				]
 				);
 		}
-		if ( ! in_array( $data['channel'] ?? '', self::CHANNELS, true ) ) {
+		$ids         = $data['channel_ids'] ?? ( isset( $data['channel'] ) ? [ $data['channel'] ] : [] );
+		$definitions = array_column( ClubConfig::get_communication_channels(), null, 'id' );
+		if ( ! is_array( $ids ) || ! $ids || count( $ids ) > 100 ) {
 			return new \WP_Error(
 				'channel_required',
-				'Kies een kanaal.',
+				'Kies minimaal één kanaal.',
 				[
 					'status' => 400,
-					'field'  => 'channel',
+					'field'  => 'channel_ids',
 				]
 				);
+		}
+		$seen = [];
+		foreach ( $ids as $id ) {
+			if ( ! is_string( $id ) || isset( $seen[ $id ] ) || ( ! in_array( $id, $retained, true ) && empty( $definitions[ $id ]['active'] ) ) ) {
+				return new \WP_Error(
+					'invalid_channel',
+					'Kies geldige, actieve kanalen zonder dubbelen.',
+					[
+						'status' => 400,
+						'field'  => 'channel_ids',
+					]
+					);
+			}
+			$seen[ $id ] = true;
 		}
 		$status = $data['status'] ?? 'concept';
 		if ( ! in_array( $status, self::STATUSES, true ) ) {
@@ -511,6 +663,9 @@ class Communication extends Base {
 					]
 					);
 			}
+		}
+		if ( ( $data['recurrence'] ?? 'none' ) !== 'none' && empty( $data['series_id'] ) && empty( $data['start_date'] ) ) {
+			return new \WP_Error( 'start_date_required', 'Kies een startdatum voor de reeks.', [ 'status' => 400 ] );
 		}
 		if ( ! empty( $data['start_date'] ) && ! empty( $data['end_date'] ) && $data['end_date'] < $data['start_date'] ) {
 			return new \WP_Error(
@@ -560,7 +715,7 @@ class Communication extends Base {
 	private function save_item_meta( int $id, array $data ) {
 		$values = [
 			'description'     => sanitize_textarea_field( $data['description'] ?? '' ),
-			'channel'         => sanitize_key( $data['channel'] ?? '' ),
+			'channels'        => $this->selection_rows( $this->selected_channels( $data ), $this->channel_rows( $id ) ),
 			'google_docs_url' => esc_url_raw( $data['google_docs_url'] ?? '' ),
 			'audience'        => sanitize_text_field( $data['audience'] ?? '' ),
 			'planned_date'    => sanitize_text_field( $data['planned_date'] ?? '' ),
@@ -569,12 +724,6 @@ class Communication extends Base {
 			'series_id'       => absint( $data['series_id'] ?? 0 ),
 			'occurrence_key'  => sanitize_text_field( $data['occurrence_key'] ?? '' ),
 		];
-		if ( array_key_exists( 'actual_date', $data ) ) {
-			$values['actual_date'] = sanitize_text_field( $data['actual_date'] );
-		}
-		if ( array_key_exists( 'published_url', $data ) ) {
-			$values['published_url'] = esc_url_raw( $data['published_url'] );
-		}
 		if ( isset( $data['attachments'] ) && is_array( $data['attachments'] ) ) {
 			$existing = get_post_meta( $id, 'attachments', true );
 			$by_key   = [];
@@ -609,13 +758,7 @@ class Communication extends Base {
 				'series_status' => 'active',
 			]
 		);
-		foreach ( self::COPY_FIELDS as $field ) {
-			if ( $field === 'attachments' ) {
-				update_post_meta( $id, $field, $data[ $field ] ?? [] );
-			} else {
-				Fields::update_for_post( $id, $field, $data[ $field ] ?? '' );
-			}
-		}
+		$this->copy_template_fields( $id, $data );
 	}
 
 	private function expand_active_series() {
@@ -684,7 +827,7 @@ class Communication extends Base {
 				'status'       => 'concept',
 			];
 			foreach ( self::COPY_FIELDS as $field ) {
-				$data[ $field ] = get_post_meta( $series_id, $field, true );
+				$data[ $field ] = $field === 'channel_ids' ? array_column( $this->channel_rows( $series_id ), 'channel_id' ) : get_post_meta( $series_id, $field, true );
 			}
 			$item_id = $this->insert_item( $data, $series_id, $key );
 			if ( is_wp_error( $item_id ) ) {
@@ -733,15 +876,16 @@ class Communication extends Base {
 			if ( $post->ID === $current_id || $this->wire_date( get_post_meta( $post->ID, 'planned_date', true ) ) < wp_date( 'Y-m-d' ) || ! in_array( get_post_meta( $post->ID, 'status', true ), [ 'concept', 'preparing', 'ready' ], true ) ) {
 				continue;
 			}
+			if ( array_filter( $this->channel_rows( $post->ID ), static fn( $row ) => ! empty( $row['actual_date'] ) ) ) {
+				continue;
+			}
 			wp_update_post(
 				[
 					'ID'         => $post->ID,
 					'post_title' => sanitize_text_field( $data['title'] ),
 				]
 				);
-			foreach ( self::COPY_FIELDS as $field ) {
-				update_post_meta( $post->ID, $field, $data[ $field ] ?? '' );
-			}
+			$this->copy_template_fields( $post->ID, $data, true );
 			$this->audit( $post->ID, 'updated_from_series' );
 		}
 		wp_update_post(
@@ -750,13 +894,33 @@ class Communication extends Base {
 				'post_title' => sanitize_text_field( $data['title'] ),
 			]
 			);
+		$this->copy_template_fields( $series_id, $data );
+	}
+
+	/** Copy shared template data once through the native field layer. */
+	private function copy_template_fields( int $id, array $data, bool $occurrence = false ): void {
+		$values = [];
 		foreach ( self::COPY_FIELDS as $field ) {
-			update_post_meta( $series_id, $field, $data[ $field ] ?? '' );
+			if ( $field === 'attachments' ) {
+				update_post_meta( $id, $field, $data[ $field ] ?? [] );
+			} elseif ( $field === 'channel_ids' ) {
+				$values['channels'] = $occurrence
+					? $this->selection_rows( $this->selected_channels( $data ), $this->channel_rows( $id ) )
+					: array_map( static fn( $channel_id ) => [ 'channel_id' => $channel_id ], $this->selected_channels( $data ) );
+			} else {
+				$values[ $field ] = $data[ $field ] ?? '';
+			}
+		}
+		Fields::update_many_for_post( $id, $values );
+		if ( $occurrence ) {
+			$this->sync_completion( $id, $values['channels'] );
 		}
 	}
 
 	public function format_item( $post, bool $full = false ): array {
 		$fields                = Fields::all_for_post( $post->ID );
+		$rows                  = $this->channel_rows( $post->ID );
+		$definitions           = array_column( ClubConfig::get_communication_channels(), null, 'id' );
 		$assignee_id           = (int) ( $fields['assignee_id'] ?? 0 );
 		$series_id             = (int) ( $fields['series_id'] ?? 0 );
 		$attachments           = get_post_meta( $post->ID, 'attachments', true );
@@ -774,7 +938,18 @@ class Communication extends Base {
 			'id'              => $post->ID,
 			'title'           => $post->post_title,
 			'description'     => $fields['description'] ?? '',
-			'channel'         => $fields['channel'] ?? '',
+			'channel'         => $rows[0]['channel_id'] ?? '',
+			'channel_ids'     => array_column( $rows, 'channel_id' ),
+			'channels'        => array_map(
+				static fn( $row ) => array_merge(
+				$row,
+				[
+					'label'  => $definitions[ $row['channel_id'] ]['label'] ?? $row['channel_id'],
+					'active' => $definitions[ $row['channel_id'] ]['active'] ?? false,
+				]
+				),
+				$rows
+				),
 			'google_docs_url' => $fields['google_docs_url'] ?? '',
 			'audience'        => $fields['audience'] ?? '',
 			'planned_date'    => $this->wire_date( $fields['planned_date'] ?? '' ),
