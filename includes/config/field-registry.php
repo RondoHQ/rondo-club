@@ -5179,6 +5179,12 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
       'fields' =>
       array (
         'description' => array ( 'canonical_name' => 'description', 'key' => 'field_comm_description', 'label' => 'Beschrijving', 'name' => 'description', 'storage_name' => 'description', 'type' => 'textarea' ),
+        'channels' => [ 'canonical_name' => 'channels', 'name' => 'channels', 'storage_name' => 'channels', 'key' => 'field_comm_channels', 'label' => 'Kanalen', 'type' => 'repeater', 'sub_fields' => [
+          'channel_id' => [ 'canonical_name' => 'channel_id', 'name' => 'channel_id', 'storage_name' => 'channel_id', 'key' => 'field_comm_channels_channel_id', 'label' => 'channel_id', 'type' => 'text' ],
+          'actual_date' => [ 'canonical_name' => 'actual_date', 'name' => 'actual_date', 'storage_name' => 'actual_date', 'key' => 'field_comm_channels_actual_date', 'label' => 'Afgehandeld op', 'type' => 'date_picker', 'return_format' => 'Y-m-d', 'storage_format' => 'Y-m-d', 'timezone' => 'date_only', 'wire_format' => 'Y-m-d' ],
+          'completed_by' => [ 'canonical_name' => 'completed_by', 'name' => 'completed_by', 'storage_name' => 'completed_by', 'key' => 'field_comm_channels_completed_by', 'label' => 'completed_by', 'type' => 'number' ],
+          'published_url' => [ 'canonical_name' => 'published_url', 'name' => 'published_url', 'storage_name' => 'published_url', 'key' => 'field_comm_channels_published_url', 'label' => 'published_url', 'type' => 'url' ],
+        ] ],
         'channel' => array ( 'canonical_name' => 'channel', 'choices' => array ( 'whatsapp' => 'WhatsApp', 'newsletter' => 'Nieuwsbrief', 'website' => 'Website' ), 'key' => 'field_comm_channel', 'label' => 'Kanaal', 'name' => 'channel', 'storage_name' => 'channel', 'type' => 'select' ),
         'google_docs_url' => array ( 'canonical_name' => 'google_docs_url', 'key' => 'field_comm_google_docs_url', 'label' => 'Google Docs-link', 'name' => 'google_docs_url', 'storage_name' => 'google_docs_url', 'type' => 'url' ),
         'audience' => array ( 'canonical_name' => 'audience', 'key' => 'field_comm_audience', 'label' => 'Doelgroep / bestemming', 'name' => 'audience', 'storage_name' => 'audience', 'type' => 'text' ),
@@ -5201,6 +5207,9 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
         'end_date' => array ( 'canonical_name' => 'end_date', 'key' => 'field_comm_series_end', 'label' => 'Einddatum', 'name' => 'end_date', 'return_format' => 'Y-m-d', 'storage_format' => 'Y-m-d', 'storage_name' => 'end_date', 'timezone' => 'date_only', 'type' => 'date_picker', 'wire_format' => 'Y-m-d' ),
         'series_status' => array ( 'canonical_name' => 'series_status', 'choices' => array ( 'active' => 'Actief', 'paused' => 'Gepauzeerd', 'ended' => 'Beëindigd' ), 'key' => 'field_comm_series_status', 'label' => 'Reeksstatus', 'name' => 'series_status', 'storage_name' => 'series_status', 'type' => 'select' ),
         'description' => array ( 'canonical_name' => 'description', 'key' => 'field_comm_series_description', 'label' => 'Beschrijving', 'name' => 'description', 'storage_name' => 'description', 'type' => 'textarea' ),
+        'channels' => [ 'canonical_name' => 'channels', 'name' => 'channels', 'storage_name' => 'channels', 'key' => 'field_comm_series_channels', 'label' => 'Kanalen', 'type' => 'repeater', 'sub_fields' => [
+          'channel_id' => [ 'canonical_name' => 'channel_id', 'name' => 'channel_id', 'storage_name' => 'channel_id', 'key' => 'field_comm_series_channels_channel_id', 'label' => 'channel_id', 'type' => 'text' ],
+        ] ],
         'channel' => array ( 'canonical_name' => 'channel', 'choices' => array ( 'whatsapp' => 'WhatsApp', 'newsletter' => 'Nieuwsbrief', 'website' => 'Website' ), 'key' => 'field_comm_series_channel', 'label' => 'Kanaal', 'name' => 'channel', 'storage_name' => 'channel', 'type' => 'select' ),
         'google_docs_url' => array ( 'canonical_name' => 'google_docs_url', 'key' => 'field_comm_series_google_docs_url', 'label' => 'Google Docs-link', 'name' => 'google_docs_url', 'storage_name' => 'google_docs_url', 'type' => 'url' ),
         'audience' => array ( 'canonical_name' => 'audience', 'key' => 'field_comm_series_audience', 'label' => 'Doelgroep / bestemming', 'name' => 'audience', 'storage_name' => 'audience', 'type' => 'text' ),
