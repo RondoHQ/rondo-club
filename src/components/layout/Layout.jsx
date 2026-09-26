@@ -38,7 +38,8 @@ import {
   CalendarDays,
   Trophy,
   TrendingUp,
-  Goal
+  Goal,
+  Megaphone
 } from 'lucide-react';
 
 // Wordmark URLs from theme directory.
@@ -93,6 +94,7 @@ const navigation = [
   { name: 'Lidpas Scanner', href: '/lidpas-scanner', icon: QrCode, requiresToegangscontrole: true, mobileOnly: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare, requiresKader: true },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare, sectionCapability: 'can_access_feedback' },
+  { name: 'Communicatie', href: '/communicatie', icon: Megaphone, sectionCapability: 'can_access_communicatie' },
   { name: 'Club TV', href: '/narrowcasting', icon: MonitorPlay, requiresNarrowcasting: true, requiresFeature: 'narrowcasting' },
   { name: 'Instellingen', href: '/settings', icon: Settings, requiresKader: true },
 ];
@@ -758,6 +760,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback, showFeedbackIntro, 
     if (path.startsWith('/toegangsstatistieken')) return 'Toegangsstatistieken';
     if (path.startsWith('/lidpas-scanner')) return 'Lidpas Scanner';
     if (path.startsWith('/feedback')) return 'Feedback';
+    if (path.startsWith('/communicatie')) return 'Communicatie';
     if (path.startsWith('/settings')) return 'Instellingen';
     if (path.startsWith('/profile')) return 'Profiel';
     return '';

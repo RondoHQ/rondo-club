@@ -5174,6 +5174,40 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
       ),
       'kind' => 'post',
     ),
+    'rondo_comm_item' =>
+    array (
+      'fields' =>
+      array (
+        'description' => array ( 'canonical_name' => 'description', 'key' => 'field_comm_description', 'label' => 'Beschrijving', 'name' => 'description', 'storage_name' => 'description', 'type' => 'textarea' ),
+        'channel' => array ( 'canonical_name' => 'channel', 'choices' => array ( 'whatsapp' => 'WhatsApp', 'newsletter' => 'Nieuwsbrief', 'website' => 'Website' ), 'key' => 'field_comm_channel', 'label' => 'Kanaal', 'name' => 'channel', 'storage_name' => 'channel', 'type' => 'select' ),
+        'google_docs_url' => array ( 'canonical_name' => 'google_docs_url', 'key' => 'field_comm_google_docs_url', 'label' => 'Google Docs-link', 'name' => 'google_docs_url', 'storage_name' => 'google_docs_url', 'type' => 'url' ),
+        'audience' => array ( 'canonical_name' => 'audience', 'key' => 'field_comm_audience', 'label' => 'Doelgroep / bestemming', 'name' => 'audience', 'storage_name' => 'audience', 'type' => 'text' ),
+        'planned_date' => array ( 'canonical_name' => 'planned_date', 'key' => 'field_comm_planned_date', 'label' => 'Geplande datum', 'name' => 'planned_date', 'return_format' => 'Y-m-d', 'storage_format' => 'Y-m-d', 'storage_name' => 'planned_date', 'timezone' => 'date_only', 'type' => 'date_picker', 'wire_format' => 'Y-m-d' ),
+        'actual_date' => array ( 'canonical_name' => 'actual_date', 'key' => 'field_comm_actual_date', 'label' => 'Werkelijke datum', 'name' => 'actual_date', 'return_format' => 'Y-m-d', 'storage_format' => 'Y-m-d', 'storage_name' => 'actual_date', 'timezone' => 'date_only', 'type' => 'date_picker', 'wire_format' => 'Y-m-d' ),
+        'published_url' => array ( 'canonical_name' => 'published_url', 'key' => 'field_comm_published_url', 'label' => 'Gepubliceerde link', 'name' => 'published_url', 'storage_name' => 'published_url', 'type' => 'url' ),
+        'assignee_id' => array ( 'canonical_name' => 'assignee_id', 'key' => 'field_comm_assignee_id', 'label' => 'Verantwoordelijke', 'name' => 'assignee_id', 'storage_name' => 'assignee_id', 'type' => 'number' ),
+        'status' => array ( 'canonical_name' => 'status', 'choices' => array ( 'concept' => 'Concept', 'preparing' => 'In voorbereiding', 'ready' => 'Klaar', 'sent' => 'Verstuurd / gepubliceerd', 'skipped' => 'Overgeslagen', 'cancelled' => 'Geannuleerd', 'paused' => 'Gepauzeerd' ), 'key' => 'field_comm_status', 'label' => 'Status', 'name' => 'status', 'storage_name' => 'status', 'type' => 'select' ),
+        'series_id' => array ( 'canonical_name' => 'series_id', 'key' => 'field_comm_series_id', 'label' => 'Reeks', 'name' => 'series_id', 'storage_name' => 'series_id', 'type' => 'number' ),
+        'occurrence_key' => array ( 'canonical_name' => 'occurrence_key', 'key' => 'field_comm_occurrence_key', 'label' => 'Herhalingssleutel', 'name' => 'occurrence_key', 'storage_name' => 'occurrence_key', 'type' => 'text' ),
+      ),
+      'kind' => 'post',
+    ),
+    'rondo_comm_series' =>
+    array (
+      'fields' =>
+      array (
+        'recurrence' => array ( 'canonical_name' => 'recurrence', 'choices' => array ( 'monthly' => 'Maandelijks', 'yearly' => 'Jaarlijks' ), 'key' => 'field_comm_series_recurrence', 'label' => 'Herhaling', 'name' => 'recurrence', 'storage_name' => 'recurrence', 'type' => 'select' ),
+        'start_date' => array ( 'canonical_name' => 'start_date', 'key' => 'field_comm_series_start', 'label' => 'Startdatum', 'name' => 'start_date', 'return_format' => 'Y-m-d', 'storage_format' => 'Y-m-d', 'storage_name' => 'start_date', 'timezone' => 'date_only', 'type' => 'date_picker', 'wire_format' => 'Y-m-d' ),
+        'end_date' => array ( 'canonical_name' => 'end_date', 'key' => 'field_comm_series_end', 'label' => 'Einddatum', 'name' => 'end_date', 'return_format' => 'Y-m-d', 'storage_format' => 'Y-m-d', 'storage_name' => 'end_date', 'timezone' => 'date_only', 'type' => 'date_picker', 'wire_format' => 'Y-m-d' ),
+        'series_status' => array ( 'canonical_name' => 'series_status', 'choices' => array ( 'active' => 'Actief', 'paused' => 'Gepauzeerd', 'ended' => 'Beëindigd' ), 'key' => 'field_comm_series_status', 'label' => 'Reeksstatus', 'name' => 'series_status', 'storage_name' => 'series_status', 'type' => 'select' ),
+        'description' => array ( 'canonical_name' => 'description', 'key' => 'field_comm_series_description', 'label' => 'Beschrijving', 'name' => 'description', 'storage_name' => 'description', 'type' => 'textarea' ),
+        'channel' => array ( 'canonical_name' => 'channel', 'choices' => array ( 'whatsapp' => 'WhatsApp', 'newsletter' => 'Nieuwsbrief', 'website' => 'Website' ), 'key' => 'field_comm_series_channel', 'label' => 'Kanaal', 'name' => 'channel', 'storage_name' => 'channel', 'type' => 'select' ),
+        'google_docs_url' => array ( 'canonical_name' => 'google_docs_url', 'key' => 'field_comm_series_google_docs_url', 'label' => 'Google Docs-link', 'name' => 'google_docs_url', 'storage_name' => 'google_docs_url', 'type' => 'url' ),
+        'audience' => array ( 'canonical_name' => 'audience', 'key' => 'field_comm_series_audience', 'label' => 'Doelgroep / bestemming', 'name' => 'audience', 'storage_name' => 'audience', 'type' => 'text' ),
+        'assignee_id' => array ( 'canonical_name' => 'assignee_id', 'key' => 'field_comm_series_assignee_id', 'label' => 'Verantwoordelijke', 'name' => 'assignee_id', 'storage_name' => 'assignee_id', 'type' => 'number' ),
+      ),
+      'kind' => 'post',
+    ),
   ),
   'schema_version' => 1,
   'reserved_exceptions' => 
@@ -5191,6 +5225,10 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
       0 => 'status',
     ),
     'rondo_room_booking' =>
+    array (
+      0 => 'status',
+    ),
+    'rondo_comm_item' =>
     array (
       0 => 'status',
     ),
