@@ -135,6 +135,22 @@ class AppAccessTest extends RondoTestCase {
 		$this->assertSame( $uri, AppAccessService::uri() );
 	}
 
+	public function test_method_overrides_cannot_reveal_secrets_through_get_caches(): void {
+		$this->request( 'PUT', [ 'uri' => self::URI ] );
+		foreach ( [ 'query', 'header' ] as $override ) {
+			// serve_request has already changed the effective method to POST at dispatch.
+			$request = new \WP_REST_Request( 'POST', '/rondo/v1/app-access/laposta/reveal' );
+			if ( $override === 'query' ) {
+				$request->set_query_params( [ '_method' => 'POST' ] );
+			} else {
+				$request->set_header( 'X-HTTP-Method-Override', 'POST' );
+			}
+			$response = rest_do_request( $request );
+			$this->assertSame( 405, $response->get_status() );
+			$this->assertStringNotContainsString( 'JBSWY3DPEHPK3PXP', wp_json_encode( $response->get_data() ) );
+		}
+	}
+
 	public function test_missing_removed_plaintext_and_corrupt_settings_fail_closed(): void {
 		$this->assertFalse( $this->request()->get_data()['configured'] );
 		$this->assertSame( 404, $this->request( 'POST', [], '/reveal' )->get_status() );

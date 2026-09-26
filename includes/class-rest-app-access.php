@@ -91,7 +91,11 @@ class AppAccess extends Base {
 		return $this->status();
 	}
 
-	public function reveal() {
+	public function reveal( $request ) {
+		// WordPress supports GET ?_method=POST; never let a GET cache hold this response.
+		if ( isset( $request->get_query_params()['_method'] ) || $request->get_header( 'X-HTTP-Method-Override' ) !== null ) {
+			return new \WP_Error( 'rondo_authenticator_method_override', 'Gebruik een directe POST-aanvraag om de QR-code op te halen.', [ 'status' => 405 ] );
+		}
 		$uri = AppAccessService::uri();
 		if ( $uri === null || is_wp_error( AppAccessService::validate_uri( $uri ) ) ) {
 			return new \WP_Error( 'rondo_authenticator_unavailable', 'De QR-code is niet beschikbaar. Vraag een beheerder om de Laposta-toegang in te stellen.', [ 'status' => 404 ] );
