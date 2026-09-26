@@ -91,6 +91,21 @@ export const wpApi = {
 
 // Helper for custom PRM API
 export const prmApi = {
+	// Communication planning
+	getCommunications: () => api.get('/rondo/v1/communications'),
+	getCommunication: (id) => api.get(`/rondo/v1/communications/${id}`),
+	createCommunication: (data) => api.post('/rondo/v1/communications', data),
+	updateCommunication: (id, data) => api.put(`/rondo/v1/communications/${id}`, data),
+	actionCommunication: (id, data) => api.post(`/rondo/v1/communications/${id}/action`, data),
+	getCommunicationComments: (id) => api.get(`/rondo/v1/communications/${id}/comments`),
+	addCommunicationComment: (id, content) => api.post(`/rondo/v1/communications/${id}/comments`, { content }),
+	uploadCommunicationAttachment: (id, file) => {
+		const data = new FormData();
+		data.append('file', file);
+		return api.post(`/rondo/v1/communications/${id}/attachments`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
+	},
+	actionCommunicationSeries: (id, data) => api.post(`/rondo/v1/communication-series/${id}/action`, data),
+
   // Version check (for cache invalidation)
   getVersion: () => api.get('/rondo/v1/version'),
 

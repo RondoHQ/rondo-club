@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.101.0] - 2026-09-26
+
+### Added
+- Shared communication planning for board members, with WhatsApp, newsletter and website channels, ownership, Google Docs links, protected image attachments and internal comments.
+- Separate open and sent overviews with search, filters, overdue indicators, manual completion, reopening, cancellation and duplication.
+- Monthly and yearly communication series with independent occurrences, audit history, skip, pause and resume controls.
+- Dedicated `communicatie` capability, granted to board members and administrators and available in the role capability matrix.
+
 ## [35.100.2] - 2026-09-23
 
 ### Fixed
