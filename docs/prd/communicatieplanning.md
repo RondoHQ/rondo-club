@@ -1,6 +1,6 @@
 # PRD: Communicatieplanning
 
-**Status:** Uitgewerkt voorstel — nog niet geïmplementeerd
+**Status:** Geïmplementeerd in versie 35.101.0
 
 **Datum:** 26 september 2026
 

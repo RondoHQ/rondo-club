@@ -48,6 +48,8 @@ class PostTypes {
 		'rondo_access_event'   => [ 'access_event', 'access_events' ],
 		'rondo_admission'      => [ 'admission', 'admissions' ],
 		'rondo_guest_pass'     => [ 'guest_pass', 'guest_passes' ],
+		'rondo_comm_item'      => [ 'communication_item', 'communication_items' ],
+		'rondo_comm_series'    => [ 'communication_series', 'communication_series' ],
 	];
 
 	/**
@@ -149,6 +151,35 @@ class PostTypes {
 		$this->register_access_event_post_type();
 		$this->register_admission_post_type();
 		$this->register_guest_pass_post_type();
+		$this->register_communication_post_types();
+	}
+
+	/** Register private communication planning records. */
+	private function register_communication_post_types() {
+		foreach ( [
+			'rondo_comm_item'   => [ 'Communicatie-items', 'Communicatie-item' ],
+			'rondo_comm_series' => [ 'Communicatiereeksen', 'Communicatiereeks' ],
+		] as $post_type => $labels ) {
+			register_post_type(
+				$post_type,
+				array_merge(
+					[
+						'labels'             => [
+							'name'          => $labels[0],
+							'singular_name' => $labels[1],
+						],
+						'public'             => false,
+						'publicly_queryable' => false,
+						'show_ui'            => false,
+						'show_in_rest'       => false,
+						'query_var'          => false,
+						'rewrite'            => false,
+						'supports'           => [ 'title', 'author' ],
+					],
+					self::capability_args( $post_type )
+				)
+			);
+		}
 	}
 
 	/** Register the private, immutable sponsor self-service activity log. */

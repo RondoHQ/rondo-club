@@ -366,6 +366,7 @@ function rondo_init() {
 		new Todos();
 		new RESTCustomFields();
 		new RESTFeedback();
+		new \Rondo\REST\Communication();
 		new RESTInvoices();
 		new RESTMembershipPasses();
 		new RESTAccessEvents();

@@ -18,7 +18,7 @@ import {
   PeopleList, PeopleAnniversaries, PeopleOnboarding, ProfileChangeLog, PersonDetail, SponsorList, SponsorDetail, TeamsList, TeamDetail,
   Kaderlijst, MyTeam, Football,
   CommissiesList, CommissieDetail, TodosList,
-  FeedbackList, FeedbackDetail, Settings, VOG,
+  FeedbackList, FeedbackDetail, Communication, Settings, VOG,
   Contributie, DisciplineCasesList,
   FinanceDashboard, Betaalstatistieken, Facturen, FactuurDetail, FactuurNieuw, RelationshipTypes,
   CustomFields, Login, Profile, ProfileIva, ProfileVog,
@@ -640,6 +640,8 @@ const router = createBrowserRouter([
           // The overview requires a capability; submitters may open their own thread.
           { path: 'feedback', element: <CapabilityRoute checkAccess={(user) => user?.can_access_feedback}><FeedbackList /></CapabilityRoute> },
           { path: 'feedback/:id', element: <FeedbackDetail /> },
+
+		  { path: 'communicatie', element: <CapabilityRoute checkAccess={(user) => user?.can_access_communicatie}><Communication /></CapabilityRoute> },
 
           // Club TV content is available to narrowcasting and sponsor managers.
           {

@@ -39,6 +39,7 @@ class UserRoles {
 		'commissies'     => 'Commissies',
 		'jubilarissen'   => 'Jubilarissen',
 		'feedback'       => 'Feedbackoverzicht',
+		'communicatie'   => 'Communicatieplanning',
 	];
 
 	/** Check one independently assignable section capability. */
@@ -54,7 +55,7 @@ class UserRoles {
 	 * installs must also receive; add_role() does not touch existing roles.
 	 */
 	const ROLES_VERSION_OPTION = 'rondo_roles_version';
-	const ROLES_VERSION        = 17;
+	const ROLES_VERSION        = 18;
 
 	/** Generic WordPress write capabilities removed from non-admin Rondo roles. */
 	private const LEGACY_GENERIC_WRITE_CAPS = [
@@ -94,7 +95,7 @@ class UserRoles {
 		'rondo_pool_schoonmaak'       => [ 'Rondo Schoonmaakpoule', [] ],
 		'rondo_pool_activiteiten'     => [ 'Rondo Activiteitenpoule', [] ],
 		'rondo_pool_werkploeg'        => [ 'Rondo Werkploeg terreinonderhoud', [] ],
-		'rondo_bestuur'               => [ 'Rondo Bestuur', [ 'jubilarissen', 'teams', 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'accommodatiebeheer', 'vrijwilligers', 'rondo_iva_approve' ] ],
+		'rondo_bestuur'               => [ 'Rondo Bestuur', [ 'communicatie', 'jubilarissen', 'teams', 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'accommodatiebeheer', 'vrijwilligers', 'rondo_iva_approve' ] ],
 	];
 
 	/**
@@ -428,6 +429,7 @@ class UserRoles {
 	 * Version 15: full team access becomes explicit; board and admins retain it.
 	 * Version 16: match-secretary dashboard access without additional person rights.
 	 * Version 17: board membership-anniversary access for its dashboard.
+	 * Version 18: board and administrators gain communication planning access.
 	 */
 	public function maybe_upgrade_roles() {
 		$installed_version = (int) get_option( self::ROLES_VERSION_OPTION, 0 );
@@ -478,6 +480,10 @@ class UserRoles {
 
 			if ( $installed_version < 17 && $slug === 'rondo_bestuur' ) {
 				$role->add_cap( 'jubilarissen' );
+			}
+
+			if ( $installed_version < 18 && in_array( $slug, [ 'administrator', 'rondo_bestuur' ], true ) ) {
+				$role->add_cap( 'communicatie' );
 			}
 
 			if ( $installed_version < 16 && in_array( $slug, [ 'administrator', 'rondo_wedstrijdzaken' ], true ) ) {
@@ -573,12 +579,21 @@ class UserRoles {
 			}
 
 			foreach ( [
-				'commissies' => 'commissie',
-				'feedback'   => 'rondo_feedback',
+				'commissies'   => 'commissie',
+				'feedback'     => 'rondo_feedback',
+				'communicatie' => 'rondo_comm_item',
 			] as $capability => $post_type ) {
 				if ( $role->has_cap( $capability ) ) {
 					$desired = array_merge( $desired, self::cpt_capabilities( $post_type, 'read' ) );
 				}
+			}
+
+			if ( $role->has_cap( 'communicatie' ) ) {
+				$desired = array_merge(
+					$desired,
+					self::cpt_capabilities( 'rondo_comm_item', 'manage' ),
+					self::cpt_capabilities( 'rondo_comm_series', 'manage' )
+				);
 			}
 
 			if ( $role->has_cap( self::FAIRPLAY_CAPABILITY ) ) {

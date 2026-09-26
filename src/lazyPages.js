@@ -17,6 +17,7 @@ export const CommissieDetail = lazy(() => import('@/pages/Commissies/CommissieDe
 export const TodosList = lazy(() => import('@/pages/Todos/TodosList'));
 export const FeedbackList = lazy(() => import('@/pages/Feedback/FeedbackList'));
 export const FeedbackDetail = lazy(() => import('@/pages/Feedback/FeedbackDetail'));
+export const Communication = lazy(() => import('@/pages/Communication/Communication'));
 export const Settings = lazy(() => import('@/pages/Settings/Settings'));
 export const VOG = lazy(() => import('@/pages/VOG/VOG'));
 export const Contributie = lazy(() => import('@/pages/Contributie/Contributie'));
