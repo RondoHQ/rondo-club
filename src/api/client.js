@@ -91,6 +91,11 @@ export const wpApi = {
 
 // Helper for custom PRM API
 export const prmApi = {
+  getAppAccess: () => api.get('/rondo/v1/app-access/laposta'),
+  saveAppAccess: (uri) => api.put('/rondo/v1/app-access/laposta', { uri }),
+  removeAppAccess: () => api.delete('/rondo/v1/app-access/laposta'),
+  revealAppAccess: (signal) => api.post('/rondo/v1/app-access/laposta/reveal', {}, { signal }),
+
 	// Communication planning
 	getCommunications: () => api.get('/rondo/v1/communications'),
 	getCommunication: (id) => api.get(`/rondo/v1/communications/${id}`),
