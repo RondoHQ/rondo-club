@@ -375,6 +375,7 @@ function rondo_init() {
 			new RESTClothing();
 		}
 		new RESTUserSettings();
+		new \Rondo\REST\AppAccess();
 		new RESTUsers();
 		new RESTReminders();
 		new RESTVog();
