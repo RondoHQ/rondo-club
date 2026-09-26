@@ -1,3 +1,4 @@
+import CommunicationChannelsSettings from '@/components/CommunicationChannelsSettings';
 import { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, UserPlus, Wrench, AlertCircle, Wallet, Award, Mail, X, Plus, Trash2, SlidersHorizontal } from 'lucide-react';
@@ -921,6 +922,8 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
 
   return (
     <div className="space-y-6">
+      {isAdmin && <CommunicationChannelsSettings clubConfig={clubConfig} setClubConfig={setClubConfig} loading={clubConfigLoading} />}
+
       {/* Club Configuration card (admin only) */}
       {isAdmin && (
         <div className="card p-6">
