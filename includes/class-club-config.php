@@ -401,11 +401,75 @@ class ClubConfig {
 	 *
 	 * @return array<string, string|bool> Array of all configuration settings
 	 */
+
+	/** Club-specific channel names retain stable IDs, including archived channels. */
+	public static function get_communication_channels(): array {
+		return get_option(
+			'rondo_communication_channels',
+			[
+				[
+					'id'     => 'whatsapp',
+					'label'  => 'WhatsApp',
+					'active' => true,
+				],
+				[
+					'id'     => 'newsletter',
+					'label'  => 'Nieuwsbrief',
+					'active' => true,
+				],
+				[
+					'id'     => 'website',
+					'label'  => 'Website',
+					'active' => true,
+				],
+			]
+			);
+	}
+
+	/** Validate the complete list before saving; omitted channels are archived. */
+	public static function update_communication_channels( $channels ) {
+		if ( ! is_array( $channels ) || count( $channels ) > 100 ) {
+			return new \WP_Error( 'invalid_channels', 'Geef maximaal 100 communicatiekanalen op.', [ 'status' => 400 ] );
+		}
+		$previous = array_column( self::get_communication_channels(), null, 'id' );
+		$next     = [];
+		$labels   = [];
+		foreach ( $channels as $channel ) {
+			if ( ! is_array( $channel ) || ! is_string( $channel['label'] ?? null ) || ( isset( $channel['active'] ) && ! is_bool( $channel['active'] ) ) || ( isset( $channel['id'] ) && ! is_string( $channel['id'] ) ) ) {
+				return new \WP_Error( 'invalid_channel', 'Geef ieder kanaal een naam en geldige instellingen.', [ 'status' => 400 ] );
+			}
+			$label = trim( sanitize_text_field( $channel['label'] ) );
+			$id    = $channel['id'] ?? '';
+			if ( $id === '' ) {
+				$id = 'channel_' . wp_generate_uuid4();
+			} elseif ( ! isset( $previous[ $id ] ) ) {
+				return new \WP_Error( 'unknown_channel', 'Onbekend kanaal. Laat het ID van een nieuw kanaal leeg.', [ 'status' => 400 ] );
+			}
+			if ( $label === '' || mb_strlen( $label ) > 80 || isset( $next[ $id ] ) || in_array( mb_strtolower( $label ), $labels, true ) ) {
+				return new \WP_Error( 'invalid_channel_name', 'Gebruik unieke kanaalnamen van maximaal 80 tekens.', [ 'status' => 400 ] );
+			}
+			$labels[]    = mb_strtolower( $label );
+			$next[ $id ] = [
+				'id'     => $id,
+				'label'  => $label,
+				'active' => $channel['active'] ?? true,
+			];
+		}
+		foreach ( $previous as $id => $channel ) {
+			if ( ! isset( $next[ $id ] ) ) {
+				$next[ $id ] = array_merge( $channel, [ 'active' => false ] );
+			}
+		}
+		update_option( 'rondo_communication_channels', array_values( $next ), false );
+		return self::get_communication_channels();
+	}
+
 	public static function get_all_settings(): array {
 		$webhook_path = 'rondo/v1/lettermint/webhook';
 
 		return [
 			'club_name'                             => self::get_club_name(),
+			'communication_channels'                => self::get_communication_channels(),
 			'guest_pass_team_id'                    => self::get_guest_pass_team_id(),
 			'guest_pass_team_name'                  => self::get_guest_pass_team_name(),
 			'volunteer_signup_info'                 => self::get_volunteer_signup_info(),
