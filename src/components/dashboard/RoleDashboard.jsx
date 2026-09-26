@@ -82,13 +82,14 @@ export default function RoleDashboard({ user }) {
   if (workspace.isError) return <LoadError retry={() => workspace.refetch()}>Het dashboard kon niet worden geladen.</LoadError>;
   const visibleBlocks = data.layout.order.filter(id => !data.layout.hidden.includes(id));
   const filteredBirthdays = data.birthdays.filter(person => birthdayTeam === 'all' || person.team_ids.includes(Number(birthdayTeam)));
-  const birthdays = context.board && !allBirthdays ? filteredBirthdays.slice(0, 6) : filteredBirthdays;
+  const birthdays = context.board && !allBirthdays ? filteredBirthdays.slice(0, 3) : filteredBirthdays;
+  const compactCelebrations = context.board && visibleBlocks.includes('birthdays') && visibleBlocks.includes('anniversaries') && Math.abs(visibleBlocks.indexOf('birthdays') - visibleBlocks.indexOf('anniversaries')) === 1;
   const todayTraining = data.training.filter(block => block.day === data.day).sort((a, b) => a.start.localeCompare(b.start));
   const teamName = (id) => teams.find(team => team.id === id)?.name || '';
   const tasks = data.tasks || [];
 
   const sections = {
-    anniversaries: <BoardAnniversaries items={data.anniversaries || []} />,
+    anniversaries: <BoardAnniversaries items={data.anniversaries || []} compact={compactCelebrations} />,
     membership: data.membership && <BoardMembership data={data.membership} />,
     volunteers: data.volunteers && <BoardVolunteers data={data.volunteers} />,
     vog: data.vog && <BoardVog data={data.vog} />,
@@ -107,14 +108,15 @@ export default function RoleDashboard({ user }) {
         {!tasks.length && !cancellations.length && <p className="py-4 text-sm text-gray-500 dark:text-gray-400">Geen open taken.{hasMatches && !attentionLoading && !attentionIncomplete ? ' Geen afgelastingen in het beschikbare programma.' : ''}</p>}
       </div>
     </section>,
-    birthdays: <section aria-labelledby="dashboard-birthdays" className="lg:col-span-12">
+    birthdays: <section aria-labelledby="dashboard-birthdays" className={compactCelebrations ? "min-w-0 lg:col-span-6" : "min-w-0 lg:col-span-12"}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 id="dashboard-birthdays" className="flex items-center gap-2 text-lg font-semibold"><Cake size={20} className="text-electric-cyan" />Verjaardagen</h2>{teams.length > 0 && <select className="input !w-auto max-w-full" aria-label="Verjaardagen filteren op team" value={birthdayTeam} onChange={event => setBirthdayTeam(event.target.value)}><option value="all">Alle toegankelijke personen</option>{teams.map(team => <option key={team.id} value={team.id}>{team.name}</option>)}</select>}</div>
       {context.board && <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">Vandaag en de komende zes dagen · {filteredBirthdays.length} {filteredBirthdays.length === 1 ? 'jarige' : 'jarigen'}</p>}
-      <div className={`${panel} grid overflow-hidden sm:grid-cols-2 xl:grid-cols-3`}>{birthdays.length ? birthdays.map(birthday => <Link key={birthday.id} to={`/people/${birthday.id}`} className={`border-b border-gray-100 p-4 dark:border-gray-700 ${birthday.days_until === 0 ? 'bg-cyan-50 dark:bg-cyan-950/40' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
-        <p className={`mb-3 text-xs ${birthday.days_until === 0 ? 'font-semibold text-cyan-800 dark:text-cyan-200' : 'text-gray-500 dark:text-gray-400'}`}>{birthday.days_until === 0 ? 'Vandaag jarig' : birthday.days_until === 1 ? 'Morgen' : dateLabel(birthday.next_occurrence, 'EEEE d MMM')}</p>
-        <div className="flex items-center gap-3"><PersonAvatar thumbnail={birthday.related_people?.[0]?.thumbnail} name={birthday.title} size="md" /><div className="min-w-0"><p className="text-sm font-semibold">{birthday.title}</p><p className="text-xs text-gray-500 dark:text-gray-400">{birthday.team_ids.map(teamName).filter(Boolean).join(', ')}{birthday.team_ids.map(teamName).filter(Boolean).length ? ' · ' : ''}wordt {Number(birthday.next_occurrence.slice(0, 4)) - Number(birthday.date_value.slice(0, 4))}</p></div></div>
-      </Link>) : <p className="p-4 text-sm text-gray-500 dark:text-gray-400 sm:col-span-2 xl:col-span-3">Geen verjaardagen in de komende zeven dagen.</p>}</div>
-      {context.board && filteredBirthdays.length > 6 && <button className="mt-3 text-sm text-cyan-800 underline underline-offset-4 dark:text-cyan-200" aria-expanded={allBirthdays} onClick={() => setAllBirthdays(value => !value)}>{allBirthdays ? 'Toon minder verjaardagen' : `Toon alle ${filteredBirthdays.length} verjaardagen`}</button>}
+      <div className={`${panel} grid overflow-hidden ${context.board ? '' : 'sm:grid-cols-2 xl:grid-cols-3'}`}>{birthdays.length ? birthdays.map(birthday => <Link key={birthday.id} to={`/people/${birthday.id}`} className={`border-b border-gray-100 last:border-b-0 dark:border-gray-700 ${context.board ? 'flex items-center gap-3 px-3 py-2' : 'p-4'} ${birthday.days_until === 0 ? 'bg-cyan-50 dark:bg-cyan-950/40' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+        {!context.board && <p className={`mb-3 text-xs ${birthday.days_until === 0 ? 'font-semibold text-cyan-800 dark:text-cyan-200' : 'text-gray-500 dark:text-gray-400'}`}>{birthday.days_until === 0 ? 'Vandaag jarig' : birthday.days_until === 1 ? 'Morgen' : dateLabel(birthday.next_occurrence, 'EEEE d MMM')}</p>}
+        <div className="flex min-w-0 flex-1 items-center gap-3"><PersonAvatar thumbnail={birthday.related_people?.[0]?.thumbnail} name={birthday.title} size="md" /><div className="min-w-0"><p className="break-words text-sm font-semibold">{birthday.title}</p><p className="text-xs text-gray-500 dark:text-gray-400">{birthday.team_ids.map(teamName).filter(Boolean).join(', ')}{birthday.team_ids.map(teamName).filter(Boolean).length ? ' · ' : ''}wordt {Number(birthday.next_occurrence.slice(0, 4)) - Number(birthday.date_value.slice(0, 4))}</p></div></div>
+        {context.board && <span className={`shrink-0 text-xs ${birthday.days_until === 0 ? 'font-semibold text-cyan-800 dark:text-cyan-200' : 'text-gray-500 dark:text-gray-400'}`}>{birthday.days_until === 0 ? 'Vandaag' : birthday.days_until === 1 ? 'Morgen' : dateLabel(birthday.next_occurrence, 'd MMM')}</span>}
+      </Link>) : <p className="col-span-full p-4 text-sm text-gray-500 dark:text-gray-400">Geen verjaardagen in de komende zeven dagen.</p>}</div>
+      {context.board && filteredBirthdays.length > 3 && <button className="mt-3 text-sm text-cyan-800 underline underline-offset-4 dark:text-cyan-200" aria-expanded={allBirthdays} onClick={() => setAllBirthdays(value => !value)}>{allBirthdays ? 'Toon minder verjaardagen' : `Toon alle ${filteredBirthdays.length} verjaardagen`}</button>}
     </section>,
     matches: <section aria-labelledby="dashboard-matches" className={visibleBlocks.includes('teams') ? 'min-w-0 lg:col-span-8' : 'min-w-0 lg:col-span-12'}>
       <h2 id="dashboard-matches" className="text-lg font-semibold">Wedstrijden deze week</h2><p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{dateLabel(data.today, 'd MMM')}–{dateLabel(data.end_date, 'd MMM')} · tijd, veld en kleedkamers</p>
