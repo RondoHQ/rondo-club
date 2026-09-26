@@ -2036,6 +2036,13 @@ class Api extends Base {
 	 * @return \WP_REST_Response Response with updated club configuration settings.
 	 */
 	public function update_club_config( $request ) {
+		if ( $request->has_param( 'communication_channels' ) ) {
+			$result = \Rondo\Config\ClubConfig::update_communication_channels( $request->get_param( 'communication_channels' ) );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+		}
+
 		// Update club_name if provided
 		$club_name = $request->get_param( 'club_name' );
 		if ( $club_name !== null ) {
