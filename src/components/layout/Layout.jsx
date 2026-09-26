@@ -96,6 +96,7 @@ const navigation = [
   { name: 'Feedback', href: '/feedback', icon: MessageSquare, sectionCapability: 'can_access_feedback' },
   { name: 'Communicatie', href: '/communicatie', icon: Megaphone, sectionCapability: 'can_access_communicatie' },
   { name: 'Club TV', href: '/narrowcasting', icon: MonitorPlay, requiresNarrowcasting: true, requiresFeature: 'narrowcasting' },
+  { name: 'App access', href: '/app-toegang', icon: QrCode, sectionCapability: 'can_access_app_access' },
   { name: 'Instellingen', href: '/settings', icon: Settings, requiresKader: true },
 ];
 

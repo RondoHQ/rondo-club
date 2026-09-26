@@ -18,7 +18,7 @@ import {
   PeopleList, PeopleAnniversaries, PeopleOnboarding, ProfileChangeLog, PersonDetail, SponsorList, SponsorDetail, TeamsList, TeamDetail,
   Kaderlijst, MyTeam, Football,
   CommissiesList, CommissieDetail, TodosList,
-  FeedbackList, FeedbackDetail, Communication, Settings, VOG,
+  FeedbackList, FeedbackDetail, Communication, Settings, AppAccess, VOG,
   Contributie, DisciplineCasesList,
   FinanceDashboard, Betaalstatistieken, Facturen, FactuurDetail, FactuurNieuw, RelationshipTypes,
   CustomFields, Login, Profile, ProfileIva, ProfileVog,
@@ -660,6 +660,9 @@ const router = createBrowserRouter([
 
           // Training management also supports accounts without general kader access.
           { path: 'settings/training', element: <CapabilityRoute checkAccess={(user) => user?.can_manage_training}><Settings tab="training" /></CapabilityRoute> },
+
+          // Shared external app enrollment is limited to the board and administrators.
+          { path: 'app-toegang', element: <CapabilityRoute checkAccess={(user) => user?.can_access_app_access}><AppAccess /></CapabilityRoute> },
 
           // Settings routes — kader only
           { path: 'settings/notifications', element: <Navigate to="/profile" replace /> },

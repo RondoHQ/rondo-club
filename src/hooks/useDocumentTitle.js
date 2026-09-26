@@ -70,6 +70,8 @@ export function useRouteTitle(customTitle = null) {
         } else {
           title = 'Teams';
         }
+      } else if (path === '/app-toegang') {
+        title = 'App access';
       } else if (path.startsWith('/settings')) {
         title = 'Instellingen';
       } else {
