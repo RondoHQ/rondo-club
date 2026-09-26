@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.103.1] - 2026-09-26
+
+### Fixed
+- Show compact birthday and anniversary previews side by side on the board dashboard, with access to all entries.
+- Include both native compact and legacy ISO certificate dates in expired and upcoming VOG filters.
+- Match dashboard VOG counts to the VOG overview by honoring role and committee exemptions.
+
 ## [35.103.0] - 2026-09-26
 
 ### Added

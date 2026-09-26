@@ -10,6 +10,7 @@ use Rondo\Fields\Fields;
 use Rondo\Fields\Formatter;
 use Rondo\REST\Reminders;
 use Rondo\Volunteer\VolunteerStatistics;
+use Rondo\VOG\VOGRequirement;
 
 final class BoardDashboard {
 
@@ -108,7 +109,7 @@ final class BoardDashboard {
 		return $data;
 	}
 
-	/** Shared with the existing dashboard; only authorized, visible volunteers count. */
+	/** Match the VOG overview: only visible volunteers with a VOG-required role count. */
 	public static function vog_counts(): array {
 		$counts = [
 			'not_submitted_to_justis' => 0,
@@ -118,17 +119,12 @@ final class BoardDashboard {
 		if ( ! current_user_can( 'vog' ) ) {
 			return $counts;
 		}
-		$cutoff = current_datetime()->modify( '-3 years' )->format( 'Y-m-d' );
-		$soon   = current_datetime()->modify( '+30 days -3 years' )->format( 'Y-m-d' );
-		foreach ( self::people(
-			[
-				[
-					'key'   => 'huidig-vrijwilliger',
-					'value' => '1',
-				],
-			]
-			) as $id ) {
-			if ( Fields::get_for_post( $id, 'former_member' ) ) {
+		$cutoff = gmdate( 'Y-m-d', strtotime( '-3 years' ) );
+		$soon   = gmdate( 'Y-m-d', strtotime( '+30 days -3 years' ) );
+		$ids    = VOGRequirement::get_required_person_ids();
+		update_meta_cache( 'post', $ids );
+		foreach ( $ids as $id ) {
+			if ( ! AccessControl::can_view_person( $id ) || Fields::get_for_post( $id, 'former_member' ) ) {
 				continue;
 			}
 			$date = Formatter::for_wire( 'person', [ 'datum_vog' => Fields::get_for_post( $id, 'datum_vog' ) ] )['datum_vog'];
