@@ -35,6 +35,8 @@ class FieldRegistryTest extends RondoTestCase {
 				'shift_template',
 				'taakuitleg',
 				'team',
+				'rondo_comm_item',
+				'rondo_comm_series',
 			],
 			Registry::contexts()
 		);
