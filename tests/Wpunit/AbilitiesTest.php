@@ -198,7 +198,7 @@ class AbilitiesTest extends RondoTestCase {
 
 		$this->assertSame( 200, $discovery_response->get_status() );
 		$this->assertSame(
-			[ 'rondo/list-communications', 'rondo/get-communication', 'rondo/create-communication', 'rondo/update-communication', 'rondo/set-communication-channel-state', 'rondo/add-communication-channel', 'rondo/list-feedback', 'rondo/create-feedback', 'rondo/update-feedback', 'rondo/search-records', 'rondo/get-record', 'rondo/get-field-schema' ],
+			[ 'rondo/list-communications', 'rondo/get-communication', 'rondo/create-communication', 'rondo/update-communication', 'rondo/set-communication-channel-state', 'rondo/add-communication-channel', 'rondo/get-team-players', 'rondo/get-team-volunteer-signups', 'rondo/list-feedback', 'rondo/create-feedback', 'rondo/update-feedback', 'rondo/search-records', 'rondo/get-record', 'rondo/get-field-schema' ],
 			array_column( $discovery_response->get_data(), 'name' )
 		);
 

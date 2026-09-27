@@ -692,7 +692,28 @@ class MemberShifts extends Base {
 	 * @param string $status_filter             active, cancelled or all.
 	 * @return array<int, array<string, mixed>>
 	 */
-	private function get_signup_shift_summaries( bool $include_without_timestamp, string $status_filter = 'active' ): array {
+	private function get_signup_shift_summaries( bool $include_without_timestamp, string $status_filter = 'active', ?array $person_ids = null, array $date_query = [] ): array {
+		if ( $person_ids === [] ) {
+			return [];
+		}
+		$assignment_query = [
+			[
+				'key'     => 'assigned_persons',
+				'compare' => 'EXISTS',
+			],
+		];
+		if ( $person_ids !== null ) {
+			$assignment_query = [ 'relation' => 'OR' ];
+			foreach ( $person_ids as $person_id ) {
+				foreach ( [ 'i:' . $person_id . ';', '"' . $person_id . '"' ] as $value ) {
+					$assignment_query[] = [
+						'key'     => 'assigned_persons',
+						'value'   => $value,
+						'compare' => 'LIKE',
+					];
+				}
+			}
+		}
 		$query = new \WP_Query(
 			[
 				'post_type'        => 'dienst_shift',
@@ -701,12 +722,7 @@ class MemberShifts extends Base {
 				'no_found_rows'    => true,
 				'suppress_filters' => true,
 				'post_status'      => [ 'publish' ],
-				'meta_query'       => [
-					[
-						'key'     => 'assigned_persons',
-						'compare' => 'EXISTS',
-					],
-				],
+				'meta_query'       => array_merge( [ $assignment_query ], $date_query ),
 			]
 		);
 
@@ -725,7 +741,10 @@ class MemberShifts extends Base {
 			}
 
 			$assigned = ShiftAssignments::person_ids( $shift->ID );
-			$signups  = [];
+			if ( $person_ids !== null ) {
+				$assigned = array_intersect( $assigned, $person_ids );
+			}
+			$signups = [];
 			foreach ( $assigned as $person_id ) {
 				$timestamp = (int) get_post_meta( $shift->ID, '_shift_signup_at_' . $person_id, true );
 				if ( $timestamp <= 0 && ! $include_without_timestamp ) {
@@ -771,6 +790,30 @@ class MemberShifts extends Base {
 		}
 
 		return $shifts;
+	}
+
+	/** Read only the visible people requested by a volunteer manager, within a date range. */
+	public function get_signups_for_people( array $person_ids, string $date_from, string $date_to ) {
+		if ( ! $this->check_vrijwilligers_permission() || ! is_user_logged_in() ) {
+			return new \WP_Error( 'rondo_signups_forbidden', 'Geen toegang tot vrijwilligersinschrijvingen.', [ 'status' => 403 ] );
+		}
+		$access     = new \Rondo\Core\AccessControl();
+		$person_ids = array_values( array_unique( array_filter( array_map( 'absint', $person_ids ), static fn( $id ) => get_post_type( $id ) === 'person' && get_post_status( $id ) === 'publish' && $access->user_can_access_post( $id ) ) ) );
+		return $this->prepare_signup_shift_response(
+			$this->get_signup_shift_summaries(
+			true,
+			'active',
+			$person_ids,
+			[
+				[
+					'key'     => 'start_datetime',
+					'value'   => [ $date_from . ' 00:00:00', $date_to . ' 23:59:59' ],
+					'compare' => 'BETWEEN',
+					'type'    => 'DATETIME',
+				],
+			]
+			)
+			);
 	}
 
 	/**
