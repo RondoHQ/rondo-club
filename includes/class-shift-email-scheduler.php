@@ -311,6 +311,57 @@ class ShiftEmailScheduler {
 	}
 
 	/**
+	 * Notify a person after a coordinator removes their assignment.
+	 * The caller must first remove the assignment under the shift write lock.
+	 *
+	 * @return array{sent: bool, reason: string|null}
+	 */
+	public function send_removal_notification( int $shift_id, int $person_id ): array {
+		$email = $this->get_person_email( $person_id );
+		if ( ! $email ) {
+			return [
+				'sent'   => false,
+				'reason' => 'no_email',
+			];
+		}
+
+		$start   = $this->parse_datetime( (string) get_post_meta( $shift_id, 'start_datetime', true ) );
+		$end     = $this->parse_datetime( (string) get_post_meta( $shift_id, 'end_datetime', true ) );
+		$type_id = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
+		if ( ! $start || ! $end || $type_id <= 0 ) {
+			return [
+				'sent'   => false,
+				'reason' => 'invalid_shift',
+			];
+		}
+
+		$vars    = $this->template_variables( $type_id, $person_id, [], $start, $end );
+		$subject = $this->substitute_variables( 'Je bent afgemeld voor {dienst} op {datum}', $vars );
+		$body    = $this->substitute_variables(
+			"Hoi {naam},\n\nEen coördinator heeft je afgemeld voor de inschrijftaak {dienst} op {datum} van {tijd} tot {eindtijd}.\n\nJe hoeft voor deze inschrijftaak niet te komen. Bekijk je overige inschrijftaken en je vrijwilligersplicht in Rondo.",
+			$vars
+		);
+		$html    = EmailTemplate::render(
+			[
+				'eyebrow'   => 'Afgemeld voor inschrijftaak',
+				'heading'   => $subject,
+				'preheader' => $subject,
+				'body_html' => EmailTemplate::format_plain_text( $body ),
+				'cta_url'   => home_url( '/vrijwillig' ),
+				'cta_label' => 'Bekijk je inschrijftaken',
+			]
+		);
+		$sent    = wp_mail( $email, $subject, $html, [ 'Content-Type: text/html; charset=UTF-8' ] );
+		if ( $sent ) {
+			do_action( 'rondo_shift_email_sent', $shift_id, $person_id, 'removal' );
+		}
+		return [
+			'sent'   => (bool) $sent,
+			'reason' => $sent ? null : 'send_failed',
+		];
+	}
+
+	/**
 	 * Immediately notify all retained assignees of a cancelled shift.
 	 *
 	 * Repeated calls only retry recipients whose earlier wp_mail() call failed.

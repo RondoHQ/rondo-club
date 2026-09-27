@@ -1609,7 +1609,7 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'invalid_shift', 'Inschrijftaak bestaat niet.', [ 'status' => 404 ] );
 		}
 
-		return $this->with_shift_write_lock(
+		$result = $this->with_shift_write_lock(
 			$shift_id,
 			function () use ( $person_id, $shift_id ) {
 				$status = (string) get_post_meta( $shift_id, 'status', true );
@@ -1634,15 +1634,28 @@ class MemberShifts extends Base {
 				}
 				VolunteerObligationCalculator::invalidate_cache();
 
-				return rest_ensure_response(
-					[
-						'shift_id'  => $shift_id,
-						'person_id' => $person_id,
-						'removed'   => true,
-					]
-				);
+				return [
+					'shift_id'  => $shift_id,
+					'person_id' => $person_id,
+					'removed'   => true,
+				];
 			}
 		);
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		$mailer                 = new ShiftEmailScheduler();
+		$result['notification'] = $mailer->send_removal_notification( $shift_id, $person_id );
+		$notification           = $result['notification'];
+		update_post_meta( $shift_id, '_shift_email_removal_status_' . $person_id, $notification['sent'] ? 'sent' : $notification['reason'] );
+		if ( $notification['sent'] ) {
+			update_post_meta( $shift_id, '_shift_email_removal_sent_' . $person_id, current_time( 'mysql' ) );
+		} else {
+			delete_post_meta( $shift_id, '_shift_email_removal_sent_' . $person_id );
+		}
+
+		return rest_ensure_response( $result );
 	}
 
 	/**
