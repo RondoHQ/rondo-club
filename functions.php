@@ -1868,6 +1868,9 @@ function rondo_login_redirect( $redirect_to, $request, $user ) {
 }
 add_filter( 'login_redirect', 'rondo_login_redirect', 10, 3 );
 
+// Disable admin notifications after password resets; keep user reset emails enabled.
+remove_action( 'after_password_reset', 'wp_password_change_notification' );
+
 /**
  * Disable admin color scheme picker for all users
  */

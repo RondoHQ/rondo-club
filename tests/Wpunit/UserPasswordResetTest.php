@@ -102,4 +102,14 @@ class UserPasswordResetTest extends RondoTestCase {
 
 		$this->assertSame( 401, $response->get_status() );
 	}
+
+	public function test_completing_a_password_reset_does_not_email_the_admin(): void {
+		$user_id = self::factory()->user->create( [ 'user_email' => 'member@example.com' ] );
+		$user    = get_userdata( $user_id );
+
+		reset_password( $user, 'new-test-password' );
+
+		$this->assertTrue( wp_check_password( 'new-test-password', get_userdata( $user_id )->user_pass, $user_id ) );
+		$this->assertSame( [], $this->sent_to );
+	}
 }
