@@ -73,3 +73,4 @@ export const Training = lazy(() => import('@/pages/Training/Training'));
 export const Football = lazy(() => import('@/pages/Football'));
 
 export const TournamentPayments = lazy(() => import('@/pages/Tournaments/TournamentPayments'));
+export const SportparkCalendar = lazy(() => import('@/pages/Bestuur/SportparkCalendar'));
