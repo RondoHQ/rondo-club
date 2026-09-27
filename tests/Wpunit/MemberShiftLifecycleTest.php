@@ -420,6 +420,90 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertSame( [], get_post_meta( $shift_id, 'assigned_persons', true ) );
 	}
 
+	public function test_coordinator_removal_emails_only_removed_person_and_duplicate_requests_do_not_resend(): void {
+		$manager_id = $this->createRondoUser( [ 'role' => 'rondo_vrijwilligers' ] );
+		wp_set_current_user( $manager_id );
+		$person_id = $this->mail_person( 'Anne', 'anne@example.com' );
+		$other_id  = $this->mail_person( 'Piet', 'piet@example.com' );
+		$shift_id  = $this->dated_shift( $this->dienst_type(), [ $person_id, $other_id ], new \DateTimeImmutable( '2026-12-28 09:00:00', wp_timezone() ) );
+		update_post_meta( $shift_id, 'status', 'vol' );
+		ShiftEmailScheduler::queue_signup_confirmation( $person_id, $shift_id );
+		$request = new WP_REST_Request( 'DELETE', "/rondo/v1/shifts/{$shift_id}/assignees/{$person_id}" );
+
+		$response = $this->server->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame(
+			[
+				'sent'   => true,
+				'reason' => null,
+			],
+			$response->get_data()['notification']
+			);
+		$this->assertSame( [ $other_id ], get_post_meta( $shift_id, 'assigned_persons', true ) );
+		$this->assertSame( 'open', get_post_meta( $shift_id, 'status', true ) );
+		$this->assertCount( 1, $this->sent_mail );
+		$this->assertSame( [ 'anne@example.com' ], $this->sent_mail[0]['to'] );
+		$this->assertSame( 'Je bent afgemeld voor Bardienst op maandag 28 december 2026', $this->sent_mail[0]['subject'] );
+		$this->assertStringContainsString( 'van 09:00 tot 11:00', $this->sent_mail[0]['message'] );
+		$this->assertStringContainsString( 'Hoi Anne', $this->sent_mail[0]['message'] );
+		$this->assertStringNotContainsString( 'gaat niet door', $this->sent_mail[0]['message'] );
+		$this->assertSame( 'sent', get_post_meta( $shift_id, '_shift_email_removal_status_' . $person_id, true ) );
+		$this->assertNotEmpty( get_post_meta( $shift_id, '_shift_email_removal_sent_' . $person_id, true ) );
+		$this->assertSame( 0, ( new ShiftEmailScheduler() )->send_signup_confirmation( $person_id ) );
+
+		$this->assertSame( 404, $this->server->dispatch( $request )->get_status() );
+		$this->assertCount( 1, $this->sent_mail );
+
+		// A later, new assignment can be removed with a new notification.
+		update_post_meta( $shift_id, 'assigned_persons', [ $person_id, $other_id ] );
+		$this->assertSame( 200, $this->server->dispatch( $request )->get_status() );
+		$this->assertCount( 2, $this->sent_mail );
+	}
+
+	public function test_removal_without_email_still_removes_assignment_and_reports_missing_email(): void {
+		$manager_id = $this->createRondoUser( [ 'role' => 'rondo_vrijwilligers' ] );
+		wp_set_current_user( $manager_id );
+		$person_id = $this->createPerson();
+		$shift_id  = $this->dated_shift( $this->dienst_type(), [ $person_id ], current_datetime()->modify( '+3 days' ) );
+		$response  = $this->server->dispatch( new WP_REST_Request( 'DELETE', "/rondo/v1/shifts/{$shift_id}/assignees/{$person_id}" ) );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame(
+			[
+				'sent'   => false,
+				'reason' => 'no_email',
+			],
+			$response->get_data()['notification']
+			);
+		$this->assertSame( [], get_post_meta( $shift_id, 'assigned_persons', true ) );
+		$this->assertCount( 0, $this->sent_mail );
+		$this->assertSame( 'no_email', get_post_meta( $shift_id, '_shift_email_removal_status_' . $person_id, true ) );
+		$this->assertEmpty( get_post_meta( $shift_id, '_shift_email_removal_sent_' . $person_id, true ) );
+	}
+
+	public function test_removal_mail_failure_keeps_removal_and_clears_previous_success_marker(): void {
+		$manager_id = $this->createRondoUser( [ 'role' => 'rondo_vrijwilligers' ] );
+		wp_set_current_user( $manager_id );
+		$person_id = $this->mail_person( 'Anne', 'anne@example.com' );
+		$shift_id  = $this->dated_shift( $this->dienst_type(), [ $person_id ], current_datetime()->modify( '+3 days' ) );
+		update_post_meta( $shift_id, '_shift_email_removal_sent_' . $person_id, '2026-09-01 10:00:00' );
+		add_filter( 'pre_wp_mail', '__return_false', 99 );
+		$response = $this->server->dispatch( new WP_REST_Request( 'DELETE', "/rondo/v1/shifts/{$shift_id}/assignees/{$person_id}" ) );
+		remove_filter( 'pre_wp_mail', '__return_false', 99 );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame(
+			[
+				'sent'   => false,
+				'reason' => 'send_failed',
+			],
+			$response->get_data()['notification']
+			);
+		$this->assertSame( [], get_post_meta( $shift_id, 'assigned_persons', true ) );
+		$this->assertSame( 'send_failed', get_post_meta( $shift_id, '_shift_email_removal_status_' . $person_id, true ) );
+		$this->assertEmpty( get_post_meta( $shift_id, '_shift_email_removal_sent_' . $person_id, true ) );
+	}
+
 	public function test_reminders_are_personalized_and_idempotent(): void {
 		$now       = new \DateTimeImmutable( '2026-09-01 10:00:00', wp_timezone() );
 		$type_id   = $this->dienst_type();

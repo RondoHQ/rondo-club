@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.106.0] - 2026-09-27
+
+### Added
+- Email volunteers when a coordinator removes their shift signup, with the task, date and time. Show delivery failures or missing contact addresses to the coordinator and record the latest send result.
+
 ## [35.105.0] - 2026-09-27
 
 ### Changed
