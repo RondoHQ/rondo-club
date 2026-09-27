@@ -1244,6 +1244,7 @@ class UserSettings extends Base {
 			'can_manage_narrowcasting'       => \Rondo\Config\FeatureToggles::can_access( 'narrowcasting' ) && ( current_user_can( 'narrowcasting' ) || $is_admin ),
 			'can_book_rooms_outside_hours'   => \Rondo\Config\FeatureToggles::can_access( 'rooms' ) && \Rondo\Rooms\BookingEligibility::is_board_member( $user_id ),
 			'can_manage_accommodatie'        => \Rondo\Config\FeatureToggles::can_access( 'rooms' ) && ( current_user_can( 'accommodatiebeheer' ) || $is_admin ),
+			'can_access_bestuur'             => \Rondo\Core\UserRoles::can_access_board( $user_id ),
 			'can_manage_training'            => \Rondo\Core\UserRoles::can_manage_training( $user_id ),
 			'can_manage_tournaments'         => \Rondo\Tournaments\TournamentAccess::can_manage( $user_id ),
 			'has_tournament_assignments'     => \Rondo\Tournaments\TournamentAccess::has_assignments( $user_id ),

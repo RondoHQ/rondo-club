@@ -360,6 +360,7 @@ function rondo_init() {
 		new Teams();
 		new \Rondo\REST\TeamMatches();
 		new \Rondo\REST\Training();
+		new \Rondo\REST\SportparkClosures();
 		new \Rondo\REST\Onboarding();
 		new RESTSponsors();
 		new Commissies();
