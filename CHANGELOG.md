@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.104.0] - 2026-09-27
+
+### Added
+- Communication overview with permission-aware links to Planning, Club TV and App access.
+
+### Changed
+- Move communication planning to `/communicatie/planning` and label it Planning.
+- Place Communicatie below Financiën and group Planning, Club TV and App access beneath it.
+
 ## [35.103.1] - 2026-09-26
 
 ### Fixed
