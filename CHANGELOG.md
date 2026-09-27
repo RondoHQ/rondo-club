@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.105.0] - 2026-09-27
+
+### Changed
+- Show communication planning as a Kanban board with Concept, In voorbereiding, Klaar and Afgerond columns, compact cards and channel completion indicators.
+- Default to the next two calendar months plus overdue and undated items; show the last 30 days of completed work, with full history available through Alle berichten.
+- Collapse planning filters behind one compact toolbar button and show one status at a time on mobile.
+
+### Added
+- Drag open communication items between statuses, preserving validation, version checks and channel-based completion.
+
 ## [35.104.0] - 2026-09-27
 
 ### Added
