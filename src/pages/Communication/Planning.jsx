@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import { CalendarClock, ChevronDown, ChevronUp, Copy, ExternalLink, FileText, ImagePlus, MessageCircle, Pause, Play, Plus, Repeat2, RotateCcw, Search, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronDown, ChevronUp, Copy, ExternalLink, ImagePlus, MessageCircle, Pause, Play, Plus, Repeat2, RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
+import PlanningBoard, { PlanningCard } from './PlanningBoard';
+import { archivedPlanningStatuses, filterPlanningItems, planningMovePayload, planningToday, sortPlanningItems } from './planningUtils';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   useAddCommunicationComment, useCommunication, useCommunicationAction, useCommunicationComments,
@@ -25,15 +27,6 @@ function niceDate(value) {
 
 function errorText(error) {
   return error?.response?.data?.message || 'Opslaan is niet gelukt. Probeer het opnieuw.';
-}
-
-function Badge({ children, tone = 'gray' }) {
-  const colors = {
-    gray: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200', blue: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-    green: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300', amber: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-    red: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
-  };
-  return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${colors[tone]}`}>{children}</span>;
 }
 
 function ChannelCompletionDetails({ itemId, channel, disabled }) {
@@ -226,49 +219,113 @@ function ItemForm({ item, users, channels, onClose }) {
 
 export default function Planning() {
   useDocumentTitle('Planning');
-  const { data, isLoading, error } = useCommunications();
-  const [tab, setTab] = useState('open');
+  const { data, isLoading, error, refetch } = useCommunications();
+  const update = useUpdateCommunication();
+  const moveLock = useRef(false);
+  const [today, setToday] = useState(planningToday);
+  const [period, setPeriod] = useState('2');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [channel, setChannel] = useState('');
   const [assignee, setAssignee] = useState('');
-  const [status, setStatus] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [showHidden, setShowHidden] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [movingId, setMovingId] = useState(null);
+  const [moveError, setMoveError] = useState(null);
+  const [announcement, setAnnouncement] = useState('');
   const items = useMemo(() => data?.items || [], [data]);
   const users = data?.users || [];
   const channels = data?.channels || [];
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Amsterdam', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
-  const filtered = useMemo(() => items.filter((item) => {
-    const tabMatch = tab === 'sent' ? item.status === 'sent' : openStatuses.includes(item.status) || (showHidden && ['skipped', 'cancelled'].includes(item.status));
-    const relevantDate = tab === 'sent' ? item.actual_date : item.planned_date;
-    const isOverdue = openStatuses.includes(item.status) && item.planned_date && item.planned_date < today;
-    return tabMatch && (!search || `${item.title} ${item.description}`.toLowerCase().includes(search.toLowerCase())) && (!channel || item.channel_ids.includes(channel)) && (!assignee || String(item.assignee_id) === assignee) && (!status || item.status === status) && (!dateFrom || relevantDate >= dateFrom) && (!dateTo || relevantDate <= dateTo) && (!overdueOnly || isOverdue);
-  }).sort((a, b) => tab === 'sent' ? (b.actual_date || '').localeCompare(a.actual_date || '') : (!a.planned_date ? 1 : !b.planned_date ? -1 : a.planned_date.localeCompare(b.planned_date))), [items, tab, search, channel, assignee, status, dateFrom, dateTo, overdueOnly, showHidden, today]);
+  useEffect(() => {
+    const timer = window.setInterval(() => setToday(planningToday()), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
 
+  const filtered = useMemo(() => filterPlanningItems(items, {
+    period, search, channel, assignee, dateFrom, dateTo, overdueOnly,
+  }, today), [items, period, search, channel, assignee, dateFrom, dateTo, overdueOnly, today]);
+  const archived = sortPlanningItems(filtered.filter((item) => archivedPlanningStatuses.includes(item.status)));
+  const filterCount = [search.trim(), channel, assignee, dateFrom || dateTo, overdueOnly, showHidden].filter(Boolean).length;
+  const customRange = Boolean(dateFrom || dateTo);
 
-  if (isLoading) return <div className="p-8 text-gray-500">Communicatieplanning laden…</div>;
-  if (error) return <div className="card p-6 text-red-700">De communicatieplanning kon niet worden geladen.</div>;
+  function clearFilters() {
+    setSearch(''); setChannel(''); setAssignee(''); setDateFrom(''); setDateTo(''); setOverdueOnly(false); setShowHidden(false);
+  }
 
-  return <div className="space-y-5 p-4 sm:p-6">
-    <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-2xl font-bold text-gray-900 dark:text-white">Planning</h2><p className="mt-1 text-sm text-gray-500">Plan berichten en houd per kanaal bij wat is gedeeld.</p></div><button className="btn-primary" onClick={() => setSelected({})}><Plus className="mr-2 h-4 w-4" />Nieuw item</button></div>
-    <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700"><button className={`px-4 py-3 text-sm font-medium ${tab === 'open' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`} onClick={() => setTab('open')}>Te communiceren</button><button className={`px-4 py-3 text-sm font-medium ${tab === 'sent' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`} onClick={() => setTab('sent')}>Verstuurd / gepubliceerd</button></div>
-    <div className="grid gap-3 rounded-lg bg-gray-50 p-3 sm:grid-cols-4 dark:bg-gray-800"><label className="relative sm:col-span-1"><Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" /><input className="input input-leading-icon w-full" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Zoeken" aria-label="Zoeken" /></label><select className="input" value={channel} onChange={(e) => setChannel(e.target.value)} aria-label="Kanaal"><option value="">Alle kanalen</option>{channels.map((entry) => <option key={entry.id} value={entry.id}>{entry.label}{!entry.active ? ' (inactief)' : ''}</option>)}</select><select className="input" value={assignee} onChange={(e) => setAssignee(e.target.value)} aria-label="Verantwoordelijke"><option value="">Iedereen</option>{users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}</select>{tab === 'open' ? <select className="input" value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status"><option value="">Alle statussen</option>{openStatuses.map((value) => <option key={value} value={value}>{statuses[value]}</option>)}</select> : <div />}<label className="text-xs text-gray-500">Vanaf<input type="date" className="input mt-1 w-full" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} /></label><label className="text-xs text-gray-500">Tot en met<input type="date" className="input mt-1 w-full" value={dateTo} onChange={(e) => setDateTo(e.target.value)} /></label></div>
-    {tab === 'open' && <div className="flex flex-wrap gap-5"><label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"><input type="checkbox" checked={showHidden} onChange={(e) => setShowHidden(e.target.checked)} />Toon overgeslagen en geannuleerde items</label><label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"><input type="checkbox" checked={overdueOnly} onChange={(e) => setOverdueOnly(e.target.checked)} />Alleen te laat</label></div>}
-    <div className="space-y-3">
-      {filtered.map((item) => {
-        const overdue = openStatuses.includes(item.status) && item.planned_date && item.planned_date < today;
-        return <article key={item.id} className={`card flex flex-col gap-3 p-4 ${overdue ? 'border-l-4 border-l-red-500' : ''}`}>
-          <div className="flex items-start gap-3"><input type="checkbox" className="mt-1" checked={item.status === 'sent'} disabled aria-label={`${item.title}: alle kanalen afgerond`} /><button className="min-w-0 flex-1 text-left" onClick={() => setSelected(item)}><div className="mb-2 flex flex-wrap items-center gap-2"><h3 className="font-semibold text-gray-900 dark:text-white">{item.title}</h3><Badge tone={item.status === 'ready' ? 'green' : item.status === 'preparing' ? 'blue' : item.status === 'sent' ? 'green' : 'gray'}>{statuses[item.status]}</Badge>{item.series_id && <Badge tone="blue"><Repeat2 className="mr-1 h-3 w-3" />{recurrenceLabels[item.recurrence]}</Badge>}{overdue && <Badge tone="red">Te laat</Badge>}</div><div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-gray-500"><span className="flex items-center gap-1"><CalendarClock className="h-4 w-4" />{niceDate(tab === 'sent' ? item.actual_date : item.planned_date)}</span><span>{item.assignee_name || 'Niet toegewezen'}</span>{item.audience && <span>{item.audience}</span>}</div></button></div>
-          <div className="flex shrink-0 items-center gap-2">{item.google_docs_url && <a className="btn-tertiary" href={item.google_docs_url} target="_blank" rel="noreferrer" title="Open Google-document"><FileText className="h-4 w-4" /></a>}<button className="btn-tertiary" onClick={() => setSelected(item)}>Bewerken</button></div>
-          <ChannelChecklist item={item} />
-        </article>;
-      })}
-      {filtered.length === 0 && <div className="card p-10 text-center text-gray-500">Geen communicatie-items gevonden.</div>}
+  async function moveItem(item, status) {
+    const payload = planningMovePayload(item, status);
+    if (!payload || moveLock.current) return;
+    moveLock.current = true;
+    setMovingId(item.id);
+    setMoveError(null);
+    setAnnouncement('');
+    try {
+      await update.mutateAsync({ id: item.id, data: payload });
+      await refetch();
+      setAnnouncement(`${item.title} verplaatst naar ${statuses[status]}.`);
+    } catch (err) {
+      setMoveError({ item, message: errorText(err) });
+      if (err.response?.status === 409) await refetch();
+    } finally {
+      moveLock.current = false;
+      setMovingId(null);
+    }
+  }
+
+  if (isLoading) return <div className="p-8 text-gray-500" role="status">Communicatieplanning laden…</div>;
+  if (error && !data) return <div className="space-y-3 p-6"><p role="alert" className="text-red-700 dark:text-red-300">De communicatieplanning kon niet worden geladen.</p><button type="button" className="btn-secondary" onClick={() => refetch()}>Opnieuw proberen</button></div>;
+
+  return (
+    <div className="min-w-0 space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className={customRange ? 'w-48 shrink-0' : 'w-36 shrink-0'}>
+        <select
+          className="input min-h-11 w-full text-sm"
+          aria-label="Periode vanaf vandaag"
+          value={customRange ? 'custom' : period}
+          onChange={(event) => { setPeriod(event.target.value); setDateFrom(''); setDateTo(''); }}
+        >
+          <option value="2">2 maanden</option><option value="1">1 maand</option><option value="all">Alle berichten</option>
+          {customRange && <option value="custom">Aangepaste periode</option>}
+        </select>
+        </div>
+        <button type="button" className="btn-secondary min-h-11 gap-2" aria-expanded={filtersOpen} aria-controls="planning-filters" onClick={() => setFiltersOpen((open) => !open)}>
+          <SlidersHorizontal aria-hidden="true" className="h-4 w-4" />Filters{filterCount > 0 && <span className="text-xs tabular-nums">· {filterCount}</span>}
+        </button>
+        <button type="button" className="btn-primary ml-auto min-h-11 gap-2" onClick={() => setSelected({})}><Plus aria-hidden="true" className="h-4 w-4" /><span className="sr-only sm:not-sr-only">Nieuw item</span></button>
+      </div>
+
+      {filtersOpen && <div id="planning-filters" className="space-y-3 border-b border-gray-200 pb-4 dark:border-gray-700">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <label className="text-sm text-gray-700 dark:text-gray-200">Zoeken<span className="relative mt-1 block"><Search aria-hidden="true" className="absolute left-3 top-3 h-4 w-4 text-gray-400" /><input className="input input-leading-icon w-full" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Titel of beschrijving" /></span></label>
+          <label className="text-sm text-gray-700 dark:text-gray-200">Kanaal<select className="input mt-1 w-full" value={channel} onChange={(event) => setChannel(event.target.value)}><option value="">Alle kanalen</option>{channels.map((entry) => <option key={entry.id} value={entry.id}>{entry.label}{!entry.active ? ' (inactief)' : ''}</option>)}</select></label>
+          <label className="text-sm text-gray-700 dark:text-gray-200">Verantwoordelijke<select className="input mt-1 w-full" value={assignee} onChange={(event) => setAssignee(event.target.value)}><option value="">Iedereen</option><option value="unassigned">Niet toegewezen</option>{users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}</select></label>
+          <label className="text-sm text-gray-700 dark:text-gray-200">Vanaf<input type="date" className="input mt-1 w-full" max={dateTo || undefined} value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} /></label>
+          <label className="text-sm text-gray-700 dark:text-gray-200">Tot en met<input type="date" className="input mt-1 w-full" min={dateFrom || undefined} value={dateTo} onChange={(event) => setDateTo(event.target.value)} /></label>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-gray-700 dark:text-gray-200">
+          <label className="flex min-h-9 items-center gap-2"><input type="checkbox" checked={overdueOnly} onChange={(event) => setOverdueOnly(event.target.checked)} />Alleen achterstallig</label>
+          <label className="flex min-h-9 items-center gap-2"><input type="checkbox" checked={showHidden} onChange={(event) => setShowHidden(event.target.checked)} />Toon overgeslagen en geannuleerde items</label>
+          {filterCount > 0 && <button type="button" className="btn-tertiary" onClick={clearFilters}>Filters wissen</button>}
+        </div>
+        <p className="text-xs text-gray-600 dark:text-gray-300">{customRange ? 'De aangepaste periode gebruikt de geplande datum, of de afhandeldatum bij afgeronde berichten.' : period === 'all' ? 'Alle geplande, ongeplande en afgeronde berichten.' : 'Achterstallige en ongeplande berichten blijven in beeld. Afgerond: laatste 30 dagen.'}</p>
+        {dateFrom && dateTo && dateFrom > dateTo && <p role="alert" className="text-sm text-red-700 dark:text-red-300">De einddatum moet op of na de begindatum liggen.</p>}
+      </div>}
+
+      {error && <p role="alert" className="text-sm text-red-700 dark:text-red-300">Vernieuwen is niet gelukt. <button type="button" className="underline" onClick={() => refetch()}>Opnieuw proberen</button></p>}
+      {moveError && <div role="alert" className="flex flex-wrap items-center gap-3 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950/50 dark:text-red-200"><span>{moveError.message}</span><button type="button" className="underline" onClick={() => { setSelected(items.find((item) => item.id === moveError.item.id) || moveError.item); setMoveError(null); }}>Open bericht</button><button type="button" aria-label="Melding sluiten" onClick={() => setMoveError(null)}><X className="h-4 w-4" /></button></div>}
+      <div role="status" aria-live="polite" className="sr-only">{announcement}</div>
+      <PlanningBoard items={filtered} today={today} onOpen={setSelected} onMove={moveItem} movingId={movingId} />
+      {showHidden && <section aria-label="Overgeslagen en geannuleerd" className="space-y-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Overgeslagen en geannuleerd · {archived.length}</h2>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{archived.map((item) => <PlanningCard key={item.id} item={item} today={today} onOpen={setSelected} />)}</div>
+        {!archived.length && <p className="text-sm text-gray-500 dark:text-gray-400">Geen berichten</p>}
+      </section>}
+      {selected && <ItemForm item={selected.id ? selected : null} users={users} channels={channels} onClose={(duplicate) => { setSelected(duplicate?.id ? duplicate : null); }} />}
     </div>
-    {selected && <ItemForm item={selected.id ? selected : null} users={users} channels={channels} onClose={(duplicate) => { setSelected(null); if (duplicate?.id) setSelected(duplicate); }} />}
-  </div>;
+  );
 }
