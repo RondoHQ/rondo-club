@@ -30,7 +30,7 @@ import {
   VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig, Household, MembershipPass,
   TaakuitlegList, TaakuitlegForm,
   Narrowcasting, NarrowcastingDisplay, PresentationSender,
-  Rooms, Training,
+  Rooms, Training, SportparkCalendar,
   TournamentsList, TournamentDetail, MyTournaments, TournamentEntry, TournamentPayments,
 } from './lazyPages';
 
@@ -320,6 +320,8 @@ const router = createBrowserRouter([
           { path: 'sponsors/new', element: <SponsorRoute><SponsorDetail /></SponsorRoute> },
           { path: 'sponsors/:id', element: <SponsorRoute><SponsorDetail /></SponsorRoute> },
 
+          { path: 'bestuur', element: <CapabilityRoute checkAccess={(user) => user?.can_access_bestuur}><Navigate to="/bestuur/sportparkkalender" replace /></CapabilityRoute> },
+          { path: 'bestuur/sportparkkalender', element: <CapabilityRoute checkAccess={(user) => user?.can_access_bestuur}><SportparkCalendar /></CapabilityRoute> },
           // VOG routes - requires VOG capability
           // Canonical lives under /vrijwilligers/vog; legacy /vog kept for back-compat.
           {

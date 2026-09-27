@@ -76,6 +76,8 @@ export function useRouteTitle(customTitle = null) {
         title = 'Communicatie';
       } else if (path === '/app-toegang') {
         title = 'App access';
+      } else if (path.startsWith('/bestuur')) {
+        title = 'Sportparkkalender';
       } else if (path.startsWith('/settings')) {
         title = 'Instellingen';
       } else {

@@ -30,6 +30,7 @@ class PostTypes {
 		'discipline_case'      => [ 'discipline_case', 'discipline_cases' ],
 		'rondo_invoice'        => [ 'invoice', 'invoices' ],
 		'rondo_room'           => [ 'room', 'rooms' ],
+		'rondo_park_closure'   => [ 'park_closure', 'park_closures' ],
 		'rondo_training'       => [ 'training_schedule', 'training_schedules' ],
 		'rondo_room_booking'   => [ 'room_booking', 'room_bookings' ],
 		'rondo_tournament'     => [ 'tournament', 'tournaments' ],
@@ -118,6 +119,22 @@ class PostTypes {
 		$this->register_invoice_statuses();
 		$this->register_invoice_post_type();
 		$this->register_room_post_type();
+		register_post_type(
+			'rondo_park_closure',
+			array_merge(
+				[
+					'label'              => 'Sportparksluitingen',
+					'public'             => false,
+					'publicly_queryable' => false,
+					'show_ui'            => false,
+					'show_in_rest'       => false,
+					'query_var'          => false,
+					'rewrite'            => false,
+					'supports'           => [ 'title', 'editor', 'author' ],
+				],
+				self::capability_args( 'rondo_park_closure' )
+			)
+		);
 		register_post_type(
 			'rondo_training',
 			array_merge(
