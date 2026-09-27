@@ -553,6 +553,15 @@ class ShiftTemplateExpander {
 	 * @return int Number of NEW shifts created (skips already-existing).
 	 */
 	public static function expand_template( int $template_id, string $from, string $to ): int {
+		$result = \Rondo\Sportpark\Closures::locked(
+			static fn() => self::expand_open_dates( $template_id, $from, $to )
+		);
+		// A concurrent closure write wins; the next expansion can retry safely.
+		return is_wp_error( $result ) ? 0 : $result;
+	}
+
+	/** Expand while holding the shared sportpark lock. */
+	private static function expand_open_dates( int $template_id, string $from, string $to ): int {
 		$dienst_type_id = (int) get_post_meta( $template_id, 'dienst_type_id', true );
 		$day_of_week    = (int) get_post_meta( $template_id, 'day_of_week', true );
 		$start_time     = (string) get_post_meta( $template_id, 'start_time', true );
@@ -583,13 +592,14 @@ class ShiftTemplateExpander {
 			return 0;
 		}
 
-		$created = 0;
-		$cursor  = strtotime( $window_start );
-		$end_ts  = strtotime( $window_end );
+		$closures = \Rondo\Sportpark\Closures::between( $window_start, $window_end );
+		$created  = 0;
+		$cursor   = strtotime( $window_start );
+		$end_ts   = strtotime( $window_end );
 
 		while ( $cursor !== false && $cursor <= $end_ts ) {
 			// PHP date('N') returns 1=Monday..7=Sunday — matches our convention.
-			if ( (int) gmdate( 'N', $cursor ) === $day_of_week ) {
+			if ( (int) gmdate( 'N', $cursor ) === $day_of_week && ! \Rondo\Sportpark\Closures::covers( gmdate( 'Y-m-d', $cursor ), $closures ) ) {
 				// Store the canonical `Y-m-d H:i:s` form native field also writes, so an admin
 				// edit through the shift editor can't produce a phantom mismatch that
 				// re-spawns a duplicate on the next expansion.

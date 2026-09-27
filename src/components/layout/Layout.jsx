@@ -86,6 +86,8 @@ const navigation = [
   { name: 'Taakuitleg', href: '/vrijwilligers/taakuitleg', icon: BookOpen, indent: true, requiresVrijwilligers: true },
   { name: 'Vrijstellingen', href: '/vrijwilligers/vrijstellingen', icon: UsersRound, indent: true, requiresVrijwilligers: true },
   { name: 'Statistieken', href: '/vrijwilligers/statistieken', icon: ChartPie, indent: true, requiresVrijwilligers: true },
+  { name: 'Bestuur', href: '/bestuur', icon: UsersRound, requiresBestuur: true },
+  { name: 'Sportparkkalender', href: '/bestuur/sportparkkalender', icon: CalendarDays, indent: true, requiresBestuur: true },
   { name: 'Financiën', href: '/financien', icon: Wallet, requiresFinancieel: true },
   { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true },
@@ -211,6 +213,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresCommunication) return canAccessCommunication(currentUser);
     if (item.sectionCapability && !currentUser?.[item.sectionCapability]) return false;
     if (item.capabilities) return canAccessFootballItem(item, currentUser);
+    if (item.requiresBestuur && !currentUser?.can_access_bestuur) return false;
     if (isAdmin) return true;
     if (item.adminOnly && !isAdmin) return false;
     if (item.requiresFootball && !canAccessFootball(currentUser)) return false;
@@ -745,6 +748,8 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback, showFeedbackIntro, 
     if (path.startsWith('/people')) return 'Relaties';
     if (path.startsWith('/sponsors')) return 'Sponsoren';
     if (path === '/toernooien/betalingen') return 'Toernooibetalingen';
+    if (path.startsWith('/bestuur/sportparkkalender')) return 'Sportparkkalender';
+    if (path === '/bestuur') return 'Bestuur';
     if (path === '/financien' || path === '/financien/') return 'Financiën';
     if (path.startsWith('/financien/contributie')) return 'Contributie';
     if (path.startsWith('/financien/facturen')) return 'Facturen';

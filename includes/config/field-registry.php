@@ -3301,6 +3301,10 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
       ),
       'kind' => 'post',
     ),
+    'rondo_park_closure' => [ 'kind' => 'post', 'fields' => [
+      'starts_at' => [ 'canonical_name' => 'starts_at', 'name' => 'starts_at', 'storage_name' => 'starts_at', 'key' => 'field_park_closure_starts_at', 'label' => 'starts_at', 'type' => 'date_picker', 'return_format' => 'Ymd', 'display_format' => 'd-m-Y', 'required' => 1 ],
+      'ends_at' => [ 'canonical_name' => 'ends_at', 'name' => 'ends_at', 'storage_name' => 'ends_at', 'key' => 'field_park_closure_ends_at', 'label' => 'ends_at', 'type' => 'date_picker', 'return_format' => 'Ymd', 'display_format' => 'd-m-Y', 'required' => 1 ],
+    ] ],
     'rondo_training' => [ 'kind' => 'post', 'fields' => [
 'season' => [ 'canonical_name' => 'season', 'name' => 'season', 'storage_name' => 'season', 'key' => 'field_training_season', 'label' => 'season', 'type' => 'text' ],
 'revision' => [ 'canonical_name' => 'revision', 'name' => 'revision', 'storage_name' => 'revision', 'key' => 'field_training_revision', 'label' => 'revision', 'type' => 'number', 'default_value' => 0 ],

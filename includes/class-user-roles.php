@@ -159,6 +159,19 @@ class UserRoles {
 		return self::can_access_section( 'commissies', $user_id ) && $user && in_array( 'rondo_bestuur', (array) $user->roles, true );
 	}
 
+	/** Board-only features, also available to administrators. */
+	public static function can_access_board( $user_id = null ): bool {
+		$user_id = $user_id ?? get_current_user_id();
+		if ( ! $user_id ) {
+			return false;
+		}
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return true;
+		}
+		$user = get_user_by( 'id', $user_id );
+		return $user && in_array( 'rondo_bestuur', (array) $user->roles, true );
+	}
+
 	/**
 	 * Whether the user has an extra role that opens the general staff surfaces.
 	 *
