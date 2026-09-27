@@ -8,6 +8,7 @@ import { PageLoadingSpinner, ContentLoadingSpinner } from '@/components/LoadingS
 import { Shield } from 'lucide-react';
 import App from './App';
 import { canAccessFeature } from '@/utils/featureToggles';
+import { canAccessCommunication } from '@/utils/communicationNavigation';
 import { canAccessFootball } from '@/utils/footballAccess';
 
 // Direct import for Dashboard (no lazy loading)
@@ -18,7 +19,7 @@ import {
   PeopleList, PeopleAnniversaries, PeopleOnboarding, ProfileChangeLog, PersonDetail, SponsorList, SponsorDetail, TeamsList, TeamDetail,
   Kaderlijst, MyTeam, Football,
   CommissiesList, CommissieDetail, TodosList,
-  FeedbackList, FeedbackDetail, Communication, Settings, AppAccess, VOG,
+  FeedbackList, FeedbackDetail, Communication, Planning, Settings, AppAccess, VOG,
   Contributie, DisciplineCasesList,
   FinanceDashboard, Betaalstatistieken, Facturen, FactuurDetail, FactuurNieuw, RelationshipTypes,
   CustomFields, Login, Profile, ProfileIva, ProfileVog,
@@ -641,7 +642,8 @@ const router = createBrowserRouter([
           { path: 'feedback', element: <CapabilityRoute checkAccess={(user) => user?.can_access_feedback}><FeedbackList /></CapabilityRoute> },
           { path: 'feedback/:id', element: <FeedbackDetail /> },
 
-		  { path: 'communicatie', element: <CapabilityRoute checkAccess={(user) => user?.can_access_communicatie}><Communication /></CapabilityRoute> },
+          { path: 'communicatie', element: <CapabilityRoute checkAccess={canAccessCommunication}><Communication /></CapabilityRoute> },
+          { path: 'communicatie/planning', element: <CapabilityRoute checkAccess={(user) => user?.can_access_communicatie}><Planning /></CapabilityRoute> },
 
           // Club TV content is available to narrowcasting and sponsor managers.
           {
