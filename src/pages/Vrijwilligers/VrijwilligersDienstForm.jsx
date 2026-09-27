@@ -214,9 +214,21 @@ export default function VrijwilligersDienstForm() {
 
   const removeAssigneeMutation = useMutation({
     mutationFn: (personId) => prmApi.removeShiftAssignee(id, personId),
-    onSuccess: async () => {
+    onSuccess: async (response) => {
+      const notification = response?.data?.notification;
+      setFeedback(notification?.sent
+        ? { kind: 'success', message: 'Aanmelding verwijderd. De afmeldmail is verzonden.' }
+        : {
+          kind: 'warning',
+          message: notification?.reason === 'no_email'
+            ? 'Aanmelding verwijderd, maar er is geen bereikbaar e-mailadres. Informeer deze persoon zelf.'
+            : 'Aanmelding verwijderd, maar de afmeldmail kon niet worden verzonden. Informeer deze persoon zelf.',
+        });
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shift', id] });
       await refreshShiftCalendars(queryClient);
+    },
+    onError: (err) => {
+      setFeedback({ kind: 'error', message: err?.response?.data?.message || err?.message || 'Verwijderen mislukt.' });
     },
   });
 
@@ -728,7 +740,7 @@ export default function VrijwilligersDienstForm() {
                 {!isCancelled && <button
                   type="button"
                   onClick={() => {
-                    if (window.confirm('Aanmelding verwijderen?')) {
+                    if (window.confirm('Aanmelding verwijderen? Deze persoon ontvangt een afmeldmail.')) {
                       removeAssigneeMutation.mutate(pid);
                     }
                   }}
