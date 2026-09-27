@@ -56,6 +56,7 @@ final class Registrar {
 	/** Register the public, authenticated ability surface. */
 	public function register_abilities(): void {
 		( new CommunicationAbilities() )->register();
+		( new TeamAbilities() )->register();
 		wp_register_ability(
 			'rondo/list-feedback',
 			[
@@ -144,6 +145,7 @@ final class Registrar {
 		}
 
 		( new CommunicationAbilities() )->register_connector( $registry );
+		( new TeamAbilities() )->register_connector( $registry );
 
 		$registry->add(
 			new \WPAgentAbilities\Abilities\Definition(
