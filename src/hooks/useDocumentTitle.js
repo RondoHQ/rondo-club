@@ -70,6 +70,10 @@ export function useRouteTitle(customTitle = null) {
         } else {
           title = 'Teams';
         }
+      } else if (path.startsWith('/communicatie/planning')) {
+        title = 'Planning';
+      } else if (path.startsWith('/communicatie')) {
+        title = 'Communicatie';
       } else if (path === '/app-toegang') {
         title = 'App access';
       } else if (path.startsWith('/settings')) {

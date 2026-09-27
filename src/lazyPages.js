@@ -17,6 +17,7 @@ export const CommissieDetail = lazy(() => import('@/pages/Commissies/CommissieDe
 export const TodosList = lazy(() => import('@/pages/Todos/TodosList'));
 export const FeedbackList = lazy(() => import('@/pages/Feedback/FeedbackList'));
 export const FeedbackDetail = lazy(() => import('@/pages/Feedback/FeedbackDetail'));
+export const Planning = lazy(() => import('@/pages/Communication/Planning'));
 export const Communication = lazy(() => import('@/pages/Communication/Communication'));
 export const AppAccess = lazy(() => import('@/pages/AppAccess'));
 export const Settings = lazy(() => import('@/pages/Settings/Settings'));

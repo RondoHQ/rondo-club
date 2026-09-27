@@ -32,7 +32,6 @@ import {
   ClipboardList,
   BookOpen,
   ChevronRight,
-  MonitorPlay,
   ChartPie,
   History,
   CalendarDays,
@@ -58,6 +57,7 @@ import { useVOGCount } from '@/hooks/useVOGCount';
 import { useDisciplineCasesCount } from '@/hooks/useDisciplineCases';
 import { prmApi } from '@/api/client';
 import { canAccessFeature } from '@/utils/featureToggles';
+import { canAccessCommunication, canAccessCommunicationItem, communicationNavigation } from '@/utils/communicationNavigation';
 import { canAccessFootball } from '@/utils/footballAccess';
 import { canAccessFootballItem, footballNavigation } from '@/utils/footballNavigation';
 
@@ -91,12 +91,11 @@ const navigation = [
   { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true },
   { name: 'Toernooibetalingen', href: '/toernooien/betalingen', icon: Trophy, indent: true, requiresFinancieel: true },
   { name: 'Betaalstatistieken', href: '/financien/betaalstatistieken', icon: TrendingUp, indent: true, requiresFinancieel: true },
+  { name: 'Communicatie', href: '/communicatie', icon: Megaphone, requiresCommunication: true },
+  ...communicationNavigation.map((item) => ({ ...item, indent: true, communicationItem: true })),
   { name: 'Lidpas Scanner', href: '/lidpas-scanner', icon: QrCode, requiresToegangscontrole: true, mobileOnly: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare, requiresKader: true },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare, sectionCapability: 'can_access_feedback' },
-  { name: 'Communicatie', href: '/communicatie', icon: Megaphone, sectionCapability: 'can_access_communicatie' },
-  { name: 'Club TV', href: '/narrowcasting', icon: MonitorPlay, requiresNarrowcasting: true, requiresFeature: 'narrowcasting' },
-  { name: 'App access', href: '/app-toegang', icon: QrCode, sectionCapability: 'can_access_app_access' },
   { name: 'Instellingen', href: '/settings', icon: Settings, requiresKader: true },
 ];
 
@@ -114,7 +113,6 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
   const canAccessLedenadministratie = currentUser?.can_access_ledenadministratie ?? false;
   const canAccessVrijwilligers = currentUser?.can_access_vrijwilligers ?? false;
-  const canAccessNarrowcasting = currentUser?.can_access_narrowcasting ?? false;
   const canManageSponsors = currentUser?.can_manage_sponsors ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
   const sidebarUserName = currentUser?.linked_person_name || currentUser?.name || '';
@@ -209,6 +207,8 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresFeature && !canAccessFeature(item.requiresFeature, isAdmin)) return false;
     if (item.requiresLinkedPerson && !currentUser?.linked_person_id) return false;
     if (item.requiresMyTeams && !currentUser?.has_my_teams) return false;
+    if (item.communicationItem) return canAccessCommunicationItem(item, currentUser);
+    if (item.requiresCommunication) return canAccessCommunication(currentUser);
     if (item.sectionCapability && !currentUser?.[item.sectionCapability]) return false;
     if (item.capabilities) return canAccessFootballItem(item, currentUser);
     if (isAdmin) return true;
@@ -221,7 +221,6 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresLedenadministratie && !canAccessLedenadministratie) return false;
     if (item.requiresShiftProgress && !currentUser?.can_view_people_shift_progress) return false;
     if (item.requiresVrijwilligers && !canAccessVrijwilligers) return false;
-    if (item.requiresNarrowcasting && !canAccessNarrowcasting) return false;
     if (item.requiresSponsors && !canManageSponsors) return false;
     if (item.requiresKader && !isKader) return false;
     return true;
@@ -761,6 +760,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback, showFeedbackIntro, 
     if (path.startsWith('/toegangsstatistieken')) return 'Toegangsstatistieken';
     if (path.startsWith('/lidpas-scanner')) return 'Lidpas Scanner';
     if (path.startsWith('/feedback')) return 'Feedback';
+    if (path.startsWith('/communicatie/planning')) return 'Planning';
     if (path.startsWith('/communicatie')) return 'Communicatie';
     if (path.startsWith('/settings')) return 'Instellingen';
     if (path.startsWith('/profile')) return 'Profiel';
