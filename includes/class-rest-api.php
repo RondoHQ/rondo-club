@@ -1435,7 +1435,7 @@ class Api extends Base {
 	public function save_role_dashboard_layout( $request ) {
 		$data      = $request->get_json_params();
 		$available = \Rondo\Dashboard\RoleDashboard::settings()['order'];
-		if ( ! is_array( $data ) || array_diff( array_keys( $data ), [ 'order', 'hidden' ] ) ) {
+		if ( ! is_array( $data ) || array_diff( array_keys( $data ), [ 'order', 'hidden', 'birthday_days' ] ) ) {
 			return new \WP_Error( 'invalid_layout', 'Ongeldige dashboardindeling.', [ 'status' => 400 ] );
 		}
 		foreach ( [ 'order', 'hidden' ] as $key ) {
@@ -1443,6 +1443,10 @@ class Api extends Base {
 				return new \WP_Error( 'invalid_layout', 'Kies alleen beschikbare dashboardblokken.', [ 'status' => 400 ] );
 			}
 		}
+		if ( array_key_exists( 'birthday_days', $data ) && ( ! is_int( $data['birthday_days'] ) || $data['birthday_days'] < 1 || $data['birthday_days'] > \Rondo\Dashboard\RoleDashboard::MAX_BIRTHDAY_DAYS ) ) {
+			return new \WP_Error( 'invalid_birthday_days', 'Kies een geheel aantal dagen tussen 1 en 30.', [ 'status' => 400 ] );
+		}
+		$data['birthday_days'] = $data['birthday_days'] ?? \Rondo\Dashboard\RoleDashboard::settings()['birthday_days'];
 		update_user_meta( get_current_user_id(), 'rondo_role_dashboard_layout', $data );
 		return new \WP_REST_Response( \Rondo\Dashboard\RoleDashboard::settings(), 200, [ 'Cache-Control' => 'no-store, private' ] );
 	}

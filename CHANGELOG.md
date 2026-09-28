@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.109.0] - 2026-09-28
+
+### Added
+- Personal birthday period in dashboard settings, from 1 to 30 days including today, defaulting to 3 days.
+
+### Fixed
+- Show membership anniversaries on role dashboards for users with the existing jubilarissen permission, while preserving person access controls.
+
 ## [35.108.0] - 2026-09-27
 
 ### Added
