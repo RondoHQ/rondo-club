@@ -133,6 +133,83 @@ class RoleDashboardTest extends RondoTestCase {
 		$this->assertSame( 403, $this->request( 'dashboard/matches' )->get_status() );
 	}
 
+	public function test_birthday_window_defaults_to_three_days_and_is_personal_without_changing_match_dates(): void {
+		$ids = [];
+		foreach ( [ 0, 2, 3, 6, 7, 29, 30 ] as $offset ) {
+			$ids[ $offset ] = $this->person( 'Onder 13', $this->team, [ 'birthdate' => current_datetime()->modify( "+{$offset} days" )->modify( '-12 years' )->format( 'Y-m-d' ) ] );
+		}
+		$data = $this->request( 'dashboard/workspace' )->get_data();
+		$this->assertSame( 3, $data['layout']['birthday_days'] );
+		$this->assertSame( [ $ids[0], $ids[2] ], array_map( 'intval', array_column( $data['birthdays'], 'id' ) ) );
+		$layout = [
+			'order'  => $data['layout']['order'],
+			'hidden' => [],
+		];
+		foreach ( [ 1, 7, 30 ] as $days ) {
+			$response = $this->request( 'dashboard/layout', $layout + [ 'birthday_days' => $days ] );
+			$this->assertSame( 200, $response->get_status() );
+			$data = $this->request( 'dashboard/workspace' )->get_data();
+			$this->assertSame( $days, $data['layout']['birthday_days'] );
+			$this->assertSame( array_values( array_filter( $ids, static fn( $offset ) => $offset < $days, ARRAY_FILTER_USE_KEY ) ), array_map( 'intval', array_column( $data['birthdays'], 'id' ) ) );
+			$this->assertSame( current_datetime()->modify( '+6 days' )->format( 'Y-m-d' ), $data['end_date'] );
+		}
+		$this->assertSame( 30, $this->request( 'dashboard/layout', $layout )->get_data()['birthday_days'] );
+		$other_user = $this->createRondoUser( [ 'role' => $this->coordinator ] );
+		wp_set_current_user( $other_user );
+		$this->assertSame( 3, $this->request( 'dashboard/workspace' )->get_data()['layout']['birthday_days'] );
+	}
+
+	public function test_invalid_birthday_periods_are_rejected_without_changing_preferences(): void {
+		$layout = [
+			'order'         => RoleDashboard::available_blocks(),
+			'hidden'        => [],
+			'birthday_days' => 7,
+		];
+		$this->assertSame( 200, $this->request( 'dashboard/layout', $layout )->get_status() );
+		foreach ( [ 0, -1, 31, 3.5, '3', null, true, [] ] as $invalid ) {
+			$response = $this->request( 'dashboard/layout', array_merge( $layout, [ 'birthday_days' => $invalid ] ) );
+			$this->assertSame( 400, $response->get_status() );
+			$this->assertSame( 'invalid_birthday_days', $response->get_data()['code'] );
+			$this->assertSame( $layout, get_user_meta( $this->user_id, 'rondo_role_dashboard_layout', true ) );
+		}
+		$this->assertSame( 200, $this->request( 'dashboard/layout', array_merge( $layout, [ 'birthday_days' => 3 ] ) )->get_status() );
+		$this->assertSame( 3, RoleDashboard::settings()['birthday_days'] );
+	}
+
+	public function test_coordinator_anniversaries_require_section_permission_and_preserve_person_scope(): void {
+		$fields  = [ 'lid_sinds' => current_datetime()->modify( '-25 years' )->format( 'Y-m-d' ) ];
+		$visible = $this->person( 'Onder 13', $this->team, $fields );
+		$hidden  = $this->person( 'Onder 19', $this->other_team, $fields );
+		$data    = $this->request( 'dashboard/workspace' )->get_data();
+		$this->assertArrayNotHasKey( 'anniversaries', $data );
+		$this->assertNotContains( 'anniversaries', $data['layout']['order'] );
+		$user = get_userdata( $this->user_id );
+		$user->add_cap( 'jubilarissen' );
+		wp_set_current_user( 0 );
+		wp_set_current_user( $this->user_id );
+		$data = $this->request( 'dashboard/workspace' )->get_data();
+		$this->assertContains( 'anniversaries', $data['layout']['order'] );
+		$this->assertSame( [ $visible ], array_column( array_column( $data['anniversaries'], 'person' ), 'id' ) );
+		$this->assertFalse( AccessControl::can_view_person( $hidden ) );
+		$this->assertArrayNotHasKey( 'membership', $data );
+		$this->assertSame(
+			200,
+			$this->request(
+			'dashboard/layout',
+			[
+				'order'  => [ 'anniversaries' ],
+				'hidden' => [],
+			]
+			)->get_status()
+			);
+		$user->remove_cap( 'jubilarissen' );
+		wp_set_current_user( 0 );
+		wp_set_current_user( $this->user_id );
+		$data = $this->request( 'dashboard/workspace' )->get_data();
+		$this->assertArrayNotHasKey( 'anniversaries', $data );
+		$this->assertNotContains( 'anniversaries', $data['layout']['order'] );
+	}
+
 	public function test_secretary_gets_club_matches_without_person_team_or_finance_access(): void {
 		$hidden = $this->person( 'Onder 19', $this->other_team );
 		$this->roles( [ $this->secretary ] );

@@ -4,11 +4,9 @@
 namespace Rondo\Dashboard;
 
 use Rondo\Core\AccessControl;
-use Rondo\Core\UserRoles;
 use Rondo\Fees\SeasonKey;
 use Rondo\Fields\Fields;
 use Rondo\Fields\Formatter;
-use Rondo\REST\Reminders;
 use Rondo\Volunteer\VolunteerStatistics;
 use Rondo\VOG\VOGRequirement;
 
@@ -20,14 +18,6 @@ final class BoardDashboard {
 			return [];
 		}
 		$data = [];
-		if ( UserRoles::can_access_section( 'jubilarissen' ) ) {
-			$data['anniversaries'] = array_values(
-				array_filter(
-					( new Reminders() )->get_upcoming_anniversaries_data( 89, 0 ),
-					static fn( array $item ): bool => $item['type'] === 'member' && AccessControl::can_view_person( (int) $item['person']['id'] )
-				)
-			);
-		}
 		if ( current_user_can( 'ledenadministratie' ) ) {
 			$data['membership'] = self::membership();
 		}

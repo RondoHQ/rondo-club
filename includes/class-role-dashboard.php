@@ -7,9 +7,13 @@ use Rondo\Core\AccessControl;
 use Rondo\Core\UserRoles;
 use Rondo\Core\VolunteerStatus;
 use Rondo\Fields\Fields;
+use Rondo\REST\Reminders;
 use Rondo\Training\Schedules;
 
 final class RoleDashboard {
+
+	public const DEFAULT_BIRTHDAY_DAYS = 3;
+	public const MAX_BIRTHDAY_DAYS     = 30;
 
 	/** Resolve the union of roles on every request, including after revocation. */
 	public static function context( ?int $user_id = null ): array {
@@ -90,7 +94,7 @@ final class RoleDashboard {
 		}
 		$birthdays = [];
 		if ( $context['coordinator'] || $context['board'] ) {
-			foreach ( ( new \RONDO_Reminders() )->get_upcoming_reminders( 6 ) as $birthday ) {
+			foreach ( ( new \RONDO_Reminders() )->get_upcoming_reminders( self::settings()['birthday_days'] - 1 ) as $birthday ) {
 				$id = (int) $birthday['id'];
 				if ( ! AccessControl::can_view_person( $id ) ) {
 					continue;
@@ -112,7 +116,16 @@ final class RoleDashboard {
 				$training[] = array_intersect_key( $block, array_flip( [ 'block_id', 'day', 'start', 'duration', 'pitch_id', 'size', 'offset' ] ) ) + [ 'team_ids' => $visible_ids ];
 			}
 		}
-		return BoardDashboard::overview() + [
+		$celebrations = [];
+		if ( UserRoles::can_access_section( 'jubilarissen' ) ) {
+			$celebrations['anniversaries'] = array_values(
+				array_filter(
+					( new Reminders() )->get_upcoming_anniversaries_data( 89, 0 ),
+					static fn( array $item ): bool => $item['type'] === 'member' && AccessControl::can_view_person( (int) $item['person']['id'] )
+				)
+			);
+		}
+		return $celebrations + BoardDashboard::overview() + [
 			'context'               => $context,
 			'teams'                 => array_values( $teams ),
 			'birthdays'             => $birthdays,
@@ -129,10 +142,10 @@ final class RoleDashboard {
 	public static function available_blocks(): array {
 		$context = self::context();
 		$blocks  = $context['board'] ? [ 'birthdays' ] : [ 'attention' ];
+		if ( UserRoles::can_access_section( 'jubilarissen' ) ) {
+			$blocks[] = 'anniversaries';
+		}
 		if ( $context['board'] ) {
-			if ( UserRoles::can_access_section( 'jubilarissen' ) ) {
-				$blocks[] = 'anniversaries';
-			}
 			$blocks[] = 'attention';
 			foreach ( [
 				'membership' => 'ledenadministratie',
@@ -162,10 +175,13 @@ final class RoleDashboard {
 		$order     = is_array( $saved ) ? array_values( array_intersect( $saved['order'] ?? [], $available ) ) : [];
 		$order     = array_values( array_unique( array_merge( $order, $available ) ) );
 		$hidden    = is_array( $saved ) ? $saved['hidden'] ?? [] : [];
+		$days      = is_array( $saved ) ? $saved['birthday_days'] ?? self::DEFAULT_BIRTHDAY_DAYS : self::DEFAULT_BIRTHDAY_DAYS;
+		$days      = is_int( $days ) && $days >= 1 && $days <= self::MAX_BIRTHDAY_DAYS ? $days : self::DEFAULT_BIRTHDAY_DAYS;
 		return [
-			'defaults' => $available,
-			'order'    => $order,
-			'hidden'   => array_values( array_intersect( $hidden, $available ) ),
+			'birthday_days' => $days,
+			'defaults'      => $available,
+			'order'         => $order,
+			'hidden'        => array_values( array_intersect( $hidden, $available ) ),
 		];
 	}
 }

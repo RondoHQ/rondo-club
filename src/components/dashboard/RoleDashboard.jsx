@@ -28,16 +28,21 @@ function LoadError({ retry, children }) {
 }
 
 function LayoutEditor({ layout, labels, onSave, pending, error }) {
-  const [draft, setDraft] = useState({ order: layout.order, hidden: layout.hidden });
-  return <div className={`${panel} mb-6 p-4`}>
+  const [draft, setDraft] = useState({ order: layout.order, hidden: layout.hidden, birthday_days: layout.birthday_days ?? 3 });
+  return <form className={`${panel} mb-6 p-4`} onSubmit={event => { event.preventDefault(); onSave(draft); }}>
     <h2 className="mb-3 font-semibold">Dashboard aanpassen</h2>
     <div className="space-y-2">{draft.order.map((id, index) => <div key={id} className="flex items-center gap-2">
       <label className="flex min-w-0 flex-1 items-center gap-3"><input type="checkbox" checked={!draft.hidden.includes(id)} onChange={(event) => setDraft({ ...draft, hidden: event.target.checked ? draft.hidden.filter(value => value !== id) : [...draft.hidden, id] })} />{labels[id]}</label>
-      {[-1, 1].map(direction => <button key={direction} className="rounded p-2 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-700" disabled={direction < 0 ? index === 0 : index === draft.order.length - 1} aria-label={`${labels[id]} ${direction < 0 ? 'omhoog' : 'omlaag'}`} onClick={() => setDraft({ ...draft, order: moveDashboardBlock(draft.order, index, direction) })}>{direction < 0 ? <ArrowUp size={16} /> : <ArrowDown size={16} />}</button>)}
+      {[-1, 1].map(direction => <button type="button" key={direction} className="rounded p-2 hover:bg-gray-100 disabled:opacity-30 dark:hover:bg-gray-700" disabled={direction < 0 ? index === 0 : index === draft.order.length - 1} aria-label={`${labels[id]} ${direction < 0 ? 'omhoog' : 'omlaag'}`} onClick={() => setDraft({ ...draft, order: moveDashboardBlock(draft.order, index, direction) })}>{direction < 0 ? <ArrowUp size={16} /> : <ArrowDown size={16} />}</button>)}
     </div>)}</div>
+    {draft.order.includes('birthdays') && <div className="mt-5">
+      <label htmlFor="dashboard-birthday-days" className="mb-1 block text-sm font-medium">Verjaardagen: aantal dagen</label>
+      <input id="dashboard-birthday-days" className="input !w-24" type="number" min="1" max="30" step="1" required aria-describedby="dashboard-birthday-days-help" value={draft.birthday_days} onChange={event => setDraft({ ...draft, birthday_days: event.target.value === '' ? '' : Number(event.target.value) })} />
+      <p id="dashboard-birthday-days-help" className="mt-1 text-sm text-gray-500 dark:text-gray-400">Vandaag telt mee. Standaard 3 dagen; kies 1 tot en met 30.</p>
+    </div>}
     {error && <p role="alert" className="mt-3 text-sm text-red-700 dark:text-red-300">Opslaan mislukt. Je wijzigingen staan hier nog; probeer het opnieuw.</p>}
-    <div className="mt-4 flex flex-wrap justify-between gap-3"><button className="text-sm underline" onClick={() => setDraft({ order: layout.defaults || layout.order, hidden: [] })}>Herstel standaard</button><button className="btn-primary" disabled={pending} onClick={() => onSave(draft)}>{pending ? 'Opslaan…' : 'Indeling opslaan'}</button></div>
-  </div>;
+    <div className="mt-4 flex flex-wrap justify-between gap-3"><button type="button" className="text-sm underline" onClick={() => setDraft({ order: layout.defaults || layout.order, hidden: [], birthday_days: 3 })}>Herstel standaard</button><button type="submit" className="btn-primary" disabled={pending}>{pending ? 'Opslaan…' : 'Instellingen opslaan'}</button></div>
+  </form>;
 }
 
 export default function RoleDashboard({ user }) {
@@ -60,7 +65,7 @@ export default function RoleDashboard({ user }) {
     queryKey: ['role-dashboard-matches', user.id, team.id], queryFn: async () => (await api.get('/rondo/v1/dashboard/matches', { params: { team_id: team.id } })).data,
     staleTime: 60_000, refetchInterval: 5 * 60_000,
   })) : EMPTY });
-  const save = useMutation({ mutationFn: async (layout) => (await api.post('/rondo/v1/dashboard/layout', layout)).data, onSuccess: (layout) => { client.setQueryData(key, value => ({ ...value, layout })); setCustomizing(false); } });
+  const save = useMutation({ mutationFn: async (layout) => (await api.post('/rondo/v1/dashboard/layout', layout)).data, onSuccess: (layout) => { client.setQueryData(key, value => ({ ...value, layout })); setCustomizing(false); return client.invalidateQueries({ queryKey: key }); } });
   const sources = matchScope === 'own' ? teamFeeds : [club];
   const feeds = sources.map((source, index) => ({ data: source.isError ? null : source.data, teamId: matchScope === 'own' ? teams[index]?.id : null }));
   const matches = combineDashboardMatches(feeds, data?.today || '', data?.end_date || '');
@@ -80,6 +85,8 @@ export default function RoleDashboard({ user }) {
 
   if (workspace.isPending) return <p className="p-6" role="status">Dashboard laden…</p>;
   if (workspace.isError) return <LoadError retry={() => workspace.refetch()}>Het dashboard kon niet worden geladen.</LoadError>;
+  const birthdayDays = data.layout.birthday_days ?? 3;
+  const birthdayPeriod = birthdayDays === 1 ? 'Vandaag' : `Vandaag en de komende ${birthdayDays - 1} ${birthdayDays === 2 ? 'dag' : 'dagen'}`;
   const visibleBlocks = data.layout.order.filter(id => !data.layout.hidden.includes(id));
   const filteredBirthdays = data.birthdays.filter(person => birthdayTeam === 'all' || person.team_ids.includes(Number(birthdayTeam)));
   const birthdays = context.board && !allBirthdays ? filteredBirthdays.slice(0, 3) : filteredBirthdays;
@@ -110,12 +117,12 @@ export default function RoleDashboard({ user }) {
     </section>,
     birthdays: <section aria-labelledby="dashboard-birthdays" className={compactCelebrations ? "min-w-0 lg:col-span-6" : "min-w-0 lg:col-span-12"}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 id="dashboard-birthdays" className="flex items-center gap-2 text-lg font-semibold"><Cake size={20} className="text-electric-cyan" />Verjaardagen</h2>{teams.length > 0 && <select className="input !w-auto max-w-full" aria-label="Verjaardagen filteren op team" value={birthdayTeam} onChange={event => setBirthdayTeam(event.target.value)}><option value="all">Alle toegankelijke personen</option>{teams.map(team => <option key={team.id} value={team.id}>{team.name}</option>)}</select>}</div>
-      {context.board && <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">Vandaag en de komende zes dagen · {filteredBirthdays.length} {filteredBirthdays.length === 1 ? 'jarige' : 'jarigen'}</p>}
+      <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">{birthdayPeriod} · {filteredBirthdays.length} {filteredBirthdays.length === 1 ? 'jarige' : 'jarigen'}</p>
       <div className={`${panel} grid overflow-hidden ${context.board ? '' : 'sm:grid-cols-2 xl:grid-cols-3'}`}>{birthdays.length ? birthdays.map(birthday => <Link key={birthday.id} to={`/people/${birthday.id}`} className={`border-b border-gray-100 last:border-b-0 dark:border-gray-700 ${context.board ? 'flex items-center gap-3 px-3 py-2' : 'p-4'} ${birthday.days_until === 0 ? 'bg-cyan-50 dark:bg-cyan-950/40' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
         {!context.board && <p className={`mb-3 text-xs ${birthday.days_until === 0 ? 'font-semibold text-cyan-800 dark:text-cyan-200' : 'text-gray-500 dark:text-gray-400'}`}>{birthday.days_until === 0 ? 'Vandaag jarig' : birthday.days_until === 1 ? 'Morgen' : dateLabel(birthday.next_occurrence, 'EEEE d MMM')}</p>}
         <div className="flex min-w-0 flex-1 items-center gap-3"><PersonAvatar thumbnail={birthday.related_people?.[0]?.thumbnail} name={birthday.title} size="md" /><div className="min-w-0"><p className="break-words text-sm font-semibold">{birthday.title}</p><p className="text-xs text-gray-500 dark:text-gray-400">{birthday.team_ids.map(teamName).filter(Boolean).join(', ')}{birthday.team_ids.map(teamName).filter(Boolean).length ? ' · ' : ''}wordt {Number(birthday.next_occurrence.slice(0, 4)) - Number(birthday.date_value.slice(0, 4))}</p></div></div>
         {context.board && <span className={`shrink-0 text-xs ${birthday.days_until === 0 ? 'font-semibold text-cyan-800 dark:text-cyan-200' : 'text-gray-500 dark:text-gray-400'}`}>{birthday.days_until === 0 ? 'Vandaag' : birthday.days_until === 1 ? 'Morgen' : dateLabel(birthday.next_occurrence, 'd MMM')}</span>}
-      </Link>) : <p className="col-span-full p-4 text-sm text-gray-500 dark:text-gray-400">Geen verjaardagen in de komende zeven dagen.</p>}</div>
+      </Link>) : <p className="col-span-full p-4 text-sm text-gray-500 dark:text-gray-400">{birthdayDays === 1 ? 'Vandaag zijn er geen verjaardagen.' : `Geen verjaardagen in deze periode van ${birthdayDays} dagen.`}</p>}</div>
       {context.board && filteredBirthdays.length > 3 && <button className="mt-3 text-sm text-cyan-800 underline underline-offset-4 dark:text-cyan-200" aria-expanded={allBirthdays} onClick={() => setAllBirthdays(value => !value)}>{allBirthdays ? 'Toon minder verjaardagen' : `Toon alle ${filteredBirthdays.length} verjaardagen`}</button>}
     </section>,
     matches: <section aria-labelledby="dashboard-matches" className={visibleBlocks.includes('teams') ? 'min-w-0 lg:col-span-8' : 'min-w-0 lg:col-span-12'}>
