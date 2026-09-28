@@ -25,7 +25,7 @@
 #
 # stdout carries log lines only. Diagnostics go to stderr, and the last stderr
 # line is always a machine-readable summary:
-#   check-error-log: status=ok files=9 lines_in=458 lines_out=22
+#   check-error-log: status=ok files=9 lines_in=458 lines_out=22 newest_line_utc=2026-09-27T13:15:10Z
 #   check-error-log: status=failed reason=ssh_unreachable
 #
 # Requires DEPLOY_SSH_* in .env (the same entries bin/deploy.sh uses).
@@ -53,6 +53,13 @@ DEFAULT_EXCLUDES=(
 	'Automatic translation updates complete.'
 	'[Rondo Fee Cache]'
 	'[Rondo Volunteer] Expanded'
+	'[Rondo Volunteer] Auto-completed'
+	# InvoiceReminderScheduler success lines only. They always end in
+	# "(N days since sent)." — the failure paths log "reminder N failed",
+	# "exception during reminder N" or "skipping.", none of which match, so
+	# this filter cannot swallow a real problem. On a reminder run it is 300+
+	# lines in one second, which buried the rest of the report.
+	'days since sent).'
 )
 
 SINCE=""
@@ -240,4 +247,17 @@ lines_in=$(wc -l <"$RAW_LOG" | tr -d ' ')
 lines_out=$(wc -l <"$FILTERED_LOG" | tr -d ' ')
 files_scanned=$(sed -n 's/^remote: scanning //p' "$STDERR_LOG" | tr ' ' '\n' | grep -c . || true)
 
-echo "check-error-log: status=ok files=$files_scanned lines_in=$lines_in lines_out=$lines_out" >&2
+# Timestamp of the newest line in the raw log — noise included — as ISO 8601 UTC.
+# This is the watermark the scheduled task stores. It comes from the raw log, not
+# from stdout: a run whose output is too large to read in full must not have to
+# guess it from the part it did read (that is how a 125k-line day once looked
+# like "production stopped logging on 20 Sep").
+newest_line_utc=$(grep -o '^\[[0-9][0-9]-[A-Z][a-z][a-z]-[0-9]\{4\} [0-9:]\{8\} UTC\]' "$RAW_LOG" | tail -1 | awk '
+	{
+		split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec", m, " ")
+		for (i = 1; i <= 12; i++) mon[m[i]] = sprintf("%02d", i)
+		split(substr($1, 2), d, "-")
+		printf "%s-%s-%sT%sZ", d[3], mon[d[2]], d[1], $2
+	}')
+
+echo "check-error-log: status=ok files=$files_scanned lines_in=$lines_in lines_out=$lines_out newest_line_utc=${newest_line_utc:-none}" >&2
