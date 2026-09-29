@@ -697,6 +697,7 @@ export default function PeopleList() {
   const spelendLid = searchParams.get('spelendLid') || '';
   const knvbBekend = searchParams.get('knvbBekend') || '';
   const isParent = searchParams.get('ouder') || '';
+  const hasRondoAccount = searchParams.get('rondoAccount') || '';
   const wachtOverschrijving = searchParams.get('wachtOverschrijving') || '';
   const shiftStatus = canViewShiftProgress ? searchParams.get('inschrijftaken') || '' : '';
 
@@ -803,6 +804,10 @@ export default function PeopleList() {
     updateSearchParams({ knvbBekend: value });
   }, [updateSearchParams]);
 
+  const setHasRondoAccount = useCallback((value) => {
+    updateSearchParams({ rondoAccount: value });
+  }, [updateSearchParams]);
+
   const setIsParent = useCallback((value) => {
     updateSearchParams({ ouder: value });
   }, [updateSearchParams]);
@@ -879,6 +884,7 @@ export default function PeopleList() {
     spelendLid: spelendLid || null,
     knvbBekend: knvbBekend || null,
     isParent: isParent || null,
+    hasRondoAccount: hasRondoAccount || null,
     wachtOverschrijving: wachtOverschrijving || null,
     shiftStatus: shiftStatus || null,
     includeShiftProgress,
@@ -1021,6 +1027,12 @@ export default function PeopleList() {
       id: 'knvb_bekend', header: 'KNVB-status', filterType: FILTER_TYPES.SELECT,
       filterOptions: [{ value: '1', label: 'Bekend' }, { value: '0', label: 'Niet bekend' }],
       getFilterLabel: (val) => `KNVB: ${val === '1' ? 'Bekend' : 'Niet bekend'}`,
+      filterSection: 'Kenmerken',
+    }),
+    createColumn({
+      id: 'has_rondo_account', header: 'Rondo-account', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [{ value: '1', label: 'Met account' }, { value: '0', label: 'Zonder account' }],
+      getFilterLabel: (val) => val === '1' ? 'Met account' : 'Zonder account',
       filterSection: 'Kenmerken',
     }),
     createColumn({ id: 'is_parent', header: 'Ouder/verzorger', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Kenmerken' }),
@@ -1168,6 +1180,7 @@ export default function PeopleList() {
     spelend_lid: spelendLid,
     knvb_bekend: knvbBekend,
     is_parent: isParent,
+    has_rondo_account: hasRondoAccount,
     is_contact: personType === 'contact' ? '1' : '',
     wacht_overschrijving: wachtOverschrijving,
     birth_year: selectedBirthYear,
@@ -1241,6 +1254,7 @@ export default function PeopleList() {
       case 'spelactiviteit_no_team': setSpelactiviteitNoTeam(value); break;
       case 'spelend_lid': setSpelendLid(value); break;
       case 'knvb_bekend': setKnvbBekend(value); break;
+      case 'has_rondo_account': setHasRondoAccount(value); break;
       case 'is_parent': setIsParent(value); break;
       case 'is_contact': setPersonType(value === '1' ? 'contact' : ''); break;
       case 'wacht_overschrijving': setWachtOverschrijving(value); break;
@@ -1261,7 +1275,7 @@ export default function PeopleList() {
         break;
       default: break;
     }
-  }, [setIncludeFormer, setIncludeDeceased, setLidTotFuture, setLidTotSeason, setLidSindsSeason, setSpelactiviteitNoTeam, setSpelendLid, setKnvbBekend, setIsParent, setWachtOverschrijving, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setPersonType, setSponsorOnly, setBusinessclubMember, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
+  }, [setIncludeFormer, setIncludeDeceased, setLidTotFuture, setLidTotSeason, setLidSindsSeason, setSpelactiviteitNoTeam, setSpelendLid, setKnvbBekend, setIsParent, setHasRondoAccount, setWachtOverschrijving, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setPersonType, setSponsorOnly, setBusinessclubMember, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
 
   // Selection helper functions
   const toggleSelection = (personId) => {
@@ -1294,7 +1308,7 @@ export default function PeopleList() {
   // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, personType, sponsorOnly, businessclubMember, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, includeDeceased, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, spelendLid, knvbBekend, isParent, wachtOverschrijving, page, people]);
+  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, personType, sponsorOnly, businessclubMember, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, includeDeceased, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, spelendLid, knvbBekend, isParent, hasRondoAccount, wachtOverschrijving, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
@@ -1387,6 +1401,7 @@ export default function PeopleList() {
         spelendLid: spelendLid || null,
         knvbBekend: knvbBekend || null,
         isParent: isParent || null,
+        hasRondoAccount: hasRondoAccount || null,
         wachtOverschrijving: wachtOverschrijving || null,
         shiftStatus: shiftStatus || null,
         includeShiftProgress,
