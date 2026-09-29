@@ -171,6 +171,7 @@ export function usePeopleByIds(personIds = [], options = {}) {
  * @param {string} filters.personType - Filter by Rondo person type (`member` or `contact`)
  * @param {string} filters.isSponsor - Filter by independent sponsor role (`1` or `0`)
  * @param {string} filters.knvbBekend - Filter by KNVB registration (`1` or `0`)
+ * @param {string} filters.childTeam - Team ID to filter parents by their children's current player teams
  * @param {string} filters.hasRondoAccount - '1' with a linked account, '0' without, '' for all
  * @param {string} filters.isParent - `1` for people with a current child relationship
  * @param {string} filters.isBusinessclubMember - Filter by active Businessclub membership (`1` or `0`)
@@ -209,6 +210,7 @@ export function buildFilteredPeopleParams(filters = {}) {
     knvb_bekend: filters.knvbBekend || null,
     is_parent: filters.isParent || null,
     has_rondo_account: filters.hasRondoAccount || null,
+    child_team: filters.childTeam || null,
     is_businessclub_member: filters.isBusinessclubMember || null,
     foto_missing: filters.fotoMissing || null,
     vog_missing: filters.vogMissing || null,

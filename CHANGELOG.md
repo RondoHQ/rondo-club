@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.111.0] - 2026-09-29
+
+### Added
+- Filter parents by their children's current player team, including combined filters and CSV export.
+- Show each child's current player teams as links on the parent's relationship card, respecting person and team access.
+
 ## [35.110.0] - 2026-09-29
 
 ### Added
