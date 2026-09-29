@@ -608,6 +608,12 @@ class People extends Base {
 							return in_array( $value, [ '', '1', '0' ], true );
 						},
 					],
+					'has_rondo_account'         => [
+						'description' => 'Filter by existing linked Rondo account (1=with, 0=without, empty=all)',
+						'type'        => 'string',
+						'default'     => '',
+						'enum'        => [ '', '1', '0' ],
+					],
 					'is_parent'                 => [
 						'description'       => 'Filter for people with a current child relationship (1=parent/guardian, empty=all)',
 						'type'              => 'string',
@@ -2070,6 +2076,47 @@ class People extends Base {
 	}
 
 	/**
+	 * Resolve both supported person/account links, ignoring deleted users.
+	 *
+	 * @return int[] Person IDs with an existing account. Callers must apply access controls.
+	 */
+	private function get_people_with_accounts(): array {
+		$user_ids = get_users( [ 'fields' => 'ID' ] );
+		if ( empty( $user_ids ) ) {
+			return [];
+		}
+
+		update_meta_cache( 'user', $user_ids );
+		$person_ids = [];
+		foreach ( $user_ids as $user_id ) {
+			$person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+			if ( $person_id > 0 ) {
+				$person_ids[] = $person_id;
+			}
+		}
+
+		$post_links = get_posts(
+			[
+				'post_type'        => 'person',
+				'post_status'      => 'publish',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'suppress_filters' => false,
+				'meta_query'       => [
+					[
+						'key'     => \Rondo\Users\UserProvisioning::META_USER_ID,
+						'value'   => $user_ids,
+						'compare' => 'IN',
+						'type'    => 'NUMERIC',
+					],
+				],
+			]
+		);
+
+		return array_values( array_unique( array_map( 'intval', array_merge( $person_ids, $post_links ) ) ) );
+	}
+
+	/**
 	 * Get filtered and paginated people
 	 *
 	 * Returns people with server-side filtering, sorting, and pagination.
@@ -2114,6 +2161,7 @@ class People extends Base {
 		$is_sponsor                = $request->get_param( 'is_sponsor' );
 		$knvb_bekend               = $request->get_param( 'knvb_bekend' );
 		$is_parent                 = $request->get_param( 'is_parent' );
+		$has_rondo_account         = (string) $request->get_param( 'has_rondo_account' );
 		$is_businessclub_member    = $request->get_param( 'is_businessclub_member' );
 		$foto_missing              = $request->get_param( 'foto_missing' );
 		$vog_missing               = $request->get_param( 'vog_missing' );
@@ -2245,6 +2293,24 @@ class People extends Base {
 
 		// Use the same age-group/team/household boundary as individual records.
 		$visible = \Rondo\Core\AccessControl::visible_person_ids_or_null( $current_user_id );
+		if ( $has_rondo_account !== '' ) {
+			$account_ids = $this->get_people_with_accounts();
+			$args        = [
+				'post_type'        => 'person',
+				'post_status'      => 'publish',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'suppress_filters' => false,
+			];
+			if ( $has_rondo_account === '1' ) {
+				$args['post__in'] = $account_ids ?: [ 0 ];
+			} else {
+				$args['post__not_in'] = $account_ids;
+			}
+			$matching_ids = get_posts( $args );
+			$visible      = $visible === null ? $matching_ids : array_values( array_intersect( $visible, $matching_ids ) );
+			$visible      = $visible ?: [ 0 ];
+		}
 		if ( $visible !== null ) {
 			$id_placeholders = implode( ', ', array_fill( 0, count( $visible ), '%d' ) );
 			$where_clauses[] = "p.ID IN ($id_placeholders)";
