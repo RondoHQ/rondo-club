@@ -890,6 +890,10 @@ export default function PersonDetail() {
     });
   }, [person?.fields?.relationships, personAgeMap]);
 
+  const childrenTeamsMap = useMemo(() => new Map(
+    (person?.children_teams || []).map(child => [Number(child.child_id), child.teams])
+  ), [person?.children_teams]);
+
   const parentSyncStatusMap = useMemo(() => new Map(
     (person?.parent_sync_statuses || []).map(status => [Number(status.parent_id), status])
   ), [person?.parent_sync_statuses]);
@@ -1666,29 +1670,44 @@ export default function PersonDetail() {
                          r.relationship_type_id === rel.relationship_type_id
                   ) ?? index;
                   
+                  const childTeams = rel.relationship_slug === 'child' ? childrenTeamsMap.get(Number(rel.related_person_id)) : null;
                   return (
                     <div key={index} className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700 group">
-                      <Link
-                        to={`/people/${rel.related_person_id}`}
-                        className="flex items-center flex-1 min-w-0"
-                      >
-                        <PersonAvatar
-                          thumbnail={rel.person_thumbnail}
-                          name={decodeHtml(rel.person_name)}
-                          size="md"
-                          className="mr-2"
-                        />
-                        <div>
-                          <p className="text-sm font-medium">
-                            {decodeHtml(rel.person_name) || `Person #${rel.related_person_id}`}
-                            {personDeceasedMap[rel.related_person_id] && (
-                              <span className="text-gray-400 ml-1" title="Overleden">†</span>
-                            )}
+                      <div className="flex-1 min-w-0">
+                        <Link
+                          to={`/people/${rel.related_person_id}`}
+                          className="flex items-center flex-1 min-w-0"
+                        >
+                          <PersonAvatar
+                            thumbnail={rel.person_thumbnail}
+                            name={decodeHtml(rel.person_name)}
+                            size="md"
+                            className="mr-2"
+                          />
+                          <div>
+                            <p className="text-sm font-medium">
+                              {decodeHtml(rel.person_name) || `Person #${rel.related_person_id}`}
+                              {personDeceasedMap[rel.related_person_id] && (
+                                <span className="text-gray-400 ml-1" title="Overleden">†</span>
+                              )}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{decodeHtml(rel.relationship_name || rel.relationship_label)}</p>
+                            <ParentSyncBadge status={parentSyncStatusMap.get(Number(rel.related_person_id))} />
+                          </div>
+                        </Link>
+                        {childTeams?.length > 0 && (
+                          <p className="ml-12 mt-1 text-xs text-gray-600 dark:text-gray-300">
+                            Speelt in: {childTeams.map((team, teamIndex) => (
+                              <span key={team.id}>
+                                {teamIndex > 0 && ', '}
+                                <Link to={`/teams/${team.id}`} className="text-cyan-800 dark:text-cyan-200 underline underline-offset-2 hover:no-underline">
+                                  {team.name}
+                                </Link>
+                              </span>
+                            ))}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{decodeHtml(rel.relationship_name || rel.relationship_label)}</p>
-                          <ParentSyncBadge status={parentSyncStatusMap.get(Number(rel.related_person_id))} />
-                        </div>
-                      </Link>
+                        )}
+                      </div>
                       {canEditPeople && (
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                           <button

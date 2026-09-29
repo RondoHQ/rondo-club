@@ -6,6 +6,9 @@
 namespace Rondo\People;
 
 use Rondo\Fields\Fields;
+use Rondo\Core\AccessControl;
+use Rondo\Core\PostTitle;
+use Rondo\Core\VolunteerStatus;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -22,9 +25,15 @@ final class ParentRelationshipService {
 	 * membership status.
 	 */
 	public function has_current_child( int $person_id ): bool {
+		return ! empty( $this->get_current_child_ids( $person_id ) );
+	}
+
+	/** @return int[] Published, non-former children, without changing relationship semantics. */
+	public function get_current_child_ids( int $person_id ): array {
+		$child_ids  = [];
 		$child_term = get_term_by( 'slug', 'child', 'relationship_type' );
 		if ( ! $child_term || is_wp_error( $child_term ) ) {
-			return false;
+			return [];
 		}
 
 		$relationships = Fields::get_for_post( $person_id, 'relationships' ) ?: [];
@@ -52,12 +61,129 @@ final class ParentRelationshipService {
 					get_post_status( $child_id ) === 'publish' &&
 					! (bool) Fields::get_for_post( $child_id, 'former_member' )
 				) {
-					return true;
+					$child_ids[] = $child_id;
 				}
 			}
 		}
 
-		return false;
+		return array_values( array_unique( $child_ids ) );
+	}
+
+	/** Accessible teams available for the child-team filter. */
+	public function get_child_team_options(): array {
+		if ( AccessControl::is_scoped_member() ) {
+			return [];
+		}
+		$allowed = AccessControl::visible_team_ids_or_null();
+		$teams   = get_posts(
+			[
+				'post_type'        => 'team',
+				'post_status'      => 'publish',
+				'posts_per_page'   => -1,
+				'orderby'          => 'title',
+				'order'            => 'ASC',
+				'suppress_filters' => false,
+			]
+			);
+		$result  = [];
+		foreach ( $teams as $team ) {
+			if ( $allowed === null || in_array( (int) $team->ID, $allowed, true ) ) {
+				$result[] = [
+					'id'   => $team->ID,
+					'name' => PostTitle::plain( $team->ID ),
+				];
+			}
+		}
+		return $result;
+	}
+
+	/** Current player teams only; preserve both record and work-history field access. */
+	private function get_player_teams( int $person_id ): array {
+		if ( AccessControl::is_scoped_member() || ! AccessControl::can_view_person( $person_id ) || get_post_type( $person_id ) !== 'person' || get_post_status( $person_id ) !== 'publish' || Fields::get_for_post( $person_id, 'former_member' ) || CommunicationPolicy::is_deceased( $person_id ) ) {
+			return [];
+		}
+		$allowed = AccessControl::visible_team_ids_or_null();
+		$roles   = VolunteerStatus::get_player_roles();
+		$teams   = [];
+		foreach ( Fields::get_for_post( $person_id, 'work_history' ) ?: [] as $position ) {
+			$team_id = (int) ( $position['team'] ?? 0 );
+			if ( ! $team_id || ! in_array( $position['job_title'] ?? '', $roles, true ) || ! VolunteerStatus::is_position_current( $position ) ) {
+				continue;
+			}
+			$team = get_post( $team_id );
+			if ( $team && $team->post_type === 'team' && $team->post_status === 'publish' && ( $allowed === null || in_array( $team_id, $allowed, true ) ) ) {
+				$teams[ $team_id ] = [
+					'id'   => $team_id,
+					'name' => PostTitle::plain( $team->ID ),
+				];
+			}
+		}
+		$teams = array_values( $teams );
+		usort( $teams, static fn( $a, $b ) => strnatcasecmp( $a['name'], $b['name'] ) );
+		return $teams;
+	}
+
+	/** Computed profile data, separate from editable relationship fields. */
+	public function get_children_teams( int $person_id ): array {
+		if ( ! AccessControl::can_view_person( $person_id ) ) {
+			return [];
+		}
+		$result = [];
+		foreach ( $this->get_current_child_ids( $person_id ) as $child_id ) {
+			$teams = $this->get_player_teams( $child_id );
+			if ( $teams ) {
+				$result[] = [
+					'child_id' => $child_id,
+					'teams'    => $teams,
+				];
+			}
+		}
+		return $result;
+	}
+
+	/** Find each accessible parent once, even when several children play in the selected team. */
+	public function get_parent_ids_for_team( int $team_id ): array {
+		if ( ! in_array( $team_id, array_column( $this->get_child_team_options(), 'id' ), true ) ) {
+			return [];
+		}
+		$players   = $this->relationship_candidates( '^work_history_[0-9]+_team$', [ $team_id ] );
+		$child_ids = [];
+		foreach ( $players as $player ) {
+			if ( in_array( $team_id, array_column( $this->get_player_teams( $player->ID ), 'id' ), true ) ) {
+				$child_ids[] = $player->ID;
+			}
+		}
+		if ( ! $child_ids ) {
+			return [];
+		}
+		$parents = [];
+		foreach ( $this->relationship_candidates( '^relationships_[0-9]+_related_person$', $child_ids ) as $parent ) {
+			if ( AccessControl::can_view_person( $parent->ID ) && array_intersect( $child_ids, $this->get_current_child_ids( $parent->ID ) ) ) {
+				$parents[] = $parent->ID;
+			}
+		}
+		return $parents;
+	}
+
+	/** Use native metadata queries and prime post/meta caches for candidate records. */
+	private function relationship_candidates( string $key_pattern, array $ids ): array {
+		return get_posts(
+			[
+				'post_type'        => 'person',
+				'post_status'      => 'publish',
+				'posts_per_page'   => -1,
+				'suppress_filters' => false,
+				'meta_query'       => [
+					[
+						'key'         => $key_pattern,
+						'compare_key' => 'REGEXP',
+						'value'       => $ids,
+						'compare'     => 'IN',
+						'type'        => 'NUMERIC',
+					],
+				],
+			]
+			);
 	}
 
 	/**

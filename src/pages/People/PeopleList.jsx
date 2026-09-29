@@ -697,6 +697,7 @@ export default function PeopleList() {
   const spelendLid = searchParams.get('spelendLid') || '';
   const knvbBekend = searchParams.get('knvbBekend') || '';
   const isParent = searchParams.get('ouder') || '';
+  const childTeam = searchParams.get('teamVanKind') || '';
   const hasRondoAccount = searchParams.get('rondoAccount') || '';
   const wachtOverschrijving = searchParams.get('wachtOverschrijving') || '';
   const shiftStatus = canViewShiftProgress ? searchParams.get('inschrijftaken') || '' : '';
@@ -885,6 +886,7 @@ export default function PeopleList() {
     knvbBekend: knvbBekend || null,
     isParent: isParent || null,
     hasRondoAccount: hasRondoAccount || null,
+    childTeam: childTeam || null,
     wachtOverschrijving: wachtOverschrijving || null,
     shiftStatus: shiftStatus || null,
     includeShiftProgress,
@@ -1040,6 +1042,12 @@ export default function PeopleList() {
     createColumn({ id: 'is_sponsor', header: 'Sponsorcontact', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Kenmerken' }),
     createColumn({ id: 'is_contact', header: 'Contact', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Kenmerken' }),
 
+    createColumn({
+      id: 'child_team', header: 'Team van kind', filterType: FILTER_TYPES.SELECT,
+      filterOptions: (filterOptions?.child_teams || []).map(team => ({ value: String(team.id), label: team.name })),
+      filterSection: 'Relaties',
+    }),
+
     // Lidmaatschap — who counts as a member right now / cancellations
     createColumn({ id: 'include_former', header: 'Toon oud-leden', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
     createColumn({ id: 'include_deceased', header: 'Toon overleden personen', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
@@ -1181,6 +1189,7 @@ export default function PeopleList() {
     knvb_bekend: knvbBekend,
     is_parent: isParent,
     has_rondo_account: hasRondoAccount,
+    child_team: childTeam,
     is_contact: personType === 'contact' ? '1' : '',
     wacht_overschrijving: wachtOverschrijving,
     birth_year: selectedBirthYear,
@@ -1254,6 +1263,7 @@ export default function PeopleList() {
       case 'spelactiviteit_no_team': setSpelactiviteitNoTeam(value); break;
       case 'spelend_lid': setSpelendLid(value); break;
       case 'knvb_bekend': setKnvbBekend(value); break;
+      case 'child_team': updateSearchParams({ teamVanKind: value }); break;
       case 'has_rondo_account': setHasRondoAccount(value); break;
       case 'is_parent': setIsParent(value); break;
       case 'is_contact': setPersonType(value === '1' ? 'contact' : ''); break;
@@ -1308,7 +1318,7 @@ export default function PeopleList() {
   // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, personType, sponsorOnly, businessclubMember, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, includeDeceased, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, spelendLid, knvbBekend, isParent, hasRondoAccount, wachtOverschrijving, page, people]);
+  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, personType, sponsorOnly, businessclubMember, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, includeDeceased, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, spelendLid, knvbBekend, isParent, hasRondoAccount, childTeam, wachtOverschrijving, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
@@ -1402,6 +1412,7 @@ export default function PeopleList() {
         knvbBekend: knvbBekend || null,
         isParent: isParent || null,
         hasRondoAccount: hasRondoAccount || null,
+        childTeam: childTeam || null,
         wachtOverschrijving: wachtOverschrijving || null,
         shiftStatus: shiftStatus || null,
         includeShiftProgress,

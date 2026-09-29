@@ -614,6 +614,11 @@ class People extends Base {
 						'default'     => '',
 						'enum'        => [ '', '1', '0' ],
 					],
+					'child_team'                => [
+						'description' => 'Filter parents by a current player team of their children',
+						'type'        => 'integer',
+						'minimum'     => 1,
+					],
 					'is_parent'                 => [
 						'description'       => 'Filter for people with a current child relationship (1=parent/guardian, empty=all)',
 						'type'              => 'string',
@@ -1309,6 +1314,11 @@ class People extends Base {
 		$data['is_deceased']       = \Rondo\People\CommunicationPolicy::is_deceased( (int) $post->ID );
 		$is_former_member          = (bool) \Rondo\Fields\Fields::get_for_post( $post->ID, 'former_member' );
 		$data['is_current_parent'] = $is_former_member && $this->has_current_child_relationship( $post->ID );
+
+		// Computed data stays outside the editable domain-field payload.
+		if ( isset( $data['fields']['relationships'] ) ) {
+			$data['children_teams'] = ( new ParentRelationshipService() )->get_children_teams( (int) $post->ID );
+		}
 
 		// Get birth year from birthdate field on person
 		$data['birth_year'] = null;
@@ -2292,7 +2302,13 @@ class People extends Base {
 		}
 
 		// Use the same age-group/team/household boundary as individual records.
-		$visible = \Rondo\Core\AccessControl::visible_person_ids_or_null( $current_user_id );
+		$visible    = \Rondo\Core\AccessControl::visible_person_ids_or_null( $current_user_id );
+		$child_team = (int) $request->get_param( 'child_team' );
+		if ( $child_team > 0 ) {
+			$matching_ids = ( new ParentRelationshipService() )->get_parent_ids_for_team( $child_team );
+			$visible      = $visible === null ? $matching_ids : array_values( array_intersect( $visible, $matching_ids ) );
+			$visible      = $visible ?: [ 0 ];
+		}
 		if ( $has_rondo_account !== '' ) {
 			$account_ids = $this->get_people_with_accounts();
 			$args        = [
@@ -3099,7 +3115,10 @@ class People extends Base {
 			   AND post_status = 'publish'"
 		);
 
-		$result = [ 'total' => $total ];
+		$result = [
+			'total'       => $total,
+			'child_teams' => ( new ParentRelationshipService() )->get_child_team_options(),
+		];
 
 		// Get filter configuration
 		$filters = $this->get_dynamic_filter_config();
