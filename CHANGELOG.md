@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.114.0] - 2026-09-30
+
+### Added
+- Kassaomzet page with monthly revenue, products, VAT, daily payment methods and businessclub billing history.
+- Independently assignable `kassaomzet` capability, granted to Bestuur by default. Invoice actions also require financial write access.
+- Businessclub invoices reserve original report rows and consume them only after successful sending; draft deletion releases rows and later imports remain available for the next invoice.
+
 ## [35.113.1] - 2026-09-30
 
 ### Changed

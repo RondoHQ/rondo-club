@@ -21,7 +21,7 @@ import {
   CommissiesList, CommissieDetail, TodosList,
   FeedbackList, FeedbackDetail, Communication, Planning, Settings, AppAccess, VOG,
   Contributie, DisciplineCasesList,
-  FinanceDashboard, Betaalstatistieken, Facturen, FactuurDetail, FactuurNieuw, RelationshipTypes,
+  FinanceDashboard, Kassaomzet, Betaalstatistieken, Facturen, FactuurDetail, FactuurNieuw, RelationshipTypes,
   CustomFields, Login, Profile, ProfileIva, ProfileVog,
   MembershipPassScanner, AccessStatistics,
   ClothingPage,
@@ -527,6 +527,7 @@ const router = createBrowserRouter([
           // Legacy: /vrijwillig/profiel is verplaatst naar /profile/iva.
           { path: 'vrijwillig/profiel', element: <Navigate to="/profile/iva" replace /> },
 
+          { path: 'financien/kassaomzet', element: <CapabilityRoute checkAccess={(user) => user?.can_access_kassaomzet}><Kassaomzet /></CapabilityRoute> },
           // Finance routes - requires financieel capability
           {
             path: 'financien',

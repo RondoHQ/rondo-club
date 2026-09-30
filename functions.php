@@ -270,6 +270,7 @@ function rondo_should_log_rest_error( $error ) {
  * Initialize the CRM functionality with conditional class loading
  */
 function rondo_init() {
+	new \Rondo\Twelve\BusinessclubInvoicing();
 	// Prevent double initialization
 	static $initialized = false;
 	if ( $initialized ) {

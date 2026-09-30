@@ -1251,6 +1251,7 @@ class UserSettings extends Base {
 			'has_my_teams'                   => ! empty( \Rondo\Teams\MyTeam::teams_for_user( $user_id ) ),
 			'can_access_fairplay'            => current_user_can( 'fairplay' ),
 			'can_access_vog'                 => current_user_can( 'vog' ),
+			'can_access_kassaomzet'          => \Rondo\Core\UserRoles::can_access_section( 'kassaomzet' ),
 			'can_access_financieel'          => \Rondo\Core\UserRoles::can_view_finances(),
 			'can_edit_financieel'            => \Rondo\Core\UserRoles::can_manage_finances(),
 			'can_edit_commissie_info'        => \Rondo\Core\UserRoles::can_manage_commissie_info(),

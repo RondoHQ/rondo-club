@@ -1423,6 +1423,37 @@ class Invoices extends Base {
 	 * @return \WP_REST_Response|\WP_Error Response containing updated invoice or error.
 	 */
 	public function send_invoice( $request ) {
+		$id      = (int) $request->get_param( 'id' );
+		$reports = get_post_meta( $id, \Rondo\Twelve\BusinessclubInvoicing::REPORTS, true );
+		if ( ! $reports ) {
+			return $this->send_invoice_unlocked( $request );
+		}
+		foreach ( (array) $reports as $report_id ) {
+			if ( (int) get_post_meta( $report_id, \Rondo\Twelve\BusinessclubInvoicing::CLAIM, true ) !== $id
+				|| get_post_meta( $report_id, \Rondo\Twelve\BusinessclubInvoicing::BILLED, true ) ) {
+				return new \WP_Error( 'twelve_invoice_allocation', 'De omzetregels zijn niet meer beschikbaar voor dit concept.', [ 'status' => 409 ] );
+			}
+		}
+		$expected = (float) get_post_meta( $id, '_twelve_total_amount', true );
+		$items    = (array) \Rondo\Fields\Fields::get_for_post( $id, 'line_items' );
+		$actual   = (float) \Rondo\Fields\Fields::get_for_post( $id, 'total_amount' );
+		$sum      = array_sum( array_column( $items, 'amount' ) );
+		if ( abs( $actual - $expected ) > 0.005 || abs( $sum - $expected ) > 0.005 ) {
+			return new \WP_Error( 'twelve_invoice_changed', 'De bedragen wijken af van de gereserveerde omzet. Verwijder het concept en maak een nieuw concept.', [ 'status' => 409 ] );
+		}
+		$key = 'rondo_twelve_send_lock_' . $id;
+		if ( ! add_option( $key, wp_generate_uuid4(), '', false ) ) {
+			return new \WP_Error( 'twelve_send_busy', 'Deze factuur wordt al verstuurd.', [ 'status' => 409 ] );
+		}
+		try {
+			return $this->send_invoice_unlocked( $request );
+		} finally {
+			delete_option( $key );
+		}
+	}
+
+	private function send_invoice_unlocked( $request ) {
+
 		$invoice_id     = (int) $request->get_param( 'id' );
 		$test_recipient = $this->get_test_email_recipient( $request );
 		$is_test_send   = $test_recipient !== '';

@@ -48,7 +48,7 @@ class TwelveReportsRestTest extends RondoTestCase {
 	public function test_summary_and_categories(): void {
 		$this->import_fixture_report();
 		$server = $this->bootRestControllers( [ TwelveReports::class ] );
-		wp_set_current_user( $this->user( 'rondo_financieel_lezen' ) );
+		wp_set_current_user( $this->user( 'rondo_bestuur' ) );
 
 		$request = new \WP_REST_Request( 'GET', '/rondo/v1/twelve/summary' );
 		$request->set_param( 'from', '2026-09-01' );
@@ -77,7 +77,7 @@ class TwelveReportsRestTest extends RondoTestCase {
 	public function test_products_and_vat(): void {
 		$this->import_fixture_report();
 		$server = $this->bootRestControllers( [ TwelveReports::class ] );
-		wp_set_current_user( $this->user( 'rondo_financieel_lezen' ) );
+		wp_set_current_user( $this->user( 'rondo_bestuur' ) );
 
 		$request = new \WP_REST_Request( 'GET', '/rondo/v1/twelve/products' );
 		$request->set_param( 'from', '2026-09-01' );
@@ -98,7 +98,7 @@ class TwelveReportsRestTest extends RondoTestCase {
 
 	public function test_businessclub_endpoint_validates_month(): void {
 		$server = $this->bootRestControllers( [ TwelveReports::class ] );
-		wp_set_current_user( $this->user( 'rondo_financieel_lezen' ) );
+		wp_set_current_user( $this->user( 'rondo_bestuur' ) );
 
 		$request = new \WP_REST_Request( 'GET', '/rondo/v1/twelve/businessclub' );
 		$request->set_param( 'month', 'september' );

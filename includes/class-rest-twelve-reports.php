@@ -3,7 +3,7 @@
  * REST API endpoints for Twelve daily revenue reports.
  *
  * Read-only overviews of the imported kassa rapportages at rondo/v1/twelve.
- * All endpoints require 'financieel_read' (see Base::check_financieel_read_permission).
+ * Reads require kassaomzet; billing writes additionally require financieel.
  */
 
 namespace Rondo\REST;
@@ -29,6 +29,23 @@ class TwelveReports extends Base {
 	 * Register REST API routes.
 	 */
 	public function register_routes() {
+		register_rest_route(
+			'rondo/v1',
+			'/twelve/billing',
+			[
+				[
+					'methods'             => 'GET',
+					'callback'            => [ $this, 'get_billing' ],
+					'permission_callback' => [ $this, 'check_kassa_permission' ],
+				],
+				[
+					'methods'             => 'POST',
+					'callback'            => [ $this, 'create_billing' ],
+					'permission_callback' => [ $this, 'check_billing_permission' ],
+				],
+			]
+			);
+
 		$range_args = [
 			'from' => [
 				'required'          => false,
@@ -50,7 +67,7 @@ class TwelveReports extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_reports' ],
-					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
+					'permission_callback' => [ $this, 'check_kassa_permission' ],
 					'args'                => [
 						'limit' => [
 							'required'          => false,
@@ -71,7 +88,7 @@ class TwelveReports extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_summary' ],
-					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
+					'permission_callback' => [ $this, 'check_kassa_permission' ],
 					'args'                => array_merge(
 						$range_args,
 						[
@@ -95,7 +112,7 @@ class TwelveReports extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_categories' ],
-					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
+					'permission_callback' => [ $this, 'check_kassa_permission' ],
 					'args'                => $range_args,
 				],
 			]
@@ -109,7 +126,7 @@ class TwelveReports extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_products' ],
-					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
+					'permission_callback' => [ $this, 'check_kassa_permission' ],
 					'args'                => $range_args,
 				],
 			]
@@ -123,7 +140,7 @@ class TwelveReports extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_vat' ],
-					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
+					'permission_callback' => [ $this, 'check_kassa_permission' ],
 					'args'                => $range_args,
 				],
 			]
@@ -137,7 +154,7 @@ class TwelveReports extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_businessclub' ],
-					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
+					'permission_callback' => [ $this, 'check_kassa_permission' ],
 					'args'                => [
 						'month' => [
 							'required'          => true,
@@ -148,6 +165,29 @@ class TwelveReports extends Base {
 				],
 			]
 		);
+	}
+
+	public function check_kassa_permission(): bool {
+		return $this->check_user_approved() && \Rondo\Core\UserRoles::can_access_section( 'kassaomzet' );
+	}
+
+	public function check_billing_permission(): bool {
+		return $this->check_kassa_permission() && \Rondo\Core\UserRoles::can_manage_finances();
+	}
+
+	public function get_billing() {
+		return rest_ensure_response( ( new \Rondo\Twelve\BusinessclubInvoicing() )->overview() );
+	}
+
+	public function create_billing( $request ) {
+		$name    = sanitize_text_field( (string) $request->get_param( 'name' ) );
+		$address = sanitize_textarea_field( (string) $request->get_param( 'address' ) );
+		$email   = sanitize_email( (string) $request->get_param( 'email' ) );
+		if ( $name === '' || $address === '' || ! is_email( $email ) ) {
+			return new \WP_Error( 'twelve_bad_recipient', 'Vul naam, factuuradres en geldig e-mailadres in.', [ 'status' => 400 ] );
+		}
+		$result = ( new \Rondo\Twelve\BusinessclubInvoicing() )->create_draft_invoice( '', compact( 'name', 'address', 'email' ) );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( [ 'id' => $result ] );
 	}
 
 	/**
