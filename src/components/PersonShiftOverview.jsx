@@ -1,6 +1,9 @@
+import { lazy, Suspense, useState } from 'react';
 import { CalendarClock } from 'lucide-react';
 import { formatStoredDateTime } from '@/utils/dateFormat';
 import { decodeHtml } from '@/utils/formatters';
+
+const ShiftTransferModal = lazy(() => import('./ShiftTransferModal'));
 
 function PersonShiftItem({ shift }) {
   const status = shift.no_show
@@ -32,6 +35,8 @@ function PersonShiftItem({ shift }) {
 }
 
 export default function PersonShiftOverview({ overview, isLoading }) {
+  const [transferring, setTransferring] = useState(false);
+  const [success, setSuccess] = useState('');
   const upcoming = overview?.upcoming || [];
   const recent = overview?.recent || [];
   const obligations = overview?.obligations || [];
@@ -46,6 +51,9 @@ export default function PersonShiftOverview({ overview, isLoading }) {
       <h2 className="mb-4 flex items-center gap-2 font-semibold text-gray-900 dark:text-gray-100">
         <CalendarClock className="h-5 w-5 shrink-0 text-bright-cobalt" aria-hidden="true" />Inschrijftaken
       </h2>
+      {overview?.can_transfer && <button type="button" onClick={() => { setSuccess(''); setTransferring(true); }} className="btn-secondary mb-4 text-sm">Inschrijftaken overzetten</button>}
+      {success && <p role="status" className="mb-4 text-sm text-emerald-800 dark:text-emerald-200">{success}</p>}
+      {transferring && <Suspense fallback={<p role="status" className="mb-4 text-sm">Overzetten laden…</p>}><ShiftTransferModal personId={overview.person_id} onClose={() => setTransferring(false)} onTransferred={(count, name) => { setTransferring(false); setSuccess(`${count} ${count === 1 ? 'inschrijftaak overgezet' : 'inschrijftaken overgezet'} naar ${name}.`); }} /></Suspense>}
       {isLoading ? <p className="text-sm text-gray-500 dark:text-gray-400">Inschrijftaken laden…</p> : !overview ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">Inschrijftaken konden niet worden geladen.</p>
       ) : (

@@ -1959,7 +1959,7 @@ export default function PersonDetail() {
         {/* Profile column 3 and sidebar on the remaining detail tabs. */}
         {!isFullWidthTab && <div className={activeTab === 'profile' ? 'min-w-0 md:col-span-2 xl:col-span-1' : 'hidden lg:block'}>
           <div className={activeTab === 'profile' ? 'space-y-6' : 'sticky top-6 space-y-6'}>
-            {activeTab === 'profile' ? <PersonShiftOverview overview={shiftOverview} isLoading={isShiftOverviewLoading} /> : <FinancesCard personId={parseInt(id)} />}
+            {activeTab === 'profile' ? <PersonShiftOverview key={id} overview={shiftOverview} isLoading={isShiftOverviewLoading} /> : <FinancesCard personId={parseInt(id)} />}
 
             {/* Todos Card */}
             <div className="card p-6">

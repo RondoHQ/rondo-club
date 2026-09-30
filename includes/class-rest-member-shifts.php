@@ -43,6 +43,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class MemberShifts extends Base {
 
+	use ShiftTransfers;
+
 	/**
 	 * Window (days ahead from "now") of available shifts to consider.
 	 * Mirrors ShiftTemplateExpander::WINDOW_DAYS so nothing falls out of view.
@@ -170,11 +172,12 @@ class MemberShifts extends Base {
 	 *
 	 * @param int      $shift_id Shift post ID.
 	 * @param callable $callback Mutation to execute while holding the lock.
+	 * @param int      $timeout_seconds Maximum lock wait; zero fails immediately for batch transfers.
 	 * @return mixed Callback result or WP_Error when the lock stays busy.
 	 */
-	private function with_shift_write_lock( int $shift_id, callable $callback ) {
+	private function with_shift_write_lock( int $shift_id, callable $callback, int $timeout_seconds = self::SHIFT_LOCK_TIMEOUT_SECONDS ) {
 		$lock_key = 'rondo_shift_write_lock_' . $shift_id;
-		$deadline = microtime( true ) + self::SHIFT_LOCK_TIMEOUT_SECONDS;
+		$deadline = microtime( true ) + $timeout_seconds;
 		$token    = wp_generate_uuid4();
 
 		do {
@@ -228,6 +231,7 @@ class MemberShifts extends Base {
 	}
 
 	public function register_routes() {
+		$this->register_shift_transfer_routes();
 		register_rest_field(
 			'dienst_shift',
 			'cancellation',
@@ -676,11 +680,12 @@ class MemberShifts extends Base {
 
 		return rest_ensure_response(
 			[
-				'person_id'   => $person_id,
-				'season'      => $season,
-				'obligations' => $obligations,
-				'upcoming'    => $upcoming,
-				'recent'      => array_slice( $recent, 0, 2 ),
+				'can_transfer' => $this->check_shift_transfer_permission( $request ),
+				'person_id'    => $person_id,
+				'season'       => $season,
+				'obligations'  => $obligations,
+				'upcoming'     => $upcoming,
+				'recent'       => array_slice( $recent, 0, 2 ),
 			]
 		);
 	}

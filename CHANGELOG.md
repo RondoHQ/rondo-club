@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.112.0] - 2026-09-30
+
+### Added
+- Select and transfer planned or completed volunteer tasks from a person's profile, with recipient selection and a confirmation preview. Membership administrators are limited to recorded family relations; board members and administrators can transfer outside the family.
+- Preserve registration and attendance history, prevent conflicting or stale transfers, and record an audit trail for each transferred task.
+
 ## [35.111.0] - 2026-09-29
 
 ### Added
