@@ -217,6 +217,12 @@
         <exclude-pattern>includes/class-field-formatter.php</exclude-pattern>
         <exclude-pattern>includes/class-field-registry.php</exclude-pattern>
         <exclude-pattern>includes/class-fields.php</exclude-pattern>
+        <!--
+            Twelve import exceptions are internal validation values, not
+            rendered output. Escaping them at construction would corrupt
+            the error messages.
+        -->
+        <exclude-pattern>includes/class-twelve-*.php</exclude-pattern>
     </rule>
 
     <!-- The registry compiler intentionally emits deterministic PHP source. -->

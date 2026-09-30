@@ -29,6 +29,7 @@ class PostTypes {
 		'rondo_feedback'       => [ 'feedback_item', 'feedback_items' ],
 		'discipline_case'      => [ 'discipline_case', 'discipline_cases' ],
 		'rondo_invoice'        => [ 'invoice', 'invoices' ],
+		'rondo_twelve_report'  => [ 'twelve_report', 'twelve_reports' ],
 		'rondo_room'           => [ 'room', 'rooms' ],
 		'rondo_park_closure'   => [ 'park_closure', 'park_closures' ],
 		'rondo_training'       => [ 'training_schedule', 'training_schedules' ],
@@ -118,6 +119,7 @@ class PostTypes {
 		$this->register_discipline_case_post_type();
 		$this->register_invoice_statuses();
 		$this->register_invoice_post_type();
+		$this->register_twelve_report_post_type();
 		$this->register_room_post_type();
 		register_post_type(
 			'rondo_park_closure',
@@ -1200,6 +1202,52 @@ class PostTypes {
 			);
 
 		register_post_type( 'rondo_invoice', $args );
+	}
+
+	/**
+	 * Register Twelve Report CPT
+	 *
+	 * One post per imported Twelve daily revenue report (kassa omzet). The
+	 * parsed report structure is stored as JSON in post meta; the raw PDF is
+	 * kept as a media attachment. Private post type, visible in wp-admin for
+	 * inspection.
+	 */
+	private function register_twelve_report_post_type() {
+		$labels = [
+			'name'               => _x( 'Twelve rapportages', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Twelve rapportage', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Twelve rapportages', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Twelve rapportage', 'rondo' ),
+			'edit_item'          => __( 'Edit Item', 'rondo' ),
+			'new_item'           => __( 'New Item', 'rondo' ),
+			'view_item'          => __( 'View Item', 'rondo' ),
+			'search_items'       => __( 'Search Twelve rapportages', 'rondo' ),
+			'not_found'          => __( 'No Twelve rapportages found', 'rondo' ),
+			'not_found_in_trash' => __( 'No Twelve rapportages found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Twelve rapportages', 'rondo' ),
+		];
+
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => false,
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 11,
+				'menu_icon'          => 'dashicons-chart-bar',
+				'supports'           => [ 'title' ],
+			],
+			self::capability_args( 'rondo_twelve_report' )
+		);
+
+		register_post_type( 'rondo_twelve_report', $args );
 	}
 
 	/**
