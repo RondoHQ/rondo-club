@@ -13,6 +13,7 @@
     <exclude-pattern>node_modules/*</exclude-pattern>
     <exclude-pattern>dist/*</exclude-pattern>
     <exclude-pattern>tests/Support/_generated/*</exclude-pattern>
+    <exclude-pattern>tests/_output/*</exclude-pattern>
     <!-- Large declarative registry maintained as reviewed PHP configuration. -->
     <exclude-pattern>includes/config/field-registry.php</exclude-pattern>
 
@@ -217,6 +218,12 @@
         <exclude-pattern>includes/class-field-formatter.php</exclude-pattern>
         <exclude-pattern>includes/class-field-registry.php</exclude-pattern>
         <exclude-pattern>includes/class-fields.php</exclude-pattern>
+        <!--
+            Twelve import exceptions are internal validation values, not
+            rendered output. Escaping them at construction would corrupt
+            the error messages.
+        -->
+        <exclude-pattern>includes/class-twelve-*.php</exclude-pattern>
     </rule>
 
     <!-- The registry compiler intentionally emits deterministic PHP source. -->

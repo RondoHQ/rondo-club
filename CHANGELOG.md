@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.114.0] - 2026-09-30
+
+### Added
+- Kassaomzet page with monthly revenue, products, VAT, daily payment methods and businessclub billing history.
+- Independently assignable `kassaomzet` capability, granted to Bestuur by default. Invoice actions also require financial write access.
+- Businessclub invoices reserve original report rows and consume them only after successful sending; draft deletion releases rows and later imports remain available for the next invoice.
+
+## [35.113.1] - 2026-09-30
+
+### Changed
+- Replace Gmail OAuth with encrypted AgentMail API key and inbox configuration.
+
+### Fixed
+- Catch up on missed reports across all inbox pages, parse negative financial amounts, keep report PDFs out of public uploads, and allow retries after PDF storage failures.
+
+## [35.113.0] - 2026-09-30
+
+### Added
+- Import the daily Twelve revenue report (PDF emailed by Twelve) into Rondo: `wp rondo twelve import` scans all received reports via the AgentMail API, parses the PDF and stores the figures as `rondo_twelve_report` posts, with the original PDF kept in protected post metadata for re-parsing.
+- REST endpoints under `rondo/v1/twelve/` (behind `financieel_read`) for reports, day/month summaries, per-category and per-product turnover, VAT overview and businessclub days.
+- `wp rondo twelve businessclub-invoice --month=JJJJ-MM` creates a draft invoice for one month of businessclub turnover, with one net line per day plus a 9% VAT line. Credentials are stored encrypted via `wp rondo twelve auth` and never live in the repo.
+
 ## [35.112.0] - 2026-09-30
 
 ### Added

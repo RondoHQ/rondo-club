@@ -1,0 +1,71 @@
+Omzetoverzicht
+BTW Type	Bedrag Nettobedrag Hoog Laag	Aantal transacties
+Laag (Excl. no-sale)	15,75	14,45 0,00 1,30 
+Omzet (excl. no-sale)	15,75	14,45 0,00 1,30	0
+ 
+No sale, ingehouden op omzet
+Bestuur	27,70	25,41 0,00 2,29	3
+Breuk en bederf	0,00	0,00 0,00 0,00 
+Businessclub	0,00	0,00 0,00 0,00 
+Subtotaal	27,70	25,41 0,00 2,29 
+ 
+Betaalwijze
+Omzet betaalpas	0,00	0,00 0,00 0,00 
+Omzet contant	0,00	0,00 0,00 0,00 
+Omzet rekening	0,00	0,00 0,00 0,00 
+Omzet pin	15,75	14,45 0,00 1,30	2
+Subtotaal	15,75	14,45 0,00 1,30 
+Mutaties rekeningen
+Totaal (excl. no-sale rekeningen)
+ 
+Totaal bijboekingen0,00
+Totaal afboekingen0,00
+Totaal0,00
+Mutaties rekeningen (excl. no-sale rekeningen)
+Wijzigingen via beheer
+ 
+Geen gegevens gevonden
+Wijzigingen via kassaterminal
+ 
+Geen gegevens gevonden
+Op- en afwaardering
+Soort actie	Op-/afgewaardeerd Bonus Betaald Aantal transacties
+Dagtotaal Example Club
+Filter
+Begindatum (incl.)29-09-2026 06:00
+Einddatum (excl.)30-09-2026 06:00
+
+Betaalwijze
+Transactietype	Bedrag
+Cash 
+Totaal	0,00
+Pin 
+Omzet pin	15,75
+Totaal	15,75
+Rekeningen 
+Totaal	0,00
+Uitgave per virtuele terminal
+Terminal	Betaald	Aantal transacties
+Kantine	15,75	2
+Totaal betaald	15,75	2
+Uitgave per product
+Product	Brutoprijs BTW bedrag Nettoprijs BTW groep Aantal producten
+Cola (blikje)	2,35 0,19 2,16 Laag 9%	1
+Cola Zero (blikje)	2,35 0,19 2,16 Laag 9%	1
+Ice Tea Green (blikje)	4,70 0,39 4,31 Laag 9%	2
+Ice Tea Sparkling (blikje	9,40 0,78 8,62 Laag 9%	4
+O2 Life Appel Kiwi	3,60 0,30 3,30 Laag 9%	1
+Sinas (blikje)	2,35 0,19 2,16 Laag 9%	1
+Snoepzakje	10,50 0,87 9,63 Laag 9%	6
+Spa Blauw (plat water)	4,20 0,35 3,85 Laag 9%	2
+Thee	4,00 0,33 3,67 Laag 9%	2
+Totaal incl. no-sale	43,45 3,59 39,86 	20
+Bonnen
+Transactietype	Bedrag
+Totaal op bon gezet	0,00
+Saldo bonnen	0,00
+Cashflow
+Soort actie	Bedrag
+Subtotaal	0,00
+Beginsaldo	491605,36
+Totaal	491605,36
