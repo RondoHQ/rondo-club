@@ -2352,6 +2352,198 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	}
 
 	/**
+	 * Twelve daily revenue report WP-CLI Commands
+	 *
+	 * Imports the PDF rapportage that Twelve emails every morning into
+	 * `rondo_twelve_report` posts, and creates the monthly businessclub
+	 * draft invoice. Credentials are stored encrypted in a WordPress
+	 * option, never in the repo.
+	 */
+	class RONDO_Twelve_CLI_Command {
+
+		/**
+		 * Store or inspect the AgentMail API credentials for the Twelve import.
+		 *
+		 * ## OPTIONS
+		 *
+		 * [--inbox-id=<inbox_id>]
+		 * : AgentMail inbox ID (email address).
+		 *
+		 * API key is read from the AGENTMAIL_API_KEY environment variable.
+		 *
+		 * [--status]
+		 * : Show whether credentials are stored (without exposing them).
+		 *
+		 * [--clear]
+		 * : Remove the stored credentials.
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp rondo twelve auth --inbox-id=reports@agentmail.to
+		 *     wp rondo twelve auth --status
+		 *
+		 * @when after_wp_load
+		 */
+		public function auth( $args, $assoc_args ) {
+			if ( isset( $assoc_args['clear'] ) ) {
+				\Rondo\Twelve\AgentMailClient::clear_credentials();
+				\WP_CLI::success( 'Twelve AgentMail-credentials verwijderd.' );
+				return;
+			}
+
+			if ( isset( $assoc_args['status'] ) ) {
+				if ( \Rondo\Twelve\AgentMailClient::has_credentials() ) {
+					\WP_CLI::success( 'Twelve AgentMail-credentials zijn opgeslagen (versleuteld).' );
+				} else {
+					\WP_CLI::warning( 'Geen Twelve AgentMail-credentials opgeslagen.' );
+				}
+				return;
+			}
+
+			$api_key  = trim( (string) getenv( 'AGENTMAIL_API_KEY' ) );
+			$inbox_id = trim( (string) ( $assoc_args['inbox-id'] ?? getenv( 'AGENTMAIL_EMAIL_ADDRESS' ) ) );
+			if ( $api_key === '' || $inbox_id === '' ) {
+				\WP_CLI::error( 'Stel AGENTMAIL_API_KEY en AGENTMAIL_EMAIL_ADDRESS in (of geef --inbox-id mee).' );
+			}
+			if ( ! \Rondo\Twelve\AgentMailClient::store_credentials( $api_key, $inbox_id ) ) {
+				\WP_CLI::error( 'Opslaan van credentials mislukt.' );
+			}
+			\WP_CLI::success( 'AgentMail-credentials versleuteld opgeslagen.' );
+		}
+
+		/**
+		 * Import the unimported Twelve daily revenue reports from AgentMail.
+		 *
+		 * ## OPTIONS
+		 *
+		 * [--message-id=<message_id>]
+		 * : Import a specific AgentMail message instead of the latest one.
+		 *
+		 * [--dry-run]
+		 * : Parse and show the report without storing anything.
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp rondo twelve import
+		 *     wp rondo twelve import --dry-run
+		 *
+		 * @when after_wp_load
+		 */
+		public function import( $args, $assoc_args ) {
+			$dry_run = isset( $assoc_args['dry-run'] );
+
+			$client = \Rondo\Twelve\AgentMailClient::from_stored_credentials();
+			if ( is_wp_error( $client ) ) {
+				\WP_CLI::error( $client->get_error_message() );
+				return;
+			}
+
+			$message_id = trim( (string) ( $assoc_args['message-id'] ?? '' ) );
+			$ids        = $message_id !== '' ? [ $message_id ] : $client->list_report_message_ids();
+			if ( is_wp_error( $ids ) ) {
+				\WP_CLI::error( $ids->get_error_message() );
+			}
+			foreach ( $ids as $message_id ) {
+				$this->import_message( $client, $message_id, $dry_run );
+			}
+		}
+
+		private function import_message( $client, string $message_id, bool $dry_run ): void {
+			$repository = new \Rondo\Twelve\ReportRepository();
+			$existing   = $repository->find_by_message_id( $message_id );
+			if ( $existing !== null ) {
+				\WP_CLI::warning( sprintf( 'Dit bericht is al geïmporteerd (rapport %d).', $existing ) );
+				return;
+			}
+
+			$pdf = $client->download_report_pdf( $message_id );
+			if ( is_wp_error( $pdf ) ) {
+				\WP_CLI::error( $pdf->get_error_message() );
+				return;
+			}
+			\WP_CLI::log( sprintf( 'PDF gedownload: %s (%d bytes)', $pdf['filename'], strlen( $pdf['bytes'] ) ) );
+
+			try {
+				$parser = new \Smalot\PdfParser\Parser();
+				$text   = $parser->parseContent( $pdf['bytes'] )->getText();
+				$parsed = \Rondo\Twelve\ReportParser::parse( $text );
+			} catch ( \Throwable $e ) {
+				\WP_CLI::error( 'PDF parsen mislukt: ' . $e->getMessage() );
+				return;
+			}
+
+			\WP_CLI::log(
+				sprintf(
+					'Rapport %s: %s t/m %s, omzet excl. no-sale € %s, %d producten',
+					$parsed['club'],
+					$parsed['period_start'],
+					$parsed['period_end'],
+					number_format( \Rondo\Twelve\ReportAggregator::omzet_excl_nosale( $parsed ), 2, ',', '.' ),
+					count( $parsed['producten'] )
+				)
+			);
+
+			if ( $dry_run ) {
+				\WP_CLI::success( 'Dry run: niets opgeslagen.' );
+				return;
+			}
+
+			$post_id = $repository->store( $parsed, $message_id, $pdf['filename'], $pdf['bytes'] );
+			if ( is_wp_error( $post_id ) ) {
+				if ( $post_id->get_error_code() === 'twelve_duplicate_report' ) {
+					\WP_CLI::log( $post_id->get_error_message() );
+					return;
+				}
+				\WP_CLI::error( $post_id->get_error_message() );
+				return;
+			}
+
+			\WP_CLI::success( sprintf( 'Rapport geïmporteerd als post %d.', $post_id ) );
+		}
+
+		/**
+		 * Create a draft invoice for one month of businessclub turnover.
+		 *
+		 * ## OPTIONS
+		 *
+		 * --month=<month>
+		 * : Month in YYYY-MM format, e.g. 2026-09.
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp rondo twelve businessclub-invoice --month=2026-09
+		 *
+		 * @when after_wp_load
+		 */
+		public function businessclub_invoice( $args, $assoc_args ) {
+			$month = isset( $assoc_args['month'] ) ? trim( (string) $assoc_args['month'] ) : '';
+			if ( $month === '' ) {
+				\WP_CLI::error( 'Geef --month=JJJJ-MM mee.' );
+				return;
+			}
+
+			$invoicing  = new \Rondo\Twelve\BusinessclubInvoicing();
+			$invoice_id = $invoicing->create_draft_invoice( $month );
+			if ( is_wp_error( $invoice_id ) ) {
+				\WP_CLI::error( $invoice_id->get_error_message() );
+				return;
+			}
+
+			$number = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_number' );
+			$total  = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'total_amount' );
+			\WP_CLI::success(
+				sprintf(
+					'Conceptfactuur %s (€ %s) aangemaakt voor businessclub %s (post %d). Vul de ontvanger aan in Rondo en verstuur.',
+					$number,
+					number_format( (float) $total, 2, ',', '.' ),
+					$month,
+					$invoice_id
+				)
+			);
+		}
+	}
+
+	/**
 	 * Register WP-CLI commands
 	 */
 	WP_CLI::add_command( 'prm people', 'RONDO_People_CLI_Command' );
@@ -2365,4 +2557,5 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'rondo feedback', 'RONDO_Feedback_CLI_Command' );
 	WP_CLI::add_command( 'rondo demo', 'RONDO_Demo_CLI_Command' );
 	WP_CLI::add_command( 'prm invoices', 'RONDO_Invoices_CLI_Command' );
+	WP_CLI::add_command( 'rondo twelve', 'RONDO_Twelve_CLI_Command' );
 }

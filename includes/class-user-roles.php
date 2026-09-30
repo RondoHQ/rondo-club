@@ -40,6 +40,7 @@ class UserRoles {
 		'jubilarissen'   => 'Jubilarissen',
 		'feedback'       => 'Feedbackoverzicht',
 		'communicatie'   => 'Communicatieplanning',
+		'kassaomzet'     => 'Kassaomzet bekijken',
 	];
 
 	/** Check one independently assignable section capability. */
@@ -55,7 +56,7 @@ class UserRoles {
 	 * installs must also receive; add_role() does not touch existing roles.
 	 */
 	const ROLES_VERSION_OPTION = 'rondo_roles_version';
-	const ROLES_VERSION        = 18;
+	const ROLES_VERSION        = 19;
 
 	/** Generic WordPress write capabilities removed from non-admin Rondo roles. */
 	private const LEGACY_GENERIC_WRITE_CAPS = [
@@ -95,7 +96,7 @@ class UserRoles {
 		'rondo_pool_schoonmaak'       => [ 'Rondo Schoonmaakpoule', [] ],
 		'rondo_pool_activiteiten'     => [ 'Rondo Activiteitenpoule', [] ],
 		'rondo_pool_werkploeg'        => [ 'Rondo Werkploeg terreinonderhoud', [] ],
-		'rondo_bestuur'               => [ 'Rondo Bestuur', [ 'communicatie', 'jubilarissen', 'teams', 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'accommodatiebeheer', 'vrijwilligers', 'rondo_iva_approve' ] ],
+		'rondo_bestuur'               => [ 'Rondo Bestuur', [ 'kassaomzet', 'communicatie', 'jubilarissen', 'teams', 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'accommodatiebeheer', 'vrijwilligers', 'rondo_iva_approve' ] ],
 	];
 
 	/**
@@ -443,6 +444,7 @@ class UserRoles {
 	 * Version 16: match-secretary dashboard access without additional person rights.
 	 * Version 17: board membership-anniversary access for its dashboard.
 	 * Version 18: board and administrators gain communication planning access.
+	 * Version 19: board gains independent kassaomzet access.
 	 */
 	public function maybe_upgrade_roles() {
 		$installed_version = (int) get_option( self::ROLES_VERSION_OPTION, 0 );
@@ -461,6 +463,10 @@ class UserRoles {
 			if ( ! empty( $role->capabilities[ self::FINANCIEEL_CAPABILITY ] )
 				&& empty( $role->capabilities[ self::FINANCIEEL_READ_CAPABILITY ] ) ) {
 				$role->add_cap( self::FINANCIEEL_READ_CAPABILITY );
+			}
+
+			if ( $installed_version < 19 && $slug === 'rondo_bestuur' ) {
+				$role->add_cap( 'kassaomzet' );
 			}
 
 			if ( $installed_version < 4

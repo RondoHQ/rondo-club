@@ -74,3 +74,5 @@ export const Football = lazy(() => import('@/pages/Football'));
 
 export const TournamentPayments = lazy(() => import('@/pages/Tournaments/TournamentPayments'));
 export const SportparkCalendar = lazy(() => import('@/pages/Bestuur/SportparkCalendar'));
+
+export const Kassaomzet = lazy(() => import('@/pages/Finance/Kassaomzet'));
