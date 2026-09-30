@@ -50,9 +50,9 @@ class TwelveReportAggregatorTest extends RondoTestCase {
 	}
 
 	public function test_summarize_per_month_sums_days(): void {
-		$reports = $this->two_reports();
-		$reports[1]['period_start'] = '2026-10-01 06:00:00';
-		$reports[1]['period_end']   = '2026-10-02 06:00:00';
+		$reports                            = $this->two_reports();
+		$reports[1]['period_start']         = '2026-10-01 06:00:00';
+		$reports[1]['period_end']           = '2026-10-02 06:00:00';
 		$reports[1]['data']['period_start'] = '2026-10-01 06:00';
 		$reports[1]['data']['period_end']   = '2026-10-02 06:00';
 

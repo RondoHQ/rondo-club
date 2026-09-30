@@ -146,4 +146,17 @@ class TwelveReportParserTest extends RondoTestCase {
 		$this->assertSame( 'unknown', $found['section'] );
 		$this->assertSame( 27.70, $found['bedrag'] );
 	}
+	public function test_negative_amounts_preserve_revenue_rows(): void {
+		$report = ReportParser::parse( str_replace( '15,75', '-15,75', $this->fixture_text() ) );
+		$this->assertCount( 11, $report['omzet'] );
+		$this->assertSame( -15.75, $report['omzet'][0]['bedrag'] );
+		$this->assertSame( -1234.56, ReportParser::parse_bedrag( '-1.234,56' ) );
+	}
+	public function test_smalot_extraction_layout(): void {
+		$report = ReportParser::parse( (string) file_get_contents( __DIR__ . '/../fixtures/twelve-smalot.txt' ) );
+		$this->assertSame( '2026-09-29 06:00', $report['period_start'] );
+		$this->assertCount( 11, $report['omzet'] );
+		$this->assertCount( 9, $report['producten'] );
+		$this->assertSame( 43.45, $report['producten_totaal']['bruto'] );
+	}
 }

@@ -28,9 +28,15 @@ class TwelveReportRepositoryTest extends RondoTestCase {
 		$this->assertSame( 'msg-123', get_post_meta( $post_id, ReportRepository::META_MESSAGE_ID, true ) );
 		$this->assertSame( 43.45, (float) get_post_meta( $post_id, ReportRepository::META_TOTAL_GROSS, true ) );
 
-		$attachment_id = (int) get_post_meta( $post_id, ReportRepository::META_PDF, true );
-		$this->assertGreaterThan( 0, $attachment_id );
-		$this->assertSame( 'application/pdf', get_post_mime_type( $attachment_id ) );
+		$this->assertSame( $this->pdf_bytes(), base64_decode( get_post_meta( $post_id, '_twelve_pdf_base64', true ) ) );
+		$this->assertEmpty(
+			get_posts(
+			[
+				'post_type'   => 'attachment',
+				'post_parent' => $post_id,
+			]
+			)
+			);
 
 		$reports = $repository->query( '2026-09-01', '2026-09-30' );
 		$this->assertCount( 1, $reports );
@@ -82,5 +88,20 @@ class TwelveReportRepositoryTest extends RondoTestCase {
 		$this->assertCount( 2, $latest );
 		$this->assertSame( '2026-09-30 06:00:00', $latest[0]['period_start'] );
 		$this->assertSame( '2026-09-29 06:00:00', $latest[1]['period_start'] );
+	}
+	public function test_failed_pdf_storage_can_be_retried(): void {
+		$fail = static function ( $check, $object_id, $key ) {
+			return $key === '_twelve_pdf_base64' ? false : $check;
+		};
+		add_filter( 'add_post_metadata', $fail, 10, 3 );
+		try {
+			$repository = new ReportRepository();
+			$result     = $repository->store( $this->parsed(), 'retry-msg', 'report.pdf', $this->pdf_bytes() );
+			$this->assertInstanceOf( \WP_Error::class, $result );
+			$this->assertNull( $repository->find_by_message_id( 'retry-msg' ) );
+		} finally {
+			remove_filter( 'add_post_metadata', $fail, 10 );
+		}
+		$this->assertIsInt( $repository->store( $this->parsed(), 'retry-msg', 'report.pdf', $this->pdf_bytes() ) );
 	}
 }

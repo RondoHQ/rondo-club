@@ -162,8 +162,38 @@ class ReportParser {
 		$lines = [];
 		foreach ( preg_split( '/\n/', $text ) as $line ) {
 			$line = trim( (string) $line );
-			if ( $line !== '' ) {
+			if ( $line === '' ) {
+				continue;
+			}
+			// Smalot emits whole table rows; pdftotext emits separate cells.
+			if ( preg_match( '/^(Begindatum \(incl\.\)|Einddatum \(excl\.\))\s*(.*)$/', $line, $match ) ) {
+				$lines[] = $match[1] . ' ' . $match[2];
+				continue;
+			}
+			if ( preg_match( '/^(Totaal bijboekingen|Totaal afboekingen|Totaal)(-?[\d.]+,\d{2})$/', $line, $match ) ) {
+				$lines[] = $match[1] . ' ' . $match[2];
+				continue;
+			}
+			$headers = [ 'BTW Type', 'Transactietype', 'Terminal', 'Product', 'Soort actie' ];
+			if ( str_contains( $line, "\t" ) && in_array( explode( "\t", $line )[0], $headers, true ) ) {
+				$lines[] = explode( "\t", $line )[0];
+				continue;
+			}
+			if ( str_contains( $line, "\t" ) ) {
+				$cells = preg_split( '/\t+|\s+(?=-?[\d.]+,\d{2}(?:\s|$))|(?<=\d{2})\s+(?=(?:Hoog|Laag) \d+%)/', $line );
+				foreach ( $cells as $cell ) {
+					$lines[] = trim( $cell );
+				}
+			} else {
 				$lines[] = $line;
+			}
+		}
+		// These headings occur inside the first table in Smalot extraction.
+		foreach ( $lines as $index => $line ) {
+			$next = $lines[ $index + 1 ] ?? '';
+			if ( ( $line === 'No sale, ingehouden op omzet' && isset( self::OMZET_SECTIONS[ $next ] ) )
+				|| ( $line === 'Betaalwijze' && str_starts_with( $next, 'Omzet ' ) ) ) {
+				unset( $lines[ $index ] );
 			}
 		}
 		return array_values( $lines );
@@ -195,7 +225,7 @@ class ReportParser {
 	 */
 	public static function parse_bedrag( string $value ): float {
 		$value = trim( $value );
-		if ( preg_match( '/^\d{1,3}(\.\d{3})+,\d{2}$/', $value ) ) {
+		if ( preg_match( '/^-?\d{1,3}(\.\d{3})+,\d{2}$/', $value ) ) {
 			$value = str_replace( '.', '', $value );
 		}
 		return (float) str_replace( ',', '.', $value );
@@ -205,14 +235,14 @@ class ReportParser {
 	 * Whether the line looks like a Dutch amount (always has ",cc").
 	 */
 	private static function is_bedrag( ?string $line ): bool {
-		return $line !== null && (bool) preg_match( '/^[\d.]+,\d{2}$/', $line );
+		return $line !== null && (bool) preg_match( '/^-?[\d.]+,\d{2}$/', $line );
 	}
 
 	/**
 	 * Whether the line is a plain integer (used for counts).
 	 */
 	private static function is_aantal( ?string $line ): bool {
-		return $line !== null && (bool) preg_match( '/^\d+$/', $line );
+		return $line !== null && (bool) preg_match( '/^-?\d+$/', $line );
 	}
 
 	/**
@@ -341,7 +371,7 @@ class ReportParser {
 		while ( $cursor < $total && ! self::is_section_header( $lines[ $cursor ] ) ) {
 			$line = $lines[ $cursor ];
 			++$cursor;
-			if ( preg_match( '/^(Totaal bijboekingen|Totaal afboekingen|Totaal)\s+([\d.,]+)$/', $line, $m ) ) {
+			if ( preg_match( '/^(Totaal bijboekingen|Totaal afboekingen|Totaal)\s+(-?[\d.,]+)$/', $line, $m ) ) {
 				$key                          = [
 					'Totaal bijboekingen' => 'bijboekingen',
 					'Totaal afboekingen'  => 'afboekingen',
