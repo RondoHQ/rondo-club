@@ -23,10 +23,9 @@ class ReportRepository {
 	public const META_MESSAGE_ID   = '_twelve_message_id';
 	public const META_DATA         = '_twelve_report_data';
 	public const META_TOTAL_GROSS  = '_twelve_total_gross';
-	public const META_PDF          = '_twelve_pdf_attachment_id';
 
 	/**
-	 * Find a report by Gmail message id (import idempotency).
+	 * Find a report by AgentMail message id (import idempotency).
 	 */
 	public function find_by_message_id( string $message_id ): ?int {
 		$posts = get_posts(
@@ -75,9 +74,9 @@ class ReportRepository {
 	 * Store a parsed report.
 	 *
 	 * @param array  $parsed       Output of ReportParser::parse().
-	 * @param string $message_id   Gmail message id.
+	 * @param string $message_id   AgentMail message id.
 	 * @param string $pdf_filename Original attachment filename.
-	 * @param string $pdf_bytes    Raw PDF bytes (stored in the media library).
+	 * @param string $pdf_bytes    Raw PDF bytes (stored in protected post metadata).
 	 * @return int|\WP_Error Post id of the created report.
 	 */
 	public function store( array $parsed, string $message_id, string $pdf_filename, string $pdf_bytes ) {
@@ -117,37 +116,14 @@ class ReportRepository {
 		update_post_meta( $post_id, self::META_DATA, wp_json_encode( $parsed ) );
 		update_post_meta( $post_id, self::META_TOTAL_GROSS, (float) ( $parsed['producten_totaal']['bruto'] ?? 0 ) );
 
-		$attachment_id = $this->store_pdf( $post_id, $pdf_filename, $pdf_bytes );
-		if ( ! is_wp_error( $attachment_id ) ) {
-			update_post_meta( $post_id, self::META_PDF, $attachment_id );
+		// Keep financial documents out of publicly served uploads entirely.
+		$saved = add_post_meta( $post_id, '_twelve_pdf_base64', base64_encode( $pdf_bytes ), true );
+		if ( ! $saved ) {
+			wp_delete_post( $post_id, true );
+			return new \WP_Error( 'twelve_pdf_storage', 'PDF opslaan mislukt; import kan opnieuw worden geprobeerd.' );
 		}
-
+		update_post_meta( $post_id, '_twelve_pdf_filename', sanitize_file_name( $pdf_filename ) );
 		return $post_id;
-	}
-
-	/**
-	 * Store the raw PDF in the media library, attached to the report post.
-	 *
-	 * @return int|\WP_Error Attachment id.
-	 */
-	private function store_pdf( int $post_id, string $filename, string $bytes ) {
-		$upload = wp_upload_bits( sanitize_file_name( $filename ), null, $bytes );
-		if ( ! empty( $upload['error'] ) ) {
-			return new \WP_Error( 'twelve_pdf_upload', 'PDF uploaden mislukt: ' . $upload['error'] );
-		}
-
-		return wp_insert_attachment(
-			[
-				'post_title'     => sanitize_file_name( $filename ),
-				'post_status'    => 'inherit',
-				'post_parent'    => $post_id,
-				'post_mime_type' => 'application/pdf',
-				'guid'           => $upload['url'],
-			],
-			$upload['file'],
-			$post_id,
-			true
-		);
 	}
 
 	/**

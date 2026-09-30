@@ -2362,18 +2362,14 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	class RONDO_Twelve_CLI_Command {
 
 		/**
-		 * Store or inspect the Gmail API credentials for the Twelve import.
+		 * Store or inspect the AgentMail API credentials for the Twelve import.
 		 *
 		 * ## OPTIONS
 		 *
-		 * [--client-id=<client_id>]
-		 * : Google OAuth client ID.
+		 * [--inbox-id=<inbox_id>]
+		 * : AgentMail inbox ID (email address).
 		 *
-		 * [--client-secret=<client_secret>]
-		 * : Google OAuth client secret.
-		 *
-		 * [--refresh-token=<refresh_token>]
-		 * : OAuth refresh token for the mailbox receiving the Twelve mails.
+		 * API key is read from the AGENTMAIL_API_KEY environment variable.
 		 *
 		 * [--status]
 		 * : Show whether credentials are stored (without exposing them).
@@ -2383,50 +2379,45 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 *
 		 * ## EXAMPLES
 		 *
-		 *     wp rondo twelve auth --client-id=ID --client-secret=SECRET --refresh-token=TOKEN
+		 *     wp rondo twelve auth --inbox-id=reports@agentmail.to
 		 *     wp rondo twelve auth --status
 		 *
 		 * @when after_wp_load
 		 */
 		public function auth( $args, $assoc_args ) {
 			if ( isset( $assoc_args['clear'] ) ) {
-				\Rondo\Twelve\GmailClient::clear_credentials();
-				\WP_CLI::success( 'Twelve Gmail-credentials verwijderd.' );
+				\Rondo\Twelve\AgentMailClient::clear_credentials();
+				\WP_CLI::success( 'Twelve AgentMail-credentials verwijderd.' );
 				return;
 			}
 
 			if ( isset( $assoc_args['status'] ) ) {
-				if ( \Rondo\Twelve\GmailClient::has_credentials() ) {
-					\WP_CLI::success( 'Twelve Gmail-credentials zijn opgeslagen (versleuteld).' );
+				if ( \Rondo\Twelve\AgentMailClient::has_credentials() ) {
+					\WP_CLI::success( 'Twelve AgentMail-credentials zijn opgeslagen (versleuteld).' );
 				} else {
-					\WP_CLI::warning( 'Geen Twelve Gmail-credentials opgeslagen.' );
+					\WP_CLI::warning( 'Geen Twelve AgentMail-credentials opgeslagen.' );
 				}
 				return;
 			}
 
-			$client_id     = isset( $assoc_args['client-id'] ) ? trim( (string) $assoc_args['client-id'] ) : '';
-			$client_secret = isset( $assoc_args['client-secret'] ) ? trim( (string) $assoc_args['client-secret'] ) : '';
-			$refresh_token = isset( $assoc_args['refresh-token'] ) ? trim( (string) $assoc_args['refresh-token'] ) : '';
-
-			if ( $client_id === '' || $client_secret === '' || $refresh_token === '' ) {
-				\WP_CLI::error( 'Geef --client-id, --client-secret en --refresh-token mee (of gebruik --status / --clear).' );
-				return;
+			$api_key  = trim( (string) getenv( 'AGENTMAIL_API_KEY' ) );
+			$inbox_id = trim( (string) ( $assoc_args['inbox-id'] ?? getenv( 'AGENTMAIL_EMAIL_ADDRESS' ) ) );
+			if ( $api_key === '' || $inbox_id === '' ) {
+				\WP_CLI::error( 'Stel AGENTMAIL_API_KEY en AGENTMAIL_EMAIL_ADDRESS in (of geef --inbox-id mee).' );
 			}
-
-			if ( \Rondo\Twelve\GmailClient::store_credentials( $client_id, $client_secret, $refresh_token ) ) {
-				\WP_CLI::success( 'Twelve Gmail-credentials versleuteld opgeslagen.' );
-			} else {
+			if ( ! \Rondo\Twelve\AgentMailClient::store_credentials( $api_key, $inbox_id ) ) {
 				\WP_CLI::error( 'Opslaan van credentials mislukt.' );
 			}
+			\WP_CLI::success( 'AgentMail-credentials versleuteld opgeslagen.' );
 		}
 
 		/**
-		 * Import the latest Twelve daily revenue report from Gmail.
+		 * Import the unimported Twelve daily revenue reports from AgentMail.
 		 *
 		 * ## OPTIONS
 		 *
 		 * [--message-id=<message_id>]
-		 * : Import a specific Gmail message instead of the latest one.
+		 * : Import a specific AgentMail message instead of the latest one.
 		 *
 		 * [--dry-run]
 		 * : Parse and show the report without storing anything.
@@ -2441,27 +2432,23 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		public function import( $args, $assoc_args ) {
 			$dry_run = isset( $assoc_args['dry-run'] );
 
-			$client = \Rondo\Twelve\GmailClient::from_stored_credentials();
+			$client = \Rondo\Twelve\AgentMailClient::from_stored_credentials();
 			if ( is_wp_error( $client ) ) {
 				\WP_CLI::error( $client->get_error_message() );
 				return;
 			}
 
-			$message_id = isset( $assoc_args['message-id'] ) ? trim( (string) $assoc_args['message-id'] ) : '';
-			if ( $message_id === '' ) {
-				$found = $client->find_latest_message();
-				if ( is_wp_error( $found ) ) {
-					\WP_CLI::error( $found->get_error_message() );
-					return;
-				}
-				if ( $found === null ) {
-					\WP_CLI::warning( 'Geen Twelve-rapportage gevonden in de mailbox (afgelopen 3 dagen).' );
-					return;
-				}
-				$message_id = $found['id'];
-				\WP_CLI::log( sprintf( 'Bericht gevonden: %s (%s)', $found['subject'], $found['date'] ) );
+			$message_id = trim( (string) ( $assoc_args['message-id'] ?? '' ) );
+			$ids        = $message_id !== '' ? [ $message_id ] : $client->list_report_message_ids();
+			if ( is_wp_error( $ids ) ) {
+				\WP_CLI::error( $ids->get_error_message() );
 			}
+			foreach ( $ids as $message_id ) {
+				$this->import_message( $client, $message_id, $dry_run );
+			}
+		}
 
+		private function import_message( $client, string $message_id, bool $dry_run ): void {
 			$repository = new \Rondo\Twelve\ReportRepository();
 			$existing   = $repository->find_by_message_id( $message_id );
 			if ( $existing !== null ) {
@@ -2503,6 +2490,10 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			$post_id = $repository->store( $parsed, $message_id, $pdf['filename'], $pdf['bytes'] );
 			if ( is_wp_error( $post_id ) ) {
+				if ( $post_id->get_error_code() === 'twelve_duplicate_report' ) {
+					\WP_CLI::log( $post_id->get_error_message() );
+					return;
+				}
 				\WP_CLI::error( $post_id->get_error_message() );
 				return;
 			}
