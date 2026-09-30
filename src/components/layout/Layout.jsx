@@ -90,6 +90,7 @@ const navigation = [
   { name: 'Sportparkkalender', href: '/bestuur/sportparkkalender', icon: CalendarDays, indent: true, requiresBestuur: true },
   { name: 'Financiën', href: '/financien', icon: Wallet, requiresFinancieel: true },
   { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
+  { name: 'Kassaomzet', href: '/financien/kassaomzet', icon: Wallet, indent: true, requiresKassaomzet: true },
   { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true },
   { name: 'Toernooibetalingen', href: '/toernooien/betalingen', icon: Trophy, indent: true, requiresFinancieel: true },
   { name: 'Betaalstatistieken', href: '/financien/betaalstatistieken', icon: TrendingUp, indent: true, requiresFinancieel: true },
@@ -218,6 +219,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.adminOnly && !isAdmin) return false;
     if (item.requiresFootball && !canAccessFootball(currentUser)) return false;
     if (item.requiresVOG && !canAccessVOG) return false;
+    if (item.requiresKassaomzet && !currentUser?.can_access_kassaomzet) return false;
     if (item.requiresFinancieel && !canAccessFinancieel) return false;
     if (item.requiresToegangscontrole && !canAccessToegangscontrole) return false;
     if (item.requiresClothing && !canAccessClothing) return false;
@@ -751,6 +753,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback, showFeedbackIntro, 
     if (path.startsWith('/bestuur/sportparkkalender')) return 'Sportparkkalender';
     if (path === '/bestuur') return 'Bestuur';
     if (path === '/financien' || path === '/financien/') return 'Financiën';
+    if (path.startsWith('/financien/kassaomzet')) return 'Kassaomzet';
     if (path.startsWith('/financien/contributie')) return 'Contributie';
     if (path.startsWith('/financien/facturen')) return 'Facturen';
     if (path.startsWith('/financien/betaalstatistieken')) return 'Betaalstatistieken';
