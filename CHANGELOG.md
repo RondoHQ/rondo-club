@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.113.0] - 2026-09-30
+
+### Added
+- Import the daily Twelve revenue report (PDF emailed by Twelve) into Rondo: `wp rondo twelve import` fetches the latest mail via the Gmail API, parses the PDF and stores the figures as `rondo_twelve_report` posts, with the original PDF kept as an attachment for re-parsing.
+- REST endpoints under `rondo/v1/twelve/` (behind `financieel_read`) for reports, day/month summaries, per-category and per-product turnover, VAT overview and businessclub days.
+- `wp rondo twelve businessclub-invoice --month=JJJJ-MM` creates a draft invoice for one month of businessclub turnover, with one net line per day plus a 9% VAT line. Credentials are stored encrypted via `wp rondo twelve auth` and never live in the repo.
+
 ## [35.112.0] - 2026-09-30
 
 ### Added

@@ -156,6 +156,7 @@ use Rondo\REST\FinanceSettings as RESTFinanceSettings;
 use Rondo\REST\Narrowcasting as RESTNarrowcasting;
 use Rondo\REST\Rooms as RESTRooms;
 use Rondo\REST\Tournaments as RESTTournaments;
+use Rondo\REST\TwelveReports as RESTTwelveReports;
 use Rondo\VOG\VOGEmail;
 use Rondo\Fees\FeeCacheInvalidator;
 use Rondo\Config\ClubConfig;
@@ -394,6 +395,7 @@ function rondo_init() {
 			new RESTRooms();
 		}
 		new RESTTournaments();
+		new RESTTwelveReports();
 		new \Rondo\REST\MemberProfile();
 		new \Rondo\REST\Oidc();
 		new \Rondo\REST\FreeScoutIntegration();
