@@ -68,7 +68,7 @@ function NewsletterEditor({ initial, metadata }) {
   const preview = useQuery({
     queryKey: ['newsletter', 'preview', initial.id, previewDraft],
     queryFn: async ({ signal }) => (await prmApi.previewNewsletter(initial.id, previewDraft, signal)).data,
-    enabled: Boolean(profileUser?.ready && metadata.configured), retry: false, gcTime: 0,
+    enabled: Boolean(profileUser?.ready), retry: false, gcTime: 0,
   });
 
   function change(key, value) { setDraft((previous) => ({ ...previous, [key]: value })); setReview(null); setMessage(''); }
