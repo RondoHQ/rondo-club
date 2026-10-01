@@ -28,7 +28,10 @@ class EntreeAccountTest extends RondoTestCase {
 		$this->assertFalse( UserRoles::has_extra_staff_role() );
 		$this->assertSame( '', get_user_meta( $this->user_id, 'rondo_linked_person_id', true ) );
 		$this->assertTrue( current_user_can( 'toegangscontrole' ) );
-		foreach ( [ 'edit_posts', 'upload_files', 'manage_options', 'read_people', 'edit_people', 'read_teams' ] as $cap ) {
+		$capabilities = array_keys( array_filter( get_role( UserRoles::ENTREE_ROLE )->capabilities ) );
+		sort( $capabilities );
+		$this->assertSame( [ 'read', 'toegangscontrole' ], $capabilities );
+		foreach ( [ 'edit_posts', 'upload_files', 'manage_options' ] as $cap ) {
 			$this->assertFalse( current_user_can( $cap ), $cap );
 		}
 		$response = rest_do_request( '/rondo/v1/user/me' );
