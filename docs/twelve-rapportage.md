@@ -142,3 +142,7 @@ Als PDF-opslag mislukt wordt het rapport verwijderd en kan dezelfde mail
 opnieuw worden geïmporteerd. De API biedt deze interne metadata niet aan.
 
 API-contract: https://docs.agentmail.to/api-reference/inboxes/messages/list
+
+## Omzetontwikkeling
+
+De tab Omzetontwikkeling toont daadwerkelijke verkopen inclusief btw en exclusief no-sale voor een vrij datumbereik, per dag of maand. De grafiek gebruikt de bestaande summary-API en heeft een uitklapbare tabel met bronbedragen. Alleen geïmporteerde rapportages tellen mee; ontbrekende dagen worden niet als nul ingevuld en maandbedragen kunnen onvolledig zijn. Dagdetails in Overzicht openen direct onder de aangeklikte rij, met een toelichting als het bronrapport geen betaalmethoden bevat.
