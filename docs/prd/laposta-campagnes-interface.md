@@ -1,6 +1,6 @@
 # Nieuwsbriefeditor: klikbaar ontwerp
 
-Status: ontwerp voor beoordeling, geen productiefunctionaliteit. De gebruiker koos op 1 oktober 2026 een apart bewerkscherm vanuit het communicatie-item, met invoer links en een direct bijgewerkt voorbeeld rechts.
+Status: goedgekeurd ontwerp geïmplementeerd in Rondo. De gebruiker koos op 1 oktober 2026 een apart bewerkscherm vanuit het communicatie-item, met invoer links en een direct bijgewerkt voorbeeld rechts. De onderstaande prototypecontrole blijft afzonderlijk van de productiecontrole onderaan.
 
 ## Direction contract
 
@@ -34,4 +34,20 @@ Op 1 oktober 2026 zijn de prototypebron en de desktop-, mobiele en donkere scher
 
 De afzonderlijke finish review gaf **SHIP**, zonder materiële bevindingen, voor het klikbare prototype op basis van broncode en schermafbeeldingen. Dit oordeel bewijst geen werkende productie-integratie, API-export, ontvangerscontrole of verzending; die blijven buiten deze ontwerpcontrole. De schermafbeeldingen staan onder `.impeccable/review/laposta-*.jpg`.
 
-Dit is een uitbreiding binnen de bestaande Rondo-identiteit. Er zijn geen nieuwe duurzame ontwerpregels vastgesteld; `PRODUCT.md`, `DESIGN.md` en `.impeccable/design.json` zijn ongewijzigd gebleven. Er is niets naar productie gedeployd.
+Dit is een uitbreiding binnen de bestaande Rondo-identiteit. Er zijn geen nieuwe duurzame ontwerpregels vastgesteld; `PRODUCT.md`, `DESIGN.md` en `.impeccable/design.json` zijn ongewijzigd gebleven. In deze prototypefase is niets naar productie gedeployd.
+
+## Productie-implementatie
+
+De React-editor staat op `/communicatie/planning/:id/nieuwsbrief`, bereikbaar na opslaan van een communicatie-item met het kanaal Nieuwsbrief. Instellingen en ondertekeningsprofielen staan op `/communicatie/nieuwsbrief-instellingen`. Conceptinhoud gebruikt native WordPress-velden; de server rendert hetzelfde HTML-document voor voorbeeld en export. De Laposta-client biedt uitsluitend conceptaanmaak en -wijziging. Export rondt het planningskanaal niet af.
+
+De productiefunctie is vanaf 35.118.0 uitgerold; 35.118.1 maakt lokaal opslaan en voorvertonen ook zonder API-sleutel mogelijk. Op productie is testitem 12704 (`Nieuwsbrief-integratietest (niet versturen)`) opgeslagen, herladen en tussen Joost en Xander gewisseld. Afzender en handtekening wisselden mee. De mobiele editor en voorbeeldtab zijn op 390 × 844 pixels gecontroleerd, zonder horizontale overflow.
+
+De lokale PHP-suite slaagde met 1.270 tests, 7.149 assertions en 22 skips. De nieuwsbriefsuite bevat 10 tests met 61 assertions, waaronder permissies, wijzigingsconflicten, expliciete doelgroepen, herstel na onbekende uitkomst, herhaalde export, externe wijzigingen en bescherming tegen wijzigen van geplande campagnes. JavaScript-lint, productiebuild en PHP-codingstandards slaagden. API-gedrag in deze producttests gebruikt gesimuleerde providerantwoorden; de eerdere technische proef is het afzonderlijke bewijs van echte Laposta-aanmaak.
+
+De gedeelde template en vier profielen zijn ingesteld. Joost en Xander zijn actief met goedgekeurde afzendadressen. Guido en Jeroen blijven inactief tot hun afzendadres is gekozen. Er is geen API-sleutel in Rondo opgeslagen: hergebruik van de bestaande proefsleutel wacht op een expliciete keuze. De productieroute voor export is daarom nog niet live getest. Het testitem heeft geen doelgroep of gekoppelde Laposta-campagne; er is niets verzonden of ingepland.
+
+De technische beheerdocumentatie staat in [developer PR 75](https://github.com/RondoHQ/developer/pull/75).
+
+Versie 35.118.2 herstelt de initialen en afzenderidentiteit boven het inboxvoorbeeld, toont het antwoordadres tijdens bewerken en markeert het gekozen voorbeeldformaat zichtbaar. De volledige CI- en deployworkflow [36906729724](https://github.com/RondoHQ/rondo-club/actions/runs/36906729724) slaagde. Deze elementen zijn daarna op productie opnieuw vastgelegd in `.impeccable/review/newsletter-production-desktop.jpg`, `newsletter-production-mobile.jpg` en `newsletter-production-mobile-preview.jpg`. Dezelfde onafhankelijke reviewer beoordeelde beide eerdere bevindingen als **resolved**, met disposition **ship** uitsluitend voor die twee correcties.
+
+De afsluitende ontwerpdocumentatiecontrole vergeleek de twee productpagina's, de gedeelde rich-text-editor en `src/index.css` met `PRODUCT.md`, `DESIGN.md` en `.impeccable/design.json`. Er zijn geen nieuwe duurzame systeemregels; deze bestanden blijven ongewijzigd. Oudere dashboardgerichte metadata en een bestaande afwijking in de kleur van secundaire knoppen zijn niet als nieuwe ontwerpregels vastgelegd of buiten de opdracht gerepareerd.
