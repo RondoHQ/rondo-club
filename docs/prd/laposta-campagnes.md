@@ -1,6 +1,6 @@
 # PRD: Laposta-campagnes vanuit Rondo
 
-**Status:** Technische proef uitgevoerd; klikbaar interfaceontwerp beschikbaar voor beoordeling; productfunctie nog niet geïmplementeerd
+**Status:** Productfunctie geïmplementeerd en uitgerold; editor live gecontroleerd. Activering van de API-koppeling wacht op de keuze voor een sleutel; productie-export is nog niet live geverifieerd.
 
 **Datum:** 1 oktober 2026
 

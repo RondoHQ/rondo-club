@@ -4,7 +4,7 @@ Datum: 1 oktober 2026. Onderdeel van [het campagneplan](../../laposta-campagnes.
 
 ## Conclusie
 
-Eén HTML-template met afzonderlijke ondertekeningsprofielen werkt voor conceptaanmaak en bijwerken via de Laposta API. Dit is geverifieerd met Joost en Xander in dezelfde campagne, inclusief afzender, antwoordadres, handtekeningafbeelding en tekstuele ondertekening. De Rondo-productfunctie is nog niet gebouwd.
+Eén HTML-template met afzonderlijke ondertekeningsprofielen werkt voor conceptaanmaak en bijwerken via de Laposta API. Dit is geverifieerd met Joost en Xander in dezelfde campagne, inclusief afzender, antwoordadres, handtekeningafbeelding en tekstuele ondertekening. Deze pagina legt de technische proef vast; de latere [productie-implementatie en openstaande verificatie](../../laposta-campagnes-interface.md#productie-implementatie) staan afzonderlijk beschreven.
 
 ## Geïsoleerde proefobjecten
 
