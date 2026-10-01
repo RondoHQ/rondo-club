@@ -1,3 +1,5 @@
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNewsletterMetadata } from '@/hooks/useNewsletter';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, Copy, ExternalLink, ImagePlus, MessageCircle, Pause, Play, Plus, Repeat2, RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
 import PlanningBoard, { PlanningCard } from './PlanningBoard';
@@ -85,6 +87,8 @@ function ChannelChecklist({ item }) {
 }
 
 function ItemForm({ item, users, channels, onClose }) {
+  const navigate = useNavigate();
+  const { data: newsletterMetadata } = useNewsletterMetadata();
   const editing = Boolean(item?.id);
   const { data: detail } = useCommunication(item?.id);
   const current = detail || item;
@@ -110,6 +114,7 @@ function ItemForm({ item, users, channels, onClose }) {
 
   async function save(event) {
     event.preventDefault();
+    const openNewsletter = event.nativeEvent.submitter?.value === 'newsletter';
     setError('');
     try {
       if (!editing && form.recurrence !== 'none' && form.start_date < new Date().toISOString().slice(0, 10)
@@ -122,6 +127,7 @@ function ItemForm({ item, users, channels, onClose }) {
       const id = response.data.id;
       for (const file of files) await upload.mutateAsync({ id, file });
       onClose();
+      if (openNewsletter) navigate(`/communicatie/planning/${id}/nieuwsbrief`);
     } catch (err) { setError(errorText(err)); }
   }
 
@@ -202,7 +208,7 @@ function ItemForm({ item, users, channels, onClose }) {
               {editing && openStatuses.includes(form.status) && <button type="button" className="btn-tertiary text-red-600" onClick={() => runAction(form.series_id ? 'skip' : 'cancel', { reason: window.prompt('Reden (optioneel)') || '' })}>{form.series_id ? 'Deze keer overslaan' : 'Annuleren'}</button>}
               {editing && ['skipped', 'cancelled'].includes(form.status) && <button type="button" className="btn-tertiary" onClick={() => runAction('restore')}><RotateCcw className="mr-2 h-4 w-4" />Ongedaan maken</button>}
             </div>
-            <button type="submit" className="btn-primary" disabled={busy}>{busy ? 'Bezig…' : 'Opslaan'}</button>
+            <div className="flex flex-wrap gap-2">{form.channel_ids.includes(newsletterMetadata?.channel_id || 'newsletter') && <button type="submit" value="newsletter" className="btn-secondary" disabled={busy}>Opslaan en nieuwsbrief bewerken</button>}<button type="submit" className="btn-primary" disabled={busy}>{busy ? 'Bezig…' : 'Opslaan'}</button></div>
           </div>
         </form>
 
@@ -219,6 +225,7 @@ function ItemForm({ item, users, channels, onClose }) {
 
 export default function Planning() {
   useDocumentTitle('Planning');
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data, isLoading, error, refetch } = useCommunications();
   const update = useUpdateCommunication();
   const moveLock = useRef(false);
@@ -239,6 +246,12 @@ export default function Planning() {
   const items = useMemo(() => data?.items || [], [data]);
   const users = data?.users || [];
   const channels = data?.channels || [];
+
+  useEffect(() => {
+    const itemId = Number(searchParams.get('item'));
+    const item = items.find((entry) => entry.id === itemId);
+    if (item) { setSelected(item); setSearchParams({}, { replace: true }); }
+  }, [items, searchParams, setSearchParams]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setToday(planningToday()), 60000);

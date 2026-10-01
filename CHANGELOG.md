@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.118.0] - 2026-10-01
+
+### Added
+- Newsletter editor in Communication Planning with one shared template, signing profiles per responsible user, explicit Laposta audience selection and desktop/mobile previews.
+- Reviewed draft exports to Laposta with readback verification, duplicate prevention, recovery after interrupted exports and protection against overwriting external edits or scheduled campaigns.
+- Administrator settings for encrypted Laposta credentials, the newsletter channel, template and signing profiles.
+
 ## [35.117.0] - 2026-10-01
 
 ### Added

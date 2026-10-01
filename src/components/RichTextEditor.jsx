@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -53,6 +53,7 @@ const MenuButton = ({ onClick, isActive, disabled, children, title }) => (
     onClick={onClick}
     disabled={disabled}
     title={title}
+    aria-label={title}
     className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${
       isActive ? 'bg-gray-200 dark:bg-gray-600 text-electric-cyan dark:text-electric-cyan' : 'text-gray-600 dark:text-gray-400'
     } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -61,7 +62,7 @@ const MenuButton = ({ onClick, isActive, disabled, children, title }) => (
   </button>
 );
 
-const MenuBar = ({ editor, enableImages = false }) => {
+const MenuBar = ({ editor, enableImages = false, enableHeadings = false }) => {
   const fileInputRef = useRef(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -104,7 +105,8 @@ const MenuBar = ({ editor, enableImages = false }) => {
   };
 
   return (
-    <div className="flex items-center gap-0.5 p-1.5 border-b border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-t-md">
+    <div className="flex flex-wrap items-center gap-0.5 p-1.5 border-b border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-t-md">
+      {enableHeadings && <select aria-label="Tekststijl" className="mr-1 max-w-28 rounded border border-gray-300 bg-white p-1 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200" value={editor.isActive('heading', { level: 2 }) ? '2' : editor.isActive('heading', { level: 3 }) ? '3' : '0'} onChange={(e) => { const level = Number(e.target.value); if (level) editor.chain().focus().setHeading({ level }).run(); else editor.chain().focus().setParagraph().run(); }}><option value="0">Alinea</option><option value="2">Kop</option><option value="3">Tussenkop</option></select>}
       <MenuButton
         onClick={() => editor.chain().focus().toggleBold().run()}
         isActive={editor.isActive('bold')}
@@ -211,11 +213,13 @@ export default function RichTextEditor({
   minHeight = '120px',
   autoFocus = false,
   enableImages = false,
+  ariaLabel,
+  enableHeadings = false,
 }) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        heading: false, // Disable headings for notes/activities
+        heading: enableHeadings ? { levels: [2, 3] } : false,
         codeBlock: false, // Disable code blocks
         blockquote: false, // Disable blockquotes
         link: false, // Disable - we add Link separately with custom config below
@@ -243,6 +247,7 @@ export default function RichTextEditor({
           ]
         : []),
     ],
+    editorProps: { attributes: ariaLabel ? { role: 'textbox', 'aria-label': ariaLabel, 'aria-multiline': 'true' } : {} },
     content: normalizeEditorContent(value),
     editable: !disabled,
     autofocus: autoFocus,
@@ -254,23 +259,22 @@ export default function RichTextEditor({
     },
   });
 
-  // Update editor content when value prop changes (for edit mode)
-  // Only update if editor exists and the content is different
-  const normalizedValue = normalizeEditorContent(value);
-  if (editor && normalizedValue !== editor.getHTML() && normalizedValue !== '') {
-    // Avoid infinite loops by checking if content is truly different
-    const currentContent = editor.getHTML();
-    const isEmpty = currentContent === '<p></p>' || currentContent === '';
-    if (normalizedValue && (isEmpty || normalizedValue !== currentContent)) {
-      editor.commands.setContent(normalizedValue, false);
+  useEffect(() => { editor?.setEditable(!disabled, false); }, [editor, disabled]);
+
+  // Synchronize server-sanitized content without emitting another user edit.
+  useEffect(() => {
+    if (!editor) return;
+    const normalized = normalizeEditorContent(value);
+    if (normalized !== editor.getHTML() && !(normalized === '' && editor.isEmpty)) {
+      editor.commands.setContent(normalized, { emitUpdate: false });
     }
-  }
+  }, [editor, value]);
 
   return (
     <div className={`border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-electric-cyan focus-within:border-transparent ${
       disabled ? 'bg-gray-100 dark:bg-gray-800 opacity-60' : 'bg-white dark:bg-gray-700'
     }`}>
-      <MenuBar editor={editor} enableImages={enableImages} />
+      <MenuBar editor={editor} enableImages={enableImages} enableHeadings={enableHeadings} />
       <EditorContent
         editor={editor}
         className="prose prose-sm dark:prose-invert max-w-none"

@@ -768,6 +768,8 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback, showFeedbackIntro, 
     if (path.startsWith('/toegangsstatistieken')) return 'Toegangsstatistieken';
     if (path.startsWith('/lidpas-scanner')) return 'Lidpas Scanner';
     if (path.startsWith('/feedback')) return 'Feedback';
+    if (path.startsWith('/communicatie/nieuwsbrief-instellingen')) return 'Nieuwsbriefinstellingen';
+    if (/^\/communicatie\/planning\/\d+\/nieuwsbrief/.test(path)) return 'Nieuwsbrief';
     if (path.startsWith('/communicatie/planning')) return 'Planning';
     if (path.startsWith('/communicatie')) return 'Communicatie';
     if (path.startsWith('/settings')) return 'Instellingen';
