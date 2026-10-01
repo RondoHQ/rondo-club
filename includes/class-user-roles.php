@@ -31,6 +31,7 @@ class UserRoles {
 	const IVA_APPROVE_CAPABILITY        = 'rondo_iva_approve';
 	const KADERLIJST_CAPABILITY         = 'kaderlijst';
 	const KADERLIJST_ROLE               = 'rondo_kaderlijst';
+	const ENTREE_ROLE                   = 'rondo_entree';
 
 	/** Independent section rights; never confer club-wide person access. */
 	public const SECTION_CAPABILITIES = [
@@ -56,7 +57,7 @@ class UserRoles {
 	 * installs must also receive; add_role() does not touch existing roles.
 	 */
 	const ROLES_VERSION_OPTION = 'rondo_roles_version';
-	const ROLES_VERSION        = 19;
+	const ROLES_VERSION        = 20;
 
 	/** Generic WordPress write capabilities removed from non-admin Rondo roles. */
 	private const LEGACY_GENERIC_WRITE_CAPS = [
@@ -86,6 +87,7 @@ class UserRoles {
 		'rondo_financieel'            => [ 'Rondo Financieel', [ 'financieel', 'financieel_read' ] ],
 		'rondo_financieel_lezen'      => [ 'Rondo Financieel Lezen', [ 'financieel_read' ] ],
 		'rondo_toegangscontrole'      => [ 'Rondo Toegangscontrole', [ 'toegangscontrole' ] ],
+		'rondo_entree'                => [ 'Rondo Entree (alleen scannen)', [ 'toegangscontrole' ] ],
 		'rondo_clothing_manager'      => [ 'Rondo Kledingbeheer', [ 'manage_clothing' ] ],
 		'rondo_ledenadministratie'    => [ 'Rondo Ledenadministratie', [ 'ledenadministratie' ] ],
 		'rondo_sponsorbeheerder'      => [ 'Rondo Sponsorbeheerder', [ 'sponsorbeheer' ] ],
@@ -185,7 +187,10 @@ class UserRoles {
 	 */
 	public static function has_extra_staff_role( $user_id = null ): bool {
 		$user_id = $user_id ?? get_current_user_id();
-		$user    = $user_id ? get_user_by( 'id', $user_id ) : false;
+		if ( self::is_entree( $user_id ) ) {
+			return false;
+		}
+		$user = $user_id ? get_user_by( 'id', $user_id ) : false;
 
 		if ( ! $user ) {
 			return false;
@@ -212,7 +217,7 @@ class UserRoles {
 	public static function is_kader( $user_id = null ): bool {
 		$user_id = $user_id ?? get_current_user_id();
 
-		if ( ! $user_id ) {
+		if ( ! $user_id || self::is_entree( $user_id ) ) {
 			return false;
 		}
 
@@ -228,6 +233,12 @@ class UserRoles {
 			|| user_can( $user_id, self::NARROWCASTING_CAPABILITY )
 			|| user_can( $user_id, self::ACCOMMODATIE_CAPABILITY )
 			|| user_can( $user_id, self::VRIJWILLIGERS_CAPABILITY );
+	}
+
+	/** Shared entrance accounts remain scanner-only even if another role is added. */
+	public static function is_entree( ?int $user_id = null ): bool {
+		$user = get_userdata( $user_id ?? get_current_user_id() );
+		return $user && in_array( self::ENTREE_ROLE, $user->roles, true );
 	}
 
 	/**
@@ -445,6 +456,7 @@ class UserRoles {
 	 * Version 17: board membership-anniversary access for its dashboard.
 	 * Version 18: board and administrators gain communication planning access.
 	 * Version 19: board gains independent kassaomzet access.
+	 * Version 20: a shared entrance role without member or staff data access.
 	 */
 	public function maybe_upgrade_roles() {
 		$installed_version = (int) get_option( self::ROLES_VERSION_OPTION, 0 );
@@ -591,7 +603,7 @@ class UserRoles {
 				$desired = array_merge( $desired, self::cpt_capabilities( $post_type, 'manage' ) );
 			}
 			$desired[] = 'upload_files';
-		} else {
+		} elseif ( $slug !== self::ENTREE_ROLE ) {
 			// Core member surfaces: household people plus read-only club structure.
 			foreach ( [ 'person', 'team' ] as $post_type ) {
 				$desired = array_merge( $desired, self::cpt_capabilities( $post_type, 'read' ) );

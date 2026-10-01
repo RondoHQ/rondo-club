@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import jsQR from 'jsqr';
 import AccessStats from '@/components/AccessStats';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import {
   useAccessEventMatches,
   useAccessEventStats,
@@ -156,6 +157,7 @@ function MatchSelector({
 }
 
 export default function MembershipPassScanner() {
+  const { data: currentUser } = useCurrentUser();
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const detectorRef = useRef(null);
@@ -478,12 +480,12 @@ export default function MembershipPassScanner() {
             </div>
           </div>
 
-          {result.person?.id ? (
+          {!currentUser?.is_entree && result.person?.id ? (
             <Link to={`/people/${result.person.id}`} className="btn-tertiary gap-2">
               Open lidprofiel
             </Link>
           ) : null}
-          {isGuest && result.guest?.host_person_id ? (
+          {!currentUser?.is_entree && isGuest && result.guest?.host_person_id ? (
             <Link to={`/people/${result.guest.host_person_id}`} className="btn-tertiary gap-2">
               Open spelersprofiel
             </Link>

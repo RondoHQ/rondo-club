@@ -182,7 +182,16 @@ class AccessControl {
 	/** Protect native and custom routes, including direct URLs and nested requests. */
 	public function guard_section_routes( $result, $server, $request ) {
 		$route = $request->get_route();
-		$deny  = preg_match( '#^/(?:wp/v2|rondo/v1)/commissies(?:/|$)#', $route )
+		if ( UserRoles::is_entree() ) {
+			$method = $request->get_method();
+			$read   = in_array( $method, [ 'GET', 'HEAD' ], true );
+			$allow  = $read && preg_match( '#^/rondo/v1/(?:user/me|version|access-events/matches|access-events/[1-9][0-9]*/stats)/?$#', $route );
+			$allow  = $allow || ( $method === 'POST' && preg_match( '#^/rondo/v1/(?:access-events/select|access-events/[1-9][0-9]*/scan|membership-passes/verify)/?$#', $route ) );
+			if ( ! $allow ) {
+				return new \WP_Error( 'rondo_entree_only', 'Dit entree-account kan alleen de scanner gebruiken.', [ 'status' => 403 ] );
+			}
+		}
+		$deny = preg_match( '#^/(?:wp/v2|rondo/v1)/commissies(?:/|$)#', $route )
 			&& ! UserRoles::can_access_section( 'commissies' );
 		if ( preg_match( '#^/wp/v2/feedback/?$#', $route ) && in_array( $request->get_method(), [ 'GET', 'HEAD' ], true ) ) {
 			$deny = ! UserRoles::can_access_section( 'feedback' );

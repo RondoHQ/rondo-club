@@ -1861,6 +1861,9 @@ add_filter( 'login_headertext', 'rondo_login_logo_title' );
  * Redirect users to homepage after login
  */
 function rondo_login_redirect( $redirect_to, $request, $user ) {
+	if ( $user instanceof \WP_User && UserRoles::is_entree( $user->ID ) ) {
+		return home_url( '/lidpas-scanner' );
+	}
 	// Only redirect if no specific redirect was requested
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( isset( $_GET['redirect_to'] ) && ! empty( $_GET['redirect_to'] ) ) {

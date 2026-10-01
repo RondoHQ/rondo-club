@@ -41,6 +41,10 @@ class MagicLoginActivation {
 	 * @return mixed
 	 */
 	public function intercept_send( $result, $user ) {
+		// Shared entrance logins have no person to activate; keep the plugin's user flow.
+		if ( $user instanceof \WP_User && \Rondo\Core\UserRoles::is_entree( $user->ID ) ) {
+			return $result;
+		}
 		unset( $user );
 
 		if ( self::$dispatching || $result !== null ) {

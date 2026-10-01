@@ -1185,6 +1185,18 @@ class UserSettings extends Base {
 			return null;
 		}
 
+		if ( \Rondo\Core\UserRoles::is_entree( $user_id ) ) {
+			return [
+				'id'                          => $user_id,
+				'name'                        => $user->display_name,
+				'is_entree'                   => true,
+				'is_admin'                    => false,
+				'is_kader'                    => false,
+				'linked_person_id'            => null,
+				'can_access_toegangscontrole' => user_can( $user_id, 'toegangscontrole' ),
+			];
+		}
+
 		$avatar_url = get_avatar_url( $user_id, [ 'size' => 96 ] );
 		$is_admin   = current_user_can( 'manage_options' );
 
