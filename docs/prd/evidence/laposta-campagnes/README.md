@@ -69,3 +69,22 @@ De bestaande lokale Laposta-sleutel is alleen voor deze proef server-side ingele
 - De eigen HTML-downloads uit [de Laposta-sjablonen](https://app.laposta.nl/c.campaign/s.template/t.dand/).
 
 De opgeslagen proefbestanden zijn uitsluitend documentatie en prototype; ze worden niet door de Rondo-app geladen.
+
+## Klikbaar interfaceontwerp
+
+Het [prototype](interface/index.html) werkt vanuit een lokale webserver:
+
+```bash
+python3 -m http.server 8765 --bind 127.0.0.1 --directory docs/prd/evidence/laposta-campagnes
+```
+
+Open daarna `http://127.0.0.1:8765/interface/`. De [ontwerpkeuzes](../../laposta-campagnes-interface.md) beschrijven de afgesproken aparte editor met invoer links en voorbeeld rechts.
+
+- Wissel tussen Joost en Xander om ondertekening, afzender en antwoordadres te zien veranderen. Het derde voorbeeld toont een ontbrekend profiel.
+- Kies per lijst een segment of expliciet de hele lijst. Alle doelgroepkeuzes zijn demonstratiegegevens; er worden geen actuele aantallen of relaties opgehaald.
+- Schrijf onderwerp, previewtekst, titel en bericht. Vet, cursief, opsommingen en weblinks zijn klikbaar. De voorbeeldnaam in de aanhef is Sam; het prototype bewijst geen daadwerkelijke personalisatie.
+- Controleer de selectie en voer de gesimuleerde conceptaanmaak uit. Geen API-sleutel, campagneaanmaak of verzending. Het kanaal blijft onafgerond.
+- Concept opslaan bewaart uitsluitend in deze browser. Opnieuw beginnen wist dat lokale prototypeconcept.
+- De template en profielen komen uit de technische proef. Het prototype voegt alleen alinea-afstand en een voorbeeldnaam toe, maakt previewlinks inert en toont de mail in een gesandboxed iframe. Het is geen productie-editor of mailclienttest.
+
+De interface is gecontroleerd op 1440 en 1728 pixels en op 390 pixels mobiel, inclusief donkere weergave, profiel-/doelgroepvalidatie, selectie van meerdere lijsten, inhoud wijzigen, linkinvoer, lokaal bewaren/herladen, controle en gesimuleerd resultaat. JavaScript-syntaxcontrole en `git diff --check` zijn geslaagd. Voor de productimplementatie moeten de React-editor, rechten en API-afhandeling afzonderlijk worden gebouwd en getest.
