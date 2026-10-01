@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.116.0] - 2026-10-01
+
+### Added
+- Omzetontwikkeling tab with a date range, daily or monthly revenue chart and accessible source figures, excluding no-sale.
+
+### Fixed
+- Expand day payment details directly below their source row and explain reports without payment-method details.
+
 ## [35.115.0] - 2026-10-01
 
 ### Added
