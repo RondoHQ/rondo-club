@@ -111,6 +111,19 @@ export const prmApi = {
 	},
 	actionCommunicationSeries: (id, data) => api.post(`/rondo/v1/communication-series/${id}/action`, data),
 
+  // Newsletter preparation; export only creates or updates a Laposta draft.
+  getNewsletterMetadata: () => api.get('/rondo/v1/newsletter'),
+  getNewsletterSettings: () => api.get('/rondo/v1/newsletter/settings'),
+  saveNewsletterSettings: (data) => api.put('/rondo/v1/newsletter/settings', data),
+  saveNewsletterProfile: (id, data) => api.put(`/rondo/v1/newsletter/profiles/${id}`, data),
+  getNewsletterLists: () => api.get('/rondo/v1/newsletter/lists'),
+  getNewsletterSegments: (id) => api.get(`/rondo/v1/newsletter/lists/${id}/segments`),
+  getNewsletter: (id) => api.get(`/rondo/v1/communications/${id}/newsletter`),
+  saveNewsletter: (id, data) => api.put(`/rondo/v1/communications/${id}/newsletter`, data),
+  previewNewsletter: (id, fields, signal) => api.post(`/rondo/v1/communications/${id}/newsletter/preview`, { fields }, { signal }),
+  reviewNewsletter: (id, revision) => api.post(`/rondo/v1/communications/${id}/newsletter/review`, { revision }),
+  exportNewsletter: (id, token) => api.post(`/rondo/v1/communications/${id}/newsletter/export`, { token }),
+
   // Version check (for cache invalidation)
   getVersion: () => api.get('/rondo/v1/version'),
 

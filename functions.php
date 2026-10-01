@@ -371,6 +371,7 @@ function rondo_init() {
 		new RESTCustomFields();
 		new RESTFeedback();
 		new \Rondo\REST\Communication();
+		new \Rondo\REST\NewsletterController();
 		new RESTInvoices();
 		new RESTMembershipPasses();
 		new RESTAccessEvents();

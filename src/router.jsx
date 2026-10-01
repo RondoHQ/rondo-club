@@ -19,7 +19,7 @@ import {
   PeopleList, PeopleAnniversaries, PeopleOnboarding, ProfileChangeLog, PersonDetail, SponsorList, SponsorDetail, TeamsList, TeamDetail,
   Kaderlijst, MyTeam, Football,
   CommissiesList, CommissieDetail, TodosList,
-  FeedbackList, FeedbackDetail, Communication, Planning, Settings, AppAccess, VOG,
+  FeedbackList, FeedbackDetail, Communication, Planning, Newsletter, NewsletterSettings, Settings, AppAccess, VOG,
   Contributie, DisciplineCasesList,
   FinanceDashboard, Kassaomzet, Betaalstatistieken, Facturen, FactuurDetail, FactuurNieuw, RelationshipTypes,
   CustomFields, Login, Profile, ProfileIva, ProfileVog,
@@ -678,6 +678,8 @@ const router = createBrowserRouter([
 
           { path: 'communicatie', element: <CapabilityRoute checkAccess={canAccessCommunication}><Communication /></CapabilityRoute> },
           { path: 'communicatie/planning', element: <CapabilityRoute checkAccess={(user) => user?.can_access_communicatie}><Planning /></CapabilityRoute> },
+          { path: 'communicatie/planning/:id/nieuwsbrief', element: <CapabilityRoute checkAccess={(user) => user?.can_access_communicatie}><Newsletter /></CapabilityRoute> },
+          { path: 'communicatie/nieuwsbrief-instellingen', element: <CapabilityRoute checkAccess={(user) => user?.is_admin && user?.can_access_communicatie}><NewsletterSettings /></CapabilityRoute> },
 
           // Club TV content is available to narrowcasting and sponsor managers.
           {

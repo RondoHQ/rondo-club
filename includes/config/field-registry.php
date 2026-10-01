@@ -5182,6 +5182,15 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
     array (
       'fields' =>
       array (
+        'newsletter_subject' => [ 'canonical_name' => 'newsletter_subject', 'key' => 'field_comm_newsletter_subject', 'label' => 'newsletter_subject', 'name' => 'newsletter_subject', 'storage_name' => 'newsletter_subject', 'type' => 'text' ],
+        'newsletter_preheader' => [ 'canonical_name' => 'newsletter_preheader', 'key' => 'field_comm_newsletter_preheader', 'label' => 'newsletter_preheader', 'name' => 'newsletter_preheader', 'storage_name' => 'newsletter_preheader', 'type' => 'text' ],
+        'newsletter_heading' => [ 'canonical_name' => 'newsletter_heading', 'key' => 'field_comm_newsletter_heading', 'label' => 'newsletter_heading', 'name' => 'newsletter_heading', 'storage_name' => 'newsletter_heading', 'type' => 'text' ],
+        'newsletter_body' => [ 'canonical_name' => 'newsletter_body', 'key' => 'field_comm_newsletter_body', 'label' => 'newsletter_body', 'name' => 'newsletter_body', 'storage_name' => 'newsletter_body', 'type' => 'wysiwyg' ],
+        'newsletter_audiences' => [ 'canonical_name' => 'newsletter_audiences', 'key' => 'field_comm_newsletter_audiences', 'label' => 'Nieuwsbriefdoelgroepen', 'name' => 'newsletter_audiences', 'storage_name' => 'newsletter_audiences', 'type' => 'repeater', 'sub_fields' => [
+          'list_id' => [ 'canonical_name' => 'list_id', 'key' => 'field_comm_newsletter_audiences_list_id', 'label' => 'list_id', 'name' => 'list_id', 'storage_name' => 'list_id', 'type' => 'text' ],
+          'segment_id' => [ 'canonical_name' => 'segment_id', 'key' => 'field_comm_newsletter_audiences_segment_id', 'label' => 'segment_id', 'name' => 'segment_id', 'storage_name' => 'segment_id', 'type' => 'text' ],
+          'scope' => [ 'canonical_name' => 'scope', 'key' => 'field_comm_newsletter_audiences_scope', 'label' => 'scope', 'name' => 'scope', 'storage_name' => 'scope', 'type' => 'text' ],
+        ] ],
         'description' => array ( 'canonical_name' => 'description', 'key' => 'field_comm_description', 'label' => 'Beschrijving', 'name' => 'description', 'storage_name' => 'description', 'type' => 'textarea' ),
         'channels' => [ 'canonical_name' => 'channels', 'name' => 'channels', 'storage_name' => 'channels', 'key' => 'field_comm_channels', 'label' => 'Kanalen', 'type' => 'repeater', 'sub_fields' => [
           'channel_id' => [ 'canonical_name' => 'channel_id', 'name' => 'channel_id', 'storage_name' => 'channel_id', 'key' => 'field_comm_channels_channel_id', 'label' => 'channel_id', 'type' => 'text' ],
