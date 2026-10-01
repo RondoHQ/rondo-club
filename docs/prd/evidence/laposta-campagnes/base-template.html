@@ -1,0 +1,970 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="nl" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>%%DOCUMENT_TITLE%%</title>
+<style type="text/css">
+
+	/*************************/
+	/*** fix email clients ***/
+	/*************************/
+	img{-ms-interpolation-mode:bicubic;}
+
+	/********************/
+	/*** reset styles ***/
+	/********************/
+	body{margin:0;padding:0;}
+	img{border:0;line-height:100%;outline:none;text-decoration:none;display:block;}
+	table{border-collapse:collapse !important;}
+	table th {margin:0 !important;vertical-align:top;font-weight:normal;}
+	body{height:100% !important;margin:0 !important;padding:0 !important;}
+	p{margin:0;padding:0;margin-bottom:0;}
+	h1,h2,h3,h4,h5,h6{line-height:1.4em;font-weight:bold;font-style:normal;margin:0}
+
+	/****************/
+	/*** defaults ***/
+	/****************/
+	h1 { font-size: 2em; }
+	h2 { font-size: 1.7em; }
+	h3 { font-size: 1.4em; }
+	h4 { font-size: 1em; }
+	hr { border: 0; color: #333333; background-color: #333333; height: 1px; }
+	ul, ol { margin: 0; padding: 1em 1em 1em 2em }
+	li { margin: 0; padding: 0 }
+	ul { list-style-type: disc; list-style-position: outside; }
+	ol { list-style-type: decimal; list-style-position: outside; }
+	ul ul, ol ul { list-style-type: circle; list-style-position: inside; margin-left: 16px; }
+	ol ol, ul ol { list-style-type: lower-latin; list-style-position: inside; margin-left: 16px; }
+	.marketing-table .text-td { color: #777; font-family: Arial; font-size: 12px; line-height: 150%; font-weight: normal; font-style: normal; text-align: center; padding: 20px 60px 6px 60px; }
+	.marketing-table .text-td a { color: #777777; text-decoration: underline; }
+	.marketing-table .logo-td { padding: 6px 24px 20px 24px; }
+	.marketing-table .inner-content-td { padding: 20px; }
+
+	/* add some spacing for Gmail: set minimum width for outer table */
+	.wrapper-td, .columns-wrapper-td { padding: 0 20px; }
+
+	/* but not for blocks inside columns */
+	.columns-wrapper-td .wrapper-td { padding: 0; }
+
+	/* prevent unnecessary vertical width in Outlook 07/10/13 */
+	.image-td, .video-td { height: 1px !important; line-height: 100% !important; }
+
+	/* keep bullets outside image padding */
+	.textimage-table ul, .textimage-table ol { overflow: hidden; }
+
+	/* never underline titles */
+	.title-td a { text-decoration: none !important; }
+
+	/* follow block */
+	.follow-td .text-td a { text-decoration: none !important; word-break: keep-all; }
+	.follow-td .spacer-text-td { font-size: 0; line-height: 0; }
+
+	/* share block */
+	.share-td .text-td a { text-decoration: none !important; word-break: keep-all; }
+	.share-td .spacer-text-td { font-size: 0; line-height: 0; }
+
+	/* follow & share spacers */
+	.spacer-h-td { padding-top: 0 !important; padding-bottom: 0 !important; }
+	.spacer-v-td { padding-left: 0 !important; padding-right: 0 !important; }
+
+	/* buttons */
+	.button-td a { display: inline-block; text-decoration: none; line-height: 125% !important; text-align: center !important; }
+
+	/* toc */
+	.toc-table ul { margin: 0; padding: 0 1em 0 2em; }
+	.toc-desktop-hide { display: none; }
+
+	/*****************************/
+	/* generic responsive styles */
+	/*****************************/
+	@media screen and (max-width: 600px) {
+
+		body,table,td,a{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}
+
+		/* reset Gmail padding */
+		.wrapper-td, .columns-wrapper-td { padding: 0 !important; }
+
+		/* correct mobile gmail hack */
+		.content-td { min-width: 0 !important; }
+
+		/* remove top/bottom padding */
+		.pad-top-td { padding: 0 !important; }
+		.pad-bottom-td { padding: 0 !important; }
+
+		/* add small padding to show background */
+		#body-div { padding: 10px 10px !important; }
+
+		/* set content at full width */
+		.content-table { width: 100% !important; }
+		.columns-content-table { width: 100% !important; }
+		.columns-border-table { width: 100% !important; }
+		.border-table { width: 100% !important; }
+
+		/* stack columns */
+		.columns-table.stacked .columns-content-table { width: 100% !important; }
+		.columns-table.stacked td.columns-inner-content-td th { display: block !important; width: 100% !important; }
+		.columns-table.stacked td.columns-inner-content-td th.col-spacer-td { display: none; }
+
+		/* stack textimage */
+		.image-table.stacked { width: 100% !important; }
+		.image-table.stacked .spacer-td { padding: 0 !important; }
+
+		/* images full width */
+		.image-td img { width: 100% !important; height: auto !important; }
+
+		/* video preview full width */
+		.video-td img { width: 100% !important; height: auto !important; }
+
+		/* follow and share tems */
+		.follow-td .item-table, .share-td .item-table { width: 1px; }
+		.follow-td .spacer-text-td, .share-td .spacer-text-td { font-size: 1px !important; }
+
+		/* marketing */
+		.marketing-table .inner-content-td { padding: 10px 0 !important; }
+		.marketing-table .text-td { color: #777 !important; padding: 20px 20px !important; text-align: left !important; font-size: 14px !important; line-height: 20px !important; }
+		.marketing-table .text-td a { color: #777 !important; }
+		.marketing-table .bull { display: none; }
+		.marketing-border-table { width: 100% !important; }
+
+		/* misc */
+		.mobile-hide { display: none; }
+
+		/* toc items visibility */
+		.toc-mobile-hide { display: none; }
+		.toc-desktop-hide { display: list-item; }
+	}
+</style>
+<!--[if gte mso 9]>
+<style>
+ul, ol { margin: 0 !important; padding: 0 !important; list-style-position: inside; }
+li { list-style:disc inside; mso-special-format:bullet; }
+</style>
+<![endif]-->
+<!--[if gte mso 9]>
+<xml>
+  <o:OfficeDocumentSettings>
+    <o:AllowPNG/>
+    <o:PixelsPerInch>96</o:PixelsPerInch>
+ </o:OfficeDocumentSettings>
+</xml>
+<![endif]-->
+<style type="text/css">
+
+/*** webfonts ***/
+
+/*** email-desktop ***/
+body,#body-td {
+	background-color: #ffffff;
+}
+body,#body-td {
+	background-image:none;
+}
+.pad-top-td {
+	padding-top: 5px;
+}
+.pad-bottom-td {
+	padding-bottom: 5px;
+}
+.content-td, .columns-content-td {
+	background-color: #bed8cb;
+}
+body,td,div {
+	color: #333333;
+	font-family: Arial,Helvetica,sans-serif;
+	font-size: 14px;
+	font-weight: normal;
+	font-style: normal;
+	line-height: 125%;
+}
+
+/* [force] */
+.title-td,.text-td,.text-div,.button-td a {
+	color: #333333;
+	font-family: Arial,Helvetica,sans-serif;
+	font-size: 14px;
+	font-weight: normal;
+	font-style: normal;
+	line-height: 125%;
+}
+.inner-content-td {
+	text-align: left;
+}
+
+/* [force] */
+.title-td,.text-td,.text-div,.button-td a {
+	text-align: left;
+}
+body a {
+	color: #00703c;
+	text-decoration: underline;
+}
+
+/* [force] */
+.title-td a,.text-td a,.text-div a,.button-td a a {
+	color: #00703c;
+}
+
+/*** blocks-desktop ***/
+
+/* title */
+#bxhpm5 .title-td {
+	color: #000000;
+	font-family: Arial,Helvetica,sans-serif;
+	font-size: 15px;
+	font-weight: bold;
+	line-height: 200%;
+	text-align: center;
+}
+
+/* [force href] */
+/* title */
+#bxhpm5 .title-td a {
+	color: #000000;
+}
+
+/* title */
+#bxhpm5 .inner-content-td {
+	background-color: #ffffff;
+	padding-top: 20px;
+}
+
+/* title */
+#bxhpm5 .wrapper-td {
+	background-color: #ffffff;
+}
+
+/* follow */
+#b1o8ic .icon-td {
+	width: 36px;
+}
+
+/* follow */
+#b1o8ic .spacer-h-td, #b1o8ic .spacer-v-td {
+	padding: 8px;
+}
+
+/* follow */
+#b1o8ic .spacer-text-td {
+	padding: 3px;
+}
+
+/* follow */
+#b1o8ic .text-td a {
+	color: #000000;
+	font-family: Arial,Helvetica,sans-serif;
+	font-size: 12px;
+	font-style: normal;
+}
+
+/* follow */
+#b1o8ic .inner-content-td {
+	background-color: #ffffff;
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+
+/* follow */
+#b1o8ic .wrapper-td {
+	background-color: #ffffff;
+}
+
+/* text */
+#bicj3m .title-td, #bicj3m .title-td div {
+	font-size: 24px;
+	font-weight: bold;
+	line-height: 125%;
+}
+
+/* text */
+#bicj3m .inner-content-td {
+	background-color: #ffffff;
+	padding-top: 10px;
+	padding-bottom: 20px;
+	padding-left: 20px;
+	padding-right: 20px;
+}
+
+/* text */
+#bicj3m .wrapper-td {
+	background-color: #ffffff;
+}
+
+/* text */
+#bicj3m .content-td {
+	padding-left: 18px;
+	padding-right: 18px;
+}
+
+/* text */
+#bw87tl .title-td {
+	font-size: 24px;
+	font-weight: bold;
+	line-height: 125%;
+}
+
+/* text */
+#bw87tl .inner-content-td {
+	background-color: #ffffff;
+	padding-left: 15px;
+	padding-right: 15px;
+}
+
+/* text */
+#bw87tl .content-td {
+	padding-top: 1px;
+	padding-left: 15px;
+	padding-right: 15px;
+}
+
+/* image */
+#bjtepw .inner-content-td {
+	background-color: #ffffff;
+	padding-top: 10px;
+	padding-bottom: 20px;
+	padding-left: 18px;
+	padding-right: 300px;
+}
+
+/* image */
+#bjtepw .content-td {
+	padding-left: 18px;
+	padding-right: 18px;
+}
+
+/* text */
+#b55a05 .title-td, #b55a05 .title-td div {
+	font-size: 24px;
+	font-weight: bold;
+	line-height: 125%;
+}
+
+/* text */
+#b55a05 .inner-content-td {
+	background-color: #ffffff;
+	padding-top: 25px;
+	padding-bottom: 25px;
+	padding-left: 20px;
+	padding-right: 20px;
+}
+
+/* text */
+#b55a05 .content-td {
+	padding-left: 18px;
+	padding-right: 18px;
+}
+
+/* preheader */
+#bnotie .inner-content-td {
+	font-size: 12px;
+}
+
+/* [force] */
+/* preheader */
+#bnotie .title-td,#bnotie .text-td,#bnotie .text-div,#bnotie .button-td a {
+	font-size: 12px;
+}
+
+/* preheader */
+#bnotie .inner-content-td {
+	padding-bottom: 15px;
+	padding-left: 20px;
+	padding-right: 20px;
+}
+
+/* preheader */
+#bnotie .col-spacer {
+	padding-left: 8px;
+	padding-right: 8px;
+}
+</style>
+<!--[if !mso]><!-->
+<style type="text/css">
+
+/*** email-mobile ***/
+@media screen and (max-width: 600px) {
+
+.pad-top-td {
+	padding-top: 10px !important;
+}
+.pad-bottom-td {
+	padding-bottom: 10px !important;
+}
+body,td,div {
+	font-size: 18px !important;
+	line-height: 125% !important;
+}
+
+/*** blocks-mobile ***/
+
+
+/* title */
+#bxhpm5 .title-td {
+	color: #000000 !important;
+	font-family: Arial,Helvetica,sans-serif !important;
+	font-size: 34px !important;
+	line-height: 125% !important;
+}
+
+/* follow */
+#b1o8ic .text-td a {
+	color: #000000 !important;
+	font-family: Arial,Helvetica,sans-serif !important;
+	font-size: 12px !important;
+}
+/* follow width */#b1o8ic img {
+	width: 36px  !important;
+	height: 36px  !important;
+}
+
+/* text */
+#bicj3m .title-td, #bicj3m .title-td div {
+	font-size: 28px !important;
+	line-height: 125% !important;
+}
+
+/* text */
+#bw87tl .title-td {
+	font-size: 28px !important;
+	line-height: 125% !important;
+}
+
+/* image */
+#bjtepw .inner-content-td {
+	padding-right: 100px !important;
+}
+
+/* text */
+#b55a05 .title-td, #b55a05 .title-td div {
+	font-size: 28px !important;
+	line-height: 125% !important;
+}
+
+/* mobile hide preheader */
+#bnotie .content-table { display: none; }
+}
+</style>
+<!--<![endif]-->
+<!--[if mso]>
+<style type="text/css">
+/*** mso lineheights ***/
+body,td,div,a {line-height: 110% !important;}
+
+/* title */
+#bxhpm5 .title-td {line-height: 140% !important;}
+
+/* text */
+#bicj3m .title-td, #bicj3m .title-td div {line-height: 110% !important;}
+
+/* text */
+#bw87tl .title-td {line-height: 110% !important;}
+
+/* text */
+#b55a05 .title-td, #b55a05 .title-td div {line-height: 110% !important;}
+</style>
+<![endif]-->
+<!--[if lte mso 15]>
+<style type="text/css">
+body,td,div,a {
+	font-family: Arial,Helvetica,sans-serif !important;
+}
+
+/* title */
+#bxhpm5 .title-td {
+	font-family: Arial,Helvetica,sans-serif !important;
+}
+
+
+/* follow */
+#b1o8ic .text-td a {
+	font-family: Arial,Helvetica,sans-serif !important;
+}
+
+</style>
+<![endif]-->
+
+</head>
+<body>
+<table width="100%" height="100%" cellspacing="0" cellpadding="0"><tr><td valign="top" id="body-td" >
+<!--[if mso]></td></tr></table><![endif]-->
+<div id="body-div"><table width="100%" cellspacing="0" cellpadding="0"><tr><td class="pad-top-td"></td></tr></table>
+
+<!--[block_id:lp-block-notiehnjua04p8rhg74t]-->
+
+<!-- preheader -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%" class="preheader-table" id="bnotie">
+	<tr>
+		<td width="100%" align="center" class="wrapper-td">
+			<table cellpadding="0" cellspacing="0" border="0" class="preheader-border-table">
+				<tr>
+					<td width="100%" valign="top" class="preheader-border-td">
+						<table cellpadding="0" cellspacing="0" border="0" class="content-table" width="636" style="width:636px;">
+							<tr>
+								<td width="100%" valign="top" class="preheader-content-td">
+									<table width="100%" cellpadding="0" cellspacing="0" border="0">
+										<tr>
+											<td width="100%" valign="top" class="inner-content-td">
+<!-- skeleton -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+	<tr>
+		<td width="50%" valign="top" style="text-align:left;" class="text-td"></td>
+		<td class="col-spacer"></td>
+		<td width="50%" valign="top" style="text-align:right;" class="text-td"><webversion>Bekijk de webversie</webversion></td>
+	</tr>
+</table>
+<!-- /skeleton -->
+											</td><!-- /td.inner-content-td -->
+										</tr>
+									</table>
+								</td><!-- /td.content-td -->
+							</tr>
+						</table>
+					</td><!-- /td.border-td -->
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- /preheader -->
+
+<!--[/block_id:lp-block-notiehnjua04p8rhg74t]-->
+<!--[block_id:lp-block-48mmqjqux7wjn8bdv4te]-->
+
+<!-- image -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%" class="image-table first-table full-width" id="b48mmq">
+	<tr>
+		<td width="100%" align="center" class="wrapper-td">
+			<table cellpadding="0" cellspacing="0" border="0" class="border-table">
+				<tr>
+					<td width="100%" valign="top" class="border-td">
+						<table cellpadding="0" cellspacing="0" border="0" class="content-table" width="636" style="width:636px;">
+							<tr>
+								<td width="100%" valign="top" class="content-td" style="min-width:480px;">
+									<table width="100%" cellpadding="0" cellspacing="0" border="0">
+										<tr>
+											<td width="100%" valign="top" class="inner-content-td">
+<!-- skeleton -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td width="100%" valign="top">
+			<table width="100%" cellpadding="0" cellspacing="0" border="0">
+				<tr>
+					<td valign="top" align="center" class="image-td"><img src="https://sv-awc.email-provider.eu/a/besfwabzto/d/3vlcaq1fxy/i/58d5cc5_w600_awcemailheader2025.png" width="636" height="212" alt="" title="" /></td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- /skeleton -->
+											</td><!-- /td.inner-content-td -->
+										</tr>
+									</table>
+								</td><!-- /td.content-td -->
+							</tr>
+						</table>
+					</td><!-- /td.border-td -->
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- /image -->
+
+<!--[/block_id:lp-block-48mmqjqux7wjn8bdv4te]-->
+<!--[block_id:lp-block-55a05dwo0sangz2hd40g]-->
+
+<!-- text -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%" class="text-table" id="b55a05">
+	<tr>
+		<td width="100%" align="center" class="wrapper-td">
+			<table cellpadding="0" cellspacing="0" border="0" class="border-table">
+				<tr>
+					<td width="100%" valign="top" class="border-td">
+						<table cellpadding="0" cellspacing="0" border="0" class="content-table" width="636" style="width:636px;">
+							<tr>
+								<td width="100%" valign="top" class="content-td" style="min-width:480px;">
+									<table width="100%" cellpadding="0" cellspacing="0" border="0">
+										<tr>
+											<td width="100%" valign="top" class="inner-content-td">
+<!-- skeleton -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td width="100%" valign="top">
+			<table cellpadding="0" cellspacing="0" border="0" width="100%">
+				<tr>
+					<td width="100%" class="title-td"><a name="id-angz2hd40g"></a>%%HEADING%%</td>
+				</tr>
+				<tr>
+					<td width="100%" class="text-td">&nbsp;<p>Hoi {{voornaam,AWCer}},</p>%%BODY_HTML%%</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- /skeleton -->
+											</td><!-- /td.inner-content-td -->
+										</tr>
+									</table>
+								</td><!-- /td.content-td -->
+							</tr>
+						</table>
+					</td><!-- /td.border-td -->
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- /text -->
+
+<!--[/block_id:lp-block-55a05dwo0sangz2hd40g]-->
+<!--[block_id:lp-block-jtepwnv6wc9eqmqxwip9]-->
+
+<!-- image -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%" class="image-table horizontal" id="bjtepw">
+	<tr>
+		<td width="100%" align="center" class="wrapper-td">
+			<table cellpadding="0" cellspacing="0" border="0" class="border-table">
+				<tr>
+					<td width="100%" valign="top" class="border-td">
+						<table cellpadding="0" cellspacing="0" border="0" class="content-table" width="636" style="width:636px;">
+							<tr>
+								<td width="100%" valign="top" class="content-td" style="min-width:480px;">
+									<table width="100%" cellpadding="0" cellspacing="0" border="0">
+										<tr>
+											<td width="100%" valign="top" class="inner-content-td">
+<!-- skeleton -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td width="100%" valign="top">
+			<table width="100%" cellpadding="0" cellspacing="0" border="0">
+				<tr>
+					<td valign="top" align="center" class="image-td"><img src="%%SIGNATURE_URL%%" width="282" height="%%SIGNATURE_HEIGHT%%" alt="Handtekening van %%SIGNER_NAME%%" title="Handtekening van %%SIGNER_NAME%%" /></td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- /skeleton -->
+											</td><!-- /td.inner-content-td -->
+										</tr>
+									</table>
+								</td><!-- /td.content-td -->
+							</tr>
+						</table>
+					</td><!-- /td.border-td -->
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- /image -->
+
+<!--[/block_id:lp-block-jtepwnv6wc9eqmqxwip9]-->
+<!--[block_id:lp-block-w87tlwcififp74w7zk3p]-->
+
+<!-- text -->
+
+<!-- /text -->
+
+<!--[/block_id:lp-block-w87tlwcififp74w7zk3p]-->
+<!--[block_id:lp-block-icj3ml9l0nufocg9jn5r]-->
+
+<!-- text -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%" class="text-table" id="bicj3m">
+	<tr>
+		<td width="100%" align="center" class="wrapper-td">
+			<table cellpadding="0" cellspacing="0" border="0" class="border-table">
+				<tr>
+					<td width="100%" valign="top" class="border-td">
+						<table cellpadding="0" cellspacing="0" border="0" class="content-table" width="636" style="width:636px;">
+							<tr>
+								<td width="100%" valign="top" class="content-td" style="min-width:480px;">
+									<table width="100%" cellpadding="0" cellspacing="0" border="0">
+										<tr>
+											<td width="100%" valign="top" class="inner-content-td">
+<!-- skeleton -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td width="100%" valign="top">
+			<table cellpadding="0" cellspacing="0" border="0" width="100%">
+
+				<tr>
+					<td width="100%" class="text-td">%%SIGNER_NAME%%<br />%%SIGNER_ROLE%%</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- /skeleton -->
+											</td><!-- /td.inner-content-td -->
+										</tr>
+									</table>
+								</td><!-- /td.content-td -->
+							</tr>
+						</table>
+					</td><!-- /td.border-td -->
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- /text -->
+
+<!--[/block_id:lp-block-icj3ml9l0nufocg9jn5r]-->
+<!--[block_id:lp-block-igf4awarmty11dyz3u7l]-->
+
+<!-- image -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%" class="image-table full-width" id="bigf4a">
+	<tr>
+		<td width="100%" align="center" class="wrapper-td">
+			<table cellpadding="0" cellspacing="0" border="0" class="border-table">
+				<tr>
+					<td width="100%" valign="top" class="border-td">
+						<table cellpadding="0" cellspacing="0" border="0" class="content-table" width="636" style="width:636px;">
+							<tr>
+								<td width="100%" valign="top" class="content-td" style="min-width:480px;">
+									<table width="100%" cellpadding="0" cellspacing="0" border="0">
+										<tr>
+											<td width="100%" valign="top" class="inner-content-td">
+<!-- skeleton -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td width="100%" valign="top">
+			<table width="100%" cellpadding="0" cellspacing="0" border="0">
+				<tr>
+					<td valign="top" align="center" class="image-td"><img src="https://sv-awc.email-provider.eu/a/besfwabzto/d/3vlcaq1fxy/i/97b84ea_w636_emailfooter.jpg" width="636" height="212" alt="" title="" /></td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- /skeleton -->
+											</td><!-- /td.inner-content-td -->
+										</tr>
+									</table>
+								</td><!-- /td.content-td -->
+							</tr>
+						</table>
+					</td><!-- /td.border-td -->
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- /image -->
+
+<!--[/block_id:lp-block-igf4awarmty11dyz3u7l]-->
+<!--[block_id:lp-block-xhpm5ey17u50cow8mw1r]-->
+
+<!-- title -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%" class="title-table" id="bxhpm5">
+	<tr>
+		<td width="100%" align="center" class="wrapper-td">
+			<table cellpadding="0" cellspacing="0" border="0" class="border-table">
+				<tr>
+					<td width="100%" valign="top" class="border-td">
+						<table cellpadding="0" cellspacing="0" border="0" class="content-table" width="636" style="width:636px;">
+							<tr>
+								<td width="100%" valign="top" class="content-td" style="min-width:480px;">
+									<table width="100%" cellpadding="0" cellspacing="0" border="0">
+										<tr>
+											<td width="100%" valign="top" class="inner-content-td">
+<!-- skeleton -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td width="100%" valign="top">
+			<table cellpadding="0" cellspacing="0" border="0" width="100%">
+				<tr>
+					<td width="100%" class="title-td"><a name="id-50cow8mw1r"></a>Volg ons voor het laatste clubnieuws</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- /skeleton -->
+											</td><!-- /td.inner-content-td -->
+										</tr>
+									</table>
+								</td><!-- /td.content-td -->
+							</tr>
+						</table>
+					</td><!-- /td.border-td -->
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- /title -->
+
+<!--[/block_id:lp-block-xhpm5ey17u50cow8mw1r]-->
+<!--[block_id:lp-block-1o8iczos57fbblanfd8u]-->
+
+<!-- follow -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%" class="follow-table last-table" id="b1o8ic">
+	<tr>
+		<td width="100%" align="center" class="wrapper-td">
+			<table cellpadding="0" cellspacing="0" border="0" class="border-table">
+				<tr>
+					<td width="100%" valign="top" class="border-td">
+						<table cellpadding="0" cellspacing="0" border="0" class="content-table" width="636" style="width:636px;">
+							<tr>
+								<td width="100%" valign="top" class="content-td" style="min-width:480px;">
+									<table width="100%" cellpadding="0" cellspacing="0" border="0">
+										<tr>
+											<td width="100%" valign="top" class="inner-content-td">
+<!-- skeleton -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+	<tr>
+		<td width="100%" valign="top">
+			<table width="100%" cellpadding="0" cellspacing="0" border="0">
+				<tr>
+					<td valign="middle" align="center" class="follow-td"><table cellpadding="0" cellspacing="0"><tr><td><table align="left" border="0" cellpadding="0" cellspacing="0" class="item-table">
+	<tr>
+		<td align="center" valign="top" class="item-wrapper-td">
+			<table border="0" cellpadding="0" cellspacing="0" class="icon-table" width="36">
+				<tr>
+					<td align="center" valign="top" class="icon-td">
+						<a href="http://www.svawc.nl"><img src="https://sv-awc.email-provider.eu/a/besfwabzto/d/3vlcaq1fxy/i/follow-22_w256_link.png" width="36" alt="" title="" /></a>
+					</td>
+				</tr>
+			</table>
+			<table border="0" cellpadding="0" cellspacing="0" class="spacer-text-table">
+				<tr>
+					<td class="spacer-text-td">&nbsp;</td>
+				</tr>
+			</table>
+			<table border="0" cellpadding="0" cellspacing="0" class="text-table">
+				<tr>
+					<td align="center" valign="top" class="text-td">
+						<a href="http://www.svawc.nl">Website</a>
+					</td>
+				</tr>
+			</table>
+		</td>
+		<td valign="top" class="spacer-wrapper">
+			<table border="0" cellpadding="0" cellspacing="0">
+				<tr>
+					<td class="spacer-h-td"></td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!--[if mso]></td><![endif]--><!--[if mso]><td valign="top"><![endif]--><table align="left" border="0" cellpadding="0" cellspacing="0" class="item-table">
+	<tr>
+		<td align="center" valign="top" class="item-wrapper-td">
+			<table border="0" cellpadding="0" cellspacing="0" class="icon-table" width="36">
+				<tr>
+					<td align="center" valign="top" class="icon-td">
+						<a href="https://www.facebook.com/svAWC"><img src="https://sv-awc.email-provider.eu/a/besfwabzto/d/3vlcaq1fxy/i/follow-22_w256_facebook.png" width="36" alt="" title="" /></a>
+					</td>
+				</tr>
+			</table>
+			<table border="0" cellpadding="0" cellspacing="0" class="spacer-text-table">
+				<tr>
+					<td class="spacer-text-td">&nbsp;</td>
+				</tr>
+			</table>
+			<table border="0" cellpadding="0" cellspacing="0" class="text-table">
+				<tr>
+					<td align="center" valign="top" class="text-td">
+						<a href="https://www.facebook.com/svAWC">Facebook</a>
+					</td>
+				</tr>
+			</table>
+		</td>
+		<td valign="top" class="spacer-wrapper">
+			<table border="0" cellpadding="0" cellspacing="0">
+				<tr>
+					<td class="spacer-h-td"></td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!--[if mso]></td><![endif]--><!--[if mso]><td valign="top"><![endif]--><table align="left" border="0" cellpadding="0" cellspacing="0" class="item-table">
+	<tr>
+		<td align="center" valign="top" class="item-wrapper-td">
+			<table border="0" cellpadding="0" cellspacing="0" class="icon-table" width="36">
+				<tr>
+					<td align="center" valign="top" class="icon-td">
+						<a href="https://www.instagram.com/svawc"><img src="https://sv-awc.email-provider.eu/a/besfwabzto/d/3vlcaq1fxy/i/follow-22_w256_instagram.png" width="36" alt="" title="" /></a>
+					</td>
+				</tr>
+			</table>
+			<table border="0" cellpadding="0" cellspacing="0" class="spacer-text-table">
+				<tr>
+					<td class="spacer-text-td">&nbsp;</td>
+				</tr>
+			</table>
+			<table border="0" cellpadding="0" cellspacing="0" class="text-table">
+				<tr>
+					<td align="center" valign="top" class="text-td">
+						<a href="https://www.instagram.com/svawc">Instagram</a>
+					</td>
+				</tr>
+			</table>
+		</td>
+		<td valign="top" class="spacer-wrapper">
+			<table border="0" cellpadding="0" cellspacing="0">
+				<tr>
+					<td class="spacer-h-td"></td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!--[if mso]></td><![endif]--><!--[if mso]><td valign="top"><![endif]--><table align="left" border="0" cellpadding="0" cellspacing="0" class="item-table">
+	<tr>
+		<td align="center" valign="top" class="item-wrapper-td">
+			<table border="0" cellpadding="0" cellspacing="0" class="icon-table" width="36">
+				<tr>
+					<td align="center" valign="top" class="icon-td">
+						<a href="https://twitter.com/awcwijchen/"><img src="https://sv-awc.email-provider.eu/a/besfwabzto/d/3vlcaq1fxy/i/follow-22_w256_twitter.png" width="36" alt="" title="" /></a>
+					</td>
+				</tr>
+			</table>
+			<table border="0" cellpadding="0" cellspacing="0" class="spacer-text-table">
+				<tr>
+					<td class="spacer-text-td">&nbsp;</td>
+				</tr>
+			</table>
+			<table border="0" cellpadding="0" cellspacing="0" class="text-table">
+				<tr>
+					<td align="center" valign="top" class="text-td">
+						<a href="https://twitter.com/awcwijchen/">X</a>
+					</td>
+				</tr>
+			</table>
+		</td>
+
+	</tr>
+</table>
+</td></tr></table></td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- /skeleton -->
+											</td><!-- /td.inner-content-td -->
+										</tr>
+									</table>
+								</td><!-- /td.content-td -->
+							</tr>
+						</table>
+					</td><!-- /td.border-td -->
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- /follow -->
+
+<!--[/block_id:lp-block-1o8iczos57fbblanfd8u]-->
+<table width="100%" cellspacing="0" cellpadding="0"><tr><td class="pad-bottom-td"></td></tr></table>
+</div><!-- /#body-div -->
+<!--[if mso]><table cellspacing="0" cellpadding="0"><tr><td><![endif]-->
+</td></tr></table>
+<table role="presentation" width="100%"><tr><td align="center" style="padding:20px;font:13px Arial,sans-serif"><unsubscribe>Afmelden voor deze nieuwsbrief</unsubscribe></td></tr></table></body>
+</html>

@@ -1,6 +1,6 @@
 # PRD: Laposta-campagnes vanuit Rondo
 
-**Status:** Voorstel, nog niet geïmplementeerd
+**Status:** Technische proef uitgevoerd; Rondo-interface nog niet geïmplementeerd
 
 **Datum:** 1 oktober 2026
 
@@ -17,7 +17,7 @@ De eerste versie eindigt bij een controleerbaar concept in Laposta. Verzenden en
 ## 2. Gecontroleerde uitgangssituatie
 
 - In Laposta staan vier voorbereide drag-and-drop-sjablonen: Guido Ronnes (voorzitter), Jeroen Pots (bestuurslid Accommodatie), Xander Notté (penningmeester) en Joost de Valk (secretaris). De gebruiker bevestigt dat dit één opmaak met wisselende ondertekening is.
-- De vier sjablonen bieden HTML-downloads. Onder Op maat stonden tijdens de inspectie geen eigen HTML-sjablonen. De export zelf is nog niet onderzocht of geïmporteerd.
+- De vier sjablonen bieden HTML-downloads. Onder Op maat stonden tijdens de inspectie geen eigen HTML-sjablonen. De exports van Joost en Xander zijn inmiddels onderzocht; één gedeelde template is via de API als concept geïmporteerd en tussen beide profielen gewisseld. Zie [de proefresultaten](evidence/laposta-campagnes/README.md).
 - De previews bevatten een titel, persoonlijke aanhef, ondertekening en sociale links. Bij alle vier heet de alternatieve tekst van de handtekeningafbeelding nog “Handtekening van Joost de Valk”; de juiste afbeeldingen en alternatieve teksten moeten bij overname afzonderlijk worden gecontroleerd.
 - De openbare [Laposta API-documentatie](https://api.laposta.nl/doc/index.nl.php#campaigns) beschrijft het aanmaken en wijzigen van campagnes, het kiezen van lijsten/segmenten en het vullen met HTML. Er is geen gedocumenteerde templatekeuze. Drag-and-drop-campagnecontent kan niet via het content-leesendpoint worden opgehaald.
 - Rondo heeft al communicatie-items, verantwoordelijken, opmerkingen, herhalingen en een checklist per kanaal. De huidige code ondersteunt meerdere kanalen per item; dat gaat verder dan de oorspronkelijke tekst van [Communicatieplanning](communicatieplanning.md).
@@ -76,6 +76,8 @@ Logo en handtekeningen moeten voor mailontvangers bereikbaar zijn. Gebruik daarv
 
 De technische proef controleert webversie- en afmeldtags, beeld-URL's, mobiele weergave en de importmeldingen van Laposta. Ontbrekende afbeeldingen of afmeldlinks blokkeren een succesvolle exportstatus totdat ze zijn opgelost. Gebruik een geïsoleerde voorbeeldweergave voor de gegenereerde HTML.
 
+Uit de proef: geïmporteerde nieuwsbrief-HTML vereist `<unsubscribe>…</unsubscribe>` en `<webversion>…</webversion>`, zoals getoond in Laposta's importscherm. Drag-and-drop-links (`/tag/...`) en Joe-sjabloontags (`<lp-unsubscribe>`) leverden bij de contentimport een afmeldwaarschuwing op. De basistemplate bevatte ook een oude achtergrondafbeelding met HTTP 404; die referentie is alleen in de proefversie verwijderd. De uiteindelijke import is zonder meldingen geverifieerd.
+
 ## 7. Opslag, rechten en technische aansluiting
 
 - Breid `rondo_comm_item` uit met nieuwsbriefvelden via de native field registry: onderwerp, previewtekst, titel, berichtinhoud, doelgroepselectie, gekoppeld Laposta-campagne-ID en exportgegevens. Gebruik de bestaande `assignee_id` voor de verantwoordelijke.
@@ -125,4 +127,4 @@ Verzenden/inplannen vanuit Rondo, statistieken, Google Docs-import, een visuele 
 
 Aanbevolen start: conceptaanmaak en bijwerken binnen de bestaande planning, doelgroepkeuze uit bestaande lijsten/segmenten en profielbeheer door beheerders. De gebruiker bevestigt deze scope vóór implementatie. Vervolgens worden de gebruiker-profielkoppelingen, afzendadressen en juiste handtekeningafbeeldingen vastgesteld.
 
-Dit bestand is alleen een plan. Er zijn geen campagnes aangemaakt, instellingen gewijzigd of mails verstuurd. Omdat de wijziging uitsluitend in `docs/prd/` staat, zijn geen theme-versieophoging, changelog of deployment nodig.
+De technische proef heeft één aparte lege testlijst, testvelden, een leeg segment en een niet-ingepland concept aangemaakt. Er zijn geen relaties toegevoegd of mails verstuurd; bestaande campagnes en sjablonen zijn ongewijzigd. De bronbestanden onder `docs/prd/evidence/` zijn uitsluitend proefmateriaal. Omdat deze wijziging uitsluitend in `docs/prd/` staat, zijn geen theme-versieophoging, changelog of deployment nodig.
