@@ -1,0 +1,20 @@
+{
+  "joost": {
+    "name": "Joost de Valk",
+    "role": "Secretaris",
+    "signature_url": "https://sv-awc.email-provider.eu/a/besfwabzto/d/3vlcaq1fxy/i/a606fbf_w1272_joostdevalksignature.png",
+    "signature_height": 77,
+    "from_name": "Joost de Valk | AWC",
+    "from_email": "secretaris@svawc.nl",
+    "reply_to": "secretaris@svawc.nl"
+  },
+  "xander": {
+    "name": "Xander Notté",
+    "role": "Penningmeester",
+    "signature_url": "https://sv-awc.email-provider.eu/a/besfwabzto/d/ydjcvyd4or/i/a49b944_w581_handtekeningxanderaw.png",
+    "signature_height": 138,
+    "from_name": "Xander Notté | AWC",
+    "from_email": "penningmeester@svawc.nl",
+    "reply_to": "penningmeester@svawc.nl"
+  }
+}
