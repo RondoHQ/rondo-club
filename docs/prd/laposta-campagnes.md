@@ -1,6 +1,6 @@
 # PRD: Laposta-campagnes vanuit Rondo
 
-**Status:** Productfunctie geïmplementeerd en uitgerold; editor live gecontroleerd. Activering van de API-koppeling wacht op de keuze voor een sleutel; productie-export is nog niet live geverifieerd.
+**Status:** Productfunctie geïmplementeerd en uitgerold; editor en productie-export live gecontroleerd met een apart ingestelde API-sleutel en de lege testdoelgroep. Er is niets verzonden of ingepland.
 
 **Datum:** 1 oktober 2026
 
