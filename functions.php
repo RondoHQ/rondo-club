@@ -271,6 +271,7 @@ function rondo_should_log_rest_error( $error ) {
  */
 function rondo_init() {
 	new \Rondo\Twelve\BusinessclubInvoicing();
+	new \Rondo\Twelve\ImportScheduler();
 	// Prevent double initialization
 	static $initialized = false;
 	if ( $initialized ) {

@@ -2449,56 +2449,18 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		}
 
 		private function import_message( $client, string $message_id, bool $dry_run ): void {
-			$repository = new \Rondo\Twelve\ReportRepository();
-			$existing   = $repository->find_by_message_id( $message_id );
-			if ( $existing !== null ) {
-				\WP_CLI::warning( sprintf( 'Dit bericht is al geïmporteerd (rapport %d).', $existing ) );
+			$result = \Rondo\Twelve\ImportScheduler::import_message( $client, $message_id, $dry_run );
+			if ( is_wp_error( $result ) ) {
+				\WP_CLI::error( $result->get_error_message() );
 				return;
 			}
-
-			$pdf = $client->download_report_pdf( $message_id );
-			if ( is_wp_error( $pdf ) ) {
-				\WP_CLI::error( $pdf->get_error_message() );
+			if ( ! empty( $result['skipped'] ) ) {
+				\WP_CLI::log( 'Rapport is al geïmporteerd.' );
 				return;
 			}
-			\WP_CLI::log( sprintf( 'PDF gedownload: %s (%d bytes)', $pdf['filename'], strlen( $pdf['bytes'] ) ) );
-
-			try {
-				$parser = new \Smalot\PdfParser\Parser();
-				$text   = $parser->parseContent( $pdf['bytes'] )->getText();
-				$parsed = \Rondo\Twelve\ReportParser::parse( $text );
-			} catch ( \Throwable $e ) {
-				\WP_CLI::error( 'PDF parsen mislukt: ' . $e->getMessage() );
-				return;
-			}
-
-			\WP_CLI::log(
-				sprintf(
-					'Rapport %s: %s t/m %s, omzet excl. no-sale € %s, %d producten',
-					$parsed['club'],
-					$parsed['period_start'],
-					$parsed['period_end'],
-					number_format( \Rondo\Twelve\ReportAggregator::omzet_excl_nosale( $parsed ), 2, ',', '.' ),
-					count( $parsed['producten'] )
-				)
-			);
-
-			if ( $dry_run ) {
-				\WP_CLI::success( 'Dry run: niets opgeslagen.' );
-				return;
-			}
-
-			$post_id = $repository->store( $parsed, $message_id, $pdf['filename'], $pdf['bytes'] );
-			if ( is_wp_error( $post_id ) ) {
-				if ( $post_id->get_error_code() === 'twelve_duplicate_report' ) {
-					\WP_CLI::log( $post_id->get_error_message() );
-					return;
-				}
-				\WP_CLI::error( $post_id->get_error_message() );
-				return;
-			}
-
-			\WP_CLI::success( sprintf( 'Rapport geïmporteerd als post %d.', $post_id ) );
+			$parsed = $result['parsed'];
+			\WP_CLI::log( sprintf( 'Rapport %s: %s t/m %s, omzet excl. no-sale € %s, %d producten', $parsed['club'], $parsed['period_start'], $parsed['period_end'], number_format( \Rondo\Twelve\ReportAggregator::omzet_excl_nosale( $parsed ), 2, ',', '.' ), count( $parsed['producten'] ) ) );
+			\WP_CLI::success( $dry_run ? 'Dry run: niets opgeslagen.' : sprintf( 'Rapport geïmporteerd als post %d.', $result['post_id'] ) );
 		}
 
 		/**

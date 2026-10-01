@@ -65,44 +65,19 @@ De credentials staan versleuteld in `rondo_twelve_agentmail_credentials`.
 `--status` controleert alleen de opgeslagen configuratie; test toegang met
 `wp rondo twelve import --dry-run`.
 
-### 3. Dagelijkse import inplannen
+### 3. Dagelijkse import
 
-systemd-timer op de VPS (pas het pad naar WordPress aan):
-
-```ini
-# /etc/systemd/system/rondo-twelve-import.service
-[Unit]
-Description=Rondo Twelve dagrapportage import
-After=network-online.target
-
-[Service]
-Type=oneshot
-User=www-data
-ExecStart=/usr/local/bin/wp rondo twelve import --path=/var/www/rondo
-```
-
-```ini
-# /etc/systemd/system/rondo-twelve-import.timer
-[Unit]
-Description=Dagelijks Twelve-rapport importeren
-
-[Timer]
-OnCalendar=07:05
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-```
+Na AgentMail-configuratie plant Rondo `rondo_twelve_daily_import` dagelijks om 06:15 Nederlandse tijd (Europe/Amsterdam). Losse events behouden deze lokale tijd bij zomer- en wintertijd. WordPress-cron wordt gestart door siteverkeer of de hosting-cron; 06:15 is de vroegste starttijd.
 
 ```bash
-sudo systemctl enable --now rondo-twelve-import.timer
+wp cron event list --hook=rondo_twelve_daily_import
+wp cron event run rondo_twelve_daily_import
+wp option get rondo_twelve_import_status --format=json
 ```
 
-Liever cron? Dit is equivalent:
+De status bevat tijd, aantallen en foutcodes zonder credentials of mailinhoud. Een mislukte import blokkeert andere berichten niet en wordt de volgende dag opnieuw geprobeerd. Een options-lock voorkomt overlap; verwijder `rondo_twelve_import_lock` na een afgebroken proces alleen als geen import meer draait.
 
-```cron
-5 7 * * * www-data /usr/local/bin/wp rondo twelve import --path=/var/www/rondo >> /var/log/rondo-twelve.log 2>&1
-```
+Twelve moet rechtstreeks mailen naar `rondo-twelve@agentmail.to`; automatisch worden alleen berichten van `noreply@twelve.eu` geaccepteerd. Doorgestuurde oude rapporten kun je met `--message-id` importeren.
 
 Handmatig testen:
 
