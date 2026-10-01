@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.117.0] - 2026-10-01
+
+### Added
+- Shared entrance accounts with the dedicated Rondo Entree role, no linked member, a scanner-only interface, automatic login redirect and a server-side allowlist for match selection, pass verification, admission scans and match totals.
+
 ## [35.116.0] - 2026-10-01
 
 ### Added

@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { Suspense } from 'react';
-import { createBrowserRouter, Navigate, Outlet, useNavigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import Layout from '@/components/layout/Layout';
@@ -256,12 +256,43 @@ function ProtectedRoute({ children }) {
 function ProtectedLayout() {
   return (
     <ProtectedRoute>
-      <Layout>
-        <Suspense fallback={<PageLoader />}>
-          <Outlet />
-        </Suspense>
-      </Layout>
+      <AccountLayout />
     </ProtectedRoute>
+  );
+}
+
+function AccountLayout() {
+  const { data: user, isLoading, isError } = useCurrentUser();
+  const { pathname } = useLocation();
+  const { logoutUrl } = useAuth();
+
+  if (isLoading) return <PageLoadingSpinner />;
+  if (isError || !user) return <AccessDenied />;
+
+  if (user.is_entree) {
+    if (pathname !== '/lidpas-scanner') return <Navigate to="/lidpas-scanner" replace />;
+
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <header className="flex items-center justify-between gap-4 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+          <span className="font-semibold text-gray-900 dark:text-gray-100">{user.name}</span>
+          <a href={logoutUrl} className="btn-tertiary">Uitloggen</a>
+        </header>
+        <main className="mx-auto max-w-3xl p-4 sm:p-6">
+          <Suspense fallback={<PageLoader />}>
+            <Outlet />
+          </Suspense>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <Layout>
+      <Suspense fallback={<PageLoader />}>
+        <Outlet />
+      </Suspense>
+    </Layout>
   );
 }
 
