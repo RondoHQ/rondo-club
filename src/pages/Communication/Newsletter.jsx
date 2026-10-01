@@ -55,6 +55,8 @@ function NewsletterEditor({ initial, metadata }) {
   const dirty = JSON.stringify(draft) !== JSON.stringify(saved.fields);
   const profileUser = metadata.users.find((u) => u.id === draft.assignee_id);
   const profile = profileUser?.profile;
+  const nameParts = (profile?.name || '').trim().split(/\s+/);
+  const initials = nameParts.length ? `${nameParts[0]?.[0] || ''}${nameParts.length > 1 ? nameParts.at(-1)[0] : ''}`.toUpperCase() : '';
   const blocker = useBlocker(dirty || Boolean(busy));
   useBeforeUnload(useCallback((e) => { if (dirty || busy) { e.preventDefault(); e.returnValue = ''; } }, [dirty, busy]));
   useEffect(() => {
@@ -125,7 +127,7 @@ function NewsletterEditor({ initial, metadata }) {
         </section> : <>
           <fieldset disabled={Boolean(busy)} className="min-w-0 rounded-xl border border-gray-200 bg-white p-5 sm:p-6 dark:border-gray-700 dark:bg-gray-800">
             <section className={sectionClass}><h2 className="text-lg font-semibold">Afzender</h2><label className={labelClass} htmlFor="newsletter-assignee">Verantwoordelijke<select id="newsletter-assignee" className="input mt-1 w-full" value={draft.assignee_id} onChange={(e) => change('assignee_id', Number(e.target.value))}><option value={0}>Kies een verantwoordelijke</option>{metadata.users.map((u) => <option key={u.id} value={u.id}>{u.name}{!u.ready ? ' · profiel ontbreekt' : ''}</option>)}</select></label>
-              {profileUser?.ready ? <div className="text-sm"><p className="font-medium">{profile.from_name}</p><p className="mt-1 break-words text-gray-600 dark:text-gray-300">{profile.from_email}</p><p className="mt-1 text-gray-600 dark:text-gray-300">Handtekening: {profile.name}, {profile.role}</p></div> : <p className="text-sm text-gray-600 dark:text-gray-300">Kies een verantwoordelijke met een ingesteld ondertekeningsprofiel.</p>}
+              {profileUser?.ready ? <div className="text-sm"><p className="font-medium">{profile.from_name}</p><p className="mt-1 break-words text-gray-600 dark:text-gray-300">{profile.from_email}</p><p className="mt-1 break-words text-gray-600 dark:text-gray-300">Antwoorden naar: {profile.reply_to}</p><p className="mt-1 text-gray-600 dark:text-gray-300">Handtekening: {profile.name}, {profile.role}</p></div> : <p className="text-sm text-gray-600 dark:text-gray-300">Kies een verantwoordelijke met een ingesteld ondertekeningsprofiel.</p>}
             </section>
             <section className={sectionClass}><h2 className="text-lg font-semibold">Doelgroep</h2><p className="text-sm text-gray-600 dark:text-gray-300">Kies een Laposta-lijst en bepaal wie daarbinnen de nieuwsbrief ontvangt.</p>
               {lists.isLoading && <p role="status" className="text-sm">Lijsten laden…</p>}
@@ -147,9 +149,9 @@ function NewsletterEditor({ initial, metadata }) {
       </div>
       <aside className={`${mobileTab === 'preview' ? '' : 'hidden'} min-w-0 lg:sticky lg:top-5 lg:block`} aria-label="Nieuwsbriefvoorbeeld">
         <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-lg font-semibold">Voorbeeld</h2><span className="text-xs text-gray-600 dark:text-gray-300">{preview.isFetching ? 'Bijwerken…' : 'Weergave kan per mailprogramma verschillen'}</span></div>
-        <div className="mb-3 hidden gap-2 lg:flex" aria-label="Voorbeeldformaat"><button className="btn-tertiary min-h-11 gap-2" aria-pressed={previewSize === 'desktop'} onClick={() => setPreviewSize('desktop')}><Monitor className="h-4 w-4" />Desktop</button><button className="btn-tertiary min-h-11 gap-2" aria-pressed={previewSize === 'mobile'} onClick={() => setPreviewSize('mobile')}><Smartphone className="h-4 w-4" />Mobiel</button></div>
+        <div className="mb-3 hidden gap-2 lg:flex" aria-label="Voorbeeldformaat"><button className={`${previewSize === 'desktop' ? 'btn-primary' : 'btn-secondary'} min-h-11 gap-2`} aria-pressed={previewSize === 'desktop'} onClick={() => setPreviewSize('desktop')}><Monitor className="h-4 w-4" />Desktop</button><button className={`${previewSize === 'mobile' ? 'btn-primary' : 'btn-secondary'} min-h-11 gap-2`} aria-pressed={previewSize === 'mobile'} onClick={() => setPreviewSize('mobile')}><Smartphone className="h-4 w-4" />Mobiel</button></div>
         <div className={`mx-auto overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 ${previewSize === 'mobile' ? 'max-w-[375px]' : 'w-full'}`}>
-          <div className="space-y-1 border-b border-gray-200 p-4 text-sm text-gray-900"><p className="break-words font-semibold">{draft.newsletter_subject || 'Onderwerp van je nieuwsbrief'}</p><p className="break-words text-gray-600">{draft.newsletter_preheader || 'Voorbeeldtekst voor de inbox'}</p></div>
+          <div className="space-y-1 border-b border-gray-200 p-4 text-sm text-gray-900"><div className="mb-3 flex items-center gap-3"><span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-700">{initials || '–'}</span><div className="min-w-0"><p className="break-words font-medium">{profile?.from_name || 'Afzender'}</p><p className="break-words text-xs text-gray-600">{profile?.from_email || 'Kies een verantwoordelijke'}</p></div></div><p className="break-words font-semibold">{draft.newsletter_subject || 'Onderwerp van je nieuwsbrief'}</p><p className="break-words text-gray-600">{draft.newsletter_preheader || 'Voorbeeldtekst voor de inbox'}</p></div>
           {html && (review || !preview.isError) ? <iframe className="block h-[70vh] min-h-[500px] w-full bg-white" title="Voorbeeld van de nieuwsbrief" sandbox="" referrerPolicy="no-referrer" srcDoc={html} /> : <p role="status" className="p-8 text-sm text-gray-600">{preview.isError ? errorText(preview.error) : 'Het voorbeeld verschijnt zodra de verbinding en het ondertekeningsprofiel zijn ingesteld.'}</p>}
         </div>
       </aside>
