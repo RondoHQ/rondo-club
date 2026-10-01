@@ -1,6 +1,6 @@
 # PRD: Laposta-campagnes vanuit Rondo
 
-**Status:** Technische proef uitgevoerd; Rondo-interface nog niet geïmplementeerd
+**Status:** Technische proef uitgevoerd; klikbaar interfaceontwerp beschikbaar voor beoordeling; productfunctie nog niet geïmplementeerd
 
 **Datum:** 1 oktober 2026
 
@@ -124,6 +124,8 @@ Verzenden/inplannen vanuit Rondo, statistieken, Google Docs-import, een visuele 
 | AC-11 | Voorbeeld en geëxporteerde HTML gebruiken dezelfde renderer; desktop, mobiel en toetsenbordbediening worden gecontroleerd. |
 
 ## 11. Te bevestigen vóór bouwen
+
+Het [klikbare interfaceontwerp](evidence/laposta-campagnes/interface/index.html) volgt de gekozen aparte editor met invoer links en direct voorbeeld rechts. Zie [ontwerpkeuzes](laposta-campagnes-interface.md) en [startinstructies](evidence/laposta-campagnes/README.md#klikbaar-interfaceontwerp). Het ontwerp gebruikt demonstratiegegevens en maakt geen echte campagnes aan.
 
 Aanbevolen start: conceptaanmaak en bijwerken binnen de bestaande planning, doelgroepkeuze uit bestaande lijsten/segmenten en profielbeheer door beheerders. De gebruiker bevestigt deze scope vóór implementatie. Vervolgens worden de gebruiker-profielkoppelingen, afzendadressen en juiste handtekeningafbeeldingen vastgesteld.
 
