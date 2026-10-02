@@ -359,9 +359,14 @@ export default function FeedbackDetail() {
                 <LinkIcon className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">URL Context</h3>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm break-all">
+                  <a
+                    href={feedback.meta.url_context}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-electric-cyan hover:underline text-sm break-all"
+                  >
                     {feedback.meta.url_context}
-                  </p>
+                  </a>
                 </div>
               </div>
             )}
