@@ -38,6 +38,7 @@ function readStoredVisibility(storageKey) {
  *
  * @param {object[]} props.data - Row data array
  * @param {object[]} props.columns - Column definitions from createColumn()
+ * @param {object[]} [props.initialSorting=[]] - Initial TanStack sorting state
  * @param {string} [props.storageKey] - Key for localStorage column visibility persistence
  * @param {boolean} [props.isLoading=false] - Show loading spinner
  * @param {ReactNode} [props.emptyIcon] - Icon for empty state
@@ -56,6 +57,7 @@ export default function DataTable({
   data = [],
   columns,
   storageKey,
+  initialSorting = [],
   isLoading = false,
   emptyIcon,
   emptyTitle = 'Geen items gevonden',
@@ -128,7 +130,7 @@ export default function DataTable({
   const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
 
   // --- Sorting state (client-side) ---
-  const [sorting, setSorting] = useState([]);
+  const [sorting, setSorting] = useState(initialSorting);
 
   // --- TanStack Table instance ---
   const table = useReactTable({

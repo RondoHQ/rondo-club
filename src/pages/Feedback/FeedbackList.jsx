@@ -66,16 +66,6 @@ const statusOptions = [
 
 const closedStatuses = ['resolved', 'declined'];
 
-const statusSortOrder = {
-  new: 0,
-  approved: 1,
-  in_progress: 2,
-  in_review: 3,
-  needs_info: 4,
-  resolved: 5,
-  declined: 6,
-};
-
 const priorityOptions = [
   { value: 'low', label: 'Laag' },
   { value: 'medium', label: 'Gemiddeld' },
@@ -176,21 +166,6 @@ export default function FeedbackList() {
     orderby: 'date',
     order: 'desc',
   });
-
-  const sortedFeedback = useMemo(() => (
-    [...feedback].sort((a, b) => {
-      const statusA = a.meta?.status || 'new';
-      const statusB = b.meta?.status || 'new';
-      const rankA = statusSortOrder[statusA] ?? 999;
-      const rankB = statusSortOrder[statusB] ?? 999;
-
-      if (rankA !== rankB) {
-        return rankA - rankB;
-      }
-
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
-    })
-  ), [feedback]);
 
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['feedback'] });
@@ -416,7 +391,8 @@ export default function FeedbackList() {
       <div className="space-y-6">
         <DataTable
           storageKey="feedback"
-          data={sortedFeedback}
+          data={feedback}
+          initialSorting={[{ id: 'id', desc: true }]}
           columns={columns}
           isLoading={isLoading}
           emptyIcon={<MessageSquare className="w-8 h-8 text-gray-400 dark:text-gray-500" />}
