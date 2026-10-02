@@ -8,7 +8,7 @@
         "chillerlan/php-qrcode": "^6.0",
         "google/apiclient": "^2.15",
         "lettermint/lettermint-php": "^2.2",
-        "mollie/mollie-api-php": "^3.9",
+        "mollie/mollie-api-php": "^4.0",
         "mpdf/mpdf": "^8.2",
         "pkpass/pkpass": "^2.4",
         "smalot/pdfparser": "^2.12"
