@@ -76,6 +76,7 @@ class SectionAccessTest extends RondoTestCase {
 	public function test_coordinator_reads_full_roster_without_opening_other_team_details(): void {
 		$assigned = $this->createOrganization( [ 'post_title' => 'JO11-1' ] );
 		$other    = $this->createOrganization( [ 'post_title' => 'JO19-1' ] );
+		\Rondo\Fields\Fields::update_for_post( $other, 'activiteit', 'Veld - Zaterdag' );
 		update_option( 'rondo_team_access', [ $this->role => [ $assigned ] ] );
 		$coaches = [];
 		foreach ( [ $assigned, $other ] as $team ) {
@@ -100,7 +101,9 @@ class SectionAccessTest extends RondoTestCase {
 		$this->assertTrue( $teams[ $assigned ]['can_access'] );
 		$this->assertFalse( $teams[ $other ]['can_access'] );
 		$this->assertSame( 'JO19-1', $teams[ $other ]['name'] );
-		$this->assertSame( [ 'id', 'parent', 'name', 'can_access' ], array_keys( $teams[ $other ] ) );
+		$this->assertSame( 'Veld - Zaterdag', $teams[ $other ]['activiteit'] );
+		$this->assertSame( '', $teams[ $assigned ]['activiteit'] );
+		$this->assertSame( [ 'id', 'parent', 'name', 'activiteit', 'can_access' ], array_keys( $teams[ $other ] ) );
 		$this->assertSame( 403, $this->request( '/wp/v2/teams/' . $other )->get_status() );
 		$this->assertFalse( AccessControl::can_view_person( $coaches[1] ) );
 		$this->assertSame( 'trainer@example.com', $data['people'][0]['fields']['email_1'] );
