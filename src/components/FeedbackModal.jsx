@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
@@ -11,6 +11,16 @@ export default function FeedbackModal({
   isLoading,
   urlContext,
 }) {
+  const [screenshot, setScreenshot] = useState(null);
+  const [preview, setPreview] = useState('');
+  const [submitError, setSubmitError] = useState('');
+  const [fileError, setFileError] = useState('');
+  useEffect(() => {
+    if (!screenshot) return;
+    const url = URL.createObjectURL(screenshot);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [screenshot]);
   const isOnline = useOnlineStatus();
   const { data: currentUser } = useCurrentUser();
   const isAdmin = currentUser?.is_admin ?? false;
@@ -32,6 +42,10 @@ export default function FeedbackModal({
   // Reset form on open
   useEffect(() => {
     if (isOpen) {
+      setScreenshot(null);
+      setPreview('');
+      setSubmitError('');
+      setFileError('');
       reset({
         title: '',
         content: '',
@@ -46,8 +60,9 @@ export default function FeedbackModal({
   }, [isOpen, reset]);
 
   // Form submit handler
-  const handleFormSubmit = (data) => {
+  const handleFormSubmit = async (data) => {
     const submitData = {
+      screenshot,
       title: data.title,
       content: data.content,
       feedback_type: data.feedback_type,
@@ -68,7 +83,12 @@ export default function FeedbackModal({
     submitData.app_version = window.rondoConfig?.version || 'unknown';
     submitData.url_context = urlContext || window.location.href;
 
-    onSubmit(submitData);
+    setSubmitError('');
+    try {
+      await onSubmit(submitData);
+    } catch (error) {
+      setSubmitError(error.response?.data?.message || 'Feedback verzenden is mislukt. Probeer het opnieuw.');
+    }
   };
 
   if (!isOpen) return null;
@@ -188,6 +208,43 @@ export default function FeedbackModal({
                 <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.content.message}</p>
               )}
             </div>
+
+            <div>
+              <label htmlFor="feedback-screenshot" className="label">Screenshot (optioneel)</label>
+              <input
+                id="feedback-screenshot"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="input"
+                disabled={isLoading}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  setFileError('');
+                  setScreenshot(null);
+                  setPreview('');
+                  if (!file) return;
+                  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+                    setFileError('Kies een PNG, JPG of WebP van maximaal 5 MB.');
+                    event.target.value = '';
+                    return;
+                  }
+                  setScreenshot(file);
+                }}
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">PNG, JPG of WebP, maximaal 5 MB.</p>
+              {fileError && <p role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{fileError}</p>}
+              {screenshot && preview && (
+                <div className="mt-2 space-y-2">
+                  <img src={preview} alt="Voorbeeld van je screenshot" className="max-h-48 max-w-full rounded border border-gray-200 dark:border-gray-700" />
+                  <button type="button" className="btn-secondary text-sm" disabled={isLoading} onClick={() => {
+                    setScreenshot(null);
+                    setPreview('');
+                    document.getElementById('feedback-screenshot').value = '';
+                  }}>Screenshot verwijderen</button>
+                </div>
+              )}
+            </div>
+            {submitError && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{submitError}</p>}
 
             {/* Bug-specific fields */}
             {feedbackType === 'bug' && (

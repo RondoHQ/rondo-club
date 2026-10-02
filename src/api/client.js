@@ -389,7 +389,17 @@ export const prmApi = {
   // Feedback
   getFeedbackList: (params) => api.get('/rondo/v1/feedback', { params }),
   getFeedback: (id) => api.get(`/rondo/v1/feedback/${id}`),
-  createFeedback: (data) => api.post('/rondo/v1/feedback', data),
+  createFeedback: (data) => {
+    const { screenshot, ...fields } = data;
+    if (!screenshot) return api.post('/rondo/v1/feedback', fields);
+    const formData = new FormData();
+    Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
+    formData.append('screenshot', screenshot);
+    return api.post('/rondo/v1/feedback', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  getFeedbackScreenshot: (id) => api.get(`/rondo/v1/feedback/${id}/screenshot`, { responseType: 'blob' }),
   updateFeedback: (id, data) => api.put(`/rondo/v1/feedback/${id}`, data),
   deleteFeedback: (id) => api.delete(`/rondo/v1/feedback/${id}`),
   getFeedbackComments: (id) => api.get(`/rondo/v1/feedback/${id}/comments`),
