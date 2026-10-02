@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.119.0] - 2026-10-02
+
+### Added
+- Notify the configured VOG mailbox once when a submission needs coordinator review, with bounded delivery retries and no private document attachments.
+- Show an “Upload je VOG hier” bar for linked members with a Justis request date, hidden while their submission is being processed or reviewed.
+
 ## [35.118.2] - 2026-10-01
 
 ### Fixed

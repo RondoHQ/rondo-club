@@ -6,5 +6,5 @@ export const VOG_SUBMISSION_LABELS = {
 };
 
 export async function refreshVog(client) {
-  await Promise.all(['vog', 'people', 'person', 'shifts', 'volunteer'].map(key => client.invalidateQueries({ queryKey: [key] })));
+  await Promise.all(['vog', 'people', 'person', 'shifts', 'volunteer', 'current-user'].map(key => client.invalidateQueries({ queryKey: [key] })));
 }

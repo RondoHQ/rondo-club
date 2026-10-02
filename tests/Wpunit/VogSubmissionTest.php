@@ -269,6 +269,7 @@ class VogSubmissionTest extends RondoTestCase {
 				Store::process( $id );
 				$result = Store::get( $id );
 				$this->assertSame( $configured ? 'approved' : 'review', $result['status'] );
+				$this->assertSame( ! $configured, (bool) wp_next_scheduled( Store::REVIEW_NOTICE_HOOK, [ $id ] ) );
 				$this->assertSame( 0, $result['code'] );
 				if ( $configured ) {
 					$this->assertSame( 'gaav_auto', $result['method'] );

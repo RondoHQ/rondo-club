@@ -10,16 +10,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 final class VogSubmissions {
-	const TYPE     = 'rondo_vog_submission';
-	const META     = '_rondo_vog_submission';
-	const RULES    = 'rondo_vog_approval_rules';
-	const IDENTITY = '_rondo_vog_verified_identity';
-	const ACTIVE   = [ 'checking', 'technical', 'review', 'awaiting_member', 'needs_original', 'waiting_paper' ];
+	const TYPE                   = 'rondo_vog_submission';
+	const META                   = '_rondo_vog_submission';
+	const RULES                  = 'rondo_vog_approval_rules';
+	const IDENTITY               = '_rondo_vog_verified_identity';
+	const ACTIVE                 = [ 'checking', 'technical', 'review', 'awaiting_member', 'needs_original', 'waiting_paper' ];
+	const REVIEW_NOTICE_HOOK     = 'rondo_vog_review_notice';
+	const REVIEW_NOTICE_SENT     = '_rondo_vog_review_notified_at';
+	const REVIEW_NOTICE_ATTEMPTS = '_rondo_vog_review_notice_attempts';
 
 	public function __construct() {
 		add_action( 'init', [ self::class, 'register' ] );
 		add_action( 'rondo_vog_retry', [ self::class, 'process' ] );
 		add_action( 'rondo_vog_cleanup', [ self::class, 'cleanup' ] );
+		add_action( self::REVIEW_NOTICE_HOOK, [ self::class, 'notify_reviewer' ] );
 		add_action( 'before_delete_post', [ self::class, 'delete_person' ] );
 		if ( did_action( 'init' ) ) {
 			self::register();
@@ -80,6 +84,52 @@ final class VogSubmissions {
 			&& ! get_option( 'rondo_is_demo_site', false );
 	}
 
+	/** Whether the linked member still needs to upload a requested VOG. */
+	public static function needs_upload( int $person_id, int $user_id ): bool {
+		if ( ! Fields::get_for_post( $person_id, 'vog_justis_submitted_date' ) || ! self::eligible( $person_id, $user_id ) ) {
+			return false;
+		}
+		$data = self::get( self::latest_id( $person_id ) );
+		return ! $data || $data['expires'] <= time() || ! in_array( $data['status'], [ 'checking', 'technical', 'review', 'waiting_paper', 'awaiting_member' ], true );
+	}
+
+	/** Technical failures need coordinator attention after the automatic retries. */
+	private static function needs_review_notice( array $data ): bool {
+		return in_array( $data['status'] ?? '', [ 'review', 'waiting_paper', 'needs_original' ], true )
+			|| ( ( $data['status'] ?? '' ) === 'technical' && $data['attempts'] >= 3 );
+	}
+
+	/** Recheck final processing state under the person lock before sending once. */
+	public static function notify_reviewer( int $id ): void {
+		$data = self::get( $id );
+		if ( ! $data ) {
+			return;
+		}
+		$result = self::locked(
+			$data['person_id'],
+			static function () use ( $id ) {
+				$data = self::get( $id );
+				if ( ! $data || ! self::needs_review_notice( $data ) || $data['expires'] <= time() || self::latest_id( $data['person_id'] ) !== $id || ! self::eligible( $data['person_id'], $data['user_id'] ) || get_post_meta( $id, self::REVIEW_NOTICE_SENT, true ) ) {
+					return;
+				}
+				$attempts = (int) get_post_meta( $id, self::REVIEW_NOTICE_ATTEMPTS, true );
+				if ( $attempts >= 3 ) {
+					return;
+				}
+				update_post_meta( $id, self::REVIEW_NOTICE_ATTEMPTS, ++$attempts );
+				if ( ( new VOGEmail() )->send_review_notification( $id ) ) {
+					update_post_meta( $id, self::REVIEW_NOTICE_SENT, gmdate( 'c' ) );
+					wp_clear_scheduled_hook( self::REVIEW_NOTICE_HOOK, [ $id ] );
+				} elseif ( $attempts < 3 && ! wp_next_scheduled( self::REVIEW_NOTICE_HOOK, [ $id ] ) ) {
+					wp_schedule_single_event( time() + 5 * MINUTE_IN_SECONDS, self::REVIEW_NOTICE_HOOK, [ $id ] );
+				}
+			}
+		);
+		if ( is_wp_error( $result ) && ! wp_next_scheduled( self::REVIEW_NOTICE_HOOK, [ $id ] ) ) {
+			wp_schedule_single_event( time() + MINUTE_IN_SECONDS, self::REVIEW_NOTICE_HOOK, [ $id ] );
+		}
+	}
+
 	public static function get( int $id ): array {
 		if ( get_post_type( $id ) !== self::TYPE ) {
 			return [];
@@ -111,6 +161,10 @@ final class VogSubmissions {
 		}
 		update_post_meta( $id, '_rondo_vog_active', in_array( $data['status'], self::ACTIVE, true ) ? '1' : '0' );
 		update_post_meta( $id, '_rondo_vog_expires', $data['expires'] );
+		// Defer until processing has finished, so automatic approvals never send mail.
+		if ( self::needs_review_notice( $data ) && ! get_post_meta( $id, self::REVIEW_NOTICE_SENT, true ) && (int) get_post_meta( $id, self::REVIEW_NOTICE_ATTEMPTS, true ) < 3 && ! wp_next_scheduled( self::REVIEW_NOTICE_HOOK, [ $id ] ) ) {
+			wp_schedule_single_event( time() + MINUTE_IN_SECONDS, self::REVIEW_NOTICE_HOOK, [ $id ] );
+		}
 	}
 
 	public static function path( array $file ): string {
@@ -184,6 +238,7 @@ final class VogSubmissions {
 		$data['status']      = $status;
 		$data['finished_at'] = gmdate( 'c' );
 		wp_clear_scheduled_hook( 'rondo_vog_retry', [ $id ] );
+		wp_clear_scheduled_hook( self::REVIEW_NOTICE_HOOK, [ $id ] );
 		self::save( $id, $data );
 	}
 

@@ -1278,6 +1278,7 @@ class UserSettings extends Base {
 			'profile_url'                    => admin_url( 'profile.php' ),
 			'admin_url'                      => admin_url(),
 			'linked_person_id'               => $person_id ?: null,
+			'needs_vog_upload'               => $person_id > 0 && \Rondo\VOG\VogSubmissions::needs_upload( $person_id, $user_id ),
 			'linked_person_name'             => $linked_person_name,
 			'active_functies'                => $active_functies,
 			'linked_person_photo'            => $linked_person_photo,
