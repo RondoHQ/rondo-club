@@ -10,6 +10,7 @@ namespace Rondo\REST;
 
 use Rondo\Feedback\NewFeedbackEmailSender;
 use Rondo\Feedback\StatusService;
+use Rondo\Feedback\FeedbackScreenshot;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -23,6 +24,7 @@ class Feedback extends Base {
 	public function __construct() {
 		parent::__construct();
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+		add_filter( 'rest_pre_serve_request', [ $this, 'serve_screenshot' ], 10, 3 );
 	}
 
 	/**
@@ -47,6 +49,16 @@ class Feedback extends Base {
 						return is_user_logged_in();
 					},
 				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/feedback/(?P<id>\d+)/screenshot',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_screenshot' ],
+				'permission_callback' => [ $this, 'check_feedback_access' ],
 			]
 		);
 
@@ -355,6 +367,11 @@ class Feedback extends Base {
 			);
 		}
 
+		$screenshot = FeedbackScreenshot::upload( $request->get_file_params() );
+		if ( is_wp_error( $screenshot ) ) {
+			return $screenshot;
+		}
+
 		// Create the post
 		$post_id = wp_insert_post(
 			[
@@ -363,15 +380,25 @@ class Feedback extends Base {
 				'post_content' => wp_kses_post( $request->get_param( 'content' ) ?? '' ),
 				'post_status'  => 'publish',
 				'post_author'  => get_current_user_id(),
-			]
+			],
+			true
 		);
 
 		if ( is_wp_error( $post_id ) ) {
+			if ( $screenshot ) {
+				wp_delete_file( FeedbackScreenshot::path( $screenshot ) );
+			}
 			return new \WP_Error(
 				'rest_cannot_create',
 				__( 'Failed to create feedback.', 'rondo' ),
 				[ 'status' => 500 ]
 			);
+		}
+
+		if ( $screenshot && ! update_post_meta( $post_id, FeedbackScreenshot::META, $screenshot ) ) {
+			wp_delete_file( FeedbackScreenshot::path( $screenshot ) );
+			wp_delete_post( $post_id, true );
+			return new \WP_Error( 'feedback_screenshot_storage', 'De screenshot kon niet worden gekoppeld. Probeer het opnieuw.', [ 'status' => 500 ] );
 		}
 
 		// Save canonical fields
@@ -443,6 +470,37 @@ class Feedback extends Base {
 		// Return formatted feedback
 		$post = get_post( $post_id );
 		return rest_ensure_response( $this->format_feedback( $post ) );
+	}
+
+	/** The binary file is streamed only after the normal feedback access check. */
+	public function get_screenshot( $request ) {
+		$file = get_post_meta( (int) $request['id'], FeedbackScreenshot::META, true );
+		if ( ! is_array( $file ) || ! is_readable( FeedbackScreenshot::path( $file ) ) || get_post_status( (int) $request['id'] ) === 'trash' ) {
+			return new \WP_Error( 'feedback_screenshot_missing', 'Deze screenshot is niet beschikbaar.', [ 'status' => 404 ] );
+		}
+		return new \WP_REST_Response( null, 200, [ 'Cache-Control' => 'private, no-store' ] );
+	}
+
+	public function serve_screenshot( $served, $result, $request ) {
+		if ( $served || ! preg_match( '#^/rondo/v1/feedback/\d+/screenshot$#', $request->get_route() ) || $result->get_status() !== 200 || ! $this->check_feedback_access( $request ) ) {
+			return $served;
+		}
+		if ( is_wp_error( $this->get_screenshot( $request ) ) ) {
+			return $served;
+		}
+		$file   = get_post_meta( (int) $request['id'], FeedbackScreenshot::META, true );
+		$handle = fopen( FeedbackScreenshot::path( $file ), 'rb' );
+		if ( ! $handle ) {
+			return $served;
+		}
+		header( 'Content-Type: ' . $file['type'] );
+		header( 'Content-Disposition: inline; filename="screenshot.' . pathinfo( $file['file'], PATHINFO_EXTENSION ) . '"' );
+		header( 'Cache-Control: private, no-store, max-age=0' );
+		header( 'X-Content-Type-Options: nosniff' );
+		header( 'Content-Security-Policy: sandbox' );
+		fpassthru( $handle );
+		fclose( $handle );
+		return true;
 	}
 
 	/**
@@ -842,18 +900,19 @@ class Feedback extends Base {
 		}
 
 		return [
-			'id'       => $post->ID,
-			'title'    => $this->sanitize_text( $post->post_title ),
-			'content'  => $this->sanitize_rich_content( $post->post_content ),
-			'author'   => [
+			'id'             => $post->ID,
+			'title'          => $this->sanitize_text( $post->post_title ),
+			'content'        => $this->sanitize_rich_content( $post->post_content ),
+			'has_screenshot' => (bool) get_post_meta( $post->ID, FeedbackScreenshot::META, true ),
+			'author'         => [
 				'id'        => $author ? (int) $author->ID : 0,
 				'name'      => $author ? $this->sanitize_text( $author->display_name ) : '',
 				'email'     => $author ? sanitize_email( $author->user_email ) : '',
 				'person_id' => $person_id,
 			],
-			'date'     => $post->post_date_gmt,
-			'modified' => $post->post_modified_gmt,
-			'meta'     => [
+			'date'           => $post->post_date_gmt,
+			'modified'       => $post->post_modified_gmt,
+			'meta'           => [
 				'feedback_type'      => \Rondo\Fields\Fields::get_for_post( $post->ID, 'feedback_type' ) ?: '',
 				'status'             => \Rondo\Fields\Fields::get_for_post( $post->ID, 'status' ) ?: 'new',
 				'priority'           => \Rondo\Fields\Fields::get_for_post( $post->ID, 'priority' ) ?: 'medium',

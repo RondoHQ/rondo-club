@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.120.0] - 2026-10-02
+
+### Added
+- Attach an optional private PNG, JPG or WebP screenshot when submitting feedback, viewable by the submitter and users with feedback access.
+
+### Fixed
+- Sort feedback IDs numerically and load all feedback pages so older issues are included in sorting and filtering.
+- Refresh feedback lists after status changes and when returning to the overview, including changes made outside the current browser.
+
 ## [35.119.3] - 2026-10-02
 
 ### Fixed

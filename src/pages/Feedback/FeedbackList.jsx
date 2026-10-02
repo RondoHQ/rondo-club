@@ -245,7 +245,8 @@ export default function FeedbackList() {
     createColumn({
       id: 'id',
       header: 'ID',
-      accessorFn: (row) => String(row.id),
+      accessorFn: (row) => Number(row.id),
+      sortingFn: 'basic',
       cell: ({ row }) => (
         <Link to={`/feedback/${row.original.id}`} className="text-electric-cyan dark:text-electric-cyan hover:underline font-medium">
           #{row.original.id}

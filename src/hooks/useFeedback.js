@@ -1,15 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 
-// Query keys
-export const feedbackKeys = {
-  all: ['feedback'],
-  lists: () => [...feedbackKeys.all, 'list'],
-  list: (filters) => [...feedbackKeys.lists(), filters],
-  details: () => [...feedbackKeys.all, 'detail'],
-  detail: (id) => [...feedbackKeys.details(), id],
-  comments: (id) => [...feedbackKeys.all, 'comments', id],
-};
+import { feedbackKeys, feedbackListOptions, refreshUpdatedFeedback } from '@/utils/feedbackQueries';
+export { feedbackKeys } from '@/utils/feedbackQueries';
 
 /**
  * Fetch list of feedback items with optional filters.
@@ -17,13 +10,7 @@ export const feedbackKeys = {
  * @returns {Object} TanStack Query result
  */
 export function useFeedbackList(filters = {}) {
-  return useQuery({
-    queryKey: feedbackKeys.list(filters),
-    queryFn: async () => {
-      const response = await prmApi.getFeedbackList(filters);
-      return response.data;
-    },
-  });
+  return useQuery(feedbackListOptions(filters, prmApi.getFeedbackList));
 }
 
 /**
@@ -39,6 +26,7 @@ export function useFeedback(id) {
       return response.data;
     },
     enabled: !!id,
+    refetchOnMount: true,
   });
 }
 
@@ -67,11 +55,7 @@ export function useUpdateFeedback() {
 
   return useMutation({
     mutationFn: ({ id, data }) => prmApi.updateFeedback(id, data),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: feedbackKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: feedbackKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-    },
+    onSuccess: (response, { id }) => refreshUpdatedFeedback(queryClient, id, response.data),
   });
 }
 
@@ -105,6 +89,7 @@ export function useFeedbackComments(id) {
       return response.data;
     },
     enabled: !!id,
+    refetchOnMount: true,
   });
 }
 

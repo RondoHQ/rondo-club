@@ -305,6 +305,7 @@ function rondo_init() {
 	new \Rondo\Users\ProfileChangeLog();
 	new \Rondo\Users\ActivationLog();
 	new \Rondo\VOG\VogSubmissions();
+	new \Rondo\Feedback\FeedbackScreenshot();
 	new \Rondo\Sponsors\ActivityLog();
 	new \Rondo\Integrations\FreeScout\ProvisioningEvents();
 

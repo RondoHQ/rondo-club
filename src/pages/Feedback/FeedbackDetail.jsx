@@ -6,6 +6,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { format } from '@/utils/dateFormat';
 import FeedbackEditModal from '@/components/FeedbackEditModal';
+import FeedbackScreenshot from '@/components/FeedbackScreenshot';
 
 // Status badge colors (same as FeedbackList)
 const statusColors = {
@@ -273,6 +274,8 @@ export default function FeedbackDetail() {
           </p>
         </div>
       </div>
+
+      {feedback.has_screenshot && <FeedbackScreenshot feedbackId={feedback.id} />}
 
       {/* Bug-specific fields */}
       {feedback.meta.feedback_type === 'bug' && (
