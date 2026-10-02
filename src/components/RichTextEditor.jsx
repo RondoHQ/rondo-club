@@ -66,7 +66,7 @@ const MenuBar = ({ editor, enableImages = false, enableHeadings = false }) => {
   const fileInputRef = useRef(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  if (!editor) return null;
+  if (!editor || editor.isDestroyed) return null;
 
   const handleImageFile = async (event) => {
     const file = event.target.files?.[0];
@@ -217,6 +217,9 @@ export default function RichTextEditor({
   enableHeadings = false,
 }) {
   const editor = useEditor({
+    // Create the editor after commit so a deferred React render cannot outlive
+    // Tiptap's cleanup timer and leave effects holding a destroyed instance.
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: enableHeadings ? { levels: [2, 3] } : false,
@@ -259,11 +262,14 @@ export default function RichTextEditor({
     },
   });
 
-  useEffect(() => { editor?.setEditable(!disabled, false); }, [editor, disabled]);
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    editor.setEditable(!disabled, false);
+  }, [editor, disabled]);
 
   // Synchronize server-sanitized content without emitting another user edit.
   useEffect(() => {
-    if (!editor) return;
+    if (!editor || editor.isDestroyed) return;
     const normalized = normalizeEditorContent(value);
     if (normalized !== editor.getHTML() && !(normalized === '' && editor.isEmpty)) {
       editor.commands.setContent(normalized, { emitUpdate: false });
