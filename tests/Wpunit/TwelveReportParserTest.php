@@ -159,4 +159,38 @@ class TwelveReportParserTest extends RondoTestCase {
 		$this->assertCount( 9, $report['producten'] );
 		$this->assertSame( 43.45, $report['producten_totaal']['bruto'] );
 	}
+
+	public function test_payment_methods_after_variable_no_sale_categories(): void {
+		$text   = (string) file_get_contents( __DIR__ . '/../fixtures/twelve-smalot-payment-methods.txt' );
+		$report = ReportParser::parse( $text );
+		$rows   = array_column( $report['omzet'], null, 'label' );
+		$this->assertSame( 'categorie', $rows['Verbruik kantinedienst']['section'] );
+		$this->assertSame( -0.90, $rows['Munten over/onderwaarde']['bedrag'] );
+		$this->assertSame( 400.55, $rows['Subtotaal']['bedrag'] );
+		$this->assertSame( [], $report['no_sale'] );
+		$summary = \Rondo\Twelve\ReportAggregator::summarize(
+			[
+				[
+					'period_start' => $report['period_start'],
+					'data'         => $report,
+				],
+			]
+			);
+		$this->assertSame( 394.95, $summary[0]['betaalmethoden']['Omzet pin'] );
+		$this->assertSame( 5.60, $summary[0]['betaalmethoden']['Omzet munten'] );
+		$this->assertSame( 400.55, array_sum( $summary[0]['betaalmethoden'] ) );
+
+		$unknown = ReportParser::parse( str_replace( 'Verbruik kantinedienst', 'Nieuwe categorie', $text ) );
+		$this->assertSame(
+			$summary[0]['betaalmethoden'],
+			\Rondo\Twelve\ReportAggregator::summarize(
+			[
+				[
+					'period_start' => $unknown['period_start'],
+					'data'         => $unknown,
+				],
+			]
+			)[0]['betaalmethoden']
+			);
+	}
 }
