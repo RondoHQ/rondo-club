@@ -23,7 +23,7 @@ class TwelveImportSchedulerTest extends RondoTestCase {
 		ImportScheduler::schedule();
 		$next = wp_next_scheduled( ImportScheduler::HOOK );
 		$this->assertGreaterThan( time(), $next );
-		$this->assertSame( '06:15', wp_date( 'H:i', $next, new \DateTimeZone( 'Europe/Amsterdam' ) ) );
+		$this->assertSame( '07:00', wp_date( 'H:i', $next, new \DateTimeZone( 'Europe/Amsterdam' ) ) );
 		ImportScheduler::schedule();
 		$this->assertSame( $next, wp_next_scheduled( ImportScheduler::HOOK ) );
 		ImportScheduler::unschedule();

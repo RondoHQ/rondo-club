@@ -17,11 +17,11 @@ class ImportScheduler {
 		if ( ! AgentMailClient::has_credentials() || wp_next_scheduled( self::HOOK ) ) {
 			return;
 		}
-		$next = new \DateTimeImmutable( 'today 06:15', new \DateTimeZone( 'Europe/Amsterdam' ) );
+		$next = new \DateTimeImmutable( 'today 07:00', new \DateTimeZone( 'Europe/Amsterdam' ) );
 		if ( $next->getTimestamp() <= time() ) {
 			$next = $next->modify( '+1 day' );
 		}
-		// Single events retain 06:15 local time across daylight-saving changes.
+		// Single events retain 07:00 local time across daylight-saving changes.
 		wp_schedule_single_event( $next->getTimestamp(), self::HOOK );
 	}
 
