@@ -59,15 +59,18 @@ class ReportParser {
 	 * Known Omzetoverzicht row labels mapped to their section.
 	 */
 	private const OMZET_SECTIONS = [
-		'Omzet (excl. no-sale)' => 'totaal',
-		'Bestuur'               => 'categorie',
-		'Breuk en bederf'       => 'categorie',
-		'Businessclub'          => 'categorie',
-		'Omzet betaalpas'       => 'betaalmethode',
-		'Omzet contant'         => 'betaalmethode',
-		'Omzet rekening'        => 'betaalmethode',
-		'Omzet pin'             => 'betaalmethode',
-		'Subtotaal'             => 'subtotaal',
+		'Omzet (excl. no-sale)'   => 'totaal',
+		'Bestuur'                 => 'categorie',
+		'Breuk en bederf'         => 'categorie',
+		'Businessclub'            => 'categorie',
+		'Verbruik kantinedienst'  => 'categorie',
+		'Munten over/onderwaarde' => 'categorie',
+		'Omzet munten'            => 'betaalmethode',
+		'Omzet betaalpas'         => 'betaalmethode',
+		'Omzet contant'           => 'betaalmethode',
+		'Omzet rekening'          => 'betaalmethode',
+		'Omzet pin'               => 'betaalmethode',
+		'Subtotaal'               => 'subtotaal',
 	];
 
 	/**
@@ -190,8 +193,12 @@ class ReportParser {
 		}
 		// These headings occur inside the first table in Smalot extraction.
 		foreach ( $lines as $index => $line ) {
-			$next = $lines[ $index + 1 ] ?? '';
-			if ( ( $line === 'No sale, ingehouden op omzet' && isset( self::OMZET_SECTIONS[ $next ] ) )
+			$next               = $lines[ $index + 1 ] ?? '';
+			$has_amount_columns = true;
+			for ( $column = 2; $column <= 5; ++$column ) {
+				$has_amount_columns = $has_amount_columns && self::is_bedrag( $lines[ $index + $column ] ?? null );
+			}
+			if ( ( $line === 'No sale, ingehouden op omzet' && $has_amount_columns )
 				|| ( $line === 'Betaalwijze' && str_starts_with( $next, 'Omzet ' ) ) ) {
 				unset( $lines[ $index ] );
 			}
@@ -308,6 +315,11 @@ class ReportParser {
 			}
 
 			if ( count( $bedragen ) < 4 ) {
+				// Card-brand details have only an amount and transaction count.
+				if ( count( $bedragen ) === 1 && self::is_aantal( self::peek( $lines, $cursor ) ) ) {
+					++$cursor;
+					continue;
+				}
 				// Not a data row; step back so the dispatcher can handle it.
 				$cursor -= count( $bedragen );
 				break;

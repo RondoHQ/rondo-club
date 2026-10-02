@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.119.3] - 2026-10-02
+
+### Fixed
+- Keep the payment-method heading readable in dark mode and describe missing imported data accurately.
+- Preserve payment-method revenue and no-sale categories when Twelve reports include canteen staff consumption, coin adjustments, or card-brand details.
+
 ## [35.119.2] - 2026-10-02
 
 ### Fixed
