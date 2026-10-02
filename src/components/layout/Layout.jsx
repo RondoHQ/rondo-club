@@ -50,6 +50,7 @@ import { useSearch, useDashboard } from '@/hooks/useDashboard';
 import { useCurrentUser, useMarkFeedbackIntroSeen } from '@/hooks/useCurrentUser';
 import FeedbackModal from '@/components/FeedbackModal';
 import FeedbackIntroPopover from '@/components/FeedbackIntroPopover';
+import VogUploadBanner from '@/components/VogUploadBanner';
 import { InstallAppButton } from '@/components/InstallAppButton';
 import { useCreateFeedback } from '@/hooks/useFeedback';
 
@@ -960,6 +961,8 @@ export default function Layout({ children }) {
           showFeedbackIntro={showFeedbackIntro}
           onAcknowledgeFeedbackIntro={acknowledgeFeedbackIntro}
         />
+
+        {currentUser?.needs_vog_upload && <VogUploadBanner />}
 
         <main className="flex-1 px-4 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom))] overflow-visible lg:min-h-0 lg:overflow-y-auto lg:p-6 [overscroll-behavior-y:none]">
           {children}

@@ -101,6 +101,34 @@ class VOGEmail {
 		return $email;
 	}
 
+	/** Notify the configured VOG mailbox without sending the private document. */
+	public function send_review_notification( int $submission_id ): bool {
+		$recipient = $this->get_from_email();
+		if ( ! is_email( $recipient ) ) {
+			return false;
+		}
+		$subject                  = 'VOG wacht op beoordeling';
+		$message                  = EmailTemplate::render(
+			[
+				'brand_name' => $this->get_from_name(),
+				'heading'    => $subject,
+				'body_html'  => '<p>Er is een VOG ingeleverd die je aandacht nodig heeft. Open Rondo om inzending ' . $submission_id . ' te beoordelen.</p>',
+				'cta_url'    => home_url( '/vrijwilligers/vog/beoordelen' ),
+				'cta_label'  => 'VOG beoordelen',
+			]
+		);
+		$this->current_from_email = $recipient;
+		add_filter( 'wp_mail_from', [ $this, 'filter_mail_from' ] );
+		add_filter( 'wp_mail_from_name', [ $this, 'filter_mail_from_name' ] );
+		try {
+			return wp_mail( $recipient, $subject, $message, [ 'Content-Type: text/html; charset=UTF-8' ] );
+		} finally {
+			remove_filter( 'wp_mail_from', [ $this, 'filter_mail_from' ] );
+			remove_filter( 'wp_mail_from_name', [ $this, 'filter_mail_from_name' ] );
+			$this->current_from_email = null;
+		}
+	}
+
 	/**
 	 * Get the from name for VOG emails
 	 *
