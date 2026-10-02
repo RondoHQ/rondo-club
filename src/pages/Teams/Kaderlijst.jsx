@@ -9,6 +9,7 @@ import { DataTable, createColumn, FILTER_TYPES } from '@/components/DataTable';
 import { useVolunteerRoleSettings } from '@/hooks/useVolunteerRoleSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { decodeHtml, formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
+import { getTeamNameWithPlayingDay } from '@/utils/teamDisplay';
 
 const collator = new Intl.Collator('nl-NL', { numeric: true, sensitivity: 'base' });
 
@@ -312,6 +313,9 @@ export default function Kaderlijst() {
 
       return {
         ...row,
+        teamName: team && grouping.ageGroup === 'Senioren'
+          ? getTeamNameWithPlayingDay(row.teamName, team.activiteit)
+          : row.teamName,
         ageGroup: grouping.ageGroup,
         yearGroup: grouping.yearGroup,
         yearNumber: grouping.yearNumber,

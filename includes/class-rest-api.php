@@ -191,6 +191,7 @@ class Api extends Base {
 					'id'         => (int) $team->ID,
 					'parent'     => (int) $team->post_parent,
 					'name'       => $team->post_title,
+					'activiteit' => (string) \Rondo\Fields\Fields::get_for_post( $team->ID, 'activiteit' ),
 					'can_access' => $allowed === null || in_array( (int) $team->ID, $allowed, true ),
 				];
 			}
