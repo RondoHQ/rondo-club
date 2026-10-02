@@ -420,11 +420,13 @@ If you're less than 95% sure about the changes you're going to make: *ASK QUESTI
 
 Test your changes as much as you can before claiming something works.
 
-### Rule 6: Update documentation
+### Rule 6: Daily developer documentation maintenance
 
 Developer documentation lives in the **developer docs site** at `../developer/src/content/docs/`. This site is deployed to `developer.rondo.club`.
 
-When making changes, update the relevant docs there. Each doc file requires Starlight frontmatter (`title:` in YAML front matter). The docs are organized as:
+Developer documentation is maintained by a separate daily automation in the `developer` repository. It reviews the previous 24 hours of changes across the Rondo repositories and updates the relevant documentation. Do not update the developer docs site as part of each code change unless the user explicitly asks for it.
+
+The daily run follows `../developer/AGENTS.md`. Each doc file requires Starlight frontmatter (`title:` in YAML front matter). The docs are organized as:
 - `api/` — Rondo Club REST API reference
 - `features/` — Feature documentation (access control, relationships, etc.)
 - `integrations/` — iCal, import
@@ -432,7 +434,7 @@ When making changes, update the relevant docs there. Each doc file requires Star
 
 PRDs and product specs still live in `docs/prd/` within this repo.
 
-If the (sub-)system you made changes to is not documented yet, document that system too.
+The daily run also documents newly added systems that do not yet have documentation.
 
 ### Rule 7: Git Commit & Push
 
