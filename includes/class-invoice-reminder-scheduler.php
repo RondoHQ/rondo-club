@@ -183,6 +183,9 @@ class InvoiceReminderScheduler {
 	 * @param int $invoice_id Invoice post ID.
 	 */
 	private function process_invoice( int $invoice_id ): void {
+		if ( get_post_meta( $invoice_id, '_invoice_kind', true ) === 'credit' ) {
+			return;
+		}
 		// Read sent_date canonical field (stored as Ymd string, e.g. '20260215').
 		$sent_date = (string) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'sent_date' );
 

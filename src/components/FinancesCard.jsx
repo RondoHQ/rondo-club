@@ -1,12 +1,11 @@
 import { useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Coins, AlertTriangle, Users, Calendar, Gavel, FileText, Loader2, Ban } from 'lucide-react';
 import { usePersonFee, feeKeys } from '@/hooks/useFees';
 import { usePersonDisciplineCases } from '@/hooks/useDisciplineCases';
-import { usePersonInvoices } from '@/hooks/useInvoices';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useUpdatePerson, peopleKeys } from '@/hooks/usePeople';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 import { formatCurrency, formatPercentage } from '@/utils/formatters';
 import { isDoorbelastException } from '@/utils/disciplineCases';
@@ -56,10 +55,23 @@ function StatusBadge({ status, reminderCount = 0 }) {
  */
 export default function FinancesCard({ personId }) {
   const navigate = useNavigate();
+  const { data: currentUser } = useCurrentUser();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedSeason = searchParams.get('financeSeason') || '';
+  const { data: history, isLoading: historyLoading, error: historyError, refetch: refetchHistory } = useQuery({
+    queryKey: ['invoices', 'person', personId, 'history', selectedSeason],
+    enabled: !!currentUser?.can_access_financieel,
+    queryFn: () => prmApi.getPersonFinanceHistory(personId, selectedSeason ? { season: selectedSeason } : {}).then(res => res.data),
+  });
+  const isHistorical = history && history.season !== history.current_season;
+  const invoices = history?.invoices || [];
+  const selectSeason = (season) => setSearchParams((previous) => {
+    const next = new URLSearchParams(previous);
+    next.set('financeSeason', season);
+    return next;
+  }, { replace: true });
   const { data: feeData, isLoading } = usePersonFee(personId);
 
-  // Fetch current user for fairplay capability check
-  const { data: currentUser } = useCurrentUser();
 
   const canAccessFairplay = Boolean(currentUser?.can_access_fairplay);
   // Read-only finance users see the card but none of its write affordances.
@@ -68,11 +80,6 @@ export default function FinancesCard({ personId }) {
   // Fetch discipline cases (only if user has fairplay access)
   const { data: disciplineCases } = usePersonDisciplineCases(personId, {
     enabled: canAccessFairplay,
-  });
-
-  // Fetch invoices for this person (only if user has financieel access)
-  const { data: invoices = [] } = usePersonInvoices(personId, {
-    enabled: Boolean(currentUser?.can_access_financieel),
   });
 
   // Single-member membership invoice creation
@@ -131,7 +138,7 @@ export default function FinancesCard({ personId }) {
   }
 
   // Don't render if loading or no data
-  if (isLoading) {
+  if (isLoading || historyLoading) {
     return (
       <div className="card p-6 mb-4">
         <div className="flex items-center gap-2 mb-3">
@@ -146,30 +153,39 @@ export default function FinancesCard({ personId }) {
     );
   }
 
-  // Person not calculable - don't show card, UNLESS manually excluded (show toggle to re-include)
-  if (!feeData?.calculable && !isExcluded) {
-    return null;
-  }
-
   const hasDiscount = feeData?.family_discount_rate > 0;
   const hasProrata = feeData?.prorata_percentage < 1.0;
   const hasNikkiData = feeData?.nikki_total !== null;
   const billingMethod = feeData?.billing_method ?? 'nikki';
-  const hasMembershipInvoice = invoices.some(inv => inv.invoice_type === 'membership');
+  const hasMembershipInvoice = invoices.some(inv => inv.invoice_type === 'membership' && inv.invoice_kind !== 'credit' && inv.status !== 'cancelled');
 
   return (
     <div className="card p-6 mb-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
           <Coins className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           <h2 className="font-semibold text-brand-gradient">Financieel</h2>
         </div>
-        {!isExcluded && <span className="text-xs text-gray-400">{feeData?.season}</span>}
+        <label className="flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+          Seizoen
+          <select aria-label="Financieel seizoen" value={history?.season || selectedSeason} onChange={event => selectSeason(event.target.value)} className="input py-1.5 w-auto">
+            {(history?.seasons || []).map(season => <option key={season} value={season}>{season}{season === history.current_season ? ' (huidig)' : ''}</option>)}
+          </select>
+        </label>
       </div>
 
-      {/* Excluded state */}
-      {isExcluded ? (
+      {historyError && <p role="alert" className="text-sm text-red-700 dark:text-red-300">Financiële gegevens konden niet worden geladen. <button onClick={() => refetchHistory()} className="underline">Opnieuw proberen</button></p>}
+      {isHistorical ? (
+        <div className="space-y-3 text-sm">
+          <p className="text-gray-500 dark:text-gray-400">Vastgelegde gegevens over {history.season}.</p>
+          {history.contribution_total !== null ? <>
+            <div className="flex justify-between gap-3"><span>Contributie ({history.source === 'nikki' ? 'Nikki' : 'facturen'})</span><strong>{formatCurrency(history.contribution_total, 2)}</strong></div>
+            <div className="flex justify-between gap-3"><span>Betaalde contributie</span><span>{history.contribution_paid === null ? 'Onbekend' : formatCurrency(history.contribution_paid, 2)}</span></div>
+          </> : history.snapshot?.final_fee != null ? <div className="flex justify-between gap-3"><span>Vastgelegde contributie</span><strong>{formatCurrency(history.snapshot.final_fee, 2)}</strong></div> : <p className="text-gray-500 dark:text-gray-400">Geen contributiegegevens beschikbaar voor dit seizoen.</p>}
+          {history.source === 'nikki' && <p className="text-xs text-gray-500 dark:text-gray-400">Nikki-gegevens bevatten geen oorspronkelijke factuur in Rondo.</p>}
+        </div>
+      ) : isExcluded ? (
         <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2">
             <Ban className="w-4 h-4 text-gray-400" />
@@ -185,7 +201,7 @@ export default function FinancesCard({ personId }) {
             </button>
           )}
         </div>
-      ) : (
+      ) : feeData?.calculable ? (
         <div className="space-y-3">
           {/* Financial Block Warning */}
           {feeData?.financiele_blokkade && (
@@ -329,31 +345,6 @@ export default function FinancesCard({ personId }) {
             </div>
           )}
 
-          {/* Invoices */}
-          {invoices.length > 0 && (
-            <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-700">
-              <div className="flex items-center gap-1.5 mb-2">
-                <FileText className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Facturen</span>
-              </div>
-              <div className="space-y-1.5">
-                {invoices.map(invoice => (
-                  <Link
-                    key={invoice.id}
-                    to={`/financien/facturen/${invoice.id}`}
-                    className="flex justify-between items-center text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded px-1 -mx-1 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-600 dark:text-gray-400">{invoice.invoice_number}</span>
-                      <StatusBadge status={invoice.status} reminderCount={invoice.reminder_count || 0} />
-                    </div>
-                    <span className="font-medium">{formatCurrency(invoice.total_amount, 2)}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Exclusion toggle — writing this needs the financieel capability, not financieel_read */}
           {canEditFinancieel && (
             <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
@@ -368,7 +359,25 @@ export default function FinancesCard({ personId }) {
             </div>
           )}
         </div>
-      )}
+      ) : <p className="text-sm text-gray-500 dark:text-gray-400">{feeData?.message || 'Geen contributiegegevens beschikbaar.'}</p>}
+      {!historyError && <>
+        <FinanceInvoiceList invoices={invoices} season={history?.season} />
+        {history?.unassigned_invoices?.length > 0 && <details className="mt-4 text-sm"><summary className="cursor-pointer text-gray-600 dark:text-gray-300">Facturen zonder vastgelegd seizoen ({history.unassigned_invoices.length})</summary><FinanceInvoiceList invoices={history.unassigned_invoices} /></details>}
+        {canEditFinancieel && history?.contribution_paid > 0 && <Link to={`/financien/facturen/nieuw?injuryPerson=${personId}&season=${history.season}`} className="btn-tertiary mt-4 gap-2 text-sm"><FileText className="h-4 w-4" />Creditnota bij blessure</Link>}
+      </>}
     </div>
   );
+}
+
+function FinanceInvoiceList({ invoices, season }) {
+  return <section className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
+    <h3 className="font-semibold text-sm mb-2">Facturen en creditnota’s</h3>
+    {!invoices.length && <p className="text-sm text-gray-500 dark:text-gray-400">Geen facturen{season ? ` voor ${season}` : ''}.</p>}
+    <div className="divide-y divide-gray-100 dark:divide-gray-700">{invoices.map(invoice => <Link key={invoice.id} to={`/financien/facturen/${invoice.id}`} className="block py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded focus-visible:outline-2 focus-visible:outline-cyan-600">
+      <div className="flex flex-wrap justify-between gap-2 text-sm"><span className="font-medium text-cyan-800 dark:text-cyan-200">{invoice.invoice_number}{invoice.invoice_kind === 'credit' ? ' · Creditnota' : ''}</span><strong className="tabular-nums">{formatCurrency(invoice.total_amount, 2)}</strong></div>
+      <p className="text-xs text-gray-600 dark:text-gray-300 my-1 break-words">{invoice.description}</p>
+      <StatusBadge status={invoice.status} reminderCount={invoice.reminder_count} />
+      {invoice.source_invoice_id > 0 && <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">Bij factuur {invoices.find(original => original.id === invoice.source_invoice_id)?.invoice_number || invoice.source_invoice_id}</span>}
+    </Link>)}</div>
+  </section>;
 }

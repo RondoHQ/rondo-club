@@ -135,6 +135,18 @@ class Fees extends Base {
 			]
 		);
 
+		register_rest_route(
+			'rondo/v1',
+			'/fees/person/(?P<id>\d+)/history',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'permission_callback' => [ $this, 'check_financieel_read_permission' ],
+				'callback'            => static function ( $request ) {
+					return rest_ensure_response( \Rondo\Finance\PersonFinanceHistory::get( (int) $request['id'], (string) ( $request->get_param( 'season' ) ?: SeasonKey::current() ) ) );
+				},
+			]
+			);
+
 		// Get single person fee data
 		register_rest_route(
 			'rondo/v1',
