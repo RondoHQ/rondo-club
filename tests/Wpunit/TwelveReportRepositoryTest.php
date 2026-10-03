@@ -60,6 +60,20 @@ class TwelveReportRepositoryTest extends RondoTestCase {
 		$this->assertSame( $first, $second->get_error_data()['post_id'] );
 	}
 
+	public function test_store_preserves_unicode_and_json_escape_characters(): void {
+		$repository                        = new ReportRepository();
+		$parsed                            = $this->parsed();
+		$parsed['producten'][0]['product'] = 'Liefmans Rosé';
+		$parsed['producten'][1]['product'] = 'Café "special" \\ test';
+		$post_id                           = $repository->store( $parsed, 'unicode-msg', 'rapportage.pdf', $this->pdf_bytes() );
+
+		$this->assertIsInt( $post_id );
+		$this->assertSame( wp_json_encode( $parsed ), get_post_meta( $post_id, ReportRepository::META_DATA, true ) );
+		$reports = $repository->query( '2026-09-29', '2026-09-29' );
+		$this->assertCount( 1, $reports );
+		$this->assertSame( array_column( $parsed['producten'], 'product' ), array_column( $reports[0]['data']['producten'], 'product' ) );
+	}
+
 	public function test_store_is_idempotent_on_period_end(): void {
 		$repository = new ReportRepository();
 		$parsed     = $this->parsed();
