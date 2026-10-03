@@ -39,6 +39,20 @@ class Invoices extends Base {
 	 * Register REST API routes
 	 */
 	public function register_routes() {
+		foreach ( [ 'preview', 'create' ] as $action ) {
+			register_rest_route(
+				'rondo/v1',
+				'/invoices/credits' . ( $action === 'preview' ? '/preview' : '' ),
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'callback'            => static function ( $request ) use ( $action ) {
+						return rest_ensure_response( \Rondo\Finance\CreditNotes::$action( $request->get_json_params() ?: [] ) );
+					},
+				]
+				);
+		}
+
 		// Recent payment totals and average paid-invoice lead time.
 		register_rest_route(
 			'rondo/v1',
@@ -969,7 +983,11 @@ class Invoices extends Base {
 	 */
 	public function update_draft_invoice( $request ) {
 		$invoice_id = (int) $request->get_param( 'id' );
-		$invoice    = get_post( $invoice_id );
+		if ( get_post_meta( $invoice_id, '_credit_calculation', true ) ) {
+			return new \WP_Error( 'credit_locked', 'Verwijder dit concept en maak een nieuwe creditnota om de berekening te wijzigen.', [ 'status' => 409 ] );
+		}
+
+		$invoice = get_post( $invoice_id );
 
 		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
 			return new \WP_Error(
@@ -1106,6 +1124,10 @@ class Invoices extends Base {
 			);
 		}
 
+		if ( $invoice->post_status === 'rondo_cancelled' && $status !== 'cancelled' && get_post_meta( $invoice_id, '_credit_calculation', true ) ) {
+			return new \WP_Error( 'credit_cancelled', 'Maak een nieuwe creditnota; een vervallen creditnota kan niet worden heropend.', [ 'status' => 409 ] );
+		}
+
 		// Paid invoices cannot be cancelled — mark them unpaid first.
 		if ( $status === 'cancelled' && $invoice->post_status === 'rondo_paid' ) {
 			return new \WP_Error(
@@ -1220,7 +1242,11 @@ class Invoices extends Base {
 	 * @return \WP_REST_Response|\WP_Error Response containing updated invoice or error.
 	 */
 	public function add_draft_line_item( $request ) {
-		$invoice_id  = (int) $request->get_param( 'id' );
+		$invoice_id = (int) $request->get_param( 'id' );
+		if ( get_post_meta( $invoice_id, '_credit_calculation', true ) ) {
+			return new \WP_Error( 'credit_locked', 'Verwijder dit concept en maak een nieuwe creditnota om de berekening te wijzigen.', [ 'status' => 409 ] );
+		}
+
 		$description = sanitize_text_field( (string) $request->get_param( 'description' ) );
 		$amount      = round( (float) $request->get_param( 'amount' ), 2 );
 
@@ -1484,6 +1510,11 @@ class Invoices extends Base {
 				__( 'Deze factuur staat ingepland voor een toekomstige datum. Annuleer eerst de inplanning als je de factuur nu wilt versturen.', 'rondo' ),
 				[ 'status' => 409 ]
 			);
+		}
+
+		$credit_validation = \Rondo\Finance\CreditNotes::validate_draft( $invoice_id );
+		if ( is_wp_error( $credit_validation ) ) {
+			return $credit_validation;
 		}
 
 		// Create payment link + QR code BEFORE PDF generation so QR is embedded in PDF.
@@ -1825,7 +1856,7 @@ class Invoices extends Base {
 
 		// Ensure payment link and QR code exist before resending
 		$existing_payment_link = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'payment_link' );
-		if ( empty( $existing_payment_link ) ) {
+		if ( $invoice_kind !== 'credit' && empty( $existing_payment_link ) ) {
 			$active_provider = FinanceServices::mollie()->get_active_payment_provider();
 			if ( $active_provider === 'mollie' ) {
 				$mollie_payment = new MolliePayment();
@@ -2357,6 +2388,9 @@ class Invoices extends Base {
 		$today = current_time( 'Ymd' );
 
 		foreach ( $query->posts as $invoice ) {
+			if ( get_post_meta( $invoice->ID, '_invoice_kind', true ) === 'credit' ) {
+				continue;
+			}
 			$due_date = get_post_meta( $invoice->ID, 'due_date', true );
 
 			if ( $due_date && $due_date < $today ) {
@@ -2421,6 +2455,7 @@ class Invoices extends Base {
 			'customer_cc_email'      => (string) get_post_meta( $post->ID, '_customer_cc_email', true ),
 			'customer_address'       => (string) get_post_meta( $post->ID, '_customer_address', true ),
 			'invoice_kind'           => get_post_meta( $post->ID, '_invoice_kind', true ) ?: 'normal',
+			'season'                 => \Rondo\Finance\PersonFinanceHistory::invoice_season( $post->ID ),
 			'total_amount'           => (float) \Rondo\Fields\Fields::get_for_post( $post->ID, 'total_amount' ),
 			'status'                 => $status,
 			'post_status'            => $post->post_status,
@@ -2826,15 +2861,18 @@ class Invoices extends Base {
 			}
 		}
 
-		$invoice['line_items']          = $formatted_items;
-		$invoice['pdf_path']            = \Rondo\Fields\Fields::get_for_post( $post->ID, 'pdf_path' ) ?: null;
-		$invoice['qr_code_path']        = \Rondo\Fields\Fields::get_for_post( $post->ID, 'qr_code_path' ) ?: null;
-		$invoice['email_subject']       = (string) get_post_meta( $post->ID, '_email_subject', true );
-		$invoice['email_body_override'] = (string) get_post_meta( $post->ID, '_email_body_override', true );
-		$invoice['payment_adjusted_at'] = (string) get_post_meta( $post->ID, '_credit_payment_adjustment_recorded_at', true ) ?: null;
-		$custom_fields_raw              = (string) get_post_meta( $post->ID, '_custom_fields', true );
-		$custom_fields                  = json_decode( $custom_fields_raw, true );
-		$invoice['custom_fields']       = is_array( $custom_fields ) ? $custom_fields : [];
+		$invoice['credit_source_invoice_id'] = (int) get_post_meta( $post->ID, '_credit_source_invoice_id', true );
+		$invoice['credit_calculation']       = get_post_meta( $post->ID, '_credit_calculation', true ) ?: null;
+		$invoice['linked_credits']           = \Rondo\Finance\CreditNotes::linked( $post->ID );
+		$invoice['line_items']               = $formatted_items;
+		$invoice['pdf_path']                 = \Rondo\Fields\Fields::get_for_post( $post->ID, 'pdf_path' ) ?: null;
+		$invoice['qr_code_path']             = \Rondo\Fields\Fields::get_for_post( $post->ID, 'qr_code_path' ) ?: null;
+		$invoice['email_subject']            = (string) get_post_meta( $post->ID, '_email_subject', true );
+		$invoice['email_body_override']      = (string) get_post_meta( $post->ID, '_email_body_override', true );
+		$invoice['payment_adjusted_at']      = (string) get_post_meta( $post->ID, '_credit_payment_adjustment_recorded_at', true ) ?: null;
+		$custom_fields_raw                   = (string) get_post_meta( $post->ID, '_custom_fields', true );
+		$custom_fields                       = json_decode( $custom_fields_raw, true );
+		$invoice['custom_fields']            = is_array( $custom_fields ) ? $custom_fields : [];
 
 		// Add installment data for multi-installment invoices
 		$plan  = get_post_meta( $post->ID, '_installment_plan', true ) ?: null;

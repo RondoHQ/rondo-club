@@ -3,9 +3,18 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useCreateInvoice, useNextInvoiceNumber, useInvoice } from '@/hooks/useInvoices';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import InvoiceDraftForm from '@/components/finance/InvoiceDraftForm';
+import InjuryCreditForm from '@/components/finance/InjuryCreditForm';
+import CreditNoteForm from '@/components/finance/CreditNoteForm';
 import { mapInvoiceToInitialValues } from '@/utils/invoiceFormValues';
 
 export default function FactuurNieuw() {
+  const [params] = useSearchParams();
+  if (params.get('injuryPerson')) return <InjuryCreditForm key={params.get('injuryPerson')} personId={params.get('injuryPerson')} initialSeason={params.get('season') || ''} />;
+  if (params.get('creditFrom')) return <CreditNoteForm key={params.get('creditFrom')} sourceInvoiceId={params.get('creditFrom')} />;
+  return <RegularInvoiceForm />;
+}
+
+function RegularInvoiceForm() {
   const [searchParams] = useSearchParams();
   const copyFromId = searchParams.get('copyFrom');
   const isCopy = !!copyFromId;

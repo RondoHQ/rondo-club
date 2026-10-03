@@ -565,7 +565,7 @@ export default function FactuurDetail() {
               {invoice.invoice_number}{invoice.invoice_kind === 'credit' ? ' · Credit' : ''}
             </h1>
             <div className="flex flex-wrap items-center gap-2">
-              {invoice.status === 'draft' && canEditFinancieel && (
+              {invoice.status === 'draft' && !invoice.credit_calculation && canEditFinancieel && (
                 <button
                   onClick={() => {
                     setIsEditingDraft((current) => !current);
@@ -577,6 +577,10 @@ export default function FactuurDetail() {
                   <Pencil className="w-4 h-4" />
                   {isEditingDraft ? 'Sluit bewerken' : 'Bewerk concept'}
                 </button>
+              )}
+              {canEditFinancieel && invoice.invoice_type === 'membership' && invoice.invoice_kind !== 'credit' && invoice.person?.id && invoice.season && <Link to={`/financien/facturen/nieuw?injuryPerson=${invoice.person.id}&season=${invoice.season}`} className="btn-tertiary gap-2">Creditnota bij blessure</Link>}
+              {canEditFinancieel && invoice.invoice_kind !== 'credit' && ['sent', 'paid', 'overdue'].includes(invoice.status) && (
+                <Link to={`/financien/facturen/nieuw?creditFrom=${invoice.id}`} className="btn-tertiary gap-2"><Receipt className="w-4 h-4" />Creditnota maken</Link>
               )}
               {canEditFinancieel && (
                 <button
@@ -611,6 +615,22 @@ export default function FactuurDetail() {
           description="Alle ingevulde velden van deze conceptfactuur kunnen hier worden aangepast."
         />
       )}
+
+      {invoice.credit_calculation && <div className="card p-5 text-sm space-y-2">
+        <h2 className="font-semibold">Onderbouwing creditnota</h2>
+        {invoice.credit_source_invoice_id > 0 && <p>Oorspronkelijke factuur: <Link className="underline text-cyan-800 dark:text-cyan-200" to={`/financien/facturen/${invoice.credit_source_invoice_id}`}>{invoice.credit_calculation.source_invoice_number}</Link></p>}
+        <p>{invoice.credit_calculation.reason}</p>
+        {invoice.credit_calculation.mode === 'injury' && <>
+          <p>Uitval: {invoice.credit_calculation.injury_start} t/m {invoice.credit_calculation.injury_end} ({invoice.credit_calculation.injury_days} dagen).</p>
+          <p>{formatCurrency(invoice.credit_calculation.paid_contribution, 2)} × {invoice.credit_calculation.percentage}% − {formatCurrency(invoice.credit_calculation.costs, 2)} kosten = {formatCurrency(invoice.credit_calculation.amount, 2)} credit.</p>
+        </>}
+        <p>Een eventuele terugbetaling voer je apart uit.</p>
+        {invoice.status === 'draft' && <p className="text-gray-600 dark:text-gray-300">Berekening wijzigen? Verwijder dit concept en maak een nieuwe creditnota.</p>}
+      </div>}
+      {invoice.linked_credits?.length > 0 && <div className="card p-5 text-sm space-y-3">
+        <h2 className="font-semibold">Gekoppelde creditnota’s</h2>
+        {invoice.linked_credits.map(credit => <Link key={credit.id} className="flex flex-wrap justify-between gap-2 text-cyan-800 dark:text-cyan-200 underline" to={`/financien/facturen/${credit.id}`}><span>{credit.invoice_number} · {statusLabels[credit.status]}</span><span>{formatCurrency(credit.total_amount, 2)}</span></Link>)}
+      </div>}
 
       {/* Info cards - two column layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -736,7 +756,7 @@ export default function FactuurDetail() {
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Naam</h3>
               {invoice.person?.id ? (
                 <Link
-                  to={`/people/${invoice.person.id}`}
+                  to={`/people/${invoice.person.id}${invoice.season ? `?financeSeason=${invoice.season}` : ''}`}
                   className="text-electric-cyan dark:text-electric-cyan hover:underline"
                 >
                   {invoice.person.name}
@@ -844,7 +864,7 @@ export default function FactuurDetail() {
             </tfoot>
           </table>
         </div>
-        {invoice.status === 'draft' && !isEditingDraft && canEditFinancieel && (
+        {invoice.status === 'draft' && !invoice.credit_calculation && !isEditingDraft && canEditFinancieel && (
           <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Extra regel toevoegen</h3>
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
@@ -1299,7 +1319,7 @@ export default function FactuurDetail() {
           )}
 
           {/* Payment link button (for any unpaid invoice without a link) */}
-          {invoice.status !== 'paid' && invoice.status !== 'cancelled' && !invoice.payment_link && (
+          {invoice.invoice_kind !== 'credit' && invoice.status !== 'paid' && invoice.status !== 'cancelled' && !invoice.payment_link && (
             <button
               onClick={handleCreatePaymentLink}
               disabled={isPending}
@@ -1315,7 +1335,7 @@ export default function FactuurDetail() {
           )}
 
           {/* Regenerate payment link button (for any unpaid invoice WITH an existing link) */}
-          {invoice.status !== 'paid' && invoice.status !== 'cancelled' && invoice.payment_link && (
+          {invoice.invoice_kind !== 'credit' && invoice.status !== 'paid' && invoice.status !== 'cancelled' && invoice.payment_link && (
             <button
               onClick={handleRegeneratePaymentLink}
               disabled={isPending}
@@ -1331,7 +1351,7 @@ export default function FactuurDetail() {
           )}
 
           {/* Cancelled status actions */}
-          {invoice.status === 'cancelled' && (
+          {invoice.status === 'cancelled' && !invoice.credit_calculation && (
             <>
               <button
                 onClick={handleReactivate}

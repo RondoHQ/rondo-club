@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.124.0] - 2026-10-03
+
+### Added
+- Select a season in a member's financial overview, with stored contribution amounts, original invoices and linked credit notes, including former and excluded members.
+- Create linked credit-note drafts with a reason, available-credit checks and safe retries.
+- Calculate injury restitution from paid contribution using a treasurer-selected percentage, at least €50 costs, verified season dates and confirmed AWC conditions.
+
+### Fixed
+- Prevent credit notes from generating payment requests, receiving payment reminders or becoming overdue.
+
 ## [35.123.1] - 2026-10-03
 
 ### Fixed

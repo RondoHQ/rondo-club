@@ -250,6 +250,10 @@ class RabobankPayment {
 	 * @return string|\WP_Error Payment link URL on success, WP_Error on failure
 	 */
 	public function create_payment_request( $invoice_id ) {
+		if ( get_post_meta( $invoice_id, '_invoice_kind', true ) === 'credit' ) {
+			return new \WP_Error( 'credit_no_payment_link', 'Een creditnota heeft geen betaallink.', [ 'status' => 400 ] );
+		}
+
 		// Validate invoice exists
 		$invoice = get_post( $invoice_id );
 		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
