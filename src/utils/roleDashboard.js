@@ -26,3 +26,31 @@ export function moveDashboardBlock(order, index, direction) {
   [next[index], next[target]] = [next[target], next[index]];
   return next;
 }
+
+/** A custom saved order remains a single ordered grid, including keyboard/reading order. */
+export function hasDefaultDashboardOrder(layout) {
+  return Array.isArray(layout.defaults)
+    && layout.order.length === layout.defaults.length
+    && layout.order.every((id, index) => id === layout.defaults[index]);
+}
+
+export function getBoardSummary(data, visibleBlocks) {
+  const items = [];
+  const add = (label, value, description, positive = false) => {
+    if (Number.isFinite(value)) items.push({ label, value, description, positive });
+  };
+  if (visibleBlocks.includes('membership') && data.membership) {
+    add('Spelende bondsleden', data.membership.active, 'Huidige ledenstand');
+    add('Instroom', data.membership.joined, `Seizoen ${data.membership.season}`, true);
+  }
+  if (visibleBlocks.includes('volunteers') && data.volunteers) {
+    add('Open vrijwilligersplekken', data.volunteers.open_spots, `Komende ${data.volunteers.window_days} dagen`);
+  }
+  if (visibleBlocks.includes('vog') && data.vog) {
+    const { not_submitted_to_justis: missing, submitted_to_justis: requested } = data.vog;
+    if (Number.isFinite(missing) && Number.isFinite(requested)) {
+      add('VOG ontbreekt of verlopen', missing + requested, `${requested.toLocaleString('nl-NL')} aangevraagd bij Justis`);
+    }
+  }
+  return items;
+}

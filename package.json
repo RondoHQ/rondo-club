@@ -1,6 +1,6 @@
 {
   "name": "rondo-club-theme",
-  "version": "35.121.6",
+  "version": "35.122.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,6 +8,7 @@
     "build": "vite build",
     "icons": "node scripts/generate-pwa-icons.js",
     "preview": "vite preview",
+    "preview:dashboard": "vite --config tests/fixtures/dashboard-preview.config.mjs",
     "lint": "eslint src --report-unused-disable-directives --max-warnings 0",
     "test:js": "node --test tests/js/*.test.mjs",
     "prepare": "husky"
