@@ -113,7 +113,8 @@ class ReportRepository {
 		update_post_meta( $post_id, self::META_PERIOD_START, $period_start );
 		update_post_meta( $post_id, self::META_PERIOD_END, $period_end );
 		update_post_meta( $post_id, self::META_MESSAGE_ID, $message_id );
-		update_post_meta( $post_id, self::META_DATA, wp_json_encode( $parsed ) );
+		// WordPress strips slashes from metadata values; preserve JSON escapes.
+		update_post_meta( $post_id, self::META_DATA, wp_slash( wp_json_encode( $parsed ) ) );
 		update_post_meta( $post_id, self::META_TOTAL_GROSS, (float) ( $parsed['producten_totaal']['bruto'] ?? 0 ) );
 
 		// Keep financial documents out of publicly served uploads entirely.
