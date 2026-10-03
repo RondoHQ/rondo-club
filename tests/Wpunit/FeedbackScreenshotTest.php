@@ -79,6 +79,70 @@ class FeedbackScreenshotTest extends RondoTestCase {
 			);
 	}
 
+	public function test_replacing_screenshot_removes_old_file_and_changes_response_version(): void {
+		$owner = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		wp_set_current_user( $owner );
+		$id       = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_feedback',
+				'post_status' => 'publish',
+				'post_author' => $owner,
+			]
+			);
+		$versions = [];
+		$paths    = [];
+		foreach ( [ 1, 2 ] as $attempt ) {
+			$input = $this->image();
+			$file  = FeedbackScreenshot::validate( $input );
+			$path  = FeedbackScreenshot::path( $file );
+			wp_mkdir_p( dirname( $path ) );
+			copy( $input['tmp_name'], $path );
+			$this->paths[] = $path;
+			$paths[]       = $path;
+			$this->assertTrue( FeedbackScreenshot::attach( $id, $file ) );
+			$data = rest_do_request( new \WP_REST_Request( 'GET', '/rondo/v1/feedback/' . $id ) )->get_data();
+			$this->assertTrue( $data['has_screenshot'] );
+			$versions[] = $data['screenshot_version'];
+		}
+		$this->assertNotSame( $versions[0], $versions[1] );
+		$this->assertFileDoesNotExist( $paths[0] );
+		$this->assertFileExists( $paths[1] );
+
+		// An ordinary edit must preserve the attachment and its preview version.
+		$request = new \WP_REST_Request( 'POST', '/rondo/v1/feedback/' . $id );
+		$request->set_body_params( [ 'title' => 'Changed title' ] );
+		$response = rest_do_request( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( $versions[1], $response->get_data()['screenshot_version'] );
+		$this->assertFileExists( $paths[1] );
+
+		// Bad screenshots must fail before changing the text or existing file.
+		$request->set_body_params( [ 'title' => 'Must not be saved' ] );
+		$request->set_file_params( [ 'screenshot' => [ 'error' => UPLOAD_ERR_PARTIAL ] ] );
+		$this->assertSame( 400, rest_do_request( $request )->get_status() );
+		$this->assertSame( 'Changed title', get_post( $id )->post_title );
+		$this->assertFileExists( $paths[1] );
+	}
+
+	public function test_feedback_reader_cannot_replace_someone_elses_screenshot(): void {
+		$owner  = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		$id     = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_feedback',
+				'post_status' => 'publish',
+				'post_author' => $owner,
+			]
+			);
+		$reader = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		get_user_by( 'id', $reader )->add_cap( 'feedback' );
+		wp_set_current_user( $reader );
+		$this->assertSame( 200, rest_do_request( new \WP_REST_Request( 'GET', '/rondo/v1/feedback/' . $id ) )->get_status() );
+		$request = new \WP_REST_Request( 'POST', '/rondo/v1/feedback/' . $id );
+		$request->set_file_params( [ 'screenshot' => $this->image() ] );
+		$this->assertSame( 403, rest_do_request( $request )->get_status() );
+		$this->assertEmpty( get_post_meta( $id, FeedbackScreenshot::META, true ) );
+	}
+
 	public function test_private_screenshot_uses_feedback_permissions_and_is_deleted_with_record(): void {
 		$owner = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		$id    = self::factory()->post->create(

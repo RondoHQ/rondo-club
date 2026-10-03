@@ -122,15 +122,9 @@ export default function FeedbackDetail() {
   const backLabel = currentUser?.can_access_feedback ? 'Terug naar feedback' : 'Terug naar start';
   const canEditFeedback = isAdmin || (currentUser?.id && feedback?.author?.id && currentUser.id === feedback.author.id);
 
-  const handleEditSubmit = (data) => {
-    updateFeedback.mutate(
-      { id, data },
-      {
-        onSuccess: () => {
-          setIsEditModalOpen(false);
-        },
-      }
-    );
+  const handleEditSubmit = async (data) => {
+    await updateFeedback.mutateAsync({ id, data });
+    setIsEditModalOpen(false);
   };
 
   const handleReply = (e) => {
@@ -275,7 +269,7 @@ export default function FeedbackDetail() {
         </div>
       </div>
 
-      {feedback.has_screenshot && <FeedbackScreenshot feedbackId={feedback.id} />}
+      {feedback.has_screenshot && <FeedbackScreenshot key={feedback.screenshot_version} feedbackId={feedback.id} />}
 
       {/* Bug-specific fields */}
       {feedback.meta.feedback_type === 'bug' && (

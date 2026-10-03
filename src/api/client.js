@@ -89,6 +89,18 @@ export const wpApi = {
   },
 };
 
+// PHP parses multipart uploads on POST, which both feedback write routes accept.
+function saveFeedback(url, data) {
+  const { screenshot, ...fields } = data;
+  if (!screenshot) return api.post(url, fields);
+  const formData = new FormData();
+  Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
+  formData.append('screenshot', screenshot);
+  return api.post(url, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+}
+
 // Helper for custom PRM API
 export const prmApi = {
   getAppAccess: () => api.get('/rondo/v1/app-access/laposta'),
@@ -389,18 +401,9 @@ export const prmApi = {
   // Feedback
   getFeedbackList: (params) => api.get('/rondo/v1/feedback', { params }),
   getFeedback: (id) => api.get(`/rondo/v1/feedback/${id}`),
-  createFeedback: (data) => {
-    const { screenshot, ...fields } = data;
-    if (!screenshot) return api.post('/rondo/v1/feedback', fields);
-    const formData = new FormData();
-    Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
-    formData.append('screenshot', screenshot);
-    return api.post('/rondo/v1/feedback', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-  },
+  createFeedback: (data) => saveFeedback('/rondo/v1/feedback', data),
   getFeedbackScreenshot: (id) => api.get(`/rondo/v1/feedback/${id}/screenshot`, { responseType: 'blob' }),
-  updateFeedback: (id, data) => api.put(`/rondo/v1/feedback/${id}`, data),
+  updateFeedback: (id, data) => saveFeedback(`/rondo/v1/feedback/${id}`, data),
   deleteFeedback: (id) => api.delete(`/rondo/v1/feedback/${id}`),
   getFeedbackComments: (id) => api.get(`/rondo/v1/feedback/${id}/comments`),
   createFeedbackComment: (id, data) => api.post(`/rondo/v1/feedback/${id}/comments`, data),

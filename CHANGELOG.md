@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Preserve accented characters, quotes and backslashes in imported Twelve report data.
 
+## [35.121.3] - 2026-10-03
+
+### Fixed
+- Allow feedback authors and administrators to add or replace a private screenshot when editing an existing feedback item, using the same upload field as new feedback.
+- Display upload errors in the edit form and refresh the screenshot preview after replacement.
+
 ## [35.121.2] - 2026-10-02
 
 ### Changed

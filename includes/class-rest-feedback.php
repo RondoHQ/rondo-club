@@ -395,10 +395,12 @@ class Feedback extends Base {
 			);
 		}
 
-		if ( $screenshot && ! update_post_meta( $post_id, FeedbackScreenshot::META, $screenshot ) ) {
-			wp_delete_file( FeedbackScreenshot::path( $screenshot ) );
-			wp_delete_post( $post_id, true );
-			return new \WP_Error( 'feedback_screenshot_storage', 'De screenshot kon niet worden gekoppeld. Probeer het opnieuw.', [ 'status' => 500 ] );
+		if ( $screenshot ) {
+			$attached = FeedbackScreenshot::attach( $post_id, $screenshot );
+			if ( is_wp_error( $attached ) ) {
+				wp_delete_post( $post_id, true );
+				return $attached;
+			}
 		}
 
 		// Save canonical fields
@@ -544,6 +546,17 @@ class Feedback extends Base {
 
 		$is_admin = current_user_can( 'manage_options' );
 
+		$files = $request->get_file_params();
+		if ( isset( $files['screenshot'] ) ) {
+			if ( ! $is_admin && (int) $feedback->post_author !== get_current_user_id() ) {
+				return new \WP_Error( 'rest_forbidden', 'Alleen de indiener en beheerders kunnen de screenshot wijzigen.', [ 'status' => 403 ] );
+			}
+			$validated = FeedbackScreenshot::validate( is_array( $files['screenshot'] ) ? $files['screenshot'] : [] );
+			if ( is_wp_error( $validated ) ) {
+				return $validated;
+			}
+		}
+
 		// Check field-level permissions for status and priority
 		$new_status = $request->get_param( 'status' );
 		if ( $new_status !== null && ! $is_admin ) {
@@ -616,126 +629,145 @@ class Feedback extends Base {
 			);
 		}
 
-		// Update post fields if provided
-		$update_args = [ 'ID' => $feedback_id ];
-
-		$title = $request->get_param( 'title' );
-		if ( $title !== null ) {
-			$update_args['post_title'] = sanitize_text_field( $title );
+		$screenshot = FeedbackScreenshot::upload( $files );
+		if ( is_wp_error( $screenshot ) ) {
+			return $screenshot;
 		}
+		$screenshot_saved = false;
+		try {
+			// Update post fields if provided
+			$update_args = [ 'ID' => $feedback_id ];
 
-		$content = $request->get_param( 'content' );
-		if ( $content !== null ) {
-			$update_args['post_content'] = wp_kses_post( $content );
-		}
-
-		if ( count( $update_args ) > 1 ) {
-			wp_update_post( $update_args );
-		}
-
-		// Update canonical fields
-		if ( $feedback_type !== null ) {
-			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'feedback_type', $feedback_type );
-		}
-
-		if ( $new_status !== null || $resolution_summary !== null || $decline_reason !== null ) {
-			$status_for_update = $new_status !== null
-				? $new_status
-				: (string) ( \Rondo\Fields\Fields::get_for_post( $feedback_id, 'status' ) ?: 'new' );
-			$status_update     = ( new StatusService() )->update(
-				$feedback_id,
-				$status_for_update,
-				$resolution_summary !== null ? (string) $resolution_summary : '',
-				$decline_reason !== null ? (string) $decline_reason : ''
-			);
-			if ( is_wp_error( $status_update ) ) {
-				return $status_update;
+			$title = $request->get_param( 'title' );
+			if ( $title !== null ) {
+				$update_args['post_title'] = sanitize_text_field( $title );
 			}
-		}
 
-		if ( $new_priority !== null ) {
-			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'priority', $new_priority );
-		}
+			$content = $request->get_param( 'content' );
+			if ( $content !== null ) {
+				$update_args['post_content'] = wp_kses_post( $content );
+			}
 
-		// Optional context fields
-		$browser_info = $request->get_param( 'browser_info' );
-		if ( $browser_info !== null ) {
-			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'browser_info', sanitize_text_field( $browser_info ) );
-		}
+			if ( count( $update_args ) > 1 ) {
+				wp_update_post( $update_args );
+			}
 
-		$app_version = $request->get_param( 'app_version' );
-		if ( $app_version !== null ) {
-			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'app_version', sanitize_text_field( $app_version ) );
-		}
+			// Update canonical fields
+			if ( $feedback_type !== null ) {
+				\Rondo\Fields\Fields::update_for_post( $feedback_id, 'feedback_type', $feedback_type );
+			}
 
-		$url_context = $request->get_param( 'url_context' );
-		if ( $url_context !== null ) {
-			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'url_context', esc_url_raw( $url_context ) );
-		}
-
-		// Bug-specific fields
-		$steps_to_reproduce = $request->get_param( 'steps_to_reproduce' );
-		if ( $steps_to_reproduce !== null ) {
-			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'steps_to_reproduce', sanitize_textarea_field( $steps_to_reproduce ) );
-		}
-
-		$expected_behavior = $request->get_param( 'expected_behavior' );
-		if ( $expected_behavior !== null ) {
-			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'expected_behavior', sanitize_textarea_field( $expected_behavior ) );
-		}
-
-		$actual_behavior = $request->get_param( 'actual_behavior' );
-		if ( $actual_behavior !== null ) {
-			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'actual_behavior', sanitize_textarea_field( $actual_behavior ) );
-		}
-
-		// Feature-specific fields
-		$use_case = $request->get_param( 'use_case' );
-		if ( $use_case !== null ) {
-			\Rondo\Fields\Fields::update_for_post( $feedback_id, 'use_case', sanitize_textarea_field( $use_case ) );
-		}
-
-		// Project meta
-		$project = $request->get_param( 'project' );
-		if ( $project !== null ) {
-			if ( in_array( $project, self::ALLOWED_PROJECTS, true ) ) {
-				update_post_meta( $feedback_id, '_feedback_project', $project );
-			} else {
-				return new \WP_Error(
-					'rest_invalid_param',
-					__( 'Invalid project.', 'rondo' ),
-					[
-						'status' => 400,
-						'params' => [ 'project' => 'Must be "rondo-club", "rondo-sync", or "website"' ],
-					]
+			if ( $new_status !== null || $resolution_summary !== null || $decline_reason !== null ) {
+				$status_for_update = $new_status !== null
+					? $new_status
+					: (string) ( \Rondo\Fields\Fields::get_for_post( $feedback_id, 'status' ) ?: 'new' );
+				$status_update     = ( new StatusService() )->update(
+					$feedback_id,
+					$status_for_update,
+					$resolution_summary !== null ? (string) $resolution_summary : '',
+					$decline_reason !== null ? (string) $decline_reason : ''
 				);
+				if ( is_wp_error( $status_update ) ) {
+					return $status_update;
+				}
+			}
+
+			if ( $new_priority !== null ) {
+				\Rondo\Fields\Fields::update_for_post( $feedback_id, 'priority', $new_priority );
+			}
+
+			// Optional context fields
+			$browser_info = $request->get_param( 'browser_info' );
+			if ( $browser_info !== null ) {
+				\Rondo\Fields\Fields::update_for_post( $feedback_id, 'browser_info', sanitize_text_field( $browser_info ) );
+			}
+
+			$app_version = $request->get_param( 'app_version' );
+			if ( $app_version !== null ) {
+				\Rondo\Fields\Fields::update_for_post( $feedback_id, 'app_version', sanitize_text_field( $app_version ) );
+			}
+
+			$url_context = $request->get_param( 'url_context' );
+			if ( $url_context !== null ) {
+				\Rondo\Fields\Fields::update_for_post( $feedback_id, 'url_context', esc_url_raw( $url_context ) );
+			}
+
+			// Bug-specific fields
+			$steps_to_reproduce = $request->get_param( 'steps_to_reproduce' );
+			if ( $steps_to_reproduce !== null ) {
+				\Rondo\Fields\Fields::update_for_post( $feedback_id, 'steps_to_reproduce', sanitize_textarea_field( $steps_to_reproduce ) );
+			}
+
+			$expected_behavior = $request->get_param( 'expected_behavior' );
+			if ( $expected_behavior !== null ) {
+				\Rondo\Fields\Fields::update_for_post( $feedback_id, 'expected_behavior', sanitize_textarea_field( $expected_behavior ) );
+			}
+
+			$actual_behavior = $request->get_param( 'actual_behavior' );
+			if ( $actual_behavior !== null ) {
+				\Rondo\Fields\Fields::update_for_post( $feedback_id, 'actual_behavior', sanitize_textarea_field( $actual_behavior ) );
+			}
+
+			// Feature-specific fields
+			$use_case = $request->get_param( 'use_case' );
+			if ( $use_case !== null ) {
+				\Rondo\Fields\Fields::update_for_post( $feedback_id, 'use_case', sanitize_textarea_field( $use_case ) );
+			}
+
+			// Project meta
+			$project = $request->get_param( 'project' );
+			if ( $project !== null ) {
+				if ( in_array( $project, self::ALLOWED_PROJECTS, true ) ) {
+					update_post_meta( $feedback_id, '_feedback_project', $project );
+				} else {
+					return new \WP_Error(
+						'rest_invalid_param',
+						__( 'Invalid project.', 'rondo' ),
+						[
+							'status' => 400,
+							'params' => [ 'project' => 'Must be "rondo-club", "rondo-sync", or "website"' ],
+						]
+					);
+				}
+			}
+
+			// Agent meta fields (pr_url, agent_branch)
+			$pr_url = $request->get_param( 'pr_url' );
+			if ( $pr_url !== null ) {
+				update_post_meta( $feedback_id, '_feedback_pr_url', esc_url_raw( $pr_url ) );
+			}
+
+			$agent_branch = $request->get_param( 'agent_branch' );
+			if ( $agent_branch !== null ) {
+				update_post_meta( $feedback_id, '_feedback_agent_branch', sanitize_text_field( $agent_branch ) );
+			}
+
+			$agent_plan = $request->get_param( 'agent_plan' );
+			if ( $agent_plan !== null ) {
+				update_post_meta( $feedback_id, '_feedback_agent_plan', wp_kses_post( $agent_plan ) );
+			}
+
+			if ( $screenshot ) {
+				$attached = FeedbackScreenshot::attach( $feedback_id, $screenshot );
+				if ( is_wp_error( $attached ) ) {
+					return $attached;
+				}
+				$screenshot_saved = true;
+			}
+
+			// Return formatted updated feedback
+			$feedback  = get_post( $feedback_id );
+			$formatted = $this->format_feedback( $feedback );
+			if ( isset( $status_update['resolution_email'] ) ) {
+				$formatted['resolution_email'] = $status_update['resolution_email'];
+			}
+
+			return rest_ensure_response( $formatted );
+		} finally {
+			if ( $screenshot && ! $screenshot_saved ) {
+				wp_delete_file( FeedbackScreenshot::path( $screenshot ) );
 			}
 		}
-
-		// Agent meta fields (pr_url, agent_branch)
-		$pr_url = $request->get_param( 'pr_url' );
-		if ( $pr_url !== null ) {
-			update_post_meta( $feedback_id, '_feedback_pr_url', esc_url_raw( $pr_url ) );
-		}
-
-		$agent_branch = $request->get_param( 'agent_branch' );
-		if ( $agent_branch !== null ) {
-			update_post_meta( $feedback_id, '_feedback_agent_branch', sanitize_text_field( $agent_branch ) );
-		}
-
-		$agent_plan = $request->get_param( 'agent_plan' );
-		if ( $agent_plan !== null ) {
-			update_post_meta( $feedback_id, '_feedback_agent_plan', wp_kses_post( $agent_plan ) );
-		}
-
-		// Return formatted updated feedback
-		$feedback  = get_post( $feedback_id );
-		$formatted = $this->format_feedback( $feedback );
-		if ( isset( $status_update['resolution_email'] ) ) {
-			$formatted['resolution_email'] = $status_update['resolution_email'];
-		}
-
-		return rest_ensure_response( $formatted );
 	}
 
 	/**
@@ -899,20 +931,23 @@ class Feedback extends Base {
 			$person_id = null;
 		}
 
+		$screenshot = get_post_meta( $post->ID, FeedbackScreenshot::META, true );
+
 		return [
-			'id'             => $post->ID,
-			'title'          => $this->sanitize_text( $post->post_title ),
-			'content'        => $this->sanitize_rich_content( $post->post_content ),
-			'has_screenshot' => (bool) get_post_meta( $post->ID, FeedbackScreenshot::META, true ),
-			'author'         => [
+			'id'                 => $post->ID,
+			'title'              => $this->sanitize_text( $post->post_title ),
+			'content'            => $this->sanitize_rich_content( $post->post_content ),
+			'has_screenshot'     => (bool) $screenshot,
+			'screenshot_version' => is_array( $screenshot ) ? hash( 'sha256', wp_json_encode( $screenshot ) ) : '',
+			'author'             => [
 				'id'        => $author ? (int) $author->ID : 0,
 				'name'      => $author ? $this->sanitize_text( $author->display_name ) : '',
 				'email'     => $author ? sanitize_email( $author->user_email ) : '',
 				'person_id' => $person_id,
 			],
-			'date'           => $post->post_date_gmt,
-			'modified'       => $post->post_modified_gmt,
-			'meta'           => [
+			'date'               => $post->post_date_gmt,
+			'modified'           => $post->post_modified_gmt,
+			'meta'               => [
 				'feedback_type'      => \Rondo\Fields\Fields::get_for_post( $post->ID, 'feedback_type' ) ?: '',
 				'status'             => \Rondo\Fields\Fields::get_for_post( $post->ID, 'status' ) ?: 'new',
 				'priority'           => \Rondo\Fields\Fields::get_for_post( $post->ID, 'priority' ) ?: 'medium',
