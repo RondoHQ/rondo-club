@@ -305,7 +305,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
   return (
     <div className="rondo-sidebar flex flex-col h-full bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700">
       {/* Logo */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="rondo-sidebar-brand flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
         <Link to="/" className="flex items-center">
           <span className="rondo-brand-logo"><img src={brandIcon} alt="" /><img src={brandWordmark} alt="Rondo Club" /></span>
           <img src={getLightLogoUrl()} alt="Rondo Club" className="rondo-legacy-logo h-10 w-auto object-contain shrink-0 dark:hidden" />
