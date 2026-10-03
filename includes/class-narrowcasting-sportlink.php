@@ -245,12 +245,15 @@ class SportlinkMatchday {
 		$specifications = $this->feed_specifications();
 		foreach ( $specifications as $name => $specification ) {
 			$existing = $cache['feeds'][ $name ] ?? [];
-			if ( ! $force && ! $this->feed_is_expired( $existing ) ) {
+			if ( ! $force && ! $this->feed_is_expired( $existing ) && ( $name !== 'results' || ! empty( $existing['complete'] ) ) ) {
 				continue;
 			}
 
 			$attempted = true;
 			$response  = $this->request( $specification['endpoint'], $specification['params'] );
+			if ( ! is_wp_error( $response ) && isset( $specification['params']['aantalregels'] ) && count( $response ) >= $specification['params']['aantalregels'] ) {
+				$response = new \WP_Error( 'rondo_sportlink_incomplete', __( 'Sportlink bereikte de regellimiet; de feed is mogelijk onvolledig.', 'rondo' ) );
+			}
 			if ( is_wp_error( $response ) ) {
 				$errors[] = sprintf( '%s: %s', $specification['label'], $response->get_error_message() );
 				continue;
@@ -260,6 +263,7 @@ class SportlinkMatchday {
 			$now                     = time();
 			$cache['feeds'][ $name ] = [
 				'items'       => $items,
+				'complete'    => true,
 				'fetched_at'  => gmdate( DATE_RFC3339, $now ),
 				'fresh_until' => gmdate( DATE_RFC3339, $now + $specification['ttl'] ),
 			];
@@ -297,7 +301,7 @@ class SportlinkMatchday {
 					$common,
 					[
 						'aantaldagen'      => 7,
-						'aantalregels'     => 100,
+						'aantalregels'     => 500,
 						'weekoffset'       => 0,
 						'eigenwedstrijden' => 'JA',
 						'sorteervolgorde'  => 'datum',
@@ -323,6 +327,7 @@ class SportlinkMatchday {
 					$common,
 					[
 						'aantaldagen'     => 14,
+						'aantalregels'    => 500,
 						'weekoffset'      => -1,
 						'sorteervolgorde' => 'datum-omgekeerd',
 						'velden'          => 'wedstrijdcode,wedstrijdnummer,thuisteamlogo,thuisteam,thuisteamclubrelatiecode,uitslag,wedstrijddatum,uitteamlogo,uitteam,uitteamclubrelatiecode,status',
@@ -402,7 +407,7 @@ class SportlinkMatchday {
 			}
 		);
 
-		return $name === 'results' ? array_slice( $items, 0, 12 ) : $items;
+		return $items;
 	}
 
 	/** Convert one Sportlink row without member or credential data. */
@@ -506,20 +511,34 @@ class SportlinkMatchday {
 		return 'https://logoapi.voetbal.nl/logo.php?clubcode=' . rawurlencode( $club_code );
 	}
 
-	/** Seven club-local calendar days, using the independently refreshed programme cache. */
+	/** Seven club-local calendar days, retaining fixtures after they move to results. */
 	public function get_week_feed(): array {
 		$cache   = $this->cache();
 		$matches = [];
-		$today   = current_datetime()->setTime( 0, 0 );
-		foreach ( range( 0, 6 ) as $offset ) {
-			$day = $this->public_feed( $cache, $today->modify( "+{$offset} days" )->format( 'Y-m-d' ) );
-			foreach ( array_merge( $day['matches'], $day['cancellations'] ) as $match ) {
-				if ( ! isset( $matches[ $match['id'] ] ) ) {
-					$matches[ $match['id'] ] = $match;
+		$today   = current_datetime()->format( 'Y-m-d' );
+		$end     = current_datetime()->modify( '+6 days' )->format( 'Y-m-d' );
+		foreach ( [ 'matches', 'results', 'cancellations' ] as $name ) {
+			foreach ( $cache['feeds'][ $name ]['items'] ?? [] as $match ) {
+				if ( $match['date'] < $today || $match['date'] > $end ) {
+					continue;
 				}
+				$previous = $matches[ $match['id'] ] ?? [];
+				// Results omit field/room information; keep it when the programme still has it.
+				$item                   = array_merge( $previous, array_filter( $match, static fn( $value ) => $value !== '' && $value !== null ) );
+				$item['dressing_rooms'] = array_merge(
+					$previous['dressing_rooms'] ?? [],
+					array_filter( $match['dressing_rooms'] ?? [], static fn( $value ) => $value !== '' && $value !== null )
+				);
+				$item['cancelled']      = $name === 'cancellations' || ! empty( $previous['cancelled'] ) || ! empty( $match['cancelled'] );
+				if ( $item['cancelled'] ) {
+					$item['status'] = __( 'Afgelast', 'rondo' );
+				} elseif ( ! empty( $item['result'] ) && empty( $match['status'] ) ) {
+					$item['status'] = __( 'Gespeeld', 'rondo' );
+				}
+				$matches[ $match['id'] ] = $item;
 			}
 		}
-		$feeds       = [ $cache['feeds']['matches'] ?? [], $cache['feeds']['cancellations'] ?? [] ];
+		$feeds       = [ $cache['feeds']['matches'] ?? [], $cache['feeds']['cancellations'] ?? [], $cache['feeds']['results'] ?? [] ];
 		$oldest      = min( array_map( static fn( $feed ) => strtotime( $feed['fetched_at'] ?? '' ) ?: 0, $feeds ) );
 		$fresh_until = min( array_map( static fn( $feed ) => strtotime( $feed['fresh_until'] ?? '' ) ?: 0, $feeds ) );
 		usort( $matches, static fn( $a, $b ) => strcmp( $a['starts_at'], $b['starts_at'] ) );
@@ -527,7 +546,7 @@ class SportlinkMatchday {
 			'matches'    => array_values( $matches ),
 			'configured' => $this->client_id() !== '' && $this->club_code() !== '',
 			'updated_at' => $oldest ? gmdate( DATE_RFC3339, $oldest ) : null,
-			'stale'      => $fresh_until < time(),
+			'stale'      => $fresh_until < time() || empty( $cache['feeds']['results']['complete'] ),
 			'expired'    => ! $oldest || time() - $oldest > DAY_IN_SECONDS,
 		];
 	}
@@ -540,7 +559,7 @@ class SportlinkMatchday {
 
 		$matches       = $cache['feeds']['matches']['items'] ?? [];
 		$cancellations = $cache['feeds']['cancellations']['items'] ?? [];
-		$results       = $cache['feeds']['results']['items'] ?? [];
+		$results       = array_slice( $cache['feeds']['results']['items'] ?? [], 0, 12 );
 		$matches       = array_values( array_filter( $matches, static fn( array $match ): bool => ( $match['date'] ?? '' ) === $target_date ) );
 		$cancellations = array_values( array_filter( $cancellations, static fn( array $match ): bool => ( $match['date'] ?? '' ) === $target_date ) );
 		$cancelled_ids = array_fill_keys( array_column( $cancellations, 'id' ), true );
@@ -597,6 +616,9 @@ class SportlinkMatchday {
 
 	/** Whether any required feed needs a server refresh. */
 	private function cache_needs_refresh( array $cache ): bool {
+		if ( empty( $cache['feeds']['results']['complete'] ) ) {
+			return true;
+		}
 		foreach ( array_keys( $this->feed_specifications() ) as $name ) {
 			if ( $this->feed_is_expired( $cache['feeds'][ $name ] ?? [] ) ) {
 				return true;

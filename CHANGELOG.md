@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [35.123.0] - 2026-10-03
 
+### Fixed
+- Keep played matches in the weekly dashboard by combining programme, results and cancellations; retain all cached results while Club TV still shows the latest twelve.
+
 ### Added
 - Compact dashboard match list with home/away counts, day and team filters, six-match pages, and result display.
 - Local-only dashboard snapshots with retrieval timestamps; preview edits remain isolated from production.
