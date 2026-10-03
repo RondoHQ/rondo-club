@@ -371,7 +371,7 @@ export default function FinancesCard({ personId }) {
 
 function FinanceInvoiceList({ invoices, season }) {
   return <section className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
-    <h3 className="font-semibold text-sm mb-2">Facturen en creditnota’s</h3>
+    <h3 className="font-semibold text-sm mb-2 text-gray-900 dark:text-gray-100">Facturen en creditnota’s</h3>
     {!invoices.length && <p className="text-sm text-gray-500 dark:text-gray-400">Geen facturen{season ? ` voor ${season}` : ''}.</p>}
     <div className="divide-y divide-gray-100 dark:divide-gray-700">{invoices.map(invoice => <Link key={invoice.id} to={`/financien/facturen/${invoice.id}`} className="block py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded focus-visible:outline-2 focus-visible:outline-cyan-600">
       <div className="flex flex-wrap justify-between gap-2 text-sm"><span className="font-medium text-cyan-800 dark:text-cyan-200">{invoice.invoice_number}{invoice.invoice_kind === 'credit' ? ' · Creditnota' : ''}</span><strong className="tabular-nums">{formatCurrency(invoice.total_amount, 2)}</strong></div>
