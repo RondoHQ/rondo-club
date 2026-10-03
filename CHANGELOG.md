@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.123.0] - 2026-10-03
+
+### Fixed
+- Keep played matches in the weekly dashboard by combining programme, results and cancellations; retain all cached results while Club TV still shows the latest twelve.
+
+### Added
+- Compact dashboard match list with home/away counts, day and team filters, six-match pages, and result display.
+- Local-only dashboard snapshots with retrieval timestamps; preview edits remain isolated from production.
+
+## [35.122.1] - 2026-10-03
+
+### Fixed
+- Preserve the dashboard logo’s natural proportions and give it more surrounding space.
+
+## [35.122.0] - 2026-10-03
+
+### Changed
+- Give role dashboards the Rondo website's Figtree typography, navy navigation, mint selections and violet controls, with matching dark and mobile styles.
+- Organize the default board dashboard into an action column and compact celebrations, with a summary derived from visible, authorized dashboard blocks; preserve custom saved block order.
+
+### Added
+- Local dashboard preview using the real React shell and components with isolated synthetic data, role selection and dark-mode control (`npm run preview:dashboard`).
+
 ## [35.121.6] - 2026-10-03
 
 ### Changed
