@@ -9,7 +9,10 @@ import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
 import { useTodoCompletion } from '@/hooks/useTodoCompletion';
 import { format, parseYmd, isValid } from '@/utils/dateFormat';
 import { toMinutes, toTime, fieldPart } from '@/utils/training';
-import { combineDashboardMatches, dashboardRoomLabel, moveDashboardBlock } from '@/utils/roleDashboard';
+import { combineDashboardMatches, moveDashboardBlock, hasDefaultDashboardOrder } from '@/utils/roleDashboard';
+import BoardSummary from './BoardSummary';
+import DashboardMatchList from './DashboardMatchList';
+import '@/styles/dashboard-brand.css';
 
 import { BoardAnniversaries, BoardMembership, BoardVolunteers, BoardVog } from './BoardDashboardBlocks';
 
@@ -69,6 +72,8 @@ export default function RoleDashboard({ user }) {
   const sources = matchScope === 'own' ? teamFeeds : [club];
   const feeds = sources.map((source, index) => ({ data: source.isError ? null : source.data, teamId: matchScope === 'own' ? teams[index]?.id : null }));
   const matches = combineDashboardMatches(feeds, data?.today || '', data?.end_date || '');
+  const clubMatches = combineDashboardMatches([{ data: club.isError ? null : club.data }], data?.today || '', data?.end_date || '');
+  const matchCounts = { home: clubMatches.filter(match => match.club_side === 'home').length, away: clubMatches.filter(match => match.club_side === 'away').length };
   const visibleMatches = matches.filter(match => matchScope === 'own' || (matchScope === 'home' ? match.club_side === 'home' : match.club_side === 'away'));
   // A match-tab selection must not hide club-wide alerts from a secretary.
   const attentionSources = context.secretary ? [club] : teamFeeds;
@@ -88,6 +93,7 @@ export default function RoleDashboard({ user }) {
   const birthdayDays = data.layout.birthday_days ?? 3;
   const birthdayPeriod = birthdayDays === 1 ? 'Vandaag' : `Vandaag en de komende ${birthdayDays - 1} ${birthdayDays === 2 ? 'dag' : 'dagen'}`;
   const visibleBlocks = data.layout.order.filter(id => !data.layout.hidden.includes(id));
+  const boardColumns = context.board && hasDefaultDashboardOrder(data.layout);
   const filteredBirthdays = data.birthdays.filter(person => birthdayTeam === 'all' || person.team_ids.includes(Number(birthdayTeam)));
   const birthdays = context.board && !allBirthdays ? filteredBirthdays.slice(0, 3) : filteredBirthdays;
   const compactCelebrations = context.board && visibleBlocks.includes('birthdays') && visibleBlocks.includes('anniversaries') && Math.abs(visibleBlocks.indexOf('birthdays') - visibleBlocks.indexOf('anniversaries')) === 1;
@@ -98,8 +104,8 @@ export default function RoleDashboard({ user }) {
   const sections = {
     anniversaries: <BoardAnniversaries items={data.anniversaries || []} compact={compactCelebrations} />,
     membership: data.membership && <BoardMembership data={data.membership} />,
-    volunteers: data.volunteers && <BoardVolunteers data={data.volunteers} />,
-    vog: data.vog && <BoardVog data={data.vog} />,
+    volunteers: data.volunteers && <BoardVolunteers data={data.volunteers} compact={boardColumns} />,
+    vog: data.vog && <BoardVog data={data.vog} compact={boardColumns} />,
     attention: <section aria-labelledby="dashboard-attention" className="lg:col-span-12">
       <h2 id="dashboard-attention" className="mb-3 text-lg font-semibold">{attentionLabel} <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">{tasks.length} {tasks.length === 1 ? 'taak' : 'taken'}</span></h2>
       {todo.updateError && <p role="alert" className="mb-3 text-sm text-red-700 dark:text-red-300">De taak kon niet worden opgeslagen. Probeer het opnieuw.</p>}
@@ -127,17 +133,12 @@ export default function RoleDashboard({ user }) {
     </section>,
     matches: <section aria-labelledby="dashboard-matches" className={visibleBlocks.includes('teams') ? 'min-w-0 lg:col-span-8' : 'min-w-0 lg:col-span-12'}>
       <h2 id="dashboard-matches" className="text-lg font-semibold">Wedstrijden deze week</h2><p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{dateLabel(data.today, 'd MMM')}–{dateLabel(data.end_date, 'd MMM')} · tijd, veld en kleedkamers</p>
-      <div className="mt-4 flex flex-wrap gap-5 border-b border-gray-200 dark:border-gray-700">{[...(context.secretary ? [['home', 'Thuiswedstrijden'], ['away', 'Uitwedstrijden']] : []), ...(context.coordinator ? [['own', 'Mijn teams']] : [])].map(([value, label]) => <button key={value} aria-pressed={matchScope === value} className={`border-b-2 pb-3 text-sm ${matchScope === value ? 'border-electric-cyan font-medium text-cyan-800 dark:text-electric-cyan' : 'border-transparent text-gray-500 dark:text-gray-400'}`} onClick={() => setMatchScope(value)}>{label}</button>)}</div>
+      <div className="mt-4 flex flex-wrap gap-5 border-b border-gray-200 dark:border-gray-700">{[...(context.secretary ? [['home', 'Thuiswedstrijden'], ['away', 'Uitwedstrijden']] : []), ...(context.coordinator ? [['own', 'Mijn teams']] : [])].map(([value, label]) => <button key={value} aria-pressed={matchScope === value} className={`border-b-2 pb-3 text-sm ${matchScope === value ? 'border-electric-cyan font-medium text-cyan-800 dark:text-electric-cyan' : 'border-transparent text-gray-500 dark:text-gray-400'}`} onClick={() => setMatchScope(value)}>{label}{value !== 'own' && !club.isPending && !club.isError && <span className="dashboard-match-count">{matchCounts[value]}</span>}</button>)}</div>
       {matchLoading && <p className="py-4 text-sm" role="status">Wedstrijden laden…</p>}
       {matchErrors && <div className="py-4"><LoadError retry={retryMatches}>Niet alle wedstrijden konden worden opgehaald. Het overzicht kan onvolledig zijn.</LoadError></div>}
       {notMatched && <p className="py-3 text-sm text-amber-800 dark:text-amber-200">Niet alle teams konden aan Sportlink worden gekoppeld.</p>}
       {stale && <p className="py-3 text-sm text-amber-800 dark:text-amber-200">Dit zijn eerder opgehaalde gegevens. Controleer wijzigingen in Sportlink.</p>}
-      {visibleMatches.map((match, index) => <div key={match.id}>{(!index || visibleMatches[index - 1].date !== match.date) && <h3 className="mt-5 text-xs font-semibold text-gray-500 dark:text-gray-400">{dateLabel(match.date)}</h3>}
-        <details className="border-b border-gray-200 py-3 dark:border-gray-700"><summary className="cursor-pointer text-sm"><span className="ml-2 inline-block w-12 align-top font-semibold tabular-nums">{match.time_known === false ? 'N.t.b.' : match.time}</span><span className="inline-block max-w-[calc(100%-5rem)] align-top"><span className="block font-medium">{match.home_team} · {match.away_team}</span><span className={`mt-1 block text-xs ${match.cancelled ? 'text-red-700 dark:text-red-300' : 'text-gray-500 dark:text-gray-400'}`}>{match.cancelled ? 'Afgelast' : `${match.pitch || 'Veld nog niet ingevuld'} · ${match.location || (match.home === false || match.club_side === 'away' ? 'Uitwedstrijd' : 'Thuiswedstrijd')}`}</span>{!match.cancelled && <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">Kleedkamers: thuis {dashboardRoomLabel(match.dressing_rooms?.home)} · uit {dashboardRoomLabel(match.dressing_rooms?.away)}</span>}</span></summary>
-          <dl className="ml-6 mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs sm:ml-[4.5rem]"><dt>Kleedkamer thuis</dt><dd>{dashboardRoomLabel(match.dressing_rooms?.home)}</dd><dt>Kleedkamer uit</dt><dd>{dashboardRoomLabel(match.dressing_rooms?.away)}</dd><dt>Status</dt><dd>{match.cancelled ? 'Afgelast' : match.status || 'Gepland'}</dd></dl>
-        </details>
-      </div>)}
-      {!matchLoading && !matchErrors && !notMatched && !stale && !visibleMatches.length && <p className="py-4 text-sm text-gray-500 dark:text-gray-400">{matchScope === 'own' && !teams.length ? 'Er zijn nog geen teams aan je coördinatorrol gekoppeld.' : 'Geen wedstrijden in dit overzicht.'}</p>}
+      <DashboardMatchList key={matchScope} matches={visibleMatches} loading={matchLoading} incomplete={matchErrors || notMatched || stale} noTeams={matchScope === 'own' && !teams.length} />
       {updated && isValid(new Date(updated)) && <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Sportlink · bijgewerkt {format(new Date(updated), 'd MMM HH:mm')}</p>}
     </section>,
     teams: <aside aria-labelledby="dashboard-teams" className={`${panel} self-start p-4 lg:col-span-4`}><h2 id="dashboard-teams" className="text-lg font-semibold">Mijn teams</h2><p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{teams.length} {teams.length === 1 ? 'team' : 'teams'} binnen jouw verantwoordelijkheid</p>
@@ -147,11 +148,23 @@ export default function RoleDashboard({ user }) {
     </aside>,
   };
 
-  return <div className="pb-6 text-gray-900 dark:text-gray-100">
-    <header className="mb-6 flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-semibold tracking-tight">{context.board ? 'Bestuursdashboard' : 'Jouw dashboard'}</h1><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{dateLabel(data.today)}</p><p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{[context.board && 'Bestuur', context.coordinator && 'Coördinator', context.secretary && 'Wedstrijdsecretaris'].filter(Boolean).join(' · ')}</p></div><div className="flex gap-2"><button className="btn-secondary text-sm !text-cyan-800 dark:!text-cyan-200" onClick={refresh}>Verversen</button><button className="btn-secondary flex items-center gap-2 text-sm !text-cyan-800 dark:!text-cyan-200" aria-expanded={customizing} aria-controls="dashboard-layout" onClick={() => setCustomizing(value => !value)}><SlidersHorizontal size={16} />Aanpassen</button></div></header>
+  const renderBlock = id => visibleBlocks.includes(id) && sections[id] ? <Suspense key={id} fallback={null}><div className={`dashboard-block dashboard-block-${id}`}>{sections[id]}</div></Suspense> : null;
+  const attentionBlocks = ['volunteers', 'vog'].filter(id => visibleBlocks.includes(id) && sections[id]);
+
+  return <div className="rondo-dashboard pb-6 text-gray-900 dark:text-gray-100">
+    <header className="mb-6 flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-semibold tracking-tight">{context.board ? 'Bestuursdashboard' : 'Jouw dashboard'}</h1><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{dateLabel(data.today)}</p><p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{[context.board && 'Bestuur', context.coordinator && 'Coördinator', context.secretary && 'Wedstrijdsecretaris'].filter(Boolean).join(' · ')}</p></div><div className="flex gap-2"><button className="btn-secondary text-sm" onClick={refresh}>Verversen</button><button className="btn-secondary flex items-center gap-2 text-sm" aria-expanded={customizing} aria-controls="dashboard-layout" onClick={() => setCustomizing(value => !value)}><SlidersHorizontal size={16} />Aanpassen</button></div></header>
     {customizing && <div id="dashboard-layout"><LayoutEditor labels={labels} layout={data.layout} onSave={save.mutate} pending={save.isPending} error={save.isError} /></div>}
     {!visibleBlocks.length && <p className="py-8 text-sm text-gray-500 dark:text-gray-400">Alle blokken zijn verborgen. Kies ‘Aanpassen’ om ze weer te tonen.</p>}
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">{visibleBlocks.map(id => <Suspense key={id} fallback={null}>{sections[id]}</Suspense>)}</div>
+    {context.board && <BoardSummary data={data} visibleBlocks={visibleBlocks} />}
+    {boardColumns ? <div className="dashboard-board-columns">
+      <div className="dashboard-column">
+        {attentionBlocks.length > 0 && <section className="dashboard-attention-panel" aria-labelledby="dashboard-action-heading"><h2 id="dashboard-action-heading">Aandacht nodig</h2>{attentionBlocks.map(renderBlock)}</section>}
+        {['attention', 'matches'].map(renderBlock)}
+      </div>
+      <div className="dashboard-column">
+        {['birthdays', 'anniversaries', 'membership', 'teams'].map(renderBlock)}
+      </div>
+    </div> : <div className="dashboard-ordered-grid">{visibleBlocks.map(renderBlock)}</div>}
     <CompleteTodoModal isOpen={todo.showCompleteModal} onClose={todo.closeCompleteModal} todo={todo.todoToComplete} onAwaiting={todo.handleMarkAwaiting} onComplete={todo.handleJustComplete} onCompleteAsActivity={todo.handleCompleteAsActivity} allowActivity={Boolean(todo.todoToComplete?.person_id)} hideAwaitingOption={todo.todoToComplete?.status === 'awaiting'} />
     <QuickActivityModal isOpen={todo.showActivityModal} onClose={todo.closeActivityModal} onSubmit={todo.handleCreateActivity} isLoading={todo.isCreatingActivity} personId={todo.todoToComplete?.person_id} initialData={todo.activityInitialData} />
     <Suspense fallback={null}><TodoModal isOpen={todo.showTodoModal} onClose={todo.closeTodoModal} onSubmit={todo.handleUpdateTodo} isLoading={todo.isUpdatingTodo} todo={todo.todoToView} /></Suspense>

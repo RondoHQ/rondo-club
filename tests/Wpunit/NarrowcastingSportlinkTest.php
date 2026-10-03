@@ -96,6 +96,105 @@ class NarrowcastingSportlinkTest extends RondoTestCase {
 		$this->assertStringNotContainsString( self::CLIENT_ID, wp_json_encode( get_option( 'rondo_narrowcasting_matchday_cache' ) ) );
 	}
 
+	public function test_week_keeps_all_results_without_expanding_club_tv_or_losing_match_details(): void {
+		$service = new SportlinkMatchday( false );
+		$service->update_settings(
+			[
+				'client_id'          => self::CLIENT_ID,
+				'club_relation_code' => self::CLUB_CODE,
+			]
+			);
+		$today   = current_datetime()->format( 'Y-m-d' );
+		$results = [];
+		foreach ( range( 0, 15 ) as $index ) {
+			$results[] = [
+				'wedstrijdcode'            => 'played-' . $index,
+				'wedstrijddatum'           => $today . 'T10:00:00+0200',
+				'thuisteam'                => $index % 2 ? 'Bezoekers' : 'AWC',
+				'thuisteamclubrelatiecode' => $index % 2 ? 'OTHER1' : self::CLUB_CODE,
+				'uitteam'                  => $index % 2 ? 'AWC' : 'Bezoekers',
+				'uitteamclubrelatiecode'   => $index % 2 ? self::CLUB_CODE : 'OTHER1',
+				'uitslag'                  => '2 - 1',
+				'status'                   => 'Gespeeld',
+			];
+		}
+		$duplicate = array_merge(
+			$results[0],
+			[
+				'veld'                => 'Veld 3',
+				'kleedkamerthuisteam' => '2',
+				'uitslag'             => '',
+				'status'              => 'Te spelen',
+			]
+			);
+		$future    = array_merge(
+			$duplicate,
+			[
+				'wedstrijdcode'  => 'future',
+				'wedstrijddatum' => current_datetime()->modify( '+6 days' )->format( 'Y-m-d' ) . 'T10:00:00+0200',
+			]
+			);
+		$outside   = array_merge(
+			$future,
+			[
+				'wedstrijdcode'  => 'outside',
+				'wedstrijddatum' => current_datetime()->modify( '+7 days' )->format( 'Y-m-d' ) . 'T10:00:00+0200',
+			]
+			);
+		$yesterday = array_merge(
+			$results[0],
+			[
+				'wedstrijdcode'  => 'yesterday',
+				'wedstrijddatum' => current_datetime()->modify( '-1 day' )->format( 'Y-m-d' ) . 'T10:00:00+0200',
+			]
+			);
+		$this->mock_sportlink( [ $duplicate, $future, $outside ], [ $results[1], array_merge( $results[1], [ 'wedstrijdcode' => 'cancel-only' ] ) ], array_merge( $results, [ $yesterday ] ) );
+		$tv = $service->refresh( true );
+		$this->assertCount( 12, $tv['results'] );
+		$week = $service->get_week_feed();
+		$this->assertCount( 18, $week['matches'] );
+		$by_id = array_column( $week['matches'], null, 'id' );
+		$this->assertArrayNotHasKey( 'outside', $by_id );
+		$this->assertArrayNotHasKey( 'yesterday', $by_id );
+		$this->assertSame( '2 - 1', $by_id['played-0']['result'] );
+		$this->assertSame( 'Veld 3', $by_id['played-0']['pitch'] );
+		$this->assertSame( '2', $by_id['played-0']['dressing_rooms']['home'] );
+		$this->assertSame( 'Gespeeld', $by_id['played-0']['status'] );
+		$this->assertTrue( $by_id['played-1']['cancelled'] );
+		$this->assertTrue( $by_id['cancel-only']['cancelled'] );
+		$this->assertSame( 'away', $by_id['played-1']['club_side'] );
+		$this->assertFalse( $week['stale'] );
+		$cache = get_option( 'rondo_narrowcasting_matchday_cache' );
+		$this->assertCount( 17, $cache['feeds']['results']['items'] );
+		$old                                      = gmdate( DATE_RFC3339, time() - 2 * DAY_IN_SECONDS );
+		$cache['feeds']['results']['fetched_at']  = $old;
+		$cache['feeds']['results']['fresh_until'] = $old;
+		update_option( 'rondo_narrowcasting_matchday_cache', $cache );
+		$week = $service->get_week_feed();
+		$this->assertSame( $old, $week['updated_at'] );
+		$this->assertTrue( $week['stale'] );
+		$this->assertTrue( $week['expired'] );
+	}
+
+	public function test_legacy_truncated_results_are_refreshed_even_before_the_old_ttl_expires(): void {
+		$service = new SportlinkMatchday( false );
+		$service->update_settings(
+			[
+				'client_id'          => self::CLIENT_ID,
+				'club_relation_code' => self::CLUB_CODE,
+			]
+			);
+		$this->mock_sportlink( [], [], [] );
+		$service->refresh( true );
+		$cache = get_option( 'rondo_narrowcasting_matchday_cache' );
+		unset( $cache['feeds']['results']['complete'] );
+		update_option( 'rondo_narrowcasting_matchday_cache', $cache );
+		$this->assertTrue( $service->get_week_feed()['stale'] );
+		$service->refresh();
+		$this->assertFalse( $service->get_week_feed()['stale'] );
+		$this->assertTrue( get_option( 'rondo_narrowcasting_matchday_cache' )['feeds']['results']['complete'] );
+	}
+
 	public function test_failed_refresh_preserves_last_known_good_payload(): void {
 		$service = new SportlinkMatchday( false );
 		$service->update_settings(
