@@ -477,6 +477,49 @@ class ActivationServiceTest extends RondoTestCase {
 		$this->assertStringContainsString( 'https://example.com/deferred-login', $mail['message'] );
 	}
 
+	public function test_deferred_magic_login_preserves_only_safe_return_destinations(): void {
+		$person_id = $this->person( 'Anne Jansen', 'anne@example.com' );
+		$user_id   = self::factory()->user->create( [ 'user_email' => 'anne@example.com' ] );
+		update_post_meta( $person_id, UserProvisioning::META_USER_ID, $user_id );
+		$return = add_query_arg(
+			[
+				'client_id' => 'freescout',
+				'state'     => 'original-state',
+			],
+			home_url( '/oauth/authorize' )
+			);
+		$seen   = [];
+		add_filter(
+			'rondo_activation_magic_login_url',
+			function ( $url, $user, $redirect ) use ( &$seen ) {
+				$seen[] = $redirect;
+				return add_query_arg( 'redirect_to', $redirect, home_url( '/login-test' ) );
+			},
+			10,
+			3
+		);
+		add_filter( 'pre_wp_mail', '__return_true' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Preserve synthetic request state in this regression test.
+		$post = $_POST;
+		try {
+			foreach ( [ $return, 'https://attacker.test/', '//attacker.test/', '' ] as $destination ) {
+				delete_transient( ActivationService::RATE_EMAIL_PREFIX . md5( 'anne@example.com' ) );
+				$bridge = new MagicLoginActivation();
+				$_POST  = [
+					'log'         => 'anne@example.com',
+					'redirect_to' => $destination,
+				];
+				$this->assertTrue( $bridge->intercept_send( null, get_userdata( $user_id ) ) );
+				// The response has finished before the queued email is generated.
+				$_POST = [];
+				$bridge->dispatch_queued_request( false );
+			}
+		} finally {
+			$_POST = $post;
+		}
+		$this->assertSame( [ $return, home_url( '/' ), home_url( '/' ), home_url( '/' ) ], $seen );
+	}
+
 	public function test_magic_login_bridge_preserves_an_earlier_plugin_failure(): void {
 		$bridge       = new MagicLoginActivation();
 		$blocked      = new \WP_Error( 'captcha_failed', 'Controle mislukt.' );

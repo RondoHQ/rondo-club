@@ -369,13 +369,14 @@ class ActivationService {
 	 * A shared household address receives one message with a named button per account.
 	 * Token creation and authentication remain owned by the Magic Login plugin.
 	 *
-	 * @param string $email      Address on file.
-	 * @param int[]  $person_ids People matched to the address.
+	 * @param string $email       Address on file.
+	 * @param int[]  $person_ids  People matched to the address.
+	 * @param string $redirect_to Optional return destination after authentication.
 	 * @return bool Whether wp_mail() accepted the message.
 	 */
-	public static function send_magic_login_email( string $email, array $person_ids ): bool {
+	public static function send_magic_login_email( string $email, array $person_ids, string $redirect_to = '' ): bool {
 		$branding    = PublicPageChrome::branding();
-		$login_links = self::magic_login_links( $person_ids );
+		$login_links = self::magic_login_links( $person_ids, $redirect_to );
 
 		if ( empty( $login_links ) ) {
 			return false;
@@ -415,11 +416,12 @@ class ActivationService {
 	 * @param string $email               Address on file.
 	 * @param int[]  $existing_person_ids People who already have accounts.
 	 * @param string $activation_token    Identity-picker token.
+	 * @param string $redirect_to         Optional return destination for existing accounts.
 	 * @return bool Whether wp_mail() accepted the message.
 	 */
-	private static function send_household_access_email( string $email, array $existing_person_ids, string $activation_token ): bool {
+	private static function send_household_access_email( string $email, array $existing_person_ids, string $activation_token, string $redirect_to = '' ): bool {
 		$branding       = PublicPageChrome::branding();
-		$login_links    = self::magic_login_links( $existing_person_ids );
+		$login_links    = self::magic_login_links( $existing_person_ids, $redirect_to );
 		$activation_url = self::activation_url( $activation_token );
 		if ( empty( $login_links ) ) {
 			return self::send_activation_email( $email, $activation_token );
@@ -467,10 +469,11 @@ class ActivationService {
 	/**
 	 * Build named Magic Login links for valid person-account pairs.
 	 *
-	 * @param int[] $person_ids Person IDs.
+	 * @param int[]  $person_ids  Person IDs.
+	 * @param string $redirect_to Optional return destination after authentication.
 	 * @return array<int,array{name:string,url:string}>
 	 */
-	private static function magic_login_links( array $person_ids ): array {
+	private static function magic_login_links( array $person_ids, string $redirect_to = '' ): array {
 		$login_links = [];
 
 		foreach ( $person_ids as $person_id ) {
@@ -480,7 +483,7 @@ class ActivationService {
 				continue;
 			}
 
-			$login_url = self::magic_login_url_for_user( $user );
+			$login_url = self::magic_login_url_for_user( $user, $redirect_to );
 			if ( $login_url === '' ) {
 				continue;
 			}
@@ -507,9 +510,10 @@ class ActivationService {
 	 * do nothing. The HTTP response has already been made generic by
 	 * MagicLoginActivation before this method runs.
 	 *
-	 * @param string $email Submitted email address.
+	 * @param string $email       Submitted email address.
+	 * @param string $redirect_to Optional return destination after authentication.
 	 */
-	public static function send_for_magic_login_request( string $email ): void {
+	public static function send_for_magic_login_request( string $email, string $redirect_to = '' ): void {
 		$persons = self::persons_for_email( $email );
 		if ( empty( $persons ) ) {
 			return;
@@ -523,7 +527,7 @@ class ActivationService {
 		);
 
 		if ( empty( $available ) ) {
-			self::send_magic_login_email( $email, $persons );
+			self::send_magic_login_email( $email, $persons, $redirect_to );
 			return;
 		}
 
@@ -537,7 +541,7 @@ class ActivationService {
 			if ( empty( $existing_person_ids ) ) {
 				self::send_activation_email( $email, $token );
 			} else {
-				self::send_household_access_email( $email, $existing_person_ids, $token );
+				self::send_household_access_email( $email, $existing_person_ids, $token, $redirect_to );
 			}
 			return;
 		}
@@ -561,7 +565,7 @@ class ActivationService {
 			return;
 		}
 
-		if ( ! self::send_magic_login_email( $email, $persons ) ) {
+		if ( ! self::send_magic_login_email( $email, $persons, $redirect_to ) ) {
 			ActivationLog::record_failure(
 				'activation_login_email_failed',
 				'Het account is aangemaakt, maar de e-mail met de inloglink kon niet worden verzonden.',
@@ -734,14 +738,15 @@ class ActivationService {
 	}
 
 	/** Create a Magic Login URL while respecting the plugin's failsafe hooks. */
-	private static function magic_login_url_for_user( \WP_User $user ): string {
+	private static function magic_login_url_for_user( \WP_User $user, string $redirect_to = '' ): string {
 		if ( apply_filters( 'magic_login_pre_send_login_link', null, $user ) !== null ) {
 			return '';
 		}
 
-		$login_url = (string) apply_filters( 'rondo_activation_magic_login_url', '', $user );
+		$redirect_to = wp_validate_redirect( $redirect_to, home_url( '/' ) ) ?: home_url( '/' );
+		$login_url   = (string) apply_filters( 'rondo_activation_magic_login_url', '', $user, $redirect_to );
 		if ( $login_url === '' && function_exists( '\\MagicLogin\\Utils\\create_login_link' ) ) {
-			$login_url = (string) \MagicLogin\Utils\create_login_link( $user, 'email', home_url( '/' ) );
+			$login_url = (string) \MagicLogin\Utils\create_login_link( $user, 'email', $redirect_to );
 		}
 		if ( $login_url !== '' ) {
 			do_action( 'magic_login_send_login_link', $user );
