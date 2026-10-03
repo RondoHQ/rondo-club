@@ -6,14 +6,17 @@ import Layout from '../../src/components/layout/Layout';
 import api from '../../src/api/client';
 import './dashboard-preview.css';
 
-// Local, synthetic API adapter: ALL requests are handled here, never forwarded to WordPress.
+// Local API adapter: snapshots and simulated edits stay on this machine; nothing is forwarded to WordPress.
 const params = new URLSearchParams(location.search);
-const role = params.get('role') || 'board-secretary';
+const snapshotResponse = params.has('synthetic') ? null : await fetch('/__dashboard-preview-data', { cache: 'no-store' }).catch(() => null);
+const snapshot = snapshotResponse?.ok ? await snapshotResponse.json() : null;
+const fullSnapshot = Boolean(snapshot?.workspace);
+const role = snapshot ? 'board-secretary' : params.get('role') || 'board-secretary';
 const board = role.startsWith('board');
 const coordinator = ['coordinator', 'combined', 'board-combined'].includes(role);
 const secretary = ['secretary', 'combined', 'board-secretary', 'board-combined'].includes(role);
 const context = { board, coordinator, secretary, enabled: true };
-const user = {
+const user = snapshot?.user || {
   id: 1, name: 'Joost de Valk', linked_person_name: 'Joost de Valk', linked_person_id: 1,
   dashboard_context: context, feedback_intro_seen: true, is_kader: true, has_my_teams: true,
   can_access_dashboard: true, can_access_commissies: board, can_access_bestuur: board,
@@ -22,7 +25,7 @@ const user = {
   can_access_communication: board, can_manage_sponsors: board,
 };
 const order = [...(board ? ['birthdays', 'anniversaries', 'attention', 'membership', 'volunteers', 'vog'] : ['attention', ...(coordinator ? ['birthdays'] : [])]), ...(coordinator || secretary ? ['matches'] : []), ...(coordinator ? ['teams'] : [])];
-const storageKey = `rondo-brand-preview-${role}`;
+const storageKey = `rondo-brand-preview-${snapshot ? 'live-' : ''}${role}`;
 function readSavedLayout() {
   try {
     const saved = JSON.parse(sessionStorage.getItem(storageKey));
@@ -34,7 +37,7 @@ let layout = readSavedLayout();
 const teams = coordinator && !params.has('no-teams') ? [{ id: 1, name: 'JO13-1', player_count: 16 }, { id: 2, name: 'JO13-2', player_count: 15 }] : [];
 const birthdays = ['Sam Jansen', 'Mila de Vries', 'Noah Bakker', 'Eva Peters', 'Liam Smits', 'Sofie Willems', 'Lucas Vos'].map((title, index) => ({ id: index + 1, title, date_value: `2013-10-0${3 + index % 3}`, next_occurrence: `2026-10-0${3 + index % 3}`, days_until: index % 3, team_ids: [index % 2 + 1], related_people: [] })).sort((a, b) => a.days_until - b.days_until);
 const matches = Array.from({ length: 4 }, (_, index) => ({ id: String(index), date: '2026-10-03', starts_at: `2026-10-03T${13 + index}:00:00+02:00`, time: `${13 + index}:00`, home_team: index === 3 ? 'Bezoekers JO13-2' : `AWC JO13-${index % 2 + 1}`, away_team: index === 3 ? 'AWC JO13-2' : 'Bezoekers JO13-1', cancelled: params.has('cancelled') && index === 2, club_side: index === 3 ? 'away' : 'home', pitch: `Veld ${index % 3 + 1}`, dressing_rooms: { home: index === 1 ? '' : '3', away: index === 2 ? '0 - geen kleedkamer' : '4' } }));
-let tasks = [
+let tasks = snapshot?.workspace?.tasks || [
   { id: 7, content: 'Bezetting zaterdag nalopen', due_date: '2026-10-03T12:00:00+02:00', status: 'open' },
   { id: 8, content: 'Agenda bestuursvergadering voorbereiden', due_date: '2026-10-05T12:00:00+02:00', status: 'open' },
   { id: 9, content: 'Nieuwe aanmeldingen controleren', due_date: '2026-10-07T12:00:00+02:00', status: 'open' },
@@ -82,6 +85,17 @@ api.defaults.adapter = async config => {
   else if (path.endsWith('/discipline-cases')) data = [];
   else if (path.endsWith('/search')) data = { people: [], teams: [], invoices: [] };
   else throw new Error(`Dit onderdeel is niet aangesloten in de lokale preview: ${method} ${path}`);
+  if (snapshot) {
+    if (path.endsWith('/workspace')) {
+      if (fullSnapshot) data = { ...snapshot.workspace, layout, tasks: tasks.filter(task => task.status !== 'completed') };
+      else {
+        const { volunteerTotals, ...overrides } = snapshot.workspaceOverrides;
+        data = { ...data, ...overrides, volunteers: { ...data.volunteers, ...volunteerTotals, shifts: [] } };
+      }
+    }
+    if (path.endsWith('/matches')) data = config.params?.team_id ? snapshot.teamMatches?.[config.params.team_id] || { matches: [], matched: false } : snapshot.clubMatches;
+    if (path === '/rondo/v1/dashboard' && snapshot.dashboard) data = snapshot.dashboard;
+  }
   return { data, status: 200, statusText: 'OK', headers: { 'x-wp-total': '0' }, config };
 };
 window.rondoConfig = { isLoggedIn: true, userId: 1, siteName: 'AWC Rondo', logoutUrl: '/?preview-logout', themeUrl: '', isDemoUser: true };
@@ -93,10 +107,11 @@ document.documentElement.style.setProperty('--rondo-admin-bar-offset', '54px');
 function PreviewControls() {
   const setParam = (key, value) => { const next = new URLSearchParams(location.search); if (value) next.set(key, value); else next.delete(key); location.assign('/?' + next); };
   return <div className="dashboard-preview-toolbar">
-    <strong>Lokale preview <span>· fictieve gegevens</span></strong>
-    <label>Rol <select value={role} onChange={event => setParam('role', event.target.value)}>
+    <strong>Lokale preview <span>· {snapshot ? `${fullSnapshot ? 'Live gegevens' : 'Actuele wedstrijden en totalen · personen fictief'} · opgehaald ${new Date(snapshot.fetchedAt).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : 'fictieve gegevens'}</span></strong>
+    {snapshot && <span>Wijzigingen blijven lokaal</span>}
+    {!snapshot && <label>Rol <select value={role} onChange={event => setParam('role', event.target.value)}>
       <option value="board-secretary">Bestuur + wedstrijdsecretaris</option><option value="board">Bestuur</option><option value="coordinator">Coördinator</option><option value="secretary">Wedstrijdsecretaris</option><option value="board-combined">Alle dashboardrollen</option>
-    </select></label>
+    </select></label>}
     <label><input type="checkbox" checked={params.has('dark')} onChange={event => setParam('dark', event.target.checked ? '1' : '')} />Donker</label>
   </div>;
 }

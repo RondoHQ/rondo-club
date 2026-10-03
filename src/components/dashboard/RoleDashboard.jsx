@@ -9,8 +9,9 @@ import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
 import { useTodoCompletion } from '@/hooks/useTodoCompletion';
 import { format, parseYmd, isValid } from '@/utils/dateFormat';
 import { toMinutes, toTime, fieldPart } from '@/utils/training';
-import { combineDashboardMatches, dashboardRoomLabel, moveDashboardBlock, hasDefaultDashboardOrder } from '@/utils/roleDashboard';
+import { combineDashboardMatches, moveDashboardBlock, hasDefaultDashboardOrder } from '@/utils/roleDashboard';
 import BoardSummary from './BoardSummary';
+import DashboardMatchList from './DashboardMatchList';
 import '@/styles/dashboard-brand.css';
 
 import { BoardAnniversaries, BoardMembership, BoardVolunteers, BoardVog } from './BoardDashboardBlocks';
@@ -71,6 +72,8 @@ export default function RoleDashboard({ user }) {
   const sources = matchScope === 'own' ? teamFeeds : [club];
   const feeds = sources.map((source, index) => ({ data: source.isError ? null : source.data, teamId: matchScope === 'own' ? teams[index]?.id : null }));
   const matches = combineDashboardMatches(feeds, data?.today || '', data?.end_date || '');
+  const clubMatches = combineDashboardMatches([{ data: club.isError ? null : club.data }], data?.today || '', data?.end_date || '');
+  const matchCounts = { home: clubMatches.filter(match => match.club_side === 'home').length, away: clubMatches.filter(match => match.club_side === 'away').length };
   const visibleMatches = matches.filter(match => matchScope === 'own' || (matchScope === 'home' ? match.club_side === 'home' : match.club_side === 'away'));
   // A match-tab selection must not hide club-wide alerts from a secretary.
   const attentionSources = context.secretary ? [club] : teamFeeds;
@@ -130,17 +133,12 @@ export default function RoleDashboard({ user }) {
     </section>,
     matches: <section aria-labelledby="dashboard-matches" className={visibleBlocks.includes('teams') ? 'min-w-0 lg:col-span-8' : 'min-w-0 lg:col-span-12'}>
       <h2 id="dashboard-matches" className="text-lg font-semibold">Wedstrijden deze week</h2><p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{dateLabel(data.today, 'd MMM')}–{dateLabel(data.end_date, 'd MMM')} · tijd, veld en kleedkamers</p>
-      <div className="mt-4 flex flex-wrap gap-5 border-b border-gray-200 dark:border-gray-700">{[...(context.secretary ? [['home', 'Thuiswedstrijden'], ['away', 'Uitwedstrijden']] : []), ...(context.coordinator ? [['own', 'Mijn teams']] : [])].map(([value, label]) => <button key={value} aria-pressed={matchScope === value} className={`border-b-2 pb-3 text-sm ${matchScope === value ? 'border-electric-cyan font-medium text-cyan-800 dark:text-electric-cyan' : 'border-transparent text-gray-500 dark:text-gray-400'}`} onClick={() => setMatchScope(value)}>{label}</button>)}</div>
+      <div className="mt-4 flex flex-wrap gap-5 border-b border-gray-200 dark:border-gray-700">{[...(context.secretary ? [['home', 'Thuiswedstrijden'], ['away', 'Uitwedstrijden']] : []), ...(context.coordinator ? [['own', 'Mijn teams']] : [])].map(([value, label]) => <button key={value} aria-pressed={matchScope === value} className={`border-b-2 pb-3 text-sm ${matchScope === value ? 'border-electric-cyan font-medium text-cyan-800 dark:text-electric-cyan' : 'border-transparent text-gray-500 dark:text-gray-400'}`} onClick={() => setMatchScope(value)}>{label}{value !== 'own' && !club.isPending && !club.isError && <span className="dashboard-match-count">{matchCounts[value]}</span>}</button>)}</div>
       {matchLoading && <p className="py-4 text-sm" role="status">Wedstrijden laden…</p>}
       {matchErrors && <div className="py-4"><LoadError retry={retryMatches}>Niet alle wedstrijden konden worden opgehaald. Het overzicht kan onvolledig zijn.</LoadError></div>}
       {notMatched && <p className="py-3 text-sm text-amber-800 dark:text-amber-200">Niet alle teams konden aan Sportlink worden gekoppeld.</p>}
       {stale && <p className="py-3 text-sm text-amber-800 dark:text-amber-200">Dit zijn eerder opgehaalde gegevens. Controleer wijzigingen in Sportlink.</p>}
-      {visibleMatches.map((match, index) => <div key={match.id}>{(!index || visibleMatches[index - 1].date !== match.date) && <h3 className="mt-5 text-xs font-semibold text-gray-500 dark:text-gray-400">{dateLabel(match.date)}</h3>}
-        <details className="border-b border-gray-200 py-3 dark:border-gray-700"><summary className="cursor-pointer text-sm"><span className="ml-2 inline-block w-12 align-top font-semibold tabular-nums">{match.time_known === false ? 'N.t.b.' : match.time}</span><span className="inline-block max-w-[calc(100%-5rem)] align-top"><span className="block font-medium">{match.home_team} · {match.away_team}</span><span className={`mt-1 block text-xs ${match.cancelled ? 'text-red-700 dark:text-red-300' : 'text-gray-500 dark:text-gray-400'}`}>{match.cancelled ? 'Afgelast' : `${match.pitch || 'Veld nog niet ingevuld'} · ${match.location || (match.home === false || match.club_side === 'away' ? 'Uitwedstrijd' : 'Thuiswedstrijd')}`}</span>{!match.cancelled && <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">Kleedkamers: thuis {dashboardRoomLabel(match.dressing_rooms?.home)} · uit {dashboardRoomLabel(match.dressing_rooms?.away)}</span>}</span></summary>
-          <dl className="ml-6 mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs sm:ml-[4.5rem]"><dt>Kleedkamer thuis</dt><dd>{dashboardRoomLabel(match.dressing_rooms?.home)}</dd><dt>Kleedkamer uit</dt><dd>{dashboardRoomLabel(match.dressing_rooms?.away)}</dd><dt>Status</dt><dd>{match.cancelled ? 'Afgelast' : match.status || 'Gepland'}</dd></dl>
-        </details>
-      </div>)}
-      {!matchLoading && !matchErrors && !notMatched && !stale && !visibleMatches.length && <p className="py-4 text-sm text-gray-500 dark:text-gray-400">{matchScope === 'own' && !teams.length ? 'Er zijn nog geen teams aan je coördinatorrol gekoppeld.' : 'Geen wedstrijden in dit overzicht.'}</p>}
+      <DashboardMatchList key={matchScope} matches={visibleMatches} loading={matchLoading} incomplete={matchErrors || notMatched || stale} noTeams={matchScope === 'own' && !teams.length} />
       {updated && isValid(new Date(updated)) && <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Sportlink · bijgewerkt {format(new Date(updated), 'd MMM HH:mm')}</p>}
     </section>,
     teams: <aside aria-labelledby="dashboard-teams" className={`${panel} self-start p-4 lg:col-span-4`}><h2 id="dashboard-teams" className="text-lg font-semibold">Mijn teams</h2><p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{teams.length} {teams.length === 1 ? 'team' : 'teams'} binnen jouw verantwoordelijkheid</p>

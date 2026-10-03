@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.123.0] - 2026-10-03
+
+### Added
+- Compact dashboard match list with home/away counts, day and team filters, six-match pages, and result display.
+- Local-only dashboard snapshots with retrieval timestamps; preview edits remain isolated from production.
+
 ## [35.122.1] - 2026-10-03
 
 ### Fixed

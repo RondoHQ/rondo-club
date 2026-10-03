@@ -19,6 +19,17 @@ export function dashboardRoomLabel(value) {
   return String(value ?? '').trim() || 'Nog niet ingevuld';
 }
 
+export function getDashboardMatchPage(matches, { date = 'all', query = '', page = 0, pageSize = 6 } = {}) {
+  const normalize = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('nl-NL');
+  const terms = normalize(query.trim()).split(/\s+/).filter(Boolean);
+  const filtered = matches.filter(match => (date === 'all' || match.date === date)
+    && terms.every(term => normalize(`${match.home_team} ${match.away_team}`).includes(term)));
+  const pages = Math.ceil(filtered.length / pageSize);
+  const current = Math.max(0, Math.min(page, pages - 1));
+  const start = current * pageSize;
+  return { items: filtered.slice(start, start + pageSize), total: filtered.length, pages, page: current, start };
+}
+
 export function moveDashboardBlock(order, index, direction) {
   const target = index + direction;
   if (target < 0 || target >= order.length) return order;
