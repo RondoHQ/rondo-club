@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
+import FeedbackScreenshotInput from '@/components/FeedbackScreenshotInput';
 
 // Status options
 const statusOptions = [
@@ -33,6 +34,8 @@ export default function FeedbackEditModal({
   feedback, // The feedback item to edit
   isAdmin = false, // Whether the current user is an admin
 }) {
+  const [screenshot, setScreenshot] = useState(null);
+  const [submitError, setSubmitError] = useState('');
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm();
   const feedbackType = watch('feedback_type');
   const selectedStatus = watch('status');
@@ -46,6 +49,8 @@ export default function FeedbackEditModal({
   // Reset form with feedback data when opening
   useEffect(() => {
     if (isOpen && feedback) {
+      setScreenshot(null);
+      setSubmitError('');
       reset({
         title: feedback.title || '',
         content: feedback.content || '',
@@ -64,8 +69,9 @@ export default function FeedbackEditModal({
   }, [isOpen, feedback, reset]);
 
   // Form submit handler
-  const handleFormSubmit = (data) => {
+  const handleFormSubmit = async (data) => {
     const submitData = {
+      screenshot,
       title: data.title,
       content: data.content,
       feedback_type: data.feedback_type,
@@ -93,7 +99,12 @@ export default function FeedbackEditModal({
       submitData.use_case = data.use_case;
     }
 
-    onSubmit(submitData);
+    setSubmitError('');
+    try {
+      await onSubmit(submitData);
+    } catch (error) {
+      setSubmitError(error.response?.data?.message || 'Feedback opslaan is mislukt. Probeer het opnieuw.');
+    }
   };
 
   if (!isOpen) return null;
@@ -287,6 +298,9 @@ export default function FeedbackEditModal({
                 <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.content.message}</p>
               )}
             </div>
+
+            <FeedbackScreenshotInput file={screenshot} onChange={setScreenshot} disabled={isLoading} hasScreenshot={feedback?.has_screenshot} />
+            {submitError && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{submitError}</p>}
 
             {/* Bug-specific fields */}
             {feedbackType === 'bug' && (

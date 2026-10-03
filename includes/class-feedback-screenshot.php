@@ -75,6 +75,21 @@ final class FeedbackScreenshot {
 		return $file;
 	}
 
+	/** Replace the descriptor before removing the previous private file. */
+	public static function attach( int $post_id, array $file ) {
+		$old = get_post_meta( $post_id, self::META, true );
+		update_post_meta( $post_id, self::META, $file, $old );
+		if ( get_post_meta( $post_id, self::META, true ) !== $file ) {
+			wp_delete_file( self::path( $file ) );
+			return new \WP_Error( 'feedback_screenshot_storage', 'De screenshot kon niet worden gekoppeld. Probeer het opnieuw.', [ 'status' => 500 ] );
+		}
+		$old_path = is_array( $old ) ? self::path( $old ) : '';
+		if ( $old_path && $old_path !== self::path( $file ) && is_file( $old_path ) ) {
+			wp_delete_file( $old_path );
+		}
+		return true;
+	}
+
 	public static function delete( int $post_id ): void {
 		if ( get_post_type( $post_id ) !== 'rondo_feedback' ) {
 			return;
