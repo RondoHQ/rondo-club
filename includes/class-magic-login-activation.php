@@ -19,6 +19,9 @@ class MagicLoginActivation {
 	/** Email queued for post-response processing. */
 	private ?string $queued_email = null;
 
+	/** Safe return destination retained until the deferred email is generated. */
+	private string $queued_redirect = '';
+
 	/** Whether this request was handled, including a throttled request. */
 	private bool $handled_request = false;
 
@@ -61,6 +64,9 @@ class MagicLoginActivation {
 		if ( ! ActivationService::is_rate_limited( $email, $ip ) ) {
 			ActivationService::record_attempt( $email, $ip );
 			$this->queued_email = $email;
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Magic Login validates its form before this filter.
+			$redirect              = $_POST['redirect_to'] ?? '';
+			$this->queued_redirect = is_string( $redirect ) ? wp_validate_redirect( wp_unslash( $redirect ), home_url( '/' ) ) : home_url( '/' );
 		}
 
 		// Any non-null, non-error result tells Magic Login that sending succeeded.
@@ -104,8 +110,10 @@ class MagicLoginActivation {
 			return;
 		}
 
-		$email              = $this->queued_email;
-		$this->queued_email = null;
+		$email                 = $this->queued_email;
+		$redirect              = $this->queued_redirect;
+		$this->queued_email    = null;
+		$this->queued_redirect = '';
 
 		if ( $finish_response ) {
 			self::finish_response();
@@ -113,7 +121,7 @@ class MagicLoginActivation {
 
 		self::$dispatching = true;
 		try {
-			ActivationService::send_for_magic_login_request( $email );
+			ActivationService::send_for_magic_login_request( $email, $redirect );
 		} finally {
 			self::$dispatching = false;
 		}

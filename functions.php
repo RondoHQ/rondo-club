@@ -1866,10 +1866,9 @@ function rondo_login_redirect( $redirect_to, $request, $user ) {
 	if ( $user instanceof \WP_User && UserRoles::is_entree( $user->ID ) ) {
 		return home_url( '/lidpas-scanner' );
 	}
-	// Only redirect if no specific redirect was requested
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	if ( isset( $_GET['redirect_to'] ) && ! empty( $_GET['redirect_to'] ) ) {
-		return $redirect_to;
+	// WordPress passes the requested destination for both GET and login-form POSTs.
+	if ( is_string( $request ) && $request !== '' ) {
+		return wp_validate_redirect( $request, home_url( '/' ) );
 	}
 
 	// Redirect all users to the homepage
