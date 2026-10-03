@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
 import FeedbackScreenshotInput from '@/components/FeedbackScreenshotInput';
 
 export default function FeedbackModal({
@@ -15,14 +14,11 @@ export default function FeedbackModal({
   const [screenshot, setScreenshot] = useState(null);
   const [submitError, setSubmitError] = useState('');
   const isOnline = useOnlineStatus();
-  const { data: currentUser } = useCurrentUser();
-  const isAdmin = currentUser?.is_admin ?? false;
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm({
     defaultValues: {
       title: '',
       content: '',
       feedback_type: 'bug',
-      project: 'rondo-club',
       steps_to_reproduce: '',
       expected_behavior: '',
       actual_behavior: '',
@@ -41,7 +37,6 @@ export default function FeedbackModal({
         title: '',
         content: '',
         feedback_type: 'bug',
-        project: 'rondo-club',
         steps_to_reproduce: '',
         expected_behavior: '',
         actual_behavior: '',
@@ -57,7 +52,7 @@ export default function FeedbackModal({
       title: data.title,
       content: data.content,
       feedback_type: data.feedback_type,
-      project: data.project,
+      project: 'rondo-club',
     };
 
     // Add type-specific fields
@@ -129,47 +124,6 @@ export default function FeedbackModal({
                 </label>
               </div>
             </div>
-
-            {/* Project */}
-            {isAdmin ? (
-              <div>
-                <label className="label">Project *</label>
-                <div className="flex gap-4">
-                  <label className="flex items-center cursor-pointer">
-                    <input
-                      {...register('project')}
-                      type="radio"
-                      value="rondo-club"
-                      className="w-4 h-4 text-electric-cyan border-gray-300 dark:border-gray-600 focus:ring-electric-cyan dark:bg-gray-700"
-                      disabled={isLoading}
-                    />
-                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Rondo Club</span>
-                  </label>
-                  <label className="flex items-center cursor-pointer">
-                    <input
-                      {...register('project')}
-                      type="radio"
-                      value="rondo-sync"
-                      className="w-4 h-4 text-electric-cyan border-gray-300 dark:border-gray-600 focus:ring-electric-cyan dark:bg-gray-700"
-                      disabled={isLoading}
-                    />
-                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Rondo Sync</span>
-                  </label>
-                  <label className="flex items-center cursor-pointer">
-                    <input
-                      {...register('project')}
-                      type="radio"
-                      value="website"
-                      className="w-4 h-4 text-electric-cyan border-gray-300 dark:border-gray-600 focus:ring-electric-cyan dark:bg-gray-700"
-                      disabled={isLoading}
-                    />
-                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Website</span>
-                  </label>
-                </div>
-              </div>
-            ) : (
-              <input type="hidden" {...register('project')} value="rondo-club" />
-            )}
 
             {/* Title */}
             <div>

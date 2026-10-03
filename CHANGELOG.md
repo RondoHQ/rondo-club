@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.121.6] - 2026-10-03
+
+### Changed
+- Remove the project selector from new and edit feedback forms; new feedback is always submitted for Rondo Club.
+
 ## [35.121.5] - 2026-10-03
 
 ### Fixed

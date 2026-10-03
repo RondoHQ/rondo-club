@@ -55,7 +55,6 @@ export default function FeedbackEditModal({
         title: feedback.title || '',
         content: feedback.content || '',
         feedback_type: feedback.meta?.feedback_type || feedback.feedback_type || 'bug',
-        project: feedback.meta?.project || 'rondo-club',
         status: feedback.meta?.status || feedback.status || 'new',
         priority: feedback.meta?.priority || feedback.priority || 'medium',
         resolution_summary: feedback.meta?.resolution_summary || '',
@@ -75,7 +74,6 @@ export default function FeedbackEditModal({
       title: data.title,
       content: data.content,
       feedback_type: data.feedback_type,
-      project: data.project,
     };
 
     // Only include status and priority if user is admin
@@ -151,43 +149,6 @@ export default function FeedbackEditModal({
                     disabled={isLoading}
                   />
                   <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Functieverzoek</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Project */}
-            <div>
-              <label className="label">Project *</label>
-              <div className="flex gap-4">
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    {...register('project')}
-                    type="radio"
-                    value="rondo-club"
-                    className="w-4 h-4 text-electric-cyan border-gray-300 dark:border-gray-600 focus:ring-electric-cyan dark:bg-gray-700"
-                    disabled={isLoading}
-                  />
-                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Rondo Club</span>
-                </label>
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    {...register('project')}
-                    type="radio"
-                    value="rondo-sync"
-                    className="w-4 h-4 text-electric-cyan border-gray-300 dark:border-gray-600 focus:ring-electric-cyan dark:bg-gray-700"
-                    disabled={isLoading}
-                  />
-                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Rondo Sync</span>
-                </label>
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    {...register('project')}
-                    type="radio"
-                    value="website"
-                    className="w-4 h-4 text-electric-cyan border-gray-300 dark:border-gray-600 focus:ring-electric-cyan dark:bg-gray-700"
-                    disabled={isLoading}
-                  />
-                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Website</span>
                 </label>
               </div>
             </div>
