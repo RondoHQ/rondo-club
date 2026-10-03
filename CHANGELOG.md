@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.122.0] - 2026-10-03
+
+### Changed
+- Give role dashboards the Rondo website's Figtree typography, navy navigation, mint selections and violet controls, with matching dark and mobile styles.
+- Organize the default board dashboard into an action column and compact celebrations, with a summary derived from visible, authorized dashboard blocks; preserve custom saved block order.
+
+### Added
+- Local dashboard preview using the real React shell and components with isolated synthetic data, role selection and dark-mode control (`npm run preview:dashboard`).
+
 ## [35.121.6] - 2026-10-03
 
 ### Changed

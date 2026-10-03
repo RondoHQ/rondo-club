@@ -38,7 +38,13 @@ export function BoardMembership({ data }) {
   </section>;
 }
 
-export function BoardVolunteers({ data }) {
+export function BoardVolunteers({ data, compact = false }) {
+  if (compact) return <section className="dashboard-action-item" aria-labelledby="dashboard-volunteers">
+    <div><h3 id="dashboard-volunteers">Vrijwilligersbezetting</h3><p>{number(data.open_spots)} open {data.open_spots === 1 ? 'plek' : 'plekken'} bij {number(data.total_shifts)} diensten in de komende {data.window_days} dagen.</p></div>
+    <Link className="dashboard-action-link" to="/vrijwilligers/diensten">Bekijk diensten <span aria-hidden="true">→</span></Link>
+    {data.shifts.length > 0 && <details className="dashboard-action-details"><summary>Eerstvolgende diensten</summary><ul>{data.shifts.slice(0, 5).map(shift => <li key={shift.id}><Link to={`/vrijwilligers/diensten/${shift.id}`}>{shift.title}</Link><p>{date(shift.start_datetime.slice(0, 10))} · {shift.start_datetime.slice(11, 16)} · {shift.spots_remaining} {shift.spots_remaining === 1 ? 'plek' : 'plekken'} open</p></li>)}</ul></details>}
+    {!data.total_shifts && <p>Geen open plekken in de geplande diensten binnen deze periode.</p>}
+  </section>;
   return <section aria-labelledby="dashboard-volunteers" className="lg:col-span-12">
     <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2"><h2 id="dashboard-volunteers" className="text-lg font-semibold">Vrijwilligersbezetting</h2><Link className={action} to="/vrijwilligers/diensten">Naar diensten</Link></div>
     <div className={`${panel} px-4`}>
@@ -50,7 +56,12 @@ export function BoardVolunteers({ data }) {
   </section>;
 }
 
-export function BoardVog({ data }) {
+export function BoardVog({ data, compact = false }) {
+  if (compact) return <section className="dashboard-action-item" aria-labelledby="dashboard-vog">
+    <div><h3 id="dashboard-vog">VOG-aandachtspunten</h3><p>{number(data.not_submitted_to_justis + data.submitted_to_justis)} ontbreken of zijn verlopen · {number(data.submitted_to_justis)} aangevraagd bij Justis.</p></div>
+    <Link className="dashboard-action-link" to="/vrijwilligers/vog">Bekijk VOG <span aria-hidden="true">→</span></Link>
+    <p>{number(data.expiring_soon)} {data.expiring_soon === 1 ? 'VOG verloopt' : 'VOG’s verlopen'} binnen 30 dagen.</p>
+  </section>;
   return <section aria-labelledby="dashboard-vog" className="lg:col-span-12">
     <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2"><h2 id="dashboard-vog" className="text-lg font-semibold">VOG-aandachtspunten</h2><Link className={action} to="/vrijwilligers/vog">Naar VOG-overzicht</Link></div>
     <dl className={`${panel} divide-y divide-gray-100 px-4 dark:divide-gray-700`}>

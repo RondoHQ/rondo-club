@@ -61,6 +61,9 @@ import { canAccessFeature } from '@/utils/featureToggles';
 import { canAccessCommunication, canAccessCommunicationItem, communicationNavigation } from '@/utils/communicationNavigation';
 import { canAccessFootball } from '@/utils/footballAccess';
 import { canAccessFootballItem, footballNavigation } from '@/utils/footballNavigation';
+import brandIcon from '@/assets/brand/logo-icon.svg';
+import brandWordmark from '@/assets/brand/logo-wordmark.svg';
+import '@/styles/dashboard-brand.css';
 
 const navigation = [
   { name: 'Mijn inschrijftaken', href: '/vrijwillig?tab=mine', icon: HeartHandshake, personal: true },
@@ -300,15 +303,16 @@ function Sidebar({ mobile = false, onClose, stats }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+    <div className="rondo-sidebar flex flex-col h-full bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700">
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
         <Link to="/" className="flex items-center">
-          <img src={getLightLogoUrl()} alt="Rondo Club" className="h-10 w-auto object-contain shrink-0 dark:hidden" />
-          <img src={getDarkLogoUrl()} alt="Rondo Club" className="hidden h-10 w-auto object-contain shrink-0 dark:block" />
+          <span className="rondo-brand-logo"><img src={brandIcon} alt="" /><img src={brandWordmark} alt="Rondo Club" /></span>
+          <img src={getLightLogoUrl()} alt="Rondo Club" className="rondo-legacy-logo h-10 w-auto object-contain shrink-0 dark:hidden" />
+          <img src={getDarkLogoUrl()} alt="Rondo Club" className="rondo-legacy-logo hidden h-10 w-auto object-contain shrink-0 dark:block" />
         </Link>
         {mobile && (
-          <button onClick={onClose} className="p-2 -mr-2 dark:text-gray-300">
+          <button onClick={onClose} aria-label="Menu sluiten" className="p-2 -mr-2 dark:text-gray-300">
             <X className="w-5 h-5" />
           </button>
         )}
@@ -787,10 +791,11 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback, showFeedbackIntro, 
   };
 
   return (
-    <header className="sticky top-0 z-30 flex items-center h-16 px-4 bg-white border-b border-gray-200 lg:px-6 dark:bg-gray-800 dark:border-gray-700">
+    <header className="rondo-app-header sticky top-0 z-30 flex items-center h-16 px-4 bg-white border-b border-gray-200 lg:px-6 dark:bg-gray-800 dark:border-gray-700">
       {/* Mobile menu button */}
       <button
         onClick={onMenuClick}
+        aria-label="Menu openen"
         className="p-2 -ml-2 lg:hidden dark:text-gray-300"
       >
         <Menu className="w-5 h-5" />
@@ -874,6 +879,7 @@ function DemoBanner() {
 }
 
 export default function Layout({ children }) {
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -881,6 +887,7 @@ export default function Layout({ children }) {
   const isDemo = window.rondoConfig?.isDemo;
   const createFeedback = useCreateFeedback();
   const { data: currentUser } = useCurrentUser();
+  const brandDashboard = location.pathname === '/' && currentUser?.dashboard_context?.enabled && new URLSearchParams(location.search).get('overzicht') !== 'club';
   const markFeedbackIntroSeen = useMarkFeedbackIntroSeen();
   const showFeedbackIntro = Boolean(currentUser && !currentUser.feedback_intro_seen && !feedbackIntroDismissed);
 
@@ -928,7 +935,7 @@ export default function Layout({ children }) {
     <>
       <DemoBanner />
       <div
-        className="flex min-h-[var(--app-min-height)] lg:h-[var(--app-height)] bg-gray-50 dark:bg-gray-900"
+        className={`${brandDashboard ? 'rondo-brand-shell ' : ''}flex min-h-[var(--app-min-height)] lg:h-[var(--app-height)] bg-gray-50 dark:bg-gray-900`}
         style={{ '--app-min-height': appMinHeight, '--app-height': appHeight }}
       >
         {/* Desktop sidebar */}
