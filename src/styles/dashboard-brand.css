@@ -56,9 +56,11 @@
 }
 .rondo-brand-logo { display: none; }
 .rondo-brand-shell .rondo-legacy-logo { display: none; }
-.rondo-brand-shell .rondo-brand-logo { display: flex; align-items: center; gap: 9px; }
-.rondo-brand-logo img:first-child { width: 39px; height: 44px; object-fit: contain; }
-.rondo-brand-logo img:last-child { width: 140px; height: 36px; filter: brightness(0) invert(1); }
+.rondo-brand-shell .rondo-sidebar-brand { padding-inline: 24px; }
+.rondo-brand-shell .rondo-brand-logo { display: flex; align-items: center; gap: 14px; }
+.rondo-brand-logo img { flex: none; height: auto; object-fit: contain; }
+.rondo-brand-logo img:first-child { width: 32px; }
+.rondo-brand-logo img:last-child { width: 132px; filter: brightness(0) invert(1); }
 .rondo-brand-shell .rondo-sidebar { background: var(--dashboard-navy); border-color: #243674; color: #e6edf9; }
 .rondo-brand-shell .rondo-sidebar nav { scrollbar-color: #44568c #001153; }
 .rondo-brand-shell .rondo-sidebar :is(.border-b, .border-t) { border-color: #243674; }
