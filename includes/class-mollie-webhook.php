@@ -325,15 +325,7 @@ class MollieWebhook {
 				update_post_meta( $invoice_id, '_mollie_dashboard_url', $dashboard_url );
 			}
 
-			$consumer_name = $paid_payment->details->consumerName ?? null;
-			if ( $consumer_name !== null ) {
-				update_post_meta( $invoice_id, '_mollie_consumer_name', $consumer_name );
-			}
-
-			$consumer_account = $paid_payment->details->consumerAccount ?? null;
-			if ( $consumer_account !== null ) {
-				update_post_meta( $invoice_id, '_mollie_consumer_account', $consumer_account );
-			}
+			$this->store_consumer_details( $invoice_id, '_mollie_', $paid_payment );
 
 			if ( $paid_payment->details !== null ) {
 				update_post_meta( $invoice_id, '_mollie_payment_details', wp_json_encode( $paid_payment->details ) );
@@ -346,7 +338,7 @@ class MollieWebhook {
 	/**
 	 * Extract and store per-installment payment details from a paid payment link.
 	 *
-	 * Stores method, paidAt, and dashboard URL using the `_installment_N_*` meta pattern.
+	 * Stores method, paidAt, dashboard URL and payer details using `_installment_N_*` meta.
 	 *
 	 * Wrapped in try/catch to never block the webhook HTTP 200 response.
 	 *
@@ -371,6 +363,7 @@ class MollieWebhook {
 
 			update_post_meta( $invoice_id, '_installment_' . $n . '_mollie_method', $paid_payment->method ?? '' );
 			update_post_meta( $invoice_id, '_installment_' . $n . '_mollie_paid_at', $paid_payment->paidAt ?? '' );
+			$this->store_consumer_details( $invoice_id, '_installment_' . $n . '_mollie_', $paid_payment );
 
 			$dashboard_url = $paid_payment->_links->dashboard->href ?? null;
 			if ( $dashboard_url !== null ) {
@@ -378,6 +371,19 @@ class MollieWebhook {
 			}
 		} catch ( \Throwable $e ) {
 			error_log( 'Mollie webhook: failed to extract installment ' . $n . ' payment details for invoice ' . $invoice_id . ': ' . $e->getMessage() );
+		}
+	}
+
+	/** Store payer details together under the payment's own metadata prefix. */
+	private function store_consumer_details( int $invoice_id, string $prefix, object $payment ): void {
+		foreach ( [
+			'consumer_name'    => 'consumerName',
+			'consumer_account' => 'consumerAccount',
+		] as $key => $property ) {
+			$value = $payment->details->$property ?? null;
+			if ( is_string( $value ) && $value !== '' ) {
+				update_post_meta( $invoice_id, $prefix . $key, wp_slash( $value ) );
+			}
 		}
 	}
 

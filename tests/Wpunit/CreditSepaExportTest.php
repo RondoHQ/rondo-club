@@ -4,6 +4,7 @@ namespace Tests\Wpunit;
 
 use Rondo\Fields\Fields;
 use Rondo\Finance\CreditSepaExport;
+use Rondo\Finance\MollieWebhook;
 use Rondo\REST\Invoices;
 use Tests\Support\RondoTestCase;
 
@@ -128,6 +129,126 @@ class CreditSepaExportTest extends RondoTestCase {
 		$data = CreditSepaExport::prepare( $this->invoice, $this->account );
 		$this->assertSame( 'Testontvanger', $data['defaults']['creditor_name'] );
 		$this->assertSame( '', $data['defaults']['creditor_iban'] );
+	}
+
+	/** Exercise registration with a paid Mollie response, without contacting Mollie. */
+	private function register_installment( int $source, int $n, ?object $details ): object {
+		$payment          = new class() {
+			public ?object $details = null;
+			public string $method   = 'ideal';
+			public string $paidAt   = '2026-10-04T10:00:00+00:00'; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.PropertyNotSnakeCase -- Mollie SDK contract.
+			// phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- Mollie SDK contract.
+			public function isPaid(): bool {
+				return true;
+			}
+		};
+		$payment->details = $details;
+		$link             = new class( $payment ) {
+			public int $calls = 0;
+			public function __construct( private object $payment ) {}
+			public function payments(): array {
+				++$this->calls;
+				return [ $this->payment ];
+			}
+		};
+		$handler          = ( new \ReflectionClass( MollieWebhook::class ) )->newInstanceWithoutConstructor();
+		$method           = new \ReflectionMethod( MollieWebhook::class, 'handle_installment_paid' );
+		$method->setAccessible( true );
+		$method->invoke( $handler, $source, $n, 'pl_fixture', $link );
+		$method->invoke( $handler, $source, $n, 'pl_fixture', $link );
+		$this->assertSame( 1, $link->calls, 'Duplicate webhooks must not fetch or replace payer details.' );
+		return $link;
+	}
+
+	private function installment_source( int $count ): int {
+		$source = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_invoice',
+				'post_status' => 'rondo_sent',
+			]
+			);
+		update_post_meta( $source, '_installment_count', $count );
+		update_post_meta( $this->invoice, '_credit_source_invoice_id', $source );
+		for ( $n = 1; $n <= $count; $n++ ) {
+			// Prevent the handler from creating real payment links for subsequent installments.
+			update_post_meta( $source, '_installment_' . $n . '_mollie_payment_id', 'pl_fixture_' . $n );
+		}
+		return $source;
+	}
+
+	public function test_single_installment_registration_prefills_payer_in_xml(): void {
+		$source = $this->installment_source( 1 );
+		$name   = "René O'Brien \\ vereniging";
+		$this->register_installment(
+			$source,
+			1,
+			(object) [
+				'consumerName'    => $name,
+				'consumerAccount' => 'nl91 abna 0417 1643 00',
+			]
+			);
+		$this->assertSame( $name, get_post_meta( $source, '_installment_1_mollie_consumer_name', true ) );
+		$this->assertSame( 'nl91 abna 0417 1643 00', get_post_meta( $source, '_installment_1_mollie_consumer_account', true ) );
+		$this->assertSame( 'rondo_paid', get_post_status( $source ) );
+		$data   = CreditSepaExport::prepare( $this->invoice, $this->account );
+		$result = CreditSepaExport::create( $this->invoice, array_merge( $this->payload(), $data['defaults'] ), $this->account );
+		$this->assertIsArray( $result );
+		$this->assertStringContainsString( '<IBAN>NL91ABNA0417164300</IBAN>', $result['xml'] );
+		$this->assertSame( $name, $data['defaults']['creditor_name'] );
+	}
+
+	public function test_multiple_installments_on_same_account_prefill_that_account(): void {
+		$source = $this->installment_source( 3 );
+		foreach ( [ 1, 2 ] as $n ) {
+			$this->register_installment(
+				$source,
+				$n,
+				(object) [
+					'consumerName'    => 'Betaler',
+					'consumerAccount' => 'NL91ABNA0417164300',
+				]
+				);
+		}
+		// Unpaid installments must not influence the recipient, even with stale metadata.
+		update_post_meta( $source, '_installment_3_mollie_consumer_account', 'DE89370400440532013000' );
+		$data = CreditSepaExport::prepare( $this->invoice, $this->account );
+		$this->assertSame( 'NL91ABNA0417164300', $data['defaults']['creditor_iban'] );
+		$this->assertSame( 'Betaler', $data['defaults']['creditor_name'] );
+		$this->assertSame( 'rondo_sent', get_post_status( $source ) );
+	}
+
+	public function test_different_installment_accounts_require_manual_recipient(): void {
+		$source = $this->installment_source( 2 );
+		$this->register_installment(
+			$source,
+			1,
+			(object) [
+				'consumerName'    => 'Eerste betaler',
+				'consumerAccount' => 'NL91ABNA0417164300',
+			]
+			);
+		$this->register_installment(
+			$source,
+			2,
+			(object) [
+				'consumerName'    => 'Tweede betaler',
+				'consumerAccount' => 'DE89370400440532013000',
+			]
+			);
+		$data = CreditSepaExport::prepare( $this->invoice, $this->account );
+		$this->assertSame( '', $data['defaults']['creditor_iban'] );
+		$this->assertSame( 'Testontvanger', $data['defaults']['creditor_name'] );
+		$this->assertSame( 'Eerste betaler', get_post_meta( $source, '_installment_1_mollie_consumer_name', true ) );
+	}
+
+	public function test_missing_or_non_iban_details_do_not_block_payment_or_prefill_account(): void {
+		foreach ( [ null, (object) [ 'consumerAccount' => 'xxxx 1234' ] ] as $details ) {
+			$source = $this->installment_source( 1 );
+			$this->register_installment( $source, 1, $details );
+			$this->assertSame( 'rondo_paid', get_post_status( $source ) );
+			$data = CreditSepaExport::prepare( $this->invoice, $this->account );
+			$this->assertSame( '', $data['defaults']['creditor_iban'] );
+		}
 	}
 
 	public function test_legacy_positive_credit_amount_is_exported_as_positive_payment(): void {
