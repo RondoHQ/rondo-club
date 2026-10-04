@@ -93,6 +93,13 @@ Geen formulefouten gevonden in de opgeslagen uitkomsten. Google-specifieke formu
 de XLSX-controlekopie deels als compatibiliteitsformules opgeslagen. De sheet is niet opnieuw
 doorgerekend na proefwijzigingen; de Apps Script-export en bankimport zijn nog niet getest.
 
+Aanvullende controle op individuele uitzonderingen op 4 oktober 2026: de formules in
+`Nmbrs AWC 1!C51:G74` en `Overzicht JO23-1!C56:E84` volgen voor iedere spelersrij hetzelfde patroon,
+zonder persoonlijke tarief- of uitzonderingslogica. `Export JO23-1!A2` gebruikt voor alle spelers
+dezelfde instellingen uit `H1:H3`. Geen afwijkende afspraken gevonden in de uitleg, celnotities
+of het reactiespaneel. De sheet bevat alleen aantallen voor AWC 1; individuele loonbedragen of
+afspraken in Nmbrs zijn hiermee niet gecontroleerd.
+
 ## 3. Bestaande onderdelen hergebruiken
 
 | Onderdeel | Huidige code | Gebruik in dit voorstel |
@@ -382,6 +389,12 @@ speler verandert deze toepassing niet.
 JO23-1 op dezelfde dag tellen beide wedstrijden mee volgens hun eigen teamregeling. Joost geeft
 aan dat dit in de praktijk niet voorkomt. Geen aanvullende workflow of samenloopwaarschuwing bouwen.
 
+**B3c, vastgesteld uit de sheet op verzoek van Joost:** de sheet bevat geen individuele
+uitzonderingen op de tellingen of het JO23-1-premietarief. De eerste versie neemt die uniforme
+rekenregels over en krijgt geen individuele uitzonderingsmodule. Eventuele persoonlijke
+loonbedragen voor AWC 1 blijven in Nmbrs; de sheet bewijst niet dat die bedragen voor iedereen
+gelijk zijn. Dit is een bronbevinding, geen bevestiging van individuele contractafspraken.
+
 ### Nog te besluiten vóór de betreffende bouwfase
 
 De overige voorgestelde defaults worden vóór de afhankelijke fase bevestigd. Vastlegging van
@@ -389,7 +402,6 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | ID | Open besluit | Voorgesteld uitgangspunt | Nodig vóór |
 |---|---|---|---|
-| B3c | Zijn er individuele afspraken die afwijken van de teamregeling? | Alleen bevestigde uitzonderingen opnemen; gastspelers en samenloop volgen B3a en B3b | Calculator en afsluiting |
 | B4 | Welk bankpakket/formaat en wat doet het Apps Script exact? | Huidige vijfkoloms-XLSX behouden na bewezen compatibiliteit | Export |
 | B5 | Wie registreert, corrigeert en sluit af; is een tweede fiatteur vereist? | Registrator per team en financiële beheerder zoals rechtenmatrix | Rechten en vrijgave |
 | B6 | Welke historische maanden zijn al verwerkt of betaald? | Geen automatische betaalstatus uit spreadsheetdata afleiden | Productie-import |
@@ -400,7 +412,7 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | Fase | Resultaat | Voorwaarde om door te gaan |
 |---|---|---|
-| 0 | B1 vertalen naar broncategorieën, besluiten B3c en B4–B8, inspectie Apps Script, geanonimiseerd exportvoorbeeld, librarykeuze | Reken- en bestandscontract bevestigd; broncontrolegrenzen vastgelegd |
+| 0 | B1 vertalen naar broncategorieën, besluiten B4–B8, inspectie Apps Script, geanonimiseerd exportvoorbeeld, librarykeuze | Reken- en bestandscontract bevestigd; broncontrolegrenzen vastgelegd |
 | 1 | Privé opslag, registry, rechtenbeleid, versiebeheer, calculator en API | Rekentests, rechtenmatrix en gelijktijdigheids-/hersteltests slagen |
 | 2 | Teamregistratie, gastspelers, afronden en bronconflicten | Volledige flow met synthetische data op desktop en mobiel gecontroleerd |
 | 3 | Financiële profielen, maandafsluiting, correcties en exports | Rekenverschillen nul, bestandscontract bewezen, export/privacytests slagen |
