@@ -274,7 +274,9 @@ De oorspronkelijke batch blijft onveranderd. Een vervangende batch vóór extern
 vereist expliciete bevestiging dat het oude bestand niet meer zal worden gebruikt. Na verwerking
 krijgt de correctie een eigen referentie en wordt alleen het nog niet verwerkte verschil aangeboden.
 Een negatieve JO23-1-correctie blokkeert automatische betaalexport en vraagt handmatige afhandeling;
-er ontstaat geen negatieve bankbetaling of automatische verrekening zonder vastgesteld beleid.
+de financiële beheerder handelt een te veel betaalde premie handmatig af en legt de afhandeling
+met reden en referentie vast. Rondo maakt geen negatieve bankbetaling en verrekent het verschil
+niet automatisch met toekomstige premies. De oorspronkelijke betaling en correctie blijven zichtbaar.
 
 Bronwijzigingen na bevestiging leveren een conflict op. Een gewijzigde uitslag of een verplaatste
 speeldatum wordt nooit stilzwijgend toegepast op een gesloten maand. Een datumcorrectie over een
@@ -567,6 +569,10 @@ actuele externe verwerkingsstatus opnieuw gecontroleerd.
 (`bank_account_holder`), dat het lid zelf kan wijzigen via Mijn gegevens. De export gebruikt de
 vastgelegde tenaamstelling uit de batchmomentopname, ook wanneer deze afwijkt van de persoonsnaam.
 
+**B7b, bevestigd door Joost:** blijkt na uitbetaling dat een JO23-1-speler te veel premie heeft
+ontvangen, dan handelt de financiële beheerder dit handmatig af. Rondo registreert de correctie
+en afhandeling, zonder automatische verrekening met toekomstige premies.
+
 ### Nog te besluiten vóór de betreffende bouwfase
 
 De overige voorgestelde defaults worden vóór de afhankelijke fase bevestigd. Vastlegging van
@@ -575,14 +581,14 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 | ID | Open besluit | Voorgesteld uitgangspunt | Nodig vóór |
 |---|---|---|---|
 | B6b | Wat is bij import de actuele verwerkingsstatus van alle te importeren maanden? | September heeft uitgangsstatus B6a; andere maanden niet afleiden uit spreadsheetdata; actualiseren vóór import | Productie-import |
-| B7b | Tariefingangsdata en negatieve correcties | Gesloten bedragen bewaren; negatieve correcties handmatig afhandelen | Correcties en export |
+| B7c | Vanaf wanneer geldt het JO23-1-tarief van €15 per punt? | Gehele seizoen 2026-2027; gesloten bedragen bewaren bij latere tariefwijzigingen | Regelconfiguratie |
 | B8 | Bewaartermijn voor afwezigheidsredenen, bankgegevens, batches en bestanden | Aansluiten op vastgesteld clubbeleid; geen termijn verzinnen | Productievrijgave |
 
 ## 13. Uitvoeringsfasen
 
 | Fase | Resultaat | Voorwaarde om door te gaan |
 |---|---|---|
-| 0 | B1 vertalen naar broncategorieën, besluiten B7b–B8 en migratiecontrole B6b voorbereiden, gedeelde SEPA-service en batchcontract uitwerken; Apps Script-controle is afgerond | Rekencontract bevestigd; bestaande Rabobank-contracten en broncontrolegrenzen vastgelegd |
+| 0 | B1 vertalen naar broncategorieën, besluiten B7c–B8 en migratiecontrole B6b voorbereiden, gedeelde SEPA-service en batchcontract uitwerken; Apps Script-controle is afgerond | Rekencontract bevestigd; bestaande Rabobank-contracten en broncontrolegrenzen vastgelegd |
 | 1 | Privé opslag, registry, rechtenbeleid, versiebeheer, calculator en API | Rekentests, rechtenmatrix en gelijktijdigheids-/hersteltests slagen |
 | 2 | Teamregistratie, gastspelers, afronden en bronconflicten | Volledige flow met synthetische data op desktop en mobiel gecontroleerd |
 | 3 | Bankvelden op personen en Mijn gegevens, maandafsluiting, correcties en Rabobank SEPA-export via gedeelde service | Rekenverschillen nul, schema-/batchtests en creditfactuurregressietests slagen; proefimport gecontroleerd |
@@ -643,6 +649,9 @@ Deze planning zelf blijft beperkt tot `docs/prd/`, zonder themaversie, changelog
   tenaamstellingen worden volgens het bevestigde exportcontract getest met fictieve gegevens.
 - [ ] Tariefwijzigingen veranderen geen afgesloten maand. Broncorrecties tonen het verschil,
   behouden eerdere versies en veroorzaken geen dubbele uitbetaling of negatieve betaalregel.
+- [ ] Een te veel betaalde JO23-1-premie wordt als correctie met handmatige afhandeling vastgelegd.
+  Toekomstige premies worden niet automatisch verminderd; oorspronkelijke betaling, correctie
+  en afhandelingsreferentie blijven afzonderlijk raadpleegbaar.
 - [ ] Twee gelijktijdige afsluitingen, dubbele aanmaak, een afgebroken request ná persist en een
   herhaalde download leveren geen dubbele registratie/batch en geen gewijzigde uitvoerdatum op.
 - [ ] De premie-export valideert tegen de bestaande Rabobank-XSD `pain.001.001.09`. Meerdere
