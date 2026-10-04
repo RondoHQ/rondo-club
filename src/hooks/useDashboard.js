@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
+import { syncDashboardTask } from '@/utils/dashboardTasks';
 
 // Default dashboard card configuration
 export const DEFAULT_DASHBOARD_CARDS = [
@@ -61,7 +62,8 @@ export function useUpdateTodo() {
 
   return useMutation({
     mutationFn: ({ todoId, data }) => prmApi.updateTodo(todoId, data),
-    onSuccess: () => {
+    onSuccess: async (response) => {
+      await syncDashboardTask(queryClient, response.data);
       queryClient.invalidateQueries({ queryKey: ['todos'] });
       queryClient.invalidateQueries({ queryKey: ['role-dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
