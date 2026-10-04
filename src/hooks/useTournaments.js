@@ -133,7 +133,7 @@ export function useTournamentEntry(id) {
     queryKey: ['tournament-entries', Number(id)],
     queryFn: async () => (await prmApi.getTournamentEntry(id)).data,
     enabled: Boolean(id),
-    refetchInterval: (query) => ['creating', 'error', 'expired'].includes(query.state.data?.payment_state) ? 10_000 : false,
+    refetchInterval: (query) => [query.state.data, ...(query.state.data?.additional_entries || [])].some((entry) => ['creating', 'error', 'expired'].includes(entry?.payment_state)) ? 10_000 : false,
   });
 }
 
@@ -143,9 +143,14 @@ export function useSaveTournamentEntryDraft() {
     mutationFn: async ({ id, data }) => (await prmApi.saveTournamentEntryDraft(id, data)).data,
     onSuccess: (entry) => {
       queryClient.setQueryData(['tournament-entries', Number(entry.id)], entry);
-      queryClient.invalidateQueries({ queryKey: ['tournament-entries', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: ['tournament-entries'] });
+      queryClient.invalidateQueries({ queryKey: ['tournaments'] });
     },
   });
+}
+
+export function useAddTournamentTeams() {
+  return useManagerEntryMutation(async ({ id, data }) => (await prmApi.addTournamentTeams(id, data)).data);
 }
 
 export function useSubmitTournamentEntry() {
@@ -154,7 +159,8 @@ export function useSubmitTournamentEntry() {
     mutationFn: async ({ id, data }) => (await prmApi.submitTournamentEntry(id, data)).data,
     onSuccess: (entry) => {
       queryClient.setQueryData(['tournament-entries', Number(entry.id)], entry);
-      queryClient.invalidateQueries({ queryKey: ['tournament-entries', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: ['tournament-entries'] });
+      queryClient.invalidateQueries({ queryKey: ['tournaments'] });
     },
   });
 }

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.129.0] - 2026-10-04
+
+### Added
+- Assigned tournament staff can register extra teams before the internal deadline, including after payment. Each supplement has its own invoice and persistent payment link, while the original registration and payment remain intact.
+
+### Changed
+- Group supplemental registrations under their Rondo team with separate payment statuses, correct team/player totals and labelled exports. Supplements inherit current staff access; repeated submissions reuse the same registration and invoice.
+
 ## [35.128.0] - 2026-10-04
 
 ### Added

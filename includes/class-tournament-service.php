@@ -87,6 +87,7 @@ final class TournamentService {
 			}
 			$rows[] = [
 				'id'                    => (int) $entry->ID,
+				'parent_entry_id'       => (int) $entry->post_parent,
 				'tournament_id'         => $tournament_id,
 				'tournament_name'       => get_the_title( $tournament_id ),
 				'team_name'             => (string) ( $fields['team_name_snapshot'] ?? '' ),
@@ -362,13 +363,17 @@ final class TournamentService {
 					'age_number' => (int) ( $entry['age_number'] ?? 0 ),
 				] + $empty;
 			}
-			++$overall['selected_team_count'];
-			++$by_age[ $age_group ]['selected_team_count'];
+			if ( empty( $entry['parent_entry_id'] ) ) {
+				++$overall['selected_team_count'];
+				++$by_age[ $age_group ]['selected_team_count'];
+			}
 			if ( ( $entry['registration_status'] ?? '' ) !== 'submitted' ) {
 				continue;
 			}
-			++$overall['submitted_entry_count'];
-			++$by_age[ $age_group ]['submitted_entry_count'];
+			if ( empty( $entry['parent_entry_id'] ) ) {
+				++$overall['submitted_entry_count'];
+				++$by_age[ $age_group ]['submitted_entry_count'];
+			}
 			foreach ( [ 'registered_team_count', 'player_count' ] as $field ) {
 				$overall[ $field ]              += (int) ( $entry[ $field ] ?? 0 );
 				$by_age[ $age_group ][ $field ] += (int) ( $entry[ $field ] ?? 0 );
@@ -847,7 +852,7 @@ final class TournamentService {
 		usort(
 			$entries,
 			static fn( array $left, array $right ): int => $left['age_number'] === $right['age_number']
-				? strnatcasecmp( $left['team_name'], $right['team_name'] )
+				? ( strnatcasecmp( $left['team_name'], $right['team_name'] ) ?: $left['id'] <=> $right['id'] )
 				: $right['age_number'] <=> $left['age_number']
 		);
 		return $entries;
@@ -859,6 +864,7 @@ final class TournamentService {
 			[
 				'post_type'        => self::ENTRY_POST_TYPE,
 				'post_status'      => 'publish',
+				'post_parent'      => 0,
 				'posts_per_page'   => -1,
 				'fields'           => 'ids',
 				'orderby'          => 'date',
@@ -869,7 +875,7 @@ final class TournamentService {
 		);
 
 		$ids = array_filter( $ids, static fn( $id ): bool => TournamentAccess::is_assigned( (int) $id, $user_id ) );
-		return array_map( fn( int $id ): array => $this->format_entry( $id ), array_map( 'intval', $ids ) );
+		return array_map( fn( int $id ): array => $this->entry_with_additions( $id ), array_map( 'intval', $ids ) );
 	}
 
 	/** Format one shared team entry. */
@@ -885,7 +891,7 @@ final class TournamentService {
 		$age_group     = (string) ( $fields['age_group_snapshot'] ?? '' );
 		$status        = (string) ( $fields['registration_status'] ?? 'open' );
 		$payment       = $this->payments->payment_summary( $entry_id, $fields );
-		$assignments   = TournamentAssignees::resolve( array_values( $fields['assignment_snapshot'] ?? [] ) );
+		$assignments   = TournamentAssignees::for_entry( $entry_id );
 		foreach ( $assignments as &$assignee ) {
 			$assignee['invitation_sent'] = TournamentAssignees::was_sent( $entry_id, $assignee, 'assignment' );
 		}
@@ -898,6 +904,9 @@ final class TournamentService {
 		return array_merge(
 			[
 				'id'                     => $entry_id,
+				'parent_entry_id'        => (int) $post->post_parent,
+				'can_add_teams'          => ! $post->post_parent && $status === 'submitted' && $this->deadline_is_open( $tournament ) && TournamentAccess::is_assigned( $entry_id ),
+				'can_reopen'             => $status === 'submitted' && $payment['payment_state'] !== 'paid' && ! $this->addition_ids( $entry_id ),
 				'tournament_id'          => $tournament_id,
 				'tournament'             => $tournament,
 				'team_id'                => (int) ( $fields['team_id'] ?? 0 ),
@@ -984,21 +993,12 @@ final class TournamentService {
 		return $this->format_entry( $entry_id );
 	}
 
-	/** Confirm a positive registration. */
-	public function submit_entry( int $entry_id, array $payload, int $actor_user_id ) {
-		$entry = $this->format_entry( $entry_id );
-		if ( empty( $entry ) ) {
-			return new \WP_Error( 'rondo_tournament_entry_not_found', __( 'Inschrijfopdracht niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
-		}
-		if ( $entry['registration_status'] === 'submitted' ) {
-			$this->payments->ensure_payment( $entry_id, $actor_user_id );
-			return $this->format_entry( $entry_id );
-		}
+	/** Validate and snapshot one registration, including its own price and contact. */
+	private function submission_fields( array $entry, array $payload, int $actor_user_id ) {
 		if ( ! $this->deadline_is_open( $entry['tournament'] ) ) {
 			return new \WP_Error( 'rondo_tournament_deadline_passed', __( 'De interne inschrijfdeadline is verstreken.', 'rondo' ), [ 'status' => 409 ] );
 		}
-		$expected_version = absint( $payload['version'] ?? 0 );
-		if ( $expected_version !== (int) $entry['version'] ) {
+		if ( absint( $payload['version'] ?? 0 ) !== (int) $entry['version'] ) {
 			return new \WP_Error(
 				'rondo_tournament_entry_conflict',
 				__( 'Een ander kaderlid heeft deze inschrijving intussen gewijzigd. Laad de actuele versie opnieuw.', 'rondo' ),
@@ -1008,97 +1008,182 @@ final class TournamentService {
 				]
 				);
 		}
-
 		$teams = $this->sanitize_team_entries( $payload['team_entries'] ?? $entry['draft_team_entries'], true );
 		if ( is_wp_error( $teams ) ) {
 			return $teams;
 		}
-		$contact_person_id = absint( $payload['contact_person_id'] ?? $entry['contact_person_id'] );
-		$contact           = $this->entry_contact_candidate( $entry, $contact_person_id );
+		$contact = $this->entry_contact_candidate( $entry, absint( $payload['contact_person_id'] ?? $entry['contact_person_id'] ) );
 		if ( is_wp_error( $contact ) ) {
 			return $contact;
 		}
 		if ( ! $contact['complete'] ) {
 			return new \WP_Error( 'rondo_tournament_contact_incomplete', __( 'De gekozen Rondo-persoon heeft nog geen geldig e-mailadres en mobiel nummer.', 'rondo' ), [ 'status' => 400 ] );
 		}
-		$contact_name   = $contact['name'];
-		$contact_email  = $contact['email'];
-		$contact_mobile = $contact['mobile'];
+		$pricing = $this->pricing_for_age( $entry['tournament']['pricing_rules'], (int) $entry['age_number'] );
+		if ( $pricing === null ) {
+			return new \WP_Error( 'rondo_tournament_price_missing', __( 'Voor deze leeftijdslaag is geen tarief ingesteld.', 'rondo' ), [ 'status' => 409 ] );
+		}
+		$price = (float) $pricing['amount'];
+		return [
+			'contact_email'          => $contact['email'],
+			'contact_mobile'         => $contact['mobile'],
+			'contact_name'           => $contact['name'],
+			'contact_person_id'      => $contact['person_id'],
+			'draft_team_entries'     => $teams,
+			'player_count'           => array_sum( array_column( $teams, 'player_count' ) ),
+			'payment_state'          => $price > 0 ? 'creating' : 'not_applicable',
+			'price_per_team'         => $price,
+			'registered_team_count'  => count( $teams ),
+			'registration_status'    => 'submitted',
+			'submitted_at'           => current_datetime()->format( 'Y-m-d H:i:s' ),
+			'submitted_by_user_id'   => $actor_user_id,
+			'submitted_team_entries' => $teams,
+			'total_amount'           => $price * count( $teams ),
+			'version'                => $entry['version'] + 1,
+		];
+	}
 
-		$team_count   = count( $teams );
-		$player_count = array_sum( array_map( static fn( array $team ): int => (int) $team['player_count'], $teams ) );
-		$submission   = $this->with_tournament_lock(
+	/** Confirm a positive registration. */
+	public function submit_entry( int $entry_id, array $payload, int $actor_user_id ) {
+		$entry = $this->format_entry( $entry_id );
+		if ( empty( $entry ) ) {
+			return new \WP_Error( 'rondo_tournament_entry_not_found', __( 'Inschrijfopdracht niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+		}
+		$result = $this->with_tournament_lock(
 			(int) $entry['tournament_id'],
-			function () use ( $actor_user_id, $contact_email, $contact_mobile, $contact_name, $contact_person_id, $entry_id, $expected_version, $player_count, $team_count, $teams ) {
-				$locked_entry = $this->format_entry( $entry_id );
-				if ( empty( $locked_entry ) ) {
+			function () use ( $entry_id, $payload, $actor_user_id ) {
+				$entry = $this->format_entry( $entry_id );
+				if ( empty( $entry ) ) {
 					return new \WP_Error( 'rondo_tournament_entry_not_found', __( 'Inschrijfopdracht niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
 				}
-				if ( $locked_entry['registration_status'] === 'submitted' ) {
-					return [ 'already_submitted' => true ];
+				if ( $entry['registration_status'] === 'submitted' ) {
+					return true;
 				}
-				if ( $expected_version !== (int) $locked_entry['version'] ) {
-					return new \WP_Error(
-						'rondo_tournament_entry_conflict',
-						__( 'Een ander kaderlid heeft deze inschrijving intussen gewijzigd. Laad de actuele versie opnieuw.', 'rondo' ),
-						[
-							'status'  => 409,
-							'current' => $locked_entry,
-						]
-					);
+				$fields = $this->submission_fields( $entry, $payload, $actor_user_id );
+				if ( is_wp_error( $fields ) ) {
+					return $fields;
 				}
-				$pricing = $this->pricing_for_age( $locked_entry['tournament']['pricing_rules'], (int) $locked_entry['age_number'] );
-				if ( $pricing === null ) {
-					return new \WP_Error( 'rondo_tournament_price_missing', __( 'Voor deze leeftijdslaag is geen tarief ingesteld.', 'rondo' ), [ 'status' => 409 ] );
+				$saved = Fields::update_many_for_post( $entry_id, $fields );
+				if ( is_wp_error( $saved ) ) {
+					return $saved;
 				}
-				$price = (float) $pricing['amount'];
-				Fields::update_many_for_post(
-					$entry_id,
-					[
-						'contact_email'          => $contact_email,
-						'contact_mobile'         => $contact_mobile,
-						'contact_name'           => $contact_name,
-						'contact_person_id'      => $contact_person_id,
-						'draft_team_entries'     => $teams,
-						'player_count'           => $player_count,
-						'payment_state'          => $price * $team_count > 0 ? 'creating' : 'not_applicable',
-						'price_per_team'         => $price,
-						'registered_team_count'  => $team_count,
-						'registration_status'    => 'submitted',
-						'submitted_at'           => current_datetime()->format( 'Y-m-d H:i:s' ),
-						'submitted_by_user_id'   => $actor_user_id,
-						'submitted_team_entries' => $teams,
-						'total_amount'           => $price * $team_count,
-						'version'                => $locked_entry['version'] + 1,
-					]
-				);
-				return [
-					'already_submitted' => false,
-					'price'             => $price,
-				];
+				TournamentActivityLog::record( $entry_id, 'entry_submitted', $actor_user_id, array_intersect_key( $fields, array_flip( [ 'registered_team_count', 'player_count', 'total_amount' ] ) ) );
+				return true;
 			}
 		);
-		if ( is_wp_error( $submission ) ) {
-			return $submission;
+		if ( is_wp_error( $result ) ) {
+			return $result;
 		}
-		if ( $submission['already_submitted'] ) {
-			$this->payments->ensure_payment( $entry_id, $actor_user_id );
-			return $this->format_entry( $entry_id );
-		}
-		$price = (float) $submission['price'];
-		TournamentActivityLog::record(
-			$entry_id,
-			'entry_submitted',
-			$actor_user_id,
-			[
-				'registered_team_count' => $team_count,
-				'player_count'          => $player_count,
-				'total_amount'          => $price * $team_count,
-			]
-		);
-
 		$this->payments->ensure_payment( $entry_id, $actor_user_id );
 		return $this->format_entry( $entry_id );
+	}
+
+	/** Append a separately payable registration; a request ID makes lost-response retries safe. */
+	public function add_teams( int $entry_id, array $payload, int $actor_user_id ) {
+		if ( ! TournamentAccess::is_assigned( $entry_id, $actor_user_id ) ) {
+			return new \WP_Error( 'rondo_tournament_forbidden', __( 'Je bent niet toegewezen aan deze inschrijving.', 'rondo' ), [ 'status' => 403 ] );
+		}
+		$entry = $this->format_entry( $entry_id );
+		if ( empty( $entry ) || $entry['parent_entry_id'] || $entry['registration_status'] !== 'submitted' ) {
+			return new \WP_Error( 'rondo_tournament_addition_invalid', __( 'Extra teams kunnen alleen bij een bevestigde hoofdinschrijving worden aangemeld.', 'rondo' ), [ 'status' => 409 ] );
+		}
+		$request_id = $payload['request_id'] ?? '';
+		if ( ! is_string( $request_id ) || ! wp_is_uuid( $request_id, 4 ) ) {
+			return new \WP_Error( 'rondo_tournament_request_id_required', __( 'Een geldig aanvraagnummer is vereist.', 'rondo' ), [ 'status' => 400 ] );
+		}
+		// Include the actor and exact submitted data: a reused key must never create a different order.
+		$fingerprint = hash( 'sha256', wp_json_encode( [ $actor_user_id, $payload['contact_person_id'] ?? null, $payload['team_entries'] ?? null ] ) );
+		$result      = $this->with_tournament_lock(
+			(int) $entry['tournament_id'],
+			function () use ( $entry_id, $payload, $actor_user_id, $request_id, $fingerprint ) {
+				$entry = $this->format_entry( $entry_id );
+				if ( ! TournamentAccess::is_assigned( $entry_id, $actor_user_id ) || $entry['registration_status'] !== 'submitted' ) {
+					return new \WP_Error( 'rondo_tournament_addition_invalid', __( 'Deze inschrijving kan niet worden aangevuld. Laad de pagina opnieuw.', 'rondo' ), [ 'status' => 409 ] );
+				}
+				foreach ( $this->addition_ids( $entry_id ) as $child_id ) {
+					if ( get_post_meta( $child_id, '_tournament_addition_request', true ) === $request_id ) {
+						return get_post_meta( $child_id, '_tournament_addition_fingerprint', true ) === $fingerprint
+							? $child_id
+							: new \WP_Error( 'rondo_tournament_request_conflict', __( 'Deze aanvraag is al gebruikt voor andere gegevens. Laad de pagina opnieuw.', 'rondo' ), [ 'status' => 409 ] );
+					}
+				}
+				$payload['team_entries'] = $payload['team_entries'] ?? [];
+				$fields                  = $this->submission_fields( $entry, $payload, $actor_user_id );
+				if ( is_wp_error( $fields ) ) {
+					return $fields;
+				}
+				$child_id = wp_insert_post(
+					[
+						'post_type'   => self::ENTRY_POST_TYPE,
+						'post_status' => 'draft',
+						'post_parent' => $entry_id,
+						'post_title'  => wp_slash( get_the_title( $entry_id ) . ' · Aanvulling' ),
+						'post_author' => $actor_user_id,
+					],
+					true
+					);
+				if ( is_wp_error( $child_id ) ) {
+					return $child_id;
+				}
+				$fields['version']            = 1;
+				$fields['tournament_id']      = $entry['tournament_id'];
+				$fields['team_id']            = $entry['team_id'];
+				$fields['team_name_snapshot'] = $entry['team_name'];
+				$fields['age_group_snapshot'] = $entry['age_group'];
+				$saved                        = Fields::update_many_for_post( $child_id, $fields );
+				if ( is_wp_error( $saved ) ) {
+					wp_trash_post( $child_id );
+					return $saved;
+				}
+				update_post_meta( $child_id, '_tournament_addition_request', $request_id );
+				update_post_meta( $child_id, '_tournament_addition_fingerprint', $fingerprint );
+				$published = wp_update_post(
+					[
+						'ID'          => $child_id,
+						'post_status' => 'publish',
+					],
+					true
+					);
+				if ( is_wp_error( $published ) ) {
+					return $published;
+				}
+				Fields::update_for_post( $entry_id, 'version', $entry['version'] + 1 );
+				TournamentActivityLog::record( $child_id, 'entry_submitted', $actor_user_id, [ 'parent_entry_id' => $entry_id ] );
+				return (int) $child_id;
+			}
+		);
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		$this->payments->ensure_payment( $result, $actor_user_id );
+		return $this->entry_with_additions( $entry_id );
+	}
+
+	/** Native WordPress parent links keep supplements grouped without changing existing invoices. */
+	private function addition_ids( int $entry_id ): array {
+		return array_map(
+			'intval',
+			get_posts(
+			[
+				'post_type'        => self::ENTRY_POST_TYPE,
+				'post_status'      => 'publish',
+				'post_parent'      => $entry_id,
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'orderby'          => 'ID',
+				'order'            => 'ASC',
+				'suppress_filters' => true,
+			]
+			)
+			);
+	}
+
+	public function entry_with_additions( int $entry_id ): array {
+		$entry = $this->format_entry( $entry_id );
+		if ( $entry ) {
+			$entry['additional_entries'] = array_map( fn( int $id ): array => $this->format_entry( $id ), $this->addition_ids( $entry_id ) );
+		}
+		return $entry;
 	}
 
 	/** Send a manager-triggered reminder for one unpaid submitted entry. */
@@ -1127,6 +1212,9 @@ final class TournamentService {
 		$entry = $this->format_entry( $entry_id );
 		if ( empty( $entry ) ) {
 			return new \WP_Error( 'rondo_tournament_entry_not_found', __( 'Inschrijfopdracht niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+		}
+		if ( $entry['parent_entry_id'] ) {
+			return new \WP_Error( 'rondo_tournament_parent_assignments', __( 'Wijzig het kader bij de hoofdinschrijving.', 'rondo' ), [ 'status' => 409 ] );
 		}
 		if ( ! in_array( $entry['tournament']['lifecycle_status'] ?? '', [ 'open', 'closed' ], true ) ) {
 			return new \WP_Error( 'rondo_tournament_assignment_readonly', __( 'De toewijzing van dit toernooi kan niet meer worden gewijzigd.', 'rondo' ), [ 'status' => 409 ] );
@@ -1275,46 +1363,58 @@ final class TournamentService {
 		if ( empty( $entry ) ) {
 			return new \WP_Error( 'rondo_tournament_entry_not_found', __( 'Inschrijfopdracht niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
 		}
-		if ( $entry['registration_status'] !== 'submitted' ) {
-			return new \WP_Error( 'rondo_tournament_entry_not_submitted', __( 'Alleen een definitieve inschrijving kan worden heropend.', 'rondo' ), [ 'status' => 409 ] );
-		}
-		$cancelled = $this->payments->cancel_unpaid_payment( $entry_id );
-		if ( is_wp_error( $cancelled ) ) {
-			return $cancelled;
-		}
+		return $this->with_tournament_lock(
+			(int) $entry['tournament_id'],
+			function () use ( $entry_id, $actor_user_id ) {
+				$entry = $this->format_entry( $entry_id );
+				if ( empty( $entry ) ) {
+					return new \WP_Error( 'rondo_tournament_entry_not_found', __( 'Inschrijfopdracht niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+				}
+				if ( $entry['registration_status'] !== 'submitted' ) {
+					return new \WP_Error( 'rondo_tournament_entry_not_submitted', __( 'Alleen een definitieve inschrijving kan worden heropend.', 'rondo' ), [ 'status' => 409 ] );
+				}
+				if ( $this->addition_ids( $entry_id ) ) {
+					return new \WP_Error( 'rondo_tournament_has_additions', __( 'Een hoofdinschrijving met aanvullingen kan niet worden heropend.', 'rondo' ), [ 'status' => 409 ] );
+				}
+				$cancelled = $this->payments->cancel_unpaid_payment( $entry_id );
+				if ( is_wp_error( $cancelled ) ) {
+					return $cancelled;
+				}
 
-		Fields::update_many_for_post(
-			$entry_id,
-			[
-				'invoice_id'             => null,
-				'last_payment_email_at'  => null,
-				'payment_reminder_log'   => [],
-				'payment_state'          => 'not_applicable',
-				'player_count'           => 0,
-				'price_per_team'         => 0,
-				'registered_team_count'  => 0,
-				'registration_status'    => 'open',
-				'submitted_at'           => null,
-				'submitted_by_user_id'   => 0,
-				'submitted_team_entries' => [],
-				'total_amount'           => 0,
-				'version'                => (int) $entry['version'] + 1,
-			]
+				Fields::update_many_for_post(
+					$entry_id,
+					[
+						'invoice_id'             => null,
+						'last_payment_email_at'  => null,
+						'payment_reminder_log'   => [],
+						'payment_state'          => 'not_applicable',
+						'player_count'           => 0,
+						'price_per_team'         => 0,
+						'registered_team_count'  => 0,
+						'registration_status'    => 'open',
+						'submitted_at'           => null,
+						'submitted_by_user_id'   => 0,
+						'submitted_team_entries' => [],
+						'total_amount'           => 0,
+						'version'                => (int) $entry['version'] + 1,
+					]
+				);
+				delete_post_meta( $entry_id, '_tournament_payment_error' );
+				foreach ( $entry['assignees'] as $assignee ) {
+					delete_post_meta( $entry_id, TournamentAssignees::receipt_key( $assignee, 'payment' ) );
+				}
+				foreach ( $entry['assigned_user_ids'] as $user_id ) {
+					delete_post_meta( $entry_id, '_tournament_payment_email_sent_' . (int) $user_id );
+				}
+				foreach ( $entry['tournament']['payment_reminder_days'] ?? [ 7, 2 ] as $days_before ) {
+					delete_post_meta( $entry_id, '_tournament_payment_reminder_' . absint( $days_before ) . '_sent_at' );
+				}
+				update_post_meta( $entry_id, '_tournament_reopened_at', current_time( 'mysql' ) );
+				update_post_meta( $entry_id, '_tournament_reopened_by_user_id', $actor_user_id );
+				TournamentActivityLog::record( $entry_id, 'entry_reopened', $actor_user_id );
+				return $this->format_entry( $entry_id );
+			}
 		);
-		delete_post_meta( $entry_id, '_tournament_payment_error' );
-		foreach ( $entry['assignees'] as $assignee ) {
-			delete_post_meta( $entry_id, TournamentAssignees::receipt_key( $assignee, 'payment' ) );
-		}
-		foreach ( $entry['assigned_user_ids'] as $user_id ) {
-			delete_post_meta( $entry_id, '_tournament_payment_email_sent_' . (int) $user_id );
-		}
-		foreach ( $entry['tournament']['payment_reminder_days'] ?? [ 7, 2 ] as $days_before ) {
-			delete_post_meta( $entry_id, '_tournament_payment_reminder_' . absint( $days_before ) . '_sent_at' );
-		}
-		update_post_meta( $entry_id, '_tournament_reopened_at', current_time( 'mysql' ) );
-		update_post_meta( $entry_id, '_tournament_reopened_by_user_id', $actor_user_id );
-		TournamentActivityLog::record( $entry_id, 'entry_reopened', $actor_user_id );
-		return $this->format_entry( $entry_id );
 	}
 
 	private function create_entry( int $tournament_id, array $team, array $person_ids, int $actor_user_id ) {
@@ -1381,6 +1481,7 @@ final class TournamentService {
 			[
 				'post_type'        => self::ENTRY_POST_TYPE,
 				'post_status'      => 'any',
+				'post_parent'      => 0,
 				'posts_per_page'   => 1,
 				'fields'           => 'ids',
 				'no_found_rows'    => true,

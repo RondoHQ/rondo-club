@@ -101,6 +101,7 @@ export default function MyTournaments() {
                   {paymentStatus.label}
                 </span>
               </div>
+              {entry.additional_entries?.length ? <div className="mt-3 space-y-1 text-sm text-gray-600 dark:text-gray-400">{entry.additional_entries.map((addition, index) => <p key={addition.id}>Aanvulling {index + 1}: {addition.registered_team_count} teams · {tournamentPaymentStatus(addition).label}</p>)}</div> : null}
               <div className="mt-4 flex items-center text-sm text-gray-600 dark:text-gray-400">
                 <CalendarDays className="mr-2 h-4 w-4" />
                 Deadline: {formatTournamentDate(entry.tournament.internal_deadline)}

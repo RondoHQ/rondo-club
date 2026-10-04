@@ -77,7 +77,7 @@ final class TournamentExport {
 				$stream,
 				[
 					$entry['age_group'],
-					$entry['team_name'],
+					$entry['team_name'] . ( $entry['parent_entry_id'] ? ' · Aanvulling' : '' ),
 					$entry['registration_status'] === 'submitted' ? 'Ingeschreven' : 'Niet ingeschreven',
 					$entry['registration_status'] === 'submitted' ? $entry['registered_team_count'] : '',
 					$entry['registration_status'] === 'submitted' ? $entry['player_count'] : '',
@@ -159,7 +159,7 @@ final class TournamentExport {
 		foreach ( $data['entries'] as $entry ) {
 			$submitted = $entry['registration_status'] === 'submitted';
 			$contact   = $submitted ? esc_html( $entry['contact_name'] ) . '<br><span class="note">' . esc_html( $entry['contact_email'] ) . '<br>' . esc_html( $entry['contact_mobile'] ) . '</span>' : '<span class="muted">-</span>';
-			$html     .= '<tr><td>' . esc_html( $entry['age_group'] ) . '</td><td>' . esc_html( $entry['team_name'] ) . '</td><td>' . ( $submitted ? 'Ingeschreven' : 'Niet ingeschreven' ) . '</td><td class="num">' . ( $submitted ? (int) $entry['registered_team_count'] : '-' ) . '</td><td class="num">' . ( $submitted ? (int) $entry['player_count'] : '-' ) . '</td><td>' . $contact . '</td><td class="num">' . ( $submitted ? esc_html( $this->money_label( $entry['total_amount'] ) ) : '-' ) . '</td><td>' . esc_html( $this->payment_status_label( $entry ) ) . ( ! empty( $entry['paid_at'] ) ? '<br><span class="note">' . esc_html( $this->date_label( $entry['paid_at'] ) ) . '</span>' : '' ) . '</td><td>' . esc_html( $entry['planner_note'] ?: '-' ) . '</td></tr>';
+			$html     .= '<tr><td>' . esc_html( $entry['age_group'] ) . '</td><td>' . esc_html( $entry['team_name'] . ( $entry['parent_entry_id'] ? ' · Aanvulling' : '' ) ) . '</td><td>' . ( $submitted ? 'Ingeschreven' : 'Niet ingeschreven' ) . '</td><td class="num">' . ( $submitted ? (int) $entry['registered_team_count'] : '-' ) . '</td><td class="num">' . ( $submitted ? (int) $entry['player_count'] : '-' ) . '</td><td>' . $contact . '</td><td class="num">' . ( $submitted ? esc_html( $this->money_label( $entry['total_amount'] ) ) : '-' ) . '</td><td>' . esc_html( $this->payment_status_label( $entry ) ) . ( ! empty( $entry['paid_at'] ) ? '<br><span class="note">' . esc_html( $this->date_label( $entry['paid_at'] ) ) . '</span>' : '' ) . '</td><td>' . esc_html( $entry['planner_note'] ?: '-' ) . '</td></tr>';
 		}
 		$html .= '</tbody></table><p class="note">Deze export ondersteunt de handmatige invoer bij de externe toernooiorganisatie.</p>';
 		return $html;

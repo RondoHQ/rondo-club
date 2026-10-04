@@ -1023,6 +1023,201 @@ class TournamentWorkflowTest extends RondoTestCase {
 		delete_option( 'rondo_tournament_write_lock_' . $tournament['id'] );
 	}
 
+	/** An extra registration must never replace the existing paid invoice. */
+	public function test_addition_preserves_paid_registration_and_totals_and_replays_once(): void {
+		[ $entry, $user, $person ] = $this->addition_fixture();
+		wp_update_post(
+			[
+				'ID'          => $entry['invoice_id'],
+				'post_status' => 'rondo_paid',
+			]
+			);
+		Fields::update_for_post( $entry['invoice_id'], 'status', 'paid' );
+		$before  = Fields::all_for_post( $entry['id'] );
+		$payload = [
+			'version'           => $entry['version'],
+			'contact_person_id' => $person,
+			'team_entries'      => [ [ 'player_count' => 8 ] ],
+			'request_id'        => wp_generate_uuid4(),
+		];
+		$result  = $this->service->add_teams( $entry['id'], $payload, $user );
+		$this->assertIsArray( $result );
+		$this->assertCount( 1, $result['additional_entries'] );
+		$child = $result['additional_entries'][0];
+		$this->assertSame( $entry['id'], $child['parent_entry_id'] );
+		$this->assertSame( $entry['id'], (int) get_post( $child['id'] )->post_parent );
+		$this->assertSame( 'paid', $result['payment_state'] );
+		$this->assertSame( 'open', $child['payment_state'] );
+		$this->assertNotSame( $entry['invoice_id'], $child['invoice_id'] );
+		$this->assertSame( 48.0, $child['total_amount'] );
+		$this->assertSame( $before['submitted_team_entries'], $result['submitted_team_entries'] );
+		foreach ( [ 'invoice_id', 'registered_team_count', 'player_count', 'total_amount', 'contact_person_id', 'submitted_at' ] as $field ) {
+			$this->assertSame( $before[ $field ], Fields::get_for_post( $entry['id'], $field ), $field );
+		}
+		// Replaying the same lost response, even with the old version, reuses the child and invoice.
+		$again = $this->service->add_teams( $entry['id'], $payload, $user );
+		$this->assertCount( 1, $again['additional_entries'] );
+		$this->assertSame( $child['invoice_id'], $again['additional_entries'][0]['invoice_id'] );
+		$totals = $this->service->totals( $this->service->entries_for_tournament( $entry['tournament_id'] ) )['overall'];
+		$this->assertSame( 1, $totals['selected_team_count'] );
+		$this->assertSame( 1, $totals['submitted_entry_count'] );
+		$this->assertSame( 2, $totals['registered_team_count'] );
+		$this->assertSame( 15, $totals['player_count'] );
+		$this->assertSame( 48.0, $totals['received_amount'] );
+		$this->assertSame( 48.0, $totals['outstanding_amount'] );
+		$this->assertCount( 1, $this->service->entries_for_user( $user ) );
+		$this->assertCount( 1, $this->service->entries_for_user( $user )[0]['additional_entries'] );
+		$this->assertStringContainsString( 'Aanvulling', ( new \Rondo\Tournaments\TournamentExport( $this->service ) )->csv( $entry['tournament_id'] ) );
+		$this->assertFalse( $result['can_reopen'] );
+		$this->assertWPError( $this->service->reopen_entry( $entry['id'], $user ) );
+	}
+
+	public function test_addition_rejects_conflicting_replays_stale_versions_and_invalid_payloads(): void {
+		[ $entry, $user, $person ] = $this->addition_fixture();
+		$payload                   = [
+			'version'           => $entry['version'],
+			'contact_person_id' => $person,
+			'team_entries'      => [ [ 'player_count' => 8 ] ],
+			'request_id'        => wp_generate_uuid4(),
+		];
+		$this->assertIsArray( $this->service->add_teams( $entry['id'], $payload, $user ) );
+		$changed                                    = $payload;
+		$changed['team_entries'][0]['player_count'] = 9;
+		$this->assertSame( 'rondo_tournament_request_conflict', $this->service->add_teams( $entry['id'], $changed, $user )->get_error_code() );
+		$changed['request_id'] = wp_generate_uuid4();
+		$this->assertSame( 'rondo_tournament_entry_conflict', $this->service->add_teams( $entry['id'], $changed, $user )->get_error_code() );
+		++$changed['version'];
+		$changed['team_entries'] = [];
+		$this->assertWPError( $this->service->add_teams( $entry['id'], $changed, $user ) );
+		$changed['team_entries'] = [ [ 'player_count' => 0 ] ];
+		$this->assertWPError( $this->service->add_teams( $entry['id'], $changed, $user ) );
+		$changed['request_id'] = '';
+		$this->assertSame( 'rondo_tournament_request_id_required', $this->service->add_teams( $entry['id'], $changed, $user )->get_error_code() );
+		$this->assertCount( 2, $this->service->entries_for_tournament( $entry['tournament_id'] ) );
+	}
+
+	public function test_addition_respects_deadline_closed_tournament_and_lock(): void {
+		[ $entry, $user, $person ] = $this->addition_fixture();
+		$payload                   = [
+			'version'           => $entry['version'],
+			'contact_person_id' => $person,
+			'team_entries'      => [ [ 'player_count' => 8 ] ],
+			'request_id'        => wp_generate_uuid4(),
+		];
+		add_option( 'rondo_tournament_write_lock_' . $entry['tournament_id'], time(), '', false );
+		$this->assertSame( 'rondo_tournament_write_locked', $this->service->add_teams( $entry['id'], $payload, $user )->get_error_code() );
+		delete_option( 'rondo_tournament_write_lock_' . $entry['tournament_id'] );
+		Fields::update_for_post( $entry['tournament_id'], 'lifecycle_status', 'closed' );
+		$this->assertSame( 'rondo_tournament_deadline_passed', $this->service->add_teams( $entry['id'], $payload, $user )->get_error_code() );
+		Fields::update_for_post( $entry['tournament_id'], 'lifecycle_status', 'open' );
+		Fields::update_for_post( $entry['tournament_id'], 'internal_deadline', current_datetime()->modify( '-1 day' )->format( 'Y-m-d H:i:s' ) );
+		$this->assertFalse( $this->service->format_entry( $entry['id'] )['can_add_teams'] );
+		$this->assertSame( 'rondo_tournament_deadline_passed', $this->service->add_teams( $entry['id'], $payload, $user )->get_error_code() );
+		$this->assertCount( 1, $this->service->entries_for_tournament( $entry['tournament_id'] ) );
+	}
+
+	public function test_addition_access_and_email_recipients_follow_current_parent_assignments(): void {
+		[ $entry, $user, $person ] = $this->addition_fixture();
+		$payload                   = [
+			'version'           => $entry['version'],
+			'contact_person_id' => $person,
+			'team_entries'      => [ [ 'player_count' => 8 ] ],
+			'request_id'        => wp_generate_uuid4(),
+		];
+		$result                    = $this->service->add_teams( $entry['id'], $payload, $user );
+		$child                     = $result['additional_entries'][0];
+		$outsider                  = $this->createRondoUser();
+		$this->assertFalse( TournamentAccess::is_assigned( $child['id'], $outsider ) );
+		$this->assertTrue( TournamentAccess::is_assigned( $child['id'], $user ) );
+		$server = $this->bootRestControllers( [ Tournaments::class ] );
+		wp_set_current_user( $outsider );
+		$this->assertSame( 403, $server->dispatch( new WP_REST_Request( 'POST', '/rondo/v1/tournament-entries/' . $entry['id'] . '/additions' ) )->get_status() );
+		$this->assertSame( 403, $server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/tournament-entries/' . $child['id'] ) )->get_status() );
+		wp_set_current_user( $user );
+		$this->assertSame( 200, $server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/tournament-entries/' . $child['id'] ) )->get_status() );
+		$this->assertWPError( $this->service->add_teams( $child['id'], $payload, $user ) );
+		Fields::update_for_post( $entry['id'], 'assignment_snapshot', [] );
+		$this->assertFalse( TournamentAccess::is_assigned( $child['id'], $user ) );
+		$this->assertSame( [], \Rondo\Tournaments\TournamentAssignees::for_entry( $child['id'] ) );
+		$this->assertSame( 'rondo_tournament_payment_recipient_missing', \Rondo\Tournaments\TournamentPaymentEmail::send_manual_reminder( $child['id'] )->get_error_code() );
+		$this->assertSame( 403, $server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/tournament-entries/' . $child['id'] ) )->get_status() );
+	}
+
+	public function test_addition_route_supports_multiple_free_supplements_and_requires_assigned_staff(): void {
+		[ $entry, $user, $person ] = $this->addition_fixture();
+		Fields::update_for_post(
+			$entry['tournament_id'],
+			'pricing_rules',
+			[
+				[
+					'min_age'     => 6,
+					'max_age'     => 20,
+					'amount'      => 0,
+					'game_format' => '5 tegen 5',
+				],
+			]
+			);
+		$server  = $this->bootRestControllers( [ Tournaments::class ] );
+		$payload = [
+			'version'           => $entry['version'],
+			'contact_person_id' => $person,
+			'team_entries'      => [ [ 'player_count' => 6 ], [ 'player_count' => 8 ] ],
+			'request_id'        => wp_generate_uuid4(),
+		];
+		$request = new WP_REST_Request( 'POST', '/rondo/v1/tournament-entries/' . $entry['id'] . '/additions' );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( $payload ) );
+		$response = $server->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$result = $response->get_data();
+		$child  = $result['additional_entries'][0];
+		$this->assertSame( 'not_applicable', $child['payment_state'] );
+		$this->assertNull( $child['invoice_id'] );
+		$this->assertSame( 2, $child['registered_team_count'] );
+		$payload['version']    = $result['version'];
+		$payload['request_id'] = wp_generate_uuid4();
+		$request->set_body( wp_json_encode( $payload ) );
+		$result = $server->dispatch( $request )->get_data();
+		$this->assertCount( 2, $result['additional_entries'] );
+		$totals = $this->service->totals( $this->service->entries_for_tournament( $entry['tournament_id'] ) )['overall'];
+		$this->assertSame( 1, $totals['selected_team_count'] );
+		$this->assertSame( 5, $totals['registered_team_count'] );
+		$this->assertSame( 35, $totals['player_count'] );
+		wp_set_current_user( 0 );
+		$this->assertSame( 401, $server->dispatch( $request )->get_status() );
+	}
+
+	private function addition_fixture(): array {
+		$admin  = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$team   = $this->createOrganization( [ 'post_title' => 'AWC O17-2' ] );
+		$user   = $this->createRondoUser();
+		$person = $this->link_user( $user, [ $this->position( $team, 'team', 'Leider' ) ] );
+		wp_set_current_user( $user );
+		$tournament = $this->create_tournament( $admin );
+		$published  = $this->service->publish(
+			$tournament['id'],
+			[
+				[
+					'team_id'    => $team,
+					'person_ids' => [ $person ],
+				],
+			],
+			$admin
+			);
+		$entry      = $published['entries'][0];
+		$submitted  = $this->service->submit_entry(
+			$entry['id'],
+			[
+				'version'           => $entry['version'],
+				'contact_person_id' => $person,
+				'team_entries'      => [ [ 'player_count' => 7 ] ],
+			],
+			$user
+			);
+		$this->assertIsArray( $submitted );
+		return [ $submitted, $user, $person ];
+	}
+
 	private function pending_staff( int $team_id, string $name, string $email ): int {
 		return $this->createPerson(
 			[ 'post_title' => $name ],

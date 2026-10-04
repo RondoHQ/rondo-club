@@ -191,6 +191,16 @@ final class Tournaments extends Base {
 		);
 		register_rest_route(
 			'rondo/v1',
+			'/tournament-entries/(?P<id>\d+)/additions',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'add_teams' ],
+				'permission_callback' => [ $this, 'check_entry_write' ],
+				'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
+			]
+		);
+		register_rest_route(
+			'rondo/v1',
 			'/tournament-entries/(?P<id>\d+)/assignees',
 			[
 				'methods'             => \WP_REST_Server::EDITABLE,
@@ -376,7 +386,7 @@ final class Tournaments extends Base {
 	}
 
 	public function get_entry( $request ) {
-		$result = $this->service->format_entry( absint( $request->get_param( 'id' ) ) );
+		$result = $this->service->entry_with_additions( absint( $request->get_param( 'id' ) ) );
 		return empty( $result )
 			? new \WP_Error( 'rondo_tournament_entry_not_found', __( 'Inschrijfopdracht niet gevonden.', 'rondo' ), [ 'status' => 404 ] )
 			: rest_ensure_response( $result );
@@ -389,6 +399,11 @@ final class Tournaments extends Base {
 
 	public function submit_entry( $request ) {
 		$result = $this->service->submit_entry( absint( $request->get_param( 'id' ) ), $request->get_json_params() ?: [], get_current_user_id() );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	public function add_teams( $request ) {
+		$result = $this->service->add_teams( absint( $request->get_param( 'id' ) ), $request->get_json_params() ?: [], get_current_user_id() );
 		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 	}
 
