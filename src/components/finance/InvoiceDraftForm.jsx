@@ -5,6 +5,7 @@ import { addDays, format, parseISO } from 'date-fns';
 import { useSearch } from '@/hooks/useDashboard';
 import { useFinanceSettings } from '@/hooks/useFinanceSettings';
 import RichTextEditor from '@/components/RichTextEditor';
+import InvoiceContactPicker from '@/components/finance/InvoiceContactPicker';
 
 const emptyLine = { description: '', amount: '', discipline_case_id: null };
 const DEFAULT_SUBJECT_TEMPLATE = 'Factuur {factuur_nummer} - {organisatie_naam}';
@@ -435,6 +436,13 @@ export default function InvoiceDraftForm({
 
         {invoiceTarget === 'external' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InvoiceContactPicker key={formKey} onSelect={(customer) => {
+              setCustomerName(customer.customerName);
+              setCustomerAttention(customer.customerAttention);
+              setCustomerEmail(customer.customerEmail);
+              setCustomerCcEmail(customer.customerCcEmail);
+              setCustomerAddress(customer.customerAddress);
+            }} />
             <label className="text-sm">Klantnaam
               <input className="input mt-1" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
             </label>
