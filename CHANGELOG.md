@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.127.0] - 2026-10-04
+
+### Added
+- Download a Rabobank SEPA payment file from an open credit invoice, with checked recipient and club account details, execution date, and a private export record. Repeat downloads reuse the exact payment file and warn against importing the same payment twice; exporting never marks the credit as paid.
+
 ## [35.126.0] - 2026-10-04
 
 ### Added

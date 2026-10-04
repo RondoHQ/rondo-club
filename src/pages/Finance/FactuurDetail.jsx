@@ -9,6 +9,7 @@ import { format, formatStoredDateTime, parseYmd } from '@/utils/dateFormat';
 import { formatCurrency } from '@/utils/formatters';
 import { prmApi } from '@/api/client';
 import InvoiceDraftForm from '@/components/finance/InvoiceDraftForm';
+import CreditSepaExport from '@/components/finance/CreditSepaExport';
 import { mapInvoiceToInitialValues } from '@/utils/invoiceFormValues';
 
 // Status badge colors (same as Facturen.jsx)
@@ -596,6 +597,10 @@ export default function FactuurDetail() {
           <StatusBadge status={invoice.status} reminderCount={invoice.reminder_count || 0} scheduledSendDate={invoice.scheduled_send_date} />
         </div>
       </div>
+
+      {invoice.invoice_kind === 'credit' && canEditFinancieel && (
+        <CreditSepaExport key={invoice.id} invoice={invoice} />
+      )}
 
       {invoice.status === 'draft' && isEditingDraft && (
         <InvoiceDraftForm
