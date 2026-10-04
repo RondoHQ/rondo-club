@@ -63,7 +63,7 @@ import { canAccessFootball } from '@/utils/footballAccess';
 import { canAccessFootballItem, footballNavigation } from '@/utils/footballNavigation';
 import brandIcon from '@/assets/brand/logo-icon.svg';
 import brandWordmark from '@/assets/brand/logo-wordmark.svg';
-import '@/styles/dashboard-brand.css';
+import '@/styles/app-shell-brand.css';
 
 const navigation = [
   { name: 'Mijn inschrijftaken', href: '/vrijwillig?tab=mine', icon: HeartHandshake, personal: true },
