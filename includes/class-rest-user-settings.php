@@ -1211,9 +1211,11 @@ class UserSettings extends Base {
 		$linked_person_name  = null;
 		$linked_person_photo = null;
 		$active_functies     = [];
+		$vog_required        = false;
 		if ( $person_id ) {
 			$person = get_post( $person_id );
 			if ( $person && $person->post_type === 'person' ) {
+				$vog_required        = \Rondo\VOG\VOGRequirement::is_required( $person_id );
 				$first               = \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '';
 				$infix               = \Rondo\Fields\Fields::get_for_post( $person_id, 'infix' ) ?: '';
 				$last                = \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '';
@@ -1281,6 +1283,7 @@ class UserSettings extends Base {
 			'needs_vog_upload'               => $person_id > 0 && \Rondo\VOG\VogSubmissions::needs_upload( $person_id, $user_id ),
 			'linked_person_name'             => $linked_person_name,
 			'active_functies'                => $active_functies,
+			'vog_required'                   => $vog_required,
 			'linked_person_photo'            => $linked_person_photo,
 			'pending_guardian'               => $pending_guardian,
 			'feedback_intro_seen'            => get_user_meta( $user_id, self::FEEDBACK_INTRO_SEEN_META, true ) !== '',
