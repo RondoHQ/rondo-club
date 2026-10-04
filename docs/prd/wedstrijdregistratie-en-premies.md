@@ -84,14 +84,15 @@ gegevens, geen bevestiging dat de opstellingen of uitslagen overeenkomen met wed
 4. De controle op ontbrekende IBAN's in `Overzicht JO23-1!J8` kijkt naar de prefix `NL`.
    Dat is geen volledige IBAN-validatie en behandelt buitenlandse IBAN's niet correct.
 5. De betaalformule selecteert op naam en positief bedrag; de ontbrekende rekeningregels komen
-   daardoor in het exporttabblad voor. Volgens de uitleg waarschuwt het Apps Script hierover.
-   Of dat script export daadwerkelijk blokkeert, is nog niet onderzocht.
+   daardoor in het exporttabblad voor. Het Apps Script waarschuwt alleen bij de exacte tekst
+   `Niet gevonden` en laat de gebruiker dan toch exporteren. Zie de exportcontrole in hoofdstuk 10.
 6. IBAN-koppeling gebeurt op naam. De Nmbrs-naamformule beschouwt het laatste woord als achternaam.
    Rondo moet stabiele persoons-ID's en bevestigde naamgegevens gebruiken.
 
 Geen formulefouten gevonden in de opgeslagen uitkomsten. Google-specifieke formules worden in
 de XLSX-controlekopie deels als compatibiliteitsformules opgeslagen. De sheet is niet opnieuw
-doorgerekend na proefwijzigingen; de Apps Script-export en bankimport zijn nog niet getest.
+doorgerekend na proefwijzigingen. Het Apps Script is inmiddels gelezen en lokaal met fictieve
+gegevens en vervangende Google-services getest; echte XLSX-generatie en bankimport zijn niet getest.
 
 Aanvullende controle op individuele uitzonderingen op 4 oktober 2026: de formules in
 `Nmbrs AWC 1!C51:G74` en `Overzicht JO23-1!C56:E84` volgen voor iedere spelersrij hetzelfde patroon,
@@ -326,7 +327,8 @@ de eerste versie ondersteunt aantoonbaar handmatige snelinvoer.
 **JO23-1:** XLSX met uitsluitend de vijf bronkolommen in dezelfde volgorde. IBAN en namen zijn
 tekst, bedrag is numeriek met twee decimalen, uitvoerdatum is een echte datum. Geen formules,
 instellingscellen, extra tabbladen of totalen in de betaalregels. Namen die op `=`, `+`, `-` of
-`@` beginnen blijven tekst. Bestandsnaam volgt na bevestiging het bestaande exportpatroon.
+`@` beginnen blijven tekst. Bestandsnaam volgt het gecontroleerde bestaande patroon
+`Inputfile vergoedingen (voetbal)_JO23_<maandnaam>_<jaar>.xlsx`.
 
 Normaliseer IBAN door spaties te verwijderen en hoofdletters te gebruiken. Controleer landlengte,
 structuur en mod-97 voor ondersteunde landen; accepteer een geldige buitenlandse rekening als
@@ -343,6 +345,51 @@ XLSX-writerdependency. Fase 0 selecteert een onderhouden library die de serverve
 en toetst die aan een geanonimiseerd daadwerkelijk exportvoorbeeld. Geen eigen XLSX-formaatbouw.
 Bestanden worden geautoriseerd gestreamd of buiten de publieke webroot bewaard, met vastgelegde
 hash, bestandscontractversie en beperkte bewaartermijn voor tijdelijke bestanden.
+
+### Controle van de bestaande export op 4 oktober 2026
+
+Bron: [Apps Script Wedstrijdregistratie, Code.gs](https://script.google.com/u/0/home/projects/1MzHwRL5ZklNKUYRec1QyelNk2Pfd95RrAyKRa_aJMbypGcqLSety9_mP/edit),
+functie `exportPremiesJO23()`. De volledige functie is read-only via de editor gelezen.
+Het productiescript is niet uitgevoerd of gewijzigd.
+
+Het script leest berekende waarden uit `Export JO23-1!A:E`, kopieert ze naar één tijdelijk
+spreadsheet en vraagt daarvan de XLSX-export op. Kolom C krijgt getalnotatie `#,##0.00` en kolom E
+`dd-mm-yyyy`; de eerste rij is vet. Het script berekent geen premies en stelt de uitvoerdatum
+niet zelf in: die komt uit de sheetformule met `TODAY()`. De omschrijving komt eveneens uit de
+sheet en is `Premie <maandnaam> <jaar>`.
+
+Het XLSX-bestand wordt aangemaakt in de eerste bovenliggende Drive-map van de bronsheet, met
+Mijn Drive als terugval wanneer er geen bovenliggende map wordt gevonden. Alle bestaande
+XLSX-bestanden met dezelfde maandbestandsnaam worden eerst naar de prullenbak verplaatst.
+Na het opslaan wordt het tijdelijke Google-spreadsheet naar de prullenbak verplaatst.
+
+De gerichte Drive-zoekopdracht en de huidige bovenliggende map `Vergoedingen / 2026/2027`
+leverden geen bestaand `Inputfile vergoedingen (voetbal)_JO23_september_2026.xlsx` op. Een eerder
+gegenereerd betaalbestand kon daardoor niet worden geïnspecteerd. Het aanwezige oorspronkelijke
+wedstrijdregistratie-XLSX is geen betaalexport. Uit de exportfunctie blijkt niet welk bankpakket
+of welke tussenstap het bestand accepteert; compatibiliteit blijft onbevestigd.
+
+| Bevinding | Gevolg |
+|---|---|
+| Waarschuwing alleen bij exact `Niet gevonden`, met keuze om door te gaan | De huidige zeven ontbrekende rekeningen voor €255 kunnen als ongeldige betaalregels worden geëxporteerd |
+| Filter verwijdert uitsluitend regels met een lege eerste cel | Een lege IBAN-regel verdwijnt zonder waarschuwing; een numerieke nul blijft staan |
+| Geen rekening-, bedrag- of datumvalidatie | Een ongeldige IBAN of een niet-numeriek bedrag wordt door het script niet tegengehouden |
+| Alleen `data.length < 2` controleert of er premies zijn | De formuletekst `Geen premies in deze maand` kan als betaalregel worden geëxporteerd |
+| Oude bestanden worden verwijderd vóór het nieuwe bestand is opgeslagen | Bij een schrijffout staat het oude bestand al in de prullenbak en is er geen nieuwe export |
+| Geen `try/finally` voor opruimen | Bij een fout na aanmaak kan het tijdelijke spreadsheet met betaalgegevens blijven staan |
+| Dezelfde maandnaam wordt telkens hergebruikt, zonder batch- of verwerkingsregistratie | De export maakt geen onderscheid tussen een herdownload, correctie en al betaalde maand |
+
+Acht lokale scenario's zijn doorlopen met een kopie van de functie, fictieve regels en volledig
+vervangen Google-services: ontbrekende rekening met Ja/Nee, lege rekening, numerieke nul,
+geen-premies-melding, ongeldig bedrag/IBAN, mislukte opslag en normale vervanging. De bovenstaande
+controle- en volgordefouten zijn daarbij gereproduceerd. Er waren geen netwerkrequests,
+Drive-wijzigingen of betalingen. Dit test de scriptlogica, niet Google-autorisatie, gedeelde
+Drive-rechten, echte XLSX-celtypen of bankacceptatie.
+
+Voor Rondo blijft het voorstel: expliciete validatie met blokkade bij ongeldige betaalregels,
+een werkelijk lege maand zonder bestand afhandelen, en onveranderlijke batches met afzonderlijke
+exportversies gebruiken. Bestandsaanmaak mag een bestaande geldige export niet eerst verwijderen.
+Deze verbeteringen zijn onderdeel van het Rondo-voorstel; het bestaande script is ongewijzigd.
 
 ## 11. Migratie en pilot
 
@@ -395,6 +442,11 @@ rekenregels over en krijgt geen individuele uitzonderingsmodule. Eventuele perso
 loonbedragen voor AWC 1 blijven in Nmbrs; de sheet bewijst niet dat die bedragen voor iedereen
 gelijk zijn. Dit is een bronbevinding, geen bevestiging van individuele contractafspraken.
 
+**B4a, vastgesteld uit het exportscript:** de huidige uitvoer is een XLSX met vijf kolommen,
+berekende waarden en de maandbestandsnaam uit hoofdstuk 10. Het script laat ongeldige betaalregels
+door en vervangt bestaande maandbestanden via de prullenbak. Bron- en lokale scenariocontrole
+zijn afgerond; bankcompatibiliteit en een werkelijk gegenereerd bestand zijn nog niet geverifieerd.
+
 ### Nog te besluiten vóór de betreffende bouwfase
 
 De overige voorgestelde defaults worden vóór de afhankelijke fase bevestigd. Vastlegging van
@@ -402,7 +454,7 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | ID | Open besluit | Voorgesteld uitgangspunt | Nodig vóór |
 |---|---|---|---|
-| B4 | Welk bankpakket/formaat en wat doet het Apps Script exact? | Huidige vijfkoloms-XLSX behouden na bewezen compatibiliteit | Export |
+| B4b | Welk bankpakket of welke tussenstap ontvangt het XLSX, en is een werkelijk exportvoorbeeld beschikbaar? | Vijfkoloms-XLSX uit B4a behouden na bewezen compatibiliteit; geen bankformaat afleiden uit alleen kolomnamen | Export |
 | B5 | Wie registreert, corrigeert en sluit af; is een tweede fiatteur vereist? | Registrator per team en financiële beheerder zoals rechtenmatrix | Rechten en vrijgave |
 | B6 | Welke historische maanden zijn al verwerkt of betaald? | Geen automatische betaalstatus uit spreadsheetdata afleiden | Productie-import |
 | B7 | Tariefingangsdata, negatieve correcties en tenaamstelling | Gesloten bedragen bewaren; negatieve correcties handmatig afhandelen | Correcties en export |
@@ -412,7 +464,7 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | Fase | Resultaat | Voorwaarde om door te gaan |
 |---|---|---|
-| 0 | B1 vertalen naar broncategorieën, besluiten B4–B8, inspectie Apps Script, geanonimiseerd exportvoorbeeld, librarykeuze | Reken- en bestandscontract bevestigd; broncontrolegrenzen vastgelegd |
+| 0 | B1 vertalen naar broncategorieën, besluiten B4b en B5–B8, geanonimiseerd exportvoorbeeld, librarykeuze; Apps Script-controle is afgerond | Reken- en bestandscontract bevestigd; broncontrolegrenzen vastgelegd |
 | 1 | Privé opslag, registry, rechtenbeleid, versiebeheer, calculator en API | Rekentests, rechtenmatrix en gelijktijdigheids-/hersteltests slagen |
 | 2 | Teamregistratie, gastspelers, afronden en bronconflicten | Volledige flow met synthetische data op desktop en mobiel gecontroleerd |
 | 3 | Financiële profielen, maandafsluiting, correcties en exports | Rekenverschillen nul, bestandscontract bewezen, export/privacytests slagen |
@@ -463,6 +515,10 @@ Deze planning zelf blijft beperkt tot `docs/prd/`, zonder themaversie, changelog
   herhaalde download leveren geen dubbele registratie/batch en geen gewijzigde uitvoerdatum op.
 - [ ] Een XLSX opent met de juiste celtypen en uitsluitend de afgesproken kolommen. Een
   geanonimiseerde proefimport bij de beoogde ontvanger slaagt zonder een betaling te initiëren.
+- [ ] Een maand zonder premies levert geen betaalbestand of tekstuele betaalregel op. Lege,
+  ontbrekende en ongeldige IBAN's bij positieve bedragen blokkeren de export zonder regels te verliezen.
+- [ ] Een fout tijdens bestandsaanmaak behoudt bestaande exports en laat geen publiek toegankelijk
+  tijdelijk betaalbestand achter. Een herdownload vervangt geen eerdere batch of verwerkingshistorie.
 - [ ] Herhaalde import is zonder extra wijzigingen; onbekende personen, wedstrijden en bestaande
   betaalstatussen zijn vóór migratie opgelost of expliciet als onopgelost geblokkeerd.
 - [ ] De registrator en penningmeester voltooien de afgesproken flow op productie na succesvolle
