@@ -207,24 +207,34 @@ export default function InvoiceDraftForm({
     setPaymentAccountId((current) => current || initialValues?.paymentAccountId || getDefaultPaymentAccountId(financeSettings, invoiceType));
   }, [financeSettings, initialValues?.paymentAccountId, invoiceType]);
 
-  // Hydrate the email fields with the kind-appropriate default, and swap them
-  // over when the invoice kind changes — but only while the field still holds a
-  // default value, so a user's own edits are never overwritten.
+  // Hydrate empty/default fields without replacing saved text or edits when
+  // settings refresh. Explicit kind changes reset both fields below.
   useEffect(() => {
     if (!financeSettings) {
       return;
     }
 
+    const previousSubject = appliedDefaultSubjectRef.current;
+    const previousBody = appliedDefaultBodyRef.current;
     setEmailSubject((current) => (
-      current === '' || current === appliedDefaultSubjectRef.current ? defaultEmailSubject : current
+      current === '' || current === previousSubject ? defaultEmailSubject : current
     ));
     setEmailBody((current) => (
-      current === '' || emailBodyMatchesDefault(current, appliedDefaultBodyRef.current) ? defaultEmailBody : current
+      current === '' || emailBodyMatchesDefault(current, previousBody) ? defaultEmailBody : current
     ));
 
     appliedDefaultSubjectRef.current = defaultEmailSubject;
     appliedDefaultBodyRef.current = defaultEmailBody;
-  }, [financeSettings, defaultEmailSubject, defaultEmailBody]);
+  }, [financeSettings, defaultEmailSubject, defaultEmailBody, invoiceKind]);
+
+  const handleInvoiceKindChange = (kind) => {
+    if (kind === invoiceKind) return;
+    setInvoiceKind(kind);
+    // Copied invoices can contain saved overrides, including payment wording.
+    // A different kind must start with its own configured email template.
+    setEmailSubject('');
+    setEmailBody('');
+  };
 
   const total = useMemo(() => lineItems.reduce((sum, item) => {
     const amount = parseFloat(item.amount) || 0;
@@ -335,7 +345,7 @@ export default function InvoiceDraftForm({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <label className="text-sm">Type
-            <select className="input mt-1" value={invoiceKind} onChange={(e) => setInvoiceKind(e.target.value)}>
+            <select className="input mt-1" value={invoiceKind} onChange={(e) => handleInvoiceKindChange(e.target.value)}>
               <option value="normal">Normale factuur</option>
               <option value="credit">Creditfactuur</option>
             </select>
