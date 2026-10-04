@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+import api from '@/api/client';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import TeamCalendarActions from '@/components/TeamCalendarActions';
@@ -7,6 +9,7 @@ const dateFormatter = new Intl.DateTimeFormat('nl-NL', { weekday: 'short', day: 
 
 export default function TeamMatches({ teamId }) {
   const [filter, setFilter] = useState('all');
+  const compensation = useQuery({ queryKey: ['match-compensation', 'settings'], queryFn: () => api.get('/rondo/v1/match-compensation/settings').then(({ data }) => data) });
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['team-matches', teamId],
     queryFn: async () => (await prmApi.getTeamMatches(teamId)).data,
@@ -25,6 +28,7 @@ export default function TeamMatches({ teamId }) {
         <div><h2 className="font-semibold text-brand-gradient">Wedstrijden {data.season.replace('-', '–')}</h2><p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Thuis- en uitwedstrijden van het hele seizoen, zodra Sportlink ze publiceert.</p></div>
         <TeamCalendarActions calendarUrl={data.calendar_url} />
       </div>
+      {compensation.data?.teams.some((team) => team.team_id === Number(teamId) && team.can_register) ? <Link className="btn-secondary inline-flex" to={`/teams/${teamId}/registratie`}>Selecties registreren</Link> : null}
       <p className="text-sm text-gray-500 dark:text-gray-400">Voeg de ICS-link als agenda-abonnement toe om wijzigingen te ontvangen. Je agenda-app bepaalt hoe snel die zichtbaar worden.</p>
       {data.stale && <p role="status" className="text-sm text-amber-700 dark:text-amber-300">Sportlink is tijdelijk niet bereikbaar. Je ziet de laatst opgehaalde wedstrijden.</p>}
       {!data.matched ? <p className="text-sm text-gray-500 dark:text-gray-400">Dit team staat niet eenduidig in het huidige Sportlink-wedstrijdprogramma. De agenda is beschikbaar zodra Sportlink het team kan koppelen.</p> : <>

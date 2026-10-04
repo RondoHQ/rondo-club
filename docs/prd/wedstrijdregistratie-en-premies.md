@@ -687,3 +687,37 @@ Deze planning zelf blijft beperkt tot `docs/prd/`, zonder themaversie, changelog
 Tests gebruiken synthetische personen en bankgegevens. PHP-tests booten de benodigde REST-controllers
 expliciet en draaien tegen MySQL volgens `docs/testing.md`. De volledige bestaande suite moet groen
 blijven. Een geslaagde build geldt niet als bewijs van juiste betaling of bankcompatibiliteit.
+
+
+## 15. Gebouwde pilotmodule (4 oktober 2026)
+
+De bankvelden zijn beschikbaar sinds 35.136.0. Versie 35.138.0 voegt de registratie- en
+maandverwerking toe onder `/financien/wedstrijdvergoedingen` en `/teams/:id/registratie`.
+De beheerder koppelt bestaande teams aan de seizoensregeling en wijst registratoren toe.
+Die toewijzing verruimt bestaande team- of persoonstoegang niet. Zonder pilottoewijzing
+blijft de module leeg; zonder vastgelegd bewaarbeleid kan geen maand worden afgesloten.
+
+Gebouwd: native privéregistraties en batches, versies en herstel na gedeeltelijke opslag,
+broncontroles, basis/bank/gastregistratie, Nmbrs-namen en aantallen, bankmomentopnames,
+Rabobank XML, maandcorrecties en afzonderlijke externe verwerkingsregistratie.
+Correcties na verwerking bevatten uitsluitend het verschil binnen dezelfde maand;
+negatieve premies blokkeren een betaalbestand en vragen handmatige afhandeling.
+
+De import accepteert een voorbereid JSON-bestand met `registrations`, elk met een bestaand
+`team_id` en de registratievelden onder `fields`. Elke selectieregel bevat een gecontroleerd
+bestaand `person_id`. De voorvertoning schrijft niets. De definitieve import vereist de hash
+van die voorvertoning, expliciete bevestiging en een bronkopie-/backupreferentie. Hetzelfde
+bestand kan opnieuw worden aangeboden zonder dubbele wedstrijden. De import maakt geen
+personen, bankgegevens of betaalstatussen aan.
+
+Nog uit te voeren bij pilotinrichting: registratoren aanwijzen, bewaarbeleid B8 vastleggen,
+september aan echte personen en bronwedstrijden koppelen, de concrete importvoorvertoning
+beoordelen en goedkeuren, septembertotalen vergelijken en een bankproefimport controleren.
+De bestaande sheet is niet gewijzigd of gearchiveerd. De generieke importvoorziening is
+geen bewijs dat deze bronmigratie al is uitgevoerd.
+
+Lokale controle: echte WordPress/MySQL-tests voor berekeningen, bankmomentopnames,
+herhaalde en gelijktijdige aanvragen, opslagherstel, bronwijzigingen, toegang, import en
+correcties; SEPA XML tegen het bestaande pain.001.001.09-schema. Een browserfixture met
+verzonnen gegevens controleert registratie, maandafsluiting en weergave op 390 pixels.
+De volledige PHP-suite bevat 1358 tests zonder fouten (22 bestaande skips).
