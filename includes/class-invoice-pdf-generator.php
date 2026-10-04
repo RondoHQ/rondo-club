@@ -193,7 +193,8 @@ class InvoicePdfGenerator {
 			$invoice_type,
 			$payment_link,
 			$membership_payment_clause,
-			$is_paid
+			$is_paid,
+			$is_credit
 		);
 
 		// Generate PDF with mPDF
@@ -274,6 +275,7 @@ class InvoicePdfGenerator {
 	 * @param string      $payment_link            Payment link URL (for membership invoices).
 	 * @param string      $membership_payment_clause Membership payment clause text (shown below membership payment section).
 	 * @param bool        $is_paid                 Whether the invoice is paid.
+	 * @param bool        $is_credit               Whether the invoice is a credit note.
 	 * @return string HTML content.
 	 */
 	private static function build_html(
@@ -300,9 +302,11 @@ class InvoicePdfGenerator {
 		$invoice_type = 'discipline',
 		$payment_link = '',
 		$membership_payment_clause = '',
-		$is_paid = false
+		$is_paid = false,
+		$is_credit = false
 	) {
-		$person_attention = preg_replace( '/^\s*(t\.?\s*a\.?\s*v\.?:?\s*)/i', '', (string) $person_attention );
+		$show_payment_instructions = ! $is_paid && ! $is_credit;
+		$person_attention          = preg_replace( '/^\s*(t\.?\s*a\.?\s*v\.?:?\s*)/i', '', (string) $person_attention );
 
 		// Format dates
 		$formatted_invoice_date = self::format_dutch_date( $invoice_date );
@@ -594,7 +598,7 @@ table.line-items .total-row td {
 	</tbody>
 </table>' ) . '
 
-		' . ( ! $is_paid && $is_membership ? '
+		' . ( $show_payment_instructions && $is_membership ? '
 <div class="payment-section">
 	<h2>Betaalgegevens</h2>
 	<table style="width: 100%; border: none;"><tr>
@@ -609,7 +613,7 @@ table.line-items .total-row td {
 			<div style="font-size: 8pt; color: #666; margin-top: 5px;">Scan om te betalen</div>
 		</td>' : '' ) . '
 	</tr></table>
-</div>' : ( ! $is_paid ? '
+</div>' : ( $show_payment_instructions ? '
 <div class="payment-section">
 	<h2>Betaalgegevens</h2>
 	<table style="width: 100%; border: none;"><tr>

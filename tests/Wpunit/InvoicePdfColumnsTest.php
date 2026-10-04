@@ -11,10 +11,19 @@ class InvoicePdfColumnsTest extends RondoTestCase {
 	public function test_columns_and_totals_match_invoice_type(): void {
 		$method = new \ReflectionMethod( InvoicePdfGenerator::class, 'build_html' );
 		foreach ( [
-			'manual'     => 2,
-			'membership' => 2,
-			'discipline' => 4,
-		] as $type => $columns ) {
+			[ 'manual', 2, false, false ],
+			[ 'membership', 2, false, false ],
+			[ 'discipline', 4, false, false ],
+			[ 'manual', 2, false, true ],
+			[ 'membership', 2, false, true ],
+			[ 'discipline', 4, false, true ],
+			[ 'manual', 2, true, false ],
+			[ 'membership', 2, true, false ],
+			[ 'discipline', 4, true, false ],
+			[ 'manual', 2, true, true ],
+			[ 'membership', 2, true, true ],
+			[ 'discipline', 4, true, true ],
+		] as [ $type, $columns, $is_paid, $is_credit ] ) {
 			$html = $method->invoke(
 				null,
 				'TEST-12767',
@@ -44,11 +53,13 @@ class InvoicePdfColumnsTest extends RondoTestCase {
 				'',
 				'Regular payment instructions',
 				null,
-				null,
+				'/tmp/payment-qr.png',
 				'#0891b2',
 				$type,
 				'',
-				'Membership payment instructions'
+				'Membership payment instructions',
+				$is_paid,
+				$is_credit
 			);
 			$dom  = new \DOMDocument();
 			$dom->loadHTML( $html );
@@ -65,7 +76,13 @@ class InvoicePdfColumnsTest extends RondoTestCase {
 			$this->assertStringContainsString( 'Gebruik sportvelden', $html );
 			$this->assertStringContainsString( '- € 10,00', $html );
 			$this->assertStringContainsString( '€ 933,17', $html );
-			$this->assertStringContainsString( $type === 'membership' ? 'Membership payment instructions' : 'Regular payment instructions', $html );
+			$show_payment_instructions = ! $is_paid && ! $is_credit;
+			$this->assertSame( $show_payment_instructions, str_contains( $html, '<div class="payment-section">' ) );
+			$this->assertSame( $show_payment_instructions, str_contains( $html, 'Betaalgegevens' ) );
+			$this->assertSame( $show_payment_instructions, str_contains( $html, 'Scan om te betalen' ) );
+			$this->assertSame( $show_payment_instructions, str_contains( $html, '/tmp/payment-qr.png' ) );
+			$this->assertSame( $show_payment_instructions && $type === 'membership', str_contains( $html, 'Membership payment instructions' ) );
+			$this->assertSame( $show_payment_instructions && $type !== 'membership', str_contains( $html, 'Regular payment instructions' ) );
 			$this->assertSame( $type !== 'membership', str_contains( $html, 'Vervaldatum:' ) );
 		}
 	}
