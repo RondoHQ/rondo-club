@@ -96,7 +96,7 @@ final class CompensationService {
 				static fn( $user ) => [
 					'id'    => $user->ID,
 					'name'  => $user->display_name,
-					'teams' => array_map( 'intval', (array) get_user_meta( $user->ID, '_rondo_match_teams', true ) ),
+					'teams' => array_values( array_filter( array_map( 'intval', (array) get_user_meta( $user->ID, '_rondo_match_teams', true ) ), static fn( $id ) => $id > 0 ) ),
 				],
 				get_users()
 				);

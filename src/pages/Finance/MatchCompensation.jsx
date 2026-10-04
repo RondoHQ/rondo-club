@@ -24,7 +24,7 @@ function Select({ label, children, ...props }) { return <label className="block 
 
 function Settings({ settings }) {
   const [teams, setTeams] = useState(settings.teams.map(({ team_id, scheme }) => ({ team_id, scheme })));
-  const [assignments, setAssignments] = useState(settings.available_users.filter((user) => user.teams.length).map((user) => ({ user_id: user.id, teams: user.teams })));
+  const [assignments, setAssignments] = useState(settings.available_users.map((user) => ({ user_id: user.id, teams: user.teams.filter((id) => Number.isInteger(id) && id > 0) })).filter((assignment) => assignment.teams.length > 0));
   const [bankCode, setBankCode] = useState(settings.bank_code);
   const [retention, setRetention] = useState(settings.retention_policy);
   const save = useAction('/settings');
