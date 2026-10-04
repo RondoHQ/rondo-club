@@ -43,7 +43,12 @@ class BusinessclubInvoicing {
 			$billed  = (int) get_post_meta( $report['id'], self::BILLED, true );
 			$invoice = $claim ? get_post( $claim ) : null;
 			$status  = $billed || ( $invoice && in_array( $invoice->post_status, [ 'rondo_sent', 'rondo_paid', 'rondo_overdue' ], true ) ) ? 'billed' : ( $invoice && $invoice->post_status === 'rondo_draft' ? 'draft' : 'available' );
-			if ( $status !== 'billed' ) {
+			if ( $status === 'available' && isset( $report['data']['source']['complete'] ) && ! $report['data']['source']['complete'] ) {
+				$status = 'provisional';
+			} elseif ( $status === 'available' && get_post_meta( $report['id'], '_twelve_historical', true ) === '1' ) {
+				$status = 'historical';
+			}
+			if ( in_array( $status, [ 'available', 'draft' ], true ) ) {
 				$total = round( $total + $day['bedrag'], 2 );
 			}
 			if ( $status === 'available' ) {

@@ -73,7 +73,7 @@ class ReportRepository {
 	/**
 	 * Store a parsed report.
 	 *
-	 * @param array  $parsed       Output of ReportParser::parse().
+	 * @param array  $parsed       Structured legacy report data.
 	 * @param string $message_id   AgentMail message id.
 	 * @param string $pdf_filename Original attachment filename.
 	 * @param string $pdf_bytes    Raw PDF bytes (stored in protected post metadata).

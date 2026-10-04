@@ -47,6 +47,22 @@ class TwelveReports extends Base {
 			]
 			);
 
+		register_rest_route(
+			'rondo/v1',
+			'/twelve/import',
+			[
+				'methods'             => 'POST',
+				'permission_callback' => fn() => $this->check_user_approved() && current_user_can( 'manage_options' ),
+				'callback'            => function ( $request ) {
+					$json = $request->get_param( 'report_json' );
+					if ( ! is_string( $json ) ) {
+						return new \WP_Error( 'twelve_invalid_export', 'Rapport ontbreekt.', [ 'status' => 400 ] );
+					}
+					return rest_ensure_response( ( new \Rondo\Twelve\BrowserImport() )->import( $json ) );
+				},
+			]
+			);
+
 		$range_args = [
 			'from' => [
 				'required'          => false,
@@ -59,6 +75,24 @@ class TwelveReports extends Base {
 				'validate_callback' => [ $this, 'validate_date_param' ],
 			],
 		];
+
+		register_rest_route(
+			'rondo/v1',
+			'/twelve/no-sales',
+			[
+				'methods'             => 'GET',
+				'permission_callback' => [ $this, 'check_kassa_permission' ],
+				'args'                => $range_args,
+				'callback'            => function ( $request ) {
+					[ $from, $to ] = $this->range( $request );
+					$rows          = [];
+					foreach ( $this->repository->query( $from, $to ) as $report ) {
+						$rows = array_merge( $rows, $report['data']['no_sale_transactions'] ?? [] );
+					}
+					return rest_ensure_response( [ 'transactions' => $rows ] );
+				},
+			]
+			);
 
 		// Most recent imported reports.
 		register_rest_route(
@@ -285,6 +319,7 @@ class TwelveReports extends Base {
 				'to'          => $to,
 				'group'       => $request->get_param( 'group' ),
 				'buckets'     => ReportAggregator::summarize( $reports, $request->get_param( 'group' ) ),
+				'last_sync'   => get_option( 'rondo_twelve_browser_last_success', null ),
 				'product_mix' => ProductClassification::summary( ReportAggregator::by_product( $reports ) ),
 			]
 		);

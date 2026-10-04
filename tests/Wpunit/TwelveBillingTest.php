@@ -3,12 +3,11 @@ namespace Tests\Wpunit;
 
 use Rondo\Twelve\BusinessclubInvoicing;
 use Rondo\Twelve\ReportRepository;
-use Rondo\Twelve\ReportParser;
 use Tests\Support\RondoTestCase;
 
 class TwelveBillingTest extends RondoTestCase {
 	private function report( string $date, string $message ): int {
-		$data                 = ReportParser::parse( file_get_contents( __DIR__ . '/../fixtures/twelve-rapportage.txt' ) );
+		$data                 = json_decode( file_get_contents( __DIR__ . '/../fixtures/twelve-report.json' ), true );
 		$data['period_start'] = $date . ' 06:00';
 		$data['period_end']   = gmdate( 'Y-m-d', strtotime( $date . ' +1 day' ) ) . ' 06:00';
 		foreach ( $data['omzet'] as &$row ) {
