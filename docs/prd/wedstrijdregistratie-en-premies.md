@@ -150,6 +150,7 @@ en betaalexport. Een speler met €0 heeft voor die maand geen rekening nodig.
 | Periode | Bevestigde speeldatum in Europe/Amsterdam, maand inclusief jaar |
 | Seizoen | 1 juli tot 1 juli van het volgende jaar, gelijk aan de bestaande feed |
 | Basis of Bank | Eén deelname per persoon per wedstrijd; de statussen zijn exclusief |
+| Gastspelers, bevestigd | Dezelfde vergoeding en premie als vaste spelers, volgens de regeling van het team waarmee zij die wedstrijd meedoen; het eigen team bepaalt de regeling niet |
 | Nmbrs Dagen, bevestigd | Aantal meetellende wedstrijden met Basis/Bank; twee wedstrijden op dezelfde kalenderdag tellen als twee |
 | Overige statussen | Geen deelname, vergoeding of premie |
 | Ontbrekende invoer | Onvolledig, nooit automatisch nul |
@@ -370,6 +371,12 @@ niet het aantal unieke kalenderdagen. Twee wedstrijden op dezelfde dag tellen al
 voorlopig leeg en instelbaar door een financiële beheerder; de verdere uitwerking gaat door.
 De telling blijft zichtbaar zonder een code te verzinnen.
 
+**B3a, bevestigd door Joost:** gastspelers krijgen dezelfde vergoeding en premie als de vaste
+spelers van het team waarmee zij die wedstrijd meedoen. Een gastspeler bij AWC 1 valt onder de
+AWC 1-regeling; een gastspeler bij JO23-1 valt onder de JO23-1-regeling. Het eigen team van de
+speler verandert deze toepassing niet. Eventuele samenloop bij deelname aan beide teams blijft
+een afzonderlijk besluitpunt.
+
 ### Nog te besluiten vóór de betreffende bouwfase
 
 De overige voorgestelde defaults worden vóór de afhankelijke fase bevestigd. Vastlegging van
@@ -377,7 +384,7 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | ID | Open besluit | Voorgesteld uitgangspunt | Nodig vóór |
 |---|---|---|---|
-| B3 | Gastspelers en deelname bij beide teams, leeftijd/contractuitzonderingen? | Per wedstrijd registreren, mogelijke dubbele aanspraken laten beoordelen | Calculator en afsluiting |
+| B3b | Deelname bij beide teams en eventuele leeftijd-/contractuitzonderingen? | Gastspelers volgen B3a; mogelijke dubbele aanspraken en overige uitzonderingen nog bevestigen | Calculator en afsluiting |
 | B4 | Welk bankpakket/formaat en wat doet het Apps Script exact? | Huidige vijfkoloms-XLSX behouden na bewezen compatibiliteit | Export |
 | B5 | Wie registreert, corrigeert en sluit af; is een tweede fiatteur vereist? | Registrator per team en financiële beheerder zoals rechtenmatrix | Rechten en vrijgave |
 | B6 | Welke historische maanden zijn al verwerkt of betaald? | Geen automatische betaalstatus uit spreadsheetdata afleiden | Productie-import |
@@ -388,7 +395,7 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | Fase | Resultaat | Voorwaarde om door te gaan |
 |---|---|---|
-| 0 | B1 vertalen naar broncategorieën, besluiten B3–B8, inspectie Apps Script, geanonimiseerd exportvoorbeeld, librarykeuze | Reken- en bestandscontract bevestigd; broncontrolegrenzen vastgelegd |
+| 0 | B1 vertalen naar broncategorieën, besluiten B3b en B4–B8, inspectie Apps Script, geanonimiseerd exportvoorbeeld, librarykeuze | Reken- en bestandscontract bevestigd; broncontrolegrenzen vastgelegd |
 | 1 | Privé opslag, registry, rechtenbeleid, versiebeheer, calculator en API | Rekentests, rechtenmatrix en gelijktijdigheids-/hersteltests slagen |
 | 2 | Teamregistratie, gastspelers, afronden en bronconflicten | Volledige flow met synthetische data op desktop en mobiel gecontroleerd |
 | 3 | Financiële profielen, maandafsluiting, correcties en exports | Rekenverschillen nul, bestandscontract bewezen, export/privacytests slagen |
@@ -409,6 +416,9 @@ Deze planning zelf blijft beperkt tot `docs/prd/`, zonder themaversie, changelog
   financiële gegevens. Publieke ICS, zoeken, abilities en generieke persoonexports lekken niets.
 - [ ] Elke persoon komt hooguit eenmaal per wedstrijd voor. Onbekend en nul blijven onderscheiden.
   Gastspelers hoeven niet tot het huidige team te behoren, maar moeten toegankelijk en gekoppeld zijn.
+- [ ] Een gastspeler met dezelfde deelnamestatus ontvangt dezelfde vergoeding en premie als een
+  vaste speler in die wedstrijd. Bij AWC 1 geldt de AWC 1-regeling; bij JO23-1 de JO23-1-regeling,
+  ongeacht het eigen team van de speler.
 - [ ] Thuis/uit, 0-0, verlies, ontbrekende uitslag, afwijkende notatie, afgelasting, verplaatsing,
   onduidelijke nacompetitie-uitslagen en december/januari worden volgens de vastgelegde regels verwerkt.
 - [ ] Alleen competitie en nacompetitie tellen mee. Beker- en oefenwedstrijden leveren voor beide
