@@ -11,7 +11,7 @@ const dateLabel = (period, group, compact = false) => new Intl.DateTimeFormat('n
   .format(new Date(`${period.length === 7 ? `${period}-01` : period}T12:00:00`));
 const sum = (points, key = 'total') => points.length ? points.reduce((total, point) => total + Math.round(point[key] * 100), 0) / 100 : null;
 
-function TrendChart({ points, series, domain, extent, group, quantity, title, lines = false }) {
+function TrendChart({ points, series, domain, extent, group, quantity, title, lines = false, productDetails = false }) {
   const container = useRef(null);
   const svg = useRef(null);
   const [width, setWidth] = useState(640);
@@ -77,14 +77,14 @@ function TrendChart({ points, series, domain, extent, group, quantity, title, li
         {dates.map((point, index) => <text key={point.periode} x={x(point.offset)} y={height - 18} textAnchor={index === 0 ? 'start' : index === dates.length - 1 ? 'end' : 'middle'} className="fill-gray-600 dark:fill-gray-300 text-xs">{dateLabel(point.periode, group, true)}</text>)}
       </svg>
       <div aria-live="polite" aria-atomic="true" className="text-sm min-h-20">
-        {selectedPoint ? <><p className="font-semibold">{dateLabel(selectedPoint.periode, group)}{selectedPoint.provisional ? ' · Voorlopig' : ''}</p><dl className="flex flex-wrap gap-x-6 gap-y-1 mt-2">{series.map((item, index) => <div key={item.key}><dt className="inline">{item.label}: </dt><dd className="inline font-medium tabular-nums">{format(selectedPoint.values[index])}{quantity ? ' stuks' : ''}</dd></div>)}</dl>{series.length === 1 && <p className="mt-1">{quantity ? `Productbedrag: ${currency(selectedPoint.amount)}` : `Aantal: ${number(selectedPoint.quantity)}`}</p>}</> : <p className="text-gray-600 dark:text-gray-300">Kies een dag of maand in de grafiek voor de exacte bedragen. Gebruik ook de pijltjestoetsen.</p>}
+        {selectedPoint ? <><p className="font-semibold">{dateLabel(selectedPoint.periode, group)}{selectedPoint.provisional ? ' · Voorlopig' : ''}</p><dl className="flex flex-wrap gap-x-6 gap-y-1 mt-2">{series.map((item, index) => <div key={item.key}><dt className="inline">{item.label}: </dt><dd className="inline font-medium tabular-nums">{format(selectedPoint.values[index])}{quantity ? ' stuks' : ''}</dd></div>)}</dl>{productDetails && <p className="mt-1">{quantity ? `Productbedrag: ${currency(selectedPoint.amount)}` : `Aantal: ${number(selectedPoint.quantity)}`}</p>}</> : <p className="text-gray-600 dark:text-gray-300">Kies een dag of maand in de grafiek voor de exacte bedragen. Gebruik ook de pijltjestoetsen.</p>}
       </div>
       <details><summary className="text-sm cursor-pointer font-medium text-cyan-800 dark:text-cyan-200">Bekijk {quantity ? 'aantallen' : 'bedragen'}</summary><div className="overflow-x-auto mt-3"><table className="w-full text-sm"><thead><tr><th scope="col" className="text-left py-3 pr-4">{group === 'month' ? 'Maand' : 'Dag'}</th>{series.map(item => <th scope="col" className="text-right py-3 px-3" key={item.key}>{item.label}</th>)}{series.length > 1 && <th scope="col" className="text-right py-3 pl-3">Totaal</th>}</tr></thead><tbody>{points.map(point => <tr key={point.periode} className="border-t border-gray-200 dark:border-gray-700"><th scope="row" className="text-left font-normal py-3 pr-4 whitespace-nowrap">{dateLabel(point.periode, group)}{point.provisional && <span className="block text-xs">Voorlopig</span>}</th>{point.values.map((value, index) => <td key={series[index].key} className="text-right tabular-nums px-3 py-3 whitespace-nowrap">{format(value)}</td>)}{series.length > 1 && <td className="text-right tabular-nums pl-3 py-3 whitespace-nowrap">{format(point.total)}</td>}</tr>)}</tbody></table></div></details>
     </>}
   </section>;
 }
 
-export default function ProductTrend({ rows, comparisonRows, from, to, comparisonFrom, comparisonTo, group, comparing, view, selectedProduct, onProductChange, metric, onMetricChange }) {
+export default function ProductTrend({ rows, comparisonRows, from, to, comparisonFrom, comparisonTo, group, comparing, view, selectedProduct, onProductChange, selectedGroup, onGroupChange, metric, onMetricChange }) {
   const allRows = [...rows, ...comparisonRows];
   const products = productOptions(allRows);
   // Retain the chosen product across date changes, including ranges with no sales of it.
@@ -99,13 +99,18 @@ export default function ProductTrend({ rows, comparisonRows, from, to, compariso
   const previous = comparing ? productPoints(comparisonRows, comparisonFrom, group, selectedId, actualMetric) : [];
   const allPoints = [...current, ...previous];
   const labels = new Map(allRows.flatMap(row => row.product_trend.groups).map(item => [item.group, item.label]));
-  const series = individual ? [{ key: product?.id ?? 'product', label: product?.name ?? 'Product', color: colors[0] }]
-    : trendGroupKeys.map((key, index) => ({ key, label: labels.get(key) ?? key, color: colors[index], dash: [undefined, '8 4', '2 4', '8 3 2 3'][index] }));
-  // Keep the unassigned slot in the data model even when no products need classification.
   const hasUnassigned = allRows.some(row => row.product_trend.unassigned_count > 0);
-  if (!individual && !hasUnassigned) {
-    series.pop();
-    allPoints.forEach(point => { point.values.pop(); });
+  const groupOptions = trendGroupKeys.map((key, index) => ({
+    key, index, label: labels.get(key) ?? ['Eten', 'Drank', 'Entree', 'Nog indelen'][index],
+    color: colors[index], dash: [undefined, '8 4', '2 4', '8 3 2 3'][index],
+  })).filter(item => item.key !== 'unassigned' || hasUnassigned || (lines && selectedGroup === 'unassigned'));
+  const series = individual ? [{ key: product?.id ?? 'product', label: product?.name ?? 'Product', color: colors[0] }]
+    : groupOptions.filter(item => !lines || selectedGroup === 'all' || item.key === selectedGroup);
+  if (!individual) {
+    allPoints.forEach(point => {
+      point.values = series.map(item => point.values[item.index]);
+      point.total = point.values.reduce((total, value) => total + Math.round(value * 100), 0) / 100;
+    });
   }
   const bounds = allPoints.flatMap(point => lines ? point.values : stackProductValues(point.values).flatMap(layer => [...layer.positive, ...layer.negative]));
   const rawMin = Math.min(0, ...bounds);
@@ -119,6 +124,7 @@ export default function ProductTrend({ rows, comparisonRows, from, to, compariso
   const excluded = data => data.reduce((total, row) => total + row.product_trend.groups.filter(item => ['other', 'merchandise'].includes(item.group)).reduce((cents, item) => cents + Math.round(item.amount * 100), 0), 0) / 100;
   if (individual && !products.length) return <p className="text-sm text-gray-600 dark:text-gray-300">Geen producten in de gekozen periodes.</p>;
   return <div className="space-y-5">
+    {lines && <label className="block text-sm w-full sm:w-fit">Productgroep<select className="input block mt-1 w-full" value={selectedGroup} onChange={event => onGroupChange(event.target.value)}><option value="all">Alle productgroepen</option>{groupOptions.map(item => <option key={item.key} value={item.key}>{item.label}</option>)}</select></label>}
     {individual && <div className="flex flex-wrap items-end gap-4">
       <label className="text-sm min-w-0 w-full sm:w-auto sm:max-w-md">Product<select className="input block mt-1 w-full" value={product.id} onChange={event => onProductChange(products.find(item => item.id === event.target.value))}>{products.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
       <label className="text-sm">Toon<select className="input block mt-1" value={metric} onChange={event => onMetricChange(event.target.value)}><option value="amount">Bedrag</option><option value="quantity">Aantal</option></select></label>
@@ -133,8 +139,8 @@ export default function ProductTrend({ rows, comparisonRows, from, to, compariso
     {comparing && periodDays(from, to) !== periodDays(comparisonFrom, comparisonTo) && <p className="text-sm text-amber-800 dark:text-amber-200">Deze periodes zijn niet even lang: {periodDays(from, to)} en {periodDays(comparisonFrom, comparisonTo)} kalenderdagen. Totalen zijn niet omgerekend naar een gelijke duur.</p>}
     {allPoints.some(point => point.provisional) && <p className="text-sm text-amber-800 dark:text-amber-200">De grafiek bevat voorlopige gegevens van een lopende kassadag.</p>}
     {comparing && <p className="text-sm text-gray-600 dark:text-gray-300">Beide grafieken gebruiken dezelfde schaal en beginnen bij dezelfde kalenderpositie binnen hun periode.</p>}
-    <TrendChart key={`${view}/${product?.id}/${metric}/${from}/${to}/${group}`} points={current} series={series} domain={domain} extent={extent} group={group} quantity={quantity} lines={lines} title={`Gekozen periode · ${dateLabel(from, 'day')} – ${dateLabel(to, 'day')}`} />
-    {comparing && <TrendChart key={`comparison/${view}/${product?.id}/${metric}/${comparisonFrom}/${comparisonTo}/${group}`} points={previous} series={series} domain={domain} extent={extent} group={group} quantity={quantity} lines={lines} title={`Vergelijkingsperiode · ${dateLabel(comparisonFrom, 'day')} – ${dateLabel(comparisonTo, 'day')}`} />}
+    <TrendChart key={`${view}/${product?.id}/${metric}/${from}/${to}/${group}`} points={current} series={series} domain={domain} extent={extent} group={group} quantity={quantity} lines={lines} productDetails={individual} title={`Gekozen periode · ${dateLabel(from, 'day')} – ${dateLabel(to, 'day')}`} />
+    {comparing && <TrendChart key={`comparison/${view}/${product?.id}/${metric}/${comparisonFrom}/${comparisonTo}/${group}`} points={previous} series={series} domain={domain} extent={extent} group={group} quantity={quantity} lines={lines} productDetails={individual} title={`Vergelijkingsperiode · ${dateLabel(comparisonFrom, 'day')} – ${dateLabel(comparisonTo, 'day')}`} />}
     <p className="text-xs text-gray-500 dark:text-gray-400">Alleen geïmporteerde rapportages. Ontbrekende dagen blijven leeg; maandbedragen kunnen onvolledig zijn. {individual && 'Een product dat niet voorkomt in een geïmporteerd rapport telt voor die dag als nul.'}</p>
   </div>;
 }
