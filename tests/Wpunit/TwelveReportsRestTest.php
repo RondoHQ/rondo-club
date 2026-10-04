@@ -339,6 +339,78 @@ class TwelveReportsRestTest extends RondoTestCase {
 		$this->assertSame( 503, $server->dispatch( $request )->get_status() );
 	}
 
+	public function test_product_trend_is_opt_in_and_respects_current_classification(): void {
+		$this->import_fixture_report();
+		$server  = $this->bootRestControllers( [ TwelveReports::class ] );
+		$request = new \WP_REST_Request( 'GET', '/rondo/v1/twelve/summary' );
+		$request->set_param( 'from', '2026-09-01' );
+		$request->set_param( 'to', '2026-09-30' );
+		$request->set_param( 'include_product_trend', true );
+		wp_set_current_user( $this->user( UserRoles::ROLE_NAME ) );
+		$this->assertSame( 403, $server->dispatch( $request )->get_status() );
+		wp_set_current_user( $this->user( 'rondo_bestuur' ) );
+		$id = hash( 'sha256', 'Snoepzakje' );
+		update_option( \Rondo\Twelve\ProductClassification::OPTION, [ $id => 'food' ] );
+		foreach ( [ 'day', 'month' ] as $group ) {
+			$request->set_param( 'group', $group );
+			$data = $server->dispatch( $request )->get_data();
+			$mix  = $data['buckets'][0]['product_trend'];
+			$this->assertEquals( 43.45, $mix['total'] );
+			$this->assertEquals( $data['product_mix']['groups'], $mix['groups'] );
+			$this->assertCount( 9, $mix['products'] );
+			$product = array_column( $mix['products'], null, 'id' )[ $id ];
+			$this->assertEquals(
+				[
+					'id'       => $id,
+					'name'     => 'Snoepzakje',
+					'group'    => 'food',
+					'amount'   => 10.50,
+					'quantity' => 6,
+				],
+				$product
+				);
+			$this->assertSame( 15.75, $data['buckets'][0]['omzet_totaal'] );
+		}
+		update_option( \Rondo\Twelve\ProductClassification::OPTION, [ $id => 'entree' ] );
+		$mix = $server->dispatch( $request )->get_data()['buckets'][0]['product_trend'];
+		$this->assertEquals( 10.50, array_column( $mix['groups'], 'amount', 'group' )['entree'] );
+		$request->set_param( 'include_product_trend', false );
+		$this->assertArrayNotHasKey( 'product_trend', $server->dispatch( $request )->get_data()['buckets'][0] );
+		$request->set_param( 'from', '2020-01-01' );
+		$request->set_param( 'to', '2020-01-31' );
+		$request->set_param( 'include_product_trend', true );
+		$this->assertSame( [], $server->dispatch( $request )->get_data()['buckets'] );
+	}
+
+	public function test_product_trend_sums_months_and_retains_refunds_and_missing_days(): void {
+		$id = hash( 'sha256', 'Koffie' );
+		update_option( \Rondo\Twelve\ProductClassification::OPTION, [ $id => 'non_food' ] );
+		$reports = [];
+		foreach ( [ [ '2026-09-29', 0.10, 1 ], [ '2026-09-30', 0.20, 2 ], [ '2026-10-02', -0.10, -1 ] ] as [ $date, $amount, $quantity ] ) {
+			$reports[] = [
+				'period_start' => $date . ' 06:00:00',
+				'data'         => [
+					'producten' => [
+						[
+							'product' => 'Koffie',
+							'bruto'   => $amount,
+							'aantal'  => $quantity,
+							'btw'     => 0,
+							'netto'   => $amount,
+						],
+					],
+				],
+			];
+		}
+		$days = \Rondo\Twelve\ProductClassification::by_period( $reports, 'day' );
+		$this->assertSame( [ '2026-09-29', '2026-09-30', '2026-10-02' ], array_keys( $days ) );
+		$months = \Rondo\Twelve\ProductClassification::by_period( $reports, 'month' );
+		$this->assertEquals( 0.30, $months['2026-09']['total'] );
+		$this->assertSame( 3, $months['2026-09']['products'][0]['quantity'] );
+		$this->assertEquals( -0.10, $months['2026-10']['total'] );
+		$this->assertSame( -1, $months['2026-10']['products'][0]['quantity'] );
+	}
+
 	public function test_unassigned_count_tracks_products_even_when_their_amount_is_zero(): void {
 		update_option( \Rondo\Twelve\ProductClassification::OPTION, [] );
 		$this->assertSame( 0, \Rondo\Twelve\ProductClassification::summary( [] )['unassigned_count'] );

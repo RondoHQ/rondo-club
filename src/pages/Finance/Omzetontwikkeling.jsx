@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 import { formatCurrency } from '@/utils/formatters';
 import { alignRevenuePeriods, periodDays, previousYear, revenueDifference, revenueTotal } from '@/utils/revenueComparison';
+import ProductTrend from './ProductTrend';
 
 const currency = value => formatCurrency(value, 2);
 const label = (period, group) => new Intl.DateTimeFormat('nl-NL', group === 'month'
@@ -140,6 +141,10 @@ export default function Omzetontwikkeling() {
   const [from, setFrom] = useState(`${Number(today.slice(0, 4)) - 1}-${today.slice(5, 7)}-01`);
   const [to, setTo] = useState(today);
   const [group, setGroup] = useState('day');
+  const [view, setView] = useState('revenue');
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [productMetric, setProductMetric] = useState('amount');
+  const productTrends = view !== 'revenue';
   const [comparing, setComparing] = useState(false);
   const [comparisonMode, setComparisonMode] = useState('year');
   const [customFrom, setCustomFrom] = useState('');
@@ -148,16 +153,17 @@ export default function Omzetontwikkeling() {
   const comparisonTo = comparisonMode === 'year' ? previousYear(to) : customTo;
   const valid = Boolean(from && to && from <= to);
   const comparisonValid = Boolean(comparisonFrom && comparisonTo && comparisonFrom <= comparisonTo);
-  const query = useQuery({ queryKey: ['twelve', 'trend', from, to, group], queryFn: async () => (await prmApi.getTwelve('summary', { from, to, group })).data, enabled: valid });
-  const comparisonQuery = useQuery({ queryKey: ['twelve', 'trend', comparisonFrom, comparisonTo, group], queryFn: async () => (await prmApi.getTwelve('summary', { from: comparisonFrom, to: comparisonTo, group })).data, enabled: comparing && valid && comparisonValid });
+  const query = useQuery({ queryKey: ['twelve', 'trend', from, to, group, productTrends], queryFn: async () => (await prmApi.getTwelve('summary', { from, to, group, include_product_trend: productTrends })).data, enabled: valid });
+  const comparisonQuery = useQuery({ queryKey: ['twelve', 'trend', comparisonFrom, comparisonTo, group, productTrends], queryFn: async () => (await prmApi.getTwelve('summary', { from: comparisonFrom, to: comparisonTo, group, include_product_trend: productTrends })).data, enabled: comparing && valid && comparisonValid });
   const rows = query.data?.buckets ?? [];
   const comparisonRows = comparing ? comparisonQuery.data?.buckets ?? [] : [];
   const slots = comparing && valid && comparisonValid ? alignRevenuePeriods(rows, comparisonRows, from, comparisonFrom, group) : [];
   const loading = query.isPending || (comparing && comparisonQuery.isPending);
   const error = query.isError || (comparing && comparisonQuery.isError);
   return <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 space-y-5">
-    <div><h2 className="text-lg font-semibold">Omzetontwikkeling</h2><p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Kassaomzet + businessclub, inclusief btw. Merchandise, Overig en ander no-sale-verbruik tellen niet mee.</p></div>
+    <div><h2 className="text-lg font-semibold">Omzetontwikkeling</h2><p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{productTrends ? 'Ontwikkeling van productbedragen en verbruik, inclusief btw en no-sale.' : 'Kassaomzet + businessclub, inclusief btw. Merchandise, Overig en ander no-sale-verbruik tellen niet mee.'}</p></div>
     <div className="flex flex-wrap items-end gap-4">
+      <label className="text-sm">Weergave<select value={view} onChange={event => setView(event.target.value)} className="input block mt-1"><option value="revenue">Totale omzet · lijn</option><option value="groups">Productgroepen · vlakken</option><option value="product">Per product</option></select></label>
       <label className="text-sm">Vanaf<input type="date" required value={from} onChange={event => setFrom(event.target.value)} className="input block mt-1" /></label>
       <label className="text-sm">Tot en met<input type="date" required value={to} onChange={event => setTo(event.target.value)} className="input block mt-1" /></label>
       <label className="text-sm">Groeperen<select value={group} onChange={event => setGroup(event.target.value)} className="input block mt-1"><option value="day">Per dag</option><option value="month">Per maand</option></select></label>
@@ -176,6 +182,7 @@ export default function Omzetontwikkeling() {
       </div>}
     </div>
     {!valid || (comparing && !comparisonValid) ? <p role="alert" className="text-sm text-red-700 dark:text-red-300">Kies voor elke periode een begindatum die vóór of op de einddatum ligt.</p> : loading ? <p role="status">Omzet laden…</p> : error ? <div><p role="alert">{query.isError ? 'De omzet van de gekozen periode' : 'De omzet van de vergelijkingsperiode'} kon niet worden geladen.</p><button className="btn-secondary mt-3" onClick={() => { if (query.isError) query.refetch(); if (comparing && comparisonQuery.isError) comparisonQuery.refetch(); }}>Opnieuw proberen</button></div> : <>
+      {productTrends ? <ProductTrend rows={rows} comparisonRows={comparisonRows} from={from} to={to} comparisonFrom={comparisonFrom} comparisonTo={comparisonTo} group={group} comparing={comparing} view={view} selectedProduct={selectedProduct} onProductChange={setSelectedProduct} metric={productMetric} onMetricChange={setProductMetric} /> : <>
       {comparing ? <ComparisonSummary rows={rows} comparisonRows={comparisonRows} from={from} to={to} comparisonFrom={comparisonFrom} comparisonTo={comparisonTo} /> : rows.length > 0 && <p className="text-sm">Totaal in deze periode: <strong className="tabular-nums">{currency(revenueTotal(rows))}</strong></p>}
       {!rows.length && <p className="text-sm text-gray-600 dark:text-gray-300">Geen rapportages in de gekozen periode. Kies een andere periode.</p>}
       {comparing && !comparisonRows.length && <p className="text-sm text-gray-600 dark:text-gray-300">Geen rapportages in de vergelijkingsperiode. Kies een andere vergelijkingsperiode.</p>}
@@ -186,6 +193,7 @@ export default function Omzetontwikkeling() {
         <td className="py-3 pr-4 whitespace-nowrap">{slot.current ? label(slot.current.periode, group) : 'Geen rapportage'}</td><td className="py-3 px-4 text-right tabular-nums whitespace-nowrap">{slot.current ? currency(slot.current.omzet_totaal) : '—'}</td>
         {comparing && <><td className="py-3 px-4 whitespace-nowrap">{slot.previous ? label(slot.previous.periode, group) : 'Geen rapportage'}</td><td className="py-3 px-4 text-right tabular-nums whitespace-nowrap">{slot.previous ? currency(slot.previous.omzet_totaal) : '—'}</td><td className="py-3 pl-4 text-right whitespace-nowrap"><Difference current={slot.current?.omzet_totaal} previous={slot.previous?.omzet_totaal} /></td></>}
       </tr>)}</tbody></table></div></details>}
+      </>}
     </>}
   </div>;
 }

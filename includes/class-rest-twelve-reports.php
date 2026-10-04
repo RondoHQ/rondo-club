@@ -173,7 +173,11 @@ class TwelveReports extends Base {
 					'args'                => array_merge(
 						$range_args,
 						[
-							'group' => [
+							'include_product_trend' => [
+								'type'    => 'boolean',
+								'default' => false,
+							],
+							'group'                 => [
 								'required'          => false,
 								'default'           => 'day',
 								'sanitize_callback' => 'sanitize_key',
@@ -387,12 +391,21 @@ class TwelveReports extends Base {
 			}
 		}
 
+		$buckets = ReportAggregator::summarize( $reports, $request->get_param( 'group' ), $excluded );
+		if ( $request->get_param( 'include_product_trend' ) ) {
+			$products = ProductClassification::by_period( $reports, $request->get_param( 'group' ) );
+			foreach ( $buckets as &$bucket ) {
+				$bucket['product_trend'] = $products[ $bucket['periode'] ];
+			}
+			unset( $bucket );
+		}
+
 		return rest_ensure_response(
 			[
 				'from'        => $from,
 				'to'          => $to,
 				'group'       => $request->get_param( 'group' ),
-				'buckets'     => ReportAggregator::summarize( $reports, $request->get_param( 'group' ), $excluded ),
+				'buckets'     => $buckets,
 				'last_sync'   => get_option( 'rondo_twelve_browser_last_success', null ),
 				'product_mix' => ProductClassification::summary( ReportAggregator::by_product( $reports ) ),
 			]
