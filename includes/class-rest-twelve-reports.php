@@ -63,6 +63,23 @@ class TwelveReports extends Base {
 			]
 			);
 
+		register_rest_route(
+			'rondo/v1',
+			'/twelve/schedule',
+			[
+				[
+					'methods'             => 'GET',
+					'permission_callback' => [ $this, 'check_kassa_permission' ],
+					'callback'            => [ $this, 'get_schedule' ],
+				],
+				[
+					'methods'             => 'POST',
+					'permission_callback' => fn() => $this->check_user_approved() && current_user_can( 'manage_options' ),
+					'callback'            => [ $this, 'set_schedule' ],
+				],
+			]
+		);
+
 		$range_args = [
 			'from' => [
 				'required'          => false,
@@ -229,6 +246,47 @@ class TwelveReports extends Base {
 				],
 			]
 		);
+	}
+
+	/** Club-specific opening windows; end 24 is midnight following that day. */
+	public function get_schedule(): array {
+		$days = [];
+		foreach ( [ 0, 2, 3, 4, 5, 6 ] as $day ) {
+			$days[] = [
+				'day'   => $day,
+				'start' => in_array( $day, [ 0, 6 ], true ) ? 10 : 20,
+				'end'   => 24,
+			];
+		}
+		return [
+			'timezone'       => 'Europe/Amsterdam',
+			'interval_hours' => 2,
+			'days'           => get_option( 'rondo_twelve_schedule', $days ),
+		];
+	}
+
+	/** Validate the entire schedule before replacing the stored option. */
+	public function set_schedule( $request ) {
+		$days = $request->get_param( 'days' );
+		if ( ! is_array( $days ) || array_values( $days ) !== $days || count( $days ) > 7 ) {
+			return new \WP_Error( 'twelve_invalid_schedule', 'Kies geldige tijdvakken per weekdag.', [ 'status' => 400 ] );
+		}
+		$seen = [];
+		foreach ( $days as $window ) {
+			if ( ! is_array( $window ) || count( $window ) !== 3 || ! isset( $window['day'], $window['start'], $window['end'] ) ||
+				! is_int( $window['day'] ) || ! is_int( $window['start'] ) || ! is_int( $window['end'] ) ||
+				$window['day'] < 0 || $window['day'] > 6 || isset( $seen[ $window['day'] ] ) ||
+				$window['start'] < 0 || $window['start'] > 23 || $window['end'] <= $window['start'] || $window['end'] > 24 ) {
+				return new \WP_Error( 'twelve_invalid_schedule', 'Gebruik iedere weekdag maximaal eenmaal, met een eindtijd na de begintijd.', [ 'status' => 400 ] );
+			}
+			$seen[ $window['day'] ] = true;
+		}
+		usort( $days, static fn( $a, $b ) => $a['day'] <=> $b['day'] );
+		update_option( 'rondo_twelve_schedule', $days, false );
+		if ( get_option( 'rondo_twelve_schedule' ) !== $days ) {
+			return new \WP_Error( 'twelve_schedule_storage', 'De planning kon niet worden opgeslagen. Probeer opnieuw.', [ 'status' => 500 ] );
+		}
+		return $this->get_schedule();
 	}
 
 	public function get_product_groups() {
