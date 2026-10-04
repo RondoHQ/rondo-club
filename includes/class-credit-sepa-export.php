@@ -40,8 +40,9 @@ class CreditSepaExport {
 		if ( $source <= 0 || get_post_type( $source ) !== 'rondo_invoice' ) {
 			$source = 0;
 		}
-		$name = $source ? (string) get_post_meta( $source, '_mollie_consumer_name', true ) : '';
-		$iban = $source ? (string) get_post_meta( $source, '_mollie_consumer_account', true ) : '';
+		$payer = $source ? self::source_payer( $source ) : [];
+		$name  = $payer['name'] ?? '';
+		$iban  = $payer['iban'] ?? '';
 		if ( $name === '' ) {
 			$name   = (string) get_post_meta( $id, '_customer_name', true );
 			$person = (int) Fields::get_for_post( $id, 'person' );
@@ -67,6 +68,30 @@ class CreditSepaExport {
 			'export'         => $summary,
 			'today'          => current_time( 'Y-m-d' ),
 		];
+	}
+
+	/** Only prefill when the original payments identify one unambiguous SEPA account. */
+	private static function source_payer( int $source ): array {
+		$prefixes = [ '_mollie_' ];
+		$count    = (int) get_post_meta( $source, '_installment_count', true );
+		for ( $n = 1; $n <= $count; $n++ ) {
+			if ( get_post_meta( $source, '_installment_' . $n . '_status', true ) === 'betaald' ) {
+				$prefixes[] = '_installment_' . $n . '_mollie_';
+			}
+		}
+		$payers = [];
+		foreach ( $prefixes as $prefix ) {
+			$iban = self::normalize_iban( (string) get_post_meta( $source, $prefix . 'consumer_account', true ) );
+			if ( ! self::valid_iban( $iban ) ) {
+				continue;
+			}
+			$name            = (string) get_post_meta( $source, $prefix . 'consumer_name', true );
+			$payers[ $iban ] = [
+				'iban' => $iban,
+				'name' => $name !== '' ? $name : ( $payers[ $iban ]['name'] ?? '' ),
+			];
+		}
+		return count( $payers ) === 1 ? reset( $payers ) : [];
 	}
 
 	/** Create one immutable export; confirmed repeat downloads return the same XML and IDs. */
