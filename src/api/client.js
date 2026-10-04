@@ -525,6 +525,8 @@ export const prmApi = {
   getInvoices: (params = {}) => api.get('/rondo/v1/invoices', { params }),
   getInvoiceStatistics: (params = {}) => api.get('/rondo/v1/invoices/statistics', { params }),
   getInvoice: (id) => api.get(`/rondo/v1/invoices/${id}`),
+  getCreditSepaExport: (id) => api.get(`/rondo/v1/invoices/${id}/sepa-export`),
+  createCreditSepaExport: (id, data) => api.post(`/rondo/v1/invoices/${id}/sepa-export`, data),
   getPersonFinanceHistory: (personId, params = {}) => api.get(`/rondo/v1/fees/person/${personId}/history`, { params }),
   previewCredit: (data) => api.post('/rondo/v1/invoices/credits/preview', data),
   createCredit: (data) => api.post('/rondo/v1/invoices/credits', data),

@@ -39,6 +39,25 @@ class Invoices extends Base {
 	 * Register REST API routes
 	 */
 	public function register_routes() {
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/(?P<id>\d+)/sepa-export',
+			[
+				'methods'             => [ 'GET', 'POST' ],
+				'permission_callback' => [ $this, 'check_financieel_permission' ],
+				'callback'            => function ( $request ) {
+					$id       = (int) $request['id'];
+					$account  = $id > 0 && get_post_type( $id ) === 'rondo_invoice' ? $this->get_invoice_payment_account( $id ) : [];
+					$result   = $request->get_method() === 'GET'
+						? \Rondo\Finance\CreditSepaExport::prepare( $id, $account )
+						: \Rondo\Finance\CreditSepaExport::create( $id, $request->get_json_params() ?: [], $account );
+					$response = is_wp_error( $result ) ? rest_convert_error_to_response( $result ) : rest_ensure_response( $result );
+					$response->header( 'Cache-Control', 'private, no-store' );
+					return $response;
+				},
+			]
+		);
+
 		foreach ( [ 'preview', 'create' ] as $action ) {
 			register_rest_route(
 				'rondo/v1',
