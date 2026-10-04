@@ -5,10 +5,12 @@ namespace Rondo\Twelve;
 class ProductClassification {
 	public const OPTION = 'rondo_twelve_product_groups';
 	public const GROUPS = [
-		'entree'     => 'Entree',
-		'food'       => 'Food',
-		'non_food'   => 'Non-food',
-		'unassigned' => 'Nog indelen',
+		'entree'      => 'Entree',
+		'food'        => 'Eten',
+		'non_food'    => 'Drank',
+		'other'       => 'Overig',
+		'merchandise' => 'Merchandise',
+		'unassigned'  => 'Nog indelen',
 	];
 
 	public static function catalog( array $products ): array {
