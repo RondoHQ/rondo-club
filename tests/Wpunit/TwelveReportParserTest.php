@@ -193,4 +193,45 @@ class TwelveReportParserTest extends RondoTestCase {
 			)[0]['betaalmethoden']
 			);
 	}
+	public function test_zero_vat_column_and_glued_product_group(): void {
+		$text   = "Dagtotaal Testclub\nBegindatum (incl.)03-10-2026 06:00\nEinddatum (excl.)04-10-2026 06:00\n"
+			. "Omzetoverzicht\nBTW Type\tBedrag Nettobedrag Hoog Laag Geen BTW Aantal transacties\n"
+			. "Hoog (Excl. no-sale)\t12,10 10,00 2,10 0,00 0,00\n"
+			. "Geen BTW (Excl. no-sale)\t5,00 5,00 0,00 0,00 0,00\n"
+			. "Omzet (excl. no-sale)\t17,10 15,00 2,10 0,00 0,00\t3\n"
+			. "Uitgave per virtuele terminal\nTerminal\tBetaald\tAantal transacties\nKantine\t17,10\t3\nTotaal betaald\t17,10\t3\n"
+			. "Uitgave per product\nProduct\tBrutoprijs BTW bedrag Nettoprijs BTW groep Aantal producten\n"
+			. "Geen Saus\t0,00 0,00 0,00Geen BTW 0%\t1\n"
+			. "Overig\t5,00 0,00 5,00 Geen BTW 0%\t1\n"
+			. "Bier\t12,10 2,10 10,00 Hoog 21%\t1\n"
+			. "Totaal incl. no-sale\t17,10 2,10 15,00\t3\n";
+		$report = ReportParser::parse( $text );
+		$this->assertCount( 3, $report['omzet'] );
+		$this->assertSame( 3, $report['omzet'][2]['transacties'] );
+		$this->assertCount( 3, $report['producten'] );
+		$this->assertSame( 'Geen BTW 0%', $report['producten'][0]['btw_groep'] );
+		$this->assertSame( 17.10, $report['producten_totaal']['bruto'] );
+		$this->assertSame(
+			[
+				'betaald'     => 17.10,
+				'transacties' => 3,
+			],
+			$report['terminals_totaal']
+			);
+	}
+
+	public function test_rejects_partially_parsed_product_table(): void {
+		$this->expectException( ReportParserException::class );
+		ReportParser::parse( str_replace( 'Cola (blikje)', "Cola (blikje)\nUnexpected row", $this->fixture_text() ) );
+	}
+
+	public function test_rejects_missing_revenue_total(): void {
+		$this->expectException( ReportParserException::class );
+		ReportParser::parse( str_replace( 'Omzet (excl. no-sale)', 'Unknown total', $this->fixture_text() ) );
+	}
+
+	public function test_rejects_inconsistent_product_total(): void {
+		$this->expectException( ReportParserException::class );
+		ReportParser::parse( str_replace( '43,45', '44,45', $this->fixture_text() ) );
+	}
 }

@@ -63,6 +63,9 @@ class ReportParser {
 		'Bestuur'                 => 'categorie',
 		'Breuk en bederf'         => 'categorie',
 		'Businessclub'            => 'categorie',
+		'Korting via rekeningen'  => 'categorie',
+		'Voetbalzaken'            => 'categorie',
+		'Accommodatie'            => 'categorie',
 		'Verbruik kantinedienst'  => 'categorie',
 		'Munten over/onderwaarde' => 'categorie',
 		'Omzet munten'            => 'betaalmethode',
@@ -151,6 +154,10 @@ class ReportParser {
 			}
 		}
 
+		if ( in_array( 'Omzetoverzicht', $lines, true ) && ! in_array( 'Omzet (excl. no-sale)', array_column( $report['omzet'], 'label' ), true ) ) {
+			throw new ReportParserException( 'Omzetoverzicht onvolledig: omzet totaal ontbreekt.' );
+		}
+
 		return $report;
 	}
 
@@ -164,7 +171,9 @@ class ReportParser {
 		$text  = str_replace( [ "\f", "\r" ], [ "\n", '' ], $text );
 		$lines = [];
 		foreach ( preg_split( '/\n/', $text ) as $line ) {
-			$line = trim( (string) $line );
+			// Smalot may glue a VAT group to the preceding amount.
+			$line = preg_replace( '/(?<=\d)(?=(?:Hoog|Laag|Geen BTW) \d+%)/', "\t", (string) $line );
+			$line = trim( $line );
 			if ( $line === '' ) {
 				continue;
 			}
@@ -183,7 +192,7 @@ class ReportParser {
 				continue;
 			}
 			if ( str_contains( $line, "\t" ) ) {
-				$cells = preg_split( '/\t+|\s+(?=-?[\d.]+,\d{2}(?:\s|$))|(?<=\d{2})\s+(?=(?:Hoog|Laag) \d+%)/', $line );
+				$cells = preg_split( '/\t+|\s+(?=-?[\d.]+,\d{2}(?:\s|$))|(?<=\d{2})\s+(?=(?:Hoog|Laag|Geen BTW) \d+%)/', $line );
 				foreach ( $cells as $cell ) {
 					$lines[] = trim( $cell );
 				}
@@ -309,7 +318,7 @@ class ReportParser {
 			++$cursor;
 
 			$bedragen = [];
-			while ( $cursor < $total && self::is_bedrag( $lines[ $cursor ] ) && count( $bedragen ) < 4 ) {
+			while ( $cursor < $total && self::is_bedrag( $lines[ $cursor ] ) && count( $bedragen ) < 5 ) {
 				$bedragen[] = self::parse_bedrag( $lines[ $cursor ] );
 				++$cursor;
 			}
@@ -338,6 +347,7 @@ class ReportParser {
 				'netto'       => $bedragen[1],
 				'hoog'        => $bedragen[2],
 				'laag'        => $bedragen[3],
+				'geen_btw'    => $bedragen[4] ?? 0.0,
 				'transacties' => $transacties,
 			];
 		}
@@ -472,6 +482,12 @@ class ReportParser {
 
 		if ( self::peek( $lines, $cursor ) === 'Totaal betaald' ) {
 			++$cursor;
+			if ( self::is_bedrag( self::peek( $lines, $cursor ) ) ) {
+				$report['terminals_totaal'] = [
+					'betaald'     => self::parse_bedrag( $lines[ $cursor++ ] ),
+					'transacties' => self::is_aantal( self::peek( $lines, $cursor ) ) ? (int) $lines[ $cursor++ ] : 0,
+				];
+			}
 		}
 
 		return $cursor;
@@ -484,7 +500,8 @@ class ReportParser {
 	 * aantal. The totals row ("Totaal incl. no-sale") has no btw-groep.
 	 */
 	private static function parse_producten( array $lines, int $cursor, array &$report ): int {
-		$total = count( $lines );
+		$total     = count( $lines );
+		$has_total = false;
 
 		// Skip column headers.
 		while ( $cursor < $total
@@ -509,7 +526,7 @@ class ReportParser {
 			}
 
 			$btw_groep = null;
-			if ( self::peek( $lines, $cursor ) !== null && (bool) preg_match( '/^(Hoog|Laag) \d+%$/', $lines[ $cursor ] ) ) {
+			if ( self::peek( $lines, $cursor ) !== null && (bool) preg_match( '/^(Hoog|Laag|Geen BTW) \d+%$/', $lines[ $cursor ] ) ) {
 				$btw_groep = $lines[ $cursor ];
 				++$cursor;
 			}
@@ -525,6 +542,7 @@ class ReportParser {
 
 			if ( $product === 'Totaal incl. no-sale' ) {
 				$report['producten_totaal'] = $row;
+				$has_total                  = true;
 			} else {
 				$report['producten'][] = array_merge(
 					[
@@ -534,6 +552,14 @@ class ReportParser {
 					$row
 					);
 			}
+		}
+
+		if ( ! $has_total ) {
+			throw new ReportParserException( 'Productoverzicht onvolledig: producttotaal ontbreekt.' );
+		}
+		if ( array_sum( array_column( $report['producten'], 'aantal' ) ) !== $report['producten_totaal']['aantal']
+			|| abs( array_sum( array_column( $report['producten'], 'bruto' ) ) - $report['producten_totaal']['bruto'] ) > 0.011 ) {
+			throw new ReportParserException( 'Productregels komen niet overeen met het producttotaal.' );
 		}
 
 		return $cursor;
