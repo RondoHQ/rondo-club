@@ -1,3 +1,4 @@
+import BankAccountCard from '@/components/finance/BankAccountCard';
 import { lazy, Suspense, useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
@@ -1543,6 +1544,8 @@ export default function PersonDetail() {
                 Nog geen contactgegevens.{canEditContact && <> <button onClick={() => setShowContactModal(true)} className="text-electric-cyan hover:underline">Toevoegen</button></>}
               </p>
             )}
+            {canEditFinancieel ? <BankAccountCard personId={Number(id)} /> : null}
+
             {/* View in Google Contacts link - only for synced contacts with email */}
             {person.google_contact_id && fields.email_1 && (
               <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">

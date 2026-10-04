@@ -1,3 +1,4 @@
+import BankAccountCard from '@/components/finance/BankAccountCard';
 import { Fragment, useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -779,6 +780,7 @@ export default function Household() {
               linkedPersonId={linkedPersonId}
               onAddParent={setParentEditorChildId}
             />
+            {selectedPerson.household_role === 'self' ? <BankAccountCard /> : null}
             {selectedPerson.household_role === 'self' ? <GuestPassesCard /> : null}
             {selectedPerson.household_role === 'self' && selectedPerson.sponsor_organization?.can_edit_logo ? (
               <SponsorCard organization={selectedPerson.sponsor_organization} />

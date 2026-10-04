@@ -287,6 +287,7 @@ function rondo_init() {
 	new FormerMemberWorkHistory();
 	new AccessControl();
 	new PersonDeletionGuard();
+	new \Rondo\Finance\PersonBankAccount();
 	new UserRoles();
 	\Rondo\Users\CapabilitySync::register_hooks();
 	new LettermintMailer();
@@ -401,6 +402,7 @@ function rondo_init() {
 		new RESTTournaments();
 		new RESTTwelveReports();
 		new \Rondo\REST\MemberProfile();
+		new \Rondo\REST\BankAccounts();
 		new \Rondo\REST\Oidc();
 		new \Rondo\REST\FreeScoutIntegration();
 		new RabobankOAuth();

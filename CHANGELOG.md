@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.136.0] - 2026-10-04
+
+### Added
+- Private IBAN and account-holder fields on people, editable through Mijn gegevens and by authorized financial managers.
+- Bank field validation, independent access controls and value-free local change audit.
+
+### Changed
+- Share Rabobank SEPA validation and XML generation between credit invoices and upcoming multi-payment exports, preserving existing credit export behavior.
+
 ## [35.135.0] - 2026-10-04
 
 ### Added

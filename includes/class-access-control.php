@@ -132,6 +132,7 @@ class AccessControl {
 	 * ledenadministratie list renders it as a badge.
 	 */
 	private const SENSITIVE_FIELD_GROUPS = [
+		'bank'    => [ 'iban', 'bank_account_holder' ],
 		'finance' => [
 			'financiele-blokkade',
 			'nikki-contributie-status',
@@ -949,6 +950,8 @@ class AccessControl {
 		}
 
 		switch ( $group ) {
+			case 'bank':
+				return UserRoles::can_manage_finances( $user_id );
 			case 'finance':
 				return UserRoles::can_view_finances( $user_id );
 			case 'support':
