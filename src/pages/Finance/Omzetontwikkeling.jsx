@@ -32,13 +32,19 @@ function RevenueChart({ rows, group }) {
   const top = 20;
   const bottom = 115;
   const values = rows.map(row => row.omzet_totaal);
-  const min = Math.min(0, ...values);
-  const max = Math.max(1, ...values);
+  const rawMin = Math.min(0, ...values);
+  const rawMax = Math.max(1, ...values);
+  const magnitude = 10 ** Math.floor(Math.log10((rawMax - rawMin) / 5));
+  const step = [1, 2, 5, 10].find(value => value * magnitude >= (rawMax - rawMin) / 5) * magnitude;
+  const min = Math.floor(rawMin / step) * step;
+  const max = Math.ceil(rawMax / step) * step;
   const start = timestamp(rows[0].periode);
   const end = timestamp(rows.at(-1).periode);
   const x = period => start === end ? width / 2 : left + (timestamp(period) - start) / (end - start) * (width - left - right);
   const y = value => top + (max - value) / (max - min) * (height - top - bottom);
-  const ticks = Array.from({ length: 5 }, (_, index) => min + (max - min) * index / 4);
+  const ticks = Array.from({ length: Math.round((max - min) / step) + 1 }, (_, index) => min + step * index);
+  const tooltipX = selected ? Math.max(left, Math.min(width - right - 205, x(selected.periode) - 102)) : 0;
+  const tooltipY = selected ? (y(selected.omzet_totaal) < top + 65 ? y(selected.omzet_totaal) + 15 : y(selected.omzet_totaal) - 65) : 0;
   // Keep date labels at least 50 SVG units apart, including the last date.
   const dateTicks = rows.filter((row, index) => index === 0 || index === rows.length - 1 || (x(row.periode) - left >= 50 && width - right - x(row.periode) >= 50));
   const dates = dateTicks.reduce((ticks, row, index) => {
@@ -64,6 +70,11 @@ function RevenueChart({ rows, group }) {
       <circle cx={x(row.periode)} cy={y(row.omzet_totaal)} r={selectedPeriod === row.periode ? 6 : 4} fill="currentColor" className="group-hover:stroke-current" strokeWidth="3" />
       <title>{label(row.periode, group)}: {currency(row.omzet_totaal)}</title>
     </g>)}
+    {selected && <g transform={`translate(${tooltipX},${tooltipY})`} pointerEvents="none" aria-hidden="true">
+      <rect width="205" height="52" rx="6" className="fill-white stroke-gray-300 dark:fill-gray-800 dark:stroke-gray-500" />
+      <text x="12" y="20" className="fill-gray-900 dark:fill-gray-100 text-xs">{label(selected.periode, group)}</text>
+      <text x="12" y="39" className="fill-gray-900 dark:fill-gray-100 text-sm font-semibold">{currency(selected.omzet_totaal)}</text>
+    </g>}
     {dates.map(row => <g key={row.periode}>
       <line x1={x(row.periode)} x2={x(row.periode)} y1={height - bottom} y2={height - bottom + 6} className="stroke-gray-400" />
       <text transform={`translate(${x(row.periode)},${height - bottom + 15}) rotate(90)`} className="fill-gray-600 dark:fill-gray-300 text-xs">{label(row.periode, group)}</text>

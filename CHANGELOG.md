@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.130.1] - 2026-10-04
+
+### Fixed
+- Keep the selected revenue period and amount visible beside its chart point, and use rounded currency scale labels.
+- Clear the schedule's saved confirmation when settings are edited again.
+
 ## [35.130.0] - 2026-10-04
 
 ### Added
