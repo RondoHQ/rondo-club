@@ -150,6 +150,7 @@ en betaalexport. Een speler met €0 heeft voor die maand geen rekening nodig.
 | Periode | Bevestigde speeldatum in Europe/Amsterdam, maand inclusief jaar |
 | Seizoen | 1 juli tot 1 juli van het volgende jaar, gelijk aan de bestaande feed |
 | Basis of Bank | Eén deelname per persoon per wedstrijd; de statussen zijn exclusief |
+| Nmbrs Dagen, bevestigd | Aantal meetellende wedstrijden met Basis/Bank; twee wedstrijden op dezelfde kalenderdag tellen als twee |
 | Overige statussen | Geen deelname, vergoeding of premie |
 | Ontbrekende invoer | Onvolledig, nooit automatisch nul |
 | Winst/gelijk | Berekenen uit thuisdoelpunten, uitdoelpunten en de kant van het geregistreerde team |
@@ -160,9 +161,10 @@ en betaalexport. Een speler met €0 heeft voor die maand geen rekening nodig.
 | Afgelast/uitgesteld | Geen financiële verwerking zolang niet daadwerkelijk gespeeld en bevestigd |
 | Gestopt of reglementaire uitslag | Geen automatische verwerking; eerst expliciet beoordelen |
 
-De sheet noemt deelnames `Dagen (gespeeld)`, maar telt wedstrijden. Twee wedstrijden op dezelfde
-dag moeten een controlesignaal geven totdat de Nmbrs-betekenis is bevestigd. Ook dubbele deelname
-aan AWC 1 en JO23-1 wordt gemeld; de software kiest niet zelfstandig welk recht vervalt.
+De Nmbrs-kolom `Dagen` telt bevestigde deelnames aan meetellende wedstrijden, overeenkomstig de
+sheet. Twee wedstrijden op dezelfde kalenderdag tellen als twee; er vindt geen samenvoeging op
+datum plaats. Deelname aan zowel AWC 1 als JO23-1 wordt wel gemeld zolang de afspraken daarover
+niet zijn bevestigd; de software kiest niet zelfstandig welk recht vervalt.
 
 De configuratie voor beide pilotteams bevat uitsluitend competitie en nacompetitie. Het
 Sportlink-wedstrijdtype moet eenduidig naar die categorieën worden vertaald; onbekende types
@@ -303,7 +305,8 @@ dubbele registraties of batches. Transients alleen zijn geen voldoende beschermi
 
 **AWC 1:** een scherm en download met dezelfde aantallen als het huidige Nmbrs-overzicht.
 De kolommen heten Naam, Naam in Nmbrs, Dagen, L3090 winst, L3091 gelijkspel, U2150 basis en
-Bankvergoeding. De laatste looncode en de betekenis van Dagen zijn besluitpunten. De export
+Bankvergoeding. Dagen telt wedstrijden, ook als die op dezelfde kalenderdag vallen. De looncode
+voor Bankvergoeding is nog een besluitpunt. De export
 wordt pas als Nmbrs-importbestand gepresenteerd als een echt importcontract is bevestigd;
 de eerste versie ondersteunt aantoonbaar handmatige snelinvoer.
 
@@ -357,6 +360,9 @@ historie; bij een fout kan de module worden uitgeschakeld zonder data te wissen.
 Beker- en oefenwedstrijden zijn uitgesloten. AWC 1 krijgt basis-/bankvergoeding plus premie bij
 winst of gelijkspel; JO23-1 krijgt alleen premie bij winst of gelijkspel.
 
+**B2a, bevestigd door Joost:** `Dagen` in Nmbrs is het aantal meetellende wedstrijden met Basis/Bank,
+niet het aantal unieke kalenderdagen. Twee wedstrijden op dezelfde dag tellen als twee.
+
 ### Nog te besluiten vóór de betreffende bouwfase
 
 De overige voorgestelde defaults worden vóór de afhankelijke fase bevestigd. Vastlegging van
@@ -364,7 +370,7 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | ID | Open besluit | Voorgesteld uitgangspunt | Nodig vóór |
 |---|---|---|---|
-| B2 | Betekent Nmbrs Dagen unieke dagen of deelnames; welke code hoort bij Bank? | Huidige aantallen als referentie, geen code of deduplicatie verzinnen | AWC 1-afsluiting |
+| B2b | Welke Nmbrs-code hoort bij Bankvergoeding? | Geen code verzinnen; de telling van Dagen is vastgelegd in B2a | AWC 1-afsluiting |
 | B3 | Gastspelers en deelname bij beide teams, leeftijd/contractuitzonderingen? | Per wedstrijd registreren, mogelijke dubbele aanspraken laten beoordelen | Calculator en afsluiting |
 | B4 | Welk bankpakket/formaat en wat doet het Apps Script exact? | Huidige vijfkoloms-XLSX behouden na bewezen compatibiliteit | Export |
 | B5 | Wie registreert, corrigeert en sluit af; is een tweede fiatteur vereist? | Registrator per team en financiële beheerder zoals rechtenmatrix | Rechten en vrijgave |
@@ -376,7 +382,7 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | Fase | Resultaat | Voorwaarde om door te gaan |
 |---|---|---|
-| 0 | B1 vertalen naar broncategorieën, besluiten B2–B8, inspectie Apps Script, geanonimiseerd exportvoorbeeld, librarykeuze | Reken- en bestandscontract bevestigd; broncontrolegrenzen vastgelegd |
+| 0 | B1 vertalen naar broncategorieën, besluiten B2b en B3–B8, inspectie Apps Script, geanonimiseerd exportvoorbeeld, librarykeuze | Reken- en bestandscontract bevestigd; broncontrolegrenzen vastgelegd |
 | 1 | Privé opslag, registry, rechtenbeleid, versiebeheer, calculator en API | Rekentests, rechtenmatrix en gelijktijdigheids-/hersteltests slagen |
 | 2 | Teamregistratie, gastspelers, afronden en bronconflicten | Volledige flow met synthetische data op desktop en mobiel gecontroleerd |
 | 3 | Financiële profielen, maandafsluiting, correcties en exports | Rekenverschillen nul, bestandscontract bewezen, export/privacytests slagen |
@@ -403,6 +409,8 @@ Deze planning zelf blijft beperkt tot `docs/prd/`, zonder themaversie, changelog
   teams geen vergoeding, premie of Nmbrs-aantal op, ook niet als er Basis/Bank is geregistreerd.
 - [ ] AWC 1 levert basis-/bankaantallen bij iedere meetellende deelname en daarnaast premies bij
   winst/gelijkspel. JO23-1 levert uitsluitend resultaatpremies, zonder basis-/bankvergoeding.
+- [ ] Twee verschillende meetellende AWC 1-wedstrijden op dezelfde kalenderdag met Basis/Bank
+  voor dezelfde speler leveren `Dagen = 2`; dezelfde wedstrijd dubbel aanbieden blijft één deelname.
 - [ ] Meer dan 30 wedstrijden en extra spelers blijven correct meetellen. Historie blijft bestaan
   na seizoenwissel, teamwissel, naamswijziging en tijdelijk wegvallen van de bronfeed.
 - [ ] September 2026 reproduceert per speler de gecontroleerde sheet, met AWC 1 44 basis/24 bank
