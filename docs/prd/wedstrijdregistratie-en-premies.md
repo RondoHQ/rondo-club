@@ -493,6 +493,12 @@ Deze verbeteringen zijn onderdeel van het Rondo-voorstel; het bestaande script i
    uit hoofdstuk 2. Laat vervolgens één volledige maand parallel lopen.
 8. Maak na akkoord Rondo de invoerbron. Bewaar de oorspronkelijke sheet als archief.
 
+Joost heeft op 4 oktober 2026 bevestigd dat september 2026 voor AWC 1 nog niet in Nmbrs is
+verwerkt en voor JO23-1 nog niet is uitbetaald. Neem september daarom op als nog te verwerken
+maand. Controleer deze tijdgebonden status opnieuw bij de daadwerkelijke import en export;
+verwerking buiten Rondo tussen deze bevestiging en de ingebruikname moet worden meegenomen.
+Deze bevestiging zegt niets over de status van andere maanden of over al klaargezette betaalbestanden.
+
 Rollback van de import gebeurt op de gemarkeerde importrecords en vooraf vastgelegde wijzigingen.
 Geen verwijdering van bestaande personen of teams. Een productiecode-rollback bewaart financiële
 historie; bij een fout kan de module worden uitgeschakeld zonder data te wissen.
@@ -550,6 +556,10 @@ wedstrijdselecties invoeren en corrigeren, binnen hun bestaande teamtoegang. Tea
 geven deze bevoegdheid niet automatisch. De administrator beheert de toewijzingen; afgesloten
 registraties blijven het vastgelegde correctie- en versieproces volgen.
 
+**B6a, bevestigd door Joost:** september 2026 is voor AWC 1 nog niet verwerkt in Nmbrs en voor
+JO23-1 nog niet uitbetaald. Dit is de uitgangsstatus op 4 oktober 2026; bij migratie wordt de
+actuele externe verwerkingsstatus opnieuw gecontroleerd.
+
 ### Nog te besluiten vóór de betreffende bouwfase
 
 De overige voorgestelde defaults worden vóór de afhankelijke fase bevestigd. Vastlegging van
@@ -557,7 +567,7 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | ID | Open besluit | Voorgesteld uitgangspunt | Nodig vóór |
 |---|---|---|---|
-| B6 | Welke historische maanden zijn al verwerkt of betaald? | Geen automatische betaalstatus uit spreadsheetdata afleiden | Productie-import |
+| B6b | Wat is bij import de actuele verwerkingsstatus van alle te importeren maanden? | September heeft uitgangsstatus B6a; andere maanden niet afleiden uit spreadsheetdata; actualiseren vóór import | Productie-import |
 | B7 | Tariefingangsdata, negatieve correcties en tenaamstelling | Gesloten bedragen bewaren; negatieve correcties handmatig afhandelen | Correcties en export |
 | B8 | Bewaartermijn voor afwezigheidsredenen, bankgegevens, batches en bestanden | Aansluiten op vastgesteld clubbeleid; geen termijn verzinnen | Productievrijgave |
 
@@ -565,7 +575,7 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | Fase | Resultaat | Voorwaarde om door te gaan |
 |---|---|---|
-| 0 | B1 vertalen naar broncategorieën, besluiten B6–B8, gedeelde SEPA-service en batchcontract uitwerken; Apps Script-controle is afgerond | Rekencontract bevestigd; bestaande Rabobank-contracten en broncontrolegrenzen vastgelegd |
+| 0 | B1 vertalen naar broncategorieën, besluiten B7–B8 en migratiecontrole B6b voorbereiden, gedeelde SEPA-service en batchcontract uitwerken; Apps Script-controle is afgerond | Rekencontract bevestigd; bestaande Rabobank-contracten en broncontrolegrenzen vastgelegd |
 | 1 | Privé opslag, registry, rechtenbeleid, versiebeheer, calculator en API | Rekentests, rechtenmatrix en gelijktijdigheids-/hersteltests slagen |
 | 2 | Teamregistratie, gastspelers, afronden en bronconflicten | Volledige flow met synthetische data op desktop en mobiel gecontroleerd |
 | 3 | Bankvelden op personen en Mijn gegevens, maandafsluiting, correcties en Rabobank SEPA-export via gedeelde service | Rekenverschillen nul, schema-/batchtests en creditfactuurregressietests slagen; proefimport gecontroleerd |
