@@ -27,12 +27,15 @@ voor Basis/Bank plus premie bij winst of gelijkspel. JO23-1 krijgt uitsluitend p
 of gelijkspel, zonder basis- of bankvergoeding.
 
 Binnen scope vallen basis/bankregistratie, afwezigheidsstatussen, gastspelers, maandafsluiting,
-correcties, een Nmbrs-snelinvoeroverzicht, JO23-1-betaalexport en een eenmalige import.
+correcties, een Nmbrs-snelinvoeroverzicht, JO23-1-betaalexport, bankgegevens op personen die leden
+zelf kunnen wijzigen via Mijn gegevens, en een eenmalige import.
 
 Buiten de eerste versie vallen een rechtstreekse Nmbrs-koppeling, bankbetalingen uitvoeren,
-SEPA-XML, loonberekening, fiscale kwalificatie van vergoedingen, speelminuten, wisselmomenten,
+loonberekening, fiscale kwalificatie van vergoedingen, speelminuten, wisselmomenten,
 trainingsregistratie en wijzigingen aan Rondo Sync. De module gebruikt geen Mollie-betaallinks:
-het gaat om uitgaande vergoedingen en een export voor verdere verwerking.
+het gaat om uitgaande vergoedingen en een export voor verdere verwerking. De JO23-1-betaalexport
+wordt Rabobank SEPA-XML, aansluitend op de bestaande export voor creditfacturen. De XLSX-export
+uit de sheet blijft uitsluitend referentiemateriaal voor de oude werkwijze.
 
 ## 2. Bronnen en gecontroleerde uitgangssituatie
 
@@ -111,6 +114,8 @@ afspraken in Nmbrs zijn hiermee niet gecontroleerd.
 | Teaminterface | `src/pages/Teams/TeamDetail.jsx`, `TeamMatches.jsx` | Registratie openen vanuit een wedstrijd |
 | Team- en persoonstoegang | `includes/class-access-control.php` | Bestaande zichtbaarheid als bovengrens |
 | Financiële rechten | `includes/class-user-roles.php` | `can_view_finances()` en `can_manage_finances()` |
+| Rabobank-betaalexport | `includes/class-credit-sepa-export.php`, `src/components/finance/CreditSepaExport.jsx` | Validatie, XML-opbouw, bevestiging en identieke herdownload als basis voor premiebetalingen |
+| SEPA-contracttests | `tests/Wpunit/CreditSepaExportTest.php`, `tests/fixtures/sepa/pain.001.001.09.xsd` | Bestaande dekking behouden en uitbreiden voor meerdere transacties |
 | Domeinvelden | `includes/config/field-registry.php`, `includes/class-fields.php` | Canonieke velden en native repeaters |
 
 De bestaande wedstrijdfeed is een cache voor het huidige seizoen. De cache wordt ongeldig bij
@@ -190,24 +195,58 @@ Gebruik uitsluitend WordPress-posts, postmeta, opties en usermeta. Nieuwe domein
 een registry-context en worden gelezen/geschreven via `Rondo\Fields\Fields`. Repeaters gebruiken
 de bestaande genummerde native opslag. Geen custom tabellen en geen directe SQL.
 
-Alle onderstaande posttypes zijn privé: `public=false`, `show_in_rest=false`, geen algemene
+Alle onderstaande nieuwe posttypes zijn privé: `public=false`, `show_in_rest=false`, geen algemene
 zoekresultaten of publieke permalinks. Alleen de domeincontroller levert toegestane velden.
 
 | Entiteit | Opslag | Belangrijkste velden |
 |---|---|---|
 | Wedstrijdregistratie | `rondo_match_reg` | `team_id`, `season`, `source_match_id`, `source_type`, `played_on`, `opponent_name`, `home_away`, `competition_type`, scores, status, versie, bronmoment |
 | Selectie | Repeater op registratie | `person_id`, vastgelegde weergavenaam, deelnamestatus, gastspeler, toelichting indien noodzakelijk |
-| Financieel profiel | `rondo_payee` per persoon | `person_id`, IBAN, tenaamstelling, bevestigde Nmbrs-naam en eventueel werknemersnummer |
+| Bankgegevens | Native velden op bestaande `person` | `iban` en voorgesteld `bank_account_holder` voor de tenaamstelling |
+| Nmbrs-identiteit | Afgeschermde native velden op bestaande `person` | Bevestigde Nmbrs-naam en eventueel werknemersnummer; uitsluitend financieel beheer |
 | Maandbatch | `rondo_match_batch` | Team, seizoen, maand, soort, status, bronversies, regelversie, totalen, afsluiter en tijdstip |
 | Batchregels | Repeater op batch | Persoons-ID, naam, aantallen, premie in centen, rekeningmomentopname voor JO23-1, verwijzingen naar bronregistraties |
+| SEPA-export | Privé postmeta op maandbatch | Onveranderlijk XML, export-ID, payloadhash, uitvoerdatum, afschrijfrekening en tenaamstelling, bericht-/betaal-/transactiereferenties, aantal transacties en controlesom |
 | Regelversies | Optie per module met onveranderlijke versies | Team/seizoen, ingangsdatum, toegestane wedstrijdtypes, punten, tarief, Nmbrs-kolommapping |
 | Toewijzing registrator | Usermeta | Expliciet toegestane team-ID's, beheerd door administrator |
 | Gebeurtenislog | Privé WordPress-commenttype op registratie/batch | Actor, actie, tijdstip, vorige/nieuwe versie, reden, operatie-ID |
 
-De log is alleen toegankelijk via de module. Geen volledige IBAN's in logteksten; een rekeningwijziging
-krijgt een gebeurtenis met gemaskeerde aanduiding. Financiële profielen blijven buiten generieke
-persoonresponses, exports, abilities en Sportlink-reverse-sync. Bestaande former-member-beveiliging
-op personen blijft intact; historisch registreren is geen wijziging van het persoonsprofiel.
+De registratielog is alleen toegankelijk via de module. Geen volledige IBAN's in logteksten; een
+rekeningwijziging krijgt een gebeurtenis met actor, tijdstip en gemaskeerde aanduiding. Bankgegevens
+en Nmbrs-identiteit krijgen afzonderlijke veldrechten op personen; bestaande toegang tot een
+persoon geeft niet automatisch toegang tot deze velden. Generieke persoonresponses, exports en
+abilities passen dezelfde afscherming toe. Deze nieuwe velden blijven lokaal in Rondo en gaan niet
+naar Sportlink-reverse-sync. Bestaande former-member-beveiliging op personen blijft intact;
+historisch registreren is geen wijziging van het persoonsprofiel.
+
+### Bankgegevens op personen en Mijn gegevens
+
+Er komt geen apart `rondo_payee`-posttype. Het IBAN staat als nullable, canoniek veld `iban` in de
+person-registry en wordt via `Fields` opgeslagen. Normaliseer spaties en hoofdletters en gebruik
+de gedeelde SEPA-IBAN-validatie. Ongeldige invoer wordt afgewezen; `null` wist het veld. Een leeg
+IBAN is toegestaan op een persoon, maar blokkeert een positieve betaling bij maandafsluiting.
+De aparte tenaamstelling `bank_account_holder` is het voorstel voor besluit B7; leid een afwijkende
+rekeninghouder niet af uit de persoonsnaam.
+
+Een lid kan via **Mijn gegevens → Bankgegevens** het eigen IBAN bekijken en direct wijzigen.
+De server bepaalt het persoonsrecord via `rondo_linked_person_id`; de client kan geen andere
+persoon als doel opgeven. De bestaande profielservice ondersteunt ook minderjarige kinderen;
+de nieuwe bankroute gebruikt uitsluitend de eigen koppeling. Toegang tot een huishouden geeft
+geen bankrechten op kinderen of andere gezinsleden. Financieel beheer en administrators kunnen
+bankgegevens op een toegankelijk persoonsrecord beheren. De normale blokkade voor oud-leden en
+overleden personen blijft gelden. Zelfservice verleent geen toegang tot Nmbrs-velden.
+
+De bankvelden krijgen één gedeeld, persoonsgebonden rechtenbeleid voor alle lees- en schrijfpaden.
+De bestaande algemene financiële veldgroep volstaat niet: die geeft financiële lezers toegang
+en kent geen uitzondering voor de eigen persoon. Beperk generieke zoek-, sorteer- en exportpaden
+zodat verborgen bankgegevens ook niet indirect uitlekken. Het wijzigingslog maskeert oude en
+nieuwe IBAN's en markeert bankwijzigingen expliciet als lokaal, zonder Sportlink-syncopdracht.
+
+Een wijziging geldt voor volgende conceptberekeningen. Bij afsluiten controleert Rondo ook de
+versie van de gebruikte bankgegevens; een wijziging sinds de voorvertoning vraagt nieuwe controle.
+Afgesloten batches en aangemaakte XML-bestanden bewaren hun rekeningmomentopname. Een later
+gewijzigd persoonsveld herschrijft die bestanden nooit; een noodzakelijke vervanging volgt het
+bestaande correctieproces met bevestiging dat de oude export niet meer wordt gebruikt.
 
 Registraties gebruiken de echte Sportlink-wedstrijdcode, niet een hash van datum en tegenstander.
 Een handmatige wedstrijd krijgt een eigen UUID en verplichte reden; een latere bronkoppeling is
@@ -248,10 +287,14 @@ alle trainers, bestuurders of leden toegekend.
 | Selectie en noodzakelijke afwezigheidsstatus lezen | Toegewezen team | Geen afwezigheidsredenen | Geen afwezigheidsredenen | Ja |
 | Concept invoeren en afronden | Toegewezen team | Nee | Alleen met registratorrecht | Ja |
 | Financiële maandtotalen lezen | Nee | Ja | Ja | Ja |
-| IBAN volledig lezen of wijzigen | Nee | Alleen gemaskeerd | Ja | Ja |
+| IBAN van andere personen volledig lezen of wijzigen | Nee | Alleen gemaskeerd, niet wijzigen | Ja, binnen persoonstoegang | Ja |
 | Tarieven beheren, afsluiten en exporteren | Nee | Nee | Ja | Ja |
 | Externe verwerking/betaling vastleggen | Nee | Nee | Ja | Ja |
 | Registratoren en teams inschakelen | Nee | Nee | Nee | Ja |
+
+Los van deze beheerdersrollen kan ieder goedgekeurd lid het eigen IBAN lezen en wijzigen via
+Mijn gegevens volgens de persoonsgebonden controles hierboven. Dit geeft geen financiële
+modulerechten of toegang tot bankgegevens van teamgenoten.
 
 Gebruik de bestaande financiële helpers met een expliciete administratorroute voor deze module;
 de helpers zelf geven niet automatisch een `manage_options`-bypass. Alle toegang vereist een
@@ -288,8 +331,13 @@ blijven behouden. Exacte bestandsnamen worden bij implementatie op de repository
 | `POST /batches/{id}/exports` | Export vastleggen met uitvoerdatum en bestandscontractversie |
 | `GET /batches/{id}/exports/{export_id}` | Geautoriseerde herhaalde download |
 | `POST /batches/{id}/processing` | Externe verwerking of betaling vastleggen met referentie |
-| `GET/PATCH /payees/{person_id}` | Financieel profiel volgens veldrechten |
 | `GET/POST /rules` | Regelversies lezen of toevoegen |
+
+Bankgegevens gebruiken de bestaande personen-API met partiële `fields`-updates en aanvullende
+veldrechten. Voeg voor Mijn gegevens `GET/PATCH /rondo/v1/user/profile-bank-account` toe aan de
+bestaande profielcontroller; deze route staat buiten de match-compensation-namespace. De route
+accepteert uitsluitend toegestane bankvelden voor de servermatig gekoppelde persoon, nooit een
+vrij `person_id` of Nmbrs-velden. Beide paden gebruiken dezelfde validatie en afscherming.
 
 Mutaties gebruiken sessie-authenticatie, nonce, domeinrechten en veldvalidatie. Datumvelden zijn
 `YYYY-MM-DD`, tijdstippen RFC 3339 met timezone. Ongeldige invoer geeft veldspecifieke HTTP 400;
@@ -324,27 +372,56 @@ Vóór overname in Nmbrs moet de beheerder de juiste code controleren. De export
 Nmbrs-importbestand gepresenteerd als een echt importcontract is bevestigd;
 de eerste versie ondersteunt aantoonbaar handmatige snelinvoer.
 
-**JO23-1:** XLSX met uitsluitend de vijf bronkolommen in dezelfde volgorde. IBAN en namen zijn
-tekst, bedrag is numeriek met twee decimalen, uitvoerdatum is een echte datum. Geen formules,
-instellingscellen, extra tabbladen of totalen in de betaalregels. Namen die op `=`, `+`, `-` of
-`@` beginnen blijven tekst. Bestandsnaam volgt het gecontroleerde bestaande patroon
-`Inputfile vergoedingen (voetbal)_JO23_<maandnaam>_<jaar>.xlsx`.
+**JO23-1, bevestigd door Joost:** een Rabobank SEPA-betaalbestand in XML, zoals bij de bestaande
+creditfacturen. Het huidige codepad gebruikt `pain.001.001.09`. De gebruiker downloadt het bestand,
+importeert het in Rabobank en controleert en ondertekent daar de betalingen. Rondo verstuurt geen
+betaalopdracht naar de bank en markeert een export niet automatisch als betaald.
 
-Normaliseer IBAN door spaties te verwijderen en hoofdletters te gebruiken. Controleer landlengte,
-structuur en mod-97 voor ondersteunde landen; accepteer een geldige buitenlandse rekening als
-het bevestigde bankcontract die ondersteunt. Tenaamstelling is een bevestigd profielveld en wordt
-niet zonder controle uit de spelersnaam afgeleid. Valideer alleen betaalregels met positief bedrag.
+De bestaande `CreditSepaExport` is expliciet gebouwd voor één betaling per creditfactuur.
+Haal de herbruikbare IBAN-/betaalvalidatie en XML-opbouw onder in een gedeelde SEPA-service die
+één of meerdere transacties ondersteunt. Laat zowel de creditfactuurexport als de premie-export
+die service gebruiken. Factuurvoorwaarden, ontvangerafleiding uit de oorspronkelijke betaling
+en factuurstatus blijven in de creditfactuurservice; maandregels en premiebeleid blijven in
+de premiemodule. Maak geen fictieve creditfacturen om spelers uit te betalen.
+
+| Onderdeel | Contract voor de premie-export |
+|---|---|
+| Bestand | Eén XML per afgesloten JO23-1-maandbatch, met unieke export-ID in de bestandsnaam |
+| Betalingen | Eén `CdtTrfTxInf` per speler met positief premiebedrag, gekoppeld aan de vaste batchregel |
+| Afschrijfrekening | Bevestigd Nederlands Rabobank-IBAN van de club en bijbehorende tenaamstelling, vastgelegd bij de export |
+| Ontvanger | Bevestigde tenaamstelling en geldig SEPA-IBAN uit de financiële momentopname |
+| Bedrag | EUR, positief, uit gehele centen; binnen de grenzen van het bestaande betaalcontract |
+| Uitvoering | Eén bevestigde uitvoerdatum voor de maandbatch, volgens de bestaande datumvalidatie |
+| Omschrijving | `Premie <maandnaam> <jaar>`, via correct ge-escapete XML-tekstnodes |
+| Referenties | Vaste `MsgId` en `PmtInfId` per export en unieke vaste `EndToEndId` per betaling |
+| Controles | `NbOfTxs` is het werkelijke aantal betalingen; `CtrlSum` is exact hun som op groeps- en betaalniveau |
+| Herdownload | Hetzelfde opgeslagen XML, dezelfde bedragen, referenties en uitvoerdatum |
+
+Gebruik dezelfde normalisatie, SEPA-landlengtes en mod-97-validatie als de creditfacturen.
+Behoud de controle op een Nederlands Rabobank-IBAN als afschrijfrekening en op een verschillende
+ontvangerrekening. Tenaamstellingen worden bevestigd; ze worden niet zonder controle uit de
+spelersnaam afgeleid. Neem de bestaande grenzen voor tenaamstelling, omschrijving en uitvoerdatum
+over uit de gedeelde validator. Toon vóór export clubrekening, uitvoerdatum, aantal ontvangers en
+totaalbedrag en vraag dezelfde expliciete bevestiging van gecontroleerde gegevens en nog niet
+klaargezette/uitgevoerde betalingen als bij creditfacturen.
 
 De eerste uitvoerdatum wordt bij export bevestigd, standaard de huidige clubdatum, en vastgelegd.
 Herdownload verandert die datum niet automatisch. Een gewijzigde datum vereist een expliciete
 nieuwe exportversie en waarschuwing over het eerdere bestand. Bedragen en ontvangers blijven
 gebonden aan de afgesloten batch. Rondo kan herhaalde betaling buiten het systeem niet uitsluiten.
 
-Voor de exportlibrary is nog geen keuze gemaakt. `composer.json` bevat geen directe
-XLSX-writerdependency. Fase 0 selecteert een onderhouden library die de serverversie ondersteunt
-en toetst die aan een geanonimiseerd daadwerkelijk exportvoorbeeld. Geen eigen XLSX-formaatbouw.
-Bestanden worden geautoriseerd gestreamd of buiten de publieke webroot bewaard, met vastgelegde
-hash, bestandscontractversie en beperkte bewaartermijn voor tijdelijke bestanden.
+Gebruik de bestaande XML-opbouw met `DOMDocument`; voor deze betaalexport is geen XLSX-library
+nodig. Bewaar het XML vóór het teruggeven in private postmeta, overeenkomstig de creditfacturen.
+De download bevat `xml`, `filename`, `export_id` en `created_at`, gebruikt de bestaande Blob-aanpak
+en is alleen beschikbaar via de geautoriseerde module-API met `Cache-Control: private, no-store`.
+Geen bestanden in publieke uploads of Google Drive. Neem de bestaande replay- en herdownload-
+controles over, maar koppel opslag en vergrendeling aan de maandbatch en de vereisten in hoofdstuk 9.
+
+De bestaande creditfactuurtest controleert het XML tegen de meegeleverde Rabobank-XSD en test
+identieke herdownloads en verloren responses. Dat is code- en schemadekking, geen bewijs van een
+geaccepteerde bankimport voor de nieuwe batchvariant. Test die variant expliciet met meerdere
+ontvangers, unieke referenties en juiste controlesommen en laat een proefbestand in Rabobank
+controleren zonder betalingen te ondertekenen. De bestaande creditfactuurflow moet ongewijzigd werken.
 
 ### Controle van de bestaande export op 4 oktober 2026
 
@@ -367,7 +444,8 @@ De gerichte Drive-zoekopdracht en de huidige bovenliggende map `Vergoedingen / 2
 leverden geen bestaand `Inputfile vergoedingen (voetbal)_JO23_september_2026.xlsx` op. Een eerder
 gegenereerd betaalbestand kon daardoor niet worden geïnspecteerd. Het aanwezige oorspronkelijke
 wedstrijdregistratie-XLSX is geen betaalexport. Uit de exportfunctie blijkt niet welk bankpakket
-of welke tussenstap het bestand accepteert; compatibiliteit blijft onbevestigd.
+of welke tussenstap het bestand accepteert. Compatibiliteit van deze oude XLSX-export blijft
+onbevestigd; Joost heeft voor Rondo inmiddels de bestaande Rabobank SEPA-route gekozen.
 
 | Bevinding | Gevolg |
 |---|---|
@@ -447,6 +525,15 @@ berekende waarden en de maandbestandsnaam uit hoofdstuk 10. Het script laat onge
 door en vervangt bestaande maandbestanden via de prullenbak. Bron- en lokale scenariocontrole
 zijn afgerond; bankcompatibiliteit en een werkelijk gegenereerd bestand zijn nog niet geverifieerd.
 
+**B4b, bevestigd door Joost:** de Rondo-betaalexport moet een Rabobank-export worden zoals die
+al bestaat bij creditfacturen. De gecontroleerde bestaande implementatie levert SEPA-XML
+`pain.001.001.09`. Hergebruik de validatie en generator via een gedeelde service en ondersteun
+meerdere premiebetalingen in één maandbestand. De oude XLSX-uitvoer hoeft niet te worden nagebouwd.
+
+**B4c, bevestigd door Joost:** voeg het IBAN toe aan bestaande personen en laat leden hun eigen
+IBAN wijzigen via Mijn gegevens. Gebruik geen apart betaalprofiel. Pas persoonsgebonden veldrechten
+toe en behoud de bankgegevens in eerder afgesloten batches en exports.
+
 ### Nog te besluiten vóór de betreffende bouwfase
 
 De overige voorgestelde defaults worden vóór de afhankelijke fase bevestigd. Vastlegging van
@@ -454,20 +541,19 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | ID | Open besluit | Voorgesteld uitgangspunt | Nodig vóór |
 |---|---|---|---|
-| B4b | Welk bankpakket of welke tussenstap ontvangt het XLSX, en is een werkelijk exportvoorbeeld beschikbaar? | Vijfkoloms-XLSX uit B4a behouden na bewezen compatibiliteit; geen bankformaat afleiden uit alleen kolomnamen | Export |
 | B5 | Wie registreert, corrigeert en sluit af; is een tweede fiatteur vereist? | Registrator per team en financiële beheerder zoals rechtenmatrix | Rechten en vrijgave |
 | B6 | Welke historische maanden zijn al verwerkt of betaald? | Geen automatische betaalstatus uit spreadsheetdata afleiden | Productie-import |
 | B7 | Tariefingangsdata, negatieve correcties en tenaamstelling | Gesloten bedragen bewaren; negatieve correcties handmatig afhandelen | Correcties en export |
-| B8 | Bewaartermijn voor afwezigheidsredenen, profielen, batches en bestanden | Aansluiten op vastgesteld clubbeleid; geen termijn verzinnen | Productievrijgave |
+| B8 | Bewaartermijn voor afwezigheidsredenen, bankgegevens, batches en bestanden | Aansluiten op vastgesteld clubbeleid; geen termijn verzinnen | Productievrijgave |
 
 ## 13. Uitvoeringsfasen
 
 | Fase | Resultaat | Voorwaarde om door te gaan |
 |---|---|---|
-| 0 | B1 vertalen naar broncategorieën, besluiten B4b en B5–B8, geanonimiseerd exportvoorbeeld, librarykeuze; Apps Script-controle is afgerond | Reken- en bestandscontract bevestigd; broncontrolegrenzen vastgelegd |
+| 0 | B1 vertalen naar broncategorieën, besluiten B5–B8, gedeelde SEPA-service en batchcontract uitwerken; Apps Script-controle is afgerond | Rekencontract bevestigd; bestaande Rabobank-contracten en broncontrolegrenzen vastgelegd |
 | 1 | Privé opslag, registry, rechtenbeleid, versiebeheer, calculator en API | Rekentests, rechtenmatrix en gelijktijdigheids-/hersteltests slagen |
 | 2 | Teamregistratie, gastspelers, afronden en bronconflicten | Volledige flow met synthetische data op desktop en mobiel gecontroleerd |
-| 3 | Financiële profielen, maandafsluiting, correcties en exports | Rekenverschillen nul, bestandscontract bewezen, export/privacytests slagen |
+| 3 | Bankvelden op personen en Mijn gegevens, maandafsluiting, correcties en Rabobank SEPA-export via gedeelde service | Rekenverschillen nul, schema-/batchtests en creditfactuurregressietests slagen; proefimport gecontroleerd |
 | 4 | Importvoorvertoning, goedgekeurde migratie en parallelle maand | Alle matches beoordeeld, totalen sluiten aan, externe verwerking bevestigd |
 | 5 | Rondo als invoerbron en sheet archiveren | Registrator en penningmeester accepteren de pilot |
 
@@ -482,7 +568,14 @@ Deze planning zelf blijft beperkt tot `docs/prd/`, zonder themaversie, changelog
 - [ ] Een registrator kan alleen toegewezen én reeds toegankelijke teams registreren; een gewone
   teambezoeker ziet geen selecties. Directe URL's en API-requests respecteren dezelfde grenzen.
 - [ ] Financieel lezen laat geen write, export of volledige IBAN toe. Een registrator krijgt geen
-  financiële gegevens. Publieke ICS, zoeken, abilities en generieke persoonexports lekken niets.
+  financiële gegevens van anderen. Publieke ICS, zoeken, abilities en generieke persoonexports lekken niets.
+- [ ] Een lid kan uitsluitend het eigen IBAN via Mijn gegevens lezen en wijzigen. Een ander
+  persoons-ID, huishoudtoegang of meegestuurde Nmbrs-velden verruimen dit niet. Oud-leden blijven
+  alleen-lezen; generieke personen-API en abilities handhaven dezelfde bankveldrechten.
+- [ ] Ongeldige IBAN's worden afgewezen; wissen met `null` is mogelijk en blokkeert positieve
+  betalingen bij afsluiten. Wijzigingslogs bevatten geen volledig IBAN en starten geen Sportlink-sync.
+- [ ] Een rekeningwijziging na de voorvertoning wordt bij afsluiten ontdekt. Wijzigingen na
+  afsluiten veranderen geen batchmomentopname of XML; herdownloads blijven exact gelijk.
 - [ ] Elke persoon komt hooguit eenmaal per wedstrijd voor. Onbekend en nul blijven onderscheiden.
   Gastspelers hoeven niet tot het huidige team te behoren, maar moeten toegankelijk en gekoppeld zijn.
 - [ ] Een gastspeler met dezelfde deelnamestatus ontvangt dezelfde vergoeding en premie als een
@@ -513,8 +606,13 @@ Deze planning zelf blijft beperkt tot `docs/prd/`, zonder themaversie, changelog
   behouden eerdere versies en veroorzaken geen dubbele uitbetaling of negatieve betaalregel.
 - [ ] Twee gelijktijdige afsluitingen, dubbele aanmaak, een afgebroken request ná persist en een
   herhaalde download leveren geen dubbele registratie/batch en geen gewijzigde uitvoerdatum op.
-- [ ] Een XLSX opent met de juiste celtypen en uitsluitend de afgesproken kolommen. Een
-  geanonimiseerde proefimport bij de beoogde ontvanger slaagt zonder een betaling te initiëren.
+- [ ] De premie-export valideert tegen de bestaande Rabobank-XSD `pain.001.001.09`. Meerdere
+  ontvangers leveren elk één transactie met unieke `EndToEndId`; beide aantallen en controlesommen
+  sluiten exact aan op de batch. Nulbedragen en negatieve bedragen worden niet als betaling geëxporteerd.
+- [ ] Creditfactuur- en premie-export gebruiken dezelfde validatie en XML-generator. De bestaande
+  creditfactuurtests blijven groen, inclusief rechten, gelijke herdownloads en verloren responses.
+- [ ] De clubrekening, tenaamstellingen en uitvoerdatum volgen het bestaande Rabobank-contract.
+  Een gecontroleerde proefimport van de batchvariant slaagt zonder betalingen te ondertekenen.
 - [ ] Een maand zonder premies levert geen betaalbestand of tekstuele betaalregel op. Lege,
   ontbrekende en ongeldige IBAN's bij positieve bedragen blokkeren de export zonder regels te verliezen.
 - [ ] Een fout tijdens bestandsaanmaak behoudt bestaande exports en laat geen publiek toegankelijk
