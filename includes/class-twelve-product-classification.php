@@ -31,9 +31,38 @@ class ProductClassification {
 
 	/** Shares of gross product value, including no-sale, with unassigned value explicit. */
 	public static function summary( array $products ): array {
+		return self::summarize_catalog( self::catalog( $products ) );
+	}
+
+	/** Product values and quantities per imported calendar bucket, including no-sale. */
+	public static function by_period( array $reports, string $group ): array {
+		$periods = [];
+		foreach ( $reports as $report ) {
+			$key               = substr( $report['period_start'], 0, $group === 'month' ? 7 : 10 );
+			$periods[ $key ][] = $report;
+		}
+		$result = [];
+		foreach ( $periods as $period => $items ) {
+			$catalog                       = self::catalog( ReportAggregator::by_product( $items ) );
+			$result[ $period ]             = self::summarize_catalog( $catalog );
+			$result[ $period ]['products'] = array_map(
+				static fn( $product ) => [
+					'id'       => $product['id'],
+					'name'     => $product['product'],
+					'group'    => $product['group'],
+					'amount'   => $product['bruto'],
+					'quantity' => $product['aantal'],
+				],
+				$catalog
+			);
+		}
+		return $result;
+	}
+
+	private static function summarize_catalog( array $catalog ): array {
 		$unassigned = 0;
 		$amounts    = array_fill_keys( array_keys( self::GROUPS ), 0 );
-		foreach ( self::catalog( $products ) as $product ) {
+		foreach ( $catalog as $product ) {
 			if ( $product['group'] === 'unassigned' ) {
 				++$unassigned;
 			}
