@@ -75,11 +75,6 @@
 .rondo-brand-shell .rondo-sidebar .bg-cyan-100 svg { color: #e6edf9; }
 .rondo-brand-shell .rondo-app-header { background: #f8fdf6; border-color: #e2ebe4; }
 .dark .rondo-brand-shell .rondo-app-header { background: #162c2b; border-color: var(--dashboard-line); }
-.rondo-brand-shell .rondo-app-header::before {
-  content: ''; position: absolute; inset: 0 22% 0 auto; width: 110px;
-  background: url('../assets/brand/shape-purple.svg') center / 130px no-repeat;
-  opacity: .11; pointer-events: none;
-}
 .rondo-brand-shell :focus-visible { outline: 3px solid #00908b; outline-offset: 3px; }
 .rondo-brand-shell .rondo-sidebar :focus-visible { outline-color: #71dba8; }
 .rondo-brand-shell ::selection { background: #bbedd2; color: #001153; }
@@ -145,11 +140,12 @@
 .dashboard-summary-value { order: -1; font-size: 2.25rem; line-height: 1.15; color: var(--dashboard-heading); font-weight: 700; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
 .dashboard-summary-value.is-positive { color: var(--dashboard-link); }
 .dashboard-summary-context { font-size: .75rem; color: var(--dashboard-muted); margin-top: 4px; }
-.dashboard-ordered-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px; }
+.dashboard-ordered-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px; align-items: start; }
 .dashboard-ordered-grid > .dashboard-block { grid-column: span 12; }
 .dashboard-ordered-grid > .dashboard-block-membership dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 @media(min-width: 1280px) {
+  .dashboard-ordered-grid > .dashboard-block { grid-column: span 6; }
   .rondo-brand-shell > div > main { padding: 32px; }
   .dashboard-action-item { grid-template-columns: minmax(0, 1fr) auto; column-gap: 20px; }
   .dashboard-action-item > :is(p, details) { grid-column: 1 / -1; }
@@ -157,8 +153,6 @@
 }
 @media(min-width: 1024px) {
   .dashboard-ordered-grid > :is(.dashboard-block-birthdays, .dashboard-block-anniversaries) { grid-column: span 6; }
-  .dashboard-ordered-grid:has(> .dashboard-block-teams) > .dashboard-block-matches { grid-column: span 8; }
-  .dashboard-ordered-grid > .dashboard-block-teams { grid-column: span 4; }
 }
 @media(max-width: 1150px) {
   .dashboard-board-columns { grid-template-columns: minmax(0, 1fr); }
@@ -175,7 +169,6 @@
   .dashboard-summary-value { font-size: 2rem; }
   .dashboard-summary dt { font-size: .8125rem; }
   .dashboard-ordered-grid > .dashboard-block-membership dl { grid-template-columns: 1fr; }
-  .rondo-brand-shell .rondo-app-header::before { display: none; }
 }
 
 .dashboard-match-count { display: inline-block; margin-left: 7px; padding: 1px 6px; border-radius: 4px; background: color-mix(in srgb, var(--dashboard-link) 10%, var(--dashboard-surface)); font-size: .75rem; font-variant-numeric: tabular-nums; }
