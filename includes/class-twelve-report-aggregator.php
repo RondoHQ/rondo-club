@@ -52,6 +52,19 @@ class ReportAggregator {
 		return (float) ( $report['producten_totaal']['bruto'] ?? 0 );
 	}
 
+	/** Revenue is cash-register sales plus businessclub consumption billed separately. */
+	public static function revenue_breakdown( array $report ): array {
+		$cash     = self::omzet_excl_nosale( $report );
+		$business = self::round2( array_sum( array_column( self::omzet_rows( $report, 'categorie', 'Businessclub' ), 'bedrag' ) ) );
+		$total    = self::round2( $cash + $business );
+		return [
+			'kassaomzet'      => $cash,
+			'businessclub'    => $business,
+			'omzet_totaal'    => $total,
+			'overig_verbruik' => self::round2( self::omzet_incl_nosale( $report ) - $total ),
+		];
+	}
+
 	/**
 	 * Number of sold products for one report.
 	 */
@@ -78,6 +91,10 @@ class ReportAggregator {
 					'omzet_incl_nosale' => 0.0,
 					'producten'         => 0,
 					'betaalmethoden'    => [],
+					'kassaomzet'        => 0.0,
+					'businessclub'      => 0.0,
+					'omzet_totaal'      => 0.0,
+					'overig_verbruik'   => 0.0,
 				];
 			}
 
@@ -85,6 +102,10 @@ class ReportAggregator {
 			$buckets[ $key ]['omzet_excl_nosale'] = self::round2( $buckets[ $key ]['omzet_excl_nosale'] + self::omzet_excl_nosale( $data ) );
 			$buckets[ $key ]['omzet_incl_nosale'] = self::round2( $buckets[ $key ]['omzet_incl_nosale'] + self::omzet_incl_nosale( $data ) );
 			$buckets[ $key ]['producten']        += self::aantal_producten( $data );
+
+			foreach ( self::revenue_breakdown( $data ) as $field => $amount ) {
+				$buckets[ $key ][ $field ] = self::round2( $buckets[ $key ][ $field ] + $amount );
+			}
 
 			foreach ( self::omzet_rows( $data, 'betaalmethode' ) as $row ) {
 				$label                                       = $row['label'];
