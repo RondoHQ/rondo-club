@@ -205,7 +205,7 @@ zoekresultaten of publieke permalinks. Alleen de domeincontroller levert toegest
 |---|---|---|
 | Wedstrijdregistratie | `rondo_match_reg` | `team_id`, `season`, `source_match_id`, `source_type`, `played_on`, `opponent_name`, `home_away`, `competition_type`, scores, status, versie, bronmoment |
 | Selectie | Repeater op registratie | `person_id`, vastgelegde weergavenaam, deelnamestatus, gastspeler, toelichting indien noodzakelijk |
-| Bankgegevens | Native velden op bestaande `person` | `iban` en voorgesteld `bank_account_holder` voor de tenaamstelling |
+| Bankgegevens | Native velden op bestaande `person` | `iban` en `bank_account_holder` voor de tenaamstelling |
 | Nmbrs-identiteit | Afgeschermde native velden op bestaande `person` | Bevestigde Nmbrs-naam en eventueel werknemersnummer; uitsluitend financieel beheer |
 | Maandbatch | `rondo_match_batch` | Team, seizoen, maand, soort, status, bronversies, regelversie, totalen, afsluiter en tijdstip |
 | Batchregels | Repeater op batch | Persoons-ID, naam, aantallen, premie in centen, rekeningmomentopname voor JO23-1, verwijzingen naar bronregistraties |
@@ -228,10 +228,13 @@ Er komt geen apart `rondo_payee`-posttype. Het IBAN staat als nullable, canoniek
 person-registry en wordt via `Fields` opgeslagen. Normaliseer spaties en hoofdletters en gebruik
 de gedeelde SEPA-IBAN-validatie. Ongeldige invoer wordt afgewezen; `null` wist het veld. Een leeg
 IBAN is toegestaan op een persoon, maar blokkeert een positieve betaling bij maandafsluiting.
-De aparte tenaamstelling `bank_account_holder` is het voorstel voor besluit B7; leid een afwijkende
-rekeninghouder niet af uit de persoonsnaam.
+De tenaamstelling staat in het aparte nullable veld `bank_account_holder`, met het label
+**Naam rekeninghouder**. Dit veld mag afwijken van de persoonsnaam en wordt niet automatisch
+overschreven bij een naamswijziging. Gebruik de bestaande SEPA-validatie voor tenaamstellingen;
+een ontbrekende of ongeldige tenaamstelling blokkeert een positieve betaling bij maandafsluiting.
 
-Een lid kan via **Mijn gegevens → Bankgegevens** het eigen IBAN bekijken en direct wijzigen.
+Een lid kan via **Mijn gegevens → Bankgegevens** het IBAN en de naam rekeninghouder op het eigen
+persoonsrecord bekijken en direct wijzigen. Beide velden vallen onder dezelfde bankveldrechten.
 De server bepaalt het persoonsrecord via `rondo_linked_person_id`; de client kan geen andere
 persoon als doel opgeven. De bestaande profielservice ondersteunt ook minderjarige kinderen;
 de nieuwe bankroute gebruikt uitsluitend de eigen koppeling. Toegang tot een huishouden geeft
@@ -299,7 +302,7 @@ alle trainers, bestuurders of leden toegekend.
 | Externe verwerking/betaling vastleggen | Nee | Nee | Ja | Ja |
 | Registratoren en teams inschakelen | Nee | Nee | Nee | Ja |
 
-Los van deze beheerdersrollen kan ieder goedgekeurd lid het eigen IBAN lezen en wijzigen via
+Los van deze beheerdersrollen kan ieder goedgekeurd lid het eigen IBAN en de naam rekeninghouder lezen en wijzigen via
 Mijn gegevens volgens de persoonsgebonden controles hierboven. Dit geeft geen financiële
 modulerechten of toegang tot bankgegevens van teamgenoten.
 
@@ -560,6 +563,10 @@ registraties blijven het vastgelegde correctie- en versieproces volgen.
 JO23-1 nog niet uitbetaald. Dit is de uitgangsstatus op 4 oktober 2026; bij migratie wordt de
 actuele externe verwerkingsstatus opnieuw gecontroleerd.
 
+**B7a, bevestigd door Joost:** de tenaamstelling krijgt een apart persoonsveld **Naam rekeninghouder**
+(`bank_account_holder`), dat het lid zelf kan wijzigen via Mijn gegevens. De export gebruikt de
+vastgelegde tenaamstelling uit de batchmomentopname, ook wanneer deze afwijkt van de persoonsnaam.
+
 ### Nog te besluiten vóór de betreffende bouwfase
 
 De overige voorgestelde defaults worden vóór de afhankelijke fase bevestigd. Vastlegging van
@@ -568,14 +575,14 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 | ID | Open besluit | Voorgesteld uitgangspunt | Nodig vóór |
 |---|---|---|---|
 | B6b | Wat is bij import de actuele verwerkingsstatus van alle te importeren maanden? | September heeft uitgangsstatus B6a; andere maanden niet afleiden uit spreadsheetdata; actualiseren vóór import | Productie-import |
-| B7 | Tariefingangsdata, negatieve correcties en tenaamstelling | Gesloten bedragen bewaren; negatieve correcties handmatig afhandelen | Correcties en export |
+| B7b | Tariefingangsdata en negatieve correcties | Gesloten bedragen bewaren; negatieve correcties handmatig afhandelen | Correcties en export |
 | B8 | Bewaartermijn voor afwezigheidsredenen, bankgegevens, batches en bestanden | Aansluiten op vastgesteld clubbeleid; geen termijn verzinnen | Productievrijgave |
 
 ## 13. Uitvoeringsfasen
 
 | Fase | Resultaat | Voorwaarde om door te gaan |
 |---|---|---|
-| 0 | B1 vertalen naar broncategorieën, besluiten B7–B8 en migratiecontrole B6b voorbereiden, gedeelde SEPA-service en batchcontract uitwerken; Apps Script-controle is afgerond | Rekencontract bevestigd; bestaande Rabobank-contracten en broncontrolegrenzen vastgelegd |
+| 0 | B1 vertalen naar broncategorieën, besluiten B7b–B8 en migratiecontrole B6b voorbereiden, gedeelde SEPA-service en batchcontract uitwerken; Apps Script-controle is afgerond | Rekencontract bevestigd; bestaande Rabobank-contracten en broncontrolegrenzen vastgelegd |
 | 1 | Privé opslag, registry, rechtenbeleid, versiebeheer, calculator en API | Rekentests, rechtenmatrix en gelijktijdigheids-/hersteltests slagen |
 | 2 | Teamregistratie, gastspelers, afronden en bronconflicten | Volledige flow met synthetische data op desktop en mobiel gecontroleerd |
 | 3 | Bankvelden op personen en Mijn gegevens, maandafsluiting, correcties en Rabobank SEPA-export via gedeelde service | Rekenverschillen nul, schema-/batchtests en creditfactuurregressietests slagen; proefimport gecontroleerd |
@@ -597,9 +604,13 @@ Deze planning zelf blijft beperkt tot `docs/prd/`, zonder themaversie, changelog
   selecties. Directe URL's en API-requests respecteren dezelfde grenzen.
 - [ ] Financieel lezen laat geen write, export of volledige IBAN toe. Een registrator krijgt geen
   financiële gegevens van anderen. Publieke ICS, zoeken, abilities en generieke persoonexports lekken niets.
-- [ ] Een lid kan uitsluitend het eigen IBAN via Mijn gegevens lezen en wijzigen. Een ander
+- [ ] Een lid kan uitsluitend het IBAN en de naam rekeninghouder op het eigen persoonsrecord
+  via Mijn gegevens lezen en wijzigen. Een ander
   persoons-ID, huishoudtoegang of meegestuurde Nmbrs-velden verruimen dit niet. Oud-leden blijven
   alleen-lezen; generieke personen-API en abilities handhaven dezelfde bankveldrechten.
+- [ ] Een afwijkende naam rekeninghouder blijft behouden bij een naamswijziging van de persoon.
+  Ontbrekende of ongeldige tenaamstellingen blokkeren positieve betalingen; de XML gebruikt de
+  tenaamstelling uit de afgesloten batch en verandert niet na een latere profielwijziging.
 - [ ] Ongeldige IBAN's worden afgewezen; wissen met `null` is mogelijk en blokkeert positieve
   betalingen bij afsluiten. Wijzigingslogs bevatten geen volledig IBAN en starten geen Sportlink-sync.
 - [ ] Een rekeningwijziging na de voorvertoning wordt bij afsluiten ontdekt. Wijzigingen na
