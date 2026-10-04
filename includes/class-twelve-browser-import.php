@@ -88,6 +88,28 @@ class BrowserImport {
 			$gross += (int) round( $row['bruto'] * 100 );
 			$count += $row['aantal'];
 		}
+		if ( isset( $data['product_revenue'] ) ) {
+			$revenue = $data['product_revenue'];
+			if ( ! is_array( $revenue ) || ( $revenue['method'] ?? '' ) !== 'proportional_v1' || ! is_array( $revenue['products'] ?? null ) ) {
+				return false;
+			}
+			$names         = array_column( $data['producten'], 'product' );
+			$seen_products = [];
+			$cash          = 0;
+			$business      = 0;
+			foreach ( $revenue['products'] as $product ) {
+				if ( ! is_array( $product ) || ! is_string( $product['product'] ?? null ) || ! in_array( $product['product'], $names, true ) || isset( $seen_products[ $product['product'] ] ) || ! is_int( $product['cashCents'] ?? null ) || ! is_int( $product['businessclubCents'] ?? null ) || abs( $product['cashCents'] ) >= 10000000000 || abs( $product['businessclubCents'] ) >= 10000000000 ) {
+					return false;
+				}
+				$seen_products[ $product['product'] ] = true;
+				$cash                                += $product['cashCents'];
+				$business                            += $product['businessclubCents'];
+			}
+			$expected = ReportAggregator::revenue_breakdown( $data );
+			if ( $cash !== (int) round( $expected['kassaomzet'] * 100 ) || $business !== (int) round( $expected['businessclub'] * 100 ) ) {
+				return false;
+			}
+		}
 		$ids = [];
 		foreach ( $data['no_sale_transactions'] as $row ) {
 			if ( ! is_array( $row ) || ! is_string( $row['transactionId'] ?? null ) || isset( $ids[ $row['transactionId'] ] ) || ( $row['day'] ?? '' ) !== $start->format( 'Y-m-d' ) || ! is_string( $row['category'] ?? null ) || ! is_int( $row['grossCents'] ?? null ) || ! is_bool( $row['partial'] ?? null ) || ! is_array( $row['products'] ?? null ) ) {

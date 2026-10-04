@@ -140,4 +140,41 @@ class TwelveReportAggregatorTest extends RondoTestCase {
 		$this->assertSame( 45.40, $month['overig_verbruik'] );
 		$this->assertSame( 31.50, $month['betaalmethoden']['Omzet pin'] );
 	}
+	public function test_excluding_product_revenue_keeps_no_sale_and_refunds_consistent(): void {
+		$data   = [
+			'omzet'            => [
+				[
+					'section' => 'totaal',
+					'label'   => 'Omzet (excl. no-sale)',
+					'bedrag'  => 10.00,
+				],
+				[
+					'section' => 'categorie',
+					'label'   => 'Businessclub',
+					'bedrag'  => 5.00,
+				],
+			],
+			'producten_totaal' => [ 'bruto' => 20.00 ],
+			'product_revenue'  => [
+				'products' => [
+					[
+						'product'           => 'Shirt',
+						'cashCents'         => 400,
+						'businessclubCents' => 200,
+					],
+					[
+						'product'           => 'Return',
+						'cashCents'         => -100,
+						'businessclubCents' => 0,
+					],
+				],
+			],
+		];
+		$result = \Rondo\Twelve\ReportAggregator::revenue_breakdown( $data, array_map( static fn( $name ) => hash( 'sha256', $name ), [ 'Shirt', 'Return' ] ) );
+		$this->assertSame( 7.0, $result['kassaomzet'] );
+		$this->assertSame( 3.0, $result['businessclub'] );
+		$this->assertSame( 10.0, $result['omzet_totaal'] );
+		$this->assertEquals( 5.0, $result['uitgesloten_omzet'] );
+		$this->assertSame( 5.0, $result['overig_verbruik'] );
+	}
 }

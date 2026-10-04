@@ -375,13 +375,24 @@ class TwelveReports extends Base {
 	public function get_summary( $request ) {
 		[ $from, $to ] = $this->range( $request );
 		$reports       = $this->repository->query( $from, $to );
+		$excluded      = ProductClassification::excluded_products();
+		foreach ( $reports as $report ) {
+			if ( isset( $report['data']['product_revenue'] ) ) {
+				continue;
+			}
+			foreach ( $report['data']['producten'] ?? [] as $product ) {
+				if ( in_array( hash( 'sha256', $product['product'] ), $excluded, true ) ) {
+					return new \WP_Error( 'twelve_product_revenue_missing', 'De omzet per product wordt nog bijgewerkt. Probeer het later opnieuw.', [ 'status' => 503 ] );
+				}
+			}
+		}
 
 		return rest_ensure_response(
 			[
 				'from'        => $from,
 				'to'          => $to,
 				'group'       => $request->get_param( 'group' ),
-				'buckets'     => ReportAggregator::summarize( $reports, $request->get_param( 'group' ) ),
+				'buckets'     => ReportAggregator::summarize( $reports, $request->get_param( 'group' ), $excluded ),
 				'last_sync'   => get_option( 'rondo_twelve_browser_last_success', null ),
 				'product_mix' => ProductClassification::summary( ReportAggregator::by_product( $reports ) ),
 			]
