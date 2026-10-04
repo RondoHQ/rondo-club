@@ -306,8 +306,11 @@ dubbele registraties of batches. Transients alleen zijn geen voldoende beschermi
 **AWC 1:** een scherm en download met dezelfde aantallen als het huidige Nmbrs-overzicht.
 De kolommen heten Naam, Naam in Nmbrs, Dagen, L3090 winst, L3091 gelijkspel, U2150 basis en
 Bankvergoeding. Dagen telt wedstrijden, ook als die op dezelfde kalenderdag vallen. De looncode
-voor Bankvergoeding is nog een besluitpunt. De export
-wordt pas als Nmbrs-importbestand gepresenteerd als een echt importcontract is bevestigd;
+voor Bankvergoeding blijft voorlopig leeg en is instelbaar door een financiële beheerder.
+Zolang de code ontbreekt, blijft de kolom zichtbaar als `Bankvergoeding (code nog niet ingesteld)`;
+registratie en berekening kunnen doorgaan en er wordt geen looncode afgeleid of verzonnen.
+Vóór overname in Nmbrs moet de beheerder de juiste code controleren. De export wordt pas als
+Nmbrs-importbestand gepresenteerd als een echt importcontract is bevestigd;
 de eerste versie ondersteunt aantoonbaar handmatige snelinvoer.
 
 **JO23-1:** XLSX met uitsluitend de vijf bronkolommen in dezelfde volgorde. IBAN en namen zijn
@@ -363,6 +366,10 @@ winst of gelijkspel; JO23-1 krijgt alleen premie bij winst of gelijkspel.
 **B2a, bevestigd door Joost:** `Dagen` in Nmbrs is het aantal meetellende wedstrijden met Basis/Bank,
 niet het aantal unieke kalenderdagen. Twee wedstrijden op dezelfde dag tellen als twee.
 
+**B2b, bevestigd door Joost:** de Nmbrs-code voor Bankvergoeding is nog onbekend. Laat deze
+voorlopig leeg en instelbaar door een financiële beheerder; de verdere uitwerking gaat door.
+De telling blijft zichtbaar zonder een code te verzinnen.
+
 ### Nog te besluiten vóór de betreffende bouwfase
 
 De overige voorgestelde defaults worden vóór de afhankelijke fase bevestigd. Vastlegging van
@@ -370,7 +377,6 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | ID | Open besluit | Voorgesteld uitgangspunt | Nodig vóór |
 |---|---|---|---|
-| B2b | Welke Nmbrs-code hoort bij Bankvergoeding? | Geen code verzinnen; de telling van Dagen is vastgelegd in B2a | AWC 1-afsluiting |
 | B3 | Gastspelers en deelname bij beide teams, leeftijd/contractuitzonderingen? | Per wedstrijd registreren, mogelijke dubbele aanspraken laten beoordelen | Calculator en afsluiting |
 | B4 | Welk bankpakket/formaat en wat doet het Apps Script exact? | Huidige vijfkoloms-XLSX behouden na bewezen compatibiliteit | Export |
 | B5 | Wie registreert, corrigeert en sluit af; is een tweede fiatteur vereist? | Registrator per team en financiële beheerder zoals rechtenmatrix | Rechten en vrijgave |
@@ -382,7 +388,7 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | Fase | Resultaat | Voorwaarde om door te gaan |
 |---|---|---|
-| 0 | B1 vertalen naar broncategorieën, besluiten B2b en B3–B8, inspectie Apps Script, geanonimiseerd exportvoorbeeld, librarykeuze | Reken- en bestandscontract bevestigd; broncontrolegrenzen vastgelegd |
+| 0 | B1 vertalen naar broncategorieën, besluiten B3–B8, inspectie Apps Script, geanonimiseerd exportvoorbeeld, librarykeuze | Reken- en bestandscontract bevestigd; broncontrolegrenzen vastgelegd |
 | 1 | Privé opslag, registry, rechtenbeleid, versiebeheer, calculator en API | Rekentests, rechtenmatrix en gelijktijdigheids-/hersteltests slagen |
 | 2 | Teamregistratie, gastspelers, afronden en bronconflicten | Volledige flow met synthetische data op desktop en mobiel gecontroleerd |
 | 3 | Financiële profielen, maandafsluiting, correcties en exports | Rekenverschillen nul, bestandscontract bewezen, export/privacytests slagen |
@@ -411,6 +417,9 @@ Deze planning zelf blijft beperkt tot `docs/prd/`, zonder themaversie, changelog
   winst/gelijkspel. JO23-1 levert uitsluitend resultaatpremies, zonder basis-/bankvergoeding.
 - [ ] Twee verschillende meetellende AWC 1-wedstrijden op dezelfde kalenderdag met Basis/Bank
   voor dezelfde speler leveren `Dagen = 2`; dezelfde wedstrijd dubbel aanbieden blijft één deelname.
+- [ ] De bankvergoedingcode kan leeg blijven zonder de telling te verliezen. Alleen een financiële
+  beheerder of administrator kan de code instellen; een ontbrekende code is zichtbaar in het overzicht
+  en de download. Rondo vult nooit zelfstandig een looncode in.
 - [ ] Meer dan 30 wedstrijden en extra spelers blijven correct meetellen. Historie blijft bestaan
   na seizoenwissel, teamwissel, naamswijziging en tijdelijk wegvallen van de bronfeed.
 - [ ] September 2026 reproduceert per speler de gecontroleerde sheet, met AWC 1 44 basis/24 bank
