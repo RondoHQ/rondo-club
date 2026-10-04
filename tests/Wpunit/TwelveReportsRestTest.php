@@ -186,6 +186,10 @@ class TwelveReportsRestTest extends RondoTestCase {
 		$groups = array_column( $server->dispatch( $summary )->get_data()['product_mix']['groups'], null, 'group' );
 		$this->assertEquals( 10.50, $groups['entree']['amount'] );
 		$this->assertEquals( 0, $groups['food']['amount'] );
+		foreach ( [ 'other', 'merchandise' ] as $group ) {
+			$post->set_param( 'group', $group );
+			$this->assertSame( 200, $server->dispatch( $post )->get_status() );
+		}
 		$post->set_param( 'group', 'unassigned' );
 		$this->assertSame( 200, $server->dispatch( $post )->get_status() );
 		$post->set_param( 'group', 'invalid' );
@@ -197,7 +201,7 @@ class TwelveReportsRestTest extends RondoTestCase {
 
 	public function test_product_mix_zero_and_new_products(): void {
 		$summary = \Rondo\Twelve\ProductClassification::summary( [] );
-		$this->assertSame( [ null, null, null, null ], array_column( $summary['groups'], 'percentage' ) );
+		$this->assertSame( [ null, null, null, null, null, null ], array_column( $summary['groups'], 'percentage' ) );
 		update_option( \Rondo\Twelve\ProductClassification::OPTION, [ hash( 'sha256', 'Known' ) => 'non_food' ] );
 		$summary = \Rondo\Twelve\ProductClassification::summary(
 			[
@@ -213,6 +217,10 @@ class TwelveReportsRestTest extends RondoTestCase {
 			);
 		$groups  = array_column( $summary['groups'], null, 'group' );
 		$this->assertEquals( 75, $groups['non_food']['percentage'] );
+		$this->assertSame( 'Drank', $groups['non_food']['label'] );
+		$this->assertSame( 'Eten', $groups['food']['label'] );
+		$this->assertSame( 'Overig', $groups['other']['label'] );
+		$this->assertSame( 'Merchandise', $groups['merchandise']['label'] );
 		$this->assertEquals( 25, $groups['unassigned']['percentage'] );
 	}
 	public function test_schedule_is_admin_only_and_validates_windows_atomically(): void {

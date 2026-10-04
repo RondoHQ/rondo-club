@@ -128,4 +128,28 @@ class TwelveBrowserImportTest extends RondoTestCase {
 		BrowserImport::retire_pdf_import();
 		$this->assertFalse( wp_next_scheduled( 'rondo_twelve_daily_import' ) );
 	}
+	public function test_no_sale_keeps_product_prices_and_validates_accounted_amount(): void {
+		$data                         = $this->payload();
+		$data['no_sale_transactions'] = [
+			[
+				'transactionId'  => 'allocation',
+				'day'            => '2026-09-29',
+				'localTime'      => '2026-09-29 12:00',
+				'category'       => 'Businessclub',
+				'partial'        => false,
+				'grossCents'     => 100,
+				'accountedCents' => 90,
+				'products'       => [
+					[
+						'name'       => 'Drink',
+						'count'      => 1,
+						'grossCents' => 100,
+					],
+				],
+			],
+		];
+		$this->assertTrue( BrowserImport::validate( $data ) );
+		$data['no_sale_transactions'][0]['accountedCents'] = 90.5;
+		$this->assertFalse( BrowserImport::validate( $data ) );
+	}
 }

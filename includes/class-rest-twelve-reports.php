@@ -291,7 +291,12 @@ class TwelveReports extends Base {
 
 	public function get_product_groups() {
 		$products = ReportAggregator::by_product( $this->repository->query( '1970-01-01', '9999-12-31' ) );
-		return rest_ensure_response( [ 'products' => ProductClassification::catalog( $products ) ] );
+		return rest_ensure_response(
+			[
+				'products' => ProductClassification::catalog( $products ),
+				'groups'   => ProductClassification::GROUPS,
+			]
+			);
 	}
 
 	public function set_product_group( $request ) {

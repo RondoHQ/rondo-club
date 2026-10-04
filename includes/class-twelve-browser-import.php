@@ -96,6 +96,9 @@ class BrowserImport {
 			if ( ! is_string( $row['localTime'] ?? null ) || ! preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/', $row['localTime'] ) || $row['localTime'] < $data['period_start'] || $row['localTime'] >= $source['coverage_end'] || ( isset( $row['terminal'] ) && ! is_string( $row['terminal'] ) ) || ( $row['partial'] && $row['products'] !== [] ) ) {
 				return false;
 			}
+			if ( isset( $row['accountedCents'] ) && ! is_int( $row['accountedCents'] ) ) {
+				return false;
+			}
 			$consumed = 0;
 			foreach ( $row['products'] as $product ) {
 				if ( ! is_array( $product ) || ! is_string( $product['name'] ?? null ) || ! is_int( $product['count'] ?? null ) || ! is_int( $product['grossCents'] ?? null ) ) {
