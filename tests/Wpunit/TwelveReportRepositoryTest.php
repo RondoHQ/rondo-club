@@ -2,7 +2,6 @@
 
 namespace Tests\Wpunit;
 
-use Rondo\Twelve\ReportParser;
 use Rondo\Twelve\ReportRepository;
 use Tests\Support\RondoTestCase;
 
@@ -10,7 +9,7 @@ use Tests\Support\RondoTestCase;
 class TwelveReportRepositoryTest extends RondoTestCase {
 
 	private function parsed(): array {
-		return ReportParser::parse( (string) file_get_contents( __DIR__ . '/../fixtures/twelve-rapportage.txt' ) );
+		return json_decode( file_get_contents( __DIR__ . '/../fixtures/twelve-report.json' ), true );
 	}
 
 	private function pdf_bytes(): string {

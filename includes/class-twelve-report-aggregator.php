@@ -3,7 +3,7 @@
  * Aggregations over parsed Twelve reports.
  *
  * Pure PHP on purpose: takes the parsed report arrays (as produced by
- * ReportParser and stored by ReportRepository) and returns summaries for
+ * the browser import and stored by ReportRepository) and returns summaries for
  * the REST API and the businessclub invoicing. No WordPress dependencies.
  */
 
@@ -95,10 +95,12 @@ class ReportAggregator {
 					'businessclub'      => 0.0,
 					'omzet_totaal'      => 0.0,
 					'overig_verbruik'   => 0.0,
+					'provisional'       => false,
 				];
 			}
 
 			$data                                 = $report['data'];
+			$buckets[ $key ]['provisional']       = $buckets[ $key ]['provisional'] || ( isset( $data['source']['complete'] ) && ! $data['source']['complete'] );
 			$buckets[ $key ]['omzet_excl_nosale'] = self::round2( $buckets[ $key ]['omzet_excl_nosale'] + self::omzet_excl_nosale( $data ) );
 			$buckets[ $key ]['omzet_incl_nosale'] = self::round2( $buckets[ $key ]['omzet_incl_nosale'] + self::omzet_incl_nosale( $data ) );
 			$buckets[ $key ]['producten']        += self::aantal_producten( $data );

@@ -3,7 +3,6 @@
 namespace Tests\Wpunit;
 
 use Rondo\Twelve\ReportAggregator;
-use Rondo\Twelve\ReportParser;
 use Tests\Support\RondoTestCase;
 
 /** Tests for aggregations over parsed Twelve reports. */
@@ -16,7 +15,7 @@ class TwelveReportAggregatorTest extends RondoTestCase {
 	 * @return array<int, array{id: int, period_start: string, period_end: string, data: array}>
 	 */
 	private function two_reports(): array {
-		$data = ReportParser::parse( (string) file_get_contents( __DIR__ . '/../fixtures/twelve-rapportage.txt' ) );
+		$data = json_decode( file_get_contents( __DIR__ . '/../fixtures/twelve-report.json' ), true );
 
 		$second                 = $data;
 		$second['period_start'] = '2026-09-30 06:00';

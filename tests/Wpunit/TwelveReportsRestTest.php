@@ -5,7 +5,6 @@ namespace Tests\Wpunit;
 use Rondo\Core\UserRoles;
 use Rondo\REST\TwelveReports;
 use Rondo\Twelve\BusinessclubInvoicing;
-use Rondo\Twelve\ReportParser;
 use Rondo\Twelve\ReportRepository;
 use Tests\Support\RondoTestCase;
 
@@ -24,7 +23,7 @@ class TwelveReportsRestTest extends RondoTestCase {
 	}
 
 	private function import_fixture_report(): int {
-		$parsed     = ReportParser::parse( (string) file_get_contents( __DIR__ . '/../fixtures/twelve-rapportage.txt' ) );
+		$parsed     = json_decode( file_get_contents( __DIR__ . '/../fixtures/twelve-report.json' ), true );
 		$repository = new ReportRepository();
 		$post_id    = $repository->store( $parsed, 'msg-123', 'rapportage.pdf', "%PDF-1.4\n%fake\n" );
 		$this->assertNotInstanceOf( \WP_Error::class, $post_id );
@@ -115,7 +114,7 @@ class TwelveReportsRestTest extends RondoTestCase {
 		$this->import_fixture_report();
 
 		// The fixture has no businessclub turnover; inject some via a second report.
-		$parsed = ReportParser::parse( (string) file_get_contents( __DIR__ . '/../fixtures/twelve-rapportage.txt' ) );
+		$parsed = json_decode( file_get_contents( __DIR__ . '/../fixtures/twelve-report.json' ), true );
 		foreach ( $parsed['omzet'] as &$row ) {
 			if ( $row['label'] === 'Businessclub' ) {
 				$row['bedrag'] = 120.00;
