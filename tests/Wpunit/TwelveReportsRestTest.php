@@ -278,4 +278,78 @@ class TwelveReportsRestTest extends RondoTestCase {
 		$this->assertSame( [], $server->dispatch( $post )->get_data()['days'] );
 		delete_option( 'rondo_twelve_schedule' );
 	}
+	public function test_revenue_excludes_classified_products_without_changing_source_or_billing(): void {
+		$id                          = $this->import_fixture_report();
+		$original                    = json_decode( get_post_meta( $id, '_twelve_report_data', true ), true );
+		$names                       = array_column( $original['producten'], 'product' );
+		$original['product_revenue'] = [
+			'method'   => 'proportional_v1',
+			'products' => [
+				[
+					'product'           => $names[0],
+					'cashCents'         => 1000,
+					'businessclubCents' => 0,
+				],
+				[
+					'product'           => $names[1],
+					'cashCents'         => 575,
+					'businessclubCents' => 0,
+				],
+			],
+		];
+		update_post_meta( $id, '_twelve_report_data', wp_slash( wp_json_encode( $original ) ) );
+		update_option(
+			\Rondo\Twelve\ProductClassification::OPTION,
+			[
+				hash( 'sha256', $names[0] ) => 'merchandise',
+				hash( 'sha256', $names[1] ) => 'food',
+			]
+			);
+		$server = $this->bootRestControllers( [ TwelveReports::class ] );
+		wp_set_current_user( $this->user( 'rondo_bestuur' ) );
+		$request = new \WP_REST_Request( 'GET', '/rondo/v1/twelve/summary' );
+		$request->set_param( 'from', '2026-09-01' );
+		$request->set_param( 'to', '2026-09-30' );
+		foreach ( [ 'day', 'month' ] as $group ) {
+			$request->set_param( 'group', $group );
+			$response = $server->dispatch( $request );
+			$this->assertSame( 200, $response->get_status() );
+			$row = $response->get_data()['buckets'][0];
+			$this->assertSame( 5.75, $row['kassaomzet'] );
+			$this->assertSame( 5.75, $row['omzet_excl_nosale'] );
+			$this->assertSame( 5.75, $row['omzet_totaal'] );
+			$this->assertEquals( 10, $row['uitgesloten_omzet'] );
+			$this->assertSame( 27.70, $row['overig_verbruik'] );
+		}
+		$this->assertEquals( $original, json_decode( get_post_meta( $id, '_twelve_report_data', true ), true ) );
+		$this->assertSame( 15.75, \Rondo\Twelve\ReportAggregator::revenue_breakdown( $original )['kassaomzet'] );
+		update_option(
+			\Rondo\Twelve\ProductClassification::OPTION,
+			[
+				hash( 'sha256', $names[0] ) => 'other',
+				hash( 'sha256', $names[1] ) => 'non_food',
+			]
+			);
+		$this->assertSame( 5.75, $server->dispatch( $request )->get_data()['buckets'][0]['omzet_totaal'] );
+		update_option( \Rondo\Twelve\ProductClassification::OPTION, [] );
+		$this->assertSame( 15.75, $server->dispatch( $request )->get_data()['buckets'][0]['omzet_totaal'] );
+		unset( $original['product_revenue'] );
+		update_post_meta( $id, '_twelve_report_data', wp_slash( wp_json_encode( $original ) ) );
+		update_option( \Rondo\Twelve\ProductClassification::OPTION, [ hash( 'sha256', $names[0] ) => 'other' ] );
+		$this->assertSame( 503, $server->dispatch( $request )->get_status() );
+	}
+
+	public function test_unassigned_count_tracks_products_even_when_their_amount_is_zero(): void {
+		update_option( \Rondo\Twelve\ProductClassification::OPTION, [] );
+		$this->assertSame( 0, \Rondo\Twelve\ProductClassification::summary( [] )['unassigned_count'] );
+		$products = [
+			[
+				'product' => 'New',
+				'bruto'   => 0,
+			],
+		];
+		$this->assertSame( 1, \Rondo\Twelve\ProductClassification::summary( $products )['unassigned_count'] );
+		update_option( \Rondo\Twelve\ProductClassification::OPTION, [ hash( 'sha256', 'New' ) => 'food' ] );
+		$this->assertSame( 0, \Rondo\Twelve\ProductClassification::summary( $products )['unassigned_count'] );
+	}
 }

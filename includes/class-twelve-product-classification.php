@@ -24,10 +24,19 @@ class ProductClassification {
 		return $products;
 	}
 
+	/** Product-name hashes excluded from revenue, while source records stay intact. */
+	public static function excluded_products(): array {
+		return array_keys( array_filter( get_option( self::OPTION, [] ), static fn( $group ) => in_array( $group, [ 'other', 'merchandise' ], true ) ) );
+	}
+
 	/** Shares of gross product value, including no-sale, with unassigned value explicit. */
 	public static function summary( array $products ): array {
-		$amounts = array_fill_keys( array_keys( self::GROUPS ), 0 );
+		$unassigned = 0;
+		$amounts    = array_fill_keys( array_keys( self::GROUPS ), 0 );
 		foreach ( self::catalog( $products ) as $product ) {
+			if ( $product['group'] === 'unassigned' ) {
+				++$unassigned;
+			}
 			$amounts[ $product['group'] ] += (int) round( $product['bruto'] * 100 );
 		}
 		$total = array_sum( $amounts );
@@ -41,8 +50,9 @@ class ProductClassification {
 			];
 		}
 		return [
-			'total'  => $total / 100,
-			'groups' => $rows,
+			'unassigned_count' => $unassigned,
+			'total'            => $total / 100,
+			'groups'           => $rows,
 		];
 	}
 }

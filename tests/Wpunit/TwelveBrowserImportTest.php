@@ -152,4 +152,30 @@ class TwelveBrowserImportTest extends RondoTestCase {
 		$data['no_sale_transactions'][0]['accountedCents'] = 90.5;
 		$this->assertFalse( BrowserImport::validate( $data ) );
 	}
+	public function test_product_revenue_requires_known_unique_products_and_balanced_totals(): void {
+		$data                    = $this->payload();
+		$data['product_revenue'] = [
+			'method'   => 'proportional_v1',
+			'products' => [
+				[
+					'product'           => $data['producten'][0]['product'],
+					'cashCents'         => 1575,
+					'businessclubCents' => 0,
+				],
+			],
+		];
+		$this->assertTrue( BrowserImport::validate( $data ) );
+		$bad = $data;
+		++$bad['product_revenue']['products'][0]['cashCents'];
+		$this->assertFalse( BrowserImport::validate( $bad ) );
+		$bad = $data;
+		++$bad['product_revenue']['products'][0]['businessclubCents'];
+		$this->assertFalse( BrowserImport::validate( $bad ) );
+		$bad = $data;
+		$bad['product_revenue']['products'][0]['product'] = 'Invented';
+		$this->assertFalse( BrowserImport::validate( $bad ) );
+		$bad                                  = $data;
+		$bad['product_revenue']['products'][] = $bad['product_revenue']['products'][0];
+		$this->assertFalse( BrowserImport::validate( $bad ) );
+	}
 }

@@ -53,15 +53,24 @@ class ReportAggregator {
 	}
 
 	/** Revenue is cash-register sales plus businessclub consumption billed separately. */
-	public static function revenue_breakdown( array $report ): array {
-		$cash     = self::omzet_excl_nosale( $report );
-		$business = self::round2( array_sum( array_column( self::omzet_rows( $report, 'categorie', 'Businessclub' ), 'bedrag' ) ) );
-		$total    = self::round2( $cash + $business );
+	public static function revenue_breakdown( array $report, array $excluded_products = [] ): array {
+		$cash              = self::omzet_excl_nosale( $report );
+		$business          = self::round2( array_sum( array_column( self::omzet_rows( $report, 'categorie', 'Businessclub' ), 'bedrag' ) ) );
+		$total             = self::round2( $cash + $business );
+		$excluded_cash     = 0;
+		$excluded_business = 0;
+		foreach ( $report['product_revenue']['products'] ?? [] as $product ) {
+			if ( in_array( hash( 'sha256', $product['product'] ), $excluded_products, true ) ) {
+				$excluded_cash     += $product['cashCents'];
+				$excluded_business += $product['businessclubCents'];
+			}
+		}
 		return [
-			'kassaomzet'      => $cash,
-			'businessclub'    => $business,
-			'omzet_totaal'    => $total,
-			'overig_verbruik' => self::round2( self::omzet_incl_nosale( $report ) - $total ),
+			'kassaomzet'        => self::round2( $cash - $excluded_cash / 100 ),
+			'businessclub'      => self::round2( $business - $excluded_business / 100 ),
+			'omzet_totaal'      => self::round2( $total - ( $excluded_cash + $excluded_business ) / 100 ),
+			'uitgesloten_omzet' => ( $excluded_cash + $excluded_business ) / 100,
+			'overig_verbruik'   => self::round2( self::omzet_incl_nosale( $report ) - $total ),
 		];
 	}
 
@@ -78,7 +87,7 @@ class ReportAggregator {
 	 * @param array<int, array{id: int, period_start: string, data: array}> $reports
 	 * @return array<int, array{periode: string, omzet_excl_nosale: float, omzet_incl_nosale: float, producten: int, betaalmethoden: array<string, float>}>
 	 */
-	public static function summarize( array $reports, string $group = 'day' ): array {
+	public static function summarize( array $reports, string $group = 'day', array $excluded_products = [] ): array {
 		$buckets = [];
 		foreach ( $reports as $report ) {
 			$date = substr( $report['period_start'], 0, 10 );
@@ -95,17 +104,18 @@ class ReportAggregator {
 					'businessclub'      => 0.0,
 					'omzet_totaal'      => 0.0,
 					'overig_verbruik'   => 0.0,
+					'uitgesloten_omzet' => 0.0,
 					'provisional'       => false,
 				];
 			}
 
 			$data                                 = $report['data'];
 			$buckets[ $key ]['provisional']       = $buckets[ $key ]['provisional'] || ( isset( $data['source']['complete'] ) && ! $data['source']['complete'] );
-			$buckets[ $key ]['omzet_excl_nosale'] = self::round2( $buckets[ $key ]['omzet_excl_nosale'] + self::omzet_excl_nosale( $data ) );
+			$buckets[ $key ]['omzet_excl_nosale'] = self::round2( $buckets[ $key ]['omzet_excl_nosale'] + self::revenue_breakdown( $data, $excluded_products )['kassaomzet'] );
 			$buckets[ $key ]['omzet_incl_nosale'] = self::round2( $buckets[ $key ]['omzet_incl_nosale'] + self::omzet_incl_nosale( $data ) );
 			$buckets[ $key ]['producten']        += self::aantal_producten( $data );
 
-			foreach ( self::revenue_breakdown( $data ) as $field => $amount ) {
+			foreach ( self::revenue_breakdown( $data, $excluded_products ) as $field => $amount ) {
 				$buckets[ $key ][ $field ] = self::round2( $buckets[ $key ][ $field ] + $amount );
 			}
 
