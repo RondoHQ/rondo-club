@@ -215,4 +215,59 @@ class TwelveReportsRestTest extends RondoTestCase {
 		$this->assertEquals( 75, $groups['non_food']['percentage'] );
 		$this->assertEquals( 25, $groups['unassigned']['percentage'] );
 	}
+	public function test_schedule_is_admin_only_and_validates_windows_atomically(): void {
+		delete_option( 'rondo_twelve_schedule' );
+		$server = $this->bootRestControllers( [ TwelveReports::class ] );
+		$post   = new \WP_REST_Request( 'POST', '/rondo/v1/twelve/schedule' );
+		$post->set_param(
+			'days',
+			[
+				[
+					'day'   => 2,
+					'start' => 20,
+					'end'   => 24,
+				],
+			]
+			);
+		wp_set_current_user( $this->user( 'rondo_bestuur' ) );
+		$this->assertSame( 403, $server->dispatch( $post )->get_status() );
+		wp_set_current_user( $this->user( 'administrator' ) );
+		$this->assertSame( 200, $server->dispatch( $post )->get_status() );
+		$get    = new \WP_REST_Request( 'GET', '/rondo/v1/twelve/schedule' );
+		$stored = $server->dispatch( $get )->get_data();
+		$this->assertSame(
+			[
+				[
+					'day'   => 2,
+					'start' => 20,
+					'end'   => 24,
+				],
+			],
+			$stored['days']
+			);
+		foreach ( [
+			[
+				[
+					'day'   => 2,
+					'start' => 24,
+					'end'   => 24,
+				],
+			],
+			[
+				[
+					'day'   => 7,
+					'start' => 10,
+					'end'   => 24,
+				],
+			],
+			array_merge( $stored['days'], $stored['days'] ),
+		] as $bad ) {
+			$post->set_param( 'days', $bad );
+			$this->assertSame( 400, $server->dispatch( $post )->get_status() );
+			$this->assertSame( $stored, $server->dispatch( $get )->get_data() );
+		}
+		$post->set_param( 'days', [] );
+		$this->assertSame( [], $server->dispatch( $post )->get_data()['days'] );
+		delete_option( 'rondo_twelve_schedule' );
+	}
 }
