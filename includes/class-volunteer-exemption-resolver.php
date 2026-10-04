@@ -159,9 +159,10 @@ class VolunteerExemptionResolver {
 	 * Resolve the exemption that applies to an obligation unit.
 	 *
 	 * A gezin obligation belongs to the responsible adults together. If one of
-	 * those adults is exempt, the shared gezin obligation is exempt as well. The
-	 * triggering children are only considered for orphan units, where no adult
-	 * could be resolved from relationships or the address fallback.
+	 * those adults is exempt, or a triggering child has any active volunteer role,
+	 * the shared gezin obligation is exempt as well. A child's personal manual or
+	 * paid exemption does not transfer to adults. Orphan units retain their own
+	 * personal exemptions when no adult could be resolved.
 	 *
 	 * @param array  $unit   Eligibility unit from VolunteerEligibilityService.
 	 * @param string $season KNVB season string ("2026-2027").
@@ -173,8 +174,10 @@ class VolunteerExemptionResolver {
 			return null;
 		}
 
+		$child_ids = [];
 		if ( ( $unit['kind'] ?? '' ) === VolunteerEligibilityService::UNIT_KIND_GEZIN ) {
 			$trigger_ids = array_map( 'intval', (array) ( $unit['trigger_person_ids'] ?? [] ) );
+			$child_ids   = array_values( array_intersect( $person_ids, $trigger_ids ) );
 			$adults      = array_values( array_diff( $person_ids, $trigger_ids ) );
 			if ( ! empty( $adults ) ) {
 				$person_ids = $adults;
@@ -188,6 +191,45 @@ class VolunteerExemptionResolver {
 					'person_id' => $person_id,
 					'reason'    => $reason,
 				];
+			}
+		}
+
+		foreach ( $child_ids as $child_id ) {
+			$reason = self::resolve_child_volunteer_role( $child_id );
+			if ( $reason !== null ) {
+				return [
+					'person_id' => $child_id,
+					'reason'    => $reason,
+				];
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Any active volunteering by a child covers the family's shared duty.
+	 *
+	 * Use actual roles, not the cached Sportlink volunteer flag. The configured
+	 * staff list is not exhaustive for children: other team support roles count
+	 * too, using the existing volunteer-role classification.
+	 */
+	private static function resolve_child_volunteer_role( int $person_id ): ?string {
+		if ( get_post_type( $person_id ) !== 'person' || get_post_status( $person_id ) === 'trash' ) {
+			return null;
+		}
+
+		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' );
+		$work_history = is_array( $work_history ) ? $work_history : [];
+		if ( self::has_active_commissie_in_history( $work_history ) ) {
+			return self::REASON_COMMISSIE;
+		}
+		if ( self::has_active_staff_role_in_history( $work_history ) ) {
+			return self::REASON_STAFF;
+		}
+		foreach ( $work_history as $position ) {
+			if ( VolunteerStatus::is_position_current( $position ) && VolunteerStatus::is_volunteer_position( $position ) ) {
+				return self::REASON_STAFF;
 			}
 		}
 
@@ -205,7 +247,7 @@ class VolunteerExemptionResolver {
 			case self::REASON_COMMISSIE:
 				return 'Actief commissielid';
 			case self::REASON_STAFF:
-				return 'Actieve staf-rol (trainer/leider/teammanager)';
+				return 'Actieve staf- of vrijwilligersrol';
 			case self::REASON_PAID:
 				return 'Betaalde vrijwilliger';
 			case self::REASON_MANUAL:
