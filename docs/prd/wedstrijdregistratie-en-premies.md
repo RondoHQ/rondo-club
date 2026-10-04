@@ -21,6 +21,11 @@ De eerste versie biedt registratie onder **Teams → Wedstrijden** en maandverwe
 Sportlink-wedstrijdprogramma vormen de basis. Onderstaande architectuur is een voorstel;
 de open besluiten in hoofdstuk 12 moeten vóór de betreffende bouwfase worden vastgelegd.
 
+Bevestigd door Joost op 4 oktober 2026: alleen competitie en nacompetitie tellen mee.
+Beker- en oefenwedstrijden geven geen recht op vergoeding of premie. AWC 1 krijgt een vergoeding
+voor Basis/Bank plus premie bij winst of gelijkspel. JO23-1 krijgt uitsluitend premie bij winst
+of gelijkspel, zonder basis- of bankvergoeding.
+
 Binnen scope vallen basis/bankregistratie, afwezigheidsstatussen, gastspelers, maandafsluiting,
 correcties, een Nmbrs-snelinvoeroverzicht, JO23-1-betaalexport en een eenmalige import.
 
@@ -141,14 +146,15 @@ en betaalexport. Een speler met €0 heeft voor die maand geen rekening nodig.
 
 | Regel | Voorgestelde verwerking |
 |---|---|
+| Meetellende wedstrijden, bevestigd | Alleen competitie en nacompetitie voor beide teams; beker en oefenwedstrijden uitgesloten |
 | Periode | Bevestigde speeldatum in Europe/Amsterdam, maand inclusief jaar |
 | Seizoen | 1 juli tot 1 juli van het volgende jaar, gelijk aan de bestaande feed |
 | Basis of Bank | Eén deelname per persoon per wedstrijd; de statussen zijn exclusief |
 | Overige statussen | Geen deelname, vergoeding of premie |
 | Ontbrekende invoer | Onvolledig, nooit automatisch nul |
 | Winst/gelijk | Berekenen uit thuisdoelpunten, uitdoelpunten en de kant van het geregistreerde team |
-| AWC 1 | Aantallen Basis, Bank, deelnames, winst en gelijkspel; geen loonbedragen berekenen |
-| JO23-1 | `(winst × punten_bij_winst + gelijk × punten_bij_gelijk) × premie_per_punt` |
+| AWC 1, bevestigd | Vergoeding voor Basis/Bank plus premie bij winst of gelijkspel; Rondo levert de aantallen voor Nmbrs en berekent geen loonbedragen |
+| JO23-1, bevestigd | Alleen premie bij winst of gelijkspel, geen basis-/bankvergoeding; `(winst × punten_bij_winst + gelijk × punten_bij_gelijk) × premie_per_punt` |
 | Geld | Gehele eurocenten, standaard 1500 cent per punt; geen floating-pointbedragen |
 | Tariefwijziging | Nieuwe regelversie met ingangsdatum; afgesloten batches blijven ongewijzigd |
 | Afgelast/uitgesteld | Geen financiële verwerking zolang niet daadwerkelijk gespeeld en bevestigd |
@@ -158,9 +164,12 @@ De sheet noemt deelnames `Dagen (gespeeld)`, maar telt wedstrijden. Twee wedstri
 dag moeten een controlesignaal geven totdat de Nmbrs-betekenis is bevestigd. Ook dubbele deelname
 aan AWC 1 en JO23-1 wordt gemeld; de software kiest niet zelfstandig welk recht vervalt.
 
-Wedstrijdtypes die meetellen worden per team/seizoen expliciet ingesteld na besluit B1.
-De bekeruitslag na strafschoppen en eventuele afwijkende premierondes vereisen een expliciete
-regel; een onduidelijke bronuitslag wordt niet automatisch als winst verwerkt.
+De configuratie voor beide pilotteams bevat uitsluitend competitie en nacompetitie. Het
+Sportlink-wedstrijdtype moet eenduidig naar die categorieën worden vertaald; onbekende types
+blokkeren financiële verwerking totdat ze zijn beoordeeld. Beker- en oefenwedstrijden mogen in
+het bestaande programma zichtbaar blijven, maar tellen nooit mee in de aantallen of betaalexport.
+Een onduidelijke uitslag, bijvoorbeeld na strafschoppen in de nacompetitie, wordt niet automatisch
+als winst verwerkt en vereist beoordeling van het toepasselijke premiebeleid.
 
 ## 6. Voorgesteld gegevensmodel
 
@@ -340,14 +349,21 @@ Rollback van de import gebeurt op de gemarkeerde importrecords en vooraf vastgel
 Geen verwijdering van bestaande personen of teams. Een productiecode-rollback bewaart financiële
 historie; bij een fout kan de module worden uitgeschakeld zonder data te wissen.
 
-## 12. Besluiten vóór implementatie
+## 12. Vastgelegde en open besluiten
 
-Deze PRD autoriseert geen nieuwe betaalregels of productie-import. De voorgestelde defaults
-zijn expliciet herkenbaar en worden vóór de afhankelijke fase bevestigd.
+### Vastgelegd op 4 oktober 2026
+
+**B1, bevestigd door Joost:** voor AWC 1 en JO23-1 tellen alleen competitie en nacompetitie mee.
+Beker- en oefenwedstrijden zijn uitgesloten. AWC 1 krijgt basis-/bankvergoeding plus premie bij
+winst of gelijkspel; JO23-1 krijgt alleen premie bij winst of gelijkspel.
+
+### Nog te besluiten vóór de betreffende bouwfase
+
+De overige voorgestelde defaults worden vóór de afhankelijke fase bevestigd. Vastlegging van
+deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | ID | Open besluit | Voorgesteld uitgangspunt | Nodig vóór |
 |---|---|---|---|
-| B1 | Welke competitie-, beker-, oefen- en nacompetitiewedstrijden tellen mee? | Expliciete lijst per team/seizoen, inclusief strafschoppenbeleid | Calculator en import |
 | B2 | Betekent Nmbrs Dagen unieke dagen of deelnames; welke code hoort bij Bank? | Huidige aantallen als referentie, geen code of deduplicatie verzinnen | AWC 1-afsluiting |
 | B3 | Gastspelers en deelname bij beide teams, leeftijd/contractuitzonderingen? | Per wedstrijd registreren, mogelijke dubbele aanspraken laten beoordelen | Calculator en afsluiting |
 | B4 | Welk bankpakket/formaat en wat doet het Apps Script exact? | Huidige vijfkoloms-XLSX behouden na bewezen compatibiliteit | Export |
@@ -360,7 +376,7 @@ zijn expliciet herkenbaar en worden vóór de afhankelijke fase bevestigd.
 
 | Fase | Resultaat | Voorwaarde om door te gaan |
 |---|---|---|
-| 0 | Besluiten B1–B8, inspectie Apps Script, geanonimiseerd exportvoorbeeld, librarykeuze | Reken- en bestandscontract bevestigd; broncontrolegrenzen vastgelegd |
+| 0 | B1 vertalen naar broncategorieën, besluiten B2–B8, inspectie Apps Script, geanonimiseerd exportvoorbeeld, librarykeuze | Reken- en bestandscontract bevestigd; broncontrolegrenzen vastgelegd |
 | 1 | Privé opslag, registry, rechtenbeleid, versiebeheer, calculator en API | Rekentests, rechtenmatrix en gelijktijdigheids-/hersteltests slagen |
 | 2 | Teamregistratie, gastspelers, afronden en bronconflicten | Volledige flow met synthetische data op desktop en mobiel gecontroleerd |
 | 3 | Financiële profielen, maandafsluiting, correcties en exports | Rekenverschillen nul, bestandscontract bewezen, export/privacytests slagen |
@@ -382,7 +398,11 @@ Deze planning zelf blijft beperkt tot `docs/prd/`, zonder themaversie, changelog
 - [ ] Elke persoon komt hooguit eenmaal per wedstrijd voor. Onbekend en nul blijven onderscheiden.
   Gastspelers hoeven niet tot het huidige team te behoren, maar moeten toegankelijk en gekoppeld zijn.
 - [ ] Thuis/uit, 0-0, verlies, ontbrekende uitslag, afwijkende notatie, afgelasting, verplaatsing,
-  bekeruitslagen met strafschoppen en december/januari worden volgens de vastgelegde regels verwerkt.
+  onduidelijke nacompetitie-uitslagen en december/januari worden volgens de vastgelegde regels verwerkt.
+- [ ] Alleen competitie en nacompetitie tellen mee. Beker- en oefenwedstrijden leveren voor beide
+  teams geen vergoeding, premie of Nmbrs-aantal op, ook niet als er Basis/Bank is geregistreerd.
+- [ ] AWC 1 levert basis-/bankaantallen bij iedere meetellende deelname en daarnaast premies bij
+  winst/gelijkspel. JO23-1 levert uitsluitend resultaatpremies, zonder basis-/bankvergoeding.
 - [ ] Meer dan 30 wedstrijden en extra spelers blijven correct meetellen. Historie blijft bestaan
   na seizoenwissel, teamwissel, naamswijziging en tijdelijk wegvallen van de bronfeed.
 - [ ] September 2026 reproduceert per speler de gecontroleerde sheet, met AWC 1 44 basis/24 bank
