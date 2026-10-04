@@ -25,6 +25,8 @@ Bevestigd door Joost op 4 oktober 2026: alleen competitie en nacompetitie tellen
 Beker- en oefenwedstrijden geven geen recht op vergoeding of premie. AWC 1 krijgt een vergoeding
 voor Basis/Bank plus premie bij winst of gelijkspel. JO23-1 krijgt uitsluitend premie bij winst
 of gelijkspel, zonder basis- of bankvergoeding.
+Voor het hele seizoen 2026-2027 geldt €30 per punt voor AWC 1 en €15 per punt voor JO23-1:
+respectievelijk €90/€45 bij winst en €30/€15 bij gelijkspel.
 
 Binnen scope vallen basis/bankregistratie, afwezigheidsstatussen, gastspelers, maandafsluiting,
 correcties, een Nmbrs-snelinvoeroverzicht, JO23-1-betaalexport, bankgegevens op personen die leden
@@ -172,9 +174,10 @@ en betaalexport. Een speler met €0 heeft voor die maand geen rekening nodig.
 | Overige statussen | Geen deelname, vergoeding of premie |
 | Ontbrekende invoer | Onvolledig, nooit automatisch nul |
 | Winst/gelijk | Berekenen uit thuisdoelpunten, uitdoelpunten en de kant van het geregistreerde team |
-| AWC 1, bevestigd | Vergoeding voor Basis/Bank plus premie bij winst of gelijkspel; Rondo levert de aantallen voor Nmbrs en berekent geen loonbedragen |
-| JO23-1, bevestigd | Alleen premie bij winst of gelijkspel, geen basis-/bankvergoeding; `(winst × punten_bij_winst + gelijk × punten_bij_gelijk) × premie_per_punt` |
-| Geld | Gehele eurocenten, standaard 1500 cent per punt; geen floating-pointbedragen |
+| AWC 1, bevestigd | Vergoeding voor Basis/Bank plus €30 per punt: €90 bij winst, €30 bij gelijkspel en €0 bij verlies; Rondo levert de aantallen voor Nmbrs en doet geen loonberekening |
+| JO23-1, bevestigd | Alleen premie van €15 per punt: €45 bij winst, €15 bij gelijkspel en €0 bij verlies, geen basis-/bankvergoeding; `(winst × punten_bij_winst + gelijk × punten_bij_gelijk) × premie_per_punt` |
+| Tariefperiode, bevestigd | Beide punttarieven gelden voor het hele seizoen 2026-2027 |
+| Geld | Gehele eurocenten; AWC 1 3000 cent en JO23-1 1500 cent per punt; winst 3 punten, gelijkspel 1 punt en verlies 0 punten; geen floating-pointbedragen |
 | Tariefwijziging | Nieuwe regelversie met ingangsdatum; afgesloten batches blijven ongewijzigd |
 | Afgelast/uitgesteld | Geen financiële verwerking zolang niet daadwerkelijk gespeeld en bevestigd |
 | Gestopt of reglementaire uitslag | Geen automatische verwerking; eerst expliciet beoordelen |
@@ -383,6 +386,9 @@ registratie en berekening kunnen doorgaan en er wordt geen looncode afgeleid of 
 Vóór overname in Nmbrs moet de beheerder de juiste code controleren. De export wordt pas als
 Nmbrs-importbestand gepresenteerd als een echt importcontract is bevestigd;
 de eerste versie ondersteunt aantoonbaar handmatige snelinvoer.
+De bevestigde premieafspraak is €30 per punt (€90 per winst en €30 per gelijkspel).
+Bewaar die afspraak in de seizoensregels; de Nmbrs-uitvoer blijft aantallen aanleveren.
+De basis- en bankvergoeding staan los van dit punttarief en blijven onderdeel van de loonverwerking.
 
 **JO23-1, bevestigd door Joost:** een Rabobank SEPA-betaalbestand in XML, zoals bij de bestaande
 creditfacturen. Het huidige codepad gebruikt `pain.001.001.09`. De gebruiker downloadt het bestand,
@@ -573,6 +579,12 @@ vastgelegde tenaamstelling uit de batchmomentopname, ook wanneer deze afwijkt va
 ontvangen, dan handelt de financiële beheerder dit handmatig af. Rondo registreert de correctie
 en afhandeling, zonder automatische verrekening met toekomstige premies.
 
+**B7c, bevestigd door Joost:** voor het hele seizoen 2026-2027 geldt €15 per punt voor JO23-1
+en €30 per punt voor AWC 1. Bij winst zijn dat respectievelijk €45 en €90; bij gelijkspel €15
+en €30. Zowel Basis als Bank komt in aanmerking. De AWC 1-premie komt boven op de basis- of
+bankvergoeding; het Nmbrs-contract blijft een overzicht van aantallen. Deze aanvullende
+tariefafspraak komt van Joost, niet uit de gecontroleerde AWC 1-sheetformules.
+
 ### Nog te besluiten vóór de betreffende bouwfase
 
 De overige voorgestelde defaults worden vóór de afhankelijke fase bevestigd. Vastlegging van
@@ -581,14 +593,13 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 | ID | Open besluit | Voorgesteld uitgangspunt | Nodig vóór |
 |---|---|---|---|
 | B6b | Wat is bij import de actuele verwerkingsstatus van alle te importeren maanden? | September heeft uitgangsstatus B6a; andere maanden niet afleiden uit spreadsheetdata; actualiseren vóór import | Productie-import |
-| B7c | Vanaf wanneer geldt het JO23-1-tarief van €15 per punt? | Gehele seizoen 2026-2027; gesloten bedragen bewaren bij latere tariefwijzigingen | Regelconfiguratie |
 | B8 | Bewaartermijn voor afwezigheidsredenen, bankgegevens, batches en bestanden | Aansluiten op vastgesteld clubbeleid; geen termijn verzinnen | Productievrijgave |
 
 ## 13. Uitvoeringsfasen
 
 | Fase | Resultaat | Voorwaarde om door te gaan |
 |---|---|---|
-| 0 | B1 vertalen naar broncategorieën, besluiten B7c–B8 en migratiecontrole B6b voorbereiden, gedeelde SEPA-service en batchcontract uitwerken; Apps Script-controle is afgerond | Rekencontract bevestigd; bestaande Rabobank-contracten en broncontrolegrenzen vastgelegd |
+| 0 | B1 vertalen naar broncategorieën, bewaarbeleid B8 en migratiecontrole B6b voorbereiden, gedeelde SEPA-service en batchcontract uitwerken; Apps Script-controle is afgerond | Rekencontract bevestigd; bestaande Rabobank-contracten en broncontrolegrenzen vastgelegd |
 | 1 | Privé opslag, registry, rechtenbeleid, versiebeheer, calculator en API | Rekentests, rechtenmatrix en gelijktijdigheids-/hersteltests slagen |
 | 2 | Teamregistratie, gastspelers, afronden en bronconflicten | Volledige flow met synthetische data op desktop en mobiel gecontroleerd |
 | 3 | Bankvelden op personen en Mijn gegevens, maandafsluiting, correcties en Rabobank SEPA-export via gedeelde service | Rekenverschillen nul, schema-/batchtests en creditfactuurregressietests slagen; proefimport gecontroleerd |
@@ -632,6 +643,9 @@ Deze planning zelf blijft beperkt tot `docs/prd/`, zonder themaversie, changelog
   teams geen vergoeding, premie of Nmbrs-aantal op, ook niet als er Basis/Bank is geregistreerd.
 - [ ] AWC 1 levert basis-/bankaantallen bij iedere meetellende deelname en daarnaast premies bij
   winst/gelijkspel. JO23-1 levert uitsluitend resultaatpremies, zonder basis-/bankvergoeding.
+- [ ] De seizoensregels voor 2026-2027 leggen AWC 1 vast op 3000 cent per punt en JO23-1 op
+  1500 cent per punt. Winst/gelijk/verlies geven respectievelijk 3/1/0 punten. JO23-1 berekent
+  €45/€15/€0 per deelname; AWC 1 houdt de Nmbrs-uitvoer in aantallen bij de afspraak €90/€30/€0.
 - [ ] Twee verschillende meetellende AWC 1-wedstrijden op dezelfde kalenderdag met Basis/Bank
   voor dezelfde speler leveren `Dagen = 2`; dezelfde wedstrijd dubbel aanbieden blijft één deelname.
 - [ ] Basis/Bank bij AWC 1 en JO23-1 op dezelfde dag wordt per afzonderlijke wedstrijd volgens
