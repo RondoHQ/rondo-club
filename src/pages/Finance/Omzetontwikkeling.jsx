@@ -143,6 +143,7 @@ export default function Omzetontwikkeling() {
   const [group, setGroup] = useState('day');
   const [view, setView] = useState('revenue');
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedProductGroup, setSelectedProductGroup] = useState('all');
   const [productMetric, setProductMetric] = useState('amount');
   const productTrends = view !== 'revenue';
   const [comparing, setComparing] = useState(false);
@@ -182,7 +183,7 @@ export default function Omzetontwikkeling() {
       </div>}
     </div>
     {!valid || (comparing && !comparisonValid) ? <p role="alert" className="text-sm text-red-700 dark:text-red-300">Kies voor elke periode een begindatum die vóór of op de einddatum ligt.</p> : loading ? <p role="status">Omzet laden…</p> : error ? <div><p role="alert">{query.isError ? 'De omzet van de gekozen periode' : 'De omzet van de vergelijkingsperiode'} kon niet worden geladen.</p><button className="btn-secondary mt-3" onClick={() => { if (query.isError) query.refetch(); if (comparing && comparisonQuery.isError) comparisonQuery.refetch(); }}>Opnieuw proberen</button></div> : <>
-      {productTrends ? <ProductTrend rows={rows} comparisonRows={comparisonRows} from={from} to={to} comparisonFrom={comparisonFrom} comparisonTo={comparisonTo} group={group} comparing={comparing} view={view} selectedProduct={selectedProduct} onProductChange={setSelectedProduct} metric={productMetric} onMetricChange={setProductMetric} /> : <>
+      {productTrends ? <ProductTrend rows={rows} comparisonRows={comparisonRows} from={from} to={to} comparisonFrom={comparisonFrom} comparisonTo={comparisonTo} group={group} comparing={comparing} view={view} selectedProduct={selectedProduct} onProductChange={setSelectedProduct} selectedGroup={selectedProductGroup} onGroupChange={setSelectedProductGroup} metric={productMetric} onMetricChange={setProductMetric} /> : <>
       {comparing ? <ComparisonSummary rows={rows} comparisonRows={comparisonRows} from={from} to={to} comparisonFrom={comparisonFrom} comparisonTo={comparisonTo} /> : rows.length > 0 && <p className="text-sm">Totaal in deze periode: <strong className="tabular-nums">{currency(revenueTotal(rows))}</strong></p>}
       {!rows.length && <p className="text-sm text-gray-600 dark:text-gray-300">Geen rapportages in de gekozen periode. Kies een andere periode.</p>}
       {comparing && !comparisonRows.length && <p className="text-sm text-gray-600 dark:text-gray-300">Geen rapportages in de vergelijkingsperiode. Kies een andere vergelijkingsperiode.</p>}
