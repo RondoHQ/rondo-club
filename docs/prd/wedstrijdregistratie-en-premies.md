@@ -280,6 +280,9 @@ geen registratie en betekent niet dat er geen wedstrijd heeft plaatsgevonden.
 
 ## 8. Rechten en afscherming
 
+Bevestigd: wedstrijdselecties invoeren en corrigeren gebeurt door expliciet per team aangewezen
+registratoren. Bestaande teambeheerrechten zijn daarvoor op zichzelf onvoldoende.
+
 Voorgestelde nieuwe capability: `wedstrijdregistratie`. Deze geeft alleen registratierechten
 binnen expliciet toegewezen teams én bestaande teamtoegang. Bestaande `teams`- of `wedstrijdzaken`-
 rechten maken iemand niet automatisch registrator. Nieuwe rechten worden niet stilzwijgend aan
@@ -289,6 +292,7 @@ alle trainers, bestuurders of leden toegekend.
 |---|---|---|---|---|
 | Selectie en noodzakelijke afwezigheidsstatus lezen | Toegewezen team | Geen afwezigheidsredenen | Geen afwezigheidsredenen | Ja |
 | Concept invoeren en afronden | Toegewezen team | Nee | Alleen met registratorrecht | Ja |
+| Selectie corrigeren volgens het versieproces | Toegewezen team | Nee | Alleen met registratorrecht | Ja |
 | Financiële maandtotalen lezen | Nee | Ja | Ja | Ja |
 | IBAN van andere personen volledig lezen of wijzigen | Nee | Alleen gemaskeerd, niet wijzigen | Ja, binnen persoonstoegang | Ja |
 | Tarieven beheren, afsluiten en exporteren | Nee | Nee | Ja | Ja |
@@ -541,6 +545,11 @@ toe en behoud de bankgegevens in eerder afgesloten batches en exports.
 exporteren. Bouw geen verplichte tweede goedkeuringsstap in Rondo. Dit verandert niets aan de
 controle en ondertekening van betalingen in Rabobank.
 
+**B5b, bevestigd door Joost:** alleen expliciet per team aangewezen registratoren mogen de
+wedstrijdselecties invoeren en corrigeren, binnen hun bestaande teamtoegang. Teambeheerrechten
+geven deze bevoegdheid niet automatisch. De administrator beheert de toewijzingen; afgesloten
+registraties blijven het vastgelegde correctie- en versieproces volgen.
+
 ### Nog te besluiten vóór de betreffende bouwfase
 
 De overige voorgestelde defaults worden vóór de afhankelijke fase bevestigd. Vastlegging van
@@ -548,7 +557,6 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | ID | Open besluit | Voorgesteld uitgangspunt | Nodig vóór |
 |---|---|---|---|
-| B5b | Wie mag wedstrijden registreren en corrigeren? | Expliciet aangewezen registratoren per team zoals rechtenmatrix | Registratierechten |
 | B6 | Welke historische maanden zijn al verwerkt of betaald? | Geen automatische betaalstatus uit spreadsheetdata afleiden | Productie-import |
 | B7 | Tariefingangsdata, negatieve correcties en tenaamstelling | Gesloten bedragen bewaren; negatieve correcties handmatig afhandelen | Correcties en export |
 | B8 | Bewaartermijn voor afwezigheidsredenen, bankgegevens, batches en bestanden | Aansluiten op vastgesteld clubbeleid; geen termijn verzinnen | Productievrijgave |
@@ -557,7 +565,7 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | Fase | Resultaat | Voorwaarde om door te gaan |
 |---|---|---|
-| 0 | B1 vertalen naar broncategorieën, besluiten B5b–B8, gedeelde SEPA-service en batchcontract uitwerken; Apps Script-controle is afgerond | Rekencontract bevestigd; bestaande Rabobank-contracten en broncontrolegrenzen vastgelegd |
+| 0 | B1 vertalen naar broncategorieën, besluiten B6–B8, gedeelde SEPA-service en batchcontract uitwerken; Apps Script-controle is afgerond | Rekencontract bevestigd; bestaande Rabobank-contracten en broncontrolegrenzen vastgelegd |
 | 1 | Privé opslag, registry, rechtenbeleid, versiebeheer, calculator en API | Rekentests, rechtenmatrix en gelijktijdigheids-/hersteltests slagen |
 | 2 | Teamregistratie, gastspelers, afronden en bronconflicten | Volledige flow met synthetische data op desktop en mobiel gecontroleerd |
 | 3 | Bankvelden op personen en Mijn gegevens, maandafsluiting, correcties en Rabobank SEPA-export via gedeelde service | Rekenverschillen nul, schema-/batchtests en creditfactuurregressietests slagen; proefimport gecontroleerd |
@@ -574,8 +582,9 @@ Deze planning zelf blijft beperkt tot `docs/prd/`, zonder themaversie, changelog
 
 - [ ] Een financiële beheerder kan na geldige controles zelfstandig afsluiten en exporteren,
   zonder tweede fiatteur in Rondo. Exporteren registreert geen betaling.
-- [ ] Een registrator kan alleen toegewezen én reeds toegankelijke teams registreren; een gewone
-  teambezoeker ziet geen selecties. Directe URL's en API-requests respecteren dezelfde grenzen.
+- [ ] Een registrator kan alleen toegewezen én reeds toegankelijke teams registreren en corrigeren;
+  bestaande teambeheerrechten alleen geven geen schrijfrechten. Een gewone teambezoeker ziet geen
+  selecties. Directe URL's en API-requests respecteren dezelfde grenzen.
 - [ ] Financieel lezen laat geen write, export of volledige IBAN toe. Een registrator krijgt geen
   financiële gegevens van anderen. Publieke ICS, zoeken, abilities en generieke persoonexports lekken niets.
 - [ ] Een lid kan uitsluitend het eigen IBAN via Mijn gegevens lezen en wijzigen. Een ander
