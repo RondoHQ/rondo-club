@@ -167,9 +167,9 @@ export default function FinancesCard({ personId }) {
           <Coins className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           <h2 className="font-semibold text-brand-gradient">Financieel</h2>
         </div>
-        <label className="flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+        <label className="inline-flex shrink-0 items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
           Seizoen
-          <select aria-label="Financieel seizoen" value={history?.season || selectedSeason} onChange={event => selectSeason(event.target.value)} className="input py-1.5 w-auto">
+          <select aria-label="Financieel seizoen" value={history?.season || selectedSeason} onChange={event => selectSeason(event.target.value)} className="input py-1.5 w-auto!">
             {(history?.seasons || []).map(season => <option key={season} value={season}>{season}{season === history.current_season ? ' (huidig)' : ''}</option>)}
           </select>
         </label>
