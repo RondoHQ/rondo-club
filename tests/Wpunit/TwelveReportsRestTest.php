@@ -35,7 +35,7 @@ class TwelveReportsRestTest extends RondoTestCase {
 		$server = $this->bootRestControllers( [ TwelveReports::class ] );
 
 		wp_set_current_user( $this->user( UserRoles::ROLE_NAME ) );
-		foreach ( [ '/rondo/v1/twelve/reports', '/rondo/v1/twelve/summary', '/rondo/v1/twelve/categories', '/rondo/v1/twelve/products', '/rondo/v1/twelve/vat' ] as $route ) {
+		foreach ( [ '/rondo/v1/twelve/reports', '/rondo/v1/twelve/summary', '/rondo/v1/twelve/categories', '/rondo/v1/twelve/products', '/rondo/v1/twelve/vat', '/rondo/v1/twelve/product-groups' ] as $route ) {
 			$response = $server->dispatch( new \WP_REST_Request( 'GET', $route ) );
 			$this->assertSame( 403, $response->get_status(), $route );
 		}
@@ -156,5 +156,64 @@ class TwelveReportsRestTest extends RondoTestCase {
 		$result    = $invoicing->create_draft_invoice( '2026-09' );
 		$this->assertInstanceOf( \WP_Error::class, $result );
 		$this->assertSame( 'twelve_nothing_to_invoice', $result->get_error_code() );
+	}
+	public function test_product_groups_require_admin_and_recalculate_history(): void {
+		$id       = $this->import_fixture_report();
+		$original = get_post_meta( $id, '_twelve_report_data', true );
+		$server   = $this->bootRestControllers( [ TwelveReports::class ] );
+		wp_set_current_user( $this->user( 'rondo_bestuur' ) );
+		$get     = new \WP_REST_Request( 'GET', '/rondo/v1/twelve/product-groups' );
+		$catalog = $server->dispatch( $get )->get_data()['products'];
+		$this->assertCount( 9, $catalog );
+		$this->assertSame( [ 'unassigned' ], array_values( array_unique( array_column( $catalog, 'group' ) ) ) );
+		$post = new \WP_REST_Request( 'POST', '/rondo/v1/twelve/product-groups' );
+		$post->set_param( 'id', hash( 'sha256', 'Snoepzakje' ) );
+		$post->set_param( 'group', 'food' );
+		$this->assertSame( 403, $server->dispatch( $post )->get_status() );
+		wp_set_current_user( $this->user( 'administrator' ) );
+		$this->assertSame( 200, $server->dispatch( $post )->get_status() );
+		$summary = new \WP_REST_Request( 'GET', '/rondo/v1/twelve/summary' );
+		$summary->set_param( 'from', '2026-09-01' );
+		$summary->set_param( 'to', '2026-09-30' );
+		$mix = $server->dispatch( $summary )->get_data()['product_mix'];
+		$this->assertEquals( 43.45, $mix['total'] );
+		$groups = array_column( $mix['groups'], null, 'group' );
+		$this->assertEquals( 10.50, $groups['food']['amount'] );
+		$this->assertEquals( 24.17, $groups['food']['percentage'] );
+		$this->assertEquals( 32.95, $groups['unassigned']['amount'] );
+		$this->assertSame( $original, get_post_meta( $id, '_twelve_report_data', true ) );
+		$post->set_param( 'group', 'entree' );
+		$this->assertSame( 200, $server->dispatch( $post )->get_status() );
+		$groups = array_column( $server->dispatch( $summary )->get_data()['product_mix']['groups'], null, 'group' );
+		$this->assertEquals( 10.50, $groups['entree']['amount'] );
+		$this->assertEquals( 0, $groups['food']['amount'] );
+		$post->set_param( 'group', 'unassigned' );
+		$this->assertSame( 200, $server->dispatch( $post )->get_status() );
+		$post->set_param( 'group', 'invalid' );
+		$this->assertSame( 400, $server->dispatch( $post )->get_status() );
+		$post->set_param( 'group', 'food' );
+		$post->set_param( 'id', hash( 'sha256', 'Unknown product' ) );
+		$this->assertSame( 404, $server->dispatch( $post )->get_status() );
+	}
+
+	public function test_product_mix_zero_and_new_products(): void {
+		$summary = \Rondo\Twelve\ProductClassification::summary( [] );
+		$this->assertSame( [ null, null, null, null ], array_column( $summary['groups'], 'percentage' ) );
+		update_option( \Rondo\Twelve\ProductClassification::OPTION, [ hash( 'sha256', 'Known' ) => 'non_food' ] );
+		$summary = \Rondo\Twelve\ProductClassification::summary(
+			[
+				[
+					'product' => 'Known',
+					'bruto'   => 3.00,
+				],
+				[
+					'product' => 'New',
+					'bruto'   => 1.00,
+				],
+			]
+			);
+		$groups  = array_column( $summary['groups'], null, 'group' );
+		$this->assertEquals( 75, $groups['non_food']['percentage'] );
+		$this->assertEquals( 25, $groups['unassigned']['percentage'] );
 	}
 }

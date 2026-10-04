@@ -10,6 +10,7 @@ namespace Rondo\REST;
 
 use Rondo\Twelve\ReportAggregator;
 use Rondo\Twelve\ReportRepository;
+use Rondo\Twelve\ProductClassification;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -74,6 +75,35 @@ class TwelveReports extends Base {
 							'default'           => 30,
 							'sanitize_callback' => 'absint',
 							'validate_callback' => static fn( $value ): bool => $value >= 1 && $value <= 365,
+						],
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/twelve/product-groups',
+			[
+				[
+					'methods'             => 'GET',
+					'callback'            => [ $this, 'get_product_groups' ],
+					'permission_callback' => [ $this, 'check_kassa_permission' ],
+				],
+				[
+					'methods'             => 'POST',
+					'callback'            => [ $this, 'set_product_group' ],
+					'permission_callback' => fn() => $this->check_kassa_permission() && current_user_can( 'manage_options' ),
+					'args'                => [
+						'id'    => [
+							'required' => true,
+							'type'     => 'string',
+							'pattern'  => '^[a-f0-9]{64}$',
+						],
+						'group' => [
+							'required' => true,
+							'type'     => 'string',
+							'enum'     => array_keys( ProductClassification::GROUPS ),
 						],
 					],
 				],
@@ -167,6 +197,44 @@ class TwelveReports extends Base {
 		);
 	}
 
+	public function get_product_groups() {
+		$products = ReportAggregator::by_product( $this->repository->query( '1970-01-01', '9999-12-31' ) );
+		return rest_ensure_response( [ 'products' => ProductClassification::catalog( $products ) ] );
+	}
+
+	public function set_product_group( $request ) {
+		$id      = $request->get_param( 'id' );
+		$catalog = $this->get_product_groups()->get_data()['products'];
+		if ( ! in_array( $id, array_column( $catalog, 'id' ), true ) ) {
+			return new \WP_Error( 'twelve_unknown_product', 'Dit product is niet gevonden.', [ 'status' => 404 ] );
+		}
+		$lock = ProductClassification::OPTION . '_lock';
+		if ( ! add_option( $lock, time(), '', false ) ) {
+			return new \WP_Error( 'twelve_groups_busy', 'Er wordt al een indeling opgeslagen. Probeer opnieuw.', [ 'status' => 409 ] );
+		}
+		try {
+			$groups = get_option( ProductClassification::OPTION, [] );
+			$group  = $request->get_param( 'group' );
+			if ( $group === 'unassigned' ) {
+				unset( $groups[ $id ] );
+			} else {
+				$groups[ $id ] = $group;
+			}
+			update_option( ProductClassification::OPTION, $groups, false );
+			if ( get_option( ProductClassification::OPTION, [] ) !== $groups ) {
+				return new \WP_Error( 'twelve_groups_save_failed', 'Opslaan mislukt. Probeer opnieuw.', [ 'status' => 500 ] );
+			}
+			return rest_ensure_response(
+				[
+					'id'    => $id,
+					'group' => $group,
+				]
+				);
+		} finally {
+			delete_option( $lock );
+		}
+	}
+
 	public function check_kassa_permission(): bool {
 		return $this->check_user_approved() && \Rondo\Core\UserRoles::can_access_section( 'kassaomzet' );
 	}
@@ -213,10 +281,11 @@ class TwelveReports extends Base {
 
 		return rest_ensure_response(
 			[
-				'from'    => $from,
-				'to'      => $to,
-				'group'   => $request->get_param( 'group' ),
-				'buckets' => ReportAggregator::summarize( $reports, $request->get_param( 'group' ) ),
+				'from'        => $from,
+				'to'          => $to,
+				'group'       => $request->get_param( 'group' ),
+				'buckets'     => ReportAggregator::summarize( $reports, $request->get_param( 'group' ) ),
+				'product_mix' => ProductClassification::summary( ReportAggregator::by_product( $reports ) ),
 			]
 		);
 	}
@@ -297,6 +366,7 @@ class TwelveReports extends Base {
 	private function format_report( array $report ): array {
 		$data = $report['data'];
 		return [
+			...ReportAggregator::revenue_breakdown( $data ),
 			'id'                => $report['id'],
 			'period_start'      => $report['period_start'],
 			'period_end'        => $report['period_end'],

@@ -121,4 +121,24 @@ class TwelveReportAggregatorTest extends RondoTestCase {
 		$this->assertSame( 110.09, $days[1]['netto'] );
 		$this->assertSame( 9.91, $days[1]['btw'] );
 	}
+	public function test_businessclub_counts_once_as_revenue_per_day_and_month(): void {
+		$reports = $this->two_reports();
+		foreach ( $reports[0]['data']['omzet'] as &$row ) {
+			if ( $row['label'] === 'Businessclub' ) {
+				$row['bedrag'] = 10.00;
+			}
+		}
+		unset( $row );
+		$days = ReportAggregator::summarize( $reports );
+		$this->assertSame( 15.75, $days[0]['kassaomzet'] );
+		$this->assertSame( 10.0, $days[0]['businessclub'] );
+		$this->assertSame( 25.75, $days[0]['omzet_totaal'] );
+		$this->assertSame( 17.70, $days[0]['overig_verbruik'] );
+		$this->assertSame( 15.75, $days[1]['omzet_totaal'] );
+		$month = ReportAggregator::summarize( $reports, 'month' )[0];
+		$this->assertSame( 41.50, $month['omzet_totaal'] );
+		$this->assertSame( 10.0, $month['businessclub'] );
+		$this->assertSame( 45.40, $month['overig_verbruik'] );
+		$this->assertSame( 31.50, $month['betaalmethoden']['Omzet pin'] );
+	}
 }

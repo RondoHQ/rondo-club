@@ -544,6 +544,7 @@ export const prmApi = {
   bulkCreateInvoices: (caseIds) => api.post('/rondo/v1/invoices/bulk', { case_ids: caseIds }),
   generateInvoicePdf: (id) => api.post(`/rondo/v1/invoices/${id}/generate-pdf`),
   getTwelve: (view, params = {}) => api.get(`/rondo/v1/twelve/${view}`, { params }),
+  setTwelveProductGroup: (data) => api.post('/rondo/v1/twelve/product-groups', data),
   createTwelveInvoice: (data) => api.post('/rondo/v1/twelve/billing', data),
   sendInvoice: (id, data = {}) => api.post(`/rondo/v1/invoices/${id}/send`, data),
   scheduleInvoice: (id, data = {}) => api.post(`/rondo/v1/invoices/${id}/schedule`, data),

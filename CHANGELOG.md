@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.125.0] - 2026-10-04
+
+### Added
+- Classify imported Twelve products as Entree, Food or Non-food in Kassaomzet. Administrators can manage the classification across historical reports; monthly shares show unassigned products separately and include VAT and no-sale.
+- Email the site administrator when a Twelve report cannot be fully parsed or imported, with a report reference and a link to Kassaomzet. Repeated alerts are limited to once per report/error per 24 hours, failed emails are retried on the next import, and dry runs remain silent.
+
+### Changed
+- Day and month revenue totals and the revenue chart now include cash-register sales plus businessclub consumption billed separately. Other no-sale consumption is shown separately.
+
+### Fixed
+- Continue importing other Twelve reports after an unexpected per-report failure; keep notification failures from interrupting the import.
+
 ## [35.124.2] - 2026-10-04
 
 ### Fixed
