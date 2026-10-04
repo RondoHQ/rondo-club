@@ -791,6 +791,8 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
     array (
       'fields' => 
       array (
+        'iban' => array ( 'canonical_name' => 'iban', 'key' => 'field_person_iban', 'label' => 'IBAN', 'name' => 'iban', 'storage_name' => 'iban', 'type' => 'text' ),
+        'bank_account_holder' => array ( 'canonical_name' => 'bank_account_holder', 'key' => 'field_person_bank_account_holder', 'label' => 'Naam rekeninghouder', 'name' => 'bank_account_holder', 'storage_name' => 'bank_account_holder', 'type' => 'text' ),
         '_nikki_2022_saldo' => 
         array (
           'canonical_name' => '_nikki_2022_saldo',
