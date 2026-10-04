@@ -320,6 +320,7 @@ class InvoicePdfGenerator {
 
 		// Build line items table rows
 		$is_membership      = ( $invoice_type === 'membership' );
+		$is_discipline      = ( $invoice_type === 'discipline' );
 		$line_items_html    = '';
 		$custom_fields_html = '';
 
@@ -351,8 +352,8 @@ class InvoicePdfGenerator {
 					$formatted_amount = '€ ' . number_format( $amount, 2, ',', '.' );
 				}
 
-				if ( $is_membership ) {
-					// Membership: 2-column layout (description + amount).
+				if ( ! $is_discipline ) {
+					// Non-discipline invoices: 2-column layout (description + amount).
 					$description      = $item['description'] ?? '';
 					$line_items_html .= '<tr>';
 					$line_items_html .= '<td>' . esc_html( $description ) . '</td>';
@@ -559,7 +560,7 @@ table.line-items .total-row td {
 	' . ( ! empty( $person_email ) ? '<div>' . esc_html( $person_email ) . '</div>' : '' ) . '
 </div>
 
-' . ( $is_membership ? '
+' . ( ! $is_discipline ? '
 <table class="line-items">
 	<thead>
 		<tr>
