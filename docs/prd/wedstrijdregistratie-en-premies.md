@@ -142,6 +142,9 @@ De interface moet op een telefoon bruikbaar zijn zonder een horizontale matrix v
 
 ### Maand verwerken
 
+De financiële beheerder mag zelfstandig afsluiten en exporteren; een tweede fiatteur in Rondo
+is niet vereist. De bestaande controles en bevestiging vóór export blijven gelden.
+
 1. De financiële beheerder kiest team, seizoen en maand en ziet afgeronde registraties,
    openstaande wedstrijden en eventuele bronconflicten.
 2. Het overzicht toont aantallen per speler met doorklik naar de onderliggende wedstrijden.
@@ -534,6 +537,10 @@ meerdere premiebetalingen in één maandbestand. De oude XLSX-uitvoer hoeft niet
 IBAN wijzigen via Mijn gegevens. Gebruik geen apart betaalprofiel. Pas persoonsgebonden veldrechten
 toe en behoud de bankgegevens in eerder afgesloten batches en exports.
 
+**B5a, bevestigd door Joost:** de financiële beheerder mag zelfstandig een maand afsluiten en
+exporteren. Bouw geen verplichte tweede goedkeuringsstap in Rondo. Dit verandert niets aan de
+controle en ondertekening van betalingen in Rabobank.
+
 ### Nog te besluiten vóór de betreffende bouwfase
 
 De overige voorgestelde defaults worden vóór de afhankelijke fase bevestigd. Vastlegging van
@@ -541,7 +548,7 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | ID | Open besluit | Voorgesteld uitgangspunt | Nodig vóór |
 |---|---|---|---|
-| B5 | Wie registreert, corrigeert en sluit af; is een tweede fiatteur vereist? | Registrator per team en financiële beheerder zoals rechtenmatrix | Rechten en vrijgave |
+| B5b | Wie mag wedstrijden registreren en corrigeren? | Expliciet aangewezen registratoren per team zoals rechtenmatrix | Registratierechten |
 | B6 | Welke historische maanden zijn al verwerkt of betaald? | Geen automatische betaalstatus uit spreadsheetdata afleiden | Productie-import |
 | B7 | Tariefingangsdata, negatieve correcties en tenaamstelling | Gesloten bedragen bewaren; negatieve correcties handmatig afhandelen | Correcties en export |
 | B8 | Bewaartermijn voor afwezigheidsredenen, bankgegevens, batches en bestanden | Aansluiten op vastgesteld clubbeleid; geen termijn verzinnen | Productievrijgave |
@@ -550,7 +557,7 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | Fase | Resultaat | Voorwaarde om door te gaan |
 |---|---|---|
-| 0 | B1 vertalen naar broncategorieën, besluiten B5–B8, gedeelde SEPA-service en batchcontract uitwerken; Apps Script-controle is afgerond | Rekencontract bevestigd; bestaande Rabobank-contracten en broncontrolegrenzen vastgelegd |
+| 0 | B1 vertalen naar broncategorieën, besluiten B5b–B8, gedeelde SEPA-service en batchcontract uitwerken; Apps Script-controle is afgerond | Rekencontract bevestigd; bestaande Rabobank-contracten en broncontrolegrenzen vastgelegd |
 | 1 | Privé opslag, registry, rechtenbeleid, versiebeheer, calculator en API | Rekentests, rechtenmatrix en gelijktijdigheids-/hersteltests slagen |
 | 2 | Teamregistratie, gastspelers, afronden en bronconflicten | Volledige flow met synthetische data op desktop en mobiel gecontroleerd |
 | 3 | Bankvelden op personen en Mijn gegevens, maandafsluiting, correcties en Rabobank SEPA-export via gedeelde service | Rekenverschillen nul, schema-/batchtests en creditfactuurregressietests slagen; proefimport gecontroleerd |
@@ -565,6 +572,8 @@ Deze planning zelf blijft beperkt tot `docs/prd/`, zonder themaversie, changelog
 
 ## 14. Acceptatiecriteria
 
+- [ ] Een financiële beheerder kan na geldige controles zelfstandig afsluiten en exporteren,
+  zonder tweede fiatteur in Rondo. Exporteren registreert geen betaling.
 - [ ] Een registrator kan alleen toegewezen én reeds toegankelijke teams registreren; een gewone
   teambezoeker ziet geen selecties. Directe URL's en API-requests respecteren dezelfde grenzen.
 - [ ] Financieel lezen laat geen write, export of volledige IBAN toe. Een registrator krijgt geen
