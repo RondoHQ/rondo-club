@@ -138,7 +138,7 @@ function ComparisonSummary({ rows, comparisonRows, from, to, comparisonFrom, com
 
 export default function Omzetontwikkeling() {
   const today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Amsterdam' }).format(new Date());
-  const [from, setFrom] = useState(`${Number(today.slice(0, 4)) - 1}-${today.slice(5, 7)}-01`);
+  const [from, setFrom] = useState(`${today.slice(0, 7)}-01`);
   const [to, setTo] = useState(today);
   const [group, setGroup] = useState('day');
   const [view, setView] = useState('revenue');
