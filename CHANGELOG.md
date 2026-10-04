@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.138.0] - 2026-10-04
+
+### Added
+- Opt-in match registration for AWC 1 and JO23-1 in season 2026-2027, with assigned team registrators, explicit selection statuses, guest players and Sportlink source checks.
+- Financial month previews, immutable settlements, confirmed Nmbrs names and CSV counts, and multi-recipient Rabobank SEPA exports using the shared credit-transfer service.
+- Versioned corrections, differences against previously processed months, manual handling of overpayments, and replay-safe writes and downloads.
+- Read-only previews and resumable imports of prepared, explicitly mapped spreadsheet registrations.
+
+### Changed
+- Serialize bank-detail changes with month closure so exported accounts match the confirmed settlement.
+
 ## [35.137.0] - 2026-10-04
 
 ### Added

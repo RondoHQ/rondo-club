@@ -8,12 +8,21 @@ use Rondo\Fields\Fields;
 use Rondo\People\CommunicationPolicy;
 
 final class PersonBankAccount {
+	private $write_lock = null;
+
 	public const FIELDS = [ 'iban', 'bank_account_holder' ];
 
 	public function __construct() {
 		add_filter( 'rondo_fields_validate_value', [ $this, 'validate' ], 10, 4 );
 		add_filter( 'rest_pre_insert_person', [ $this, 'guard' ], 5, 2 );
 		add_action( 'rondo_fields_saved_post', [ $this, 'audit' ], 10, 2 );
+		add_filter(
+			'rest_request_after_callbacks',
+			function ( $response ) {
+				$this->release_lock();
+				return $response;
+			}
+			);
 	}
 
 	/** Financial access never implies access to an otherwise hidden person. */
@@ -49,13 +58,23 @@ final class PersonBankAccount {
 
 	public function validate( $value, $id, $definition, $old ) {
 		$key = $definition['canonical_name'];
-		if ( ( $definition['context'] ?? '' ) !== 'person' || ! in_array( $key, self::FIELDS, true ) ) {
+		if ( ( $definition['context'] ?? '' ) !== 'person' || ! in_array( $key, array_merge( self::FIELDS, [ 'nmbrs_name' ] ), true ) ) {
 			return $value;
 		}
-		if ( ! self::can_write( (int) $id ) ) {
+		if ( ! self::can_write( (int) $id ) || ( $key === 'nmbrs_name' && ! current_user_can( 'manage_options' ) && ! UserRoles::can_manage_finances() ) ) {
 			return self::error( 'Je mag deze bankgegevens niet wijzigen.', 403 );
 		}
-		return self::normalize( $key, $value );
+		$normalized = self::normalize( $key, $value );
+		if ( is_wp_error( $normalized ) ) {
+			$this->release_lock();
+			return $normalized; }
+		if ( $normalized !== (string) $old && ! $this->write_lock ) {
+			$lock = \Rondo\Matches\CompensationLock::acquire();
+			if ( is_wp_error( $lock ) ) {
+				return $lock; }
+			$this->write_lock = $lock;
+		}
+		return $normalized;
 	}
 
 	/** Reject unauthorized generic REST writes before any part of the person changes. */
@@ -64,8 +83,8 @@ final class PersonBankAccount {
 			return $post;
 		}
 		foreach ( (array) $request->get_param( 'fields' ) as $key => $value ) {
-			if ( in_array( $key, self::FIELDS, true ) ) {
-				if ( ! self::can_write( (int) ( $post->ID ?? 0 ) ) ) {
+			if ( in_array( $key, array_merge( self::FIELDS, [ 'nmbrs_name' ] ), true ) ) {
+				if ( ! self::can_write( (int) ( $post->ID ?? 0 ) ) || ( $key === 'nmbrs_name' && ! current_user_can( 'manage_options' ) && ! UserRoles::can_manage_finances() ) ) {
 					return self::error( 'Je mag deze bankgegevens niet wijzigen.', 403 );
 				}
 				$result = self::normalize( $key, $value );
@@ -104,6 +123,7 @@ final class PersonBankAccount {
 		if ( get_post_type( $id ) !== 'person' ) {
 			return;
 		}
+		$this->release_lock();
 		$keys = array_intersect( array_map( static fn( $change ) => $change[0]['canonical_name'], $changes ), self::FIELDS );
 		if ( $keys ) {
 			add_post_meta(
@@ -117,6 +137,15 @@ final class PersonBankAccount {
 				);
 		}
 	}
+
+	private function release_lock(): void {
+		if ( is_resource( $this->write_lock ) ) {
+			flock( $this->write_lock, LOCK_UN );
+			fclose( $this->write_lock ); }
+		$this->write_lock = null;
+	}
+	public function __destruct() {
+		$this->release_lock(); }
 
 	private static function error( string $message, int $status = 400 ): \WP_Error {
 		return new \WP_Error( 'rondo_bank_account', $message, [ 'status' => $status ] );

@@ -95,6 +95,7 @@ const navigation = [
   { name: 'Financiën', href: '/financien', icon: Wallet, requiresFinancieel: true },
   { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'Kassaomzet', href: '/financien/kassaomzet', icon: Wallet, indent: true, requiresKassaomzet: true },
+  { name: 'Wedstrijdvergoedingen', href: '/financien/wedstrijdvergoedingen', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true },
   { name: 'Toernooibetalingen', href: '/toernooien/betalingen', icon: Trophy, indent: true, requiresFinancieel: true },
   { name: 'Betaalstatistieken', href: '/financien/betaalstatistieken', icon: TrendingUp, indent: true, requiresFinancieel: true },
