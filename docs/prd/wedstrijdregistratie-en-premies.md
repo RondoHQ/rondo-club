@@ -151,6 +151,7 @@ en betaalexport. Een speler met €0 heeft voor die maand geen rekening nodig.
 | Seizoen | 1 juli tot 1 juli van het volgende jaar, gelijk aan de bestaande feed |
 | Basis of Bank | Eén deelname per persoon per wedstrijd; de statussen zijn exclusief |
 | Gastspelers, bevestigd | Dezelfde vergoeding en premie als vaste spelers, volgens de regeling van het team waarmee zij die wedstrijd meedoen; het eigen team bepaalt de regeling niet |
+| Deelname aan beide teams, bevestigd | Twee afzonderlijke wedstrijden tellen beide mee volgens hun eigen teamregeling, ook op dezelfde dag; geen voorrangsregel of vermindering |
 | Nmbrs Dagen, bevestigd | Aantal meetellende wedstrijden met Basis/Bank; twee wedstrijden op dezelfde kalenderdag tellen als twee |
 | Overige statussen | Geen deelname, vergoeding of premie |
 | Ontbrekende invoer | Onvolledig, nooit automatisch nul |
@@ -164,8 +165,9 @@ en betaalexport. Een speler met €0 heeft voor die maand geen rekening nodig.
 
 De Nmbrs-kolom `Dagen` telt bevestigde deelnames aan meetellende wedstrijden, overeenkomstig de
 sheet. Twee wedstrijden op dezelfde kalenderdag tellen als twee; er vindt geen samenvoeging op
-datum plaats. Deelname aan zowel AWC 1 als JO23-1 wordt wel gemeld zolang de afspraken daarover
-niet zijn bevestigd; de software kiest niet zelfstandig welk recht vervalt.
+datum plaats. Bij deelname aan zowel AWC 1 als JO23-1 tellen beide afzonderlijke wedstrijden mee
+volgens hun eigen teamregeling. Volgens Joost komt dit in de praktijk niet voor. Er is daarom
+geen aparte waarschuwing, blokkade of voorrangsregel voor deze samenloop nodig.
 
 De configuratie voor beide pilotteams bevat uitsluitend competitie en nacompetitie. Het
 Sportlink-wedstrijdtype moet eenduidig naar die categorieën worden vertaald; onbekende types
@@ -374,8 +376,11 @@ De telling blijft zichtbaar zonder een code te verzinnen.
 **B3a, bevestigd door Joost:** gastspelers krijgen dezelfde vergoeding en premie als de vaste
 spelers van het team waarmee zij die wedstrijd meedoen. Een gastspeler bij AWC 1 valt onder de
 AWC 1-regeling; een gastspeler bij JO23-1 valt onder de JO23-1-regeling. Het eigen team van de
-speler verandert deze toepassing niet. Eventuele samenloop bij deelname aan beide teams blijft
-een afzonderlijk besluitpunt.
+speler verandert deze toepassing niet.
+
+**B3b, bevestigd door Joost:** bij Basis/Bank in twee afzonderlijke wedstrijden van AWC 1 en
+JO23-1 op dezelfde dag tellen beide wedstrijden mee volgens hun eigen teamregeling. Joost geeft
+aan dat dit in de praktijk niet voorkomt. Geen aanvullende workflow of samenloopwaarschuwing bouwen.
 
 ### Nog te besluiten vóór de betreffende bouwfase
 
@@ -384,7 +389,7 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | ID | Open besluit | Voorgesteld uitgangspunt | Nodig vóór |
 |---|---|---|---|
-| B3b | Deelname bij beide teams en eventuele leeftijd-/contractuitzonderingen? | Gastspelers volgen B3a; mogelijke dubbele aanspraken en overige uitzonderingen nog bevestigen | Calculator en afsluiting |
+| B3c | Zijn er individuele afspraken die afwijken van de teamregeling? | Alleen bevestigde uitzonderingen opnemen; gastspelers en samenloop volgen B3a en B3b | Calculator en afsluiting |
 | B4 | Welk bankpakket/formaat en wat doet het Apps Script exact? | Huidige vijfkoloms-XLSX behouden na bewezen compatibiliteit | Export |
 | B5 | Wie registreert, corrigeert en sluit af; is een tweede fiatteur vereist? | Registrator per team en financiële beheerder zoals rechtenmatrix | Rechten en vrijgave |
 | B6 | Welke historische maanden zijn al verwerkt of betaald? | Geen automatische betaalstatus uit spreadsheetdata afleiden | Productie-import |
@@ -395,7 +400,7 @@ deze afspraken is nog geen opdracht tot implementatie of productie-import.
 
 | Fase | Resultaat | Voorwaarde om door te gaan |
 |---|---|---|
-| 0 | B1 vertalen naar broncategorieën, besluiten B3b en B4–B8, inspectie Apps Script, geanonimiseerd exportvoorbeeld, librarykeuze | Reken- en bestandscontract bevestigd; broncontrolegrenzen vastgelegd |
+| 0 | B1 vertalen naar broncategorieën, besluiten B3c en B4–B8, inspectie Apps Script, geanonimiseerd exportvoorbeeld, librarykeuze | Reken- en bestandscontract bevestigd; broncontrolegrenzen vastgelegd |
 | 1 | Privé opslag, registry, rechtenbeleid, versiebeheer, calculator en API | Rekentests, rechtenmatrix en gelijktijdigheids-/hersteltests slagen |
 | 2 | Teamregistratie, gastspelers, afronden en bronconflicten | Volledige flow met synthetische data op desktop en mobiel gecontroleerd |
 | 3 | Financiële profielen, maandafsluiting, correcties en exports | Rekenverschillen nul, bestandscontract bewezen, export/privacytests slagen |
@@ -427,6 +432,8 @@ Deze planning zelf blijft beperkt tot `docs/prd/`, zonder themaversie, changelog
   winst/gelijkspel. JO23-1 levert uitsluitend resultaatpremies, zonder basis-/bankvergoeding.
 - [ ] Twee verschillende meetellende AWC 1-wedstrijden op dezelfde kalenderdag met Basis/Bank
   voor dezelfde speler leveren `Dagen = 2`; dezelfde wedstrijd dubbel aanbieden blijft één deelname.
+- [ ] Basis/Bank bij AWC 1 en JO23-1 op dezelfde dag wordt per afzonderlijke wedstrijd volgens
+  de eigen teamregeling berekend, zonder voorrang, vermindering of samenloopwaarschuwing.
 - [ ] De bankvergoedingcode kan leeg blijven zonder de telling te verliezen. Alleen een financiële
   beheerder of administrator kan de code instellen; een ontbrekende code is zichtbaar in het overzicht
   en de download. Rondo vult nooit zelfstandig een looncode in.
