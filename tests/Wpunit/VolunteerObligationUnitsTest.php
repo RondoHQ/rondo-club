@@ -132,6 +132,118 @@ class VolunteerObligationUnitsTest extends RondoTestCase {
 		$this->assertSame( 2, $units[1]['required_count'], 'Gezinsplicht for one child' );
 	}
 
+	public function test_child_referee_exempts_both_parents_and_siblings_including_profile_response(): void {
+		$first_parent  = $this->person( null, 'Eerste ouder' );
+		$second_parent = $this->person( null, 'Tweede ouder' );
+		$referee       = $this->person( 'Onder 15', 'Jeugdscheidsrechter' );
+		$sibling       = $this->person( 'Onder 10', 'Broer of zus' );
+		foreach ( [ $first_parent, $second_parent ] as $parent ) {
+			$this->link_parent_child( $parent, $referee );
+			$this->link_parent_child( $parent, $sibling );
+		}
+		$this->set_child_role( $referee, 'Verenigingsscheidsrechter' );
+
+		$server = $this->bootRestControllers( [ \Rondo\REST\MemberShifts::class ] );
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		foreach ( [ $first_parent, $second_parent, $referee, $sibling ] as $person_id ) {
+			$response = $server->dispatch( new \WP_REST_Request( 'GET', '/rondo/v1/people/' . $person_id . '/shifts' ) );
+			$this->assertSame( 200, $response->get_status() );
+			$obligations = $response->get_data()['obligations'];
+			$this->assertCount( 1, $obligations );
+			$this->assertSame( 'gezin', $obligations[0]['kind'] );
+			$this->assertSame( $referee, $obligations[0]['exemption']['person_id'] );
+			$this->assertSame( 'staff', $obligations[0]['exemption']['reason'] );
+		}
+
+		$units = $this->service->get_eligible_units_for_person( $first_parent );
+		$this->assertSame( 2, $units[0]['child_count'] );
+		$partition = VolunteerExemptionResolver::partition_units( $units, '2026-2027' );
+		$this->assertSame( 0, $partition['required_count'] );
+		$this->assertCount( 1, $partition['exempt'] );
+	}
+
+	public function test_any_child_volunteer_role_exempts_family_but_not_parents_own_player_duty(): void {
+		$parent = $this->person( 'Senioren', 'Spelende ouder' );
+		$child  = $this->person( 'Onder 12', 'Vrijwilliger' );
+		$this->link_parent_child( $parent, $child );
+		$units = $this->service->get_eligible_units_for_person( $parent );
+
+		foreach ( [ 'Materiaalbeheerder', 'Assistent-trainer/coach', 'Verenigingsscheidsrechter' ] as $role ) {
+			$this->set_child_role( $child, $role );
+			$this->assertNull( VolunteerExemptionResolver::resolve_unit( $units[0], '2026-2027' ), $role );
+			$this->assertSame( $child, VolunteerExemptionResolver::resolve_unit( $units[1], '2026-2027' )['person_id'], $role );
+		}
+
+		$this->set_child_role( $child, 'Lid', [ 'entity_type' => 'commissie' ] );
+		$this->assertSame( 'commissie', VolunteerExemptionResolver::resolve_unit( $units[1], '2026-2027' )['reason'] );
+	}
+
+	public function test_inactive_future_player_and_honorary_child_roles_do_not_exempt_family(): void {
+		$parent = $this->person( null );
+		$child  = $this->person( 'Onder 12' );
+		$this->link_parent_child( $parent, $child );
+		$unit = $this->service->get_eligible_units_for_person( $parent )[0];
+
+		foreach ( [ 'Verenigingsscheidsrechter', 'Materiaalbeheerder' ] as $role ) {
+			foreach ( [ [ 'end_date' => '2020-01-01' ], [ 'start_date' => '2099-01-01' ], [ 'is_current' => false ] ] as $inactive ) {
+				$this->set_child_role( $child, $role, $inactive );
+				$this->assertNull( VolunteerExemptionResolver::resolve_unit( $unit, '2026-2027' ) );
+			}
+		}
+		foreach ( [ 'Teamspeler', 'Donateur', 'Erelid' ] as $role ) {
+			$this->set_child_role( $child, $role );
+			$this->assertNull( VolunteerExemptionResolver::resolve_unit( $unit, '2026-2027' ), $role );
+		}
+	}
+
+	public function test_child_personal_exemption_and_cached_volunteer_flag_do_not_transfer_to_parents(): void {
+		$parent = $this->person( null );
+		$child  = $this->person( 'Onder 12' );
+		$this->link_parent_child( $parent, $child );
+		Fields::update_for_post( $child, 'vrijgesteld_handmatig', true );
+		Fields::update_for_post( $child, 'betaalde_vrijwilliger', true );
+		Fields::update_for_post( $child, 'huidig_vrijwilliger', true );
+		$unit = $this->service->get_eligible_units_for_person( $parent )[0];
+		$this->assertNull( VolunteerExemptionResolver::resolve_unit( $unit, '2026-2027' ) );
+
+		// An orphan unit still retains the child's own personal exemption.
+		$unit['person_ids'] = [ $child ];
+		$this->assertSame( 'betaald', VolunteerExemptionResolver::resolve_unit( $unit, '2026-2027' )['reason'] );
+	}
+
+	public function test_child_role_does_not_exempt_another_family_or_a_stale_person_reference(): void {
+		$parent = $this->person( null );
+		$child  = $this->person( 'Onder 12' );
+		$other  = $this->person( 'Onder 12' );
+		$this->link_parent_child( $parent, $child );
+		$this->set_child_role( $other, 'Verenigingsscheidsrechter' );
+		$unit                         = $this->service->get_eligible_units_for_person( $parent )[0];
+		$unit['trigger_person_ids'][] = $other;
+		$this->assertNull( VolunteerExemptionResolver::resolve_unit( $unit, '2026-2027' ) );
+
+		$this->set_child_role( $child, 'Verenigingsscheidsrechter' );
+		Fields::update_for_post( $child, 'relationships', [] );
+		$this->assertNotFalse( wp_trash_post( $child ) );
+		$this->assertNull( VolunteerExemptionResolver::resolve_unit( $unit, '2026-2027' ) );
+	}
+
+	private function set_child_role( int $child, string $role, array $overrides = [] ): void {
+		Fields::update_for_post(
+			$child,
+			'work_history',
+			[
+				array_merge(
+					[
+						'entity_type' => 'team',
+						'job_title'   => $role,
+						'is_current'  => true,
+					],
+					$overrides
+				),
+			]
+		);
+	}
+
 	public function test_playing_parent_of_two_youths_gets_multi_child_scaling(): void {
 		$parent_id = $this->person( 'Veteranen', 'Spelende ouder' );
 		$this->link_parent_child( $parent_id, $this->person( 'Onder 12', 'Kind 1' ) );
