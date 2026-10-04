@@ -38,7 +38,7 @@ export default function TournamentPayments() {
       sortingFn: (a, b) => a.original.tournament_name.localeCompare(b.original.tournament_name, 'nl'),
       cell: ({ row }) => canManage ? <Link className="text-bright-cobalt underline underline-offset-2 dark:text-electric-cyan" to={`/toernooien/${row.original.tournament_id}`}>{row.original.tournament_name}</Link> : row.original.tournament_name,
     }),
-    createColumn({ id: 'team_name', header: 'Clubteam', accessorKey: 'team_name', filterType: FILTER_TYPES.TEXT }),
+    createColumn({ id: 'team_name', header: 'Clubteam', accessorKey: 'team_name', filterType: FILTER_TYPES.TEXT, cell: ({ row }) => <>{row.original.team_name}{row.original.parent_entry_id ? <span className="block text-xs text-gray-500">Aanvulling</span> : null}</> }),
     createColumn({ id: 'registered_team_count', header: 'Teams', accessorKey: 'registered_team_count', className: 'tabular-nums' }),
     createColumn({
       id: 'payment_state', header: 'Betaalstatus', accessorFn: paymentGroup,

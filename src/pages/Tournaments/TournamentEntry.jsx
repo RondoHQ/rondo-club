@@ -4,6 +4,7 @@ import { ArrowLeft, CheckCircle2, CreditCard, ExternalLink, Loader2, Plus, Trash
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
+  useAddTournamentTeams,
   useSaveTournamentEntryDraft,
   useSubmitTournamentEntry,
   useTournamentEntry,
@@ -14,26 +15,38 @@ function errorMessage(error) {
   return error?.response?.data?.message || error?.message || 'Er ging iets mis.';
 }
 
-function EntryEditor({ entry }) {
+function EntryEditor({ entry, additional = false, onDone }) {
+  const addTeams = useAddTournamentTeams();
+  const [requestId] = useState(() => crypto.randomUUID());
+  const [version] = useState(entry.version);
   const saveDraft = useSaveTournamentEntryDraft();
   const submitEntry = useSubmitTournamentEntry();
-  const initialRows = entry.draft_team_entries?.length ? entry.draft_team_entries : [{ sequence: 1, player_count: '' }];
+  const initialRows = !additional && entry.draft_team_entries?.length ? entry.draft_team_entries : [{ sequence: 1, player_count: '' }];
   const [form, setForm] = useState({
     contact_person_id: entry.contact_person_id || 0,
     team_entries: initialRows.map((row) => ({ ...row })),
   });
   const [message, setMessage] = useState('');
 
-  const payload = () => ({ ...form, version: entry.version });
+  const payload = () => ({ ...form, version });
   const save = async () => {
     setMessage('');
-    await saveDraft.mutateAsync({ id: entry.id, data: payload() });
+    try {
+      await saveDraft.mutateAsync({ id: entry.id, data: payload() });
+    } catch { return; }
     setMessage('Concept opgeslagen. Andere kaderleden zien deze versie direct.');
   };
   const submit = async (event) => {
     event.preventDefault();
     setMessage('');
-    await submitEntry.mutateAsync({ id: entry.id, data: payload() });
+    try {
+      if (additional) {
+        await addTeams.mutateAsync({ id: entry.id, data: { ...payload(), request_id: requestId } });
+        onDone();
+      } else {
+        await submitEntry.mutateAsync({ id: entry.id, data: payload() });
+      }
+    } catch { /* The mutation error is displayed below; retain the request ID for a safe retry. */ }
   };
   const updatePlayers = (index, value) => setForm((current) => ({
     ...current,
@@ -50,17 +63,20 @@ function EntryEditor({ entry }) {
   const contactCandidates = [...(entry.contact_candidates || [])].sort((left, right) => Number(right.is_current_user) - Number(left.is_current_user));
   const selectedContact = contactCandidates.find((candidate) => candidate.person_id === Number(form.contact_person_id));
 
-  const mutationError = saveDraft.error || submitEntry.error;
+  const mutationError = saveDraft.error || submitEntry.error || addTeams.error;
+  const pending = saveDraft.isPending || submitEntry.isPending || addTeams.isPending;
+  const price = entry.tournament.pricing_rules.find((rule) => entry.age_number >= rule.min_age && entry.age_number <= rule.max_age)?.amount;
   return (
-    <form className="space-y-6" onSubmit={submit}>
+    <form onSubmit={submit}>
+      <fieldset disabled={pending} className="min-w-0 space-y-6">
       <section className="card space-y-4 p-5">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div><h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Teams inschrijven</h2><p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Vul per toernooiteam het aantal spelers in. De contactpersoon geldt voor alle teams hieronder.</p></div>
+          <div><h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{additional ? 'Extra teams aanmelden' : 'Teams inschrijven'}</h2><p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{additional ? 'Vul alleen de extra teams in. Deze aanvulling krijgt een eigen betaling.' : 'Vul per toernooiteam het aantal spelers in. De contactpersoon geldt voor alle teams hieronder.'}</p></div>
           <button type="button" className="btn-tertiary inline-flex items-center justify-center" onClick={addTeam}><Plus className="mr-2 h-4 w-4" />Team toevoegen</button>
         </div>
         <div className="space-y-3">{form.team_entries.map((team, index) => (
           <div key={team.sequence} className="flex items-end gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-            <label className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">{entry.team_name} · team {index + 1}
+            <label className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">{entry.team_name} · {additional ? 'extra team' : 'team'} {index + 1}
               <input className="input mt-1" type="number" min="1" required placeholder="Aantal spelers" value={team.player_count} onChange={(event) => updatePlayers(index, event.target.value)} />
             </label>
             <button type="button" className="btn-tertiary p-2" aria-label={`Team ${index + 1} verwijderen`} disabled={form.team_entries.length === 1} onClick={() => removeTeam(index)}><Trash2 className="h-4 w-4" /></button>
@@ -84,12 +100,14 @@ function EntryEditor({ entry }) {
         {selectedContact ? <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-300"><strong className="text-gray-900 dark:text-gray-100">{selectedContact.name}</strong><span className="mt-1 block">{selectedContact.email || 'Geen e-mailadres'} · {selectedContact.mobile || 'Geen mobiel nummer'}</span>{!selectedContact.complete ? <span className="mt-2 block text-amber-700 dark:text-amber-300">Vul de ontbrekende gegevens eerst aan in Rondo voordat je de inschrijving bevestigt.</span> : null}</div> : null}
       </section>
 
-      {mutationError ? <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">{errorMessage(mutationError)}</div> : null}
+      {additional && price != null ? <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Bij te betalen: {formatTournamentCurrency(Number(price) * form.team_entries.length)}</p> : null}
+      {mutationError ? <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">{errorMessage(mutationError)}</div> : null}
       {message ? <p className="text-sm text-green-700 dark:text-green-300">{message}</p> : null}
       <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
-        <button type="button" className="btn-tertiary" disabled={saveDraft.isPending || submitEntry.isPending} onClick={save}>{saveDraft.isPending ? 'Opslaan…' : 'Concept opslaan'}</button>
-        <button className="btn-primary" disabled={saveDraft.isPending || submitEntry.isPending}>{submitEntry.isPending ? 'Bevestigen…' : 'Inschrijving bevestigen'}</button>
+        <button type="button" className="btn-tertiary" disabled={pending} onClick={additional ? onDone : save}>{additional ? 'Annuleren' : saveDraft.isPending ? 'Opslaan…' : 'Concept opslaan'}</button>
+        <button className="btn-primary" disabled={pending}>{pending ? 'Bevestigen…' : additional ? 'Extra teams bevestigen' : 'Inschrijving bevestigen'}</button>
       </div>
+      </fieldset>
     </form>
   );
 }
@@ -144,6 +162,7 @@ function SubmittedEntry({ entry }) {
 
 export default function TournamentEntry() {
   const { id } = useParams();
+  const [adding, setAdding] = useState(false);
   const { data: entry, isLoading, error } = useTournamentEntry(id);
   useDocumentTitle(entry ? `${entry.tournament.name} · ${entry.team_name}` : 'Toernooi-inschrijving');
   if (isLoading) return <ContentLoadingSpinner />;
@@ -161,7 +180,19 @@ export default function TournamentEntry() {
         <div className="grid gap-3 md:grid-cols-2">{entry.tournament.schedule.map((row, index) => <div key={index} className="rounded-lg bg-gray-50 p-3 text-sm dark:bg-gray-800"><strong className="text-gray-900 dark:text-gray-100">{row.age_group}</strong><span className="mt-1 block text-gray-600 dark:text-gray-300">{formatTournamentDate(row.start_datetime, true)}{row.location ? ` · ${row.location}` : ''}</span></div>)}</div>
         <div className="grid gap-3 md:grid-cols-2">{entry.tournament.pricing_rules.map((row, index) => <div key={index} className="text-sm text-gray-600 dark:text-gray-300">O{row.min_age} t/m O{row.max_age}: <strong>{formatTournamentCurrency(row.amount)} per team</strong>{row.game_format ? ` · ${row.game_format}` : ''}</div>)}</div>
       </section>
+      {entry.parent_entry_id ? <Link className="inline-flex min-h-11 items-center text-bright-cobalt underline dark:text-electric-cyan" to={`/mijn-toernooien/${entry.parent_entry_id}`}>Alle inschrijvingen van dit team</Link> : null}
+      {entry.additional_entries?.length ? <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Oorspronkelijke inschrijving</h2> : null}
       {entry.registration_status === 'submitted' ? <SubmittedEntry entry={entry} /> : entry.can_edit ? <EntryEditor key={`${entry.id}:${entry.version}`} entry={entry} /> : <div className="card p-5 text-sm text-amber-700 dark:text-amber-300">De interne deadline is verstreken. De toernooicoördinator kan de deadline verlengen.</div>}
+      {(entry.additional_entries || []).map((addition, index) => (
+        <section key={addition.id} className="space-y-4 border-t border-gray-200 pt-6 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Aanvulling {index + 1}</h2>
+          {addition.registration_status === 'submitted' ? <SubmittedEntry entry={addition} /> : <Link className="btn-secondary inline-flex" to={`/mijn-toernooien/${addition.id}`}>Aanvulling afronden</Link>}
+        </section>
+      ))}
+      {entry.can_add_teams ? (
+        adding ? <EntryEditor key={`addition:${entry.id}`} entry={entry} additional onDone={() => setAdding(false)} /> :
+          <button type="button" className="btn-primary inline-flex items-center" onClick={() => setAdding(true)}><Plus aria-hidden="true" className="mr-2 h-4 w-4" />Extra team aanmelden</button>
+      ) : null}
     </div>
   );
 }

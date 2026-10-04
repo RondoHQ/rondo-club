@@ -16,6 +16,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class TournamentAssignees {
 
+	/** Supplements inherit the current root assignments; never trust a stale copied snapshot. */
+	public static function for_entry( int $entry_id ): array {
+		$entry = get_post( $entry_id );
+		if ( ! $entry || $entry->post_type !== TournamentService::ENTRY_POST_TYPE || $entry->post_status === 'trash' ) {
+			return [];
+		}
+		if ( $entry->post_parent ) {
+			$parent = get_post( $entry->post_parent );
+			if ( ! $parent || $parent->post_type !== TournamentService::ENTRY_POST_TYPE || $parent->post_status !== 'publish' || $parent->post_parent
+				|| Fields::get_for_post( $entry_id, 'tournament_id' ) !== Fields::get_for_post( $parent->ID, 'tournament_id' )
+				|| Fields::get_for_post( $entry_id, 'team_id' ) !== Fields::get_for_post( $parent->ID, 'team_id' ) ) {
+				return [];
+			}
+			$entry_id = (int) $parent->ID;
+		}
+		return self::resolve( Fields::get_for_post( $entry_id, 'assignment_snapshot' ) ?: [] );
+	}
+
 	/** Resolve accounts only through their trusted person link, never by email. */
 	public static function users_by_person( array $person_ids ): array {
 		$person_ids = array_values( array_unique( array_filter( array_map( 'intval', $person_ids ) ) ) );

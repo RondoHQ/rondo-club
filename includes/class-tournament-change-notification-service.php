@@ -54,7 +54,7 @@ final class TournamentChangeNotificationService {
 		foreach ( $entry_ids as $entry_id ) {
 			$fields    = Fields::all_for_post( (int) $entry_id );
 			$team_name = (string) ( $fields['team_name_snapshot'] ?? '' );
-			foreach ( TournamentAssignees::resolve( $fields['assignment_snapshot'] ?? [] ) as $assignee ) {
+			foreach ( TournamentAssignees::for_entry( (int) $entry_id ) as $assignee ) {
 				$user_id = (int) ( $assignee['user_id'] ?? 0 );
 				$user    = $user_id > 0 ? get_userdata( $user_id ) : false;
 				$email   = sanitize_email( (string) ( $assignee['email'] ?? '' ) );

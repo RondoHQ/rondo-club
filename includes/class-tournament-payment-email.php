@@ -60,7 +60,7 @@ final class TournamentPaymentEmail {
 
 		$recipients = array_values(
 			array_filter(
-				TournamentAssignees::resolve( $fields['assignment_snapshot'] ?? [] ),
+				TournamentAssignees::for_entry( (int) $entry_id ),
 				static fn( $assignee ): bool => is_array( $assignee ) && is_email( sanitize_email( (string) ( $assignee['email'] ?? '' ) ) )
 			)
 		);

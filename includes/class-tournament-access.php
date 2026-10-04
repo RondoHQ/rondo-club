@@ -60,7 +60,7 @@ final class TournamentAccess {
 			return false;
 		}
 		$person_id = self::linked_person( $user_id );
-		foreach ( Fields::get_for_post( $entry_id, 'assignment_snapshot' ) ?: [] as $row ) {
+		foreach ( TournamentAssignees::for_entry( $entry_id ) as $row ) {
 			$assigned_person = (int) ( $row['person_id'] ?? 0 );
 			if ( $assigned_person > 0 ? $assigned_person === $person_id : (int) ( $row['user_id'] ?? 0 ) === $user_id ) {
 				return true;
