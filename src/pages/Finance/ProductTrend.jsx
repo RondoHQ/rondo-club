@@ -11,7 +11,7 @@ const dateLabel = (period, group, compact = false) => new Intl.DateTimeFormat('n
   .format(new Date(`${period.length === 7 ? `${period}-01` : period}T12:00:00`));
 const sum = (points, key = 'total') => points.length ? points.reduce((total, point) => total + Math.round(point[key] * 100), 0) / 100 : null;
 
-function TrendChart({ points, series, domain, extent, group, quantity, title }) {
+function TrendChart({ points, series, domain, extent, group, quantity, title, lines = false }) {
   const container = useRef(null);
   const svg = useRef(null);
   const [width, setWidth] = useState(640);
@@ -58,7 +58,7 @@ function TrendChart({ points, series, domain, extent, group, quantity, title }) 
       }}>
         {ticks.map(value => <g key={value}><line x1={left} x2={width - right} y1={y(value)} y2={y(value)} className="stroke-gray-200 dark:stroke-gray-700" /><text x={left - 10} y={y(value) + 4} textAnchor="end" className="fill-gray-600 dark:fill-gray-300 text-xs">{format(value)}</text></g>)}
         {series.map((item, seriesIndex) => <g key={item.key} className={item.color}>
-          {segments.flatMap((segment, segmentIndex) => ['positive', 'negative'].map(side => {
+          {lines ? segments.map((segment, index) => <polyline key={index} points={segment.map(point => `${x(point.offset)},${y(point.values[seriesIndex])}`).join(' ')} fill="none" stroke="currentColor" strokeWidth="2.5" strokeDasharray={item.dash} strokeLinejoin="round" />) : segments.flatMap((segment, segmentIndex) => ['positive', 'negative'].map(side => {
             const layers = segment.map(point => stackProductValues(point.values)[seriesIndex][side]);
             if (layers.every(([low, high]) => low === high)) return null;
             if (segment.length === 1) return <rect key={`${segmentIndex}/${side}`} x={x(segment[0].offset) - 8} y={y(layers[0][1])} width="16" height={y(layers[0][0]) - y(layers[0][1])} fill="currentColor" fillOpacity="0.65" />;
@@ -69,8 +69,10 @@ function TrendChart({ points, series, domain, extent, group, quantity, title }) 
         </g>)}
         {selectedPoint && <line x1={x(selectedPoint.offset)} x2={x(selectedPoint.offset)} y1={top} y2={height - bottom} className="stroke-gray-500 dark:stroke-gray-400" strokeDasharray="3 4" />}
         {points.map((point, index) => <g key={point.periode} data-point={index} role="button" tabIndex={selectedPoint ? (selected === point.periode ? 0 : -1) : (index === 0 ? 0 : -1)} aria-pressed={selected === point.periode} aria-label={`${dateLabel(point.periode, group)}: ${series.map((item, i) => `${item.label} ${format(point.values[i])}`).join(', ')}${point.provisional ? ', voorlopig' : ''}`} className="cursor-pointer text-cyan-800 dark:text-cyan-200 group outline-none" onClick={event => { event.stopPropagation(); setSelected(point.periode); }} onKeyDown={event => keyboard(event, index)}>
-          <circle cx={x(point.offset)} cy={y(point.total)} r="15" fill="transparent" className="group-focus:stroke-current" strokeWidth="2" />
-          <circle cx={x(point.offset)} cy={y(point.total)} r={selected === point.periode ? 5 : 3} fill="currentColor" />
+          {(lines ? point.values : [point.total]).map((value, seriesIndex) => <g key={seriesIndex} className={lines ? series[seriesIndex].color : undefined}>
+            <circle cx={x(point.offset)} cy={y(value)} r="15" fill="transparent" className="group-focus:stroke-current" strokeWidth="2" />
+            <circle cx={x(point.offset)} cy={y(value)} r={selected === point.periode ? 5 : 3} fill="currentColor" />
+          </g>)}
         </g>)}
         {dates.map((point, index) => <text key={point.periode} x={x(point.offset)} y={height - 18} textAnchor={index === 0 ? 'start' : index === dates.length - 1 ? 'end' : 'middle'} className="fill-gray-600 dark:fill-gray-300 text-xs">{dateLabel(point.periode, group, true)}</text>)}
       </svg>
@@ -89,6 +91,7 @@ export default function ProductTrend({ rows, comparisonRows, from, to, compariso
   if (selectedProduct && !products.some(item => item.id === selectedProduct.id)) products.push(selectedProduct);
   const product = selectedProduct ?? products[0];
   const individual = view === 'product';
+  const lines = view === 'group-lines';
   const quantity = individual && metric === 'quantity';
   const selectedId = individual ? product?.id : null;
   const actualMetric = quantity ? 'quantity' : 'amount';
@@ -97,14 +100,14 @@ export default function ProductTrend({ rows, comparisonRows, from, to, compariso
   const allPoints = [...current, ...previous];
   const labels = new Map(allRows.flatMap(row => row.product_trend.groups).map(item => [item.group, item.label]));
   const series = individual ? [{ key: product?.id ?? 'product', label: product?.name ?? 'Product', color: colors[0] }]
-    : trendGroupKeys.map((key, index) => ({ key, label: labels.get(key) ?? key, color: colors[index] }));
+    : trendGroupKeys.map((key, index) => ({ key, label: labels.get(key) ?? key, color: colors[index], dash: [undefined, '8 4', '2 4', '8 3 2 3'][index] }));
   // Keep the unassigned slot in the data model even when no products need classification.
   const hasUnassigned = allRows.some(row => row.product_trend.unassigned_count > 0);
   if (!individual && !hasUnassigned) {
     series.pop();
     allPoints.forEach(point => { point.values.pop(); });
   }
-  const bounds = allPoints.flatMap(point => stackProductValues(point.values).flatMap(layer => [...layer.positive, ...layer.negative]));
+  const bounds = allPoints.flatMap(point => lines ? point.values : stackProductValues(point.values).flatMap(layer => [...layer.positive, ...layer.negative]));
   const rawMin = Math.min(0, ...bounds);
   const rawMax = Math.max(1, ...bounds);
   const magnitude = 10 ** Math.floor(Math.log10((rawMax - rawMin) / 5));
@@ -121,7 +124,7 @@ export default function ProductTrend({ rows, comparisonRows, from, to, compariso
       <label className="text-sm">Toon<select className="input block mt-1" value={metric} onChange={event => onMetricChange(event.target.value)}><option value="amount">Bedrag</option><option value="quantity">Aantal</option></select></label>
     </div>}
     <p className="text-sm text-gray-600 dark:text-gray-300">{individual ? 'Verkochte en verbruikte producten, inclusief no-sale. Productbedragen zijn inclusief btw.' : 'Productbedragen inclusief btw en no-sale. Merchandise en Overig vallen buiten deze grafiek.'}</p>
-    {!individual && <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm" aria-label="Productgroepen">{series.map(item => <li key={item.key} className="flex items-center gap-2"><span aria-hidden="true" className={`h-3 w-3 rounded-sm bg-current ${item.color}`} />{item.label}</li>)}</ul>}
+    {!individual && <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm" aria-label="Productgroepen">{series.map(item => <li key={item.key} className="flex items-center gap-2">{lines ? <svg aria-hidden="true" width="28" height="12" className={item.color}><line x1="0" x2="28" y1="6" y2="6" stroke="currentColor" strokeWidth="2.5" strokeDasharray={item.dash} /></svg> : <span aria-hidden="true" className={`h-3 w-3 rounded-sm bg-current ${item.color}`} />}{item.label}</li>)}</ul>}
     <div className="text-sm space-y-2">
       <p>Gekozen periode: <strong className="tabular-nums">{sum(current) === null ? 'Geen rapportages' : `${format(sum(current))}${quantity ? ' stuks' : ''}`}</strong>{individual && !quantity && current.length > 0 && <span> · {number(sum(current, 'quantity'))} stuks</span>}</p>
       {comparing && <><p>Vergelijkingsperiode: <strong className="tabular-nums">{sum(previous) === null ? 'Geen rapportages' : `${format(sum(previous))}${quantity ? ' stuks' : ''}`}</strong>{individual && !quantity && previous.length > 0 && <span> · {number(sum(previous, 'quantity'))} stuks</span>}</p><p>Verschil: {delta ? <strong className="tabular-nums">{delta.amount > 0 ? '+' : ''}{format(delta.amount)}{quantity ? ' stuks' : ''}{delta.percent === null ? ' · percentage niet beschikbaar bij nul' : ` (${number(delta.percent)}%)`}</strong> : 'Geen vergelijking'}</p></>}
@@ -130,8 +133,8 @@ export default function ProductTrend({ rows, comparisonRows, from, to, compariso
     {comparing && periodDays(from, to) !== periodDays(comparisonFrom, comparisonTo) && <p className="text-sm text-amber-800 dark:text-amber-200">Deze periodes zijn niet even lang: {periodDays(from, to)} en {periodDays(comparisonFrom, comparisonTo)} kalenderdagen. Totalen zijn niet omgerekend naar een gelijke duur.</p>}
     {allPoints.some(point => point.provisional) && <p className="text-sm text-amber-800 dark:text-amber-200">De grafiek bevat voorlopige gegevens van een lopende kassadag.</p>}
     {comparing && <p className="text-sm text-gray-600 dark:text-gray-300">Beide grafieken gebruiken dezelfde schaal en beginnen bij dezelfde kalenderpositie binnen hun periode.</p>}
-    <TrendChart key={`${view}/${product?.id}/${metric}/${from}/${to}/${group}`} points={current} series={series} domain={domain} extent={extent} group={group} quantity={quantity} title={`Gekozen periode · ${dateLabel(from, 'day')} – ${dateLabel(to, 'day')}`} />
-    {comparing && <TrendChart key={`comparison/${view}/${product?.id}/${metric}/${comparisonFrom}/${comparisonTo}/${group}`} points={previous} series={series} domain={domain} extent={extent} group={group} quantity={quantity} title={`Vergelijkingsperiode · ${dateLabel(comparisonFrom, 'day')} – ${dateLabel(comparisonTo, 'day')}`} />}
+    <TrendChart key={`${view}/${product?.id}/${metric}/${from}/${to}/${group}`} points={current} series={series} domain={domain} extent={extent} group={group} quantity={quantity} lines={lines} title={`Gekozen periode · ${dateLabel(from, 'day')} – ${dateLabel(to, 'day')}`} />
+    {comparing && <TrendChart key={`comparison/${view}/${product?.id}/${metric}/${comparisonFrom}/${comparisonTo}/${group}`} points={previous} series={series} domain={domain} extent={extent} group={group} quantity={quantity} lines={lines} title={`Vergelijkingsperiode · ${dateLabel(comparisonFrom, 'day')} – ${dateLabel(comparisonTo, 'day')}`} />}
     <p className="text-xs text-gray-500 dark:text-gray-400">Alleen geïmporteerde rapportages. Ontbrekende dagen blijven leeg; maandbedragen kunnen onvolledig zijn. {individual && 'Een product dat niet voorkomt in een geïmporteerd rapport telt voor die dag als nul.'}</p>
   </div>;
 }
