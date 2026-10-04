@@ -407,4 +407,15 @@ class MatchCompensationTest extends RondoTestCase {
 		$this->assertSame( 3, $recovered['home_score'] );
 		$this->assertCount( 1, Service::posts( Service::REG, $this->team ) );
 	}
+	public function test_settings_only_return_real_team_assignments(): void {
+		$unassigned = self::factory()->user->create();
+		$empty      = self::factory()->user->create();
+		$assigned   = self::factory()->user->create();
+		update_user_meta( $empty, '_rondo_match_teams', [ 0, '' ] );
+		update_user_meta( $assigned, '_rondo_match_teams', [ (string) $this->team ] );
+		$users = array_column( Service::settings()['available_users'], null, 'id' );
+		$this->assertSame( [], $users[ $unassigned ]['teams'] );
+		$this->assertSame( [], $users[ $empty ]['teams'] );
+		$this->assertSame( [ $this->team ], $users[ $assigned ]['teams'] );
+	}
 }
