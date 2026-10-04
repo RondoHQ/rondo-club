@@ -1,0 +1,54 @@
+@font-face {
+  font-family: 'Rondo Figtree';
+  src: url('../assets/brand/figtree-400.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Rondo Figtree';
+  src: url('../assets/brand/figtree-latin-600-normal.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Rondo Figtree';
+  src: url('../assets/brand/figtree-latin-700-normal.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 700 900;
+  font-display: swap;
+}
+
+/* Shared navigation styling on every page using Layout, including the mobile drawer. */
+.rondo-sidebar, .rondo-app-header {
+  font-family: 'Rondo Figtree', system-ui, sans-serif;
+}
+.rondo-app-header h1 {
+  font-family: 'Rondo Figtree', system-ui, sans-serif;
+  color: #172a72;
+  letter-spacing: -.02em;
+}
+.dark .rondo-app-header h1 { color: #dce4ff; }
+.rondo-legacy-logo { display: none; }
+.rondo-sidebar-brand { padding-inline: 24px; }
+.rondo-brand-logo { display: flex; align-items: center; gap: 14px; }
+.rondo-brand-logo img { flex: none; height: auto; object-fit: contain; }
+.rondo-brand-logo img:first-child { width: 32px; }
+.rondo-brand-logo img:last-child { width: 132px; filter: brightness(0) invert(1); }
+.rondo-sidebar { background: #001153; border-color: #243674; color: #e6edf9; }
+.rondo-sidebar nav { scrollbar-color: #44568c #001153; }
+.rondo-sidebar :is(.border-b, .border-t) { border-color: #243674; }
+.rondo-sidebar :is(a, button) { color: #e6edf9; }
+.rondo-sidebar :is(a, button):hover { background-color: #172a72; }
+.rondo-sidebar a[aria-current='page'] { color: #001153; background: #71dba8; border: 0; font-weight: 700; }
+.rondo-sidebar a[aria-current='page'] span { color: #233c68; }
+.rondo-sidebar :is(.text-gray-400, .text-gray-500) { color: #aebee8; }
+.rondo-sidebar :is(.text-gray-900, .text-gray-700) { color: #e6edf9; }
+.rondo-sidebar .bg-cyan-100 { background: #243771; }
+.rondo-sidebar .bg-cyan-100 svg { color: #e6edf9; }
+.rondo-app-header { background: #f8fdf6; border-color: #e2ebe4; }
+.dark .rondo-app-header { background: #162c2b; border-color: #344259; }
+.rondo-app-header :focus-visible { outline: 3px solid #00908b; outline-offset: 3px; }
+.rondo-sidebar :focus-visible { outline: 3px solid #71dba8; outline-offset: 3px; }
+:is(.rondo-sidebar, .rondo-app-header) ::selection { background: #bbedd2; color: #001153; }
