@@ -178,4 +178,39 @@ class TwelveBrowserImportTest extends RondoTestCase {
 		$bad['product_revenue']['products'][] = $bad['product_revenue']['products'][0];
 		$this->assertFalse( BrowserImport::validate( $bad ) );
 	}
+	public function test_hourly_import_is_validated_against_financial_products(): void {
+		$data                    = $this->payload();
+		$totals                  = \Rondo\Twelve\ReportAggregator::revenue_breakdown( $data );
+		$product                 = [
+			'name'              => $data['producten'][0]['product'],
+			'cashCents'         => (int) round( $totals['kassaomzet'] * 100 ),
+			'businessclubCents' => (int) round( $totals['businessclub'] * 100 ),
+		];
+		$data['product_revenue'] = [
+			'method'   => 'proportional_v1',
+			'products' => [
+				[
+					'product'           => $product['name'],
+					'cashCents'         => $product['cashCents'],
+					'businessclubCents' => $product['businessclubCents'],
+				],
+			],
+		];
+		$data['activity']        = [
+			'version'      => 1,
+			'transactions' => [
+				[
+					'id'        => 'synthetic',
+					'localTime' => $data['period_start'],
+					'kind'      => 'sale',
+					'products'  => [ $product ],
+				],
+			],
+		];
+		$result                  = $this->save( $data );
+		$this->assertIsArray( $result );
+		$this->assertSame( 'unchanged', $this->save( $data )['status'] );
+		++$data['activity']['transactions'][0]['products'][0]['cashCents'];
+		$this->assertSame( 'twelve_invalid_export', $this->save( $data )->get_error_code() );
+	}
 }
