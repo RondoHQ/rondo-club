@@ -86,6 +86,10 @@
     -webkit-text-fill-color: initial;
   }
 
+  .dark h3 {
+    color: #dce4ff;
+  }
+
   /* Keep native select chevrons a bit away from the edge for readability. */
   select:not([multiple]):not([size]) {
     -webkit-appearance: none;
