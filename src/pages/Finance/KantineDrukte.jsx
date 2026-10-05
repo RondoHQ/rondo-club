@@ -29,7 +29,7 @@ function Fixtures({ matches }) {
   const special = (home, time) => home ? `Thuis · ${time}` : home === false ? 'Geen thuiswedstrijd' : 'Niet vastgesteld';
   return <section className={panel} aria-labelledby="kantine-matches-title">
     <div className="flex flex-wrap items-start justify-between gap-5">
-      <div><h3 id="kantine-matches-title" className="text-lg font-semibold">Thuiswedstrijden op De Wijchert</h3><p className="mt-2 text-2xl font-semibold tabular-nums">{matches.complete ? matches.count : matches.count ? `Minstens ${matches.count}` : 'Onbekend'}</p><p className={`${muted} mt-1`}>{matches.complete ? 'Volledig opgeslagen dagprogramma' : 'Het opgeslagen programma is onvolledig.'}</p></div>
+      <div><h3 id="kantine-matches-title" className="text-lg font-semibold">Thuiswedstrijden op De Wijchert</h3><p className="mt-2 text-2xl font-semibold tabular-nums">{matches.complete ? matches.count : matches.count ? `Minstens ${matches.count}` : 'Onbekend'}</p></div>
       <dl className="flex flex-wrap gap-x-8 gap-y-3 text-sm"><div><dt className="font-semibold">AWC</dt><dd className="mt-1">{special(matches.first_home, matches.first_time)}</dd></div><div><dt className="font-semibold">O23-1</dt><dd className="mt-1">{special(matches.u23_home, matches.u23_time)}</dd></div></dl>
     </div>
     <details className="mt-5 border-t border-gray-200 pt-4 dark:border-gray-700"><summary className="cursor-pointer text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-600">Bekijk getelde wedstrijden en activiteiten</summary>
