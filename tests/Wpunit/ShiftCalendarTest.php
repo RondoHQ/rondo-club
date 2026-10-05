@@ -68,6 +68,25 @@ class ShiftCalendarTest extends RondoTestCase {
 		return $request;
 	}
 
+	public function test_completed_shifts_are_visible_only_in_manager_history(): void {
+		$this->from       = current_datetime()->modify( '-3 days' )->format( 'Y-m-d' );
+		$this->to         = $this->from;
+		$this->shift_date = $this->from;
+		$type             = $this->dienst_type( 'Historische bardienst' );
+		$completed        = $this->shift( $type, 1, [], 'voltooid' );
+		$this->shift( $type, 1, [], 'geannuleerd' );
+		$user_id   = $this->createRondoUser( [ 'role' => 'rondo_vrijwilligers' ] );
+		$person_id = $this->createPerson( [], [ 'first_name' => 'Test' ] );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+		wp_set_current_user( $user_id );
+
+		$data = $this->controller->get_shift_calendar( $this->calendar_request( 'manage' ) )->get_data();
+		$this->assertSame( [ $completed ], array_column( $data['days'][0]['shifts'], 'id' ) );
+		$this->assertSame( 'voltooid', $data['days'][0]['shifts'][0]['status'] );
+		$data = $this->controller->get_shift_calendar( $this->calendar_request( 'signup' ) )->get_data();
+		$this->assertSame( [], $data['days'] );
+	}
+
 	public function test_manager_calendar_aggregates_open_spots_and_filters_by_type(): void {
 		$manager_id = $this->createRondoUser( [ 'role' => 'rondo_vrijwilligers' ] );
 		wp_set_current_user( $manager_id );

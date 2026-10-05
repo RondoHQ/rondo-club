@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.140.0] - 2026-10-05
+
+### Added
+- Coordinators can record extra helpers on finished volunteer shifts, even above planned capacity and without current certificate or pool requirements; historical registrations count toward completed duties and canteen staffing without sending signup emails.
+- Historical shift lookup, visible retrospective registration labels and auditable corrections preserve the originally planned capacity.
+
+### Changed
+- Canteen staffing labels include both planned volunteers and helpers registered afterwards.
+
 ## [35.139.3] - 2026-10-05
 
 ### Fixed
