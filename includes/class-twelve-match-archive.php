@@ -59,7 +59,7 @@ class MatchArchive {
 		$kind              = sanitize_text_field( $row['competitiesoort'] ?? '' );
 		$team_id           = (string) ( $row['thuisteamid'] ?? '' );
 		$item['special']   = in_array( $team_id, $config['first_team_ids'] ?? [], true ) ? 'first' : ( in_array( $team_id, $config['u23_team_ids'] ?? [], true ) ? 'u23' : null );
-		$item['youth']     = (bool) preg_match( '/\b(?:J|M)?O\d|\b023/i', $item['home_team'] );
+		$item['youth']     = self::is_youth( $item['home_team'] );
 		$item['cancelled'] = $item['cancelled'] || (bool) preg_match( '/afgelast|geannuleerd|uitgesteld|vervallen/i', $item['status'] . ' ' . $kind );
 		$activity          = preg_match( '/training|onderling/i', $kind ) || preg_match( '/blokkade|recreanten|mini.s|training/i', $item['home_team'] . ' ' . $item['away_team'] );
 		$item['activity']  = (bool) $activity;
@@ -202,8 +202,19 @@ class MatchArchive {
 		}
 	}
 
+	/** O23 belongs to seniors; Sportlink local names also spell the O as zero. */
+	private static function is_youth( string $name ): bool {
+		return preg_match( '/\b(?:J|M)?[O0](\d{1,2})(?=\D|$)/i', $name, $matches ) === 1 && (int) $matches[1] > 0 && (int) $matches[1] < 23;
+	}
+
 	public static function summary( array $day ): array {
 		$fixtures = array_values( $day['fixtures'] ?? [] );
+		// Derive the grouping when reading too, so existing archive snapshots
+		// immediately follow the same rule without rewriting source history.
+		foreach ( $fixtures as &$fixture ) {
+			$fixture['youth'] = self::is_youth( $fixture['home_team'] );
+		}
+		unset( $fixture );
 		usort( $fixtures, static fn( $a, $b ) => strcmp( $a['time'], $b['time'] ) ?: strcmp( $a['home_team'], $b['home_team'] ) );
 		$counted  = array_values( array_filter( $fixtures, static fn( $fixture ) => $fixture['reason'] === null ) );
 		$first    = array_values( array_filter( $counted, static fn( $fixture ) => $fixture['special'] === 'first' ) );

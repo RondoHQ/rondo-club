@@ -5,6 +5,43 @@ use Rondo\Twelve\MatchArchive;
 use Tests\Support\RondoTestCase;
 
 class TwelveMatchArchiveTest extends RondoTestCase {
+	public function test_age_grouping_handles_letter_and_digit_prefixes_and_existing_snapshots(): void {
+		foreach ( [
+			'AWC O11-1'    => true,
+			'AWC 011-1'    => true,
+			'AWC 012-2'    => true,
+			'AWC O13-1'    => true,
+			'AWC JO19-1'   => true,
+			'AWC MO17-1'   => true,
+			'AWC O22-1'    => true,
+			'AWC O23-1'    => false,
+			'AWC 023-2'    => false,
+			'AWC JO23-1'   => false,
+			'AWC O35-1'    => false,
+			'AWC zat 1'    => false,
+			'AWC 1 zondag' => false,
+		] as $name => $youth ) {
+			$summary = MatchArchive::summary(
+				[
+					'complete' => true,
+					'fixtures' => [
+						[
+							'id'        => '1',
+							'time'      => '12:00',
+							'home_team' => $name,
+							'away_team' => 'Bezoekers',
+							'reason'    => null,
+							'special'   => null,
+							'youth'     => ! $youth,
+						],
+					],
+				]
+				);
+			$this->assertSame( $youth, $summary['fixtures'][0]['youth'], $name );
+			$this->assertSame( 1, $summary['count'], 'Grouping does not change fixture counts.' );
+		}
+	}
+
 	public function test_archive_is_idempotent_retains_past_fixtures_and_moves_rescheduled_ids(): void {
 		$service = new MatchArchive();
 		$service->register();
