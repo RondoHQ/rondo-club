@@ -547,6 +547,14 @@ export const prmApi = {
   bulkCreateInvoices: (caseIds) => api.post('/rondo/v1/invoices/bulk', { case_ids: caseIds }),
   generateInvoicePdf: (id) => api.post(`/rondo/v1/invoices/${id}/generate-pdf`),
   getTwelve: (view, params = {}) => api.get(`/rondo/v1/twelve/${view}`, { params }),
+  saveKantineProduct: (data) => api.post('/rondo/v1/twelve/margins/product', data),
+  saveKantinePurchase: (data) => api.post('/rondo/v1/twelve/margins/purchase', data),
+  previewKantinePurchase: (file) => {
+    const data = new FormData();
+    data.append('file', file);
+    return api.post('/rondo/v1/twelve/margins/preview', data, { headers: { 'Content-Type': undefined } });
+  },
+  getKantinePurchasePdfUrl: (id) => `${(window.rondoConfig?.apiUrl || '/wp-json/').replace(/\/?$/, '/')}rondo/v1/twelve/margins/invoice/${id}/pdf?_wpnonce=${window.rondoConfig?.nonce || ''}`,
   setTwelveSchedule: (data) => api.post('/rondo/v1/twelve/schedule', data),
   setTwelveProductGroup: (data) => api.post('/rondo/v1/twelve/product-groups', data),
   createTwelveInvoice: (data) => api.post('/rondo/v1/twelve/billing', data),

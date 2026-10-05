@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.141.0] - 2026-10-05
+
+### Added
+- Kassaomzet margins by product, using dated purchase prices, sale-price history and editable ingredient quantities with explicit review statuses.
+- Private purchase invoice storage, reconciled Van Altena PDF previews and replay-safe imports, plus manual purchase-price entry and protected source downloads.
+- Finance permission checks and revision checks protect costing edits; unreviewed quantities, packaging changes and missing recipes keep margins unknown.
+
 ## [35.140.0] - 2026-10-05
 
 ### Added

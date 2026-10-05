@@ -5283,4 +5283,5 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
 );
 
 $config['contexts'] = array_merge( $config['contexts'], require __DIR__ . '/match-compensation-fields.php' );
+$config['contexts'] = array_merge( $config['contexts'], require __DIR__ . '/kantine-margin-fields.php' );
 return $config;
