@@ -2,7 +2,6 @@
 /** Private VOG submissions and their lifecycle. */
 namespace Rondo\VOG;
 
-use Rondo\Core\AccessControl;
 use Rondo\Fields\Fields;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -76,9 +75,9 @@ final class VogSubmissions {
 	}
 
 	public static function eligible( int $person_id, int $user_id ): bool {
+		// Own-profile uploads use the account link, independent of coordinator person scopes.
 		return $user_id > 0 && get_user_by( 'id', $user_id ) && get_post_type( $person_id ) === 'person'
 			&& get_post_status( $person_id ) === 'publish'
-			&& AccessControl::can_view_person( $person_id, $user_id )
 			&& (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) === $person_id
 			&& ! Fields::get_for_post( $person_id, 'former_member' )
 			&& ! get_option( 'rondo_is_demo_site', false );

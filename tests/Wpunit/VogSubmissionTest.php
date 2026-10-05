@@ -4,6 +4,8 @@ namespace Tests\Wpunit;
 use Rondo\VOG\VogDocument;
 use Rondo\VOG\VogSubmissions as Store;
 use Rondo\REST\VogSubmissions;
+use Rondo\REST\Volunteer;
+use Rondo\Core\AccessControl;
 use Rondo\Fields\Fields;
 use Tests\Support\RondoTestCase;
 
@@ -205,6 +207,47 @@ class VogSubmissionTest extends RondoTestCase {
 		Fields::update_for_post( $this->person, 'former_member', false );
 		update_option( 'rondo_is_demo_site', true );
 		$this->assertFalse( ( new VogSubmissions() )->member_permission() );
+	}
+
+	public function test_coordinator_can_upload_own_vog_outside_person_scope(): void {
+		update_option( 'rondo_age_group_access', [ 'rondo_user' => [ 'Onder 12' ] ] );
+		Fields::update_for_post( $this->person, 'vog_justis_submitted_date', '2026-10-02T00:00:00+02:00' );
+		$this->server = $this->bootRestControllers( [ VogSubmissions::class, Volunteer::class ] );
+		$other        = $this->createPerson( [], [ 'leeftijdsgroep' => 'Onder 12' ] );
+		$id           = $this->submission();
+
+		foreach ( [ [], [ $this->createOrganization() ] ] as $teams ) {
+			update_option( 'rondo_team_access', [ 'rondo_user' => $teams ] );
+			$this->assertFalse( AccessControl::can_view_person( $this->person, $this->member ) );
+			$this->assertTrue( AccessControl::can_view_person( $other, $this->member ) );
+			$this->assertTrue( Store::eligible( $this->person, $this->member ) );
+			$this->assertFalse( Store::eligible( $other, $this->member ) );
+			$this->assertTrue( $this->request( 'GET', '/vog/me' )->get_data()['can_upload'] );
+			$upload = $this->request( 'POST', '/vog/upload' );
+			$this->assertSame( 400, $upload->get_status() );
+			$this->assertSame( 'vog_files', $upload->get_data()['code'] );
+			$this->assertSame( 200, $this->request( 'GET', '/vog/submissions/' . $id . '/files/0' )->get_status() );
+			$this->assertSame( 403, $this->request( 'GET', '/vog/submissions' )->get_status() );
+			$this->assertSame( 403, $this->approval( $id )->get_status() );
+		}
+		Store::finish( $id, Store::get( $id ), 'rejected' );
+		$this->assertTrue( Store::needs_upload( $this->person, $this->member ) );
+	}
+
+	public function test_upload_requires_an_authenticated_link_to_a_published_person(): void {
+		$this->assertFalse( Store::eligible( $this->person, 0 ) );
+		$this->assertFalse( Store::eligible( $this->person, $this->reviewer ) );
+		$this->assertFalse( Store::eligible( $this->createOrganization(), $this->member ) );
+		foreach ( [ 'draft', 'trash' ] as $status ) {
+			wp_update_post(
+				[
+					'ID'          => $this->person,
+					'post_status' => $status,
+				]
+			);
+			$this->assertFalse( Store::eligible( $this->person, $this->member ) );
+			$this->assertSame( 403, $this->request( 'POST', '/vog/upload' )->get_status() );
+		}
 	}
 
 	public function test_parser_and_rules_fail_closed(): void {
