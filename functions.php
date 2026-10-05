@@ -272,6 +272,7 @@ function rondo_should_log_rest_error( $error ) {
 function rondo_init() {
 	new \Rondo\Twelve\BusinessclubInvoicing();
 	new \Rondo\Twelve\MatchArchive();
+	new \Rondo\Twelve\MarginRepository();
 	add_action( 'init', [ \Rondo\Twelve\BrowserImport::class, 'retire_pdf_import' ] );
 	// Prevent double initialization
 	static $initialized = false;
@@ -403,6 +404,7 @@ function rondo_init() {
 		}
 		new RESTTournaments();
 		new RESTTwelveReports();
+		new \Rondo\REST\KantineMargins();
 		new \Rondo\REST\MemberProfile();
 		new \Rondo\REST\BankAccounts();
 		new \Rondo\REST\MatchCompensation();
