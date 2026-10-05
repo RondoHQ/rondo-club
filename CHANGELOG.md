@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.139.0] - 2026-10-05
+
+### Added
+- Kassaomzet: Drukte & bezetting combines hourly food, drink and mixed purchases, product revenue and deduplicated scheduled kantine staffing.
+- Validated basket imports reconcile to daily product revenue, count split payments once and keep corrections separate from purchases.
+- Durable Sportlink matchday archives distinguish actual home fixtures, activities, cancellations and other venues, including the exact AWC and O23-1 teams.
+- Median revenue comparison requires five complete same-weekday days with similar fixture counts and matching first-team home status; missing history remains explicit.
+
 ## [35.138.1] - 2026-10-04
 
 ### Fixed

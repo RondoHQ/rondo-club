@@ -271,6 +271,7 @@ function rondo_should_log_rest_error( $error ) {
  */
 function rondo_init() {
 	new \Rondo\Twelve\BusinessclubInvoicing();
+	new \Rondo\Twelve\MatchArchive();
 	add_action( 'init', [ \Rondo\Twelve\BrowserImport::class, 'retire_pdf_import' ] );
 	// Prevent double initialization
 	static $initialized = false;

@@ -110,6 +110,9 @@ class BrowserImport {
 				return false;
 			}
 		}
+		if ( array_key_exists( 'activity', $data ) && ! Activity::validate( $data ) ) {
+			return false;
+		}
 		$ids = [];
 		foreach ( $data['no_sale_transactions'] as $row ) {
 			if ( ! is_array( $row ) || ! is_string( $row['transactionId'] ?? null ) || isset( $ids[ $row['transactionId'] ] ) || ( $row['day'] ?? '' ) !== $start->format( 'Y-m-d' ) || ! is_string( $row['category'] ?? null ) || ! is_int( $row['grossCents'] ?? null ) || ! is_bool( $row['partial'] ?? null ) || ! is_array( $row['products'] ?? null ) ) {

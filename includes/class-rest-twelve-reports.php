@@ -111,6 +111,28 @@ class TwelveReports extends Base {
 			]
 			);
 
+		register_rest_route(
+			'rondo/v1',
+			'/twelve/activity',
+			[
+				'methods'             => 'GET',
+				'permission_callback' => [ $this, 'check_kassa_permission' ],
+				'args'                => [
+					'date' => array_merge(
+					$range_args['from'],
+					[
+						'required'          => true,
+						'validate_callback' => static function ( $value ) {
+										$date = is_string( $value ) ? \DateTimeImmutable::createFromFormat( '!Y-m-d', $value ) : false;
+										return $date && $date->format( 'Y-m-d' ) === $value;
+						},
+					]
+			),
+				],
+				'callback'            => static fn( $request ) => rest_ensure_response( \Rondo\Twelve\Activity::day( $request->get_param( 'date' ) ) ),
+			]
+			);
+
 		// Most recent imported reports.
 		register_rest_route(
 			'rondo/v1',
