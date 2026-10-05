@@ -212,6 +212,7 @@ export default function VrijwilligersDiensten() {
   const [feedback, setFeedback] = useState(null);
   const typesButtonRef = useRef(null);
   const selectedDienstType = searchParams.get('diensttype') || '';
+  const historyDate = searchParams.get('datum') || '';
 
   const { data: typesData, isLoading: typesLoading } = useQuery({
     queryKey: ['volunteer', 'dienst-types'],
@@ -226,10 +227,12 @@ export default function VrijwilligersDiensten() {
   });
 
   const { data: calendarData, isLoading: calendarLoading } = useQuery({
-    queryKey: shiftCalendarKeys.manage(selectedDienstType),
+    queryKey: [...shiftCalendarKeys.manage(selectedDienstType), historyDate],
     queryFn: async () => (await prmApi.getShiftCalendar({
       view: 'manage',
       dienst_type_id: selectedDienstType || undefined,
+      from: historyDate || undefined,
+      to: historyDate || undefined,
     })).data,
     staleTime: 60 * 1000,
   });
@@ -351,7 +354,36 @@ export default function VrijwilligersDiensten() {
         />
       )}
 
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="block">
+          <span className="label">Eerdere dienst opzoeken</span>
+          <input
+            type="date"
+            className="input"
+            value={historyDate}
+            max={format(new Date(), 'yyyy-MM-dd')}
+            onChange={(event) => setSearchParams((previousParams) => {
+              const nextParams = new URLSearchParams(previousParams);
+              if (event.target.value) nextParams.set('datum', event.target.value);
+              else nextParams.delete('datum');
+              return nextParams;
+            }, { replace: true })}
+          />
+        </label>
+        {historyDate && (
+          <button type="button" className="btn-tertiary" onClick={() => setSearchParams((previousParams) => {
+            const nextParams = new URLSearchParams(previousParams);
+            nextParams.delete('datum');
+            return nextParams;
+          }, { replace: true })}>
+            Terug naar komende diensten
+          </button>
+        )}
+      </div>
+
       <ShiftCoverageCalendar
+        key={historyDate}
+        title={historyDate ? 'Bezetting op gekozen datum' : 'Bezetting komende diensten'}
         data={calendarData}
         isLoading={calendarLoading}
         selectedDienstType={selectedDienstType}
@@ -389,7 +421,7 @@ export default function VrijwilligersDiensten() {
               )}
             </div>
             <span className={`text-xs font-medium ${shift.is_filled ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
-              {shift.is_filled ? 'Ingevuld' : `${Math.max(0, Math.max(1, shift.capacity) - shift.assigned_count)} open`}
+              {shift.status === 'voltooid' ? 'Voltooid' : shift.is_filled ? 'Ingevuld' : `${Math.max(0, Math.max(1, shift.capacity) - shift.assigned_count)} open`}
             </span>
             <Link
               to={`/vrijwilligers/diensten/${shift.id}`}

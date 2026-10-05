@@ -27,6 +27,7 @@ namespace Rondo\REST;
 use Rondo\Core\PostTitle;
 use Rondo\Core\VolunteerStatus;
 use Rondo\Fees\SeasonKey;
+use Rondo\Fields\Fields;
 use Rondo\Users\GuardianAccountService;
 use Rondo\Volunteer\IvaStatus;
 use Rondo\Volunteer\ShiftAssignments;
@@ -158,6 +159,8 @@ class MemberShifts extends Base {
 		}
 		$data['assigned_person_names']    = $names;
 		$data['duty_assigned_person_ids'] = array_values( array_filter( $assigned, static fn( int $person_id ): bool => ShiftAssignments::is_duty_assignment( $post->ID, $person_id ) ) );
+		$data['retroactive_person_ids']   = array_values( array_filter( $assigned, static fn( int $person_id ): bool => (bool) get_post_meta( $post->ID, '_shift_retroactive_at_' . $person_id, true ) ) );
+		$data['can_record_attendance']    = $this->can_record_attendance( $post->ID );
 		$response->set_data( $data );
 		return $response;
 	}
@@ -440,6 +443,10 @@ class MemberShifts extends Base {
 						'type'    => 'string',
 						'default' => 'signup',
 						'enum'    => [ 'signup', 'assigned' ],
+					],
+					'retroactive'     => [
+						'type'    => 'boolean',
+						'default' => false,
 					],
 				],
 			]
@@ -1025,7 +1032,7 @@ class MemberShifts extends Base {
 						'compare' => 'BETWEEN',
 						'type'    => 'DATETIME',
 					],
-					$this->active_shift_status_meta_query( true ),
+					$this->active_shift_status_meta_query( true, $view === 'manage' ),
 				],
 				'orderby'          => 'meta_value',
 				'meta_key'         => 'start_datetime',
@@ -1424,6 +1431,13 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'invalid_person', 'Persoon bestaat niet.', [ 'status' => 404 ] );
 		}
 
+		if ( $request->get_param( 'retroactive' ) ) {
+			if ( ! $this->check_person_access( $request ) ) {
+				return new \WP_Error( 'rest_forbidden', 'Je hebt geen toegang tot deze persoon.', [ 'status' => 403 ] );
+			}
+			return $this->record_attendance( $shift_id, $person_id );
+		}
+
 		$status = (string) get_post_meta( $shift_id, 'status', true );
 		if ( ! in_array( $status, [ 'open', 'vol' ], true ) ) {
 			return new \WP_Error( 'shift_closed', 'Deze inschrijftaak staat niet meer open.', [ 'status' => 409 ] );
@@ -1536,6 +1550,84 @@ class MemberShifts extends Base {
 		);
 	}
 
+	/** Only finished, published, non-cancelled shifts accept historical attendance. */
+	private function can_record_attendance( int $shift_id ): bool {
+		if ( get_post_status( $shift_id ) !== 'publish' || ! in_array( Fields::get_for_post( $shift_id, 'status' ), [ 'open', 'vol', 'voltooid' ], true ) ) {
+			return false;
+		}
+		$start = $this->shift_start_timestamp( $shift_id );
+		$end   = (string) Fields::get_for_post( $shift_id, 'end_datetime' );
+		if ( $start === null || $end === '' ) {
+			return false;
+		}
+		try {
+			$end_at = ( new \DateTimeImmutable( $end, wp_timezone() ) )->getTimestamp();
+			return $end_at > $start && $end_at <= time();
+		} catch ( \Exception $exception ) {
+			return false;
+		}
+	}
+
+	/** Record what happened, without applying today's signup requirements or sending mail. */
+	private function record_attendance( int $shift_id, int $person_id ) {
+		return $this->with_shift_write_lock(
+			$shift_id,
+			function () use ( $shift_id, $person_id ) {
+				if ( ! $this->can_record_attendance( $shift_id ) ) {
+					return new \WP_Error( 'attendance_unavailable', 'Achteraf registreren kan alleen bij een afgelopen, niet-geannuleerde inschrijftaak.', [ 'status' => 409 ] );
+				}
+				$assigned = ShiftAssignments::person_ids( $shift_id );
+				$already  = in_array( $person_id, $assigned, true );
+				if ( ! $already ) {
+					$assigned[] = $person_id;
+					$saved      = Fields::update_many_for_post(
+						$shift_id,
+						[
+							'assigned_persons' => $assigned,
+							'status'           => 'voltooid',
+						]
+						);
+					if ( is_wp_error( $saved ) ) {
+						return $saved;
+					}
+					update_post_meta( $shift_id, '_shift_retroactive_at_' . $person_id, time() );
+					update_post_meta( $shift_id, '_shift_assigned_by_' . $person_id, get_current_user_id() );
+					update_post_meta( $shift_id, '_shift_assigned_at_' . $person_id, time() );
+					$this->log_attendance_change( $shift_id, $person_id, 'added' );
+					VolunteerObligationCalculator::invalidate_cache();
+				}
+				return rest_ensure_response(
+					[
+						'shift_id'         => $shift_id,
+						'person_id'        => $person_id,
+						'retroactive'      => true,
+						'already_assigned' => $already,
+						'assigned_count'   => count( $assigned ),
+						'capacity'         => (int) Fields::get_for_post( $shift_id, 'capacity' ),
+						'notification'     => [
+							'queued' => false,
+							'reason' => 'retroactive',
+						],
+					]
+				);
+			}
+		);
+	}
+
+	/** Append-only audit survives a corrected registration. */
+	private function log_attendance_change( int $shift_id, int $person_id, string $action ): void {
+		add_post_meta(
+			$shift_id,
+			'_shift_attendance_log',
+			[
+				'person_id'   => $person_id,
+				'action'      => $action,
+				'user_id'     => get_current_user_id(),
+				'recorded_at' => time(),
+			]
+		);
+	}
+
 	/**
 	 * Candidates a coordinator may put on this shift, with the reason each one
 	 * cannot be added when that applies.
@@ -1556,8 +1648,9 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'invalid_shift', 'Inschrijftaak bestaat niet.', [ 'status' => 404 ] );
 		}
 
-		$assigned   = ShiftAssignments::person_ids( $shift_id );
-		$candidates = $this->search_person_ids( $search );
+		$assigned    = ShiftAssignments::person_ids( $shift_id );
+		$candidates  = $this->search_person_ids( $search );
+		$retroactive = $this->can_record_attendance( $shift_id );
 
 		$people = [];
 		foreach ( $candidates as $person_id ) {
@@ -1569,7 +1662,7 @@ class MemberShifts extends Base {
 			$block_reason = null;
 			if ( ! ( new VolunteerEligibilityService() )->may_volunteer( $person_id ) ) {
 				$block_reason = 'geen actief lid';
-			} else {
+			} elseif ( ! $retroactive ) {
 				$blocked = $this->assert_person_may_take_shift( $person_id, $shift_id );
 				if ( is_wp_error( $blocked ) ) {
 					$block_reason = $blocked->get_error_message();
@@ -1661,6 +1754,22 @@ class MemberShifts extends Base {
 			$shift_id,
 			function () use ( $person_id, $shift_id ) {
 				$status = (string) get_post_meta( $shift_id, 'status', true );
+				if ( $this->can_record_attendance( $shift_id ) && get_post_meta( $shift_id, '_shift_retroactive_at_' . $person_id, true ) ) {
+					$assigned = ShiftAssignments::person_ids( $shift_id );
+					$saved    = Fields::update_many_for_post( $shift_id, [ 'assigned_persons' => array_values( array_diff( $assigned, [ $person_id ] ) ) ] );
+					if ( is_wp_error( $saved ) ) {
+						return $saved;
+					}
+					delete_post_meta( $shift_id, '_shift_retroactive_at_' . $person_id );
+					$this->log_attendance_change( $shift_id, $person_id, 'removed' );
+					VolunteerObligationCalculator::invalidate_cache();
+					return [
+						'shift_id'    => $shift_id,
+						'person_id'   => $person_id,
+						'removed'     => true,
+						'retroactive' => true,
+					];
+				}
 				if ( in_array( $status, [ 'geannuleerd', 'voltooid' ], true ) ) {
 					return new \WP_Error( 'shift_closed', 'Aanmeldingen van een geannuleerde of voltooide inschrijftaak kunnen niet meer worden gewijzigd.', [ 'status' => 409 ] );
 				}
@@ -1691,6 +1800,10 @@ class MemberShifts extends Base {
 		);
 		if ( is_wp_error( $result ) ) {
 			return $result;
+		}
+
+		if ( ! empty( $result['retroactive'] ) ) {
+			return rest_ensure_response( $result );
 		}
 
 		$mailer                 = new ShiftEmailScheduler();
@@ -1952,12 +2065,12 @@ class MemberShifts extends Base {
 	 * that absence as open mirrors Fields::get_for_post() and keeps those shifts
 	 * visible while newly submitted defaults are materialized by the field API.
 	 */
-	private function active_shift_status_meta_query( bool $include_full ): array {
+	private function active_shift_status_meta_query( bool $include_full, bool $include_completed = false ): array {
 		return [
 			'relation' => 'OR',
 			[
 				'key'     => 'status',
-				'value'   => $include_full ? [ 'open', 'vol' ] : 'open',
+				'value'   => $include_full ? ( $include_completed ? [ 'open', 'vol', 'voltooid' ] : [ 'open', 'vol' ] ) : 'open',
 				'compare' => $include_full ? 'IN' : '=',
 			],
 			[

@@ -337,6 +337,7 @@ class PersonMergeTest extends RondoTestCase {
 			);
 		\Rondo\Fields\Fields::update_for_post( $shift_id, 'assigned_persons', [ $duplicate_id, $other_id ] );
 		update_post_meta( $shift_id, '_no_show_' . $duplicate_id, 1 );
+		update_post_meta( $shift_id, '_shift_retroactive_at_' . $duplicate_id, 123456 );
 		update_post_meta( $shift_id, '_shift_assignment_mode_' . $duplicate_id, 'assigned' );
 		update_post_meta( $shift_id, '_shift_assignment_mode_' . $primary_id, 'signup' );
 
@@ -393,6 +394,8 @@ class PersonMergeTest extends RondoTestCase {
 		$this->assertIsArray( $result );
 		$this->assertSame( [ $primary_id, $other_id ], array_map( 'intval', \Rondo\Fields\Fields::get_for_post( $shift_id, 'assigned_persons' ) ) );
 		$this->assertSame( 1, (int) get_post_meta( $shift_id, '_no_show_' . $primary_id, true ) );
+		$this->assertSame( 123456, (int) get_post_meta( $shift_id, '_shift_retroactive_at_' . $primary_id, true ) );
+		$this->assertFalse( metadata_exists( 'post', $shift_id, '_shift_retroactive_at_' . $duplicate_id ) );
 		$this->assertFalse( metadata_exists( 'post', $shift_id, '_no_show_' . $duplicate_id ) );
 		$this->assertSame( 'assigned', get_post_meta( $shift_id, '_shift_assignment_mode_' . $primary_id, true ) );
 		$this->assertFalse( metadata_exists( 'post', $shift_id, '_shift_assignment_mode_' . $duplicate_id ) );

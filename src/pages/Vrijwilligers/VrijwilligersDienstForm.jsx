@@ -154,6 +154,8 @@ export default function VrijwilligersDienstForm() {
   const assignablePeople = assignableData?.people || [];
 
   const isCancelled = form.status === 'geannuleerd';
+  const canRecordAttendance = Boolean(existing?.can_record_attendance);
+  const retroactiveIds = existing?.retroactive_person_ids || [];
   const cancellation = existing?.cancellation || null;
   const templateLink = existing?.template_link || null;
   const cancellationIsLastMinute = useMemo(() => {
@@ -216,7 +218,9 @@ export default function VrijwilligersDienstForm() {
     mutationFn: (personId) => prmApi.removeShiftAssignee(id, personId),
     onSuccess: async (response) => {
       const notification = response?.data?.notification;
-      setFeedback(notification?.sent
+      setFeedback(response?.data?.retroactive
+        ? { kind: 'success', message: 'Registratie verwijderd. Er is geen mail verstuurd.' }
+        : notification?.sent
         ? { kind: 'success', message: 'Aanmelding verwijderd. De afmeldmail is verzonden.' }
         : {
           kind: 'warning',
@@ -226,6 +230,7 @@ export default function VrijwilligersDienstForm() {
         });
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shift', id] });
       await refreshShiftCalendars(queryClient);
+      await refreshAttendanceQueries();
     },
     onError: (err) => {
       setFeedback({ kind: 'error', message: err?.response?.data?.message || err?.message || 'Verwijderen mislukt.' });
@@ -234,12 +239,16 @@ export default function VrijwilligersDienstForm() {
 
   const addAssigneeMutation = useMutation({
     mutationFn: ({ personId, forceOverlap = false, mode }) =>
-      prmApi.addShiftAssignee(id, { person_id: personId, force_overlap: forceOverlap, assignment_mode: mode }),
+      prmApi.addShiftAssignee(id, { person_id: personId, force_overlap: forceOverlap, assignment_mode: mode, retroactive: canRecordAttendance }),
     onSuccess: async (response) => {
       const data = response?.data || {};
       setAddPersonOpen(false);
       setOverlapPrompt(null);
-      if (data.notification && data.notification.queued === false) {
+      if (data.retroactive) {
+        setFeedback({ kind: 'success', message: data.already_assigned
+          ? 'Deze persoon stond al geregistreerd. De bestaande registratie is behouden.'
+          : 'Achteraf geregistreerd. Deze dienst telt mee als uitgevoerd en in de bezetting. Er is geen mail verstuurd.' });
+      } else if (data.notification && data.notification.queued === false) {
         setFeedback({
           kind: 'warning',
           message: data.assignment_mode === 'assigned'
@@ -255,6 +264,7 @@ export default function VrijwilligersDienstForm() {
       }
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shift', id] });
       await refreshShiftCalendars(queryClient);
+      await refreshAttendanceQueries();
     },
     onError: (err, variables) => {
       const data = err?.response?.data;
@@ -265,6 +275,14 @@ export default function VrijwilligersDienstForm() {
       setFeedback({ kind: 'error', message: data?.message || err?.message || 'Toevoegen mislukt.' });
     },
   });
+
+  async function refreshAttendanceQueries() {
+    await Promise.all([
+      ...['volunteer', 'my-shifts'].map((key) => queryClient.refetchQueries({ queryKey: [key], type: 'all' })),
+      queryClient.refetchQueries({ queryKey: ['twelve', 'activity'], type: 'all' }),
+      queryClient.refetchQueries({ predicate: (query) => query.queryKey[0] === 'people' && query.queryKey[2] === 'shifts', type: 'all' }),
+    ]);
+  }
 
   if ((isEdit && existingLoading) || typesLoading) {
     return <ContentLoadingSpinner />;
@@ -334,7 +352,7 @@ export default function VrijwilligersDienstForm() {
           });
         }}
       >
-        {isEdit && assignedIds.length > 0 && !isCancelled && (
+        {isEdit && assignedIds.length > 0 && !isCancelled && !canRecordAttendance && (
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Bij een wijziging van de datum, tijden, soort taak of toelichting krijgen ingeschreven vrijwilligers automatisch een mail met de oude en nieuwe gegevens.
           </p>
@@ -518,7 +536,7 @@ export default function VrijwilligersDienstForm() {
               Verwijderen
             </button>
           )}
-          {isEdit && !isCancelled && assignedIds.length > 0 && (
+          {isEdit && !isCancelled && existing?.fields?.status !== 'voltooid' && assignedIds.length > 0 && (
             <button
               type="button"
               onClick={() => {
@@ -588,15 +606,21 @@ export default function VrijwilligersDienstForm() {
         <section className="card p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="font-semibold text-gray-900 dark:text-gray-100">Iemand indelen</h2>
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">{canRecordAttendance ? 'Achteraf registreren' : 'Iemand indelen'}</h2>
               <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                Voor leden zonder account of e-mail, of als iemand het je persoonlijk laat weten.
-                Bij indelen gelden de normale afmeldregels. Bij toewijzen kan de persoon zich niet zelf afmelden.
+                {canRecordAttendance
+                  ? 'Leg vast wie deze dienst heeft geholpen, ook boven de geplande bezetting. Dit telt mee als uitgevoerd; er wordt geen mail verstuurd.'
+                  : 'Voor leden zonder account of e-mail, of als iemand het je persoonlijk laat weten. Bij indelen gelden de normale afmeldregels. Bij toewijzen kan de persoon zich niet zelf afmelden.'}
               </p>
+              {canRecordAttendance && (
+                <p className="mt-2 text-sm text-gray-700 dark:text-gray-200">
+                  {assignedIds.length} geregistreerd · {existing?.fields?.capacity || 1} {Number(existing?.fields?.capacity || 1) === 1 ? 'plek' : 'plekken'} gepland
+                </p>
+              )}
             </div>
             {!addPersonOpen && (
               <div className="flex flex-wrap gap-2">
-                {['signup', 'assigned'].map((mode) => (
+                {(canRecordAttendance ? ['signup'] : ['signup', 'assigned']).map((mode) => (
                   <button
                     key={mode}
                     type="button"
@@ -607,7 +631,7 @@ export default function VrijwilligersDienstForm() {
                     }}
                     className="btn-tertiary inline-flex items-center gap-1.5 text-sm"
                   >
-                    <UserPlus className="h-4 w-4" /> {mode === 'assigned' ? 'Dienst toewijzen' : 'Indelen'}
+                    <UserPlus className="h-4 w-4" /> {canRecordAttendance ? 'Helper registreren' : mode === 'assigned' ? 'Dienst toewijzen' : 'Indelen'}
                   </button>
                 ))}
               </div>
@@ -616,7 +640,7 @@ export default function VrijwilligersDienstForm() {
 
           {addPersonOpen && (
             <div className="mt-4 space-y-3">
-              <fieldset disabled={addAssigneeMutation.isPending}>
+              {!canRecordAttendance && <fieldset disabled={addAssigneeMutation.isPending}>
                 <legend className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">Manier van indelen</legend>
                 <div className="flex flex-wrap gap-4">
                   {['signup', 'assigned'].map((mode) => (
@@ -626,8 +650,8 @@ export default function VrijwilligersDienstForm() {
                     </label>
                   ))}
                 </div>
-              </fieldset>
-              {assignmentMode === 'assigned' && (
+              </fieldset>}
+              {!canRecordAttendance && assignmentMode === 'assigned' && (
                 <p className="text-sm text-gray-700 dark:text-gray-300">
                   De persoon krijgt een toewijzingsmail, blijft verantwoordelijk en kan zich niet zelf afmelden.
                   Vervanging of ruilen moet via de accommodatiemanager.{' '}
@@ -635,7 +659,7 @@ export default function VrijwilligersDienstForm() {
                 </p>
               )}
               <label className="block">
-                <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">Zoek een lid</span>
+                <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">{canRecordAttendance ? 'Zoek een helper' : 'Zoek een lid'}</span>
                 <input
                   type="search"
                   autoFocus
@@ -676,7 +700,7 @@ export default function VrijwilligersDienstForm() {
                             }}
                             className="btn-tertiary shrink-0 text-xs disabled:cursor-not-allowed disabled:opacity-40"
                           >
-                            {assignmentMode === 'assigned' ? 'Toewijzen' : 'Indelen'}
+                            {canRecordAttendance ? 'Registreren' : assignmentMode === 'assigned' ? 'Toewijzen' : 'Indelen'}
                           </button>
                         )}
                       </li>
@@ -724,27 +748,29 @@ export default function VrijwilligersDienstForm() {
 
       {isEdit && assignedIds.length > 0 && (
         <section className="card p-5">
-          <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Aanmeldingen ({assignedIds.length})</h2>
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{canRecordAttendance ? 'Geregistreerde helpers' : 'Aanmeldingen'} ({assignedIds.length})</h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
             {isCancelled
               ? 'Deze aanmeldingen blijven bewaard voor de historie en de puntentoekenning.'
-              : <>Leden melden zich aan via <code>/vrijwillig</code>. Hier kun je iemand handmatig verwijderen — bv. bij vergissingen.</>}
+              : canRecordAttendance ? 'Achteraf toegevoegde registraties kun je bij een vergissing weer verwijderen.'
+                : <>Leden melden zich aan via <code>/vrijwillig</code>. Hier kun je iemand handmatig verwijderen — bv. bij vergissingen.</>}
           </p>
           <ul className="divide-y divide-gray-100 dark:divide-gray-700">
             {assignedIds.map((pid) => (
               <li key={pid} className="py-2 flex items-center justify-between gap-3 text-sm">
-                <Link to={`/people/${pid}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline inline-flex items-center gap-1">
+                <Link to={`/people/${pid}`} className="min-w-0 flex-wrap text-bright-cobalt dark:text-electric-cyan hover:underline inline-flex items-center gap-1">
                   {assignedPeopleLoading ? 'Naam laden…' : (assignedPeopleById.get(pid) || `Persoon ${pid}`)}
                   {existing?.duty_assigned_person_ids?.includes(pid) && <span className="text-xs text-gray-600 dark:text-gray-300">(toegewezen)</span>} <ExternalLink className="w-3 h-3" />
+                  {retroactiveIds.includes(pid) && <span className="text-xs text-gray-600 dark:text-gray-300">Achteraf geregistreerd</span>}
                 </Link>
-                {!isCancelled && <button
+                {!isCancelled && (retroactiveIds.includes(pid) || existing?.fields?.status !== 'voltooid') && <button
                   type="button"
                   onClick={() => {
-                    if (window.confirm('Aanmelding verwijderen? Deze persoon ontvangt een afmeldmail.')) {
+                    if (retroactiveIds.includes(pid) || window.confirm('Aanmelding verwijderen? Deze persoon ontvangt een afmeldmail.')) {
                       removeAssigneeMutation.mutate(pid);
                     }
                   }}
-                  disabled={removeAssigneeMutation.isLoading}
+                  disabled={removeAssigneeMutation.isPending}
                   className="text-xs text-red-700 dark:text-red-300 inline-flex items-center gap-1 hover:underline"
                 >
                   <UserX className="w-3 h-3" /> Verwijder

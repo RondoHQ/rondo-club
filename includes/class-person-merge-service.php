@@ -51,6 +51,7 @@ final class PersonMergeService {
 		'_shift_email_survey_sent_',
 		'_shift_assigned_by_',
 		'_shift_assigned_at_',
+		'_shift_retroactive_at_',
 		'_no_show_',
 	];
 

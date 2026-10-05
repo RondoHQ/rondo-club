@@ -198,6 +198,130 @@ class ShiftAssignmentByCoordinatorTest extends RondoTestCase {
 		$this->assertSame( 409, $this->add_assignee( $completed, $this->person_id )->get_status() );
 	}
 
+	public function test_retroactive_helper_counts_above_capacity_without_mail_or_current_certificates(): void {
+		$user_id = $this->as_coordinator();
+		$past    = $this->create_shift( '-3 days', 1, 'voltooid' );
+		$first   = $this->createPerson( [ 'post_title' => 'Eerder ingepland' ] );
+		update_post_meta( $past, 'assigned_persons', [ $first ] );
+		update_post_meta( $past, 'template_id', 123 );
+		update_post_meta( $this->dienst_type_id, 'vog_required', true );
+		update_post_meta( $this->dienst_type_id, 'iva_required', true );
+		update_post_meta( $this->dienst_type_id, 'required_pool', 999 );
+		update_post_meta( $this->dienst_type_id, '_rondo_seed_key', 'kantine_bar' );
+		$unit       = [
+			'unit_id'        => 'speler:' . $this->person_id,
+			'kind'           => 'speler',
+			'person_ids'     => [ $this->person_id ],
+			'required_count' => 2,
+		];
+		$season     = \Rondo\Fees\SeasonKey::current( substr( get_post_meta( $past, 'start_datetime', true ), 0, 10 ) );
+		$calculator = new \Rondo\Volunteer\VolunteerObligationCalculator();
+		$this->assertSame( 0, $calculator->progress_for_unit( $unit, $season )['completed_count'] );
+		$mail_calls = 0;
+		$trap       = static function ( $result ) use ( &$mail_calls ) {
+			++$mail_calls;
+			return true;
+		};
+		add_filter( 'pre_wp_mail', $trap );
+		try {
+			$response = $this->add_assignee( $past, $this->person_id, [ 'retroactive' => true ] );
+		} finally {
+			remove_filter( 'pre_wp_mail', $trap );
+		}
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertSame( 0, $mail_calls );
+		$this->assertSame( [ $first, $this->person_id ], \Rondo\Volunteer\ShiftAssignments::person_ids( $past ) );
+		$this->assertSame( 1, (int) get_post_meta( $past, 'capacity', true ) );
+		$this->assertSame( 'voltooid', get_post_meta( $past, 'status', true ) );
+		$this->assertSame( 123, (int) get_post_meta( $past, 'template_id', true ) );
+		$this->assertEmpty( get_post_meta( $past, '_shift_customized', true ) );
+		$this->assertSame( $user_id, (int) get_post_meta( $past, '_shift_assigned_by_' . $this->person_id, true ) );
+		$this->assertFalse( $response->get_data()['notification']['queued'] );
+		$this->assertSame( '', get_post_meta( $past, '_shift_signup_at_' . $this->person_id, true ) );
+		$this->assertFalse( wp_next_scheduled( ShiftEmailScheduler::SIGNUP_CONFIRMATION_CRON_HOOK, [ $this->person_id ] ) );
+		$this->assertSame( 1, $calculator->progress_for_unit( $unit, $season )['completed_count'] );
+		$staffing = \Rondo\Twelve\Activity::staffing( substr( get_post_meta( $past, 'start_datetime', true ), 0, 10 ) );
+		$this->assertSame( 2, $staffing['11']['min'] );
+		$this->assertSame( 2, $staffing['11']['max'] );
+		$get = rest_get_server()->dispatch( new WP_REST_Request( 'GET', '/wp/v2/dienst-shifts/' . $past ) );
+		$this->assertSame( [ $this->person_id ], $get->get_data()['retroactive_person_ids'] );
+		$this->assertTrue( $get->get_data()['can_record_attendance'] );
+	}
+
+	public function test_retroactive_registration_requires_finished_published_non_cancelled_shift(): void {
+		$this->as_coordinator();
+		$running = $this->create_shift( '-1 day', 2 );
+		update_post_meta( $running, 'end_datetime', current_datetime()->modify( '+1 hour' )->format( 'Y-m-d H:i:s' ) );
+		$cancelled        = $this->create_shift( '-3 days', 2, 'geannuleerd' );
+		$future_completed = $this->create_shift( '+3 days', 2, 'voltooid' );
+		$draft            = $this->create_shift( '-3 days', 2 );
+		wp_update_post(
+			[
+				'ID'          => $draft,
+				'post_status' => 'draft',
+			]
+			);
+		$invalid = $this->create_shift( '-3 days', 2 );
+		delete_post_meta( $invalid, 'end_datetime' );
+		foreach ( [ $this->shift_id, $running, $cancelled, $future_completed, $draft, $invalid ] as $shift ) {
+			$this->assertSame( 409, $this->add_assignee( $shift, $this->person_id, [ 'retroactive' => true ] )->get_status() );
+			$this->assertSame( [], \Rondo\Volunteer\ShiftAssignments::person_ids( $shift ) );
+		}
+	}
+
+	public function test_retroactive_registration_is_manager_only_and_does_not_relax_future_signups(): void {
+		$past = $this->create_shift( '-3 days', 2, 'voltooid' );
+		wp_set_current_user( $this->createRondoUser() );
+		$this->assertSame( 403, $this->add_assignee( $past, $this->person_id, [ 'retroactive' => true ] )->get_status() );
+		$this->as_coordinator();
+		update_post_meta( $this->dienst_type_id, 'iva_required', true );
+		$this->assertSame( 403, $this->add_assignee( $this->shift_id, $this->person_id )->get_status() );
+		$request = new WP_REST_Request( 'GET', '/rondo/v1/shifts/' . $past . '/assignable-people' );
+		$request->set_param( 'search', 'Jan' );
+		$people = rest_get_server()->dispatch( $request )->get_data()['people'];
+		$this->assertFalse( array_column( $people, null, 'id' )[ $this->person_id ]['blocked'] );
+	}
+
+	public function test_retroactive_retry_preserves_existing_signup_and_no_show(): void {
+		$this->as_coordinator();
+		$past = $this->create_shift( '-3 days', 1 );
+		$this->assertSame( 200, $this->add_assignee( $past, $this->person_id, [ 'retroactive' => true ] )->get_status() );
+		$at    = get_post_meta( $past, '_shift_retroactive_at_' . $this->person_id, true );
+		$again = $this->add_assignee( $past, $this->person_id, [ 'retroactive' => true ] );
+		$this->assertTrue( $again->get_data()['already_assigned'] );
+		$this->assertSame( 'voltooid', get_post_meta( $past, 'status', true ) );
+		$this->assertSame( $at, get_post_meta( $past, '_shift_retroactive_at_' . $this->person_id, true ) );
+		$this->assertCount( 1, get_post_meta( $past, '_shift_attendance_log', false ) );
+		$original = $this->create_shift( '-5 days', 1, 'voltooid' );
+		update_post_meta( $original, 'assigned_persons', [ $this->person_id ] );
+		update_post_meta( $original, '_no_show_' . $this->person_id, true );
+		update_post_meta( $original, '_shift_assignment_mode_' . $this->person_id, 'assigned' );
+		$again = $this->add_assignee( $original, $this->person_id, [ 'retroactive' => true ] );
+		$this->assertTrue( $again->get_data()['already_assigned'] );
+		$this->assertEmpty( get_post_meta( $original, '_shift_retroactive_at_' . $this->person_id, true ) );
+		$this->assertSame( 'assigned', get_post_meta( $original, '_shift_assignment_mode_' . $this->person_id, true ) );
+		$this->assertTrue( (bool) get_post_meta( $original, '_no_show_' . $this->person_id, true ) );
+	}
+
+	public function test_retroactive_correction_removes_only_new_helper_without_mail_and_keeps_audit(): void {
+		$this->as_coordinator();
+		$past  = $this->create_shift( '-3 days', 1, 'voltooid' );
+		$first = $this->createPerson( [ 'post_title' => 'Eerder ingepland' ] );
+		update_post_meta( $past, 'assigned_persons', [ $first ] );
+		$this->add_assignee( $past, $this->person_id, [ 'retroactive' => true ] );
+		$request  = new WP_REST_Request( 'DELETE', '/rondo/v1/shifts/' . $past . '/assignees/' . $this->person_id );
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $response->get_data()['retroactive'] );
+		$this->assertArrayNotHasKey( 'notification', $response->get_data() );
+		$this->assertSame( [ $first ], \Rondo\Volunteer\ShiftAssignments::person_ids( $past ) );
+		$this->assertSame( 'voltooid', get_post_meta( $past, 'status', true ) );
+		$this->assertEmpty( get_post_meta( $past, '_shift_retroactive_at_' . $this->person_id, true ) );
+		$this->assertSame( [ 'added', 'removed' ], array_column( get_post_meta( $past, '_shift_attendance_log', false ), 'action' ) );
+		$request = new WP_REST_Request( 'DELETE', '/rondo/v1/shifts/' . $past . '/assignees/' . $first );
+		$this->assertSame( 409, rest_get_server()->dispatch( $request )->get_status() );
+	}
+
 	public function test_overlap_warns_once_then_proceeds_when_forced(): void {
 		$this->as_coordinator();
 
