@@ -81,8 +81,9 @@ class MatchArchive {
 			return new \WP_Error( 'kantine_archive_busy', 'Wedstrijdarchief wordt bijgewerkt.' );
 		}
 		try {
-			$source = new SportlinkMatchday( false );
-			$rows   = [];
+			$source          = new SportlinkMatchday( false );
+			$rows            = [];
+			$invalid_records = 0;
 			foreach ( [ 'programma', 'uitslagen', 'afgelastingen' ] as $endpoint ) {
 				$response = $source->request(
 					$endpoint,
@@ -101,11 +102,13 @@ class MatchArchive {
 				}
 				foreach ( $response as $row ) {
 					if ( ! is_array( $row ) ) {
-						return new \WP_Error( 'kantine_archive_invalid', 'Onvolledig wedstrijdrecord.' );
+						++$invalid_records;
+						continue;
 					}
 					$item = self::normalize( $row, $source, $config );
 					if ( ! $item ) {
-						return new \WP_Error( 'kantine_archive_invalid', 'Een wedstrijd mist een datum of herkenbaar nummer.' );
+						++$invalid_records;
+						continue;
 					}
 					if ( $endpoint === 'afgelastingen' ) {
 						$item['cancelled'] = true;
@@ -123,6 +126,7 @@ class MatchArchive {
 			$now     = new \DateTimeImmutable( 'now', new \DateTimeZone( 'Europe/Amsterdam' ) );
 			$from    = $now->setTime( 0, 0 )->modify( $weekoffset . ' weeks' );
 			$to      = $from->modify( '+' . $days . ' days' );
+			$rows    = array_filter( $rows, static fn( $row ) => $row['date'] >= $from->format( 'Y-m-d' ) && $row['date'] < $to->format( 'Y-m-d' ) );
 			$archive = self::load();
 			$changed = [];
 			// A rescheduled stable source ID must not remain on its former date.
@@ -144,7 +148,7 @@ class MatchArchive {
 					'captured_during' => false,
 					'complete'        => false,
 				];
-				if ( $date > $now->format( 'Y-m-d' ) ) {
+				if ( ! $invalid_records && $date > $now->format( 'Y-m-d' ) ) {
 					foreach ( $day['fixtures'] as $id => &$old ) {
 						if ( ! isset( $rows[ $id ] ) ) {
 							$old['reason'] = 'Niet meer in programma';
@@ -157,11 +161,11 @@ class MatchArchive {
 						$day['fixtures'][ $id ] = $item;
 					}
 				}
-				$day['captured_before'] = $day['captured_before'] || ( $time > $now && $time < $now->modify( '+2 days' ) );
-				$day['captured_during'] = ( $day['captured_during'] ?? false ) || ( $date === $now->format( 'Y-m-d' ) );
+				$day['captured_before'] = $day['captured_before'] || ( ! $invalid_records && $time > $now && $time < $now->modify( '+2 days' ) );
+				$day['captured_during'] = ( $day['captured_during'] ?? false ) || ( ! $invalid_records && $date === $now->format( 'Y-m-d' ) );
 				// Backfills cannot reconstruct youth fixtures that have disappeared.
 				// A final refresh after the day plus a pre-day snapshot is required.
-				$day['complete']   = $day['complete'] || ( $day['captured_before'] && $day['captured_during'] && $time->modify( '+1 day' ) < $now );
+				$day['complete']   = ! $invalid_records && ( $day['complete'] || ( $day['captured_before'] && $day['captured_during'] && $time->modify( '+1 day' ) < $now ) );
 				$day['updated_at'] = $now->format( DATE_RFC3339 );
 				$archive[ $date ]  = $day;
 				$changed[ $date ]  = true;
@@ -189,8 +193,9 @@ class MatchArchive {
 				}
 			}
 			return [
-				'days'     => count( $changed ),
-				'fixtures' => count( $rows ),
+				'days'            => count( $changed ),
+				'fixtures'        => count( $rows ),
+				'invalid_records' => $invalid_records,
 			];
 		} finally {
 			delete_option( 'rondo_kantine_archive_lock' );

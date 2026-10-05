@@ -56,6 +56,13 @@ class TwelveMatchArchiveTest extends RondoTestCase {
 			$service->refresh();
 			$this->assertSame( 0, MatchArchive::summary( MatchArchive::load()[ $date ] )['count'] );
 			$this->assertSame( 1, MatchArchive::summary( MatchArchive::load()[ $new_date ] )['count'] );
+			$rows[] = [
+				'wedstrijdcode' => 999,
+				'thuisteam'     => 'Datum ontbreekt',
+			];
+			$this->assertSame( 1, $service->refresh()['invalid_records'] );
+			$this->assertSame( 1, MatchArchive::summary( MatchArchive::load()[ $new_date ] )['count'] );
+			$this->assertFalse( MatchArchive::summary( MatchArchive::load()[ $new_date ] )['complete'] );
 			$fail = true;
 			$this->assertWPError( $service->refresh() );
 			$this->assertSame( 1, MatchArchive::summary( MatchArchive::load()[ $new_date ] )['count'] );
