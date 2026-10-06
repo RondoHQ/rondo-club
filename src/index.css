@@ -50,6 +50,19 @@
   line-height: 1.4;
 }
 
+.newsletter-editor .ProseMirror :is(ul, ol) {
+  margin: 0 0 12px;
+  padding: 0 0 0 24px;
+}
+
+.newsletter-editor .ProseMirror li {
+  margin: 0 0 4px;
+}
+
+.newsletter-editor .ProseMirror li p {
+  margin: 0;
+}
+
 /* Custom base styles */
 @layer base {
   html {
