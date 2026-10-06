@@ -81,9 +81,13 @@ class Newsletter {
 
 	private static function render_body( string $html ): string {
 		$processor = new \WP_HTML_Tag_Processor( self::sanitize_body( $html ) );
-		while ( $processor->next_tag( 'IMG' ) ) {
-			// Email clients cannot use the editor's Tailwind image classes.
-			$processor->set_attribute( 'style', 'max-width:100%;height:auto;display:block;margin:12px 0;' );
+		while ( $processor->next_tag() ) {
+			// Email clients need inline styles matching the editor's spacing.
+			if ( $processor->get_tag() === 'IMG' ) {
+				$processor->set_attribute( 'style', 'max-width:100%;height:auto;display:block;margin:12px 0;' );
+			} elseif ( in_array( $processor->get_tag(), [ 'H2', 'H3' ], true ) ) {
+				$processor->set_attribute( 'style', 'margin:24px 0 8px;line-height:1.4;' );
+			}
 		}
 		return $processor->get_updated_html();
 	}

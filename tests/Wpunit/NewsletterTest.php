@@ -283,6 +283,23 @@ class NewsletterTest extends RondoTestCase {
 		$this->assertStringNotContainsString( 'data:', Newsletter::sanitize_body( '<img src="data:image/png;base64,AAAA">' ) );
 	}
 
+	public function test_heading_spacing_survives_preview_and_export(): void {
+		$this->prepare();
+		$body = '<p>Intro</p><h2>Kop</h2><p>Tekst</p><ul><li>Punt</li></ul><h3>Tussenkop</h3><p>Meer tekst</p>';
+		$r    = $this->save( [ 'newsletter_body' => $body ] );
+		$this->assertSame( 200, $r->get_status() );
+		$this->assertSame( $body, Fields::get_for_post( $this->id, 'newsletter_body' ) );
+		$preview = $this->request( '/preview', 'POST' );
+		$this->assertSame( 200, $preview->get_status() );
+		$review = $this->request( '/review', 'POST', [ 'revision' => $r->get_data()['revision'] ] );
+		$this->assertSame( 200, $review->get_status() );
+		$this->assertSame( 200, $this->request( '/export', 'POST', [ 'token' => $review->get_data()['token'] ] )->get_status() );
+		foreach ( [ $preview->get_data()['html'], $this->html ] as $html ) {
+			$this->assertStringContainsString( '<h2 style="margin:24px 0 8px;line-height:1.4;">Kop</h2>', $html );
+			$this->assertStringContainsString( '<h3 style="margin:24px 0 8px;line-height:1.4;">Tussenkop</h3>', $html );
+		}
+	}
+
 	public function test_whole_list_is_explicit_and_survives_form_encoding(): void {
 		$token = $this->prepare( 'all' );
 		$this->assertSame( 200, $this->request( '/export', 'POST', [ 'token' => $token ] )->get_status() );
