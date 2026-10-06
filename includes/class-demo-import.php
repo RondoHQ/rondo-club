@@ -10,6 +10,7 @@
 namespace Rondo\Demo;
 
 use WP_CLI;
+use Rondo\Passes\MembershipPassService;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -90,7 +91,8 @@ class DemoImport {
 	/**
 	 * Clean all existing Rondo data before import
 	 *
-	 * Removes all Rondo-specific posts, taxonomy terms, and options.
+	 * Removes Rondo-specific posts, taxonomy terms, and configuration options.
+	 * Preserves completed migrations so a refresh does not repeat upgrade work.
 	 * Does NOT remove user accounts or WordPress core data.
 	 */
 	public function clean() {
@@ -192,6 +194,8 @@ class DemoImport {
 			    OR option_name LIKE 'rondo_membership_pass_%'"
 		);
 
+		// Upgrade state belongs to the installed code, not the replaceable demo data.
+		$dynamic_options = array_diff( $dynamic_options, [ MembershipPassService::LEGACY_CLEANUP_OPTION ] );
 		foreach ( $dynamic_options as $option_name ) {
 			delete_option( $option_name );
 		}
