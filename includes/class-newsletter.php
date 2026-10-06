@@ -80,13 +80,29 @@ class Newsletter {
 	}
 
 	private static function render_body( string $html ): string {
-		$processor = new \WP_HTML_Tag_Processor( self::sanitize_body( $html ) );
-		while ( $processor->next_tag() ) {
+		$processor       = new \WP_HTML_Tag_Processor( self::sanitize_body( $html ) );
+		$list_item_depth = 0;
+		while ( $processor->next_tag( [ 'tag_closers' => 'visit' ] ) ) {
+			$tag = $processor->get_tag();
+			if ( $processor->is_tag_closer() ) {
+				if ( $tag === 'LI' ) {
+					$list_item_depth = max( 0, $list_item_depth - 1 );
+				}
+				continue;
+			}
 			// Email clients need inline styles matching the editor's spacing.
-			if ( $processor->get_tag() === 'IMG' ) {
+			if ( $tag === 'IMG' ) {
 				$processor->set_attribute( 'style', 'max-width:100%;height:auto;display:block;margin:12px 0;' );
-			} elseif ( in_array( $processor->get_tag(), [ 'H2', 'H3' ], true ) ) {
+			} elseif ( in_array( $tag, [ 'H2', 'H3' ], true ) ) {
 				$processor->set_attribute( 'style', 'margin:24px 0 8px;line-height:1.4;' );
+			} elseif ( in_array( $tag, [ 'UL', 'OL' ], true ) ) {
+				$processor->set_attribute( 'style', 'margin:0 0 12px;padding:0 0 0 24px;' );
+			} elseif ( $tag === 'LI' ) {
+				++$list_item_depth;
+				$processor->set_attribute( 'style', 'margin:0 0 4px;' );
+			} elseif ( $tag === 'P' && $list_item_depth > 0 ) {
+				// Override the template's important paragraph rule only inside lists.
+				$processor->set_attribute( 'style', 'margin:0!important;' );
 			}
 		}
 		return $processor->get_updated_html();

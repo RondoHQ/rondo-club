@@ -300,6 +300,28 @@ class NewsletterTest extends RondoTestCase {
 		}
 	}
 
+	public function test_list_spacing_is_compact_in_preview_and_export_and_preserves_paragraphs(): void {
+		$this->prepare();
+		$body = '<p>Intro</p><ul><li><p>Punt</p><ol><li><p>Genest</p></li></ol></li><li><p>Tweede punt</p></li></ul><p>Na de lijst</p>';
+		$r    = $this->save( [ 'newsletter_body' => $body ] );
+		$this->assertSame( 200, $r->get_status() );
+		$this->assertSame( $body, Fields::get_for_post( $this->id, 'newsletter_body' ) );
+		$preview = $this->request( '/preview', 'POST' );
+		$this->assertSame( 200, $preview->get_status() );
+		$review = $this->request( '/review', 'POST', [ 'revision' => $r->get_data()['revision'] ] );
+		$this->assertSame( 200, $review->get_status() );
+		$this->assertSame( 200, $this->request( '/export', 'POST', [ 'token' => $review->get_data()['token'] ] )->get_status() );
+		foreach ( [ $preview->get_data()['html'], $this->html ] as $html ) {
+			$this->assertStringContainsString( '<ul style="margin:0 0 12px;padding:0 0 0 24px;">', $html );
+			$this->assertStringContainsString( '<ol style="margin:0 0 12px;padding:0 0 0 24px;">', $html );
+			$this->assertStringContainsString( '<li style="margin:0 0 4px;"><p style="margin:0!important;">Punt</p>', $html );
+			$this->assertStringContainsString( '<p style="margin:0!important;">Genest</p>', $html );
+			$this->assertStringContainsString( '<p style="margin:0!important;">Tweede punt</p>', $html );
+			$this->assertStringContainsString( '<p>Intro</p>', $html );
+			$this->assertStringContainsString( '<p>Na de lijst</p>', $html );
+		}
+	}
+
 	public function test_whole_list_is_explicit_and_survives_form_encoding(): void {
 		$token = $this->prepare( 'all' );
 		$this->assertSame( 200, $this->request( '/export', 'POST', [ 'token' => $token ] )->get_status() );
