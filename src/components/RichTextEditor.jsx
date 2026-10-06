@@ -213,6 +213,7 @@ export default function RichTextEditor({
   minHeight = '120px',
   autoFocus = false,
   enableImages = false,
+  imageSpacing,
   ariaLabel,
   enableHeadings = false,
 }) {
@@ -245,6 +246,7 @@ export default function RichTextEditor({
               allowBase64: false,
               HTMLAttributes: {
                 class: 'rounded-md max-w-full h-auto my-2',
+                ...(imageSpacing !== undefined ? { style: `margin:${imageSpacing}px 0;` } : {}),
               },
             }),
           ]
