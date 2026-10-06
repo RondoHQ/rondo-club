@@ -230,9 +230,10 @@ class MollieWebhook {
 	 * @return \WP_REST_Response Response with ok:true (always 200).
 	 */
 	private function handle_installment_paid( int $invoice_id, int $n, string $payment_id, $payment_link ): \WP_REST_Response {
-		// 1. Idempotency check: already marked betaald — no-op.
+		// 1. Already paid: refresh arrears without replaying payment actions.
 		$current_status = get_post_meta( $invoice_id, '_installment_' . $n . '_status', true );
 		if ( $current_status === 'betaald' ) {
+			InvoiceOverdueStatus::refresh( $invoice_id );
 			return rest_ensure_response( [ 'ok' => true ] );
 		}
 
@@ -268,6 +269,8 @@ class MollieWebhook {
 			\Rondo\Fields\Fields::update_for_post( $invoice_id, 'status', 'paid' );
 			return rest_ensure_response( [ 'ok' => true ] );
 		}
+
+		InvoiceOverdueStatus::refresh( $invoice_id );
 
 		// 5. More installments remain — create next installment payment automatically.
 		$next = $n + 1;

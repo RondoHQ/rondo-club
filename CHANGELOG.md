@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.141.3] - 2026-10-06
+
+### Fixed
+- Determine installment invoice arrears and the displayed deadline from the next unpaid installment instead of the original invoice deadline, and repair stale overdue statuses on invoice reads, payment confirmations and daily installment processing.
+- Keep overdue installment plans eligible for scheduled installment emails and reminders.
+
 ## [35.141.2] - 2026-10-05
 
 ### Fixed

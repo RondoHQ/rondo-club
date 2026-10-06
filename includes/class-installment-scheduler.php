@@ -100,14 +100,14 @@ class InstallmentScheduler {
 	/**
 	 * Query all invoices with active payment plans and process each one
 	 *
-	 * Queries rondo_invoice posts with rondo_sent status where the installment plan
+	 * Queries sent and overdue rondo_invoice posts where the installment plan
 	 * is not 'full' (i.e. quarterly_3 or monthly_8).
 	 */
 	private function process_invoices(): void {
 		$invoice_ids = get_posts(
 			[
 				'post_type'        => 'rondo_invoice',
-				'post_status'      => 'rondo_sent',
+				'post_status'      => [ 'rondo_sent', 'rondo_overdue' ],
 				'posts_per_page'   => -1,
 				'fields'           => 'ids',
 				'no_found_rows'    => true,
@@ -127,6 +127,7 @@ class InstallmentScheduler {
 		}
 
 		foreach ( $invoice_ids as $invoice_id ) {
+			InvoiceOverdueStatus::refresh( (int) $invoice_id );
 			$this->process_invoice( (int) $invoice_id );
 		}
 	}

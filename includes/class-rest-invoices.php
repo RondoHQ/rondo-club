@@ -12,6 +12,7 @@ use Rondo\Finance\InvoiceNumbering;
 use Rondo\Finance\InvoicePdfGenerator;
 use Rondo\Finance\InvoiceEmailSender;
 use Rondo\Finance\InvoiceStatistics;
+use Rondo\Finance\InvoiceOverdueStatus;
 use Rondo\Finance\PublicPaymentPage;
 use Rondo\Finance\RabobankOAuth;
 use Rondo\Finance\RabobankPayment;
@@ -915,7 +916,8 @@ class Invoices extends Base {
 			);
 		}
 
-		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+		InvoiceOverdueStatus::refresh( $invoice_id );
+		return rest_ensure_response( $this->format_invoice_detail( get_post( $invoice_id ) ) );
 	}
 
 	/**
@@ -2393,35 +2395,14 @@ class Invoices extends Base {
 	private function check_overdue_invoices() {
 		$args = [
 			'post_type'      => 'rondo_invoice',
-			'post_status'    => 'rondo_sent',
+			'post_status'    => [ 'rondo_sent', 'rondo_overdue' ],
 			'posts_per_page' => -1,
-			'meta_query'     => [
-				[
-					'key'     => 'due_date',
-					'compare' => 'EXISTS',
-				],
-			],
 		];
 
 		$query = new \WP_Query( $args );
-		$today = current_time( 'Ymd' );
 
 		foreach ( $query->posts as $invoice ) {
-			if ( get_post_meta( $invoice->ID, '_invoice_kind', true ) === 'credit' ) {
-				continue;
-			}
-			$due_date = get_post_meta( $invoice->ID, 'due_date', true );
-
-			if ( $due_date && $due_date < $today ) {
-				// Update to overdue status
-				wp_update_post(
-					[
-						'ID'          => $invoice->ID,
-						'post_status' => 'rondo_overdue',
-					]
-				);
-				\Rondo\Fields\Fields::update_for_post( $invoice->ID, 'status', 'overdue' );
-			}
+			InvoiceOverdueStatus::refresh( (int) $invoice->ID );
 		}
 	}
 
@@ -2432,6 +2413,7 @@ class Invoices extends Base {
 	 * @return array Formatted invoice data.
 	 */
 	private function format_invoice( $post ) {
+		$installment_due_date = InvoiceOverdueStatus::next_unpaid_due_date( (int) $post->ID );
 		$status               = \Rondo\Fields\Fields::get_for_post( $post->ID, 'status' );
 		$raw_payment_link     = \Rondo\Fields\Fields::get_for_post( $post->ID, 'payment_link' ) ?: null;
 		$payment_link         = ( $status === 'paid' ) ? null : $raw_payment_link;
@@ -2479,7 +2461,7 @@ class Invoices extends Base {
 			'status'                 => $status,
 			'post_status'            => $post->post_status,
 			'sent_date'              => get_post_meta( $post->ID, 'sent_date', true ) ?: null,
-			'due_date'               => get_post_meta( $post->ID, 'due_date', true ) ?: null,
+			'due_date'               => $installment_due_date !== null ? str_replace( '-', '', $installment_due_date ) : ( get_post_meta( $post->ID, 'due_date', true ) ?: null ),
 			'scheduled_send_date'    => get_post_meta( $post->ID, '_scheduled_send_date', true ) ?: null,
 			'scheduled_send_pending' => $this->is_invoice_send_pending( $post->ID ),
 			'payment_link'           => $payment_link,
