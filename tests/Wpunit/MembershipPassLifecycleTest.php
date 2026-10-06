@@ -13,6 +13,58 @@ use Tests\Support\RondoTestCase;
 /** Contract tests for permanent, online-verifiable membership passes. */
 class MembershipPassLifecycleTest extends RondoTestCase {
 
+	public function test_legacy_public_pass_cleanup_clears_cached_meta_and_runs_only_once(): void {
+		$people = [ $this->createPerson(), $this->createPerson( [ 'post_status' => 'trash' ] ) ];
+		foreach ( $people as $person_id ) {
+			update_post_meta( $person_id, MembershipPassService::LEGACY_TOKEN_META_KEY, 'legacy-token' );
+			update_post_meta( $person_id, MembershipPassService::LEGACY_URL_META_KEY, 'https://example.org/lidpas/legacy-token' );
+			update_post_meta( $person_id, MembershipPassService::PASS_VERSION_META_KEY, 7 );
+			// Prime the metadata cache so direct SQL must invalidate it.
+			$this->assertSame( 'legacy-token', get_post_meta( $person_id, MembershipPassService::LEGACY_TOKEN_META_KEY, true ) );
+		}
+		delete_option( MembershipPassService::LEGACY_CLEANUP_OPTION );
+		update_option( MembershipPassService::LEGACY_BACKFILL_OPTION, true, false );
+
+		$service = new MembershipPassService();
+		$service->maybe_remove_legacy_public_pass_data();
+
+		$this->assertTrue( (bool) get_option( MembershipPassService::LEGACY_CLEANUP_OPTION ) );
+		$this->assertFalse( get_option( MembershipPassService::LEGACY_BACKFILL_OPTION ) );
+		foreach ( $people as $person_id ) {
+			$this->assertFalse( metadata_exists( 'post', $person_id, MembershipPassService::LEGACY_TOKEN_META_KEY ) );
+			$this->assertFalse( metadata_exists( 'post', $person_id, MembershipPassService::LEGACY_URL_META_KEY ) );
+			$this->assertSame( '7', get_post_meta( $person_id, MembershipPassService::PASS_VERSION_META_KEY, true ) );
+		}
+
+		// Sentinel data proves that a second call skips all cleanup work.
+		update_post_meta( $people[0], MembershipPassService::LEGACY_TOKEN_META_KEY, 'second-call-sentinel' );
+		update_option( MembershipPassService::LEGACY_BACKFILL_OPTION, true, false );
+		$service->maybe_remove_legacy_public_pass_data();
+		$this->assertSame( 'second-call-sentinel', get_post_meta( $people[0], MembershipPassService::LEGACY_TOKEN_META_KEY, true ) );
+		$this->assertTrue( (bool) get_option( MembershipPassService::LEGACY_BACKFILL_OPTION ) );
+	}
+
+	public function test_legacy_public_pass_cleanup_marks_done_before_deleting_meta(): void {
+		global $wpdb;
+		$person_id = $this->createPerson();
+		update_post_meta( $person_id, MembershipPassService::LEGACY_TOKEN_META_KEY, 'legacy-token' );
+		delete_option( MembershipPassService::LEGACY_CLEANUP_OPTION );
+		$flag_at_delete = null;
+		$observe_delete = static function ( $query ) use ( $wpdb, &$flag_at_delete ) {
+			if ( str_starts_with( $query, "DELETE FROM {$wpdb->postmeta} WHERE meta_key IN (" ) ) {
+				$flag_at_delete = (bool) get_option( MembershipPassService::LEGACY_CLEANUP_OPTION );
+			}
+			return $query;
+		};
+		add_filter( 'query', $observe_delete );
+		try {
+			( new MembershipPassService() )->maybe_remove_legacy_public_pass_data();
+		} finally {
+			remove_filter( 'query', $observe_delete );
+		}
+		$this->assertTrue( $flag_at_delete );
+	}
+
 	public function test_default_qr_token_has_no_expiry_and_includes_pass_version(): void {
 		$person_id = $this->createPerson(
 			[ 'post_title' => 'Actief lid' ],

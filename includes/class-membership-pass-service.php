@@ -332,33 +332,27 @@ class MembershipPassService {
 			return;
 		}
 
-		$people = get_posts(
-			[
-				'post_type'      => 'person',
-				'post_status'    => 'any',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-				'meta_query'     => [
-					'relation' => 'OR',
-					[
-						'key'     => self::LEGACY_TOKEN_META_KEY,
-						'compare' => 'EXISTS',
-					],
-					[
-						'key'     => self::LEGACY_URL_META_KEY,
-						'compare' => 'EXISTS',
-					],
-				],
-			]
+		// Set the flag before cleanup so later requests do not repeat the migration.
+		update_option( self::LEGACY_CLEANUP_OPTION, true, false );
+
+		global $wpdb;
+		// These retired keys can be removed directly without joining all post metadata.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- One-time bulk cleanup; the metadata cache is cleared below.
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->postmeta} WHERE meta_key IN (%s, %s)",
+				self::LEGACY_TOKEN_META_KEY,
+				self::LEGACY_URL_META_KEY
+			)
 		);
 
-		foreach ( $people as $person_id ) {
-			delete_post_meta( (int) $person_id, self::LEGACY_TOKEN_META_KEY );
-			delete_post_meta( (int) $person_id, self::LEGACY_URL_META_KEY );
+		if ( wp_cache_supports( 'flush_group' ) ) {
+			wp_cache_flush_group( 'post_meta' );
+		} else {
+			wp_cache_flush();
 		}
 
 		delete_option( self::LEGACY_BACKFILL_OPTION );
-		update_option( self::LEGACY_CLEANUP_OPTION, true, false );
 		flush_rewrite_rules( false );
 	}
 
