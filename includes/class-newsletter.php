@@ -63,6 +63,13 @@ class Newsletter {
 				'li'     => [],
 				'h2'     => [],
 				'h3'     => [],
+				'img'    => [
+					'src'    => true,
+					'alt'    => true,
+					'title'  => true,
+					'width'  => true,
+					'height' => true,
+				],
 				'a'      => [
 					'href'  => true,
 					'title' => true,
@@ -70,6 +77,15 @@ class Newsletter {
 			],
 			[ 'https', 'http', 'mailto' ]
 			);
+	}
+
+	private static function render_body( string $html ): string {
+		$processor = new \WP_HTML_Tag_Processor( self::sanitize_body( $html ) );
+		while ( $processor->next_tag( 'IMG' ) ) {
+			// Email clients cannot use the editor's Tailwind image classes.
+			$processor->set_attribute( 'style', 'max-width:100%;height:auto;display:block;' );
+		}
+		return $processor->get_updated_html();
 	}
 
 	public static function draft( int $id ): array {
@@ -156,7 +172,7 @@ class Newsletter {
 		$html   = preg_replace_callback(
 			'/%%([A-Z_]+)%%/',
 			static function ( $match ) use ( $values, $draft ) {
-				return $match[1] === 'BODY_HTML' ? self::sanitize_body( $draft['newsletter_body'] ) : esc_html( $values[ $match[1] ] ?? '' );
+				return $match[1] === 'BODY_HTML' ? self::render_body( $draft['newsletter_body'] ) : esc_html( $values[ $match[1] ] ?? '' );
 			},
 			$config['template']
 			);

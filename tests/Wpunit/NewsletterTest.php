@@ -259,6 +259,29 @@ class NewsletterTest extends RondoTestCase {
 		$this->assertCount( $writes, array_filter( $this->calls, fn( $c ) => $c[0] === 'POST' ) );
 	}
 
+	public function test_images_survive_save_preview_and_export_without_unsafe_attributes(): void {
+		$this->prepare();
+		$image = '<img src="https://example.org/photo.jpg" alt="Clubfoto" title="Onze club" width="1600" height="900">';
+		$r     = $this->save( [ 'newsletter_body' => '<p>Onze club</p>' . str_replace( '>', ' onerror="evil()" style="position:fixed" class="editor-image">', $image ) ] );
+		$this->assertSame( 200, $r->get_status(), wp_json_encode( $r->get_data() ) );
+		$this->assertSame( '<p>Onze club</p>' . $image, $this->request()->get_data()['fields']['newsletter_body'] );
+		$this->assertSame( '<p>Onze club</p>' . $image, Fields::get_for_post( $this->id, 'newsletter_body' ) );
+		$preview = $this->request( '/preview', 'POST' );
+		$this->assertSame( 200, $preview->get_status() );
+		$this->assertStringContainsString( 'src="https://example.org/photo.jpg"', $preview->get_data()['html'] );
+		$this->assertStringContainsString( 'max-width:100%;height:auto;display:block;', $preview->get_data()['html'] );
+		$review = $this->request( '/review', 'POST', [ 'revision' => $r->get_data()['revision'] ] );
+		$this->assertSame( 200, $review->get_status(), wp_json_encode( $review->get_data() ) );
+		$this->assertSame( 200, $this->request( '/export', 'POST', [ 'token' => $review->get_data()['token'] ] )->get_status() );
+		$this->assertStringContainsString( 'src="https://example.org/photo.jpg"', $this->html );
+		$this->assertStringContainsString( 'alt="Clubfoto"', $this->html );
+		$this->assertStringContainsString( 'max-width:100%;height:auto;display:block;', $this->html );
+		$this->assertStringNotContainsString( 'onerror', $this->html );
+		$this->assertStringNotContainsString( 'position:fixed', $this->html );
+		$this->assertStringNotContainsString( 'javascript:', Newsletter::sanitize_body( '<img src="javascript:evil()" onerror="evil()">' ) );
+		$this->assertStringNotContainsString( 'data:', Newsletter::sanitize_body( '<img src="data:image/png;base64,AAAA">' ) );
+	}
+
 	public function test_whole_list_is_explicit_and_survives_form_encoding(): void {
 		$token = $this->prepare( 'all' );
 		$this->assertSame( 200, $this->request( '/export', 'POST', [ 'token' => $token ] )->get_status() );
