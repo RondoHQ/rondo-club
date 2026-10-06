@@ -83,7 +83,7 @@ class Newsletter {
 		$processor = new \WP_HTML_Tag_Processor( self::sanitize_body( $html ) );
 		while ( $processor->next_tag( 'IMG' ) ) {
 			// Email clients cannot use the editor's Tailwind image classes.
-			$processor->set_attribute( 'style', 'max-width:100%;height:auto;display:block;' );
+			$processor->set_attribute( 'style', 'max-width:100%;height:auto;display:block;margin:12px 0;' );
 		}
 		return $processor->get_updated_html();
 	}
