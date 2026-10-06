@@ -19,6 +19,7 @@ class NewsletterTest extends RondoTestCase {
 	private string $html       = '';
 	private string $failure    = '';
 	private string $definition = 'field = value';
+	private array $test_emails = [];
 
 	protected function set_up(): void {
 		parent::set_up();
@@ -140,6 +141,12 @@ class NewsletterTest extends RondoTestCase {
 					'report' => [],
 				],
 			];
+		} elseif ( $path === '/campaign/campaign1/action/testmail' && $args['method'] === 'POST' ) {
+			$this->test_emails[] = $body['email'];
+			if ( $this->failure === 'test_timeout' ) {
+				return new \WP_Error( 'timeout', 'timeout' );
+			}
+			$data = [ 'campaign' => $this->remote ];
 		} else {
 			$this->fail( 'Unexpected Laposta call: ' . $args['method'] . ' ' . $path );
 		}
@@ -371,6 +378,149 @@ class NewsletterTest extends RondoTestCase {
 		$this->assertEmpty( array_filter( $this->calls, fn( $c ) => $c[0] === 'POST' ) );
 	}
 
+	public function test_testmail_sends_only_to_the_requested_address_without_changing_the_campaign(): void {
+		$token = $this->prepare();
+		$this->assertSame( 200, $this->request( '/export', 'POST', [ 'token' => $token ] )->get_status() );
+		$before      = get_post_meta( $this->id, Newsletter::EXPORT, true );
+		$remote      = $this->remote;
+		$this->calls = [];
+		$r           = $this->request(
+			'/testmail',
+			'POST',
+			[
+				'email'    => ' tester@example.org ',
+				'revision' => Newsletter::revision( $this->id ),
+			]
+			);
+		$this->assertSame( 200, $r->get_status(), wp_json_encode( $r->get_data() ) );
+		$this->assertSame(
+			[
+				'email'  => 'tester@example.org',
+				'status' => 'requested',
+			],
+			$r->get_data()
+			);
+		$this->assertSame( [ 'tester@example.org' ], $this->test_emails );
+		$this->assertSame( [ [ 'POST', '/campaign/campaign1/action/testmail' ] ], array_values( array_filter( $this->calls, fn( $c ) => $c[0] === 'POST' ) ) );
+		$this->assertSame( $remote, $this->remote );
+		$this->assertSame( $before, get_post_meta( $this->id, Newsletter::EXPORT, true ) );
+		$this->assertSame( 'concept', Fields::get_for_post( $this->id, 'status' ) );
+	}
+
+	public function test_testmail_rejects_invalid_recipients_stale_or_unexported_drafts(): void {
+		$revision = Newsletter::revision( $this->id );
+		foreach ( [ '', 'invalid', 'a@example.org,b@example.org', "a@example.org\r\nBcc:b@example.org", [ 'a@example.org' ] ] as $email ) {
+			$this->assertSame(
+				400,
+				$this->request(
+				'/testmail',
+				'POST',
+				[
+					'email'    => $email,
+					'revision' => $revision,
+				]
+				)->get_status()
+				);
+		}
+		$this->assertSame(
+			409,
+			$this->request(
+			'/testmail',
+			'POST',
+			[
+				'email'    => 'a@example.org',
+				'revision' => $revision,
+			]
+			)->get_status()
+			);
+		$token = $this->prepare();
+		$this->assertSame( 200, $this->request( '/export', 'POST', [ 'token' => $token ] )->get_status() );
+		$this->calls = [];
+		$this->assertSame(
+			409,
+			$this->request(
+			'/testmail',
+			'POST',
+			[
+				'email'    => 'a@example.org',
+				'revision' => 'stale',
+			]
+			)->get_status()
+			);
+		$this->assertSame(
+			400,
+			$this->request(
+			'/testmail',
+			'POST',
+			[
+				'email'       => 'a@example.org',
+				'revision'    => Newsletter::revision( $this->id ),
+				'campaign_id' => 'other',
+			]
+			)->get_status()
+			);
+		$this->save( [ 'newsletter_body' => '<p>Changed</p>' ] );
+		$this->assertSame(
+			409,
+			$this->request(
+			'/testmail',
+			'POST',
+			[
+				'email'    => 'a@example.org',
+				'revision' => Newsletter::revision( $this->id ),
+			]
+			)->get_status()
+			);
+		$this->assertEmpty( $this->calls );
+		$this->assertEmpty( $this->test_emails );
+	}
+
+	public function test_testmail_rejects_remote_edits_and_scheduled_or_sent_campaigns(): void {
+		$token = $this->prepare();
+		$this->assertSame( 200, $this->request( '/export', 'POST', [ 'token' => $token ] )->get_status() );
+		$body        = [
+			'email'    => 'a@example.org',
+			'revision' => Newsletter::revision( $this->id ),
+		];
+		$html        = $this->html;
+		$this->calls = [];
+		$this->html  = '<p>Edited in Laposta</p>';
+		$this->assertSame( 409, $this->request( '/testmail', 'POST', $body )->get_status() );
+		$this->html = $html;
+		foreach ( [ 'delivery_requested', 'delivery_started', 'delivery_ended' ] as $field ) {
+			$this->remote[ $field ] = '2026-10-06 12:00:00';
+			$this->assertSame( 409, $this->request( '/testmail', 'POST', $body )->get_status() );
+			$this->remote[ $field ] = null;
+		}
+		$this->assertEmpty( array_filter( $this->calls, fn( $c ) => $c[0] === 'POST' ) );
+		$this->assertEmpty( $this->test_emails );
+	}
+
+	public function test_testmail_respects_permissions_and_shared_lock_and_does_not_retry_timeouts(): void {
+		$token = $this->prepare();
+		$this->assertSame( 200, $this->request( '/export', 'POST', [ 'token' => $token ] )->get_status() );
+		$body        = [
+			'email'    => 'a@example.org',
+			'revision' => Newsletter::revision( $this->id ),
+		];
+		$this->calls = [];
+		add_option( 'rondo_comm_edit_' . $this->id, time() );
+		$this->assertSame( 409, $this->request( '/testmail', 'POST', $body )->get_status() );
+		delete_option( 'rondo_comm_edit_' . $this->id );
+		wp_set_current_user( $this->createRondoUser() );
+		$this->assertSame( 403, $this->request( '/testmail', 'POST', $body )->get_status() );
+		wp_set_current_user( 0 );
+		$this->assertNotSame( 200, $this->request( '/testmail', 'POST', $body )->get_status() );
+		$this->assertEmpty( $this->calls );
+		wp_set_current_user( $this->user_id );
+		$this->failure = 'test_timeout';
+		$r             = $this->request( '/testmail', 'POST', $body );
+		$this->assertSame( 502, $r->get_status() );
+		$this->assertSame( 'newsletter_test_uncertain', $r->get_data()['code'] );
+		$this->assertSame( [ 'a@example.org' ], $this->test_emails );
+		$this->assertNull( $this->remote['delivery_requested'] );
+	}
+
 	public function test_planned_campaign_and_send_endpoints_are_blocked(): void {
 		$token = $this->prepare();
 		$this->assertSame( 200, $this->request( '/export', 'POST', [ 'token' => $token ] )->get_status() );
@@ -379,6 +529,22 @@ class NewsletterTest extends RondoTestCase {
 		$this->assertSame( 409, $this->request( '/export', 'POST', [ 'token' => $token ] )->get_status() );
 		$this->assertEmpty( array_filter( $this->calls, fn( $c ) => $c[0] === 'POST' ) );
 		$this->assertWPError( ( new LapostaClient() )->request( 'POST', '/campaign/campaign1/action', [ 'action' => 'send' ] ) );
+		$client = new LapostaClient();
+		foreach ( [ '/campaign/campaign1/action/send', '/campaign/campaign1/action/schedule', '/campaign/campaign1/action/testmail/extra' ] as $path ) {
+			$this->assertWPError( $client->request( 'POST', $path, [ 'email' => 'a@example.org' ] ) );
+		}
+		$this->assertWPError( $client->request( 'GET', '/campaign/campaign1/action/testmail', [ 'email' => 'a@example.org' ] ) );
+		$this->assertWPError( $client->request( 'POST', '/campaign/campaign1/action/testmail', [ 'email' => 'invalid' ] ) );
+		$this->assertWPError(
+			$client->request(
+			'POST',
+			'/campaign/campaign1/action/testmail',
+			[
+				'email'  => 'a@example.org',
+				'action' => 'send',
+			]
+			)
+			);
 	}
 	public function test_body_backslashes_and_link_quotes_survive_storage_and_duplicate_is_unlinked(): void {
 		$body = '<p>Pad C:\\nieuws <a href="https://example.org/?a=1&amp;b=2">link</a></p>';

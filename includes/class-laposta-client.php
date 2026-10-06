@@ -1,5 +1,5 @@
 <?php
-/** Restricted Laposta client: campaign drafts and audience metadata only. */
+/** Restricted Laposta client: campaign drafts, audience metadata and testmail. */
 namespace Rondo\Integrations;
 
 use Rondo\Data\CredentialEncryption;
@@ -12,10 +12,12 @@ class LapostaClient {
 	public const KEY_OPTION = 'rondo_laposta_campaign_key';
 
 	public function request( string $method, string $path, array $data = [] ) {
-		// No member, send, schedule, testmail or delete endpoint can pass this boundary.
+		// No member, campaign send, schedule or delete endpoint can pass this boundary.
 		$read  = preg_match( '#^/(list|segment|campaign)(/[a-zA-Z0-9]+)?(/content)?$#', $path );
 		$write = preg_match( '#^/campaign(/[a-zA-Z0-9]+)?(/content)?$#', $path );
-		if ( ! ( $method === 'GET' && $read ) && ! ( $method === 'POST' && $write ) ) {
+		$test  = preg_match( '#^/campaign/[a-zA-Z0-9]+/action/testmail$#', $path )
+			&& array_keys( $data ) === [ 'email' ] && is_string( $data['email'] ) && is_email( $data['email'] );
+		if ( ! ( $method === 'GET' && $read ) && ! ( $method === 'POST' && ( $write || $test ) ) ) {
 			return new \WP_Error( 'laposta_endpoint', 'Deze Laposta-actie is niet toegestaan.', [ 'status' => 400 ] );
 		}
 		$key = CredentialEncryption::get_secret_option( self::KEY_OPTION );

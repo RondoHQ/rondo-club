@@ -50,6 +50,7 @@ function NewsletterEditor({ initial, metadata }) {
   const [message, setMessage] = useState('');
   const [mobileTab, setMobileTab] = useState('edit');
   const [previewSize, setPreviewSize] = useState('desktop');
+  const [testEmail, setTestEmail] = useState('');
   const noticeRef = useRef(null);
   const lists = useNewsletterLists(metadata.configured);
   const dirty = JSON.stringify(draft) !== JSON.stringify(saved.fields);
@@ -85,12 +86,15 @@ function NewsletterEditor({ initial, metadata }) {
     refresh(data); return data;
   }
   async function perform(action) {
-    if (busy) return;
+    if (busy || (action === 'testmail' && (dirty || saved.status !== 'exported'))) return;
     setBusy(action); setError(''); setMessage('');
     try {
-      if (action === 'export') {
+      if (action === 'testmail') {
+        const { data } = await prmApi.sendNewsletterTestmail(initial.id, testEmail.trim(), saved.revision);
+        setMessage(`Testmail aangevraagd bij Laposta voor ${data.email}.`);
+      } else if (action === 'export') {
         const { data } = await prmApi.exportNewsletter(initial.id, review.token);
-        refresh(data); setReview(null); setMessage('Het concept is opgeslagen en gecontroleerd in Laposta. Je kunt daar testen, inplannen en versturen.');
+        refresh(data); setReview(null); setMessage('Het concept staat in Laposta. Je kunt hieronder een testmail aanvragen en de nieuwsbrief in Laposta inplannen en versturen.');
       } else {
         const data = await save();
         if (action === 'review') {
@@ -120,7 +124,7 @@ function NewsletterEditor({ initial, metadata }) {
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(330px,0.85fr)_minmax(360px,1.15fr)] xl:gap-8">
       <div className={`${mobileTab === 'edit' ? '' : 'hidden'} min-w-0 lg:block`}>
         {review ? <section className="space-y-6 rounded-xl border border-gray-200 bg-white p-5 sm:p-6 dark:border-gray-700 dark:bg-gray-800" aria-labelledby="review-title">
-          <div><h2 id="review-title" className="text-xl font-semibold">Controleer je nieuwsbrief</h2><p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Rondo maakt een concept in Laposta. Testen en versturen doe je daarna in Laposta.</p></div>
+          <div><h2 id="review-title" className="text-xl font-semibold">Controleer je nieuwsbrief</h2><p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Rondo maakt een concept in Laposta. Daarna kun je hier een testmail aanvragen. Inplannen en versturen doe je in Laposta.</p></div>
           <dl className="space-y-4 text-sm"><div><dt className="text-gray-600 dark:text-gray-300">Onderwerp</dt><dd className="mt-1 font-medium break-words">{draft.newsletter_subject}</dd></div><div><dt className="text-gray-600 dark:text-gray-300">Afzender</dt><dd className="mt-1 break-words">{review.profile.from_name}<br />{review.profile.from_email}</dd></div><div><dt className="text-gray-600 dark:text-gray-300">Antwoorden naar</dt><dd className="mt-1 break-words">{review.profile.reply_to}</dd></div><div><dt className="text-gray-600 dark:text-gray-300">Doelgroep</dt><dd className="mt-1 space-y-2">{review.audiences.map((a) => <p key={a.list_id}><strong>{a.list_name}</strong><br />{a.scope === 'all' ? 'De hele lijst' : a.segment_name}</p>)}</dd></div></dl>
           <p className="text-xs text-gray-600 dark:text-gray-300">Doelgroep gecontroleerd om {new Date(review.checked_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}. Het uiteindelijke aantal ontvangers controleer je in Laposta.</p>
           <div className="flex flex-wrap gap-3"><button disabled={Boolean(busy)} className="btn-primary min-h-11 gap-2" onClick={() => perform('export')}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{saved.campaign_id ? 'Concept bijwerken in Laposta' : 'Concept maken in Laposta'}</button><button className="btn-secondary min-h-11" disabled={Boolean(busy)} onClick={() => setReview(null)}>Terug naar bewerken</button></div>
@@ -146,6 +150,14 @@ function NewsletterEditor({ initial, metadata }) {
           <div className="sticky bottom-0 z-10 mt-4 flex flex-wrap gap-3 border-t border-gray-200 bg-gray-50 py-4 dark:border-gray-700 dark:bg-gray-900"><button className="btn-secondary min-h-11" disabled={Boolean(busy) || !dirty} onClick={() => perform('save')}>{busy === 'save' ? 'Opslaan…' : 'Concept opslaan'}</button><button className="btn-primary min-h-11 gap-2" disabled={Boolean(busy) || !metadata.configured || !profileUser?.ready} onClick={() => perform('review')}>{busy === 'review' ? 'Controleren…' : 'Controleren'}<ArrowRight className="h-4 w-4" /></button></div>
         </>}
         {saved.campaign_url && !message && <p className="mt-4 text-sm"><a className="inline-flex items-center gap-1 underline" href={saved.campaign_url} target="_blank" rel="noreferrer">Bestaand concept in Laposta<ExternalLink className="h-4 w-4" /></a></p>}
+        {!review && <section className="mt-6 space-y-3 border-t border-gray-200 pt-5 dark:border-gray-700" aria-labelledby="newsletter-test-title">
+          <h2 id="newsletter-test-title" className="text-lg font-semibold">Testmail</h2>
+          <p id="newsletter-test-help" className="text-sm text-gray-600 dark:text-gray-300">{dirty || saved.status !== 'exported' ? 'Controleer het concept en werk het eerst bij in Laposta via de knop Controleren. Daarna kun je een testmail aanvragen.' : 'Laposta verstuurt het huidige concept naar het e-mailadres dat je hieronder invult.'}</p>
+          <form className="space-y-3" onSubmit={(event) => { event.preventDefault(); perform('testmail'); }}>
+            <label className={labelClass} htmlFor="newsletter-test-email">E-mailadres voor testmail<input id="newsletter-test-email" type="email" autoComplete="email" required maxLength={254} className="input mt-1 w-full" aria-describedby="newsletter-test-help" value={testEmail} disabled={Boolean(busy) || dirty || saved.status !== 'exported'} onChange={(event) => { setTestEmail(event.target.value); setMessage(''); }} /></label>
+            <button type="submit" className="btn-secondary min-h-11 gap-2" disabled={Boolean(busy) || dirty || saved.status !== 'exported' || !testEmail.trim()}>{busy === 'testmail' && <Loader2 className="h-4 w-4 animate-spin" />}{busy === 'testmail' ? 'Testmail aanvragen…' : 'Testmail versturen'}</button>
+          </form>
+        </section>}
       </div>
       <aside className={`${mobileTab === 'preview' ? '' : 'hidden'} min-w-0 lg:sticky lg:top-5 lg:block`} aria-label="Nieuwsbriefvoorbeeld">
         <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-lg font-semibold">Voorbeeld</h2><span className="text-xs text-gray-600 dark:text-gray-300">{preview.isFetching ? 'Bijwerken…' : 'Weergave kan per mailprogramma verschillen'}</span></div>

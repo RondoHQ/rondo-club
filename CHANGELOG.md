@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.143.0] - 2026-10-06
+
+### Added
+- Request a newsletter testmail from Rondo through Laposta to one entered email address, after checking that the exported draft is current and has not been changed, scheduled or sent in Laposta.
+
 ## [35.142.4] - 2026-10-06
 
 ### Fixed

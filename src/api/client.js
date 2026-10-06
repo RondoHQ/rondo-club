@@ -135,6 +135,7 @@ export const prmApi = {
   previewNewsletter: (id, fields, signal) => api.post(`/rondo/v1/communications/${id}/newsletter/preview`, { fields }, { signal }),
   reviewNewsletter: (id, revision) => api.post(`/rondo/v1/communications/${id}/newsletter/review`, { revision }),
   exportNewsletter: (id, token) => api.post(`/rondo/v1/communications/${id}/newsletter/export`, { token }),
+  sendNewsletterTestmail: (id, email, revision) => api.post(`/rondo/v1/communications/${id}/newsletter/testmail`, { email, revision }),
 
   // Version check (for cache invalidation)
   getVersion: () => api.get('/rondo/v1/version'),
