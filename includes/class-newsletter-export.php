@@ -1,5 +1,5 @@
 <?php
-/** Recoverable draft export. Never sends or schedules campaigns. */
+/** Recoverable draft export and testmail. Never sends to campaign audiences. */
 namespace Rondo\Communication;
 
 use Rondo\Integrations\LapostaClient;
@@ -105,6 +105,34 @@ class NewsletterExport {
 
 	private static function conflict() {
 		return new \WP_Error( 'newsletter_remote_conflict', 'De campagne is in Laposta gewijzigd of de vorige export is onzeker. Controleer het concept in Laposta; er is niets overschreven.', [ 'status' => 409 ] );
+	}
+
+	/** Caller holds the item lock; test only the exact last verified draft. */
+	public function test_mail( int $id, string $email ) {
+		$state = get_post_meta( $id, Newsletter::EXPORT, true );
+		if ( ! is_array( $state ) || ( $state['phase'] ?? '' ) !== 'verified' || empty( $state['campaign_id'] ) || ( $state['fingerprint'] ?? '' ) !== Newsletter::fingerprint( $id ) ) {
+			return new \WP_Error( 'newsletter_test_update_required', 'Controleer het concept en werk het eerst bij in Laposta voordat je een testmail verstuurt.', [ 'status' => 409 ] );
+		}
+		$remote = $this->remote( $state['campaign_id'] );
+		if ( is_wp_error( $remote ) ) {
+			return $remote;
+		}
+		if ( $remote !== ( $state['baseline'] ?? null ) ) {
+			return self::conflict();
+		}
+		if ( $state['fingerprint'] !== Newsletter::fingerprint( $id ) ) {
+			return new \WP_Error( 'newsletter_test_update_required', 'Het concept is gewijzigd. Werk het eerst bij in Laposta.', [ 'status' => 409 ] );
+		}
+		$result = $this->client->request( 'POST', '/campaign/' . $state['campaign_id'] . '/action/testmail', [ 'email' => $email ] );
+		if ( is_wp_error( $result ) ) {
+			if ( $result->get_error_code() !== 'laposta_unreachable' && ! ( $result->get_error_code() === 'laposta_request_failed' && ( $result->get_error_data()['http_status'] ?? 0 ) >= 500 ) ) {
+				return $result;
+			}
+		} elseif ( ( $result['campaign']['campaign_id'] ?? '' ) === $state['campaign_id'] ) {
+			Newsletter::audit( $id, 'newsletter_test_requested' );
+			return true;
+		}
+		return new \WP_Error( 'newsletter_test_uncertain', 'Laposta heeft de testmail niet bevestigd. Controleer je inbox voordat je opnieuw een testmail aanvraagt.', [ 'status' => 502 ] );
 	}
 
 	/** Caller holds the shared communication-item lock for the complete transaction. */

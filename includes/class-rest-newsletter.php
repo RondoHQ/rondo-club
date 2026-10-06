@@ -33,6 +33,7 @@ class NewsletterController extends Base {
 			[ '/communications/(?P<id>\d+)/newsletter/preview', 'POST', 'preview', 'can_item' ],
 			[ '/communications/(?P<id>\d+)/newsletter/review', 'POST', 'review', 'can_item' ],
 			[ '/communications/(?P<id>\d+)/newsletter/export', 'POST', 'export', 'can_item' ],
+			[ '/communications/(?P<id>\d+)/newsletter/testmail', 'POST', 'testmail', 'can_item' ],
 		] as [ $route, $method, $callback, $permission ] ) {
 			register_rest_route(
 				'rondo/v1',
@@ -335,6 +336,30 @@ class NewsletterController extends Base {
 					'checked_at' => gmdate( 'c' ),
 				]
 				);
+			}
+			);
+	}
+
+	public function testmail( $request ) {
+		return $this->locked(
+			$request,
+			function () use ( $request ) {
+				$data = $request->get_json_params();
+				if ( ! is_array( $data ) || array_diff( array_keys( $data ), [ 'email', 'revision' ] ) || ! isset( $data['email'] ) || ! is_string( $data['email'] ) || ! is_email( trim( $data['email'] ) ) ) {
+					return new \WP_Error( 'newsletter_test_email', 'Vul één geldig e-mailadres in voor de testmail.', [ 'status' => 400 ] );
+				}
+				$id = (int) $request['id'];
+				if ( ( $data['revision'] ?? null ) !== Newsletter::revision( $id ) ) {
+					return new \WP_Error( 'newsletter_stale', 'Dit concept is gewijzigd. Herlaad de pagina voordat je een testmail verstuurt.', [ 'status' => 409 ] );
+				}
+				$email  = trim( $data['email'] );
+				$result = ( new NewsletterExport() )->test_mail( $id, $email );
+				return is_wp_error( $result ) ? $result : rest_ensure_response(
+					[
+						'email'  => $email,
+						'status' => 'requested',
+					]
+					);
 			}
 			);
 	}
