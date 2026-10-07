@@ -192,6 +192,7 @@ class HouseholdMembershipPassTest extends RondoTestCase {
 				],
 			]
 		);
+		update_option( 'rondo_club_name', 'SV Voorbeeld' );
 		$this->createSponsor( 'Businessclubbedrijf', 'businessclub', $person_id );
 
 		$pass = MembershipPassService::get_person_pass_summary( $person_id );
@@ -199,7 +200,7 @@ class HouseholdMembershipPassTest extends RondoTestCase {
 		$this->assertSame( 'businessclub', $pass['type'] );
 		$this->assertSame( 'Lidpassen', $pass['label'] );
 		$this->assertTrue( $pass['requires_role'] );
-		$this->assertSame( [ 'Businessclubpas', 'AWC-pas — AWC 1 — Trainer' ], array_column( $pass['role_options'], 'label' ) );
+		$this->assertSame( [ 'Businessclubpas', 'SV Voorbeeld ledenpas — AWC 1 — Trainer' ], array_column( $pass['role_options'], 'label' ) );
 		$this->assertSame( MembershipPassService::SPONSOR_PASS_SELECTION, $pass['role_options'][0]['key'] );
 
 		$resolve_selection = ( new \ReflectionClass( MembershipPassService::class ) )->getMethod( 'resolve_selected_pass' );

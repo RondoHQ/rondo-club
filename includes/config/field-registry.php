@@ -5,6 +5,8 @@
  * This PHP configuration is the source of truth for static field definitions.
  */
 
+$sponsor_role_labels = \Rondo\Config\ClubConfig::get_sponsor_role_labels();
+
 $config = array (
   'computed_top_level' => 
   array (
@@ -1606,8 +1608,8 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'canonical_name' => 'sponsor_pass_variant',
           'choices' => 
           array (
-            'awc_sponsor' => 'AWC Sponsor',
-            'businessclub' => 'Businessclub AWC',
+            'awc_sponsor' => $sponsor_role_labels['awc_sponsor'],
+            'businessclub' => $sponsor_role_labels['businessclub'],
           ),
           'conditional_logic' => 
           array (
@@ -2151,9 +2153,9 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'canonical_name' => 'pass_type',
           'choices' =>
           array (
-            'awc_sponsor' => 'AWC-sponsor',
+            'awc_sponsor' => $sponsor_role_labels['awc_sponsor'],
             'bondslid' => 'Bondslid',
-            'businessclub' => 'Businessclub',
+            'businessclub' => $sponsor_role_labels['businessclub'],
 			'guest' => 'Gast',
             'verenigingslid' => 'Verenigingslid',
           ),
@@ -4747,8 +4749,8 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'canonical_name' => 'sponsor_role',
           'choices' =>
           array (
-            'awc_sponsor' => 'AWC Sponsor',
-            'businessclub' => 'Businessclub AWC',
+            'awc_sponsor' => $sponsor_role_labels['awc_sponsor'],
+            'businessclub' => $sponsor_role_labels['businessclub'],
           ),
           'key' => 'field_sponsor_role',
           'label' => 'Sponsorrol',

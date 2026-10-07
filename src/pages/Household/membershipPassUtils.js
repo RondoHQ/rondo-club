@@ -1,25 +1,23 @@
+import { getClubName, getSponsorRoleLabels } from '../../utils/clubLabels.js';
+
 const PASS_PRESENTATIONS = {
   bondslid: {
     eyebrow: 'Bondslid',
-    title: 'AWC Ledenpas',
     sponsor: false,
     businessclub: false,
   },
   verenigingslid: {
     eyebrow: 'Verenigingslid',
-    title: 'AWC Ledenpas',
     sponsor: false,
     businessclub: false,
   },
   businessclub: {
     eyebrow: 'Sponsor',
-    title: 'Businessclub AWC',
     sponsor: true,
     businessclub: true,
   },
   awc_sponsor: {
     eyebrow: 'Sponsor',
-    title: 'AWC Sponsor',
     sponsor: true,
     businessclub: false,
   },
@@ -27,13 +25,16 @@ const PASS_PRESENTATIONS = {
 
 const FALLBACK_PRESENTATION = {
   eyebrow: 'Ledenpas',
-  title: 'AWC Ledenpas',
   sponsor: false,
   businessclub: false,
 };
 
 export function getMembershipPassPresentation(passType) {
-  return PASS_PRESENTATIONS[passType] || FALLBACK_PRESENTATION;
+  const presentation = PASS_PRESENTATIONS[passType] || FALLBACK_PRESENTATION;
+  const title = presentation.sponsor
+    ? getSponsorRoleLabels()[passType]
+    : `${getClubName('')} Ledenpas`.trim();
+  return { ...presentation, title };
 }
 
 export function buildDigitalPassPath(personId, role = '') {
