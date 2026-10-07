@@ -2228,12 +2228,16 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 * [--clean]
 		 * : Remove all existing Rondo data before importing. Use this to start fresh.
 		 *
+		 * [--refresh]
+		 * : Replace only the current manifest's showcase records on a demo site. Cannot be combined with --clean.
+		 *
 		 * ## EXAMPLES
 		 *
 		 *     wp rondo demo import
 		 *     wp rondo demo import --input=/tmp/demo-data.json
 		 *     wp rondo demo import --clean
 		 *     wp rondo demo import --input=/tmp/demo-data.json --clean
+		 *     wp rondo demo import --input=fixtures/demo-showcase.json --refresh
 		 *
 		 * @when after_wp_load
 		 */
@@ -2254,16 +2258,25 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			$importer = new DemoImport( $input_path );
 			$importer->validate();
+			$refresh = ! empty( $assoc_args['refresh'] );
+			if ( $refresh && ! empty( $assoc_args['clean'] ) ) {
+				WP_CLI::error( 'Use either --refresh or --clean, not both.' );
+			}
+			if ( $refresh ) {
+				$importer->validate_refresh();
+			}
 			if ( isset( $assoc_args['dry-run'] ) ) {
 				WP_CLI::success( 'Fixture validated; no data changed.' );
 				return;
 			}
 
-			if ( $importer->is_showcase() && empty( $assoc_args['clean'] ) ) {
-				WP_CLI::error( 'Showcase import requires --clean to reset existing records and payment configuration.' );
+			if ( $importer->is_showcase() && empty( $assoc_args['clean'] ) && ! $refresh ) {
+				WP_CLI::error( 'Showcase import requires --clean for the first import or --refresh to replace the current showcase.' );
 			}
 
-			if ( isset( $assoc_args['clean'] ) && $assoc_args['clean'] ) {
+			if ( $refresh ) {
+				$importer->refresh();
+			} elseif ( isset( $assoc_args['clean'] ) && $assoc_args['clean'] ) {
 				WP_CLI::log( 'Cleaning existing data...' );
 				$importer->clean();
 				WP_CLI::log( '' );
