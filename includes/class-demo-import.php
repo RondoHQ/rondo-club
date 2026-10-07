@@ -165,6 +165,35 @@ class DemoImport {
 			}
 		}
 
+		$this->clean_settings();
+		WP_CLI::log( 'Clean complete.' );
+	}
+
+	/** Validate refresh eligibility without changing the fixture or existing records. */
+	public function validate_refresh() {
+		$this->read_fixture();
+		if ( ! $this->is_showcase() ) {
+			WP_CLI::error( '--refresh is only supported for fictional showcase fixtures.' );
+		}
+		$result = ( new DemoShowcase() )->validate_refresh();
+		if ( is_wp_error( $result ) ) {
+			WP_CLI::error( $result->get_error_message() );
+		}
+	}
+
+	/** Refresh only manifest-owned records, preserving unrelated posts, terms and comments. */
+	public function refresh() {
+		$this->validate_refresh();
+		$result = ( new DemoShowcase() )->refresh();
+		if ( is_wp_error( $result ) ) {
+			WP_CLI::error( $result->get_error_message() );
+		}
+		$this->clean_settings();
+		WP_CLI::log( 'Showcase refresh cleanup complete.' );
+	}
+
+	/** Clear demo configuration, including payment credentials, for either reset path. */
+	private function clean_settings() {
 		// 4. Delete Rondo-specific WordPress options
 		// Static option keys
 		$option_keys = [
@@ -208,8 +237,6 @@ class DemoImport {
 		}
 
 		WP_CLI::log( sprintf( '  Deleted %d options', count( $option_keys ) + count( $dynamic_options ) ) );
-
-		WP_CLI::log( 'Clean complete.' );
 	}
 
 
