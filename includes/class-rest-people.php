@@ -1150,9 +1150,8 @@ class People extends Base {
 		}
 
 		// Get person's name for filename
-		$first_name = \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '';
-		$last_name  = \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '';
-		$name_slug  = sanitize_title( strtolower( trim( $first_name . ' ' . $last_name ) ) );
+		$full_name = \Rondo\People\PersonName::get( $person_id );
+		$name_slug = sanitize_title( strtolower( $full_name ) );
 
 		// Get file extension
 		$extension = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
@@ -1178,7 +1177,7 @@ class People extends Base {
 		];
 
 		// Handle the upload
-		$attachment_id = media_handle_sideload( $file_array, $person_id, sprintf( '%s %s', $first_name, $last_name ) );
+		$attachment_id = media_handle_sideload( $file_array, $person_id, $full_name );
 
 		if ( is_wp_error( $attachment_id ) ) {
 			return new \WP_Error( 'upload_failed', $attachment_id->get_error_message(), [ 'status' => 500 ] );

@@ -638,9 +638,7 @@ class Lettermint extends Base {
 
 		$person_name = '';
 		if ( $person_id > 0 ) {
-			$first_name  = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) );
-			$last_name   = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) );
-			$person_name = trim( $first_name . ' ' . $last_name );
+			$person_name = \Rondo\People\PersonName::get( $person_id );
 		}
 		if ( $person_name === '' ) {
 			$person_name = $recipient;

@@ -34,7 +34,9 @@ class PhotoSyncTest extends RondoTestCase {
 			[],
 			[
 				'knvb_id'    => 'TEST123',
-				'first_name' => 'Test',
+				'first_name' => 'Lars',
+				'infix'      => 'van der',
+				'last_name'  => 'Meer',
 			]
 			);
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
@@ -60,6 +62,8 @@ class PhotoSyncTest extends RondoTestCase {
 		$this->assertSame( 'pending', get_post_meta( $id, PhotoSync::META, true )['state'] );
 		$attachment_id = (int) get_post_thumbnail_id( $id );
 		$this->assertGreaterThan( 0, $attachment_id );
+		$this->assertSame( 'Lars van der Meer', get_the_title( $attachment_id ) );
+		$this->assertStringContainsString( 'lars-van-der-meer', basename( get_attached_file( $attachment_id ) ) );
 		$entries = ProfileChangeLog::recent()['items'];
 		$this->assertSame( 'photo', $entries[0]['type'] );
 		$this->assertSame( 'rondo', $entries[0]['source'] );

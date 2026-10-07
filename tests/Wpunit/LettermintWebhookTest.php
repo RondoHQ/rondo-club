@@ -83,6 +83,38 @@ class LettermintWebhookTest extends RondoTestCase {
 		);
 	}
 
+	public function test_verification_bounce_task_keeps_the_complete_person_name(): void {
+		$secret = 'test-lettermint-secret';
+		update_option( LettermintConfig::OPTION_WEBHOOK_SECRET, $secret );
+		$person_id = $this->createPerson(
+			[],
+			[
+				'first_name' => 'Lars',
+				'infix'      => 'van der',
+				'last_name'  => 'Meer',
+				'email_1'    => 'bounce@example.com',
+			]
+		);
+		$response  = $this->dispatch_signed_webhook(
+			[
+				'event' => 'message.hard_bounced',
+				'id'    => 'evt_verification_name',
+				'data'  => [
+					'recipient' => 'bounce@example.com',
+					'metadata'  => [
+						'flow'             => LettermintWebhook::FLOW_EMAIL_VERIFICATION,
+						'source_person_id' => $person_id,
+					],
+				],
+			],
+			$secret
+		);
+		$this->assertSame( 200, $response->get_status() );
+		$tasks = $this->get_tasks_for_event( 'evt_verification_name' );
+		$this->assertNotEmpty( $tasks );
+		$this->assertSame( 'Het email adres van Lars van der Meer werkt niet meer.', get_the_title( $tasks[0] ) );
+	}
+
 	public function test_soft_bounce_is_ignored_without_creating_a_task(): void {
 		$secret = 'test-lettermint-secret';
 		update_option( LettermintConfig::OPTION_WEBHOOK_SECRET, $secret );
