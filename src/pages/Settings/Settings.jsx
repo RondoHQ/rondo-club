@@ -1,3 +1,4 @@
+import { getSponsorRoleLabels } from '@/utils/clubLabels';
 import CommunicationChannelsSettings from '@/components/CommunicationChannelsSettings';
 import { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
@@ -1099,7 +1100,7 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
                   className="mt-2 block w-full text-sm text-gray-700 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-electric-cyan file:text-white hover:file:bg-electric-cyan/90 file:cursor-pointer"
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Wordt gebruikt op Businessclub AWC-passen. Zonder instelling gebruikt Rondo het meegeleverde Businessclub-logo.
+                  Wordt gebruikt op {getSponsorRoleLabels(clubName).businessclub}-passen. Zonder instelling gebruikt Rondo het meegeleverde Businessclub-logo.
                 </p>
               </div>
 

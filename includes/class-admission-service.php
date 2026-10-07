@@ -30,7 +30,7 @@ class AdmissionService {
 		'bondslid'       => 'Bondslid',
 		'verenigingslid' => 'Verenigingslid',
 		'businessclub'   => 'Businessclub',
-		'awc_sponsor'    => 'AWC-sponsor',
+		'awc_sponsor'    => 'Sponsor',
 		'guest'          => 'Gast',
 	];
 
@@ -282,7 +282,7 @@ class AdmissionService {
 		}
 
 		$breakdown = [];
-		foreach ( self::PASS_TYPES as $type => $label ) {
+		foreach ( array_replace( self::PASS_TYPES, \Rondo\Config\ClubConfig::get_sponsor_role_labels() ) as $type => $label ) {
 			$breakdown[] = [
 				'type'  => $type,
 				'label' => $label,

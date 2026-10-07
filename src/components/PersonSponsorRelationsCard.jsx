@@ -1,12 +1,12 @@
+import { getSponsorRoleLabels } from '@/utils/clubLabels';
 import { useState } from 'react';
 import { Building2, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { prmApi } from '@/api/client';
 import { useUpdateSponsor } from '@/hooks/useSponsors';
 
-const roleLabels = { businessclub: 'Businessclub AWC', awc_sponsor: 'AWC Sponsor' };
-
 export default function PersonSponsorRelationsCard({ person, canManage }) {
+  const roleLabels = getSponsorRoleLabels();
   const relationships = person?.sponsor_relationships || [];
   const [error, setError] = useState('');
   const updateSponsor = useUpdateSponsor();
