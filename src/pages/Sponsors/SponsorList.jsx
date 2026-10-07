@@ -1,13 +1,9 @@
+import { getSponsorRoleLabels } from '@/utils/clubLabels';
 import { useDeferredValue, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Building2, ImageOff, Plus, Search, User } from 'lucide-react';
 import { useSponsors } from '@/hooks/useSponsors';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-
-const roleLabels = {
-  businessclub: 'Businessclub AWC',
-  awc_sponsor: 'AWC Sponsor',
-};
 
 const clubTvLabels = {
   1: 'Soms',
@@ -16,6 +12,7 @@ const clubTvLabels = {
 };
 
 export default function SponsorList() {
+  const roleLabels = getSponsorRoleLabels();
   useDocumentTitle('Sponsoren');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('active');
@@ -64,8 +61,8 @@ export default function SponsorList() {
         </select>
         <select className="input" value={role} onChange={(event) => setRole(event.target.value)}>
           <option value="">Alle sponsorrollen</option>
-          <option value="businessclub">Businessclub AWC</option>
-          <option value="awc_sponsor">AWC Sponsor</option>
+          <option value="businessclub">{roleLabels.businessclub}</option>
+          <option value="awc_sponsor">{roleLabels.awc_sponsor}</option>
         </select>
         <select className="input" value={status} onChange={(event) => setStatus(event.target.value)}>
           <option value="active">Actief</option>

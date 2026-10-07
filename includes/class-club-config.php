@@ -158,6 +158,15 @@ class ClubConfig {
 		return get_option( self::OPTION_CLUB_NAME, self::DEFAULTS['club_name'] );
 	}
 
+	/** Return club-branded labels while retaining the stored sponsor role keys. */
+	public static function get_sponsor_role_labels( ?string $club_name = null ): array {
+		$name = trim( $club_name ?? self::get_club_name() );
+		return [
+			'awc_sponsor'  => trim( 'Sponsor ' . $name ),
+			'businessclub' => trim( 'Businessclub ' . $name ),
+		];
+	}
+
 	/** Return the configured guest-pass team, or zero when guest passes are disabled. */
 	public static function get_guest_pass_team_id(): int {
 		$team_id = (int) get_option( self::OPTION_GUEST_PASS_TEAM_ID, self::DEFAULTS['guest_pass_team_id'] );

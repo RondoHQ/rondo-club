@@ -8,6 +8,27 @@ use Tests\Support\RondoTestCase;
 
 class FieldRegistryTest extends RondoTestCase {
 
+	public function test_sponsor_choices_follow_club_name_and_preserve_stored_values(): void {
+		try {
+			foreach ( [ 'AWC', 'SV Voorbeeld', '' ] as $club_name ) {
+				update_option( 'rondo_club_name', $club_name );
+				Registry::reset();
+				$expected = [
+					'awc_sponsor'  => trim( 'Sponsor ' . $club_name ),
+					'businessclub' => trim( 'Businessclub ' . $club_name ),
+				];
+				$this->assertSame( $expected, Registry::resolve( 'rondo_sponsor', 'sponsor_role' )['choices'] );
+				$this->assertSame( $expected, Registry::resolve( 'person', 'sponsor_pass_variant' )['choices'] );
+				$admission_choices = Registry::resolve( 'rondo_admission', 'pass_type' )['choices'];
+				foreach ( $expected as $key => $label ) {
+					$this->assertSame( $label, $admission_choices[ $key ] );
+				}
+			}
+		} finally {
+			Registry::reset();
+		}
+	}
+
 	public function test_registry_contains_every_static_context(): void {
 		$this->assertSame(
 			[
