@@ -1565,7 +1565,12 @@ class People extends Base {
 	private function sponsor_pass_variant_error() {
 		return new \WP_Error(
 			'rondo_sponsor_pass_variant_required',
-			__( 'Kies Businessclub AWC of AWC Sponsor als pasvariant.', 'rondo' ),
+			sprintf(
+				/* translators: 1: Businessclub label, 2: sponsor label. */
+				__( 'Kies %1$s of %2$s als pasvariant.', 'rondo' ),
+				\Rondo\Config\ClubConfig::get_sponsor_role_labels()['businessclub'],
+				\Rondo\Config\ClubConfig::get_sponsor_role_labels()['awc_sponsor']
+			),
 			[ 'status' => 400 ]
 		);
 	}

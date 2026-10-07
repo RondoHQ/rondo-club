@@ -13,6 +13,16 @@ use Tests\Support\RondoTestCase;
 
 class MembershipPassSponsorTest extends RondoTestCase {
 
+	public function test_wallet_sponsor_titles_use_club_name_instead_of_issuer_branding(): void {
+		update_option( 'rondo_club_name', 'SV Voorbeeld' );
+		foreach ( [ new MembershipPassApple(), new MembershipPassGoogle() ] as $service ) {
+			$method = ( new ReflectionClass( $service ) )->getMethod( 'get_card_title' );
+			$method->setAccessible( true );
+			$this->assertSame( 'Sponsor SV Voorbeeld', $method->invoke( $service, 'Legacy Issuer', 'sponsor', 'awc_sponsor' ) );
+			$this->assertSame( 'Businessclub SV Voorbeeld', $method->invoke( $service, 'Legacy Issuer', 'sponsor', 'businessclub' ) );
+		}
+	}
+
 	public function test_expired_member_uses_wire_date_in_status_payload(): void {
 		$person_id = $this->createPerson();
 		update_post_meta( $person_id, 'lid-tot', '20260630' );
@@ -164,8 +174,8 @@ class MembershipPassSponsorTest extends RondoTestCase {
 		$google_title->setAccessible( true );
 		$google_logo->setAccessible( true );
 
-		$this->assertSame( 'AWC Sponsor', $apple_title->invoke( $apple, 'AWC', 'sponsor', 'awc_sponsor' ) );
-		$this->assertSame( 'AWC Sponsor', $google_title->invoke( $google, 'AWC', 'sponsor', 'awc_sponsor' ) );
+		$this->assertSame( 'Sponsor AWC', $apple_title->invoke( $apple, 'AWC', 'sponsor', 'awc_sponsor' ) );
+		$this->assertSame( 'Sponsor AWC', $google_title->invoke( $google, 'AWC', 'sponsor', 'awc_sponsor' ) );
 		$this->assertNotSame( 'businessclub-awc-logo.png', basename( $apple_logo->invoke( $apple, 'sponsor', 'awc_sponsor' ) ) );
 		$this->assertStringNotContainsString( 'businessclub-awc-logo.png', $google_logo->invoke( $google, 'sponsor', 'awc_sponsor' ) );
 	}

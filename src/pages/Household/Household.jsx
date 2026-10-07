@@ -1,3 +1,4 @@
+import { getClubName } from '@/utils/clubLabels';
 import BankAccountCard from '@/components/finance/BankAccountCard';
 import { Fragment, useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -346,7 +347,7 @@ function SponsorCard({ organization }) {
       </div>
 
       <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">
-        We gebruiken je bedrijfslogo onder meer op Club TV, de narrowcasting op de tv-schermen bij AWC.
+        We gebruiken je bedrijfslogo onder meer op Club TV, de narrowcasting op de tv-schermen bij {getClubName()}.
         Zo zien leden en bezoekers welke bedrijven de club steunen.
       </p>
 
@@ -396,7 +397,7 @@ function SponsorCard({ organization }) {
             <span>
               <span className="block text-sm font-medium text-gray-900 dark:text-gray-100">Toon ons niet op de narrowcasting</span>
               <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
-                Als je dit aanvinkt, verschijnt jullie logo niet op de tv-schermen bij AWC.
+                Als je dit aanvinkt, verschijnt jullie logo niet op de tv-schermen bij {getClubName()}.
               </span>
             </span>
           </label>
