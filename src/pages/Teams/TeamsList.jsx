@@ -5,17 +5,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { getTeamName } from '@/utils/formatters';
-import { getSpeeldag, teamNameCollator } from '@/utils/teamDisplay';
+import { getGenderLabel, getSpeeldag, teamNameCollator } from '@/utils/teamDisplay';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import InlineFieldInput from '@/components/InlineFieldInput';
 import SortableHeader from '@/components/SortableHeader';
 import { DataTableToolbar, ColumnSettingsPanel, useColumnVisibility, createColumn, FILTER_TYPES } from '@/components/DataTable';
-
-function getGenderLabel(gender) {
-  if (!gender) return '';
-  const map = { male: 'Man', female: 'Vrouw', Mannen: 'Man', Vrouwen: 'Vrouw', Gemengd: 'Gemengd' };
-  return map[gender] || gender;
-}
 
 function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelection, isOdd, onSaveRow, isUpdating, isEditing, onStartEdit, onCancelEdit, isColVisible }) {
   const [editedFields, setEditedFields] = useState({});

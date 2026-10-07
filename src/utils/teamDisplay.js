@@ -1,3 +1,10 @@
+const genderLabels = { male: 'Man', female: 'Vrouw', Mannen: 'Man', Vrouwen: 'Vrouw', Gemengd: 'Gemengd' };
+
+export function getGenderLabel(gender) {
+  if (!gender) return '';
+  return Object.hasOwn(genderLabels, gender) ? genderLabels[gender] : 'Onbekend';
+}
+
 export function getSpeeldag(activiteit) {
   if (!activiteit) return '';
   const parts = activiteit.split(/veld\s*-\s*/i);
