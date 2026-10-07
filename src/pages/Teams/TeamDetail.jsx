@@ -6,6 +6,7 @@ import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useVolunteerRoleSettings } from '@/hooks/useVolunteerRoleSettings';
 import { getTeamName, sanitizeTeamFields } from '@/utils/formatters';
+import { getGenderLabel } from '@/utils/teamDisplay';
 import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
@@ -144,7 +145,7 @@ export default function TeamDetail() {
             {/* Subtitle: Activiteit - Gender */}
             {(fields.activiteit || fields.gender) && (
               <p className="text-gray-500 dark:text-gray-400">
-                {[fields.activiteit, fields.gender].filter(Boolean).join(' - ')}
+                {[fields.activiteit, getGenderLabel(fields.gender)].filter(Boolean).join(' - ')}
               </p>
             )}
             {fields.website && (
