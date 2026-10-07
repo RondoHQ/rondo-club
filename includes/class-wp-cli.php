@@ -1141,14 +1141,12 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			$person_name_keys = [];
 			// Build email -> person IDs map for ALL people
 			$email_to_persons = [];
-			// Build name -> person IDs map (first_name + last_name, lowercased)
+			// Build name -> person IDs map (full personal name, lowercased)
 			$name_to_persons = [];
 
 			foreach ( $people as $person ) {
 				// Collect name key for this person
-				$first_name = \Rondo\Fields\Fields::get_for_post( $person->ID, 'first_name' ) ?: '';
-				$last_name  = \Rondo\Fields\Fields::get_for_post( $person->ID, 'last_name' ) ?: '';
-				$name_key   = strtolower( trim( trim( $first_name ) . ' ' . trim( $last_name ) ) );
+				$name_key = strtolower( \Rondo\People\PersonName::get( $person->ID ) );
 
 				// Store name key for this person
 				$person_name_keys[ $person->ID ] = $name_key;
