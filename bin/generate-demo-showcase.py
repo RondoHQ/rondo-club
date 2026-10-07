@@ -55,7 +55,7 @@ for slug, name, age in team_specs:
         is_home = n % 2 == 0
         matches.append({'id': f'showcase-{slug}-{n}', 'starts_at': dt(f'{offset:+d} days 14:00'),
                         'date': day(f'{offset:+d} days'), 'time': '14:00', 'home_team': name if is_home else opponent,
-                        'away_team': opponent if is_home else name, 'is_home': is_home, 'location': 'Sportpark De Voorbeeldvelden',
+                        'away_team': opponent if is_home else name, 'home': is_home, 'location': 'Sportpark De Voorbeeldvelden',
                         'pitch': 'Veld 1', 'status': 'Afgelast' if n == 4 else 'Vastgesteld', 'cancelled': n == 4,
                         'result': '3 - 1' if offset < 0 else '', 'time_known': True, 'competition': 'Competitie',
                         'duration_minutes': 105 if age >= 17 else 75, 'sequence': 0, 'modified_at': dt('-1 day')})
