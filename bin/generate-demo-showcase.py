@@ -8,6 +8,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 records, terms, comments = [], [], []
+media = [
+    {'_ref': 'attachment:' + slug, 'file': slug + '.svg', 'title': title}
+    for slug, title in [('sv-voorbeeld', 'SV Voorbeeld'), ('polder-fietsen', 'Polder Fietsen'),
+                        ('horizon-bouw', 'Horizon Bouw'), ('voorbeeld-bakkerij', 'Voorbeeld Bakkerij'),
+                        ('groenveld-tuinen', 'Groenveld Tuinen')]
+]
 
 def ref(value):
     return {'$ref': value}
@@ -71,7 +77,7 @@ committee_specs = [('board', 'Bestuur'), ('youth', 'Jeugdcommissie'), ('bar', 'K
                    ('events', 'Activiteiten'), ('sponsors', 'Sponsorcommissie'), ('clothing', 'Kledingcommissie')]
 for slug, name in committee_specs:
     add('commissie:' + slug, 'commissie', name, {'taakomschrijving': 'Samen zorgen voor een gastvrije en goed georganiseerde vereniging.',
-        'lange_omschrijving': 'Fictieve commissie voor de Rondo-demo.', 'max_leden': 12, 'max_wachtlijst': 4,
+        'lange_omschrijving': 'Organiseert activiteiten en ondersteunt leden, trainers en vrijwilligers.', 'max_leden': 12, 'max_wachtlijst': 4,
         'uren_aantal': 4, 'uren_periode': 'maand', 'dagen_flexibel': 'In overleg'})
 
 first_names = ['Anna', 'Bram', 'Cato', 'Daan', 'Elin', 'Finn', 'Gwen', 'Hugo', 'Iris', 'Jens', 'Kiki', 'Lars', 'Mila', 'Niek', 'Olivia', 'Pim']
@@ -101,7 +107,7 @@ for t, (slug, name, age) in enumerate(team_specs):
         if i == 2:
             fields.update(datum_vog=day('-4 years'))
         if i == 3:
-            fields.update(vrijgesteld_handmatig=True, vrijstelling_reden='Mantelzorg (fictief)', vrijstelling_seizoen='{season}')
+            fields.update(vrijgesteld_handmatig=True, vrijstelling_reden='Mantelzorg', vrijstelling_seizoen='{season}')
         if i == 4:
             fields.update(betaalde_vrijwilliger=True, vergoeding_reden='knvb-trainer', vergoeding_tot=day('+6 months'))
         if i == 5:
@@ -138,13 +144,13 @@ for i in range(4):
 
 for i, slug in enumerate(['bar', 'cleaning', 'grounds']):
     add('dienst_type:' + slug, 'dienst_type', ['Kantinedienst', 'Schoonmaak', 'Terreinonderhoud'][i],
-        {'description': 'Fictieve vrijwilligerstaak; kies een dienst en bekijk de instructies.', 'color': ['#2563eb', '#16a34a', '#ca8a04'][i],
+        {'description': 'Help mee op het sportpark; bekijk de instructies voor je dienst.', 'color': ['#2563eb', '#16a34a', '#ca8a04'][i],
          'default_capacity': 2 if i == 0 else 4, 'vog_required': True, 'iva_required': i == 0, 'sleutel_involved': i == 2})
     add('shift_template:' + slug, 'shift_template', 'Wekelijkse ' + slug,
         {'dienst_type_id': ref('dienst_type:' + slug), 'day_of_week': 6, 'start_time': '09:00', 'end_time': '12:00', 'capacity': 2,
          'active_from': day('-1 month'), 'active_until': day('+2 months')})
     add('taakuitleg:' + slug, 'taakuitleg', 'Zo werkt ' + slug,
-        {'dienst_types': [ref('dienst_type:' + slug)]}, content='<h2>Voor je begint</h2><p>Meld je bij de dienstcoördinator. Dit is een fictieve taakuitleg.</p>')
+        {'dienst_types': [ref('dienst_type:' + slug)]}, content='<h2>Voor je begint</h2><p>Meld je bij de dienstcoördinator en neem samen de werkzaamheden en sleuteloverdracht door.</p>')
 for i, offset in enumerate([-14, -7, -2, 1, 3, 7, 10, 14, 17, 21, 24, 28]):
     status = 'voltooid' if offset < 0 else ('vol' if i == 5 else ('geannuleerd' if i == 8 else 'open'))
     assigned = [ref('person:p001'), ref('person:p002')] if status in ['vol', 'voltooid'] else ([ref('person:p003')] if i % 2 else [])
@@ -154,20 +160,21 @@ for i, offset in enumerate([-14, -7, -2, 1, 3, 7, 10, 14, 17, 21, 24, 28]):
     add('dienst_shift:shift' + str(i), 'dienst_shift', 'Kantine ' + str(i + 1),
         {'dienst_type_id': ref('dienst_type:bar'), 'template_id': ref('shift_template:bar'), 'start_datetime': dt(f'{offset:+d} days 09:00'),
          'end_datetime': dt(f'{offset:+d} days 12:00'), 'capacity': 2, 'status': status, 'assigned_persons': assigned,
-         'notes': 'Achteraf geregistreerde extra hulp' if i == 2 else 'Fictieve demo-dienst'}, meta=meta)
+         'notes': 'Achteraf geregistreerde extra hulp' if i == 2 else 'Meld je bij de bar voor de overdracht. Controleer de voorraad en zet de koffie klaar.'}, meta=meta)
 
 for i in range(4):
     add('rondo_sponsor:s' + str(i), 'rondo_sponsor', ['Polder Fietsen', 'Horizon Bouw', 'Voorbeeld Bakkerij', 'Groenveld Tuinen'][i],
         {'sponsor_type': 'organization', 'sponsor_role': 'businessclub' if i < 2 else 'awc_sponsor', 'website': 'https://bedrijf.example',
          'address_city': 'Voorbeelddorp', 'address_street_name': 'Ondernemersweg', 'address_house_number': str(i + 1),
          'contacts': [{'person_id': ref('person:contact' + str(i)), 'contact_role': 'Eigenaar', 'is_primary': True,
-                       'is_primary_pass': True, 'receives_pass': True}], 'club_tv_priority': min(i + 1, 3)})
+                       'is_primary_pass': True, 'receives_pass': True}], 'club_tv_priority': min(i + 1, 3)},
+        meta={'_thumbnail_id': ref(media[i + 1]['_ref'])})
 
 for i in range(8):
     add('discipline_case:c' + str(i), 'discipline_case', 'Demo tuchtzaak ' + str(i + 1),
         {'person': ref(f'person:p{i + 2:03d}'), 'dossier_id': f'DEMO-TUCHT-{i + 1:03d}', 'match_date': day(f'-{i + 7} days'),
          'processing_date': day('-3 days'), 'home_team': ref('team:senior1'), 'away_team': None,
-         'match_description': 'SV Voorbeeld 1 - FC Polder', 'charge_codes': 'DEMO', 'charge_description': 'Fictieve gele kaart',
+         'match_description': 'SV Voorbeeld 1 - FC Polder', 'charge_codes': 'DEMO', 'charge_description': 'Gele kaart: onsportief gedrag',
          'sanction_description': 'Waarschuwing', 'administrative_fee': 12.5, 'is_charged': 'rondo' if i < 4 else ''},
         taxonomies={'seizoen': [ref('seizoen:current')]})
 for i in range(16):
@@ -176,7 +183,7 @@ for i in range(16):
     amount = 12.5 if inv_type == 'discipline' else (60 if inv_type == 'tournament' else 240)
     fields = {'invoice_number': f'DEMO-{i + 1:04d}', 'invoice_type': inv_type, 'person': ref(f'person:p{i + 1:03d}'),
               'status': state, 'total_amount': amount, 'due_date': day('-7 days' if state == 'overdue' else '+14 days'),
-              'line_items': [{'description': {'discipline': 'Fictieve tuchtbijdrage', 'membership': 'Contributie {season}', 'tournament': 'Voorbeeldtoernooi'}[inv_type], 'amount': amount}]}
+              'line_items': [{'description': {'discipline': 'Tuchtbijdrage gele kaart', 'membership': 'Contributie {season}', 'tournament': 'Voorbeeldtoernooi'}[inv_type], 'amount': amount}]}
     if state != 'draft':
         fields['sent_date'] = day('-14 days')
     meta = {'_invoice_season': '{season}'}
@@ -190,18 +197,24 @@ for i in range(16):
                          f'_installment_{n}_status': 'betaald' if n == 1 else 'pending',
                          f'_installment_{n}_due_date': day(f'+{n * 30} days')})
     add('rondo_invoice:i' + str(i), 'rondo_invoice', f'Factuur DEMO-{i + 1:04d}', fields, status='rondo_' + state, meta=meta)
+todo_notes = ['Bespreek de beschikbaarheid voor de trainingen op dinsdag en donderdag.',
+              'Vraag of de aanvraag is ontvangen en controleer de verwachte afgiftedatum.',
+              'Controleer het ingeleverde tenue en werk de borgadministratie bij.',
+              'Stem de ontvangst, catering en uitnodigingen af met de sponsorcommissie.',
+              'Bespreek de laatste wijzigingen met de trainers en informeer de ouders.',
+              'Bel het lid over de openstaande termijn en maak een betaalafspraak.']
 for i, title in enumerate(['Nieuwe trainer bellen', 'VOG opvolgen', 'Kleding retour controleren', 'Sponsoravond voorbereiden', 'Teamindeling afronden', 'Contributie bespreken']):
     add('rondo_todo:t' + str(i), 'rondo_todo', title,
-        {'related_persons': [ref(f'person:p{i + 1:03d}')], 'due_date': day('-2 days' if i == 0 else f'+{i + 1} days'), 'notes': 'Fictieve taak voor de demo.'},
+        {'related_persons': [ref(f'person:p{i + 1:03d}')], 'due_date': day('-2 days' if i == 0 else f'+{i + 1} days'), 'notes': todo_notes[i]},
         status=['rondo_open', 'rondo_awaiting', 'rondo_completed'][i % 3])
 for i in range(24):
     comments.append({'post': ref(f'person:p{i + 1:03d}'), 'type': 'rondo_note' if i % 2 else 'rondo_activity',
-                     'content': 'Kennismakingsgesprek gevoerd; voorkeur voor zaterdag besproken.' if i % 2 else 'Fictieve clubactiviteit: geholpen bij de open dag.',
+                     'content': 'Kennismakingsgesprek gevoerd; voorkeur voor zaterdag besproken.' if i % 2 else 'Geholpen bij de open dag: nieuwe leden ontvangen en rondgeleid over het sportpark.',
                      'date': day(f'-{i + 1} days 10:00', 'Y-m-d H:i:s')})
 for i, state in enumerate(['new', 'in_progress', 'resolved']):
     add('rondo_feedback:f' + str(i), 'rondo_feedback', ['Idee: gezamenlijke ouderavond', 'Vraag over teamkalender', 'Kledingmaat aangepast'][i],
-        {'feedback_type': 'feature_request' if i == 0 else 'bug', 'status': state, 'priority': 'medium', 'use_case': 'Fictieve demo-feedback', 'url_context': '/teams'},
-        content='Voorbeeld van feedback die binnen de club wordt opgevolgd.')
+        {'feedback_type': 'feature_request' if i == 0 else 'bug', 'status': state, 'priority': 'medium', 'use_case': 'Samenwerking tussen trainers en ouders verbeteren.', 'url_context': '/teams'},
+        content='Graag afstemmen met de jeugdcommissie en terugkoppelen aan de betrokken ouders.')
 
 pitches = [{'id': 'pitch1', 'name': 'Veld 1'}, {'id': 'pitch2', 'name': 'Veld 2'}]
 groups = [{'id': 'youth', 'name': 'Jeugd', 'color': '#2563eb'}, {'id': 'senior', 'name': 'Senioren', 'color': '#16a34a'}]
@@ -214,7 +227,7 @@ add('rondo_training:draft', 'rondo_training', 'Voorstel winterindeling', {'seaso
 add('rondo_park_closure:maintenance', 'rondo_park_closure', 'Onderhoud kunstgrasveld', {'starts_at': day('+18 days'), 'ends_at': day('+18 days')})
 for i, title in enumerate(['Bestuurskamer', 'Teamruimte', 'Clubhuis']):
     add('rondo_room:r' + str(i), 'rondo_room', title,
-        {'location': 'Clubgebouw', 'description': 'Fictieve ruimte voor teamoverleg en clubactiviteiten.', 'capacity': [12, 20, 80][i],
+        {'location': 'Clubgebouw', 'description': 'Ruimte voor teamoverleg en clubactiviteiten, met wifi en een beamer.', 'capacity': [12, 20, 80][i],
          'booking_enabled': True, 'booking_interval_minutes': 30, 'minimum_duration_minutes': 30, 'maximum_duration_minutes': 180,
          'minimum_notice_minutes': 30, 'maximum_advance_days': 90, 'changeover_buffer_minutes': 15, 'access_before_minutes': 15,
          'member_instructions': 'Laat de ruimte netjes achter.', 'opening_hours': [{'day': n, 'start_time': '08:00', 'end_time': '23:00'} for n in range(1, 8)], 'facilities': [{'name': 'Wifi'}, {'name': 'Beamer'}]})
@@ -222,12 +235,12 @@ for i in range(6):
     add('rondo_room_booking:b' + str(i), 'rondo_room_booking', ['Teamoverleg', 'Jeugdcommissie', 'Sponsorontvangst'][i % 3],
         {'room_id': ref('rondo_room:r' + str(i % 3)), 'holder_person_id': ref('person:p001'), 'holder_user_id': {'$user': 'demo'},
          'created_by_user_id': {'$user': 'demo'}, 'start_datetime': dt(f'+{i + 1} days 19:00'), 'end_datetime': dt(f'+{i + 1} days 20:00'),
-         'purpose': 'Fictieve reservering', 'status': 'cancelled' if i == 5 else 'confirmed', 'booking_type': 'member_reservation',
+         'purpose': 'Overleg over de teamindeling en het programma voor de komende wedstrijden.', 'status': 'cancelled' if i == 5 else 'confirmed', 'booking_type': 'member_reservation',
          'booking_context_type': 'team', 'eligibility_team_id': ref('team:senior1'), 'context_label_snapshot': 'SV Voorbeeld 1'}, status='private')
 
 for i, state in enumerate(['draft', 'open', 'closed']):
     add('rondo_tournament:t' + str(i), 'rondo_tournament', ['Voorjaarstoernooi', 'Horizon Jeugdcup', 'Polder Zomercup'][i],
-        {'description': 'Fictief toernooi voor jeugdteams.', 'organizer': 'SV Voorbeeld', 'location': 'Sportpark De Voorbeeldvelden',
+        {'description': 'Een sportieve dag voor jeugdteams, met poulewedstrijden en een gezamenlijke prijsuitreiking.', 'organizer': 'SV Voorbeeld', 'location': 'Sportpark De Voorbeeldvelden',
          'lifecycle_status': state, 'external_status': 'not_processed' if i < 2 else 'confirmed', 'version': 1,
          'internal_deadline': day('+14 days'), 'external_deadline': day('+21 days'), 'payment_deadline': day('+28 days'),
          'target_team_ids': [ref('team:jo9'), ref('team:jo11'), ref('team:jo13')], 'pricing_rules': [{'min_age': 8, 'max_age': 13, 'game_format': '6x6', 'amount': 60}],
@@ -253,12 +266,19 @@ for i, state in enumerate(['concept', 'preparing', 'ready', 'sent', 'cancelled']
          'channels': [{'channel_id': 'newsletter'}, {'channel_id': 'website'}], 'assignee_id': {'$user': 'demo'},
          'series_id': ref('rondo_comm_series:monthly') if i == 3 else None,
          'newsletter_subject': 'Nieuws van SV Voorbeeld', 'newsletter_heading': 'Samen maken we de club',
-         'newsletter_preheader': 'Fictief clubnieuws voor de demo', 'newsletter_body': '<p>De open dag biedt trainingen, spelletjes en een rondleiding voor nieuwe leden.</p>',
-         'description': 'Fictief communicatie-item.'})
+         'newsletter_preheader': 'Open dag, teamnieuws en activiteiten op het sportpark', 'newsletter_body': '<p>De open dag biedt trainingen, spelletjes en een rondleiding voor nieuwe leden.</p>',
+         'description': 'Stem de planning en publicatie af met de betrokken commissie.'})
 
-for i, kind in enumerate(['announcement', 'sponsor', 'matches', 'results', 'fallback']):
+signage_texts = {
+    'announcement': 'Welkom op Sportpark De Voorbeeldvelden! Geniet van de wedstrijden. De kantine is open voor koffie, verse broodjes en een gezellig praatje.',
+    'sponsor': 'Met Polder Fietsen kom je goed op weg. Voor een nieuwe fiets, onderhoud en deskundig advies in Voorbeelddorp. Trots partner van SV Voorbeeld.',
+    'matches': '09:00  SV Voorbeeld JO9-1 - VV Horizon JO9-1 | Veld 2\n10:30  SV Voorbeeld JO13-1 - FC Polder JO13-1 | Veld 1\n14:00  SV Voorbeeld 1 - FC Polder 1 | Veld 1',
+    'results': 'SV Voorbeeld 1 - FC Polder 1: 3 - 1\nVV Horizon 2 - SV Voorbeeld 2: 2 - 2\nSV Voorbeeld VR1 - VV Bosrand VR1: 4 - 0\nGoed gespeeld, teams!',
+    'fallback': 'Samen maken we SV Voorbeeld. Dank aan onze vrijwilligers en sponsors! Help je ook mee? Meld je bij de bar of vraag je teamleider naar de mogelijkheden.',
+}
+for i, kind in enumerate(signage_texts):
     add('rondo_signage_item:s' + str(i), 'rondo_signage_item', ['Welkom bij SV Voorbeeld', 'Polder Fietsen', 'Wedstrijden vandaag', 'Uitslagen', 'Samen maken we de club'][i],
-        {'content_type': kind, 'body': 'Fictieve clubinformatie voor bezoekers en leden.', 'enabled': True, 'duration_seconds': 15,
+        {'content_type': kind, 'body': signage_texts[kind], 'enabled': True, 'duration_seconds': 15,
          'priority': 10, 'use_club_colors': True, 'sponsor_id': ref('rondo_sponsor:s0') if kind == 'sponsor' else None})
 add('rondo_signage_list:clubhouse', 'rondo_signage_list', 'Clubhuis standaard',
     {'enabled': True, 'days_of_week': ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], 'start_time': '08:00', 'end_time': '23:00',
@@ -268,15 +288,15 @@ for i, name in enumerate(['Clubhuis', 'Entree']):
     add('rondo_display:d' + str(i), 'rondo_display', name,
         {'location': name, 'pairing_status': 'approved', 'assigned_playlist_id': ref('rondo_signage_list:clubhouse'),
          'device_id': 'showcase-display-' + str(i), 'display_timezone': 'Europe/Amsterdam', 'update_channel': 'off',
-         'wake_time': '08:00', 'sleep_time': '23:00', 'last_error': 'Fictief scherm; geen fysieke player gekoppeld.'})
+         'wake_time': '08:00', 'sleep_time': '23:00', 'last_error': ''})
 for i, offset in enumerate([-7, 3, 10]):
     add('rondo_access_event:m' + str(i), 'rondo_access_event', 'SV Voorbeeld 1 - FC Polder',
         {'home_team': 'SV Voorbeeld 1', 'away_team': 'FC Polder', 'source_id': 'showcase-entry-' + str(i),
          'starts_at': dt(f'{offset:+d} days 14:00'), 'location': 'Sportpark De Voorbeeldvelden', 'pitch': 'Veld 1', 'cancelled': False})
-add('rondo_guest_pass:g1', 'rondo_guest_pass', 'Fictieve gast: Noor Voorbeeld',
+add('rondo_guest_pass:g1', 'rondo_guest_pass', 'Gastpas: Noor Voorbeeld',
     {'host_person_id': ref('person:p001'), 'guest_name': 'Noor Voorbeeld', 'slot_number': 1, 'pass_status': 'active', 'pass_version': 1, 'claimed_at': dt('-8 days')})
 for i in range(6):
-    add('rondo_admission:a' + str(i), 'rondo_admission', 'Fictieve toegang ' + str(i + 1),
+    add('rondo_admission:a' + str(i), 'rondo_admission', 'Entree SV Voorbeeld 1 - FC Polder: ' + str(i + 1),
         {'event_id': ref('rondo_access_event:m0'), 'host_person_id': ref(f'person:p{i + 1:03d}'),
          'pass_type': 'bondslid', 'scanned_at': dt('-7 days 13:45')})
 
@@ -292,7 +312,7 @@ for i in range(12):
               '_clothing_size': ['M', 'L', 'S'][i % 3], '_clothing_condition': 'good', '_clothing_date': day('-14 days'),
               '_clothing_handled_by': {'$user': 'demo'}, '_clothing_in_or_out': 'in' if i == 11 else 'out',
               '_clothing_deposit_paid': '1', '_clothing_deposit_returned': '1' if i == 11 else '0',
-              '_clothing_season': '{season}', '_clothing_notes': 'Fictieve kledingtransactie'})
+              '_clothing_season': '{season}', '_clothing_notes': 'Tenue gecontroleerd en compleet overgedragen.'})
 
 # Twelve reports contain synthetic daily, hourly and product data, not copies of live reports.
 for i in range(14):
@@ -319,36 +339,36 @@ for i in range(14):
               'producten_totaal': {'bruto': gross, 'aantal': sum(p['aantal'] for p in products)},
               'source': {'coverage_end': day(f'-{i} days 06:00', 'Y-m-d H:i')}, 'no_sale_transactions': [],
               'product_revenue': {'version': 1, 'products': revenue}, 'activity': {'version': 1, 'transactions': transactions}}
-    add('rondo_twelve_report:r' + str(i), 'rondo_twelve_report', 'Fictief kantinerapport ' + str(i + 1),
+    add('rondo_twelve_report:r' + str(i), 'rondo_twelve_report', 'Kantineomzet dagrapport ' + str(i + 1),
         meta={'_twelve_period_start': day(f'-{i + 1} days 06:00', 'Y-m-d H:i:s'), '_twelve_period_end': day(f'-{i} days 06:00', 'Y-m-d H:i:s'),
               '_twelve_message_id': 'showcase-report-' + str(i), '_twelve_report_data': {'$json': parsed}, '_twelve_total_gross': gross})
 for i in range(3):
-    add('rondo_purchase:p' + str(i), 'rondo_purchase', 'Fictieve inkoopfactuur ' + str(i + 1),
+    add('rondo_purchase:p' + str(i), 'rondo_purchase', 'Inkoopfactuur Voorbeeld Groothandel ' + str(i + 1),
         {'invoice_number': 'DEMO-INKOOP-' + str(i + 1), 'supplier': 'Voorbeeld Groothandel', 'invoice_date': day(f'-{i * 7 + 1} days'),
          'vat_amount': 9, 'total_amount': 109, 'revision': 1,
          'lines': [{'article': 'DEMO-KOFFIE', 'description': 'Koffiebonen', 'amount': 100, 'deposit': 0, 'vat_rate': 9,
-                    'packs': 10, 'pack_content': '1 kg', 'units_per_pack': 1, 'quantity': 10, 'unit': 'kg', 'category': 'Dranken', 'note': 'Fictieve factuur'}]})
+                    'packs': 10, 'pack_content': '1 kg', 'units_per_pack': 1, 'quantity': 10, 'unit': 'kg', 'category': 'Dranken', 'note': 'Levering ontvangen en gecontroleerd; bestemd voor de kantine.'}]})
 for i, name in enumerate(['Koffie', 'Thee', 'Cola', 'Broodje kaas']):
     add('rondo_kassa_product:p' + str(i), 'rondo_kassa_product', name,
         {'twelve_id': str(i + 1), 'product_name': name, 'active': True, 'cost_status': ['ready', 'portion', 'mapping', 'recipe'][i],
-         'cost_note': 'Fictieve kostprijs', 'revision': 1, 'ingredients': [{'article': 'DEMO-KOFFIE', 'quantity': .008, 'unit': 'kg'}] if i == 0 else [],
+         'cost_note': 'Kostprijs op basis van de laatste inkoop en portiegrootte.', 'revision': 1, 'ingredients': [{'article': 'DEMO-KOFFIE', 'quantity': .008, 'unit': 'kg'}] if i == 0 else [],
          'sale_prices': [{'effective_date': day('-1 month'), 'amount': [2.5, 2.25, 2.75, 3.5][i], 'vat_rate': 9, 'source': 'showcase'}]})
 for i, offset in enumerate([-7, 3]):
-    add('rondo_kantine_day:d' + str(i), 'rondo_kantine_day', 'Fictieve wedstrijddag ' + str(i + 1),
+    add('rondo_kantine_day:d' + str(i), 'rondo_kantine_day', 'Thuiswedstrijden SV Voorbeeld ' + str(i + 1),
         meta={'_kantine_day': {'date': day(f'{offset:+d} days'), 'matches': [{'id': 'showcase-busy-' + str(i),
               'date': day(f'{offset:+d} days'), 'time': '14:00', 'home_team': 'SV Voorbeeld 1', 'away_team': 'FC Polder',
               'club_side': 'home', 'location': 'Sportpark De Voorbeeldvelden', 'status': 'Vastgesteld', 'cancelled': False,
               'result': '3 - 1' if offset < 0 else '', 'special': 'first', 'youth': False, 'activity': False, 'reason': None}],
               'complete': True, 'updated_at': dt('today')}})
 for i in range(3):
-    add('rondo_match_reg:m' + str(i), 'rondo_match_reg', 'Fictieve wedstrijdregistratie ' + str(i + 1),
+    add('rondo_match_reg:m' + str(i), 'rondo_match_reg', 'SV Voorbeeld 1 - FC Polder: wedstrijdregistratie ' + str(i + 1),
         {'team_id': ref('team:senior1'), 'season': '{season}', 'phase': 'completed' if i < 2 else 'draft', 'version': 1,
          'source_match_id': 'showcase-senior1-' + str(i), 'played_on': day(f'-{i * 7 + 1} days'), 'opponent_name': 'FC Polder', 'home': True,
          'category': 'competitie', 'home_score': 3, 'away_score': 1,
          'selection': [{'person_id': ref(f'person:p{n + 1:03d}'), 'player_name': first_names[n] + ' Bos', 'participation': 'basis' if n < 11 else 'bank', 'guest': False} for n in range(16)]}, status='private')
 add('rondo_onboard_round:new', 'rondo_onboard_round', 'Welkom: nieuw lid met overschrijving', status='private',
     parent=ref('person:p007'), meta={'_onboarding_key': 'showcase-new', '_onboarding_due': day('+1 day', 'U'), '_onboarding_recognized': day('today', 'U')})
-add('rondo_profile_change:c1', 'rondo_profile_change', 'Fictieve contactwijziging', status='private',
+add('rondo_profile_change:c1', 'rondo_profile_change', 'Contactgegevens bijgewerkt', status='private',
     meta={'_rondo_profile_change_type': 'contact', '_rondo_profile_change_source': 'rondo', '_rondo_profile_change_person_ids': [ref('person:p001')],
           '_rondo_profile_change_changes': [{'person_id': ref('person:p001'), 'field': 'email_1', 'old_value': 'oud@club.example', 'new_value': 'lid1@club.example'}],
           '_rondo_profile_change_verified': '1', '_rondo_profile_change_sync_pending': []})
@@ -366,9 +386,9 @@ coverage = {
  'kleding': ['rondo_clothing_item:c0', 'rondo_clothing_txn:x0'], 'kantine': ['rondo_twelve_report:r0', 'rondo_purchase:p0', 'rondo_kassa_product:p0'],
  'wedstrijdregistratie': ['rondo_match_reg:m0'], 'onboarding_en_wijzigingen': ['person:p007', 'rondo_onboard_round:new', 'rondo_profile_change:c1'],
  'lidpassen_en_gastpassen': ['person:p001', 'rondo_guest_pass:g1'], 'jubilarissen': ['person:p006']}
-settings = {'rondo_club_name': 'SV Voorbeeld', 'rondo_feature_toggles': {'rooms': 'on', 'clothing': 'on', 'narrowcasting': 'on'},
+settings = {'rondo_club_name': 'SV Voorbeeld', 'rondo_finance_club_logo_id': ref('attachment:sv-voorbeeld'), 'rondo_feature_toggles': {'rooms': 'on', 'clothing': 'on', 'narrowcasting': 'on'},
  'rondo_volunteer_pool_commissies': {'schoonmaak': ref('commissie:cleaning'), 'activiteiten': ref('commissie:events'), 'werkploeg': ref('commissie:grounds')},
- 'rondo_volunteer_signup_info': 'Kies een fictieve dienst om de inschrijving te bekijken.',
+ 'rondo_volunteer_signup_info': 'Kies een dienst die bij je past en help mee in de kantine of op het sportpark.',
  'rondo_player_roles': ['Teamspeler'], 'rondo_excluded_roles': [], 'rondo_anniversary_milestones': [25, 40, 50, 60, 70],
  'rondo_vog_exempt_commissies': [], 'rondo_training_active': ref('rondo_training:active'),
  'rondo_training_settings': {'revision': 1, 'pitches': pitches, 'age_groups': groups,
@@ -380,9 +400,16 @@ settings = {'rondo_club_name': 'SV Voorbeeld', 'rondo_feature_toggles': {'rooms'
     'youth': {'label': 'Jeugd', 'amount': 180, 'age_classes': ['Onder 9', 'Onder 11', 'Onder 13', 'Onder 15', 'Onder 17', 'Onder 19'], 'is_youth': True, 'sort_order': 2}},
  'rondo_family_discount_{season}': {'second_child_percent': 25, 'third_child_percent': 50},
  'rondo_twelve_product_groups': {hashlib.sha256(name.encode()).hexdigest(): 'food' if name == 'Broodje kaas' else 'non_food' for name in ['Koffie', 'Thee', 'Cola', 'Broodje kaas']},
- 'rondo_match_compensation': {'teams': [{'team_id': ref('team:senior1'), 'scheme': 'awc1'}, {'team_id': ref('team:o23'), 'scheme': 'jo23'}], 'bank_code': '', 'retention_policy': 'Fictieve gegevens; geen echte uitbetaling.'}}
+ 'rondo_match_compensation': {'teams': [{'team_id': ref('team:senior1'), 'scheme': 'awc1'}, {'team_id': ref('team:o23'), 'scheme': 'jo23'}], 'bank_code': '', 'retention_policy': 'Wedstrijdvergoedingen worden na controle door de penningmeester verwerkt.'}}
 # Use the canonical registry to keep relative date markers in each field's wire format.
-schema = json.loads(subprocess.check_output(['php', '-r', "$config = require $argv[1]; echo json_encode($config['contexts']);", str(ROOT / 'includes/config/field-registry.php')]))
+registry_loader = """
+define('ABSPATH', $argv[1] . '/');
+function get_option($key, $default = false) { return $default; }
+require $argv[1] . '/includes/class-club-config.php';
+$config = require $argv[1] . '/includes/config/field-registry.php';
+echo json_encode($config['contexts']);
+"""
+schema = json.loads(subprocess.check_output(['php', '-r', registry_loader, str(ROOT)]))
 def normalize_dates(fields, definitions):
     for name, value in fields.items():
         definition = definitions[name]
@@ -410,7 +437,7 @@ for record in records:
 
 fixture = {'meta': {'version': '2.0', 'source': 'fictional_showcase', 'name': 'SV Voorbeeld: alle modules',
                    'record_counts': dict(sorted(Counter(r['post_type'] for r in records).items()))},
-           'terms': terms, 'records': records, 'comments': comments, 'settings': settings, 'coverage': coverage,
+           'media': media, 'terms': terms, 'records': records, 'comments': comments, 'settings': settings, 'coverage': coverage,
            'demo_account': {'roles': ['rondo_bestuur', 'rondo_kaderlijst'], 'capabilities': ['manage_training', 'narrowcasting', 'wedstrijdregistratie', 'wedstrijdzaken', 'feedback', 'commissies', 'vrijwilligers'], 'user_meta': {'rondo_linked_person_id': ref('person:p001'), 'rondo_approved': '1',
              '_rondo_match_teams': [ref('team:senior1')], 'rondo_newsletter_profile': {'name': 'Anna Bos', 'role': 'Secretaris',
              'from_name': 'SV Voorbeeld', 'from_email': 'club@club.example', 'reply_to': 'club@club.example', 'active': True}}}}
