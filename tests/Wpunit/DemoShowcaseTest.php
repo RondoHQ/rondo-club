@@ -107,6 +107,8 @@ class DemoShowcaseTest extends RondoTestCase {
 				$this->assertSame( 16, $team_counts[ $ids[ $record['_ref'] ] ]['players'] );
 			}
 		}
+		$this->assertSame( 1, $team_counts[ $ids['team:senior1'] ]['staff'] );
+		$this->assertSame( 1, $team_counts[ $ids['team:jo13'] ]['staff'] );
 		$this->assertTrue( user_can( $user_id, 'manage_training' ) );
 		$this->assertTrue( \Rondo\Core\UserRoles::can_access_board( $user_id ) );
 		$this->assertTrue( ( new \Rondo\Passes\GuestPassService() )->is_eligible_host( $ids['person:p001'] ) );
@@ -128,6 +130,9 @@ class DemoShowcaseTest extends RondoTestCase {
 		$feed = ( new TeamMatches() )->get_feed( $ids['team:senior1'] );
 		$this->assertNotWPError( $feed );
 		$this->assertCount( 5, $feed['matches'] );
+		$this->assertSame( [ true, false, true, false, true ], array_column( $feed['matches'], 'is_home' ) );
+		$this->assertSame( 'SV Voorbeeld 1', $feed['matches'][0]['home_team'] );
+		$this->assertSame( 'SV Voorbeeld 1', $feed['matches'][1]['away_team'] );
 		$this->assertTrue( $feed['matches'][4]['cancelled'] );
 		$report = json_decode( get_post_meta( $ids['rondo_twelve_report:r0'], '_twelve_report_data', true ), true );
 		$this->assertTrue( \Rondo\Twelve\Activity::validate( $report ) );

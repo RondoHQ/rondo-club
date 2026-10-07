@@ -51,9 +51,11 @@ team_specs = [('senior1', 'SV Voorbeeld 1', 26), ('senior2', 'SV Voorbeeld 2', 2
 for slug, name, age in team_specs:
     matches = []
     for n, offset in enumerate([-14, -7, 3, 10, 17]):
+        opponent = 'VV Horizon' if n % 2 else 'FC Polder'
+        is_home = n % 2 == 0
         matches.append({'id': f'showcase-{slug}-{n}', 'starts_at': dt(f'{offset:+d} days 14:00'),
-                        'date': day(f'{offset:+d} days'), 'time': '14:00', 'home_team': name,
-                        'away_team': 'VV Horizon' if n % 2 else 'FC Polder', 'location': 'Sportpark De Voorbeeldvelden',
+                        'date': day(f'{offset:+d} days'), 'time': '14:00', 'home_team': name if is_home else opponent,
+                        'away_team': opponent if is_home else name, 'is_home': is_home, 'location': 'Sportpark De Voorbeeldvelden',
                         'pitch': 'Veld 1', 'status': 'Afgelast' if n == 4 else 'Vastgesteld', 'cancelled': n == 4,
                         'result': '3 - 1' if offset < 0 else '', 'time_known': True, 'competition': 'Competitie',
                         'duration_minutes': 105 if age >= 17 else 75, 'sequence': 0, 'modified_at': dt('-1 day')})
@@ -117,7 +119,9 @@ for i in range(12):
     add(parent, 'person', first_names[(i + 3) % 16] + ' Familie' + str(i + 1),
         {'first_name': first_names[(i + 3) % 16], 'last_name': 'Familie' + str(i + 1), 'person_type': 'member',
          'type_lid': 'Ouder', 'birthdate': day('-40 years'), 'isparent': True, 'email_1': f'ouder{i + 1}@club.example',
-         'addresses': [dict(address)], 'relationships': [{'related_person_id': ref(f'person:p{child + 1:03d}'), 'relationship_type_id': ref('relationship_type:child')} for child in children]})
+         'addresses': [dict(address)], 'relationships': [{'related_person_id': ref(f'person:p{child + 1:03d}'), 'relationship_type_id': ref('relationship_type:child')} for child in children],
+         'work_history': [job('team:jo13', 'Teamleider')] if i == 0 else ([job('team:senior1', 'Trainer')] if i == 1 else []),
+         'huidig_vrijwilliger': i < 2, 'datum_vog': day('-1 year') if i < 2 else None})
     for child in children:
         child_record = next(r for r in records if r['_ref'] == f'person:p{child + 1:03d}')
         child_record['fields']['addresses'] = [dict(address)]
