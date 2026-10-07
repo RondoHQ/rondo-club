@@ -136,7 +136,7 @@ class MembershipPassService {
 			foreach ( $work_options as $option ) {
 				$role_options[] = [
 					'key'   => (string) $option['key'],
-					'label' => 'AWC-pas — ' . (string) $option['label'],
+					'label' => trim( \Rondo\Config\ClubConfig::get_club_name() . ' ledenpas' ) . ' — ' . (string) $option['label'],
 				];
 			}
 		}
@@ -507,7 +507,7 @@ class MembershipPassService {
 		return count( $role_options ) > 1 ? null : '';
 	}
 
-	/** Resolve the requested sponsor or regular AWC pass and its work role. */
+	/** Resolve the requested sponsor or regular club pass and its work role. */
 	private static function resolve_selected_pass( int $person_id, string $selected_role, array $work_options ): ?array {
 		$member_tier          = self::get_person_member_tier( $person_id );
 		$standard_member_tier = self::get_person_standard_member_tier( $person_id );

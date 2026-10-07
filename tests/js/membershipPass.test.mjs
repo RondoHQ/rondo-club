@@ -15,6 +15,7 @@ test('builds a personal digital pass route with an encoded optional choice', () 
 });
 
 test('selects the correct presentation for every scanner pass type', () => {
+  globalThis.window = { rondoConfig: { clubName: 'AWC' } };
   assert.deepEqual(getMembershipPassPresentation('bondslid'), {
     eyebrow: 'Bondslid',
     title: 'AWC Ledenpas',
@@ -23,5 +24,22 @@ test('selects the correct presentation for every scanner pass type', () => {
   });
   assert.equal(getMembershipPassPresentation('businessclub').title, 'Businessclub AWC');
   assert.equal(getMembershipPassPresentation('businessclub').businessclub, true);
-  assert.equal(getMembershipPassPresentation('awc_sponsor').title, 'AWC Sponsor');
+  assert.equal(getMembershipPassPresentation('awc_sponsor').title, 'Sponsor AWC');
+});
+
+
+test('uses current club branding for all pass types without changing their stored keys', () => {
+  for (const clubName of ['SV Voorbeeld', 'FC Andere Club']) {
+    globalThis.window = { rondoConfig: { clubName } };
+    assert.equal(getMembershipPassPresentation('awc_sponsor').title, `Sponsor ${clubName}`);
+    assert.equal(getMembershipPassPresentation('businessclub').title, `Businessclub ${clubName}`);
+    for (const type of ['bondslid', 'verenigingslid', 'unknown']) {
+      assert.equal(getMembershipPassPresentation(type).title, `${clubName} Ledenpas`);
+    }
+  }
+  globalThis.window.rondoConfig.clubName = '  ';
+  assert.equal(getMembershipPassPresentation('awc_sponsor').title, 'Sponsor');
+  assert.equal(getMembershipPassPresentation('businessclub').title, 'Businessclub');
+  assert.equal(getMembershipPassPresentation('unknown').title, 'Ledenpas');
+  delete globalThis.window;
 });
