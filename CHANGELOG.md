@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.144.9] - 2026-10-07
+
+### Fixed
+- Add demo-only `wp rondo demo import --refresh` to clear manifest-owned relationships and shift assignments before replacing the showcase, while preserving deletion guards and unrelated records.
+
 ## [35.144.7] - 2026-10-07
 
 ### Fixed
