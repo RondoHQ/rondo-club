@@ -7,7 +7,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useUpdatePerson, peopleKeys } from '@/hooks/usePeople';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
-import { formatCurrency, formatPercentage } from '@/utils/formatters';
+import { formatCurrency, formatPercentage, formatPersonName } from '@/utils/formatters';
 import { isDoorbelastException } from '@/utils/disciplineCases';
 
 /**
@@ -251,7 +251,7 @@ export default function FinancesCard({ personId }) {
                         to={`/people/${member.id}`}
                         className="text-electric-cyan dark:text-electric-cyan hover:underline"
                       >
-                        {member.name}
+                        {formatPersonName(member.first_name, member.infix, member.last_name) || member.name}
                       </Link>
                     </span>
                   ))}

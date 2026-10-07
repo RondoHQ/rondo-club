@@ -706,7 +706,10 @@ class Fees extends Base {
 				if ( $cat_cmp !== 0 ) {
 					return $cat_cmp;
 				}
-				return strcasecmp( $a['first_name'] . ' ' . $a['last_name'], $b['first_name'] . ' ' . $b['last_name'] );
+				return strcasecmp(
+					\Rondo\People\PersonName::format( $a['first_name'], $a['infix'], $a['last_name'] ),
+					\Rondo\People\PersonName::format( $b['first_name'], $b['infix'], $b['last_name'] )
+				);
 			}
 		);
 
@@ -1040,16 +1043,8 @@ class Fees extends Base {
 			$family_size = count( $group_members );
 			foreach ( $group_members as $member_id ) {
 				if ( (int) $member_id !== $person_id ) {
-					$first_name = \Rondo\Fields\Fields::get_for_post( $member_id, 'first_name' ) ?: '';
-					$infix      = \Rondo\Fields\Fields::get_for_post( $member_id, 'infix' ) ?: '';
-					$last_name  = \Rondo\Fields\Fields::get_for_post( $member_id, 'last_name' ) ?: '';
-					$name       = implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) );
-					if ( empty( $name ) ) {
-						$name = get_the_title( $member_id );
-					}
 					$family_members[] = [
-						'id'   => (int) $member_id,
-						'name' => $name,
+						'id' => (int) $member_id,
 					];
 				}
 			}
@@ -1065,6 +1060,15 @@ class Fees extends Base {
 
 		// Get billing method for this season
 		$billing_method = FeeServices::settings()->get_billing_method( $season );
+
+		// Names are presentation data: refresh them even when fee amounts are cached.
+		foreach ( $family_members as &$member ) {
+			$member['first_name'] = (string) \Rondo\Fields\Fields::get_for_post( $member['id'], 'first_name' );
+			$member['infix']      = (string) \Rondo\Fields\Fields::get_for_post( $member['id'], 'infix' );
+			$member['last_name']  = (string) \Rondo\Fields\Fields::get_for_post( $member['id'], 'last_name' );
+			$member['name']       = \Rondo\People\PersonName::format( $member['first_name'], $member['infix'], $member['last_name'] ) ?: get_the_title( $member['id'] );
+		}
+		unset( $member );
 
 		return rest_ensure_response(
 			[
