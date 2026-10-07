@@ -49,7 +49,7 @@ Reference names below map to real IDs in the `rondo_demo_showcase_manifest` opti
 
 | Feature | Deliberate examples |
 | --- | --- |
-| Members, households and self-service | Anna Bos (`person:p001`), 12 parents linked to children, six former members with closed roles; demo account opens Anna's own profile |
+| Members, households and self-service | Anna Bos (`person:p001`), 12 parents linked to children (including three siblings), six former members with closed roles; demo account opens Anna's own profile |
 | Teams, staff and calendars | Youth, girls, women, seniors, O23, G-football and walking football; five fictional fixtures per team including results and a cancellation |
 | Committees and volunteers | Eight committees and volunteer pools; current and former roles |
 | VOG and IVA | Current certificates, expired VOG (`person:p003`), missing VOG, approved IVA and manual exemption (`person:p004`) |
@@ -61,7 +61,7 @@ Reference names below map to real IDs in the `rondo_demo_showcase_manifest` opti
 | Sponsors | Four fictional businesses and linked contacts, businessclub and sponsor-pass variants |
 | Training and park calendar | Active weekly timetable, winter proposal and an upcoming maintenance closure |
 | Rooms | Three rooms with opening hours and facilities, five confirmed reservations and one cancellation |
-| Tournaments | Draft, open and closed editions; invited teams, draft/submitted/withdrawn entries and a linked unpaid invoice |
+| Tournaments | Draft, open and closed editions; invited teams, open/submitted entries, a linked unpaid invoice and a manually paid example |
 | Communication and newsletters | Concept, preparing, ready, published and cancelled items; monthly series, three channels and a fictional sender profile |
 | Club TV | Two fictional displays, a five-item playlist, sponsor, welcome, programme and results slides |
 | Entry control | Three fixtures and six historical admissions |

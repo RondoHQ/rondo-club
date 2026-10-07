@@ -89,7 +89,7 @@ for t, (slug, name, age) in enumerate(team_specs):
                   'email_1': f'lid{i + 1}@club.example', 'work_history': roles, 'huidig_vrijwilliger': volunteer,
                   'datum_vog': day('-1 year') if volunteer and n != 2 else None,
                   'datum_iva': day('-6 months') if volunteer else None, 'iva_approved': volunteer,
-                  'addresses': [{'street_name': 'Voorbeeldlaan', 'house_number': str(t + 1), 'postal_code': '1234 AB',
+                  'addresses': [{'street_name': 'Voorbeeldlaan', 'house_number': str(i + 1), 'postal_code': '1234 AB',
                                  'city': 'Voorbeelddorp', 'country': 'Nederland', 'country_code': 'NL'}]}
         if i == 0:
             fields['work_history'] += [job('commissie:board', 'Secretaris'), job('commissie:events', 'Coördinator toernooien'), job('team:senior1', 'Trainer')]
@@ -110,14 +110,18 @@ for t, (slug, name, age) in enumerate(team_specs):
 
 # Deliberate households, former members, new volunteers and sponsor contacts.
 for i in range(12):
-    child = 112 + i
+    children = [112, 128, 144] if i == 0 else [112 + i]
     parent = 'person:parent' + str(i + 1)
+    address = {'street_name': 'Voorbeeldlaan', 'house_number': str(children[0] + 1), 'postal_code': '1234 AB',
+               'city': 'Voorbeelddorp', 'country': 'Nederland', 'country_code': 'NL'}
     add(parent, 'person', first_names[(i + 3) % 16] + ' Familie' + str(i + 1),
         {'first_name': first_names[(i + 3) % 16], 'last_name': 'Familie' + str(i + 1), 'person_type': 'member',
          'type_lid': 'Ouder', 'birthdate': day('-40 years'), 'isparent': True, 'email_1': f'ouder{i + 1}@club.example',
-         'relationships': [{'related_person_id': ref(f'person:p{child + 1:03d}'), 'relationship_type_id': ref('relationship_type:child')}]})
-    child_record = next(r for r in records if r['_ref'] == f'person:p{child + 1:03d}')
-    child_record['fields']['relationships'] = [{'related_person_id': ref(parent), 'relationship_type_id': ref('relationship_type:parent')}]
+         'addresses': [dict(address)], 'relationships': [{'related_person_id': ref(f'person:p{child + 1:03d}'), 'relationship_type_id': ref('relationship_type:child')} for child in children]})
+    for child in children:
+        child_record = next(r for r in records if r['_ref'] == f'person:p{child + 1:03d}')
+        child_record['fields']['addresses'] = [dict(address)]
+        child_record['fields']['relationships'] = [{'related_person_id': ref(parent), 'relationship_type_id': ref('relationship_type:parent')}]
 for i in range(6):
     add('person:former' + str(i), 'person', 'Oudlid Voorbeeld' + str(i + 1),
         {'first_name': 'Oudlid', 'last_name': 'Voorbeeld' + str(i + 1), 'type_lid': 'Oud bondslid', 'former_member': True,
@@ -225,14 +229,14 @@ for i, state in enumerate(['draft', 'open', 'closed']):
          'target_team_ids': [ref('team:jo9'), ref('team:jo11'), ref('team:jo13')], 'pricing_rules': [{'min_age': 8, 'max_age': 13, 'game_format': '6x6', 'amount': 60}],
          'schedule': [{'age_group': 'JO11', 'location': 'Veld 1', 'start_datetime': dt('+42 days 09:00')}],
          'created_by_user_id': {'$user': 'demo'}}, status='draft' if i == 0 else 'publish')
-for i, state in enumerate(['draft', 'submitted', 'withdrawn']):
+for i, state in enumerate(['open', 'submitted', 'submitted']):
     team_slug = ['jo9', 'jo11', 'jo13'][i]
     add('rondo_tourn_entry:e' + str(i), 'rondo_tourn_entry', 'Deelname JO11 ' + str(i + 1),
         {'tournament_id': ref('rondo_tournament:t1'), 'team_id': ref('team:' + team_slug), 'team_name_snapshot': 'SV Voorbeeld ' + team_slug.upper() + '-1',
-         'age_group_snapshot': 'JO11', 'registration_status': state, 'payment_state': ['not_required', 'pending', 'paid'][i],
-         'player_count': 8, 'registered_team_count': 1, 'price_per_team': 60, 'total_amount': 60, 'version': 1,
+         'age_group_snapshot': 'JO11', 'registration_status': state, 'payment_state': ['not_applicable', 'error', 'paid'][i],
+         'player_count': 8 if i else 0, 'registered_team_count': 1 if i else 0, 'price_per_team': 60, 'total_amount': 60 if i else 0, 'version': 1,
          'contact_person_id': ref('person:p001'), 'contact_name': 'Anna Bos', 'contact_email': 'lid1@club.example',
-         'invoice_id': ref('rondo_invoice:i14') if i == 1 else None,
+         'invoice_id': ref('rondo_invoice:i' + str(13 + i)) if i else None,
          'assignment_snapshot': [{'person_id': ref('person:p001'), 'user_id': {'$user': 'demo'}, 'name': 'Anna Bos', 'email': 'lid1@club.example', 'role': 'Trainer'}],
          'draft_team_entries': [{'sequence': 1, 'player_count': 8}], 'submitted_team_entries': [] if i == 0 else [{'sequence': 1, 'player_count': 8}]}, status='publish', meta={'_tournament_assigned_person_{{person:p001}}': 1})
 
@@ -370,7 +374,7 @@ settings = {'rondo_club_name': 'SV Voorbeeld', 'rondo_feature_toggles': {'rooms'
  'rondo_narrowcasting_default_playlist_id': ref('rondo_signage_list:clubhouse'), 'rondo_guest_pass_team_id': ref('team:senior1'),
  'rondo_membership_fees_{season}': {'senior': {'label': 'Senioren', 'amount': 240, 'age_classes': ['Senioren'], 'is_youth': False, 'sort_order': 1},
     'youth': {'label': 'Jeugd', 'amount': 180, 'age_classes': ['Onder 9', 'Onder 11', 'Onder 13', 'Onder 15', 'Onder 17', 'Onder 19'], 'is_youth': True, 'sort_order': 2}},
- 'rondo_family_discount_{season}': {'second_child': 10, 'third_child': 20},
+ 'rondo_family_discount_{season}': {'second_child_percent': 25, 'third_child_percent': 50},
  'rondo_twelve_product_groups': {hashlib.sha256(name.encode()).hexdigest(): 'food' if name == 'Broodje kaas' else 'non_food' for name in ['Koffie', 'Thee', 'Cola', 'Broodje kaas']},
  'rondo_match_compensation': {'teams': [{'team_id': ref('team:senior1'), 'scheme': 'awc1'}, {'team_id': ref('team:o23'), 'scheme': 'jo23'}], 'bank_code': '', 'retention_policy': 'Fictieve gegevens; geen echte uitbetaling.'}}
 # Use the canonical registry to keep relative date markers in each field's wire format.

@@ -75,6 +75,14 @@ class DemoShowcaseTest extends RondoTestCase {
 		$this->assertTrue( ( new \Rondo\Passes\GuestPassService() )->is_eligible_host( $ids['person:p001'] ) );
 		$tournaments = new \Rondo\Tournaments\TournamentService();
 		$this->assertCount( 3, $tournaments->entries_for_tournament( $ids['rondo_tournament:t1'] ) );
+		$this->assertSame( 'open', $tournaments->format_entry( $ids['rondo_tourn_entry:e0'] )['registration_status'] );
+		$this->assertSame( 'not_applicable', $tournaments->format_entry( $ids['rondo_tourn_entry:e0'] )['payment_state'] );
+		$this->assertSame( 'error', $tournaments->format_entry( $ids['rondo_tourn_entry:e1'] )['payment_state'] );
+		$this->assertSame( 'paid', $tournaments->format_entry( $ids['rondo_tourn_entry:e2'] )['payment_state'] );
+		$this->assertNotEmpty( ( new \Rondo\Passes\GuestPassService() )->get_share_url( $ids['rondo_guest_pass:g1'] ) );
+		$this->assertCount( 3, Fields::get_for_post( $ids['person:parent1'], 'relationships' ) );
+		$this->assertSame( Fields::get_for_post( $ids['person:p113'], 'addresses' ), Fields::get_for_post( $ids['person:p129'], 'addresses' ) );
+		$this->assertNotSame( Fields::get_for_post( $ids['person:p001'], 'addresses' ), Fields::get_for_post( $ids['person:p002'], 'addresses' ) );
 		$roles = Fields::all_for_post( $ids['person:p001'] )['work_history'];
 		$this->assertSame( $ids['team:senior1'], $roles[0]['team_id'] );
 		$this->assertSame( $ids['person:parent1'], Fields::all_for_post( $ids['person:p113'] )['relationships'][0]['related_person_id'] );
