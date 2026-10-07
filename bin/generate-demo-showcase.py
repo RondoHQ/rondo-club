@@ -78,7 +78,7 @@ for t, (slug, name, age) in enumerate(team_specs):
     for n in range(16):
         i = t * 16 + n
         first, last = first_names[n], last_names[t]
-        roles = [job('team:' + slug, 'Speler')]
+        roles = [job('team:' + slug, 'Teamspeler')]
         volunteer = n < 3
         if volunteer:
             roles.append(job('commissie:bar', 'Vrijwilliger'))
@@ -126,7 +126,7 @@ for i in range(6):
     add('person:former' + str(i), 'person', 'Oudlid Voorbeeld' + str(i + 1),
         {'first_name': 'Oudlid', 'last_name': 'Voorbeeld' + str(i + 1), 'type_lid': 'Oud bondslid', 'former_member': True,
          'lid_sinds': day('-10 years'), 'lid_tot': day('-1 year'), 'birthdate': day('-45 years'), 'email_1': f'oudlid{i + 1}@club.example',
-         'work_history': [{**job('team:senior2', 'Speler', '-10 years', False), 'end_date': day('-1 year')}]})
+         'work_history': [{**job('team:senior2', 'Teamspeler', '-10 years', False), 'end_date': day('-1 year')}]})
 for i in range(4):
     add('person:contact' + str(i), 'person', 'Sponsor Contact' + str(i + 1),
         {'first_name': 'Sponsor', 'last_name': 'Contact' + str(i + 1), 'person_type': 'contact',
@@ -365,7 +365,7 @@ coverage = {
 settings = {'rondo_club_name': 'SV Voorbeeld', 'rondo_feature_toggles': {'rooms': 'on', 'clothing': 'on', 'narrowcasting': 'on'},
  'rondo_volunteer_pool_commissies': {'schoonmaak': ref('commissie:cleaning'), 'activiteiten': ref('commissie:events'), 'werkploeg': ref('commissie:grounds')},
  'rondo_volunteer_signup_info': 'Kies een fictieve dienst om de inschrijving te bekijken.',
- 'rondo_player_roles': ['Speler'], 'rondo_excluded_roles': [], 'rondo_anniversary_milestones': [25, 40, 50, 60, 70],
+ 'rondo_player_roles': ['Teamspeler'], 'rondo_excluded_roles': [], 'rondo_anniversary_milestones': [25, 40, 50, 60, 70],
  'rondo_vog_exempt_commissies': [], 'rondo_training_active': ref('rondo_training:active'),
  'rondo_training_settings': {'revision': 1, 'pitches': pitches, 'age_groups': groups,
     'teams': [{'team_id': ref('team:' + slug), 'age_group_id': 'senior' if age >= 18 else 'youth', 'duration': 90, 'size': 2} for slug, name, age in team_specs]},
