@@ -6,6 +6,7 @@
 namespace Rondo\Passes;
 
 use PKPass\PKPass;
+use Rondo\Config\ClubConfig;
 use Rondo\Config\FinanceConfig;
 use Rondo\Data\PrivateCredentialStorage;
 
@@ -604,8 +605,8 @@ class MembershipPassApple {
 		}
 
 		return $sponsor_pass_variant === MembershipPassService::SPONSOR_PASS_VARIANT_AWC_SPONSOR
-			? $organization_name . ' Sponsor'
-			: 'Businessclub ' . $organization_name;
+			? ClubConfig::get_sponsor_role_labels( ClubConfig::get_club_name() ?: $organization_name )['awc_sponsor']
+			: ClubConfig::get_sponsor_role_labels( ClubConfig::get_club_name() ?: $organization_name )['businessclub'];
 	}
 
 	/**

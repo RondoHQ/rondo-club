@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { getSponsorRoleLabels } from '@/utils/clubLabels';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Archive, Clock3, ImagePlus, Plus, Save, Search, Trash2, UserPlus, X } from 'lucide-react';
 import { wpApi } from '@/api/client';
@@ -58,6 +59,7 @@ function formatActivityDate(value) {
 }
 
 export default function SponsorDetail() {
+  const roleLabels = getSponsorRoleLabels();
   const { id } = useParams();
   const isNew = id === 'new';
   const navigate = useNavigate();
@@ -225,7 +227,7 @@ export default function SponsorDetail() {
             <label><span className="label">{form.sponsor_type === 'person' ? 'Naam' : 'Organisatienaam'}</span><input className="input w-full" value={form.title} onChange={(event) => updateField('title', event.target.value)} required autoFocus={isNew} /></label>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <label><span className="label">Sponsorrol</span><select className="input w-full" value={form.sponsor_role} onChange={(event) => updateField('sponsor_role', event.target.value)}><option value="businessclub">Businessclub AWC</option><option value="awc_sponsor">AWC Sponsor</option></select></label>
+            <label><span className="label">Sponsorrol</span><select className="input w-full" value={form.sponsor_role} onChange={(event) => updateField('sponsor_role', event.target.value)}><option value="businessclub">{roleLabels.businessclub}</option><option value="awc_sponsor">{roleLabels.awc_sponsor}</option></select></label>
             <label><span className="label">Status</span><select className="input w-full" value={form.status} onChange={(event) => updateField('status', event.target.value)}><option value="publish">Actief</option><option value="draft">Gearchiveerd</option></select></label>
           </div>
           <label className="block"><span className="label">Website</span><input className="input w-full" type="url" value={form.website} onChange={(event) => updateField('website', event.target.value)} placeholder="https://www.voorbeeld.nl" /></label>

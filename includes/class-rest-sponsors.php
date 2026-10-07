@@ -647,7 +647,11 @@ final class Sponsors extends Base {
 			return new \WP_Error( 'rondo_sponsor_type_required', 'Kies organisatie of persoon als sponsortype.', [ 'status' => 400 ] );
 		}
 		if ( ( $creating || array_key_exists( 'sponsor_role', $input ) ) && ! in_array( $role, self::ROLES, true ) ) {
-			return new \WP_Error( 'rondo_sponsor_role_required', 'Kies Businessclub AWC of AWC Sponsor.', [ 'status' => 400 ] );
+			return new \WP_Error(
+				'rondo_sponsor_role_required',
+				sprintf( 'Kies %s of %s.', \Rondo\Config\ClubConfig::get_sponsor_role_labels()['businessclub'], \Rondo\Config\ClubConfig::get_sponsor_role_labels()['awc_sponsor'] ),
+				[ 'status' => 400 ]
+			);
 		}
 		if ( array_key_exists( 'sponsit_contact_id', $input ) ) {
 			$source_id = sanitize_text_field( (string) $input['sponsit_contact_id'] );
