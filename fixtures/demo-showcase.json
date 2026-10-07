@@ -118,6 +118,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld 1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -143,8 +144,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld 1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld 1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -172,6 +174,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld 1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -197,8 +200,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld 1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld 1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -226,6 +230,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld 1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Afgelast",
@@ -292,6 +297,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld 2",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -317,8 +323,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld 2",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld 2",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -346,6 +353,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld 2",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -371,8 +379,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld 2",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld 2",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -400,6 +409,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld 2",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Afgelast",
@@ -466,6 +476,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld VR1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -491,8 +502,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld VR1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld VR1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -520,6 +532,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld VR1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -545,8 +558,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld VR1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld VR1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -574,6 +588,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld VR1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Afgelast",
@@ -640,6 +655,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld O23-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -665,8 +681,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld O23-1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld O23-1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -694,6 +711,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld O23-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -719,8 +737,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld O23-1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld O23-1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -748,6 +767,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld O23-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Afgelast",
@@ -814,6 +834,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld JO19-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -839,8 +860,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld JO19-1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld JO19-1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -868,6 +890,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld JO19-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -893,8 +916,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld JO19-1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld JO19-1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -922,6 +946,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld JO19-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Afgelast",
@@ -988,6 +1013,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld MO17-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1013,8 +1039,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld MO17-1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld MO17-1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1042,6 +1069,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld MO17-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1067,8 +1095,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld MO17-1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld MO17-1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1096,6 +1125,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld MO17-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Afgelast",
@@ -1162,6 +1192,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld JO15-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1187,8 +1218,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld JO15-1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld JO15-1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1216,6 +1248,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld JO15-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1241,8 +1274,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld JO15-1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld JO15-1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1270,6 +1304,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld JO15-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Afgelast",
@@ -1336,6 +1371,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld JO13-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1361,8 +1397,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld JO13-1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld JO13-1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1390,6 +1427,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld JO13-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1415,8 +1453,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld JO13-1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld JO13-1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1444,6 +1483,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld JO13-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Afgelast",
@@ -1510,6 +1550,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld JO11-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1535,8 +1576,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld JO11-1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld JO11-1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1564,6 +1606,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld JO11-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1589,8 +1632,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld JO11-1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld JO11-1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1618,6 +1662,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld JO11-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Afgelast",
@@ -1684,6 +1729,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld JO9-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1709,8 +1755,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld JO9-1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld JO9-1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1738,6 +1785,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld JO9-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1763,8 +1811,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld JO9-1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld JO9-1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1792,6 +1841,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld JO9-1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Afgelast",
@@ -1858,6 +1908,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld G1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1883,8 +1934,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld G1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld G1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1912,6 +1964,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld G1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1937,8 +1990,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld G1",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld G1",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -1966,6 +2020,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld G1",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Afgelast",
@@ -2032,6 +2087,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld Walking Football",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -2057,8 +2113,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld Walking Football",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld Walking Football",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -2086,6 +2143,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld Walking Football",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -2111,8 +2169,9 @@
                 "format": "Y-m-d"
               },
               "time": "14:00",
-              "home_team": "SV Voorbeeld Walking Football",
-              "away_team": "VV Horizon",
+              "home_team": "VV Horizon",
+              "away_team": "SV Voorbeeld Walking Football",
+              "is_home": false,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Vastgesteld",
@@ -2140,6 +2199,7 @@
               "time": "14:00",
               "home_team": "SV Voorbeeld Walking Football",
               "away_team": "FC Polder",
+              "is_home": true,
               "location": "Sportpark De Voorbeeldvelden",
               "pitch": "Veld 1",
               "status": "Afgelast",
@@ -13323,7 +13383,26 @@
               "$ref": "relationship_type:child"
             }
           }
-        ]
+        ],
+        "work_history": [
+          {
+            "team_id": {
+              "$ref": "team:jo13"
+            },
+            "job_title": "Teamleider",
+            "start_date": {
+              "$date": "-2 years",
+              "format": "Y-m-d"
+            },
+            "is_current": true,
+            "entity_type": "team"
+          }
+        ],
+        "huidig_vrijwilliger": true,
+        "datum_vog": {
+          "$date": "-1 year",
+          "format": "Y-m-d"
+        }
       }
     },
     {
@@ -13361,7 +13440,26 @@
               "$ref": "relationship_type:child"
             }
           }
-        ]
+        ],
+        "work_history": [
+          {
+            "team_id": {
+              "$ref": "team:senior1"
+            },
+            "job_title": "Trainer",
+            "start_date": {
+              "$date": "-2 years",
+              "format": "Y-m-d"
+            },
+            "is_current": true,
+            "entity_type": "team"
+          }
+        ],
+        "huidig_vrijwilliger": true,
+        "datum_vog": {
+          "$date": "-1 year",
+          "format": "Y-m-d"
+        }
       }
     },
     {
@@ -13399,7 +13497,10 @@
               "$ref": "relationship_type:child"
             }
           }
-        ]
+        ],
+        "work_history": [],
+        "huidig_vrijwilliger": false,
+        "datum_vog": null
       }
     },
     {
@@ -13437,7 +13538,10 @@
               "$ref": "relationship_type:child"
             }
           }
-        ]
+        ],
+        "work_history": [],
+        "huidig_vrijwilliger": false,
+        "datum_vog": null
       }
     },
     {
@@ -13475,7 +13579,10 @@
               "$ref": "relationship_type:child"
             }
           }
-        ]
+        ],
+        "work_history": [],
+        "huidig_vrijwilliger": false,
+        "datum_vog": null
       }
     },
     {
@@ -13513,7 +13620,10 @@
               "$ref": "relationship_type:child"
             }
           }
-        ]
+        ],
+        "work_history": [],
+        "huidig_vrijwilliger": false,
+        "datum_vog": null
       }
     },
     {
@@ -13551,7 +13661,10 @@
               "$ref": "relationship_type:child"
             }
           }
-        ]
+        ],
+        "work_history": [],
+        "huidig_vrijwilliger": false,
+        "datum_vog": null
       }
     },
     {
@@ -13589,7 +13702,10 @@
               "$ref": "relationship_type:child"
             }
           }
-        ]
+        ],
+        "work_history": [],
+        "huidig_vrijwilliger": false,
+        "datum_vog": null
       }
     },
     {
@@ -13627,7 +13743,10 @@
               "$ref": "relationship_type:child"
             }
           }
-        ]
+        ],
+        "work_history": [],
+        "huidig_vrijwilliger": false,
+        "datum_vog": null
       }
     },
     {
@@ -13665,7 +13784,10 @@
               "$ref": "relationship_type:child"
             }
           }
-        ]
+        ],
+        "work_history": [],
+        "huidig_vrijwilliger": false,
+        "datum_vog": null
       }
     },
     {
@@ -13703,7 +13825,10 @@
               "$ref": "relationship_type:child"
             }
           }
-        ]
+        ],
+        "work_history": [],
+        "huidig_vrijwilliger": false,
+        "datum_vog": null
       }
     },
     {
@@ -13741,7 +13866,10 @@
               "$ref": "relationship_type:child"
             }
           }
-        ]
+        ],
+        "work_history": [],
+        "huidig_vrijwilliger": false,
+        "datum_vog": null
       }
     },
     {

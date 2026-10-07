@@ -50,7 +50,7 @@ Reference names below map to real IDs in the `rondo_demo_showcase_manifest` opti
 | Feature | Deliberate examples |
 | --- | --- |
 | Members, households and self-service | Anna Bos (`person:p001`), 12 parents linked to children (including three siblings), six former members with closed roles; demo account opens Anna's own profile |
-| Teams, staff and calendars | Youth, girls, women, seniors, O23, G-football and walking football; five fictional fixtures per team including results and a cancellation |
+| Teams, staff and calendars | Youth, girls, women, seniors, O23, G-football and walking football; separate trainer (`person:parent2`) and team leader (`person:parent1`); five home/away fixtures per team including results and a cancellation |
 | Committees and volunteers | Eight committees and volunteer pools; current and former roles |
 | VOG and IVA | Current certificates, expired VOG (`person:p003`), missing VOG, approved IVA and manual exemption (`person:p004`) |
 | Volunteer shifts | Open, full, completed and cancelled shifts; past shift with an extra retrospective helper (`dienst_shift:shift2`), recurring templates and task instructions |
