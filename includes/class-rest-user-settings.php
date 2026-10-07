@@ -1055,13 +1055,11 @@ class UserSettings extends Base {
 		if ( $person_id ) {
 			$person = get_post( $person_id );
 			if ( $person && $person->post_type === 'person' && $person->post_status === 'publish' ) {
-				$first_name = \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '';
-				$last_name  = \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '';
-				$thumbnail  = get_the_post_thumbnail_url( $person_id, 'thumbnail' );
+				$thumbnail = get_the_post_thumbnail_url( $person_id, 'thumbnail' );
 
 				$response['person'] = [
 					'id'        => $person_id,
-					'name'      => trim( $first_name . ' ' . $last_name ),
+					'name'      => \Rondo\People\PersonName::get( (int) $person_id ),
 					'thumbnail' => $thumbnail ?: null,
 				];
 			} else {
@@ -1126,9 +1124,7 @@ class UserSettings extends Base {
 		update_user_meta( $user_id, 'rondo_linked_person_id', (int) $person_id );
 		update_post_meta( (int) $person_id, \Rondo\Users\UserProvisioning::META_USER_ID, $user_id );
 
-		$first_name = \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '';
-		$last_name  = \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '';
-		$thumbnail  = get_the_post_thumbnail_url( $person_id, 'thumbnail' );
+		$thumbnail = get_the_post_thumbnail_url( $person_id, 'thumbnail' );
 
 		return rest_ensure_response(
 			[
@@ -1136,7 +1132,7 @@ class UserSettings extends Base {
 				'person_id' => (int) $person_id,
 				'person'    => [
 					'id'        => (int) $person_id,
-					'name'      => trim( $first_name . ' ' . $last_name ),
+					'name'      => \Rondo\People\PersonName::get( (int) $person_id ),
 					'thumbnail' => $thumbnail ?: null,
 				],
 				'message'   => __( 'Person linked successfully.', 'rondo' ),

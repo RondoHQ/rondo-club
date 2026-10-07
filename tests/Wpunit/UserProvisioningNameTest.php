@@ -70,6 +70,7 @@ class UserProvisioningNameTest extends RondoTestCase {
 			[],
 			[
 				'first_name'   => 'Anne',
+				'infix'        => 'van',
 				'last_name'    => 'Jansen',
 				'company_name' => 'Voorbeeld BV',
 				'email_1'      => 'anne@example.com',
@@ -80,6 +81,6 @@ class UserProvisioningNameTest extends RondoTestCase {
 		$this->assertIsArray( $result );
 		$user = get_userdata( $result['user_id'] );
 		$this->assertSame( 'anne.jansen', $user->user_login );
-		$this->assertSame( 'Anne Jansen', $user->display_name );
+		$this->assertSame( 'Anne van Jansen', $user->display_name );
 	}
 }

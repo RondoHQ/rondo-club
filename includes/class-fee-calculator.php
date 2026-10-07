@@ -350,9 +350,7 @@ class FeeCalculator {
 		$siblings = [];
 		foreach ( $sorted as $member ) {
 			if ( $member['person_id'] !== $person_id ) {
-				$first_name = \Rondo\Fields\Fields::get_for_post( $member['person_id'], 'first_name' ) ?: '';
-				$last_name  = \Rondo\Fields\Fields::get_for_post( $member['person_id'], 'last_name' ) ?: '';
-				$name       = trim( $first_name . ' ' . $last_name );
+				$name = \Rondo\People\PersonName::get( $member['person_id'] );
 				if ( empty( $name ) ) {
 					$name = get_the_title( $member['person_id'] );
 				}

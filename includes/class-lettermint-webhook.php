@@ -611,9 +611,7 @@ class LettermintWebhook {
 			return $fallback;
 		}
 
-		$first_name = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) );
-		$last_name  = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) );
-		$full_name  = trim( $first_name . ' ' . $last_name );
+		$full_name = \Rondo\People\PersonName::get( $person_id );
 
 		return $full_name !== '' ? $full_name : $fallback;
 	}

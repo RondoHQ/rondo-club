@@ -54,7 +54,7 @@ class AutoTitle {
 	}
 
 	/**
-	 * Auto-generate Person post title from first_name + last_name
+	 * Auto-generate Person post title from first_name + infix + last_name
 	 */
 	public function auto_generate_person_title( $post_id ) {
 		if ( ! $this->is_valid_person_save( $post_id ) ) {
@@ -114,16 +114,7 @@ class AutoTitle {
 	 * @param int $post_id Person post ID.
 	 */
 	private function update_person_title( int $post_id ): void {
-		$full_name = implode(
-			' ',
-			array_filter(
-				[
-					\Rondo\Fields\Fields::get_for_post( $post_id, 'first_name' ),
-					\Rondo\Fields\Fields::get_for_post( $post_id, 'infix' ),
-					\Rondo\Fields\Fields::get_for_post( $post_id, 'last_name' ),
-				]
-			)
-		);
+		$full_name = \Rondo\People\PersonName::get( $post_id );
 
 		if ( empty( $full_name ) ) {
 			$full_name = trim( (string) \Rondo\Fields\Fields::get_for_post( $post_id, 'company_name' ) );
