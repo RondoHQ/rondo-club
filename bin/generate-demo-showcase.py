@@ -407,7 +407,7 @@ for record in records:
 fixture = {'meta': {'version': '2.0', 'source': 'fictional_showcase', 'name': 'SV Voorbeeld: alle modules',
                    'record_counts': dict(sorted(Counter(r['post_type'] for r in records).items()))},
            'terms': terms, 'records': records, 'comments': comments, 'settings': settings, 'coverage': coverage,
-           'demo_account': {'roles': ['rondo_bestuur', 'rondo_kaderlijst'], 'capabilities': ['manage_training', 'narrowcasting', 'wedstrijdregistratie', 'wedstrijdzaken', 'feedback', 'commissies'], 'user_meta': {'rondo_linked_person_id': ref('person:p001'), 'rondo_approved': '1',
+           'demo_account': {'roles': ['rondo_bestuur', 'rondo_kaderlijst'], 'capabilities': ['manage_training', 'narrowcasting', 'wedstrijdregistratie', 'wedstrijdzaken', 'feedback', 'commissies', 'vrijwilligers'], 'user_meta': {'rondo_linked_person_id': ref('person:p001'), 'rondo_approved': '1',
              '_rondo_match_teams': [ref('team:senior1')], 'rondo_newsletter_profile': {'name': 'Anna Bos', 'role': 'Secretaris',
              'from_name': 'SV Voorbeeld', 'from_email': 'club@club.example', 'reply_to': 'club@club.example', 'active': True}}}}
 (ROOT / 'fixtures/demo-showcase.json').write_text(json.dumps(fixture, ensure_ascii=False, indent=2) + '\n')
