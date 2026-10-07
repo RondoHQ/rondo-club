@@ -165,12 +165,86 @@ final class DemoShowcase {
 		return true;
 	}
 
+	/** Resolve and validate the current manifest before any refresh writes. */
+	public function validate_refresh() {
+		if ( ! get_option( 'rondo_is_demo_site', false ) ) {
+			return new \WP_Error( 'demo_only', 'Showcase refresh requires a demo site.' );
+		}
+		$manifest = get_option( 'rondo_demo_showcase_manifest' );
+		if ( ! is_array( $manifest ) || empty( $manifest['refs'] ) || ! is_array( $manifest['refs'] ) ) {
+			return new \WP_Error( 'demo_manifest_invalid', 'Showcase refresh requires an existing manifest. Use --clean for the first import.' );
+		}
+		$ids = [];
+		foreach ( $manifest['refs'] as $ref => $id ) {
+			if ( ! is_string( $ref ) || ! preg_match( '/^([a-z_]+):[a-z0-9_-]+$/D', $ref, $matches ) || ! is_int( $id ) || $id <= 0 ) {
+				return new \WP_Error( 'demo_manifest_invalid', 'Invalid showcase manifest reference.' );
+			}
+			$type = $matches[1];
+			// Terms may predate the showcase and their IDs can overlap post IDs.
+			if ( in_array( $type, [ 'relationship_type', 'seizoen', 'clothing_category' ], true ) ) {
+				continue;
+			}
+			$post = get_post( $id );
+			if ( $type === 'attachment' && $post && ! in_array( get_post_meta( $id, '_rondo_showcase_logo', true ), self::LOGOS, true ) ) {
+				return new \WP_Error( 'demo_manifest_invalid', 'Showcase manifest attachment is not a bundled logo: ' . $ref );
+			}
+			if ( ! in_array( $type, $this->cleanup_post_types( [] ), true ) || ( $post && $post->post_type !== $type ) ) {
+				return new \WP_Error( 'demo_manifest_invalid', 'Showcase manifest record type does not match: ' . $ref );
+			}
+			if ( $post ) {
+				$ids[] = $id;
+			}
+		}
+		$ids = array_values( array_unique( $ids ) );
+		// Native relationship writes also update the inverse side. Keep both sides owned.
+		foreach ( $ids as $id ) {
+			if ( get_post_type( $id ) !== 'person' ) {
+				continue;
+			}
+			foreach ( Fields::get_for_post( $id, 'relationships' ) ?: [] as $row ) {
+				$related_id = (int) ( $row['related_person'] ?? 0 );
+				if ( $related_id && get_post( $related_id ) && ! in_array( $related_id, $ids, true ) ) {
+					return new \WP_Error( 'demo_refresh_unowned_relationship', 'Showcase person ' . $id . ' has a relationship outside the manifest. Review it before refreshing.' );
+				}
+			}
+		}
+		return $ids;
+	}
+
+	/** Clear only owned fixture links, then let the normal deletion guards run. */
+	public function refresh() {
+		$ids = $this->validate_refresh();
+		if ( is_wp_error( $ids ) ) {
+			return $ids;
+		}
+		foreach ( $ids as $id ) {
+			$type  = get_post_type( $id );
+			$field = $type === 'person' ? 'relationships' : ( $type === 'dienst_shift' ? 'assigned_persons' : null );
+			if ( $field === null ) {
+				continue;
+			}
+			$result = Fields::update_many_for_post( $id, [ $field => [] ] );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+		}
+		return $this->clean( $ids );
+	}
+
+	/** Attachments are eligible only when explicitly scoped to a refresh manifest. */
+	private function cleanup_post_types( ?array $record_ids ): array {
+		return $record_ids === null ? self::POST_TYPES : array_merge( self::POST_TYPES, [ 'attachment' ] );
+	}
+
 	/** Refuse a partial reset while native relationship or shift guards protect records. */
-	public function validate_cleanup() {
+	public function validate_cleanup( ?array $record_ids = null ) {
 		if ( ! get_option( 'rondo_is_demo_site', false ) ) {
 			return new \WP_Error( 'demo_only', 'Showcase cleanup requires a demo site.' );
 		}
-		foreach ( self::POST_TYPES as $type ) {
+		foreach ( $this->cleanup_post_types( $record_ids ) as $type ) {
+			if ( $record_ids === [] ) {
+				break;
+			}
 			$page = 1;
 			do {
 				$posts = get_posts(
@@ -180,6 +254,7 @@ final class DemoShowcase {
 						'posts_per_page'   => 100,
 						'paged'            => $page,
 						'suppress_filters' => true,
+						'post__in'         => $record_ids ?? [],
 					]
 					);
 				foreach ( $posts as $post ) {
@@ -194,12 +269,15 @@ final class DemoShowcase {
 	}
 
 	/** Reset only showcase-owned modules; upgrade flags and user accounts survive. */
-	public function clean() {
-		$valid = $this->validate_cleanup();
+	public function clean( ?array $record_ids = null ) {
+		$valid = $this->validate_cleanup( $record_ids );
 		if ( is_wp_error( $valid ) ) {
 			return $valid;
 		}
-		foreach ( self::POST_TYPES as $type ) {
+		foreach ( $this->cleanup_post_types( $record_ids ) as $type ) {
+			if ( $record_ids === [] ) {
+				break;
+			}
 			do {
 				$ids = get_posts(
 					[
@@ -208,6 +286,7 @@ final class DemoShowcase {
 						'posts_per_page'   => 100,
 						'fields'           => 'ids',
 						'suppress_filters' => true,
+						'post__in'         => $record_ids ?? [],
 					]
 					);
 				foreach ( $ids as $id ) {
