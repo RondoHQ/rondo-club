@@ -41,6 +41,33 @@
       "team": 12
     }
   },
+  "media": [
+    {
+      "_ref": "attachment:sv-voorbeeld",
+      "file": "sv-voorbeeld.svg",
+      "title": "SV Voorbeeld"
+    },
+    {
+      "_ref": "attachment:polder-fietsen",
+      "file": "polder-fietsen.svg",
+      "title": "Polder Fietsen"
+    },
+    {
+      "_ref": "attachment:horizon-bouw",
+      "file": "horizon-bouw.svg",
+      "title": "Horizon Bouw"
+    },
+    {
+      "_ref": "attachment:voorbeeld-bakkerij",
+      "file": "voorbeeld-bakkerij.svg",
+      "title": "Voorbeeld Bakkerij"
+    },
+    {
+      "_ref": "attachment:groenveld-tuinen",
+      "file": "groenveld-tuinen.svg",
+      "title": "Groenveld Tuinen"
+    }
+  ],
   "terms": [
     {
       "_ref": "relationship_type:parent",
@@ -2235,7 +2262,7 @@
       "status": "publish",
       "fields": {
         "taakomschrijving": "Samen zorgen voor een gastvrije en goed georganiseerde vereniging.",
-        "lange_omschrijving": "Fictieve commissie voor de Rondo-demo.",
+        "lange_omschrijving": "Organiseert activiteiten en ondersteunt leden, trainers en vrijwilligers.",
         "max_leden": 12,
         "max_wachtlijst": 4,
         "uren_aantal": 4,
@@ -2250,7 +2277,7 @@
       "status": "publish",
       "fields": {
         "taakomschrijving": "Samen zorgen voor een gastvrije en goed georganiseerde vereniging.",
-        "lange_omschrijving": "Fictieve commissie voor de Rondo-demo.",
+        "lange_omschrijving": "Organiseert activiteiten en ondersteunt leden, trainers en vrijwilligers.",
         "max_leden": 12,
         "max_wachtlijst": 4,
         "uren_aantal": 4,
@@ -2265,7 +2292,7 @@
       "status": "publish",
       "fields": {
         "taakomschrijving": "Samen zorgen voor een gastvrije en goed georganiseerde vereniging.",
-        "lange_omschrijving": "Fictieve commissie voor de Rondo-demo.",
+        "lange_omschrijving": "Organiseert activiteiten en ondersteunt leden, trainers en vrijwilligers.",
         "max_leden": 12,
         "max_wachtlijst": 4,
         "uren_aantal": 4,
@@ -2280,7 +2307,7 @@
       "status": "publish",
       "fields": {
         "taakomschrijving": "Samen zorgen voor een gastvrije en goed georganiseerde vereniging.",
-        "lange_omschrijving": "Fictieve commissie voor de Rondo-demo.",
+        "lange_omschrijving": "Organiseert activiteiten en ondersteunt leden, trainers en vrijwilligers.",
         "max_leden": 12,
         "max_wachtlijst": 4,
         "uren_aantal": 4,
@@ -2295,7 +2322,7 @@
       "status": "publish",
       "fields": {
         "taakomschrijving": "Samen zorgen voor een gastvrije en goed georganiseerde vereniging.",
-        "lange_omschrijving": "Fictieve commissie voor de Rondo-demo.",
+        "lange_omschrijving": "Organiseert activiteiten en ondersteunt leden, trainers en vrijwilligers.",
         "max_leden": 12,
         "max_wachtlijst": 4,
         "uren_aantal": 4,
@@ -2310,7 +2337,7 @@
       "status": "publish",
       "fields": {
         "taakomschrijving": "Samen zorgen voor een gastvrije en goed georganiseerde vereniging.",
-        "lange_omschrijving": "Fictieve commissie voor de Rondo-demo.",
+        "lange_omschrijving": "Organiseert activiteiten en ondersteunt leden, trainers en vrijwilligers.",
         "max_leden": 12,
         "max_wachtlijst": 4,
         "uren_aantal": 4,
@@ -2325,7 +2352,7 @@
       "status": "publish",
       "fields": {
         "taakomschrijving": "Samen zorgen voor een gastvrije en goed georganiseerde vereniging.",
-        "lange_omschrijving": "Fictieve commissie voor de Rondo-demo.",
+        "lange_omschrijving": "Organiseert activiteiten en ondersteunt leden, trainers en vrijwilligers.",
         "max_leden": 12,
         "max_wachtlijst": 4,
         "uren_aantal": 4,
@@ -2340,7 +2367,7 @@
       "status": "publish",
       "fields": {
         "taakomschrijving": "Samen zorgen voor een gastvrije en goed georganiseerde vereniging.",
-        "lange_omschrijving": "Fictieve commissie voor de Rondo-demo.",
+        "lange_omschrijving": "Organiseert activiteiten en ondersteunt leden, trainers en vrijwilligers.",
         "max_leden": 12,
         "max_wachtlijst": 4,
         "uren_aantal": 4,
@@ -2656,7 +2683,7 @@
           }
         ],
         "vrijgesteld_handmatig": true,
-        "vrijstelling_reden": "Mantelzorg (fictief)",
+        "vrijstelling_reden": "Mantelzorg",
         "vrijstelling_seizoen": "{season}"
       }
     },
@@ -14188,7 +14215,7 @@
       "title": "Kantinedienst",
       "status": "publish",
       "fields": {
-        "description": "Fictieve vrijwilligerstaak; kies een dienst en bekijk de instructies.",
+        "description": "Help mee op het sportpark; bekijk de instructies voor je dienst.",
         "color": "#2563eb",
         "default_capacity": 2,
         "vog_required": true,
@@ -14231,7 +14258,7 @@
           }
         ]
       },
-      "content": "<h2>Voor je begint</h2><p>Meld je bij de dienstcoördinator. Dit is een fictieve taakuitleg.</p>"
+      "content": "<h2>Voor je begint</h2><p>Meld je bij de dienstcoördinator en neem samen de werkzaamheden en sleuteloverdracht door.</p>"
     },
     {
       "_ref": "dienst_type:cleaning",
@@ -14239,7 +14266,7 @@
       "title": "Schoonmaak",
       "status": "publish",
       "fields": {
-        "description": "Fictieve vrijwilligerstaak; kies een dienst en bekijk de instructies.",
+        "description": "Help mee op het sportpark; bekijk de instructies voor je dienst.",
         "color": "#16a34a",
         "default_capacity": 4,
         "vog_required": true,
@@ -14282,7 +14309,7 @@
           }
         ]
       },
-      "content": "<h2>Voor je begint</h2><p>Meld je bij de dienstcoördinator. Dit is een fictieve taakuitleg.</p>"
+      "content": "<h2>Voor je begint</h2><p>Meld je bij de dienstcoördinator en neem samen de werkzaamheden en sleuteloverdracht door.</p>"
     },
     {
       "_ref": "dienst_type:grounds",
@@ -14290,7 +14317,7 @@
       "title": "Terreinonderhoud",
       "status": "publish",
       "fields": {
-        "description": "Fictieve vrijwilligerstaak; kies een dienst en bekijk de instructies.",
+        "description": "Help mee op het sportpark; bekijk de instructies voor je dienst.",
         "color": "#ca8a04",
         "default_capacity": 4,
         "vog_required": true,
@@ -14333,7 +14360,7 @@
           }
         ]
       },
-      "content": "<h2>Voor je begint</h2><p>Meld je bij de dienstcoördinator. Dit is een fictieve taakuitleg.</p>"
+      "content": "<h2>Voor je begint</h2><p>Meld je bij de dienstcoördinator en neem samen de werkzaamheden en sleuteloverdracht door.</p>"
     },
     {
       "_ref": "dienst_shift:shift0",
@@ -14365,7 +14392,7 @@
             "$ref": "person:p002"
           }
         ],
-        "notes": "Fictieve demo-dienst"
+        "notes": "Meld je bij de bar voor de overdracht. Controleer de voorraad en zet de koffie klaar."
       }
     },
     {
@@ -14398,7 +14425,7 @@
             "$ref": "person:p002"
           }
         ],
-        "notes": "Fictieve demo-dienst"
+        "notes": "Meld je bij de bar voor de overdracht. Controleer de voorraad en zet de koffie klaar."
       }
     },
     {
@@ -14479,7 +14506,7 @@
             "$ref": "person:p003"
           }
         ],
-        "notes": "Fictieve demo-dienst"
+        "notes": "Meld je bij de bar voor de overdracht. Controleer de voorraad en zet de koffie klaar."
       }
     },
     {
@@ -14505,7 +14532,7 @@
         "capacity": 2,
         "status": "open",
         "assigned_persons": [],
-        "notes": "Fictieve demo-dienst"
+        "notes": "Meld je bij de bar voor de overdracht. Controleer de voorraad en zet de koffie klaar."
       }
     },
     {
@@ -14538,7 +14565,7 @@
             "$ref": "person:p002"
           }
         ],
-        "notes": "Fictieve demo-dienst"
+        "notes": "Meld je bij de bar voor de overdracht. Controleer de voorraad en zet de koffie klaar."
       }
     },
     {
@@ -14564,7 +14591,7 @@
         "capacity": 2,
         "status": "open",
         "assigned_persons": [],
-        "notes": "Fictieve demo-dienst"
+        "notes": "Meld je bij de bar voor de overdracht. Controleer de voorraad en zet de koffie klaar."
       }
     },
     {
@@ -14594,7 +14621,7 @@
             "$ref": "person:p003"
           }
         ],
-        "notes": "Fictieve demo-dienst"
+        "notes": "Meld je bij de bar voor de overdracht. Controleer de voorraad en zet de koffie klaar."
       }
     },
     {
@@ -14620,7 +14647,7 @@
         "capacity": 2,
         "status": "geannuleerd",
         "assigned_persons": [],
-        "notes": "Fictieve demo-dienst"
+        "notes": "Meld je bij de bar voor de overdracht. Controleer de voorraad en zet de koffie klaar."
       }
     },
     {
@@ -14650,7 +14677,7 @@
             "$ref": "person:p003"
           }
         ],
-        "notes": "Fictieve demo-dienst"
+        "notes": "Meld je bij de bar voor de overdracht. Controleer de voorraad en zet de koffie klaar."
       }
     },
     {
@@ -14676,7 +14703,7 @@
         "capacity": 2,
         "status": "open",
         "assigned_persons": [],
-        "notes": "Fictieve demo-dienst"
+        "notes": "Meld je bij de bar voor de overdracht. Controleer de voorraad en zet de koffie klaar."
       }
     },
     {
@@ -14706,7 +14733,7 @@
             "$ref": "person:p003"
           }
         ],
-        "notes": "Fictieve demo-dienst"
+        "notes": "Meld je bij de bar voor de overdracht. Controleer de voorraad en zet de koffie klaar."
       }
     },
     {
@@ -14733,6 +14760,11 @@
           }
         ],
         "club_tv_priority": 1
+      },
+      "post_meta": {
+        "_thumbnail_id": {
+          "$ref": "attachment:polder-fietsen"
+        }
       }
     },
     {
@@ -14759,6 +14791,11 @@
           }
         ],
         "club_tv_priority": 2
+      },
+      "post_meta": {
+        "_thumbnail_id": {
+          "$ref": "attachment:horizon-bouw"
+        }
       }
     },
     {
@@ -14785,6 +14822,11 @@
           }
         ],
         "club_tv_priority": 3
+      },
+      "post_meta": {
+        "_thumbnail_id": {
+          "$ref": "attachment:voorbeeld-bakkerij"
+        }
       }
     },
     {
@@ -14811,6 +14853,11 @@
           }
         ],
         "club_tv_priority": 3
+      },
+      "post_meta": {
+        "_thumbnail_id": {
+          "$ref": "attachment:groenveld-tuinen"
+        }
       }
     },
     {
@@ -14837,7 +14884,7 @@
         "away_team": null,
         "match_description": "SV Voorbeeld 1 - FC Polder",
         "charge_codes": "DEMO",
-        "charge_description": "Fictieve gele kaart",
+        "charge_description": "Gele kaart: onsportief gedrag",
         "sanction_description": "Waarschuwing",
         "administrative_fee": 12.5,
         "is_charged": "rondo"
@@ -14874,7 +14921,7 @@
         "away_team": null,
         "match_description": "SV Voorbeeld 1 - FC Polder",
         "charge_codes": "DEMO",
-        "charge_description": "Fictieve gele kaart",
+        "charge_description": "Gele kaart: onsportief gedrag",
         "sanction_description": "Waarschuwing",
         "administrative_fee": 12.5,
         "is_charged": "rondo"
@@ -14911,7 +14958,7 @@
         "away_team": null,
         "match_description": "SV Voorbeeld 1 - FC Polder",
         "charge_codes": "DEMO",
-        "charge_description": "Fictieve gele kaart",
+        "charge_description": "Gele kaart: onsportief gedrag",
         "sanction_description": "Waarschuwing",
         "administrative_fee": 12.5,
         "is_charged": "rondo"
@@ -14948,7 +14995,7 @@
         "away_team": null,
         "match_description": "SV Voorbeeld 1 - FC Polder",
         "charge_codes": "DEMO",
-        "charge_description": "Fictieve gele kaart",
+        "charge_description": "Gele kaart: onsportief gedrag",
         "sanction_description": "Waarschuwing",
         "administrative_fee": 12.5,
         "is_charged": "rondo"
@@ -14985,7 +15032,7 @@
         "away_team": null,
         "match_description": "SV Voorbeeld 1 - FC Polder",
         "charge_codes": "DEMO",
-        "charge_description": "Fictieve gele kaart",
+        "charge_description": "Gele kaart: onsportief gedrag",
         "sanction_description": "Waarschuwing",
         "administrative_fee": 12.5,
         "is_charged": ""
@@ -15022,7 +15069,7 @@
         "away_team": null,
         "match_description": "SV Voorbeeld 1 - FC Polder",
         "charge_codes": "DEMO",
-        "charge_description": "Fictieve gele kaart",
+        "charge_description": "Gele kaart: onsportief gedrag",
         "sanction_description": "Waarschuwing",
         "administrative_fee": 12.5,
         "is_charged": ""
@@ -15059,7 +15106,7 @@
         "away_team": null,
         "match_description": "SV Voorbeeld 1 - FC Polder",
         "charge_codes": "DEMO",
-        "charge_description": "Fictieve gele kaart",
+        "charge_description": "Gele kaart: onsportief gedrag",
         "sanction_description": "Waarschuwing",
         "administrative_fee": 12.5,
         "is_charged": ""
@@ -15096,7 +15143,7 @@
         "away_team": null,
         "match_description": "SV Voorbeeld 1 - FC Polder",
         "charge_codes": "DEMO",
-        "charge_description": "Fictieve gele kaart",
+        "charge_description": "Gele kaart: onsportief gedrag",
         "sanction_description": "Waarschuwing",
         "administrative_fee": 12.5,
         "is_charged": ""
@@ -15128,7 +15175,7 @@
         },
         "line_items": [
           {
-            "description": "Fictieve tuchtbijdrage",
+            "description": "Tuchtbijdrage gele kaart",
             "amount": 12.5
           }
         ]
@@ -15156,7 +15203,7 @@
         },
         "line_items": [
           {
-            "description": "Fictieve tuchtbijdrage",
+            "description": "Tuchtbijdrage gele kaart",
             "amount": 12.5
           }
         ],
@@ -15188,7 +15235,7 @@
         },
         "line_items": [
           {
-            "description": "Fictieve tuchtbijdrage",
+            "description": "Tuchtbijdrage gele kaart",
             "amount": 12.5
           }
         ],
@@ -15220,7 +15267,7 @@
         },
         "line_items": [
           {
-            "description": "Fictieve tuchtbijdrage",
+            "description": "Tuchtbijdrage gele kaart",
             "amount": 12.5
           }
         ],
@@ -15729,7 +15776,7 @@
           "$date": "-2 days",
           "format": "Y-m-d"
         },
-        "notes": "Fictieve taak voor de demo."
+        "notes": "Bespreek de beschikbaarheid voor de trainingen op dinsdag en donderdag."
       }
     },
     {
@@ -15747,7 +15794,7 @@
           "$date": "+2 days",
           "format": "Y-m-d"
         },
-        "notes": "Fictieve taak voor de demo."
+        "notes": "Vraag of de aanvraag is ontvangen en controleer de verwachte afgiftedatum."
       }
     },
     {
@@ -15765,7 +15812,7 @@
           "$date": "+3 days",
           "format": "Y-m-d"
         },
-        "notes": "Fictieve taak voor de demo."
+        "notes": "Controleer het ingeleverde tenue en werk de borgadministratie bij."
       }
     },
     {
@@ -15783,7 +15830,7 @@
           "$date": "+4 days",
           "format": "Y-m-d"
         },
-        "notes": "Fictieve taak voor de demo."
+        "notes": "Stem de ontvangst, catering en uitnodigingen af met de sponsorcommissie."
       }
     },
     {
@@ -15801,7 +15848,7 @@
           "$date": "+5 days",
           "format": "Y-m-d"
         },
-        "notes": "Fictieve taak voor de demo."
+        "notes": "Bespreek de laatste wijzigingen met de trainers en informeer de ouders."
       }
     },
     {
@@ -15819,7 +15866,7 @@
           "$date": "+6 days",
           "format": "Y-m-d"
         },
-        "notes": "Fictieve taak voor de demo."
+        "notes": "Bel het lid over de openstaande termijn en maak een betaalafspraak."
       }
     },
     {
@@ -15831,10 +15878,10 @@
         "feedback_type": "feature_request",
         "status": "new",
         "priority": "medium",
-        "use_case": "Fictieve demo-feedback",
+        "use_case": "Samenwerking tussen trainers en ouders verbeteren.",
         "url_context": "/teams"
       },
-      "content": "Voorbeeld van feedback die binnen de club wordt opgevolgd."
+      "content": "Graag afstemmen met de jeugdcommissie en terugkoppelen aan de betrokken ouders."
     },
     {
       "_ref": "rondo_feedback:f1",
@@ -15845,10 +15892,10 @@
         "feedback_type": "bug",
         "status": "in_progress",
         "priority": "medium",
-        "use_case": "Fictieve demo-feedback",
+        "use_case": "Samenwerking tussen trainers en ouders verbeteren.",
         "url_context": "/teams"
       },
-      "content": "Voorbeeld van feedback die binnen de club wordt opgevolgd."
+      "content": "Graag afstemmen met de jeugdcommissie en terugkoppelen aan de betrokken ouders."
     },
     {
       "_ref": "rondo_feedback:f2",
@@ -15859,10 +15906,10 @@
         "feedback_type": "bug",
         "status": "resolved",
         "priority": "medium",
-        "use_case": "Fictieve demo-feedback",
+        "use_case": "Samenwerking tussen trainers en ouders verbeteren.",
         "url_context": "/teams"
       },
-      "content": "Voorbeeld van feedback die binnen de club wordt opgevolgd."
+      "content": "Graag afstemmen met de jeugdcommissie en terugkoppelen aan de betrokken ouders."
     },
     {
       "_ref": "rondo_training:active",
@@ -16199,7 +16246,7 @@
       "status": "publish",
       "fields": {
         "location": "Clubgebouw",
-        "description": "Fictieve ruimte voor teamoverleg en clubactiviteiten.",
+        "description": "Ruimte voor teamoverleg en clubactiviteiten, met wifi en een beamer.",
         "capacity": 12,
         "booking_enabled": true,
         "booking_interval_minutes": 30,
@@ -16264,7 +16311,7 @@
       "status": "publish",
       "fields": {
         "location": "Clubgebouw",
-        "description": "Fictieve ruimte voor teamoverleg en clubactiviteiten.",
+        "description": "Ruimte voor teamoverleg en clubactiviteiten, met wifi en een beamer.",
         "capacity": 20,
         "booking_enabled": true,
         "booking_interval_minutes": 30,
@@ -16329,7 +16376,7 @@
       "status": "publish",
       "fields": {
         "location": "Clubgebouw",
-        "description": "Fictieve ruimte voor teamoverleg en clubactiviteiten.",
+        "description": "Ruimte voor teamoverleg en clubactiviteiten, met wifi en een beamer.",
         "capacity": 80,
         "booking_enabled": true,
         "booking_interval_minutes": 30,
@@ -16413,7 +16460,7 @@
           "$date": "+1 days 20:00",
           "format": "c"
         },
-        "purpose": "Fictieve reservering",
+        "purpose": "Overleg over de teamindeling en het programma voor de komende wedstrijden.",
         "status": "confirmed",
         "booking_type": "member_reservation",
         "booking_context_type": "team",
@@ -16449,7 +16496,7 @@
           "$date": "+2 days 20:00",
           "format": "c"
         },
-        "purpose": "Fictieve reservering",
+        "purpose": "Overleg over de teamindeling en het programma voor de komende wedstrijden.",
         "status": "confirmed",
         "booking_type": "member_reservation",
         "booking_context_type": "team",
@@ -16485,7 +16532,7 @@
           "$date": "+3 days 20:00",
           "format": "c"
         },
-        "purpose": "Fictieve reservering",
+        "purpose": "Overleg over de teamindeling en het programma voor de komende wedstrijden.",
         "status": "confirmed",
         "booking_type": "member_reservation",
         "booking_context_type": "team",
@@ -16521,7 +16568,7 @@
           "$date": "+4 days 20:00",
           "format": "c"
         },
-        "purpose": "Fictieve reservering",
+        "purpose": "Overleg over de teamindeling en het programma voor de komende wedstrijden.",
         "status": "confirmed",
         "booking_type": "member_reservation",
         "booking_context_type": "team",
@@ -16557,7 +16604,7 @@
           "$date": "+5 days 20:00",
           "format": "c"
         },
-        "purpose": "Fictieve reservering",
+        "purpose": "Overleg over de teamindeling en het programma voor de komende wedstrijden.",
         "status": "confirmed",
         "booking_type": "member_reservation",
         "booking_context_type": "team",
@@ -16593,7 +16640,7 @@
           "$date": "+6 days 20:00",
           "format": "c"
         },
-        "purpose": "Fictieve reservering",
+        "purpose": "Overleg over de teamindeling en het programma voor de komende wedstrijden.",
         "status": "cancelled",
         "booking_type": "member_reservation",
         "booking_context_type": "team",
@@ -16609,7 +16656,7 @@
       "title": "Voorjaarstoernooi",
       "status": "draft",
       "fields": {
-        "description": "Fictief toernooi voor jeugdteams.",
+        "description": "Een sportieve dag voor jeugdteams, met poulewedstrijden en een gezamenlijke prijsuitreiking.",
         "organizer": "SV Voorbeeld",
         "location": "Sportpark De Voorbeeldvelden",
         "lifecycle_status": "draft",
@@ -16667,7 +16714,7 @@
       "title": "Horizon Jeugdcup",
       "status": "publish",
       "fields": {
-        "description": "Fictief toernooi voor jeugdteams.",
+        "description": "Een sportieve dag voor jeugdteams, met poulewedstrijden en een gezamenlijke prijsuitreiking.",
         "organizer": "SV Voorbeeld",
         "location": "Sportpark De Voorbeeldvelden",
         "lifecycle_status": "open",
@@ -16725,7 +16772,7 @@
       "title": "Polder Zomercup",
       "status": "publish",
       "fields": {
-        "description": "Fictief toernooi voor jeugdteams.",
+        "description": "Een sportieve dag voor jeugdteams, met poulewedstrijden en een gezamenlijke prijsuitreiking.",
         "organizer": "SV Voorbeeld",
         "location": "Sportpark De Voorbeeldvelden",
         "lifecycle_status": "closed",
@@ -16996,9 +17043,9 @@
         "series_id": null,
         "newsletter_subject": "Nieuws van SV Voorbeeld",
         "newsletter_heading": "Samen maken we de club",
-        "newsletter_preheader": "Fictief clubnieuws voor de demo",
+        "newsletter_preheader": "Open dag, teamnieuws en activiteiten op het sportpark",
         "newsletter_body": "<p>De open dag biedt trainingen, spelletjes en een rondleiding voor nieuwe leden.</p>",
-        "description": "Fictief communicatie-item."
+        "description": "Stem de planning en publicatie af met de betrokken commissie."
       }
     },
     {
@@ -17027,9 +17074,9 @@
         "series_id": null,
         "newsletter_subject": "Nieuws van SV Voorbeeld",
         "newsletter_heading": "Samen maken we de club",
-        "newsletter_preheader": "Fictief clubnieuws voor de demo",
+        "newsletter_preheader": "Open dag, teamnieuws en activiteiten op het sportpark",
         "newsletter_body": "<p>De open dag biedt trainingen, spelletjes en een rondleiding voor nieuwe leden.</p>",
-        "description": "Fictief communicatie-item."
+        "description": "Stem de planning en publicatie af met de betrokken commissie."
       }
     },
     {
@@ -17058,9 +17105,9 @@
         "series_id": null,
         "newsletter_subject": "Nieuws van SV Voorbeeld",
         "newsletter_heading": "Samen maken we de club",
-        "newsletter_preheader": "Fictief clubnieuws voor de demo",
+        "newsletter_preheader": "Open dag, teamnieuws en activiteiten op het sportpark",
         "newsletter_body": "<p>De open dag biedt trainingen, spelletjes en een rondleiding voor nieuwe leden.</p>",
-        "description": "Fictief communicatie-item."
+        "description": "Stem de planning en publicatie af met de betrokken commissie."
       }
     },
     {
@@ -17094,9 +17141,9 @@
         },
         "newsletter_subject": "Nieuws van SV Voorbeeld",
         "newsletter_heading": "Samen maken we de club",
-        "newsletter_preheader": "Fictief clubnieuws voor de demo",
+        "newsletter_preheader": "Open dag, teamnieuws en activiteiten op het sportpark",
         "newsletter_body": "<p>De open dag biedt trainingen, spelletjes en een rondleiding voor nieuwe leden.</p>",
-        "description": "Fictief communicatie-item."
+        "description": "Stem de planning en publicatie af met de betrokken commissie."
       }
     },
     {
@@ -17125,9 +17172,9 @@
         "series_id": null,
         "newsletter_subject": "Nieuws van SV Voorbeeld",
         "newsletter_heading": "Samen maken we de club",
-        "newsletter_preheader": "Fictief clubnieuws voor de demo",
+        "newsletter_preheader": "Open dag, teamnieuws en activiteiten op het sportpark",
         "newsletter_body": "<p>De open dag biedt trainingen, spelletjes en een rondleiding voor nieuwe leden.</p>",
-        "description": "Fictief communicatie-item."
+        "description": "Stem de planning en publicatie af met de betrokken commissie."
       }
     },
     {
@@ -17137,7 +17184,7 @@
       "status": "publish",
       "fields": {
         "content_type": "announcement",
-        "body": "Fictieve clubinformatie voor bezoekers en leden.",
+        "body": "Welkom op Sportpark De Voorbeeldvelden! Geniet van de wedstrijden. De kantine is open voor koffie, verse broodjes en een gezellig praatje.",
         "enabled": true,
         "duration_seconds": 15,
         "priority": 10,
@@ -17152,7 +17199,7 @@
       "status": "publish",
       "fields": {
         "content_type": "sponsor",
-        "body": "Fictieve clubinformatie voor bezoekers en leden.",
+        "body": "Met Polder Fietsen kom je goed op weg. Voor een nieuwe fiets, onderhoud en deskundig advies in Voorbeelddorp. Trots partner van SV Voorbeeld.",
         "enabled": true,
         "duration_seconds": 15,
         "priority": 10,
@@ -17169,7 +17216,7 @@
       "status": "publish",
       "fields": {
         "content_type": "matches",
-        "body": "Fictieve clubinformatie voor bezoekers en leden.",
+        "body": "09:00  SV Voorbeeld JO9-1 - VV Horizon JO9-1 | Veld 2\n10:30  SV Voorbeeld JO13-1 - FC Polder JO13-1 | Veld 1\n14:00  SV Voorbeeld 1 - FC Polder 1 | Veld 1",
         "enabled": true,
         "duration_seconds": 15,
         "priority": 10,
@@ -17184,7 +17231,7 @@
       "status": "publish",
       "fields": {
         "content_type": "results",
-        "body": "Fictieve clubinformatie voor bezoekers en leden.",
+        "body": "SV Voorbeeld 1 - FC Polder 1: 3 - 1\nVV Horizon 2 - SV Voorbeeld 2: 2 - 2\nSV Voorbeeld VR1 - VV Bosrand VR1: 4 - 0\nGoed gespeeld, teams!",
         "enabled": true,
         "duration_seconds": 15,
         "priority": 10,
@@ -17199,7 +17246,7 @@
       "status": "publish",
       "fields": {
         "content_type": "fallback",
-        "body": "Fictieve clubinformatie voor bezoekers en leden.",
+        "body": "Samen maken we SV Voorbeeld. Dank aan onze vrijwilligers en sponsors! Help je ook mee? Meld je bij de bar of vraag je teamleider naar de mogelijkheden.",
         "enabled": true,
         "duration_seconds": 15,
         "priority": 10,
@@ -17285,7 +17332,7 @@
       "post_meta": {
         "pairing_status": "approved",
         "device_id": "showcase-display-0",
-        "last_error": "Fictief scherm; geen fysieke player gekoppeld."
+        "last_error": ""
       }
     },
     {
@@ -17306,7 +17353,7 @@
       "post_meta": {
         "pairing_status": "approved",
         "device_id": "showcase-display-1",
-        "last_error": "Fictief scherm; geen fysieke player gekoppeld."
+        "last_error": ""
       }
     },
     {
@@ -17366,7 +17413,7 @@
     {
       "_ref": "rondo_guest_pass:g1",
       "post_type": "rondo_guest_pass",
-      "title": "Fictieve gast: Noor Voorbeeld",
+      "title": "Gastpas: Noor Voorbeeld",
       "status": "publish",
       "fields": {
         "host_person_id": {
@@ -17385,7 +17432,7 @@
     {
       "_ref": "rondo_admission:a0",
       "post_type": "rondo_admission",
-      "title": "Fictieve toegang 1",
+      "title": "Entree SV Voorbeeld 1 - FC Polder: 1",
       "status": "publish",
       "fields": {
         "event_id": {
@@ -17404,7 +17451,7 @@
     {
       "_ref": "rondo_admission:a1",
       "post_type": "rondo_admission",
-      "title": "Fictieve toegang 2",
+      "title": "Entree SV Voorbeeld 1 - FC Polder: 2",
       "status": "publish",
       "fields": {
         "event_id": {
@@ -17423,7 +17470,7 @@
     {
       "_ref": "rondo_admission:a2",
       "post_type": "rondo_admission",
-      "title": "Fictieve toegang 3",
+      "title": "Entree SV Voorbeeld 1 - FC Polder: 3",
       "status": "publish",
       "fields": {
         "event_id": {
@@ -17442,7 +17489,7 @@
     {
       "_ref": "rondo_admission:a3",
       "post_type": "rondo_admission",
-      "title": "Fictieve toegang 4",
+      "title": "Entree SV Voorbeeld 1 - FC Polder: 4",
       "status": "publish",
       "fields": {
         "event_id": {
@@ -17461,7 +17508,7 @@
     {
       "_ref": "rondo_admission:a4",
       "post_type": "rondo_admission",
-      "title": "Fictieve toegang 5",
+      "title": "Entree SV Voorbeeld 1 - FC Polder: 5",
       "status": "publish",
       "fields": {
         "event_id": {
@@ -17480,7 +17527,7 @@
     {
       "_ref": "rondo_admission:a5",
       "post_type": "rondo_admission",
-      "title": "Fictieve toegang 6",
+      "title": "Entree SV Voorbeeld 1 - FC Polder: 6",
       "status": "publish",
       "fields": {
         "event_id": {
@@ -17611,7 +17658,7 @@
         "_clothing_deposit_paid": "1",
         "_clothing_deposit_returned": "0",
         "_clothing_season": "{season}",
-        "_clothing_notes": "Fictieve kledingtransactie"
+        "_clothing_notes": "Tenue gecontroleerd en compleet overgedragen."
       }
     },
     {
@@ -17639,7 +17686,7 @@
         "_clothing_deposit_paid": "1",
         "_clothing_deposit_returned": "0",
         "_clothing_season": "{season}",
-        "_clothing_notes": "Fictieve kledingtransactie"
+        "_clothing_notes": "Tenue gecontroleerd en compleet overgedragen."
       }
     },
     {
@@ -17667,7 +17714,7 @@
         "_clothing_deposit_paid": "1",
         "_clothing_deposit_returned": "0",
         "_clothing_season": "{season}",
-        "_clothing_notes": "Fictieve kledingtransactie"
+        "_clothing_notes": "Tenue gecontroleerd en compleet overgedragen."
       }
     },
     {
@@ -17695,7 +17742,7 @@
         "_clothing_deposit_paid": "1",
         "_clothing_deposit_returned": "0",
         "_clothing_season": "{season}",
-        "_clothing_notes": "Fictieve kledingtransactie"
+        "_clothing_notes": "Tenue gecontroleerd en compleet overgedragen."
       }
     },
     {
@@ -17723,7 +17770,7 @@
         "_clothing_deposit_paid": "1",
         "_clothing_deposit_returned": "0",
         "_clothing_season": "{season}",
-        "_clothing_notes": "Fictieve kledingtransactie"
+        "_clothing_notes": "Tenue gecontroleerd en compleet overgedragen."
       }
     },
     {
@@ -17751,7 +17798,7 @@
         "_clothing_deposit_paid": "1",
         "_clothing_deposit_returned": "0",
         "_clothing_season": "{season}",
-        "_clothing_notes": "Fictieve kledingtransactie"
+        "_clothing_notes": "Tenue gecontroleerd en compleet overgedragen."
       }
     },
     {
@@ -17779,7 +17826,7 @@
         "_clothing_deposit_paid": "1",
         "_clothing_deposit_returned": "0",
         "_clothing_season": "{season}",
-        "_clothing_notes": "Fictieve kledingtransactie"
+        "_clothing_notes": "Tenue gecontroleerd en compleet overgedragen."
       }
     },
     {
@@ -17807,7 +17854,7 @@
         "_clothing_deposit_paid": "1",
         "_clothing_deposit_returned": "0",
         "_clothing_season": "{season}",
-        "_clothing_notes": "Fictieve kledingtransactie"
+        "_clothing_notes": "Tenue gecontroleerd en compleet overgedragen."
       }
     },
     {
@@ -17835,7 +17882,7 @@
         "_clothing_deposit_paid": "1",
         "_clothing_deposit_returned": "0",
         "_clothing_season": "{season}",
-        "_clothing_notes": "Fictieve kledingtransactie"
+        "_clothing_notes": "Tenue gecontroleerd en compleet overgedragen."
       }
     },
     {
@@ -17863,7 +17910,7 @@
         "_clothing_deposit_paid": "1",
         "_clothing_deposit_returned": "0",
         "_clothing_season": "{season}",
-        "_clothing_notes": "Fictieve kledingtransactie"
+        "_clothing_notes": "Tenue gecontroleerd en compleet overgedragen."
       }
     },
     {
@@ -17891,7 +17938,7 @@
         "_clothing_deposit_paid": "1",
         "_clothing_deposit_returned": "0",
         "_clothing_season": "{season}",
-        "_clothing_notes": "Fictieve kledingtransactie"
+        "_clothing_notes": "Tenue gecontroleerd en compleet overgedragen."
       }
     },
     {
@@ -17919,13 +17966,13 @@
         "_clothing_deposit_paid": "1",
         "_clothing_deposit_returned": "1",
         "_clothing_season": "{season}",
-        "_clothing_notes": "Fictieve kledingtransactie"
+        "_clothing_notes": "Tenue gecontroleerd en compleet overgedragen."
       }
     },
     {
       "_ref": "rondo_twelve_report:r0",
       "post_type": "rondo_twelve_report",
-      "title": "Fictief kantinerapport 1",
+      "title": "Kantineomzet dagrapport 1",
       "status": "publish",
       "post_meta": {
         "_twelve_period_start": {
@@ -18163,7 +18210,7 @@
     {
       "_ref": "rondo_twelve_report:r1",
       "post_type": "rondo_twelve_report",
-      "title": "Fictief kantinerapport 2",
+      "title": "Kantineomzet dagrapport 2",
       "status": "publish",
       "post_meta": {
         "_twelve_period_start": {
@@ -18401,7 +18448,7 @@
     {
       "_ref": "rondo_twelve_report:r2",
       "post_type": "rondo_twelve_report",
-      "title": "Fictief kantinerapport 3",
+      "title": "Kantineomzet dagrapport 3",
       "status": "publish",
       "post_meta": {
         "_twelve_period_start": {
@@ -18639,7 +18686,7 @@
     {
       "_ref": "rondo_twelve_report:r3",
       "post_type": "rondo_twelve_report",
-      "title": "Fictief kantinerapport 4",
+      "title": "Kantineomzet dagrapport 4",
       "status": "publish",
       "post_meta": {
         "_twelve_period_start": {
@@ -18877,7 +18924,7 @@
     {
       "_ref": "rondo_twelve_report:r4",
       "post_type": "rondo_twelve_report",
-      "title": "Fictief kantinerapport 5",
+      "title": "Kantineomzet dagrapport 5",
       "status": "publish",
       "post_meta": {
         "_twelve_period_start": {
@@ -19115,7 +19162,7 @@
     {
       "_ref": "rondo_twelve_report:r5",
       "post_type": "rondo_twelve_report",
-      "title": "Fictief kantinerapport 6",
+      "title": "Kantineomzet dagrapport 6",
       "status": "publish",
       "post_meta": {
         "_twelve_period_start": {
@@ -19353,7 +19400,7 @@
     {
       "_ref": "rondo_twelve_report:r6",
       "post_type": "rondo_twelve_report",
-      "title": "Fictief kantinerapport 7",
+      "title": "Kantineomzet dagrapport 7",
       "status": "publish",
       "post_meta": {
         "_twelve_period_start": {
@@ -19591,7 +19638,7 @@
     {
       "_ref": "rondo_twelve_report:r7",
       "post_type": "rondo_twelve_report",
-      "title": "Fictief kantinerapport 8",
+      "title": "Kantineomzet dagrapport 8",
       "status": "publish",
       "post_meta": {
         "_twelve_period_start": {
@@ -19829,7 +19876,7 @@
     {
       "_ref": "rondo_twelve_report:r8",
       "post_type": "rondo_twelve_report",
-      "title": "Fictief kantinerapport 9",
+      "title": "Kantineomzet dagrapport 9",
       "status": "publish",
       "post_meta": {
         "_twelve_period_start": {
@@ -20067,7 +20114,7 @@
     {
       "_ref": "rondo_twelve_report:r9",
       "post_type": "rondo_twelve_report",
-      "title": "Fictief kantinerapport 10",
+      "title": "Kantineomzet dagrapport 10",
       "status": "publish",
       "post_meta": {
         "_twelve_period_start": {
@@ -20305,7 +20352,7 @@
     {
       "_ref": "rondo_twelve_report:r10",
       "post_type": "rondo_twelve_report",
-      "title": "Fictief kantinerapport 11",
+      "title": "Kantineomzet dagrapport 11",
       "status": "publish",
       "post_meta": {
         "_twelve_period_start": {
@@ -20543,7 +20590,7 @@
     {
       "_ref": "rondo_twelve_report:r11",
       "post_type": "rondo_twelve_report",
-      "title": "Fictief kantinerapport 12",
+      "title": "Kantineomzet dagrapport 12",
       "status": "publish",
       "post_meta": {
         "_twelve_period_start": {
@@ -20781,7 +20828,7 @@
     {
       "_ref": "rondo_twelve_report:r12",
       "post_type": "rondo_twelve_report",
-      "title": "Fictief kantinerapport 13",
+      "title": "Kantineomzet dagrapport 13",
       "status": "publish",
       "post_meta": {
         "_twelve_period_start": {
@@ -21019,7 +21066,7 @@
     {
       "_ref": "rondo_twelve_report:r13",
       "post_type": "rondo_twelve_report",
-      "title": "Fictief kantinerapport 14",
+      "title": "Kantineomzet dagrapport 14",
       "status": "publish",
       "post_meta": {
         "_twelve_period_start": {
@@ -21257,7 +21304,7 @@
     {
       "_ref": "rondo_purchase:p0",
       "post_type": "rondo_purchase",
-      "title": "Fictieve inkoopfactuur 1",
+      "title": "Inkoopfactuur Voorbeeld Groothandel 1",
       "status": "publish",
       "fields": {
         "invoice_number": "DEMO-INKOOP-1",
@@ -21282,7 +21329,7 @@
             "quantity": 10,
             "unit": "kg",
             "category": "Dranken",
-            "note": "Fictieve factuur"
+            "note": "Levering ontvangen en gecontroleerd; bestemd voor de kantine."
           }
         ]
       }
@@ -21290,7 +21337,7 @@
     {
       "_ref": "rondo_purchase:p1",
       "post_type": "rondo_purchase",
-      "title": "Fictieve inkoopfactuur 2",
+      "title": "Inkoopfactuur Voorbeeld Groothandel 2",
       "status": "publish",
       "fields": {
         "invoice_number": "DEMO-INKOOP-2",
@@ -21315,7 +21362,7 @@
             "quantity": 10,
             "unit": "kg",
             "category": "Dranken",
-            "note": "Fictieve factuur"
+            "note": "Levering ontvangen en gecontroleerd; bestemd voor de kantine."
           }
         ]
       }
@@ -21323,7 +21370,7 @@
     {
       "_ref": "rondo_purchase:p2",
       "post_type": "rondo_purchase",
-      "title": "Fictieve inkoopfactuur 3",
+      "title": "Inkoopfactuur Voorbeeld Groothandel 3",
       "status": "publish",
       "fields": {
         "invoice_number": "DEMO-INKOOP-3",
@@ -21348,7 +21395,7 @@
             "quantity": 10,
             "unit": "kg",
             "category": "Dranken",
-            "note": "Fictieve factuur"
+            "note": "Levering ontvangen en gecontroleerd; bestemd voor de kantine."
           }
         ]
       }
@@ -21363,7 +21410,7 @@
         "product_name": "Koffie",
         "active": true,
         "cost_status": "ready",
-        "cost_note": "Fictieve kostprijs",
+        "cost_note": "Kostprijs op basis van de laatste inkoop en portiegrootte.",
         "revision": 1,
         "ingredients": [
           {
@@ -21395,7 +21442,7 @@
         "product_name": "Thee",
         "active": true,
         "cost_status": "portion",
-        "cost_note": "Fictieve kostprijs",
+        "cost_note": "Kostprijs op basis van de laatste inkoop en portiegrootte.",
         "revision": 1,
         "ingredients": [],
         "sale_prices": [
@@ -21421,7 +21468,7 @@
         "product_name": "Cola",
         "active": true,
         "cost_status": "mapping",
-        "cost_note": "Fictieve kostprijs",
+        "cost_note": "Kostprijs op basis van de laatste inkoop en portiegrootte.",
         "revision": 1,
         "ingredients": [],
         "sale_prices": [
@@ -21447,7 +21494,7 @@
         "product_name": "Broodje kaas",
         "active": true,
         "cost_status": "recipe",
-        "cost_note": "Fictieve kostprijs",
+        "cost_note": "Kostprijs op basis van de laatste inkoop en portiegrootte.",
         "revision": 1,
         "ingredients": [],
         "sale_prices": [
@@ -21466,7 +21513,7 @@
     {
       "_ref": "rondo_kantine_day:d0",
       "post_type": "rondo_kantine_day",
-      "title": "Fictieve wedstrijddag 1",
+      "title": "Thuiswedstrijden SV Voorbeeld 1",
       "status": "publish",
       "post_meta": {
         "_kantine_day": {
@@ -21506,7 +21553,7 @@
     {
       "_ref": "rondo_kantine_day:d1",
       "post_type": "rondo_kantine_day",
-      "title": "Fictieve wedstrijddag 2",
+      "title": "Thuiswedstrijden SV Voorbeeld 2",
       "status": "publish",
       "post_meta": {
         "_kantine_day": {
@@ -21546,7 +21593,7 @@
     {
       "_ref": "rondo_match_reg:m0",
       "post_type": "rondo_match_reg",
-      "title": "Fictieve wedstrijdregistratie 1",
+      "title": "SV Voorbeeld 1 - FC Polder: wedstrijdregistratie 1",
       "status": "private",
       "fields": {
         "team_id": {
@@ -21700,7 +21747,7 @@
     {
       "_ref": "rondo_match_reg:m1",
       "post_type": "rondo_match_reg",
-      "title": "Fictieve wedstrijdregistratie 2",
+      "title": "SV Voorbeeld 1 - FC Polder: wedstrijdregistratie 2",
       "status": "private",
       "fields": {
         "team_id": {
@@ -21854,7 +21901,7 @@
     {
       "_ref": "rondo_match_reg:m2",
       "post_type": "rondo_match_reg",
-      "title": "Fictieve wedstrijdregistratie 3",
+      "title": "SV Voorbeeld 1 - FC Polder: wedstrijdregistratie 3",
       "status": "private",
       "fields": {
         "team_id": {
@@ -22028,7 +22075,7 @@
     {
       "_ref": "rondo_profile_change:c1",
       "post_type": "rondo_profile_change",
-      "title": "Fictieve contactwijziging",
+      "title": "Contactgegevens bijgewerkt",
       "status": "private",
       "post_meta": {
         "_rondo_profile_change_type": "contact",
@@ -22059,7 +22106,7 @@
         "$ref": "person:p001"
       },
       "type": "rondo_activity",
-      "content": "Fictieve clubactiviteit: geholpen bij de open dag.",
+      "content": "Geholpen bij de open dag: nieuwe leden ontvangen en rondgeleid over het sportpark.",
       "date": {
         "$date": "-1 days 10:00",
         "format": "Y-m-d H:i:s"
@@ -22081,7 +22128,7 @@
         "$ref": "person:p003"
       },
       "type": "rondo_activity",
-      "content": "Fictieve clubactiviteit: geholpen bij de open dag.",
+      "content": "Geholpen bij de open dag: nieuwe leden ontvangen en rondgeleid over het sportpark.",
       "date": {
         "$date": "-3 days 10:00",
         "format": "Y-m-d H:i:s"
@@ -22103,7 +22150,7 @@
         "$ref": "person:p005"
       },
       "type": "rondo_activity",
-      "content": "Fictieve clubactiviteit: geholpen bij de open dag.",
+      "content": "Geholpen bij de open dag: nieuwe leden ontvangen en rondgeleid over het sportpark.",
       "date": {
         "$date": "-5 days 10:00",
         "format": "Y-m-d H:i:s"
@@ -22125,7 +22172,7 @@
         "$ref": "person:p007"
       },
       "type": "rondo_activity",
-      "content": "Fictieve clubactiviteit: geholpen bij de open dag.",
+      "content": "Geholpen bij de open dag: nieuwe leden ontvangen en rondgeleid over het sportpark.",
       "date": {
         "$date": "-7 days 10:00",
         "format": "Y-m-d H:i:s"
@@ -22147,7 +22194,7 @@
         "$ref": "person:p009"
       },
       "type": "rondo_activity",
-      "content": "Fictieve clubactiviteit: geholpen bij de open dag.",
+      "content": "Geholpen bij de open dag: nieuwe leden ontvangen en rondgeleid over het sportpark.",
       "date": {
         "$date": "-9 days 10:00",
         "format": "Y-m-d H:i:s"
@@ -22169,7 +22216,7 @@
         "$ref": "person:p011"
       },
       "type": "rondo_activity",
-      "content": "Fictieve clubactiviteit: geholpen bij de open dag.",
+      "content": "Geholpen bij de open dag: nieuwe leden ontvangen en rondgeleid over het sportpark.",
       "date": {
         "$date": "-11 days 10:00",
         "format": "Y-m-d H:i:s"
@@ -22191,7 +22238,7 @@
         "$ref": "person:p013"
       },
       "type": "rondo_activity",
-      "content": "Fictieve clubactiviteit: geholpen bij de open dag.",
+      "content": "Geholpen bij de open dag: nieuwe leden ontvangen en rondgeleid over het sportpark.",
       "date": {
         "$date": "-13 days 10:00",
         "format": "Y-m-d H:i:s"
@@ -22213,7 +22260,7 @@
         "$ref": "person:p015"
       },
       "type": "rondo_activity",
-      "content": "Fictieve clubactiviteit: geholpen bij de open dag.",
+      "content": "Geholpen bij de open dag: nieuwe leden ontvangen en rondgeleid over het sportpark.",
       "date": {
         "$date": "-15 days 10:00",
         "format": "Y-m-d H:i:s"
@@ -22235,7 +22282,7 @@
         "$ref": "person:p017"
       },
       "type": "rondo_activity",
-      "content": "Fictieve clubactiviteit: geholpen bij de open dag.",
+      "content": "Geholpen bij de open dag: nieuwe leden ontvangen en rondgeleid over het sportpark.",
       "date": {
         "$date": "-17 days 10:00",
         "format": "Y-m-d H:i:s"
@@ -22257,7 +22304,7 @@
         "$ref": "person:p019"
       },
       "type": "rondo_activity",
-      "content": "Fictieve clubactiviteit: geholpen bij de open dag.",
+      "content": "Geholpen bij de open dag: nieuwe leden ontvangen en rondgeleid over het sportpark.",
       "date": {
         "$date": "-19 days 10:00",
         "format": "Y-m-d H:i:s"
@@ -22279,7 +22326,7 @@
         "$ref": "person:p021"
       },
       "type": "rondo_activity",
-      "content": "Fictieve clubactiviteit: geholpen bij de open dag.",
+      "content": "Geholpen bij de open dag: nieuwe leden ontvangen en rondgeleid over het sportpark.",
       "date": {
         "$date": "-21 days 10:00",
         "format": "Y-m-d H:i:s"
@@ -22301,7 +22348,7 @@
         "$ref": "person:p023"
       },
       "type": "rondo_activity",
-      "content": "Fictieve clubactiviteit: geholpen bij de open dag.",
+      "content": "Geholpen bij de open dag: nieuwe leden ontvangen en rondgeleid over het sportpark.",
       "date": {
         "$date": "-23 days 10:00",
         "format": "Y-m-d H:i:s"
@@ -22321,6 +22368,9 @@
   ],
   "settings": {
     "rondo_club_name": "SV Voorbeeld",
+    "rondo_finance_club_logo_id": {
+      "$ref": "attachment:sv-voorbeeld"
+    },
     "rondo_feature_toggles": {
       "rooms": "on",
       "clothing": "on",
@@ -22337,7 +22387,7 @@
         "$ref": "commissie:grounds"
       }
     },
-    "rondo_volunteer_signup_info": "Kies een fictieve dienst om de inschrijving te bekijken.",
+    "rondo_volunteer_signup_info": "Kies een dienst die bij je past en help mee in de kantine of op het sportpark.",
     "rondo_player_roles": [
       "Teamspeler"
     ],
@@ -22555,7 +22605,7 @@
         }
       ],
       "bank_code": "",
-      "retention_policy": "Fictieve gegevens; geen echte uitbetaling."
+      "retention_policy": "Wedstrijdvergoedingen worden na controle door de penningmeester verwerkt."
     }
   },
   "coverage": {
