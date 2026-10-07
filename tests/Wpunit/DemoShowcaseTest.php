@@ -119,6 +119,12 @@ class DemoShowcaseTest extends RondoTestCase {
 		$fixture = $this->fixture();
 		$fixture['records'][0]['fields']['work_history'] = [ [ 'team_id' => [ '$ref' => 'team:missing' ] ] ];
 		$this->assertWPError( ( new DemoShowcase() )->validate( $fixture ) );
+		$fixture                     = $this->fixture();
+		$fixture['media'][0]['file'] = '../style.css';
+		$this->assertWPError( ( new DemoShowcase() )->validate( $fixture ) );
+		$fixture                     = $this->fixture();
+		$fixture['media'][0]['_ref'] = $fixture['records'][0]['_ref'];
+		$this->assertWPError( ( new DemoShowcase() )->validate( $fixture ) );
 		$this->assertFalse( get_option( 'rondo_demo_showcase_manifest' ) );
 	}
 
@@ -154,7 +160,7 @@ class DemoShowcaseTest extends RondoTestCase {
 				],
 			],
 		];
-		foreach ( [ 'terms', 'settings', 'comments', 'coverage' ] as $section ) {
+		foreach ( [ 'media', 'terms', 'settings', 'comments', 'coverage' ] as $section ) {
 			$fixture[ $section ] = [];
 		}
 		unset( $fixture['demo_account']['user_meta']['_rondo_match_teams'] );
@@ -183,6 +189,33 @@ class DemoShowcaseTest extends RondoTestCase {
 				$this->assertArrayHasKey( $ref, $ids );
 			}
 		}
+		$this->assertSame( $ids['attachment:sv-voorbeeld'], (int) get_option( 'rondo_finance_club_logo_id' ) );
+		$this->assertNotEmpty( ( new \Rondo\Config\FinanceConfig() )->get_all_settings()['club_logo_url'] );
+		foreach ( $fixture['media'] as $asset ) {
+			$id = $ids[ $asset['_ref'] ];
+			$this->assertSame( 'attachment', get_post_type( $id ) );
+			$this->assertSame( 'image/svg+xml', get_post_mime_type( $id ) );
+			$this->assertFileExists( get_attached_file( $id ) );
+			$this->assertNotEmpty( wp_get_attachment_image_url( $id, 'large' ) );
+			$this->assertSame( $asset['title'], get_post_meta( $id, '_wp_attachment_image_alt', true ) );
+		}
+		$this->assertArrayNotHasKey( 'svg', get_allowed_mime_types() );
+		$sponsors = array_values( array_filter( ( new \Rondo\Narrowcasting\Content() )->sponsor_choices(), static fn( $sponsor ) => ! $sponsor['legacy'] ) );
+		$this->assertCount( 4, $sponsors );
+		foreach ( $sponsors as $sponsor ) {
+			$this->assertNotEmpty( $sponsor['logo_url'] );
+		}
+		foreach ( range( 0, 3 ) as $index ) {
+			$this->assertSame( $ids[ $fixture['media'][ $index + 1 ]['_ref'] ], (int) get_post_thumbnail_id( $ids[ 'rondo_sponsor:s' . $index ] ) );
+		}
+		$bodies = [];
+		foreach ( range( 0, 4 ) as $index ) {
+			$bodies[] = Fields::get_for_post( $ids[ 'rondo_signage_item:s' . $index ], 'body' );
+		}
+		$this->assertCount( 5, array_unique( $bodies ) );
+		$this->assertStringContainsString( '09:00', $bodies[2] );
+		$this->assertStringContainsString( '3 - 1', $bodies[3] );
+		$this->assertDoesNotMatchRegularExpression( '/fictie[fv]/i', wp_json_encode( $fixture ) );
 		$this->assertSame( $ids['person:p001'], (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) );
 		$this->assertFalse( user_can( $user_id, 'manage_options' ) );
 		$team_counts = \Rondo\REST\Teams::get_all_member_counts( true );
@@ -232,11 +265,15 @@ class DemoShowcaseTest extends RondoTestCase {
 		$result = $importer->clean();
 		$this->assertWPError( $result );
 		$this->assertSame( 'demo_cleanup_protected', $result->get_error_code() );
+		foreach ( $fixture['media'] as $asset ) {
+			$this->assertNotNull( get_post( $ids[ $asset['_ref'] ] ) );
+		}
 		foreach ( $fixture['records'] as $record ) {
 			$this->assertNotNull( get_post( $ids[ $record['_ref'] ] ) );
 		}
 		$this->assertTrue( (bool) get_option( MembershipPassService::LEGACY_CLEANUP_OPTION ) );
 		$this->assertNotFalse( get_userdata( $user_id ) );
+
 		$unowned_person = $this->createPerson();
 		$unowned_other  = $this->createPerson();
 		$unowned_rows   = [
@@ -306,11 +343,26 @@ class DemoShowcaseTest extends RondoTestCase {
 				]
 				);
 		}
-		$core = self::factory()->post->create( [ 'post_type' => 'post' ] );
+		$logo = self::factory()->post->create(
+			[
+				'post_type'   => 'attachment',
+				'post_status' => 'inherit',
+			]
+			);
+		update_post_meta( $logo, '_rondo_showcase_logo', 'polder-fietsen.svg' );
+		$other_media = self::factory()->post->create(
+			[
+				'post_type'   => 'attachment',
+				'post_status' => 'inherit',
+			]
+			);
+		$core        = self::factory()->post->create( [ 'post_type' => 'post' ] );
 		$this->assertTrue( ( new DemoShowcase() )->clean() );
 		foreach ( $ids as $id ) {
 			$this->assertNull( get_post( $id ) );
 		}
+		$this->assertNull( get_post( $logo ) );
+		$this->assertNotNull( get_post( $other_media ) );
 		$this->assertNotNull( get_post( $core ) );
 		$this->assertTrue( (bool) get_option( MembershipPassService::LEGACY_CLEANUP_OPTION ) );
 	}
