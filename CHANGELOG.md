@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.144.3] - 2026-10-07
+
+### Fixed
+- Use the supported Teamspeler role in fictional work history and player settings so each showcase team reports its 16 players correctly.
+
 ## [35.144.2] - 2026-10-07
 
 ### Fixed

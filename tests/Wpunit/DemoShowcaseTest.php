@@ -101,6 +101,12 @@ class DemoShowcaseTest extends RondoTestCase {
 		}
 		$this->assertSame( $ids['person:p001'], (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) );
 		$this->assertFalse( user_can( $user_id, 'manage_options' ) );
+		$team_counts = \Rondo\REST\Teams::get_all_member_counts( true );
+		foreach ( $fixture['records'] as $record ) {
+			if ( $record['post_type'] === 'team' ) {
+				$this->assertSame( 16, $team_counts[ $ids[ $record['_ref'] ] ]['players'] );
+			}
+		}
 		$this->assertTrue( user_can( $user_id, 'manage_training' ) );
 		$this->assertTrue( \Rondo\Core\UserRoles::can_access_board( $user_id ) );
 		$this->assertTrue( ( new \Rondo\Passes\GuestPassService() )->is_eligible_host( $ids['person:p001'] ) );
