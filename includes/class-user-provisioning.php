@@ -170,7 +170,7 @@ class UserProvisioning {
 		$first_name = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '' );
 		$last_name  = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '' );
 		$company    = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
-		$name       = trim( $first_name . ' ' . $last_name ) ?: $company;
+		$name       = \Rondo\People\PersonName::get( $person_id ) ?: $company;
 
 		// Generate a unique username.
 		$username = $this->generate_username( $first_name, $last_name, $company, $person_id );
