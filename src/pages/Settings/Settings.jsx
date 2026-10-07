@@ -1,5 +1,6 @@
 import { getSponsorRoleLabels } from '@/utils/clubLabels';
 import CommunicationChannelsSettings from '@/components/CommunicationChannelsSettings';
+import FeedbackNoticeSettings from '@/components/FeedbackNoticeSettings';
 import { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, UserPlus, Wrench, AlertCircle, Wallet, Award, Mail, X, Plus, Trash2, SlidersHorizontal } from 'lucide-react';
@@ -1023,6 +1024,8 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
           </div>
         </div>
       )}
+
+      {isAdmin ? <FeedbackNoticeSettings clubConfig={clubConfig} setClubConfig={setClubConfig} isLoading={clubConfigLoading} /> : null}
 
       {isAdmin && (
         <div className="card p-6">

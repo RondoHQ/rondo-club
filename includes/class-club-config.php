@@ -20,6 +20,43 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class ClubConfig {
 
+	/** Option key for the configurable feedback form notice. */
+	const OPTION_FEEDBACK_NOTICE = 'rondo_feedback_notice';
+
+	/** Default notice; each club configures its own membership contact address. */
+	const DEFAULT_FEEDBACK_NOTICE = [
+		'enabled' => false,
+		'title'   => 'Wijzigingen in je account?',
+		'text'    => "Wil je je persoonlijke gegevens wijzigen of heb je een vraag over je lidmaatschap? Stuur dan een e-mail naar {email}.\n\nGebruik het feedbackformulier alleen voor vragen, problemen of suggesties over Rondo.",
+		'email'   => '',
+	];
+
+	/** Return the feedback notice, including defaults for unset fields. */
+	public static function get_feedback_notice(): array {
+		return array_merge( self::DEFAULT_FEEDBACK_NOTICE, (array) get_option( self::OPTION_FEEDBACK_NOTICE, [] ) );
+	}
+
+	/** Validate and persist a partial notice update without discarding its text. */
+	public static function update_feedback_notice( array $values ) {
+		$notice            = array_merge( self::get_feedback_notice(), array_intersect_key( $values, self::DEFAULT_FEEDBACK_NOTICE ) );
+		$notice['enabled'] = rest_sanitize_boolean( $notice['enabled'] );
+		$notice['title']   = sanitize_text_field( $notice['title'] );
+		$notice['text']    = sanitize_textarea_field( $notice['text'] );
+		$notice['email']   = trim( $notice['email'] );
+
+		if ( ( $notice['email'] !== '' && ! is_email( $notice['email'] ) )
+			|| ( $notice['enabled'] && ( $notice['email'] === '' || $notice['title'] === '' || $notice['text'] === '' ) ) ) {
+			return new \WP_Error(
+				'rondo_invalid_feedback_notice',
+				__( 'Vul een titel, tekst en geldig e-mailadres in voor de feedbackmelding.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		update_option( self::OPTION_FEEDBACK_NOTICE, $notice );
+		return $notice;
+	}
+
 	/**
 	 * Option key for club name
 	 */
@@ -478,6 +515,7 @@ class ClubConfig {
 
 		return [
 			'club_name'                             => self::get_club_name(),
+			'feedback_notice'                       => self::get_feedback_notice(),
 			'communication_channels'                => self::get_communication_channels(),
 			'guest_pass_team_id'                    => self::get_guest_pass_team_id(),
 			'guest_pass_team_name'                  => self::get_guest_pass_team_name(),

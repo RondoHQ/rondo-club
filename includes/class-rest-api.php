@@ -736,6 +736,16 @@ class Api extends Base {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
+						'feedback_notice'                 => [
+							'type'                 => 'object',
+							'additionalProperties' => false,
+							'properties'           => [
+								'enabled' => [ 'type' => 'boolean' ],
+								'title'   => [ 'type' => 'string' ],
+								'text'    => [ 'type' => 'string' ],
+								'email'   => [ 'type' => 'string' ],
+							],
+						],
 						'guest_pass_team_id'              => [
 							'required'          => false,
 							'sanitize_callback' => 'absint',
@@ -2041,6 +2051,13 @@ class Api extends Base {
 	 * @return \WP_REST_Response Response with updated club configuration settings.
 	 */
 	public function update_club_config( $request ) {
+		if ( $request->has_param( 'feedback_notice' ) ) {
+			$result = \Rondo\Config\ClubConfig::update_feedback_notice( $request->get_param( 'feedback_notice' ) );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+		}
+
 		if ( $request->has_param( 'communication_channels' ) ) {
 			$result = \Rondo\Config\ClubConfig::update_communication_channels( $request->get_param( 'communication_channels' ) );
 			if ( is_wp_error( $result ) ) {

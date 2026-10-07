@@ -777,6 +777,7 @@ function rondo_get_js_config() {
 		'buildTime'           => $build_time,
 		'currentUserPersonId' => $linked_person_id ?: null,
 		'clubName'            => $club_settings['club_name'],
+		'feedbackNotice'      => $club_settings['feedback_notice'],
 		'volunteerSignupInfo' => $club_settings['volunteer_signup_info'],
 		'freescoutUrl'        => $club_settings['freescout_url'],
 		'isDemo'              => (bool) get_option( 'rondo_is_demo_site', false ),
