@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.144.0] - 2026-10-07
+
+### Added
+- Reproducible fictional SV Voorbeeld demo dataset with 214 people and linked scenarios for members, volunteers, finance, sponsors, training, rooms, tournaments, communication, Club TV, clothing, entry control, and canteen reporting.
+- Demo-only version 2 fixture import with relative dates, canonical native fields, validated references, and a read-only `--dry-run` preflight before cleanup.
+
+### Changed
+- Showcase refreshes clean newer modules in bounded batches, preserve upgrade state and login credentials, and link the demo account to a fictional member with Rondo showcase permissions.
+- Block outbound WordPress email while the fictional showcase is active; require a clean import so existing payment configuration is removed.
+
 ## [35.143.1] - 2026-10-06
 
 ### Fixed
