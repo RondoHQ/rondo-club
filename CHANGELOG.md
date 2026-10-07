@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.144.6] - 2026-10-07
+
+### Fixed
+- Share Dutch gender labels between the team list and detail page, showing "Onbekend" for unmapped values instead of raw English.
+
 ## [35.144.5] - 2026-10-07
 
 ### Fixed
