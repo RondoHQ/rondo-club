@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import FeedbackScreenshotInput from '@/components/FeedbackScreenshotInput';
+import FeedbackNotice from '@/components/FeedbackNotice';
 
 export default function FeedbackModal({
   isOpen,
@@ -97,6 +98,7 @@ export default function FeedbackModal({
         {/* Form */}
         <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <FeedbackNotice />
             {/* Type */}
             <div>
               <label className="label">Type *</label>
