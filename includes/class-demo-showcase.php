@@ -305,6 +305,23 @@ final class DemoShowcase {
 		foreach ( $this->resolve( $fixture['settings'] ?? [] ) as $key => $value ) {
 			update_option( $key, $value, false );
 		}
+		// Generate private guest-share tokens through the normal slot service.
+		$guests = new \Rondo\Passes\GuestPassService();
+		foreach ( $fixture['records'] as $record ) {
+			if ( $record['post_type'] !== 'rondo_guest_pass' ) {
+				continue;
+			}
+			$fields = $this->resolve( $record['fields'] ?? [] );
+			$result = $guests->replace_slot( $fields['host_person_id'], $fields['slot_number'] );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+			$result = Fields::update_many_for_post( $this->ids[ $record['_ref'] ], Formatter::for_storage( 'rondo_guest_pass', $fields ) );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+		}
+
 		$user = get_user_by( 'login', 'demo' );
 		if ( $user && ! empty( $fixture['demo_account'] ) ) {
 			foreach ( $fixture['demo_account']['roles'] ?? [] as $role ) {
