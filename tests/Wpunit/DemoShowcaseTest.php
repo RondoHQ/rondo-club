@@ -27,6 +27,90 @@ class DemoShowcaseTest extends RondoTestCase {
 		$this->assertFalse( get_option( 'rondo_demo_showcase_manifest' ) );
 	}
 
+	public function test_refresh_requires_a_demo_site_and_valid_manifest_before_writing(): void {
+		$person = $this->createPerson();
+		$other  = $this->createPerson();
+		$rows   = [
+			[
+				'related_person'     => $other,
+				'relationship_type'  => 0,
+				'relationship_label' => '',
+			],
+		];
+		Fields::update_for_post( $person, 'relationships', $rows );
+		$rows     = Fields::get_for_post( $person, 'relationships' );
+		$importer = new DemoShowcase();
+		update_option( 'rondo_demo_showcase_manifest', [ 'refs' => [ 'person:owned' => $person ] ] );
+		delete_option( 'rondo_is_demo_site' );
+		$this->assertSame( 'demo_only', $importer->refresh()->get_error_code() );
+		update_option( 'rondo_is_demo_site', true );
+		foreach ( [
+			false,
+			[],
+			[ 'refs' => [] ],
+			[
+				'refs' => [
+					'person:owned' => $person,
+					'team:wrong'   => $other,
+				],
+			],
+			[ 'refs' => [ 'person:owned' => (string) $person ] ],
+		] as $manifest ) {
+			update_option( 'rondo_demo_showcase_manifest', $manifest );
+			$this->assertSame( 'demo_manifest_invalid', $importer->refresh()->get_error_code() );
+			$this->assertSame( $rows, Fields::get_for_post( $person, 'relationships' ) );
+			$this->assertNotNull( get_post( $person ) );
+		}
+		update_option( 'rondo_demo_showcase_manifest', [ 'refs' => [ 'person:owned' => $person ] ] );
+		$this->assertSame( 'demo_refresh_unowned_relationship', $importer->refresh()->get_error_code() );
+		$this->assertSame( $rows, Fields::get_for_post( $person, 'relationships' ) );
+		$this->assertNotNull( get_post( $other ) );
+	}
+
+	public function test_refresh_keeps_other_deletion_guards_active(): void {
+		update_option( 'rondo_is_demo_site', true );
+		$person = $this->createPerson();
+		$shift  = self::factory()->post->create( [ 'post_type' => 'dienst_shift' ] );
+		Fields::update_for_post( $shift, 'assigned_persons', [ $person ] );
+		update_post_meta( $shift, \Rondo\Volunteer\ShiftCancellationService::META_VARIANT, 'last_minute' );
+		$manifest = [
+			'refs' => [
+				'person:owned'       => $person,
+				'dienst_shift:owned' => $shift,
+			],
+		];
+		update_option( 'rondo_demo_showcase_manifest', $manifest );
+		$guard = new \Rondo\Volunteer\ShiftCancellationService();
+		try {
+			$result = ( new DemoShowcase() )->refresh();
+			$this->assertSame( 'demo_cleanup_protected', $result->get_error_code() );
+			$this->assertNotNull( get_post( $person ) );
+			$this->assertNotNull( get_post( $shift ) );
+			$this->assertSame( [], Fields::get_for_post( $shift, 'assigned_persons' ) );
+			$this->assertSame( $manifest, get_option( 'rondo_demo_showcase_manifest' ) );
+		} finally {
+			remove_filter( 'pre_delete_post', [ $guard, 'prevent_delete_with_assignees' ], 10 );
+			remove_filter( 'rest_pre_insert_dienst_shift', [ $guard, 'prevent_direct_rest_cancellation' ], 10 );
+		}
+	}
+
+	public function test_refresh_with_only_term_or_deleted_refs_does_not_clean_unowned_posts(): void {
+		update_option( 'rondo_is_demo_site', true );
+		$person = $this->createPerson();
+		// A term reference must never be treated as a post, even when the IDs overlap.
+		update_option(
+			'rondo_demo_showcase_manifest',
+			[
+				'refs' => [
+					'relationship_type:parent' => $person,
+					'person:deleted'           => PHP_INT_MAX,
+				],
+			]
+			);
+		$this->assertTrue( ( new DemoShowcase() )->refresh() );
+		$this->assertNotNull( get_post( $person ) );
+	}
+
 	public function test_preflight_rejects_invalid_relationships_and_fields_without_writing(): void {
 		update_option( 'rondo_is_demo_site', true );
 		$fixture                                    = $this->fixture();
@@ -93,7 +177,7 @@ class DemoShowcaseTest extends RondoTestCase {
 		$this->assertSame( true, $valid, is_wp_error( $valid ) ? $valid->get_error_message() : '' );
 		$ids = $importer->import( $fixture );
 		$this->assertNotWPError( $ids );
-		$this->assertCount( count( $fixture['records'] ) + count( $fixture['terms'] ), $ids );
+		$this->assertCount( count( $fixture['records'] ) + count( $fixture['terms'] ) + count( $fixture['media'] ?? [] ), $ids );
 		foreach ( $fixture['coverage'] as $refs ) {
 			foreach ( $refs as $ref ) {
 				$this->assertArrayHasKey( $ref, $ids );
@@ -153,6 +237,61 @@ class DemoShowcaseTest extends RondoTestCase {
 		}
 		$this->assertTrue( (bool) get_option( MembershipPassService::LEGACY_CLEANUP_OPTION ) );
 		$this->assertNotFalse( get_userdata( $user_id ) );
+		$unowned_person = $this->createPerson();
+		$unowned_other  = $this->createPerson();
+		$unowned_rows   = [
+			[
+				'related_person'     => $unowned_other,
+				'relationship_type'  => 0,
+				'relationship_label' => '',
+			],
+		];
+		Fields::update_for_post( $unowned_person, 'relationships', $unowned_rows );
+		$unowned_rows  = Fields::get_for_post( $unowned_person, 'relationships' );
+		$unowned_shift = self::factory()->post->create( [ 'post_type' => 'dienst_shift' ] );
+		Fields::update_for_post( $unowned_shift, 'assigned_persons', [ $unowned_person ] );
+		$unowned_logo = self::factory()->post->create(
+			[
+				'post_type'   => 'attachment',
+				'post_status' => 'inherit',
+			]
+			);
+		update_post_meta( $unowned_logo, '_rondo_showcase_logo', 'sv-voorbeeld.svg' );
+		$unowned_comment = wp_insert_comment(
+			[
+				'comment_post_ID' => $unowned_person,
+				'comment_content' => 'Keep me',
+				'comment_type'    => 'rondo_note',
+			]
+			);
+		$guard           = new \Rondo\Volunteer\ShiftCancellationService();
+		try {
+			for ( $run = 0; $run < 2; ++$run ) {
+				$expected_ids = array_map( static fn( $record ) => $ids[ $record['_ref'] ], array_merge( $fixture['media'] ?? [], $fixture['records'] ) );
+				$this->assertSame( $expected_ids, $importer->validate_refresh() );
+				$this->assertNotEmpty( Fields::get_for_post( $ids['person:parent1'], 'relationships' ) );
+				$this->assertTrue( $importer->refresh() );
+				foreach ( $fixture['records'] as $record ) {
+					$this->assertNull( get_post( $ids[ $record['_ref'] ] ) );
+				}
+				$this->assertNotNull( get_post( $unowned_person ) );
+				$this->assertSame( $unowned_rows, Fields::get_for_post( $unowned_person, 'relationships' ) );
+				$this->assertSame( [ $unowned_person ], Fields::get_for_post( $unowned_shift, 'assigned_persons' ) );
+				$this->assertNotNull( get_comment( $unowned_comment ) );
+				$this->assertNotNull( get_post( $unowned_logo ) );
+				$this->assertTrue( (bool) get_option( MembershipPassService::LEGACY_CLEANUP_OPTION ) );
+				$this->assertNotFalse( get_userdata( $user_id ) );
+				$ids = $importer->import( $fixture );
+				$this->assertNotWPError( $ids );
+				$this->assertCount( count( $fixture['records'] ) + count( $fixture['terms'] ) + count( $fixture['media'] ?? [] ), $ids );
+				$this->assertSame( $ids, get_option( 'rondo_demo_showcase_manifest' )['refs'] );
+				$this->assertSame( $ids['person:parent1'], Fields::all_for_post( $ids['person:p113'] )['relationships'][0]['related_person_id'] );
+				$this->assertSame( $ids['person:p001'], (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) );
+			}
+		} finally {
+			remove_filter( 'pre_delete_post', [ $guard, 'prevent_delete_with_assignees' ], 10 );
+			remove_filter( 'rest_pre_insert_dienst_shift', [ $guard, 'prevent_direct_rest_cancellation' ], 10 );
+		}
 	}
 
 	public function test_unprotected_demo_modules_can_be_cleaned_without_removing_upgrade_state(): void {
