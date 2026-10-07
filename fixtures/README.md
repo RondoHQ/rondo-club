@@ -38,7 +38,7 @@ the reset stops before deleting any records; review and approve a separate maint
 before loading the replacement. A clean import replaces records instead of appending them.
 
 The existing `demo` account is linked to Anna Bos and receives Rondo board and roster roles plus
-training, Club TV, match registration, football administration, committee and feedback capabilities.
+training, Club TV, match registration, football administration, committee, feedback and volunteer capabilities.
 It receives no WordPress administrator role or `manage_options` capability.
 Showcase email delivery is blocked and reports an unsent result. Payment providers remain
 unconfigured after cleanup; no real checkout or financial transfer is part of this fixture.

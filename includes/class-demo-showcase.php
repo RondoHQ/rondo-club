@@ -68,7 +68,7 @@ final class DemoShowcase {
 		'rondo_match_compensation',
 	];
 	private const USER_META = [ 'rondo_linked_person_id', 'rondo_newsletter_profile', '_rondo_match_teams', 'rondo_approved' ];
-	private const USER_CAPS = [ 'manage_training', 'narrowcasting', 'wedstrijdregistratie', 'wedstrijdzaken', 'feedback', 'commissies' ];
+	private const USER_CAPS = [ 'manage_training', 'narrowcasting', 'wedstrijdregistratie', 'wedstrijdzaken', 'feedback', 'commissies', 'vrijwilligers' ];
 	private array $ids      = [];
 	private \DateTimeImmutable $today;
 

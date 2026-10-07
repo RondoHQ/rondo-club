@@ -52,6 +52,37 @@ class DemoShowcaseTest extends RondoTestCase {
 		}
 	}
 
+	public function test_showcase_explicitly_grants_volunteer_access_on_existing_demo_accounts(): void {
+		update_option( 'rondo_is_demo_site', true );
+		$user_id = $this->createRondoUser( [ 'user_login' => 'demo' ] );
+		$user    = get_user_by( 'id', $user_id );
+		$user->add_cap( 'vrijwilligers', false );
+		$this->assertFalse( user_can( $user, 'vrijwilligers' ) );
+		$fixture            = $this->fixture();
+		$fixture['records'] = [
+			[
+				'_ref'      => 'person:p001',
+				'post_type' => 'person',
+				'title'     => 'Anna Bos',
+				'fields'    => [
+					'first_name' => 'Anna',
+					'last_name'  => 'Bos',
+				],
+			],
+		];
+		foreach ( [ 'terms', 'settings', 'comments', 'coverage' ] as $section ) {
+			$fixture[ $section ] = [];
+		}
+		unset( $fixture['demo_account']['user_meta']['_rondo_match_teams'] );
+		$result = ( new DemoShowcase() )->import( $fixture );
+		$this->assertNotWPError( $result );
+		wp_set_current_user( $user_id );
+		$this->bootRestControllers( [ \Rondo\REST\Volunteer::class ] );
+		$response = rest_do_request( new \WP_REST_Request( 'GET', '/rondo/v1/volunteer-statistics' ) );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertFalse( current_user_can( 'manage_options' ) );
+	}
+
 	public function test_complete_fixture_imports_native_fields_and_relative_dates_and_protects_existing_records(): void {
 		update_option( 'rondo_is_demo_site', true );
 		$user_id = $this->createRondoUser( [ 'user_login' => 'demo' ] );
