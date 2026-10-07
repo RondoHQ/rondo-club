@@ -96,6 +96,13 @@ class DemoImport {
 	 * Does NOT remove user accounts or WordPress core data.
 	 */
 	public function clean() {
+		$this->read_fixture();
+		if ( $this->fixture['meta']['version'] === '2.0' ) {
+			$result = ( new DemoShowcase() )->clean();
+			if ( is_wp_error( $result ) ) {
+				WP_CLI::error( $result->get_error_message() );
+			}
+		}
 		WP_CLI::log( 'Cleaning existing Rondo data...' );
 
 		// 1. Delete all comments of custom types first (before posts to avoid FK issues)
@@ -218,6 +225,15 @@ class DemoImport {
 		WP_CLI::log( sprintf( 'Reading fixture from: %s', $this->fixture_path ) );
 		$this->read_fixture();
 
+		if ( $this->fixture['meta']['version'] === '2.0' ) {
+			$result = ( new DemoShowcase() )->import( $this->fixture );
+			if ( is_wp_error( $result ) ) {
+				WP_CLI::error( $result->get_error_message() );
+			}
+			WP_CLI::log( sprintf( 'Imported %d fictional showcase records and terms.', count( $result ) ) );
+			return;
+		}
+
 		// Calculate date shift offset
 		$export_date       = new \DateTime( $this->fixture['meta']['exported_at'] );
 		$today             = new \DateTime( 'today', wp_timezone() );
@@ -271,6 +287,15 @@ class DemoImport {
 	/**
 	 * Read and validate fixture JSON file
 	 */
+	public function validate() {
+		$this->read_fixture();
+	}
+
+	/** Whether the validated file is the fictional showcase format. */
+	public function is_showcase(): bool {
+		return ( $this->fixture['meta']['version'] ?? '' ) === '2.0';
+	}
+
 	private function read_fixture() {
 		if ( ! file_exists( $this->fixture_path ) ) {
 			WP_CLI::error( sprintf( 'Fixture file not found: %s', $this->fixture_path ) );
@@ -296,6 +321,14 @@ class DemoImport {
 		// Validate fixture format
 		if ( ! isset( $this->fixture['meta']['version'] ) ) {
 			WP_CLI::error( 'Invalid fixture: missing meta.version' );
+		}
+
+		if ( $this->fixture['meta']['version'] === '2.0' ) {
+			$result = ( new DemoShowcase() )->validate( $this->fixture );
+			if ( is_wp_error( $result ) ) {
+				WP_CLI::error( $result->get_error_message() );
+			}
+			return;
 		}
 
 		if ( $this->fixture['meta']['version'] !== '1.0' ) {

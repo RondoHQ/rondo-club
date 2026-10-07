@@ -2224,6 +2224,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 * [--input=<path>]
 		 * : Input fixture JSON file path. Defaults to fixtures/demo-fixture.json in theme directory.
 		 *
+		 * [--dry-run]
+		 * : Validate the complete fixture without changing data.
+		 *
 		 * [--clean]
 		 * : Remove all existing Rondo data before importing. Use this to start fresh.
 		 *
@@ -2252,6 +2255,15 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( sprintf( 'Importing demo data from: %s', $input_path ) );
 
 			$importer = new DemoImport( $input_path );
+			$importer->validate();
+			if ( isset( $assoc_args['dry-run'] ) ) {
+				WP_CLI::success( 'Fixture validated; no data changed.' );
+				return;
+			}
+
+			if ( $importer->is_showcase() && empty( $assoc_args['clean'] ) ) {
+				WP_CLI::error( 'Showcase import requires --clean to reset existing records and payment configuration.' );
+			}
 
 			if ( isset( $assoc_args['clean'] ) && $assoc_args['clean'] ) {
 				WP_CLI::log( 'Cleaning existing data...' );

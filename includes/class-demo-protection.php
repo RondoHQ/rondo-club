@@ -22,11 +22,19 @@ class DemoProtection {
 			return;
 		}
 
+		// Fictional showcase workflows must never deliver real email.
+		add_filter( 'pre_wp_mail', [ $this, 'block_showcase_mail' ], 1 );
+
 		// Block wp-admin profile page for demo user.
 		add_action( 'admin_init', [ $this, 'block_profile_page' ] );
 
 		// Prevent password/email changes for demo user via any method.
 		add_filter( 'wp_pre_insert_user_data', [ $this, 'protect_demo_user_data' ], 10, 4 );
+	}
+
+	/** Leave normal sites untouched; report blocked showcase mail as unsent. */
+	public function block_showcase_mail( $pre ) {
+		return get_option( 'rondo_is_demo_site', false ) && get_option( 'rondo_demo_showcase_manifest', false ) ? false : $pre;
 	}
 
 	/**

@@ -1,0 +1,128 @@
+<?php
+
+namespace Tests\Wpunit;
+
+use Rondo\Demo\DemoShowcase;
+use Rondo\Fields\Fields;
+use Rondo\Passes\MembershipPassService;
+use Rondo\Teams\TeamMatches;
+use Tests\Support\RondoTestCase;
+
+/** Fictional fixture graph, relative dates and safe demo refresh contracts. */
+class DemoShowcaseTest extends RondoTestCase {
+
+	private function fixture(): array {
+		return json_decode( file_get_contents( RONDO_THEME_DIR . '/fixtures/demo-showcase.json' ), true );
+	}
+
+	public function test_showcase_refuses_production_without_mutations(): void {
+		delete_option( 'rondo_is_demo_site' );
+		$person   = $this->createPerson();
+		$importer = new DemoShowcase();
+		$result   = $importer->import( $this->fixture() );
+		$this->assertWPError( $result );
+		$this->assertSame( 'demo_only', $result->get_error_code() );
+		$importer->clean();
+		$this->assertNotNull( get_post( $person ) );
+		$this->assertFalse( get_option( 'rondo_demo_showcase_manifest' ) );
+	}
+
+	public function test_preflight_rejects_invalid_relationships_and_fields_without_writing(): void {
+		update_option( 'rondo_is_demo_site', true );
+		$fixture                                    = $this->fixture();
+		$fixture['records'][0]['fields']['unknown'] = 'invalid';
+		$this->assertWPError( ( new DemoShowcase() )->validate( $fixture ) );
+		$fixture = $this->fixture();
+		$fixture['records'][0]['fields']['work_history'] = [ [ 'team_id' => [ '$ref' => 'team:missing' ] ] ];
+		$this->assertWPError( ( new DemoShowcase() )->validate( $fixture ) );
+		$this->assertFalse( get_option( 'rondo_demo_showcase_manifest' ) );
+	}
+
+	public function test_showcase_mail_is_blocked_without_changing_normal_sites(): void {
+		update_option( 'rondo_is_demo_site', true );
+		update_option( 'rondo_demo_showcase_manifest', [ 'source' => 'fictional_showcase' ] );
+		$protection = new \Rondo\Demo\DemoProtection();
+		try {
+			$this->assertFalse( wp_mail( 'recipient@club.example', 'Showcase', 'Fictional message' ) );
+			delete_option( 'rondo_is_demo_site' );
+			$this->assertNull( $protection->block_showcase_mail( null ) );
+			$this->assertTrue( $protection->block_showcase_mail( true ) );
+		} finally {
+			remove_filter( 'pre_wp_mail', [ $protection, 'block_showcase_mail' ], 1 );
+		}
+	}
+
+	public function test_complete_fixture_imports_native_fields_and_relative_dates_and_protects_existing_records(): void {
+		update_option( 'rondo_is_demo_site', true );
+		$user_id = $this->createRondoUser( [ 'user_login' => 'demo' ] );
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$fixture  = $this->fixture();
+		$importer = new DemoShowcase();
+		$valid    = $importer->validate( $fixture );
+		$this->assertSame( true, $valid, is_wp_error( $valid ) ? $valid->get_error_message() : '' );
+		$ids = $importer->import( $fixture );
+		$this->assertNotWPError( $ids );
+		$this->assertCount( count( $fixture['records'] ) + count( $fixture['terms'] ), $ids );
+		foreach ( $fixture['coverage'] as $refs ) {
+			foreach ( $refs as $ref ) {
+				$this->assertArrayHasKey( $ref, $ids );
+			}
+		}
+		$this->assertSame( $ids['person:p001'], (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) );
+		$this->assertFalse( user_can( $user_id, 'manage_options' ) );
+		$this->assertTrue( user_can( $user_id, 'manage_training' ) );
+		$this->assertTrue( \Rondo\Core\UserRoles::can_access_board( $user_id ) );
+		$this->assertTrue( ( new \Rondo\Passes\GuestPassService() )->is_eligible_host( $ids['person:p001'] ) );
+		$tournaments = new \Rondo\Tournaments\TournamentService();
+		$this->assertCount( 3, $tournaments->entries_for_tournament( $ids['rondo_tournament:t1'] ) );
+		$roles = Fields::all_for_post( $ids['person:p001'] )['work_history'];
+		$this->assertSame( $ids['team:senior1'], $roles[0]['team_id'] );
+		$this->assertSame( $ids['person:parent1'], Fields::all_for_post( $ids['person:p113'] )['relationships'][0]['related_person_id'] );
+		$today = new \DateTimeImmutable( 'today', wp_timezone() );
+		$this->assertSame( $today->modify( '-2 years' )->format( 'Ymd' ), Fields::get_for_post( $ids['person:p001'], 'lid_sinds' ) );
+		$feed = ( new TeamMatches() )->get_feed( $ids['team:senior1'] );
+		$this->assertNotWPError( $feed );
+		$this->assertCount( 5, $feed['matches'] );
+		$this->assertTrue( $feed['matches'][4]['cancelled'] );
+		$report = json_decode( get_post_meta( $ids['rondo_twelve_report:r0'], '_twelve_report_data', true ), true );
+		$this->assertTrue( \Rondo\Twelve\Activity::validate( $report ) );
+		$this->assertNotNull( \Rondo\Twelve\Activity::hours( $report ) );
+		$this->assertCount( 4, \Rondo\Twelve\ReportAggregator::by_product( [ [ 'data' => $report ] ] ) );
+		$this->assertSame( 450.0, \Rondo\Twelve\ReportAggregator::omzet_excl_nosale( $report ) );
+		$this->assertNotWPError( \Rondo\Training\Schedules::validate_blocks( \Rondo\Fields\Formatter::for_wire( 'rondo_training', Fields::all_for_post( $ids['rondo_training:active'] ) )['blocks'] ) );
+		$this->assertSame( 'SV Voorbeeld', json_decode( get_post_meta( $ids['rondo_twelve_report:r0'], '_twelve_report_data', true ), true )['club'] );
+		$this->assertSame( $ids['rondo_training:active'], (int) get_option( 'rondo_training_active' ) );
+		$this->assertSame( '3', get_post_meta( $ids['rondo_invoice:i9'], '_installment_count', true ) );
+		$this->assertFalse( metadata_exists( 'post', $ids['rondo_invoice:i9'], '_mollie_payment_id' ) );
+		update_option( MembershipPassService::LEGACY_CLEANUP_OPTION, true, false );
+		$result = $importer->clean();
+		$this->assertWPError( $result );
+		$this->assertSame( 'demo_cleanup_protected', $result->get_error_code() );
+		foreach ( $fixture['records'] as $record ) {
+			$this->assertNotNull( get_post( $ids[ $record['_ref'] ] ) );
+		}
+		$this->assertTrue( (bool) get_option( MembershipPassService::LEGACY_CLEANUP_OPTION ) );
+		$this->assertNotFalse( get_userdata( $user_id ) );
+	}
+
+	public function test_unprotected_demo_modules_can_be_cleaned_without_removing_upgrade_state(): void {
+		update_option( 'rondo_is_demo_site', true );
+		update_option( MembershipPassService::LEGACY_CLEANUP_OPTION, true, false );
+		$ids = [];
+		foreach ( [ 'rondo_display', 'rondo_room_booking', 'dienst_shift', 'rondo_match_reg', 'rondo_tourn_entry' ] as $type ) {
+			$ids[] = self::factory()->post->create(
+				[
+					'post_type'   => $type,
+					'post_status' => 'private',
+				]
+				);
+		}
+		$core = self::factory()->post->create( [ 'post_type' => 'post' ] );
+		$this->assertTrue( ( new DemoShowcase() )->clean() );
+		foreach ( $ids as $id ) {
+			$this->assertNull( get_post( $id ) );
+		}
+		$this->assertNotNull( get_post( $core ) );
+		$this->assertTrue( (bool) get_option( MembershipPassService::LEGACY_CLEANUP_OPTION ) );
+	}
+}
