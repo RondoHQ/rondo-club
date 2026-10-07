@@ -51,6 +51,7 @@ final class DemoShowcase {
 	];
 	public const SETTINGS   = [
 		'rondo_club_name',
+		'rondo_finance_club_logo_id',
 		'rondo_feature_toggles',
 		'rondo_communication_channels',
 		'rondo_newsletter_config',
@@ -68,6 +69,7 @@ final class DemoShowcase {
 		'rondo_match_compensation',
 	];
 	private const USER_META = [ 'rondo_linked_person_id', 'rondo_newsletter_profile', '_rondo_match_teams', 'rondo_approved' ];
+	private const LOGOS     = [ 'sv-voorbeeld.svg', 'polder-fietsen.svg', 'horizon-bouw.svg', 'voorbeeld-bakkerij.svg', 'groenveld-tuinen.svg' ];
 	private const USER_CAPS = [ 'manage_training', 'narrowcasting', 'wedstrijdregistratie', 'wedstrijdzaken', 'feedback', 'commissies', 'vrijwilligers' ];
 	private array $ids      = [];
 	private \DateTimeImmutable $today;
@@ -82,7 +84,7 @@ final class DemoShowcase {
 			return new \WP_Error( 'demo_only', 'Showcase fixtures may only be imported on a demo site.' );
 		}
 		try {
-			foreach ( [ 'meta', 'records', 'terms', 'settings', 'comments', 'demo_account' ] as $section ) {
+			foreach ( [ 'meta', 'media', 'records', 'terms', 'settings', 'comments', 'demo_account' ] as $section ) {
 				if ( isset( $fixture[ $section ] ) && ! is_array( $fixture[ $section ] ) ) {
 					throw new \InvalidArgumentException( 'Invalid fixture section: ' . $section );
 				}
@@ -92,12 +94,18 @@ final class DemoShowcase {
 				throw new \InvalidArgumentException( 'Invalid fictional showcase fixture.' );
 			}
 			$this->ids = [];
-			foreach ( array_merge( $fixture['terms'] ?? [], $fixture['records'] ) as $index => $record ) {
+			foreach ( array_merge( $fixture['media'] ?? [], $fixture['terms'] ?? [], $fixture['records'] ) as $index => $record ) {
 				$ref = $record['_ref'] ?? '';
 				if ( ! is_string( $ref ) || ! preg_match( '/^[a-z_]+:[a-z0-9_-]+$/D', $ref ) || isset( $this->ids[ $ref ] ) ) {
 					throw new \InvalidArgumentException( 'Missing or duplicate fixture reference.' );
 				}
 				$this->ids[ $ref ] = $index + 1;
+			}
+			foreach ( $fixture['media'] ?? [] as $asset ) {
+				if ( ! in_array( $asset['file'] ?? '', self::LOGOS, true ) || empty( $asset['title'] )
+					|| ! is_readable( RONDO_THEME_DIR . '/fixtures/demo-logos/' . $asset['file'] ) ) {
+					throw new \InvalidArgumentException( 'Invalid showcase logo.' );
+				}
 			}
 			foreach ( $fixture['terms'] ?? [] as $term ) {
 				if ( ! in_array( $term['taxonomy'] ?? '', [ 'relationship_type', 'seizoen', 'clothing_category' ], true ) ) {
@@ -299,6 +307,19 @@ final class DemoShowcase {
 		foreach ( self::SETTINGS as $key ) {
 			delete_option( $key );
 		}
+		if ( $record_ids === null ) {
+			foreach ( get_posts(
+				[
+					'post_type'      => 'attachment',
+					'post_status'    => 'inherit',
+					'posts_per_page' => -1,
+					'fields'         => 'ids',
+					'meta_key'       => '_rondo_showcase_logo',
+				]
+				) as $id ) {
+				wp_delete_attachment( $id, true );
+			}
+		}
 		delete_option( 'rondo_demo_showcase_manifest' );
 		return true;
 	}
@@ -310,6 +331,13 @@ final class DemoShowcase {
 			return $valid;
 		}
 		$this->ids = [];
+		foreach ( $fixture['media'] ?? [] as $asset ) {
+			$id = $this->import_logo( $asset );
+			if ( is_wp_error( $id ) ) {
+				return $id;
+			}
+			$this->ids[ $asset['_ref'] ] = $id;
+		}
 		foreach ( $fixture['terms'] ?? [] as $term ) {
 			$name   = $this->resolve( $term['name'] );
 			$slug   = $this->resolve( $term['slug'] );
@@ -426,6 +454,50 @@ final class DemoShowcase {
 			false
 			);
 		return $this->ids;
+	}
+
+	/** Import only the reviewed, bundled SVGs without enabling general SVG uploads. */
+	private function import_logo( array $asset ) {
+		$allow_svg = static function ( array $mimes ): array {
+			$mimes['svg'] = 'image/svg+xml';
+			return $mimes;
+		};
+		add_filter( 'upload_mimes', $allow_svg );
+		try {
+			$upload = wp_upload_bits( $asset['file'], null, file_get_contents( RONDO_THEME_DIR . '/fixtures/demo-logos/' . $asset['file'] ) );
+		} finally {
+			remove_filter( 'upload_mimes', $allow_svg );
+		}
+		if ( $upload['error'] ) {
+			return new \WP_Error( 'demo_logo_upload_failed', $upload['error'] );
+		}
+		$id = wp_insert_attachment(
+			[
+				'post_title'     => $asset['title'],
+				'post_mime_type' => 'image/svg+xml',
+				'post_status'    => 'inherit',
+			],
+			$upload['file'],
+			0,
+			true
+		);
+		if ( is_wp_error( $id ) ) {
+			wp_delete_file( $upload['file'] );
+			return $id;
+		}
+		// WordPress cannot rasterize SVGs; explicit dimensions keep image URLs available at every size.
+		wp_update_attachment_metadata(
+			$id,
+			[
+				'width'  => 640,
+				'height' => 240,
+				'file'   => _wp_relative_upload_path( $upload['file'] ),
+				'sizes'  => [],
+			]
+			);
+		update_post_meta( $id, '_wp_attachment_image_alt', $asset['title'] );
+		update_post_meta( $id, '_rondo_showcase_logo', $asset['file'] );
+		return $id;
 	}
 
 	/** Resolve explicit references, import-relative dates, JSON and season placeholders. */
