@@ -18,7 +18,7 @@ export default function VogSubmissionStatus({ submission, vog, renewalText }) {
           {submission.status === 'needs_original' && <p className="text-sm">Upload hieronder de oorspronkelijke PDF uit de Berichtenbox van MijnOverheid. Gebruik geen screenshot of afdruk naar PDF. Kom je er niet uit? De VOG-coördinator kan je helpen.</p>}
           {submission.status === 'waiting_paper' && <p className="text-sm">Neem het originele papieren document mee naar de VOG-coördinator. Je scan is ontvangen; opnieuw uploaden is niet nodig.</p>}
           {submission.status === 'technical' && <p className="text-sm">De controle lukt nu niet. {submission.attempts < 3 ? 'We proberen het automatisch opnieuw.' : 'De VOG-coördinator kan de controle opnieuw starten.'} Je hoeft het document niet opnieuw te uploaden.</p>}
-          {submission.status === 'approved' && <p className="text-sm">{submission.method === 'paper_original' ? 'Origineel op papier gecontroleerd.' : 'Digitaal gecontroleerd via Justid.'}</p>}
+          {submission.status === 'approved' && <p className="text-sm">{submission.method === 'paper_original' ? 'Origineel op papier gecontroleerd.' : 'Digitaal gecontroleerd via de Justitiële Informatiedienst (Justid).'}</p>}
           {submission.status === 'expired' && <p className="text-sm">Je inzending is niet op tijd afgerond. Upload je VOG opnieuw om de controle te starten.</p>}
           {submission.identity_remembered && <p className="text-sm">Je bevestigde namen worden gebruikt bij volgende VOG-controles. Je naam in de ledenlijst blijft gelijk.</p>}
           {submission.note && <p className="text-sm whitespace-pre-line">{submission.note}</p>}

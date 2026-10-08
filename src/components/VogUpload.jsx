@@ -80,7 +80,7 @@ export default function VogUpload() {
           </div>
         )}
         <p className="text-sm text-gray-600 dark:text-gray-300">
-          {source === 'digital' ? 'We sturen de originele PDF naar de officiële validatiedienst van Justid en vergelijken de gegevens met je profiel.' : 'De VOG-coördinator bekijkt je upload. Voor goedkeuring is de originele digitale PDF of controle van het echte papieren origineel nodig.'}
+          {source === 'digital' ? 'We sturen de originele PDF naar de officiële validatiedienst van de Justitiële Informatiedienst (Justid) en vergelijken de gegevens met je profiel.' : 'De VOG-coördinator bekijkt je upload. Voor goedkeuring is de originele digitale PDF of controle van het echte papieren origineel nodig.'}
           {' '}Na afronding verwijderen we je upload. Openstaande uploads zijn maximaal 30 dagen beschikbaar. Bewaar zelf je origineel.
         </p>
         <div className="space-y-2">
