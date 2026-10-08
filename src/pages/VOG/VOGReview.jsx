@@ -62,7 +62,7 @@ function Submission({ item, onApproved }) {
         <div><Link to={`/people/${item.person_id}`} className="font-semibold text-bright-cobalt dark:text-electric-cyan">{item.name}</Link><p className="text-sm text-gray-600 dark:text-gray-300">{VOG_SUBMISSION_LABELS[item.status]} · inzending {item.id}</p></div>
         {item.parsed?.date && <p className="text-sm">Afgegeven op {format(item.parsed.date, 'd MMMM yyyy')}</p>}
       </div>
-      {item.source === 'digital' && <p className="text-sm">Echtheid: {item.code === 0 ? 'Bevestigd door Justid' : item.status === 'technical' ? 'Controle tijdelijk niet beschikbaar' : item.code === null ? 'Nog niet bevestigd' : 'Niet bevestigd; originele PDF nodig'}</p>}
+      {item.source === 'digital' && <p className="text-sm">Echtheid: {item.code === 0 ? 'Bevestigd door de Justitiële Informatiedienst (Justid)' : item.status === 'technical' ? 'Controle tijdelijk niet beschikbaar' : item.code === null ? 'Nog niet bevestigd' : 'Niet bevestigd; originele PDF nodig'}</p>}
       <div className="flex flex-wrap gap-2">{item.files?.map((file, index) => <button key={index} className="btn-secondary" type="button" onClick={() => openFile(index)}>Bekijk {file.type === 'application/pdf' ? 'PDF' : `foto ${index + 1}`}</button>)}</div>
       {fileError && <p role="alert" className="text-red-700 dark:text-red-300 text-sm">{fileError}</p>}
       {item.status === 'needs_original' && <p className="text-sm">Vraag de originele PDF uit MijnOverheid. Een scan, screenshot of afdruk van een digitale VOG is onvoldoende om de echtheid vast te stellen.</p>}
