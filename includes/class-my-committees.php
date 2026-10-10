@@ -23,9 +23,14 @@ final class MyCommittees {
 			if ( $role === '' || ! RosterPerson::is_current_position( $position ) || get_post_type( $id ) !== 'commissie' || get_post_status( $id ) !== 'publish' ) {
 				continue;
 			}
+			$name = html_entity_decode( get_the_title( $id ), ENT_QUOTES, 'UTF-8' );
+			// Sportlink's club-wide role container is not an actual committee.
+			if ( strtolower( trim( $name ) ) === 'verenigingsbreed' ) {
+				continue;
+			}
 			$committees[ $id ] = [
 				'id'                => $id,
-				'name'              => html_entity_decode( get_the_title( $id ), ENT_QUOTES, 'UTF-8' ),
+				'name'              => $name,
 				'can_view_contacts' => strtolower( $role ) === 'voorzitter' || ( $committees[ $id ]['can_view_contacts'] ?? false ),
 			];
 		}
