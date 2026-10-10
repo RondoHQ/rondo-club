@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Add Mijn commissies with current committee members and roles, and contact details available only to each committee's active chairperson. Access follows current membership and chairperson assignments.
 
+### Fixed
+- Keep weekend recruitment planning tests independent of elapsed fixture dates.
+
 ## [35.145.1] - 2026-10-08
 
 ### Changed

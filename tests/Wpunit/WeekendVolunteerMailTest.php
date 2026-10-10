@@ -49,8 +49,9 @@ class WeekendVolunteerMailTest extends RondoTestCase {
 			);
 	}
 
-	private function shift( string $date = '2026-10-03 11:00:00', array $assigned = [], string $status = 'open', int $capacity = 2, ?int $type = null ): int {
-		$id = self::factory()->post->create(
+	private function shift( ?string $date = null, array $assigned = [], string $status = 'open', int $capacity = 2, ?int $type = null ): int {
+		$date = $date ?? $this->sunday->modify( '+13 days' )->setTime( 11, 0 )->format( 'Y-m-d H:i:s' );
+		$id   = self::factory()->post->create(
 			[
 				'post_type'   => 'dienst_shift',
 				'post_status' => 'publish',
@@ -67,6 +68,21 @@ class WeekendVolunteerMailTest extends RondoTestCase {
 			update_post_meta( $id, $key, $value );
 		}
 		return $id;
+	}
+
+	/** Planning uses the real clock, so keep these fixtures in a future autumn season. */
+	private function use_future_round(): string {
+		$year         = (int) current_datetime()->format( 'Y' ) + 1;
+		$this->sunday = WeekendVolunteerMail::next_sunday( new \DateTimeImmutable( $year . '-09-01', wp_timezone() ) );
+		return SeasonKey::current( $this->sunday->format( 'Y-m-d' ) );
+	}
+
+	private function plan_required_shifts( int $person_id ): void {
+		foreach ( [ 20, 21 ] as $days ) {
+			$start = $this->sunday->modify( '+' . $days . ' days' )->setTime( 11, 0 );
+			$this->assertGreaterThan( time(), $start->getTimestamp() );
+			$this->shift( $start->format( 'Y-m-d H:i:s' ), [ $person_id ] );
+		}
 	}
 
 	public function test_wordpress_init_schedules_mail_without_a_date_argument(): void {
@@ -107,6 +123,7 @@ class WeekendVolunteerMailTest extends RondoTestCase {
 		[$start, $end] = WeekendVolunteerMail::weekend( $this->sunday );
 		$this->assertSame( '2026-09-26 00:00:00', $start->format( 'Y-m-d H:i:s' ) );
 		$this->assertSame( '2026-10-12 00:00:00', $end->format( 'Y-m-d H:i:s' ) );
+		$this->assertStringContainsString( '26 september t/m 11 oktober', $this->mailer->message( [], [], $this->sunday )['subject'] );
 	}
 
 	public function test_next_three_weekends_are_included_across_dst_and_year_boundaries(): void {
@@ -185,14 +202,14 @@ class WeekendVolunteerMailTest extends RondoTestCase {
 	}
 
 	public function test_only_open_duties_receive_mail_and_shared_addresses_are_deduplicated(): void {
+		$season = $this->use_future_round();
 		$this->player( 'shared@example.org' );
 		$this->player( 'SHARED@example.org' );
 		$planned = $this->player( 'planned@example.org' );
-		$this->shift( '2026-10-10 11:00:00', [ $planned ] );
-		$this->shift( '2026-10-11 11:00:00', [ $planned ] );
+		$this->plan_required_shifts( $planned );
 		$exempt = $this->player( 'exempt@example.org' );
 		Fields::update_for_post( $exempt, 'vrijgesteld_handmatig', true );
-		Fields::update_for_post( $exempt, 'vrijstelling_seizoen', '2026-2027' );
+		Fields::update_for_post( $exempt, 'vrijstelling_seizoen', $season );
 		$former = $this->player( 'former@example.org' );
 		Fields::update_for_post( $former, 'former_member', true );
 		$dead = $this->player( 'dead@example.org' );
@@ -201,13 +218,13 @@ class WeekendVolunteerMailTest extends RondoTestCase {
 		$this->assertSame( 1, $this->mailer->run( $this->sunday ) );
 		$this->assertCount( 1, $this->mail );
 		$this->assertSame( [ 'shared@example.org' ], $this->mail[0]['to'] );
-		$this->assertStringContainsString( '26 september t/m 11 oktober', $this->mail[0]['subject'] );
 		$this->assertStringContainsString( 'Hoi Anne,', $this->mail[0]['message'] );
 		$this->assertStringNotContainsString( '[voornaam]', $this->mail[0]['message'] );
 		$this->assertSame( 0, $this->mailer->run( $this->sunday->modify( '+2 minutes' ) ) );
 	}
 
 	public function test_batch_limit_rechecks_planning_email_and_capacity(): void {
+		$this->use_future_round();
 		$people = [];
 		for ( $n = 0; $n < 28; ++$n ) {
 			$people[] = $this->player( sprintf( 'person%02d@example.org', $n ) );
@@ -215,8 +232,7 @@ class WeekendVolunteerMailTest extends RondoTestCase {
 		$open = $this->shift();
 		$this->assertSame( 25, $this->mailer->run( $this->sunday ) );
 		$this->assertSame( 0, $this->mailer->run( $this->sunday->modify( '+30 seconds' ) ) );
-		$this->shift( '2026-10-10 11:00:00', [ $people[25] ] );
-		$this->shift( '2026-10-11 11:00:00', [ $people[25] ] );
+		$this->plan_required_shifts( $people[25] );
 		Fields::update_for_post( $people[26], 'email_1', 'changed@example.org' );
 		$this->assertSame( 1, $this->mailer->run( $this->sunday->modify( '+1 minute' ) ) );
 		$this->assertSame( [ 'person27@example.org' ], $this->mail[25]['to'] );
@@ -236,6 +252,7 @@ class WeekendVolunteerMailTest extends RondoTestCase {
 	}
 
 	public function test_family_duty_targets_parents_and_partner_signup_satisfies_both(): void {
+		$season  = $this->use_future_round();
 		$parent  = $this->createPerson( [], [ 'email_1' => 'parent@example.org' ] );
 		$partner = $this->createPerson( [], [ 'email_1' => 'partner@example.org' ] );
 		$child   = $this->createPerson(
@@ -273,9 +290,8 @@ class WeekendVolunteerMailTest extends RondoTestCase {
 		}
 		VolunteerEligibilityService::invalidate_cache();
 		VolunteerObligationCalculator::invalidate_cache();
-		$this->assertEqualsCanonicalizing( [ 'parent@example.org', 'partner@example.org' ], array_keys( $this->mailer->recipients( '2026-2027' ) ) );
-		$this->shift( '2026-10-10 11:00:00', [ $partner ] );
-		$this->shift( '2026-10-11 11:00:00', [ $partner ] );
+		$this->assertEqualsCanonicalizing( [ 'parent@example.org', 'partner@example.org' ], array_keys( $this->mailer->recipients( $season ) ) );
+		$this->plan_required_shifts( $partner );
 		$this->shift();
 		$this->assertSame( 0, $this->mailer->run( $this->sunday ) );
 	}
