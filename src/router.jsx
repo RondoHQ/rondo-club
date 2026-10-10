@@ -17,7 +17,7 @@ import Dashboard from '@/pages/Dashboard';
 // Lazy-loaded page components (separate file for fast refresh compatibility)
 import {
   PeopleList, PeopleAnniversaries, PeopleOnboarding, ProfileChangeLog, PersonDetail, SponsorList, SponsorDetail, TeamsList, TeamDetail,
-  Kaderlijst, MyTeam, Football,
+  Kaderlijst, MyTeam, MyCommittees, Football,
   CommissiesList, CommissieDetail, TodosList,
   FeedbackList, FeedbackDetail, Communication, Planning, Newsletter, NewsletterSettings, Settings, AppAccess, VOG,
   Contributie, DisciplineCasesList,
@@ -551,6 +551,7 @@ const router = createBrowserRouter([
           { path: 'vrijwillig', element: <Vrijwillig /> },
           // Mijn gegevens — eigen record + kinderen. Server-side gescoped.
           { path: 'mijn-gegevens', element: <Household /> },
+          { path: 'mijn-commissies', element: <CapabilityRoute checkAccess={(user) => user?.has_my_committees}><MyCommittees /></CapabilityRoute> },
           { path: 'mijn-team', element: <CapabilityRoute checkAccess={(user) => user?.has_my_teams}><MyTeam /></CapabilityRoute> },
           { path: 'mijn-gegevens/pas/:personId', element: <MembershipPass /> },
           { path: 'mijn-toernooien', element: <MyTournaments /> },

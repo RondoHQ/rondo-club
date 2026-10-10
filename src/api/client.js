@@ -155,6 +155,7 @@ export const prmApi = {
   getTournamentEntries: (id) => api.get(`/rondo/v1/tournaments/${id}/entries`),
   getTournamentCoordinators: () => api.get('/rondo/v1/tournaments/coordinators'),
   getMyTournamentEntries: () => api.get('/rondo/v1/tournament-entries/mine'),
+  getMyCommittees: () => api.get('/rondo/v1/my-committees'),
   getMyTeams: () => api.get('/rondo/v1/my-teams'),
   getTournamentEntry: (id) => api.get(`/rondo/v1/tournament-entries/${id}`),
   saveTournamentEntryDraft: (id, data) => api.patch(`/rondo/v1/tournament-entries/${id}/draft`, data),
