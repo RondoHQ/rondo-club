@@ -49,6 +49,20 @@ class Commissies extends Base {
 	 * Register custom REST routes for commissies domain
 	 */
 	public function register_routes() {
+		register_rest_route(
+			'rondo/v1',
+			'/my-committees',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => static function () {
+					$response = rest_ensure_response( \Rondo\Commissies\MyCommittees::rosters() );
+					$response->header( 'Cache-Control', 'private, no-store' );
+					return $response;
+				},
+				'permission_callback' => static fn(): bool => is_user_logged_in() && ! empty( \Rondo\Commissies\MyCommittees::committees_for_user() ),
+			]
+		);
+
 		// Member counts load independently so they do not block the commissie list.
 		register_rest_route(
 			'rondo/v1',
