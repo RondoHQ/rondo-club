@@ -1259,6 +1259,7 @@ class UserSettings extends Base {
 			'can_manage_tournaments'         => \Rondo\Tournaments\TournamentAccess::can_manage( $user_id ),
 			'has_tournament_assignments'     => \Rondo\Tournaments\TournamentAccess::has_assignments( $user_id ),
 			'has_my_teams'                   => ! empty( \Rondo\Teams\MyTeam::teams_for_user( $user_id ) ),
+			'has_my_committees'              => ! empty( \Rondo\Commissies\MyCommittees::committees_for_user( $user_id ) ),
 			'can_access_fairplay'            => current_user_can( 'fairplay' ),
 			'can_access_vog'                 => current_user_can( 'vog' ),
 			'can_access_kassaomzet'          => \Rondo\Core\UserRoles::can_access_section( 'kassaomzet' ),

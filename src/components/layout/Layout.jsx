@@ -68,6 +68,7 @@ import '@/styles/app-shell-brand.css';
 const navigation = [
   { name: 'Mijn inschrijftaken', href: '/vrijwillig?tab=mine', icon: HeartHandshake, personal: true },
   { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, requiresLinkedPerson: true, personal: true },
+  { name: 'Mijn commissies', href: '/mijn-commissies', icon: Users, requiresMyCommittees: true, personal: true },
   { name: 'Mijn team', href: '/mijn-team', icon: Shield, requiresMyTeams: true, personal: true },
   { name: 'Ruimtes', href: '/rooms', icon: CalendarDays, personal: true, requiresFeature: 'rooms' },
   { name: 'Toernooien', href: '/mijn-toernooien', icon: Trophy, personal: true },
@@ -214,6 +215,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.mobileOnly && !mobile) return false;
     if (item.requiresFeature && !canAccessFeature(item.requiresFeature, isAdmin)) return false;
     if (item.requiresLinkedPerson && !currentUser?.linked_person_id) return false;
+    if (item.requiresMyCommittees && !currentUser?.has_my_committees) return false;
     if (item.requiresMyTeams && !currentUser?.has_my_teams) return false;
     if (item.communicationItem) return canAccessCommunicationItem(item, currentUser);
     if (item.requiresCommunication) return canAccessCommunication(currentUser);
