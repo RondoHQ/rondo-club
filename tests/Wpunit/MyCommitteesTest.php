@@ -178,6 +178,25 @@ class MyCommitteesTest extends RondoTestCase {
 		$this->assertSame( 401, $this->request()->get_status() );
 	}
 
+	public function test_club_wide_roles_never_grant_a_committee_roster_or_contacts(): void {
+		$club = $this->createOrganization(
+			[
+				'post_type'  => 'commissie',
+				'post_title' => 'Verenigingsbreed',
+			]
+			);
+		Fields::update_for_post( $this->person_id, 'work_history', [ $this->position( $club, 'Voorzitter' ), $this->position( $this->committee_id ) ] );
+		$rosters = $this->request()->get_data();
+		$this->assertSame( [ $this->committee_id ], array_column( $rosters, 'id' ) );
+		$this->assertFalse( $rosters[0]['can_view_contacts'] );
+		$this->assertArrayNotHasKey( 'emails', $rosters[0]['members'][0] );
+		foreach ( [ 'Kaderlid Algemeen', 'Voorzitter' ] as $role ) {
+			Fields::update_for_post( $this->person_id, 'work_history', [ $this->position( $club, $role ) ] );
+			$this->assertSame( 403, $this->request()->get_status() );
+			$this->assertFalse( ( new UserSettings() )->get_current_user_data( $this->user_id )['has_my_committees'] );
+		}
+	}
+
 	public function test_team_chairmanship_and_admin_role_do_not_grant_committee_membership(): void {
 		$team = $this->createOrganization();
 		Fields::update_for_post( $this->person_id, 'work_history', [ $this->position( $team, 'Voorzitter' ) ] );
