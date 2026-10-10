@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.146.0] - 2026-10-10
+
+### Added
+- Add Mijn commissies with current committee members and roles, and contact details available only to each committee's active chairperson. Access follows current membership and chairperson assignments.
+
+### Fixed
+- Keep weekend recruitment planning tests independent of elapsed fixture dates.
+
 ## [35.145.1] - 2026-10-08
 
 ### Changed
