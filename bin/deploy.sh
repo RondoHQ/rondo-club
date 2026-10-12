@@ -394,6 +394,12 @@ if [ "$PRUNE_DELETED" = true ]; then
     done
 fi
 
+# The loader resolves code from the current theme release, including on rollback.
+if [ -f "$SOURCE_DIR/mu-plugins/rondo-error-monitoring.php" ]; then
+    retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
+        "mkdir -p $DEPLOY_REMOTE_WP_PATH/wp-content/mu-plugins && cp $DEPLOY_REMOTE_THEME_PATH/mu-plugins/rondo-error-monitoring.php $DEPLOY_REMOTE_WP_PATH/wp-content/mu-plugins/rondo-error-monitoring.php"
+fi
+
 echo -e "${YELLOW}Step 3c: Refreshing WordPress rewrite rules...${NC}"
 retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
     "cd $DEPLOY_REMOTE_WP_PATH && wp rewrite flush --hard"
