@@ -27,29 +27,37 @@ final class CompensationAgreements {
 		return Formatter::for_wire( 'person', [ self::FIELD => Fields::get_for_post( $id, self::FIELD ) ] )[ self::FIELD ];
 	}
 	public static function people(): array {
-		return get_posts(
+		$people = [];
+		// Separate these conditions: an OR with EXISTS joins every person's meta rows twice.
+		foreach ( [
+			[
+				'key'     => self::FIELD,
+				'value'   => 0,
+				'compare' => '>',
+				'type'    => 'NUMERIC',
+			],
+			[
+				'key'     => '_match_agreement_pending',
+				'compare' => 'EXISTS',
+			],
+		] as $condition ) {
+			$matches = get_posts(
 			[
 				'post_type'        => 'person',
 				'post_status'      => 'publish',
 				'numberposts'      => -1,
-				'meta_query'       => [
-					'relation' => 'OR',
-					[
-						'key'     => self::FIELD,
-						'value'   => 0,
-						'compare' => '>',
-						'type'    => 'NUMERIC',
-					],
-					[
-						'key'     => '_match_agreement_pending',
-						'compare' => 'EXISTS',
-					],
-				],
+				'meta_query'       => [ $condition ],
 				'suppress_filters' => false,
 				'orderby'          => 'ID',
 				'order'            => 'ASC',
 			]
 			);
+			foreach ( $matches as $post ) {
+				$people[ $post->ID ] = $post;
+			}
+		}
+		ksort( $people );
+		return array_values( $people );
 	}
 	public static function roster( int $team ): array {
 		$people = [];
