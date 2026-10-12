@@ -11,6 +11,8 @@ final class MatchCompensation extends Base {
 	}
 	public function register_routes(): void {
 		$routes = [
+			'/people/(?P<id>\d+)/agreements'        => [ 'GET', 'PATCH' ],
+			'/agreements'                           => [ 'GET' ],
 			'/imports/preview'                      => [ 'POST' ],
 			'/imports'                              => [ 'POST' ],
 			'/people/(?P<id>\d+)/nmbrs'             => [ 'PATCH' ],
@@ -21,7 +23,7 @@ final class MatchCompensation extends Base {
 			'/months'                               => [ 'GET' ],
 			'/batches'                              => [ 'POST' ],
 			'/batches/(?P<id>\d+)'                  => [ 'GET' ],
-			'/batches/(?P<id>\d+)/(?P<action>exports|processing|corrections)' => [ 'POST' ],
+			'/batches/(?P<id>\d+)/(?P<action>exports|processing|corrections|route-corrections)' => [ 'POST' ],
 		];
 		foreach ( $routes as $route => $methods ) {
 			register_rest_route(
@@ -42,7 +44,13 @@ final class MatchCompensation extends Base {
 		if ( ! is_array( $input ) ) {
 			return Service::error( 'Ongeldige invoer.' );
 		}
-		if ( str_contains( $route, '/imports' ) ) {
+		if ( str_ends_with( $route, '/agreements' ) ) {
+			if ( ! Service::finance( true ) ) {
+				return Service::error( 'Geen financieel beheerrecht.', 403 );
+			}
+			$id     = (int) ( $params['id'] ?? 0 );
+			$result = $id ? ( $request->get_method() === 'GET' ? \Rondo\Matches\CompensationAgreements::response( $id ) : \Rondo\Matches\CompensationAgreements::update( $id, $input ) ) : \Rondo\Matches\CompensationAgreements::roster( (int) $request['team_id'] );
+		} elseif ( str_contains( $route, '/imports' ) ) {
 			$result = Service::import( $input, str_ends_with( $route, '/imports' ) );
 		} elseif ( str_ends_with( $route, '/nmbrs' ) ) {
 			$id = (int) ( $params['id'] ?? 0 );
@@ -61,7 +69,22 @@ final class MatchCompensation extends Base {
 			$result = Service::close( $input );
 		} elseif ( $request->get_method() === 'GET' ) {
 			$record = Service::record( (int) ( $params['id'] ?? 0 ) );
-			$result = Service::finance() && get_post_type( (int) ( $params['id'] ?? 0 ) ) === Service::BATCH && $record ? $record + [ 'summary' => Service::batch_summary( $record ) ] : Service::error( 'Geen toegang tot deze maand.', 403 );
+			$result = Service::finance() && get_post_type( (int) ( $params['id'] ?? 0 ) ) === Service::BATCH && $record ? $record + [
+				'summary'             => Service::batch_summary( $record ),
+				'reversal_candidates' => array_values(
+				array_reduce(
+				Service::baseline( $record ),
+				static function ( $result, $row ) {
+					$result[ $row['person_id'] ] = [
+						'person_id'   => $row['person_id'],
+						'player_name' => $row['player_name'],
+					];
+					return $result;
+				},
+					[]
+				)
+			),
+			] : Service::error( 'Geen toegang tot deze maand.', 403 );
 		} else {
 			$result = Service::batch_action( (int) ( $params['id'] ?? 0 ), (string) ( $params['action'] ?? '' ), $input );
 		}
@@ -69,12 +92,13 @@ final class MatchCompensation extends Base {
 			return $result;
 		}
 		if ( ! Service::finance( true ) ) {
+			unset( $result['agreement_snapshot'], $result['allocations'], $result['allocation_baseline'] );
 			foreach ( [ 'rows', 'settlement_rows' ] as $key ) {
 				if ( ! isset( $result[ $key ] ) ) {
 					continue; }
 				foreach ( $result[ $key ] as &$row ) {
 					$row['iban'] = empty( $row['iban'] ) ? '' : '•••• ' . substr( $row['iban'], -4 );
-					unset( $row['bank_account_holder'] );
+					unset( $row['bank_account_holder'], $row['nmbrs_name'], $row['nmbrs_employee_number'] );
 				}
 				unset( $row );
 			}

@@ -132,7 +132,7 @@ class AccessControl {
 	 * ledenadministratie list renders it as a badge.
 	 */
 	private const SENSITIVE_FIELD_GROUPS = [
-		'bank'    => [ 'iban', 'bank_account_holder', 'nmbrs_name' ],
+		'bank'    => [ 'iban', 'bank_account_holder', 'nmbrs_name', 'match_compensation_agreements' ],
 		'finance' => [
 			'financiele-blokkade',
 			'nikki-contributie-status',
