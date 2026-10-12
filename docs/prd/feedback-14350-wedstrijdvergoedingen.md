@@ -71,6 +71,12 @@ Een financieel beheerder kan een bestaande persoon zoeken, een afspraak toevoege
 personeelsnummer vastleggen. Bij ontbrekend personeelsnummer blijft een loonspeler geblokkeerd;
 die wordt nooit tijdelijk naar SEPA verplaatst. Dit ondersteunt ook later toegevoegde loonspelers.
 
+**Besluit van Joost, 12 oktober 2026:** de penningmeester voert de ingangsdatum zelf in op de
+pagina Wedstrijdvergoedingen, bij de betreffende afspraak, met een optionele einddatum.
+De ingangsdatum is geen voorafgaand beslispunt of voorwaarde om de module te bouwen.
+De pagina toont welke open maanden door de gekozen datum veranderen; afgesloten maanden
+blijven hun vastgelegde afspraken gebruiken en volgen bij wijzigingen het correctieproces.
+
 ### Rechten en presentatie
 
 De afspraken en personeelsnummers vallen onder dezelfde financiële veldbeveiliging als de
@@ -181,8 +187,9 @@ Na goedkeuring van het plan volgen afzonderlijk controle en inrichting:
 1. Controleer Frans' originele loonbestand en de definitieve lijst met personeelsnummers.
    Verifieer de in feedback genoemde uitzonderingen op hun bestaande Rondo-ID's; leid de
    loonstatus niet af uit het huidige gastlabel. Sla de volledige personenlijst niet in Git op.
-2. Bevestig de ingangsdatum van de nieuwe afspraken en de status van augustus en september
-   buiten Rondo. Xanders rekenvoorbeelden zijn geen bewijs dat deze maanden nog onbetaald zijn.
+2. De penningmeester vult per afspraak de ingangsdatum op de pagina in en controleert vóór
+   historische verwerking de status van augustus en september buiten Rondo. Xanders
+   rekenvoorbeelden zijn geen bewijs dat deze maanden nog onbetaald zijn.
 3. Maak een voorstel voor afspraken met controlevoorvertoning en backupreferentie. Schrijf
    alleen na akkoord de gecontroleerde koppelingen; verifieer teruglezen en identieke herhaling.
 4. Controleer Guido's exacte account, koppel de twee bestaande moduleteams en verifieer de
@@ -203,8 +210,8 @@ De gebruiker beslist zelf over het delen van die instructie.
 
 | Fase | Werk | Gereed als |
 |---|---|---|
-| 0. Besluiten en broncontract | Nieuwe regeling, ingangsdatum, voorbeeldbestand, correctieformaat en loonlijst bevestigen | De open beslissingen hieronder zijn vastgelegd voor het betreffende onderdeel |
-| 1. Afspraken | Native velden, financiële rechten, beheerinterface, geldigheids- en uniciteitscontrole | Onbekende afspraken blokkeren; een gastlabel verandert de betaalroute niet |
+| 0. Besluiten en broncontract | Nieuwe regeling, voorbeeldbestand, correctieformaat en loonlijst bevestigen | De open beslissingen hieronder zijn vastgelegd voor het betreffende onderdeel |
+| 1. Afspraken | Native velden, financiële rechten, beheerinterface met ingangsdatum, geldigheids- en uniciteitscontrole | De penningmeester kan de ingangsdatum invoeren; onbekende afspraken blokkeren; een gastlabel verandert de betaalroute niet |
 | 2. Maandberekening | Afspraken per speeldatum toepassen, twee groepen, alle loonspelers meenemen | Berekeningen en uitsluitingen kloppen onafhankelijk van de huidige teamsamenstelling |
 | 3. Bestanden en historie | XLSX, SEPA, binaire download, aparte bewijzen en correcties | Beide bestanden voldoen aan hun contract; herdownload en gedeeltelijke verwerking blijven veilig |
 | 4. Inrichting en uitleg | Gecontroleerde koppelingen, Guido, instellingen en instructie | Bevoegde gebruikers kunnen de bedoelde stappen uitvoeren en onbevoegden niet |
@@ -218,6 +225,8 @@ De gebruiker beslist zelf over het delen van die instructie.
   JO23-1 blijft €15 per punt. Registratieconcepten tellen niet mee.
 - Loonspeler zonder deelname staat in XLSX met lege telcellen. Dubbele personeelsnummers,
   ongeldige datums, overlappende afspraken en onbekende routes worden geweigerd.
+- De penningmeester kan per afspraak de ingangsdatum en optionele einddatum invoeren en ziet
+  de gevolgen voor open maanden. Een datumwijziging herschrijft geen afgesloten maand.
 - Een loonspeler met `guest=true` blijft loonspeler; een speler zonder overeenkomst krijgt
   uitsluitend SEPA. Een afspraakwijziging midden in de maand telt elke deelname precies eenmaal.
 - Test native opslag, gedeeltelijke writes, verwijderde repeaterregels, veldrechten en afscherming
@@ -237,9 +246,9 @@ Developer-documentatie wordt conform de repositoryafspraak door de dagelijkse au
 
 ## 8. Beslispunten vóór de bouw
 
-1. **Regeling en ingangsdatum:** akkoord met €20 plus €30 per punt voor bevestigde spelers
-   zonder premieovereenkomst, ter vervanging van B3a voor AWC 1; bevestig vanaf welke datum
-   en voor welke nog onverwerkte historische maanden dit geldt.
+1. **Regeling:** akkoord met €20 plus €30 per punt voor bevestigde spelers zonder
+   premieovereenkomst, ter vervanging van B3a voor AWC 1. De penningmeester bepaalt de
+   ingangsdatum later op de pagina; daarvoor is vooraf geen besluit nodig.
 2. **Looncontract:** het originele importbestand, gecontroleerde loonlijst en correctiewerkwijze
    moeten beschikbaar zijn. De koppeling op personeelsnummer vervangt het handmatig raden van
    namen; de naamkolom blijft volgens het importcontract verplicht.
