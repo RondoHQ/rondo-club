@@ -35,13 +35,24 @@ final class CompensationService {
 		}
 	}
 	public static function config(): array {
-		return get_option(
+		return array_merge(
+			[
+				'debtor_number'                 => '',
+				'company_number'                => '',
+				'basis_code'                    => 'U2150',
+				'win_code'                      => 'L3090',
+				'draw_code'                     => 'L3091',
+				'payroll_import_confirmed'      => false,
+				'payroll_corrections_confirmed' => false,
+			],
+			get_option(
 			self::CONFIG,
 			[
 				'teams'            => [],
 				'bank_code'        => '',
 				'retention_policy' => '',
 			]
+			)
 			);
 	}
 	public static function finance( bool $write = false ): bool {
@@ -155,6 +166,20 @@ final class CompensationService {
 			'bank_code'        => sanitize_text_field( (string) ( $input['bank_code'] ?? '' ) ),
 			'retention_policy' => sanitize_textarea_field( (string) ( $input['retention_policy'] ?? '' ) ),
 		];
+
+		foreach ( [ 'debtor_number', 'company_number', 'basis_code', 'win_code', 'draw_code' ] as $key ) {
+			$value = $input[ $key ] ?? self::config()[ $key ];
+			if ( ! is_string( $value ) || ( $value !== '' && ! preg_match( in_array( $key, [ 'debtor_number', 'company_number' ], true ) ? '/^[1-9][0-9]{0,13}$/D' : '/^[UL][0-9]{4}$/D', $value ) ) ) {
+				return self::error( 'Ongeldige administratie- of looncomponentcode.' );
+			}
+			$config[ $key ] = $value;
+		}
+		if ( $config['bank_code'] !== '' && ! preg_match( '/^U[0-9]{4}$/D', $config['bank_code'] ) ) {
+			return self::error( 'Ongeldige bankvergoedingcode.' );
+		}
+		foreach ( [ 'payroll_import_confirmed', 'payroll_corrections_confirmed' ] as $key ) {
+			$config[ $key ] = ( $input[ $key ] ?? self::config()[ $key ] ) === true;
+		}
 		update_option( self::CONFIG, $config, false );
 		foreach ( $assignments as $id => $ids ) {
 			update_user_meta( $id, '_rondo_match_teams', array_values( $ids ) );
@@ -189,6 +214,15 @@ final class CompensationService {
 		return is_array( $record ) ? $record : [];
 	}
 	private static function save( int $id, array $fields, string $request_id ) {
+		if ( get_post_type( $id ) === self::BATCH && isset( $fields['rows'] ) ) {
+			foreach ( $fields['rows'] as &$row ) {
+				$row += [
+					'payment_route'         => '',
+					'nmbrs_employee_number' => '',
+				];
+			}
+			unset( $row );
+		}
 		$previous = self::record( $id );
 		update_post_meta( $id, '_match_pending', wp_slash( $fields ) );
 		$result = Fields::update_many_for_post( $id, Formatter::for_storage( get_post_type( $id ), $fields ) );
@@ -523,51 +557,169 @@ final class CompensationService {
 			$matches[]            = $record;
 			$sources[ $post->ID ] = (int) $record['version'];
 		}
-		$errors = array_merge( $errors, self::source_errors( $team, $month, $matches ) );
-		$rows   = CompensationCalculator::calculate( $matches, $rule['scheme'] );
+		$errors      = array_merge( $errors, self::source_errors( $team, $month, $matches ) );
+		$agreements  = $rule['scheme'] === 'awc1' ? CompensationAgreements::roster( $team ) : [];
+		$calculation = $rule['scheme'] === 'awc1' ? CompensationPayroll::calculate( $matches, $agreements, $month ) : [
+			'rows'   => CompensationCalculator::calculate( $matches, $rule['scheme'] ),
+			'errors' => [],
+		];
+		$rows        = $calculation['rows'];
+		$errors      = array_merge( $errors, $calculation['errors'] );
 		foreach ( $rows as &$row ) {
-			$row['nmbrs_name'] = (string) Fields::get_for_post( $row['person_id'], 'nmbrs_name' );
-			if ( $rule['scheme'] === 'awc1' && $row['nmbrs_name'] === '' ) {
-				$errors[] = $row['player_name'] . ': bevestigde Nmbrs-naam ontbreekt.'; }
+			if ( ! AccessControl::can_view_person( (int) $row['person_id'] ) ) {
+				return self::error( 'Een betrokken persoon is niet toegankelijk.', 403 );
+			}
+			if ( get_post_meta( $row['person_id'], '_match_agreement_pending', true ) ) {
+				$errors[] = 'Een afspraakwijziging is niet volledig opgeslagen; herstel deze eerst.';
+			}
+			$row['nmbrs_name']        ??= '';
 			$row['iban']                = (string) Fields::get_for_post( $row['person_id'], 'iban' );
 			$row['bank_account_holder'] = (string) Fields::get_for_post( $row['person_id'], 'bank_account_holder' );
-
 		}
 		unset( $row );
-		if ( ! $matches ) {
-			$errors[] = 'Geen afgeronde meetellende wedstrijden.';
+		if ( ! $matches && ! $rows ) {
+			$errors[] = 'Geen afgeronde meetellende wedstrijden of geldige loonafspraken.';
+		}
+		if ( self::config()['retention_policy'] === '' ) {
+			$errors[] = 'Leg het vastgestelde bewaarbeleid vast bij Instellingen.';
 		}
 		$batches  = array_values( array_filter( array_map( static fn( $post ) => self::record( $post->ID ), self::posts( self::BATCH, $team ) ), static fn( $batch ) => $batch && $batch['month'] === $month ) );
 		$baseline = [];
 		$previous = $batches ? end( $batches ) : null;
 		if ( $previous && $previous['phase'] === 'superseded' ) {
-			$baseline = get_post_meta( $previous['id'], get_post_meta( $previous['id'], '_match_processing', true ) ? '_match_full_rows' : '_match_baseline_rows', true ) ?: [];
+			$baseline = self::baseline( self::record( $previous['id'] ) );
+		}
+		$allocation_baseline = $previous && $previous['phase'] === 'superseded' ? self::baseline_allocations( $previous ) : [];
+		foreach ( $allocation_baseline as $participation => $allocation ) {
+			$now = $calculation['allocations'][ $participation ] ?? null;
+			if ( $now && $now['key'] !== $allocation['key'] ) {
+				$errors[] = 'Een verwerkte deelname is aan een andere betaalroute of een ander personeelsnummer gekoppeld; leg eerst het externe herstel vast.';
+			}
 		}
 		$settlement = $baseline ? self::delta_rows( $rows, $baseline ) : $rows;
 		foreach ( $settlement as $row ) {
-			if ( $rule['scheme'] === 'awc1' && $row['nmbrs_name'] === '' ) {
-				$errors[] = $row['player_name'] . ': bevestigde Nmbrs-naam ontbreekt.'; }
-			if ( $rule['scheme'] === 'jo23' && $row['amount_cents'] > 0 && ( ! SepaCreditTransfer::valid_iban( $row['iban'] ) || $row['bank_account_holder'] === '' ) ) {
+			$payroll = ( $row['payment_route'] ?? '' ) === 'payroll';
+			if ( $payroll && ( $row['nmbrs_name'] === '' || empty( $row['nmbrs_employee_number'] ) ) ) {
+				$errors[] = $row['player_name'] . ': loonafspraak is onvolledig.';
+			}
+			if ( ( $rule['scheme'] === 'jo23' || ( $row['payment_route'] ?? '' ) === 'sepa_guest' ) && $row['amount_cents'] > 0 && ( ! SepaCreditTransfer::valid_iban( $row['iban'] ) || $row['bank_account_holder'] === '' ) ) {
 				$errors[] = $row['player_name'] . ': bankgegevens ontbreken of zijn ongeldig.';
 			}
 		}
+		if ( $rule['scheme'] === 'awc1' && $baseline ) {
+			foreach ( $baseline as $old ) {
+				$old_route = $old['payment_route'] ?? '';
+				$same      = array_values( array_filter( $rows, static fn( $row ) => CompensationPayroll::key( $row ) === CompensationPayroll::key( $old ) ) );
+				$other     = array_filter( $rows, static fn( $row ) => $row['person_id'] === $old['person_id'] && CompensationPayroll::key( $row ) !== CompensationPayroll::key( $old ) );
+				if ( $other && ( ! $same || $same[0]['days'] < $old['days'] || $old_route === '' ) ) {
+					$errors[] = 'Betaalroute of personeelsnummer gewijzigd na externe verwerking; leg eerst het herstel van de oorspronkelijke verwerking vast.';
+				}
+			}
+		}
+		if ( $rule['scheme'] === 'awc1' && array_filter( $rows, static fn( $row ) => $row['payment_route'] === 'payroll' ) ) {
+			foreach ( [ 'debtor_number', 'company_number', 'bank_code', 'basis_code', 'win_code', 'draw_code' ] as $key ) {
+				if ( empty( self::config()[ $key ] ) ) {
+					$errors[] = 'Nmbrs-instelling ontbreekt: ' . $key;
+				}
+			}
+		}
 		$data                = [
-			'team_id'         => $team,
-			'month'           => $month,
-			'scheme'          => $rule['scheme'],
-			'rows'            => $rows,
-			'settlement_rows' => $settlement,
-			'is_correction'   => (bool) $baseline,
-			'sources'         => $sources,
-			'errors'          => $errors,
-			'bank_code'       => self::config()['bank_code'],
-			'batches'         => array_map( static fn( $batch ) => self::batch_summary( $batch ), $batches ),
+			'allocations'         => $calculation['allocations'] ?? [],
+			'allocation_baseline' => $allocation_baseline,
+			'agreement_snapshot'  => wp_json_encode( $agreements ),
+			'payroll_config'      => wp_json_encode( self::payroll_config() ),
+			'team_id'             => $team,
+			'month'               => $month,
+			'scheme'              => $rule['scheme'],
+			'rows'                => $rows,
+			'settlement_rows'     => $settlement,
+			'is_correction'       => (bool) $baseline,
+			'sources'             => $sources,
+			'errors'              => $errors,
+			'bank_code'           => self::config()['bank_code'],
+			'batches'             => array_map( static fn( $batch ) => self::batch_summary( $batch ), $batches ),
 		];
-		$data['fingerprint'] = hash( 'sha256', wp_json_encode( [ $rows, $settlement, $sources, $rule, $data['bank_code'], $previous['id'] ?? null ] ) );
+		$data['fingerprint'] = hash( 'sha256', wp_json_encode( [ $rows, $settlement, $sources, $rule, $data['bank_code'], $agreements, self::payroll_config(), self::config()['retention_policy'], $baseline, $allocation_baseline, $calculation['allocations'] ?? [], $previous['id'] ?? null ] ) );
 		return $data;
+	}
+	public static function payroll_config(): array {
+		return array_intersect_key( self::config(), array_flip( [ 'debtor_number', 'company_number', 'basis_code', 'bank_code', 'win_code', 'draw_code' ] ) );
+	}
+	public static function route_summary( array $batch ): array {
+		if ( ( $batch['schema_version'] ?? '' ) !== '2' || $batch['scheme'] !== 'awc1' ) {
+			return [];
+		}
+		$result = [];
+		foreach ( [ 'payroll', 'sepa_guest' ] as $route ) {
+			$result[ $route ] = [
+				'applicable' => (bool) array_filter( $batch['rows'], static fn( $row ) => $row['payment_route'] === $route ),
+				'exported'   => (bool) get_post_meta( $batch['id'], '_match_export_' . $route, true ),
+				'processing' => get_post_meta( $batch['id'], '_match_processing_' . $route, true ) ?: null,
+			];
+		}
+		return $result;
+	}
+	private static function baseline_allocations( array $batch ): array {
+		$result    = [];
+		$reversals = get_post_meta( $batch['id'], '_match_route_reversals', true ) ?: [];
+		foreach ( self::route_summary( $batch ) as $route => $status ) {
+			$source = get_post_meta( $batch['id'], $status['processing'] ? '_match_full_allocations' : '_match_baseline_allocations', true ) ?: [];
+			foreach ( $source as $key => $allocation ) {
+				if ( $allocation['payment_route'] === $route && ! isset( $reversals[ $allocation['person_id'] ] ) ) {
+					$result[ $key ] = $allocation; }
+			}
+		}
+		return $result;
+	}
+	public static function baseline( array $batch ): array {
+		$routes = self::route_summary( $batch );
+		$rows   = [];
+		if ( ! $routes ) {
+			$rows = get_post_meta( $batch['id'], get_post_meta( $batch['id'], '_match_processing', true ) ? '_match_full_rows' : '_match_baseline_rows', true ) ?: [];
+		} else {
+			foreach ( $routes as $route => $status ) {
+				$source = get_post_meta( $batch['id'], $status['processing'] ? '_match_full_rows' : '_match_baseline_rows', true ) ?: [];
+				foreach ( $source as $row ) {
+					if ( $row['payment_route'] === $route ) {
+						$rows[] = $row; }
+				}
+			}
+		}
+		$reversals = get_post_meta( $batch['id'], '_match_route_reversals', true ) ?: [];
+		return array_values( array_filter( $rows, static fn( $row ) => ! isset( $reversals[ $row['person_id'] ] ) ) );
+	}
+	/** External reversal is an explicit attestation, never inferred from a changed agreement. */
+	private static function reverse_person( array $batch, array $input, string $request_id ) {
+		$person = (int) ( $input['person_id'] ?? 0 );
+		if ( $batch['phase'] !== 'superseded' || ( $input['confirmed'] ?? false ) !== true || ! is_string( $input['reference'] ?? null ) || trim( $input['reference'] ) === '' || ! AccessControl::can_view_person( $person ) ) {
+			return self::error( 'Open eerst een correctieronde en bevestig met een bewijsreferentie dat alle eerdere verwerking voor deze speler en maand extern is teruggedraaid.', 409 );
+		}
+		foreach ( self::posts( self::BATCH, (int) $batch['team_id'] ) as $post ) {
+			$other = self::record( $post->ID );
+			if ( $other && $other['month'] === $batch['month'] && (int) $other['version'] > (int) $batch['version'] ) {
+				return self::error( 'Er is al een volgende maandversie; corrigeer de nieuwste versie.', 409 );
+			}
+		}
+		if ( ! array_filter( self::baseline( $batch ), static fn( $row ) => (int) $row['person_id'] === $person ) ) {
+			return self::error( 'Deze speler heeft geen eerdere verwerking in deze correctie.' );
+		}
+		$date = is_string( $input['date'] ?? null ) ? \DateTimeImmutable::createFromFormat( '!Y-m-d', $input['date'] ) : false;
+		if ( ! $date || $date->format( 'Y-m-d' ) !== $input['date'] || $input['date'] > current_time( 'Y-m-d' ) ) {
+			return self::error( 'Gebruik een geldige hersteldatum tot en met vandaag.' );
+		}
+		$reversals            = get_post_meta( $batch['id'], '_match_route_reversals', true ) ?: [];
+		$reversals[ $person ] = [
+			'date'       => $input['date'],
+			'reference'  => sanitize_text_field( $input['reference'] ),
+			'actor'      => get_current_user_id(),
+			'request_id' => $request_id,
+		];
+		update_post_meta( $batch['id'], '_match_route_reversals', wp_slash( $reversals ) );
+		return get_post_meta( $batch['id'], '_match_route_reversals', true ) === $reversals ? $reversals[ $person ] : self::error( 'Vastleggen van het herstel is mislukt.', 500 );
 	}
 	public static function batch_summary( array $batch ): array {
 		return [
+			'routes'     => self::route_summary( $batch ),
 			'id'         => $batch['id'],
 			'phase'      => $batch['phase'],
 			'closed_at'  => $batch['closed_at'],
@@ -624,7 +776,12 @@ final class CompensationService {
 				$baseline = [];
 				$previous = $preview['batches'] ? end( $preview['batches'] ) : null;
 				if ( $previous ) {
-					$baseline = get_post_meta( $previous['id'], get_post_meta( $previous['id'], '_match_processing', true ) ? '_match_full_rows' : '_match_baseline_rows', true ) ?: [];
+					$baseline = self::baseline( self::record( $previous['id'] ) );
+				}
+				update_post_meta( $id, '_match_full_allocations', wp_slash( $preview['allocations'] ) );
+				update_post_meta( $id, '_match_baseline_allocations', wp_slash( $preview['allocation_baseline'] ) );
+				if ( get_post_meta( $id, '_match_full_allocations', true ) !== $preview['allocations'] || get_post_meta( $id, '_match_baseline_allocations', true ) !== $preview['allocation_baseline'] ) {
+					return self::error( 'De verdeling van deelnames kon niet worden opgeslagen.', 500 );
 				}
 				update_post_meta( $id, '_match_full_rows', wp_slash( $preview['rows'] ) );
 				update_post_meta( $id, '_match_baseline_rows', wp_slash( $baseline ) );
@@ -636,15 +793,18 @@ final class CompensationService {
 				return self::save(
 				$id,
 				[
-					'team_id'   => $team,
-					'season'    => '2026-2027',
-					'month'     => $month,
-					'scheme'    => $preview['scheme'],
-					'phase'     => 'closed',
-					'version'   => $version,
-					'closed_at' => current_datetime()->format( DATE_ATOM ),
-					'bank_code' => $preview['bank_code'],
-					'rows'      => $preview['rows'],
+					'team_id'            => $team,
+					'season'             => '2026-2027',
+					'month'              => $month,
+					'scheme'             => $preview['scheme'],
+					'phase'              => 'closed',
+					'version'            => $version,
+					'closed_at'          => current_datetime()->format( DATE_ATOM ),
+					'bank_code'          => $preview['bank_code'],
+					'rows'               => $preview['rows'],
+					'schema_version'     => '2',
+					'agreement_snapshot' => $preview['agreement_snapshot'],
+					'payroll_config'     => $preview['payroll_config'],
 				],
 				$request_id
 				);
@@ -661,11 +821,28 @@ final class CompensationService {
 			$input,
 			$action . ':' . $id,
 			static function ( $request_id ) use ( $id, $action, $input ) {
-				$batch = self::record( $id );
+				$batch  = self::record( $id );
+				$modern = ( $batch['schema_version'] ?? '' ) === '2' && $batch['scheme'] === 'awc1';
+				$route  = $modern ? ( $input['route'] ?? '' ) : '';
+				if ( $modern && ! in_array( $action, [ 'corrections', 'route-corrections' ], true ) && ! in_array( $route, [ 'payroll', 'sepa_guest' ], true ) ) {
+					return self::error( 'Kies loonadministratie of directe uitbetaling.' );
+				}
+				$export_key     = '_match_export' . ( $modern ? '_' . $route : '' );
+				$processing_key = '_match_processing' . ( $modern ? '_' . $route : '' );
+				if ( $action === 'route-corrections' ) {
+					return self::reverse_person( $batch, $input, $request_id );
+				}
 				if ( $action === 'corrections' ) {
 					if ( $batch['last_request_id'] === $request_id ) {
 						return $batch; }
-					if ( $batch['phase'] !== 'closed' || empty( $input['reason'] ) || ( ! get_post_meta( $id, '_match_processing', true ) && ( $input['previous_file_unused'] ?? false ) !== true ) ) {
+					if ( $modern ) {
+						foreach ( self::route_summary( $batch ) as $status ) {
+							if ( $status['applicable'] && ! $status['processing'] && ( $input['previous_file_unused'] ?? false ) !== true ) {
+								return self::error( 'Bevestig dat alle onverwerkte bestanden niet zijn gebruikt en niet meer worden gebruikt.', 409 );
+							}
+						}
+					}
+					if ( $batch['phase'] !== 'closed' || empty( $input['reason'] ) || ( ! $modern && ! get_post_meta( $id, $processing_key, true ) && ( $input['previous_file_unused'] ?? false ) !== true ) ) {
 						return self::error( 'Geef een reden; bevestig bij een onverwerkte maand dat het oude bestand niet wordt gebruikt.', 409 );
 					}
 					update_post_meta( $id, '_match_correction_reason', sanitize_text_field( $input['reason'] ) );
@@ -673,21 +850,30 @@ final class CompensationService {
 					$batch['phase'] = 'superseded';
 					return self::save( $id, $batch, $request_id );
 				}
+				if ( $action === 'exports' && get_post_meta( $id, $export_key, true ) ) {
+					return get_post_meta( $id, $export_key, true );
+				}
 				if ( $batch['phase'] !== 'closed' ) {
 					return self::error( 'Deze maand is vervangen.', 409 );
+				}
+				if ( $modern ) {
+					$batch['rows'] = array_values( array_filter( $batch['rows'], static fn( $row ) => $row['payment_route'] === $route ) );
+					if ( ! $batch['rows'] ) {
+						return self::error( 'Deze uitvoerroute is niet van toepassing.' );
+					}
 				}
 				if ( $action === 'processing' ) {
 					if ( empty( $input['reference'] ) || ! in_array( $input['kind'] ?? '', [ 'nmbrs', 'paid', 'manual_correction' ], true ) || empty( $input['date'] ) ) {
 						return self::error( 'Vul datum, soort verwerking en referentie in.' );
 					}
-					$existing_event = get_post_meta( $id, '_match_processing', true );
+					$existing_event = get_post_meta( $id, $processing_key, true );
 					if ( $existing_event ) {
 						return ( $existing_event['request_id'] ?? '' ) === $request_id ? $existing_event : self::error( 'Verwerking is al vastgelegd.', 409 ); }
 					$date = \DateTimeImmutable::createFromFormat( '!Y-m-d', (string) $input['date'], wp_timezone() );
 					if ( ! $date || $date->format( 'Y-m-d' ) !== $input['date'] || $input['date'] > current_time( 'Y-m-d' ) ) {
 						return self::error( 'Gebruik een geldige verwerkingsdatum tot en met vandaag.' ); }
 					$negative      = count( array_filter( $batch['rows'], static fn( $row ) => $row['amount_cents'] < 0 ) ) > 0;
-					$expected_kind = $batch['scheme'] === 'awc1' ? 'nmbrs' : ( $negative ? 'manual_correction' : 'paid' );
+					$expected_kind = ( $modern ? $route === 'payroll' : $batch['scheme'] === 'awc1' ) ? 'nmbrs' : ( $negative ? 'manual_correction' : 'paid' );
 					if ( $input['kind'] !== $expected_kind ) {
 						return self::error( 'Gebruik de verwerkingssoort die bij deze maand hoort: ' . $expected_kind ); }
 
@@ -698,17 +884,25 @@ final class CompensationService {
 						'actor'      => get_current_user_id(),
 						'request_id' => $request_id,
 					];
-					update_post_meta( $id, '_match_processing', wp_slash( $event ) );
-					return get_post_meta( $id, '_match_processing', true ) === $event ? $event : self::error( 'De verwerking kon niet worden vastgelegd. Probeer opnieuw.', 500 );
+					update_post_meta( $id, $processing_key, wp_slash( $event ) );
+					return get_post_meta( $id, $processing_key, true ) === $event ? $event : self::error( 'De verwerking kon niet worden vastgelegd. Probeer opnieuw.', 500 );
 				}
-				$existing = get_post_meta( $id, '_match_export', true );
+				$existing = get_post_meta( $id, $export_key, true );
 				if ( $existing ) {
 					return $existing;
 				}
-				if ( ( $input['confirmed'] ?? false ) !== true || get_post_meta( $id, '_match_processing', true ) ) {
+				if ( ( $input['confirmed'] ?? false ) !== true || get_post_meta( $id, $processing_key, true ) ) {
 					return self::error( 'Bevestig dat deze maand nog niet verwerkt of klaargezet is.', 409 );
 				}
-				if ( $batch['scheme'] === 'awc1' ) {
+				if ( $modern && $route === 'payroll' ) {
+					if ( ! self::config()['payroll_import_confirmed'] || ( get_post_meta( $id, '_match_baseline_rows', true ) && ! self::config()['payroll_corrections_confirmed'] ) ) {
+						return self::error( 'Bevestig eerst de proefimport en zo nodig de correctiewerkwijze bij Instellingen.' );
+					}
+					$export = CompensationPayroll::workbook( $batch, json_decode( $batch['payroll_config'], true ) );
+					if ( is_wp_error( $export ) ) {
+						return $export;
+					}
+				} elseif ( ! $modern && $batch['scheme'] === 'awc1' ) {
 					$rows = [ [ 'Naam', 'Naam in Nmbrs', 'Dagen', 'L3090 winst', 'L3091 gelijkspel', 'U2150 basis', $batch['bank_code'] ?: 'Bankvergoeding (code nog niet ingesteld)' ] ];
 					foreach ( $batch['rows'] as $row ) {
 						$rows[] = [ $row['player_name'], $row['nmbrs_name'], $row['days'], $row['wins'], $row['draws'], $row['basis'], $row['bank'] ];
@@ -752,7 +946,7 @@ final class CompensationService {
 							'creditor_iban' => $payment['creditor_iban'],
 							'creditor_name' => $payment['creditor_name'],
 							'end_to_end_id' => 'RM' . substr( hash( 'sha256', $export_id . ':' . $row['person_id'] ), 0, 32 ),
-							'description'   => 'Premie ' . $batch['month'],
+							'description'   => 'Vergoeding ' . get_the_title( $batch['team_id'] ) . ' ' . CompensationPayroll::month_name( $batch['month'] ) . ' ' . substr( $batch['month'], 0, 4 ),
 						];
 					}
 					if ( ! $transactions ) {
@@ -772,9 +966,11 @@ final class CompensationService {
 						'mime'     => 'application/xml',
 					];
 				}
+				$export['sha256']     = hash( 'sha256', $export['content'] );
+				$export['route']      = $route;
 				$export['created_at'] = current_datetime()->format( DATE_ATOM );
 				$export['created_by'] = get_current_user_id();
-				if ( ! update_post_meta( $id, '_match_export', wp_slash( $export ) ) ) {
+				if ( ! update_post_meta( $id, $export_key, wp_slash( $export ) ) ) {
 					return self::error( 'Het betaalbestand kon niet worden opgeslagen.', 500 );
 				}
 				return $export;
@@ -783,8 +979,12 @@ final class CompensationService {
 	}
 	/** Delta against the last externally processed full snapshot, never a future month. */
 	public static function delta_rows( array $current, array $baseline ): array {
-		$new  = array_column( $current, null, 'person_id' );
-		$old  = array_column( $baseline, null, 'person_id' );
+		$new = [];
+		$old = [];
+		foreach ( $current as $row ) {
+			$new[ CompensationPayroll::key( $row ) ] = $row; }
+		foreach ( $baseline as $row ) {
+			$old[ CompensationPayroll::key( $row ) ] = $row; }
 		$rows = [];
 		foreach ( array_unique( array_merge( array_keys( $new ), array_keys( $old ) ) ) as $id ) {
 			$row     = $new[ $id ] ?? $old[ $id ];

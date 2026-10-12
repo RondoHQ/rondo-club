@@ -291,6 +291,7 @@ function rondo_init() {
 	new PersonDeletionGuard();
 	new \Rondo\Finance\PersonBankAccount();
 	new \Rondo\Matches\CompensationService();
+	new \Rondo\Matches\CompensationAgreements();
 	new UserRoles();
 	\Rondo\Users\CapabilitySync::register_hooks();
 	new LettermintMailer();

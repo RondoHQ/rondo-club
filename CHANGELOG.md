@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.148.0] - 2026-10-12
+
+### Added
+- Manage dated AWC 1 compensation agreements with payroll personnel numbers on the match compensation page, protected by financial permissions and person access.
+- Export the full eligible payroll roster as an Nmbrs XLSX and guest compensation as separate SEPA payments (€20 per match plus €30 per point).
+- Track immutable exports and external processing separately for each route, including partial corrections and explicit evidence of reversed payments before changing routes.
+
+### Changed
+- Show missing agreements and retention settings before closing a month; let the treasurer enter effective dates and review affected open months.
+- Require confirmation of the payroll trial import and correction procedure before the respective payroll exports; preserve historical batches and downloaded files.
+- Include concise match registration instructions for registrators.
+
 ## [35.147.0] - 2026-10-12
 
 ### Added
