@@ -11,6 +11,7 @@
         "mollie/mollie-api-php": "^3.9",
         "mpdf/mpdf": "^8.2",
         "pkpass/pkpass": "^2.4",
+        "sentry/sentry": "^4.34",
         "smalot/pdfparser": "^2.12"
     },
     "autoload": {
