@@ -775,6 +775,10 @@ function rondo_get_js_config() {
 		'adminUrl'            => admin_url(),
 		'themeUrl'            => RONDO_THEME_URL,
 		'version'             => wp_get_theme()->get( 'Version' ),
+		'errorMonitoring'     => [
+			'dsn'         => defined( 'RONDO_GLITCHTIP_REACT_DSN' ) ? RONDO_GLITCHTIP_REACT_DSN : '',
+			'environment' => defined( 'RONDO_GLITCHTIP_ENVIRONMENT' ) ? RONDO_GLITCHTIP_ENVIRONMENT : 'production',
+		],
 		'buildTime'           => $build_time,
 		'currentUserPersonId' => $linked_person_id ?: null,
 		'clubName'            => $club_settings['club_name'],

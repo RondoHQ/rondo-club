@@ -1,3 +1,4 @@
+import { reportError, reportReactError } from './utils/error-monitoring';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query';
@@ -36,12 +37,16 @@ const rootElement = document.getElementById('root');
 
 if (rootElement) {
   try {
-    ReactDOM.createRoot(rootElement).render(
+    ReactDOM.createRoot(rootElement, {
+      onUncaughtError: reportReactError,
+      onCaughtError: reportReactError,
+    }).render(
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>
     );
-  } catch {
+  } catch (error) {
+    reportError(error);
     rootElement.innerHTML = '<div style="padding: 20px; color: red;"><h1>Error Loading Application</h1><p>Please check the browser console for details.</p></div>';
   }
 }

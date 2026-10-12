@@ -1,4 +1,8 @@
 import { defineConfig } from 'vite';
+import { sentryVitePlugin } from '@sentry/vite-plugin';
+import { readFileSync } from 'node:fs';
+const themeVersion = JSON.parse(readFileSync(new URL('./package.json', import.meta.url))).version;
+const release = `rondo-club@${themeVersion}`;
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -6,6 +10,12 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [
+    ...(process.env.SENTRY_AUTH_TOKEN ? [sentryVitePlugin({
+      url: 'https://errors.rondo.club/', org: 'rondo', project: 'rondo-react',
+      authToken: process.env.SENTRY_AUTH_TOKEN, telemetry: false,
+      release: { name: release, setCommits: { auto: true } },
+      sourcemaps: { filesToDeleteAfterUpload: ['dist/**/*.map'] },
+    })] : []),
     tailwindcss(),
     react(),
     VitePWA({
@@ -26,6 +36,7 @@ export default defineConfig({
       scope: '/',
 
       workbox: {
+        sourcemap: false,
         // vite-plugin-pwa defaults navigateFallback to 'index.html'. That default
         // is wrong twice over here: WordPress renders the shell (there is no
         // index.html in the build, so createHandlerBoundToURL would throw and
@@ -116,6 +127,7 @@ export default defineConfig({
 
   // Inject build timestamp for version checking
   define: {
+    __RONDO_RELEASE__: JSON.stringify(release),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },
 
@@ -123,6 +135,7 @@ export default defineConfig({
   build: {
     // Output to dist folder
     outDir: 'dist',
+    sourcemap: 'hidden',
 
     // Generate manifest for WordPress to read
     manifest: true,

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { reportError } from '../utils/error-monitoring';
 
 // Get config from WordPress
 const config = window.rondoConfig || {};
@@ -25,6 +26,8 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error.response?.status >= 500) reportError(error);
+
     // Handle 401 - redirect to login
     if (error.response?.status === 401) {
       window.location.href = config.loginUrl || '/wp-login.php';

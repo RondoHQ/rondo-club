@@ -62,9 +62,13 @@ jobs:
           coverage: none
 
       - name: Install and build frontend
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.GLITCHTIP_AUTH_TOKEN }}
         run: |
+          test -n "$SENTRY_AUTH_TOKEN" || { echo "Missing GlitchTip sourcemap token"; exit 1; }
           npm ci
           npm run build
+          test -z "$(find dist -name '*.map' -print -quit)"
 
       - name: Install production PHP dependencies
         run: composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
