@@ -51,6 +51,15 @@ niet gekopieerd. De andere in feedback genoemde registratiebijlage is niet gecon
 De maandafsluiting controleert het bewaarbeleid pas bij afsluiten. Dit wordt in de nieuwe
 voorvertoning vooraf zichtbaar. Het beleid wordt niet door de implementatie verzonnen.
 
+**Vergelijking loonlijst met productie, 12 oktober 2026:** alle 18 namen uit rijen 3–20
+hebben precies één toegankelijk persoonsrecord met dezelfde volledige naam. De 18 verschillende
+Rondo-ID's zijn afzonderlijk teruggelezen via de typed record-ability: alle records zijn
+gepubliceerd, hebben een KNVB-ID en hebben `former_member=false`. Het bestaande `nmbrs_name`
+is bij alle 18 leeg. Er zijn geen ontbrekende of dubbele naamovereenkomsten gevonden.
+Dit bevestigt de naamvergelijking met bestaande personen; de bron bevat geen KNVB-ID om de
+identiteit onafhankelijk te koppelen. Personeelsnummers en afspraken zijn niet opgeslagen.
+De augustuslijst bewijst ook niet dat iedere loonafspraak nu of in september geldig is.
+
 ## 3. Financiële indeling en gegevensmodel
 
 ### Voorstel voor opslag
@@ -138,7 +147,7 @@ Gecontroleerde bronkenmerken:
 
 - Rijen 3–20 bevatten 18 unieke personeelsnummers en 18 namen; periode is overal `2026-08`.
   Dit is een bronlijst voor augustus, geen bewijs van de actuele of historische geldigheid
-  van iedere overeenkomst. Koppeling aan Rondo-personen wordt afzonderlijk gecontroleerd.
+  van iedere overeenkomst. De naamvergelijking met Rondo-personen is hierboven vastgelegd.
 - Debiteurnummer A is tekst; bedrijfsnummer B en personeelsnummer C zijn numeriek opgeslagen.
   Namen D en periode E zijn tekst. Er staan geen formules in het importblad.
 - F3 bevat één spatie; de overige cellen F3:K20 zijn leeg. De export schrijft echte lege cellen,
@@ -223,8 +232,9 @@ geschikt voor de nieuwe gastspelersregeling. Geen automatische herberekening van
 
 Na goedkeuring van het plan volgen afzonderlijk controle en inrichting:
 
-1. Gebruik Frans' gecontroleerde voorbeeldbestand en verifieer de actuele lijst met personeelsnummers.
-   Verifieer de in feedback genoemde uitzonderingen op hun bestaande Rondo-ID's; leid de
+1. Gebruik Frans' gecontroleerde voorbeeldbestand en de gecontroleerde naamovereenkomsten met
+   18 bestaande Rondo-personen. Bevestig bij inrichting de actuele loonlijst en de bedoelde
+   personeelsnummerkoppelingen; leid de
    loonstatus niet af uit het huidige gastlabel. Sla de volledige personenlijst niet in Git op.
 2. De penningmeester vult per afspraak de ingangsdatum op de pagina in en controleert vóór
    historische verwerking de status van augustus en september buiten Rondo. Xanders
@@ -289,7 +299,8 @@ De gastspelersregeling is goedgekeurd. De penningmeester bepaalt de ingangsdatum
 de pagina; daarvoor is vooraf geen besluit nodig. De volgende punten staan nog open:
 
 1. **Looncontract:** het originele importformaat en de bronlijst met 18 personeelsnummers zijn
-   gecontroleerd. Verifieer nog de actuele koppeling van die loonlijst aan Rondo-personen.
+   gecontroleerd; alle 18 namen hebben één exact overeenkomend Rondo-persoonsrecord.
+   Bevestig bij inrichting de actuele loonlijst en de personeelsnummerkoppelingen.
    Nulwaarden en correctiewerkwijze moeten bij een proefimport met de loonadministratie worden
    bevestigd vóór ingebruikname. De koppeling op personeelsnummer vervangt het handmatig raden
    van namen; de naamkolom blijft volgens het importcontract verplicht.
