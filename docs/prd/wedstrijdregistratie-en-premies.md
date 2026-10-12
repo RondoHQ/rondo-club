@@ -534,6 +534,12 @@ spelers van het team waarmee zij die wedstrijd meedoen. Een gastspeler bij AWC 1
 AWC 1-regeling; een gastspeler bij JO23-1 valt onder de JO23-1-regeling. Het eigen team van de
 speler verandert deze toepassing niet.
 
+**Aanpassing, goedgekeurd door Joost op 12 oktober 2026:** voor AWC 1 wordt de regeling voor
+spelers zonder premieovereenkomst €20 per meetellende Basis/Bank-deelname plus €30 per punt,
+met verwerking via SEPA. De JO23-1-regeling blijft gelijk. Zie het
+[wijzigingsplan voor feedback 14350](feedback-14350-wedstrijdvergoedingen.md) voor de
+goedgekeurde bedragen en verdere uitwerking; de implementatie is nog niet uitgevoerd.
+
 **B3b, bevestigd door Joost:** bij Basis/Bank in twee afzonderlijke wedstrijden van AWC 1 en
 JO23-1 op dezelfde dag tellen beide wedstrijden mee volgens hun eigen teamregeling. Joost geeft
 aan dat dit in de praktijk niet voorkomt. Geen aanvullende workflow of samenloopwaarschuwing bouwen.
