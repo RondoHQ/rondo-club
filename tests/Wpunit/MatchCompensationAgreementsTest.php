@@ -190,6 +190,27 @@ class MatchCompensationAgreementsTest extends RondoTestCase {
 		$this->assertCount( 2, $batch['rows'] );
 		$this->assertSame( 0, $batch['rows'][0]['days'] );
 	}
+	public function test_roster_keeps_pending_agreements_without_duplicates_or_unrelated_people(): void {
+		$this->save( $this->person, [ $this->agreement() ] );
+		update_post_meta( $this->person, '_match_agreement_pending', [ 'old' => [ $this->agreement() ] ] );
+		$pending = $this->person();
+		update_post_meta( $pending, '_match_agreement_pending', [ 'old' => [ $this->agreement( 'payroll', '1002' ) ] ] );
+		$unrelated = $this->person();
+		update_post_meta( $unrelated, Agreements::FIELD, 0 );
+		$draft = $this->person();
+		wp_update_post(
+			[
+				'ID'          => $draft,
+				'post_status' => 'draft',
+			]
+			);
+		update_post_meta( $draft, '_match_agreement_pending', [ 'old' => [ $this->agreement( 'payroll', '1003' ) ] ] );
+
+		$this->assertSame( [ $this->person, $pending ], array_column( Agreements::people(), 'ID' ) );
+		$roster = Agreements::roster( $this->team );
+		$this->assertSame( [ $this->person, $pending ], array_column( $roster, 'person_id' ) );
+		$this->assertSame( [ $this->agreement( 'payroll', '1002' ) ], $roster[1]['agreements'] );
+	}
 	public function test_xlsx_and_sepa_are_separate_immutable_outputs_and_partial_corrections(): void {
 		$guest = $this->person();
 		$this->save( $this->person, [ $this->agreement() ] );
