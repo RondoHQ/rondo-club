@@ -29,7 +29,14 @@ aan Rondo Sync vallen buiten scope. Dit plan doet geen uitspraak over fiscale kw
 ## 2. Vastgestelde uitgangssituatie
 
 Onderstaande feiten komen uit de codecontrole en de productie-interface van 12 oktober 2026.
-De originele Excelbijlagen bij Xanders bericht zijn nog niet gecontroleerd.
+Het originele Nmbrs-voorbeeld is op diezelfde datum door Joost aangeleverd en read-only
+gecontroleerd, zowel via de oorspronkelijke XLSX/XML-celopslag als met een onafhankelijke
+XLSX-lezer. Het bestand is niet gewijzigd of in Nmbrs geïmporteerd.
+
+Bronbestand: `23008 L 2026 08 25 Import_sheet_mutaties_SV_AWC_augustus.xlsx`.
+SHA-256: `2d8c81109ff11e052cf80eef04e50cbd4410d5bc156650ed6132cf4832c2c91b`.
+De bron blijft buiten Git; de namen en individuele personeelsnummerkoppelingen worden hier
+niet gekopieerd. De andere in feedback genoemde registratiebijlage is niet gecontroleerd.
 
 | Onderdeel | Bestaande werking | Verschil met het verzoek |
 |---|---|---|
@@ -102,34 +109,63 @@ worden door de loonadministratie berekend.
 
 De export bevat iedere loonspeler met een geldige afspraak die de maand overlapt, ook zonder
 deelname. Alleen deelnames binnen de geldigheidsperiode tellen. Bij nul wedstrijden zijn de
-telcellen leeg volgens Xanders verzoek; de identiteit en periode blijven ingevuld. De exacte
-conventie voor overige nulwaarden wordt aan Frans' voorbeeld getoetst.
+telcellen leeg volgens Xanders verzoek; de identiteit en periode blijven ingevuld. Het voorbeeld
+bevat helemaal geen ingevulde aantallen en bewijst daarom niet hoe nulwaarden bij spelers
+met deelname moeten worden aangeleverd. Voorgesteld: ook nulstanden in de telkolommen leeg
+exporteren, met expliciete bevestiging bij de proefimport vóór ingebruikname.
 
-### Voorgesteld XLSX-contract
+### Gecontroleerd XLSX-contract
 
-Werkblad `LooncomponentenVar`, twee kopregels en deze kolomvolgorde:
+Werkblad `LooncomponentenVar`, twee kopregels, gegevens vanaf rij 3 en deze exacte kopteksten:
 
-| Kolom | Inhoud |
-|---|---|
-| A | Debiteurnr, door Xander opgegeven als 23008 |
-| B | Bedrijfnr, door Xander opgegeven als 23008 |
-| C | Persnr |
-| D | Bevestigde naam in de loonadministratie |
-| E | Periode `YYYY-MM` |
-| F | Dagen |
-| G | DagenVoorLC, aanwezig maar leeg |
-| H | U2150, aantal Basis |
-| I | U2151, aantal Bank |
-| J | L3090, aantal Winst |
-| K | L3091, aantal Gelijk |
+| Kolom | Rij 1 | Rij 2 | Betekenis |
+|---|---|---|---|
+| A | Import | Debiteurnr | 23008 |
+| B | Leeg | Bedrijfnr | 23008 |
+| C | Leeg | Persnr | Personeelsnummer |
+| D | Leeg | Naam | Bevestigde naam in de loonadministratie |
+| E | Leeg | Periode | Tekst `YYYY-MM` |
+| F | Leeg | Dagen | Aantal meetellende Basis/Bank-deelnames |
+| G | Leeg | DagenVoorLC | Aanwezig, gegevens leeg |
+| H | Wedstrijdvergoeding (basis) aantal | U2150 | Aantal Basis |
+| I | Wedstrijdvergoeding (bank) aantal | U2151 | Aantal Bank |
+| J | Wedstrijdpremie (winst) | L3090 | Aantal Winst |
+| K | Wedstrijdpremie (gelijkspel) | L3091 | Aantal Gelijk |
+
+De woorden 'Leeg' in deze tabel betekenen lege cellen, geen te exporteren tekst.
+
+Gecontroleerde bronkenmerken:
+
+- Rijen 3–20 bevatten 18 unieke personeelsnummers en 18 namen; periode is overal `2026-08`.
+  Dit is een bronlijst voor augustus, geen bewijs van de actuele of historische geldigheid
+  van iedere overeenkomst. Koppeling aan Rondo-personen wordt afzonderlijk gecontroleerd.
+- Debiteurnummer A is tekst; bedrijfsnummer B en personeelsnummer C zijn numeriek opgeslagen.
+  Namen D en periode E zijn tekst. Er staan geen formules in het importblad.
+- F3 bevat één spatie; de overige cellen F3:K20 zijn leeg. De export schrijft echte lege cellen,
+  geen spaties. Er zijn geen voorbeeldbedragen of aantallen om rekenuitkomsten tegen te toetsen.
+- Het bestand heeft vier tabbladen: `Start`, `LooncomponentenVar`, verborgen `Blad1` en
+  verborgen `Kostenverdeling (variabel)`. De twee verborgen bladen hebben geen celwaarden;
+  `Start` bevat navigatielabels. Het importblad heeft geen samengevoegde cellen of datavalidaties.
+
+Behoud voor de eerste export de tabbladstructuur en verborgen status van het voorbeeld;
+kopieer geen echte spelerslijst naar een testsjabloon. Dit voorkomt een onbewezen vereenvoudiging
+naar één tabblad. Of die aanvullende bladen voor Nmbrs noodzakelijk zijn, is nog niet getest.
+Het aangeleverde bestand is alleen structureel gecontroleerd, niet als werkende import bewezen.
+
+Bewaar personeelsnummers intern als tekst. Schrijf de in dit voorbeeld gebruikte numerieke
+identificaties verliesloos als getallen in B/C, overeenkomstig het bronformaat. Bij toekomstige
+identificaties met voorloopnullen of letters mag geen stille conversie plaatsvinden; toets dan
+eerst het importcontract. Nieuwe aantallen worden numerieke waarden, geen tekst of formules.
 
 De administratie- en componentcodes worden expliciete gevalideerde module-instellingen.
-`U2151` is de door Xander aangeleverde kandidaat, nog te toetsen aan het originele voorbeeld.
+`U2151` is bevestigd in cel I2; administratiecodes 23008 zijn bevestigd in kolommen A en B.
 Voorbeeld bestandsnaam: `23008 L 2026 09 Import_sheet_mutaties_SV_AWC_september.xlsx`.
+De aangeleverde augustusbron bevat daarnaast `25` in de bestandsnaam; neem die niet als vaste
+waarde over. De nieuwe maandbestandsnaam volgt Xanders expliciete verzoek in de feedback.
 
-Controleer het originele bestand vóór implementatie van de export: beide kopregels, celtypen,
-tabbladnaam, eventuele extra metadata en lege versus nulwaarden. Gebruik daarna een
-geanonimiseerd contractbestand met fictieve personen voor tests. Exporteer echte XLSX-bytes,
+Gebruik de gecontroleerde kopregels en structuur voor een geanonimiseerd contractbestand met
+fictieve personen voor tests. Controleer vóór ingebruikname de proefimport, nulwaarden en
+correctiewerkwijze met de loonadministratie. Exporteer echte XLSX-bytes,
 met tekstvelden als tekst en aantallen als getallen; geen formules uit gebruikersinvoer.
 De bestaande tekst-download via `Blob([file.content])` moet voor binaire XLSX-uitvoer worden
 aangepast. Selecteer de XLSX-bibliotheek tijdens implementatie na controle van de bestaande
@@ -187,7 +223,7 @@ geschikt voor de nieuwe gastspelersregeling. Geen automatische herberekening van
 
 Na goedkeuring van het plan volgen afzonderlijk controle en inrichting:
 
-1. Controleer Frans' originele loonbestand en de definitieve lijst met personeelsnummers.
+1. Gebruik Frans' gecontroleerde voorbeeldbestand en verifieer de actuele lijst met personeelsnummers.
    Verifieer de in feedback genoemde uitzonderingen op hun bestaande Rondo-ID's; leid de
    loonstatus niet af uit het huidige gastlabel. Sla de volledige personenlijst niet in Git op.
 2. De penningmeester vult per afspraak de ingangsdatum op de pagina in en controleert vóór
@@ -197,8 +233,8 @@ Na goedkeuring van het plan volgen afzonderlijk controle en inrichting:
    alleen na akkoord de gecontroleerde koppelingen; verifieer teruglezen en identieke herhaling.
 4. Controleer Guido's exacte account, koppel de twee bestaande moduleteams en verifieer de
    bestaande teamtoegang. Een registratortoewijzing mag geen onbedoelde financiële toegang geven.
-5. Laat de club het bewaarbeleid aanleveren, controleer de looncode en administratiecodes en
-   vul alleen de bevestigde waarden in.
+5. Laat de club het bewaarbeleid aanleveren en vul de in het voorbeeld bevestigde looncode en
+   administratiecodes in tijdens de geautoriseerde productie-inrichting.
 6. Controleer maandtotalen zonder af te sluiten of bestanden voor betaling klaar te zetten.
    Vergelijk de proef-XLSX met Frans' voorbeeld en laat de loonadministratie de importindeling
    bevestigen. Controleer de SEPA-validatie zonder een echte betaling uit te voeren.
@@ -213,7 +249,7 @@ De gebruiker beslist zelf over het delen van die instructie.
 
 | Fase | Werk | Gereed als |
 |---|---|---|
-| 0. Broncontract | Voorbeeldbestand, correctieformaat en loonlijst bevestigen | De resterende open punten hieronder zijn vastgelegd voor het betreffende onderdeel |
+| 0. Broncontract | Gecontroleerd voorbeeld gebruiken; correctieformaat en actuele loonlijst bevestigen | De resterende open punten hieronder zijn vastgelegd voor het betreffende onderdeel |
 | 1. Afspraken | Native velden, financiële rechten, beheerinterface met ingangsdatum, geldigheids- en uniciteitscontrole | De penningmeester kan de ingangsdatum invoeren; onbekende afspraken blokkeren; een gastlabel verandert de betaalroute niet |
 | 2. Maandberekening | Afspraken per speeldatum toepassen, twee groepen, alle loonspelers meenemen | Berekeningen en uitsluitingen kloppen onafhankelijk van de huidige teamsamenstelling |
 | 3. Bestanden en historie | XLSX, SEPA, binaire download, aparte bewijzen en correcties | Beide bestanden voldoen aan hun contract; herdownload en gedeeltelijke verwerking blijven veilig |
@@ -252,9 +288,11 @@ Developer-documentatie wordt conform de repositoryafspraak door de dagelijkse au
 De gastspelersregeling is goedgekeurd. De penningmeester bepaalt de ingangsdatum later op
 de pagina; daarvoor is vooraf geen besluit nodig. De volgende punten staan nog open:
 
-1. **Looncontract:** het originele importbestand, gecontroleerde loonlijst en correctiewerkwijze
-   moeten beschikbaar zijn. De koppeling op personeelsnummer vervangt het handmatig raden van
-   namen; de naamkolom blijft volgens het importcontract verplicht.
+1. **Looncontract:** het originele importformaat en de bronlijst met 18 personeelsnummers zijn
+   gecontroleerd. Verifieer nog de actuele koppeling van die loonlijst aan Rondo-personen.
+   Nulwaarden en correctiewerkwijze moeten bij een proefimport met de loonadministratie worden
+   bevestigd vóór ingebruikname. De koppeling op personeelsnummer vervangt het handmatig raden
+   van namen; de naamkolom blijft volgens het importcontract verplicht.
 2. **Inrichting:** definitief bewaarbeleid, Guido's account/toegang en actuele externe verwerking
    moeten vóór productie-inrichting worden vastgesteld.
 
