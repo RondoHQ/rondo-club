@@ -17,8 +17,11 @@ De registrator blijft alleen wedstrijdgegevens en deelname vastleggen. Een spele
 een ander team wordt toegevoegd, kan een premieovereenkomst hebben. Het registratielabel
 `guest` bepaalt daarom nooit of iemand naar Nmbrs of SEPA gaat.
 
-Dit voorstel vervangt voor AWC 1 de afspraak B3a uit de voorganger pas na expliciete
-goedkeuring. De JO23-1-regeling blijft €15 per punt, zonder vaste wedstrijdvergoeding.
+**Goedgekeurd door Joost op 12 oktober 2026:** Xanders gastspelersregeling van €20 per
+meetellende wedstrijd plus €30 per punt wordt overgenomen voor spelers zonder
+premieovereenkomst bij AWC 1. Dit vervangt voor AWC 1 de afspraak B3a uit de voorganger.
+De bedragen zijn vast; er komt hiervoor geen tariefinstelling voor de penningmeester.
+De JO23-1-regeling blijft €15 per punt, zonder vaste wedstrijdvergoeding.
 Alleen competitie en nacompetitie tellen mee. Basis en Bank tellen beide; overige statussen niet.
 Een rechtstreekse Nmbrs-koppeling, loonberekening, automatische bankbetaling en wijzigingen
 aan Rondo Sync vallen buiten scope. Dit plan doet geen uitspraak over fiscale kwalificatie.
@@ -210,7 +213,7 @@ De gebruiker beslist zelf over het delen van die instructie.
 
 | Fase | Werk | Gereed als |
 |---|---|---|
-| 0. Besluiten en broncontract | Nieuwe regeling, voorbeeldbestand, correctieformaat en loonlijst bevestigen | De open beslissingen hieronder zijn vastgelegd voor het betreffende onderdeel |
+| 0. Broncontract | Voorbeeldbestand, correctieformaat en loonlijst bevestigen | De resterende open punten hieronder zijn vastgelegd voor het betreffende onderdeel |
 | 1. Afspraken | Native velden, financiële rechten, beheerinterface met ingangsdatum, geldigheids- en uniciteitscontrole | De penningmeester kan de ingangsdatum invoeren; onbekende afspraken blokkeren; een gastlabel verandert de betaalroute niet |
 | 2. Maandberekening | Afspraken per speeldatum toepassen, twee groepen, alle loonspelers meenemen | Berekeningen en uitsluitingen kloppen onafhankelijk van de huidige teamsamenstelling |
 | 3. Bestanden en historie | XLSX, SEPA, binaire download, aparte bewijzen en correcties | Beide bestanden voldoen aan hun contract; herdownload en gedeeltelijke verwerking blijven veilig |
@@ -246,14 +249,14 @@ Developer-documentatie wordt conform de repositoryafspraak door de dagelijkse au
 
 ## 8. Beslispunten vóór de bouw
 
-1. **Regeling:** akkoord met €20 plus €30 per punt voor bevestigde spelers zonder
-   premieovereenkomst, ter vervanging van B3a voor AWC 1. De penningmeester bepaalt de
-   ingangsdatum later op de pagina; daarvoor is vooraf geen besluit nodig.
-2. **Looncontract:** het originele importbestand, gecontroleerde loonlijst en correctiewerkwijze
+De gastspelersregeling is goedgekeurd. De penningmeester bepaalt de ingangsdatum later op
+de pagina; daarvoor is vooraf geen besluit nodig. De volgende punten staan nog open:
+
+1. **Looncontract:** het originele importbestand, gecontroleerde loonlijst en correctiewerkwijze
    moeten beschikbaar zijn. De koppeling op personeelsnummer vervangt het handmatig raden van
    namen; de naamkolom blijft volgens het importcontract verplicht.
-3. **Inrichting:** definitief bewaarbeleid, Guido's account/toegang en actuele externe verwerking
+2. **Inrichting:** definitief bewaarbeleid, Guido's account/toegang en actuele externe verwerking
    moeten vóór productie-inrichting worden vastgesteld.
 
-Deze punten zijn nog geen geaccordeerde feiten. De keuze om dit plan uit te werken geeft
+Deze resterende punten zijn nog geen geaccordeerde feiten. De keuze om dit plan uit te werken geeft
 geen toestemming om betalingen uit te voeren, rechten toe te kennen of feedback af te sluiten.
