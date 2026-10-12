@@ -5284,6 +5284,15 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
   'version' => 1,
 );
 
+$agreement_children = [];
+foreach ( [ 'team_id' => 'number', 'valid_from' => 'date_picker', 'valid_until' => 'date_picker', 'payment_route' => 'text', 'nmbrs_employee_number' => 'text', 'nmbrs_name' => 'text' ] as $name => $type ) {
+    $agreement_children[$name] = [ 'canonical_name' => $name, 'storage_name' => $name, 'name' => $name, 'key' => 'field_match_agreement_' . $name, 'label' => $name, 'type' => $type ];
+}
+$config['contexts']['person']['fields']['match_compensation_agreements'] = [
+    'canonical_name' => 'match_compensation_agreements', 'storage_name' => 'match_compensation_agreements', 'name' => 'match_compensation_agreements',
+    'key' => 'field_person_match_compensation_agreements', 'label' => 'Afspraken wedstrijdvergoedingen', 'type' => 'repeater', 'read_only' => true, 'sub_fields' => $agreement_children,
+];
+
 $config['contexts'] = array_merge( $config['contexts'], require __DIR__ . '/match-compensation-fields.php' );
 $config['contexts'] = array_merge( $config['contexts'], require __DIR__ . '/kantine-margin-fields.php' );
 return $config;

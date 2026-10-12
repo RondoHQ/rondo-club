@@ -9,6 +9,11 @@ const euro = (cents) => new Intl.NumberFormat('nl-NL', { style: 'currency', curr
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Amsterdam' }).format(new Date());
 const category = (value) => ({ regulier: 'competitie', competitie: 'competitie', nacompetitie: 'nacompetitie', beker: 'beker', oefen: 'oefen', oefenwedstrijd: 'oefen' })[value?.trim().toLowerCase()] || '';
 const request = (path) => api.get(root + path).then(({ data }) => data);
+function downloadFile(file) {
+  const bytes = file.encoding === 'base64' ? Uint8Array.from(atob(file.content), (char) => char.charCodeAt(0)) : file.content;
+  const url = URL.createObjectURL(new Blob([bytes], { type: file.mime }));
+  const anchor = document.createElement('a'); anchor.href = url; anchor.download = file.filename; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 function ErrorMessage({ error }) { return error ? <p role="alert" className="text-red-700 dark:text-red-300">{error.response?.data?.message || 'Laden of opslaan mislukt. Probeer opnieuw.'}</p> : null; }
 function useAction(path, method = 'post') {
   const client = useQueryClient();
@@ -26,15 +31,16 @@ function Settings({ settings }) {
   const [teams, setTeams] = useState(settings.teams.map(({ team_id, scheme }) => ({ team_id, scheme })));
   const [assignments, setAssignments] = useState(settings.available_users.map((user) => ({ user_id: user.id, teams: user.teams.filter((id) => Number.isInteger(id) && id > 0) })).filter((assignment) => assignment.teams.length > 0));
   const [bankCode, setBankCode] = useState(settings.bank_code);
+  const [payroll, setPayroll] = useState(Object.fromEntries(['debtor_number', 'company_number', 'basis_code', 'win_code', 'draw_code', 'payroll_import_confirmed', 'payroll_corrections_confirmed'].map((key) => [key, settings[key]])));
   const [retention, setRetention] = useState(settings.retention_policy);
   const save = useAction('/settings');
   const changeTeam = (index, fields) => setTeams((old) => old.map((team, n) => n === index ? { ...team, ...fields } : team));
-  return <form className="card p-6 space-y-4" onSubmit={(event) => { event.preventDefault(); save.mutate({ teams, registrators: assignments, bank_code: bankCode, retention_policy: retention }); }}>
+  return <form className="card p-6 space-y-4" onSubmit={(event) => { event.preventDefault(); save.mutate({ ...payroll, teams, registrators: assignments, bank_code: bankCode, retention_policy: retention }); }}>
     <h2 className="text-lg font-semibold">Pilotteams en registratoren</h2>
     <p className="text-sm text-gray-500">Koppel de bestaande teams aan hun regeling. Registratoren behouden hun bestaande teamtoegang.</p>
     {teams.map((team, index) => <div key={index} className="grid sm:grid-cols-3 gap-3">
       <Select label="Team" value={team.team_id} onChange={(event) => changeTeam(index, { team_id: Number(event.target.value) })}><option value={0}>Kies een team</option>{settings.available_teams.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</Select>
-      <Select label="Regeling" value={team.scheme} onChange={(event) => changeTeam(index, { scheme: event.target.value })}><option value="awc1">AWC 1 · €30 per punt</option><option value="jo23">JO23-1 · €15 per punt</option></Select>
+      <Select label="Regeling" value={team.scheme} onChange={(event) => changeTeam(index, { scheme: event.target.value })}><option value="awc1">AWC 1 · loonafspraken en gastvergoedingen</option><option value="jo23">JO23-1 · €15 per punt</option></Select>
       <button type="button" className="btn-tertiary self-end" onClick={() => setTeams((old) => old.filter((_, n) => n !== index))}>Team verwijderen</button>
     </div>)}
     <button type="button" className="btn-secondary" onClick={() => setTeams((old) => [...old, { team_id: 0, scheme: 'jo23' }])}>Team toevoegen</button>
@@ -44,7 +50,9 @@ function Settings({ settings }) {
       <button type="button" className="btn-tertiary self-end" onClick={() => setAssignments((old) => old.filter((_, n) => n !== index))}>Toewijzing verwijderen</button>
     </div>)}
     <button type="button" className="btn-secondary" onClick={() => setAssignments((old) => [...old, { user_id: 0, teams: [] }])}>Registrator toevoegen</button>
-    <Input label="Nmbrs-code bankvergoeding (mag voorlopig leeg blijven)" value={bankCode} onChange={(event) => setBankCode(event.target.value)} />
+    {Object.entries({ debtor_number: 'Nmbrs-debiteurnummer', company_number: 'Nmbrs-bedrijfsnummer', basis_code: 'Looncode basis', win_code: 'Looncode winst', draw_code: 'Looncode gelijkspel' }).map(([key, label]) => <Input key={key} label={label} value={payroll[key] || ''} onChange={(event) => setPayroll({ ...payroll, [key]: event.target.value })} />)}
+    {Object.entries({ payroll_import_confirmed: 'De loonadministratie heeft de proefimport en lege nulwaarden bevestigd.', payroll_corrections_confirmed: 'De loonadministratie heeft de verwerking van correctiebestanden bevestigd.' }).map(([key, label]) => <label key={key} className="flex gap-2 text-sm"><input type="checkbox" checked={!!payroll[key]} onChange={(event) => setPayroll({ ...payroll, [key]: event.target.checked })} />{label}</label>)}
+    <Input label="Nmbrs-code bankvergoeding" value={bankCode} onChange={(event) => setBankCode(event.target.value)} />
     <label className="block text-sm">Vastgesteld clubbeleid voor bewaren<textarea className="input mt-1 w-full" rows={3} value={retention} onChange={(event) => setRetention(event.target.value)} /></label>
     <p className="text-sm text-gray-500">Leg vóór de eerste maandafsluiting het vastgestelde beleid vast. Bewaren en eventuele verwijdering worden afzonderlijk beoordeeld.</p>
     <ErrorMessage error={save.error} />
@@ -72,10 +80,47 @@ function ImportPanel() {
     {commit.isSuccess ? <p role="status">{commit.data.imported_ids.length} wedstrijden overgenomen. Controleer nu de maandtotalen en externe verwerkingsstatus.</p> : null}
   </section>;
 }
-function NmbrsName({ row }) {
-  const [name, setName] = useState(row.nmbrs_name || '');
-  const save = useAction(`/people/${row.person_id}/nmbrs`, 'patch');
-  return <div className="flex flex-wrap items-end gap-2"><Input label={`Naam in Nmbrs: ${row.player_name}`} value={name} onChange={(event) => setName(event.target.value)} /><button className="btn-secondary" disabled={save.isPending || !name} onClick={() => save.mutate({ nmbrs_name: name })}>Naam bevestigen</button><ErrorMessage error={save.error} /></div>;
+function AgreementEditor({ person, team, onSaved }) {
+  const [rows, setRows] = useState(person.agreements);
+  const save = useAction(`/people/${person.person_id}/agreements`, 'patch');
+  const update = (index, fields) => setRows((old) => old.map((row, i) => i === index ? { ...row, ...fields } : row));
+  const months = [...new Set([...person.agreements, ...rows].filter((row) => row.team_id === team.team_id).flatMap((row) => {
+    const values = [];
+    for (let y = 2026, m = 7; y < 2027 || m <= 6; m++) {
+      if (m === 13) { y++; m = 1; }
+      const month = `${y}-${String(m).padStart(2, '0')}`;
+      if (row.valid_from?.slice(0, 7) <= month && (!row.valid_until || row.valid_until.slice(0, 7) >= month)) values.push(month);
+      if (y === 2027 && m === 6) break;
+    }
+    return values;
+  }))].filter((month) => !(person.closed_months?.[team.team_id] || []).includes(month)).sort();
+  return <form className="space-y-4 border-t pt-4" onSubmit={(event) => { event.preventDefault(); save.mutate({ agreements: rows, version: person.version }, { onSuccess: onSaved }); }}>
+    <h3 className="font-semibold">{person.player_name}</h3>
+    {rows.map((row, index) => row.team_id === team.team_id ? <fieldset key={index} className="grid sm:grid-cols-2 gap-3 border rounded p-4" disabled={!person.can_edit}><legend>Afspraak {index + 1}</legend>
+      <Input label="Ingangsdatum" type="date" required value={row.valid_from || ''} onChange={(event) => update(index, { valid_from: event.target.value })} />
+      <Input label="Einddatum (optioneel)" type="date" value={row.valid_until || ''} onChange={(event) => update(index, { valid_until: event.target.value || null })} />
+      <Select label="Betaalroute" value={row.payment_route} onChange={(event) => update(index, { payment_route: event.target.value, ...(event.target.value === 'sepa_guest' ? { nmbrs_name: '', nmbrs_employee_number: '' } : {}) })}><option value="payroll">Loonadministratie · premieovereenkomst</option><option value="sepa_guest">Direct uitbetalen · zonder premieovereenkomst</option></Select>
+      {row.payment_route === 'payroll' ? <><Input label="Personeelsnummer" required value={row.nmbrs_employee_number} onChange={(event) => update(index, { nmbrs_employee_number: event.target.value })} /><Input label="Bevestigde naam in Nmbrs" required value={row.nmbrs_name} onChange={(event) => update(index, { nmbrs_name: event.target.value })} /></> : <p className="text-sm">€20 per wedstrijd plus €30 per punt, voor Basis en Bank.</p>}
+      <button type="button" className="btn-tertiary" onClick={() => setRows((old) => old.filter((_, i) => i !== index))}>Afspraak verwijderen</button>
+    </fieldset> : null)}
+    <p className="text-sm">Open maanden die door deze afspraken kunnen veranderen: {months.join(', ') || 'geen; kies een ingangsdatum'}. Open maanden worden opnieuw berekend; afgesloten maanden houden hun vastgelegde afspraken. Voor verwijderde of verkorte afspraken worden de betrokken open maanden ook opnieuw berekend.</p>
+    {person.can_edit ? <div className="flex gap-3"><button type="button" className="btn-secondary" onClick={() => setRows((old) => [...old, { team_id: team.team_id, valid_from: '', valid_until: null, payment_route: 'payroll', nmbrs_employee_number: '', nmbrs_name: '' }])}>Afspraak toevoegen</button><button className="btn-primary" disabled={save.isPending}>Afspraken opslaan</button></div> : <p>Deze persoon is alleen-lezen.</p>}
+    <ErrorMessage error={save.error} />
+  </form>;
+}
+function Agreements({ team }) {
+  const [search, setSearch] = useState('');
+  const [personId, setPersonId] = useState(null);
+  const roster = useQuery({ queryKey: ['match-compensation', 'agreements', team.team_id], queryFn: () => request(`/agreements?team_id=${team.team_id}`) });
+  const results = useQuery({ queryKey: ['match-agreement-search', search], queryFn: () => api.get('/wp/v2/people', { params: { search, per_page: 20, _fields: 'id,title' } }).then(({ data }) => data), enabled: search.length >= 3 });
+  const person = useQuery({ queryKey: ['match-compensation', 'agreement-person', personId], queryFn: () => request(`/people/${personId}/agreements`), enabled: !!personId });
+  return <section className="card p-6 space-y-4"><h2 className="text-lg font-semibold">Afspraken {team.name}</h2><p>Kies per speler de betaalroute en ingangsdatum. Een gast in de registratie kan een loonafspraak hebben.</p>
+    <Input label="Speler zoeken (minimaal 3 tekens)" value={search} onChange={(event) => setSearch(event.target.value)} />
+    {search.length >= 3 ? results.data?.map((row) => <button key={row.id} className="btn-secondary mr-2" onClick={() => { setPersonId(row.id); setSearch(''); }}>{row.title.rendered}</button>) : null}
+    <div className="flex flex-wrap gap-2">{roster.data?.map((row) => <button key={row.person_id} className="btn-secondary" onClick={() => setPersonId(row.person_id)}>{row.player_name}</button>)}</div>
+    <ErrorMessage error={roster.error || results.error || person.error} />
+    {person.data ? <AgreementEditor key={`${personId}:${person.data.version}`} person={person.data} team={team} onSaved={() => setPersonId(null)} /> : null}
+  </section>;
 }
 
 function RegistrationForm({ teamId, initial, roster, onSaved }) {
@@ -121,7 +166,7 @@ function Registrations({ team }) {
   const blank = (match) => { const score = match?.result?.trim().match(/^(\d+)\s*-\s*(\d+)$/); return ({ source_match_id: match?.id || `manual:${crypto.randomUUID()}`, played_on: match?.date || today(), opponent_name: match ? (match.home ? match.away_team : match.home_team) : '', home: match?.home ?? true, category: category(match?.competition), home_score: score ? Number(score[1]) : null, away_score: score ? Number(score[2]) : null, selection: [], reason: '' }); };
   return <div className="space-y-4">
     <ErrorMessage error={registrations.error || fixtures.error || roster.error} />
-    <div className="card p-6 space-y-4"><h2 className="text-lg font-semibold">Registraties {team.name}</h2><p className="text-sm text-gray-500">Controleer per wedstrijd de uitslag, wedstrijdsoort en selectie. Beker en oefenwedstrijden tellen niet mee voor vergoedingen.</p>
+    <div className="card p-6 space-y-4"><h2 className="text-lg font-semibold">Registraties {team.name}</h2><p className="text-sm text-gray-500">Kies een wedstrijd of voeg deze handmatig toe. Controleer datum, tegenstander, thuis/uit, uitslag en wedstrijdsoort. Geef iedere speler een status en voeg spelers van buiten het team toe als gast. Concepten tellen niet mee; afronden maakt de wedstrijd beschikbaar voor financiën. Beker en oefenwedstrijden tellen niet mee. Het gastlabel bepaalt niet de betaalroute.</p>
       {registrations.data?.map((record) => <button key={record.id} className="block w-full text-left rounded border p-3 dark:border-gray-700" onClick={() => setSelected(record)}>{record.played_on} · {record.opponent_name} · {record.phase === 'completed' ? 'Afgerond' : 'Concept'}</button>)}
       <Select label="Wedstrijd uit het programma" value="" onChange={(event) => { const match = fixtures.data?.matches.find((match) => String(match.id) === event.target.value); if (match) setSelected(blank(match)); }}><option value="">Kies een wedstrijd</option>{fixtures.data?.matches.filter((match) => !match.cancelled && !registrations.data?.some((record) => String(record.source_match_id) === String(match.id))).map((match) => <option key={match.id} value={match.id}>{match.date} · {match.home_team} - {match.away_team}{match.result ? ` · ${match.result}` : ''}</option>)}</Select>
       <button className="btn-secondary" onClick={() => setSelected(blank())}>Handmatige wedstrijd</button>
@@ -130,30 +175,66 @@ function Registrations({ team }) {
   </div>;
 }
 
-function BatchActions({ batch, canManage, onChanged }) {
+function BatchActions({ batch, canManage, onChanged, route = null }) {
   const [account, setAccount] = useState({ debtor_name: '', debtor_iban: '', execution_date: today(), confirmed: false });
-  const [processing, setProcessing] = useState({ date: today(), reference: '', kind: batch.scheme === 'awc1' ? 'nmbrs' : batch.rows.some((row) => row.amount_cents < 0) ? 'manual_correction' : 'paid' });
+  const [processing, setProcessing] = useState({ date: today(), reference: '', kind: (route ? route === 'payroll' : batch.scheme === 'awc1') ? 'nmbrs' : batch.rows.some((row) => row.amount_cents < 0) ? 'manual_correction' : 'paid' });
   const [reason, setReason] = useState('');
   const [unused, setUnused] = useState(false);
   const exportAction = useAction(`/batches/${batch.id}/exports`);
   const process = useAction(`/batches/${batch.id}/processing`);
   const correct = useAction(`/batches/${batch.id}/corrections`);
-  const download = () => exportAction.mutate(account, { onSuccess: (file) => {
-    const url = URL.createObjectURL(new Blob([file.content], { type: file.mime }));
-    const anchor = document.createElement('a'); anchor.href = url; anchor.download = file.filename; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); onChanged();
+  const download = () => exportAction.mutate({ ...account, ...(route ? { route } : {}) }, { onSuccess: (file) => {
+    downloadFile(file); onChanged();
   } });
   if (!canManage || batch.phase !== 'closed') return null;
   return <div className="space-y-5 border-t pt-4 dark:border-gray-700">
-    {batch.scheme === 'jo23' && !batch.summary.exported ? <div className="grid sm:grid-cols-3 gap-3"><Input label="Naam rekeninghouder club" value={account.debtor_name} onChange={(event) => setAccount({ ...account, debtor_name: event.target.value })} /><Input label="Rabobank-IBAN club" value={account.debtor_iban} onChange={(event) => setAccount({ ...account, debtor_iban: event.target.value })} /><Input label="Uitvoerdatum" type="date" min={today()} value={account.execution_date} onChange={(event) => setAccount({ ...account, execution_date: event.target.value })} /></div> : null}
+    {(route === 'sepa_guest' || batch.scheme === 'jo23') && !batch.summary.exported ? <div className="grid sm:grid-cols-3 gap-3"><Input label="Naam rekeninghouder club" value={account.debtor_name} onChange={(event) => setAccount({ ...account, debtor_name: event.target.value })} /><Input label="Rabobank-IBAN club" value={account.debtor_iban} onChange={(event) => setAccount({ ...account, debtor_iban: event.target.value })} /><Input label="Uitvoerdatum" type="date" min={today()} value={account.execution_date} onChange={(event) => setAccount({ ...account, execution_date: event.target.value })} /></div> : null}
     {!batch.summary.exported ? <label className="flex gap-2 text-sm"><input type="checkbox" checked={account.confirmed} onChange={(event) => setAccount({ ...account, confirmed: event.target.checked })} />Ik heb bedragen en gegevens gecontroleerd; deze maand is nog niet verwerkt of klaargezet.</label> : <p className="text-sm">Opnieuw downloaden levert hetzelfde bestand op. Importeer een bestand niet tweemaal.</p>}
-    <button className="btn-primary" disabled={exportAction.isPending || (!batch.summary.exported && !account.confirmed)} onClick={download}>{batch.summary.exported ? 'Bestaand bestand downloaden' : batch.scheme === 'awc1' ? 'Nmbrs-overzicht downloaden' : 'Rabobank-bestand downloaden'}</button>
+    <button className="btn-primary" disabled={exportAction.isPending || (!batch.summary.exported && !account.confirmed)} onClick={download}>{batch.summary.exported ? 'Bestaand bestand downloaden' : (route === 'payroll' || (!route && batch.scheme === 'awc1')) ? 'Nmbrs-overzicht downloaden' : 'Rabobank-bestand downloaden'}</button>
     <ErrorMessage error={exportAction.error} />
-    {batch.summary.processing ? <p role="status">Verwerking vastgelegd: {batch.summary.processing.date} · {batch.summary.processing.reference}</p> : <details><summary className="cursor-pointer font-medium">Verwerking buiten Rondo vastleggen</summary><div className="mt-3 space-y-3"><Input label="Verwerkingsdatum" type="date" value={processing.date} onChange={(event) => setProcessing({ ...processing, date: event.target.value })} /><Input label="Referentie van betaling of Nmbrs-verwerking" value={processing.reference} onChange={(event) => setProcessing({ ...processing, reference: event.target.value })} /><button className="btn-secondary" disabled={process.isPending} onClick={() => process.mutate(processing, { onSuccess: onChanged })}>Verwerking vastleggen</button><ErrorMessage error={process.error} /></div></details>}
-    {<details><summary className="cursor-pointer font-medium">Maand corrigeren</summary><div className="mt-3 space-y-3"><Input label="Reden" value={reason} onChange={(event) => setReason(event.target.value)} />{!batch.summary.processing ? <label className="flex gap-2 text-sm"><input type="checkbox" checked={unused} onChange={(event) => setUnused(event.target.checked)} />Het oude bestand is niet verwerkt en zal niet meer worden gebruikt.</label> : <p className="text-sm">De nieuwe maandversie bevat alleen het verschil met de al verwerkte bedragen. Negatieve correcties handel je handmatig af.</p>}<button className="btn-secondary" disabled={(!batch.summary.processing && !unused) || !reason || correct.isPending} onClick={() => correct.mutate({ reason, previous_file_unused: unused }, { onSuccess: onChanged })}>Correctieronde openen</button><ErrorMessage error={correct.error} /></div></details>}
+    {batch.summary.processing ? <p role="status">Verwerking vastgelegd: {batch.summary.processing.date} · {batch.summary.processing.reference}</p> : <details><summary className="cursor-pointer font-medium">Verwerking buiten Rondo vastleggen</summary><div className="mt-3 space-y-3"><Input label="Verwerkingsdatum" type="date" value={processing.date} onChange={(event) => setProcessing({ ...processing, date: event.target.value })} /><Input label="Referentie van betaling of Nmbrs-verwerking" value={processing.reference} onChange={(event) => setProcessing({ ...processing, reference: event.target.value })} /><button className="btn-secondary" disabled={process.isPending} onClick={() => process.mutate({ ...processing, ...(route ? { route } : {}) }, { onSuccess: onChanged })}>Verwerking vastleggen</button><ErrorMessage error={process.error} /></div></details>}
+    {!route ? <details><summary className="cursor-pointer font-medium">Maand corrigeren</summary><div className="mt-3 space-y-3"><Input label="Reden" value={reason} onChange={(event) => setReason(event.target.value)} />{!batch.summary.processing ? <label className="flex gap-2 text-sm"><input type="checkbox" checked={unused} onChange={(event) => setUnused(event.target.checked)} />Het oude bestand is niet verwerkt en zal niet meer worden gebruikt.</label> : <p className="text-sm">De nieuwe maandversie bevat alleen het verschil met de al verwerkte bedragen. Negatieve correcties handel je handmatig af.</p>}<button className="btn-secondary" disabled={(!batch.summary.processing && !unused) || !reason || correct.isPending} onClick={() => correct.mutate({ reason, previous_file_unused: unused }, { onSuccess: onChanged })}>Correctieronde openen</button><ErrorMessage error={correct.error} /></div></details> : null}
   </div>;
 }
 function Rows({ rows, scheme }) {
-  return <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr>{['Speler', 'Basis', 'Bank', 'Winst', 'Gelijk', scheme === 'awc1' ? 'Wedstrijden' : 'Premie'].map((title) => <th key={title} className="p-2 text-left">{title}</th>)}</tr></thead><tbody>{rows.map((row) => <tr key={row.person_id} className="border-t dark:border-gray-700"><td className="p-2"><Link className="hover:underline" to={`/people/${row.person_id}`}>{row.player_name}</Link></td>{['basis', 'bank', 'wins', 'draws'].map((key) => <td key={key} className="p-2">{row[key]}</td>)}<td className="p-2">{scheme === 'awc1' ? row.days : euro(row.amount_cents)}</td></tr>)}</tbody></table></div>;
+  return <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr>{['Speler', 'Basis', 'Bank', 'Winst', 'Gelijk', scheme === 'awc1' ? 'Wedstrijden' : scheme === 'unknown' ? 'Afspraak' : 'Vergoeding'].map((title) => <th key={title} className="p-2 text-left">{title}</th>)}</tr></thead><tbody>{rows.map((row) => <tr key={`${row.person_id}:${row.payment_route || ""}:${row.nmbrs_employee_number || ""}`} className="border-t dark:border-gray-700"><td className="p-2"><Link className="hover:underline" to={`/people/${row.person_id}`}>{row.player_name}</Link>{row.payment_route === 'payroll' && row.nmbrs_employee_number ? <span className="block text-xs text-gray-500">{row.nmbrs_employee_number} · {row.nmbrs_name}</span> : null}</td>{['basis', 'bank', 'wins', 'draws'].map((key) => <td key={key} className="p-2">{row[key]}</td>)}<td className="p-2">{scheme === 'awc1' ? row.days : scheme === 'unknown' ? 'Ontbreekt' : euro(row.amount_cents)}</td></tr>)}</tbody></table></div>;
+}
+function RouteRows({ rows, scheme }) {
+  if (scheme !== 'awc1' || !rows.some((row) => row.payment_route)) return <Rows rows={rows} scheme={scheme} />;
+  return Object.entries({ payroll: 'Loonadministratie', sepa_guest: 'Direct uitbetalen', unknown: 'Nog in te delen' }).map(([route, label]) => {
+    const selected = rows.filter((row) => row.payment_route === route);
+    return <section key={route} className="space-y-2"><h3 className="font-semibold">{label}</h3>{selected.length ? <><Rows rows={selected} scheme={route === 'payroll' ? 'awc1' : route === 'unknown' ? 'unknown' : 'jo23'} />{route === 'sepa_guest' ? <p>Totaal {euro(selected.reduce((sum, row) => sum + row.amount_cents, 0))}</p> : null}</> : <p className="text-sm">Niet van toepassing</p>}</section>;
+  });
+}
+function ArchivedDownload({ batch, route }) {
+  const action = useAction(`/batches/${batch.id}/exports`);
+  return <div><button className="btn-secondary" disabled={action.isPending} onClick={() => action.mutate(route ? { route } : {}, { onSuccess: downloadFile })}>Vervangen bestand downloaden{route === 'payroll' ? ' · loonadministratie' : route === 'sepa_guest' ? ' · directe uitbetaling' : ''}</button><ErrorMessage error={action.error} /></div>;
+}
+function ArchivedDownloads({ batch }) {
+  if (batch.phase !== 'superseded') return null;
+  const routes = Object.entries(batch.summary.routes || {}).filter(([, status]) => status.exported);
+  if (!routes.length && !batch.summary.exported) return null;
+  return <section className="space-y-3"><p>Deze bestanden horen bij een vervangen maandversie. Gebruik ze alleen voor controle, niet voor nieuwe verwerking.</p>{routes.length ? routes.map(([route]) => <ArchivedDownload key={route} batch={batch} route={route} />) : <ArchivedDownload batch={batch} />}</section>;
+}
+function ExternalReversal({ batch, onChanged }) {
+  const [personId, setPersonId] = useState('');
+  const [reference, setReference] = useState('');
+  const [date, setDate] = useState(today());
+  const [confirmed, setConfirmed] = useState(false);
+  const save = useAction(`/batches/${batch.id}/route-corrections`);
+  if (batch.phase !== 'superseded' || !batch.reversal_candidates?.length) return null;
+  return <details><summary>Extern herstel bij gewijzigde betaalroute vastleggen</summary><div className="space-y-3 mt-3"><p>Alleen gebruiken nadat de eerdere loonverwerking en/of betaling voor deze speler en maand volledig is teruggedraaid. De nieuwe versie verwerkt deze speler daarna opnieuw volgens de actuele afspraken.</p><Select label="Speler" value={personId} onChange={(event) => { setPersonId(event.target.value); setConfirmed(false); }}><option value="">Kies een speler</option>{batch.reversal_candidates.map((row) => <option key={row.person_id} value={row.person_id}>{row.player_name}</option>)}</Select><Input label="Datum extern herstel" type="date" value={date} onChange={(event) => setDate(event.target.value)} /><Input label="Bewijsreferentie van volledig herstel" value={reference} onChange={(event) => setReference(event.target.value)} /><label className="flex gap-2"><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} />Alle eerdere verwerking voor deze speler en maand is volledig teruggedraaid buiten Rondo.</label><button className="btn-secondary" disabled={!personId || !reference || !confirmed || save.isPending} onClick={() => save.mutate({ person_id: Number(personId), reference, date, confirmed }, { onSuccess: onChanged })}>Extern herstel vastleggen</button><ErrorMessage error={save.error} /></div></details>;
+}
+function ModernBatchActions({ batch, canManage, onChanged }) {
+  const [reason, setReason] = useState('');
+  const [unused, setUnused] = useState(false);
+  const correct = useAction(`/batches/${batch.id}/corrections`);
+  const routes = Object.entries(batch.summary.routes);
+  const needsUnused = routes.some(([, status]) => status.applicable && !status.processing);
+  if (!canManage || batch.phase !== 'closed') return null;
+  return <div className="space-y-6">{routes.map(([route, status]) => <section key={route}><h3 className="font-semibold">{route === 'payroll' ? 'Loonadministratie' : 'Direct uitbetalen'}</h3>{status.applicable ? <BatchActions batch={{ ...batch, rows: batch.rows.filter((row) => row.payment_route === route), summary: status }} route={route} canManage={canManage} onChanged={onChanged} /> : <p>Niet van toepassing</p>}</section>)}
+    <details><summary>Maand corrigeren</summary><div className="space-y-3 mt-3"><Input label="Reden" value={reason} onChange={(event) => setReason(event.target.value)} />{needsUnused ? <label className="flex gap-2"><input type="checkbox" checked={unused} onChange={(event) => setUnused(event.target.checked)} />Alle onverwerkte bestanden zijn niet gebruikt en worden niet meer gebruikt.</label> : null}<p className="text-sm">Verwerkte routes krijgen alleen het verschil. Een gewijzigde betaalroute na verwerking vereist eerst controle van de oorspronkelijke betaling. Negatieve betalingen worden handmatig afgehandeld.</p><button className="btn-secondary" disabled={!reason || (needsUnused && !unused) || correct.isPending} onClick={() => correct.mutate({ reason, previous_file_unused: unused }, { onSuccess: onChanged })}>Correctieronde openen</button><ErrorMessage error={correct.error} /></div></details>
+  </div>;
 }
 function Monthly({ team, settings }) {
   const [month, setMonth] = useState(today().slice(0, 7));
@@ -166,16 +247,16 @@ function Monthly({ team, settings }) {
   return <div className="space-y-4"><section className="card p-6 space-y-4">
     <div className="flex flex-wrap justify-between gap-4"><h2 className="text-lg font-semibold">Maandverwerking {team.name}</h2><Input label="Maand" type="month" min="2026-07" max="2027-06" value={month} onChange={(event) => { setMonth(event.target.value); setConfirmed(false); setBatchId(null); }} /></div>
     <ErrorMessage error={preview.error} />
-    {preview.isPending ? <p role="status">Maand laden…</p> : preview.data ? <><Rows rows={preview.data.rows} scheme={team.scheme} />{team.scheme === 'jo23' ? <p className="font-semibold">Totaal {euro(total)}</p> : <p className="text-sm">Nmbrs: aantallen voor snelinvoer. Bankvergoedingcode: {preview.data.bank_code || 'nog niet ingesteld'}.</p>}
-      {preview.data.is_correction ? <div className="space-y-3"><h3 className="font-semibold">Te verwerken correctie op deze maand</h3><p className="text-sm">Alleen dit verschil met de al verwerkte maand komt in de nieuwe versie. Negatieve premies worden handmatig afgehandeld.</p><Rows rows={preview.data.settlement_rows} scheme={team.scheme} /></div> : null}
+    {preview.isPending ? <p role="status">Maand laden…</p> : preview.data ? <><RouteRows rows={preview.data.rows} scheme={team.scheme} />{team.scheme === 'jo23' ? <p className="font-semibold">Totaal {euro(total)}</p> : <p className="text-sm">Nmbrs: XLSX met alle geldige loonafspraken, ook zonder deelname. Bankvergoedingcode: {preview.data.bank_code || 'nog niet ingesteld'}.</p>}
+      {preview.data.is_correction ? <div className="space-y-3"><h3 className="font-semibold">Te verwerken correctie op deze maand</h3><p className="text-sm">Alleen dit verschil met de al verwerkte maand komt in de nieuwe versie. Negatieve premies worden handmatig afgehandeld.</p><RouteRows rows={preview.data.settlement_rows} scheme={team.scheme} /></div> : null}
       {preview.data.errors.length ? <ul className="list-disc pl-5 text-amber-800 dark:text-amber-200">{preview.data.errors.map((message, index) => <li key={index}>{message}</li>)}</ul> : null}
-      {team.scheme === 'awc1' && settings.can_manage ? <details><summary className="cursor-pointer">Namen in Nmbrs bevestigen</summary><div className="mt-4 space-y-4">{preview.data.rows.map((row) => <NmbrsName key={row.person_id} row={row} />)}</div></details> : null}
+
       {settings.can_manage && !preview.data.batches.some((batch) => batch.phase === 'closed') ? <><label className="flex gap-2 text-sm"><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} />Alle gespeelde competitie- en nacompetitiewedstrijden van deze maand zijn gecontroleerd en geregistreerd.</label><button className="btn-primary" disabled={!confirmed || preview.data.errors.length > 0 || close.isPending} onClick={() => close.mutate({ team_id: team.team_id, month, fingerprint: preview.data.fingerprint, all_matches_confirmed: true }, { onSuccess: (result) => { setBatchId(result.id); setConfirmed(false); } })}>Maand afsluiten</button><ErrorMessage error={close.error} /></> : null}
       {preview.data.batches.map((batch) => <button key={batch.id} className="block btn-secondary" onClick={() => setBatchId(batch.id)}>Versie {batch.version} · {batch.phase === 'closed' ? 'Afgesloten' : 'Vervangen'}{batch.exported ? ' · Geëxporteerd' : ''}{batch.processing ? ' · Verwerkt' : ''}</button>)}
     </> : null}
   </section>
     <ErrorMessage error={batch.error} />
-    {batch.data ? <section className="card p-6 space-y-4"><h2 className="text-lg font-semibold">Vastgelegde maand · {batch.data.month} · versie {batch.data.version}</h2><Rows rows={batch.data.rows} scheme={batch.data.scheme} /><BatchActions key={batch.data.id} batch={batch.data} canManage={settings.can_manage} onChanged={() => batch.refetch()} /></section> : null}
+    {batch.data ? <section className="card p-6 space-y-4"><h2 className="text-lg font-semibold">Vastgelegde maand · {batch.data.month} · versie {batch.data.version}</h2><RouteRows rows={batch.data.rows} scheme={batch.data.scheme} />{settings.can_manage ? <ArchivedDownloads batch={batch.data} /> : null}{settings.can_manage ? <ExternalReversal key={`reversal:${batch.data.id}`} batch={batch.data} onChanged={() => batch.refetch()} /> : null}{batch.data.schema_version === '2' && batch.data.scheme === 'awc1' ? <ModernBatchActions key={batch.data.id} batch={batch.data} canManage={settings.can_manage} onChanged={() => batch.refetch()} /> : <BatchActions key={batch.data.id} batch={batch.data} canManage={settings.can_manage} onChanged={() => batch.refetch()} />}</section> : null}
   </div>;
 }
 
@@ -189,7 +270,7 @@ export default function MatchCompensation() {
   const settings = query.data;
   const team = settings.teams.find((team) => team.team_id === teamId) || settings.teams[0];
   return <div className="max-w-6xl mx-auto space-y-6"><header><h1 className="text-2xl font-bold">Wedstrijdvergoedingen</h1><p className="text-gray-500 mt-1">AWC 1 en JO23-1 · seizoen 2026–2027</p></header>
-    <nav className="flex flex-wrap gap-2" aria-label="Wedstrijdvergoedingen">{team?.can_register ? <button className={tab === 'registration' ? 'btn-primary' : 'btn-secondary'} onClick={() => setTab('registration')}>Registratie</button> : null}{settings.can_finance ? <button className={tab === 'finance' ? 'btn-primary' : 'btn-secondary'} onClick={() => setTab('finance')}>Maandverwerking</button> : null}{settings.can_configure ? <button className={tab === 'settings' ? 'btn-primary' : 'btn-secondary'} onClick={() => setTab('settings')}>Instellingen</button> : null}</nav>
-    {tab === 'settings' && settings.can_configure ? <><Settings key={JSON.stringify(settings.teams)} settings={settings} /><ImportPanel /></> : <>{team ? <><Select label="Team" value={team.team_id} onChange={(event) => setTeamId(Number(event.target.value))}>{settings.teams.map((team) => <option key={team.team_id} value={team.team_id}>{team.name}</option>)}</Select>{tab === 'registration' && team.can_register ? <Registrations key={team.team_id} team={team} /> : settings.can_finance ? <Monthly key={team.team_id} team={team} settings={settings} /> : <p>Geen toegang tot dit onderdeel.</p>}<Link className="text-electric-cyan" to={`/teams/${team.team_id}`}>Terug naar team</Link></> : <div className="card p-6">Er zijn nog geen teams voor jou ingeschakeld.{settings.can_configure ? ' Koppel de pilotteams bij Instellingen.' : ''}</div>}</>}
+    <nav className="flex flex-wrap gap-2" aria-label="Wedstrijdvergoedingen">{team?.can_register ? <button className={tab === 'registration' ? 'btn-primary' : 'btn-secondary'} onClick={() => setTab('registration')}>Registratie</button> : null}{settings.can_finance ? <button className={tab === 'finance' ? 'btn-primary' : 'btn-secondary'} onClick={() => setTab('finance')}>Maandverwerking</button> : null}{settings.can_manage && team?.scheme === 'awc1' ? <button className={tab === 'agreements' ? 'btn-primary' : 'btn-secondary'} onClick={() => setTab('agreements')}>Afspraken</button> : null}{settings.can_configure ? <button className={tab === 'settings' ? 'btn-primary' : 'btn-secondary'} onClick={() => setTab('settings')}>Instellingen</button> : null}</nav>
+    {tab === 'settings' && settings.can_configure ? <><Settings key={JSON.stringify(settings.teams)} settings={settings} /><ImportPanel /></> : <>{team ? <><Select label="Team" value={team.team_id} onChange={(event) => setTeamId(Number(event.target.value))}>{settings.teams.map((team) => <option key={team.team_id} value={team.team_id}>{team.name}</option>)}</Select>{tab === 'agreements' && settings.can_manage && team.scheme === 'awc1' ? <Agreements key={team.team_id} team={team} /> : tab === 'registration' && team.can_register ? <Registrations key={team.team_id} team={team} /> : settings.can_finance ? <Monthly key={team.team_id} team={team} settings={settings} /> : <p>Geen toegang tot dit onderdeel.</p>}<Link className="text-electric-cyan" to={`/teams/${team.team_id}`}>Terug naar team</Link></> : <div className="card p-6">Er zijn nog geen teams voor jou ingeschakeld.{settings.can_configure ? ' Koppel de pilotteams bij Instellingen.' : ''}</div>}</>}
   </div>;
 }

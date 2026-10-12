@@ -50,22 +50,24 @@ return ( static function () {
 			}
 			$fields['selection'] = $definition( $context, 'selection', 'repeater', [ 'sub_fields' => $children ] );
 		} else {
-			foreach ( [ 'month', 'scheme', 'closed_at', 'bank_code' ] as $name ) {
+			foreach ( [ 'month', 'scheme', 'closed_at', 'bank_code', 'schema_version', 'agreement_snapshot', 'payroll_config' ] as $name ) {
 				$fields[ $name ] = $definition( $context, $name );
 			}
 			$children = [];
 			foreach ( [
-				'person_id'           => 'number',
-				'player_name'         => 'text',
-				'days'                => 'number',
-				'basis'               => 'number',
-				'bank'                => 'number',
-				'wins'                => 'number',
-				'draws'               => 'number',
-				'amount_cents'        => 'number',
-				'iban'                => 'text',
-				'bank_account_holder' => 'text',
-				'nmbrs_name'          => 'text',
+				'person_id'             => 'number',
+				'player_name'           => 'text',
+				'days'                  => 'number',
+				'basis'                 => 'number',
+				'bank'                  => 'number',
+				'wins'                  => 'number',
+				'draws'                 => 'number',
+				'amount_cents'          => 'number',
+				'iban'                  => 'text',
+				'bank_account_holder'   => 'text',
+				'nmbrs_name'            => 'text',
+				'nmbrs_employee_number' => 'text',
+				'payment_route'         => 'text',
 			] as $name => $type ) {
 				$children[ $name ] = $definition( $context . '_rows', $name, $type );
 			}
