@@ -375,10 +375,7 @@ class MatchCompensationTest extends RondoTestCase {
 		update_option( Service::CONFIG, $config );
 		$this->assertNotEmpty( Service::preview( $this->team, '2026-09' )['errors'] );
 		$this->assertNotInstanceOf( \WP_Error::class, Fields::update_for_post( $this->person, 'nmbrs_name', 'Speler zoals in Nmbrs' ) );
-		$batch  = $this->close();
-		$export = $this->act( $batch['id'], 'exports', [ 'confirmed' => true ] );
-		$this->assertStringContainsString( 'Speler zoals in Nmbrs', $export['content'] );
-		$this->assertStringContainsString( 'Bankvergoeding (code nog niet ingesteld)', $export['content'] );
+		$this->assertNotEmpty( Service::preview( $this->team, '2026-09' )['errors'], 'A loose Nmbrs name must not create a payroll agreement.' );
 	}
 	public function test_registrar_is_limited_to_assigned_team(): void {
 		$user    = self::factory()->user->create( [ 'role' => 'rondo_financieel' ] );

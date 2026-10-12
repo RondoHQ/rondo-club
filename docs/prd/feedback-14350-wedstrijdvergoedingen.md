@@ -1,6 +1,6 @@
 # Wijzigingsplan wedstrijdvergoedingen: feedback 14350
 
-**Status:** Voorstel ter beoordeling; geen opdracht tot implementatie of productie-inrichting.
+**Status:** Bouw goedgekeurd door Joost op 12 oktober 2026; productie-inrichting van personen en rechten volgt afzonderlijk.
 **Datum:** 2026-10-12.
 **Bron:** [Feedback #14350](https://rondo.svawc.nl/feedback/14350).
 **Voorganger:** [Wedstrijdregistratie en premies](wedstrijdregistratie-en-premies.md).
@@ -290,7 +290,7 @@ De gebruiker beslist zelf over het delen van die instructie.
   Controleer na CI/deploy de productie-interface als financieel beheerder en registrator;
   maak geen fictieve productiebetalingen of registraties voor tests.
 
-Dit document is alleen planning: geen versie- of changelogwijziging en geen deployment nodig.
+Dit document beschrijft het goedgekeurde bouwplan; de implementatie krijgt een eigen versie, changelog en controles.
 Developer-documentatie wordt conform de repositoryafspraak door de dagelijkse automation bijgewerkt.
 
 ## 8. Beslispunten vóór de bouw
