@@ -107,6 +107,59 @@ class NewsletterExport {
 		return new \WP_Error( 'newsletter_remote_conflict', 'De campagne is in Laposta gewijzigd of de vorige export is onzeker. Controleer het concept in Laposta; er is niets overschreven.', [ 'status' => 409 ] );
 	}
 
+	/** Translate the import report without exposing arbitrary response data or URL credentials. */
+	private static function import_warning( array $result ): string {
+		$labels   = [
+			'javascript'        => 'Er staat JavaScript in de nieuwsbrief. Verwijder scripts uit de template.',
+			'flash'             => 'Er staat Flash-inhoud in de nieuwsbrief. Verwijder deze uit de template.',
+			'no_unsubscribe'    => 'De afmeldlink ontbreekt. Voeg deze toe aan de template.',
+			'empty_unsubscribe' => 'De afmeldlink is leeg. Geef deze een zichtbare tekst in de template.',
+			'css'               => 'Laposta kon een extern stylesheet niet importeren.',
+			'images'            => 'Laposta kon een afbeelding niet importeren.',
+		];
+		$messages = [];
+		foreach ( [ $result['campaign']['report'] ?? [], $result['report'] ?? [] ] as $report ) {
+			if ( empty( $report ) ) {
+				continue;
+			}
+			if ( ! is_array( $report ) ) {
+				$messages[] = 'Laposta gaf een importwaarschuwing in een onbekend formaat. Vraag een beheerder om dit te onderzoeken.';
+				continue;
+			}
+			foreach ( array_slice( $report, 0, 50, true ) as $code => $detail ) {
+				if ( empty( $detail ) ) {
+					continue;
+				}
+				if ( ! isset( $labels[ $code ] ) ) {
+					$messages[] = 'Laposta gaf een onbekende importwaarschuwing. Vraag een beheerder om dit te onderzoeken.';
+					continue;
+				}
+				$message = $labels[ $code ];
+				if ( in_array( $code, [ 'images', 'css' ], true ) ) {
+					$files = [];
+					foreach ( array_slice( (array) $detail, 0, 20, true ) as $key => $value ) {
+						// Accept URL lists and URL-keyed maps, but never print remote error text.
+						foreach ( [ $key, $value ] as $candidate ) {
+							if ( ! is_string( $candidate ) ) {
+								continue;
+							}
+							$url = wp_parse_url( html_entity_decode( $candidate, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+							if ( ! is_array( $url ) || empty( $url['host'] ) || ! in_array( $url['scheme'] ?? '', [ 'https', 'http' ], true ) ) {
+								continue;
+							}
+							$files[] = sanitize_text_field( $url['scheme'] . '://' . $url['host'] . ( isset( $url['port'] ) ? ':' . $url['port'] : '' ) . ( $url['path'] ?? '' ) );
+						}
+					}
+					$files    = array_unique( array_map( static fn( $file ) => mb_substr( $file, 0, 500 ), $files ) );
+					$message .= $files ? "\n" . implode( "\n", $files ) : ' Laposta gaf geen bruikbaar bestandsadres terug.';
+					$message .= "\nControleer of het bestand openbaar bereikbaar is en door Laposta wordt ondersteund.";
+				}
+				$messages[] = $message;
+			}
+		}
+		return $messages ? "Laposta meldt bij de laatste import:\n" . implode( "\n\n", array_unique( $messages ) ) : '';
+	}
+
 	/** Caller holds the item lock; test only the exact last verified draft. */
 	public function test_mail( int $id, string $email ) {
 		$state = get_post_meta( $id, Newsletter::EXPORT, true );
@@ -261,8 +314,10 @@ class NewsletterExport {
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
-		if ( ! empty( $result['campaign']['report'] ) || ! empty( $result['report'] ) ) {
-			return new \WP_Error( 'newsletter_import_warning', 'Laposta meldt een probleem met de geïmporteerde inhoud of afbeeldingen. Controleer het concept en de template vóór verder gebruik.', [ 'status' => 409 ] );
+		$state['import_warning'] = self::import_warning( $result );
+		update_post_meta( $id, Newsletter::EXPORT, wp_slash( $state ) );
+		if ( $state['import_warning'] !== '' ) {
+			return new \WP_Error( 'newsletter_import_warning', $state['import_warning'], [ 'status' => 409 ] );
 		}
 		$remote = $this->remote( $campaign_id );
 		if ( is_wp_error( $remote ) ) {

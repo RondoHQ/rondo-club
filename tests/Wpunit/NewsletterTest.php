@@ -20,6 +20,8 @@ class NewsletterTest extends RondoTestCase {
 	private string $failure    = '';
 	private string $definition = 'field = value';
 	private array $test_emails = [];
+	private mixed $report      = [];
+	private mixed $top_report  = [];
 
 	protected function set_up(): void {
 		parent::set_up();
@@ -138,8 +140,9 @@ class NewsletterTest extends RondoTestCase {
 			$data = [
 				'campaign' => [
 					'html'   => $this->html,
-					'report' => [],
+					'report' => $args['method'] === 'POST' ? $this->report : [],
 				],
+				'report'   => $args['method'] === 'POST' ? $this->top_report : [],
 			];
 		} elseif ( $path === '/campaign/campaign1/action/testmail' && $args['method'] === 'POST' ) {
 			$this->test_emails[] = $body['email'];
@@ -288,6 +291,94 @@ class NewsletterTest extends RondoTestCase {
 		$this->assertStringNotContainsString( 'position:fixed', $this->html );
 		$this->assertStringNotContainsString( 'javascript:', Newsletter::sanitize_body( '<img src="javascript:evil()" onerror="evil()">' ) );
 		$this->assertStringNotContainsString( 'data:', Newsletter::sanitize_body( '<img src="data:image/png;base64,AAAA">' ) );
+	}
+
+	public function test_import_warning_identifies_files_survives_reload_and_clears_after_success(): void {
+		$token        = $this->prepare();
+		$this->report = [
+			'images' => [ 'https://user:password@example.org/signature.webp?token=private#secret' ],
+			'css'    => [ 'https://example.org/email.css' => 'private remote error text' ],
+		];
+		$r            = $this->request( '/export', 'POST', [ 'token' => $token ] );
+		$this->assertSame( 409, $r->get_status() );
+		$this->assertSame( 'newsletter_import_warning', $r->get_data()['code'] );
+		$message = $r->get_data()['message'];
+		$this->assertStringContainsString( 'Laposta kon een afbeelding niet importeren.', $message );
+		$this->assertStringContainsString( 'https://example.org/signature.webp', $message );
+		$this->assertStringContainsString( 'Laposta kon een extern stylesheet niet importeren.', $message );
+		$this->assertStringContainsString( 'https://example.org/email.css', $message );
+		foreach ( [ 'user:', 'password', '?token', 'private', '#secret' ] as $secret ) {
+			$this->assertStringNotContainsString( $secret, $message );
+		}
+		$this->assertSame( $message, get_post_meta( $this->id, Newsletter::EXPORT, true )['import_warning'] );
+		$reloaded = $this->request()->get_data();
+		$this->assertSame( $message, $reloaded['import_warning'] );
+		$this->assertSame( 'attention', $reloaded['status'] );
+		$this->assertSame(
+			409,
+			$this->request(
+			'/testmail',
+			'POST',
+			[
+				'email'    => 'test@example.org',
+				'revision' => $reloaded['revision'],
+			]
+			)->get_status()
+			);
+		$this->assertEmpty( $this->test_emails );
+
+		$this->report = [];
+		$r            = $this->request( '/export', 'POST', [ 'token' => $token ] );
+		$this->assertSame( 200, $r->get_status(), wp_json_encode( $r->get_data() ) );
+		$this->assertSame( 'exported', $r->get_data()['status'] );
+		$this->assertSame( '', $r->get_data()['import_warning'] );
+		$this->assertSame( '', $this->request()->get_data()['import_warning'] );
+		$this->assertCount( 1, array_filter( $this->calls, fn( $c ) => $c === [ 'POST', '/campaign' ] ) );
+	}
+
+	public function test_both_report_locations_explain_all_documented_content_warnings(): void {
+		$token            = $this->prepare();
+		$this->report     = [ 'javascript' => true ];
+		$this->top_report = [
+			'flash'             => true,
+			'no_unsubscribe'    => true,
+			'empty_unsubscribe' => true,
+		];
+		$r                = $this->request( '/export', 'POST', [ 'token' => $token ] );
+		$this->assertSame( 409, $r->get_status() );
+		foreach ( [ 'JavaScript', 'Flash-inhoud', 'De afmeldlink ontbreekt.', 'De afmeldlink is leeg.' ] as $expected ) {
+			$this->assertStringContainsString( $expected, $r->get_data()['message'] );
+		}
+		$this->assertSame( $r->get_data()['message'], $this->request()->get_data()['import_warning'] );
+	}
+
+	public function test_unrecognized_reports_stay_blocking_without_exposing_raw_response_data(): void {
+		$token = $this->prepare();
+		foreach ( [
+			[ 'unknown' => '<script>private response</script>' ],
+			'<script>private response</script>',
+			[ 'images' => [ '<script>private response</script>', [ 'url' => 'private response' ] ] ],
+		] as $report ) {
+			$this->report = $report;
+			$r            = $this->request( '/export', 'POST', [ 'token' => $token ] );
+			$this->assertSame( 409, $r->get_status() );
+			$this->assertSame( 'newsletter_import_warning', $r->get_data()['code'] );
+			$this->assertStringNotContainsString( 'private response', $r->get_data()['message'] );
+			$this->assertStringNotContainsString( '<script>', $r->get_data()['message'] );
+			$this->assertSame( $r->get_data()['message'], $this->request()->get_data()['import_warning'] );
+		}
+	}
+
+	public function test_empty_report_flags_do_not_block_export(): void {
+		$token        = $this->prepare();
+		$this->report = [
+			'javascript'     => false,
+			'images'         => [],
+			'no_unsubscribe' => false,
+		];
+		$r            = $this->request( '/export', 'POST', [ 'token' => $token ] );
+		$this->assertSame( 200, $r->get_status(), wp_json_encode( $r->get_data() ) );
+		$this->assertSame( '', $r->get_data()['import_warning'] );
 	}
 
 	public function test_heading_spacing_survives_preview_and_export(): void {
