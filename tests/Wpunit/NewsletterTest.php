@@ -296,7 +296,7 @@ class NewsletterTest extends RondoTestCase {
 	public function test_import_warning_identifies_files_survives_reload_and_clears_after_success(): void {
 		$token        = $this->prepare();
 		$this->report = [
-			'images' => [ 'https://user:password@example.org/signature.webp?token=private#secret' ],
+			'images' => [ 'https://user:password@example.org/signature%20test.webp?token=private#secret' ],
 			'css'    => [ 'https://example.org/email.css' => 'private remote error text' ],
 		];
 		$r            = $this->request( '/export', 'POST', [ 'token' => $token ] );
@@ -304,7 +304,7 @@ class NewsletterTest extends RondoTestCase {
 		$this->assertSame( 'newsletter_import_warning', $r->get_data()['code'] );
 		$message = $r->get_data()['message'];
 		$this->assertStringContainsString( 'Laposta kon een afbeelding niet importeren.', $message );
-		$this->assertStringContainsString( 'https://example.org/signature.webp', $message );
+		$this->assertStringContainsString( 'https://example.org/signature%20test.webp', $message );
 		$this->assertStringContainsString( 'Laposta kon een extern stylesheet niet importeren.', $message );
 		$this->assertStringContainsString( 'https://example.org/email.css', $message );
 		foreach ( [ 'user:', 'password', '?token', 'private', '#secret' ] as $secret ) {
