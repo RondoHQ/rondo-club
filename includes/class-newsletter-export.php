@@ -147,7 +147,7 @@ class NewsletterExport {
 							if ( ! is_array( $url ) || empty( $url['host'] ) || ! in_array( $url['scheme'] ?? '', [ 'https', 'http' ], true ) ) {
 								continue;
 							}
-							$files[] = sanitize_text_field( $url['scheme'] . '://' . $url['host'] . ( isset( $url['port'] ) ? ':' . $url['port'] : '' ) . ( $url['path'] ?? '' ) );
+							$files[] = esc_url_raw( $url['scheme'] . '://' . $url['host'] . ( isset( $url['port'] ) ? ':' . $url['port'] : '' ) . ( $url['path'] ?? '' ) );
 						}
 					}
 					$files    = array_unique( array_map( static fn( $file ) => mb_substr( $file, 0, 500 ), $files ) );
