@@ -111,6 +111,7 @@ function NewsletterEditor({ initial, metadata }) {
   }
 
   const html = review?.html || preview.data?.html;
+  const visibleError = error || saved.import_warning;
   return <div className="mx-auto max-w-[1560px] space-y-5 text-gray-900 dark:text-gray-100">
     <Link to={`/communicatie/planning?item=${initial.id}`} className="inline-flex min-h-9 items-center gap-2 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"><ArrowLeft className="h-4 w-4" />Terug naar planning</Link>
     <header className="flex flex-wrap items-start justify-between gap-4">
@@ -118,7 +119,7 @@ function NewsletterEditor({ initial, metadata }) {
       <div className="flex flex-wrap items-center gap-3 text-sm"><span role="status" className="text-gray-600 dark:text-gray-300">{dirty ? 'Niet-opgeslagen wijzigingen' : statusLabels[saved.status]}</span>{user?.is_admin && <Link to="/communicatie/nieuwsbrief-instellingen" className="btn-tertiary min-h-11" aria-label="Nieuwsbriefinstellingen"><Settings2 className="h-4 w-4" /></Link>}</div>
     </header>
     {!metadata.configured && <p className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">De Laposta-verbinding en template moeten nog worden ingesteld. {user?.is_admin ? <Link className="underline" to="/communicatie/nieuwsbrief-instellingen">Open instellingen</Link> : 'Vraag een beheerder om dit in te stellen.'}</p>}
-    {error && <div ref={noticeRef} tabIndex={-1} role="alert" className="rounded-lg bg-red-50 p-4 text-sm text-red-800 dark:bg-red-950/40 dark:text-red-200">{error}</div>}
+    {visibleError && <div ref={noticeRef} tabIndex={-1} role="alert" className="whitespace-pre-line break-words rounded-lg bg-red-50 p-4 text-sm text-red-800 dark:bg-red-950/40 dark:text-red-200">{visibleError}</div>}
     {message && <div role="status" className="rounded-lg bg-green-50 p-4 text-sm text-green-900 dark:bg-green-950/40 dark:text-green-200">{message}{saved.campaign_url && <a className="ml-2 inline-flex items-center gap-1 underline" href={saved.campaign_url} target="_blank" rel="noreferrer">Open in Laposta<ExternalLink className="h-4 w-4" /></a>}</div>}
     <div className="flex gap-2 lg:hidden" aria-label="Weergave">{[['edit', review ? 'Controleren' : 'Bewerken'], ['preview', 'Voorbeeld']].map(([value, label]) => <button key={value} className={`${mobileTab === value ? 'btn-primary' : 'btn-secondary'} min-h-11 flex-1`} aria-pressed={mobileTab === value} onClick={() => setMobileTab(value)}>{label}</button>)}</div>
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(330px,0.85fr)_minmax(360px,1.15fr)] xl:gap-8">

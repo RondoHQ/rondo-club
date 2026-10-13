@@ -225,14 +225,15 @@ class NewsletterController extends Base {
 		$campaign = $export['campaign_id'] ?? '';
 		return rest_ensure_response(
 			[
-				'id'           => $id,
-				'title'        => get_the_title( $id ),
-				'fields'       => Newsletter::draft( $id ),
-				'revision'     => Newsletter::revision( $id ),
-				'status'       => $status,
-				'campaign_id'  => $campaign,
-				'campaign_url' => $campaign ? 'https://app.laposta.nl/c.campaign/s.browse/edit/confirm/?campaign=' . rawurlencode( $campaign ) : '',
-				'verified_at'  => $export['verified_at'] ?? null,
+				'id'             => $id,
+				'title'          => get_the_title( $id ),
+				'fields'         => Newsletter::draft( $id ),
+				'revision'       => Newsletter::revision( $id ),
+				'status'         => $status,
+				'campaign_id'    => $campaign,
+				'campaign_url'   => $campaign ? 'https://app.laposta.nl/c.campaign/s.browse/edit/confirm/?campaign=' . rawurlencode( $campaign ) : '',
+				'verified_at'    => $export['verified_at'] ?? null,
+				'import_warning' => $export['import_warning'] ?? '',
 			]
 			);
 	}
