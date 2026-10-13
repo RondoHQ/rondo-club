@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, Cake, CalendarX, SlidersHorizontal, Square } from 'lucide-react';
@@ -12,11 +12,11 @@ import { toMinutes, toTime, fieldPart } from '@/utils/training';
 import { combineDashboardMatches, moveDashboardBlock, hasDefaultDashboardOrder } from '@/utils/roleDashboard';
 import BoardSummary from './BoardSummary';
 import DashboardMatchList from './DashboardMatchList';
+import DashboardTodoModal from './DashboardTodoModal';
 import '@/styles/dashboard-brand.css';
 
 import { BoardAnniversaries, BoardMembership, BoardVolunteers, BoardVog } from './BoardDashboardBlocks';
 
-const TodoModal = lazy(() => import('@/components/Timeline/TodoModal'));
 const LABELS = { anniversaries: 'Jubilarissen', membership: 'Ledenontwikkeling', volunteers: 'Vrijwilligersbezetting', vog: 'VOG-aandachtspunten', attention: 'Aandacht nodig', birthdays: 'Verjaardagen', matches: 'Wedstrijden', teams: 'Mijn teams en trainingen' };
 const EMPTY = [];
 const panel = 'rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800';
@@ -167,6 +167,6 @@ export default function RoleDashboard({ user }) {
     </div> : <div className="dashboard-ordered-grid">{visibleBlocks.map(renderBlock)}</div>}
     <CompleteTodoModal isOpen={todo.showCompleteModal} onClose={todo.closeCompleteModal} todo={todo.todoToComplete} onAwaiting={todo.handleMarkAwaiting} onComplete={todo.handleJustComplete} onCompleteAsActivity={todo.handleCompleteAsActivity} allowActivity={Boolean(todo.todoToComplete?.person_id)} hideAwaitingOption={todo.todoToComplete?.status === 'awaiting'} />
     <QuickActivityModal isOpen={todo.showActivityModal} onClose={todo.closeActivityModal} onSubmit={todo.handleCreateActivity} isLoading={todo.isCreatingActivity} personId={todo.todoToComplete?.person_id} initialData={todo.activityInitialData} />
-    <Suspense fallback={null}><TodoModal isOpen={todo.showTodoModal} onClose={todo.closeTodoModal} onSubmit={todo.handleUpdateTodo} isLoading={todo.isUpdatingTodo} todo={todo.todoToView} /></Suspense>
+    <DashboardTodoModal isOpen={todo.showTodoModal} onClose={todo.closeTodoModal} onSubmit={todo.handleUpdateTodo} isLoading={todo.isUpdatingTodo} todo={todo.todoToView} />
   </div>;
 }

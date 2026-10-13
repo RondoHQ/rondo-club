@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.148.3] - 2026-10-13
+
+### Fixed
+- Load the role dashboard task window only when opened and contain loading or rendering failures within a closable message, keeping the dashboard available.
+
 ## [35.148.2] - 2026-10-13
 
 ### Fixed
