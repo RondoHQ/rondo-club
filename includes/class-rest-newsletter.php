@@ -366,9 +366,13 @@ class NewsletterController extends Base {
 	}
 
 	public function export( $request ) {
+		$force = $request->get_param( 'force' );
+		if ( $force !== null && ! is_bool( $force ) ) {
+			return new \WP_Error( 'newsletter_force_invalid', 'Bevestig expliciet of je het Laposta-concept wilt overschrijven.', [ 'status' => 400 ] );
+		}
 		return $this->locked(
 			$request,
-			function () use ( $request ) {
+			function () use ( $request, $force ) {
 				$id     = (int) $request['id'];
 				$token  = $request->get_param( 'token' );
 				$review = is_string( $token ) ? get_transient( 'rondo_newsletter_review_' . hash( 'sha256', $token ) ) : false;
@@ -383,7 +387,7 @@ class NewsletterController extends Base {
 				if ( $audiences !== $review['audiences'] ) {
 					return new \WP_Error( 'newsletter_audience_changed', 'De lijst of segmentdefinitie is gewijzigd. Controleer de doelgroep opnieuw.', [ 'status' => 409 ] );
 				}
-				$result = $service->export( $id, $audiences, $review['fingerprint'] );
+				$result = $service->export( $id, $audiences, $review['fingerprint'], $force === true );
 				return is_wp_error( $result ) ? $result : $this->show( $request );
 			}
 			);
