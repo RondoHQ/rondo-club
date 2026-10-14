@@ -143,9 +143,21 @@ jobs:
           WPBROWSER_LOOP_DEBUG: 1
         run: vendor/bin/codecept run Wpunit MobileSpikeTest
 
+  build-release:
+    name: Prepare production release
+    # Build while checks run; only the deploy job waits for every check.
+    if: >-
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/_build-production.yml
+    with:
+      ref: ${{ github.sha }}
+    secrets: inherit
+
   deploy:
     name: Deploy successful main commit
     needs:
+      - build-release
       - javascript
       - php
       - tests
@@ -155,5 +167,5 @@ jobs:
       github.ref == 'refs/heads/main'
     uses: ./.github/workflows/_deploy-production.yml
     with:
-      ref: ${{ github.sha }}
+      ref: ${{ needs.build-release.outputs.commit_sha }}
     secrets: inherit
