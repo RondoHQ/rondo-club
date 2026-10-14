@@ -103,8 +103,15 @@ class NewsletterExport {
 		];
 	}
 
-	private static function conflict() {
-		return new \WP_Error( 'newsletter_remote_conflict', 'De campagne is in Laposta gewijzigd of de vorige export is onzeker. Controleer het concept in Laposta; er is niets overschreven.', [ 'status' => 409 ] );
+	private static function conflict( bool $can_force = false ) {
+		return new \WP_Error(
+			'newsletter_remote_conflict',
+			'De campagne is in Laposta gewijzigd of de vorige export is onzeker. Controleer het concept in Laposta; er is niets overschreven.',
+			[
+				'status'    => 409,
+				'can_force' => $can_force,
+			]
+			);
 	}
 
 	/** Translate the import report without exposing arbitrary response data or URL credentials. */
@@ -189,7 +196,7 @@ class NewsletterExport {
 	}
 
 	/** Caller holds the shared communication-item lock for the complete transaction. */
-	public function export( int $id, array $audiences, string $expected_fingerprint ) {
+	public function export( int $id, array $audiences, string $expected_fingerprint, bool $force = false ) {
 		if ( Newsletter::fingerprint( $id ) !== $expected_fingerprint ) {
 			return new \WP_Error( 'newsletter_review_expired', 'Het profiel of de template is gewijzigd. Controleer opnieuw.', [ 'status' => 409 ] );
 		}
@@ -282,8 +289,8 @@ class NewsletterExport {
 			}
 			$baseline = $state['baseline'] ?? [];
 			// Accept only our last verified state or the exact interrupted transaction target.
-			if ( ! in_array( $remote['settings'], [ $baseline['settings'] ?? null, $state['target'] ?? null ], true ) || ! in_array( $remote['html'], [ $baseline['html'] ?? null, $state['target_html'] ?? null ], true ) ) {
-				return self::conflict();
+			if ( ! $force && ( ! in_array( $remote['settings'], [ $baseline['settings'] ?? null, $state['target'] ?? null ], true ) || ! in_array( $remote['html'], [ $baseline['html'] ?? null, $state['target_html'] ?? null ], true ) ) ) {
+				return self::conflict( true );
 			}
 			if ( ( $state['fingerprint'] ?? '' ) === $fingerprint && $remote === ( $state['baseline'] ?? null ) && ( $state['phase'] ?? '' ) === 'verified' ) {
 				return true;
