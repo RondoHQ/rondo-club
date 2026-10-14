@@ -1,4 +1,4 @@
-name: Build and deploy production
+name: Deploy production release
 
 on:
   workflow_call:
@@ -16,89 +16,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-release:
-    name: Build production release
-    runs-on: ubuntu-latest
-    outputs:
-      commit_sha: ${{ steps.validate.outputs.commit_sha }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ inputs.ref }}
-          fetch-depth: 0
-
-      - name: Validate deployment commit
-        id: validate
-        env:
-          REQUESTED_REF: ${{ inputs.ref }}
-        run: |
-          if [[ ! "$REQUESTED_REF" =~ ^[0-9a-f]{40}$ ]]; then
-            echo "Deployment ref must be a full lowercase commit SHA."
-            exit 1
-          fi
-
-          RESOLVED_SHA="$(git rev-parse HEAD)"
-          if [ "$RESOLVED_SHA" != "$REQUESTED_REF" ]; then
-            echo "Checked-out commit does not match requested ref."
-            exit 1
-          fi
-
-          git fetch --no-tags origin main
-          if ! git merge-base --is-ancestor "$RESOLVED_SHA" origin/main; then
-            echo "Only commits contained in main may be deployed."
-            exit 1
-          fi
-
-          echo "commit_sha=$RESOLVED_SHA" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 20
-          cache: npm
-
-      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
-        with:
-          php-version: '8.2'
-          coverage: none
-
-      - name: Install and build frontend
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.GLITCHTIP_AUTH_TOKEN }}
-        run: |
-          test -n "$SENTRY_AUTH_TOKEN" || { echo "Missing GlitchTip sourcemap token"; exit 1; }
-          npm ci
-          npm run build
-          test -z "$(find dist -name '*.map' -print -quit)"
-
-      - name: Install production PHP dependencies
-        run: composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
-
-      - name: Package isolated VOG reader for production Linux
-        if: hashFiles('bin/vog/requirements-linux.txt') != ''
-        run: |
-          python3 -m pip install --no-compile --only-binary=:all: --platform manylinux2014_x86_64 --python-version 314 --implementation cp --abi abi3 --require-hashes --target vendor/vog-python -r bin/vog/requirements-linux.txt
-
-      - name: Package release
-        run: |
-          RELEASE_DIR="$RUNNER_TEMP/rondo-club-release"
-          mkdir -p "$RELEASE_DIR"
-          git archive --format=tar HEAD | tar -xf - -C "$RELEASE_DIR"
-          cp -R dist vendor "$RELEASE_DIR/"
-          tar -czf "$RUNNER_TEMP/rondo-club-release.tar.gz" -C "$RELEASE_DIR" .
-
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          # No run_attempt in the name: a deploy-only rerun must find the
-          # artifact built in the original attempt. overwrite handles full reruns.
-          name: rondo-club-${{ github.run_id }}
-          path: ${{ runner.temp }}/rondo-club-release.tar.gz
-          if-no-files-found: error
-          overwrite: true
-          retention-days: 30
-
   deploy-production:
     name: Deploy production
-    needs: build-release
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -136,7 +55,7 @@ jobs:
           DEPLOY_PRODUCTION_URL: ${{ vars.DEPLOY_PRODUCTION_URL }}
           DEPLOY_SSH_IDENTITY_FILE: ${{ runner.temp }}/rondo_deploy_key
           DEPLOY_SSH_KNOWN_HOSTS_FILE: ${{ runner.temp }}/rondo_known_hosts
-          DEPLOY_COMMIT_SHA: ${{ needs.build-release.outputs.commit_sha }}
+          DEPLOY_COMMIT_SHA: ${{ inputs.ref }}
         run: |
           bash deployer/bin/deploy.sh \
             --source-dir "$RUNNER_TEMP/release" \
@@ -145,7 +64,7 @@ jobs:
 
       - name: Deployment summary
         env:
-          DEPLOYED_SHA: ${{ needs.build-release.outputs.commit_sha }}
+          DEPLOYED_SHA: ${{ inputs.ref }}
           DEPLOYED_URL: ${{ vars.DEPLOY_PRODUCTION_URL }}
         run: |
           {
