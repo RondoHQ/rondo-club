@@ -13,7 +13,37 @@ permissions:
   contents: read
 
 jobs:
+  check-plan:
+    name: Plan checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    outputs:
+      reuse: ${{ steps.plan.outputs.reuse }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Test the reuse decision
+        run: python3 tests/python/test_reuse_pr_checks.py
+      - name: Find verified identical PR code
+        id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tests/ci/reuse_pr_checks.py
+      - name: Record the exact PR tree being checked
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ci-tree-${{ github.run_attempt }}-${{ github.event.pull_request.number }}-${{ steps.plan.outputs.tree }}
+          path: ${{ runner.temp }}/ci-tested-tree.txt
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7
+
   javascript:
+    needs: check-plan
+    if: needs.check-plan.outputs.reuse != 'true'
     name: JavaScript lint and build
     runs-on: ubuntu-latest
     steps:
@@ -27,6 +57,8 @@ jobs:
       - run: npm run build
 
   mobile-spike:
+    needs: check-plan
+    if: needs.check-plan.outputs.reuse != 'true'
     name: Capacitor spike checks
     runs-on: ubuntu-latest
     steps:
@@ -42,6 +74,8 @@ jobs:
       - run: npm run prepare:pilot --prefix mobile
 
   php:
+    needs: check-plan
+    if: needs.check-plan.outputs.reuse != 'true'
     name: PHP coding standards
     runs-on: ubuntu-latest
     steps:
@@ -55,6 +89,8 @@ jobs:
       - run: composer lint
 
   php-tests:
+    needs: check-plan
+    if: needs.check-plan.outputs.reuse != 'true'
     name: PHP tests (group ${{ matrix.group }}/3)
     runs-on: ubuntu-latest
     strategy:
@@ -169,14 +205,22 @@ jobs:
   tests:
     # Keep one stable status and block deployment if any group fails or is skipped.
     name: PHP tests
-    needs: php-tests
+    needs: [check-plan, php-tests]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Require all test groups to pass
         env:
+          PLAN_RESULT: ${{ needs.check-plan.result }}
+          REUSE_CHECKS: ${{ needs.check-plan.outputs.reuse }}
           GROUP_RESULT: ${{ needs.php-tests.result }}
-        run: test "$GROUP_RESULT" = success
+        run: |
+          test "$PLAN_RESULT" = success
+          if [ "$REUSE_CHECKS" = true ]; then
+            test "$GROUP_RESULT" = skipped
+          else
+            test "$GROUP_RESULT" = success
+          fi
 
   build-release:
     name: Prepare production release
@@ -192,14 +236,23 @@ jobs:
   deploy:
     name: Deploy successful main commit
     needs:
+      - check-plan
       - build-release
       - javascript
       - php
       - tests
       - mobile-spike
+    # Skipped checks are allowed only with verified identical PR evidence.
     if: >-
+      !cancelled() &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
-      github.ref == 'refs/heads/main'
+      github.ref == 'refs/heads/main' &&
+      needs.check-plan.result == 'success' &&
+      needs.build-release.result == 'success' &&
+      needs.tests.result == 'success' &&
+      (needs.check-plan.outputs.reuse == 'true' ||
+       (needs.javascript.result == 'success' && needs.php.result == 'success' &&
+        needs.mobile-spike.result == 'success'))
     uses: ./.github/workflows/_deploy-production.yml
     with:
       ref: ${{ needs.build-release.outputs.commit_sha }}
