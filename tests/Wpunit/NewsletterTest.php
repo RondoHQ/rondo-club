@@ -14,14 +14,15 @@ class NewsletterTest extends RondoTestCase {
 	private string $role;
 	private int $user_id;
 	private int $id;
-	private array $calls       = [];
-	private array $remote      = [];
-	private string $html       = '';
-	private string $failure    = '';
-	private string $definition = 'field = value';
-	private array $test_emails = [];
-	private mixed $report      = [];
-	private mixed $top_report  = [];
+	private array $calls           = [];
+	private array $remote          = [];
+	private string $html           = '';
+	private string $failure        = '';
+	private string $definition     = 'field = value';
+	private array $test_emails     = [];
+	private mixed $report          = [];
+	private mixed $top_report      = [];
+	private bool $normalize_import = false;
 
 	protected function set_up(): void {
 		parent::set_up();
@@ -132,6 +133,9 @@ class NewsletterTest extends RondoTestCase {
 		} elseif ( $path === '/campaign/campaign1/content' ) {
 			if ( $args['method'] === 'POST' ) {
 				$this->html = $body['html'];
+				if ( $this->normalize_import ) {
+					$this->html = str_replace( [ '📅', '🕢', '📍' ], [ '&#128197;', '&#128354;', '&#128205;' ], $this->html );
+				}
 				if ( $this->failure === 'content_timeout' ) {
 					$this->failure = '';
 					return new \WP_Error( 'timeout', 'timeout' );
@@ -139,11 +143,23 @@ class NewsletterTest extends RondoTestCase {
 			}
 			$data = [
 				'campaign' => [
-					'html'   => $this->html,
-					'report' => $args['method'] === 'POST' ? $this->report : [],
+					'campaign_id' => 'campaign1',
+					'html'        => $this->html,
+					'report'      => $args['method'] === 'POST' ? $this->report : [],
 				],
 				'report'   => $args['method'] === 'POST' ? $this->top_report : [],
 			];
+			if ( $args['method'] === 'POST' ) {
+				if ( $this->failure === 'missing_import_html' ) {
+					unset( $data['campaign']['html'] );
+				} elseif ( $this->failure === 'wrong_import_campaign' ) {
+					$data['campaign']['campaign_id'] = 'other';
+				} elseif ( $this->failure === 'remote_edit_after_import' ) {
+					$this->html = '<p>Changed after import</p>';
+				} elseif ( $this->failure === 'audience_edit_after_import' ) {
+					$this->remote['list_ids'] = [ 'other' => [] ];
+				}
+			}
 		} elseif ( $path === '/campaign/campaign1/action/testmail' && $args['method'] === 'POST' ) {
 			$this->test_emails[] = $body['email'];
 			if ( $this->failure === 'test_timeout' ) {
@@ -511,6 +527,70 @@ class NewsletterTest extends RondoTestCase {
 			$this->assertSame( $expected, $this->remote );
 			$this->assertSame( [ [ 'POST', '/campaign/campaign1' ], [ 'POST', '/campaign/campaign1/content' ] ], array_values( array_filter( $this->calls, fn( $c ) => $c[0] === 'POST' ) ) );
 			$this->assertSame( 'concept', Fields::get_for_post( $this->id, 'status' ) );
+		}
+	}
+
+	public function test_laposta_encoded_html_is_verified_for_normal_and_forced_exports(): void {
+		$this->prepare();
+		$this->save( [ 'newsletter_body' => '<p>📅 Datum: 14 december<br>🕢 Aanvang: 19.30u<br>📍 Clubhuis</p>' ] );
+		$token                  = $this->request( '/review', 'POST', [ 'revision' => Newsletter::revision( $this->id ) ] )->get_data()['token'];
+		$this->normalize_import = true;
+		$source                 = Newsletter::render( Newsletter::draft( $this->id ) );
+		$result                 = $this->request( '/export', 'POST', [ 'token' => $token ] );
+		$this->assertSame( 200, $result->get_status(), wp_json_encode( $result->get_data() ) );
+		$this->assertSame( 'exported', $result->get_data()['status'] );
+		$this->assertNotSame( $source, $this->html );
+		$this->assertSame( html_entity_decode( $source, ENT_QUOTES | ENT_HTML5, 'UTF-8' ), html_entity_decode( $this->html, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+		$state = get_post_meta( $this->id, Newsletter::EXPORT, true );
+		$this->assertSame( $this->html, $state['baseline']['html'] );
+		$this->assertSame( $this->html, $state['target_html'] );
+		$this->calls = [];
+		$this->assertSame( 200, $this->request( '/export', 'POST', [ 'token' => $token ] )->get_status() );
+		$this->assertEmpty( array_filter( $this->calls, fn( $c ) => $c[0] === 'POST' ) );
+		$this->html = '<p>Edited outside Rondo</p>';
+		$this->assertSame( 409, $this->request( '/export', 'POST', [ 'token' => $token ] )->get_status() );
+		$result = $this->request(
+			'/export',
+			'POST',
+			[
+				'token' => $token,
+				'force' => true,
+			]
+			);
+		$this->assertSame( 200, $result->get_status(), wp_json_encode( $result->get_data() ) );
+		$this->assertSame( 'exported', $result->get_data()['status'] );
+		$this->assertStringContainsString( '&#128197;', $this->html );
+		$this->assertSame(
+			200,
+			$this->request(
+			'/testmail',
+			'POST',
+			[
+				'email'    => 'test@example.org',
+				'revision' => Newsletter::revision( $this->id ),
+			]
+			)->get_status()
+			);
+	}
+
+	public function test_force_export_still_rejects_unacknowledged_imports_and_readback_changes(): void {
+		$token = $this->prepare();
+		$this->assertSame( 200, $this->request( '/export', 'POST', [ 'token' => $token ] )->get_status() );
+		foreach ( [ 'missing_import_html', 'wrong_import_campaign', 'remote_edit_after_import', 'audience_edit_after_import' ] as $failure ) {
+			$this->html    = '<p>External edit requiring overwrite</p>';
+			$this->failure = $failure;
+			$result        = $this->request(
+				'/export',
+				'POST',
+				[
+					'token' => $token,
+					'force' => true,
+				]
+				);
+			$uncertain     = in_array( $failure, [ 'missing_import_html', 'wrong_import_campaign' ], true );
+			$this->assertSame( $uncertain ? 502 : 409, $result->get_status(), $failure );
+			$this->assertSame( $uncertain ? 'newsletter_import_uncertain' : 'newsletter_verify_failed', $result->get_data()['code'], $failure );
+			$this->assertSame( 'updating', get_post_meta( $this->id, Newsletter::EXPORT, true )['phase'] );
 		}
 	}
 

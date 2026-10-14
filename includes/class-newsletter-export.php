@@ -322,15 +322,25 @@ class NewsletterExport {
 			return $result;
 		}
 		$state['import_warning'] = self::import_warning( $result );
+		// Laposta rewrites imported HTML (for example emoji entities and inline CSS).
+		// Verify its acknowledged import against a separate read, not against the source HTML.
+		$imported_html = $result['campaign']['html'] ?? null;
+		$imported      = ( $result['campaign']['campaign_id'] ?? '' ) === $campaign_id && is_string( $imported_html ) && trim( $imported_html ) !== '';
+		if ( $imported ) {
+			$state['target_html'] = rtrim( $imported_html );
+		}
 		update_post_meta( $id, Newsletter::EXPORT, wp_slash( $state ) );
 		if ( $state['import_warning'] !== '' ) {
 			return new \WP_Error( 'newsletter_import_warning', $state['import_warning'], [ 'status' => 409 ] );
+		}
+		if ( ! $imported ) {
+			return new \WP_Error( 'newsletter_import_uncertain', 'Laposta heeft de geïmporteerde inhoud niet bevestigd. Controleer het concept en probeer de export opnieuw.', [ 'status' => 502 ] );
 		}
 		$remote = $this->remote( $campaign_id );
 		if ( is_wp_error( $remote ) ) {
 			return $remote;
 		}
-		if ( $remote['settings'] !== $target || $remote['html'] !== $html ) {
+		if ( $remote['settings'] !== $target || $remote['html'] !== $state['target_html'] ) {
 			return new \WP_Error( 'newsletter_verify_failed', 'De inhoud of doelgroep in Laposta wijkt af. Controleer het concept; de export is niet als geslaagd gemarkeerd.', [ 'status' => 409 ] );
 		}
 		$state = array_merge(
