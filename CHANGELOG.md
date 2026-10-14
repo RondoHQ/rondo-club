@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.149.3] - 2026-10-14
+
+### Changed
+- Run PHP tests in three groups balanced by measured duration, with isolated WordPress/MySQL environments, automatic inclusion of new test files, and a required combined success check before deployment.
+
 ## [35.149.2] - 2026-10-14
 
 ### Fixed

@@ -54,9 +54,13 @@ jobs:
         run: composer install --prefer-dist --no-interaction
       - run: composer lint
 
-  tests:
-    name: PHP tests
+  php-tests:
+    name: PHP tests (group ${{ matrix.group }}/3)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [1, 2, 3]
     services:
       mysql:
         # SQLite is not usable here: the codebase compares meta with
@@ -130,18 +134,49 @@ jobs:
           WP_DOMAIN=rondo.test
           ENV
 
+      - name: Select a balanced test group
+        run: |
+          python3 tests/python/test_ci_test_groups.py
+          python3 tests/ci/split_php_tests.py --group "${{ matrix.group }}"
+
       - name: Run the test suite without field plugins
         env:
           # wp-browser caps its theme-activation subprocess at 30 seconds by
           # default. Shared runners can exceed that before tests even start.
           WPBROWSER_LOOP_DEBUG: 1
-        run: composer test
+        run: |
+          composer test -- --group ci --override "groups: ci: tests/_output/ci-group.txt" --xml php-tests.xml
+          python3 tests/ci/split_php_tests.py --group "${{ matrix.group }}" --verify-report tests/_output/php-tests.xml
 
       - name: Test the opt-in mobile adapter in a development environment
+        if: matrix.group == 1
         env:
           WP_ENVIRONMENT_TYPE: local
           WPBROWSER_LOOP_DEBUG: 1
-        run: vendor/bin/codecept run Wpunit MobileSpikeTest
+        run: vendor/bin/codecept run Wpunit MobileSpikeTest --xml mobile-tests.xml
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: php-tests-group-${{ matrix.group }}
+          path: |
+            tests/_output/php-tests.xml
+            tests/_output/mobile-tests.xml
+            tests/_output/ci-group.txt
+          retention-days: 7
+
+  tests:
+    # Keep one stable status and block deployment if any group fails or is skipped.
+    name: PHP tests
+    needs: php-tests
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all test groups to pass
+        env:
+          GROUP_RESULT: ${{ needs.php-tests.result }}
+        run: test "$GROUP_RESULT" = success
 
   build-release:
     name: Prepare production release
