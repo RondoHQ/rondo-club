@@ -12,9 +12,17 @@ permissions:
   contents: read
 
 jobs:
-  rollback:
-    name: Rebuild and deploy selected commit
-    uses: ./.github/workflows/_deploy-production.yml
+  build-release:
+    name: Rebuild selected commit
+    uses: ./.github/workflows/_build-production.yml
     with:
       ref: ${{ inputs.commit_sha }}
+    secrets: inherit
+
+  rollback:
+    name: Deploy selected release
+    needs: build-release
+    uses: ./.github/workflows/_deploy-production.yml
+    with:
+      ref: ${{ needs.build-release.outputs.commit_sha }}
     secrets: inherit
