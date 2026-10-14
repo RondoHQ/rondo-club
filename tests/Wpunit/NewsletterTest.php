@@ -469,6 +469,192 @@ class NewsletterTest extends RondoTestCase {
 		$this->assertEmpty( array_filter( $this->calls, fn( $c ) => $c[0] === 'POST' ) );
 	}
 
+	public function test_force_export_replaces_external_edits_and_recovers_uncertain_drafts(): void {
+		$token = $this->prepare();
+		$this->assertSame( 200, $this->request( '/export', 'POST', [ 'token' => $token ] )->get_status() );
+		$expected_html = $this->html;
+		$expected      = $this->remote;
+		foreach ( [ 'verified', 'updating' ] as $phase ) {
+			$state          = get_post_meta( $this->id, Newsletter::EXPORT, true );
+			$state['phase'] = $phase;
+			update_post_meta( $this->id, Newsletter::EXPORT, $state );
+			$this->html               = '<p>Edited in Laposta</p>';
+			$this->remote['subject']  = 'External subject';
+			$this->remote['from']     = [
+				'name'  => 'Other',
+				'email' => 'other@example.org',
+			];
+			$this->remote['list_ids'] = [ 'other' => [] ];
+			$this->calls              = [];
+			$conflict                 = $this->request(
+				'/export',
+				'POST',
+				[
+					'token' => $token,
+					'force' => false,
+				]
+				);
+			$this->assertSame( 409, $conflict->get_status() );
+			$this->assertTrue( $conflict->get_data()['data']['can_force'] );
+			$this->assertEmpty( array_filter( $this->calls, fn( $c ) => $c[0] === 'POST' ) );
+			$result = $this->request(
+				'/export',
+				'POST',
+				[
+					'token' => $token,
+					'force' => true,
+				]
+				);
+			$this->assertSame( 200, $result->get_status(), wp_json_encode( $result->get_data() ) );
+			$this->assertSame( 'exported', $result->get_data()['status'] );
+			$this->assertSame( $expected_html, $this->html );
+			$this->assertSame( $expected, $this->remote );
+			$this->assertSame( [ [ 'POST', '/campaign/campaign1' ], [ 'POST', '/campaign/campaign1/content' ] ], array_values( array_filter( $this->calls, fn( $c ) => $c[0] === 'POST' ) ) );
+			$this->assertSame( 'concept', Fields::get_for_post( $this->id, 'status' ) );
+		}
+	}
+
+	public function test_force_export_keeps_delivery_state_and_unknown_creation_guards(): void {
+		$token = $this->prepare();
+		$this->assertSame( 200, $this->request( '/export', 'POST', [ 'token' => $token ] )->get_status() );
+		$this->html = '<p>External edit</p>';
+		foreach ( [ 'delivery_requested', 'delivery_started', 'delivery_ended', 'state' ] as $field ) {
+			$this->remote[ $field ] = $field === 'state' ? 'deleted' : '2026-10-14 12:00:00';
+			$this->calls            = [];
+			$result                 = $this->request(
+				'/export',
+				'POST',
+				[
+					'token' => $token,
+					'force' => true,
+				]
+				);
+			$this->assertSame( 'newsletter_remote_locked', $result->get_data()['code'] );
+			$this->assertEmpty( array_filter( $this->calls, fn( $c ) => $c[0] === 'POST' ) );
+			$this->remote[ $field ] = null;
+		}
+		unset( $this->remote['delivery_requested'] );
+		$this->assertSame(
+			'newsletter_remote_locked',
+			$this->request(
+			'/export',
+			'POST',
+			[
+				'token' => $token,
+				'force' => true,
+			]
+			)->get_data()['code']
+			);
+		$state = get_post_meta( $this->id, Newsletter::EXPORT, true );
+		unset( $state['campaign_id'] );
+		update_post_meta( $this->id, Newsletter::EXPORT, $state );
+		$this->remote = [];
+		$this->calls  = [];
+		$result       = $this->request(
+			'/export',
+			'POST',
+			[
+				'token' => $token,
+				'force' => true,
+			]
+			);
+		$this->assertSame( 'newsletter_remote_conflict', $result->get_data()['code'] );
+		$this->assertFalse( $result->get_data()['data']['can_force'] );
+		$this->assertEmpty( array_filter( $this->calls, fn( $c ) => $c[0] === 'POST' ) );
+	}
+
+	public function test_force_export_requires_boolean_and_current_review_audience_and_user(): void {
+		$token = $this->prepare();
+		foreach ( [ 'true', 'false', 1, [], [ true ] ] as $force ) {
+			$this->assertSame(
+				400,
+				$this->request(
+				'/export',
+				'POST',
+				[
+					'token' => $token,
+					'force' => $force,
+				]
+				)->get_status()
+				);
+		}
+		$this->assertSame(
+			409,
+			$this->request(
+			'/export',
+			'POST',
+			[
+				'token' => 'expired',
+				'force' => true,
+			]
+			)->get_status()
+			);
+		$this->definition = 'changed definition';
+		$this->assertSame(
+			'newsletter_audience_changed',
+			$this->request(
+			'/export',
+			'POST',
+			[
+				'token' => $token,
+				'force' => true,
+			]
+			)->get_data()['code']
+			);
+		$this->definition = 'field = value';
+		add_option( 'rondo_comm_edit_' . $this->id, time() );
+		$this->assertSame(
+			409,
+			$this->request(
+			'/export',
+			'POST',
+			[
+				'token' => $token,
+				'force' => true,
+			]
+			)->get_status()
+			);
+		delete_option( 'rondo_comm_edit_' . $this->id );
+		wp_set_current_user( $this->createRondoUser( [ 'role' => $this->role ] ) );
+		$this->assertSame(
+			409,
+			$this->request(
+			'/export',
+			'POST',
+			[
+				'token' => $token,
+				'force' => true,
+			]
+			)->get_status()
+			);
+		wp_set_current_user( 0 );
+		$this->assertSame(
+			401,
+			$this->request(
+			'/export',
+			'POST',
+			[
+				'token' => $token,
+				'force' => true,
+			]
+			)->get_status()
+			);
+		wp_set_current_user( $this->user_id );
+		$this->save( [ 'newsletter_body' => '<p>Changed after review</p>' ] );
+		$this->assertSame(
+			409,
+			$this->request(
+			'/export',
+			'POST',
+			[
+				'token' => $token,
+				'force' => true,
+			]
+			)->get_status()
+			);
+		$this->assertEmpty( array_filter( $this->calls, fn( $c ) => $c[0] === 'POST' ) );
+	}
+
 	public function test_testmail_sends_only_to_the_requested_address_without_changing_the_campaign(): void {
 		$token = $this->prepare();
 		$this->assertSame( 200, $this->request( '/export', 'POST', [ 'token' => $token ] )->get_status() );

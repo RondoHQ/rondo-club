@@ -45,6 +45,7 @@ function NewsletterEditor({ initial, metadata }) {
   const [draft, setDraft] = useState(initial.fields);
   const [previewDraft, setPreviewDraft] = useState(initial.fields);
   const [review, setReview] = useState(null);
+  const [canForceExport, setCanForceExport] = useState(false);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -85,15 +86,17 @@ function NewsletterEditor({ initial, metadata }) {
     const { data } = await prmApi.saveNewsletter(initial.id, { fields, revision: saved.revision });
     refresh(data); return data;
   }
-  async function perform(action) {
+  async function perform(action, force = false) {
     if (busy || (action === 'testmail' && (dirty || saved.status !== 'exported'))) return;
+    if (force && (!canForceExport || !review || !window.confirm('Het Laposta-concept overschrijven met deze nieuwsbrief uit Rondo? De inhoud, het onderwerp, de afzender en de doelgroep in Laposta worden vervangen. Wijzigingen die je daar hebt gemaakt gaan verloren. Er wordt geen nieuwsbrief verstuurd.'))) return;
+    setCanForceExport(false);
     setBusy(action); setError(''); setMessage('');
     try {
       if (action === 'testmail') {
         const { data } = await prmApi.sendNewsletterTestmail(initial.id, testEmail.trim(), saved.revision);
         setMessage(`Testmail aangevraagd bij Laposta voor ${data.email}.`);
       } else if (action === 'export') {
-        const { data } = await prmApi.exportNewsletter(initial.id, review.token);
+        const { data } = await prmApi.exportNewsletter(initial.id, review.token, force);
         refresh(data); setReview(null); setMessage('Het concept staat in Laposta. Je kunt hieronder een testmail aanvragen en de nieuwsbrief in Laposta inplannen en versturen.');
       } else {
         const data = await save();
@@ -104,7 +107,9 @@ function NewsletterEditor({ initial, metadata }) {
     } catch (err) {
       setError(errorText(err));
       if (action === 'export') {
-        setReview(null);
+        const conflict = err?.response?.data?.code === 'newsletter_remote_conflict' && err.response.data.data?.can_force === true;
+        setCanForceExport(conflict);
+        if (!conflict) setReview(null);
         try { const { data } = await prmApi.getNewsletter(initial.id); setSaved(data); } catch { /* Keep the current draft when status refresh fails. */ }
       }
     } finally { setBusy(''); }
@@ -128,7 +133,8 @@ function NewsletterEditor({ initial, metadata }) {
           <div><h2 id="review-title" className="text-xl font-semibold">Controleer je nieuwsbrief</h2><p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Rondo maakt een concept in Laposta. Daarna kun je hier een testmail aanvragen. Inplannen en versturen doe je in Laposta.</p></div>
           <dl className="space-y-4 text-sm"><div><dt className="text-gray-600 dark:text-gray-300">Onderwerp</dt><dd className="mt-1 font-medium break-words">{draft.newsletter_subject}</dd></div><div><dt className="text-gray-600 dark:text-gray-300">Afzender</dt><dd className="mt-1 break-words">{review.profile.from_name}<br />{review.profile.from_email}</dd></div><div><dt className="text-gray-600 dark:text-gray-300">Antwoorden naar</dt><dd className="mt-1 break-words">{review.profile.reply_to}</dd></div><div><dt className="text-gray-600 dark:text-gray-300">Doelgroep</dt><dd className="mt-1 space-y-2">{review.audiences.map((a) => <p key={a.list_id}><strong>{a.list_name}</strong><br />{a.scope === 'all' ? 'De hele lijst' : a.segment_name}</p>)}</dd></div></dl>
           <p className="text-xs text-gray-600 dark:text-gray-300">Doelgroep gecontroleerd om {new Date(review.checked_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}. Het uiteindelijke aantal ontvangers controleer je in Laposta.</p>
-          <div className="flex flex-wrap gap-3"><button disabled={Boolean(busy)} className="btn-primary min-h-11 gap-2" onClick={() => perform('export')}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{saved.campaign_id ? 'Concept bijwerken in Laposta' : 'Concept maken in Laposta'}</button><button className="btn-secondary min-h-11" disabled={Boolean(busy)} onClick={() => setReview(null)}>Terug naar bewerken</button></div>
+          {canForceExport && <p className="text-sm text-red-800 dark:text-red-200">Je kunt het Laposta-concept vervangen door de nieuwsbrief die je hier controleert. De inhoud, het onderwerp, de afzender en de doelgroep worden overschreven.</p>}
+          <div className="flex flex-wrap gap-3"><button disabled={Boolean(busy)} className="btn-primary min-h-11 gap-2" onClick={() => perform('export', canForceExport)}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{canForceExport ? 'Concept geforceerd overschrijven' : saved.campaign_id ? 'Concept bijwerken in Laposta' : 'Concept maken in Laposta'}</button><button className="btn-secondary min-h-11" disabled={Boolean(busy)} onClick={() => { setReview(null); setCanForceExport(false); }}>Terug naar bewerken</button></div>
         </section> : <>
           <fieldset disabled={Boolean(busy)} className="min-w-0 rounded-xl border border-gray-200 bg-white p-5 sm:p-6 dark:border-gray-700 dark:bg-gray-800">
             <section className={sectionClass}><h2 className="text-lg font-semibold">Afzender</h2><label className={labelClass} htmlFor="newsletter-assignee">Verantwoordelijke<select id="newsletter-assignee" className="input mt-1 w-full" value={draft.assignee_id} onChange={(e) => change('assignee_id', Number(e.target.value))}><option value={0}>Kies een verantwoordelijke</option>{metadata.users.map((u) => <option key={u.id} value={u.id}>{u.name}{!u.ready ? ' · profiel ontbreekt' : ''}</option>)}</select></label>
