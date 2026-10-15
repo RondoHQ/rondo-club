@@ -776,8 +776,9 @@ function rondo_get_js_config() {
 		'themeUrl'            => RONDO_THEME_URL,
 		'version'             => wp_get_theme()->get( 'Version' ),
 		'errorMonitoring'     => [
-			'dsn'         => defined( 'RONDO_GLITCHTIP_REACT_DSN' ) ? RONDO_GLITCHTIP_REACT_DSN : '',
-			'environment' => defined( 'RONDO_GLITCHTIP_ENVIRONMENT' ) ? RONDO_GLITCHTIP_ENVIRONMENT : 'production',
+			'performanceEnabled' => ! defined( 'RONDO_GLITCHTIP_REACT_PERFORMANCE' ) || RONDO_GLITCHTIP_REACT_PERFORMANCE,
+			'dsn'                => defined( 'RONDO_GLITCHTIP_REACT_DSN' ) ? RONDO_GLITCHTIP_REACT_DSN : '',
+			'environment'        => defined( 'RONDO_GLITCHTIP_ENVIRONMENT' ) ? RONDO_GLITCHTIP_ENVIRONMENT : 'production',
 		],
 		'buildTime'           => $build_time,
 		'currentUserPersonId' => $linked_person_id ?: null,
