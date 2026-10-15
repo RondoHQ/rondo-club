@@ -1,3 +1,4 @@
+import { wrapCreateBrowserRouter } from '@sentry/react';
 /* eslint-disable react-refresh/only-export-components */
 import { Suspense } from 'react';
 import { createBrowserRouter, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -297,7 +298,7 @@ function AccountLayout() {
 }
 
 // Router configuration at MODULE SCOPE - critical for preventing remounts
-const router = createBrowserRouter([
+const router = wrapCreateBrowserRouter(createBrowserRouter)([
   {
     path: '/display',
     element: (
