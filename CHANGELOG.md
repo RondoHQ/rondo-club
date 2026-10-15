@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.149.5] - 2026-10-15
+
+### Fixed
+- Preserve retired frontend assets for seven days after a release replaces them, uploading new assets before build metadata so open apps can still load their pages during deployments.
+- Show one Dutch update prompt and activate a waiting service worker only when the user chooses to reload, preserving other tabs and their unsaved work without deleting shared caches.
+
 ## [35.149.4] - 2026-10-14
 
 ### Changed
