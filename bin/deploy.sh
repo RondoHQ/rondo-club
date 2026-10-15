@@ -313,13 +313,26 @@ if [ ! -f "$SOURCE_DIR/vendor/autoload.php" ]; then
     exit 1
 fi
 
-echo -e "${YELLOW}Step 2: Syncing dist/ folder...${NC}"
-if ! rsync -avz --delete \
+php "$SCRIPT_DIR/retain-assets.php" inventory "$SOURCE_DIR/dist"
+
+# Upload hashed files before publishing manifests/workers. Open tabs may still
+# import chunks from an older build, so neither transfer path deletes assets.
+echo -e "${YELLOW}Step 2: Syncing build assets...${NC}"
+if ! rsync -avz \
+    -e "$RSYNC_SSH" \
+    "$SOURCE_DIR/dist/assets/" \
+    "$REMOTE_TARGET:$DEPLOY_REMOTE_THEME_PATH/dist/assets/"; then
+    echo -e "${YELLOW}  rsync receiver unavailable; using validated archive transfer.${NC}"
+    archive_sync "$SOURCE_DIR/dist/assets" "$REMOTE_THEME_PATH_RESOLVED/dist/assets" overlay assets
+fi
+
+echo -e "${YELLOW}Step 2b: Publishing build metadata...${NC}"
+if ! rsync -avz --exclude='assets' --exclude='.asset-retention.json*' \
     -e "$RSYNC_SSH" \
     "$SOURCE_DIR/dist/" \
     "$REMOTE_TARGET:$DEPLOY_REMOTE_THEME_PATH/dist/"; then
     echo -e "${YELLOW}  rsync receiver unavailable; using validated archive transfer.${NC}"
-    archive_sync "$SOURCE_DIR/dist" "$REMOTE_THEME_PATH_RESOLVED/dist" replace dist
+    archive_sync "$SOURCE_DIR/dist" "$REMOTE_THEME_PATH_RESOLVED/dist" overlay dist --exclude='./assets' --exclude='./.asset-retention.json*'
 fi
 
 echo -e "${YELLOW}Step 3: Syncing theme files...${NC}"
@@ -393,6 +406,12 @@ if [ "$PRUNE_DELETED" = true ]; then
         fi
     done
 fi
+
+# Only retire files after the complete release is present. The first deployment
+# starts a fresh grace period even for files with old build modification times.
+printf -v RETENTION_COMMAND 'php %q prune %q' \
+    "$REMOTE_THEME_PATH_RESOLVED/bin/retain-assets.php" "$REMOTE_THEME_PATH_RESOLVED/dist"
+retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" "$RETENTION_COMMAND"
 
 # The loader resolves code from the current theme release, including on rollback.
 if [ -f "$SOURCE_DIR/mu-plugins/rondo-error-monitoring.php" ]; then
