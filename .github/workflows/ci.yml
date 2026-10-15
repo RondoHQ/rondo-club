@@ -87,6 +87,11 @@ jobs:
       - name: Install PHP dependencies
         run: composer install --prefer-dist --no-interaction
       - run: composer lint
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 20
+      - name: Test deployment asset retention and app updates
+        run: node --test tests/js/appUpdate.test.mjs tests/js/assetRetention.test.mjs tests/js/deployAssetTransfer.test.mjs
 
   php-tests:
     needs: check-plan
