@@ -363,6 +363,7 @@ function rondo_init() {
 
 	// REST API classes - only for REST requests
 	if ( $is_rest ) {
+		new \Rondo\MonitoringTunnel();
 		new RestFields();
 		new Api();
 		new People();
@@ -776,6 +777,7 @@ function rondo_get_js_config() {
 		'themeUrl'            => RONDO_THEME_URL,
 		'version'             => wp_get_theme()->get( 'Version' ),
 		'errorMonitoring'     => [
+			'tunnel'             => wp_make_link_relative( rest_url( 'rondo/v1/diagnostics' ) ),
 			'performanceEnabled' => ! defined( 'RONDO_GLITCHTIP_REACT_PERFORMANCE' ) || RONDO_GLITCHTIP_REACT_PERFORMANCE,
 			'dsn'                => defined( 'RONDO_GLITCHTIP_REACT_DSN' ) ? RONDO_GLITCHTIP_REACT_DSN : '',
 			'environment'        => defined( 'RONDO_GLITCHTIP_ENVIRONMENT' ) ? RONDO_GLITCHTIP_ENVIRONMENT : 'production',

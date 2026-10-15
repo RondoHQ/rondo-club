@@ -71,6 +71,11 @@ class PerformanceMonitoringTest extends RondoTestCase {
 			);
 		$server = new \WP_REST_Server();
 		$server->register_route( 'rondo/v1', '/rondo/v1/performance-test', [] );
+		$server->register_route( 'rondo/v1', '/rondo/v1/diagnostics', [] );
+		$tunnel_request = new \WP_REST_Request( 'POST', '/rondo/v1/diagnostics' );
+		$tunnel_request->set_header( 'sentry-trace', str_repeat( 'a', 32 ) . '-' . str_repeat( 'b', 16 ) . '-1' );
+		PerformanceMonitoring::start( null, $server, $tunnel_request );
+		PerformanceMonitoring::finish( new \WP_REST_Response( [], 204 ) );
 		$request = new \WP_REST_Request( 'GET', '/rondo/v1/performance-test' );
 		$request->set_header( 'sentry-trace', str_repeat( 'a', 32 ) . '-' . str_repeat( 'b', 16 ) . '-0' );
 		PerformanceMonitoring::start( null, $server, $request );

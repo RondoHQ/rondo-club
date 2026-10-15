@@ -52,7 +52,7 @@ class PerformanceMonitoring {
 	 * @return mixed
 	 */
 	public static function start( $result, $server, $request ) {
-		if ( ! self::enabled() || self::$transaction || ! preg_match( '#^/(rondo/v1|wp/v2)/#', $request->get_route() ) ) {
+		if ( ! self::enabled() || self::$transaction || strtolower( rtrim( $request->get_route(), '/' ) ) === '/rondo/v1/diagnostics' || ! preg_match( '#^/(rondo/v1|wp/v2)/#', $request->get_route() ) ) {
 			return $result;
 		}
 		try {

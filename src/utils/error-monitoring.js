@@ -9,6 +9,7 @@ const config = window.rondoConfig?.errorMonitoring;
 if (config?.dsn) {
   init({
     dsn: config.dsn,
+    tunnel: config.tunnel,
     release: __RONDO_RELEASE__,
     environment: config.environment || 'production',
     sendDefaultPii: false,
