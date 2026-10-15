@@ -177,8 +177,18 @@ class UserProvisioningEmailTest extends RondoTestCase {
 		$user = get_userdata( $result['user_id'] );
 		$this->assertTrue( UserProvisioning::is_synthetic_email( $user->user_email ) );
 
-		$this->sent_to = [];
-		$this->assertTrue( retrieve_password( $user->user_login ) );
+		$this->sent_to          = [];
+		$previous_ip            = $_SERVER['REMOTE_ADDR'] ?? null;
+		$_SERVER['REMOTE_ADDR'] = '192.0.2.1';
+		try {
+			$this->assertTrue( retrieve_password( $user->user_login ) );
+		} finally {
+			if ( $previous_ip === null ) {
+				unset( $_SERVER['REMOTE_ADDR'] );
+			} else {
+				$_SERVER['REMOTE_ADDR'] = $previous_ip;
+			}
+		}
 
 		$this->assertSame(
 			[ 'gezin@example.com' ],
