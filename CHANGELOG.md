@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.151.1] - 2026-10-19
+
+### Fixed
+
+- Add allowlisted error categories, anonymized page paths, online state and bounded HTTP status to browser diagnostics without sending raw messages, member IDs, query strings or arbitrary context.
+- Recognize Vite lazy-asset failures even when the browser supplies only a generic error, while preserving normal error handling and existing issue grouping.
+
 ## [35.151.0] - 2026-10-15
 
 ### Added
