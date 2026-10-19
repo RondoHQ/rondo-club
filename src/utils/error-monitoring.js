@@ -3,10 +3,11 @@ import { init, captureException, reactErrorHandler, reactRouterBrowserTracingInt
 import { useEffect } from 'react';
 import { useLocation, useNavigationType, createRoutesFromChildren, matchRoutes } from 'react-router-dom';
 import { sanitizeTransaction, safePath } from './performance-monitoring';
-import { sanitizeErrorEvent } from './error-event';
+import { markChunkLoadError, sanitizeErrorEvent } from './error-event';
 
 const config = window.rondoConfig?.errorMonitoring;
 if (config?.dsn) {
+  window.addEventListener('vite:preloadError', event => markChunkLoadError(event.payload));
   init({
     dsn: config.dsn,
     tunnel: config.tunnel,
@@ -20,7 +21,10 @@ if (config?.dsn) {
     tracePropagationTargets: [new RegExp(`^${window.location.origin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/wp-json/`), /^\/wp-json\//],
     beforeSendTransaction: sanitizeTransaction,
     sendClientReports: false,
-    beforeSend: sanitizeErrorEvent,
+    beforeSend: (event, hint) => sanitizeErrorEvent(event, hint, {
+      pathname: window.location.pathname,
+      online: navigator.onLine,
+    }),
     integrations: defaults => [
       ...defaults.filter(integration => !['BrowserSession', 'Breadcrumbs', 'HttpContext'].includes(integration.name)),
       ...(config.performanceEnabled === false ? [] : [reactRouterBrowserTracingIntegration({
