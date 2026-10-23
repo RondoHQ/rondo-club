@@ -1,6 +1,24 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { safePath, sanitizeTransaction } from '../../src/utils/performance-monitoring.js';
+import { getWebVitalsOptions, safePath, sanitizeTransaction } from '../../src/utils/performance-monitoring.js';
+
+test('Web Vitals keeps all metrics when Array.at is available', () => {
+  assert.deepEqual(getWebVitalsOptions(), { ignore: [] });
+});
+
+test('Web Vitals disables only CLS and INP when Array.at is not callable', () => {
+  const descriptor = Object.getOwnPropertyDescriptor(Array.prototype, 'at');
+  const results = [];
+  try {
+    for (const value of [undefined, null, false]) {
+      Object.defineProperty(Array.prototype, 'at', { ...descriptor, value });
+      results.push(getWebVitalsOptions());
+    }
+  } finally {
+    Object.defineProperty(Array.prototype, 'at', descriptor);
+  }
+  for (const result of results) assert.deepEqual(result, { ignore: ['cls', 'inp'] });
+});
 
 test('performance payload retains timings and IDs but strips private data at every level', () => {
   const trace = { trace_id: 'a'.repeat(32), span_id: 'b'.repeat(16), op: 'http.client', data: { token: 'PRIVATE' } };
