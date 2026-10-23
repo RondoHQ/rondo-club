@@ -2,7 +2,7 @@
 import { init, captureException, reactErrorHandler, reactRouterBrowserTracingIntegration } from '@sentry/react';
 import { useEffect } from 'react';
 import { useLocation, useNavigationType, createRoutesFromChildren, matchRoutes } from 'react-router-dom';
-import { sanitizeTransaction, safePath } from './performance-monitoring';
+import { getWebVitalsOptions, sanitizeTransaction, safePath } from './performance-monitoring';
 import { markChunkLoadError, sanitizeErrorEvent } from './error-event';
 
 const config = window.rondoConfig?.errorMonitoring;
@@ -29,6 +29,7 @@ if (config?.dsn) {
       ...defaults.filter(integration => !['BrowserSession', 'Breadcrumbs', 'HttpContext'].includes(integration.name)),
       ...(config.performanceEnabled === false ? [] : [reactRouterBrowserTracingIntegration({
         useEffect, useLocation, useNavigationType, createRoutesFromChildren, matchRoutes,
+        webVitals: getWebVitalsOptions(),
         beforeStartSpan: options => ({ ...options, name: safePath(options.name) }),
       })]),
     ],
