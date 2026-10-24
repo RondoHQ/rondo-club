@@ -828,7 +828,9 @@ function rondo_preload_dashboard_api() {
 
 	$dashboard_url = rest_url( 'rondo/v1/dashboard' );
 	$nonce         = wp_create_nonce( 'wp_rest' );
-	echo '<script>window.__dashboardPreload = fetch(' . wp_json_encode( $dashboard_url ) . ', { headers: { "X-WP-Nonce": ' . wp_json_encode( $nonce ) . ' } });</script>' . "\n";
+	// Handle early rejection before React boots, retaining the original promise
+	// so getDashboard() can still detect failure and retry through the API client.
+	echo '<script>window.__dashboardPreload = fetch(' . wp_json_encode( $dashboard_url ) . ', { headers: { "X-WP-Nonce": ' . wp_json_encode( $nonce ) . ' } });window.__dashboardPreload.catch(function () {});</script>' . "\n";
 }
 add_action( 'wp_head', 'rondo_preload_dashboard_api', 1 );
 
