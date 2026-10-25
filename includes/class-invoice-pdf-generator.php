@@ -54,9 +54,13 @@ class InvoicePdfGenerator {
 		$invoice_kind   = (string) get_post_meta( $invoice_id, '_invoice_kind', true ) ?: 'normal';
 		$is_credit      = ( $invoice_kind === 'credit' );
 
-		// Use current date as invoice date if not sent yet (draft preview)
+		// Scheduled draft previews use their planned send date. Sent invoices keep
+		// their recorded send date, even if stale schedule metadata remains.
 		if ( empty( $sent_date ) ) {
-			$sent_date = current_time( 'Ymd' );
+			$scheduled_date = $invoice->post_status === 'rondo_draft'
+				? (string) get_post_meta( $invoice_id, '_scheduled_send_date', true )
+				: '';
+			$sent_date      = $scheduled_date !== '' ? $scheduled_date : current_time( 'Ymd' );
 		}
 
 		// Calculate due date if not set

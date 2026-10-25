@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.151.5] - 2026-10-25
+
+### Fixed
+
+- Use the planned send date as the invoice date in scheduled draft PDFs, including the fallback payment deadline, while preserving the recorded date of sent invoices (feedback #14427).
+
 ## [35.151.4] - 2026-10-25
 
 ### Fixed
