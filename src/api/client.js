@@ -596,6 +596,8 @@ export const prmApi = {
 
   // Volunteer Policy
   getVolunteerEligibility: (params = {}) => api.get('/rondo/v1/volunteer-eligibility', { params }),
+  getVolunteerMailing: () => api.get('/rondo/v1/volunteer-mailing'),
+  updateVolunteerMailing: (data) => api.put('/rondo/v1/volunteer-mailing', data),
   getVolunteerAssignmentOverview: (params = {}) => api.get('/rondo/v1/volunteer-assignments', { params }),
   getVolunteerAssignmentShifts: (params) => api.get('/rondo/v1/volunteer-assignments/shifts', { params }),
   assignVolunteerDuty: (data) => api.post('/rondo/v1/volunteer-assignments', data),

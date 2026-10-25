@@ -388,4 +388,114 @@ class WeekendVolunteerMailTest extends RondoTestCase {
 		$this->assertSame( '2026-09-20T19:00:00+02:00', WeekendVolunteerMail::next_sunday( $this->sunday->modify( '-1 week' ) )->format( 'c' ) );
 		$this->assertEmpty( $this->mail );
 	}
+	public function test_general_overview_is_once_per_round_and_counts_towards_batch_limit(): void {
+		update_option( WeekendVolunteerMail::OVERVIEW_EMAIL, 'clubhouse@example.org' );
+		for ( $n = 0; $n < 26; ++$n ) {
+			$this->player( sprintf( 'member%02d@example.org', $n ) );
+		}
+		$this->shift();
+		$this->assertSame( 25, $this->mailer->run( $this->sunday ) );
+		$this->assertCount( 25, $this->mail );
+		$this->assertSame( [ 'clubhouse@example.org' ], $this->mail[0]['to'] );
+		$this->assertStringContainsString( 'algemene overzicht', $this->mail[0]['message'] );
+		$this->assertStringNotContainsString( 'Je hebt dit seizoen', $this->mail[0]['message'] );
+		update_option( WeekendVolunteerMail::OVERVIEW_EMAIL, 'changed@example.org' );
+		$this->assertSame( 2, $this->mailer->run( $this->sunday->modify( '+1 minute' ) ) );
+		$this->assertSame( 0, $this->mailer->run( $this->sunday->modify( '+2 minutes' ) ) );
+		$this->assertCount( 27, $this->mail );
+		$this->assertSame( 'accepted', get_option( WeekendVolunteerMail::STATE )['overview']['status'] );
+		$this->assertSame( 'clubhouse@example.org', get_option( WeekendVolunteerMail::STATE )['overview']['email'] );
+		$this->assertEmpty( get_option( WeekendVolunteerMail::STATE )['pending'] );
+	}
+
+	public function test_general_overview_includes_iva_shifts_without_eligible_members_and_handles_empty_rounds(): void {
+		update_option( WeekendVolunteerMail::OVERVIEW_EMAIL, 'clubhouse@example.org' );
+		update_post_meta( $this->type, 'iva_required', true );
+		$this->shift();
+		$this->assertSame( 1, $this->mailer->run( $this->sunday ) );
+		$this->assertStringContainsString( 'Keuken', $this->mail[0]['message'] );
+		$this->assertStringContainsString( 'IVA nodig', $this->mail[0]['message'] );
+		$this->assertSame( 1, $this->mailer->run( $this->sunday->modify( '+2 weeks' ) ) );
+		$this->assertStringContainsString( 'geen openstaande diensten', $this->mail[1]['message'] );
+		$this->assertCount( 2, $this->mail );
+	}
+
+	public function test_failed_or_uncertain_overview_is_not_retried(): void {
+		update_option( WeekendVolunteerMail::OVERVIEW_EMAIL, 'clubhouse@example.org' );
+		$this->accept = false;
+		$this->assertSame( 0, $this->mailer->run( $this->sunday ) );
+		$this->assertSame( 'failed', get_option( WeekendVolunteerMail::STATE )['overview']['status'] );
+		$this->assertSame( 0, $this->mailer->run( $this->sunday->modify( '+1 minute' ) ) );
+		$this->assertCount( 1, $this->mail );
+		$attempts = 0;
+		add_filter(
+			'pre_wp_mail',
+			static function () use ( &$attempts ) {
+				++$attempts;
+				throw new \RuntimeException( 'Provider timeout' );
+			},
+			0
+			);
+		$next = $this->sunday->modify( '+2 weeks' );
+		$this->assertSame( 0, $this->mailer->run( $next ) );
+		$this->assertSame( 'uncertain', get_option( WeekendVolunteerMail::STATE )['overview']['status'] );
+		$this->assertSame( 0, $this->mailer->run( $next->modify( '+1 minute' ) ) );
+		$this->assertSame( 1, $attempts );
+	}
+
+	public function test_status_has_next_local_round_and_aggregate_results_without_recipients(): void {
+		update_option( WeekendVolunteerMail::OVERVIEW_EMAIL, 'clubhouse@example.org' );
+		update_option(
+			WeekendVolunteerMail::STATE,
+			[
+				'date'     => '2026-10-18',
+				'pending'  => [ 'private-pending@example.org' ],
+				'results'  => [
+					[
+						'email'  => 'private-member@example.org',
+						'status' => 'accepted',
+					],
+					[
+						'email'  => 'private-unknown@example.org',
+						'status' => 'reserved',
+					],
+				],
+				'overview' => [
+					'status' => 'accepted',
+					'email'  => 'previous-private@example.org',
+				],
+			]
+			);
+		$data = $this->mailer->status( new \DateTimeImmutable( '2026-10-25 20:00:00', new \DateTimeZone( 'Europe/Amsterdam' ) ) );
+		$this->assertSame( '2026-11-01T19:00:00+01:00', $data['next_at'] );
+		$this->assertSame( 1, $data['last_round']['accepted'] );
+		$this->assertSame( 1, $data['last_round']['pending'] );
+		$this->assertSame( 1, $data['last_round']['uncertain'] );
+		$this->assertSame( 'accepted', $data['last_round']['overview_status'] );
+		$this->assertStringNotContainsString( 'private', wp_json_encode( $data ) );
+	}
+
+	public function test_member_eligibility_is_rechecked_after_sending_the_overview(): void {
+		$season = $this->use_future_round();
+		$person = $this->player();
+		$this->shift();
+		update_option( WeekendVolunteerMail::OVERVIEW_EMAIL, 'clubhouse@example.org' );
+		add_filter(
+			'pre_wp_mail',
+			static function ( $pre, $atts ) use ( $person, $season ) {
+				if ( in_array( 'X-Rondo-Email-Tag: volunteer-weekend-overview', $atts['headers'], true ) ) {
+					Fields::update_for_post( $person, 'vrijgesteld_handmatig', true );
+					Fields::update_for_post( $person, 'vrijstelling_seizoen', $season );
+					VolunteerEligibilityService::invalidate_cache();
+					VolunteerObligationCalculator::invalidate_cache();
+				}
+				return $pre;
+			},
+			0,
+			2
+		);
+		$this->assertSame( 1, $this->mailer->run( $this->sunday ) );
+		$this->assertCount( 1, $this->mail );
+		$this->assertSame( 'skipped', array_values( get_option( WeekendVolunteerMail::STATE )['results'] )[0]['status'] );
+	}
 }

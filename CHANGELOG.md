@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.153.0] - 2026-10-25
+
+### Added
+
+- Show the last and next volunteer recruitment mailing rounds and aggregate delivery results on the volunteer dashboard, with a configurable recipient for one general overview per round (feedback #14603).
+- Send the general overview once per round, including IVA-required open shifts and empty-period notices, while reserving delivery before sending and respecting the existing batch limit.
+
 ## [35.152.0] - 2026-10-25
 
 ### Added

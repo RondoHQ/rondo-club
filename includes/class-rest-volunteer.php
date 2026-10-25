@@ -25,6 +25,7 @@ use Rondo\Volunteer\VolunteerExemptionResolver;
 use Rondo\Volunteer\VolunteerObligationCalculator;
 use Rondo\Volunteer\VolunteerSeeder;
 use Rondo\Volunteer\VolunteerStatistics;
+use Rondo\Volunteer\WeekendVolunteerMail;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -41,6 +42,30 @@ class Volunteer extends Base {
 	}
 
 	public function register_routes() {
+		register_rest_route(
+			'rondo/v1',
+			'/volunteer-mailing',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_mailing' ],
+					'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::EDITABLE,
+					'callback'            => [ $this, 'update_mailing' ],
+					'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
+					'args'                => [
+						'overview_email' => [
+							'type'              => 'string',
+							'required'          => true,
+							'validate_callback' => static fn( $value ) => is_string( $value ) && ( trim( $value ) === '' || is_email( trim( $value ) ) !== false ),
+							'sanitize_callback' => static fn( $value ) => trim( $value ),
+						],
+					],
+				],
+			]
+		);
 		register_rest_route(
 			'rondo/v1',
 			'/volunteer-eligibility',
@@ -898,6 +923,20 @@ class Volunteer extends Base {
 				'aggregate' => $aggregate,
 			]
 		);
+	}
+
+	public function get_mailing( \WP_REST_Request $request ) {
+		$response = rest_ensure_response( ( new WeekendVolunteerMail() )->status() );
+		$response->header( 'Cache-Control', 'private, no-store' );
+		return $response;
+	}
+
+	public function update_mailing( \WP_REST_Request $request ) {
+		update_option( WeekendVolunteerMail::OVERVIEW_EMAIL, $request['overview_email'], false );
+		if ( get_option( WeekendVolunteerMail::OVERVIEW_EMAIL ) !== $request['overview_email'] ) {
+			return new \WP_Error( 'mailing_settings_failed', 'Het e-mailadres kon niet worden opgeslagen.', [ 'status' => 500 ] );
+		}
+		return $this->get_mailing( $request );
 	}
 
 	/**

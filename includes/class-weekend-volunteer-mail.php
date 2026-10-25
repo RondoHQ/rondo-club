@@ -15,6 +15,32 @@ final class WeekendVolunteerMail {
 	const STATE           = 'rondo_weekend_volunteer_mail_state';
 	const BATCH_SIZE      = 25;
 	const FIRST_SEND_DATE = '2026-09-20';
+	const OVERVIEW_EMAIL  = 'rondo_weekend_volunteer_mail_overview_email';
+
+	public static function overview_email(): string {
+		return sanitize_email( (string) get_option( self::OVERVIEW_EMAIL, '' ) );
+	}
+
+	/** Expose aggregate delivery information without recipient names or addresses. */
+	public function status( ?\DateTimeImmutable $now = null ): array {
+		$now    = $now ?? self::now();
+		$state  = get_option( self::STATE, [] );
+		$counts = array_count_values( array_column( $state['results'] ?? [], 'status' ) );
+		return [
+			'overview_email' => self::overview_email(),
+			'next_at'        => self::next_sunday( $now )->format( DATE_ATOM ),
+			'scheduled'      => (bool) wp_next_scheduled( self::HOOK ),
+			'last_round'     => empty( $state['date'] ) ? null : [
+				'date'            => $state['date'],
+				'accepted'        => $counts['accepted'] ?? 0,
+				'pending'         => count( $state['pending'] ?? [] ),
+				'failed'          => $counts['failed'] ?? 0,
+				'uncertain'       => ( $counts['uncertain'] ?? 0 ) + ( $counts['reserved'] ?? 0 ),
+				'skipped'         => $counts['skipped'] ?? 0,
+				'overview_status' => $state['overview']['status'] ?? 'not_recorded',
+			],
+		];
+	}
 
 	public function __construct() {
 		// WordPress supplies an empty string for actions without arguments.
@@ -98,7 +124,7 @@ final class WeekendVolunteerMail {
 	}
 
 	/** Read current capacity and requirements; do not depend on the queue snapshot. */
-	public function available_shifts( array $person_ids, \DateTimeImmutable $sunday ): array {
+	public function available_shifts( array $person_ids, \DateTimeImmutable $sunday, bool $overview = false ): array {
 		[ $from, $until ] = self::weekend( $sunday );
 		$posts            = get_posts(
 			[
@@ -135,7 +161,7 @@ final class WeekendVolunteerMail {
 			if ( $remaining === 0 ) {
 				continue;
 			}
-			$eligible = array_filter( $person_ids, static fn( $id ) => ! in_array( $id, $assigned, true ) && ShiftSignupEligibility::block_reason( $post->ID, $id ) === null );
+			$eligible = $overview || array_filter( $person_ids, static fn( $id ) => ! in_array( $id, $assigned, true ) && ShiftSignupEligibility::block_reason( $post->ID, $id ) === null );
 			if ( ! $eligible ) {
 				continue;
 			}
@@ -191,14 +217,17 @@ final class WeekendVolunteerMail {
 	}
 
 	/** Render the same branded template as the reviewed preview. No sending here. */
-	public function message( array $person_ids, array $shifts, \DateTimeImmutable $sunday ): array {
+	public function message( array $person_ids, array $shifts, \DateTimeImmutable $sunday, bool $overview = false ): array {
 		[ $saturday, $monday ] = self::weekend( $sunday );
 		$dates                 = self::date_label( $saturday ) . ' t/m ' . self::date_label( $monday->modify( '-1 day' ) );
 		$club                  = ( new FinanceConfig() )->get_display_name();
 		$names                 = array_values( array_unique( array_filter( array_map( static fn( $id ) => trim( (string) Fields::get_for_post( $id, 'first_name' ) ), $person_ids ) ) ) );
 		$greeting              = $names ? 'Hoi ' . implode( ' en ', $names ) . ',' : 'Hoi,';
 		$body                  = '<p style="margin:0 0 16px;">' . esc_html( $greeting ) . '</p><p style="margin:0 0 16px;">Je hebt dit seizoen nog niet al je diensten ingepland. Met jouw hulp houden we ' . esc_html( $club ) . ' draaiende.</p><p style="margin:0 0 8px;">Voor <strong>' . esc_html( $dates ) . '</strong> zoeken we nog vrijwilligers. Zit er een moment tussen dat jou uitkomt?</p>';
-		$day                   = '';
+		if ( $overview ) {
+			$body = '<p style="margin:0 0 16px;">Beste accommodatiemanager,</p><p style="margin:0 0 16px;">Dit is het algemene overzicht bij de tweewekelijkse mailing van ' . esc_html( self::date_label( $sunday ) ) . ', voor de weekenden van <strong>' . esc_html( $dates ) . '</strong>.</p><p style="margin:0 0 16px;">' . ( $shifts ? 'Hieronder staan alle openstaande diensten waarvoor inschrijven mogelijk is. Leden ontvangen de diensten waarvoor zij in aanmerking komen.' : 'Er zijn voor deze periode geen openstaande diensten waarvoor inschrijven mogelijk is.' ) . '</p>';
+		}
+		$day = '';
 		foreach ( $shifts as $shift ) {
 			$date = $shift['start']->format( 'Y-m-d' );
 			if ( $day !== $date ) {
@@ -211,18 +240,18 @@ final class WeekendVolunteerMail {
 			$body .= '<tr><td style="padding:12px 0;border-top:1px solid #dbe4e1;vertical-align:top;"><strong style="font-size:16px;">' . esc_html( $shift['name'] ) . '</strong><br><span style="color:#475569;font-size:14px;">' . esc_html( $shift['start']->format( 'H:i' ) . '–' . $shift['end']->format( 'H:i' ) . ( $shift['iva'] ? ' · IVA nodig' : '' ) ) . '</span></td><td width="84" style="padding:12px 0 12px 12px;border-top:1px solid #dbe4e1;text-align:right;vertical-align:top;font-size:14px;">' . esc_html( $spots ) . '</td></tr>';
 		}
 		$body .= $day !== '' ? '</table>' : '';
-		$body .= '<p style="margin:24px 0 0;">Kies en bevestig je dienst in Rondo. Daar zie je welke plekken op dat moment nog beschikbaar zijn.</p>';
+		$body .= $overview ? '<p style="margin:24px 0 0;">Bekijk de actuele bezetting en beheer de diensten in Rondo.</p>' : '<p style="margin:24px 0 0;">Kies en bevestig je dienst in Rondo. Daar zie je welke plekken op dat moment nog beschikbaar zijn.</p>';
 		return [
-			'subject' => $club . ' zoekt hulp: openstaande diensten van ' . $dates,
+			'subject' => $overview ? $club . ': overzicht openstaande diensten van ' . $dates : $club . ' zoekt hulp: openstaande diensten van ' . $dates,
 			'html'    => EmailTemplate::render(
 				[
 					'brand_name'  => $club,
-					'heading'     => 'Welke dienst past in jouw agenda?',
+					'heading'     => $overview ? 'Overzicht openstaande diensten' : 'Welke dienst past in jouw agenda?',
 					'preheader'   => 'Dit zijn de openstaande diensten van ' . $dates . '.',
 					'body_html'   => $body,
-					'cta_url'     => home_url( '/vrijwillig' ),
-					'cta_label'   => 'Kies je dienst',
-					'footer_html' => '<p style="margin:0 0 16px;color:#475569;font-size:14px;line-height:1.6;">Zelf kiezen werkt het fijnst: dan pak je een dienst die in je agenda past. Voldoe je niet aan het <a href="https://www.svawc.nl/vrijwilligers/">vrijwilligersbeleid</a>, dan kan het zijn dat je ingepland wordt. Je ontvangt daar een e-mail over. Kun je dan niet? Ruilen of vervanging regelen mag altijd.</p><p style="margin:0;color:#475569;font-size:13px;line-height:1.6;">Je ontvangt dit overzicht omdat je nog diensten moet inplannen. Zodra je alle diensten hebt ingepland, stopt deze tweewekelijkse mail.</p>',
+					'cta_url'     => home_url( $overview ? '/vrijwilligers/diensten' : '/vrijwillig' ),
+					'cta_label'   => $overview ? 'Beheer de diensten' : 'Kies je dienst',
+					'footer_html' => $overview ? '<p>Je ontvangt dit algemene overzicht via het ingestelde adres bij Vrijwilligers in Rondo.</p>' : '<p style="margin:0 0 16px;color:#475569;font-size:14px;line-height:1.6;">Zelf kiezen werkt het fijnst: dan pak je een dienst die in je agenda past. Voldoe je niet aan het <a href="https://www.svawc.nl/vrijwilligers/">vrijwilligersbeleid</a>, dan kan het zijn dat je ingepland wordt. Je ontvangt daar een e-mail over. Kun je dan niet? Ruilen of vervanging regelen mag altijd.</p><p style="margin:0;color:#475569;font-size:13px;line-height:1.6;">Je ontvangt dit overzicht omdat je nog diensten moet inplannen. Zodra je alle diensten hebt ingepland, stopt deze tweewekelijkse mail.</p>',
 				]
 			),
 		];
@@ -269,8 +298,10 @@ final class WeekendVolunteerMail {
 			}
 			$state['next_batch'] = $now->getTimestamp() + MINUTE_IN_SECONDS;
 			$this->save_state( $state );
-			$generation = $this->generation();
-			foreach ( array_slice( $state['pending'], 0, self::BATCH_SIZE ) as $email ) {
+			$generation                            = $this->generation();
+			[ $overview_attempts, $overview_sent ] = $this->send_overview( $state, $now );
+			$sent                                 += $overview_sent;
+			foreach ( array_slice( $state['pending'], 0, self::BATCH_SIZE - $overview_attempts ) as $email ) {
 				if ( $generation !== $this->generation() ) {
 					$recipients = $this->recipients( $season );
 					$generation = $this->generation();
@@ -305,6 +336,35 @@ final class WeekendVolunteerMail {
 			$this->register_cron( $now );
 		}
 		return $sent;
+	}
+
+	/** Reserve before delivery: a timeout or later batch must never send a second overview. */
+	private function send_overview( array &$state, \DateTimeImmutable $now ): array {
+		if ( isset( $state['overview'] ) ) {
+			return [ 0, 0 ];
+		}
+		$email = self::overview_email();
+		if ( $email === '' ) {
+			$state['overview'] = [ 'status' => 'disabled' ];
+			$this->save_state( $state );
+			return [ 0, 0 ];
+		}
+		$shifts            = $this->available_shifts( [], $now, true );
+		$message           = $this->message( [], $shifts, $now, true );
+		$state['overview'] = [
+			'status' => 'reserved',
+			'email'  => $email,
+		];
+		$this->save_state( $state );
+		try {
+			$accepted                    = wp_mail( $email, $message['subject'], $message['html'], [ 'Content-Type: text/html; charset=UTF-8', 'X-Rondo-Email-Tag: volunteer-weekend-overview' ] );
+			$state['overview']['status'] = $accepted ? 'accepted' : 'failed';
+		} catch ( \Throwable $exception ) {
+			$accepted                    = false;
+			$state['overview']['status'] = 'uncertain';
+		}
+		$this->save_state( $state );
+		return [ 1, (int) $accepted ];
 	}
 
 	private function generation(): string {
