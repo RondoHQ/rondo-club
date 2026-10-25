@@ -739,6 +739,22 @@ function rondo_theme_enqueue_assets() {
 add_action( 'wp_enqueue_scripts', 'rondo_theme_enqueue_assets' );
 
 /**
+ * Refresh a REST nonce using the current login cookie, as WordPress's own
+ * rest-nonce AJAX action does. No REST nonce is required here: recovering an
+ * invalid nonce is the purpose of this authenticated, read-only action.
+ */
+function rondo_refresh_rest_session() {
+	nocache_headers();
+	wp_send_json_success(
+		[
+			'userId' => get_current_user_id(),
+			'nonce'  => wp_create_nonce( 'wp_rest' ),
+		]
+	);
+}
+add_action( 'wp_ajax_rondo_rest_session', 'rondo_refresh_rest_session' );
+
+/**
  * Get JavaScript configuration
  */
 function rondo_get_js_config() {
@@ -764,6 +780,7 @@ function rondo_get_js_config() {
 
 	return [
 		'apiUrl'              => rest_url(),
+		'sessionRefreshUrl'   => add_query_arg( 'action', 'rondo_rest_session', admin_url( 'admin-ajax.php' ) ),
 		'nonce'               => wp_create_nonce( 'wp_rest' ),
 		'siteUrl'             => home_url(),
 		'siteName'            => get_bloginfo( 'name' ),

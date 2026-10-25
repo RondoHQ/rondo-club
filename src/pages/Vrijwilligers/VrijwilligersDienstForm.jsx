@@ -145,7 +145,7 @@ export default function VrijwilligersDienstForm() {
   );
 
   const trimmedSearch = personSearch.trim();
-  const { data: assignableData, isFetching: assignableLoading } = useQuery({
+  const { data: assignableData, isFetching: assignableLoading, isError: assignableError, refetch: retryAssignableSearch } = useQuery({
     queryKey: ['volunteer', 'assignable-people', id, trimmedSearch],
     queryFn: async () => (await prmApi.getAssignablePeople(id, trimmedSearch)).data,
     enabled: addPersonOpen && trimmedSearch.length >= 2,
@@ -673,6 +673,11 @@ export default function VrijwilligersDienstForm() {
               {trimmedSearch.length >= 2 && (
                 assignableLoading ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400">Zoeken…</p>
+                ) : assignableError ? (
+                  <div role="alert" className="text-sm text-red-600 dark:text-red-400">
+                    <p>Leden zoeken is niet gelukt. Probeer het opnieuw.</p>
+                    <button type="button" className="btn-tertiary mt-2" onClick={() => retryAssignableSearch()}>Opnieuw proberen</button>
+                  </div>
                 ) : assignablePeople.length === 0 ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400">Geen leden gevonden.</p>
                 ) : (

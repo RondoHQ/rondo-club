@@ -54,8 +54,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
-      - name: Test privacy-safe browser diagnostics
-        run: node --test tests/js/error-monitoring.test.mjs tests/js/performance-monitoring.test.mjs
+      - name: Test browser diagnostics and session recovery
+        run: node --test tests/js/error-monitoring.test.mjs tests/js/performance-monitoring.test.mjs tests/js/nonceRecovery.test.mjs
       - run: npm run build
 
   mobile-spike:

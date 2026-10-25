@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { reportError } from '../utils/error-monitoring';
+import { installNonceRecovery } from './nonce-recovery';
 
 // Get config from WordPress
 const config = window.rondoConfig || {};
@@ -21,6 +22,8 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+installNonceRecovery(api, config);
 
 // Response interceptor for error handling
 api.interceptors.response.use(
