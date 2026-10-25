@@ -140,7 +140,7 @@ class VolunteerAssignmentOverviewTest extends RondoTestCase {
 	public function test_household_is_one_row_and_partner_bookings_count(): void {
 		$a             = $this->createPerson( [ 'post_title' => 'Parent A' ] );
 		$b             = $this->createPerson( [ 'post_title' => 'Parent B' ] );
-		$child         = $this->createPerson( [], [ 'leeftijdsgroep' => 'Onder 12' ] );
+		$child         = $this->createPerson( [ 'post_title' => 'Ráaf Eefting' ], [ 'leeftijdsgroep' => 'Onder 12' ] );
 		$relationships = [];
 		foreach ( [ $a, $b ] as $parent ) {
 			$relationships[] = [
@@ -167,6 +167,24 @@ class VolunteerAssignmentOverviewTest extends RondoTestCase {
 		$this->assertSame( 1, $row['planned'] );
 		$this->assertSame( 1, $row['needed'] );
 		$this->assertEqualsCanonicalizing( [ $a, $b ], array_column( $row['people'], 'id' ) );
+		$found = $this->request(
+			[
+				'search'    => '  RAAF EEFTING  ',
+				'completed' => 'all',
+				'planning'  => 'all',
+			]
+			)->get_data();
+		$this->assertSame( 1, $found['total'] );
+		$this->assertSame( $row, $found['rows'][0] );
+		$this->assertSame(
+			0,
+			$this->request(
+			[
+				'search'   => 'Unrelated child',
+				'planning' => 'all',
+			]
+			)->get_data()['total']
+			);
 		$this->assertSame( 0, $this->request()->get_data()['total'] );
 		$this->assertFalse( $row['people'][0]['has_email'] );
 		$shift = $this->shift( [], 'open', 3 );
@@ -193,6 +211,16 @@ class VolunteerAssignmentOverviewTest extends RondoTestCase {
 			)->get_status()
 			);
 		$this->assertSame( 0, $this->request( [ 'planning' => 'all' ] )->get_data()['total'] );
+		$this->assertSame(
+			0,
+			$this->request(
+			[
+				'search'    => 'Raaf Eefting',
+				'completed' => 'all',
+				'planning'  => 'all',
+			]
+			)->get_data()['total']
+			);
 	}
 
 	public function test_options_exclude_full_closed_iva_and_other_assignees(): void {

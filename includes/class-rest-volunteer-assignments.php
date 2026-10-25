@@ -113,7 +113,7 @@ class VolunteerAssignments extends Base {
 	}
 
 	/** Only return the minimum fields needed for this private worklist. */
-	private function rows(): array {
+	private function rows( string $search = '' ): array {
 		$season      = SeasonKey::current();
 		$eligibility = new VolunteerEligibilityService();
 		$units       = ( new VolunteerObligationCalculator() )->decorate_units( $eligibility->get_eligible_units( $season ), $season );
@@ -128,6 +128,11 @@ class VolunteerAssignments extends Base {
 				if ( ! AccessControl::can_view_person( (int) $person_id ) ) {
 					continue 2;
 				}
+			}
+			// Search the whole household, including children, after checking record access.
+			$names = array_map( static fn( $id ) => PostTitle::plain( (int) $id ), $unit['person_ids'] );
+			if ( $search !== '' && ! str_contains( remove_accents( mb_strtolower( implode( ' / ', $names ) ) ), $search ) ) {
+				continue;
 			}
 			$ids = array_map( 'intval', $unit['person_ids'] );
 			if ( $unit['kind'] === 'gezin' ) {
@@ -170,11 +175,10 @@ class VolunteerAssignments extends Base {
 		$search    = remove_accents( mb_strtolower( trim( $request['search'] ) ) );
 		$rows      = array_values(
 			array_filter(
-				$this->rows(),
-				static function ( $row ) use ( $completed, $planning, $search ) {
+				$this->rows( $search ),
+				static function ( $row ) use ( $completed, $planning ) {
 					return ( $completed === 'all' || $row['completed'] === (int) $completed )
-						&& ( $planning === 'all' || ( $planning === 'none' ? $row['planned'] === 0 : $row['planned'] > 0 ) )
-						&& ( $search === '' || str_contains( remove_accents( mb_strtolower( $row['name'] ) ), $search ) );
+						&& ( $planning === 'all' || ( $planning === 'none' ? $row['planned'] === 0 : $row['planned'] > 0 ) );
 				}
 			)
 		);

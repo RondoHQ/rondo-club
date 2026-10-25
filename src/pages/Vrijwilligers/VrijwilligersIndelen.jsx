@@ -158,7 +158,7 @@ export default function VrijwilligersIndelen() {
         <div>
           <label htmlFor="assignment-completed" className="label">Afgerond</label>
           <select id="assignment-completed" className="input" value={completed} onChange={(event) => changeFilter(setCompleted, event.target.value)}>
-            <option value="0">0 diensten afgerond</option><option value="1">1 dienst afgerond</option><option value="all">Alle aantallen</option>
+            <option value="0">0 diensten afgerond</option><option value="1">1 dienst afgerond</option><option value="all">Alle aantallen (open verplichtingen)</option>
           </select>
         </div>
         <div>
@@ -168,11 +168,11 @@ export default function VrijwilligersIndelen() {
           </select>
         </div>
         <form className="flex w-full min-w-0 items-end gap-2 sm:min-w-64 sm:flex-1" onSubmit={(event) => { event.preventDefault(); changeFilter(setSearch, searchInput.trim()); }}>
-          <div className="min-w-0 flex-1"><label htmlFor="assignment-search" className="label">Naam</label><input id="assignment-search" type="search" className={fieldClass} value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder="Zoek een lid of ouder" /></div>
+          <div className="min-w-0 flex-1"><label htmlFor="assignment-search" className="label">Naam</label><input id="assignment-search" type="search" className={fieldClass} value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder="Zoek een lid, ouder of kind" /></div>
           <button type="submit" className="btn-secondary">Zoeken</button>
         </form>
       </div>
-      <p className="text-sm text-gray-600 dark:text-gray-300">‘Nog nodig’ houdt rekening met afgeronde én ingeplande diensten. Vrijgestelde en volledig ingeplande verplichtingen staan niet in deze lijst.</p>
+      <p className="text-sm text-gray-600 dark:text-gray-300">Deze lijst toont alleen open verplichtingen, ook bij ‘Alle aantallen’. ‘Nog nodig’ houdt rekening met afgeronde én ingeplande diensten. Vrijgestelde en volledig ingevulde verplichtingen staan niet in deze lijst. Zoek bij gezinnen op de naam van een ouder of kind.</p>
       {feedback && <p role="status" className="rounded-lg bg-green-50 p-4 text-sm text-green-800 dark:bg-green-900/30 dark:text-green-200">{feedback}</p>}
       {isLoading ? <p role="status" className="card p-8 text-center text-gray-600 dark:text-gray-300">Overzicht laden…</p>
         : error ? <div role="alert" className="card p-6 text-red-700 dark:text-red-300">Het overzicht kon niet worden geladen. <button type="button" className="underline" onClick={() => refetch()}>Opnieuw proberen</button></div>
