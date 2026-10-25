@@ -16,6 +16,7 @@ const overviewLabels = {
 export default function VolunteerMailingCard() {
   const queryClient = useQueryClient();
   const [email, setEmail] = useState(null);
+  const [plannerEmail, setPlannerEmail] = useState(null);
   const queryKey = ['volunteer', 'mailing'];
   const { data, isPending, error, refetch } = useQuery({
     queryKey,
@@ -23,10 +24,11 @@ export default function VolunteerMailingCard() {
     refetchInterval: 60_000,
   });
   const save = useMutation({
-    mutationFn: async () => (await prmApi.updateVolunteerMailing({ overview_email: (email ?? data?.overview_email ?? '').trim() })).data,
+    mutationFn: async () => (await prmApi.updateVolunteerMailing({ overview_email: (email ?? data?.overview_email ?? '').trim(), planner_email: (plannerEmail ?? data?.planner_email ?? '').trim() })).data,
     onSuccess: (result) => {
       queryClient.setQueryData(queryKey, result);
       setEmail(null);
+      setPlannerEmail(null);
     },
   });
   const last = data?.last_round;
@@ -37,7 +39,7 @@ export default function VolunteerMailingCard() {
         <Mail className="w-5 h-5 text-bright-cobalt dark:text-electric-cyan shrink-0" aria-hidden="true" />
         <div>
           <h2 id="volunteer-mailing-title" className="font-semibold text-gray-900 dark:text-gray-100">Mailing openstaande diensten</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Elke twee weken op zondag vanaf 19:00 uur. Leden met open verplichtingen ontvangen passende diensten voor de volgende drie weekenden.</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Elke zondag vanaf 19:00 uur. Leden met open verplichtingen ontvangen passende diensten voor alle dagen van de volgende vijf volledige weken.</p>
         </div>
       </div>
       {isPending ? <p role="status" className="text-sm">Verzendgegevens laden…</p> : error ? (
@@ -63,6 +65,9 @@ export default function VolunteerMailingCard() {
               <button type="submit" className="btn-secondary" disabled={save.isPending}>{save.isPending ? 'Opslaan…' : 'Opslaan'}</button>
             </div>
             <p id="volunteer-mailing-email-help" className="text-sm text-gray-600 dark:text-gray-300">Dit adres ontvangt per verzendronde één algemeen overzicht van alle open diensten. Laat leeg om dit overzicht uit te schakelen. Wijzigingen gelden vanaf de volgende verzendronde.</p>
+            <label htmlFor="volunteer-planner-email" className="label">Ontvanger indelingsvoorstellen en herinneringen</label>
+            <input id="volunteer-planner-email" type="email" className="input sm:max-w-sm" value={plannerEmail ?? data.planner_email ?? ''} disabled={save.isPending} onChange={(event) => { setPlannerEmail(event.target.value); save.reset(); }} />
+            <p className="text-sm text-gray-600 dark:text-gray-300">Dit adres ontvangt de link naar het woensdagvoorstel en na twee dagen een herinnering als het nog openstaat. Laat leeg om deze berichten uit te schakelen. Gebruik Opslaan om beide adressen te bewaren.</p>
             {save.isSuccess && <p role="status" className="text-sm text-green-700 dark:text-green-300">E-mailadres opgeslagen.</p>}
             {save.error && <p role="alert" className="text-sm text-red-700 dark:text-red-300">{save.error.response?.data?.message || 'Het e-mailadres kon niet worden opgeslagen.'}</p>}
           </form>

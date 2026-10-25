@@ -216,6 +216,7 @@ export default function VrijwilligersDashboard() {
           Snelle navigatie
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <StatCard label="Indelingsvoorstellen" value="Controleer" sub="Wekelijks vier weken vooruit" icon={CalendarClock} href="/vrijwilligers/voorstellen" />
           {currentUser?.can_view_people_shift_progress && <StatCard label="Nog in te delen" value="Indelen" sub="Open verplichtingen en toewijzen" icon={UsersRound} href="/vrijwilligers/indelen" />}
           <StatCard label="Statistieken" value="Bekijk" sub="Bezetting en voortgang" icon={ChartPie} href="/vrijwilligers/statistieken" />
           <StatCard label="VOG" value="Beheer" sub="Verklaring Omtrent Gedrag" icon={FileCheck} href="/vrijwilligers/vog" />

@@ -80,8 +80,11 @@ class ShiftEmailScheduler {
 	/**
 	 * Queue a shift for the member's next combined signup confirmation.
 	 */
-	public static function queue_signup_confirmation( int $person_id, int $shift_id ): void {
+	public static function queue_signup_confirmation( int $person_id, int $shift_id, bool $recover = false ): void {
 		if ( $person_id <= 0 || get_post_type( $shift_id ) !== 'dienst_shift' ) {
+			return;
+		}
+		if ( $recover && ( get_post_meta( $shift_id, self::signup_confirmation_queue_key( $person_id ), true ) || get_post_meta( $shift_id, '_shift_email_assignment_sent_' . $person_id, true ) ) ) {
 			return;
 		}
 
@@ -223,6 +226,10 @@ class ShiftEmailScheduler {
 			$parts[ $part ] = $this->substitute_variables( $template, $vars );
 		}
 
+		$parts['body'] = str_replace( 'Zelf afmelden via Rondo is voor deze toegewezen dienst niet mogelijk.', '', $parts['body'] );
+		if ( ! str_contains( $parts['body'], 'tot drie weken voor aanvang' ) ) {
+			$parts['body'] .= "\n\nZelf afmelden via Rondo kan tot drie weken voor aanvang. Daarna regel je vervanging of ruil via de accommodatiemanager.";
+		}
 		$attachment = $this->create_signup_calendar_attachment( $person_id, [ $shift ] );
 		$body_html  = EmailTemplate::format_plain_text( $parts['body'] );
 		if ( $attachment ) {

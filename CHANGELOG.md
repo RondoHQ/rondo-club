@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.154.0] - 2026-10-25
+
+### Added
+
+- Generate editable volunteer duty proposals every Wednesday for four weeks ahead and earlier gaps, with coordinator approval before assignments and member notifications (feedback #14605 and #10028).
+- Check qualifications, exemptions, family obligations, existing assignments, matches and training before proposing candidates; show unresolved gaps and require explicit approval for bar-to-luik conversions.
+- Add a configurable proposal notification address, a reminder after two days and recoverable publication without duplicate assignments or notifications.
+
+### Changed
+
+- Send volunteer recruitment mail every Sunday for all seven days in the next five full weeks.
+- Allow members to cancel assigned duties until 21 days beforehand and prepare replacement proposals after cancellations.
+
 ## [35.153.0] - 2026-10-25
 
 ### Added

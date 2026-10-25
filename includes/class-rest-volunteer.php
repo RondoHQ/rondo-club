@@ -62,6 +62,12 @@ class Volunteer extends Base {
 							'validate_callback' => static fn( $value ) => is_string( $value ) && ( trim( $value ) === '' || is_email( trim( $value ) ) !== false ),
 							'sanitize_callback' => static fn( $value ) => trim( $value ),
 						],
+						'planner_email'  => [
+							'type'              => 'string',
+							'required'          => false,
+							'validate_callback' => static fn( $value ) => is_string( $value ) && ( trim( $value ) === '' || is_email( trim( $value ) ) !== false ),
+							'sanitize_callback' => static fn( $value ) => trim( $value ),
+						],
 					],
 				],
 			]
@@ -935,6 +941,9 @@ class Volunteer extends Base {
 		update_option( WeekendVolunteerMail::OVERVIEW_EMAIL, $request['overview_email'], false );
 		if ( get_option( WeekendVolunteerMail::OVERVIEW_EMAIL ) !== $request['overview_email'] ) {
 			return new \WP_Error( 'mailing_settings_failed', 'Het e-mailadres kon niet worden opgeslagen.', [ 'status' => 500 ] );
+		}
+		if ( $request->get_param( 'planner_email' ) !== null ) {
+			update_option( \Rondo\Volunteer\VolunteerPlanner::EMAIL, $request['planner_email'], false );
 		}
 		return $this->get_mailing( $request );
 	}

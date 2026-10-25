@@ -350,6 +350,7 @@ function rondo_init() {
 		new \Rondo\Volunteer\ShiftEmailScheduler();
 		new \Rondo\Volunteer\ShiftChangeNotification();
 		new \Rondo\Volunteer\WeekendVolunteerMail();
+		new \Rondo\Volunteer\VolunteerPlanner();
 
 		// Enforce the audited, mail-aware cancellation flow for assigned shifts.
 		new \Rondo\Volunteer\ShiftCancellationService();
@@ -394,6 +395,7 @@ function rondo_init() {
 		new \Rondo\REST\VogSubmissions();
 		new RESTVolunteer();
 		new \Rondo\REST\VolunteerAssignments();
+		new \Rondo\REST\VolunteerPlans();
 		new RESTMemberShifts();
 		new \Rondo\Volunteer\ShiftDayCopier();
 		new RESTFees();
@@ -1351,6 +1353,9 @@ function rondo_theme_deactivation() {
 	\Rondo\Volunteer\ShiftScheduler::unregister_cron();
 	\Rondo\Volunteer\ShiftEmailScheduler::unregister_cron();
 	\Rondo\Volunteer\WeekendVolunteerMail::unregister_cron();
+	wp_clear_scheduled_hook( \Rondo\Volunteer\VolunteerPlanner::HOOK );
+	wp_clear_scheduled_hook( \Rondo\Volunteer\VolunteerPlanner::REPAIR );
+	wp_clear_scheduled_hook( \Rondo\Volunteer\VolunteerPlanner::REMINDER );
 	\Rondo\Volunteer\ShiftTemplateExpander::unregister_cron();
 
 	// Remove custom user role (must call directly since switch_theme hook already fired)

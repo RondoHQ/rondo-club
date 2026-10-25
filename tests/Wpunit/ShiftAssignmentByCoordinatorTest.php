@@ -452,34 +452,30 @@ class ShiftAssignmentByCoordinatorTest extends RondoTestCase {
 		$this->assertNotEmpty( $match[0]['block_reason'] );
 	}
 
-	public function test_duty_assignment_blocks_self_cancellation_before_deadline_and_during_grace(): void {
+	public function test_duty_assignment_can_cancel_early_but_has_no_last_minute_signup_grace(): void {
 		foreach ( [ 14, 35 ] as $days ) {
 			$this->as_coordinator();
 			$shift_id = $this->create_shift( '+' . $days . ' days', 2 );
 			$response = $this->add_assignee( $shift_id, $this->person_id, [ 'assignment_mode' => 'assigned' ] );
 			$this->assertSame( 200, $response->get_status() );
-			$this->assertSame( 'assigned', $response->get_data()['assignment_mode'] );
-			$this->assertNotFalse( wp_next_scheduled( ShiftEmailScheduler::SIGNUP_CONFIRMATION_CRON_HOOK, [ $this->person_id ] ) );
-
 			$member = $this->createRondoUser();
 			update_user_meta( $member, 'rondo_linked_person_id', $this->person_id );
 			wp_set_current_user( $member );
 			$mine = rest_do_request( new WP_REST_Request( 'GET', '/rondo/v1/my-shifts' ) )->get_data()['shifts'];
-			$rows = array_values( array_filter( $mine, static fn( array $row ): bool => $row['id'] === $shift_id ) );
+			$rows = array_values( array_filter( $mine, static fn( $row ) => $row['id'] === $shift_id ) );
 			$this->assertTrue( $rows[0]['is_duty_assigned'] );
-			$this->assertFalse( $rows[0]['can_cancel'] );
-
-			// Retrying signup must neither unlock the duty nor reset its timestamp.
+			$this->assertSame( $days > 21, $rows[0]['can_cancel'] );
 			$this->assertSame( 200, rest_do_request( new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $shift_id . '/signup' ) )->get_status() );
 			$cancel = rest_do_request( new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $shift_id . '/cancel' ) );
-			$this->assertSame( 409, $cancel->get_status() );
-			$this->assertSame( 'shift_assignment_required', $cancel->get_data()['code'] );
-			$this->assertSame( [ $this->person_id ], get_post_meta( $shift_id, 'assigned_persons', true ) );
-
-			$this->as_coordinator();
-			$retry = $this->add_assignee( $shift_id, $this->person_id, [ 'assignment_mode' => 'signup' ] );
-			$this->assertTrue( $retry->get_data()['already_assigned'] );
-			$this->assertSame( 'assigned', $retry->get_data()['assignment_mode'] );
+			if ( $days > 21 ) {
+				$this->assertSame( 200, $cancel->get_status() );
+				$this->assertEmpty( get_post_meta( $shift_id, 'assigned_persons', true ) );
+				$this->assertNotEmpty( get_post_meta( $shift_id, '_shift_declined_' . $this->person_id, true ) );
+			} else {
+				$this->assertSame( 409, $cancel->get_status() );
+				$this->assertSame( 'shift_assignment_required', $cancel->get_data()['code'] );
+				$this->assertSame( [ $this->person_id ], get_post_meta( $shift_id, 'assigned_persons', true ) );
+			}
 		}
 	}
 

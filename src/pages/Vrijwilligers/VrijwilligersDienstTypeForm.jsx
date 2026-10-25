@@ -216,7 +216,7 @@ export default function VrijwilligersDienstTypeForm() {
           <div>
             <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Toewijzingsmail</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Deze mail volgt na ‘Dienst toewijzen’. Het lid kan zich niet zelf afmelden.
+              Deze mail volgt na ‘Dienst toewijzen’. Het lid kan zich tot drie weken voor aanvang afmelden.
               Laat een veld leeg voor de standaardtekst over verantwoordelijkheid, vervanging en ruilen via de accommodatiemanager.
             </p>
           </div>

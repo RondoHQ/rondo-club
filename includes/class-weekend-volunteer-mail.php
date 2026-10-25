@@ -1,5 +1,5 @@
 <?php
-/** Fortnightly Sunday recruitment digest for the next three weekends. */
+/** Weekly Sunday recruitment digest for the next five full weeks. */
 
 namespace Rondo\Volunteer;
 
@@ -28,6 +28,7 @@ final class WeekendVolunteerMail {
 		$counts = array_count_values( array_column( $state['results'] ?? [], 'status' ) );
 		return [
 			'overview_email' => self::overview_email(),
+			'planner_email'  => VolunteerPlanner::email(),
 			'next_at'        => self::next_sunday( $now )->format( DATE_ATOM ),
 			'scheduled'      => (bool) wp_next_scheduled( self::HOOK ),
 			'last_round'     => empty( $state['date'] ) ? null : [
@@ -49,7 +50,7 @@ final class WeekendVolunteerMail {
 		add_action( self::HOOK, [ $this, 'run' ], 10, 0 );
 	}
 
-	/** Calendar days preserve the fortnightly rhythm across DST and year boundaries. */
+	/** Calendar days preserve the weekly rhythm across DST and year boundaries. */
 	public static function next_sunday( \DateTimeImmutable $now ): \DateTimeImmutable {
 		$now   = $now->setTimezone( new \DateTimeZone( 'Europe/Amsterdam' ) );
 		$first = new \DateTimeImmutable( self::FIRST_SEND_DATE . ' 19:00:00', $now->getTimezone() );
@@ -67,13 +68,13 @@ final class WeekendVolunteerMail {
 	private static function is_sending_sunday( \DateTimeImmutable $date ): bool {
 		$date  = $date->setTimezone( new \DateTimeZone( 'Europe/Amsterdam' ) )->setTime( 0, 0 );
 		$first = new \DateTimeImmutable( self::FIRST_SEND_DATE, $date->getTimezone() );
-		return $date >= $first && (int) $first->diff( $date )->days % 14 === 0;
+		return $date >= $first && (int) $first->diff( $date )->days % 7 === 0;
 	}
 
 	/** Inclusive start, exclusive end in the club's local timezone. */
 	public static function weekend( \DateTimeImmutable $sunday ): array {
 		$sunday = $sunday->setTimezone( new \DateTimeZone( 'Europe/Amsterdam' ) )->setTime( 0, 0 );
-		return [ $sunday->modify( '+6 days' ), $sunday->modify( '+22 days' ) ];
+		return [ $sunday->modify( '+1 day' ), $sunday->modify( '+36 days' ) ];
 	}
 
 	private static function now(): \DateTimeImmutable {
@@ -82,13 +83,14 @@ final class WeekendVolunteerMail {
 
 	/** Recover missing cron events during an eligible Sunday evening delivery window. */
 	public function register_cron( ?\DateTimeImmutable $now = null ): void {
+		$now       = ( $now ?? self::now() )->setTimezone( new \DateTimeZone( 'Europe/Amsterdam' ) );
 		$scheduled = wp_next_scheduled( self::HOOK );
 		if ( $scheduled ) {
 			$date = new \DateTimeImmutable( '@' . $scheduled );
-			if ( self::is_sending_sunday( $date ) ) {
+			if ( self::is_sending_sunday( $date ) && $scheduled <= self::next_sunday( $now )->getTimestamp() ) {
 				return;
 			}
-			// Replace a remaining weekly event on an off-week during deployment.
+			// Replace an invalid delivery date.
 			wp_unschedule_event( $scheduled, self::HOOK );
 		}
 		$now     = ( $now ?? self::now() )->setTimezone( new \DateTimeZone( 'Europe/Amsterdam' ) );
@@ -176,7 +178,7 @@ final class WeekendVolunteerMail {
 			} catch ( \Exception $exception ) {
 				continue;
 			}
-			if ( $end <= $start || $start < $from || $start >= $until || (int) $start->format( 'N' ) < 6 ) {
+			if ( $end <= $start || $start < $from || $start >= $until ) {
 				continue;
 			}
 			$iva = (bool) Fields::get_for_post( $type, 'iva_required' ) && ! (bool) Fields::get_for_post( $post->ID, 'iva_waived' );
@@ -225,14 +227,22 @@ final class WeekendVolunteerMail {
 		$greeting              = $names ? 'Hoi ' . implode( ' en ', $names ) . ',' : 'Hoi,';
 		$body                  = '<p style="margin:0 0 16px;">' . esc_html( $greeting ) . '</p><p style="margin:0 0 16px;">Je hebt dit seizoen nog niet al je diensten ingepland. Met jouw hulp houden we ' . esc_html( $club ) . ' draaiende.</p><p style="margin:0 0 8px;">Voor <strong>' . esc_html( $dates ) . '</strong> zoeken we nog vrijwilligers. Zit er een moment tussen dat jou uitkomt?</p>';
 		if ( $overview ) {
-			$body = '<p style="margin:0 0 16px;">Beste accommodatiemanager,</p><p style="margin:0 0 16px;">Dit is het algemene overzicht bij de tweewekelijkse mailing van ' . esc_html( self::date_label( $sunday ) ) . ', voor de weekenden van <strong>' . esc_html( $dates ) . '</strong>.</p><p style="margin:0 0 16px;">' . ( $shifts ? 'Hieronder staan alle openstaande diensten waarvoor inschrijven mogelijk is. Leden ontvangen de diensten waarvoor zij in aanmerking komen.' : 'Er zijn voor deze periode geen openstaande diensten waarvoor inschrijven mogelijk is.' ) . '</p>';
+			$body = '<p style="margin:0 0 16px;">Beste accommodatiemanager,</p><p style="margin:0 0 16px;">Dit is het algemene overzicht bij de wekelijkse mailing van ' . esc_html( self::date_label( $sunday ) ) . ', voor de periode <strong>' . esc_html( $dates ) . '</strong>.</p><p style="margin:0 0 16px;">' . ( $shifts ? 'Hieronder staan alle openstaande diensten waarvoor inschrijven mogelijk is. Leden ontvangen de diensten waarvoor zij in aanmerking komen.' : 'Er zijn voor deze periode geen openstaande diensten waarvoor inschrijven mogelijk is.' ) . '</p>';
 		}
 		$day = '';
 		foreach ( $shifts as $shift ) {
 			$date = $shift['start']->format( 'Y-m-d' );
 			if ( $day !== $date ) {
 				$body .= $day !== '' ? '</table>' : '';
-				$label = ( $shift['start']->format( 'N' ) === '6' ? 'Zaterdag ' : 'Zondag ' ) . self::date_label( $shift['start'] );
+				$label = [
+					1 => 'Maandag ',
+					2 => 'Dinsdag ',
+					3 => 'Woensdag ',
+					4 => 'Donderdag ',
+					5 => 'Vrijdag ',
+					6 => 'Zaterdag ',
+					7 => 'Zondag ',
+				][ (int) $shift['start']->format( 'N' ) ] . self::date_label( $shift['start'] );
 				$body .= '<h2 style="margin:26px 0 10px;font-size:18px;line-height:1.4;">' . esc_html( $label ) . '</h2><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">';
 				$day   = $date;
 			}
@@ -251,7 +261,7 @@ final class WeekendVolunteerMail {
 					'body_html'   => $body,
 					'cta_url'     => home_url( $overview ? '/vrijwilligers/diensten' : '/vrijwillig' ),
 					'cta_label'   => $overview ? 'Beheer de diensten' : 'Kies je dienst',
-					'footer_html' => $overview ? '<p>Je ontvangt dit algemene overzicht via het ingestelde adres bij Vrijwilligers in Rondo.</p>' : '<p style="margin:0 0 16px;color:#475569;font-size:14px;line-height:1.6;">Zelf kiezen werkt het fijnst: dan pak je een dienst die in je agenda past. Voldoe je niet aan het <a href="https://www.svawc.nl/vrijwilligers/">vrijwilligersbeleid</a>, dan kan het zijn dat je ingepland wordt. Je ontvangt daar een e-mail over. Kun je dan niet? Ruilen of vervanging regelen mag altijd.</p><p style="margin:0;color:#475569;font-size:13px;line-height:1.6;">Je ontvangt dit overzicht omdat je nog diensten moet inplannen. Zodra je alle diensten hebt ingepland, stopt deze tweewekelijkse mail.</p>',
+					'footer_html' => $overview ? '<p>Je ontvangt dit algemene overzicht via het ingestelde adres bij Vrijwilligers in Rondo.</p>' : '<p style="margin:0 0 16px;color:#475569;font-size:14px;line-height:1.6;">Zelf kiezen werkt het fijnst: dan pak je een dienst die in je agenda past. Voldoe je niet aan het <a href="https://www.svawc.nl/vrijwilligers/">vrijwilligersbeleid</a>, dan kan het zijn dat je ingepland wordt. Je ontvangt daar een e-mail over. Kun je dan niet? Ruilen of vervanging regelen mag altijd.</p><p style="margin:0;color:#475569;font-size:13px;line-height:1.6;">Je ontvangt dit overzicht omdat je nog diensten moet inplannen. Zodra je alle diensten hebt ingepland, stopt deze wekelijkse mail.</p>',
 				]
 			),
 		];

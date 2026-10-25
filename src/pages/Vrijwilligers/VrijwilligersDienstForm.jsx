@@ -252,14 +252,14 @@ export default function VrijwilligersDienstForm() {
         setFeedback({
           kind: 'warning',
           message: data.assignment_mode === 'assigned'
-            ? 'Dienst toegewezen. Deze persoon kan zich niet zelf afmelden en heeft geen e-mailadres. Geef de toewijzing zelf door.'
+            ? 'Dienst toegewezen. Deze persoon kan zich tot drie weken vooraf afmelden en heeft geen e-mailadres. Geef de toewijzing zelf door.'
             : 'Toegevoegd, maar deze persoon heeft geen e-mailadres. Laat het diegene zelf even weten.',
         });
       } else {
         setFeedback({ kind: 'success', message: data.already_assigned
           ? 'Deze persoon was al ingedeeld. De bestaande indeling is behouden.'
           : data.assignment_mode === 'assigned'
-            ? 'Dienst toegewezen. De persoon krijgt een toewijzingsmail en kan zich niet zelf afmelden.'
+            ? 'Dienst toegewezen. De persoon krijgt een toewijzingsmail en kan zich tot drie weken vooraf afmelden.'
             : 'Persoon toegevoegd. Die krijgt een bevestigingsmail.' });
       }
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shift', id] });
@@ -610,7 +610,7 @@ export default function VrijwilligersDienstForm() {
               <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                 {canRecordAttendance
                   ? 'Leg vast wie deze dienst heeft geholpen, ook boven de geplande bezetting. Dit telt mee als uitgevoerd; er wordt geen mail verstuurd.'
-                  : 'Voor leden zonder account of e-mail, of als iemand het je persoonlijk laat weten. Bij indelen gelden de normale afmeldregels. Bij toewijzen kan de persoon zich niet zelf afmelden.'}
+                  : 'Voor leden zonder account of e-mail, of als iemand het je persoonlijk laat weten. Bij indelen gelden de normale afmeldregels. Bij toewijzen geldt de termijn van drie weken, zonder de bedenktijd van een eigen aanmelding.'}
               </p>
               {canRecordAttendance && (
                 <p className="mt-2 text-sm text-gray-700 dark:text-gray-200">
@@ -653,7 +653,7 @@ export default function VrijwilligersDienstForm() {
               </fieldset>}
               {!canRecordAttendance && assignmentMode === 'assigned' && (
                 <p className="text-sm text-gray-700 dark:text-gray-300">
-                  De persoon krijgt een toewijzingsmail, blijft verantwoordelijk en kan zich niet zelf afmelden.
+                  De persoon krijgt een toewijzingsmail, blijft verantwoordelijk en kan zich tot drie weken vooraf afmelden.
                   Vervanging of ruilen moet via de accommodatiemanager.{' '}
                   <Link to={`/vrijwilligers/diensttypes/${existing?.fields?.dienst_type_id}`} className="text-bright-cobalt underline dark:text-electric-cyan">Toewijzingsmail aanpassen</Link>
                 </p>
