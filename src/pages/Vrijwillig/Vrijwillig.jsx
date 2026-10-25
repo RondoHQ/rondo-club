@@ -353,8 +353,7 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
         </p>
         {shift.is_duty_assigned && ['open', 'vol'].includes(shift.status) && (
           <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-            Deze dienst is aan je toegewezen. Je kunt je niet zelf afmelden.
-            Regel vervanging of ruil en geef dit door aan de accommodatiemanager; je blijft eindverantwoordelijk.
+            Deze dienst is aan je toegewezen. {shift.can_cancel ? 'Je kunt je tot drie weken voor aanvang afmelden via Rondo.' : 'De afmeldtermijn is verstreken. Regel vervanging of ruil via de accommodatiemanager; je blijft eindverantwoordelijk.'}
           </p>
         )}
         {shift.capacity > 0 && (

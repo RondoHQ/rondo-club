@@ -113,48 +113,48 @@ class WeekendVolunteerMailTest extends RondoTestCase {
 
 	public function test_schedule_preserves_local_evening_through_dst_and_year_boundary(): void {
 		foreach ( [
-			[ '2026-10-18 19:00:00', '2026-11-01T19:00:00+01:00' ],
-			[ '2027-03-21 19:00:00', '2027-04-04T19:00:00+02:00' ],
-			[ '2026-12-27 19:00:00', '2027-01-10T19:00:00+01:00' ],
+			[ '2026-10-18 19:00:00', '2026-10-25T19:00:00+01:00' ],
+			[ '2027-03-21 19:00:00', '2027-03-28T19:00:00+02:00' ],
+			[ '2026-12-27 19:00:00', '2027-01-03T19:00:00+01:00' ],
 			[ '2026-09-20 18:59:00', '2026-09-20T19:00:00+02:00' ],
 		] as [$input, $expected] ) {
 			$this->assertSame( $expected, WeekendVolunteerMail::next_sunday( new \DateTimeImmutable( $input, new \DateTimeZone( 'Europe/Amsterdam' ) ) )->format( 'c' ) );
 		}
 		[$start, $end] = WeekendVolunteerMail::weekend( $this->sunday );
-		$this->assertSame( '2026-09-26 00:00:00', $start->format( 'Y-m-d H:i:s' ) );
-		$this->assertSame( '2026-10-12 00:00:00', $end->format( 'Y-m-d H:i:s' ) );
-		$this->assertStringContainsString( '26 september t/m 11 oktober', $this->mailer->message( [], [], $this->sunday )['subject'] );
+		$this->assertSame( '2026-09-21 00:00:00', $start->format( 'Y-m-d H:i:s' ) );
+		$this->assertSame( '2026-10-26 00:00:00', $end->format( 'Y-m-d H:i:s' ) );
+		$this->assertStringContainsString( '21 september t/m 25 oktober', $this->mailer->message( [], [], $this->sunday )['subject'] );
 	}
 
-	public function test_next_three_weekends_are_included_across_dst_and_year_boundaries(): void {
+	public function test_all_days_of_five_full_weeks_across_dst_and_year_boundaries(): void {
 		$person = $this->player();
-		foreach ( [
-			[ '2026-10-04', [ '2026-10-10', '2026-10-11', '2026-10-17', '2026-10-18', '2026-10-24', '2026-10-25' ] ],
-			[ '2026-10-18', [ '2026-10-24', '2026-10-25', '2026-10-31', '2026-11-01', '2026-11-07', '2026-11-08' ] ],
-			[ '2026-12-27', [ '2027-01-02', '2027-01-03', '2027-01-09', '2027-01-10', '2027-01-16', '2027-01-17' ] ],
-		] as [$date, $weekends] ) {
-			$ids = [];
-			foreach ( $weekends as $day ) {
-				$ids[] = $this->shift( $day . ' 11:00:00' );
+		foreach ( [ '2026-10-18', '2026-12-20' ] as $date ) {
+			$sunday   = new \DateTimeImmutable( $date . ' 19:00:00', wp_timezone() );
+			$expected = [];
+			$ids      = [];
+			for ( $day = 1; $day <= 35; ++$day ) {
+				$value      = $sunday->modify( '+' . $day . ' days' )->format( 'Y-m-d' );
+				$expected[] = $value;
+				$ids[]      = $this->shift( $value . ' 11:00:00' );
 			}
-			$sunday = new \DateTimeImmutable( $date . ' 19:00:00', new \DateTimeZone( 'Europe/Amsterdam' ) );
-			$rows   = $this->mailer->available_shifts( [ $person ], $sunday );
-			$this->assertSame( $weekends, array_map( static fn( $row ) => $row['start']->format( 'Y-m-d' ), $rows ) );
+			$ids[] = $this->shift( $sunday->modify( '+36 days' )->format( 'Y-m-d' ) . ' 11:00:00' );
+			$rows  = $this->mailer->available_shifts( [ $person ], $sunday );
+			$this->assertSame( $expected, array_map( static fn( $row ) => $row['start']->format( 'Y-m-d' ), $rows ) );
 			$message = $this->mailer->message( [ $person ], $rows, $sunday );
-			$this->assertSame( 3, substr_count( $message['html'], '>Zaterdag ' ) );
-			$this->assertSame( 3, substr_count( $message['html'], '>Zondag ' ) );
-			foreach ( $ids as $id ) {
-				wp_delete_post( $id, true );
+			foreach ( [ 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag' ] as $day ) {
+				$this->assertSame( 5, substr_count( $message['html'], '>' . $day . ' ' ) );
 			}
+			foreach ( $ids as $id ) {
+				wp_delete_post( $id, true ); }
 		}
 	}
 
-	public function test_weekend_only_current_capacity_grouping_and_certificate_pool_rules(): void {
+	public function test_current_capacity_grouping_and_certificate_pool_rules(): void {
 		$person = $this->player();
 		$this->shift();
 		$this->shift();
 		$this->shift( '2026-10-04 09:00:00' );
-		foreach ( [ '2026-10-02 23:00:00', '2026-10-05 00:00:00', '2026-09-20 11:00:00', '2026-09-25 23:59:00', '2026-10-12 00:00:00', '2026-10-17 11:00:00' ] as $outside ) {
+		foreach ( [ '2026-09-20 11:00:00', '2026-09-19 23:59:00', '2026-10-26 00:00:00', '2026-11-02 11:00:00' ] as $outside ) {
 			$this->shift( $outside );
 		}
 		$this->shift( '2026-10-03 08:00:00', [ $person ], 'open', 1 );
@@ -319,7 +319,7 @@ class WeekendVolunteerMailTest extends RondoTestCase {
 		$this->assertSame( 0, $this->mailer->run( $this->sunday ) );
 		delete_option( 'rondo_weekend_mail_lock_2026-09-20' );
 		$this->assertSame( 1, $this->mailer->run( $this->sunday ) );
-		$this->assertSame( 0, $this->mailer->run( $this->sunday->modify( '+1 week' ) ) );
+		$this->assertSame( 1, $this->mailer->run( $this->sunday->modify( '+1 week' ) ) );
 		$this->shift( '2026-10-17 11:00:00' );
 		$this->assertSame( 1, $this->mailer->run( $this->sunday->modify( '+2 weeks' ) ) );
 	}
@@ -336,7 +336,7 @@ class WeekendVolunteerMailTest extends RondoTestCase {
 		$this->assertSame( $this->sunday->getTimestamp() + 60, wp_next_scheduled( WeekendVolunteerMail::HOOK ) );
 		WeekendVolunteerMail::unregister_cron();
 		$this->mailer->run( $this->sunday->modify( '+1 minute' ) );
-		$this->assertSame( $this->sunday->modify( '+2 weeks' )->getTimestamp(), wp_next_scheduled( WeekendVolunteerMail::HOOK ) );
+		$this->assertSame( $this->sunday->modify( '+1 week' )->getTimestamp(), wp_next_scheduled( WeekendVolunteerMail::HOOK ) );
 		WeekendVolunteerMail::unregister_cron();
 		$this->assertFalse( wp_next_scheduled( WeekendVolunteerMail::HOOK ) );
 	}
@@ -375,19 +375,18 @@ class WeekendVolunteerMailTest extends RondoTestCase {
 		$this->shift( '2026-07-04 11:00:00' );
 		$this->assertEmpty( $this->mailer->available_shifts( [ $person ], new \DateTimeImmutable( '2026-06-21 19:00:00', new \DateTimeZone( 'Europe/Amsterdam' ) ) ) );
 	}
-	public function test_off_week_is_skipped_even_without_a_previous_round_and_old_cron_is_replaced(): void {
+	public function test_every_sunday_is_a_delivery_round_and_old_fortnightly_cron_is_replaced(): void {
 		WeekendVolunteerMail::unregister_cron();
-		$off_week = $this->sunday->modify( '+1 week' );
-		wp_schedule_single_event( $off_week->getTimestamp(), WeekendVolunteerMail::HOOK );
+		wp_schedule_single_event( $this->sunday->modify( '+2 weeks' )->getTimestamp(), WeekendVolunteerMail::HOOK );
+		$this->mailer->register_cron( $this->sunday->modify( '+1 day' ) );
+		$this->assertSame( $this->sunday->modify( '+1 week' )->getTimestamp(), wp_next_scheduled( WeekendVolunteerMail::HOOK ) );
 		$this->player();
 		$this->shift( '2026-10-10 11:00:00' );
-		$this->assertSame( 0, $this->mailer->run( $off_week ) );
-		$this->assertFalse( get_option( WeekendVolunteerMail::STATE, false ) );
-		$this->assertSame( $this->sunday->modify( '+2 weeks' )->getTimestamp(), wp_next_scheduled( WeekendVolunteerMail::HOOK ) );
-		$this->assertSame( '2026-10-04T19:00:00+02:00', WeekendVolunteerMail::next_sunday( $this->sunday )->format( 'c' ) );
-		$this->assertSame( '2026-09-20T19:00:00+02:00', WeekendVolunteerMail::next_sunday( $this->sunday->modify( '-1 week' ) )->format( 'c' ) );
-		$this->assertEmpty( $this->mail );
+		$this->assertSame( 1, $this->mailer->run( $this->sunday->modify( '+1 week' ) ) );
+		$this->assertSame( '2026-09-27T19:00:00+02:00', WeekendVolunteerMail::next_sunday( $this->sunday )->format( 'c' ) );
+		$this->assertSame( 0, $this->mailer->run( $this->sunday->modify( '+8 days' ) ) );
 	}
+
 	public function test_general_overview_is_once_per_round_and_counts_towards_batch_limit(): void {
 		update_option( WeekendVolunteerMail::OVERVIEW_EMAIL, 'clubhouse@example.org' );
 		for ( $n = 0; $n < 26; ++$n ) {

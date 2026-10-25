@@ -107,6 +107,7 @@ class PostTypes {
 	 * Register all custom post types
 	 */
 	public function register_post_types() {
+		\Rondo\Volunteer\VolunteerPlanner::register();
 		$this->register_person_post_type();
 		$this->register_team_post_type();
 		$this->register_commissie_post_type();

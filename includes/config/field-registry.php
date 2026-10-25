@@ -422,7 +422,7 @@ Je bent ingedeeld voor {dienst} op {datum} van {tijd} tot {eindtijd}.
 
 Je bent zelf verantwoordelijk voor deze dienst. Je mag iemand anders regelen of onderling ruilen. Geef dit altijd door aan de accommodatiemanager. Je blijft eindverantwoordelijk voor de invulling van je dienst.
 
-Zelf afmelden via Rondo is voor deze toegewezen dienst niet mogelijk.',
+Zelf afmelden via Rondo kan tot drie weken voor aanvang. Daarna regel je vervanging of ruil via de accommodatiemanager.',
           'instructions' => 'Variabelen: {naam}, {dienst}, {datum}, {tijd}, {eindtijd}, {medevrijwilligers}. Leeg gebruikt de standaardtekst.',
           'key' => 'field_dienst_type_assignment_email_body',
           'label' => 'Tekst toewijzingsmail',

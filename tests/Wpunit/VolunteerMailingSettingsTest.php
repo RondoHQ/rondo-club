@@ -50,4 +50,29 @@ class VolunteerMailingSettingsTest extends RondoTestCase {
 		$this->assertSame( 403, $this->request( 'PUT', [ 'overview_email' => 'other@example.org' ] )->get_status() );
 		$this->assertSame( 'clubhouse@example.org', get_option( WeekendVolunteerMail::OVERVIEW_EMAIL ) );
 	}
+	public function test_proposal_notification_address_is_independent_of_general_overview(): void {
+		wp_set_current_user( $this->createRondoUser( [ 'role' => 'rondo_vrijwilligers' ] ) );
+		$response = $this->request(
+			'PUT',
+			[
+				'overview_email' => 'overview@example.org',
+				'planner_email'  => 'planner@example.org',
+			]
+			);
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'planner@example.org', $response->get_data()['planner_email'] );
+		$this->assertSame(
+			400,
+			$this->request(
+			'PUT',
+			[
+				'overview_email' => 'other@example.org',
+				'planner_email'  => 'invalid',
+			]
+			)->get_status()
+			);
+		$this->assertSame( 'overview@example.org', get_option( WeekendVolunteerMail::OVERVIEW_EMAIL ) );
+		$response = $this->request( 'PUT', [ 'overview_email' => '' ] );
+		$this->assertSame( 'planner@example.org', $response->get_data()['planner_email'] );
+	}
 }

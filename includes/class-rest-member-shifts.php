@@ -1337,12 +1337,12 @@ class MemberShifts extends Base {
 					return new \WP_Error( 'shift_closed', 'Een geannuleerde of voltooide inschrijftaak kan niet meer worden afgemeld.', [ 'status' => 409 ] );
 				}
 
-				if ( ShiftAssignments::is_duty_assignment( $shift_id, $person_id ) ) {
-					return new \WP_Error(
-						'shift_assignment_required',
-						'Deze dienst is aan je toegewezen. Zelf afmelden is niet mogelijk. Regel vervanging of ruil en geef dit door aan de accommodatiemanager; je blijft eindverantwoordelijk.',
-						[ 'status' => 409 ]
-					);
+				$was_duty = ShiftAssignments::is_duty_assignment( $shift_id, $person_id );
+				if ( ! in_array( $person_id, ShiftAssignments::person_ids( $shift_id ), true ) ) {
+					return new \WP_Error( 'not_signed_up', 'Je bent niet aangemeld voor deze dienst.', [ 'status' => 409 ] );
+				}
+				if ( $was_duty && ! $this->can_member_cancel( $shift_id, $person_id ) ) {
+					return new \WP_Error( 'shift_assignment_required', 'Afmelden van een toegewezen dienst kan tot drie weken voor aanvang. Regel daarna vervanging of ruil via de accommodatiemanager.', [ 'status' => 409 ] );
 				}
 
 				if ( ! $this->can_member_cancel( $shift_id, $person_id ) ) {
@@ -1357,6 +1357,8 @@ class MemberShifts extends Base {
 				$filtered = array_values( array_diff( $assigned, [ $person_id ] ) );
 
 				update_post_meta( $shift_id, 'assigned_persons', $filtered );
+				update_post_meta( $shift_id, '_shift_declined_' . $person_id, time() );
+				delete_post_meta( $shift_id, '_shift_assignment_mode_' . $person_id );
 				delete_post_meta( $shift_id, '_shift_signup_at_' . $person_id );
 				GuardianAccountService::unmark_shift_signup( $shift_id, $person_id );
 				ShiftEmailScheduler::discard_signup_confirmation( $person_id, $shift_id );
@@ -1364,6 +1366,7 @@ class MemberShifts extends Base {
 					update_post_meta( $shift_id, 'status', 'open' );
 				}
 				VolunteerObligationCalculator::invalidate_cache();
+				do_action( 'rondo_shift_member_cancelled', $shift_id, $person_id );
 
 				return rest_ensure_response(
 					[
@@ -1477,79 +1480,136 @@ class MemberShifts extends Base {
 			}
 		}
 
+		return $this->with_shift_write_lock( $shift_id, fn() => $this->commit_assignee( $shift_id, $person_id, $mode ) );
+	}
+
+	/** The planner rechecks its quota, availability and snapshot inside the same shift lock. */
+	public function add_planned_assignee( int $shift_id, int $person_id, int $target_type, string $snapshot, callable $validate, int $plan_id = 0 ) {
+		if ( ! $this->check_vrijwilligers_permission() ) {
+			return new \WP_Error( 'rest_forbidden', 'Geen toegang tot indelen.', [ 'status' => 403 ] );
+		}
 		return $this->with_shift_write_lock(
 			$shift_id,
-			function () use ( $person_id, $shift_id, $mode ) {
-				$status = (string) get_post_meta( $shift_id, 'status', true );
-				if ( ! in_array( $status, [ 'open', 'vol' ], true ) ) {
-					return new \WP_Error( 'shift_closed', 'Deze inschrijftaak staat niet meer open.', [ 'status' => 409 ] );
+			function () use ( $shift_id, $person_id, $target_type, $snapshot, $validate, $plan_id ) {
+				if ( \Rondo\Volunteer\VolunteerPlanner::snapshot( $shift_id ) !== $snapshot ) {
+					return new \WP_Error( 'plan_shift_changed', 'De dienst is gewijzigd. Maak een nieuw voorstel.', [ 'status' => 409 ] );
 				}
-
-				$assigned = ShiftAssignments::person_ids( $shift_id );
-				$capacity = (int) get_post_meta( $shift_id, 'capacity', true );
-
-				if ( in_array( $person_id, $assigned, true ) ) {
-					return rest_ensure_response(
-						[
-							'shift_id'         => $shift_id,
-							'person_id'        => $person_id,
-							'already_assigned' => true,
-							'assignment_mode'  => ShiftAssignments::is_duty_assignment( $shift_id, $person_id ) ? 'assigned' : 'signup',
-							'assigned_count'   => count( $assigned ),
-							'capacity'         => $capacity,
-							'status'           => $status,
-						]
-					);
+				$valid = $validate();
+				if ( is_wp_error( $valid ) ) {
+					return $valid; }
+				$original_type = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
+				if ( $target_type !== $original_type ) {
+					if ( ShiftAssignments::person_ids( $shift_id ) || get_post_type( $target_type ) !== 'dienst_type' || get_post_status( $target_type ) !== 'publish' || get_post_meta( $target_type, 'iva_required', true ) ) {
+						return new \WP_Error( 'plan_conversion_changed', 'Omzetten is niet meer mogelijk. Controleer de dienst.', [ 'status' => 409 ] );
+					}
+					\Rondo\Fields\Fields::update_for_post( $shift_id, 'dienst_type_id', $target_type );
 				}
-
-				if ( $capacity > 0 && count( $assigned ) >= $capacity ) {
-					return new \WP_Error( 'shift_full', 'Deze inschrijftaak is vol. Verhoog eerst de capaciteit.', [ 'status' => 409 ] );
+				$result = $this->commit_assignee( $shift_id, $person_id, 'assigned', $plan_id );
+				if ( is_wp_error( $result ) && $target_type !== $original_type ) {
+					\Rondo\Fields\Fields::update_for_post( $shift_id, 'dienst_type_id', $original_type );
 				}
+				return $result;
+			}
+			);
+	}
 
-				$assigned[] = $person_id;
-				$assigned   = array_values( array_unique( $assigned ) );
-				$user_id    = get_current_user_id();
-
-				update_post_meta( $shift_id, 'assigned_persons', $assigned );
-				// Keep the timestamp for reporting; explicit duty assignments cannot self-cancel.
-				update_post_meta( $shift_id, '_shift_assignment_mode_' . $person_id, $mode );
-				update_post_meta( $shift_id, '_shift_signup_at_' . $person_id, time() );
-				// Survives cancellation, unlike the signup timestamp, so the audit
-				// trail of who arranged this outlives the assignment itself.
-				update_post_meta( $shift_id, '_shift_assigned_by_' . $person_id, $user_id );
-				update_post_meta( $shift_id, '_shift_assigned_at_' . $person_id, time() );
-				GuardianAccountService::mark_shift_signup( $shift_id, $person_id, $user_id );
-				ShiftEmailScheduler::queue_signup_confirmation( $person_id, $shift_id );
-
-				$new_status = $status;
-				if ( $capacity > 0 && count( $assigned ) >= $capacity ) {
-					$new_status = 'vol';
-					update_post_meta( $shift_id, 'status', 'vol' );
+	/** Finish an interrupted planner commit without replaying an already queued or sent email. */
+	public function resume_planned_assignee( int $shift_id, int $person_id, int $plan_id ) {
+		if ( ! $this->check_vrijwilligers_permission() ) {
+			return new \WP_Error( 'rest_forbidden', 'Geen toegang tot indelen.', [ 'status' => 403 ] );
+		}
+		return $this->with_shift_write_lock(
+			$shift_id,
+			function () use ( $shift_id, $person_id, $plan_id ) {
+				if ( (int) get_post_meta( $shift_id, '_shift_plan_id_' . $person_id, true ) !== $plan_id || ! in_array( $person_id, ShiftAssignments::person_ids( $shift_id ), true ) ) {
+					return new \WP_Error( 'plan_resume_changed', 'De indeling is intussen gewijzigd.', [ 'status' => 409 ] );
 				}
-
-				VolunteerObligationCalculator::invalidate_cache();
-
-				do_action( 'rondo_shift_assignee_added', $shift_id, $person_id, $user_id );
-
-				return rest_ensure_response(
-					[
-						'shift_id'        => $shift_id,
-						'person_id'       => $person_id,
-						'assigned'        => true,
-						'assignment_mode' => $mode,
-						'assigned_count'  => count( $assigned ),
-						'capacity'        => $capacity,
-						'status'          => $new_status,
-						'notification'    => [
-							'queued' => $this->person_has_email( $person_id ),
-							'reason' => $this->person_has_email( $person_id ) ? null : 'no_email',
-						],
-					]
-				);
+				// A cancellation followed by a new signup belongs to the member, not this old attempt.
+				if ( get_post_meta( $shift_id, '_shift_declined_' . $person_id, true ) ) {
+					return true;
+				}
+				update_post_meta( $shift_id, '_shift_assignment_mode_' . $person_id, 'assigned' );
+				if ( ! get_post_meta( $shift_id, '_shift_assigned_at_' . $person_id, true ) ) {
+					update_post_meta( $shift_id, '_shift_assigned_at_' . $person_id, time() );
+					update_post_meta( $shift_id, '_shift_assigned_by_' . $person_id, get_current_user_id() );
+				}
+				ShiftEmailScheduler::queue_signup_confirmation( $person_id, $shift_id, true );
+				return true;
 			}
 		);
 	}
 
+	/** Common capacity-checked commit and confirmation queue; caller holds the shift lock. */
+	private function commit_assignee( int $shift_id, int $person_id, string $mode, int $plan_id = 0 ) {
+		$status = (string) get_post_meta( $shift_id, 'status', true );
+		if ( ! in_array( $status, [ 'open', 'vol' ], true ) ) {
+			return new \WP_Error( 'shift_closed', 'Deze inschrijftaak staat niet meer open.', [ 'status' => 409 ] );
+		}
+
+		$assigned = ShiftAssignments::person_ids( $shift_id );
+		$capacity = (int) get_post_meta( $shift_id, 'capacity', true );
+
+		if ( in_array( $person_id, $assigned, true ) ) {
+			return rest_ensure_response(
+				[
+					'shift_id'         => $shift_id,
+					'person_id'        => $person_id,
+					'already_assigned' => true,
+					'assignment_mode'  => ShiftAssignments::is_duty_assignment( $shift_id, $person_id ) ? 'assigned' : 'signup',
+					'assigned_count'   => count( $assigned ),
+					'capacity'         => $capacity,
+					'status'           => $status,
+				]
+			);
+		}
+
+		if ( $capacity > 0 && count( $assigned ) >= $capacity ) {
+			return new \WP_Error( 'shift_full', 'Deze inschrijftaak is vol. Verhoog eerst de capaciteit.', [ 'status' => 409 ] );
+		}
+
+		$assigned[] = $person_id;
+		$assigned   = array_values( array_unique( $assigned ) );
+		$user_id    = get_current_user_id();
+
+		if ( $plan_id > 0 ) {
+			update_post_meta( $shift_id, '_shift_plan_id_' . $person_id, $plan_id ); }
+		update_post_meta( $shift_id, 'assigned_persons', $assigned );
+		// Explicit assignments have the same three-week deadline, without signup grace.
+		update_post_meta( $shift_id, '_shift_assignment_mode_' . $person_id, $mode );
+		update_post_meta( $shift_id, '_shift_signup_at_' . $person_id, time() );
+		// Survives cancellation, unlike the signup timestamp, so the audit
+		// trail of who arranged this outlives the assignment itself.
+		update_post_meta( $shift_id, '_shift_assigned_by_' . $person_id, $user_id );
+		update_post_meta( $shift_id, '_shift_assigned_at_' . $person_id, time() );
+		GuardianAccountService::mark_shift_signup( $shift_id, $person_id, $user_id );
+		ShiftEmailScheduler::queue_signup_confirmation( $person_id, $shift_id );
+
+		$new_status = $status;
+		if ( $capacity > 0 && count( $assigned ) >= $capacity ) {
+			$new_status = 'vol';
+			update_post_meta( $shift_id, 'status', 'vol' );
+		}
+
+		VolunteerObligationCalculator::invalidate_cache();
+
+		do_action( 'rondo_shift_assignee_added', $shift_id, $person_id, $user_id );
+
+		return rest_ensure_response(
+			[
+				'shift_id'        => $shift_id,
+				'person_id'       => $person_id,
+				'assigned'        => true,
+				'assignment_mode' => $mode,
+				'assigned_count'  => count( $assigned ),
+				'capacity'        => $capacity,
+				'status'          => $new_status,
+				'notification'    => [
+					'queued' => $this->person_has_email( $person_id ),
+					'reason' => $this->person_has_email( $person_id ) ? null : 'no_email',
+				],
+			]
+		);
+	}
 	/** Only finished, published, non-cancelled shifts accept historical attendance. */
 	private function can_record_attendance( int $shift_id ): bool {
 		if ( get_post_status( $shift_id ) !== 'publish' || ! in_array( Fields::get_for_post( $shift_id, 'status' ), [ 'open', 'vol', 'voltooid' ], true ) ) {
@@ -1823,10 +1883,6 @@ class MemberShifts extends Base {
 	 * Determine whether a member may still cancel their own signup.
 	 */
 	private function can_member_cancel( int $shift_id, int $person_id ): bool {
-		if ( ShiftAssignments::is_duty_assignment( $shift_id, $person_id ) ) {
-			return false;
-		}
-
 		$start_at = $this->shift_start_timestamp( $shift_id );
 		if ( $start_at === null ) {
 			return false;
@@ -1842,6 +1898,8 @@ class MemberShifts extends Base {
 			return true;
 		}
 
+		if ( ShiftAssignments::is_duty_assignment( $shift_id, $person_id ) ) {
+			return false; }
 		$signup_at = (int) get_post_meta( $shift_id, '_shift_signup_at_' . $person_id, true );
 		return $signup_at > 0 && $now <= $signup_at + self::CANCEL_GRACE_SECONDS;
 	}

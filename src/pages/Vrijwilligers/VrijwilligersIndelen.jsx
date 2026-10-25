@@ -113,7 +113,7 @@ function AssignmentForm({ row, onClose, onAssigned }) {
       {selected && (
         <div className="space-y-2 text-sm text-gray-700 dark:text-gray-200">
           <p>Je wijst <strong>{selected.name}</strong> op <strong>{formatStoredDateTime(selected.start_datetime, 'd MMMM, HH:mm')}–{formatStoredDateTime(selected.end_datetime, 'HH:mm')}</strong> toe aan <strong>{person.name}</strong>.</p>
-          <p>{person.has_email ? 'Deze persoon krijgt automatisch een toewijzingsmail en blijft verantwoordelijk voor de bezetting. Zelf afmelden is niet mogelijk.' : 'Deze persoon heeft geen e-mailadres. Informeer de persoon zelf over de dienst en de verantwoordelijkheid voor de bezetting.'}</p>
+          <p>{person.has_email ? 'Deze persoon krijgt automatisch een toewijzingsmail en blijft verantwoordelijk voor de bezetting. Afmelden kan tot drie weken voor aanvang.' : 'Deze persoon heeft geen e-mailadres. Informeer de persoon zelf over de dienst en de verantwoordelijkheid voor de bezetting.'}</p>
         </div>
       )}
       {saveError && <p role="alert" className="text-sm text-red-700 dark:text-red-300">{saveError}</p>}

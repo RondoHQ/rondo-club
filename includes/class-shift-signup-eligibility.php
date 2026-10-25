@@ -5,9 +5,9 @@ namespace Rondo\Volunteer;
 use Rondo\Core\VolunteerStatus;
 
 final class ShiftSignupEligibility {
-	public static function block_reason( int $shift_id, int $person_id, ?array $blocks = null ): ?string {
+	public static function block_reason( int $shift_id, int $person_id, ?array $blocks = null, ?int $type_override = null ): ?string {
 		$blocks         = $blocks ?? self::signup_blocks( $person_id );
-		$dienst_type_id = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
+		$dienst_type_id = $type_override ?? (int) get_post_meta( $shift_id, 'dienst_type_id', true );
 		if ( $dienst_type_id <= 0 ) {
 			return null;
 		}
