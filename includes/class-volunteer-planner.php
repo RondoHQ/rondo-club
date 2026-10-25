@@ -30,12 +30,8 @@ final class VolunteerPlanner {
 			'show_ui'      => false,
 			'show_in_rest' => false,
 			'supports'     => [ 'title' ],
-			'capabilities' => [
-				'create_posts' => 'do_not_allow',
-				'edit_posts'   => 'do_not_allow',
-				'read_post'    => 'do_not_allow',
-			],
-			'map_meta_cap' => true,
+			'capabilities' => array_fill_keys( [ 'read', 'read_post', 'edit_post', 'delete_post', 'edit_posts', 'create_posts', 'publish_posts', 'read_private_posts', 'delete_posts', 'edit_others_posts' ], 'do_not_allow' ),
+			'map_meta_cap' => false,
 		]
 		);
 	}

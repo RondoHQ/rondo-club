@@ -113,6 +113,8 @@ class VolunteerPlannerTest extends RondoTestCase {
 		$data    = VolunteerPlanner::data( $id );
 		$this->assertSame( VolunteerPlanner::TYPE, get_post_type( $id ) );
 		$this->assertSame( 'private', get_post_status( $id ) );
+		$this->assertFalse( current_user_can( 'do_not_allow' ) );
+		$this->assertFalse( current_user_can( 'edit_post', $id ) );
 		$this->assertSame( [ $id ], [ $this->planner->generate() ] );
 		$this->assertCount( 2, $data['rows'] );
 		$this->assertEqualsCanonicalizing( [ $a,$b ], array_column( $data['rows'], 'person_id' ) );
