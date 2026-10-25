@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { filterInvoiceContacts, invoiceCustomerFromContact } from '../../src/utils/invoiceContact.js';
+import { filterInvoiceContacts, invoiceContactPayload, invoiceContactSignature, invoiceCustomerFromContact } from '../../src/utils/invoiceContact.js';
 
 const business = {
   id: 12,
@@ -59,4 +59,50 @@ test('search matches company, contact person, secondary email and contacts beyon
   }
   assert.equal(filterInvoiceContacts(contacts, '').length, 26);
   assert.deepEqual(filterInvoiceContacts(contacts, 'onbekend'), []);
+});
+
+test('saved invoice contacts round-trip multiline addresses, attention and both recipients without guessing name or address parts', () => {
+  const customer = {
+    customerName: 'AWC Businessclub', customerAttention: 'Bestuur, t.a.v. Jan van der Meer',
+    customerEmail: 'facturen@example.org', customerCcEmail: 'bestuur@example.org',
+    customerAddress: 'Postbus 42\n6600 AA Wijchen\nNederland',
+  };
+  const before = structuredClone(customer);
+  const payload = invoiceContactPayload(customer);
+  assert.equal(payload.status, 'publish');
+  assert.equal(payload.fields.person_type, 'contact');
+  assert.equal(payload.fields.company_name, 'AWC Businessclub');
+  assert.equal('person_id' in payload, false);
+  assert.equal('first_name' in payload.fields, false);
+  assert.deepEqual(invoiceCustomerFromContact(payload), customer);
+  assert.deepEqual(customer, before);
+  assert.equal(filterInvoiceContacts([payload], 'Meer Wijchen').length, 1);
+});
+
+test('saved invoice addresses take precedence over postal addresses while normal contacts retain their existing mapping', () => {
+  const saved = structuredClone(business);
+  saved.fields.invoice_address = 'PO Box 123\nLondon SW1A 1AA\nUnited Kingdom';
+  saved.fields.invoice_attention = 'Finance department';
+  const customer = invoiceCustomerFromContact(saved);
+  assert.equal(customer.customerAddress, saved.fields.invoice_address);
+  assert.equal(customer.customerAttention, 'Finance department');
+  assert.deepEqual(invoiceCustomerFromContact(invoiceContactPayload(customer)), customer);
+});
+
+test('identical invoice contacts have a stable signature after trimming and newline normalization', () => {
+  const customer = {
+    customerName: '  Club  ', customerAddress: 'Postbus 42\r\nWijchen  ',
+    customerEmail: 'info@example.org', customerCcEmail: 'INFO@example.org',
+  };
+  const saved = invoiceCustomerFromContact(invoiceContactPayload(customer));
+  assert.equal(invoiceContactSignature(customer), invoiceContactSignature(saved));
+  assert.notEqual(invoiceContactSignature(customer), invoiceContactSignature({ ...customer, customerAddress: 'Ander adres' }));
+});
+
+test('saved invoice contacts preserve an empty primary recipient and a CC recipient in their original slots', () => {
+  const customer = {
+    customerName: 'AWC Businessclub', customerAttention: '', customerAddress: 'Postbus 42',
+    customerEmail: '', customerCcEmail: 'bestuur@example.org',
+  };
+  assert.deepEqual(invoiceCustomerFromContact(invoiceContactPayload(customer)), customer);
 });

@@ -1058,6 +1058,24 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'storage_name' => 'company_name',
           'type' => 'text',
         ),
+        'invoice_address' =>
+        array (
+          'canonical_name' => 'invoice_address',
+          'key' => 'field_person_invoice_address',
+          'label' => 'Factuuradres',
+          'name' => 'invoice_address',
+          'storage_name' => 'invoice_address',
+          'type' => 'textarea',
+        ),
+        'invoice_attention' =>
+        array (
+          'canonical_name' => 'invoice_attention',
+          'key' => 'field_person_invoice_attention',
+          'label' => 'Factuur ter attentie van',
+          'name' => 'invoice_attention',
+          'storage_name' => 'invoice_attention',
+          'type' => 'text',
+        ),
         'datum_foto' => 
         array (
           'canonical_name' => 'datum_foto',
