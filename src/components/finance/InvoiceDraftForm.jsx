@@ -6,6 +6,7 @@ import { useSearch } from '@/hooks/useDashboard';
 import { useFinanceSettings } from '@/hooks/useFinanceSettings';
 import RichTextEditor from '@/components/RichTextEditor';
 import InvoiceContactPicker from '@/components/finance/InvoiceContactPicker';
+import InvoiceContactSave from '@/components/finance/InvoiceContactSave';
 
 const emptyLine = { description: '', amount: '', discipline_case_id: null };
 const DEFAULT_SUBJECT_TEMPLATE = 'Factuur {factuur_nummer} - {organisatie_naam}';
@@ -458,6 +459,7 @@ export default function InvoiceDraftForm({
             <label className="text-sm md:col-span-2">Adres
               <textarea className="input mt-1 min-h-20" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} />
             </label>
+            <InvoiceContactSave key={formKey} disabled={isSubmitting} customer={{ customerName, customerAttention, customerEmail, customerCcEmail, customerAddress }} />
           </div>
         )}
 

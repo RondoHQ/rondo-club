@@ -12,19 +12,40 @@ export function invoiceCustomerFromContact(contact) {
   const addresses = Array.isArray(fields.addresses) ? fields.addresses.filter(Boolean) : [];
   const address = addresses.find((item) => clean(item.address_label).toLowerCase() === 'factuur')
     || addresses[0] || {};
+  const invoiceAddress = clean(fields.invoice_address);
 
   return {
     customerName: company || name || clean(contact?.name),
-    customerAttention: company ? name : '',
-    customerEmail: emails[0] || '',
-    customerCcEmail: emails[1] || '',
-    customerAddress: join([
+    customerAttention: clean(fields.invoice_attention) || (company ? name : ''),
+    customerEmail: invoiceAddress ? clean(fields.email_1) : emails[0] || '',
+    customerCcEmail: invoiceAddress ? clean(fields.email_2) : emails[1] || '',
+    customerAddress: invoiceAddress || join([
       join([address.street_name, address.house_number, address.house_number_addition]),
       join([address.postal_code, address.city]),
       address.state,
       address.country,
     ], '\n'),
   };
+}
+
+// Preserve invoice text without guessing name parts or splitting postal addresses.
+export function invoiceContactPayload(customer) {
+  return {
+    title: clean(customer.customerName),
+    status: 'publish',
+    fields: {
+      person_type: 'contact',
+      company_name: clean(customer.customerName),
+      invoice_attention: clean(customer.customerAttention),
+      invoice_address: clean(customer.customerAddress).replaceAll('\r\n', '\n'),
+      email_1: clean(customer.customerEmail),
+      email_2: clean(customer.customerCcEmail),
+    },
+  };
+}
+
+export function invoiceContactSignature(customer) {
+  return JSON.stringify(invoiceCustomerFromContact({ fields: invoiceContactPayload(customer).fields }));
 }
 
 export function filterInvoiceContacts(contacts, search) {
