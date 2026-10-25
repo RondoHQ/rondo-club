@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.151.4] - 2026-10-25
+
+### Fixed
+
+- Recover stale REST security tokens in existing windows after signing in again in another window, safely retrying rejected requests once without replaying actions under a different account (feedback #14600).
+- Show failed member searches when assigning a volunteer shift as errors with a retry action instead of showing no matching members.
+
 ## [35.151.3] - 2026-10-24
 
 ### Fixed
