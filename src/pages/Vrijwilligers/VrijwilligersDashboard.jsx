@@ -5,6 +5,7 @@ import { HeartHandshake, FileCheck, Wine, CalendarClock, UsersRound, Users, User
 import { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import VolunteerMailingCard from '@/components/VolunteerMailingCard';
 
 function StatCard({ label, value, sub, icon: Icon, href }) {
   const content = (
@@ -34,6 +35,7 @@ export default function VrijwilligersDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'eligibility'] });
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'relationship-quality'] });
+      queryClient.invalidateQueries({ queryKey: ['volunteer', 'mailing'] });
     },
   });
 
@@ -92,6 +94,8 @@ export default function VrijwilligersDashboard() {
           Kon eligibility niet ophalen: {error?.message || 'onbekende fout'}
         </div>
       )}
+
+      <VolunteerMailingCard />
 
       <section>
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider mb-3">
