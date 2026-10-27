@@ -597,4 +597,64 @@ class ShiftAssignmentByCoordinatorTest extends RondoTestCase {
 		$this->assertSame( 0, ( new ShiftEmailScheduler() )->send_signup_confirmation( $this->person_id ) );
 		$this->assertCount( 1, $mail );
 	}
+
+	public function test_assignment_mail_names_current_companions_in_default_and_custom_templates_once(): void {
+		$this->as_coordinator();
+		$other = $this->createPerson(
+			[ 'post_title' => 'Bram & Co' ],
+			[
+				'first_name' => 'Bram & Co',
+				'email_1'    => 'bram@example.org',
+			]
+			);
+		$this->assertSame( 200, $this->add_assignee( $this->shift_id, $this->person_id, [ 'assignment_mode' => 'assigned' ] )->get_status() );
+		$this->assertSame( 200, $this->add_assignee( $this->shift_id, $other, [ 'assignment_mode' => 'assigned' ] )->get_status() );
+		$mail = [];
+		add_filter(
+			'pre_wp_mail',
+			static function ( $result, $atts ) use ( &$mail ) {
+				$mail[] = $atts;
+				return true;
+			},
+			10,
+			2
+			);
+		foreach ( [ '', 'Hoi {naam}, je bent ingedeeld.', 'Hoi {naam}, je werkt met {medevrijwilligers}.' ] as $template ) {
+			Fields::update_for_post( $this->dienst_type_id, 'assignment_email_body', $template );
+			ShiftEmailScheduler::queue_signup_confirmation( $this->person_id, $this->shift_id );
+			$this->assertSame( 1, ( new ShiftEmailScheduler() )->send_signup_confirmation( $this->person_id ) );
+			$message = end( $mail )['message'];
+			$this->assertSame( 1, substr_count( html_entity_decode( wp_strip_all_tags( $message ) ), 'Bram & Co' ) );
+			$this->assertStringNotContainsString( '{medevrijwilligers}', $message );
+			$this->assertStringNotContainsString( 'bram@example.org', $message );
+		}
+	}
+
+	public function test_assignment_mail_omits_companion_removed_before_delivery(): void {
+		$this->as_coordinator();
+		$other = $this->createPerson(
+			[ 'post_title' => 'Removed Buddy' ],
+			[
+				'first_name' => 'Removed Buddy',
+				'email_1'    => 'buddy@example.org',
+			]
+			);
+		$this->add_assignee( $this->shift_id, $this->person_id, [ 'assignment_mode' => 'assigned' ] );
+		$this->add_assignee( $this->shift_id, $other, [ 'assignment_mode' => 'assigned' ] );
+		update_post_meta( $this->shift_id, 'assigned_persons', [ $this->person_id ] );
+		$mail = [];
+		add_filter(
+			'pre_wp_mail',
+			static function ( $result, $atts ) use ( &$mail ) {
+				$mail[] = $atts;
+				return true;
+			},
+			10,
+			2
+			);
+		$this->assertSame( 1, ( new ShiftEmailScheduler() )->send_signup_confirmation( $this->person_id ) );
+		$this->assertCount( 1, $mail );
+		$this->assertStringNotContainsString( 'Removed Buddy', $mail[0]['message'] );
+		$this->assertStringNotContainsString( 'samen ingedeeld', $mail[0]['message'] );
+	}
 }

@@ -220,9 +220,13 @@ class ShiftEmailScheduler {
 		$vars    = $this->template_variables( $type_id, $person_id, ShiftAssignments::person_ids( $shift['id'] ), $shift['start'], $shift['end'] );
 		$parts   = [];
 		foreach ( [ 'subject', 'body' ] as $part ) {
-			$field          = 'assignment_email_' . $part;
-			$template       = (string) Fields::get_for_post( $type_id, $field );
-			$template       = trim( $template ) !== '' ? $template : Registry::resolve( 'dienst_type', $field )['default_value'];
+			$field    = 'assignment_email_' . $part;
+			$template = (string) Fields::get_for_post( $type_id, $field );
+			$template = trim( $template ) !== '' ? $template : Registry::resolve( 'dienst_type', $field )['default_value'];
+			// Resolve companions at delivery time, after publication or later changes.
+			if ( $part === 'body' && ! str_contains( $template, '{medevrijwilligers}' ) && $vars['medevrijwilligers'] !== 'nog niemand anders' ) {
+				$template .= "\n\nJe bent voor deze dienst samen ingedeeld met {medevrijwilligers}.";
+			}
 			$parts[ $part ] = $this->substitute_variables( $template, $vars );
 		}
 
