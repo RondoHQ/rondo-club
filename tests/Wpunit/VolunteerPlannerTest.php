@@ -7,6 +7,8 @@ use Rondo\REST\VolunteerPlans;
 use Rondo\Volunteer\VolunteerPlanner;
 use Rondo\Volunteer\ShiftAssignments;
 use Rondo\Volunteer\PlannerAvailability;
+use Rondo\Volunteer\PlannerContext;
+use Rondo\Fees\SeasonKey;
 use Rondo\Volunteer\VolunteerEligibilityService;
 use Rondo\Training\Schedules;
 use Tests\Support\RondoTestCase;
@@ -102,6 +104,228 @@ class VolunteerPlannerTest extends RondoTestCase {
 		$id = $this->planner->generate();
 		$this->assertIsInt( $id );
 		return $id;}
+
+	private function team(): int {
+		return self::factory()->post->create(
+			[
+				'post_type'   => 'team',
+				'post_status' => 'publish',
+			]
+			);
+	}
+
+	private function set_team( int $person, int $team, array $extra = [] ): void {
+		Fields::update_for_post(
+			$person,
+			'work_history',
+			[
+				array_merge(
+				[
+					'team'       => $team,
+					'job_title'  => 'Teamspeler',
+					'is_current' => true,
+				],
+				$extra
+			),
+			]
+			);
+	}
+
+	private function child_of( int $parent ): int {
+		return (int) Fields::get_for_post( $parent, 'relationships' )[0]['related_person'];
+	}
+
+	/** Deliberately give the first hash-ranked candidate no teammate. */
+	public function test_pairs_parents_via_child_teams_before_filling_an_empty_shift(): void {
+		$this->family( 'Anne' );
+		$this->family( 'Bram' );
+		$this->family( 'Cato' );
+		$shift   = $this->shift( 25, null, [], 2 );
+		$options = ( new PlannerContext( current_datetime() ) )->candidates( $shift );
+		$this->assertCount( 3, $options );
+		$team = $this->team();
+		foreach ( [ 1, 2 ] as $index ) {
+			$this->set_team( $this->child_of( $options[ $index ]['person_id'] ), $team );
+		}
+		$data = VolunteerPlanner::data( $this->plan() );
+		$this->assertSame( [ $options[1]['person_id'], $options[2]['person_id'] ], array_column( $data['rows'], 'person_id' ) );
+		$this->assertEmpty( ShiftAssignments::person_ids( $shift ) );
+		$this->assertTrue( $this->planner->publish( $this->plan(), 1, false ) );
+		$this->assertEqualsCanonicalizing( [ $options[1]['person_id'], $options[2]['person_id'] ], ShiftAssignments::person_ids( $shift ) );
+	}
+
+	public function test_single_remaining_place_prefers_teammate_of_existing_assignee(): void {
+		$assigned = $this->family( 'Assigned' );
+		$this->family( 'Anne' );
+		$this->family( 'Bram' );
+		$shift   = $this->shift( 25, null, [ $assigned ], 2 );
+		$options = ( new PlannerContext( current_datetime() ) )->candidates( $shift );
+		$team    = $this->team();
+		$this->set_team( $this->child_of( $assigned ), $team );
+		$this->set_team( $this->child_of( $options[1]['person_id'] ), $team );
+		$this->assertSame( $options[1]['person_id'], VolunteerPlanner::data( $this->plan() )['rows'][0]['person_id'] );
+	}
+
+	public function test_parent_can_match_through_a_second_child(): void {
+		$assigned = $this->family( 'Assigned' );
+		$this->family( 'Anne' );
+		$this->family( 'Bram' );
+		$shift           = $this->shift( 25, null, [ $assigned ], 2 );
+		$options         = ( new PlannerContext( current_datetime() ) )->candidates( $shift );
+		$parent          = $options[1]['person_id'];
+		$child           = $this->createPerson( [ 'post_title' => 'Second child' ], [ 'leeftijdsgroep' => 'Onder 12' ] );
+		$relationships   = Fields::get_for_post( $parent, 'relationships' );
+		$relationships[] = [
+			'related_person'    => $child,
+			'relationship_type' => 3,
+		];
+		Fields::update_for_post( $parent, 'relationships', $relationships );
+		Fields::update_for_post(
+			$child,
+			'relationships',
+			[
+				[
+					'related_person'    => $parent,
+					'relationship_type' => 2,
+				],
+			]
+			);
+		$team = $this->team();
+		$this->set_team( $this->child_of( $assigned ), $team );
+		$this->set_team( $this->child_of( $parent ), $this->team() );
+		$this->set_team( $child, $team );
+		$this->assertSame( $parent, VolunteerPlanner::data( $this->plan() )['rows'][0]['person_id'] );
+	}
+
+	public function test_pending_companion_in_another_proposal_counts_without_being_assigned(): void {
+		$this->family( 'Anne' );
+		$this->family( 'Bram' );
+		$this->family( 'Cato' );
+		$shift   = $this->shift( 25, null, [], 2 );
+		$options = ( new PlannerContext( current_datetime() ) )->candidates( $shift );
+		$id      = $this->plan();
+		$this->assertTrue( $this->planner->edit( $id, 1, 1, 0 ) );
+		$team = $this->team();
+		$this->set_team( $this->child_of( $options[0]['person_id'] ), $team );
+		$this->set_team( $this->child_of( $options[2]['person_id'] ), $team );
+		$replacement = $this->planner->generate( null, true );
+		$rows        = VolunteerPlanner::data( $replacement )['rows'];
+		$this->assertCount( 1, $rows );
+		$this->assertSame( $options[2]['person_id'], $rows[0]['person_id'] );
+		$this->assertEmpty( ShiftAssignments::person_ids( $shift ) );
+	}
+
+	public function test_pairing_never_moves_a_lower_priority_person_ahead_of_an_open_obligation(): void {
+		$assigned = $this->family( 'Assigned' );
+		$busy     = $this->family( 'Busy' );
+		$free     = $this->family( 'Free' );
+		$team     = $this->team();
+		$this->set_team( $this->child_of( $assigned ), $team );
+		$this->set_team( $this->child_of( $busy ), $team );
+		$this->shift( 30, null, [ $busy ] );
+		$shift = $this->shift( 25, null, [ $assigned ], 2 );
+		$rows  = VolunteerPlanner::data( $this->plan() )['rows'];
+		$this->assertCount( 1, $rows );
+		$this->assertSame( $shift, $rows[0]['shift_id'] );
+		$this->assertSame( $free, $rows[0]['person_id'] );
+	}
+
+	public function test_historical_child_team_does_not_displace_normal_fallback(): void {
+		$assigned = $this->family( 'Assigned' );
+		$this->family( 'Anne' );
+		$this->family( 'Bram' );
+		$shift   = $this->shift( 25, null, [ $assigned ], 2 );
+		$options = ( new PlannerContext( current_datetime() ) )->candidates( $shift );
+		$team    = $this->team();
+		$this->set_team( $this->child_of( $assigned ), $team );
+		$this->set_team( $this->child_of( $options[1]['person_id'] ), $team, [ 'end_date' => current_datetime()->modify( '-1 day' )->format( 'Y-m-d' ) ] );
+		$this->assertSame( $options[0]['person_id'], VolunteerPlanner::data( $this->plan() )['rows'][0]['person_id'] );
+	}
+
+	public function test_existing_pairs_do_not_keep_pulling_in_a_third_teammate(): void {
+		$a = $this->family( 'AssignedA' );
+		$b = $this->family( 'AssignedB' );
+		$this->family( 'Anne' );
+		$this->family( 'Bram' );
+		$shift   = $this->shift( 25, null, [ $a, $b ], 3 );
+		$options = ( new PlannerContext( current_datetime() ) )->candidates( $shift );
+		$team    = $this->team();
+		foreach ( [ $a, $b, $options[1]['person_id'] ] as $person ) {
+			$this->set_team( $this->child_of( $person ), $team );
+		}
+		$this->assertSame( $options[0]['person_id'], VolunteerPlanner::data( $this->plan() )['rows'][0]['person_id'] );
+	}
+
+	public function test_unavailable_teammate_is_skipped_and_capacity_is_still_filled(): void {
+		$assigned = $this->family( 'Assigned' );
+		$blocked  = $this->family( 'Blocked' );
+		$fallback = $this->family( 'Fallback' );
+		$team     = $this->team();
+		$this->set_team( $this->child_of( $assigned ), $team );
+		$this->set_team( $this->child_of( $blocked ), $team );
+		$shift = $this->shift( 25, null, [ $assigned ], 2 );
+		$this->shift( 25, null, [ $blocked ] );
+		$this->assertSame( $fallback, VolunteerPlanner::data( $this->plan() )['rows'][0]['person_id'] );
+	}
+
+	public function test_players_are_paired_from_current_teams_with_availability_checks(): void {
+		$people = [];
+		foreach ( [ 'Anne', 'Bram', 'Cato' ] as $name ) {
+			$people[] = $this->createPerson(
+				[ 'post_title' => $name ],
+				[
+					'first_name'     => $name,
+					'email_1'        => strtolower( $name ) . '@example.org',
+					'leeftijdsgroep' => 'Senioren',
+				]
+				);
+		}
+		usort( $people, static fn( $a, $b ) => strcmp( hash( 'sha256', current_datetime()->format( 'o-W' ) . '|' . $a ), hash( 'sha256', current_datetime()->format( 'o-W' ) . '|' . $b ) ) );
+		$solo_team = $this->team();
+		$pair_team = $this->team();
+		$this->set_team( $people[0], $solo_team );
+		$this->set_team( $people[1], $pair_team );
+		$this->set_team( $people[2], $pair_team );
+		$training = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_training',
+				'post_status' => 'private',
+			]
+			);
+		Fields::update_for_post( $training, 'season', SeasonKey::current() );
+		Fields::update_for_post(
+			$training,
+			'blocks',
+			[
+				[
+					'block_id' => 'teams',
+					'team_ids' => [ $solo_team, $pair_team ],
+					'day'      => 1,
+					'start'    => '18:00',
+					'duration' => 90,
+				],
+			]
+			);
+		update_option( Schedules::ACTIVE, $training );
+		foreach ( [ $solo_team, $pair_team ] as $team ) {
+			update_post_meta(
+				$team,
+				'_rondo_team_matches_cache',
+				[
+					'season'           => SeasonKey::current(),
+					'identity'         => '|',
+					'retry_after'      => time() + HOUR_IN_SECONDS,
+					'duration_version' => 1,
+					'matched'          => true,
+					'stale'            => false,
+					'matchdays'        => [],
+					'matches'          => [],
+				]
+				);
+		}
+		$this->shift( 25, null, [], 2 );
+		$this->assertSame( [ $people[1], $people[2] ], array_column( VolunteerPlanner::data( $this->plan() )['rows'], 'person_id' ) );
+	}
 
 	public function test_draft_is_private_balances_families_and_does_not_assign_or_mail_members(): void {
 		$a       = $this->family( 'Anne' );
