@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { readDashboardResponse, retryDashboardRequest } from '@/api/dashboard-response';
+import { reportError } from '@/utils/error-monitoring';
 import {
   Users,
   Award,
@@ -133,34 +135,36 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const isKader = currentUser?.is_kader ?? false;
 
   // Finance menu counters
-  const { data: invoiceData = [] } = useQuery({
+  const invoiceQuery = useQuery({
     queryKey: ['sidebar', 'invoices'],
     queryFn: async () => {
-      const response = await prmApi.getInvoices({});
-      return response.data;
+      return readDashboardResponse(await prmApi.getInvoices({}), 'invoices', reportError);
     },
     enabled: canAccessFinancieel,
+    retry: retryDashboardRequest,
     staleTime: 30000,
   });
 
-  const { data: feeData } = useQuery({
+  const feeQuery = useQuery({
     queryKey: ['sidebar', 'fees'],
     queryFn: async () => {
-      const response = await prmApi.getFeeList();
-      return response.data;
+      return readDashboardResponse(await prmApi.getFeeList(), 'fees', reportError);
     },
     enabled: canAccessFinancieel,
+    retry: retryDashboardRequest,
     staleTime: 30000,
   });
 
   const openInvoicesCount = useMemo(
-    () => invoiceData.filter((invoice) => invoice.status === 'sent' || invoice.status === 'overdue').length,
-    [invoiceData]
+    () => invoiceQuery.isError || !invoiceQuery.data ? null
+      : invoiceQuery.data.filter((invoice) => invoice.status === 'sent' || invoice.status === 'overdue').length,
+    [invoiceQuery.data, invoiceQuery.isError]
   );
 
   const payingMembersCount = useMemo(
-    () => (feeData?.members || []).filter((member) => (parseFloat(member.final_fee) || 0) > 0).length,
-    [feeData]
+    () => feeQuery.isError || !feeQuery.data ? null
+      : feeQuery.data.members.filter((member) => (parseFloat(member.final_fee) || 0) > 0).length,
+    [feeQuery.data, feeQuery.isError]
   );
 
   const formatMenuCount = (count) => (
@@ -324,6 +328,19 @@ function Sidebar({ mobile = false, onClose, stats }) {
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+        {canAccessFinancieel && (invoiceQuery.isError || feeQuery.isError) && (
+          <p role="alert" className="px-2 py-2 text-sm text-red-700 dark:text-red-300">
+            Financiële aantallen konden niet worden geladen.{' '}
+            <button type="button" className="underline disabled:opacity-50"
+              disabled={invoiceQuery.isFetching || feeQuery.isFetching}
+              onClick={() => {
+                if (invoiceQuery.isError) void invoiceQuery.refetch();
+                if (feeQuery.isError) void feeQuery.refetch();
+              }}>
+              Opnieuw proberen
+            </button>
+          </p>
+        )}
         {personalNav.length > 0 && (
           <div className="pb-4 mb-3 space-y-1 border-b border-gray-200 dark:border-gray-700">
             <div className="px-3 pb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">

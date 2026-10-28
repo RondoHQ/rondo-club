@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.154.1] - 2026-10-28
+
+### Fixed
+
+- Validate dashboard and finance counter responses before caching them, showing a retry action instead of crashing on malformed responses.
+- Report only fixed response-shape, content-type, status and contract categories for invalid dashboard responses, without response bodies or personal data.
+
 ## [35.154.0] - 2026-10-25
 
 ### Added
