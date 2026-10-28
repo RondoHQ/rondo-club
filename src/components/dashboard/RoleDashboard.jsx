@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, Cake, CalendarX, SlidersHorizontal, Square } from 'lucide-react';
 import api from '@/api/client';
+import { readDashboardResponse, retryDashboardRequest } from '@/api/dashboard-response';
+import { reportError } from '@/utils/error-monitoring';
 import PersonAvatar from '@/components/PersonAvatar';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
@@ -56,7 +58,12 @@ export default function RoleDashboard({ user }) {
   const [matchScope, setMatchScope] = useState(user.dashboard_context.secretary ? 'home' : 'own');
   const todo = useTodoCompletion();
   const key = ['role-dashboard', user.id];
-  const workspace = useQuery({ queryKey: key, queryFn: async () => (await api.get('/rondo/v1/dashboard/workspace')).data, staleTime: 60_000 });
+  const workspace = useQuery({
+    queryKey: key,
+    queryFn: async () => readDashboardResponse(await api.get('/rondo/v1/dashboard/workspace'), 'workspace', reportError),
+    retry: retryDashboardRequest,
+    staleTime: 60_000,
+  });
   const data = workspace.data;
   const teams = data?.teams || EMPTY;
   const context = data?.context || user.dashboard_context;

@@ -55,7 +55,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - name: Test browser diagnostics and session recovery
-        run: node --test tests/js/error-monitoring.test.mjs tests/js/performance-monitoring.test.mjs tests/js/nonceRecovery.test.mjs
+        run: node --test tests/js/error-monitoring.test.mjs tests/js/performance-monitoring.test.mjs tests/js/nonceRecovery.test.mjs tests/js/dashboardResponse.test.mjs
       - run: npm run build
 
   mobile-spike:

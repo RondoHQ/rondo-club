@@ -43,6 +43,7 @@ let tasks = snapshot?.workspace?.tasks || [
   { id: 9, content: 'Nieuwe aanmeldingen controleren', due_date: '2026-10-07T12:00:00+02:00', status: 'open' },
 ];
 const empty = params.has('empty');
+const failedResponses = new Set();
 api.defaults.adapter = async config => {
   const path = config.url;
   const method = config.method || 'get';
@@ -95,6 +96,13 @@ api.defaults.adapter = async config => {
     }
     if (path.endsWith('/matches')) data = config.params?.team_id ? snapshot.teamMatches?.[config.params.team_id] || { matches: [], matched: false } : snapshot.clubMatches;
     if (path === '/rondo/v1/dashboard' && snapshot.dashboard) data = snapshot.dashboard;
+  }
+  // Opt-in synthetic regression cases: the first read fails, retry recovers.
+  const invalidContract = path.endsWith('/workspace') ? 'workspace'
+    : path.endsWith('/invoices') ? 'invoices' : path.endsWith('/fees') ? 'fees' : null;
+  if (params.has('synthetic') && invalidContract && params.get('invalid-response') === invalidContract && !failedResponses.has(path)) {
+    failedResponses.add(path);
+    return { data: '<!doctype html><title>Unexpected response</title>', status: 200, statusText: 'OK', headers: { 'content-type': 'text/html' }, config };
   }
   return { data, status: 200, statusText: 'OK', headers: { 'x-wp-total': '0' }, config };
 };
