@@ -1283,6 +1283,7 @@ class UserSettings extends Base {
 			'vog_required'                   => $vog_required,
 			'linked_person_photo'            => $linked_person_photo,
 			'pending_guardian'               => $pending_guardian,
+			'can_switch_accounts'            => \Rondo\Users\AccountSwitcher::available(),
 			'feedback_intro_seen'            => get_user_meta( $user_id, self::FEEDBACK_INTRO_SEEN_META, true ) !== '',
 		];
 	}

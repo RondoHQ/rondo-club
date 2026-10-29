@@ -23,7 +23,7 @@ import {
   FeedbackList, FeedbackDetail, Communication, Planning, Newsletter, NewsletterSettings, Settings, AppAccess, VOG,
   Contributie, DisciplineCasesList,
   MatchCompensation, FinanceDashboard, Kassaomzet, Betaalstatistieken, Facturen, FactuurDetail, FactuurNieuw, RelationshipTypes,
-  CustomFields, Login, Profile, ProfileIva, ProfileVog,
+  CustomFields, Login, AccountSwitcher, Profile, ProfileIva, ProfileVog,
   MembershipPassScanner, AccessStatistics,
   ClothingPage,
   VrijwilligersVoorstellen, VrijwilligersDashboard, VrijwilligersIndelen, VrijwilligersStatistieken, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten, VrijwilligersAanmeldingen,
@@ -721,6 +721,7 @@ const router = wrapCreateBrowserRouter(createBrowserRouter)([
 
           // Profile routes — Profile zelf is voor iedereen, subpagina's voor certificaten
           { path: 'profile', element: <Profile /> },
+          { path: 'wissel-account', element: <AccountSwitcher /> },
           { path: 'profile/vog', element: <ProfileVog /> },
           { path: 'profile/iva', element: <ProfileIva /> },
 
