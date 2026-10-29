@@ -11,7 +11,7 @@ export function ReloadPrompt() {
   const registrationRef = useRef(null);
   const [dismissedUpdate, setDismissedUpdate] = useState(null);
   const [reloading, setReloading] = useState(false);
-  const { hasUpdate, latestVersion } = useVersionCheck();
+  const { hasUpdate, latestBuildTime, checkVersion } = useVersionCheck();
   const { needRefresh: [needRefresh] } = useRegisterSW({
     onRegisteredSW(_swUrl, registration) {
       registrationRef.current = registration;
@@ -24,6 +24,12 @@ export function ReloadPrompt() {
       console.error('SW registration error:', error);
     },
   });
+
+  // A waiting worker can belong to the build this document already loaded.
+  // Verify the server build before asking the user to reload again.
+  useEffect(() => {
+    if (needRefresh) checkVersion();
+  }, [needRefresh, checkVersion]);
 
   useEffect(() => {
     const check = () => {
@@ -39,8 +45,8 @@ export function ReloadPrompt() {
     };
   }, []);
 
-  const updateKey = `${hasUpdate ? latestVersion : ''}:${needRefresh}`;
-  if ((!hasUpdate && !needRefresh) || dismissedUpdate === updateKey) return null;
+  const updateKey = latestBuildTime;
+  if (!hasUpdate || dismissedUpdate === updateKey) return null;
 
   const reload = async () => {
     setReloading(true);
