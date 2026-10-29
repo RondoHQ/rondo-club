@@ -83,18 +83,9 @@ export default defineConfig({
             handler: 'NetworkOnly',
           },
           {
+            // Account switches share the browser but must never share private API responses.
             urlPattern: /\/wp-json\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24, // 24 hours
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
+            handler: 'NetworkOnly',
           },
           {
             // WordPress renders the app shell per request — nonce, window.rondoConfig,
