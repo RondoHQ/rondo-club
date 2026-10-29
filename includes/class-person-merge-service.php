@@ -99,13 +99,23 @@ final class PersonMergeService {
 	 * @param array<string,string> $resolutions Conflict choices keyed by canonical field name.
 	 * @return array|\WP_Error
 	 */
-	public function merge( int $primary_id, int $duplicate_id, array $resolutions, int $user_id ) {
+	public function merge( int $primary_id, int $duplicate_id, array $resolutions, int $user_id, bool $override_knvb_id = false ) {
 		$validation = $this->validate_pair( $primary_id, $duplicate_id );
 		if ( is_wp_error( $validation ) ) {
 			return $validation;
 		}
 
-		$plan = $this->build_plan( $primary_id, $duplicate_id, $resolutions );
+		$plan      = $this->build_plan( $primary_id, $duplicate_id, $resolutions );
+		$overrides = [];
+		if ( $override_knvb_id ) {
+			foreach ( $plan['blocking_conflicts'] as $index => $conflict ) {
+				if ( $conflict['field'] === 'knvb_id' ) {
+					$overrides[] = $conflict;
+					unset( $plan['blocking_conflicts'][ $index ] );
+				}
+			}
+			$plan['blocking_conflicts'] = array_values( $plan['blocking_conflicts'] );
+		}
 		if ( $plan['blocking_conflicts'] ) {
 			return new \WP_Error(
 				'rondo_person_merge_blocked',
@@ -168,6 +178,7 @@ final class PersonMergeService {
 			'merged_at'      => $now,
 			'merged_by'      => $user_id,
 			'resolutions'    => $resolutions,
+			'overrides'      => $overrides,
 		];
 		add_post_meta( $primary_id, '_rondo_person_merge_history', $audit, false );
 		update_post_meta( $duplicate_id, '_rondo_merged_into_person_id', $primary_id );

@@ -203,21 +203,25 @@ class People extends Base {
 				'callback'            => [ $this, 'merge_people' ],
 				'permission_callback' => [ $this, 'check_admin_permission' ],
 				'args'                => [
-					'primary_id'   => [
+					'primary_id'       => [
 						'required'          => true,
 						'sanitize_callback' => 'absint',
 					],
-					'duplicate_id' => [
+					'duplicate_id'     => [
 						'required'          => true,
 						'sanitize_callback' => 'absint',
 					],
-					'resolutions'  => [
+					'resolutions'      => [
 						'default' => [],
 						'type'    => 'object',
 					],
-					'confirmed'    => [
+					'confirmed'        => [
 						'required' => true,
 						'type'     => 'boolean',
+					],
+					'override_knvb_id' => [
+						'default' => false,
+						'type'    => 'boolean',
 					],
 				],
 			]
@@ -847,7 +851,8 @@ class People extends Base {
 			(int) $request['primary_id'],
 			(int) $request['duplicate_id'],
 			$resolutions,
-			get_current_user_id()
+			get_current_user_id(),
+			$request->get_param( 'override_knvb_id' ) === true
 		);
 		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 	}
