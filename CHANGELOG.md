@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.156.0] - 2026-10-29
+
+### Added
+
+- Add “Wissel van account” for people sharing an email address, including secondary addresses and people without a family relationship. Mailbox confirmation is scoped to the current browser session; existing email login links grant immediate access to the chooser.
+- Offer the existing activation flow for people without an account and recheck mailbox membership and account links before every switch.
+
+### Changed
+
+- Replace the session and reload permissions when switching accounts, refresh other open tabs, and stop caching private API responses across identities.
+
 ## [35.155.1] - 2026-10-29
 
 ### Fixed

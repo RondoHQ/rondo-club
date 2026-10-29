@@ -14,6 +14,7 @@ import {
   Home,
   IdCard,
   LogOut,
+  ArrowRightLeft,
   Search,
   CheckSquare,
   Command,
@@ -429,6 +430,12 @@ function Sidebar({ mobile = false, onClose, stats }) {
                 <span className="block text-xs text-gray-500 dark:text-gray-400">Profiel</span>
               </span>
             )}
+          </Link>
+        )}
+        {currentUser?.can_switch_accounts && !window.rondoConfig?.isDemoUser && (
+          <Link to="/wissel-account" onClick={mobile ? onClose : undefined} className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors dark:text-gray-200 dark:hover:bg-gray-700">
+            <ArrowRightLeft className="w-5 h-5 mr-3" aria-hidden="true" />
+            Wissel van account
           </Link>
         )}
         {/* Keep the install affordance in the mobile menu, but omit it from the desktop sidebar. */}

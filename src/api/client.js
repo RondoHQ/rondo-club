@@ -109,6 +109,10 @@ function saveFeedback(url, data) {
 
 // Helper for custom PRM API
 export const prmApi = {
+  getAccountSwitcher: () => api.get('/rondo/v1/user/account-switcher'),
+  verifyAccountSwitcher: (email) => api.post('/rondo/v1/user/account-switcher/verify', { email }),
+  switchAccount: (personId) => api.post('/rondo/v1/user/account-switcher/switch', { person_id: personId }),
+  activateSwitchAccount: (personId) => api.post('/rondo/v1/user/account-switcher/activate', { person_id: personId }),
   getAppAccess: () => api.get('/rondo/v1/app-access/laposta'),
   saveAppAccess: (uri) => api.put('/rondo/v1/app-access/laposta', { uri }),
   removeAppAccess: () => api.delete('/rondo/v1/app-access/laposta'),
