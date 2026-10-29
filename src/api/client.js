@@ -144,7 +144,8 @@ export const prmApi = {
   sendNewsletterTestmail: (id, email, revision) => api.post(`/rondo/v1/communications/${id}/newsletter/testmail`, { email, revision }),
 
   // Version check (for cache invalidation)
-  getVersion: () => api.get('/rondo/v1/version'),
+  // A unique URL also bypasses API responses cached by older service workers.
+  getVersion: () => api.get('/rondo/v1/version', { params: { _t: Date.now() } }),
 
   // Tournaments
   getTournamentPayments: () => api.get('/rondo/v1/tournaments/payments'),

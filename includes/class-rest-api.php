@@ -1387,21 +1387,13 @@ class Api extends Base {
 	 * Used for cache invalidation on PWA/mobile apps
 	 */
 	public function get_version( $request ) {
-		// Get build time from manifest file modification time
-		$build_time    = null;
-		$manifest_path = \RONDO_THEME_DIR . '/dist/.vite/manifest.json';
-		if ( file_exists( $manifest_path ) ) {
-			$build_time = gmdate( 'c', filemtime( $manifest_path ) );
-		} else {
-			// Fallback to current time for dev mode.
-			$build_time = gmdate( 'c' );
-		}
-
-		return rest_ensure_response(
+		return new \WP_REST_Response(
 			[
 				'version'   => \RONDO_THEME_VERSION,
-				'buildTime' => $build_time,
-			]
+				'buildTime' => \rondo_get_build_time(),
+			],
+			200,
+			[ 'Cache-Control' => 'no-store, private' ]
 		);
 	}
 

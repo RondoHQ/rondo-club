@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.155.1] - 2026-10-29
+
+### Fixed
+
+- Only show the app update prompt when a fresh server check confirms a different build, preventing a waiting browser service worker from repeatedly announcing the already loaded release.
+- Bypass stale version responses, clear resolved update notices, and keep a dismissed notice hidden when the worker state changes.
+- Disable build-change detection when no production manifest exists instead of treating each request time as a new build.
+
 ## [35.155.0] - 2026-10-29
 
 ### Added
