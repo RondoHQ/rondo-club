@@ -36,6 +36,12 @@ export default function AccountSwitcher() {
     setBusy(account.person_id);
     setError('');
     try {
+      // An older worker may still cache private API responses while this release waits.
+      // Detach it before changing identity; the next app bootstrap registers the current worker.
+      if (account.active && 'serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration) await registration.unregister();
+      }
       const result = account.active
         ? await prmApi.switchAccount(account.person_id)
         : await prmApi.activateSwitchAccount(account.person_id);
