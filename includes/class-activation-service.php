@@ -710,6 +710,7 @@ class ActivationService {
 			return new \WP_Error( 'invalid_user', 'Het aangemaakte account kon niet worden geopend.' );
 		}
 		if ( $verified_email !== null ) {
+			AccountSwitcher::remember_verified_email( $user->ID, $verified_email );
 			OidcIdentity::mark_email_verified( $user->ID, $verified_email, 'activation' );
 		}
 
@@ -732,6 +733,7 @@ class ActivationService {
 
 		self::consume_token( $token );
 		if ( $verified_email !== null ) {
+			AccountSwitcher::remember_verified_email( $user->ID, $verified_email );
 			OidcIdentity::mark_email_verified( $user->ID, $verified_email, 'activation' );
 		}
 		return $login_url;

@@ -8,7 +8,7 @@ use Rondo\Users\ActivationService;
 use Rondo\Users\UserProvisioning;
 use Tests\Support\RondoTestCase;
 
-/** Mailbox possession authorizes an exact address in one browser session only. */
+/** Mailbox possession authorizes an exact address across authenticated sessions. */
 class AccountSwitcherTest extends RondoTestCase {
 
 	private $old_cookie;
@@ -91,6 +91,100 @@ class AccountSwitcherTest extends RondoTestCase {
 		$this->assertWPError( AccountSwitcher::activation_url( $inactive ) );
 	}
 
+	public function test_activation_confirmation_survives_logout_and_password_login(): void {
+		[ $person ] = $this->person( 'First', 'shared@example.com', false );
+		$this->person( 'Second', 'shared@example.com' );
+		$result = ActivationService::activate( ActivationService::create_token( 'shared@example.com' ), $person );
+		$this->assertIsString( $result );
+		$user = (int) get_post_meta( $person, UserProvisioning::META_USER_ID, true );
+		$this->login( $user );
+		$this->assertTrue( AccountSwitcher::status()['verified'] );
+		wp_destroy_current_session();
+		$this->login( $user );
+		$this->assertTrue( AccountSwitcher::status()['verified'] );
+		$this->assertCount( 2, AccountSwitcher::status()['accounts'] );
+	}
+
+	public function test_recorded_activation_is_reused_without_another_email(): void {
+		[ , $user ] = $this->person( 'First', 'shared@example.com' );
+		$this->person( 'Second', 'shared@example.com' );
+		update_user_meta( $user, 'rondo_oidc_verified_email', 'shared@example.com' );
+		update_user_meta( $user, 'rondo_oidc_verified_email_method', 'activation' );
+		update_user_meta( $user, 'rondo_oidc_verified_email_at', gmdate( DATE_ATOM ) );
+		$this->login( $user );
+		$this->assertTrue( AccountSwitcher::status()['verified'] );
+		$this->assertCount( 2, AccountSwitcher::status()['accounts'] );
+	}
+
+	public function test_existing_browser_confirmation_is_saved_for_future_logins(): void {
+		[ , $user ]                    = $this->person( 'First', 'shared@example.com' );
+		$token                         = $this->login( $user );
+		$manager                       = \WP_Session_Tokens::get_instance( $user );
+		$session                       = $manager->get( $token );
+		$session['rondo_switch_email'] = 'shared@example.com';
+		$manager->update( $token, $session );
+		$this->assertTrue( AccountSwitcher::status()['verified'] );
+		wp_destroy_current_session();
+		$token = $this->login( $user );
+		$this->assertTrue( AccountSwitcher::status()['verified'] );
+		$session               = $manager->get( $token );
+		$session['expiration'] = time() - 1;
+		$manager->update( $token, $session );
+		$this->assertFalse( AccountSwitcher::status()['verified'] );
+	}
+
+	public function test_inferred_legacy_magic_login_address_is_not_imported(): void {
+		[ , $user ] = $this->person( 'First', 'shared@example.com' );
+		update_user_meta( $user, 'rondo_oidc_verified_email', 'shared@example.com' );
+		update_user_meta( $user, 'rondo_oidc_verified_email_method', 'magic_login' );
+		update_user_meta( $user, 'rondo_oidc_verified_email_at', gmdate( DATE_ATOM ) );
+		$this->login( $user );
+		$this->assertFalse( AccountSwitcher::status()['verified'] );
+	}
+
+	public function test_address_change_and_restore_revokes_all_sessions_and_legacy_confirmation(): void {
+		[ $person, $user ] = $this->person( 'First', 'shared@example.com' );
+		update_user_meta( $user, 'rondo_oidc_verified_email', 'shared@example.com' );
+		update_user_meta( $user, 'rondo_oidc_verified_email_method', 'activation' );
+		update_user_meta( $user, 'rondo_oidc_verified_email_at', gmdate( DATE_ATOM ) );
+		$this->login( $user, 'shared@example.com' );
+		$first_cookie = $_COOKIE[ LOGGED_IN_COOKIE ];
+		$this->login( $user, 'shared@example.com' );
+		Fields::update_for_post( $person, 'email_1', 'changed@example.com' );
+		$this->assertFalse( AccountSwitcher::status()['verified'] );
+		Fields::update_for_post( $person, 'email_1', 'shared@example.com' );
+		$this->assertFalse( AccountSwitcher::status()['verified'] );
+		$_COOKIE[ LOGGED_IN_COOKIE ] = $first_cookie;
+		$this->assertFalse( AccountSwitcher::status()['verified'] );
+		$this->login( $user );
+		$this->assertFalse( AccountSwitcher::status()['verified'] );
+		$this->login( $user, 'shared@example.com' );
+		$this->assertTrue( AccountSwitcher::status()['verified'] );
+	}
+
+	public function test_deleting_address_or_changing_person_link_revokes_confirmation(): void {
+		[ $person, $user ] = $this->person( 'First', 'shared@example.com' );
+		$this->login( $user, 'shared@example.com' );
+		delete_post_meta( $person, 'email_1' );
+		Fields::update_for_post( $person, 'email_1', 'shared@example.com' );
+		$this->assertFalse( AccountSwitcher::status()['verified'] );
+		$this->login( $user, 'shared@example.com' );
+		update_user_meta( $user, 'rondo_linked_person_id', 999999 );
+		update_user_meta( $user, 'rondo_linked_person_id', $person );
+		$this->assertFalse( AccountSwitcher::status()['verified'] );
+	}
+
+	public function test_unchanged_verified_address_survives_other_contact_changes(): void {
+		[ $person, $user ] = $this->person( 'First', 'shared@example.com' );
+		$this->login( $user, 'shared@example.com' );
+		Fields::update_for_post( $person, 'email_2', 'other@example.com' );
+		$this->login( $user );
+		$this->assertTrue( AccountSwitcher::status()['verified'] );
+		$this->assertSame( 'shared@example.com', AccountSwitcher::status()['email'] );
+		unset( $_COOKIE[ LOGGED_IN_COOKIE ] );
+		$this->assertFalse( AccountSwitcher::status()['verified'] );
+	}
+
 	public function test_verified_mailbox_switches_unrelated_accounts_with_target_permissions_and_same_expiry(): void {
 		[ , $first ]                = $this->person( 'First', 'shared@example.com' );
 		[ $second_person, $second ] = $this->person( 'Second', 'shared@example.com' );
@@ -111,7 +205,7 @@ class AccountSwitcherTest extends RondoTestCase {
 		$this->assertSame( $expiry, \WP_Session_Tokens::get_instance( $second )->get( wp_get_session_token() )['expiration'] );
 	}
 
-	public function test_proof_does_not_transfer_to_another_session_or_another_mailbox(): void {
+	public function test_proof_survives_another_session_but_does_not_grant_another_mailbox(): void {
 		[ $first_person, $first ]   = $this->person( 'First', 'shared@example.com' );
 		[ $second_person, $second ] = $this->person( 'Second', 'shared@example.com' );
 		[ $third_person ]           = $this->person( 'Third', 'other@example.com' );
@@ -121,7 +215,8 @@ class AccountSwitcherTest extends RondoTestCase {
 		$_COOKIE[ LOGGED_IN_COOKIE ] = $this->issued_cookie;
 		$this->assertWPError( AccountSwitcher::switch_account( $third_person ) );
 		$this->login( $second );
-		$this->assertWPError( AccountSwitcher::switch_account( $first_person ) );
+		$this->assertWPError( AccountSwitcher::switch_account( $third_person ) );
+		$this->assertIsArray( AccountSwitcher::switch_account( $first_person ) );
 	}
 
 	public function test_secondary_mailbox_is_proved_exactly_and_does_not_grant_primary_mailbox(): void {
@@ -259,6 +354,11 @@ class AccountSwitcherTest extends RondoTestCase {
 		do_action( 'set_logged_in_cookie', $_COOKIE[ LOGGED_IN_COOKIE ], 0, time() + HOUR_IN_SECONDS, $user, 'logged_in', wp_get_session_token() );
 		do_action( 'magic_login_logged_in', get_userdata( $user ), $token_data );
 		$this->assertTrue( AccountSwitcher::status()['verified'] );
+		$this->assertFalse( get_transient( 'rondo_switch_link_' . $token_data['token'] ) );
+		// Revoke the address and restore it: the old, consumed link cannot reauthorize it.
+		$person = (int) get_user_meta( $user, 'rondo_linked_person_id', true );
+		Fields::update_for_post( $person, 'email_1', 'changed@example.com' );
+		Fields::update_for_post( $person, 'email_1', 'shared@example.com' );
 		$this->login( $user );
 		do_action( 'set_logged_in_cookie', $_COOKIE[ LOGGED_IN_COOKIE ], 0, time() + HOUR_IN_SECONDS, $user, 'logged_in', wp_get_session_token() );
 		do_action( 'magic_login_logged_in', get_userdata( $user ), $token_data );

@@ -1,6 +1,6 @@
 <?php
 /**
- * Session-scoped mailbox proof and switching between identities on that mailbox.
+ * Durable mailbox proof and switching between identities on that mailbox.
  *
  * @package Rondo\Users
  */
@@ -8,13 +8,15 @@
 namespace Rondo\Users;
 
 use Rondo\Fields\Fields;
+use Rondo\Identity\OidcIdentity;
 
-/** Never treat an editable contact address or an old verification as login proof. */
+/** Reuse exact-email verification only while the account remains linked to it. */
 class AccountSwitcher {
 
 	private const PROOF           = 'rondo_switch_email';
 	private const HINT            = 'rondo_login_email';
 	private const LINK_PREFIX     = 'rondo_switch_link_';
+	private const VERIFIED_META   = 'rondo_switch_verified_mailbox';
 	private string $login_email   = '';
 	private array $issued_session = [];
 
@@ -23,6 +25,10 @@ class AccountSwitcher {
 		add_filter( 'attach_session_information', [ $this, 'attach_identifier' ], 10, 2 );
 		add_action( 'set_logged_in_cookie', [ $this, 'capture_session' ], 10, 6 );
 		add_action( 'magic_login_logged_in', [ $this, 'confirm_magic_login' ], 20, 2 );
+		add_action( 'updated_post_meta', [ $this, 'invalidate_changed_address' ], 10, 3 );
+		add_action( 'deleted_post_meta', [ $this, 'invalidate_changed_address' ], 10, 3 );
+		add_action( 'updated_user_meta', [ $this, 'invalidate_changed_person' ], 10, 3 );
+		add_action( 'deleted_user_meta', [ $this, 'invalidate_changed_person' ], 10, 3 );
 	}
 
 	/** Remember the submitted address before LoginResolver rewrites it. */
@@ -86,8 +92,74 @@ class AccountSwitcher {
 		$manager = \WP_Session_Tokens::get_instance( $user->ID );
 		$session = $manager->get( $this->issued_session['token'] );
 		if ( $session ) {
+			self::remember_verified_email( $user->ID, $proof['email'] );
 			$session[ self::PROOF ] = $proof['email'];
 			$manager->update( $this->issued_session['token'], $session );
+		}
+	}
+
+	/** Called after consuming an emailed activation or login token, never on send. */
+	public static function remember_verified_email( int $user_id, string $email ): void {
+		$email = self::normalize( $email );
+		if ( ! in_array( $email, self::addresses( $user_id ), true ) ) {
+			return;
+		}
+		update_user_meta(
+			$user_id,
+			self::VERIFIED_META,
+			[
+				'email'     => $email,
+				'person_id' => (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ),
+			]
+		);
+	}
+
+	/** Removing an address revokes old proof even if that address is later restored. */
+	public function invalidate_changed_address( $meta_id, int $person_id, string $key ): void {
+		unset( $meta_id );
+		if ( ! in_array( $key, [ 'email_1', 'email_2', UserProvisioning::META_USER_ID ], true ) ) {
+			return;
+		}
+		$users = get_users(
+			[
+				'meta_key'   => 'rondo_linked_person_id',
+				'meta_value' => $person_id,
+				'fields'     => 'ID',
+			]
+		);
+		foreach ( $users as $user_id ) {
+			self::prune_proof( (int) $user_id, self::addresses( (int) $user_id ) );
+		}
+	}
+
+	/** Verification belongs to one person-account link, not a reusable user ID. */
+	public function invalidate_changed_person( $meta_id, int $user_id, string $key ): void {
+		unset( $meta_id );
+		if ( $key === 'rondo_linked_person_id' ) {
+			self::prune_proof( $user_id, [] );
+		}
+	}
+
+	private static function prune_proof( int $user_id, array $addresses ): void {
+		$proof = (array) get_user_meta( $user_id, self::VERIFIED_META, true );
+		$email = $proof['email'] ?? (string) get_user_meta( $user_id, OidcIdentity::META_VERIFIED_EMAIL, true );
+		if ( ! in_array( $email, $addresses, true ) ) {
+			// An empty record also prevents importing revoked legacy proof later.
+			update_user_meta( $user_id, self::VERIFIED_META, [] );
+		}
+		// WordPress stores verifiers, not raw tokens, here. Keep authentication intact
+		// while removing mailbox permissions from all pre-existing browser sessions.
+		$sessions = (array) get_user_meta( $user_id, 'session_tokens', true );
+		$changed  = false;
+		foreach ( $sessions as &$session ) {
+			if ( isset( $session[ self::PROOF ] ) && ! in_array( $session[ self::PROOF ], $addresses, true ) ) {
+				unset( $session[ self::PROOF ] );
+				$changed = true;
+			}
+		}
+		unset( $session );
+		if ( $changed ) {
+			update_user_meta( $user_id, 'session_tokens', $sessions );
 		}
 	}
 
@@ -133,8 +205,31 @@ class AccountSwitcher {
 
 	/** Returns proof only while the current account still belongs to that address. */
 	private static function verified_email(): string {
-		$email = (string) ( self::session()[ self::PROOF ] ?? '' );
-		return $email !== '' && in_array( $email, self::addresses( get_current_user_id() ), true ) ? $email : '';
+		$session = self::session();
+		if ( ! $session ) {
+			return '';
+		}
+		$user_id   = get_current_user_id();
+		$addresses = self::addresses( $user_id );
+		if ( isset( $session[ self::PROOF ] ) ) {
+			$email = (string) $session[ self::PROOF ];
+			if ( in_array( $email, $addresses, true ) ) {
+				self::remember_verified_email( $user_id, $email );
+				return $email;
+			}
+			return '';
+		}
+		if ( ! metadata_exists( 'user', $user_id, self::VERIFIED_META ) ) {
+			// Activation and explicit email confirmation already record the exact address.
+			// Legacy Magic Login records inferred the primary address, so cannot prove a secondary mailbox.
+			$method = (string) get_user_meta( $user_id, OidcIdentity::META_VERIFIED_METHOD, true );
+			if ( in_array( $method, [ 'activation', 'profile_email_change', 'oidc_email' ], true ) && get_user_meta( $user_id, OidcIdentity::META_VERIFIED_AT, true ) ) {
+				self::remember_verified_email( $user_id, (string) get_user_meta( $user_id, OidcIdentity::META_VERIFIED_EMAIL, true ) );
+			}
+		}
+		$proof = (array) get_user_meta( $user_id, self::VERIFIED_META, true );
+		$email = (string) ( $proof['email'] ?? '' );
+		return (int) ( $proof['person_id'] ?? 0 ) === (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) && in_array( $email, $addresses, true ) ? $email : '';
 	}
 
 	/** Cheap sidebar availability check; no other account names leave this method. */
@@ -147,7 +242,7 @@ class AccountSwitcher {
 		return false;
 	}
 
-	/** Names are returned only after this browser has proved mailbox possession. */
+	/** Names are returned only for a previously confirmed, still-linked mailbox. */
 	public static function status(): array {
 		$verified = self::verified_email();
 		$emails   = array_values( array_filter( self::addresses( get_current_user_id() ), static fn( $email ) => count( ActivationService::persons_for_email( $email ) ) > 1 ) );
@@ -213,6 +308,7 @@ class AccountSwitcher {
 		$new                = $manager->get( $token );
 		$new[ self::PROOF ] = $email;
 		$manager->update( $token, $new );
+		self::remember_verified_email( $user_id, $email );
 		wp_destroy_current_session();
 		wp_clear_auth_cookie();
 		wp_set_current_user( $user_id );
