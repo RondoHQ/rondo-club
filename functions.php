@@ -303,6 +303,7 @@ function rondo_init() {
 	new \Rondo\Users\LoginResolver();
 	// Turns the Magic Login email form into the single login/activation entry point.
 	new \Rondo\Users\MagicLoginActivation();
+	new \Rondo\Users\AccountSwitcher();
 	// First-party OIDC provider for FreeScout login and durable exact-email proof.
 	new \Rondo\Identity\OidcIdentity();
 	new \Rondo\Identity\OidcProvider();
@@ -388,6 +389,7 @@ function rondo_init() {
 			new RESTClothing();
 		}
 		new RESTUserSettings();
+		new \Rondo\REST\AccountSwitcher();
 		new \Rondo\REST\AppAccess();
 		new RESTUsers();
 		new RESTReminders();

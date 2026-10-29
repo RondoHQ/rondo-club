@@ -318,6 +318,15 @@ button, [role="tab"], [role="button"], summary {
   @apply bg-transparent border border-electric-cyan text-electric-cyan hover:bg-electric-cyan/10 focus:ring-electric-cyan dark:border-electric-cyan-light dark:text-electric-cyan-light dark:hover:bg-electric-cyan/15;
 }
 
+/* Keep identity choices legible on both account-switcher surfaces. */
+.account-switcher .btn-secondary {
+  @apply min-h-11 border-cyan-700 text-cyan-800 dark:border-electric-cyan-light dark:text-electric-cyan-light;
+}
+
+.account-switcher .btn-primary {
+  @apply min-h-11 bg-none bg-cyan-800 text-white hover:bg-cyan-900 dark:bg-electric-cyan-light dark:text-gray-900;
+}
+
 /* Tier 3 — Tertiary: ghost, text-only, no border, no lift */
 .btn-tertiary {
   @apply bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-400 dark:text-gray-300 dark:hover:bg-gray-800;
