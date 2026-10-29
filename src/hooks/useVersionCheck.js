@@ -20,6 +20,7 @@ export function useVersionCheck({ checkInterval = 15 * 60 * 1000 } = {}) {
   const [hasUpdate, setHasUpdate] = useState(false);
   const [currentBuildTime] = useState(() => window.rondoConfig?.buildTime || null);
   const [latestVersion, setLatestVersion] = useState(null);
+  const [latestBuildTime, setLatestBuildTime] = useState(null);
   const lastCheckRef = useRef(0);
   const checkInFlightRef = useRef(false);
 
@@ -34,12 +35,12 @@ export function useVersionCheck({ checkInterval = 15 * 60 * 1000 } = {}) {
       const serverBuildTime = response.data?.buildTime;
       const serverVersion = response.data?.version;
 
-      // Compare build times instead of versions
-      if (serverBuildTime && serverBuildTime !== currentBuildTime) {
-        // Store the version for display in the banner
-        setLatestVersion(serverVersion);
-        setHasUpdate(true);
-      }
+      // A fresh server response is authoritative, including when an earlier
+      // mismatch has disappeared. A waiting worker alone is not a new app build.
+      const updateAvailable = Boolean(serverBuildTime && serverBuildTime !== currentBuildTime);
+      setLatestVersion(updateAvailable ? serverVersion : null);
+      setLatestBuildTime(updateAvailable ? serverBuildTime : null);
+      setHasUpdate(updateAvailable);
     } catch (error) {
       // Silently fail - version check is not critical
       console.debug('Version check failed:', error.message);
@@ -81,6 +82,7 @@ export function useVersionCheck({ checkInterval = 15 * 60 * 1000 } = {}) {
     hasUpdate,
     currentVersion,
     latestVersion,
+    latestBuildTime,
     checkVersion,
   };
 }
