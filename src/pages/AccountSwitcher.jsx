@@ -87,7 +87,7 @@ export default function AccountSwitcher() {
       ) : !data.verified ? (
         <div className="space-y-4">
           <p className="text-sm text-gray-700 dark:text-gray-200">
-            Bevestig eerst dat je toegang hebt tot dit e-mailadres. Daarna kun je in deze sessie wisselen tussen de bijbehorende accounts.
+            Bevestig dit e-mailadres eenmalig. Daarna kun je ook bij volgende logins wisselen tussen de bijbehorende accounts, zolang dit e-mailadres aan je account gekoppeld blijft.
           </p>
           {data.emails.length > 1 ? (
             <div>
