@@ -56,7 +56,7 @@ export default function VrijwilligersVoorstellen() {
     setEditor(null); setAcceptConversions(false);
   };
   const create = useMutation({ mutationFn: () => prmApi.createVolunteerPlan(), onSuccess: (response) => {
-    setParams({ plan: response.data.id }); receive(response.data); setMessage('Nieuw voorstel gemaakt. Er zijn nog geen diensten toegewezen aan leden.');
+    setParams({ plan: response.data.id }); receive(response.data); setMessage('Het actuele voorstel bevat alle open plekken. Geldige keuzes zijn behouden; er zijn nog geen diensten toegewezen.');
   } });
   const publish = useMutation({ mutationFn: async () => {
     let current = plan;
@@ -81,7 +81,7 @@ export default function VrijwilligersVoorstellen() {
   return (
     <div className="space-y-6">
       <Link to="/vrijwilligers" className="text-sm hover:underline">← Terug naar vrijwilligers</Link>
-      <header className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-xl font-semibold">Indelingsvoorstellen</h1><p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Elke woensdag een voorstel voor vier kalenderweken vooruit, inclusief open plekken op kortere termijn. Pas na jouw akkoord worden diensten toegewezen.</p></div><button type="button" className="btn-primary" disabled={busy} onClick={() => create.mutate()}>{create.isPending ? 'Voorstel berekenen…' : 'Nieuw voorstel / gaten aanvullen'}</button></header>
+      <header className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-xl font-semibold">Indelingsvoorstellen</h1><p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Elke woensdag een voorstel voor vier kalenderweken vooruit, inclusief open plekken op kortere termijn. Pas na jouw akkoord worden diensten toegewezen.</p></div><button type="button" className="btn-primary" disabled={busy} onClick={() => create.mutate()}>{create.isPending ? 'Voorstel berekenen…' : 'Voorstel vernieuwen / gaten aanvullen'}</button></header>
       {list.data && <p className="text-sm text-gray-600 dark:text-gray-300">Volgende automatische ronde: {date(list.data.next_at)} · Berichten naar {list.data.notification_email || 'geen adres ingesteld'}. Het adres is instelbaar op het vrijwilligersdashboard.</p>}
       {message && <p role="status" className="card p-4 text-green-800 dark:text-green-300">{message}</p>}
       {actionError && <p role="alert" className="card p-4 text-red-700 dark:text-red-300">{actionError.response?.data?.message || 'Verwerking mislukt. Ververs om de actuele status te bekijken.'}</p>}
@@ -92,6 +92,7 @@ export default function VrijwilligersVoorstellen() {
       </select></label>}
       {id > 0 && detail.isPending && <p role="status">Indeling laden…</p>}
       {plan && <>
+        {plan.superseded_by > 0 && <p role="status" className="card p-4">Dit voorstel is vervangen. <Link className="underline" to={`/vrijwilligers/voorstellen?plan=${plan.superseded_by}`}>Bekijk het actuele voorstel</Link>.</p>}
         <section className="card p-5 space-y-3"><h2 className="font-semibold">{phases[plan.phase]} · {plan.from} t/m {plan.until}</h2>
           <p>{plan.coverage.filled} van {plan.coverage.places} plekken definitief bezet · {pending.length} toewijzingen in dit voorstel.</p>
           {(plan.coverage.filled < plan.coverage.places || plan.coverage.unlimited > 0) && <p className="text-amber-700 dark:text-amber-300">Het rooster is nog niet volledig bezet. {plan.coverage.unlimited > 0 && `${plan.coverage.unlimited} diensten hebben onbegrensde capaciteit; stel daar eerst een aantal plekken in.`}</p>}
@@ -103,7 +104,7 @@ export default function VrijwilligersVoorstellen() {
           </>}
         </section>
         <section className="card divide-y divide-gray-200 dark:divide-gray-700" aria-label="Voorgestelde indelingen">
-          {!plan.rows.length && <p className="p-5">Geen nieuwe toewijzingen nodig. Open plekken kunnen al in een ander conceptvoorstel staan.</p>}
+          {!plan.rows.length && <p className="p-5">Geen open plekken in deze periode.</p>}
           {plan.rows.map((row) => <div key={row.index} className="p-4 space-y-2">
             <div className="flex flex-wrap justify-between gap-3"><div><Link to={`/vrijwilligers/diensten/${row.shift_id}`} className="font-medium hover:underline">{row.title}</Link><p className="text-sm">{date(row.start)} – {row.end?.slice(11, 16)}</p></div><span className="text-sm">{row.state === 'published' ? 'Gepubliceerd' : row.state === 'publishing' ? 'Verwerking controleren' : row.person_id ? 'Voorgesteld' : 'Open plek'}</span></div>
             {row.conversion && <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">Voorgestelde omzetting: {row.title} → {row.target_title}</p>}
