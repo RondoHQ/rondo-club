@@ -794,6 +794,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback, showFeedbackIntro, 
     if (path.startsWith('/contributie')) return 'Contributie';
     if (path.startsWith('/vog')) return 'VOG';
     if (path.startsWith('/tuchtzaken')) return 'Tuchtzaken';
+    if (path.startsWith('/voetbal/verenigingen')) return 'Verenigingen';
     if (path === '/voetbal' || path === '/voetbal/') return 'Voetbal';
     if (path.startsWith('/teams')) return 'Teams';
     if (path.startsWith('/trainingsschema')) return 'Trainingsschema';
