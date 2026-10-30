@@ -636,4 +636,168 @@ class TrainingSchedulesTest extends RondoTestCase {
 		$this->assertSame( [], Schedules::posts() );
 		delete_option( 'rondo_training_write_lock' );
 	}
+	private function cancellation_fixture( array $extra_teams = [] ): array {
+		$block    = $this->block( [ 'team_ids' => array_merge( [ $this->team_id ], $extra_teams ) ] );
+		$schedule = $this->create( [ $block ] );
+		update_option( Schedules::ACTIVE, $schedule['id'] );
+		return [
+			'schedule_id'       => $schedule['id'],
+			'schedule_revision' => 1,
+			'block_id'          => $block['block_id'],
+			'date'              => current_datetime()->modify( 'next monday' )->format( 'Y-m-d' ),
+			'team_id'           => $this->team_id,
+			'cancelled'         => true,
+			'revision'          => 0,
+		];
+	}
+
+	public function test_dated_cancellation_preserves_other_weeks_shared_teams_and_audit(): void {
+		$other    = $this->createOrganization( [ 'post_title' => 'O13-2' ] );
+		$data     = $this->cancellation_fixture( [ $other ] );
+		$before   = Schedules::schedule( $data['schedule_id'] );
+		$response = $this->request( 'PUT', '/attendance', $data );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$block = $response->get_data()['schedule']['blocks'][0];
+		$this->assertFalse( $block['cancelled'] );
+		$this->assertTrue( $block['attendance'][0]['cancelled'] );
+		$this->assertFalse( $block['attendance'][1]['cancelled'] );
+		$this->assertSame( $before, Schedules::schedule( $data['schedule_id'] ) );
+		$this->assertSame( str_replace( '-', '', $data['date'] ), get_post_meta( $data['schedule_id'], 'cancellations_0_date', true ) );
+		$next = \Rondo\Training\Occurrences::week( current_datetime()->modify( 'next monday +7 days' )->format( 'Y-m-d' ) );
+		$this->assertFalse( $next['schedule']['blocks'][0]['attendance'][0]['cancelled'] );
+		$other_data = array_merge( $data, [ 'team_id' => $other ] );
+		$this->assertTrue( $this->request( 'PUT', '/attendance', $other_data )->get_data()['schedule']['blocks'][0]['cancelled'] );
+		$this->assertSame( 409, $this->request( 'PUT', '/attendance', array_merge( $data, [ 'cancelled' => false ] ) )->get_status() );
+		$restored = $this->request(
+			'PUT',
+			'/attendance',
+			array_merge(
+			$data,
+			[
+				'cancelled' => false,
+				'revision'  => 1,
+			]
+			)
+			);
+		$this->assertSame( 200, $restored->get_status() );
+		$this->assertFalse( $restored->get_data()['schedule']['blocks'][0]['cancelled'] );
+		$this->assertCount( 3, Fields::get_for_post( $data['schedule_id'], 'cancellations' ) );
+		$this->assertStringNotContainsString( 'changed_by', wp_json_encode( $restored->get_data() ) );
+		$this->assertStringNotContainsString( 'cancellations', wp_json_encode( Schedules::feed() ) );
+	}
+
+	public function test_only_current_own_coaches_and_managers_can_cancel(): void {
+		$data   = $this->cancellation_fixture();
+		$person = $this->createPerson(
+			[],
+			[
+				'first_name'   => 'Trainer',
+				'work_history' => [
+					[
+						'team'       => $this->team_id,
+						'job_title'  => 'Trainer/coach',
+						'is_current' => true,
+					],
+				],
+			]
+			);
+		$user   = $this->createRondoUser();
+		update_user_meta( $user, 'rondo_linked_person_id', $person );
+		\Rondo\Core\AccessControl::flush_visible_person_ids_cache();
+		wp_set_current_user( $user );
+		$this->assertTrue( \Rondo\Training\Occurrences::week( $data['date'] )['schedule']['blocks'][0]['attendance'][0]['can_change'] );
+		$this->assertSame( 200, $this->request( 'PUT', '/attendance', $data )->get_status() );
+		$outsider = $this->createRondoUser();
+		wp_set_current_user( $outsider );
+		$this->assertSame(
+			403,
+			$this->request(
+			'PUT',
+			'/attendance',
+			array_merge(
+			$data,
+			[
+				'cancelled' => false,
+				'revision'  => 1,
+			]
+			)
+			)->get_status()
+			);
+		wp_set_current_user( $user );
+		$restore = array_merge(
+			$data,
+			[
+				'cancelled' => false,
+				'revision'  => 1,
+			]
+			);
+		foreach ( [ 'Teamspeler', 'Materiaalman' ] as $role ) {
+			Fields::update_for_post(
+				$person,
+				'work_history',
+				[
+					[
+						'team'       => $this->team_id,
+						'job_title'  => $role,
+						'is_current' => true,
+					],
+				]
+				);
+			$this->assertSame( 403, $this->request( 'PUT', '/attendance', $restore )->get_status() );
+		}
+		Fields::update_for_post(
+			$person,
+			'work_history',
+			[
+				[
+					'team'       => $this->team_id,
+					'job_title'  => 'Leider',
+					'is_current' => true,
+				],
+			]
+			);
+		Fields::update_for_post( $person, 'former_member', true );
+		$this->assertSame( 403, $this->request( 'PUT', '/attendance', $restore )->get_status() );
+		Fields::update_for_post( $person, 'former_member', false );
+		Fields::update_for_post(
+			$person,
+			'work_history',
+			[
+				[
+					'team'       => $this->team_id,
+					'job_title'  => 'Leider',
+					'is_current' => false,
+				],
+			]
+			);
+		$this->assertSame( 403, $this->request( 'PUT', '/attendance', $restore )->get_status() );
+		wp_set_current_user( 0 );
+		$this->assertSame( 401, $this->request( 'PUT', '/attendance', $restore )->get_status() );
+		$this->assertFalse( \Rondo\Training\Occurrences::week( $data['date'] )['schedule']['blocks'][0]['attendance'][0]['can_change'] );
+	}
+
+	public function test_cancellation_rejects_stale_schedule_invalid_dates_and_past_training(): void {
+		$data = $this->cancellation_fixture();
+		foreach ( [ [ 'date' => '2026-02-30' ], [ 'date' => 'tomorrow' ], [ 'cancelled' => 'true' ], [ 'team_id' => (string) $this->team_id ], [ 'unexpected' => true ] ] as $patch ) {
+			$this->assertSame( 400, $this->request( 'PUT', '/attendance', array_merge( $data, $patch ) )->get_status() );
+		}
+		$this->assertSame( 404, $this->request( 'PUT', '/attendance', array_merge( $data, [ 'date' => current_datetime()->modify( 'next tuesday' )->format( 'Y-m-d' ) ] ) )->get_status() );
+		$this->assertSame( 409, $this->request( 'PUT', '/attendance', array_merge( $data, [ 'date' => current_datetime()->modify( 'last monday' )->format( 'Y-m-d' ) ] ) )->get_status() );
+		$this->assertSame( 409, $this->request( 'PUT', '/attendance', array_merge( $data, [ 'schedule_revision' => 0 ] ) )->get_status() );
+		delete_option( Schedules::ACTIVE );
+		$this->assertSame( 409, $this->request( 'PUT', '/attendance', $data )->get_status() );
+		$this->assertEmpty( Fields::get_for_post( $data['schedule_id'], 'cancellations' ) );
+	}
+
+	public function test_week_calendar_uses_club_timezone_across_dst_and_year_boundary(): void {
+		$this->cancellation_fixture();
+		update_option( 'timezone_string', 'Europe/Amsterdam' );
+		foreach ( [ [ '2026-03-29', '2026-03-23', '2026-03-29' ], [ '2026-10-25', '2026-10-19', '2026-10-25' ], [ '2027-01-01', '2026-12-28', '2027-01-03' ] ] as [ $date, $start, $end ] ) {
+			$week = \Rondo\Training\Occurrences::week( $date );
+			$this->assertSame( $start, $week['week_start'] );
+			$this->assertSame( $end, $week['week_end'] );
+			$this->assertSame( $start, $week['schedule']['blocks'][0]['date'] );
+		}
+		$this->assertTrue( is_wp_error( \Rondo\Training\Occurrences::week( '2026-13-01' ) ) );
+	}
 }

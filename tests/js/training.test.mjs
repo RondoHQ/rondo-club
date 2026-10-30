@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { conflictingBlocks, trainingDefaults, editableSchedule, fieldPart, fieldOffsets, fieldStep, trainingColor, contrastText, schedulePayload, toMinutes, toTime } from '../../src/utils/training.js';
+import { conflictingBlocks, trainingDefaults, editableSchedule, fieldPart, fieldOffsets, fieldStep, trainingColor, contrastText, schedulePayload, toMinutes, toTime, shiftTrainingDate, trainingDateLabel } from '../../src/utils/training.js';
 const block = { block_id: 'a', day: 1, start: '18:00', duration: 60, pitch_id: 'p', offset: 0, size: 2, team_ids: [1] };
 test('field and team collisions; adjacent slots and different versions remain independent', () => {
   assert.equal(conflictingBlocks([block, { ...block, block_id: 'b', offset: 2, team_ids: [2] }]).size, 0);
@@ -40,4 +40,12 @@ test('colors follow team selection or explicit group, with readable contrast and
   assert.equal(contrastText('#b3de69'), '#000000');
   assert.equal(contrastText('#123456'), '#ffffff');
   assert.equal('color' in schedulePayload({ name: 'Test', blocks: [{ ...block, color: '#123456' }] }).blocks[0], false);
+});
+
+test('week navigation remains calendar based over DST and year boundaries', () => {
+  assert.equal(shiftTrainingDate('2026-03-23', 7), '2026-03-30');
+  assert.equal(shiftTrainingDate('2026-10-19', 7), '2026-10-26');
+  assert.equal(shiftTrainingDate('2026-12-28', 7), '2027-01-04');
+  assert.equal(shiftTrainingDate('2027-01-04', -7), '2026-12-28');
+  assert.equal(trainingDateLabel('2026-03-29'), '29 maart');
 });

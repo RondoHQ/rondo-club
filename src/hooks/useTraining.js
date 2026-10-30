@@ -24,6 +24,16 @@ export function useTrainingMutation() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: async ({ path, method = 'post', data }) => (await api.request({ url: `/rondo/v1/training/${path}`, method, data })).data,
-    onSuccess: () => client.invalidateQueries({ queryKey: ['training'] }),
+    onSuccess: () => Promise.all([client.invalidateQueries({ queryKey: ['training'] }), client.invalidateQueries({ queryKey: ['role-dashboard'] })]),
+  });
+}
+
+export function useTrainingWeek(date) {
+  const { data: user } = useCurrentUser();
+  return useQuery({
+    queryKey: ['training', 'week', user?.id, date],
+    queryFn: async () => (await api.get('/rondo/v1/training/week', { params: { date: date || undefined } })).data,
+    refetchInterval: 30000,
+    staleTime: 0,
   });
 }

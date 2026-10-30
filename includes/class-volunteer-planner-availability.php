@@ -7,9 +7,10 @@ use Rondo\Fields\Fields;
 use Rondo\Teams\TeamMatches;
 use Rondo\Training\Schedules;
 final class PlannerAvailability {
-	private array $teams     = [];
-	private array $feeds     = [];
-	private ?array $training = null;
+	private array $teams               = [];
+	private array $feeds               = [];
+	private ?array $training           = null;
+	private array $training_attendance = [];
 	public static function interval( int $id ): ?array {
 		try {
 			$start = new \DateTimeImmutable( (string) get_post_meta( $id, 'start_datetime', true ), wp_timezone() );
@@ -48,9 +49,10 @@ final class PlannerAvailability {
 			return $age !== null && $age >= 17 ? 'Actuele teamindeling ontbreekt' : null;
 		}
 		if ( $this->training === null ) {
-			$id             = (int) get_option( Schedules::ACTIVE, 0 );
-			$training       = $id ? Schedules::schedule( $id ) : [];
-			$this->training = is_wp_error( $training ) ? [] : $training;
+			$id                        = (int) get_option( Schedules::ACTIVE, 0 );
+			$training                  = $id ? Schedules::schedule( $id ) : [];
+			$this->training            = is_wp_error( $training ) ? [] : $training;
+			$this->training_attendance = $id && ! is_wp_error( $training ) ? \Rondo\Training\Occurrences::states( $id ) : [];
 		}
 		$season        = \Rondo\Fees\SeasonKey::current( $interval[0]->format( 'Y-m-d' ) );
 		$year          = (int) substr( $season, 0, 4 );
@@ -66,7 +68,7 @@ final class PlannerAvailability {
 				}
 				$has_training = true;
 				for ( $day = $interval[0]->setTime( 0, 0 ); $day < $interval[1]; $day = $day->modify( '+1 day' ) ) {
-					if ( (int) $day->format( 'N' ) !== (int) $block['day'] ) {
+					if ( (int) $day->format( 'N' ) !== (int) $block['day'] || \Rondo\Training\Occurrences::state( $this->training_attendance, $day->format( 'Y-m-d' ), $block['block_id'], $team )['cancelled'] ) {
 						continue;
 					}
 					$start = new \DateTimeImmutable( $day->format( 'Y-m-d' ) . ' ' . $block['start'], wp_timezone() );
