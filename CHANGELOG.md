@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.162.0] - 2026-10-30
+
+### Added
+
+- People CSV exports now follow the visible list columns, their labels and order, including selected address, Sportlink, custom and shift-progress fields. All matching pages remain included.
+
+### Fixed
+
+- Keep hidden columns out of people exports, avoid unnecessary team lookups, and show an export error instead of downloading a partial file when a request fails. Treat text values beginning with spreadsheet formula characters as literal text.
+
 ## [35.161.1] - 2026-10-30
 
 ### Fixed

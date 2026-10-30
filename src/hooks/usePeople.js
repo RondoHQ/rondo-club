@@ -1,3 +1,4 @@
+import { fetchAllPeoplePages } from '../api/fetchAllPeoplePages.js';
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { decodeHtml, formatPersonName, isDutchMobilePhone } from '@/utils/formatters';
@@ -257,22 +258,9 @@ export function useFilteredPeople(filters = {}, options = {}) {
   });
 }
 
-// Fetch every matching person across all pages. Backend caps per_page at 100,
-// so we walk pages sequentially. Page 1 tells us total_pages; the rest fan out.
-export async function fetchAllFilteredPeople(filters = {}) {
-  const firstParams = { ...buildFilteredPeopleParams(filters), page: 1, per_page: 100 };
-  const first = (await prmApi.getFilteredPeople(firstParams)).data;
-  const totalPages = first.total_pages || 1;
-  if (totalPages <= 1) return first.people || [];
-
-  const rest = await Promise.all(
-    Array.from({ length: totalPages - 1 }, (_, i) => i + 2).map(async (page) => {
-      const response = await prmApi.getFilteredPeople({ ...firstParams, page });
-      return response.data.people || [];
-    })
-  );
-
-  return [...(first.people || []), ...rest.flat()];
+// Fetch every matching person, retaining the active filters and permissions.
+export function fetchAllFilteredPeople(filters = {}) {
+  return fetchAllPeoplePages(params => prmApi.getFilteredPeople(params), buildFilteredPeopleParams(filters));
 }
 
 /**
