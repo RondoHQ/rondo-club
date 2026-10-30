@@ -373,6 +373,7 @@ function rondo_init() {
 		new People();
 		new Teams();
 		new \Rondo\REST\TeamMatches();
+		new \Rondo\REST\ClubDirectory();
 		new \Rondo\REST\Training();
 		new \Rondo\REST\SportparkClosures();
 		new \Rondo\REST\Onboarding();

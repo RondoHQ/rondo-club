@@ -18,7 +18,7 @@ import Dashboard from '@/pages/Dashboard';
 // Lazy-loaded page components (separate file for fast refresh compatibility)
 import {
   PeopleList, PeopleAnniversaries, PeopleOnboarding, ProfileChangeLog, PersonDetail, SponsorList, SponsorDetail, TeamsList, TeamDetail,
-  Kaderlijst, MyTeam, MyCommittees, Football,
+  Kaderlijst, MyTeam, MyCommittees, Football, ClubDirectory,
   CommissiesList, CommissieDetail, TodosList,
   FeedbackList, FeedbackDetail, Communication, Planning, Newsletter, NewsletterSettings, Settings, AppAccess, VOG,
   Contributie, DisciplineCasesList,
@@ -348,6 +348,8 @@ const router = wrapCreateBrowserRouter(createBrowserRouter)([
           },
           { path: 'people/:id', element: <KaderOrVrijwilligRedirect><PersonDetail /></KaderOrVrijwilligRedirect> },
           { path: 'voetbal', element: <CapabilityRoute checkAccess={canAccessFootball}><Football /></CapabilityRoute> },
+          { path: 'voetbal/verenigingen', element: <CapabilityRoute checkAccess={(user) => user?.is_admin || user?.can_access_teams}><ClubDirectory /></CapabilityRoute> },
+          { path: 'voetbal/verenigingen/:id', element: <CapabilityRoute checkAccess={(user) => user?.is_admin || user?.can_access_teams}><ClubDirectory /></CapabilityRoute> },
           { path: 'sponsors', element: <SponsorRoute><SponsorList /></SponsorRoute> },
           { path: 'sponsors/new', element: <SponsorRoute><SponsorDetail /></SponsorRoute> },
           { path: 'sponsors/:id', element: <SponsorRoute><SponsorDetail /></SponsorRoute> },
