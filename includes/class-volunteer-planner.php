@@ -503,7 +503,7 @@ final class VolunteerPlanner {
 			if ( is_wp_error( $data ) ) {
 				return $data;
 			}
-			if ( $data['revision'] !== $revision ) {
+			if ( $data['revision'] !== $revision || ! empty( $data['superseded_by'] ) ) {
 				return self::error( 'Het voorstel is gewijzigd. Ververs eerst.' );
 			}
 			$data['phase'] = 'closed';
