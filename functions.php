@@ -186,7 +186,9 @@ use Rondo\Volunteer\PublicTaakuitlegPage;
 
 define( 'RONDO_THEME_DIR', get_template_directory() );
 define( 'RONDO_THEME_URL', get_template_directory_uri() );
-define( 'RONDO_THEME_VERSION', wp_get_theme()->get( 'Version' ) );
+$rondo_theme_data = get_file_data( RONDO_THEME_DIR . '/style.css', [ 'Version' => 'Version' ] );
+define( 'RONDO_THEME_VERSION', $rondo_theme_data['Version'] );
+unset( $rondo_theme_data );
 
 // Plugin constants (now part of theme)
 define( 'RONDO_VERSION', RONDO_THEME_VERSION );
@@ -795,7 +797,7 @@ function rondo_get_js_config() {
 		'logoutUrl'           => wp_logout_url( home_url() ),
 		'adminUrl'            => admin_url(),
 		'themeUrl'            => RONDO_THEME_URL,
-		'version'             => wp_get_theme()->get( 'Version' ),
+		'version'             => RONDO_THEME_VERSION,
 		'errorMonitoring'     => [
 			'tunnel'             => wp_make_link_relative( rest_url( 'rondo/v1/diagnostics' ) ),
 			'performanceEnabled' => ! defined( 'RONDO_GLITCHTIP_REACT_PERFORMANCE' ) || RONDO_GLITCHTIP_REACT_PERFORMANCE,

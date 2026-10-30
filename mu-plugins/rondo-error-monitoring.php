@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) || ! defined( 'RONDO_GLITCHTIP_DSN' ) || ! RONDO_GLI
 	return;
 }
 
-$rondo_monitoring_theme = WP_CONTENT_DIR . '/themes/rondo-club';
+$rondo_monitoring_theme = defined( 'RONDO_REQUEST_THEME_DIR' ) ? RONDO_REQUEST_THEME_DIR : realpath( WP_CONTENT_DIR . '/themes/rondo-club' );
 if ( is_readable( $rondo_monitoring_theme . '/vendor/autoload.php' ) && is_readable( $rondo_monitoring_theme . '/includes/class-error-monitoring.php' ) ) {
 	require_once $rondo_monitoring_theme . '/vendor/autoload.php';
 	require_once $rondo_monitoring_theme . '/includes/class-error-monitoring.php';

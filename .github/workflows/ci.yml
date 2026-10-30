@@ -93,7 +93,10 @@ jobs:
         with:
           node-version: 20
       - name: Test deployment asset retention and app updates
-        run: node --test tests/js/appUpdate.test.mjs tests/js/assetRetention.test.mjs tests/js/deployAssetTransfer.test.mjs
+        run: node --test tests/js/appUpdate.test.mjs tests/js/assetRetention.test.mjs
+
+      - name: Test atomic deployment and rollback
+        run: python3 tests/python/test_atomic_release.py
 
   php-tests:
     needs: check-plan
