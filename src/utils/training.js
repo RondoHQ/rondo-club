@@ -44,3 +44,14 @@ export function contrastText(color) {
   const luminance = channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
   return luminance > 0.179 ? '#000000' : '#ffffff';
 }
+
+// Calendar arithmetic uses noon UTC so browser timezone and DST cannot change the date.
+export function shiftTrainingDate(date, days) {
+  const value = new Date(`${date}T12:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
+export function trainingDateLabel(date) {
+  return new Intl.DateTimeFormat('nl-NL', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));
+}

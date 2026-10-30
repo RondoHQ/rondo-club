@@ -160,6 +160,8 @@ for var in "${required_vars[@]}"; do
     fi
 done
 
+DEPLOY_REMOTE_THEME_PATH="${DEPLOY_REMOTE_THEME_PATH%/}"
+
 if [ -n "${DEPLOY_SSH_IDENTITY_FILE:-}" ] && [ ! -f "$DEPLOY_SSH_IDENTITY_FILE" ]; then
     echo -e "${RED}Error: SSH identity file not found${NC}"
     exit 1
@@ -191,7 +193,6 @@ if [ -n "${DEPLOY_SSH_KNOWN_HOSTS_FILE:-}" ]; then
 fi
 
 SSH_CMD=(ssh "${SSH_OPTIONS[@]}")
-printf -v RSYNC_SSH '%q ' "${SSH_CMD[@]}"
 REMOTE_TARGET="$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST"
 
 SCP_OPTIONS=(
@@ -246,222 +247,123 @@ retry_remote() {
     done
 }
 
-# Some managed hosts allow normal SSH/SFTP writes while blocking rsync when it
-# runs as the receiver. Build a complete archive first, upload it with SCP, and
-# only then extract it on the host. A failed upload never changes production.
-archive_sync() {
-    local source_dir="$1"
-    local remote_dir="$2"
-    local mode="$3"
-    local label="$4"
-    shift 4
+# Every upload goes to an inactive release. The Python helper validates and
+# switches the theme symlink with one filesystem operation, including bootstrap.
+LOCAL_ARCHIVE="$(mktemp "${TMPDIR:-/tmp}/rondo-release-XXXXXX")"
+RELEASE_ID="${DEPLOY_COMMIT_SHA:-manual}-$(date -u +%Y%m%dT%H%M%S)-${LOCAL_ARCHIVE##*-}"
+REMOTE_WP="$(retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" "cd $DEPLOY_REMOTE_WP_PATH && pwd -P")"
+# Keep release backups, certificates and deployment tools outside the web root.
+RELEASE_ROOT="${REMOTE_WP%/*}/.rondo-releases/${DEPLOY_REMOTE_THEME_PATH##*/}"
+LIVE_THEME="$REMOTE_WP/wp-content/themes/${DEPLOY_REMOTE_THEME_PATH##*/}"
+printf -v ROOT_COMMAND 'mkdir -p %q' "$RELEASE_ROOT"
+retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" "$ROOT_COMMAND"
+REMOTE_HELPER="$RELEASE_ROOT/deploy-$RELEASE_ID.py"
+REMOTE_ARCHIVE="$RELEASE_ROOT/upload-$RELEASE_ID.tar.gz"
 
-    local archive
-    local remote_archive
-    local remote_archive_quoted
-    local remote_command
-    archive="$(mktemp "${TMPDIR:-/tmp}/rondo-${label}-XXXXXX")"
-    remote_archive="$REMOTE_THEME_PATH_RESOLVED/.rondo-${label}-${DEPLOY_COMMIT_SHA:-manual}.tar.gz"
-    printf -v remote_archive_quoted '%q' "$remote_archive"
-
-    tar -czf "$archive" -C "$source_dir" "$@" .
-    retry_remote "${SCP_CMD[@]}" "$archive" "$REMOTE_TARGET:$remote_archive"
-    rm -f "$archive"
-
-    printf -v remote_command 'set -e; tar -tzf %q >/dev/null; mkdir -p %q; ' "$remote_archive" "$remote_dir"
-    if [ "$mode" = "replace" ]; then
-        printf -v remote_command '%sfind %q -mindepth 1 -depth -delete; ' "$remote_command" "$remote_dir"
-    fi
-    printf -v remote_command '%star -xzf %q -C %q' "$remote_command" "$remote_archive" "$remote_dir"
-
-    retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" "$remote_command"
-    retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" "rm -f $remote_archive_quoted"
+remote_release() {
+    local command
+    printf -v command 'python3 %q %q %q %q %q' "$REMOTE_HELPER" "$1" "$LIVE_THEME" "$RELEASE_ROOT" "$RELEASE_ID"
+    shift
+    local argument
+    for argument in "$@"; do
+        printf -v command '%s %q' "$command" "$argument"
+    done
+    retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" "$command"
 }
 
-echo -e "${GREEN}=== Rondo Club Deployment ===${NC}"
-echo "Target: $REMOTE_TARGET"
-echo "Theme path: $DEPLOY_REMOTE_THEME_PATH"
-echo "Source: $SOURCE_DIR"
-if [ -n "${DEPLOY_COMMIT_SHA:-}" ]; then
-    echo "Commit: $DEPLOY_COMMIT_SHA"
-fi
-echo ""
+# Also runs when SSH loses its reply after activation: rollback reads the durable
+# transaction and checks the live target before changing anything.
+DEPLOY_FINISHED=false
+HELPER_UPLOADED=false
+cleanup_deployment() {
+    local status=$?
+    trap - EXIT
+    rm -f "$LOCAL_ARCHIVE"
+    if [ "$DEPLOY_FINISHED" = false ] && [ "$HELPER_UPLOADED" = true ]; then
+        echo "Deployment failed; restoring the previous release if activated." >&2
+        if remote_release rollback; then
+            retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
+                "cd $DEPLOY_REMOTE_WP_PATH && wp rewrite flush --hard && wp cache flush && wp sg purge" || true
+        else
+            echo "Automatic rollback could not be confirmed; inspect the deployment transaction." >&2
+        fi
+    fi
+    exit "$status"
+}
+trap cleanup_deployment EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
-REMOTE_THEME_PATH_RESOLVED="$(retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
-    "cd $DEPLOY_REMOTE_THEME_PATH && pwd -P" | tail -n 1 | tr -d '\r')"
-
-if [ -z "$REMOTE_THEME_PATH_RESOLVED" ]; then
-    echo -e "${RED}Error: could not resolve the remote theme path${NC}"
-    exit 1
-fi
-
+echo -e "${GREEN}=== Rondo Club atomic deployment ===${NC}"
 if [ "$SKIP_BUILD" = false ]; then
-    echo -e "${YELLOW}Step 1: Building frontend assets...${NC}"
-    cd "$SOURCE_DIR"
-    npm run build
-else
-    echo -e "${YELLOW}Step 1: Using pre-built frontend assets...${NC}"
+    (cd "$SOURCE_DIR" && npm run build)
 fi
-
-if [ ! -f "$SOURCE_DIR/dist/.vite/manifest.json" ] && [ ! -f "$SOURCE_DIR/dist/manifest.json" ]; then
-    echo -e "${RED}Error: no Vite manifest found in release dist/${NC}"
-    exit 1
-fi
-
 if [ ! -f "$SOURCE_DIR/vendor/autoload.php" ]; then
-    echo -e "${RED}Error: release is missing vendor/autoload.php${NC}"
+    echo "Release is missing vendor/autoload.php" >&2
     exit 1
 fi
-
 php "$SCRIPT_DIR/retain-assets.php" inventory "$SOURCE_DIR/dist"
 
-# Upload hashed files before publishing manifests/workers. Open tabs may still
-# import chunks from an older build, so neither transfer path deletes assets.
-echo -e "${YELLOW}Step 2: Syncing build assets...${NC}"
-if ! rsync -avz \
-    -e "$RSYNC_SSH" \
-    "$SOURCE_DIR/dist/assets/" \
-    "$REMOTE_TARGET:$DEPLOY_REMOTE_THEME_PATH/dist/assets/"; then
-    echo -e "${YELLOW}  rsync receiver unavailable; using validated archive transfer.${NC}"
-    archive_sync "$SOURCE_DIR/dist/assets" "$REMOTE_THEME_PATH_RESOLVED/dist/assets" overlay assets
-fi
-
-echo -e "${YELLOW}Step 2b: Publishing build metadata...${NC}"
-if ! rsync -avz --exclude='assets' --exclude='.asset-retention.json*' \
-    -e "$RSYNC_SSH" \
-    "$SOURCE_DIR/dist/" \
-    "$REMOTE_TARGET:$DEPLOY_REMOTE_THEME_PATH/dist/"; then
-    echo -e "${YELLOW}  rsync receiver unavailable; using validated archive transfer.${NC}"
-    archive_sync "$SOURCE_DIR/dist" "$REMOTE_THEME_PATH_RESOLVED/dist" overlay dist --exclude='./assets' --exclude='./.asset-retention.json*'
-fi
-
-echo -e "${YELLOW}Step 3: Syncing theme files...${NC}"
-RSYNC_EXCLUDES=(
-    --exclude='.git'
-    --exclude='.github'
-    --exclude='.claude'
-    --exclude='.agents'
-    --exclude='.codex'
-    --exclude='.impeccable'
-    --exclude='PRODUCT.md'
-    --exclude='DESIGN.md'
-    --exclude='.husky'
-    --exclude='.env'
-    --exclude='.DS_Store'
-    --exclude='dist'
-    --exclude='graphify-out'
-    --exclude='release'
-    --exclude='tests'
-)
-
 TAR_EXCLUDES=(
-    --exclude='.git'
-    --exclude='.github'
-    --exclude='.claude'
-    --exclude='.agents'
-    --exclude='.codex'
-    --exclude='.impeccable'
-    --exclude='PRODUCT.md'
-    --exclude='DESIGN.md'
-    --exclude='.husky'
-    --exclude='.env'
-    --exclude='.DS_Store'
-    --exclude='dist'
-    --exclude='graphify-out'
-    --exclude='release'
-    --exclude='tests'
+    --exclude='./.git' --exclude='./.github' --exclude='./.env'
+    --exclude='./.claude' --exclude='./.agents' --exclude='./.codex'
+    --exclude='./.DS_Store' --exclude='./tests' --exclude='./release'
+    --exclude='./.impeccable' --exclude='./.husky' --exclude='./graphify-out'
+    --exclude='./PRODUCT.md' --exclude='./DESIGN.md' --exclude='./CLAUDE.md'
+    --exclude='./certs' --exclude='./dist/.asset-retention.json*'
 )
-
 if [ "$INCLUDE_NODE_MODULES" = false ]; then
-    RSYNC_EXCLUDES+=(--exclude='node_modules')
-    TAR_EXCLUDES+=(--exclude='node_modules')
-else
-    echo "(Including node_modules)"
+    TAR_EXCLUDES+=(--exclude='./node_modules')
 fi
+tar -czf "$LOCAL_ARCHIVE" "${TAR_EXCLUDES[@]}" -C "$SOURCE_DIR" .
+ARCHIVE_SHA="$(shasum -a 256 "$LOCAL_ARCHIVE" | cut -d ' ' -f 1)"
+retry_remote "${SCP_CMD[@]}" "$SCRIPT_DIR/atomic-release.py" "$REMOTE_TARGET:$REMOTE_HELPER"
+HELPER_UPLOADED=true
+retry_remote "${SCP_CMD[@]}" "$LOCAL_ARCHIVE" "$REMOTE_TARGET:$REMOTE_ARCHIVE"
+# Use current tooling even when rolling back to a release predating this change.
+for helper in retain-assets.php; do
+    retry_remote "${SCP_CMD[@]}" "$SCRIPT_DIR/$helper" "$REMOTE_TARGET:$RELEASE_ROOT/$RELEASE_ID-$helper"
+done
+for loader in rondo-00-release.php rondo-error-monitoring.php; do
+    retry_remote "${SCP_CMD[@]}" "$PROJECT_ROOT/mu-plugins/$loader" "$REMOTE_TARGET:$RELEASE_ROOT/$RELEASE_ID-$loader"
+done
 
-if ! rsync -avz \
-    "${RSYNC_EXCLUDES[@]}" \
-    -e "$RSYNC_SSH" \
-    "$SOURCE_DIR/" \
-    "$REMOTE_TARGET:$DEPLOY_REMOTE_THEME_PATH/"; then
-    echo -e "${YELLOW}  rsync receiver unavailable; using validated archive transfer.${NC}"
-    archive_sync "$SOURCE_DIR" "$REMOTE_THEME_PATH_RESOLVED" overlay theme "${TAR_EXCLUDES[@]}"
-fi
+echo "Preparing and checking the inactive release..."
+remote_release prepare "$REMOTE_ARCHIVE" "$ARCHIVE_SHA" "$PRUNE_DELETED"
+echo "Activating the complete release..."
+remote_release activate
 
-if [ "$PRUNE_DELETED" = true ]; then
-    echo -e "${YELLOW}Step 3b: Pruning deleted files from ${PRUNE_DIRS[*]}...${NC}"
-    for dir in "${PRUNE_DIRS[@]}"; do
-        if [ ! -d "$SOURCE_DIR/$dir" ]; then
-            echo "  (skipping ${dir}/ — not present in release)"
-            continue
-        fi
-
-        echo "  ${dir}/"
-        if ! rsync -az --delete \
-            -e "$RSYNC_SSH" \
-            "$SOURCE_DIR/$dir/" \
-            "$REMOTE_TARGET:$DEPLOY_REMOTE_THEME_PATH/$dir/"; then
-            echo -e "${YELLOW}    rsync receiver unavailable; using validated archive transfer.${NC}"
-            archive_sync "$SOURCE_DIR/$dir" "$REMOTE_THEME_PATH_RESOLVED/$dir" replace "prune-$dir"
-        fi
-    done
-fi
-
-# Only retire files after the complete release is present. The first deployment
-# starts a fresh grace period even for files with old build modification times.
-printf -v RETENTION_COMMAND 'php %q prune %q' \
-    "$REMOTE_THEME_PATH_RESOLVED/bin/retain-assets.php" "$REMOTE_THEME_PATH_RESOLVED/dist"
-retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" "$RETENTION_COMMAND"
-
-# The loader resolves code from the current theme release, including on rollback.
-if [ -f "$SOURCE_DIR/mu-plugins/rondo-error-monitoring.php" ]; then
-    retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
-        "mkdir -p $DEPLOY_REMOTE_WP_PATH/wp-content/mu-plugins && cp $DEPLOY_REMOTE_THEME_PATH/mu-plugins/rondo-error-monitoring.php $DEPLOY_REMOTE_WP_PATH/wp-content/mu-plugins/rondo-error-monitoring.php"
-fi
-
-echo -e "${YELLOW}Step 3c: Refreshing WordPress rewrite rules...${NC}"
 retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
     "cd $DEPLOY_REMOTE_WP_PATH && wp rewrite flush --hard"
-
 if [ "$SKIP_CACHE_CLEAR" = false ]; then
-    echo -e "${YELLOW}Step 4: Clearing caches...${NC}"
     retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
         "cd $DEPLOY_REMOTE_WP_PATH && wp cache flush && wp sg purge"
 fi
 
+if [ "$SKIP_HEALTH_CHECK" = false ]; then
+    EXPECTED_VERSION="$(awk -F': ' '/^Version:/ { print $2; exit }' "$SOURCE_DIR/style.css" | tr -d '\r')"
+    REMOTE_VERSION="$(retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
+        "cd $DEPLOY_REMOTE_WP_PATH && wp theme get ${DEPLOY_REMOTE_THEME_PATH##*/} --field=version" | tail -n 1 | tr -d '\r')"
+    if [ -z "$EXPECTED_VERSION" ] || [ "$REMOTE_VERSION" != "$EXPECTED_VERSION" ]; then
+        echo "Deployed version does not match $EXPECTED_VERSION" >&2
+        exit 1
+    fi
+    if [ -n "${DEPLOY_PRODUCTION_URL:-}" ]; then
+        for route in "" "/oauth/.well-known/openid-configuration"; do
+            curl --fail --silent --show-error --location \
+                --retry 3 --retry-delay 2 --max-time 30 \
+                "${DEPLOY_PRODUCTION_URL%/}$route" >/dev/null
+        done
+        # HTTP success alone can be a stale cached release. Verify the web SAPI.
+        curl --fail --silent --show-error --retry 3 --retry-delay 2 --max-time 30 \
+            "${DEPLOY_PRODUCTION_URL%/}/wp-json/rondo/v1/version?deploy=$RELEASE_ID" \
+            | python3 -c 'import json,sys; assert json.load(sys.stdin)["version"] == sys.argv[1], "Live release version mismatch"' "$EXPECTED_VERSION"
+    fi
+fi
 if [ -n "${DEPLOY_COMMIT_SHA:-}" ]; then
-    echo -e "${YELLOW}Step 5: Recording deployed commit...${NC}"
     retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
         "cd $DEPLOY_REMOTE_WP_PATH && wp option update rondo_deployed_commit $DEPLOY_COMMIT_SHA --quiet"
 fi
-
-if [ "$SKIP_HEALTH_CHECK" = false ]; then
-    echo -e "${YELLOW}Step 6: Verifying deployment...${NC}"
-
-    EXPECTED_VERSION="$(awk -F': ' '/^Version:/ { print $2; exit }' "$SOURCE_DIR/style.css" | tr -d '\r')"
-    THEME_SLUG="${DEPLOY_REMOTE_THEME_PATH%/}"
-    THEME_SLUG="${THEME_SLUG##*/}"
-    REMOTE_VERSION="$(retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
-        "cd $DEPLOY_REMOTE_WP_PATH && wp theme get $THEME_SLUG --field=version" | tail -n 1 | tr -d '\r')"
-
-    if [ -z "$EXPECTED_VERSION" ] || [ "$REMOTE_VERSION" != "$EXPECTED_VERSION" ]; then
-        echo -e "${RED}Error: deployed theme version '$REMOTE_VERSION' does not match '$EXPECTED_VERSION'${NC}"
-        exit 1
-    fi
-
-    if [ -n "${DEPLOY_PRODUCTION_URL:-}" ]; then
-        curl --fail --silent --show-error --location \
-            --retry 3 --retry-delay 2 --max-time 30 \
-            "$DEPLOY_PRODUCTION_URL" >/dev/null
-
-        curl --fail --silent --show-error \
-            --retry 3 --retry-delay 2 --max-time 30 \
-            "${DEPLOY_PRODUCTION_URL%/}/oauth/.well-known/openid-configuration" >/dev/null
-    fi
-fi
-
-echo ""
-echo -e "${GREEN}=== Deployment Complete ===${NC}"
-if [ -n "${DEPLOY_PRODUCTION_URL:-}" ]; then
-    echo "Production URL: $DEPLOY_PRODUCTION_URL"
-fi
+remote_release finish
+DEPLOY_FINISHED=true
+echo -e "${GREEN}=== Deployment complete and verified ===${NC}"

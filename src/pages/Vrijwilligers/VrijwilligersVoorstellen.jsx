@@ -45,6 +45,7 @@ export default function VrijwilligersVoorstellen() {
   const [editor, setEditor] = useState(null);
   const [acceptConversions, setAcceptConversions] = useState(false);
   const [message, setMessage] = useState('');
+  const [selection, setSelection] = useState({ planId: 0, excluded: [] });
   const list = useQuery({ queryKey: ['volunteer', 'plans'], queryFn: async () => (await prmApi.getVolunteerPlans()).data });
   const id = Number(params.get('plan') || list.data?.plans?.[0]?.id || 0);
   const queryKey = ['volunteer', 'plan', id];
@@ -56,32 +57,42 @@ export default function VrijwilligersVoorstellen() {
     setEditor(null); setAcceptConversions(false);
   };
   const create = useMutation({ mutationFn: () => prmApi.createVolunteerPlan(), onSuccess: (response) => {
-    setParams({ plan: response.data.id }); receive(response.data); setMessage('Nieuw voorstel gemaakt. Er zijn nog geen diensten toegewezen aan leden.');
+    setParams({ plan: response.data.id }); receive(response.data); setMessage('Het actuele voorstel bevat alle open plekken. Geldige keuzes zijn behouden; er zijn nog geen diensten toegewezen.');
   } });
   const publish = useMutation({ mutationFn: async () => {
+    const shiftIds = selectedShiftIds;
     let current = plan;
     let response;
     do {
-      response = await prmApi.publishVolunteerPlan(id, { revision: current.revision, accept_conversions: acceptConversions });
+      response = await prmApi.publishVolunteerPlan(id, { revision: current.revision, accept_conversions: acceptConversions, shift_ids: shiftIds });
       current = response.data;
       client.setQueryData(['volunteer', 'plan', id], current);
     } while (current.publish_more);
     return response;
   }, onSuccess: (response) => {
-    receive(response.data); setMessage(response.data.phase === 'published' ? 'De indelingen zijn gepubliceerd. De toewijzingsmails staan klaar voor verzending.' : 'De geldige indelingen zijn gepubliceerd. Controleer de resterende open regels en eventuele gewijzigde beschikbaarheid.');
+    receive(response.data); setMessage(response.data.phase === 'published' ? 'De indelingen zijn gepubliceerd. De toewijzingsmails staan klaar voor verzending.' : 'De geldige geselecteerde indelingen zijn gepubliceerd. Niet geselecteerde diensten blijven in het voorstel. Controleer ook eventuele meldingen bij de resterende open regels.');
     client.invalidateQueries({ queryKey: ['people'] });
   } });
   const close = useMutation({ mutationFn: () => prmApi.closeVolunteerPlan(id, { revision: plan.revision }), onSuccess: (response) => { receive(response.data); setMessage('Voorstel afgesloten. Gepubliceerde indelingen blijven staan.'); } });
   const writable = plan && ['draft', 'partial'].includes(plan.phase);
   const pending = plan?.rows.filter((row) => ['pending', 'publishing'].includes(row.state) && row.person_id > 0) || [];
-  const conversions = pending.filter((row) => row.conversion);
+  const shiftIds = [...new Set(pending.map((row) => row.shift_id))];
+  const excluded = selection.planId === id ? selection.excluded : [];
+  const continuing = Array.isArray(plan?.publish_shift_ids);
+  const selectedShiftIds = continuing ? plan.publish_shift_ids : shiftIds.filter((shiftId) => !excluded.includes(shiftId));
+  const selectedRows = pending.filter((row) => selectedShiftIds.includes(row.shift_id));
+  const conversions = selectedRows.filter((row) => row.conversion);
+  const toggleShift = (shiftId, checked) => {
+    setSelection({ planId: id, excluded: checked ? excluded.filter((value) => value !== shiftId) : [...excluded, shiftId] });
+    setAcceptConversions(false);
+  };
   const busy = create.isPending || publish.isPending || close.isPending;
   const actionError = create.error || publish.error || close.error;
 
   return (
     <div className="space-y-6">
       <Link to="/vrijwilligers" className="text-sm hover:underline">← Terug naar vrijwilligers</Link>
-      <header className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-xl font-semibold">Indelingsvoorstellen</h1><p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Elke woensdag een voorstel voor vier kalenderweken vooruit, inclusief open plekken op kortere termijn. Pas na jouw akkoord worden diensten toegewezen.</p></div><button type="button" className="btn-primary" disabled={busy} onClick={() => create.mutate()}>{create.isPending ? 'Voorstel berekenen…' : 'Nieuw voorstel / gaten aanvullen'}</button></header>
+      <header className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-xl font-semibold">Indelingsvoorstellen</h1><p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Elke woensdag een voorstel voor vier kalenderweken vooruit, inclusief open plekken op kortere termijn. Pas na jouw akkoord worden diensten toegewezen.</p></div><button type="button" className="btn-primary" disabled={busy} onClick={() => create.mutate()}>{create.isPending ? 'Voorstel berekenen…' : 'Voorstel vernieuwen / gaten aanvullen'}</button></header>
       {list.data && <p className="text-sm text-gray-600 dark:text-gray-300">Volgende automatische ronde: {date(list.data.next_at)} · Berichten naar {list.data.notification_email || 'geen adres ingesteld'}. Het adres is instelbaar op het vrijwilligersdashboard.</p>}
       {message && <p role="status" className="card p-4 text-green-800 dark:text-green-300">{message}</p>}
       {actionError && <p role="alert" className="card p-4 text-red-700 dark:text-red-300">{actionError.response?.data?.message || 'Verwerking mislukt. Ververs om de actuele status te bekijken.'}</p>}
@@ -92,26 +103,31 @@ export default function VrijwilligersVoorstellen() {
       </select></label>}
       {id > 0 && detail.isPending && <p role="status">Indeling laden…</p>}
       {plan && <>
+        {plan.superseded_by > 0 && <p role="status" className="card p-4">Dit voorstel is vervangen. <Link className="underline" to={`/vrijwilligers/voorstellen?plan=${plan.superseded_by}`}>Bekijk het actuele voorstel</Link>.</p>}
         <section className="card p-5 space-y-3"><h2 className="font-semibold">{phases[plan.phase]} · {plan.from} t/m {plan.until}</h2>
           <p>{plan.coverage.filled} van {plan.coverage.places} plekken definitief bezet · {pending.length} toewijzingen in dit voorstel.</p>
           {(plan.coverage.filled < plan.coverage.places || plan.coverage.unlimited > 0) && <p className="text-amber-700 dark:text-amber-300">Het rooster is nog niet volledig bezet. {plan.coverage.unlimited > 0 && `${plan.coverage.unlimited} diensten hebben onbegrensde capaciteit; stel daar eerst een aantal plekken in.`}</p>}
           <p className="text-sm text-gray-600 dark:text-gray-300">Wedstrijden: twee uur marge voor en na. Trainingen: dertig minuten marge. Ontbrekende of verouderde beschikbaarheidsgegevens geven geen automatische toewijzing. Toegewezen diensten kunnen tot drie weken vooraf worden afgemeld; vrijgekomen plekken komen opnieuw in een voorstel.</p>
           {writable && <>
-            {conversions.length > 0 && <label className="flex gap-2 text-sm text-amber-800 dark:text-amber-300"><input type="checkbox" checked={acceptConversions} onChange={(event) => setAcceptConversions(event.target.checked)} />Ik ga expliciet akkoord met de hieronder gemarkeerde omzettingen van bar naar luik.</label>}
-            <div className="flex flex-wrap gap-2"><button type="button" className="btn-primary" disabled={busy || !pending.length || (conversions.length > 0 && !acceptConversions)} onClick={() => publish.mutate()}>{publish.isPending ? 'Publiceren…' : `Akkoord en ${pending.length} toewijzingen publiceren`}</button><button type="button" className="btn-secondary" disabled={busy} onClick={() => { detail.refetch(); }}>Verversen</button><button type="button" className="btn-secondary" disabled={busy} onClick={() => close.mutate()}>Voorstel afsluiten</button></div>
-            <p className="text-xs text-gray-500">Publiceren controleert alle regels opnieuw. Gewijzigde of onmogelijke regels blijven open; gepubliceerde regels worden bij opnieuw klikken niet nogmaals verstuurd. Afsluiten verwijdert alleen de nog niet gepubliceerde voorstellen.</p>
+            <p className="text-sm">{selectedShiftIds.filter((shiftId) => shiftIds.includes(shiftId)).length} van {shiftIds.length} diensten geselecteerd · {selectedRows.length} toewijzingen. Vink diensten uit om ze later te publiceren; de voorgestelde kandidaten blijven bewaard.</p>
+            {continuing && <p role="status" className="text-sm">Rond de gestarte publicatie af met de eerder gekozen selectie.</p>}
+            {!continuing && shiftIds.length > 0 && <div className="flex flex-wrap gap-2"><button type="button" className="btn-secondary text-sm" disabled={busy} onClick={() => { setSelection({ planId: id, excluded: [] }); setAcceptConversions(false); }}>Alles selecteren</button><button type="button" className="btn-secondary text-sm" disabled={busy} onClick={() => { setSelection({ planId: id, excluded: shiftIds }); setAcceptConversions(false); }}>Alles deselecteren</button></div>}
+            {conversions.length > 0 && <label className="flex gap-2 text-sm text-amber-800 dark:text-amber-300"><input type="checkbox" checked={acceptConversions} disabled={busy} onChange={(event) => setAcceptConversions(event.target.checked)} />Ik ga expliciet akkoord met de geselecteerde omzettingen van bar naar luik.</label>}
+            <div className="flex flex-wrap gap-2"><button type="button" className="btn-primary" disabled={busy || (!selectedRows.length && !continuing) || (conversions.length > 0 && !acceptConversions)} onClick={() => publish.mutate()}>{publish.isPending ? 'Publiceren…' : continuing ? 'Publicatie hervatten' : `Akkoord en ${selectedRows.length} toewijzingen publiceren`}</button><button type="button" className="btn-secondary" disabled={busy} onClick={() => { detail.refetch(); }}>Verversen</button><button type="button" className="btn-secondary" disabled={busy || continuing} onClick={() => close.mutate()}>Voorstel afsluiten</button></div>
+            <p className="text-xs text-gray-500">Publiceren controleert de geselecteerde indelingen opnieuw. Gewijzigde of onmogelijke regels blijven open; gepubliceerde regels worden bij opnieuw klikken niet nogmaals verstuurd. Afsluiten verwijdert alleen de nog niet gepubliceerde voorstellen.</p>
           </>}
         </section>
         <section className="card divide-y divide-gray-200 dark:divide-gray-700" aria-label="Voorgestelde indelingen">
-          {!plan.rows.length && <p className="p-5">Geen nieuwe toewijzingen nodig. Open plekken kunnen al in een ander conceptvoorstel staan.</p>}
+          {!plan.rows.length && <p className="p-5">Geen open plekken in deze periode.</p>}
           {plan.rows.map((row) => <div key={row.index} className="p-4 space-y-2">
+            {writable && row.person_id > 0 && ['pending', 'publishing'].includes(row.state) && <label className="flex items-center gap-2 min-h-11 text-sm"><input type="checkbox" className="h-4 w-4" checked={selectedShiftIds.includes(row.shift_id)} disabled={busy || continuing} aria-label={`Publiceer ${row.title} op ${date(row.start)}, kandidaat ${row.person_name}`} onChange={(event) => toggleShift(row.shift_id, event.target.checked)} />Deze dienst publiceren{pending.filter((candidate) => candidate.shift_id === row.shift_id).length > 1 ? ' (alle kandidaten voor deze dienst)' : ''}</label>}
             <div className="flex flex-wrap justify-between gap-3"><div><Link to={`/vrijwilligers/diensten/${row.shift_id}`} className="font-medium hover:underline">{row.title}</Link><p className="text-sm">{date(row.start)} – {row.end?.slice(11, 16)}</p></div><span className="text-sm">{row.state === 'published' ? 'Gepubliceerd' : row.state === 'publishing' ? 'Verwerking controleren' : row.person_id ? 'Voorgesteld' : 'Open plek'}</span></div>
             {row.conversion && <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">Voorgestelde omzetting: {row.title} → {row.target_title}</p>}
             <p>{row.person_name || 'Geen kandidaat gekozen'}</p>
             {row.issue && <p className="text-sm text-amber-700 dark:text-amber-300">{row.issue}</p>}
             {Object.keys(row.diagnostics).length > 0 && <p className="text-xs text-gray-500">Blokkades: {Object.entries(row.diagnostics).map(([reason, count]) => `${reason}: ${count}`).join(' · ')}</p>}
-            {writable && row.state === 'pending' && <button type="button" className="btn-secondary text-sm" disabled={busy} onClick={() => setEditor(editor === row.index ? null : row.index)}>Kandidaat aanpassen</button>}
-            {editor === row.index && <CandidateEditor key={`${id}-${row.index}-${plan.revision}`} plan={plan} row={row} onSaved={receive} onClose={() => setEditor(null)} />}
+            {writable && row.state === 'pending' && <button type="button" className="btn-secondary text-sm" disabled={busy || continuing} onClick={() => setEditor(editor === row.index ? null : row.index)}>Kandidaat aanpassen</button>}
+            {editor === row.index && !busy && !continuing && <CandidateEditor key={`${id}-${row.index}-${plan.revision}`} plan={plan} row={row} onSaved={receive} onClose={() => setEditor(null)} />}
           </div>)}
         </section>
       </>}

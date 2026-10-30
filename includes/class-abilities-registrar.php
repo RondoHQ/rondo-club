@@ -580,26 +580,29 @@ final class Registrar {
 			'suppress_filters' => false,
 		];
 
-		foreach ( get_posts( $args + [ 's' => $query ] ) as $post ) {
-			$posts[ $post->ID ] = $post;
-		}
-
-		$meta_query = [ 'relation' => 'OR' ];
-		foreach ( self::SEARCH_FIELDS[ $context ] as $canonical_name ) {
-			$definition = Registry::resolve( $context, $canonical_name );
-			if ( $definition['storage_name'] === null ) {
-				continue;
-			}
-			$meta_query[] = [
-				'key'     => $definition['storage_name'],
-				'value'   => $query,
-				'compare' => 'LIKE',
-			];
-		}
-
-		if ( count( $meta_query ) > 1 ) {
-			foreach ( get_posts( $args + [ 'meta_query' => $meta_query ] ) as $post ) {
+		$variants = $context === 'team' ? \Rondo\Core\SearchQuery::apostrophe_variants( $query ) : [ $query ];
+		foreach ( $variants as $variant ) {
+			foreach ( get_posts( $args + [ 's' => $variant ] ) as $post ) {
 				$posts[ $post->ID ] = $post;
+			}
+
+			$meta_query = [ 'relation' => 'OR' ];
+			foreach ( self::SEARCH_FIELDS[ $context ] as $canonical_name ) {
+				$definition = Registry::resolve( $context, $canonical_name );
+				if ( $definition['storage_name'] === null ) {
+					continue;
+				}
+				$meta_query[] = [
+					'key'     => $definition['storage_name'],
+					'value'   => $variant,
+					'compare' => 'LIKE',
+				];
+			}
+
+			if ( count( $meta_query ) > 1 ) {
+				foreach ( get_posts( $args + [ 'meta_query' => $meta_query ] ) as $post ) {
+					$posts[ $post->ID ] = $post;
+				}
 			}
 		}
 

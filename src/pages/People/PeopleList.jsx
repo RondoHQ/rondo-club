@@ -8,8 +8,8 @@ import { wpApi, prmApi } from '@/api/client';
 import { buildCsv, downloadCsv } from '@/utils/csvExport';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
-import { formatPersonSurname, getTeamName, formatPhoneForTel, formatPhoneForDisplay, hasSponsorRole } from '@/utils/formatters';
-import { format, parseYmd, isValid } from '@/utils/dateFormat';
+import { formatPersonSurname, getTeamName, formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
+import { format } from '@/utils/dateFormat';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import Pagination from '@/components/Pagination';
 import { useListPreferences } from '@/hooks/useListPreferences';
@@ -20,53 +20,8 @@ import PersonEditModal from '@/components/PersonEditModal';
 import FloatingHorizontalScrollbar from '@/components/FloatingHorizontalScrollbar';
 import { getCurrentTeamId } from './peopleListUtils';
 import { SHIFT_COLUMNS, SHIFT_STATUS_LABELS, shiftColumnValue } from './shiftProgress';
-
-// Helper function to get first email from fixed fields
-function getFirstEmail(person) {
-  return person.fields?.email_1 || person.fields?.email_2 || null;
-}
-
-// Helper function to get first phone from fixed fields
-function getFirstPhone(person) {
-  return person.fields?.mobile_1 || person.fields?.telephone_1 || person.fields?.mobile_2 || person.fields?.telephone_2 || null;
-}
-
-// Primary address is the first row of the native field `addresses` repeater.
-function getPrimaryAddress(person) {
-  const addresses = person.fields?.addresses;
-  return Array.isArray(addresses) && addresses.length > 0 ? addresses[0] : null;
-}
-
-function formatStreetLine(address) {
-  if (!address) return '';
-  const street = address.street_name || '';
-  const number = [address.house_number, address.house_number_addition].filter(Boolean).join('');
-  return [street, number].filter(Boolean).join(' ').trim();
-}
-
-function formatBirthdateDisplay(birthdate) {
-  if (!birthdate) return '-';
-  const parsed = parseYmd(birthdate);
-  if (!isValid(parsed)) return '-';
-  return format(parsed, 'd MMM yyyy');
-}
-
-function getMembershipTypeLabel(person) {
-  const fields = person.fields || {};
-  const sponsorSuffix = (person.characteristics?.sponsor || hasSponsorRole(fields)) ? ' + sponsorcontact' : '';
-
-  if (fields.person_type === 'contact') return `Contact${sponsorSuffix}`;
-
-  const sportlinkType = String(fields['type_lid'] || '').trim().toLowerCase();
-  if (sportlinkType.includes('verenigingslid')) return `Verenigingslid${sponsorSuffix}`;
-  if (sportlinkType.includes('bondslid')) return `Bondslid${sponsorSuffix}`;
-  if (sportlinkType.includes('ouder')) return `Ouder${sponsorSuffix}`;
-
-  const isParent = fields.isparent === true || fields.isparent === 1 || fields.isparent === '1';
-  if (isParent || !fields['knvb_id']) return `Ouder${sponsorSuffix}`;
-
-  return `Bondslid${sponsorSuffix}`;
-}
+import { getFirstEmail, getFirstPhone, getPrimaryAddress, formatStreetLine, formatBirthdateDisplay, getMembershipTypeLabel, getCharacteristicBadges } from './peopleListValues';
+import { buildPeopleExportRows } from './peopleExport';
 
 // Map column IDs to sort field names
 const COLUMN_SORT_FIELDS = {
@@ -132,21 +87,7 @@ function PersonCharacteristics({ characteristics }) {
 
   return (
     <div className="flex min-w-[18rem] flex-wrap gap-1">
-      {characteristics.contact ? (
-        <CharacteristicBadge label="Contact" tone="contact" />
-      ) : (
-        <CharacteristicBadge
-          label={characteristics.playing_member ? 'Spelend lid' : 'Niet-spelend lid'}
-          tone={characteristics.playing_member ? 'playing' : 'notPlaying'}
-        />
-      )}
-      <CharacteristicBadge
-        label={characteristics.knvb_known ? 'KNVB bekend' : 'KNVB onbekend'}
-        tone={characteristics.knvb_known ? 'knvb' : 'noKnvb'}
-      />
-      {characteristics.parent && <CharacteristicBadge label="Ouder/verzorger" tone="parent" />}
-      {characteristics.volunteer && <CharacteristicBadge label="Vrijwilliger" tone="volunteer" />}
-      {characteristics.sponsor && <CharacteristicBadge label="Sponsorcontact" tone="sponsor" />}
+      {getCharacteristicBadges(characteristics).map(badge => <CharacteristicBadge key={badge.tone} {...badge} />)}
     </div>
   );
 }
@@ -824,6 +765,7 @@ export default function PeopleList() {
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [showColumnSettings, setShowColumnSettings] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState(null);
   const [newPersonMode, setNewPersonMode] = useState(null);
   const bulkDropdownRef = useRef(null);
   const queryClient = useQueryClient();
@@ -1381,6 +1323,9 @@ export default function PeopleList() {
   // (list view is capped at 100 per page; export must include the full set).
   const handleExportCsv = async () => {
     if (isExporting) return;
+    const exportColumns = visibleColumns.map(id => columnMap[id]).filter(Boolean);
+    if (!exportColumns.length) return;
+    setExportError(null);
     setIsExporting(true);
     try {
       const allPeople = await fetchAllFilteredPeople({
@@ -1418,7 +1363,8 @@ export default function PeopleList() {
         includeShiftProgress,
       });
 
-      const allTeamIds = [...new Set(allPeople.map(getCurrentTeamId).filter(Boolean))];
+      const allTeamIds = exportColumns.some(column => column.id === 'team')
+        ? [...new Set(allPeople.map(getCurrentTeamId).filter(Boolean))] : [];
       const exportTeamMap = {};
       for (let i = 0; i < allTeamIds.length; i += 100) {
         const chunk = allTeamIds.slice(i, i + 100);
@@ -1428,30 +1374,10 @@ export default function PeopleList() {
         });
       }
 
-      const headers = ['Voornaam', 'Achternaam', 'Organisatie', 'Email', 'Telefoon', 'Team', 'Adres', 'Postcode', 'Plaats', 'Land'];
-      if (includeShiftProgress) headers.push('Inschrijftaken', 'Ingepland', 'Afgerond', 'Vereist', 'Inclusief gezin');
-      const rows = allPeople.map(person => {
-        const teamId = getCurrentTeamId(person);
-        const address = getPrimaryAddress(person);
-        return [
-          person.first_name || '',
-          formatPersonSurname(person.infix, person.last_name),
-          person.fields?.company_name || person.company_name || '',
-          getFirstEmail(person) || '',
-          getFirstPhone(person) || '',
-          (teamId && exportTeamMap[teamId]) || '',
-          formatStreetLine(address),
-          address?.postal_code || '',
-          address?.city || '',
-          address?.country || '',
-          ...(includeShiftProgress ? [
-            ...SHIFT_COLUMNS.map(id => shiftColumnValue(person.shift_progress, id)),
-            person.shift_progress?.family ? 'Ja' : 'Nee',
-          ] : []),
-        ];
-      });
-      const csv = buildCsv([headers, ...rows]);
+      const csv = buildCsv(buildPeopleExportRows(allPeople, exportColumns, customFieldsMap, exportTeamMap));
       downloadCsv(csv, `leden-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    } catch {
+      setExportError('Exporteren is niet gelukt. Probeer het opnieuw; er is geen gedeeltelijk bestand gedownload.');
     } finally {
       setIsExporting(false);
     }
@@ -1480,8 +1406,9 @@ export default function PeopleList() {
               <button
                 onClick={handleExportCsv}
                 className="btn-tertiary"
-                title={isExporting ? 'Bezig met exporteren…' : 'Downloaden als CSV'}
-                disabled={isExporting || totalPeople === 0}
+                title={isExporting ? 'Bezig met exporteren…' : 'Alle gefilterde leden met de zichtbare kolommen downloaden als CSV'}
+                aria-label="Downloaden als CSV"
+                disabled={isExporting || totalPeople === 0 || !visibleColumns.some(id => columnMap[id])}
               >
                 {isExporting
                   ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -1490,6 +1417,8 @@ export default function PeopleList() {
             </div>
           }
         />
+
+      {exportError && <p role="alert" className="text-sm text-red-700 dark:text-red-300">{exportError}</p>}
 
       {/* Age-group restriction info banner */}
       {includeShiftProgress && (

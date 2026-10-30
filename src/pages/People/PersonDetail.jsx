@@ -1,3 +1,4 @@
+import { RoleEngagementBadges, RoleEngagementControl } from '@/components/RoleEngagements';
 import BankAccountCard from '@/components/finance/BankAccountCard';
 import { lazy, Suspense, useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
@@ -5,7 +6,7 @@ import {
   Trash2, Mail, Phone,
   MapPin, Plus, Pencil, MessageCircle, X, Camera, Download,
   CheckSquare2, StickyNote, ExternalLink, Gavel,
-  ContactRound, UsersRound, HandHeart, Handshake, AlertCircle
+  ContactRound, UsersRound, Handshake, AlertCircle
 } from 'lucide-react';
 import { peopleKeys, usePerson, usePersonTimeline, useDeleteNote, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, useAddParentRelationship, usePeopleByIds } from '@/hooks/usePeople';
 import TimelineView from '@/components/Timeline/TimelineView';
@@ -1394,11 +1395,7 @@ export default function PersonDetail() {
                   Wacht op overschrijving
                 </span>
               )}
-              {fields['huidig_vrijwilliger'] && (
-                <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                  <HandHeart className="h-3.5 w-3.5" aria-hidden="true" />Vrijwilliger
-                </span>
-              )}
+              <RoleEngagementBadges data={person.role_engagements} isStaff={fields.huidig_vrijwilliger} />
             </div>
             {fields.financiele_blokkade && (
               <p className="flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">
@@ -1900,9 +1897,10 @@ export default function PersonDetail() {
                   const teamData = job.team_id ? teamMap[job.team_id] : null;
                   const startDate = parseFieldDate(job.start_date);
                   const endDate = parseFieldDate(job.end_date);
+                  const engagement = person.role_engagements?.roles.find(role => role.index === job.originalIndex);
 
                   return (
-                    <li key={job.originalIndex} className="grid grid-cols-1 gap-x-6 gap-y-1 border-b border-gray-100 py-2 text-sm last:border-b-0 dark:border-gray-700 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_11rem]">
+                    <li key={`${engagement?.role_key || 'role'}-${job.originalIndex}`} className="grid grid-cols-1 gap-x-6 gap-y-1 border-b border-gray-100 py-2 text-sm last:border-b-0 dark:border-gray-700 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_11rem]">
                       <p className="min-w-0 break-words font-medium text-gray-900 dark:text-gray-100">{job.job_title}</p>
                       <div className="min-w-0 break-words empty:hidden sm:empty:block">
                         {job.team_id && teamData && (
@@ -1922,6 +1920,7 @@ export default function PersonDetail() {
                         {' - '}
                         {job.is_current ? 'Heden' : endDate ? format(endDate, 'MMM yyyy') : ''}
                       </p>
+                      {engagement && <RoleEngagementControl personId={id} role={engagement} version={person.role_engagements.version} canEdit={canEditPeople} />}
                       {job.description && (
                         <p className="min-w-0 break-words text-gray-600 dark:text-gray-400 sm:col-span-3">{job.description}</p>
                       )}

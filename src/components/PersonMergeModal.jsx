@@ -101,6 +101,7 @@ export default function PersonMergeModal({ currentPerson, onClose, onMerged }) {
   const [keepCurrent, setKeepCurrent] = useState(true);
   const [resolutions, setResolutions] = useState({});
   const [confirmed, setConfirmed] = useState(false);
+  const [knvbOverrideKey, setKnvbOverrideKey] = useState(null);
   const [submissionError, setSubmissionError] = useState('');
   const deferredSearch = useDeferredValue(search.trim().toLowerCase());
 
@@ -158,6 +159,7 @@ export default function PersonMergeModal({ currentPerson, onClose, onMerged }) {
           duplicate_id: duplicateId,
           resolutions: conflictChoices,
           confirmed: true,
+          override_knvb_id: overrideKnvbId,
         })
       ).data;
     },
@@ -184,6 +186,7 @@ export default function PersonMergeModal({ currentPerson, onClose, onMerged }) {
     setKeepCurrent(true);
     setResolutions({});
     setConfirmed(false);
+    setKnvbOverrideKey(null);
     setSubmissionError('');
   };
 
@@ -191,11 +194,13 @@ export default function PersonMergeModal({ currentPerson, onClose, onMerged }) {
     setKeepCurrent(value);
     setResolutions({});
     setConfirmed(false);
+    setKnvbOverrideKey(null);
     setSubmissionError('');
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (!canSubmit) return;
     setSubmissionError('');
     try {
       await mergeMutation.mutateAsync();
@@ -205,7 +210,14 @@ export default function PersonMergeModal({ currentPerson, onClose, onMerged }) {
   };
 
   const preview = previewQuery.data;
-  const hasBlockers = (preview?.blocking_conflicts?.length || 0) > 0;
+  const knvbConflict = preview?.blocking_conflicts?.find((conflict) => conflict.field === 'knvb_id');
+  const knvbConflictKey = knvbConflict
+    ? JSON.stringify([primaryId, duplicateId, knvbConflict.primary_value, knvbConflict.duplicate_value])
+    : null;
+  const overrideKnvbId = knvbConflictKey !== null && knvbOverrideKey === knvbConflictKey;
+  const blockers = (preview?.blocking_conflicts || []).filter((conflict) => conflict.field !== 'knvb_id');
+  const hasBlockers = blockers.length > 0 || (knvbConflict && !overrideKnvbId);
+  const canSubmit = preview && !previewQuery.isFetching && !previewQuery.isError && !hasBlockers && confirmed && !mergeMutation.isPending;
   const referenceEntries = Object.entries(preview?.references || {}).filter(([, count]) => count > 0);
 
   return (
@@ -346,14 +358,37 @@ export default function PersonMergeModal({ currentPerson, onClose, onMerged }) {
                   </section>
                 ) : null}
 
-                {hasBlockers ? (
+                {knvbConflict ? (
+                  <section className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200">
+                    <h3 className="font-semibold">Verschillende KNVB-ID’s</h3>
+                    <p className="mt-2">
+                      Het hoofdprofiel behoudt KNVB-ID <strong>{knvbConflict.primary_value}</strong>.
+                      {' '}Het dubbele profiel met KNVB-ID <strong>{knvbConflict.duplicate_value}</strong> gaat naar de prullenbak.
+                    </p>
+                    <label className="mt-3 flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        checked={overrideKnvbId}
+                        onChange={(event) => {
+                          setKnvbOverrideKey(event.target.checked ? knvbConflictKey : null);
+                          setConfirmed(false);
+                        }}
+                        disabled={mergeMutation.isPending}
+                        className="mt-1"
+                      />
+                      <span>Ik heb gecontroleerd dat dit dezelfde persoon is en wil het verschil in KNVB-ID overrulen.</span>
+                    </label>
+                  </section>
+                ) : null}
+
+                {blockers.length > 0 ? (
                   <section className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-900/20">
                     <div className="flex items-start gap-3">
                       <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
                       <div>
                         <h3 className="font-semibold text-red-800 dark:text-red-200">Samenvoegen is nog niet veilig</h3>
                         <ul className="mt-2 space-y-2 text-sm text-red-700 dark:text-red-300">
-                          {preview.blocking_conflicts.map((conflict) => <li key={conflict.field}>{conflict.message}</li>)}
+                          {blockers.map((conflict) => <li key={conflict.field}>{conflict.message}</li>)}
                         </ul>
                       </div>
                     </div>
@@ -375,7 +410,7 @@ export default function PersonMergeModal({ currentPerson, onClose, onMerged }) {
 
               <div className="flex justify-end gap-2 border-t border-gray-200 bg-gray-50 px-5 py-4 dark:border-gray-700 dark:bg-gray-900">
                 <button type="button" onClick={onClose} className="btn-secondary" disabled={mergeMutation.isPending}>Annuleren</button>
-                <button type="submit" className="btn-danger gap-2" disabled={!preview || previewQuery.isFetching || hasBlockers || !confirmed || mergeMutation.isPending}>
+                <button type="submit" className="btn-danger gap-2" disabled={!canSubmit}>
                   <GitMerge className="h-4 w-4" />
                   {mergeMutation.isPending ? 'Samenvoegen…' : 'Profielen samenvoegen'}
                 </button>

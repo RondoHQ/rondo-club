@@ -11,6 +11,7 @@ import App from './App';
 import { canAccessFeature } from '@/utils/featureToggles';
 import { canAccessCommunication } from '@/utils/communicationNavigation';
 import { canAccessFootball } from '@/utils/footballAccess';
+import { canAccessClubDirectory } from '@/utils/footballNavigation';
 
 // Direct import for Dashboard (no lazy loading)
 import Dashboard from '@/pages/Dashboard';
@@ -18,12 +19,12 @@ import Dashboard from '@/pages/Dashboard';
 // Lazy-loaded page components (separate file for fast refresh compatibility)
 import {
   PeopleList, PeopleAnniversaries, PeopleOnboarding, ProfileChangeLog, PersonDetail, SponsorList, SponsorDetail, TeamsList, TeamDetail,
-  Kaderlijst, MyTeam, MyCommittees, Football,
+  Kaderlijst, MyTeam, MyCommittees, Football, ClubDirectory,
   CommissiesList, CommissieDetail, TodosList,
   FeedbackList, FeedbackDetail, Communication, Planning, Newsletter, NewsletterSettings, Settings, AppAccess, VOG,
   Contributie, DisciplineCasesList,
   MatchCompensation, FinanceDashboard, Kassaomzet, Betaalstatistieken, Facturen, FactuurDetail, FactuurNieuw, RelationshipTypes,
-  CustomFields, Login, Profile, ProfileIva, ProfileVog,
+  CustomFields, Login, AccountSwitcher, Profile, ProfileIva, ProfileVog,
   MembershipPassScanner, AccessStatistics,
   ClothingPage,
   VrijwilligersVoorstellen, VrijwilligersDashboard, VrijwilligersIndelen, VrijwilligersStatistieken, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten, VrijwilligersAanmeldingen,
@@ -348,6 +349,8 @@ const router = wrapCreateBrowserRouter(createBrowserRouter)([
           },
           { path: 'people/:id', element: <KaderOrVrijwilligRedirect><PersonDetail /></KaderOrVrijwilligRedirect> },
           { path: 'voetbal', element: <CapabilityRoute checkAccess={canAccessFootball}><Football /></CapabilityRoute> },
+          { path: 'voetbal/verenigingen', element: <CapabilityRoute checkAccess={canAccessClubDirectory}><ClubDirectory /></CapabilityRoute> },
+          { path: 'voetbal/verenigingen/:id', element: <CapabilityRoute checkAccess={canAccessClubDirectory}><ClubDirectory /></CapabilityRoute> },
           { path: 'sponsors', element: <SponsorRoute><SponsorList /></SponsorRoute> },
           { path: 'sponsors/new', element: <SponsorRoute><SponsorDetail /></SponsorRoute> },
           { path: 'sponsors/:id', element: <SponsorRoute><SponsorDetail /></SponsorRoute> },
@@ -721,6 +724,7 @@ const router = wrapCreateBrowserRouter(createBrowserRouter)([
 
           // Profile routes — Profile zelf is voor iedereen, subpagina's voor certificaten
           { path: 'profile', element: <Profile /> },
+          { path: 'wissel-account', element: <AccountSwitcher /> },
           { path: 'profile/vog', element: <ProfileVog /> },
           { path: 'profile/iva', element: <ProfileIva /> },
 

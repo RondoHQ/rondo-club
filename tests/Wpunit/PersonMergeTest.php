@@ -310,6 +310,78 @@ class PersonMergeTest extends RondoTestCase {
 		$this->assertSame( 'publish', get_post_status( $duplicate_id ) );
 	}
 
+	public function test_knvb_override_requires_admin_confirmation_and_preserves_primary_id_and_audit(): void {
+		$server       = $this->bootRestControllers( [ People::class ] );
+		$primary_id   = $this->createPerson( [], [ 'knvb_id' => 'AAAA111' ] );
+		$duplicate_id = $this->createPerson(
+			[],
+			[
+				'knvb_id'  => 'BBBB222',
+				'nickname' => 'Lex',
+			]
+			);
+		$merge        = new WP_REST_Request( 'POST', '/rondo/v1/people/' . $primary_id . '/merge' );
+		$merge->set_param( 'duplicate_id', $duplicate_id );
+		$merge->set_param( 'confirmed', true );
+		$merge->set_param( 'override_knvb_id', true );
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'subscriber' ] ) );
+		$this->assertSame( 403, $server->dispatch( $merge )->get_status() );
+		$this->assertSame( 'publish', get_post_status( $duplicate_id ) );
+
+		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		wp_set_current_user( $admin_id );
+		$merge->set_param( 'confirmed', false );
+		$this->assertSame( 400, $server->dispatch( $merge )->get_status() );
+		$merge->set_param( 'confirmed', true );
+		foreach ( [ false, 'false' ] as $override ) {
+			$merge->set_param( 'override_knvb_id', $override );
+			$this->assertSame( 409, $server->dispatch( $merge )->get_status() );
+			$this->assertEmpty( Fields::get_for_post( $primary_id, 'nickname' ) );
+			$this->assertSame( 'publish', get_post_status( $duplicate_id ) );
+		}
+
+		$merge->set_param( 'override_knvb_id', true );
+		// A generic field choice must not replace the explicitly retained KNVB ID.
+		$merge->set_param( 'resolutions', [ 'knvb_id' => 'duplicate' ] );
+		$this->assertSame( 200, $server->dispatch( $merge )->get_status() );
+		$this->assertSame( 'AAAA111', Fields::get_for_post( $primary_id, 'knvb_id' ) );
+		$this->assertSame( 'BBBB222', Fields::get_for_post( $duplicate_id, 'knvb_id' ) );
+		$this->assertSame( 'Lex', Fields::get_for_post( $primary_id, 'nickname' ) );
+		$this->assertSame( 'trash', get_post_status( $duplicate_id ) );
+		$this->assertSame( $primary_id, (int) get_post_meta( $duplicate_id, '_rondo_merged_into_person_id', true ) );
+		$audit = get_post_meta( $primary_id, '_rondo_person_merge_history', true );
+		$this->assertSame( $admin_id, $audit['merged_by'] );
+		$this->assertSame( 'knvb_id', $audit['overrides'][0]['field'] );
+		$this->assertSame( 'AAAA111', $audit['overrides'][0]['primary_value'] );
+		$this->assertSame( 'BBBB222', $audit['overrides'][0]['duplicate_value'] );
+	}
+
+	public function test_knvb_override_does_not_bypass_other_stable_id_conflicts(): void {
+		foreach ( [ 'sponsit_person_id', 'sponsit_contact_id', 'freescout_id' ] as $field ) {
+			$primary_id   = $this->createPerson(
+				[],
+				[
+					'knvb_id' => 'AAAA111',
+					$field    => '111',
+				]
+				);
+			$duplicate_id = $this->createPerson(
+				[],
+				[
+					'knvb_id'  => 'BBBB222',
+					$field     => '222',
+					'nickname' => 'Lex',
+				]
+				);
+			$result       = ( new PersonMergeService() )->merge( $primary_id, $duplicate_id, [], 1, true );
+			$this->assertWPError( $result );
+			$this->assertSame( 'rondo_person_merge_blocked', $result->get_error_code() );
+			$this->assertSame( $field, $result->get_error_data()['conflicts'][0]['field'] );
+			$this->assertSame( 'publish', get_post_status( $duplicate_id ) );
+			$this->assertEmpty( Fields::get_for_post( $primary_id, 'nickname' ) );
+		}
+	}
+
 	public function test_merge_moves_domain_references_account_comments_and_attachments(): void {
 		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		wp_set_current_user( $admin_id );

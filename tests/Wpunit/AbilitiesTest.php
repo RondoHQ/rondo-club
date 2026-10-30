@@ -112,6 +112,48 @@ class AbilitiesTest extends RondoTestCase {
 		$this->assertSame( [ $committee_id, $team_id ], array_column( $result['records'], 'id' ) );
 	}
 
+	public function test_team_search_apostrophes_preserve_identity_and_visibility(): void {
+		$user_id  = $this->createRondoUser();
+		$team_id  = self::factory()->post->create(
+			[
+				'post_type'   => 'team',
+				'post_status' => 'publish',
+				'post_title'  => "Mini's",
+			]
+			);
+		$curly_id = self::factory()->post->create(
+			[
+				'post_type'   => 'team',
+				'post_status' => 'publish',
+				'post_title'  => 'Mini’s extra',
+			]
+			);
+		wp_set_current_user( $user_id );
+		$ability = wp_get_ability( 'rondo/search-records' );
+		$result  = $ability->execute(
+			[
+				'query'    => 'mini´s',
+				'contexts' => [ 'team' ],
+			]
+			);
+		$this->assertNotWPError( $result );
+		$this->assertSame( [], $result['records'] );
+		get_user_by( 'id', $user_id )->add_cap( 'teams' );
+		wp_set_current_user( 0 );
+		wp_set_current_user( $user_id );
+		foreach ( [ "mini's", 'mini’s', 'mini´s' ] as $query ) {
+			$result = $ability->execute(
+				[
+					'query'    => $query,
+					'contexts' => [ 'team' ],
+				]
+				);
+			$this->assertNotWPError( $result );
+			$this->assertSame( $query, $result['query'] );
+			$this->assertEqualsCanonicalizing( [ $team_id, $curly_id ], array_column( $result['records'], 'id' ) );
+		}
+	}
+
 	public function test_get_record_uses_canonical_field_visibility_and_selection(): void {
 		$user_id = $this->createRondoUser();
 		wp_set_current_user( $user_id );

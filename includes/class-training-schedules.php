@@ -55,8 +55,11 @@ final class Schedules {
 			return self::error( 'Trainingsschema niet gevonden.', 404 );
 		}
 		$settings = self::settings();
-		$fields   = Fields::all_for_post( $id );
-		$blocks   = $fields['blocks'] ?: [];
+		$fields   = [];
+		foreach ( [ 'blocks', 'season', 'revision' ] as $field ) {
+			$fields[ $field ] = Fields::get_for_post( $id, $field );
+		}
+		$blocks = $fields['blocks'] ?: [];
 		foreach ( $blocks as &$block ) {
 			// Native time storage includes seconds; the API consistently returns HH:mm.
 			$block['age_group_id'] = $block['age_group_id'] ?: '';

@@ -18,6 +18,8 @@ final class TournamentActivityLog {
 	public const COMMENT_TYPE = 'rondo_tourn_activity';
 
 	private const LABELS = [
+		'registration_reminder_sent'                      => 'Inschrijfherinnering verstuurd',
+		'registration_reminder_partially_failed'          => 'Inschrijfherinnering niet volledig verstuurd',
 		'tournament_created'                              => 'Toernooi aangemaakt',
 		'tournament_updated'                              => 'Toernooi bijgewerkt',
 		'tournament_published_updated'                    => 'Gepubliceerd toernooi bijgewerkt',
