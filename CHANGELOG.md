@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.160.0] - 2026-10-30
+
+### Added
+
+- Classify individual staff functions as employment, compensated volunteering, unpaid volunteering or unknown from a person's Roles tab, with separate badges for people who combine employment and volunteering.
+- Show current people and function counts by category, team and committee in volunteer statistics, with unclassified roles explicitly separated and people counted once within each category.
+- Preserve local classifications across Sportlink role refreshes and reordering; require review for changed functions or start dates, reject stale edits and duplicate roles, and retain a private change history. Existing VOG and shift-exemption rules remain unchanged.
+
 ## [35.159.0] - 2026-10-30
 
 ### Added

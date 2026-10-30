@@ -62,6 +62,34 @@ class People extends Base {
 	public function register_routes() {
 		register_rest_route(
 			'rondo/v1',
+			'/people/(?P<person_id>\d+)/role-engagements',
+			[
+				'methods'             => \WP_REST_Server::EDITABLE,
+				'callback'            => [ $this, 'update_role_engagement' ],
+				'permission_callback' => [ $this, 'check_role_engagement_write' ],
+				'args'                => [
+					'person_id'       => [
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+					],
+					'role_key'        => [
+						'type'     => 'string',
+						'required' => true,
+					],
+					'engagement_type' => [
+						'type'     => 'string',
+						'enum'     => array_keys( \Rondo\People\RoleEngagements::LABELS ),
+						'required' => true,
+					],
+					'version'         => [
+						'type'     => 'string',
+						'required' => true,
+					],
+				],
+			]
+			);
+		register_rest_route(
+			'rondo/v1',
 			'/people/(?P<person_id>\d+)/parents',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -1307,6 +1335,17 @@ class People extends Base {
 		return rest_ensure_response( [ 'updated' => true ] );
 	}
 
+	public function check_role_engagement_write( $request ): bool {
+		return $this->check_user_approved() && \Rondo\People\RoleEngagements::can_view()
+			&& \Rondo\Core\AccessControl::can_edit_people()
+			&& $this->check_person_access( $request ) && $this->check_person_edit_permission( $request );
+	}
+
+	public function update_role_engagement( $request ) {
+		$result = \Rondo\People\RoleEngagements::update( (int) $request['person_id'], $request['role_key'], $request['engagement_type'], $request['version'] );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
 	public function add_person_computed_fields( $response, $post, $request ) {
 		// Return early if response is an error (e.g., unauthorized access)
 		if ( is_wp_error( $response ) ) {
@@ -1314,6 +1353,10 @@ class People extends Base {
 		}
 
 		$data = $response->get_data();
+
+		if ( isset( $data['fields']['work_history'] ) && \Rondo\People\RoleEngagements::can_view() ) {
+			$data['role_engagements'] = \Rondo\People\RoleEngagements::for_person( (int) $post->ID );
+		}
 
 		$data['is_deceased']       = \Rondo\People\CommunicationPolicy::is_deceased( (int) $post->ID );
 		$is_former_member          = (bool) \Rondo\Fields\Fields::get_for_post( $post->ID, 'former_member' );
