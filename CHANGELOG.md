@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.158.0] - 2026-10-30
+
+### Added
+
+- Cancel and reinstate an individual training date from My team, team pages, and a dated field overview. Current trainers and leaders can change their own teams; training managers can manage all teams.
+- Show fully cancelled training blocks in grey and distinguish partial cancellations on shared blocks, while retaining the recurring schedule and a private audit trail.
+
+### Fixed
+
+- Respect dated training cancellations in today's coordinator dashboard and volunteer planning availability.
+
 ## [35.157.1] - 2026-10-30
 
 ### Fixed
