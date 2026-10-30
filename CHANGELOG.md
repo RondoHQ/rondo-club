@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.161.1] - 2026-10-30
+
+### Fixed
+
+- Allow users with wedstrijdzaken rights to search and open the Sportlink club address book, including its Football navigation entry, without requiring all-teams access.
+
 ## [35.161.0] - 2026-10-30
 
 ### Added
