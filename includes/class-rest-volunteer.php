@@ -957,7 +957,9 @@ class Volunteer extends Base {
 	public function get_statistics( \WP_REST_Request $request ) {
 		$season = $request->get_param( 'season' ) ?: SeasonKey::current();
 
-		return rest_ensure_response( ( new VolunteerStatistics() )->for_season( $season ) );
+		$data                     = ( new VolunteerStatistics() )->for_season( $season );
+		$data['role_engagements'] = \Rondo\People\RoleEngagements::statistics();
+		return rest_ensure_response( $data );
 	}
 
 	/**

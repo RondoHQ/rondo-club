@@ -1240,6 +1240,7 @@ class UserSettings extends Base {
 			'dashboard_context'              => \Rondo\Dashboard\RoleDashboard::context( $user_id ),
 			'can_access_club_dashboard'      => $is_kader && ( \Rondo\Core\UserRoles::can_access_section( 'teams', $user_id ) || ! \Rondo\Core\AccessControl::has_coordinator_team_scope( $user_id ) ),
 			'can_access_teams'               => \Rondo\Core\AccessControl::can_access_teams( $user_id ),
+			'can_access_wedstrijdzaken'      => \Rondo\Core\UserRoles::can_access_section( 'wedstrijdzaken', $user_id ),
 			'can_access_commissies'          => \Rondo\Core\UserRoles::can_access_section( 'commissies', $user_id ),
 			'can_access_jubilarissen'        => \Rondo\Core\UserRoles::can_access_section( 'jubilarissen', $user_id ),
 			'can_access_feedback'            => \Rondo\Core\UserRoles::can_access_section( 'feedback', $user_id ),
@@ -1283,6 +1284,7 @@ class UserSettings extends Base {
 			'vog_required'                   => $vog_required,
 			'linked_person_photo'            => $linked_person_photo,
 			'pending_guardian'               => $pending_guardian,
+			'can_switch_accounts'            => \Rondo\Users\AccountSwitcher::available(),
 			'feedback_intro_seen'            => get_user_meta( $user_id, self::FEEDBACK_INTRO_SEEN_META, true ) !== '',
 		];
 	}

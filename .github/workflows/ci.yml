@@ -55,7 +55,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - name: Test browser diagnostics and session recovery
-        run: node --test tests/js/error-monitoring.test.mjs tests/js/performance-monitoring.test.mjs tests/js/nonceRecovery.test.mjs
+        run: node --test tests/js/error-monitoring.test.mjs tests/js/performance-monitoring.test.mjs tests/js/nonceRecovery.test.mjs tests/js/dashboardResponse.test.mjs tests/js/clubDirectoryAccess.test.mjs tests/js/peopleExport.test.mjs
       - run: npm run build
 
   mobile-spike:
@@ -93,7 +93,10 @@ jobs:
         with:
           node-version: 20
       - name: Test deployment asset retention and app updates
-        run: node --test tests/js/appUpdate.test.mjs tests/js/assetRetention.test.mjs tests/js/deployAssetTransfer.test.mjs
+        run: node --test tests/js/appUpdate.test.mjs tests/js/assetRetention.test.mjs
+
+      - name: Test atomic deployment and rollback
+        run: python3 tests/python/test_atomic_release.py
 
   php-tests:
     needs: check-plan

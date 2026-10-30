@@ -186,7 +186,9 @@ use Rondo\Volunteer\PublicTaakuitlegPage;
 
 define( 'RONDO_THEME_DIR', get_template_directory() );
 define( 'RONDO_THEME_URL', get_template_directory_uri() );
-define( 'RONDO_THEME_VERSION', wp_get_theme()->get( 'Version' ) );
+$rondo_theme_data = get_file_data( RONDO_THEME_DIR . '/style.css', [ 'Version' => 'Version' ] );
+define( 'RONDO_THEME_VERSION', $rondo_theme_data['Version'] );
+unset( $rondo_theme_data );
 
 // Plugin constants (now part of theme)
 define( 'RONDO_VERSION', RONDO_THEME_VERSION );
@@ -303,6 +305,7 @@ function rondo_init() {
 	new \Rondo\Users\LoginResolver();
 	// Turns the Magic Login email form into the single login/activation entry point.
 	new \Rondo\Users\MagicLoginActivation();
+	new \Rondo\Users\AccountSwitcher();
 	// First-party OIDC provider for FreeScout login and durable exact-email proof.
 	new \Rondo\Identity\OidcIdentity();
 	new \Rondo\Identity\OidcProvider();
@@ -370,6 +373,7 @@ function rondo_init() {
 		new People();
 		new Teams();
 		new \Rondo\REST\TeamMatches();
+		new \Rondo\REST\ClubDirectory();
 		new \Rondo\REST\Training();
 		new \Rondo\REST\SportparkClosures();
 		new \Rondo\REST\Onboarding();
@@ -388,6 +392,7 @@ function rondo_init() {
 			new RESTClothing();
 		}
 		new RESTUserSettings();
+		new \Rondo\REST\AccountSwitcher();
 		new \Rondo\REST\AppAccess();
 		new RESTUsers();
 		new RESTReminders();
@@ -757,22 +762,21 @@ function rondo_refresh_rest_session() {
 add_action( 'wp_ajax_rondo_rest_session', 'rondo_refresh_rest_session' );
 
 /**
+ * Get the deployed build timestamp, or null when no production build exists.
+ *
+ * @return string|null
+ */
+function rondo_get_build_time() {
+	$manifest_path = RONDO_THEME_DIR . '/dist/.vite/manifest.json';
+	return file_exists( $manifest_path ) ? gmdate( 'c', filemtime( $manifest_path ) ) : null;
+}
+
+/**
  * Get JavaScript configuration
  */
 function rondo_get_js_config() {
 	$user    = wp_get_current_user();
 	$user_id = get_current_user_id();
-
-	// Get build time from manifest file modification time.
-	// This ensures every build produces a unique timestamp.
-	$build_time    = null;
-	$manifest_path = RONDO_THEME_DIR . '/dist/.vite/manifest.json';
-	if ( file_exists( $manifest_path ) ) {
-		$build_time = gmdate( 'c', filemtime( $manifest_path ) );
-	} else {
-		// Fallback to current time for dev mode (Vite dev server).
-		$build_time = gmdate( 'c' );
-	}
 
 	// Get user's linked person ID (for filtering current user from attendee lists)
 	$linked_person_id = $user_id ? (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) : null;
@@ -794,14 +798,14 @@ function rondo_get_js_config() {
 		'logoutUrl'           => wp_logout_url( home_url() ),
 		'adminUrl'            => admin_url(),
 		'themeUrl'            => RONDO_THEME_URL,
-		'version'             => wp_get_theme()->get( 'Version' ),
+		'version'             => RONDO_THEME_VERSION,
 		'errorMonitoring'     => [
 			'tunnel'             => wp_make_link_relative( rest_url( 'rondo/v1/diagnostics' ) ),
 			'performanceEnabled' => ! defined( 'RONDO_GLITCHTIP_REACT_PERFORMANCE' ) || RONDO_GLITCHTIP_REACT_PERFORMANCE,
 			'dsn'                => defined( 'RONDO_GLITCHTIP_REACT_DSN' ) ? RONDO_GLITCHTIP_REACT_DSN : '',
 			'environment'        => defined( 'RONDO_GLITCHTIP_ENVIRONMENT' ) ? RONDO_GLITCHTIP_ENVIRONMENT : 'production',
 		],
-		'buildTime'           => $build_time,
+		'buildTime'           => rondo_get_build_time(),
 		'currentUserPersonId' => $linked_person_id ?: null,
 		'clubName'            => $club_settings['club_name'],
 		'feedbackNotice'      => $club_settings['feedback_notice'],

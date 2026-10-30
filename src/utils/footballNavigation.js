@@ -1,6 +1,7 @@
-import { CalendarDays, ChartPie, Gavel, Shield, Trophy, Users } from 'lucide-react';
+import { BookUser, CalendarDays, ChartPie, Gavel, Shield, Trophy, Users } from 'lucide-react';
 
 export const footballNavigation = [
+  { name: 'Verenigingen', href: '/voetbal/verenigingen', icon: BookUser, description: 'Zoek verenigingen en contactpersonen in Sportlink.', capabilities: ['can_access_teams', 'can_access_wedstrijdzaken'] },
   { name: 'Teams', href: '/teams', icon: Shield, description: 'Bekijk teams en hun spelers en staf.', capabilities: ['can_access_teams'] },
   { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, description: 'Vind trainers, leiders en andere kaderleden.', capabilities: ['can_access_kaderlijst'] },
   { name: 'Trainingsschema', href: '/trainingsschema', icon: CalendarDays, description: 'Bekijk wanneer en waar teams trainen.', capabilities: ['is_kader', 'can_manage_training'] },
@@ -11,4 +12,8 @@ export const footballNavigation = [
 
 export function canAccessFootballItem(item, user) {
   return Boolean(user?.is_admin || item.capabilities.some((capability) => user?.[capability]));
+}
+
+export function canAccessClubDirectory(user) {
+  return canAccessFootballItem(footballNavigation.find((item) => item.href === '/voetbal/verenigingen'), user);
 }

@@ -3329,6 +3329,15 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
       'ends_at' => [ 'canonical_name' => 'ends_at', 'name' => 'ends_at', 'storage_name' => 'ends_at', 'key' => 'field_park_closure_ends_at', 'label' => 'ends_at', 'type' => 'date_picker', 'return_format' => 'Ymd', 'display_format' => 'd-m-Y', 'required' => 1 ],
     ] ],
     'rondo_training' => [ 'kind' => 'post', 'fields' => [
+'cancellations' => [ 'canonical_name' => 'cancellations', 'name' => 'cancellations', 'storage_name' => 'cancellations', 'key' => 'field_training_cancellations', 'label' => 'Afmeldingen', 'type' => 'repeater', 'sub_fields' => [
+'date' => [ 'canonical_name' => 'date', 'name' => 'date', 'storage_name' => 'date', 'key' => 'field_training_cancel_date', 'label' => 'date', 'type' => 'date_picker' ],
+'block_id' => [ 'canonical_name' => 'block_id', 'name' => 'block_id', 'storage_name' => 'block_id', 'key' => 'field_training_cancel_block_id', 'label' => 'block_id', 'type' => 'text' ],
+'team_id' => [ 'canonical_name' => 'team_id', 'name' => 'team_id', 'storage_name' => 'team_id', 'key' => 'field_training_cancel_team_id', 'label' => 'team_id', 'type' => 'number' ],
+'cancelled' => [ 'canonical_name' => 'cancelled', 'name' => 'cancelled', 'storage_name' => 'cancelled', 'key' => 'field_training_cancel_cancelled', 'label' => 'cancelled', 'type' => 'true_false' ],
+'revision' => [ 'canonical_name' => 'revision', 'name' => 'revision', 'storage_name' => 'revision', 'key' => 'field_training_cancel_revision', 'label' => 'revision', 'type' => 'number' ],
+'changed_by' => [ 'canonical_name' => 'changed_by', 'name' => 'changed_by', 'storage_name' => 'changed_by', 'key' => 'field_training_cancel_changed_by', 'label' => 'changed_by', 'type' => 'number' ],
+'changed_at' => [ 'canonical_name' => 'changed_at', 'name' => 'changed_at', 'storage_name' => 'changed_at', 'key' => 'field_training_cancel_changed_at', 'label' => 'changed_at', 'type' => 'text' ],
+] ],
 'season' => [ 'canonical_name' => 'season', 'name' => 'season', 'storage_name' => 'season', 'key' => 'field_training_season', 'label' => 'season', 'type' => 'text' ],
 'revision' => [ 'canonical_name' => 'revision', 'name' => 'revision', 'storage_name' => 'revision', 'key' => 'field_training_revision', 'label' => 'revision', 'type' => 'number', 'default_value' => 0 ],
 'blocks' => [ 'canonical_name' => 'blocks', 'name' => 'blocks', 'storage_name' => 'blocks', 'key' => 'field_training_blocks', 'label' => 'blocks', 'type' => 'repeater', 'sub_fields' => [
@@ -5309,6 +5318,15 @@ foreach ( [ 'team_id' => 'number', 'valid_from' => 'date_picker', 'valid_until' 
 $config['contexts']['person']['fields']['match_compensation_agreements'] = [
     'canonical_name' => 'match_compensation_agreements', 'storage_name' => 'match_compensation_agreements', 'name' => 'match_compensation_agreements',
     'key' => 'field_person_match_compensation_agreements', 'label' => 'Afspraken wedstrijdvergoedingen', 'type' => 'repeater', 'read_only' => true, 'sub_fields' => $agreement_children,
+];
+
+$role_engagement_children = [];
+foreach ( [ 'role_key', 'engagement_type' ] as $name ) {
+    $role_engagement_children[$name] = [ 'canonical_name' => $name, 'storage_name' => $name, 'name' => $name, 'key' => 'field_role_engagement_' . $name, 'label' => $name, 'type' => 'text' ];
+}
+$config['contexts']['person']['fields']['role_engagements'] = [
+    'canonical_name' => 'role_engagements', 'storage_name' => 'role_engagements', 'name' => 'role_engagements',
+    'key' => 'field_person_role_engagements', 'label' => 'Indeling per functie', 'type' => 'repeater', 'read_only' => true, 'sub_fields' => $role_engagement_children,
 ];
 
 $config['contexts'] = array_merge( $config['contexts'], require __DIR__ . '/match-compensation-fields.php' );

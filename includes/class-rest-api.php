@@ -1245,71 +1245,73 @@ class Api extends Base {
 		// Search teams with scoring (similar to people)
 		$team_results = [];
 
-		// Query 1: Name field matches (highest priority, score: 60)
-		$name_matches = get_posts(
-			[
-				'post_type'        => 'team',
-				'suppress_filters' => false,
-				'posts_per_page'   => 20,
-				'post_status'      => 'publish',
-				'meta_query'       => [
-					[
-						'key'     => 'name',
-						'value'   => $query,
-						'compare' => 'LIKE',
-					],
-				],
-			]
-		);
-
-		foreach ( $name_matches as $team ) {
-			$team_results[ $team->ID ] = [
-				'team'  => $team,
-				'score' => 60,
-			];
-		}
-
-		// Query 2: General WordPress search (score: 20)
-		$general_company_matches = get_posts(
-			[
-				'post_type'        => 'team',
-				'suppress_filters' => false,
-				's'                => $query,
-				'posts_per_page'   => 20,
-				'post_status'      => 'publish',
-			]
-		);
-
-		foreach ( $general_company_matches as $team ) {
-			if ( ! isset( $team_results[ $team->ID ] ) ) {
-				$team_results[ $team->ID ] = [
-					'team'  => $team,
-					'score' => 20,
-				];
-			}
-		}
-
-		// Query 3: Custom field matches (score: 30)
-		$team_custom_fields = $this->get_searchable_custom_fields( 'team' );
-		if ( ! empty( $team_custom_fields ) ) {
-			$team_meta_query = $this->build_custom_field_meta_query( $team_custom_fields, $query );
-
-			$team_custom_matches = get_posts(
+		foreach ( \Rondo\Core\SearchQuery::apostrophe_variants( $query ) as $team_query ) {
+			// Query 1: Name field matches (highest priority, score: 60)
+			$name_matches = get_posts(
 				[
 					'post_type'        => 'team',
 					'suppress_filters' => false,
 					'posts_per_page'   => 20,
 					'post_status'      => 'publish',
-					'meta_query'       => $team_meta_query,
+					'meta_query'       => [
+						[
+							'key'     => 'name',
+							'value'   => $team_query,
+							'compare' => 'LIKE',
+						],
+					],
 				]
 			);
 
-			foreach ( $team_custom_matches as $team ) {
+			foreach ( $name_matches as $team ) {
+				$team_results[ $team->ID ] = [
+					'team'  => $team,
+					'score' => 60,
+				];
+			}
+
+			// Query 2: General WordPress search (score: 20)
+			$general_company_matches = get_posts(
+				[
+					'post_type'        => 'team',
+					'suppress_filters' => false,
+					's'                => $team_query,
+					'posts_per_page'   => 20,
+					'post_status'      => 'publish',
+				]
+			);
+
+			foreach ( $general_company_matches as $team ) {
 				if ( ! isset( $team_results[ $team->ID ] ) ) {
 					$team_results[ $team->ID ] = [
 						'team'  => $team,
-						'score' => 30,
+						'score' => 20,
 					];
+				}
+			}
+
+			// Query 3: Custom field matches (score: 30)
+			$team_custom_fields = $this->get_searchable_custom_fields( 'team' );
+			if ( ! empty( $team_custom_fields ) ) {
+				$team_meta_query = $this->build_custom_field_meta_query( $team_custom_fields, $team_query );
+
+				$team_custom_matches = get_posts(
+					[
+						'post_type'        => 'team',
+						'suppress_filters' => false,
+						'posts_per_page'   => 20,
+						'post_status'      => 'publish',
+						'meta_query'       => $team_meta_query,
+					]
+				);
+
+				foreach ( $team_custom_matches as $team ) {
+					if ( ! isset( $team_results[ $team->ID ] ) ) {
+						$team_results[ $team->ID ] = [
+							'team'  => $team,
+							'score' => 30,
+						];
+					}
 				}
 			}
 		}
@@ -1387,21 +1389,13 @@ class Api extends Base {
 	 * Used for cache invalidation on PWA/mobile apps
 	 */
 	public function get_version( $request ) {
-		// Get build time from manifest file modification time
-		$build_time    = null;
-		$manifest_path = \RONDO_THEME_DIR . '/dist/.vite/manifest.json';
-		if ( file_exists( $manifest_path ) ) {
-			$build_time = gmdate( 'c', filemtime( $manifest_path ) );
-		} else {
-			// Fallback to current time for dev mode.
-			$build_time = gmdate( 'c' );
-		}
-
-		return rest_ensure_response(
+		return new \WP_REST_Response(
 			[
 				'version'   => \RONDO_THEME_VERSION,
-				'buildTime' => $build_time,
-			]
+				'buildTime' => \rondo_get_build_time(),
+			],
+			200,
+			[ 'Cache-Control' => 'no-store, private' ]
 		);
 	}
 

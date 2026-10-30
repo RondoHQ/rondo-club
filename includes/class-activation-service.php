@@ -85,7 +85,7 @@ class ActivationService {
 			[
 				'post_type'      => 'person',
 				'post_status'    => 'publish',
-				'posts_per_page' => 20,
+				'posts_per_page' => -1,
 				'fields'         => 'ids',
 				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 				'meta_query'     => [
@@ -376,7 +376,7 @@ class ActivationService {
 	 */
 	public static function send_magic_login_email( string $email, array $person_ids, string $redirect_to = '' ): bool {
 		$branding    = PublicPageChrome::branding();
-		$login_links = self::magic_login_links( $person_ids, $redirect_to );
+		$login_links = self::magic_login_links( $person_ids, $redirect_to, $email );
 
 		if ( empty( $login_links ) ) {
 			return false;
@@ -421,7 +421,7 @@ class ActivationService {
 	 */
 	private static function send_household_access_email( string $email, array $existing_person_ids, string $activation_token, string $redirect_to = '' ): bool {
 		$branding       = PublicPageChrome::branding();
-		$login_links    = self::magic_login_links( $existing_person_ids, $redirect_to );
+		$login_links    = self::magic_login_links( $existing_person_ids, $redirect_to, $email );
 		$activation_url = self::activation_url( $activation_token );
 		if ( empty( $login_links ) ) {
 			return self::send_activation_email( $email, $activation_token );
@@ -473,7 +473,7 @@ class ActivationService {
 	 * @param string $redirect_to Optional return destination after authentication.
 	 * @return array<int,array{name:string,url:string}>
 	 */
-	private static function magic_login_links( array $person_ids, string $redirect_to = '' ): array {
+	private static function magic_login_links( array $person_ids, string $redirect_to = '', string $email = '' ): array {
 		$login_links = [];
 
 		foreach ( $person_ids as $person_id ) {
@@ -483,7 +483,7 @@ class ActivationService {
 				continue;
 			}
 
-			$login_url = self::magic_login_url_for_user( $user, $redirect_to );
+			$login_url = self::magic_login_url_for_user( $user, $redirect_to, $email );
 			if ( $login_url === '' ) {
 				continue;
 			}
@@ -710,6 +710,7 @@ class ActivationService {
 			return new \WP_Error( 'invalid_user', 'Het aangemaakte account kon niet worden geopend.' );
 		}
 		if ( $verified_email !== null ) {
+			AccountSwitcher::remember_verified_email( $user->ID, $verified_email );
 			OidcIdentity::mark_email_verified( $user->ID, $verified_email, 'activation' );
 		}
 
@@ -725,20 +726,21 @@ class ActivationService {
 			return new \WP_Error( 'invalid_user', 'Het bestaande ouderaccount kon niet worden geopend.' );
 		}
 
-		$login_url = self::magic_login_url_for_user( $user );
+		$login_url = self::magic_login_url_for_user( $user, '', $verified_email ?? '' );
 		if ( $login_url === '' ) {
 			return new \WP_Error( 'magic_login_unavailable', 'Voor deze ouder/verzorger bestaat al een account. Vraag een nieuwe inloglink aan.' );
 		}
 
 		self::consume_token( $token );
 		if ( $verified_email !== null ) {
+			AccountSwitcher::remember_verified_email( $user->ID, $verified_email );
 			OidcIdentity::mark_email_verified( $user->ID, $verified_email, 'activation' );
 		}
 		return $login_url;
 	}
 
 	/** Create a Magic Login URL while respecting the plugin's failsafe hooks. */
-	private static function magic_login_url_for_user( \WP_User $user, string $redirect_to = '' ): string {
+	private static function magic_login_url_for_user( \WP_User $user, string $redirect_to = '', string $email = '' ): string {
 		if ( apply_filters( 'magic_login_pre_send_login_link', null, $user ) !== null ) {
 			return '';
 		}
@@ -749,6 +751,7 @@ class ActivationService {
 			$login_url = (string) \MagicLogin\Utils\create_login_link( $user, 'email', $redirect_to );
 		}
 		if ( $login_url !== '' ) {
+			AccountSwitcher::bind_login_link( $login_url, $user->ID, $email );
 			do_action( 'magic_login_send_login_link', $user );
 		}
 		return $login_url;

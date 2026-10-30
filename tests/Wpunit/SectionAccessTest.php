@@ -50,6 +50,15 @@ class SectionAccessTest extends RondoTestCase {
 		wp_set_current_user( $this->user_id );
 	}
 
+	public function test_match_affairs_capability_is_exposed_without_granting_team_access(): void {
+		delete_option( 'rondo_age_group_access' );
+		$this->assertFalse( $this->request( '/rondo/v1/user/me' )->get_data()['can_access_wedstrijdzaken'] );
+		$this->grant( 'wedstrijdzaken' );
+		$data = $this->request( '/rondo/v1/user/me' )->get_data();
+		$this->assertTrue( $data['can_access_wedstrijdzaken'] );
+		$this->assertFalse( $data['can_access_teams'] );
+	}
+
 	public function test_general_staff_needs_explicit_team_access(): void {
 		delete_option( 'rondo_age_group_access' );
 		$this->grant( 'jubilarissen' );

@@ -236,3 +236,15 @@ export function useTournamentExport() {
     mutationFn: async ({ id, format }) => prmApi.downloadTournamentExport(id, format),
   });
 }
+
+export function usePreviewTournamentRegistrationReminder(id) {
+  return useMutation({ mutationFn: async (data) => (await prmApi.previewTournamentRegistrationReminder(id, data)).data });
+}
+
+export function useSendTournamentRegistrationReminder(id) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data) => (await prmApi.sendTournamentRegistrationReminder(id, data)).data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tournaments', Number(id)] }),
+  });
+}

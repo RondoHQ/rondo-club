@@ -1,4 +1,4 @@
-import { canAccessFootballItem, footballNavigation } from './footballNavigation';
+import { canAccessFootballItem, footballNavigation } from './footballNavigation.js';
 
 /** Whether a user can see any page in the football navigation section. */
 export function canAccessFootball(user) {

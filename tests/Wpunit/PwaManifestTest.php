@@ -14,6 +14,16 @@ use Tests\Support\RondoTestCase;
  */
 class PwaManifestTest extends RondoTestCase {
 
+	public function test_version_response_matches_the_shell_and_cannot_be_cached(): void {
+		$server   = $this->bootRestControllers( [ \Rondo\REST\Api::class ] );
+		$response = $server->dispatch( new \WP_REST_Request( 'GET', '/rondo/v1/version' ) );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'no-store, private', $response->get_headers()['Cache-Control'] );
+		$this->assertSame( rondo_get_js_config()['buildTime'], $response->get_data()['buildTime'] );
+		$this->assertSame( RONDO_THEME_VERSION, $response->get_data()['version'] );
+	}
+
 	protected function tear_down(): void {
 		delete_option( ClubConfig::OPTION_CLUB_NAME );
 		update_option( 'blogname', 'Test Blog' );

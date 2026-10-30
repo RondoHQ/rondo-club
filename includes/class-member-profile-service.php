@@ -352,6 +352,7 @@ final class MemberProfileService {
 				);
 			update_user_meta( $user_id, UserProvisioning::META_CONTACT_EMAIL, $old_account['contact_email'] );
 		} elseif ( ! is_wp_error( $result ) && $slot === 'primary' && $person_id === $linked_id ) {
+			AccountSwitcher::remember_verified_email( $user_id, $new );
 			OidcIdentity::mark_email_verified( $user_id, $new, 'profile_email_change' );
 		}
 		return $result;

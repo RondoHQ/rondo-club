@@ -109,6 +109,13 @@ function saveFeedback(url, data) {
 
 // Helper for custom PRM API
 export const prmApi = {
+  searchExternalClubs: (params) => api.get('/rondo/v1/external-clubs', { params, timeout: 190000 }),
+  getExternalClub: (id) => api.get(`/rondo/v1/external-clubs/${id}`, { timeout: 190000 }),
+  updateRoleEngagement: (id, data) => api.patch(`/rondo/v1/people/${id}/role-engagements`, data),
+  getAccountSwitcher: () => api.get('/rondo/v1/user/account-switcher'),
+  verifyAccountSwitcher: (email) => api.post('/rondo/v1/user/account-switcher/verify', { email }),
+  switchAccount: (personId) => api.post('/rondo/v1/user/account-switcher/switch', { person_id: personId }),
+  activateSwitchAccount: (personId) => api.post('/rondo/v1/user/account-switcher/activate', { person_id: personId }),
   getAppAccess: () => api.get('/rondo/v1/app-access/laposta'),
   saveAppAccess: (uri) => api.put('/rondo/v1/app-access/laposta', { uri }),
   removeAppAccess: () => api.delete('/rondo/v1/app-access/laposta'),
@@ -144,10 +151,13 @@ export const prmApi = {
   sendNewsletterTestmail: (id, email, revision) => api.post(`/rondo/v1/communications/${id}/newsletter/testmail`, { email, revision }),
 
   // Version check (for cache invalidation)
-  getVersion: () => api.get('/rondo/v1/version'),
+  // A unique URL also bypasses API responses cached by older service workers.
+  getVersion: () => api.get('/rondo/v1/version', { params: { _t: Date.now() } }),
 
   // Tournaments
   getTournamentPayments: () => api.get('/rondo/v1/tournaments/payments'),
+  previewTournamentRegistrationReminder: (id, data) => api.post(`/rondo/v1/tournaments/${id}/registration-reminder/preview`, data),
+  sendTournamentRegistrationReminder: (id, data) => api.post(`/rondo/v1/tournaments/${id}/registration-reminder/send`, data),
   getTournaments: () => api.get('/rondo/v1/tournaments'),
   getTournament: (id) => api.get(`/rondo/v1/tournaments/${id}`),
   createTournament: (data) => api.post('/rondo/v1/tournaments', data),

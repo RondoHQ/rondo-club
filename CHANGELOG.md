@@ -5,12 +5,128 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [35.155.0] - 2026-10-27
+## [35.163.0] - 2026-10-30
 
 ### Added
 
 - Prefer volunteer pairs from the same team, including parents of children on the same team, among equally prioritized eligible candidates (feedback #14641). Existing assignments and open proposals count towards pairs; unmatched places keep the normal fallback.
 - Include current fellow volunteers in duty assignment emails, also for custom templates without the fellow-volunteer placeholder, using the final assignments at delivery time.
+
+## [35.162.0] - 2026-10-30
+
+### Added
+
+- People CSV exports now follow the visible list columns, their labels and order, including selected address, Sportlink, custom and shift-progress fields. All matching pages remain included.
+
+### Fixed
+
+- Keep hidden columns out of people exports, avoid unnecessary team lookups, and show an export error instead of downloading a partial file when a request fails. Treat text values beginning with spreadsheet formula characters as literal text.
+
+## [35.161.1] - 2026-10-30
+
+### Fixed
+
+- Allow users with wedstrijdzaken rights to search and open the Sportlink club address book, including its Football navigation entry, without requiring all-teams access.
+
+## [35.161.0] - 2026-10-30
+
+### Added
+
+- Search the Sportlink club address book by club name or city under Football, and view club contact details and officials filtered by function.
+- Read Sportlink's internal JSON through the authenticated Rondo Sync service, with a visible source timestamp and a fifteen-minute WordPress cache. Access requires the existing all-teams permission; source failures never appear as empty results.
+
+## [35.160.0] - 2026-10-30
+
+### Added
+
+- Classify individual staff functions as employment, compensated volunteering, unpaid volunteering or unknown from a person's Roles tab, with separate badges for people who combine employment and volunteering.
+- Show current people and function counts by category, team and committee in volunteer statistics, with unclassified roles explicitly separated and people counted once within each category.
+- Preserve local classifications across Sportlink role refreshes and reordering; require review for changed functions or start dates, reject stale edits and duplicate roles, and retain a private change history. Existing VOG and shift-exemption rules remain unchanged.
+
+## [35.159.0] - 2026-10-30
+
+### Added
+
+- Manually remind assigned staff of outstanding tournament registrations, with an editable message and a team and recipient preview before sending.
+- Recheck registrations, deadlines and current email addresses before dispatch, combine teams for shared recipients, report missing addresses, and prevent duplicate delivery when a send request is retried.
+
+## [35.158.0] - 2026-10-30
+
+### Added
+
+- Cancel and reinstate an individual training date from My team, team pages, and a dated field overview. Current trainers and leaders can change their own teams; training managers can manage all teams.
+- Show fully cancelled training blocks in grey and distinguish partial cancellations on shared blocks, while retaining the recurring schedule and a private audit trail.
+
+### Fixed
+
+- Respect dated training cancellations in today's coordinator dashboard and volunteer planning availability.
+
+## [35.157.1] - 2026-10-30
+
+### Fixed
+
+- Find team names across straight, curly and keyboard-accent apostrophe variants in global search and the record-search ability, while preserving existing access restrictions.
+
+## [35.157.0] - 2026-10-30
+
+### Added
+
+- Select which duties to publish from a volunteer proposal, with all duties selected by default and deselected candidates preserved for later publication.
+- Keep the approved duty selection across publication batches and interrupted requests; require conversion approval only for selected duties.
+
+## [35.156.3] - 2026-10-30
+
+### Fixed
+
+- Consolidate outstanding volunteer proposals into one current proposal when refreshing, so duties already reserved in an older draft no longer disappear from the latest proposal.
+- Preserve valid candidate choices and manually open places, recheck changed duties, and retain superseded proposals as read-only history with a link to the current proposal.
+- Keep interrupted publications recoverable and preserve existing assignments when proposals are refreshed.
+
+## [35.156.2] - 2026-10-30
+
+### Fixed
+
+- Prepare and validate complete theme releases before atomically activating them, preventing missing PHP classes while deployment copies files.
+- Keep each PHP request and error monitoring on the same release, preserve existing browser assets and runtime certificates, and restore the previous release if deployment verification fails.
+
+## [35.156.1] - 2026-10-29
+
+### Fixed
+
+- Keep exact mailbox confirmation for account switching across logins, including activation and existing recorded email confirmations, instead of asking again each session.
+- Revoke stored and session mailbox proof when its address or person-account link changes, and retain exact-address checks when switching.
+
+## [35.156.0] - 2026-10-29
+
+### Added
+
+- Add “Wissel van account” for people sharing an email address, including secondary addresses and people without a family relationship. Mailbox confirmation is scoped to the current browser session; existing email login links grant immediate access to the chooser.
+- Offer the existing activation flow for people without an account and recheck mailbox membership and account links before every switch.
+
+### Changed
+
+- Replace the session and reload permissions when switching accounts, refresh other open tabs, and stop caching private API responses across identities.
+
+## [35.155.1] - 2026-10-29
+
+### Fixed
+
+- Only show the app update prompt when a fresh server check confirms a different build, preventing a waiting browser service worker from repeatedly announcing the already loaded release.
+- Bypass stale version responses, clear resolved update notices, and keep a dismissed notice hidden when the worker state changes.
+- Disable build-change detection when no production manifest exists instead of treating each request time as a new build.
+
+## [35.155.0] - 2026-10-29
+
+### Added
+
+- Allow administrators to explicitly override different KNVB IDs when merging people, retaining the selected primary profile’s ID and recording both IDs in the merge history. Other merge blockers remain enforced.
+
+## [35.154.1] - 2026-10-28
+
+### Fixed
+
+- Validate dashboard and finance counter responses before caching them, showing a retry action instead of crashing on malformed responses.
+- Report only fixed response-shape, content-type, status and contract categories for invalid dashboard responses, without response bodies or personal data.
 
 ## [35.154.0] - 2026-10-25
 
