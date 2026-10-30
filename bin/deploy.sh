@@ -309,7 +309,7 @@ TAR_EXCLUDES=(
     --exclude='./.claude' --exclude='./.agents' --exclude='./.codex'
     --exclude='./.DS_Store' --exclude='./tests' --exclude='./release'
     --exclude='./.impeccable' --exclude='./.husky' --exclude='./graphify-out'
-    --exclude='./PRODUCT.md' --exclude='./DESIGN.md'
+    --exclude='./PRODUCT.md' --exclude='./DESIGN.md' --exclude='./CLAUDE.md'
     --exclude='./certs' --exclude='./dist/.asset-retention.json*'
 )
 if [ "$INCLUDE_NODE_MODULES" = false ]; then
