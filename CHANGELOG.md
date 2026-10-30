@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.157.0] - 2026-10-30
+
+### Added
+
+- Select which duties to publish from a volunteer proposal, with all duties selected by default and deselected candidates preserved for later publication.
+- Keep the approved duty selection across publication batches and interrupted requests; require conversion approval only for selected duties.
+
 ## [35.156.3] - 2026-10-30
 
 ### Fixed

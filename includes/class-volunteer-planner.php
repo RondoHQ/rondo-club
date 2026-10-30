@@ -187,7 +187,7 @@ final class VolunteerPlanner {
 				if ( get_current_user_id() > 0 && is_wp_error( $this->view( $post->ID ) ) ) {
 					return self::error( 'Geen toegang tot alle personen in de bestaande voorstellen.', 403 );
 				}
-				if ( ! empty( $source['publish_more'] ) || array_filter( $source['rows'], static fn( $row ) => $row['state'] === 'publishing' ) ) {
+				if ( isset( $source['publish_shift_ids'] ) || ! empty( $source['publish_more'] ) || array_filter( $source['rows'], static fn( $row ) => $row['state'] === 'publishing' ) ) {
 					return self::error( 'Rond eerst het publiceren van het bestaande voorstel af. Daarna kun je het voorstel vernieuwen.' );
 				}
 				$sources[ $post->ID ] = $source;
@@ -370,6 +370,9 @@ final class VolunteerPlanner {
 			if ( $data['revision'] !== $revision || ! in_array( $data['phase'], [ 'draft','partial' ], true ) ) {
 				return self::error( 'Het voorstel is gewijzigd. Ververs eerst.' );
 			}
+			if ( isset( $data['publish_shift_ids'] ) ) {
+				return self::error( 'Rond eerst de lopende publicatie af.' );
+			}
 			$options = $this->candidates( $id, $index );
 			if ( is_wp_error( $options ) ) {
 				return $options;
@@ -393,9 +396,9 @@ final class VolunteerPlanner {
 		}
 		);
 	}
-	public function publish( int $id, int $revision, bool $conversions ) {
+	public function publish( int $id, int $revision, bool $conversions, ?array $shift_ids = null ) {
 		return $this->locked(
-		function () use ( $id, $revision, $conversions ) {
+		function () use ( $id, $revision, $conversions, $shift_ids ) {
 			$data = self::data( $id );
 			if ( is_wp_error( $data ) ) {
 				return $data;
@@ -406,19 +409,36 @@ final class VolunteerPlanner {
 			if ( $data['revision'] !== $revision || ! in_array( $data['phase'], [ 'draft','partial' ], true ) ) {
 				return self::error( 'Het voorstel is gewijzigd. Ververs eerst.' );
 			}
+			// Persist the approved scope before any assignment, including across timeouts and chunks.
+			$available = array_values( array_unique( array_column( $data['rows'], 'shift_id' ) ) );
+			$selected  = array_values( array_unique( $shift_ids ?? $data['publish_shift_ids'] ?? $available ) );
+			sort( $selected, SORT_NUMERIC );
+			if ( ! $selected || array_diff( $selected, $available ) ) {
+				return self::error( 'Selecteer minstens één dienst uit dit voorstel.', 400 );
+			}
+			if ( isset( $data['publish_shift_ids'] ) && $selected !== $data['publish_shift_ids'] ) {
+				return self::error( 'Rond eerst de lopende publicatie met de oorspronkelijke selectie af.' );
+			}
 			foreach ( $data['rows'] as $row ) {
+				if ( ! in_array( $row['shift_id'], $selected, true ) ) {
+					if ( $row['state'] === 'publishing' ) {
+						return self::error( 'Een dienst wordt al gepubliceerd. Rond eerst die publicatie af.' );
+					}
+					continue;
+				}
 				if ( $row['state'] === 'pending' && $row['person_id'] > 0 && $row['target_type'] !== (int) get_post_meta( $row['shift_id'], 'dienst_type_id', true ) && ! $conversions ) {
 					return self::error( 'Geef expliciet akkoord voor de omzetting van bar naar luik.' );
 				}
 			}
-			$data['phase'] = 'partial';
+			$data['publish_shift_ids'] = $selected;
+			$data['phase']             = 'partial';
 			self::save( $id, $data );
 			$controller  = new MemberShifts();
 			$processed   = 0;
 			$cursor      = (int) ( $data['publish_cursor'] ?? 0 );
 			$next_cursor = 0;
 			foreach ( $data['rows'] as $index => $row ) {
-				if ( $index < $cursor ) {
+				if ( $index < $cursor || ! in_array( $row['shift_id'], $selected, true ) ) {
 					continue;
 				}
 				$row = $data['rows'][ $index ];
@@ -488,7 +508,10 @@ final class VolunteerPlanner {
 			}
 			$data['publish_cursor'] = $next_cursor;
 			$data['publish_more']   = $next_cursor > 0;
-			$data['phase']          = array_filter( $data['rows'], static fn( $row )=>$row['state'] !== 'published' ) ? 'partial' : 'published';
+			if ( ! $data['publish_more'] && ! array_filter( $data['rows'], static fn( $row ) => $row['state'] === 'publishing' ) ) {
+				unset( $data['publish_shift_ids'] );
+			}
+			$data['phase'] = array_filter( $data['rows'], static fn( $row )=>$row['state'] !== 'published' ) ? 'partial' : 'published';
 			++$data['revision'];
 			$data['published_by'] = get_current_user_id();
 			self::save( $id, $data );
@@ -503,7 +526,7 @@ final class VolunteerPlanner {
 			if ( is_wp_error( $data ) ) {
 				return $data;
 			}
-			if ( $data['revision'] !== $revision || ! empty( $data['superseded_by'] ) ) {
+			if ( $data['revision'] !== $revision || ! empty( $data['superseded_by'] ) || isset( $data['publish_shift_ids'] ) ) {
 				return self::error( 'Het voorstel is gewijzigd. Ververs eerst.' );
 			}
 			$data['phase'] = 'closed';
@@ -615,6 +638,7 @@ final class VolunteerPlanner {
 			'notices'            => $data['notices'],
 			'notification_email' => self::email(),
 			'publish_more'       => $data['publish_more'] ?? false,
+			'publish_shift_ids'  => $data['publish_shift_ids'] ?? null,
 			'superseded_by'      => $data['superseded_by'] ?? 0,
 		];
 	}
