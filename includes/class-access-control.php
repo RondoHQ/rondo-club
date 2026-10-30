@@ -132,18 +132,19 @@ class AccessControl {
 	 * ledenadministratie list renders it as a badge.
 	 */
 	private const SENSITIVE_FIELD_GROUPS = [
-		'bank'    => [ 'iban', 'bank_account_holder', 'nmbrs_name', 'match_compensation_agreements' ],
-		'finance' => [
+		'engagement' => [ 'role_engagements' ],
+		'bank'       => [ 'iban', 'bank_account_holder', 'nmbrs_name', 'match_compensation_agreements' ],
+		'finance'    => [
 			'financiele-blokkade',
 			'nikki-contributie-status',
 			'_nikki_*',
 		],
-		'support' => [
+		'support'    => [
 			'freescout-id',
 			'onboarding-email-lid-sent',
 			'onboarding-email-vrijwilliger-sent',
 		],
-		'sponsor' => [
+		'sponsor'    => [
 			'sponsit_contact_id',
 			'sponsit_person_id',
 		],
@@ -950,6 +951,8 @@ class AccessControl {
 		}
 
 		switch ( $group ) {
+			case 'engagement':
+				return user_can( $user_id, 'ledenadministratie' ) || user_can( $user_id, 'vrijwilligers' ) || UserRoles::can_view_finances( $user_id );
 			case 'bank':
 				return UserRoles::can_manage_finances( $user_id );
 			case 'finance':
