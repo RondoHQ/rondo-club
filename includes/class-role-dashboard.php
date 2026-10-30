@@ -104,12 +104,13 @@ final class RoleDashboard {
 			}
 		}
 		usort( $teams, static fn( $a, $b ) => strnatcasecmp( $a['name'], $b['name'] ) );
-		$active_id = (int) get_option( Schedules::ACTIVE, 0 );
-		$schedule  = $context['coordinator'] && $active_id && Schedules::exists( $active_id ) ? Schedules::schedule( $active_id ) : null;
-		$training  = [];
+		$active_id  = (int) get_option( Schedules::ACTIVE, 0 );
+		$schedule   = $context['coordinator'] && $active_id && Schedules::exists( $active_id ) ? Schedules::schedule( $active_id ) : null;
+		$training   = [];
+		$attendance = is_array( $schedule ) ? \Rondo\Training\Occurrences::states( $active_id ) : [];
 		if ( is_array( $schedule ) ) {
 			foreach ( $schedule['blocks'] as $block ) {
-				$visible_ids = array_values( array_intersect( $block['team_ids'], $ids ) );
+				$visible_ids = array_values( array_filter( array_intersect( $block['team_ids'], $ids ), static fn( $team_id ) => ! \Rondo\Training\Occurrences::state( $attendance, current_datetime()->format( 'Y-m-d' ), $block['block_id'], $team_id )['cancelled'] ) );
 				if ( ! $visible_ids ) {
 					continue;
 				}

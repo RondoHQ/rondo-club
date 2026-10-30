@@ -9,6 +9,7 @@ namespace Rondo\REST;
 
 use Rondo\Core\UserRoles;
 use Rondo\Training\Schedules;
+use Rondo\Training\Occurrences;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -21,6 +22,24 @@ final class Training extends Base {
 	}
 
 	public function register_routes(): void {
+		register_rest_route(
+			'rondo/v1',
+			'/training/week',
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'week' ],
+				'permission_callback' => '__return_true',
+			]
+			);
+		register_rest_route(
+			'rondo/v1',
+			'/training/attendance',
+			[
+				'methods'             => 'PUT',
+				'callback'            => [ $this, 'attendance' ],
+				'permission_callback' => static fn() => is_user_logged_in() && ! UserRoles::is_entree(),
+			]
+			);
 		foreach ( [
 			[ '/training/schedules', 'GET', 'index', false ],
 			[ '/training/schedules', 'POST', 'save', true ],
@@ -47,6 +66,15 @@ final class Training extends Base {
 
 	public function can_read(): bool {
 		return true;
+	}
+
+	public function week( $request ) {
+		return $this->response( Occurrences::week( $request->get_param( 'date' ) ) );
+	}
+
+	public function attendance( $request ) {
+		$data = $request->get_json_params();
+		return $this->response( is_array( $data ) ? Schedules::locked( static fn() => Occurrences::change( $data ) ) : Schedules::error( 'Stuur de afmelding als JSON-object.' ) );
 	}
 
 	public function can_manage(): bool {
