@@ -281,7 +281,7 @@ final class VolunteerPlanner {
 							}
 						}
 					}
-					$chosen = $options[0] ?? null;
+					$chosen = $context->choose_candidate( $id, $options, $needed - $slot );
 					$row    = [
 						'shift_id'    => $id,
 						'person_id'   => $chosen['person_id'] ?? 0,

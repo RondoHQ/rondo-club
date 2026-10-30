@@ -24,7 +24,8 @@ final class PlannerAvailability {
 	public static function overlaps( array $a, array $b ): bool {
 		return $a[0] < $b[1] && $a[1] > $b[0];
 	}
-	private function player_teams( int $person ): array {
+	/** Current player teams, shared by availability and the pairing preference. */
+	public function player_teams( int $person ): array {
 		if ( ! isset( $this->teams[ $person ] ) ) {
 			$teams = [];
 			foreach ( Fields::get_for_post( $person, 'work_history' ) ?: [] as $role ) {
