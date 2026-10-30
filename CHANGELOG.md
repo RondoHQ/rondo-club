@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.156.3] - 2026-10-30
+
+### Fixed
+
+- Consolidate outstanding volunteer proposals into one current proposal when refreshing, so duties already reserved in an older draft no longer disappear from the latest proposal.
+- Preserve valid candidate choices and manually open places, recheck changed duties, and retain superseded proposals as read-only history with a link to the current proposal.
+- Keep interrupted publications recoverable and preserve existing assignments when proposals are refreshed.
+
 ## [35.156.2] - 2026-10-30
 
 ### Fixed
