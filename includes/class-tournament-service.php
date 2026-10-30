@@ -748,6 +748,10 @@ final class TournamentService {
 
 	/** Close, reopen or archive a published tournament. */
 	public function update_lifecycle_status( int $tournament_id, string $status, int $actor_user_id ) {
+		return $this->with_tournament_lock( $tournament_id, fn() => $this->update_lifecycle_status_locked( $tournament_id, $status, $actor_user_id ) );
+	}
+
+	private function update_lifecycle_status_locked( int $tournament_id, string $status, int $actor_user_id ) {
 		$tournament = $this->format_tournament( $tournament_id, false );
 		if ( empty( $tournament ) ) {
 			return new \WP_Error( 'rondo_tournament_not_found', __( 'Toernooi niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
@@ -776,6 +780,10 @@ final class TournamentService {
 
 	/** Move a tournament and all linked entries to the WordPress trash. */
 	public function delete_tournament( int $tournament_id ) {
+		return $this->with_tournament_lock( $tournament_id, fn() => $this->delete_tournament_locked( $tournament_id ) );
+	}
+
+	private function delete_tournament_locked( int $tournament_id ) {
 		$post = get_post( $tournament_id );
 		if ( ! $post || $post->post_type !== self::TOURNAMENT_POST_TYPE || $post->post_status === 'trash' ) {
 			return new \WP_Error( 'rondo_tournament_not_found', __( 'Toernooi niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
@@ -1753,8 +1761,8 @@ final class TournamentService {
 		return ! empty( $ids );
 	}
 
-	/** Serialize price mutation and registration submission for one tournament. */
-	private function with_tournament_lock( int $tournament_id, callable $callback ) {
+	/** Serialize tournament mutations, registration submissions and reminder dispatch. */
+	public function with_tournament_lock( int $tournament_id, callable $callback ) {
 		$key      = 'rondo_tournament_write_lock_' . $tournament_id;
 		$acquired = add_option( $key, time(), '', false );
 		if ( ! $acquired ) {

@@ -12,6 +12,7 @@ use Rondo\Tournaments\TournamentChangeNotificationService;
 use Rondo\Tournaments\TournamentExport;
 use Rondo\Tournaments\TournamentProgramService;
 use Rondo\Tournaments\TournamentService;
+use Rondo\Tournaments\TournamentRegistrationReminderService;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -34,6 +35,18 @@ final class Tournaments extends Base {
 	}
 
 	public function register_routes(): void {
+		foreach ( [ 'preview', 'send' ] as $action ) {
+			register_rest_route(
+				'rondo/v1',
+				'/tournaments/(?P<id>\d+)/registration-reminder/' . $action,
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, $action . '_registration_reminder' ],
+					'permission_callback' => [ $this, 'check_manager_permission' ],
+					'args'                => [ 'id' => [ 'sanitize_callback' => 'absint' ] ],
+				]
+			);
+		}
 		register_rest_route(
 			'rondo/v1',
 			'/tournaments',
@@ -308,6 +321,16 @@ final class Tournaments extends Base {
 
 	public function get_tournaments() {
 		return rest_ensure_response( $this->service->tournaments() );
+	}
+
+	public function preview_registration_reminder( $request ) {
+		$result = ( new TournamentRegistrationReminderService() )->preview( absint( $request['id'] ), $request->get_json_params() ?: [], get_current_user_id() );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	public function send_registration_reminder( $request ) {
+		$result = ( new TournamentRegistrationReminderService() )->send( absint( $request['id'] ), (string) $request->get_param( 'token' ), get_current_user_id() );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 	}
 
 	public function create_tournament( $request ) {
