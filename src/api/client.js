@@ -153,6 +153,8 @@ export const prmApi = {
 
   // Tournaments
   getTournamentPayments: () => api.get('/rondo/v1/tournaments/payments'),
+  previewTournamentRegistrationReminder: (id, data) => api.post(`/rondo/v1/tournaments/${id}/registration-reminder/preview`, data),
+  sendTournamentRegistrationReminder: (id, data) => api.post(`/rondo/v1/tournaments/${id}/registration-reminder/send`, data),
   getTournaments: () => api.get('/rondo/v1/tournaments'),
   getTournament: (id) => api.get(`/rondo/v1/tournaments/${id}`),
   createTournament: (data) => api.post('/rondo/v1/tournaments', data),
