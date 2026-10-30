@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.161.0] - 2026-10-30
+
+### Added
+
+- Search the Sportlink club address book by club name or city under Football, and view club contact details and officials filtered by function.
+- Read Sportlink's internal JSON through the authenticated Rondo Sync service, with a visible source timestamp and a fifteen-minute WordPress cache. Access requires the existing all-teams permission; source failures never appear as empty results.
+
 ## [35.160.0] - 2026-10-30
 
 ### Added
