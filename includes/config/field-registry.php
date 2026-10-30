@@ -5320,6 +5320,15 @@ $config['contexts']['person']['fields']['match_compensation_agreements'] = [
     'key' => 'field_person_match_compensation_agreements', 'label' => 'Afspraken wedstrijdvergoedingen', 'type' => 'repeater', 'read_only' => true, 'sub_fields' => $agreement_children,
 ];
 
+$role_engagement_children = [];
+foreach ( [ 'role_key', 'engagement_type' ] as $name ) {
+    $role_engagement_children[$name] = [ 'canonical_name' => $name, 'storage_name' => $name, 'name' => $name, 'key' => 'field_role_engagement_' . $name, 'label' => $name, 'type' => 'text' ];
+}
+$config['contexts']['person']['fields']['role_engagements'] = [
+    'canonical_name' => 'role_engagements', 'storage_name' => 'role_engagements', 'name' => 'role_engagements',
+    'key' => 'field_person_role_engagements', 'label' => 'Indeling per functie', 'type' => 'repeater', 'read_only' => true, 'sub_fields' => $role_engagement_children,
+];
+
 $config['contexts'] = array_merge( $config['contexts'], require __DIR__ . '/match-compensation-fields.php' );
 $config['contexts'] = array_merge( $config['contexts'], require __DIR__ . '/kantine-margin-fields.php' );
 return $config;

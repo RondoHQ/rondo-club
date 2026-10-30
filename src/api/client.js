@@ -109,6 +109,7 @@ function saveFeedback(url, data) {
 
 // Helper for custom PRM API
 export const prmApi = {
+  updateRoleEngagement: (id, data) => api.patch(`/rondo/v1/people/${id}/role-engagements`, data),
   getAccountSwitcher: () => api.get('/rondo/v1/user/account-switcher'),
   verifyAccountSwitcher: (email) => api.post('/rondo/v1/user/account-switcher/verify', { email }),
   switchAccount: (personId) => api.post('/rondo/v1/user/account-switcher/switch', { person_id: personId }),
