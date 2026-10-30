@@ -109,6 +109,8 @@ function saveFeedback(url, data) {
 
 // Helper for custom PRM API
 export const prmApi = {
+  searchExternalClubs: (params) => api.get('/rondo/v1/external-clubs', { params, timeout: 190000 }),
+  getExternalClub: (id) => api.get(`/rondo/v1/external-clubs/${id}`, { timeout: 190000 }),
   updateRoleEngagement: (id, data) => api.patch(`/rondo/v1/people/${id}/role-engagements`, data),
   getAccountSwitcher: () => api.get('/rondo/v1/user/account-switcher'),
   verifyAccountSwitcher: (email) => api.post('/rondo/v1/user/account-switcher/verify', { email }),
