@@ -6,6 +6,7 @@ import { TRAINING_DAYS, conflictingBlocks, editableSchedule, schedulePayload } f
 import TrainingBoard from './TrainingBoard';
 import TrainingBlockForm from './TrainingBlockForm';
 import TrainingDialog from './TrainingDialog';
+import TrainingWeek from './TrainingWeek';
 
 function VersionForm({ source, onSubmit, onClose, busy, error }) {
   const [name, setName] = useState(source ? `${source.name} (kopie)` : '');
@@ -15,6 +16,20 @@ function VersionForm({ source, onSubmit, onClose, busy, error }) {
 }
 
 export default function Training() {
+  useDocumentTitle('Trainingsschema');
+  const [view, setView] = useState('week');
+  const [editorVisited, setEditorVisited] = useState(false);
+  return <div className="space-y-5">
+    <div className="flex flex-wrap gap-2" aria-label="Weergave trainingsschema">
+      <button className={view === 'week' ? 'btn-primary' : 'btn-secondary'} aria-pressed={view === 'week'} onClick={() => setView('week')}>Weekoverzicht</button>
+      <button className={view === 'schedule' ? 'btn-primary' : 'btn-secondary'} aria-pressed={view === 'schedule'} onClick={() => { setEditorVisited(true); setView('schedule'); }}>Vast weekschema</button>
+    </div>
+    {view === 'week' ? <TrainingWeek /> : null}
+    {editorVisited ? <div hidden={view !== 'schedule'}><ScheduleEditor /></div> : null}
+  </div>;
+}
+
+function ScheduleEditor() {
   useDocumentTitle('Trainingsschema');
   const { data, isLoading, error } = useTrainingSchedules();
   const { data: config, error: configError } = useTrainingSettings();
