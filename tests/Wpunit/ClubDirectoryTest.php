@@ -69,6 +69,27 @@ class ClubDirectoryTest extends RondoTestCase {
 		$this->assertSame( 1, $this->calls );
 	}
 
+	public function test_match_affairs_can_search_and_read_details_without_all_teams_access(): void {
+		$id   = $this->createRondoUser();
+		$user = new \WP_User( $id );
+		$user->add_cap( 'wedstrijdzaken' );
+		wp_set_current_user( $id );
+		$this->assertFalse( current_user_can( 'teams' ) );
+		$this->assertSame( 200, $this->request()->get_status() );
+		$this->payload = [
+			'club'       => $this->club(),
+			'contacts'   => [],
+			'fetched_at' => '2026-10-30T15:00:00Z',
+		];
+		$this->assertSame( 200, $this->request( '/TEST001' )->get_status() );
+		$user->remove_cap( 'wedstrijdzaken' );
+		wp_set_current_user( 0 );
+		wp_set_current_user( $id );
+		$this->assertSame( 403, $this->request()->get_status() );
+		$this->assertSame( 403, $this->request( '/TEST001' )->get_status() );
+		$this->assertSame( 2, $this->calls );
+	}
+
 	public function test_invalid_queries_are_rejected_without_contacting_sync(): void {
 		foreach ( [
 			[ 'search' => 'x' ],

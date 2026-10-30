@@ -47,7 +47,7 @@ class ClubDirectory extends Base {
 	}
 
 	public function can_read(): bool {
-		return $this->check_user_approved() && UserRoles::can_access_section( 'teams' );
+		return $this->check_user_approved() && ( UserRoles::can_access_section( 'teams' ) || UserRoles::can_access_section( 'wedstrijdzaken' ) );
 	}
 
 	public function search( \WP_REST_Request $request ) {

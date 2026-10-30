@@ -11,6 +11,7 @@ import App from './App';
 import { canAccessFeature } from '@/utils/featureToggles';
 import { canAccessCommunication } from '@/utils/communicationNavigation';
 import { canAccessFootball } from '@/utils/footballAccess';
+import { canAccessClubDirectory } from '@/utils/footballNavigation';
 
 // Direct import for Dashboard (no lazy loading)
 import Dashboard from '@/pages/Dashboard';
@@ -348,8 +349,8 @@ const router = wrapCreateBrowserRouter(createBrowserRouter)([
           },
           { path: 'people/:id', element: <KaderOrVrijwilligRedirect><PersonDetail /></KaderOrVrijwilligRedirect> },
           { path: 'voetbal', element: <CapabilityRoute checkAccess={canAccessFootball}><Football /></CapabilityRoute> },
-          { path: 'voetbal/verenigingen', element: <CapabilityRoute checkAccess={(user) => user?.is_admin || user?.can_access_teams}><ClubDirectory /></CapabilityRoute> },
-          { path: 'voetbal/verenigingen/:id', element: <CapabilityRoute checkAccess={(user) => user?.is_admin || user?.can_access_teams}><ClubDirectory /></CapabilityRoute> },
+          { path: 'voetbal/verenigingen', element: <CapabilityRoute checkAccess={canAccessClubDirectory}><ClubDirectory /></CapabilityRoute> },
+          { path: 'voetbal/verenigingen/:id', element: <CapabilityRoute checkAccess={canAccessClubDirectory}><ClubDirectory /></CapabilityRoute> },
           { path: 'sponsors', element: <SponsorRoute><SponsorList /></SponsorRoute> },
           { path: 'sponsors/new', element: <SponsorRoute><SponsorDetail /></SponsorRoute> },
           { path: 'sponsors/:id', element: <SponsorRoute><SponsorDetail /></SponsorRoute> },
