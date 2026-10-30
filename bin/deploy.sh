@@ -283,7 +283,7 @@ cleanup_deployment() {
         echo "Deployment failed; restoring the previous release if activated." >&2
         if remote_release rollback; then
             retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
-                "cd $DEPLOY_REMOTE_WP_PATH && wp cache flush && wp sg purge" || true
+                "cd $DEPLOY_REMOTE_WP_PATH && wp rewrite flush --hard && wp cache flush && wp sg purge" || true
         else
             echo "Automatic rollback could not be confirmed; inspect the deployment transaction." >&2
         fi
