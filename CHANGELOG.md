@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.159.0] - 2026-10-30
+
+### Added
+
+- Manually remind assigned staff of outstanding tournament registrations, with an editable message and a team and recipient preview before sending.
+- Recheck registrations, deadlines and current email addresses before dispatch, combine teams for shared recipients, report missing addresses, and prevent duplicate delivery when a send request is retried.
+
 ## [35.158.0] - 2026-10-30
 
 ### Added

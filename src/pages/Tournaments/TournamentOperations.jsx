@@ -31,6 +31,7 @@ import {
   tournamentPaymentToneClasses,
 } from './tournamentFormatters';
 import TournamentInvitations from './TournamentInvitations';
+import TournamentRegistrationReminder from './TournamentRegistrationReminder';
 import { tournamentAssignmentDelta, tournamentAssignmentNeedsSync } from './tournamentSelections';
 
 const tabs = [
@@ -431,6 +432,7 @@ export default function TournamentOperations({ tournament }) {
       {activeTab === 'overview' ? <OverviewPanel tournament={tournament} /> : null}
       {activeTab === 'teams' && tournament.lifecycle_status === 'open' ? (
         <div className="space-y-4">
+          <TournamentRegistrationReminder key={tournament.id} tournament={tournament} />
           <button type="button" className="btn-tertiary inline-flex items-center" aria-expanded={inviting} onClick={() => setInviting((value) => !value)}><Users className="mr-2 h-4 w-4" />{inviting ? 'Uitnodigen sluiten' : 'Extra teams uitnodigen'}</button>
           {inviting ? <TournamentInvitations tournament={tournament} additional onSent={setInvitationResult} /> : null}
         </div>
