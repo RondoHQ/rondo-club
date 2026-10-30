@@ -201,6 +201,9 @@ class AtomicReleaseTests(unittest.TestCase):
             self.assertEqual(stdout.splitlines(), [str(self.old), 'other', str(self.old), 'other', 'monitor-old'])
 
     def test_real_deploy_script_rolls_back_when_public_health_check_fails(self):
+        # git archives include this documentation symlink; it is not runtime code.
+        (self.source / 'AGENTS.md').write_text('Fixture instructions')
+        (self.source / 'CLAUDE.md').symlink_to('AGENTS.md')
         transport = self.base / 'transport'
         transport.mkdir()
         scripts = {
