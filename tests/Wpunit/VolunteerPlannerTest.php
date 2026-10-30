@@ -156,6 +156,8 @@ class VolunteerPlannerTest extends RondoTestCase {
 		$this->assertSame( $combined, $this->planner->view( $first )['superseded_by'] );
 		$this->assertSame( 'closed', VolunteerPlanner::data( $first )['phase'] );
 		$this->assertWPError( $this->planner->publish( $first, 1, false ) );
+		$this->assertWPError( $this->planner->discard( $first, 1 ) );
+		$this->assertSame( $first_data, get_post_meta( $first, '_planner_data', true ) );
 		$this->assertEmpty( ShiftAssignments::person_ids( $first_shift ) );
 		$this->assertEmpty( ShiftAssignments::person_ids( $second_shift ) );
 		$again = $this->planner->generate( null, true );
