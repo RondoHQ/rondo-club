@@ -12,6 +12,7 @@ import {
   Users,
 } from 'lucide-react';
 import { prmApi } from '@/api/client';
+import { RoleEngagementStatistics } from '@/components/RoleEngagements';
 import TabButton from '@/components/TabButton';
 import { getSpeeldag } from '@/utils/teamDisplay';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -516,6 +517,7 @@ export default function VrijwilligersStatistieken() {
           </Panel>
         ) : (
           <>
+            <RoleEngagementStatistics data={data.role_engagements} />
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
               <StatCard label="Inschrijvingen" value={numberFormat.format(summary.total_assignments)} sub={`${numberFormat.format(summary.total_capacity)} beschikbare plekken`} icon={CalendarCheck} />
               <StatCard label="Vrijwilligers" value={numberFormat.format(summary.unique_volunteers)} sub="Unieke ingeschreven personen" icon={Users} />
