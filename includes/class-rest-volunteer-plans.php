@@ -56,6 +56,14 @@ final class VolunteerPlans extends Base {
 					'methods'  => 'POST',
 					'callback' => [ $this, 'publish' ],
 					'args'     => $revision + [
+						'shift_ids'          => [
+							'type'     => 'array',
+							'minItems' => 1,
+							'items'    => [
+								'type'    => 'integer',
+								'minimum' => 1,
+							],
+						],
 						'accept_conversions' => [
 							'type'    => 'boolean',
 							'default' => false,
@@ -132,7 +140,7 @@ final class VolunteerPlans extends Base {
 		if ( is_wp_error( $view ) ) {
 			return $view;
 		}
-		$result = ( new VolunteerPlanner() )->publish( (int) $request['id'], (int) $request['revision'], (bool) $request['accept_conversions'] );
+		$result = ( new VolunteerPlanner() )->publish( (int) $request['id'], (int) $request['revision'], (bool) $request['accept_conversions'], $request['shift_ids'] );
 		return is_wp_error( $result ) ? $result : $this->view( $request );
 	}
 	public function close( $request ) {
