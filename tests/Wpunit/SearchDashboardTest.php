@@ -116,6 +116,41 @@ class SearchDashboardTest extends RondoTestCase {
 		$this->assertNotContains( $jane_id, $result_ids, 'Search should NOT return Jane Smith' );
 	}
 
+	public function test_team_search_accepts_apostrophe_variants_without_widening_access(): void {
+		$user_id  = $this->createRondoUser();
+		$team_ids = [];
+		foreach ( [ "'", '’', '‘', '´', '`' ] as $mark ) {
+			$team_ids[] = self::factory()->post->create(
+				[
+					'post_type'   => 'team',
+					'post_status' => 'publish',
+					'post_title'  => 'Mini' . $mark . 's',
+				]
+				);
+		}
+		$unrelated = self::factory()->post->create(
+			[
+				'post_type'   => 'team',
+				'post_status' => 'publish',
+				'post_title'  => 'Minivoetbal',
+			]
+			);
+		wp_set_current_user( $user_id );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/search', [ 'q' => 'mini´s' ] );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( [], $response->get_data()['teams'] );
+		get_user_by( 'id', $user_id )->add_cap( 'teams' );
+		wp_set_current_user( 0 );
+		wp_set_current_user( $user_id );
+		foreach ( [ "mini's", 'mini’s', 'mini‘s', 'mini´s', 'mini`s' ] as $query ) {
+			$response = $this->doRestRequest( 'GET', '/rondo/v1/search', [ 'q' => $query ] );
+			$this->assertSame( 200, $response->get_status() );
+			$ids = array_column( $response->get_data()['teams'], 'id' );
+			$this->assertEqualsCanonicalizing( $team_ids, $ids, $query );
+			$this->assertNotContains( $unrelated, $ids );
+		}
+	}
+
 	public function test_search_person_summary_keeps_full_name_and_exposes_all_name_parts(): void {
 		$user_id = self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] );
 		wp_set_current_user( $user_id );

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.157.1] - 2026-10-30
+
+### Fixed
+
+- Find team names across straight, curly and keyboard-accent apostrophe variants in global search and the record-search ability, while preserving existing access restrictions.
+
 ## [35.157.0] - 2026-10-30
 
 ### Added
