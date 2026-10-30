@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.163.0] - 2026-10-30
+
+### Added
+
+- Prefer volunteer pairs from the same team, including parents of children on the same team, among equally prioritized eligible candidates (feedback #14641). Existing assignments and open proposals count towards pairs; unmatched places keep the normal fallback.
+- Include current fellow volunteers in duty assignment emails, also for custom templates without the fellow-volunteer placeholder, using the final assignments at delivery time.
+
 ## [35.162.0] - 2026-10-30
 
 ### Added

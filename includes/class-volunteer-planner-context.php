@@ -7,12 +7,16 @@ use Rondo\Core\PostTitle;
 use Rondo\Fees\SeasonKey;
 use Rondo\People\CommunicationPolicy;
 final class PlannerContext {
-	public array $units      = [];
-	public array $slots      = [];
-	private array $busy      = [];
-	private array $blocks    = [];
-	private array $load      = [];
-	private array $own_units = [];
+	public array $units          = [];
+	public array $slots          = [];
+	private array $busy          = [];
+	private array $blocks        = [];
+	private array $load          = [];
+	private array $own_units     = [];
+	private array $team_sources  = [];
+	private array $pairing_teams = [];
+	private array $families      = [];
+	private array $companions    = [];
 	private PlannerAvailability $availability;
 	private \DateTimeImmutable $now;
 	public array $reasons = [];
@@ -23,10 +27,17 @@ final class PlannerContext {
 		$eligibility        = new VolunteerEligibilityService();
 		$units              = ( new VolunteerObligationCalculator() )->decorate_units( $eligibility->get_eligible_units( $season ), $season );
 		foreach ( $units as $unit ) {
-			if ( VolunteerExemptionResolver::resolve_unit( $unit, $season ) !== null ) {
+			if ( get_current_user_id() > 0 && array_filter( $unit['person_ids'], static fn( $id ) => ! AccessControl::can_view_person( (int) $id ) ) ) {
 				continue;
 			}
-			if ( get_current_user_id() > 0 && array_filter( $unit['person_ids'], static fn( $id ) => ! AccessControl::can_view_person( (int) $id ) ) ) {
+			// Keep family links for existing assignees too, even after their quota is filled.
+			if ( $unit['kind'] === 'gezin' ) {
+				foreach ( array_diff( $unit['person_ids'], $unit['trigger_person_ids'] ) as $parent ) {
+					$this->team_sources[ $parent ] = array_unique( array_merge( $this->team_sources[ $parent ] ?? [], $unit['trigger_person_ids'] ) );
+					$this->families[ $parent ][]   = $unit['unit_id'];
+				}
+			}
+			if ( VolunteerExemptionResolver::resolve_unit( $unit, $season ) !== null ) {
 				continue;
 			}
 			$key                 = hash_hmac( 'sha256', $season . '|' . $unit['unit_id'], wp_salt( 'auth' ) );
@@ -120,9 +131,78 @@ final class PlannerContext {
 			--$this->units[ $key ]['remaining'];
 			++$this->units[ $key ]['half'][ (int) $interval[0]->format( 'n' ) >= 7 ? 0 : 1 ];
 		}
-		$this->slots[ $row['shift_id'] ] = ( $this->slots[ $row['shift_id'] ] ?? 0 ) + 1;
-		$this->busy[ $person ][]         = $interval;
-		$this->load[ $person ]           = ( $this->load[ $person ] ?? 0 ) + 1;
+		$this->slots[ $row['shift_id'] ]        = ( $this->slots[ $row['shift_id'] ] ?? 0 ) + 1;
+		$this->busy[ $person ][]                = $interval;
+		$this->load[ $person ]                  = ( $this->load[ $person ] ?? 0 ) + 1;
+		$this->companions[ $row['shift_id'] ][] = $person;
+	}
+
+	/** Own teams and, for family duties, the current teams of the children. */
+	private function pairing_teams( int $person ): array {
+		if ( ! isset( $this->pairing_teams[ $person ] ) ) {
+			$teams = [];
+			foreach ( array_merge( [ $person ], $this->team_sources[ $person ] ?? [] ) as $source ) {
+				if ( get_current_user_id() === 0 || AccessControl::can_view_person( (int) $source ) ) {
+					$teams = array_merge( $teams, $this->availability->player_teams( (int) $source ) );
+				}
+			}
+			$this->pairing_teams[ $person ] = array_unique( $teams );
+		}
+		return $this->pairing_teams[ $person ];
+	}
+
+	/** A pair is two different people from different family obligations. */
+	private function can_pair( int $a, int $b ): bool {
+		return $a !== $b
+			&& ! array_intersect( $this->families[ $a ] ?? [], $this->families[ $b ] ?? [] )
+			&& (bool) array_intersect( $this->pairing_teams( $a ), $this->pairing_teams( $b ) );
+	}
+
+	/** Prefer pairs only within the best fairness tier; never relax candidate rules. */
+	public function choose_candidate( int $shift, array $options, int $free_slots ): ?array {
+		if ( ! $options ) {
+			return null;
+		}
+		$priority  = array_slice( $options[0]['score'], 0, 3 );
+		$peers     = array_values( array_filter( $options, static fn( $option ) => array_slice( $option['score'], 0, 3 ) === $priority ) );
+		$unpaired  = [];
+		$occupants = array_unique( array_merge( ShiftAssignments::person_ids( $shift ), $this->companions[ $shift ] ?? [] ) );
+		foreach ( $occupants as $person ) {
+			foreach ( $unpaired as $index => $other ) {
+				if ( $this->can_pair( (int) $person, $other ) ) {
+					unset( $unpaired[ $index ] );
+					continue 2;
+				}
+			}
+			$unpaired[] = (int) $person;
+		}
+		foreach ( $peers as $option ) {
+			foreach ( $unpaired as $other ) {
+				if ( $this->can_pair( $option['person_id'], $other ) ) {
+					return $option;
+				}
+			}
+		}
+		// Look ahead before filling an empty pair, so an unpaired first choice
+		// does not prevent two equally eligible teammates from working together.
+		if ( $free_slots >= 2 ) {
+			$by_team = [];
+			foreach ( $peers as $option ) {
+				foreach ( $this->pairing_teams( $option['person_id'] ) as $team ) {
+					$by_team[ $team ][] = $option['person_id'];
+				}
+			}
+			foreach ( $peers as $option ) {
+				foreach ( $this->pairing_teams( $option['person_id'] ) as $team ) {
+					foreach ( $by_team[ $team ] as $other ) {
+						if ( $this->can_pair( $option['person_id'], $other ) ) {
+							return $option;
+						}
+					}
+				}
+			}
+		}
+		return $options[0];
 	}
 	/** The same candidate rules are enforced on generation, editing and publishing. */
 	public function candidates( int $shift, ?int $type = null ): array {
