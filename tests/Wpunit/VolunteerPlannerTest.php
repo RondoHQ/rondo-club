@@ -127,6 +127,133 @@ class VolunteerPlannerTest extends RondoTestCase {
 		$this->assertSame( 0, $this->planner->view( $id )['coverage']['filled'] );
 	}
 
+	public function test_refresh_consolidates_legacy_drafts_and_preserves_choices_without_assigning(): void {
+		$this->family( 'Anne' );
+		$this->family( 'Bram' );
+		$first_shift  = $this->shift( 15 );
+		$first        = $this->plan();
+		$first_data   = VolunteerPlanner::data( $first );
+		$second_shift = $this->shift( 16 );
+		// Reproduce two legacy drafts reserving different days of the same weekend.
+		$second                   = self::factory()->post->create(
+			[
+				'post_type'   => VolunteerPlanner::TYPE,
+				'post_status' => 'private',
+			]
+			);
+		$second_data              = $first_data;
+		$second_data['rows']      = [];
+		$second_data['shift_ids'] = [ $second_shift ];
+		update_post_meta( $second, '_planner_data', $second_data );
+		update_post_meta( $second, '_planner_phase', 'draft' );
+		$combined = $this->planner->generate( null, true );
+		$data     = VolunteerPlanner::data( $combined );
+		$this->assertEqualsCanonicalizing( [ $first_shift, $second_shift ], array_column( $data['rows'], 'shift_id' ) );
+		$this->assertSame( $first_data['rows'][0]['person_id'], $data['rows'][0]['person_id'] );
+		$this->assertCount( 2, array_unique( array_column( $data['rows'], 'person_id' ) ) );
+		$this->assertSame( [ $combined ], array_column( VolunteerPlanner::plans( true ), 'ID' ) );
+		$this->assertSame( $first_data, get_post_meta( $first, '_planner_data', true ) );
+		$this->assertSame( $combined, $this->planner->view( $first )['superseded_by'] );
+		$this->assertSame( 'closed', VolunteerPlanner::data( $first )['phase'] );
+		$this->assertWPError( $this->planner->publish( $first, 1, false ) );
+		$this->assertEmpty( ShiftAssignments::person_ids( $first_shift ) );
+		$this->assertEmpty( ShiftAssignments::person_ids( $second_shift ) );
+		$again = $this->planner->generate( null, true );
+		$this->assertSame( $data['rows'], VolunteerPlanner::data( $again )['rows'] );
+		$this->assertSame( $again, $this->planner->view( $first )['superseded_by'] );
+		$this->assertTrue( $this->planner->publish( $again, 1, false ) );
+		$this->assertCount( 1, ShiftAssignments::person_ids( $first_shift ) );
+		$this->assertCount( 1, ShiftAssignments::person_ids( $second_shift ) );
+	}
+
+	public function test_refresh_preserves_manual_open_slots_and_drops_filled_or_deleted_shifts(): void {
+		$this->family( 'Anne' );
+		$this->family( 'Bram' );
+		$open    = $this->shift( 15 );
+		$filled  = $this->shift( 16 );
+		$deleted = $this->shift( 17 );
+		$id      = $this->plan();
+		$this->assertTrue( $this->planner->edit( $id, 1, 0, 0 ) );
+		$data = VolunteerPlanner::data( $id );
+		update_post_meta( $filled, 'assigned_persons', [ $data['rows'][1]['person_id'] ] );
+		wp_delete_post( $deleted, true );
+		$latest = $this->planner->generate( null, true );
+		$rows   = VolunteerPlanner::data( $latest )['rows'];
+		$this->assertCount( 1, $rows );
+		$this->assertSame( $open, $rows[0]['shift_id'] );
+		$this->assertSame( 0, $rows[0]['person_id'] );
+		$this->assertSame( 'Handmatig open gelaten', $rows[0]['issue'] );
+	}
+
+	public function test_refresh_refuses_an_interrupted_publication_and_keeps_its_recovery_available(): void {
+		$this->family( 'Anne' );
+		$this->shift();
+		$id                       = $this->plan();
+		$data                     = VolunteerPlanner::data( $id );
+		$data['rows'][0]['state'] = 'publishing';
+		update_post_meta( $id, '_planner_data', $data );
+		$this->assertWPError( $this->planner->generate( null, true ) );
+		$this->assertSame( [ $id ], array_column( VolunteerPlanner::plans( true ), 'ID' ) );
+		$this->assertSame( $data, VolunteerPlanner::data( $id ) );
+	}
+
+	public function test_refresh_reserves_manual_choice_on_later_day_before_filling_new_earlier_gap(): void {
+		$this->family( 'Anne' );
+		$this->family( 'Bram' );
+		$later   = $this->shift( 20 );
+		$id      = $this->plan();
+		$options = $this->planner->candidates( $id, 0 );
+		$choice  = $options[1]['person_id'];
+		$this->assertTrue( $this->planner->edit( $id, 1, 0, $choice ) );
+		$earlier = $this->shift( 2 );
+		$new     = $this->planner->generate( null, true, false );
+		$rows    = array_column( VolunteerPlanner::data( $new )['rows'], null, 'shift_id' );
+		$this->assertSame( $choice, $rows[ $later ]['person_id'] );
+		$this->assertNotSame( $choice, $rows[ $earlier ]['person_id'] );
+		$this->assertCount( 1, $this->mail );
+	}
+
+	public function test_failed_snapshot_write_does_not_supersede_existing_choices(): void {
+		$this->family( 'Anne' );
+		$this->shift();
+		$id   = $this->plan();
+		$data = VolunteerPlanner::data( $id );
+		$fail = static fn( $check, $object, $key ) => $key === '_planner_data' ? false : $check;
+		add_filter( 'add_post_metadata', $fail, 10, 3 );
+		try {
+			$this->planner->generate( null, true );
+			$this->fail( 'A failed snapshot write must abort generation.' );
+		} catch ( \RuntimeException $error ) {
+			$this->assertStringContainsString( 'opgeslagen', $error->getMessage() );
+		} finally {
+			remove_filter( 'add_post_metadata', $fail, 10 );
+		}
+		$this->assertSame( $data, VolunteerPlanner::data( $id ) );
+		$this->assertSame( [ $id ], array_column( VolunteerPlanner::plans( true ), 'ID' ) );
+	}
+
+	public function test_refresh_keeps_published_history_and_never_reopens_old_reservations(): void {
+		$this->family( 'Anne' );
+		$this->family( 'Bram' );
+		$filled                   = $this->shift( 15 );
+		$open                     = $this->shift( 16 );
+		$id                       = $this->plan();
+		$data                     = VolunteerPlanner::data( $id );
+		$data['rows'][0]['state'] = 'published';
+		$data['phase']            = 'partial';
+		update_post_meta( $id, '_planner_data', $data );
+		update_post_meta( $filled, 'assigned_persons', [ $data['rows'][0]['person_id'] ] );
+		$new    = $this->planner->generate( null, true );
+		$latest = VolunteerPlanner::data( $new );
+		$this->assertSame( [ $open ], array_column( $latest['rows'], 'shift_id' ) );
+		$this->assertSame( $data['rows'][1]['person_id'], $latest['rows'][0]['person_id'] );
+		$this->assertSame( $data, get_post_meta( $id, '_planner_data', true ) );
+		$this->assertTrue( $this->planner->discard( $new, 1 ) );
+		$this->assertEmpty( VolunteerPlanner::plans( true ) );
+		$this->assertWPError( $this->planner->publish( $id, 1, false ) );
+		$this->assertSame( [ $data['rows'][0]['person_id'] ], ShiftAssignments::person_ids( $filled ) );
+	}
+
 	public function test_publish_rechecks_and_queues_once_and_can_be_cancelled_before_three_weeks(): void {
 		$parent = $this->family( 'Anne' );
 		$shift  = $this->shift();
@@ -199,11 +326,12 @@ class VolunteerPlannerTest extends RondoTestCase {
 		$id2 = $this->planner->generate( null, true );
 		$this->assertSame( $parent, VolunteerPlanner::data( $id2 )['rows'][0]['person_id'] );
 		$id3 = $this->planner->generate( null, true );
-		$this->assertEmpty( VolunteerPlanner::data( $id3 )['rows'] );
+		$this->assertSame( $parent, VolunteerPlanner::data( $id3 )['rows'][0]['person_id'] );
+		$this->assertWPError( $this->planner->publish( $id2, 1, false ) );
 		update_post_meta( $shift, 'capacity', 2 );
-		$this->assertTrue( $this->planner->publish( $id2, 1, false ) );
+		$this->assertTrue( $this->planner->publish( $id3, 1, false ) );
 		$this->assertEmpty( ShiftAssignments::person_ids( $shift ) );
-		$this->assertStringContainsString( 'gewijzigd', VolunteerPlanner::data( $id2 )['rows'][0]['issue'] );
+		$this->assertStringContainsString( 'gewijzigd', VolunteerPlanner::data( $id3 )['rows'][0]['issue'] );
 	}
 
 	public function test_editing_closing_and_private_routes_preserve_existing_assignments(): void {

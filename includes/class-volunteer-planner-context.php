@@ -16,7 +16,7 @@ final class PlannerContext {
 	private PlannerAvailability $availability;
 	private \DateTimeImmutable $now;
 	public array $reasons = [];
-	public function __construct( \DateTimeImmutable $now, int $exclude_plan = 0, ?array $exclude_row = null, ?string $season = null ) {
+	public function __construct( \DateTimeImmutable $now, int|array $exclude_plan = 0, ?array $exclude_row = null, ?string $season = null ) {
 		$this->now          = $now;
 		$this->availability = new PlannerAvailability();
 		$season             = $season ?? SeasonKey::current( $now->format( 'Y-m-d' ) );
@@ -95,7 +95,7 @@ final class PlannerContext {
 			}
 		}
 		foreach ( VolunteerPlanner::plans( true ) as $plan ) {
-			if ( $plan->ID === $exclude_plan ) {
+			if ( in_array( $plan->ID, (array) $exclude_plan, true ) ) {
 				continue;
 			}
 			$data = get_post_meta( $plan->ID, '_planner_data', true );

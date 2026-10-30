@@ -73,7 +73,7 @@ final class VolunteerPlanner {
 		}
 	}
 	public static function plans( bool $open = false ): array {
-		$args = [
+		$args  = [
 			'post_type'        => self::TYPE,
 			'post_status'      => 'private',
 			'numberposts'      => -1,
@@ -81,23 +81,47 @@ final class VolunteerPlanner {
 			'order'            => 'DESC',
 			'suppress_filters' => true,
 		];
-		if ( $open ) {
-			$args['meta_query'] = [
-				[
-					'key'     => '_planner_phase',
-					'value'   => [ 'draft', 'partial' ],
-					'compare' => 'IN',
-				],
-			];
+		$posts = get_posts( $args );
+		if ( ! $open ) {
+			return $posts;
 		}
-		return get_posts( $args );
+		$replacements = self::replacements( $posts );
+		return array_values(
+			array_filter(
+			$posts,
+			static function ( $post ) use ( $replacements ) {
+				$data = get_post_meta( $post->ID, '_planner_data', true );
+				return ! isset( $replacements[ $post->ID ] ) && in_array( $data['phase'] ?? '', [ 'draft', 'partial' ], true );
+			}
+			)
+			);
 	}
+	/** The new snapshot supersedes its sources in one write; historical choices stay intact. */
+	private static function replacements( array $posts ): array {
+		$result = [];
+		foreach ( $posts as $post ) {
+			$data = get_post_meta( $post->ID, '_planner_data', true );
+			foreach ( $data['supersedes'] ?? [] as $source ) {
+				$result[ (int) $source ] = $result[ (int) $source ] ?? $post->ID;
+			}
+		}
+		return $result;
+	}
+
 	public static function data( int $id ) {
 		if ( get_post_type( $id ) !== self::TYPE || get_post_status( $id ) !== 'private' ) {
 			return self::error( 'Voorstel niet gevonden.', 404 );
 		}
 		$data = get_post_meta( $id, '_planner_data', true );
-		return is_array( $data ) ? $data : self::error( 'Voorstel kon niet worden gelezen.', 500 );
+		if ( ! is_array( $data ) ) {
+			return self::error( 'Voorstel kon niet worden gelezen.', 500 );
+		}
+		$replacement = self::replacements( self::plans() )[ $id ] ?? 0;
+		if ( $replacement ) {
+			$data['phase']         = 'closed';
+			$data['superseded_by'] = $replacement;
+		}
+		return $data;
 	}
 	private static function save( int $id, array $data ): void {
 		update_post_meta( $id, '_planner_data', $data );
@@ -143,10 +167,10 @@ final class VolunteerPlanner {
 		VolunteerObligationCalculator::invalidate_cache();
 	}
 	/** Unfilled finite-capacity duties, through Sunday four calendar weeks ahead. */
-	public function generate( ?\DateTimeImmutable $now = null, bool $force = false ) {
+	public function generate( ?\DateTimeImmutable $now = null, bool $force = false, bool $notify = true ) {
 		$now = $now ?? self::now();
 		return $this->locked(
-		function () use ( $now, $force ) {
+		function () use ( $now, $force, $notify ) {
 			self::refresh();
 			$week = $now->format( 'o-W' );
 			if ( ! $force ) {
@@ -155,6 +179,19 @@ final class VolunteerPlanner {
 						return $post->ID;
 					}
 				}
+			}
+			$sources    = [];
+			$supersedes = [];
+			foreach ( self::plans( true ) as $post ) {
+				$source = self::data( $post->ID );
+				if ( get_current_user_id() > 0 && is_wp_error( $this->view( $post->ID ) ) ) {
+					return self::error( 'Geen toegang tot alle personen in de bestaande voorstellen.', 403 );
+				}
+				if ( ! empty( $source['publish_more'] ) || array_filter( $source['rows'], static fn( $row ) => $row['state'] === 'publishing' ) ) {
+					return self::error( 'Rond eerst het publiceren van het bestaande voorstel af. Daarna kun je het voorstel vernieuwen.' );
+				}
+				$sources[ $post->ID ] = $source;
+				$supersedes           = array_merge( $supersedes, [ $post->ID ], $source['supersedes'] ?? [] );
 			}
 			$until    = $now->modify( 'monday this week' )->setTime( 0, 0 )->modify( '+5 weeks' );
 			$contexts = [];
@@ -176,28 +213,61 @@ final class VolunteerPlanner {
 			);
 			// Scarce qualifications first; within each class, urgent dates first.
 			usort( $shifts, static fn( $a, $b ) => (int) (bool) get_post_meta( (int) get_post_meta( $b->ID, 'dienst_type_id', true ), 'iva_required', true ) <=> (int) (bool) get_post_meta( (int) get_post_meta( $a->ID, 'dienst_type_id', true ), 'iva_required', true ) ?: strcmp( (string) get_post_meta( $a->ID, 'start_datetime', true ), (string) get_post_meta( $b->ID, 'start_datetime', true ) ) );
-			$rows      = [];
-			$shift_ids = [];
+			$eligible = [];
 			foreach ( $shifts as $shift ) {
 				$id   = $shift->ID;
 				$span = PlannerAvailability::interval( $id );
 				$type = (int) get_post_meta( $id, 'dienst_type_id', true );
-				if ( ! $span || ! in_array( get_post_meta( $id, 'status', true ), [ 'open','vol' ], true ) || get_post_type( $type ) !== 'dienst_type' || get_post_status( $type ) !== 'publish' ) {
+				if ( ! $span || ! in_array( get_post_meta( $id, 'status', true ), [ 'open', 'vol' ], true ) || get_post_type( $type ) !== 'dienst_type' || get_post_status( $type ) !== 'publish' ) {
 					continue;
 				}
-				$season = \Rondo\Fees\SeasonKey::current( $span[0]->format( 'Y-m-d' ) );
-				if ( ! isset( $contexts[ $season ] ) ) {
-					$contexts[ $season ] = new PlannerContext( $now, 0, null, $season );
-					foreach ( $rows as $prior ) {
-						if ( $prior['person_id'] ) {
-							$contexts[ $season ]->reserve( $prior, PlannerAvailability::interval( (int) $prior['shift_id'] ) );
-						}
+				$season              = \Rondo\Fees\SeasonKey::current( $span[0]->format( 'Y-m-d' ) );
+				$contexts[ $season ] = $contexts[ $season ] ?? new PlannerContext( $now, array_keys( $sources ), null, $season );
+				$capacity            = (int) get_post_meta( $id, 'capacity', true );
+				$eligible[ $id ]     = [
+					'span'     => $span,
+					'type'     => $type,
+					'season'   => $season,
+					'capacity' => $capacity,
+					'needed'   => $capacity > 0 ? max( 0, $capacity - count( ShiftAssignments::person_ids( $id ) ) ) : 1,
+				];
+			}
+			$by_shift = [];
+			// Reserve all retained choices before filling gaps, including choices on later days.
+			foreach ( $sources as $source ) {
+				foreach ( $source['rows'] as $row ) {
+					$id          = (int) $row['shift_id'];
+					$info        = $eligible[ $id ] ?? null;
+					$manual_open = ! $row['person_id'] && $row['issue'] === 'Handmatig open gelaten';
+					if ( ! $info || $row['state'] !== 'pending' || ( ! $row['person_id'] && ! $manual_open ) || count( $by_shift[ $id ] ?? [] ) >= $info['needed'] ) {
+						continue;
 					}
+					if ( $row['person_id'] ) {
+						$context = $contexts[ $info['season'] ];
+						// Changed duties and no-longer-eligible candidates must be planned afresh.
+						if ( $row['snapshot'] !== self::snapshot( $id ) || ! array_filter( $context->candidates( $id, (int) $row['target_type'] ), static fn( $option ) => $option['person_id'] === $row['person_id'] && $option['unit'] === $row['unit'] ) ) {
+							continue;
+						}
+						foreach ( $contexts as $ledger ) {
+							$ledger->reserve( $row, $info['span'] );
+						}
+					} else {
+						$row['snapshot']    = self::snapshot( $id );
+						$row['target_type'] = $info['type'];
+					}
+					$by_shift[ $id ][] = $row;
 				}
-				$context     = $contexts[ $season ];
-				$shift_ids[] = $id;
-				$capacity    = (int) get_post_meta( $id, 'capacity', true );
-				$needed      = $capacity > 0 ? max( 0, $capacity - count( ShiftAssignments::person_ids( $id ) ) - ( $context->slots[ $id ] ?? 0 ) ) : 1;
+			}
+			$rows      = [];
+			$shift_ids = array_keys( $eligible );
+			foreach ( $eligible as $id => $info ) {
+				$span     = $info['span'];
+				$type     = $info['type'];
+				$capacity = $info['capacity'];
+				$context  = $contexts[ $info['season'] ];
+				$kept     = $by_shift[ $id ] ?? [];
+				$rows     = array_merge( $rows, $kept );
+				$needed   = $info['needed'] - count( $kept );
 				for ( $slot = 0; $slot < $needed; ++$slot ) {
 						$target      = $type;
 						$options     = $capacity > 0 ? $context->candidates( $id ) : [];
@@ -250,10 +320,11 @@ final class VolunteerPlanner {
 				'rows'       => $rows,
 				'shift_ids'  => $shift_ids,
 				'notices'    => [],
+				'supersedes' => array_values( array_unique( $supersedes ) ),
 			];
 			update_post_meta( $id, '_planner_week', $week );
 			self::save( $id, $data );
-			if ( $rows ) {
+			if ( $rows && $notify ) {
 				$this->notice( $id, 'created' );
 			}
 			return $id;
@@ -544,6 +615,7 @@ final class VolunteerPlanner {
 			'notices'            => $data['notices'],
 			'notification_email' => self::email(),
 			'publish_more'       => $data['publish_more'] ?? false,
+			'superseded_by'      => $data['superseded_by'] ?? 0,
 		];
 	}
 }
