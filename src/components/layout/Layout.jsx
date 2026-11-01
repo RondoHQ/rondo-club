@@ -805,6 +805,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback, showFeedbackIntro, 
     if (path.startsWith('/feedback')) return 'Feedback';
     if (path.startsWith('/communicatie/nieuwsbrief-instellingen')) return 'Nieuwsbriefinstellingen';
     if (/^\/communicatie\/planning\/\d+\/nieuwsbrief/.test(path)) return 'Nieuwsbrief';
+    if (path.startsWith('/communicatie/enquetes')) return 'Enquêtes';
     if (path.startsWith('/communicatie/planning')) return 'Planning';
     if (path.startsWith('/communicatie')) return 'Communicatie';
     if (path.startsWith('/settings')) return 'Instellingen';

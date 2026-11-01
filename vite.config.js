@@ -79,7 +79,7 @@ export default defineConfig({
           },
           {
             // Release checks, contact rosters and private worklists need fresh network data.
-            urlPattern: /\/wp-json\/rondo\/v1\/(?:version|app-access|my-teams|my-committees|volunteer-assignments|tournaments\/payments)(?:[/?]|$)/i,
+            urlPattern: /\/wp-json\/rondo\/v1\/(?:surveys|public-surveys|version|app-access|my-teams|my-committees|volunteer-assignments|tournaments\/payments)(?:[/?]|$)/i,
             handler: 'NetworkOnly',
           },
           {

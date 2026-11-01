@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ClipboardList, Save, Trash2 } from 'lucide-react';
-import { prmApi, wpApi } from '@/api/client';
+import api, { prmApi, wpApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { decodeHtml } from '@/utils/formatters';
@@ -27,11 +27,13 @@ const EMPTY = {
   survey_email_subject: 'Hoe ging je inschrijftaak {dienst}?',
   survey_email_body: 'Hoi {naam},\n\nBedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlopen. Wil je onze korte enquête invullen?',
   survey_url: '',
+  survey_id: 0,
 };
 
 export default function VrijwilligersDienstTypeForm() {
   const { id } = useParams();
   const isEdit = !!id;
+  const surveys = useQuery({ queryKey: ['available-surveys'], queryFn: async () => (await api.get('/rondo/v1/surveys/available')).data });
   useDocumentTitle(isEdit ? 'Inschrijftaak bewerken' : 'Nieuwe inschrijftaak');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -83,6 +85,7 @@ export default function VrijwilligersDienstTypeForm() {
       survey_email_subject: fields.survey_email_subject || EMPTY.survey_email_subject,
       survey_email_body: fields.survey_email_body || EMPTY.survey_email_body,
       survey_url: fields.survey_url || '',
+      survey_id: fields.survey_id || 0,
     });
   }, [existing]);
 
@@ -169,6 +172,7 @@ export default function VrijwilligersDienstTypeForm() {
               survey_email_subject: form.survey_email_subject,
               survey_email_body: form.survey_email_body,
               survey_url: form.survey_url,
+              survey_id: Number(form.survey_id),
             },
           });
         }}
@@ -327,7 +331,7 @@ export default function VrijwilligersDienstTypeForm() {
           <div>
             <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Enquête na de inschrijftaak</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Eén dag na de inschrijftaak ontvangt iedere deelnemer deze mail. Zonder Google Forms-link wordt niets verstuurd.
+              Eén dag na de inschrijftaak ontvangt iedere deelnemer deze mail. Kies een Rondo-enquête of vul een externe enquêtelink in. Zonder enquête wordt niets verstuurd.
             </p>
           </div>
           <Field label="Onderwerp">
@@ -349,12 +353,20 @@ export default function VrijwilligersDienstTypeForm() {
               className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
             />
           </Field>
-          <Field label="Google Forms-link" hint="Laat leeg om de enquêtemail voor deze inschrijftaak uit te schakelen.">
+          <Field label="Rondo-enquête" hint="Iedere deelnemer krijgt een persoonlijke uitnodiging. Deze keuze gaat voor de externe link.">
+            <select className="input w-full" value={form.survey_id} onChange={(e) => setForm({ ...form, survey_id: Number(e.target.value) })}>
+              <option value={0}>Geen interne enquête</option>
+              {form.survey_id > 0 && !surveys.data?.some((s) => s.id === Number(form.survey_id)) && <option value={form.survey_id}>Geselecteerde enquête (gesloten of niet beschikbaar)</option>}
+              {surveys.data?.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
+            </select>
+            {surveys.isError && <p role="alert" className="text-sm text-red-700">Enquêtes laden is mislukt.</p>}
+          </Field>
+          <Field label="Externe enquêtelink" hint="Wordt alleen gebruikt wanneer geen Rondo-enquête is geselecteerd.">
             <input
               type="url"
               value={form.survey_url}
               onChange={(e) => setForm({ ...form, survey_url: e.target.value })}
-              placeholder="https://docs.google.com/forms/..."
+              placeholder="https://..."
               className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
             />
           </Field>

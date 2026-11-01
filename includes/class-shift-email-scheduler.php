@@ -496,7 +496,7 @@ class ShiftEmailScheduler {
 		}
 
 		$survey_url = esc_url_raw( (string) get_post_meta( $type_id, 'survey_url', true ) );
-		if ( $survey_url !== '' && $this->is_due( $now, $end->modify( '+1 day' ) ) ) {
+		if ( ( $survey_url !== '' || (int) Fields::get_for_post( $type_id, 'survey_id' ) > 0 ) && $this->is_due( $now, $end->modify( '+1 day' ) ) ) {
 			foreach ( $assigned as $person_id ) {
 				if ( get_post_meta( $shift_id, '_no_show_' . $person_id, true ) ) {
 					continue;
@@ -528,11 +528,20 @@ class ShiftEmailScheduler {
 			return false;
 		}
 
-		$is_survey = $delivery === 'survey';
-		$subject   = (string) get_post_meta( $type_id, $is_survey ? 'survey_email_subject' : 'reminder_email_subject', true );
-		$body      = (string) get_post_meta( $type_id, $is_survey ? 'survey_email_body' : 'reminder_email_body', true );
-		$subject   = $subject !== '' ? $subject : ( $is_survey ? self::DEFAULT_SURVEY_SUBJECT : self::DEFAULT_REMINDER_SUBJECT );
-		$body      = $body !== '' ? $body : ( $is_survey ? self::DEFAULT_SURVEY_BODY : self::DEFAULT_REMINDER_BODY );
+		$is_survey     = $delivery === 'survey';
+		$survey_invite = null;
+		$survey_id     = (int) Fields::get_for_post( $type_id, 'survey_id' );
+		if ( $is_survey && $survey_id > 0 ) {
+			$survey_invite = \Rondo\Surveys\Surveys::shift_invitation( $survey_id, $shift_id, $person_id, $email );
+			if ( is_wp_error( $survey_invite ) ) {
+				return false;
+			}
+			$survey_url = \Rondo\Surveys\Surveys::url( $survey_id, $survey_invite['token'] );
+		}
+		$subject = (string) get_post_meta( $type_id, $is_survey ? 'survey_email_subject' : 'reminder_email_subject', true );
+		$body    = (string) get_post_meta( $type_id, $is_survey ? 'survey_email_body' : 'reminder_email_body', true );
+		$subject = $subject !== '' ? $subject : ( $is_survey ? self::DEFAULT_SURVEY_SUBJECT : self::DEFAULT_REMINDER_SUBJECT );
+		$body    = $body !== '' ? $body : ( $is_survey ? self::DEFAULT_SURVEY_BODY : self::DEFAULT_REMINDER_BODY );
 
 		$vars    = $this->template_variables( $type_id, $person_id, $assigned, $start, $end );
 		$subject = $this->substitute_variables( $subject, $vars );
@@ -562,6 +571,17 @@ class ShiftEmailScheduler {
 			return false;
 		}
 
+		if ( $survey_invite ) {
+			\Rondo\Surveys\Surveys::locked(
+				'survey:' . $survey_id,
+				static function () use ( $survey_invite, $survey_id ) {
+					$invite            = \Rondo\Surveys\Surveys::read( $survey_invite['id'], \Rondo\Surveys\Surveys::INVITE );
+					$invite['status']  = 'sent';
+					$invite['sent_at'] = gmdate( 'c' );
+					\Rondo\Surveys\Surveys::write( \Rondo\Surveys\Surveys::INVITE, $invite, $invite['id'], $survey_id );
+				}
+				);
+		}
 		do_action( 'rondo_shift_email_sent', $shift_id, $person_id, $delivery );
 		return true;
 	}
