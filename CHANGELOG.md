@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.163.2] - 2026-11-01
+
+### Fixed
+
+- Allow VOG reviewers to explicitly accept a different organization or function per submission, including alongside different screening codes. Each discrepancy requires its own confirmation and is recorded in the review receipt; authenticity, readable document data, date and identity checks remain required.
+
 ## [35.163.1] - 2026-11-01
 
 ### Fixed

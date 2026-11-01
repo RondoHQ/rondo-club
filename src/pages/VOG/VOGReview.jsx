@@ -21,13 +21,17 @@ function Submission({ item, onApproved }) {
   const [identityConfirmed, setIdentityConfirmed] = useState(false);
   const [remember, setRemember] = useState(false);
   const [codesConfirmed, setCodesConfirmed] = useState(false);
+  const [organizationConfirmed, setOrganizationConfirmed] = useState(false);
   const [contactAction, setContactAction] = useState('');
   const [fileError, setFileError] = useState('');
   const assessment = item.assessment;
   const paper = item.source === 'paper';
   const identityRequired = assessment && !assessment.identity_matches;
   const identityChecked = !!identityMethod && identityConfirmed;
-  const contentChecked = assessment?.content_passed || (assessment?.codes_override_allowed && codesConfirmed);
+  const hasContentOverride = assessment?.codes_override_allowed || assessment?.organization_override_allowed;
+  const contentChecked = assessment?.content_passed || (hasContentOverride
+    && (!assessment.codes_override_allowed || codesConfirmed)
+    && (!assessment.organization_override_allowed || organizationConfirmed));
   const canApprove = paper ? confirmed && !!date : item.code === 0 && contentChecked && (!identityRequired || identityChecked) && (!remember || identityChecked);
   const action = useMutation({
     mutationFn: name => name === 'retry' ? prmApi.retryVog(item.id) : prmApi.reviewVog(item.id, {
@@ -35,6 +39,7 @@ function Submission({ item, onApproved }) {
       note: name === 'approve' ? '' : note, date, confirmed: paper ? confirmed : true,
       method: paper ? 'paper_original' : 'gaav_manual',
       identity_method: identityMethod, identity_confirmed: identityConfirmed, remember_identity: remember, codes_confirmed: codesConfirmed,
+      organization_confirmed: organizationConfirmed,
     }),
     onSuccess: async (response, name) => {
       if (name === 'approve') onApproved({ name: item.name, date: response.data.approved_date, remembered: response.data.identity_remembered, method: identityMethod });
@@ -101,8 +106,9 @@ function Submission({ item, onApproved }) {
               {check.passed ? <CheckCircle2 className="size-4 shrink-0 mt-0.5" aria-hidden="true" /> : <AlertTriangle className="size-4 shrink-0 mt-0.5" aria-hidden="true" />}<span>{check.passed ? 'In orde: ' : 'Niet bevestigd: '}{check.label}</span>
             </li>)}</ul>
             {item.parsed?.codes?.length > 0 && <p className="text-sm text-gray-600 dark:text-gray-300">Screeningscodes op de VOG: {item.parsed.codes.join(', ')}.</p>}
+            {assessment.organization_override_allowed && <label className="flex items-start gap-2 text-sm"><input className="mt-1" type="checkbox" checked={organizationConfirmed} onChange={event => setOrganizationConfirmed(event.target.checked)} /><span>Ik heb de afwijkende organisatie en/of functie gecontroleerd en accepteer deze VOG voor de functie binnen de club. Deze bevestiging geldt alleen voor deze inzending.</span></label>}
             {assessment.codes_override_allowed && <label className="flex items-start gap-2 text-sm"><input className="mt-1" type="checkbox" checked={codesConfirmed} onChange={event => setCodesConfirmed(event.target.checked)} /><span>Ik heb de afwijkende screeningscodes gecontroleerd en accepteer deze VOG voor de functie binnen de club. Deze bevestiging geldt alleen voor deze inzending.</span></label>}
-            {!assessment.content_passed && !assessment.codes_override_allowed && <p className="text-sm">Controleer de VOG-instellingen met een beheerder of doe navraag. Deze VOG kan nu niet worden goedgekeurd.</p>}
+            {!assessment.content_passed && !hasContentOverride && <p className="text-sm">Controleer de VOG-instellingen met een beheerder of doe navraag. Deze VOG kan nu niet worden goedgekeurd.</p>}
           </section>
         </>}
         {paper && <>
