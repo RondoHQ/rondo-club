@@ -3,9 +3,67 @@ namespace Tests\Wpunit;
 
 use Rondo\Twelve\BusinessclubInvoicing;
 use Rondo\Twelve\ReportRepository;
+use Rondo\Finance\FinanceServices;
+use Rondo\Finance\MollieConfig;
 use Tests\Support\RondoTestCase;
 
 class TwelveBillingTest extends RondoTestCase {
+	private function configure_mollie_accounts(): void {
+		$accounts = [];
+		foreach ( [ 'membership', 'manual' ] as $id ) {
+			$accounts[] = [
+				'id'             => $id,
+				'internal_name'  => $id,
+				'account_holder' => 'Test club',
+				'iban'           => 'NL91ABNA0417164300',
+				'api_key'        => 'test_' . str_repeat( $id === 'manual' ? 'a' : 'b', 30 ),
+			];
+		}
+		update_option( MollieConfig::OPTION_MOLLIE_ACCOUNTS, FinanceServices::mollie()->normalize_accounts_for_storage( $accounts ) );
+		update_option( MollieConfig::OPTION_ACTIVE_PAYMENT_PROVIDER, 'mollie' );
+		update_option( MollieConfig::OPTION_MOLLIE_DEFAULT_MANUAL_ACCOUNT_ID, 'manual' );
+		update_option( MollieConfig::OPTION_MOLLIE_DEFAULT_MEMBERSHIP_ACCOUNT_ID, 'membership' );
+	}
+
+	public function test_draft_stores_manual_payment_account_and_keeps_it_when_default_changes(): void {
+		$this->configure_mollie_accounts();
+		$this->report( '2026-09-29', 'payment-account' );
+		$id = ( new BusinessclubInvoicing() )->create_draft_invoice();
+		$this->assertIsInt( $id );
+		$this->assertSame( 'manual', get_post_meta( $id, '_payment_account_id', true ) );
+		$this->assertSame( 'manual', get_post_meta( $id, '_payment_account_internal_name', true ) );
+		$this->assertSame( 'Test club', get_post_meta( $id, '_payment_account_account_holder', true ) );
+		$this->assertSame( 'NL91ABNA0417164300', get_post_meta( $id, '_payment_account_iban', true ) );
+		$this->assertSame( 'mollie', get_post_meta( $id, '_payment_account_linked_provider', true ) );
+		update_option( MollieConfig::OPTION_MOLLIE_DEFAULT_MANUAL_ACCOUNT_ID, 'membership' );
+		$this->assertSame( 'test_' . str_repeat( 'a', 30 ), FinanceServices::mollie()->get_mollie_api_key_for_account( get_post_meta( $id, '_payment_account_id', true ) ) );
+	}
+
+	public function test_missing_payment_account_leaves_reports_available_for_retry(): void {
+		update_option( MollieConfig::OPTION_ACTIVE_PAYMENT_PROVIDER, 'mollie' );
+		update_option( MollieConfig::OPTION_MOLLIE_ACCOUNTS, [] );
+		$report  = $this->report( '2026-09-29', 'missing-payment-account' );
+		$service = new BusinessclubInvoicing();
+		$result  = $service->create_draft_invoice();
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertSame( 'mollie_account_not_configured', $result->get_error_code() );
+		$this->assertSame( '', get_post_meta( $report, BusinessclubInvoicing::CLAIM, true ) );
+		$this->assertSame( [], $service->overview()['invoices'] );
+		$this->assertSame( 109.0, $service->overview()['available'] );
+		$this->assertFalse( get_option( 'rondo_twelve_invoice_lock' ) );
+		$this->configure_mollie_accounts();
+		$this->assertIsInt( $service->create_draft_invoice() );
+	}
+
+	public function test_rabobank_draft_does_not_require_a_mollie_account(): void {
+		update_option( MollieConfig::OPTION_ACTIVE_PAYMENT_PROVIDER, 'rabobank' );
+		update_option( MollieConfig::OPTION_MOLLIE_ACCOUNTS, [] );
+		$this->report( '2026-09-29', 'rabobank-payment-account' );
+		$id = ( new BusinessclubInvoicing() )->create_draft_invoice();
+		$this->assertIsInt( $id );
+		$this->assertSame( 'rabobank', get_post_meta( $id, '_payment_account_linked_provider', true ) );
+	}
+
 	private function report( string $date, string $message ): int {
 		$data                 = json_decode( file_get_contents( __DIR__ . '/../fixtures/twelve-report.json' ), true );
 		$data['period_start'] = $date . ' 06:00';
