@@ -10,6 +10,7 @@ import ProductIndeling from './ProductIndeling';
 import TwelveSchedule from './TwelveSchedule';
 import KantineDrukte from './KantineDrukte';
 import KantineMargins from './KantineMargins';
+import InvoiceContactPicker from '@/components/finance/InvoiceContactPicker';
 
 const tabs = [['overview', 'Overzicht'], ['trend', 'Omzetontwikkeling'], ['activity', 'Drukte & bezetting'], ['products', 'Producten'], ['margins', 'Marges'], ['vat', 'Btw'], ['business', 'Businessclub']];
 const statusLabels = { rondo_draft: 'Concept', rondo_sent: 'Verstuurd', rondo_paid: 'Betaald', rondo_overdue: 'Achterstallig', provisional: 'Dag nog niet afgesloten', historical: 'Historische import', available: 'Nog te factureren', draft: 'In concept', billed: 'Gefactureerd' };
@@ -62,7 +63,7 @@ export default function Kassaomzet() {
   const [tab, setTab] = useState('overview');
   const [month, setMonth] = useState(() => new Intl.DateTimeFormat('sv-SE', { year: 'numeric', month: '2-digit', timeZone: 'Europe/Amsterdam' }).format(new Date()));
   const [selectedDay, setSelectedDay] = useState(null);
-  const [recipient, setRecipient] = useState({ name: '', address: '', email: '' });
+  const [recipient, setRecipient] = useState({ name: '', address: '', email: '', attention: '', cc_email: '' });
   const [composing, setComposing] = useState(false);
   const { data: user } = useCurrentUser();
   const canWrite = user?.can_edit_financieel ?? false;
@@ -107,7 +108,34 @@ export default function Kassaomzet() {
       {tab === 'vat' && <div className={panelClass}><h2 className="text-lg font-semibold">Btw over verkopen</h2><p className="text-sm text-gray-500 dark:text-gray-400">Originele Twelve-bedragen, inclusief Merchandise en Overig en exclusief no-sale.</p><DataTable columns={['Tarief', 'Netto', 'Btw', 'Bruto']} rows={(details.data?.vat ?? []).map(row => [row.tarief, amount(row.netto), amount(row.btw_totaal), amount(row.bruto)])} /></div>}
       {tab === 'business' && billing.data && <>
         <div className={panelClass}><h2 className="text-lg font-semibold">Nog te factureren</h2><div className="flex flex-wrap justify-between items-center gap-4 mt-3"><div><p className="text-3xl font-semibold tabular-nums">{amount(billing.data.total)}</p><p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{amount(billing.data.available)} beschikbaar · {amount(billing.data.total - billing.data.available)} in concept</p></div>{canWrite && <button className="btn-primary" disabled={billing.data.available <= 0 || action.isPending} onClick={() => setComposing(true)}>Maak conceptfactuur</button>}</div><p className="text-xs text-gray-500 dark:text-gray-400 mt-4">Afgesloten, ongefactureerde dagen. Historische imports van vóór de oorspronkelijke rapportages vallen buiten de facturatie. De teller wordt bijgewerkt na succesvol versturen.</p>
-          {composing && <form className="border-t border-gray-200 dark:border-gray-700 mt-5 pt-5 space-y-4" onSubmit={event => { event.preventDefault(); action.mutate({ type: 'create' }); }}><h3 className="font-semibold">Ontvanger Businessclub</h3><div className="grid sm:grid-cols-2 gap-4">{[['name', 'Naam'], ['email', 'E-mailadres']].map(([field, label]) => <label key={field} className="text-sm">{label}<input type={field === 'email' ? 'email' : 'text'} required className="input mt-1 w-full" value={recipient[field]} onChange={event => setRecipient({ ...recipient, [field]: event.target.value })} /></label>)}</div><label className="block text-sm">Factuuradres<textarea required className="input mt-1 w-full" value={recipient.address} onChange={event => setRecipient({ ...recipient, address: event.target.value })} /></label><div className="flex gap-3"><button className="btn-primary" disabled={action.isPending}>Concept aanmaken</button><button type="button" className="btn-secondary" onClick={() => setComposing(false)}>Annuleren</button></div></form>}
+          {composing && <form className="border-t border-gray-200 dark:border-gray-700 mt-5 pt-5" onSubmit={event => { event.preventDefault(); action.mutate({ type: 'create' }); }}>
+            <fieldset disabled={action.isPending} className="space-y-4">
+              <legend className="font-semibold mb-4">Ontvanger Businessclub</legend>
+              <InvoiceContactPicker onSelect={customer => setRecipient({
+                name: customer.customerName,
+                attention: customer.customerAttention,
+                email: customer.customerEmail,
+                cc_email: customer.customerCcEmail,
+                address: customer.customerAddress,
+              })} />
+              <div className="grid sm:grid-cols-2 gap-4">
+                {[
+                  ['name', 'Naam', 'text', true],
+                  ['attention', 'Ter attentie van (optioneel)', 'text', false],
+                  ['email', 'E-mailadres', 'email', true],
+                  ['cc_email', 'Cc-e-mailadres (optioneel)', 'email', false],
+                ].map(([field, label, type, required]) => <label key={field} className="text-sm">
+                  {label}
+                  <input type={type} required={required} className="input mt-1 w-full" value={recipient[field]} onChange={event => setRecipient({ ...recipient, [field]: event.target.value })} />
+                </label>)}
+              </div>
+              <label className="block text-sm">Factuuradres<textarea required className="input mt-1 w-full" value={recipient.address} onChange={event => setRecipient({ ...recipient, address: event.target.value })} /></label>
+              <div className="flex flex-wrap gap-3">
+                <button className="btn-primary">{action.isPending ? 'Concept aanmaken…' : 'Concept aanmaken'}</button>
+                <button type="button" className="btn-secondary" onClick={() => setComposing(false)}>Annuleren</button>
+              </div>
+            </fieldset>
+          </form>}
           {draftInvoices.map(invoice => <div key={invoice.id} className="border-t border-gray-200 dark:border-gray-700 pt-5 mt-5"><h3 className="font-semibold">Concept {invoice.number} · {amount(invoice.amount)}</h3><p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{invoice.recipient || 'Ontvanger ontbreekt'} · {invoice.email || 'E-mailadres ontbreekt'}</p>{canWrite && <div className="flex flex-wrap gap-3 mt-4"><Link className="btn-secondary" to={`/financien/facturen/${invoice.id}`}>Bekijk concept</Link><button className="btn-primary" disabled={action.isPending || !invoice.email} onClick={() => action.mutate({ type: 'send', id: invoice.id })}>Verstuur factuur</button><button className="btn-secondary" disabled={action.isPending} onClick={() => { if (window.confirm('Concept verwijderen? De omzetregels komen weer beschikbaar.')) action.mutate({ type: 'delete', id: invoice.id }); }}>Concept verwijderen</button></div>}</div>)}
         </div>
         <div className={panelClass}><h2 className="text-lg font-semibold">Omzetregels</h2><DataTable columns={['Dag', 'Bruto', 'Status']} rows={billing.data.rows.map(row => [dayLabel(row.datum), amount(row.bedrag), statusLabels[row.status]])} />{!billing.data.rows.length && <p className="text-sm mt-4">Nog geen businessclub-verbruik geïmporteerd.</p>}</div>

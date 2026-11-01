@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.164.0] - 2026-11-01
+
+### Added
+
+- Choose an existing external address-book contact when creating a Businessclub invoice from cash-register turnover. Copy the name, invoice address, attention line, email and optional cc into editable invoice fields (feedback #14788).
+
 ## [35.163.3] - 2026-11-01
 
 ### Fixed

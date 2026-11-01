@@ -160,7 +160,7 @@ class BusinessclubInvoicing {
 			update_post_meta( $id, '_twelve_total_amount', $total );
 			update_post_meta( $id, self::META_MONTH, $month );
 			update_post_meta( $id, self::REPORTS, array_column( $days, 'report_id' ) );
-			foreach ( [ 'name', 'address', 'email' ] as $field ) {
+			foreach ( [ 'name', 'address', 'email', 'attention', 'cc_email' ] as $field ) {
 				update_post_meta( $id, '_customer_' . $field, $recipient[ $field ] ?? '' );
 			}
 			foreach ( $days as $day ) {
