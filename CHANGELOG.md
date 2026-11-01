@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.163.3] - 2026-11-01
+
+### Fixed
+
+- Store the configured manual-invoice payment account on Businessclub invoices created from cash-register turnover, so sending can find the Mollie API key. Reject missing account configuration before creating an invoice or reserving turnover (feedback #14790).
+
 ## [35.163.2] - 2026-11-01
 
 ### Fixed
