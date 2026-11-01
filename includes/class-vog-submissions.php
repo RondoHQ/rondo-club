@@ -303,7 +303,7 @@ final class VogSubmissions {
 	}
 
 	/** Caller holds the person lock; no date can go backwards. */
-	public static function approve( int $id, array $data, string $date, string $method, int $reviewer, array $identity = [] ) {
+	public static function approve( int $id, array $data, string $date, string $method, int $reviewer, array $identity = [], bool $codes_confirmed = false ) {
 		if ( ! VogDocument::valid_date( $date ) ) {
 			return new \WP_Error( 'vog_date', 'Kies een geldige afgiftedatum binnen de clubtermijn.', [ 'status' => 400 ] );
 		}
@@ -313,14 +313,22 @@ final class VogSubmissions {
 			if ( $data['code'] !== 0 || ! is_readable( $path ) || hash_file( 'sha256', $path ) !== ( $file['sha256'] ?? '' ) ) {
 				return new \WP_Error( 'vog_original_changed', 'Het originele bestand kan niet meer worden bevestigd. Lever het opnieuw in.', [ 'status' => 409 ] );
 			}
-			$rules      = get_option( self::RULES, [] );
-			$assessment = VogDocument::assessment( $data['parsed'], $data['person_id'], $rules );
-			if ( ! $assessment['content_passed'] ) {
+			$rules          = get_option( self::RULES, [] );
+			$assessment     = VogDocument::assessment( $data['parsed'], $data['person_id'], $rules );
+			$codes_override = $method === 'gaav_manual' && $reviewer > 0 && $codes_confirmed && $assessment['codes_override_allowed'];
+			if ( ! $assessment['content_passed'] && ! $codes_override ) {
 				return new \WP_Error( 'vog_content', 'De VOG voldoet niet aan de automatische inhoudelijke controles. Controleer de VOG-instellingen of doe navraag.', [ 'status' => 400 ] );
 			}
 			$identity_checked = $reviewer > 0 && ( $identity['confirmed'] ?? false ) === true && in_array( $identity['method'] ?? '', [ 'original_id', 'verified_records' ], true );
 			if ( ( ! $assessment['identity_matches'] || ! empty( $identity['remember'] ) ) && ! $identity_checked ) {
 				return new \WP_Error( 'vog_identity', 'Bevestig eerst de identiteit en hoe je die hebt gecontroleerd.', [ 'status' => 400 ] );
+			}
+			if ( $codes_override ) {
+				$data['codes_check'] = [
+					'codes'      => $data['parsed']['codes'],
+					'reviewer'   => $reviewer,
+					'checked_at' => gmdate( 'c' ),
+				];
 			}
 			$data['rule_version'] = hash( 'sha256', wp_json_encode( $rules ) );
 			if ( $identity_checked ) {
