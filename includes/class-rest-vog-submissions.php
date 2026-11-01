@@ -285,7 +285,8 @@ final class VogSubmissions extends Base {
 							'confirmed' => $request['identity_confirmed'] === true,
 							'remember'  => $request['remember_identity'] === true,
 						],
-						$request['codes_confirmed'] === true
+						$request['codes_confirmed'] === true,
+						$request['organization_confirmed'] === true
 						);
 					if ( is_wp_error( $result ) ) {
 						return $result;

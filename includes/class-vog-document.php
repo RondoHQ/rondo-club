@@ -169,7 +169,7 @@ final class VogDocument {
 				$codes   = $codes || ! array_diff( array_unique( array_merge( [ '84' ], $rule['codes'] ) ), $data['codes'] ?? [] );
 			}
 		}
-		$checks        = [
+		$checks           = [
 			[
 				'key'    => 'document',
 				'label'  => 'VOG met volledig leesbare gegevens',
@@ -191,15 +191,17 @@ final class VogDocument {
 				'passed' => self::valid_date( (string) ( $data['date'] ?? '' ) ),
 			],
 		];
-		$failed_checks = array_column( array_filter( $checks, static fn( $check ) => ! $check['passed'] ), 'key' );
+		$failed_checks    = array_column( array_filter( $checks, static fn( $check ) => ! $check['passed'] ), 'key' );
+		$override_allowed = ! array_diff( $failed_checks, [ 'codes', 'organization' ] );
 		return [
-			'codes_override_allowed' => $failed_checks === [ 'codes' ],
-			'identity_rows'          => $rows,
-			'identity_matches'       => ! in_array( false, array_column( $rows, 'matches' ), true ),
-			'verified_at'            => $use_saved ? ( $verified['checked_at'] ?? '' ) : '',
-			'content_checks'         => $checks,
-			'content_passed'         => ! in_array( false, array_column( $checks, 'passed' ), true ),
-			'revision'               => hash( 'sha256', wp_json_encode( [ $data, $profile, $verified, $rules ] ) ),
+			'codes_override_allowed'        => $override_allowed && in_array( 'codes', $failed_checks, true ),
+			'organization_override_allowed' => $override_allowed && in_array( 'organization', $failed_checks, true ),
+			'identity_rows'                 => $rows,
+			'identity_matches'              => ! in_array( false, array_column( $rows, 'matches' ), true ),
+			'verified_at'                   => $use_saved ? ( $verified['checked_at'] ?? '' ) : '',
+			'content_checks'                => $checks,
+			'content_passed'                => ! in_array( false, array_column( $checks, 'passed' ), true ),
+			'revision'                      => hash( 'sha256', wp_json_encode( [ $data, $profile, $verified, $rules ] ) ),
 		];
 	}
 
