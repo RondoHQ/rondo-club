@@ -371,13 +371,18 @@ class TwelveReports extends Base {
 	}
 
 	public function create_billing( $request ) {
-		$name    = sanitize_text_field( (string) $request->get_param( 'name' ) );
-		$address = sanitize_textarea_field( (string) $request->get_param( 'address' ) );
-		$email   = sanitize_email( (string) $request->get_param( 'email' ) );
+		$name      = sanitize_text_field( (string) $request->get_param( 'name' ) );
+		$address   = sanitize_textarea_field( (string) $request->get_param( 'address' ) );
+		$email     = sanitize_email( (string) $request->get_param( 'email' ) );
+		$attention = sanitize_text_field( (string) $request->get_param( 'attention' ) );
+		$cc_email  = trim( (string) $request->get_param( 'cc_email' ) );
 		if ( $name === '' || $address === '' || ! is_email( $email ) ) {
 			return new \WP_Error( 'twelve_bad_recipient', 'Vul naam, factuuradres en geldig e-mailadres in.', [ 'status' => 400 ] );
 		}
-		$result = ( new \Rondo\Twelve\BusinessclubInvoicing() )->create_draft_invoice( '', compact( 'name', 'address', 'email' ) );
+		if ( $cc_email !== '' && ! is_email( $cc_email ) ) {
+			return new \WP_Error( 'twelve_bad_recipient', 'Vul een geldig cc-e-mailadres in of laat dit veld leeg.', [ 'status' => 400 ] );
+		}
+		$result = ( new \Rondo\Twelve\BusinessclubInvoicing() )->create_draft_invoice( '', compact( 'name', 'address', 'email', 'attention', 'cc_email' ) );
 		return is_wp_error( $result ) ? $result : rest_ensure_response( [ 'id' => $result ] );
 	}
 
