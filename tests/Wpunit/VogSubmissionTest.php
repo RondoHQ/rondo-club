@@ -512,13 +512,68 @@ class VogSubmissionTest extends RondoTestCase {
 		$this->assertSame( 'Roepnaam', Fields::get_for_post( $this->person, 'first_name' ) );
 	}
 
+	public function test_different_codes_require_explicit_manual_confirmation_and_keep_a_receipt(): void {
+		wp_set_current_user( $this->reviewer );
+		$id                      = $this->submission();
+		$data                    = Store::get( $id );
+		$data['parsed']['codes'] = [ '85', '86' ];
+		Store::save( $id, $data );
+		$assessment = Store::payload( $id, true )['assessment'];
+		$this->assertFalse( $assessment['content_passed'] );
+		$this->assertTrue( $assessment['codes_override_allowed'] );
+		foreach ( [ false, 'true', 1 ] as $confirmation ) {
+			$this->assertSame( 400, $this->approval( $id, [ 'codes_confirmed' => $confirmation ] )->get_status() );
+		}
+		$result = Store::approve( $id, Store::get( $id ), gmdate( 'Y-m-d' ), 'gaav_auto', 0, [], true );
+		$this->assertWPError( $result );
+		$this->assertSame( 'vog_content', $result->get_error_code() );
+		$this->assertSame( 200, $this->approval( $id, [ 'codes_confirmed' => true ] )->get_status() );
+		$receipt = Store::get( $id );
+		$this->assertSame( 'approved', $receipt['status'] );
+		$this->assertSame( [ '85', '86' ], $receipt['codes_check']['codes'] );
+		$this->assertSame( $this->reviewer, $receipt['codes_check']['reviewer'] );
+		$this->assertNotEmpty( $receipt['codes_check']['checked_at'] );
+		$this->assertEmpty( $receipt['parsed'] );
+		$this->assertSame( gmdate( 'Ymd' ), Fields::get_for_post( $this->person, 'datum_vog' ) );
+	}
+
+	public function test_codes_confirmation_preserves_identity_authenticity_and_revision_checks(): void {
+		wp_set_current_user( $this->reviewer );
+		$id                           = $this->submission();
+		$data                         = Store::get( $id );
+		$data['parsed']['codes']      = [ '85' ];
+		$data['parsed']['first_name'] = 'Andere voornamen';
+		Store::save( $id, $data );
+		$response = $this->approval( $id, [ 'codes_confirmed' => true ] );
+		$this->assertSame( 'vog_identity', $response->get_data()['code'] );
+		$params   = [
+			'codes_confirmed'    => true,
+			'identity_method'    => 'original_id',
+			'identity_confirmed' => true,
+		];
+		$revision = Store::payload( $id, true )['assessment']['revision'];
+		Fields::update_for_post( $this->person, 'first_name', 'Gewijzigd' );
+		$this->assertSame( 409, $this->approval( $id, $params + [ 'assessment_revision' => $revision ] )->get_status() );
+		$data         = Store::get( $id );
+		$data['code'] = 1;
+		Store::save( $id, $data );
+		$this->assertSame( 400, $this->approval( $id, $params )->get_status() );
+		$data['code'] = 0;
+		Store::save( $id, $data );
+		file_put_contents( Store::path( $data['files'][0] ), '%PDF-changed' );
+		$this->assertSame( 409, $this->approval( $id, $params )->get_status() );
+		$this->assertEmpty( Fields::get_for_post( $this->person, 'datum_vog' ) );
+	}
+
 	public function test_digital_content_cannot_be_overridden_by_manual_confirmation(): void {
 		wp_set_current_user( $this->reviewer );
-		foreach ( [ 'missing_code', 'other_club', 'unreadable', 'future_date' ] as $failure ) {
+		foreach ( [ 'missing_code', 'other_club', 'unreadable', 'future_date', 'empty_codes' ] as $failure ) {
 			$id   = $this->submission();
 			$data = Store::get( $id );
 			if ( $failure === 'missing_code' ) {
 				$data['parsed']['codes'] = [ '85' ]; }
+			if ( $failure === 'empty_codes' ) {
+				$data['parsed']['codes'] = []; }
 			if ( $failure === 'other_club' ) {
 				$data['parsed']['purpose'] = 'Vrijwilliger bij Andereclub'; }
 			if ( $failure === 'unreadable' ) {
@@ -531,6 +586,7 @@ class VogSubmissionTest extends RondoTestCase {
 				$this->approval(
 				$id,
 				[
+					'codes_confirmed'    => $failure !== 'missing_code',
 					'identity_method'    => 'original_id',
 					'identity_confirmed' => true,
 					'remember_identity'  => true,
