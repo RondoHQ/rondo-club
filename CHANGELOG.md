@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.165.0] - 2026-11-01
+
+### Added
+
+- Add reusable surveys under Communication with an editor, conditional sections and questions, required answers, immutable published versions, draft previews, duplication and closing dates.
+- Add mobile public forms without login, personal single-use invitations, queued email deliveries and one reminder for non-respondents, sharing links and downloadable QR codes.
+- Add separate survey management and result permissions, per-question response counts, result filters, individual responses and CSV export with spreadsheet formula protection.
+- Include the complete AWC volunteer policy questionnaire as an editable template and support internal survey selection on volunteer duty types while retaining external survey links.
 ## [35.164.0] - 2026-11-01
 
 ### Added

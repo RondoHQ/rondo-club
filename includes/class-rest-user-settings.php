@@ -1244,6 +1244,8 @@ class UserSettings extends Base {
 			'can_access_commissies'          => \Rondo\Core\UserRoles::can_access_section( 'commissies', $user_id ),
 			'can_access_jubilarissen'        => \Rondo\Core\UserRoles::can_access_section( 'jubilarissen', $user_id ),
 			'can_access_feedback'            => \Rondo\Core\UserRoles::can_access_section( 'feedback', $user_id ),
+			'can_access_enquetes'            => \Rondo\Core\UserRoles::can_access_section( 'enquetes', $user_id ),
+			'can_access_enquete_resultaten'  => \Rondo\Core\UserRoles::can_access_section( 'enquete_resultaten', $user_id ),
 			'can_access_communicatie'        => \Rondo\Core\UserRoles::can_access_section( 'communicatie', $user_id ),
 			'can_access_kaderlijst'          => \Rondo\Core\UserRoles::can_access_kaderlijst( $user_id ),
 			'is_sponsor'                     => $person_id ? \Rondo\Core\SponsorStatus::is_sponsor( $person_id ) : false,

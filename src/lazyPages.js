@@ -86,3 +86,5 @@ export const MatchCompensation = lazy(() => import('@/pages/Finance/MatchCompens
 export const AccountSwitcher = lazy(() => import('@/pages/AccountSwitcher'));
 
 export const ClubDirectory = lazy(() => import('./pages/ClubDirectory'));
+
+export const Surveys = lazy(() => import('@/pages/Surveys/Surveys'));

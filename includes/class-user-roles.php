@@ -35,13 +35,15 @@ class UserRoles {
 
 	/** Independent section rights; never confer club-wide person access. */
 	public const SECTION_CAPABILITIES = [
-		'wedstrijdzaken' => 'Wedstrijdprogramma op dashboard',
-		'teams'          => 'Alle teams',
-		'commissies'     => 'Commissies',
-		'jubilarissen'   => 'Jubilarissen',
-		'feedback'       => 'Feedbackoverzicht',
-		'communicatie'   => 'Communicatieplanning',
-		'kassaomzet'     => 'Kassaomzet bekijken',
+		'wedstrijdzaken'     => 'Wedstrijdprogramma op dashboard',
+		'teams'              => 'Alle teams',
+		'commissies'         => 'Commissies',
+		'jubilarissen'       => 'Jubilarissen',
+		'feedback'           => 'Feedbackoverzicht',
+		'communicatie'       => 'Communicatieplanning',
+		'enquetes'           => 'Enquêtes beheren',
+		'enquete_resultaten' => 'Enquêteresultaten bekijken en exporteren',
+		'kassaomzet'         => 'Kassaomzet bekijken',
 	];
 
 	/** Check one independently assignable section capability. */
@@ -57,7 +59,7 @@ class UserRoles {
 	 * installs must also receive; add_role() does not touch existing roles.
 	 */
 	const ROLES_VERSION_OPTION = 'rondo_roles_version';
-	const ROLES_VERSION        = 20;
+	const ROLES_VERSION        = 21;
 
 	/** Generic WordPress write capabilities removed from non-admin Rondo roles. */
 	private const LEGACY_GENERIC_WRITE_CAPS = [
@@ -98,7 +100,7 @@ class UserRoles {
 		'rondo_pool_schoonmaak'       => [ 'Rondo Schoonmaakpoule', [] ],
 		'rondo_pool_activiteiten'     => [ 'Rondo Activiteitenpoule', [] ],
 		'rondo_pool_werkploeg'        => [ 'Rondo Werkploeg terreinonderhoud', [] ],
-		'rondo_bestuur'               => [ 'Rondo Bestuur', [ 'kassaomzet', 'communicatie', 'jubilarissen', 'teams', 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'accommodatiebeheer', 'vrijwilligers', 'rondo_iva_approve' ] ],
+		'rondo_bestuur'               => [ 'Rondo Bestuur', [ 'kassaomzet', 'communicatie', 'enquetes', 'enquete_resultaten', 'jubilarissen', 'teams', 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'accommodatiebeheer', 'vrijwilligers', 'rondo_iva_approve' ] ],
 	];
 
 	/**
@@ -511,6 +513,11 @@ class UserRoles {
 
 			if ( $installed_version < 17 && $slug === 'rondo_bestuur' ) {
 				$role->add_cap( 'jubilarissen' );
+			}
+
+			if ( $installed_version < 21 && in_array( $slug, [ 'administrator', 'rondo_bestuur' ], true ) ) {
+				$role->add_cap( 'enquetes' );
+				$role->add_cap( 'enquete_resultaten' );
 			}
 
 			if ( $installed_version < 18 && in_array( $slug, [ 'administrator', 'rondo_bestuur' ], true ) ) {

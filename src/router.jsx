@@ -21,7 +21,7 @@ import {
   PeopleList, PeopleAnniversaries, PeopleOnboarding, ProfileChangeLog, PersonDetail, SponsorList, SponsorDetail, TeamsList, TeamDetail,
   Kaderlijst, MyTeam, MyCommittees, Football, ClubDirectory,
   CommissiesList, CommissieDetail, TodosList,
-  FeedbackList, FeedbackDetail, Communication, Planning, Newsletter, NewsletterSettings, Settings, AppAccess, VOG,
+  FeedbackList, FeedbackDetail, Communication, Planning, Surveys, Newsletter, NewsletterSettings, Settings, AppAccess, VOG,
   Contributie, DisciplineCasesList,
   MatchCompensation, FinanceDashboard, Kassaomzet, Betaalstatistieken, Facturen, FactuurDetail, FactuurNieuw, RelationshipTypes,
   CustomFields, Login, AccountSwitcher, Profile, ProfileIva, ProfileVog,
@@ -688,6 +688,8 @@ const router = wrapCreateBrowserRouter(createBrowserRouter)([
           { path: 'feedback/:id', element: <FeedbackDetail /> },
 
           { path: 'communicatie', element: <CapabilityRoute checkAccess={canAccessCommunication}><Communication /></CapabilityRoute> },
+          { path: 'communicatie/enquetes', element: <CapabilityRoute checkAccess={(user) => user?.can_access_enquetes || user?.can_access_enquete_resultaten}><Surveys /></CapabilityRoute> },
+          { path: 'communicatie/enquetes/:id', element: <CapabilityRoute checkAccess={(user) => user?.can_access_enquetes || user?.can_access_enquete_resultaten}><Surveys /></CapabilityRoute> },
           { path: 'communicatie/planning', element: <CapabilityRoute checkAccess={(user) => user?.can_access_communicatie}><Planning /></CapabilityRoute> },
           { path: 'communicatie/planning/:id/nieuwsbrief', element: <CapabilityRoute checkAccess={(user) => user?.can_access_communicatie}><Newsletter /></CapabilityRoute> },
           { path: 'communicatie/nieuwsbrief-instellingen', element: <CapabilityRoute checkAccess={(user) => user?.is_admin && user?.can_access_communicatie}><NewsletterSettings /></CapabilityRoute> },

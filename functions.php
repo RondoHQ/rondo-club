@@ -285,6 +285,8 @@ function rondo_init() {
 	// Core classes - always needed for WordPress integration
 	\Rondo\Data\SecretMigration::run();
 	new PostTypes();
+	new \Rondo\Surveys\Surveys();
+	new \Rondo\Surveys\PublicSurveyPage();
 	new Taxonomies();
 	new \Rondo\Fields\FieldSchema();
 	new AbilityRegistrar();
@@ -383,6 +385,7 @@ function rondo_init() {
 		new RESTCustomFields();
 		new RESTFeedback();
 		new \Rondo\REST\Communication();
+		new \Rondo\REST\SurveyController();
 		new \Rondo\REST\NewsletterController();
 		new RESTInvoices();
 		new RESTMembershipPasses();
@@ -1243,7 +1246,7 @@ add_filter( 'query_vars', 'rondo_pwa_query_vars' );
  * Runs late on `init` so every add_rewrite_rule() call has already registered.
  */
 function rondo_maybe_flush_rewrite_rules() {
-	$rewrite_version = '10'; // Bump when adding/changing a rewrite rule.
+	$rewrite_version = '11'; // Bump when adding/changing a rewrite rule.
 	if ( get_option( 'rondo_rewrite_rules_version' ) === $rewrite_version ) {
 		return;
 	}
