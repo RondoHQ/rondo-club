@@ -3,6 +3,7 @@
 namespace Rondo\Twelve;
 
 use Rondo\Fields\Fields;
+use Rondo\Finance\FinanceServices;
 use Rondo\Finance\InvoiceNumbering;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -121,6 +122,10 @@ class BusinessclubInvoicing {
 			if ( $total <= 0 ) {
 				return new \WP_Error( 'twelve_nothing_to_invoice', 'Het netto factuurbedrag moet positief zijn.', [ 'status' => 409 ] );
 			}
+			$payment_account = FinanceServices::mollie()->get_payment_account_snapshot_for_invoice_type( 'manual' );
+			if ( is_wp_error( $payment_account ) ) {
+				return $payment_account;
+			}
 			$items[] = [
 				'discipline_case' => null,
 				'description'     => 'Btw volgens Twelve dagrapportages',
@@ -149,6 +154,9 @@ class BusinessclubInvoicing {
 				Fields::update_for_post( $id, $key, $value );
 			}
 			update_post_meta( $id, '_invoice_kind', 'normal' );
+			foreach ( $payment_account as $key => $value ) {
+				update_post_meta( $id, '_payment_account_' . $key, $value );
+			}
 			update_post_meta( $id, '_twelve_total_amount', $total );
 			update_post_meta( $id, self::META_MONTH, $month );
 			update_post_meta( $id, self::REPORTS, array_column( $days, 'report_id' ) );
@@ -161,6 +169,9 @@ class BusinessclubInvoicing {
 			$stored   = get_post_meta( $id, self::REPORTS, true );
 			$complete = $stored === array_column( $days, 'report_id' )
 				&& abs( (float) Fields::get_for_post( $id, 'total_amount' ) - $total ) < 0.005;
+			foreach ( $payment_account as $key => $value ) {
+				$complete = $complete && get_post_meta( $id, '_payment_account_' . $key, true ) === $value;
+			}
 			foreach ( $days as $day ) {
 				$complete = $complete && (int) get_post_meta( $day['report_id'], self::CLAIM, true ) === $id;
 			}
