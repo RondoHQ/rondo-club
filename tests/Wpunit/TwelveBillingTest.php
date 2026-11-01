@@ -8,6 +8,53 @@ use Rondo\Finance\MollieConfig;
 use Tests\Support\RondoTestCase;
 
 class TwelveBillingTest extends RondoTestCase {
+	public function test_billing_endpoint_preserves_address_book_recipient_fields(): void {
+		$this->configure_mollie_accounts();
+		$this->report( '2026-09-29', 'address-book-recipient' );
+		$server = $this->bootRestControllers( [ \Rondo\REST\TwelveReports::class ] );
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$request   = new \WP_REST_Request( 'POST', '/rondo/v1/twelve/billing' );
+		$recipient = [
+			'name'      => 'Businessclub Voorbeeld',
+			'address'   => "Sportlaan 1\n1234 AB Voorbeeldstad",
+			'email'     => 'facturen@example.org',
+			'attention' => 'Penningmeester',
+			'cc_email'  => 'administratie@example.org',
+		];
+		$request->set_body_params( $recipient );
+		$response = $server->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$id = $response->get_data()['id'];
+		foreach ( $recipient as $key => $value ) {
+			$this->assertSame( $value, get_post_meta( $id, '_customer_' . $key, true ), $key );
+		}
+		$this->assertSame( 'rondo_draft', get_post_status( $id ) );
+		$this->assertSame( 'manual', get_post_meta( $id, '_payment_account_id', true ) );
+	}
+
+	public function test_billing_endpoint_rejects_invalid_cc_before_reserving_reports(): void {
+		$this->configure_mollie_accounts();
+		$report = $this->report( '2026-09-29', 'invalid-cc' );
+		$server = $this->bootRestControllers( [ \Rondo\REST\TwelveReports::class ] );
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$request = new \WP_REST_Request( 'POST', '/rondo/v1/twelve/billing' );
+		$request->set_body_params(
+			[
+				'name'     => 'Businessclub',
+				'address'  => 'Sportlaan 1',
+				'email'    => 'facturen@example.org',
+				'cc_email' => 'ongeldig',
+			]
+			);
+		$this->assertSame( 400, $server->dispatch( $request )->get_status() );
+		$this->assertSame( '', get_post_meta( $report, BusinessclubInvoicing::CLAIM, true ) );
+		$request->set_param( 'cc_email', '' );
+		$response = $server->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( '', get_post_meta( $response->get_data()['id'], '_customer_cc_email', true ) );
+		$this->assertSame( '', get_post_meta( $response->get_data()['id'], '_customer_attention', true ) );
+	}
+
 	private function configure_mollie_accounts(): void {
 		$accounts = [];
 		foreach ( [ 'membership', 'manual' ] as $id ) {
