@@ -232,7 +232,8 @@ final class VolunteerPlanner {
 					'needed'   => $capacity > 0 ? max( 0, $capacity - count( ShiftAssignments::person_ids( $id ) ) ) : 1,
 				];
 			}
-			$by_shift = [];
+			$by_shift     = [];
+			$target_types = [];
 			// Reserve all retained choices before filling gaps, including choices on later days.
 			foreach ( $sources as $source ) {
 				foreach ( $source['rows'] as $row ) {
@@ -243,11 +244,17 @@ final class VolunteerPlanner {
 						continue;
 					}
 					if ( $row['person_id'] ) {
+						// A conversion changes the entire shift, including every retained place.
+						$fixed_type = $target_types[ $id ] ?? ( ShiftAssignments::person_ids( $id ) ? $info['type'] : null );
+						if ( $fixed_type !== null && $fixed_type !== $row['target_type'] ) {
+							continue;
+						}
 						$context = $contexts[ $info['season'] ];
 						// Changed duties and no-longer-eligible candidates must be planned afresh.
 						if ( $row['snapshot'] !== self::snapshot( $id ) || ! array_filter( $context->candidates( $id, (int) $row['target_type'] ), static fn( $option ) => $option['person_id'] === $row['person_id'] && $option['unit'] === $row['unit'] ) ) {
 							continue;
 						}
+						$target_types[ $id ] = $row['target_type'];
 						foreach ( $contexts as $ledger ) {
 							$ledger->reserve( $row, $info['span'] );
 						}
@@ -269,16 +276,15 @@ final class VolunteerPlanner {
 				$rows     = array_merge( $rows, $kept );
 				$needed   = $info['needed'] - count( $kept );
 				for ( $slot = 0; $slot < $needed; ++$slot ) {
-						$target      = $type;
-						$options     = $capacity > 0 ? $context->candidates( $id ) : [];
-						$diagnostics = $context->reasons;
-					if ( ! $options && $capacity > 0 && ! ShiftAssignments::person_ids( $id ) && get_post_meta( $type, 'iva_required', true ) ) {
-						$luik = $this->luik_type();
-						if ( $luik ) {
-									$options = $context->candidates( $id, $luik );
-							if ( $options ) {
-								$target = $luik;
-							}
+					$target      = $target_types[ $id ] ?? $type;
+					$options     = $capacity > 0 ? $context->candidates( $id, $target ) : [];
+					$diagnostics = $context->reasons;
+					if ( $capacity > 0 && ! isset( $target_types[ $id ] ) && ! ShiftAssignments::person_ids( $id ) && get_post_meta( $type, 'iva_required', true ) ) {
+						$luik_type  ??= $this->luik_type();
+						$luik_options = $luik_type ? $context->candidates( $id, $luik_type ) : [];
+						if ( $luik_options && self::duty_counts( $luik_options, $needed ) < self::duty_counts( $options, $needed ) ) {
+							$target  = $luik_type;
+							$options = $luik_options;
 						}
 					}
 					$chosen = $context->choose_candidate( $id, $options, $needed - $slot );
@@ -294,12 +300,18 @@ final class VolunteerPlanner {
 					];
 					$rows[] = $row;
 					if ( $chosen ) {
+						$target_types[ $id ] = $target;
 						foreach ( $contexts as $ledger ) {
 							$ledger->reserve( $row, $span );
 						}
 					}
 				}
 			}
+			// An intentionally open place may be filled by hand after the other places are proposed.
+			foreach ( $rows as &$row ) {
+				$row['target_type'] = $target_types[ $row['shift_id'] ] ?? $row['target_type'];
+			}
+			unset( $row );
 			$id = wp_insert_post(
 			[
 				'post_type'   => self::TYPE,
@@ -331,6 +343,13 @@ final class VolunteerPlanner {
 		}
 		);
 	}
+	/** Compare the lowest workloads for every place. An unfilled place ranks last. */
+	private static function duty_counts( array $options, int $places ): array {
+		$counts = array_column( $options, 'duty_count', 'person_id' );
+		sort( $counts, SORT_NUMERIC );
+		return array_pad( array_slice( $counts, 0, $places ), $places, PHP_INT_MAX );
+	}
+
 	private function luik_type(): int {
 		$matches = [];
 		foreach ( get_posts(

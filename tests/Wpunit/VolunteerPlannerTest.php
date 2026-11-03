@@ -544,7 +544,12 @@ class VolunteerPlannerTest extends RondoTestCase {
 	}
 
 	public function test_luik_conversion_requires_explicit_approval_and_applies_only_at_publication(): void {
-		$parent = $this->family( 'Anne' );
+		$parent      = $this->family( 'Anne' );
+		$experienced = $this->family( 'Bram' );
+		Fields::update_for_post( $experienced, 'datum_iva', '2024-01-01' );
+		Fields::update_for_post( $experienced, 'iva_approved', true );
+		$completed = $this->shift( 0, null, [ $experienced ] );
+		update_post_meta( $completed, 'status', 'voltooid' );
 		update_post_meta( $this->type, 'iva_required', true );
 		$luik  = self::factory()->post->create(
 			[
@@ -555,7 +560,9 @@ class VolunteerPlannerTest extends RondoTestCase {
 			);
 		$shift = $this->shift();
 		$id    = $this->plan();
-		$row   = VolunteerPlanner::data( $id )['rows'][0];
+		$rows  = VolunteerPlanner::data( $id )['rows'];
+		$row   = $rows[0];
+		$this->assertSame( [ $luik ], array_column( $rows, 'target_type' ) );
 		$this->assertSame( $luik, $row['target_type'] );
 		$this->assertSame( $parent, $row['person_id'] );
 		$this->assertSame( $this->type, (int) get_post_meta( $shift, 'dienst_type_id', true ) );
@@ -564,6 +571,54 @@ class VolunteerPlannerTest extends RondoTestCase {
 		$this->assertTrue( $this->planner->publish( $id, 1, true ) );
 		$this->assertSame( $luik, (int) get_post_meta( $shift, 'dienst_type_id', true ) );
 		$this->assertSame( [ $parent ], ShiftAssignments::person_ids( $shift ) );
+	}
+
+	public function test_empty_bar_can_propose_two_first_time_volunteers_but_an_occupied_bar_keeps_its_type(): void {
+		$qualified = $this->family( 'Anne' );
+		$first     = $this->family( 'Bram' );
+		$occupied  = $this->family( 'Cato' );
+		Fields::update_for_post( $qualified, 'datum_iva', '2024-01-01' );
+		Fields::update_for_post( $qualified, 'iva_approved', true );
+		update_post_meta( $this->type, 'iva_required', true );
+		$luik    = self::factory()->post->create(
+			[
+				'post_type'   => 'dienst_type',
+				'post_status' => 'publish',
+				'post_title'  => 'Kantine luik',
+			]
+		);
+		$partial = $this->shift( 20, null, [ $occupied ], 2 );
+		$empty   = $this->shift( 21, null, [], 2 );
+		$rows    = VolunteerPlanner::data( $this->plan() )['rows'];
+		$this->assertSame( [ $partial, $empty, $empty ], array_column( $rows, 'shift_id' ) );
+		$this->assertSame( [ $this->type, $luik, $luik ], array_column( $rows, 'target_type' ) );
+		$this->assertSame( $qualified, $rows[0]['person_id'] );
+		$this->assertContains( $first, array_column( array_slice( $rows, 1 ), 'person_id' ) );
+	}
+
+	public function test_december_blocks_completed_and_planned_duties_and_january_allows_second_duty(): void {
+		$done    = $this->family( 'Done' );
+		$planned = $this->family( 'Planned' );
+		$fresh   = $this->family( 'Fresh' );
+		$shifts  = [];
+		foreach ( [
+			[ '2032-10-15', [ $done ], 'voltooid' ],
+			[ '2033-03-10', [ $planned ], 'open' ],
+			[ '2032-12-31', [], 'open' ],
+			[ '2033-01-01', [], 'open' ],
+		] as [ $date, $people, $status ] ) {
+			$shift = $this->shift( 0, null, $people );
+			update_post_meta( $shift, 'start_datetime', $date . ' 12:00:00' );
+			update_post_meta( $shift, 'end_datetime', $date . ' 14:00:00' );
+			update_post_meta( $shift, 'status', $status );
+			$shifts[ $date ] = $shift;
+		}
+		$context  = new PlannerContext( new \DateTimeImmutable( '2032-12-20', wp_timezone() ) );
+		$december = $context->candidates( $shifts['2032-12-31'] );
+		$january  = $context->candidates( $shifts['2033-01-01'] );
+		$this->assertSame( [ $fresh ], array_column( $december, 'person_id' ) );
+		$this->assertSame( $fresh, $january[0]['person_id'] );
+		$this->assertEqualsCanonicalizing( [ $done, $planned, $fresh ], array_column( $january, 'person_id' ) );
 	}
 
 	public function test_certificates_quota_other_drafts_and_changed_shifts_remain_guarded(): void {
