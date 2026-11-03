@@ -279,10 +279,10 @@ final class VolunteerPlanner {
 					$target      = $target_types[ $id ] ?? $type;
 					$options     = $capacity > 0 ? $context->candidates( $id, $target ) : [];
 					$diagnostics = $context->reasons;
-					if ( $capacity > 0 && ! isset( $target_types[ $id ] ) && ! ShiftAssignments::person_ids( $id ) && get_post_meta( $type, 'iva_required', true ) && self::first_time_candidates( $options ) < $needed ) {
+					if ( $capacity > 0 && ! isset( $target_types[ $id ] ) && ! ShiftAssignments::person_ids( $id ) && get_post_meta( $type, 'iva_required', true ) ) {
 						$luik_type  ??= $this->luik_type();
 						$luik_options = $luik_type ? $context->candidates( $id, $luik_type ) : [];
-						if ( $luik_options && ( ! $options || self::first_time_candidates( $luik_options ) > self::first_time_candidates( $options ) ) ) {
+						if ( $luik_options && self::duty_counts( $luik_options, $needed ) < self::duty_counts( $options, $needed ) ) {
 							$target  = $luik_type;
 							$options = $luik_options;
 						}
@@ -343,10 +343,11 @@ final class VolunteerPlanner {
 		}
 		);
 	}
-	/** Count people, since one person can have more than one obligation. */
-	private static function first_time_candidates( array $options ): int {
-		$first_time = array_filter( $options, static fn( $option ) => $option['first_duty'] );
-		return count( array_unique( array_column( $first_time, 'person_id' ) ) );
+	/** Compare the lowest workloads for every place. An unfilled place ranks last. */
+	private static function duty_counts( array $options, int $places ): array {
+		$counts = array_column( $options, 'duty_count', 'person_id' );
+		sort( $counts, SORT_NUMERIC );
+		return array_pad( array_slice( $counts, 0, $places ), $places, PHP_INT_MAX );
 	}
 
 	private function luik_type(): int {

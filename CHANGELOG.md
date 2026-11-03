@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Give volunteers who have yet to complete a duty this season first choice in new proposals. An empty IVA-required bar shift can be proposed as a luik shift for a first-time volunteer, even when an experienced bar volunteer is available (feedback #14852).
+- For July through December, only propose volunteers with no completed, scheduled or proposed duty in the season, including across personal and family obligations (feedback #14851). From January, rank volunteers by their total completed and scheduled duties before considering IVA. An empty IVA-required bar shift can be proposed as a luik shift for a first-time volunteer, even when an experienced bar volunteer is available (feedback #14852).
 
 ## [35.165.0] - 2026-11-01
 
