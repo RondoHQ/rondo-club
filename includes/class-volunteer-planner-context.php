@@ -12,6 +12,7 @@ final class PlannerContext {
 	private array $busy          = [];
 	private array $blocks        = [];
 	private array $load          = [];
+	private array $has_completed = [];
 	private array $own_units     = [];
 	private array $team_sources  = [];
 	private array $pairing_teams = [];
@@ -69,18 +70,22 @@ final class PlannerContext {
 		);
 		$tokens = [];
 		foreach ( $shifts as $shift ) {
-			$interval = PlannerAvailability::interval( $shift->ID );
-			if ( ! $interval ) {
-				continue;
-			}
+			$interval  = PlannerAvailability::interval( $shift->ID );
 			$status    = get_post_meta( $shift->ID, 'status', true );
 			$completed = $status === 'voltooid' || ( $status === 'geannuleerd' && get_post_meta( $shift->ID, ShiftCancellationService::META_CREDIT, true ) );
-			$pending   = in_array( $status, [ 'open', 'vol', '' ], true ) && $interval[0] >= $now;
+			$pending   = in_array( $status, [ 'open', 'vol', '' ], true ) && $interval && $interval[0] >= $now;
 			foreach ( ShiftAssignments::person_ids( $shift->ID ) as $person ) {
+				$credited = $completed && ! get_post_meta( $shift->ID, '_no_show_' . $person, true );
+				if ( $credited ) {
+					$this->has_completed[ $person ] = true;
+				}
+				if ( ! $interval ) {
+					continue;
+				}
 				if ( $pending ) {
 					$this->busy[ $person ][] = $interval;
 				}
-				if ( ( $completed && ! get_post_meta( $shift->ID, '_no_show_' . $person, true ) ) || $pending ) {
+				if ( $credited || $pending ) {
 					$tokens[ $person ][]   = [
 						'completed' => $completed,
 						'start'     => $interval[0],
@@ -163,8 +168,8 @@ final class PlannerContext {
 		if ( ! $options ) {
 			return null;
 		}
-		$priority  = array_slice( $options[0]['score'], 0, 3 );
-		$peers     = array_values( array_filter( $options, static fn( $option ) => array_slice( $option['score'], 0, 3 ) === $priority ) );
+		$priority  = array_slice( $options[0]['score'], 0, -1 );
+		$peers     = array_values( array_filter( $options, static fn( $option ) => array_slice( $option['score'], 0, -1 ) === $priority ) );
 		$unpaired  = [];
 		$occupants = array_unique( array_merge( ShiftAssignments::person_ids( $shift ), $this->companions[ $shift ] ?? [] ) );
 		foreach ( $occupants as $person ) {
@@ -235,11 +240,12 @@ final class PlannerContext {
 				}
 				$goal     = $half === 0 ? (int) ceil( $unit['required_count'] / 2 ) : (int) floor( $unit['required_count'] / 2 );
 				$result[] = [
-					'person_id' => $person,
-					'name'      => PostTitle::plain( $person ),
-					'unit'      => $key,
-					'remaining' => $unit['remaining'],
-					'score'     => [ $unit['half'][ $half ] < $goal ? 0 : 1, ( $unit['required_count'] - $unit['remaining'] ) / max( 1, $unit['required_count'] ), $this->load[ $person ] ?? 0, hash( 'sha256', $this->now->format( 'o-W' ) . '|' . $person ) ],
+					'person_id'  => $person,
+					'name'       => PostTitle::plain( $person ),
+					'unit'       => $key,
+					'remaining'  => $unit['remaining'],
+					'first_duty' => ! isset( $this->has_completed[ $person ] ),
+					'score'      => [ (int) isset( $this->has_completed[ $person ] ), $unit['half'][ $half ] < $goal ? 0 : 1, ( $unit['required_count'] - $unit['remaining'] ) / max( 1, $unit['required_count'] ), $this->load[ $person ] ?? 0, hash( 'sha256', $this->now->format( 'o-W' ) . '|' . $person ) ],
 				];
 			}
 		}

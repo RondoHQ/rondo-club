@@ -544,7 +544,12 @@ class VolunteerPlannerTest extends RondoTestCase {
 	}
 
 	public function test_luik_conversion_requires_explicit_approval_and_applies_only_at_publication(): void {
-		$parent = $this->family( 'Anne' );
+		$parent      = $this->family( 'Anne' );
+		$experienced = $this->family( 'Bram' );
+		Fields::update_for_post( $experienced, 'datum_iva', '2024-01-01' );
+		Fields::update_for_post( $experienced, 'iva_approved', true );
+		$completed = $this->shift( 0, null, [ $experienced ] );
+		update_post_meta( $completed, 'status', 'voltooid' );
 		update_post_meta( $this->type, 'iva_required', true );
 		$luik  = self::factory()->post->create(
 			[
@@ -553,9 +558,11 @@ class VolunteerPlannerTest extends RondoTestCase {
 				'post_title'  => 'Kantine luik',
 			]
 			);
-		$shift = $this->shift();
+		$shift = $this->shift( 25, null, [], 2 );
 		$id    = $this->plan();
-		$row   = VolunteerPlanner::data( $id )['rows'][0];
+		$rows  = VolunteerPlanner::data( $id )['rows'];
+		$row   = $rows[0];
+		$this->assertSame( [ $luik, $luik ], array_column( $rows, 'target_type' ) );
 		$this->assertSame( $luik, $row['target_type'] );
 		$this->assertSame( $parent, $row['person_id'] );
 		$this->assertSame( $this->type, (int) get_post_meta( $shift, 'dienst_type_id', true ) );
@@ -563,7 +570,30 @@ class VolunteerPlannerTest extends RondoTestCase {
 		$this->assertEmpty( ShiftAssignments::person_ids( $shift ) );
 		$this->assertTrue( $this->planner->publish( $id, 1, true ) );
 		$this->assertSame( $luik, (int) get_post_meta( $shift, 'dienst_type_id', true ) );
-		$this->assertSame( [ $parent ], ShiftAssignments::person_ids( $shift ) );
+		$this->assertSame( [ $parent, $experienced ], ShiftAssignments::person_ids( $shift ) );
+	}
+
+	public function test_empty_bar_can_propose_two_first_time_volunteers_but_an_occupied_bar_keeps_its_type(): void {
+		$qualified = $this->family( 'Anne' );
+		$first     = $this->family( 'Bram' );
+		$occupied  = $this->family( 'Cato' );
+		Fields::update_for_post( $qualified, 'datum_iva', '2024-01-01' );
+		Fields::update_for_post( $qualified, 'iva_approved', true );
+		update_post_meta( $this->type, 'iva_required', true );
+		$luik    = self::factory()->post->create(
+			[
+				'post_type'   => 'dienst_type',
+				'post_status' => 'publish',
+				'post_title'  => 'Kantine luik',
+			]
+		);
+		$partial = $this->shift( 20, null, [ $occupied ], 2 );
+		$empty   = $this->shift( 21, null, [], 2 );
+		$rows    = VolunteerPlanner::data( $this->plan() )['rows'];
+		$this->assertSame( [ $partial, $empty, $empty ], array_column( $rows, 'shift_id' ) );
+		$this->assertSame( [ $this->type, $luik, $luik ], array_column( $rows, 'target_type' ) );
+		$this->assertSame( $qualified, $rows[0]['person_id'] );
+		$this->assertContains( $first, array_column( array_slice( $rows, 1 ), 'person_id' ) );
 	}
 
 	public function test_certificates_quota_other_drafts_and_changed_shifts_remain_guarded(): void {
