@@ -380,6 +380,37 @@ class SurveysTest extends RondoTestCase {
 		$this->assertSame( 'Nieuw concept', Surveys::read( $id )['title'] );
 	}
 
+	public function test_duty_type_can_be_created_and_survey_cleared_through_rest(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$server  = $this->bootRestControllers( [] );
+		$request = new \WP_REST_Request( 'POST', '/wp/v2/dienst-types' );
+		$request->set_body_params(
+			[
+				'title'  => 'Entree zonder enquête',
+				'status' => 'publish',
+				'fields' => [
+					'description' => 'Controleer de toegang.',
+					'survey_id'   => 0,
+				],
+			]
+		);
+		$response = $server->dispatch( $request );
+		$this->assertSame( 201, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$type = $response->get_data()['id'];
+		$this->assertSame( 0, $response->get_data()['fields']['survey_id'] );
+		$this->assertSame( 'Controleer de toegang.', $response->get_data()['fields']['description'] );
+
+		$survey = $this->survey();
+		foreach ( [ $survey, 0 ] as $survey_id ) {
+			$request = new \WP_REST_Request( 'POST', '/wp/v2/dienst-types/' . $type );
+			$request->set_body_params( [ 'fields' => [ 'survey_id' => $survey_id ] ] );
+			$response = $server->dispatch( $request );
+			$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+			$this->assertSame( $survey_id, $response->get_data()['fields']['survey_id'] );
+			$this->assertSame( (string) $survey_id, get_post_meta( $type, 'survey_id', true ) );
+		}
+	}
+
 	public function test_shift_invitations_are_per_shift_and_person_and_field_round_trips(): void {
 		$id     = $this->survey();
 		$person = $this->createPerson();

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.165.3] - 2026-11-03
+
+### Fixed
+
+- Allow saving volunteer duty types with “Geen interne enquête” selected, including clearing an existing survey, without a false validation error and incomplete duplicate duty types on retry (feedback #14863).
+
 ## [35.165.2] - 2026-11-03
 
 ### Changed
