@@ -283,6 +283,16 @@ final class RestFields {
 					: $type,
 				'readonly'    => ! empty( $definition['read_only'] ),
 			];
+			if ( $type === 'integer' ) {
+				foreach ( [
+					'min' => 'minimum',
+					'max' => 'maximum',
+				] as $bound => $keyword ) {
+					if ( isset( $definition[ $bound ] ) && $definition[ $bound ] !== '' ) {
+						$properties[ $name ][ $keyword ] = $definition[ $bound ];
+					}
+				}
+			}
 		}
 		return [
 			'description' => 'Canonical Rondo domain fields.',
@@ -300,8 +310,8 @@ final class RestFields {
 		if ( $type === 'true_false' ) {
 			return 'boolean';
 		}
-		if ( $type === 'number' ) {
-			return 'number';
+		if ( in_array( $type, [ 'number', 'integer' ], true ) ) {
+			return $type;
 		}
 		if ( in_array( $type, [ 'post_object', 'taxonomy' ], true ) ) {
 			return 'integer';

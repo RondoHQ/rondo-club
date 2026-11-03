@@ -34,11 +34,10 @@ final class Surveys {
 		if ( is_wp_error( $value ) || ( $definition['context'] ?? '' ) !== 'dienst_type' || ( $definition['canonical_name'] ?? '' ) !== 'survey_id' ) {
 			return $value;
 		}
-		// The REST field formatter normalizes numeric values to floats.
-		if ( $value === null || $value === 0 || $value === 0.0 || $value === '0' ) {
+		if ( $value === null || $value === 0 ) {
 			return $value;
 		}
-		if ( ! is_numeric( $value ) || (float) $value !== (float) absint( $value ) || is_wp_error( self::read( (int) $value ) ) ) {
+		if ( ! is_int( $value ) || $value < 0 || is_wp_error( self::read( $value ) ) ) {
 			return Schema::error( 'Selecteer een bestaande Rondo-enquête.' );
 		}
 		return $value;

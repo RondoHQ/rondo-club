@@ -60,8 +60,22 @@ final class Fields {
 		foreach ( $values as $identifier => $value ) {
 			$definition            = Registry::resolve( $context, (string) $identifier );
 			$definition['context'] = $context;
-			$old_value             = NativeFieldStorage::read_post( $post_id, $definition );
-			$new_value             = apply_filters( 'rondo_fields_validate_value', $value, $post_id, $definition, $old_value );
+			if ( $definition['type'] === 'integer' ) {
+				try {
+					$value = Formatter::normalize_integer( $definition, $value, 'fields.' . $definition['canonical_name'] );
+				} catch ( \InvalidArgumentException $error ) {
+					return new \WP_Error(
+						'rondo_invalid_field',
+						$error->getMessage(),
+						[
+							'status' => 400,
+							'field'  => 'fields.' . $definition['canonical_name'],
+						]
+						);
+				}
+			}
+			$old_value = NativeFieldStorage::read_post( $post_id, $definition );
+			$new_value = apply_filters( 'rondo_fields_validate_value', $value, $post_id, $definition, $old_value );
 			if ( is_wp_error( $new_value ) ) {
 				return $new_value;
 			}

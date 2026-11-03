@@ -18,6 +18,36 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class Formatter {
 
+	/** Normalize an integer field without truncating fractions or overflowing PHP integers. */
+	public static function normalize_integer( array $definition, $value, string $path ): ?int {
+		if ( $value === null || $value === '' ) {
+			if ( ! empty( $definition['required'] ) ) {
+				throw new InvalidArgumentException( "{$path} is required." );
+			}
+			return null;
+		}
+		if ( is_float( $value ) && ! is_finite( $value ) ) {
+			throw new InvalidArgumentException( "{$path} must be an integer." );
+		}
+		$integer = is_int( $value ) || is_float( $value ) || is_string( $value )
+			? filter_var( $value, FILTER_VALIDATE_INT )
+			: false;
+		if ( $integer === false ) {
+			throw new InvalidArgumentException( "{$path} must be an integer." );
+		}
+		self::validate_numeric_range( $definition, $integer, $path );
+		return $integer;
+	}
+
+	private static function validate_numeric_range( array $definition, $value, string $path ): void {
+		if ( isset( $definition['min'] ) && $definition['min'] !== '' && $value < $definition['min'] ) {
+			throw new InvalidArgumentException( "{$path} is below the minimum." );
+		}
+		if ( isset( $definition['max'] ) && $definition['max'] !== '' && $value > $definition['max'] ) {
+			throw new InvalidArgumentException( "{$path} exceeds the maximum." );
+		}
+	}
+
 	/**
 	 * Format a canonical-name payload for the REST wire contract.
 	 *
@@ -62,6 +92,13 @@ final class Formatter {
 	 */
 	private static function format_value( array $definition, $value ) {
 		$type = $definition['type'];
+		if ( $type === 'integer' ) {
+			try {
+				return self::normalize_integer( $definition, $value, 'fields.' . $definition['canonical_name'] );
+			} catch ( InvalidArgumentException $error ) {
+				return null;
+			}
+		}
 
 		if ( $type === 'select' && ! empty( $definition['multiple'] ) ) {
 			return is_array( $value ) ? array_values( array_map( 'strval', $value ) ) : [];
@@ -166,6 +203,9 @@ final class Formatter {
 			throw new InvalidArgumentException( "{$path} is required." );
 		}
 
+		if ( $type === 'integer' ) {
+			return self::normalize_integer( $definition, $value, $path );
+		}
 		if ( $value === null ) {
 			return in_array( $type, [ 'repeater', 'relationship', 'gallery', 'checkbox' ], true ) ? [] : '';
 		}
@@ -246,12 +286,7 @@ final class Formatter {
 					return '';
 				}
 				$number = (float) $value;
-				if ( isset( $definition['min'] ) && $definition['min'] !== '' && $number < (float) $definition['min'] ) {
-					throw new InvalidArgumentException( "{$path} is below the minimum." );
-				}
-				if ( isset( $definition['max'] ) && $definition['max'] !== '' && $number > (float) $definition['max'] ) {
-					throw new InvalidArgumentException( "{$path} exceeds the maximum." );
-				}
+				self::validate_numeric_range( $definition, $number, $path );
 				return $number;
 			case 'post_object':
 			case 'taxonomy':
