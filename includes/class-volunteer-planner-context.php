@@ -18,12 +18,14 @@ final class PlannerContext {
 	private array $families      = [];
 	private array $companions    = [];
 	private PlannerAvailability $availability;
+	private string $season;
 	private \DateTimeImmutable $now;
 	public array $reasons = [];
 	public function __construct( \DateTimeImmutable $now, int|array $exclude_plan = 0, ?array $exclude_row = null, ?string $season = null ) {
 		$this->now          = $now;
 		$this->availability = new PlannerAvailability();
 		$season             = $season ?? SeasonKey::current( $now->format( 'Y-m-d' ) );
+		$this->season       = $season;
 		$eligibility        = new VolunteerEligibilityService();
 		$units              = ( new VolunteerObligationCalculator() )->decorate_units( $eligibility->get_eligible_units( $season ), $season );
 		foreach ( $units as $unit ) {
@@ -69,25 +71,28 @@ final class PlannerContext {
 		);
 		$tokens = [];
 		foreach ( $shifts as $shift ) {
-			$interval = PlannerAvailability::interval( $shift->ID );
-			if ( ! $interval ) {
-				continue;
-			}
+			$interval  = PlannerAvailability::interval( $shift->ID );
 			$status    = get_post_meta( $shift->ID, 'status', true );
 			$completed = $status === 'voltooid' || ( $status === 'geannuleerd' && get_post_meta( $shift->ID, ShiftCancellationService::META_CREDIT, true ) );
-			$pending   = in_array( $status, [ 'open', 'vol', '' ], true ) && $interval[0] >= $now;
+			$start     = (string) get_post_meta( $shift->ID, 'start_datetime', true );
+			$pending   = in_array( $status, [ 'open', 'vol', '' ], true ) && $start >= $now->format( 'Y-m-d H:i:s' );
 			foreach ( ShiftAssignments::person_ids( $shift->ID ) as $person ) {
+				$credited = $completed && ! get_post_meta( $shift->ID, '_no_show_' . $person, true );
+				if ( ! $credited && ! $pending ) {
+					continue;
+				}
+				$this->load[ $person ] = ( $this->load[ $person ] ?? 0 ) + 1;
+				if ( ! $interval ) {
+					continue;
+				}
 				if ( $pending ) {
 					$this->busy[ $person ][] = $interval;
 				}
-				if ( ( $completed && ! get_post_meta( $shift->ID, '_no_show_' . $person, true ) ) || $pending ) {
-					$tokens[ $person ][]   = [
-						'completed' => $completed,
-						'start'     => $interval[0],
-						'half'      => (int) $interval[0]->format( 'n' ) >= 7 ? 0 : 1,
-					];
-					$this->load[ $person ] = ( $this->load[ $person ] ?? 0 ) + 1;
-				}
+				$tokens[ $person ][] = [
+					'completed' => $completed,
+					'start'     => $interval[0],
+					'half'      => (int) $interval[0]->format( 'n' ) >= 7 ? 0 : 1,
+				];
 			}
 		}
 		foreach ( $tokens as $person => $items ) {
@@ -125,6 +130,9 @@ final class PlannerContext {
 		}
 	}
 	public function reserve( array $row, array $interval ): void {
+		if ( SeasonKey::current( $interval[0]->format( 'Y-m-d' ) ) !== $this->season ) {
+			return;
+		}
 		$key    = $row['unit'];
 		$person = (int) $row['person_id'];
 		if ( isset( $this->units[ $key ] ) ) {
@@ -163,8 +171,8 @@ final class PlannerContext {
 		if ( ! $options ) {
 			return null;
 		}
-		$priority  = array_slice( $options[0]['score'], 0, 3 );
-		$peers     = array_values( array_filter( $options, static fn( $option ) => array_slice( $option['score'], 0, 3 ) === $priority ) );
+		$priority  = array_slice( $options[0]['score'], 0, -1 );
+		$peers     = array_values( array_filter( $options, static fn( $option ) => array_slice( $option['score'], 0, -1 ) === $priority ) );
 		$unpaired  = [];
 		$occupants = array_unique( array_merge( ShiftAssignments::person_ids( $shift ), $this->companions[ $shift ] ?? [] ) );
 		foreach ( $occupants as $person ) {
@@ -219,7 +227,12 @@ final class PlannerContext {
 			}
 			foreach ( $unit['candidates'] as $person ) {
 				$person = (int) $person;
-				$own    = $this->own_units[ $person ] ?? null;
+				if ( $half === 0 && ! empty( $this->load[ $person ] ) ) {
+					$reason                   = 'Al een dienst afgerond of ingepland dit seizoen';
+					$this->reasons[ $reason ] = ( $this->reasons[ $reason ] ?? 0 ) + 1;
+					continue;
+				}
+				$own = $this->own_units[ $person ] ?? null;
 				if ( $unit['kind'] === 'gezin' && $own && $this->units[ $own ]['remaining'] > 0 ) {
 					continue;
 				}
@@ -235,11 +248,12 @@ final class PlannerContext {
 				}
 				$goal     = $half === 0 ? (int) ceil( $unit['required_count'] / 2 ) : (int) floor( $unit['required_count'] / 2 );
 				$result[] = [
-					'person_id' => $person,
-					'name'      => PostTitle::plain( $person ),
-					'unit'      => $key,
-					'remaining' => $unit['remaining'],
-					'score'     => [ $unit['half'][ $half ] < $goal ? 0 : 1, ( $unit['required_count'] - $unit['remaining'] ) / max( 1, $unit['required_count'] ), $this->load[ $person ] ?? 0, hash( 'sha256', $this->now->format( 'o-W' ) . '|' . $person ) ],
+					'person_id'  => $person,
+					'name'       => PostTitle::plain( $person ),
+					'unit'       => $key,
+					'remaining'  => $unit['remaining'],
+					'duty_count' => $this->load[ $person ] ?? 0,
+					'score'      => [ $this->load[ $person ] ?? 0, $unit['half'][ $half ] < $goal ? 0 : 1, ( $unit['required_count'] - $unit['remaining'] ) / max( 1, $unit['required_count'] ), hash( 'sha256', $this->now->format( 'o-W' ) . '|' . $person ) ],
 				];
 			}
 		}
