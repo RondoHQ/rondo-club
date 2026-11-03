@@ -542,7 +542,7 @@ Je doet deze inschrijftaak samen met {medevrijwilligers}.',
         ),
         'survey_id' => array (
           'canonical_name' => 'survey_id', 'default_value' => 0, 'key' => 'field_dienst_type_survey_id',
-          'label' => 'Rondo-enquête', 'name' => 'survey_id', 'storage_name' => 'survey_id', 'type' => 'number', 'min' => 0, 'step' => 1,
+          'label' => 'Rondo-enquête', 'name' => 'survey_id', 'storage_name' => 'survey_id', 'type' => 'integer', 'min' => 0,
         ),
         'survey_email_body' => 
         array (

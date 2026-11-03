@@ -46,8 +46,8 @@ final class FieldSchema {
 		if ( $definition['type'] === 'true_false' ) {
 			return 'boolean';
 		}
-		if ( $definition['type'] === 'number' ) {
-			return 'number';
+		if ( in_array( $definition['type'], [ 'number', 'integer' ], true ) ) {
+			return $definition['type'];
 		}
 		return 'string';
 	}

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.165.4] - 2026-11-03
+
+### Fixed
+
+- Define survey references as integer fields across the REST schema, PHP validation, formatting and native metadata. Normalize whole values before domain validation and reject fractions, booleans, invalid values and negative IDs without truncation. Preserve existing metadata keys and nullable clearing.
+
 ## [35.165.3] - 2026-11-03
 
 ### Fixed
