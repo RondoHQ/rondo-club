@@ -5,6 +5,10 @@ namespace Rondo\Volunteer;
 use Rondo\Core\VolunteerStatus;
 
 final class ShiftSignupEligibility {
+	public static function requires_iva( int $shift_id, int $type_id ): bool {
+		return (bool) get_post_meta( $type_id, 'iva_required', true ) && ! (bool) get_post_meta( $shift_id, 'iva_waived', true );
+	}
+
 	public static function block_reason( int $shift_id, int $person_id, ?array $blocks = null, ?int $type_override = null ): ?string {
 		$blocks         = $blocks ?? self::signup_blocks( $person_id );
 		$dienst_type_id = $type_override ?? (int) get_post_meta( $shift_id, 'dienst_type_id', true );
@@ -16,8 +20,7 @@ final class ShiftSignupEligibility {
 			return 'vog';
 		}
 
-		$requires_iva = (bool) get_post_meta( $dienst_type_id, 'iva_required', true );
-		if ( $requires_iva && ! (bool) get_post_meta( $shift_id, 'iva_waived', true ) && in_array( 'iva', $blocks, true ) ) {
+		if ( in_array( 'iva', $blocks, true ) && self::requires_iva( $shift_id, $dienst_type_id ) ) {
 			return 'iva';
 		}
 
