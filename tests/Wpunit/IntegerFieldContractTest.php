@@ -83,6 +83,7 @@ class IntegerFieldContractTest extends RondoTestCase {
 	}
 
 	public function test_rest_and_wordpress_metadata_advertise_integer_contract(): void {
+			( new \Rondo\Fields\FieldSchema() )->register();
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
 		$server   = $this->bootRestControllers( [] );
 		$response = $server->dispatch( new \WP_REST_Request( 'OPTIONS', '/wp/v2/dienst-types' ) );
