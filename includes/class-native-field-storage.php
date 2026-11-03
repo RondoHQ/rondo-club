@@ -109,6 +109,8 @@ final class NativeFieldStorage {
 		}
 
 		switch ( $definition['type'] ) {
+			case 'integer':
+				return Formatter::normalize_integer( $definition, $value, 'fields.' . $definition['canonical_name'] ) ?? '';
 			case 'date_picker':
 				if ( is_string( $value ) && preg_match( '/^(\d{4})-?(\d{2})-?(\d{2})$/', $value, $matches ) ) {
 					return $matches[1] . $matches[2] . $matches[3];
@@ -244,6 +246,12 @@ final class NativeFieldStorage {
 			return is_array( $value ) ? array_values( array_map( 'strval', $value ) ) : [];
 		}
 		switch ( $definition['type'] ) {
+			case 'integer':
+				try {
+					return Formatter::normalize_integer( $definition, $value, 'fields.' . $definition['canonical_name'] );
+				} catch ( \InvalidArgumentException $error ) {
+					return null;
+				}
 			case 'true_false':
 				return (bool) $value;
 			case 'number':
