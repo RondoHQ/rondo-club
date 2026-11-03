@@ -232,8 +232,7 @@ final class VolunteerPlanner {
 					'needed'   => $capacity > 0 ? max( 0, $capacity - count( ShiftAssignments::person_ids( $id ) ) ) : 1,
 				];
 			}
-			$by_shift     = [];
-			$target_types = [];
+			$by_shift = [];
 			// Reserve all retained choices before filling gaps, including choices on later days.
 			foreach ( $sources as $source ) {
 				foreach ( $source['rows'] as $row ) {
@@ -244,9 +243,8 @@ final class VolunteerPlanner {
 						continue;
 					}
 					if ( $row['person_id'] ) {
-						// A conversion changes the entire shift, including every retained place.
-						$fixed_type = $target_types[ $id ] ?? ( ShiftAssignments::person_ids( $id ) ? $info['type'] : null );
-						if ( $fixed_type !== null && $fixed_type !== $row['target_type'] ) {
+						// Recalculate legacy bar-to-luik rows using the actual duty.
+						if ( $row['target_type'] !== $info['type'] ) {
 							continue;
 						}
 						$context = $contexts[ $info['season'] ];
@@ -254,7 +252,6 @@ final class VolunteerPlanner {
 						if ( $row['snapshot'] !== self::snapshot( $id ) || ! array_filter( $context->candidates( $id, (int) $row['target_type'] ), static fn( $option ) => $option['person_id'] === $row['person_id'] && $option['unit'] === $row['unit'] ) ) {
 							continue;
 						}
-						$target_types[ $id ] = $row['target_type'];
 						foreach ( $contexts as $ledger ) {
 							$ledger->reserve( $row, $info['span'] );
 						}
@@ -276,42 +273,27 @@ final class VolunteerPlanner {
 				$rows     = array_merge( $rows, $kept );
 				$needed   = $info['needed'] - count( $kept );
 				for ( $slot = 0; $slot < $needed; ++$slot ) {
-					$target      = $target_types[ $id ] ?? $type;
-					$options     = $capacity > 0 ? $context->candidates( $id, $target ) : [];
+					$options     = $capacity > 0 ? $context->candidates( $id ) : [];
 					$diagnostics = $context->reasons;
-					if ( $capacity > 0 && ! isset( $target_types[ $id ] ) && ! ShiftAssignments::person_ids( $id ) && get_post_meta( $type, 'iva_required', true ) ) {
-						$luik_type  ??= $this->luik_type();
-						$luik_options = $luik_type ? $context->candidates( $id, $luik_type ) : [];
-						if ( $luik_options && self::duty_counts( $luik_options, $needed ) < self::duty_counts( $options, $needed ) ) {
-							$target  = $luik_type;
-							$options = $luik_options;
-						}
-					}
-					$chosen = $context->choose_candidate( $id, $options, $needed - $slot );
-					$row    = [
+					$chosen      = $context->choose_candidate( $id, $options, $needed - $slot );
+					$row         = [
 						'shift_id'    => $id,
 						'person_id'   => $chosen['person_id'] ?? 0,
 						'unit'        => $chosen['unit'] ?? '',
-						'target_type' => $target,
+						'target_type' => $type,
 						'snapshot'    => self::snapshot( $id ),
 						'state'       => 'pending',
 						'issue'       => $chosen ? '' : ( $capacity > 0 ? 'Geen geschikte kandidaat met een open verplichting en bereikbaar e-mailadres.' : 'Onbegrensde capaciteit: stel eerst het aantal benodigde plekken in.' ),
 						'diagnostics' => $chosen ? [] : $diagnostics,
 					];
-					$rows[] = $row;
+					$rows[]      = $row;
 					if ( $chosen ) {
-						$target_types[ $id ] = $target;
 						foreach ( $contexts as $ledger ) {
 							$ledger->reserve( $row, $span );
 						}
 					}
 				}
 			}
-			// An intentionally open place may be filled by hand after the other places are proposed.
-			foreach ( $rows as &$row ) {
-				$row['target_type'] = $target_types[ $row['shift_id'] ] ?? $row['target_type'];
-			}
-			unset( $row );
 			$id = wp_insert_post(
 			[
 				'post_type'   => self::TYPE,
@@ -342,29 +324,6 @@ final class VolunteerPlanner {
 			return $id;
 		}
 		);
-	}
-	/** Compare the lowest workloads for every place. An unfilled place ranks last. */
-	private static function duty_counts( array $options, int $places ): array {
-		$counts = array_column( $options, 'duty_count', 'person_id' );
-		sort( $counts, SORT_NUMERIC );
-		return array_pad( array_slice( $counts, 0, $places ), $places, PHP_INT_MAX );
-	}
-
-	private function luik_type(): int {
-		$matches = [];
-		foreach ( get_posts(
-		[
-			'post_type'        => 'dienst_type',
-			'post_status'      => 'publish',
-			'numberposts'      => -1,
-			'suppress_filters' => true,
-		]
-		) as $type ) {
-			if ( str_contains( mb_strtolower( $type->post_title ), 'luik' ) && ! get_post_meta( $type->ID, 'iva_required', true ) ) {
-				$matches[] = $type->ID;
-			}
-		}
-		return count( $matches ) === 1 ? $matches[0] : 0;
 	}
 	public function candidates( int $id, int $index ) {
 		$data = self::data( $id );
@@ -619,6 +578,7 @@ final class VolunteerPlanner {
 				'title'        => PostTitle::plain( $original ),
 				'target_title' => PostTitle::plain( (int) $row['target_type'] ),
 				'conversion'   => $original !== $row['target_type'],
+				'iva_missing'  => $person && ShiftSignupEligibility::requires_iva( $shift, (int) $row['target_type'] ) && ! IvaStatus::is_valid( $person ),
 				'start'        => get_post_meta( $shift, 'start_datetime', true ),
 				'end'          => get_post_meta( $shift, 'end_datetime', true ),
 				'person_id'    => $person,
