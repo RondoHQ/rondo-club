@@ -543,7 +543,7 @@ class VolunteerPlannerTest extends RondoTestCase {
 		$this->assertNotEmpty( $row['issue'] );
 	}
 
-	public function test_luik_conversion_requires_explicit_approval_and_applies_only_at_publication(): void {
+	public function test_volunteer_without_iva_is_proposed_and_assigned_to_the_original_bar_duty(): void {
 		$parent      = $this->family( 'Anne' );
 		$experienced = $this->family( 'Bram' );
 		Fields::update_for_post( $experienced, 'datum_iva', '2024-01-01' );
@@ -551,47 +551,32 @@ class VolunteerPlannerTest extends RondoTestCase {
 		$completed = $this->shift( 0, null, [ $experienced ] );
 		update_post_meta( $completed, 'status', 'voltooid' );
 		update_post_meta( $this->type, 'iva_required', true );
-		$luik  = self::factory()->post->create(
-			[
-				'post_type'   => 'dienst_type',
-				'post_status' => 'publish',
-				'post_title'  => 'Kantine luik',
-			]
-			);
 		$shift = $this->shift();
 		$id    = $this->plan();
 		$rows  = VolunteerPlanner::data( $id )['rows'];
 		$row   = $rows[0];
-		$this->assertSame( [ $luik ], array_column( $rows, 'target_type' ) );
-		$this->assertSame( $luik, $row['target_type'] );
+		$this->assertTrue( $this->planner->view( $id )['rows'][0]['iva_missing'] );
+		$this->assertSame( $this->type, $row['target_type'] );
 		$this->assertSame( $parent, $row['person_id'] );
 		$this->assertSame( $this->type, (int) get_post_meta( $shift, 'dienst_type_id', true ) );
-		$this->assertWPError( $this->planner->publish( $id, 1, false ) );
 		$this->assertEmpty( ShiftAssignments::person_ids( $shift ) );
-		$this->assertTrue( $this->planner->publish( $id, 1, true ) );
-		$this->assertSame( $luik, (int) get_post_meta( $shift, 'dienst_type_id', true ) );
+		$this->assertTrue( $this->planner->publish( $id, 1, false ) );
+		$this->assertSame( $this->type, (int) get_post_meta( $shift, 'dienst_type_id', true ) );
 		$this->assertSame( [ $parent ], ShiftAssignments::person_ids( $shift ) );
 	}
 
-	public function test_empty_bar_can_propose_two_first_time_volunteers_but_an_occupied_bar_keeps_its_type(): void {
+	public function test_bar_keeps_its_type_and_prefers_iva_at_equal_workload(): void {
 		$qualified = $this->family( 'Anne' );
 		$first     = $this->family( 'Bram' );
 		$occupied  = $this->family( 'Cato' );
 		Fields::update_for_post( $qualified, 'datum_iva', '2024-01-01' );
 		Fields::update_for_post( $qualified, 'iva_approved', true );
 		update_post_meta( $this->type, 'iva_required', true );
-		$luik    = self::factory()->post->create(
-			[
-				'post_type'   => 'dienst_type',
-				'post_status' => 'publish',
-				'post_title'  => 'Kantine luik',
-			]
-		);
 		$partial = $this->shift( 20, null, [ $occupied ], 2 );
 		$empty   = $this->shift( 21, null, [], 2 );
 		$rows    = VolunteerPlanner::data( $this->plan() )['rows'];
 		$this->assertSame( [ $partial, $empty, $empty ], array_column( $rows, 'shift_id' ) );
-		$this->assertSame( [ $this->type, $luik, $luik ], array_column( $rows, 'target_type' ) );
+		$this->assertSame( [ $this->type, $this->type, $this->type ], array_column( $rows, 'target_type' ) );
 		$this->assertSame( $qualified, $rows[0]['person_id'] );
 		$this->assertContains( $first, array_column( array_slice( $rows, 1 ), 'person_id' ) );
 	}
@@ -791,13 +776,20 @@ class VolunteerPlannerTest extends RondoTestCase {
 		$conversion = $this->shift( 20 );
 		$regular    = $this->shift( 21, $luik );
 		$id         = $this->plan();
+		// This pending conversion was created by the previous version of the planner.
+		$data                           = VolunteerPlanner::data( $id );
+		$data['rows'][0]['target_type'] = $luik;
+		update_post_meta( $id, '_planner_data', $data );
 		$this->assertTrue( $this->planner->publish( $id, 1, false, [ $regular ] ) );
 		$this->assertEmpty( ShiftAssignments::person_ids( $conversion ) );
 		$this->assertSame( $this->type, (int) get_post_meta( $conversion, 'dienst_type_id', true ) );
 		$this->assertCount( 1, ShiftAssignments::person_ids( $regular ) );
 		$this->assertWPError( $this->planner->publish( $id, 2, false, [ $conversion ] ) );
-		$this->assertTrue( $this->planner->publish( $id, 2, true, [ $conversion ] ) );
-		$this->assertSame( $luik, (int) get_post_meta( $conversion, 'dienst_type_id', true ) );
+		$renewed = $this->planner->generate( null, true, false );
+		$rows    = VolunteerPlanner::data( $renewed )['rows'];
+		$this->assertSame( $this->type, $rows[0]['target_type'] );
+		$this->assertTrue( $this->planner->publish( $renewed, 1, false, [ $conversion ] ) );
+		$this->assertSame( $this->type, (int) get_post_meta( $conversion, 'dienst_type_id', true ) );
 	}
 
 	public function test_selection_saved_before_interruption_is_used_when_resuming(): void {
