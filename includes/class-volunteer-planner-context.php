@@ -219,8 +219,10 @@ final class PlannerContext {
 		if ( ! $span || $span[0] <= $this->now ) {
 			return [];
 		}
-		$result = [];
-		$half   = (int) $span[0]->format( 'n' ) >= 7 ? 0 : 1;
+		$type       ??= (int) get_post_meta( $shift, 'dienst_type_id', true );
+		$requires_iva = ShiftSignupEligibility::requires_iva( $shift, $type );
+		$result       = [];
+		$half         = (int) $span[0]->format( 'n' ) >= 7 ? 0 : 1;
 		foreach ( $this->units as $key => $unit ) {
 			if ( $unit['remaining'] <= 0 ) {
 				continue;
@@ -240,7 +242,8 @@ final class PlannerContext {
 					continue;
 				}
 				$this->blocks[ $person ] = $this->blocks[ $person ] ?? ShiftSignupEligibility::signup_blocks( $person );
-				$reason                  = ShiftSignupEligibility::block_reason( $shift, $person, $this->blocks[ $person ], $type );
+				$missing_iva             = $requires_iva && in_array( 'iva', $this->blocks[ $person ], true );
+				$reason                  = ShiftSignupEligibility::block_reason( $shift, $person, array_diff( $this->blocks[ $person ], [ 'iva' ] ), $type );
 				$reason                  = $reason ?: $this->availability->reason( $person, $span, $this->busy );
 				if ( $reason ) {
 					$this->reasons[ $reason ] = ( $this->reasons[ $reason ] ?? 0 ) + 1;
@@ -248,12 +251,11 @@ final class PlannerContext {
 				}
 				$goal     = $half === 0 ? (int) ceil( $unit['required_count'] / 2 ) : (int) floor( $unit['required_count'] / 2 );
 				$result[] = [
-					'person_id'  => $person,
-					'name'       => PostTitle::plain( $person ),
-					'unit'       => $key,
-					'remaining'  => $unit['remaining'],
-					'duty_count' => $this->load[ $person ] ?? 0,
-					'score'      => [ $this->load[ $person ] ?? 0, $unit['half'][ $half ] < $goal ? 0 : 1, ( $unit['required_count'] - $unit['remaining'] ) / max( 1, $unit['required_count'] ), hash( 'sha256', $this->now->format( 'o-W' ) . '|' . $person ) ],
+					'person_id' => $person,
+					'name'      => PostTitle::plain( $person ),
+					'unit'      => $key,
+					'remaining' => $unit['remaining'],
+					'score'     => [ $this->load[ $person ] ?? 0, (int) $missing_iva, $unit['half'][ $half ] < $goal ? 0 : 1, ( $unit['required_count'] - $unit['remaining'] ) / max( 1, $unit['required_count'] ), hash( 'sha256', $this->now->format( 'o-W' ) . '|' . $person ) ],
 				];
 			}
 		}
