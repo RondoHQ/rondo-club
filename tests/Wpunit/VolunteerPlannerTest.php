@@ -560,7 +560,14 @@ class VolunteerPlannerTest extends RondoTestCase {
 		$this->assertSame( $parent, $row['person_id'] );
 		$this->assertSame( $this->type, (int) get_post_meta( $shift, 'dienst_type_id', true ) );
 		$this->assertEmpty( ShiftAssignments::person_ids( $shift ) );
-		$this->assertTrue( $this->planner->publish( $id, 1, false ) );
+		$path   = '/' . $id . '/publish';
+		$params = [ 'revision' => 1 ];
+		$this->assertSame( 409, $this->request( $path, 'POST', $params )->get_status() );
+		$params['accepted_iva_rows'] = [ 1 ];
+		$this->assertSame( 409, $this->request( $path, 'POST', $params )->get_status() );
+		$this->assertEmpty( ShiftAssignments::person_ids( $shift ) );
+		$params['accepted_iva_rows'] = [ 0 ];
+		$this->assertSame( 200, $this->request( $path, 'POST', $params )->get_status() );
 		$this->assertSame( $this->type, (int) get_post_meta( $shift, 'dienst_type_id', true ) );
 		$this->assertSame( [ $parent ], ShiftAssignments::person_ids( $shift ) );
 	}
@@ -788,7 +795,7 @@ class VolunteerPlannerTest extends RondoTestCase {
 		$renewed = $this->planner->generate( null, true, false );
 		$rows    = VolunteerPlanner::data( $renewed )['rows'];
 		$this->assertSame( $this->type, $rows[0]['target_type'] );
-		$this->assertTrue( $this->planner->publish( $renewed, 1, false, [ $conversion ] ) );
+		$this->assertTrue( $this->planner->publish( $renewed, 1, false, [ $conversion ], [ 0 ] ) );
 		$this->assertSame( $this->type, (int) get_post_meta( $conversion, 'dienst_type_id', true ) );
 	}
 
