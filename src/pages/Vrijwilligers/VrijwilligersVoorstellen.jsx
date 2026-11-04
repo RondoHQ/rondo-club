@@ -44,6 +44,7 @@ export default function VrijwilligersVoorstellen() {
   const [params, setParams] = useSearchParams();
   const [editor, setEditor] = useState(null);
   const [acceptConversions, setAcceptConversions] = useState(false);
+  const [ivaApproval, setIvaApproval] = useState(null);
   const [message, setMessage] = useState('');
   const [selection, setSelection] = useState({ planId: 0, excluded: [] });
   const list = useQuery({ queryKey: ['volunteer', 'plans'], queryFn: async () => (await prmApi.getVolunteerPlans()).data });
@@ -54,7 +55,7 @@ export default function VrijwilligersVoorstellen() {
   const receive = (data) => {
     client.setQueryData(['volunteer', 'plan', data.id], data);
     client.invalidateQueries({ queryKey: ['volunteer'] });
-    setEditor(null); setAcceptConversions(false);
+    setEditor(null); setAcceptConversions(false); setIvaApproval(null);
   };
   const create = useMutation({ mutationFn: () => prmApi.createVolunteerPlan(), onSuccess: (response) => {
     setParams({ plan: response.data.id }); receive(response.data); setMessage('Het actuele voorstel bevat alle open plekken. Geldige keuzes zijn behouden; er zijn nog geen diensten toegewezen.');
@@ -64,7 +65,7 @@ export default function VrijwilligersVoorstellen() {
     let current = plan;
     let response;
     do {
-      response = await prmApi.publishVolunteerPlan(id, { revision: current.revision, accept_conversions: acceptConversions, shift_ids: shiftIds });
+      response = await prmApi.publishVolunteerPlan(id, { revision: current.revision, accept_conversions: acceptConversions, accepted_iva_rows: confirmedIva ? missingIvaRows : [], shift_ids: shiftIds });
       current = response.data;
       client.setQueryData(['volunteer', 'plan', id], current);
     } while (current.publish_more);
@@ -82,7 +83,11 @@ export default function VrijwilligersVoorstellen() {
   const selectedShiftIds = continuing ? plan.publish_shift_ids : shiftIds.filter((shiftId) => !excluded.includes(shiftId));
   const selectedRows = pending.filter((row) => selectedShiftIds.includes(row.shift_id));
   const conversions = selectedRows.filter((row) => row.conversion);
+  const missingIvaRows = selectedRows.filter((row) => row.iva_missing).map((row) => row.index);
+  const ivaScope = JSON.stringify([id, plan?.revision, selectedShiftIds, missingIvaRows]);
+  const confirmedIva = ivaApproval === ivaScope;
   const toggleShift = (shiftId, checked) => {
+    setIvaApproval(null);
     setSelection({ planId: id, excluded: checked ? excluded.filter((value) => value !== shiftId) : [...excluded, shiftId] });
     setAcceptConversions(false);
   };
@@ -98,7 +103,7 @@ export default function VrijwilligersVoorstellen() {
       {actionError && <p role="alert" className="card p-4 text-red-700 dark:text-red-300">{actionError.response?.data?.message || 'Verwerking mislukt. Ververs om de actuele status te bekijken.'}</p>}
       {(list.error || detail.error) && <p role="alert" className="card p-4 text-red-700 dark:text-red-300">Voorstellen ophalen mislukt. <button type="button" className="underline" onClick={() => { list.refetch(); detail.refetch(); }}>Opnieuw proberen</button></p>}
       {list.isPending && <p role="status">Voorstellen laden…</p>}
-      {list.data?.plans?.length > 0 && <label className="label max-w-xl">Voorstel<select className="input mt-1" value={id} disabled={busy} onChange={(event) => { setParams({ plan: event.target.value }); setEditor(null); setMessage(''); setAcceptConversions(false); }}>
+      {list.data?.plans?.length > 0 && <label className="label max-w-xl">Voorstel<select className="input mt-1" value={id} disabled={busy} onChange={(event) => { setParams({ plan: event.target.value }); setEditor(null); setMessage(''); setAcceptConversions(false); setIvaApproval(null); }}>
         {list.data.plans.map((item) => <option key={item.id} value={item.id}>{date(item.created_at)} · {phases[item.phase]}</option>)}
       </select></label>}
       {id > 0 && detail.isPending && <p role="status">Indeling laden…</p>}
@@ -112,9 +117,10 @@ export default function VrijwilligersVoorstellen() {
           {writable && <>
             <p className="text-sm">{selectedShiftIds.filter((shiftId) => shiftIds.includes(shiftId)).length} van {shiftIds.length} diensten geselecteerd · {selectedRows.length} toewijzingen. Vink diensten uit om ze later te publiceren; de voorgestelde kandidaten blijven bewaard.</p>
             {continuing && <p role="status" className="text-sm">Rond de gestarte publicatie af met de eerder gekozen selectie.</p>}
-            {!continuing && shiftIds.length > 0 && <div className="flex flex-wrap gap-2"><button type="button" className="btn-secondary text-sm" disabled={busy} onClick={() => { setSelection({ planId: id, excluded: [] }); setAcceptConversions(false); }}>Alles selecteren</button><button type="button" className="btn-secondary text-sm" disabled={busy} onClick={() => { setSelection({ planId: id, excluded: shiftIds }); setAcceptConversions(false); }}>Alles deselecteren</button></div>}
+            {!continuing && shiftIds.length > 0 && <div className="flex flex-wrap gap-2"><button type="button" className="btn-secondary text-sm" disabled={busy} onClick={() => { setIvaApproval(null); setSelection({ planId: id, excluded: [] }); setAcceptConversions(false); }}>Alles selecteren</button><button type="button" className="btn-secondary text-sm" disabled={busy} onClick={() => { setIvaApproval(null); setSelection({ planId: id, excluded: shiftIds }); setAcceptConversions(false); }}>Alles deselecteren</button></div>}
+            {missingIvaRows.length > 0 && <label className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-300"><input type="checkbox" checked={confirmedIva} disabled={busy} onChange={(event) => setIvaApproval(event.target.checked ? ivaScope : null)} />{missingIvaRows.length === 1 ? 'Ik bevestig de geselecteerde toewijzing zonder goedgekeurd IVA-bewijs.' : `Ik bevestig de ${missingIvaRows.length} geselecteerde toewijzingen zonder goedgekeurd IVA-bewijs.`}</label>}
             {conversions.length > 0 && <label className="flex gap-2 text-sm text-amber-800 dark:text-amber-300"><input type="checkbox" checked={acceptConversions} disabled={busy} onChange={(event) => setAcceptConversions(event.target.checked)} />Ik ga expliciet akkoord met de geselecteerde omzettingen van bar naar luik.</label>}
-            <div className="flex flex-wrap gap-2"><button type="button" className="btn-primary" disabled={busy || (!selectedRows.length && !continuing) || (conversions.length > 0 && !acceptConversions)} onClick={() => publish.mutate()}>{publish.isPending ? 'Publiceren…' : continuing ? 'Publicatie hervatten' : `Akkoord en ${selectedRows.length} toewijzingen publiceren`}</button><button type="button" className="btn-secondary" disabled={busy} onClick={() => { detail.refetch(); }}>Verversen</button><button type="button" className="btn-secondary" disabled={busy || continuing} onClick={() => close.mutate()}>Voorstel afsluiten</button></div>
+            <div className="flex flex-wrap gap-2"><button type="button" className="btn-primary" disabled={busy || (!selectedRows.length && !continuing) || (conversions.length > 0 && !acceptConversions) || (missingIvaRows.length > 0 && !confirmedIva)} onClick={() => publish.mutate()}>{publish.isPending ? 'Publiceren…' : continuing ? 'Publicatie hervatten' : `Akkoord en ${selectedRows.length} toewijzingen publiceren`}</button><button type="button" className="btn-secondary" disabled={busy} onClick={() => { detail.refetch(); }}>Verversen</button><button type="button" className="btn-secondary" disabled={busy || continuing} onClick={() => close.mutate()}>Voorstel afsluiten</button></div>
             <p className="text-xs text-gray-500">Publiceren controleert de geselecteerde indelingen opnieuw. Gewijzigde of onmogelijke regels blijven open; gepubliceerde regels worden bij opnieuw klikken niet nogmaals verstuurd. Afsluiten verwijdert alleen de nog niet gepubliceerde voorstellen.</p>
           </>}
         </section>
