@@ -374,9 +374,13 @@ final class VolunteerPlanner {
 		}
 		);
 	}
-	public function publish( int $id, int $revision, bool $conversions, ?array $shift_ids = null ) {
+	private static function missing_iva( array $row ): bool {
+		return $row['person_id'] && ShiftSignupEligibility::requires_iva( (int) $row['shift_id'], (int) $row['target_type'] ) && ! IvaStatus::is_valid( (int) $row['person_id'] );
+	}
+
+	public function publish( int $id, int $revision, bool $conversions, ?array $shift_ids = null, array $accepted_iva_rows = [] ) {
 		return $this->locked(
-		function () use ( $id, $revision, $conversions, $shift_ids ) {
+		function () use ( $id, $revision, $conversions, $shift_ids, $accepted_iva_rows ) {
 			$data = self::data( $id );
 			if ( is_wp_error( $data ) ) {
 				return $data;
@@ -397,12 +401,15 @@ final class VolunteerPlanner {
 			if ( isset( $data['publish_shift_ids'] ) && $selected !== $data['publish_shift_ids'] ) {
 				return self::error( 'Rond eerst de lopende publicatie met de oorspronkelijke selectie af.' );
 			}
-			foreach ( $data['rows'] as $row ) {
+			foreach ( $data['rows'] as $index => $row ) {
 				if ( ! in_array( $row['shift_id'], $selected, true ) ) {
 					if ( $row['state'] === 'publishing' ) {
 						return self::error( 'Een dienst wordt al gepubliceerd. Rond eerst die publicatie af.' );
 					}
 					continue;
+				}
+				if ( $row['state'] === 'pending' && self::missing_iva( $row ) && ! in_array( $index, $accepted_iva_rows, true ) ) {
+					return self::error( 'Bevestig de geselecteerde toewijzingen zonder goedgekeurd IVA-bewijs. Ververs het voorstel als de waarschuwing ontbreekt.' );
 				}
 				if ( $row['state'] === 'pending' && $row['person_id'] > 0 && $row['target_type'] !== (int) get_post_meta( $row['shift_id'], 'dienst_type_id', true ) && ! $conversions ) {
 					return self::error( 'Geef expliciet akkoord voor de omzetting van bar naar luik.' );
@@ -449,7 +456,10 @@ final class VolunteerPlanner {
 				$person,
 				(int) $row['target_type'],
 				$row['snapshot'],
-				function () use ( $id, $row, $shift, $person ) {
+				function () use ( $id, $row, $shift, $person, $index, $accepted_iva_rows ) {
+					if ( ! in_array( $index, $accepted_iva_rows, true ) && self::missing_iva( $row ) ) {
+						return self::error( 'Bevestig de toewijzing zonder goedgekeurd IVA-bewijs.' );
+					}
 					if ( get_post_type( $shift ) !== 'dienst_shift' || get_post_status( $shift ) !== 'publish' || ! in_array( get_post_meta( $shift, 'status', true ), [ 'open','vol' ], true ) ) {
 						return self::error( 'De dienst is niet meer beschikbaar.' );
 					}
@@ -578,7 +588,7 @@ final class VolunteerPlanner {
 				'title'        => PostTitle::plain( $original ),
 				'target_title' => PostTitle::plain( (int) $row['target_type'] ),
 				'conversion'   => $original !== $row['target_type'],
-				'iva_missing'  => $person && ShiftSignupEligibility::requires_iva( $shift, (int) $row['target_type'] ) && ! IvaStatus::is_valid( $person ),
+				'iva_missing'  => self::missing_iva( $row ),
 				'start'        => get_post_meta( $shift, 'start_datetime', true ),
 				'end'          => get_post_meta( $shift, 'end_datetime', true ),
 				'person_id'    => $person,
