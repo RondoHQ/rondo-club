@@ -91,7 +91,7 @@ class RecordUpdateAbilityTest extends RondoTestCase {
 			]
 			);
 		$response = rest_do_request( $request );
-		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
 		$this->assertContains( $id, array_column( $response->get_data(), 'id' ) );
 		$this->assertFalse( wp_get_ability( 'rondo/update-record' )->get_meta_item( 'annotations' )['readonly'] );
 	}
@@ -212,6 +212,25 @@ class RecordUpdateAbilityTest extends RondoTestCase {
 			);
 		$this->assertSame( '', get_post_meta( $id, 'addresses_0_city', true ) );
 		$this->assertSame( [], Fields::get_for_post( $id, 'addresses' ) );
+	}
+
+	public function test_rest_ability_execution_requires_post_and_returns_saved_fields(): void {
+		$id    = $this->person();
+		$input = [
+			'id'              => $id,
+			'fields'          => [ 'email_1' => 'new@example.test' ],
+			'expected_fields' => [ 'email_1' => 'old@example.test' ],
+		];
+		$get   = new \WP_REST_Request( 'GET', '/wp-abilities/v1/abilities/rondo/update-record/run' );
+		$get->set_query_params( [ 'input' => $input ] );
+		$this->assertGreaterThanOrEqual( 400, rest_do_request( $get )->get_status() );
+		$this->assertSame( 'old@example.test', Fields::get_for_post( $id, 'email_1' ) );
+		$post = new \WP_REST_Request( 'POST', '/wp-abilities/v1/abilities/rondo/update-record/run' );
+		$post->set_header( 'Content-Type', 'application/json' );
+		$post->set_body( wp_json_encode( [ 'input' => $input ] ) );
+		$response = rest_do_request( $post );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertSame( [ 'email_1' => 'new@example.test' ], $response->get_data()['fields'] );
 	}
 
 	public function test_teams_and_committees_use_their_own_rest_routes(): void {
