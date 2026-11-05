@@ -109,6 +109,13 @@ Use `novamira/execute-php` only when the typed abilities cannot answer a necessa
 tightly scoped repair is required. For those cases, use WordPress and the native Rondo field APIs,
 keep the operation as narrow as possible, and preserve the same access and verification rules.
 
+For record updates, use `rondo/update-record` after searching and reading the exact record.
+Load its schema first and supply only changed canonical `fields` plus their current
+`get-record` values in `expected_fields`. This uses the app’s REST permissions and
+field processing and advances the modification time used by reverse sync. Read back
+afterwards; saving in Rondo does not confirm Sportlink delivery. Do not substitute a
+generic post-meta write for this ability.
+
 Production-write rules:
 
 - Read first and verify exact IDs, post types, titles, and stable external identifiers before a
