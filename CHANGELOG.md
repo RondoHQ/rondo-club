@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.167.0] - 2026-11-06
+
+### Added
+
+- Cancel a full day of volunteer shifts from the planning calendar, with a reviewed list, optional reason, cancellation emails and the existing 48-hour credit policy. Show partial failures and missing email addresses, and retry failed requests or emails without repeating successful cancellations (feedback #14966).
+
+### Fixed
+
+- Select and publish individual candidates in volunteer proposals, including shifts with multiple places. Preserve the exact candidate selection across interrupted or batched publication and apply IVA confirmation only to selected candidates (feedback #14965).
+
 ## [35.166.0] - 2026-11-05
 
 ### Added

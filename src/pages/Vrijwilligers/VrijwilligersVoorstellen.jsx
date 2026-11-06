@@ -61,34 +61,36 @@ export default function VrijwilligersVoorstellen() {
     setParams({ plan: response.data.id }); receive(response.data); setMessage('Het actuele voorstel bevat alle open plekken. Geldige keuzes zijn behouden; er zijn nog geen diensten toegewezen.');
   } });
   const publish = useMutation({ mutationFn: async () => {
-    const shiftIds = selectedShiftIds;
+    const rowIndices = selectedRowIndices;
     let current = plan;
     let response;
     do {
-      response = await prmApi.publishVolunteerPlan(id, { revision: current.revision, accept_conversions: acceptConversions, accepted_iva_rows: confirmedIva ? missingIvaRows : [], shift_ids: shiftIds });
+      response = await prmApi.publishVolunteerPlan(id, { revision: current.revision, accept_conversions: acceptConversions, accepted_iva_rows: confirmedIva ? missingIvaRows : [], row_indices: rowIndices });
       current = response.data;
       client.setQueryData(['volunteer', 'plan', id], current);
     } while (current.publish_more);
     return response;
   }, onSuccess: (response) => {
-    receive(response.data); setMessage(response.data.phase === 'published' ? 'De indelingen zijn gepubliceerd. De toewijzingsmails staan klaar voor verzending.' : 'De geldige geselecteerde indelingen zijn gepubliceerd. Niet geselecteerde diensten blijven in het voorstel. Controleer ook eventuele meldingen bij de resterende open regels.');
+    receive(response.data); setMessage(response.data.phase === 'published' ? 'De indelingen zijn gepubliceerd. De toewijzingsmails staan klaar voor verzending.' : 'De geldige geselecteerde indelingen zijn gepubliceerd. Niet geselecteerde kandidaten blijven in het voorstel. Controleer ook eventuele meldingen bij de resterende open regels.');
     client.invalidateQueries({ queryKey: ['people'] });
   } });
   const close = useMutation({ mutationFn: () => prmApi.closeVolunteerPlan(id, { revision: plan.revision }), onSuccess: (response) => { receive(response.data); setMessage('Voorstel afgesloten. Gepubliceerde indelingen blijven staan.'); } });
   const writable = plan && ['draft', 'partial'].includes(plan.phase);
   const pending = plan?.rows.filter((row) => ['pending', 'publishing'].includes(row.state) && row.person_id > 0) || [];
-  const shiftIds = [...new Set(pending.map((row) => row.shift_id))];
+  const rowIndices = pending.map((row) => row.index);
   const excluded = selection.planId === id ? selection.excluded : [];
   const continuing = Array.isArray(plan?.publish_shift_ids);
-  const selectedShiftIds = continuing ? plan.publish_shift_ids : shiftIds.filter((shiftId) => !excluded.includes(shiftId));
-  const selectedRows = pending.filter((row) => selectedShiftIds.includes(row.shift_id));
+  const selectedRowIndices = continuing
+    ? (plan.publish_row_indices ?? plan.rows.filter((row) => plan.publish_shift_ids.includes(row.shift_id)).map((row) => row.index))
+    : rowIndices.filter((index) => !excluded.includes(index));
+  const selectedRows = pending.filter((row) => selectedRowIndices.includes(row.index));
   const conversions = selectedRows.filter((row) => row.conversion);
   const missingIvaRows = selectedRows.filter((row) => row.iva_missing).map((row) => row.index);
-  const ivaScope = JSON.stringify([id, plan?.revision, selectedShiftIds, missingIvaRows]);
+  const ivaScope = JSON.stringify([id, plan?.revision, selectedRowIndices, missingIvaRows]);
   const confirmedIva = ivaApproval === ivaScope;
-  const toggleShift = (shiftId, checked) => {
+  const toggleRow = (index, checked) => {
     setIvaApproval(null);
-    setSelection({ planId: id, excluded: checked ? excluded.filter((value) => value !== shiftId) : [...excluded, shiftId] });
+    setSelection({ planId: id, excluded: checked ? excluded.filter((value) => value !== index) : [...excluded, index] });
     setAcceptConversions(false);
   };
   const busy = create.isPending || publish.isPending || close.isPending;
@@ -115,19 +117,19 @@ export default function VrijwilligersVoorstellen() {
           <p className="text-sm text-gray-600 dark:text-gray-300">Voor diensten tot 1 januari komen alleen mensen in aanmerking die dit seizoen nog geen dienst hebben gedraaid of ingepland. Ook een plek in een open voorstel telt mee. Vanaf 1 januari gaan mensen met de minste diensten voor. Bij een gelijk aantal diensten krijgt iemand met IVA voorrang voor de bar. Wie nog geen IVA heeft, kan voor de bardienst worden voorgesteld.</p>
           <p className="text-sm text-gray-600 dark:text-gray-300">Wedstrijden: twee uur marge voor en na. Trainingen: dertig minuten marge. Ontbrekende of verouderde beschikbaarheidsgegevens geven geen automatische toewijzing. Toegewezen diensten kunnen tot drie weken vooraf worden afgemeld; vrijgekomen plekken komen opnieuw in een voorstel.</p>
           {writable && <>
-            <p className="text-sm">{selectedShiftIds.filter((shiftId) => shiftIds.includes(shiftId)).length} van {shiftIds.length} diensten geselecteerd · {selectedRows.length} toewijzingen. Vink diensten uit om ze later te publiceren; de voorgestelde kandidaten blijven bewaard.</p>
+            <p className="text-sm">{selectedRows.length} van {pending.length} toewijzingen geselecteerd. Vink kandidaten uit om ze later te publiceren; de voorgestelde kandidaten blijven bewaard.</p>
             {continuing && <p role="status" className="text-sm">Rond de gestarte publicatie af met de eerder gekozen selectie.</p>}
-            {!continuing && shiftIds.length > 0 && <div className="flex flex-wrap gap-2"><button type="button" className="btn-secondary text-sm" disabled={busy} onClick={() => { setIvaApproval(null); setSelection({ planId: id, excluded: [] }); setAcceptConversions(false); }}>Alles selecteren</button><button type="button" className="btn-secondary text-sm" disabled={busy} onClick={() => { setIvaApproval(null); setSelection({ planId: id, excluded: shiftIds }); setAcceptConversions(false); }}>Alles deselecteren</button></div>}
+            {!continuing && rowIndices.length > 0 && <div className="flex flex-wrap gap-2"><button type="button" className="btn-secondary text-sm" disabled={busy} onClick={() => { setIvaApproval(null); setSelection({ planId: id, excluded: [] }); setAcceptConversions(false); }}>Alles selecteren</button><button type="button" className="btn-secondary text-sm" disabled={busy} onClick={() => { setIvaApproval(null); setSelection({ planId: id, excluded: rowIndices }); setAcceptConversions(false); }}>Alles deselecteren</button></div>}
             {missingIvaRows.length > 0 && <label className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-300"><input type="checkbox" checked={confirmedIva} disabled={busy} onChange={(event) => setIvaApproval(event.target.checked ? ivaScope : null)} />{missingIvaRows.length === 1 ? 'Ik bevestig de geselecteerde toewijzing zonder goedgekeurd IVA-bewijs.' : `Ik bevestig de ${missingIvaRows.length} geselecteerde toewijzingen zonder goedgekeurd IVA-bewijs.`}</label>}
             {conversions.length > 0 && <label className="flex gap-2 text-sm text-amber-800 dark:text-amber-300"><input type="checkbox" checked={acceptConversions} disabled={busy} onChange={(event) => setAcceptConversions(event.target.checked)} />Ik ga expliciet akkoord met de geselecteerde omzettingen van bar naar luik.</label>}
-            <div className="flex flex-wrap gap-2"><button type="button" className="btn-primary" disabled={busy || (!selectedRows.length && !continuing) || (conversions.length > 0 && !acceptConversions) || (missingIvaRows.length > 0 && !confirmedIva)} onClick={() => publish.mutate()}>{publish.isPending ? 'Publiceren…' : continuing ? 'Publicatie hervatten' : `Akkoord en ${selectedRows.length} toewijzingen publiceren`}</button><button type="button" className="btn-secondary" disabled={busy} onClick={() => { detail.refetch(); }}>Verversen</button><button type="button" className="btn-secondary" disabled={busy || continuing} onClick={() => close.mutate()}>Voorstel afsluiten</button></div>
+            <div className="flex flex-wrap gap-2"><button type="button" className="btn-primary" disabled={busy || (!selectedRows.length && !continuing) || (conversions.length > 0 && !acceptConversions) || (missingIvaRows.length > 0 && !confirmedIva)} onClick={() => publish.mutate()}>{publish.isPending ? 'Publiceren…' : continuing ? 'Publicatie hervatten' : `Akkoord en ${selectedRows.length} ${selectedRows.length === 1 ? 'toewijzing' : 'toewijzingen'} publiceren`}</button><button type="button" className="btn-secondary" disabled={busy} onClick={() => { detail.refetch(); }}>Verversen</button><button type="button" className="btn-secondary" disabled={busy || continuing} onClick={() => close.mutate()}>Voorstel afsluiten</button></div>
             <p className="text-xs text-gray-500">Publiceren controleert de geselecteerde indelingen opnieuw. Gewijzigde of onmogelijke regels blijven open; gepubliceerde regels worden bij opnieuw klikken niet nogmaals verstuurd. Afsluiten verwijdert alleen de nog niet gepubliceerde voorstellen.</p>
           </>}
         </section>
         <section className="card divide-y divide-gray-200 dark:divide-gray-700" aria-label="Voorgestelde indelingen">
           {!plan.rows.length && <p className="p-5">Geen open plekken in deze periode.</p>}
           {plan.rows.map((row) => <div key={row.index} className="p-4 space-y-2">
-            {writable && row.person_id > 0 && ['pending', 'publishing'].includes(row.state) && <label className="flex items-center gap-2 min-h-11 text-sm"><input type="checkbox" className="h-4 w-4" checked={selectedShiftIds.includes(row.shift_id)} disabled={busy || continuing} aria-label={`Publiceer ${row.title} op ${date(row.start)}, kandidaat ${row.person_name}`} onChange={(event) => toggleShift(row.shift_id, event.target.checked)} />Deze dienst publiceren{pending.filter((candidate) => candidate.shift_id === row.shift_id).length > 1 ? ' (alle kandidaten voor deze dienst)' : ''}</label>}
+            {writable && row.person_id > 0 && ['pending', 'publishing'].includes(row.state) && <label className="flex items-center gap-2 min-h-11 text-sm"><input type="checkbox" className="h-4 w-4" checked={selectedRowIndices.includes(row.index)} disabled={busy || continuing} aria-label={`Publiceer ${row.title} op ${date(row.start)}, kandidaat ${row.person_name}`} onChange={(event) => toggleRow(row.index, event.target.checked)} />Deze kandidaat indelen</label>}
             <div className="flex flex-wrap justify-between gap-3"><div><Link to={`/vrijwilligers/diensten/${row.shift_id}`} className="font-medium hover:underline">{row.title}</Link><p className="text-sm">{date(row.start)} – {row.end?.slice(11, 16)}</p></div><span className="text-sm">{row.state === 'published' ? 'Gepubliceerd' : row.state === 'publishing' ? 'Verwerking controleren' : row.person_id ? 'Voorgesteld' : 'Open plek'}</span></div>
             {row.conversion && <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">Voorgestelde omzetting: {row.title} → {row.target_title}</p>}
             <p>{row.person_name || 'Geen kandidaat gekozen'}</p>

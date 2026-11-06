@@ -722,6 +722,97 @@ class VolunteerPlannerTest extends RondoTestCase {
 		$this->assertSame( 'published', VolunteerPlanner::data( $id )['phase'] );
 	}
 
+	public function test_candidates_in_the_same_shift_can_be_published_separately(): void {
+		$this->family( 'Anne' );
+		$this->family( 'Bram' );
+		$shift    = $this->shift( 20, null, [], 2 );
+		$id       = $this->plan();
+		$before   = VolunteerPlanner::data( $id );
+		$response = $this->request(
+			'/' . $id . '/publish',
+			'POST',
+			[
+				'revision'    => 1,
+				'row_indices' => [ 1 ],
+			]
+			);
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertSame( [ $before['rows'][1]['person_id'] ], ShiftAssignments::person_ids( $shift ) );
+		$after = VolunteerPlanner::data( $id );
+		$this->assertSame( 'pending', $after['rows'][0]['state'] );
+		$this->assertSame( $before['rows'][0]['person_id'], $after['rows'][0]['person_id'] );
+		$this->assertEmpty( get_post_meta( $shift, '_shift_confirmation_queued_at_' . $before['rows'][0]['person_id'], true ) );
+		$this->assertNull( $response->get_data()['publish_row_indices'] );
+		$response = $this->request(
+			'/' . $id . '/publish',
+			'POST',
+			[
+				'revision'    => 2,
+				'row_indices' => [ 0 ],
+			]
+			);
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertCount( 2, ShiftAssignments::person_ids( $shift ) );
+		$this->assertSame( 'published', $response->get_data()['phase'] );
+	}
+
+	public function test_iva_confirmation_only_applies_to_the_selected_candidate(): void {
+		$this->family( 'Anne' );
+		$this->family( 'Bram' );
+		update_post_meta( $this->type, 'iva_required', true );
+		$shift  = $this->shift( 20, null, [], 2 );
+		$id     = $this->plan();
+		$params = [
+			'revision'          => 1,
+			'row_indices'       => [ 1 ],
+			'accepted_iva_rows' => [ 0 ],
+		];
+		$this->assertSame( 409, $this->request( '/' . $id . '/publish', 'POST', $params )->get_status() );
+		$this->assertEmpty( ShiftAssignments::person_ids( $shift ) );
+		$params['accepted_iva_rows'] = [ 1 ];
+		$response                    = $this->request( '/' . $id . '/publish', 'POST', $params );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertCount( 1, ShiftAssignments::person_ids( $shift ) );
+		$this->assertSame( 'pending', VolunteerPlanner::data( $id )['rows'][0]['state'] );
+	}
+
+	public function test_invalid_row_selection_does_not_change_the_proposal(): void {
+		$this->family( 'Anne' );
+		$shift  = $this->shift();
+		$id     = $this->plan();
+		$before = VolunteerPlanner::data( $id );
+		foreach ( [ [], [ 1 ], [ -1 ], [ 'invalid' ] ] as $selection ) {
+			$response = $this->request(
+				'/' . $id . '/publish',
+				'POST',
+				[
+					'revision'    => 1,
+					'row_indices' => $selection,
+				]
+				);
+			$this->assertSame( 400, $response->get_status() );
+			$this->assertSame( $before, VolunteerPlanner::data( $id ) );
+			$this->assertEmpty( ShiftAssignments::person_ids( $shift ) );
+		}
+	}
+
+	public function test_row_selection_survives_batches_without_publishing_other_candidates(): void {
+		for ( $n = 0; $n < 12; ++$n ) {
+			$this->family( 'Family' . $n );
+		}
+		$shift    = $this->shift( 20, null, [], 12 );
+		$id       = $this->plan();
+		$selected = range( 1, 11 );
+		$this->assertTrue( $this->planner->publish( $id, 1, false, null, [], $selected ) );
+		$this->assertSame( $selected, $this->planner->view( $id )['publish_row_indices'] );
+		$this->assertTrue( $this->planner->view( $id )['publish_more'] );
+		$this->assertWPError( $this->planner->publish( $id, 2, false, [ $shift ] ) );
+		$this->assertWPError( $this->planner->publish( $id, 2, false, null, [], range( 0, 11 ) ) );
+		$this->assertTrue( $this->planner->publish( $id, 2, false ) );
+		$this->assertCount( 11, ShiftAssignments::person_ids( $shift ) );
+		$this->assertSame( 'pending', VolunteerPlanner::data( $id )['rows'][0]['state'] );
+	}
+
 	public function test_invalid_selection_does_not_assign_or_change_the_proposal(): void {
 		$this->family( 'Anne' );
 		$shift  = $this->shift();
