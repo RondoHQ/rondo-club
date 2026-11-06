@@ -378,9 +378,9 @@ final class VolunteerPlanner {
 		return $row['person_id'] && ShiftSignupEligibility::requires_iva( (int) $row['shift_id'], (int) $row['target_type'] ) && ! IvaStatus::is_valid( (int) $row['person_id'] );
 	}
 
-	public function publish( int $id, int $revision, bool $conversions, ?array $shift_ids = null, array $accepted_iva_rows = [] ) {
+	public function publish( int $id, int $revision, bool $conversions, ?array $shift_ids = null, array $accepted_iva_rows = [], ?array $row_indices = null ) {
 		return $this->locked(
-		function () use ( $id, $revision, $conversions, $shift_ids, $accepted_iva_rows ) {
+		function () use ( $id, $revision, $conversions, $shift_ids, $accepted_iva_rows, $row_indices ) {
 			$data = self::data( $id );
 			if ( is_wp_error( $data ) ) {
 				return $data;
@@ -391,18 +391,28 @@ final class VolunteerPlanner {
 			if ( $data['revision'] !== $revision || ! in_array( $data['phase'], [ 'draft','partial' ], true ) ) {
 				return self::error( 'Het voorstel is gewijzigd. Ververs eerst.' );
 			}
-			// Persist the approved scope before any assignment, including across timeouts and chunks.
+			// Keep legacy shift selection compatible, but persist the exact approved rows.
 			$available = array_values( array_unique( array_column( $data['rows'], 'shift_id' ) ) );
-			$selected  = array_values( array_unique( $shift_ids ?? $data['publish_shift_ids'] ?? $available ) );
-			sort( $selected, SORT_NUMERIC );
-			if ( ! $selected || array_diff( $selected, $available ) ) {
+			if ( $row_indices !== null && $shift_ids !== null ) {
+				return self::error( 'Selecteer toewijzingen of diensten, niet beide.', 400 );
+			}
+			$selected_shifts = array_values( array_unique( $shift_ids ?? $data['publish_shift_ids'] ?? $available ) );
+			sort( $selected_shifts, SORT_NUMERIC );
+			if ( ! $selected_shifts || array_diff( $selected_shifts, $available ) ) {
 				return self::error( 'Selecteer minstens één dienst uit dit voorstel.', 400 );
 			}
-			if ( isset( $data['publish_shift_ids'] ) && $selected !== $data['publish_shift_ids'] ) {
+			$scope    = static fn( $shifts ) => array_keys( array_filter( $data['rows'], static fn( $row ) => in_array( $row['shift_id'], $shifts, true ) ) );
+			$saved    = $data['publish_row_indices'] ?? ( isset( $data['publish_shift_ids'] ) ? $scope( $data['publish_shift_ids'] ) : null );
+			$selected = array_values( array_unique( $row_indices ?? ( $shift_ids !== null ? $scope( $selected_shifts ) : ( $saved ?? $scope( $selected_shifts ) ) ) ) );
+			sort( $selected, SORT_NUMERIC );
+			if ( ! $selected || array_diff( $selected, array_keys( $data['rows'] ) ) ) {
+				return self::error( 'Selecteer minstens één toewijzing uit dit voorstel.', 400 );
+			}
+			if ( $saved !== null && $selected !== $saved ) {
 				return self::error( 'Rond eerst de lopende publicatie met de oorspronkelijke selectie af.' );
 			}
 			foreach ( $data['rows'] as $index => $row ) {
-				if ( ! in_array( $row['shift_id'], $selected, true ) ) {
+				if ( ! in_array( $index, $selected, true ) ) {
 					if ( $row['state'] === 'publishing' ) {
 						return self::error( 'Een dienst wordt al gepubliceerd. Rond eerst die publicatie af.' );
 					}
@@ -415,15 +425,17 @@ final class VolunteerPlanner {
 					return self::error( 'Geef expliciet akkoord voor de omzetting van bar naar luik.' );
 				}
 			}
-			$data['publish_shift_ids'] = $selected;
-			$data['phase']             = 'partial';
+			$data['publish_row_indices'] = $selected;
+			$data['publish_shift_ids']   = array_values( array_unique( array_column( array_intersect_key( $data['rows'], array_flip( $selected ) ), 'shift_id' ) ) );
+			sort( $data['publish_shift_ids'], SORT_NUMERIC );
+			$data['phase'] = 'partial';
 			self::save( $id, $data );
 			$controller  = new MemberShifts();
 			$processed   = 0;
 			$cursor      = (int) ( $data['publish_cursor'] ?? 0 );
 			$next_cursor = 0;
 			foreach ( $data['rows'] as $index => $row ) {
-				if ( $index < $cursor || ! in_array( $row['shift_id'], $selected, true ) ) {
+				if ( $index < $cursor || ! in_array( $index, $selected, true ) ) {
 					continue;
 				}
 				$row = $data['rows'][ $index ];
@@ -497,7 +509,7 @@ final class VolunteerPlanner {
 			$data['publish_cursor'] = $next_cursor;
 			$data['publish_more']   = $next_cursor > 0;
 			if ( ! $data['publish_more'] && ! array_filter( $data['rows'], static fn( $row ) => $row['state'] === 'publishing' ) ) {
-				unset( $data['publish_shift_ids'] );
+				unset( $data['publish_shift_ids'], $data['publish_row_indices'] );
 			}
 			$data['phase'] = array_filter( $data['rows'], static fn( $row )=>$row['state'] !== 'published' ) ? 'partial' : 'published';
 			++$data['revision'];
@@ -616,19 +628,20 @@ final class VolunteerPlanner {
 			$coverage['filled'] += min( $capacity, count( ShiftAssignments::person_ids( $shift ) ) );
 		}
 		return [
-			'id'                 => $id,
-			'revision'           => $data['revision'],
-			'phase'              => $data['phase'],
-			'created_at'         => $data['created_at'],
-			'from'               => $data['from'],
-			'until'              => $data['until'],
-			'rows'               => $rows,
-			'coverage'           => $coverage,
-			'notices'            => $data['notices'],
-			'notification_email' => self::email(),
-			'publish_more'       => $data['publish_more'] ?? false,
-			'publish_shift_ids'  => $data['publish_shift_ids'] ?? null,
-			'superseded_by'      => $data['superseded_by'] ?? 0,
+			'id'                  => $id,
+			'revision'            => $data['revision'],
+			'phase'               => $data['phase'],
+			'created_at'          => $data['created_at'],
+			'from'                => $data['from'],
+			'until'               => $data['until'],
+			'rows'                => $rows,
+			'coverage'            => $coverage,
+			'notices'             => $data['notices'],
+			'notification_email'  => self::email(),
+			'publish_more'        => $data['publish_more'] ?? false,
+			'publish_shift_ids'   => $data['publish_shift_ids'] ?? null,
+			'publish_row_indices' => $data['publish_row_indices'] ?? null,
+			'superseded_by'       => $data['superseded_by'] ?? 0,
 		];
 	}
 }
