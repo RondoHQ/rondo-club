@@ -10,6 +10,7 @@ import { decodeHtml } from '@/utils/formatters';
 import AnchoredPopover from '@/components/AnchoredPopover';
 import ShiftCoverageCalendar from '@/components/volunteers/ShiftCoverageCalendar';
 import ShiftSignupTable from '@/components/volunteers/ShiftSignupTable';
+import CancelShiftDayDialog from '@/components/volunteers/CancelShiftDayDialog';
 
 function DienstTypesPopover({ anchor, isLoading, onClose, types }) {
   const closeButtonRef = useRef(null);
@@ -208,6 +209,7 @@ export default function VrijwilligersDiensten() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [typesPopoverOpen, setTypesPopoverOpen] = useState(false);
   const [copyDay, setCopyDay] = useState(null);
+  const [cancelDate, setCancelDate] = useState(null);
   const [copyError, setCopyError] = useState('');
   const [feedback, setFeedback] = useState(null);
   const typesButtonRef = useRef(null);
@@ -277,24 +279,29 @@ export default function VrijwilligersDiensten() {
     if (selectedDienstType) {
       return (
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          Kies &ldquo;Alle inschrijftaken&rdquo; in het filter om de volledige dagplanning te kopiëren.
+          Kies &ldquo;Alle inschrijftaken&rdquo; in het filter om de volledige dagplanning te kopiëren of leeg te maken.
         </p>
       );
     }
 
     return (
-      <button
-        type="button"
-        onClick={() => {
-          closeDetails();
-          setFeedback(null);
-          setCopyError('');
-          setCopyDay(day);
-        }}
-        className="btn-tertiary inline-flex w-full items-center justify-center gap-2"
-      >
-        <Copy className="h-4 w-4" /> Dagplanning kopiëren
-      </button>
+      <div className="space-y-2">
+        <button
+          type="button"
+          onClick={() => {
+            closeDetails();
+            setFeedback(null);
+            setCopyError('');
+            setCopyDay(day);
+          }}
+          className="btn-tertiary inline-flex w-full items-center justify-center gap-2"
+        >
+          <Copy className="h-4 w-4" /> Dagplanning kopiëren
+        </button>
+        <button type="button" className="btn-tertiary inline-flex w-full items-center justify-center gap-2 text-red-700 dark:text-red-300" onClick={() => { closeDetails(); setCancelDate(day.date); }}>
+          <X className="h-4 w-4" /> Dag leegmaken
+        </button>
+      </div>
     );
   }, [selectedDienstType]);
 
@@ -453,6 +460,8 @@ export default function VrijwilligersDiensten() {
           <ShiftSignupTable shifts={recentSignupShifts} />
         )}
       </section>
+
+      {cancelDate && <CancelShiftDayDialog date={cancelDate} onClose={() => setCancelDate(null)} />}
 
       {copyDay ? (
         <CopyDayModal

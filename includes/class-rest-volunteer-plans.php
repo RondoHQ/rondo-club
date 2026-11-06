@@ -64,6 +64,14 @@ final class VolunteerPlans extends Base {
 								'minimum' => 1,
 							],
 						],
+						'row_indices'        => [
+							'type'     => 'array',
+							'minItems' => 1,
+							'items'    => [
+								'type'    => 'integer',
+								'minimum' => 0,
+							],
+						],
 						'accepted_iva_rows'  => [
 							'type'    => 'array',
 							'default' => [],
@@ -148,7 +156,7 @@ final class VolunteerPlans extends Base {
 		if ( is_wp_error( $view ) ) {
 			return $view;
 		}
-		$result = ( new VolunteerPlanner() )->publish( (int) $request['id'], (int) $request['revision'], (bool) $request['accept_conversions'], $request['shift_ids'], $request['accepted_iva_rows'] );
+		$result = ( new VolunteerPlanner() )->publish( (int) $request['id'], (int) $request['revision'], (bool) $request['accept_conversions'], $request['shift_ids'], $request['accepted_iva_rows'], $request['row_indices'] );
 		return is_wp_error( $result ) ? $result : $this->view( $request );
 	}
 	public function close( $request ) {
