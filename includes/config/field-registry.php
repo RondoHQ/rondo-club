@@ -2234,7 +2234,7 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
 		  'allow_null' => 0,
 		  'canonical_name' => 'host_person_id',
 		  'key' => 'field_guest_pass_host_person_id',
-		  'label' => 'Speler',
+		  'label' => 'Gastheer',
 		  'name' => 'host_person_id',
 		  'post_type' =>
 		  array (
@@ -2242,6 +2242,18 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
 		  ),
 		  'return_format' => 'id',
 		  'storage_name' => 'host_person_id',
+		  'type' => 'post_object',
+		),
+		'sponsor_id' =>
+		array (
+		  'allow_null' => 1,
+		  'canonical_name' => 'sponsor_id',
+		  'key' => 'field_guest_pass_sponsor_id',
+		  'label' => 'Businessclubbedrijf',
+		  'name' => 'sponsor_id',
+		  'post_type' => array ( 'rondo_sponsor' ),
+		  'return_format' => 'id',
+		  'storage_name' => 'sponsor_id',
 		  'type' => 'post_object',
 		),
 		'pass_version' =>

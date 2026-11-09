@@ -14,8 +14,8 @@ export function useMyGuestPasses() {
 export function useCreateGuestPassSlot() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (slot) => {
-      const response = await prmApi.createGuestPassSlot(slot);
+    mutationFn: async ({ slot, sponsorId = 0 }) => {
+      const response = await prmApi.createGuestPassSlot(slot, sponsorId);
       return response.data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['guest-passes', 'me'] }),
@@ -25,8 +25,8 @@ export function useCreateGuestPassSlot() {
 export function useReplaceGuestPassSlot() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (slot) => {
-      const response = await prmApi.replaceGuestPassSlot(slot);
+    mutationFn: async ({ slot, sponsorId = 0 }) => {
+      const response = await prmApi.replaceGuestPassSlot(slot, sponsorId);
       return response.data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['guest-passes', 'me'] }),
