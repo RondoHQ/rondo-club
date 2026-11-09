@@ -1782,6 +1782,34 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'type' => 'date_time_picker',
           'wire_format' => 'Y-m-d\\TH:i:sP',
         ),
+        'planner_excluded' =>
+        array (
+          'canonical_name' => 'planner_excluded',
+          'storage_name' => 'planner_excluded',
+          'label' => 'Uitgesloten van automatische indeling',
+          'type' => 'true_false',
+          'default_value' => 0,
+          'read_only' => true,
+        ),
+        'planner_exclusion_reason' =>
+        array (
+          'canonical_name' => 'planner_exclusion_reason',
+          'storage_name' => 'planner_exclusion_reason',
+          'label' => 'Reden uitsluiting',
+          'type' => 'textarea',
+          'read_only' => true,
+        ),
+        'planner_excluded_since' =>
+        array (
+          'canonical_name' => 'planner_excluded_since',
+          'storage_name' => 'planner_excluded_since',
+          'label' => 'Toegevoegd aan uitsluitlijst',
+          'type' => 'date_time_picker',
+          'storage_format' => 'Y-m-d H:i:s',
+          'wire_format' => 'Y-m-d\\TH:i:sP',
+          'timezone' => 'site',
+          'read_only' => true,
+        ),
         'vrijgesteld_handmatig' => 
         array (
           'canonical_name' => 'vrijgesteld_handmatig',

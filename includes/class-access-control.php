@@ -132,6 +132,7 @@ class AccessControl {
 	 * ledenadministratie list renders it as a badge.
 	 */
 	private const SENSITIVE_FIELD_GROUPS = [
+		'planner'    => [ 'planner_excluded', 'planner_exclusion_reason', 'planner_excluded_since' ],
 		'engagement' => [ 'role_engagements' ],
 		'bank'       => [ 'iban', 'bank_account_holder', 'nmbrs_name', 'match_compensation_agreements' ],
 		'finance'    => [
@@ -951,6 +952,8 @@ class AccessControl {
 		}
 
 		switch ( $group ) {
+			case 'planner':
+				return user_can( $user_id, 'vrijwilligers' );
 			case 'engagement':
 				return user_can( $user_id, 'ledenadministratie' ) || user_can( $user_id, 'vrijwilligers' ) || UserRoles::can_view_finances( $user_id );
 			case 'bank':
