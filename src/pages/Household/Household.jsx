@@ -594,16 +594,33 @@ function PersonCard({ person, isParent, householdPeople, linkedPersonId, onAddPa
 
 function GuestPassesCard() {
   const { data, isLoading } = useMyGuestPasses();
+
+  if (isLoading || !data) return null;
+
+  return (
+    <div className="space-y-4">
+      {data.eligible ? (
+        <GuestPassGroup name={data.team} slots={data.slots} />
+      ) : null}
+      {(data.businessclub ?? []).map((company) => (
+        <GuestPassGroup key={company.sponsor_id} sponsorId={company.sponsor_id} name={company.name} slots={company.slots} />
+      ))}
+    </div>
+  );
+}
+
+function GuestPassGroup({ sponsorId = 0, name, slots }) {
   const createSlot = useCreateGuestPassSlot();
   const replaceSlot = useReplaceGuestPassSlot();
   const [copiedSlot, setCopiedSlot] = useState(null);
-
-  if (isLoading || !data?.eligible) return null;
+  const isBusinessclub = sponsorId > 0;
 
   const shareSlot = async (slot) => {
     const shareData = {
-      title: `Gastpas ${data.team}`,
-      text: `Hiermee kun je jouw gastpas voor de thuiswedstrijden van ${data.team} op je telefoon zetten.`,
+      title: `Gastpas ${name}`,
+      text: isBusinessclub
+        ? `Je bent te gast bij ${name}. Hiermee kun je jouw gastpas op je telefoon zetten.`
+        : `Hiermee kun je jouw gastpas voor de thuiswedstrijden van ${name} op je telefoon zetten.`,
       url: slot.share_url,
     };
     if (navigator.share) {
@@ -622,7 +639,7 @@ function GuestPassesCard() {
   const replace = (slot) => {
     const guest = slot.guest_name || `gast ${slot.slot}`;
     if (!window.confirm(`Weet je zeker dat je de pas van ${guest} wilt vervangen? De huidige QR-code werkt daarna niet meer.`)) return;
-    replaceSlot.mutate(slot.slot);
+    replaceSlot.mutate({ slot: slot.slot, sponsorId });
   };
 
   return (
@@ -630,15 +647,17 @@ function GuestPassesCard() {
       <div className="flex items-start gap-3">
         <Link2 className="mt-0.5 h-5 w-5 shrink-0 text-electric-cyan" aria-hidden="true" />
         <div>
-          <h2 className="font-semibold text-gray-900 dark:text-gray-100">Gastpassen {data.team}</h2>
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100">{isBusinessclub ? 'BC-gastpas' : 'Gastpassen'} {name}</h2>
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Je hebt twee herbruikbare gastpassen. Iedere pas kan per thuiswedstrijd één keer worden gebruikt.
+            {isBusinessclub
+              ? 'Naast je persoonlijke pas heb je één herbruikbare gastpas. Deze kan per thuiswedstrijd één keer worden gebruikt en vervalt zodra het bedrijf een tweede contactpersoon heeft.'
+              : 'Je hebt twee herbruikbare gastpassen. Iedere pas kan per thuiswedstrijd één keer worden gebruikt.'}
           </p>
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        {data.slots.map((slot) => (
+      <div className={`mt-4 grid gap-3 ${slots.length > 1 ? 'sm:grid-cols-2' : ''}`}>
+        {slots.map((slot) => (
           <div key={slot.slot} className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -662,7 +681,7 @@ function GuestPassesCard() {
                   type="button"
                   className="btn-primary text-sm"
                   disabled={createSlot.isPending}
-                  onClick={() => createSlot.mutate(slot.slot)}
+                  onClick={() => createSlot.mutate({ slot: slot.slot, sponsorId })}
                 >
                   {createSlot.isPending ? 'Link maken…' : 'Maak gastlink'}
                 </button>

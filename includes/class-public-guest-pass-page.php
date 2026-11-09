@@ -50,7 +50,7 @@ class PublicGuestPassPage {
 		}
 
 		$pass = $this->service->get_pass_data( (int) $slot['id'] );
-		if ( $pass === null || ! $this->service->is_eligible_host( $pass['host_person_id'] ) ) {
+		if ( $pass === null || ! $this->service->is_eligible_pass( $pass ) ) {
 			$this->render_error( 'Deze gastpas is momenteel niet beschikbaar.' );
 		}
 
@@ -117,7 +117,7 @@ class PublicGuestPassPage {
 		$brand_name = $config->get_display_name() ?: get_bloginfo( 'name' );
 		$accent     = MembershipPassService::get_background_color_hex();
 		$logo_url   = $this->get_logo_url( $config );
-		$team_name  = $this->service->get_eligible_team_name();
+		$valid_for  = $pass['valid_for'];
 
 		status_header( 200 );
 		nocache_headers();
@@ -166,7 +166,7 @@ class PublicGuestPassPage {
 				?>
 				<img class="logo" src="<?php echo esc_url( $logo_url ); ?>" alt=""><?php endif; ?>
 			<h1>Gastpas <?php echo esc_html( $brand_name ); ?></h1>
-			<p class="subtitle">Voor thuiswedstrijden van <?php echo esc_html( $team_name ); ?></p>
+			<p class="subtitle"><?php echo esc_html( $valid_for ); ?></p>
 		</header>
 		<div class="content">
 			<?php if ( $pass['status'] !== 'active' ) : ?>
@@ -181,8 +181,8 @@ class PublicGuestPassPage {
 			<?php else : ?>
 				<h2><?php echo esc_html( $pass['guest_name'] ); ?></h2>
 				<div class="meta">
-					<div><span>Gast van</span><?php echo esc_html( $pass['host_name'] ); ?></div>
-					<div><span>Geldig voor</span><?php echo esc_html( $team_name ); ?> thuiswedstrijden</div>
+					<div><span>Gast van</span><?php echo esc_html( $pass['sponsor_name'] ?: $pass['host_name'] ); ?></div>
+					<div><span>Geldig voor</span><?php echo esc_html( $valid_for ); ?></div>
 				</div>
 				<p>Bewaar deze pas op je telefoon. Je hoeft voor de volgende wedstrijd geen nieuwe pas aan te vragen.</p>
 				<div class="wallets">
@@ -194,7 +194,7 @@ class PublicGuestPassPage {
 					<?php endif; ?>
 				</div>
 				<img class="qr" src="<?php echo esc_attr( $this->render_qr_data_uri( (int) $slot['id'] ) ); ?>" alt="QR-code van de gastpas">
-				<p class="note">Per gastpas kan per wedstrijd één persoon naar binnen. Bij vervanging door de speler wordt deze QR-code ongeldig.</p>
+				<p class="note">Per gastpas kan per wedstrijd één persoon naar binnen. Bij vervanging door de gastheer wordt deze QR-code ongeldig.</p>
 			<?php endif; ?>
 		</div>
 	</section>

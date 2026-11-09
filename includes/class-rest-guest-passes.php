@@ -60,11 +60,20 @@ class GuestPasses extends Base {
 		);
 	}
 
-	/** Return eligibility and both stable slots. */
+	/** Return team slots plus independently owned businessclub slots. */
 	public function get_mine() {
 		$host_person_id = $this->service->get_current_host_person_id();
 		$eligible       = $this->service->is_eligible_host( $host_person_id );
 		$team_id        = $this->service->get_eligible_team_id();
+		$businessclub   = [];
+		foreach ( $this->service->get_businessclub_sponsors( $host_person_id ) as $sponsor ) {
+			$businessclub[] = [
+				'sponsor_id' => $sponsor['sponsor_id'],
+				'name'       => html_entity_decode( $sponsor['sponsor_name'], ENT_QUOTES, 'UTF-8' ),
+				'limit'      => 1,
+				'slots'      => $this->service->get_slots( $host_person_id, $sponsor['sponsor_id'] ),
+			];
+		}
 		return rest_ensure_response(
 			[
 				'eligible'       => $eligible,
@@ -73,6 +82,7 @@ class GuestPasses extends Base {
 				'limit'          => GuestPassService::SLOT_LIMIT,
 				'host_person_id' => $eligible ? $host_person_id : null,
 				'slots'          => $eligible ? $this->service->get_slots( $host_person_id ) : [],
+				'businessclub'   => $businessclub,
 			]
 		);
 	}
@@ -81,7 +91,8 @@ class GuestPasses extends Base {
 	public function create_slot( $request ) {
 		$result = $this->service->ensure_slot(
 			$this->service->get_current_host_person_id(),
-			(int) $request->get_param( 'slot' )
+			(int) $request->get_param( 'slot' ),
+			(int) $request->get_param( 'sponsor_id' )
 		);
 		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 	}
@@ -90,7 +101,8 @@ class GuestPasses extends Base {
 	public function replace_slot( $request ) {
 		$result = $this->service->replace_slot(
 			$this->service->get_current_host_person_id(),
-			(int) $request->get_param( 'slot' )
+			(int) $request->get_param( 'slot' ),
+			(int) $request->get_param( 'sponsor_id' )
 		);
 		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 	}
@@ -102,7 +114,12 @@ class GuestPasses extends Base {
 
 	private function slot_args(): array {
 		return [
-			'slot' => [
+			'sponsor_id' => [
+				'type'    => 'integer',
+				'minimum' => 0,
+				'default' => 0,
+			],
+			'slot'       => [
 				'validate_callback' => static fn( $value ): bool => is_numeric( $value ) && (int) $value >= 1 && (int) $value <= GuestPassService::SLOT_LIMIT,
 			],
 		];

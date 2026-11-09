@@ -170,7 +170,9 @@ class AdmissionService {
 			return new \WP_Error( 'rondo_guest_admission_invalid', __( 'Ongeldige gastpasregistratie.', 'rondo' ), [ 'status' => 422 ] );
 		}
 
-		$fingerprint = hash_hmac( 'sha256', 'guest|' . $event_id . '|' . $host_person_id . '|' . $slot, $this->fingerprint_secret() );
+		$sponsor_id  = (int) Fields::get_for_post( $guest_pass_id, 'sponsor_id' );
+		$owner       = $sponsor_id > 0 ? 'sponsor:' . $sponsor_id : (string) $host_person_id;
+		$fingerprint = hash_hmac( 'sha256', 'guest|' . $event_id . '|' . $owner . '|' . $slot, $this->fingerprint_secret() );
 		return $this->record_with_fingerprint(
 			$event_id,
 			'guest',

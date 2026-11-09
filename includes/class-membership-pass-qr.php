@@ -98,6 +98,9 @@ class MembershipPassQr {
 		if ( $pass['status'] !== 'active' || $pass['guest_name'] === '' ) {
 			return new \WP_Error( 'rondo_guest_pass_unclaimed', 'Deze gastpas is nog niet geregistreerd.', [ 'status' => 422 ] );
 		}
+		if ( ! $service->is_eligible_pass( $pass ) ) {
+			return new \WP_Error( 'rondo_guest_pass_host_ineligible', 'Deze gastpas is momenteel niet beschikbaar.', [ 'status' => 403 ] );
+		}
 
 		$now     = time();
 		$payload = [

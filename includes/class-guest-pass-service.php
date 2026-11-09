@@ -1,6 +1,6 @@
 <?php
 /**
- * Reusable guest-pass slots for players and staff of the configured team.
+ * Reusable guest-pass slots for team members and businessclub contacts.
  *
  * @package Rondo\Passes
  */
@@ -10,6 +10,7 @@ namespace Rondo\Passes;
 use Rondo\Core\VolunteerStatus;
 use Rondo\Config\ClubConfig;
 use Rondo\Fields\Fields;
+use Rondo\Sponsors\Relations;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -39,8 +40,32 @@ class GuestPassService {
 		return ClubConfig::get_guest_pass_team_name();
 	}
 
-	/** Check whether a person currently plays or serves as staff for the configured team. */
-	public function is_eligible_host( int $person_id ): bool {
+	/** Return active businessclub companies with this person as their only contact. */
+	public function get_businessclub_sponsors( int $person_id ): array {
+		if ( $person_id <= 0 || get_post_type( $person_id ) !== 'person' || get_post_status( $person_id ) !== 'publish' ) {
+			return [];
+		}
+
+		return array_values(
+			array_filter(
+				Relations::for_person( $person_id, true ),
+				static function ( array $relationship ) use ( $person_id ): bool {
+					if ( $relationship['sponsor_role'] !== 'businessclub' || empty( $relationship['receives_pass'] ) ) {
+						return false;
+					}
+					$contacts = Fields::get_for_post( $relationship['sponsor_id'], 'contacts' );
+					return is_array( $contacts ) && count( $contacts ) === 1 && (int) $contacts[0]['person_id'] === $person_id;
+				}
+			)
+		);
+	}
+
+	/** Check a person's current entitlement for either team or company guest slots. */
+	public function is_eligible_host( int $person_id, int $sponsor_id = 0 ): bool {
+		if ( $sponsor_id !== 0 ) {
+			return in_array( $sponsor_id, array_column( $this->get_businessclub_sponsors( $person_id ), 'sponsor_id' ), true );
+		}
+
 		$eligible_team_id = $this->get_eligible_team_id();
 		if ( $eligible_team_id <= 0 ) {
 			return false;
@@ -89,36 +114,51 @@ class GuestPassService {
 		return $this->is_eligible_host( $person_id );
 	}
 
-	/** Return both fixed slots, including virtual slots that have not been created yet. */
-	public function get_slots( int $host_person_id ): array {
+	/** Check the source and slot at every public, Wallet and scanner boundary. */
+	public function is_eligible_pass( array $pass ): bool {
+		return $pass['slot'] >= 1 && $pass['slot'] <= $this->get_slot_limit( $pass['sponsor_id'] )
+			&& $this->is_eligible_host( $pass['host_person_id'], $pass['sponsor_id'] );
+	}
+
+	/** Businessclub companies have one guest slot; team members retain two. */
+	public function get_slot_limit( int $sponsor_id = 0 ): int {
+		return $sponsor_id > 0 ? 1 : self::SLOT_LIMIT;
+	}
+
+	/** Return fixed slots, including virtual slots that have not been created yet. */
+	public function get_slots( int $host_person_id, int $sponsor_id = 0 ): array {
 		$slots = [];
-		for ( $slot = 1; $slot <= self::SLOT_LIMIT; ++$slot ) {
-			$pass_id = $this->find_slot_id( $host_person_id, $slot );
+		$limit = $this->get_slot_limit( $sponsor_id );
+		for ( $slot = 1; $slot <= $limit; ++$slot ) {
+			$pass_id = $this->find_slot_id( $host_person_id, $slot, $sponsor_id );
 			$slots[] = $pass_id > 0 ? $this->format_slot( $pass_id ) : $this->format_empty_slot( $slot );
 		}
 		return $slots;
 	}
 
 	/** Create a slot on first use and keep its identity stable afterwards. */
-	public function ensure_slot( int $host_person_id, int $slot ) {
-		if ( ! $this->is_eligible_host( $host_person_id ) ) {
-			return new \WP_Error( 'rondo_guest_pass_ineligible', 'Alleen actuele spelers en stafleden van het ingestelde gastpasteam kunnen gastpassen gebruiken.', [ 'status' => 403 ] );
+	public function ensure_slot( int $host_person_id, int $slot, int $sponsor_id = 0 ) {
+		if ( ! $this->is_eligible_host( $host_person_id, $sponsor_id ) ) {
+			return new \WP_Error( 'rondo_guest_pass_ineligible', 'Je hebt momenteel geen recht op deze gastpas.', [ 'status' => 403 ] );
 		}
-		if ( $slot < 1 || $slot > self::SLOT_LIMIT ) {
+		if ( $slot < 1 || $slot > $this->get_slot_limit( $sponsor_id ) ) {
 			return new \WP_Error( 'rondo_guest_pass_invalid_slot', 'Ongeldig gastslot.', [ 'status' => 400 ] );
 		}
 
-		$existing_id = $this->find_slot_id( $host_person_id, $slot );
+		$existing_id = $this->find_slot_id( $host_person_id, $slot, $sponsor_id );
 		if ( $existing_id > 0 ) {
 			return $this->format_slot( $existing_id );
 		}
-		$mapping_key   = 'rondo_guest_pass_slot_' . $host_person_id . '_' . $slot;
+		$mapping_key = 'rondo_guest_pass_slot_' . $host_person_id . '_' . $slot;
+		if ( $sponsor_id > 0 ) {
+			$mapping_key .= '_sponsor_' . $sponsor_id;
+		}
 		$mapping_value = get_option( $mapping_key, false );
-		if ( is_numeric( $mapping_value ) && get_post_type( (int) $mapping_value ) === 'rondo_guest_pass' ) {
+		if ( is_numeric( $mapping_value ) && $this->get_pass_data( (int) $mapping_value ) !== null ) {
 			return $this->format_slot( (int) $mapping_value );
 		}
 		if ( ! add_option( $mapping_key, 'pending:' . time(), '', false ) ) {
-			$existing_id = $this->find_slot_id( $host_person_id, $slot );
+			$existing_id = $this->find_slot_id( $host_person_id, $slot, $sponsor_id );
 			if ( $existing_id > 0 ) {
 				update_option( $mapping_key, $existing_id, false );
 				return $this->format_slot( $existing_id );
@@ -144,6 +184,7 @@ class GuestPassService {
 			(int) $pass_id,
 			[
 				'host_person_id' => $host_person_id,
+				'sponsor_id'     => $sponsor_id > 0 ? $sponsor_id : null,
 				'slot_number'    => $slot,
 				'guest_name'     => '',
 				'pass_status'    => 'unclaimed',
@@ -163,13 +204,16 @@ class GuestPassService {
 	}
 
 	/** Revoke the old QR/link and return the same slot as a new unclaimed pass. */
-	public function replace_slot( int $host_person_id, int $slot ) {
-		$pass_id = $this->find_slot_id( $host_person_id, $slot );
-		if ( $pass_id <= 0 ) {
-			return $this->ensure_slot( $host_person_id, $slot );
+	public function replace_slot( int $host_person_id, int $slot, int $sponsor_id = 0 ) {
+		if ( ! $this->is_eligible_host( $host_person_id, $sponsor_id ) ) {
+			return new \WP_Error( 'rondo_guest_pass_ineligible', 'Je hebt momenteel geen recht op deze gastpas.', [ 'status' => 403 ] );
 		}
-		if ( ! $this->is_eligible_host( $host_person_id ) ) {
-			return new \WP_Error( 'rondo_guest_pass_ineligible', 'Alleen actuele spelers en stafleden van het ingestelde gastpasteam kunnen gastpassen gebruiken.', [ 'status' => 403 ] );
+		if ( $slot < 1 || $slot > $this->get_slot_limit( $sponsor_id ) ) {
+			return new \WP_Error( 'rondo_guest_pass_invalid_slot', 'Ongeldig gastslot.', [ 'status' => 400 ] );
+		}
+		$pass_id = $this->find_slot_id( $host_person_id, $slot, $sponsor_id );
+		if ( $pass_id <= 0 ) {
+			return $this->ensure_slot( $host_person_id, $slot, $sponsor_id );
 		}
 
 		$version = max( 1, (int) Fields::get_for_post( $pass_id, 'pass_version' ) ) + 1;
@@ -197,7 +241,11 @@ class GuestPassService {
 			return new \WP_Error( 'rondo_guest_pass_not_found', 'Deze gastlink is niet geldig.', [ 'status' => 404 ] );
 		}
 
-		$status = (string) Fields::get_for_post( $pass_id, 'pass_status' );
+		$pass = $this->get_pass_data( $pass_id );
+		if ( $pass === null || ! $this->is_eligible_pass( $pass ) ) {
+			return new \WP_Error( 'rondo_guest_pass_host_ineligible', 'Deze gastpas is momenteel niet beschikbaar.', [ 'status' => 403 ] );
+		}
+		$status = $pass['status'];
 		if ( $status === 'active' ) {
 			return $this->format_slot( $pass_id );
 		}
@@ -205,11 +253,6 @@ class GuestPassService {
 		$guest_name = trim( sanitize_text_field( $guest_name ) );
 		if ( mb_strlen( $guest_name ) < 2 || mb_strlen( $guest_name ) > 100 ) {
 			return new \WP_Error( 'rondo_guest_pass_invalid_name', 'Vul je volledige naam in.', [ 'status' => 400 ] );
-		}
-
-		$host_person_id = (int) Fields::get_for_post( $pass_id, 'host_person_id' );
-		if ( ! $this->is_eligible_host( $host_person_id ) ) {
-			return new \WP_Error( 'rondo_guest_pass_host_ineligible', 'Deze speler of dit staflid kan momenteel geen gastpassen gebruiken.', [ 'status' => 403 ] );
 		}
 
 		$updated = Fields::update_many_for_post(
@@ -232,13 +275,17 @@ class GuestPassService {
 	/** Return scanner and Wallet data for one pass. */
 	public function get_pass_data( int $pass_id ): ?array {
 		$post = get_post( $pass_id );
-		if ( ! $post || $post->post_type !== 'rondo_guest_pass' ) {
+		if ( ! $post || $post->post_type !== 'rondo_guest_pass' || $post->post_status !== 'publish' ) {
 			return null;
 		}
 
 		$host_person_id = (int) Fields::get_for_post( $pass_id, 'host_person_id' );
+		$sponsor_id     = (int) Fields::get_for_post( $pass_id, 'sponsor_id' );
 		return [
 			'id'             => $pass_id,
+			'sponsor_id'     => $sponsor_id,
+			'sponsor_name'   => $sponsor_id > 0 ? html_entity_decode( get_the_title( $sponsor_id ), ENT_QUOTES, 'UTF-8' ) : '',
+			'valid_for'      => $sponsor_id > 0 ? 'Thuiswedstrijden ' . ClubConfig::get_club_name() : $this->get_eligible_team_name() . ' thuiswedstrijden',
 			'host_person_id' => $host_person_id,
 			'host_name'      => $this->get_person_name( $host_person_id ),
 			'guest_name'     => (string) Fields::get_for_post( $pass_id, 'guest_name' ),
@@ -260,8 +307,8 @@ class GuestPassService {
 		if ( $data['status'] !== 'active' || $data['guest_name'] === '' ) {
 			return new \WP_Error( 'rondo_guest_pass_unclaimed', 'Deze gastpas is nog niet geregistreerd.', [ 'status' => 403 ] );
 		}
-		if ( ! $this->is_eligible_host( $data['host_person_id'] ) ) {
-			return new \WP_Error( 'rondo_guest_pass_host_ineligible', 'De speler of het staflid kan momenteel geen gastpassen gebruiken.', [ 'status' => 403 ] );
+		if ( ! $this->is_eligible_pass( $data ) ) {
+			return new \WP_Error( 'rondo_guest_pass_host_ineligible', 'Deze gastpas is momenteel niet beschikbaar.', [ 'status' => 403 ] );
 		}
 		if ( get_post_type( $event_id ) !== 'rondo_access_event' ) {
 			return new \WP_Error( 'rondo_guest_pass_event_required', 'Selecteer eerst een wedstrijd.', [ 'status' => 422 ] );
@@ -269,7 +316,7 @@ class GuestPassService {
 
 		$home_team          = (string) Fields::get_for_post( $event_id, 'home_team' );
 		$eligible_team_name = $this->get_eligible_team_name();
-		if ( $eligible_team_name === '' || $this->normalize( $home_team ) !== $this->normalize( $eligible_team_name ) ) {
+		if ( $data['sponsor_id'] === 0 && ( $eligible_team_name === '' || $this->normalize( $home_team ) !== $this->normalize( $eligible_team_name ) ) ) {
 			return new \WP_Error( 'rondo_guest_pass_wrong_match', 'Deze gastpas is niet geldig voor de gekozen wedstrijd.', [ 'status' => 403 ] );
 		}
 
@@ -305,7 +352,7 @@ class GuestPassService {
 		];
 	}
 
-	private function find_slot_id( int $host_person_id, int $slot ): int {
+	private function find_slot_id( int $host_person_id, int $slot, int $sponsor_id = 0 ): int {
 		$ids = get_posts(
 			[
 				'post_type'      => 'rondo_guest_pass',
@@ -315,6 +362,21 @@ class GuestPassService {
 				'no_found_rows'  => true,
 				'meta_query'     => [
 					'relation' => 'AND',
+					$sponsor_id > 0 ? [
+						'key'   => 'sponsor_id',
+						'value' => $sponsor_id,
+					] : [
+						'relation' => 'OR',
+						[
+							'key'     => 'sponsor_id',
+							'compare' => 'NOT EXISTS',
+						],
+						[
+							'key'   => 'sponsor_id',
+							'value' => 0,
+							'type'  => 'NUMERIC',
+						],
+					],
 					[
 						'key'     => 'host_person_id',
 						'value'   => $host_person_id,
