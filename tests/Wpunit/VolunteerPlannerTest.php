@@ -135,6 +135,69 @@ class VolunteerPlannerTest extends RondoTestCase {
 		return (int) Fields::get_for_post( $parent, 'relationships' )[0]['related_person'];
 	}
 
+	public function test_exclusion_blocks_only_one_parent_and_preserves_the_family_obligation(): void {
+		$parent = $this->family( 'Anne' );
+		$child  = $this->child_of( $parent );
+		$other  = $this->createPerson( [ 'post_title' => 'Bram' ], [ 'email_1' => 'bram@example.org' ] );
+		Fields::update_for_post(
+			$child,
+			'relationships',
+			[
+				[
+					'related_person'    => $parent,
+					'relationship_type' => 2,
+				],
+				[
+					'related_person'    => $other,
+					'relationship_type' => 2,
+				],
+			]
+			);
+		Fields::update_for_post(
+			$other,
+			'relationships',
+			[
+				[
+					'related_person'    => $child,
+					'relationship_type' => 3,
+				],
+			]
+			);
+		$shift = $this->shift();
+		$this->assertEqualsCanonicalizing( [ $parent, $other ], array_column( ( new PlannerContext( current_datetime() ) )->candidates( $shift ), 'person_id' ) );
+		Fields::update_for_post( $parent, 'planner_excluded', true );
+		$this->assertSame( [ $other ], array_column( ( new PlannerContext( current_datetime() ) )->candidates( $shift ), 'person_id' ) );
+		$plan_id = $this->plan();
+		$data    = VolunteerPlanner::data( $plan_id );
+		$this->assertSame( $other, $data['rows'][0]['person_id'] );
+		$this->assertFalse( \Rondo\Volunteer\VolunteerExemptionResolver::is_exempt( $parent, SeasonKey::current() ) );
+		Fields::update_for_post( $parent, 'planner_excluded', false );
+		$this->assertContains( $parent, array_column( ( new PlannerContext( current_datetime(), $plan_id ) )->candidates( $shift ), 'person_id' ) );
+	}
+
+	public function test_excluding_a_draft_candidate_blocks_editing_and_publication_without_mail(): void {
+		$parent = $this->family( 'Anne' );
+		$shift  = $this->shift();
+		$id     = $this->plan();
+		$this->assertSame( $parent, VolunteerPlanner::data( $id )['rows'][0]['person_id'] );
+		$this->mail = [];
+		Fields::update_for_post( $parent, 'planner_excluded', true );
+		$this->assertSame( [], $this->planner->candidates( $id, 0 ) );
+		$this->planner->publish( $id, 1, false );
+		$this->assertEmpty( ShiftAssignments::person_ids( $shift ) );
+		$this->assertEmpty( $this->mail );
+		$this->assertNotEmpty( VolunteerPlanner::data( $id )['rows'][0]['issue'] );
+	}
+
+	public function test_exclusion_does_not_remove_existing_assignments_or_prevent_self_signup(): void {
+		$parent = $this->family( 'Anne' );
+		$shift  = $this->shift( 25, null, [ $parent ] );
+		Fields::update_for_post( $parent, 'planner_excluded', true );
+		$this->assertTrue( ( new VolunteerEligibilityService() )->may_volunteer( $parent ) );
+		$this->plan();
+		$this->assertSame( [ $parent ], ShiftAssignments::person_ids( $shift ) );
+	}
+
 	/** Deliberately give the first hash-ranked candidate no teammate. */
 	public function test_pairs_parents_via_child_teams_before_filling_an_empty_shift(): void {
 		$this->family( 'Anne' );

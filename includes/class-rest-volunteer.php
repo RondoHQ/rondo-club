@@ -44,6 +44,38 @@ class Volunteer extends Base {
 	public function register_routes() {
 		register_rest_route(
 			'rondo/v1',
+			'/volunteer-exclusions',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_planner_exclusions' ],
+				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
+			]
+		);
+		register_rest_route(
+			'rondo/v1',
+			'/volunteer-exclusions/(?P<person_id>\d+)',
+			[
+				'methods'             => \WP_REST_Server::EDITABLE,
+				'callback'            => [ $this, 'update_planner_exclusion' ],
+				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
+				'args'                => [
+					'enabled' => [
+						'type'              => 'boolean',
+						'required'          => true,
+						'validate_callback' => static fn( $value ) => is_bool( $value ) || in_array( $value, [ 0, 1, '0', '1', 'true', 'false' ], true ),
+					],
+					'reason'  => [
+						'type'              => 'string',
+						'default'           => '',
+						'maxLength'         => 1000,
+						'validate_callback' => 'rest_validate_request_arg',
+						'sanitize_callback' => 'sanitize_textarea_field',
+					],
+				],
+			]
+		);
+		register_rest_route(
+			'rondo/v1',
 			'/volunteer-mailing',
 			[
 				[
@@ -1186,6 +1218,68 @@ class Volunteer extends Base {
 		}
 
 		return rest_ensure_response( $this->prepare_exemption_response( $person_id, $season ) );
+	}
+
+	/** List visible people currently excluded from automatic planning. */
+	public function get_planner_exclusions() {
+		$people = get_posts(
+			[
+				'post_type'        => 'person',
+				'post_status'      => 'publish',
+				'posts_per_page'   => -1,
+				'meta_key'         => 'planner_excluded',
+				'meta_value'       => '1',
+				'orderby'          => 'title',
+				'order'            => 'ASC',
+				'suppress_filters' => false,
+			]
+		);
+		$rows   = [];
+		foreach ( $people as $person ) {
+			if ( \Rondo\Core\AccessControl::can_view_person( $person->ID ) ) {
+				$rows[] = $this->planner_exclusion_row( $person->ID );
+			}
+		}
+		$response = rest_ensure_response( $rows );
+		$response->header( 'Cache-Control', 'private, no-store' );
+		return $response;
+	}
+
+	/** Manage planning policy without granting general profile editing rights. */
+	public function update_planner_exclusion( \WP_REST_Request $request ) {
+		$person_id = (int) $request['person_id'];
+		if ( get_post_type( $person_id ) !== 'person' || get_post_status( $person_id ) !== 'publish' || ! \Rondo\Core\AccessControl::can_view_person( $person_id ) ) {
+			return new \WP_Error( 'person_not_found', 'Persoon niet gevonden.', [ 'status' => 404 ] );
+		}
+		$enabled = (bool) $request['enabled'];
+		$reason  = trim( (string) $request['reason'] );
+		if ( $enabled && $reason === '' ) {
+			return new \WP_Error( 'exclusion_reason_required', 'Vul een reden voor de uitsluiting in.', [ 'status' => 400 ] );
+		}
+		$since  = Fields::get_for_post( $person_id, 'planner_excluded' ) ? Fields::get_for_post( $person_id, 'planner_excluded_since' ) : null;
+		$result = Fields::update_many_for_post(
+			$person_id,
+			[
+				'planner_excluded'         => $enabled,
+				'planner_exclusion_reason' => $enabled ? $reason : '',
+				'planner_excluded_since'   => $enabled ? ( $since ?: current_time( 'mysql' ) ) : null,
+			]
+		);
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		$response = rest_ensure_response( $this->planner_exclusion_row( $person_id ) );
+		$response->header( 'Cache-Control', 'private, no-store' );
+		return $response;
+	}
+
+	/** Canonical, permission-filtered fields shared by the list and mutations. */
+	private function planner_exclusion_row( int $person_id ): array {
+		return [
+			'id'     => $person_id,
+			'name'   => \Rondo\Core\PostTitle::plain( $person_id ),
+			'fields' => \Rondo\Fields\RestFields::for_post_fields( 'person', $person_id, [ 'planner_excluded', 'planner_exclusion_reason', 'planner_excluded_since' ] ),
+		];
 	}
 
 	/**
