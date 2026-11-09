@@ -180,7 +180,7 @@ class MembershipPassApple {
 
 		$guest_service = new GuestPassService();
 		$guest         = $guest_service->get_pass_data( $guest_pass_id );
-		if ( $guest === null || $guest['status'] !== 'active' || ! $guest_service->is_eligible_host( $guest['host_person_id'] ) ) {
+		if ( $guest === null || $guest['status'] !== 'active' || ! $guest_service->is_eligible_pass( $guest ) ) {
 			return new \WP_Error( 'rondo_guest_pass_unavailable', 'Deze gastpas is niet beschikbaar.' );
 		}
 
@@ -195,7 +195,6 @@ class MembershipPassApple {
 		}
 
 		$organization_name = $this->get_organization_name();
-		$team_name         = $guest_service->get_eligible_team_name();
 		$pass_data         = [
 			'formatVersion'      => 1,
 			'passTypeIdentifier' => $this->get_pass_type_identifier(),
@@ -219,14 +218,14 @@ class MembershipPassApple {
 					[
 						'key'   => 'host_name',
 						'label' => 'GAST VAN',
-						'value' => $guest['host_name'],
+						'value' => $guest['sponsor_name'] ?: $guest['host_name'],
 					],
 				],
 				'auxiliaryFields' => [
 					[
 						'key'   => 'valid_for',
 						'label' => 'GELDIG VOOR',
-						'value' => $team_name . ' thuiswedstrijden',
+						'value' => $guest['valid_for'],
 					],
 				],
 			],

@@ -307,8 +307,8 @@ export const prmApi = {
 
   // Reusable guest-pass slots for the configured team
   getMyGuestPasses: () => api.get('/rondo/v1/guest-passes/me'),
-  createGuestPassSlot: (slot) => api.post(`/rondo/v1/guest-passes/slots/${slot}`),
-  replaceGuestPassSlot: (slot) => api.post(`/rondo/v1/guest-passes/slots/${slot}/replace`),
+  createGuestPassSlot: (slot, sponsorId = 0) => api.post(`/rondo/v1/guest-passes/slots/${slot}`, { sponsor_id: sponsorId }),
+  replaceGuestPassSlot: (slot, sponsorId = 0) => api.post(`/rondo/v1/guest-passes/slots/${slot}/replace`, { sponsor_id: sponsorId }),
   createNote: (personId, content, visibility = 'private') =>
     api.post(`/rondo/v1/people/${personId}/notes`, { content, visibility }),
   updateNote: (noteId, content, visibility = null) =>

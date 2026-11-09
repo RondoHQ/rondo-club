@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.168.0] - 2026-11-09
+
+### Added
+
+- Give active businessclub companies with one pass-enabled contact one shareable guest pass in Mijn gegevens, alongside the contact's personal pass. Company guest passes support Apple/Google Wallet, stop working when a second contact is added, and count once per company per home match, including after a guest or contact replacement. Companies with two or more contacts retain their personal passes without a guest pass; existing player and staff guest allowances remain separate (feedback #15010).
+
 ## [35.167.0] - 2026-11-06
 
 ### Added
