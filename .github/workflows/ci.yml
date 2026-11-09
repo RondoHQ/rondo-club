@@ -96,7 +96,9 @@ jobs:
         run: node --test tests/js/appUpdate.test.mjs tests/js/assetRetention.test.mjs
 
       - name: Test atomic deployment and rollback
-        run: python3 tests/python/test_atomic_release.py
+        run: |
+          python3 tests/python/test_atomic_release.py
+          python3 tests/python/test_deploy_targets.py
 
   php-tests:
     needs: check-plan
