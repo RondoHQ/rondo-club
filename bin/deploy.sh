@@ -68,7 +68,7 @@ while [ "$#" -gt 0 ]; do
             echo "  --source-dir PATH     Deploy a prepared release directory"
             echo "  --skip-build          Do not run the frontend build"
             echo "  --with-node-modules   Include node_modules (legacy/local only)"
-            echo "  --skip-cache          Skip WordPress and SiteGround cache clearing"
+            echo "  --skip-cache          Skip WordPress and optional host cache clearing"
             echo "  --skip-health-check   Skip version and HTTP verification"
             echo "  --prune               Delete removed files in: ${PRUNE_DIRS[*]}"
             echo "  --help, -h            Show this help message"
@@ -275,6 +275,12 @@ remote_release() {
 # transaction and checks the live target before changing anything.
 DEPLOY_FINISHED=false
 HELPER_UPLOADED=false
+
+clear_remote_caches() {
+    retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
+        "cd $DEPLOY_REMOTE_WP_PATH && wp cache flush && if wp cli has-command 'sg purge' >/dev/null 2>&1; then wp sg purge; fi"
+}
+
 cleanup_deployment() {
     local status=$?
     trap - EXIT
@@ -283,7 +289,8 @@ cleanup_deployment() {
         echo "Deployment failed; restoring the previous release if activated." >&2
         if remote_release rollback; then
             retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
-                "cd $DEPLOY_REMOTE_WP_PATH && wp rewrite flush --hard && wp cache flush && wp sg purge" || true
+                "cd $DEPLOY_REMOTE_WP_PATH && wp rewrite flush --hard" || true
+            clear_remote_caches || true
         else
             echo "Automatic rollback could not be confirmed; inspect the deployment transaction." >&2
         fi
@@ -336,8 +343,7 @@ remote_release activate
 retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
     "cd $DEPLOY_REMOTE_WP_PATH && wp rewrite flush --hard"
 if [ "$SKIP_CACHE_CLEAR" = false ]; then
-    retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
-        "cd $DEPLOY_REMOTE_WP_PATH && wp cache flush && wp sg purge"
+    clear_remote_caches
 fi
 
 if [ "$SKIP_HEALTH_CHECK" = false ]; then
