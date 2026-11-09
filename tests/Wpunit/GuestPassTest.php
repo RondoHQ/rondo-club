@@ -8,8 +8,10 @@ use Rondo\Core\VolunteerStatus;
 use Rondo\Fields\Fields;
 use Rondo\Passes\GuestPassService;
 use Rondo\Passes\MembershipPassQr;
+use Rondo\Passes\MembershipPassService;
 use Rondo\REST\AccessEvents;
 use Rondo\REST\GuestPasses;
+use Rondo\Sponsors\Relations;
 use Tests\Support\RondoTestCase;
 
 /** Tests reusable guest slots for the configured team and their match quota. */
@@ -18,11 +20,277 @@ class GuestPassTest extends RondoTestCase {
 	protected function set_up(): void {
 		parent::set_up();
 		delete_option( ClubConfig::OPTION_GUEST_PASS_TEAM_ID );
+		Relations::flush_cache();
 	}
 
 	protected function tear_down(): void {
+		Relations::flush_cache();
 		delete_option( ClubConfig::OPTION_GUEST_PASS_TEAM_ID );
 		parent::tear_down();
+	}
+
+	public function test_businessclub_contact_gets_one_company_slot_without_a_team_membership(): void {
+		[ $user_id, $person_id, $sponsor_id ] = $this->create_businessclub_host();
+		wp_set_current_user( $user_id );
+		$server = $this->bootRestControllers( [ GuestPasses::class ] );
+		$data   = $server->dispatch( new \WP_REST_Request( 'GET', '/rondo/v1/guest-passes/me' ) )->get_data();
+		$this->assertFalse( $data['eligible'] );
+		$this->assertSame( [], $data['slots'] );
+		$this->assertCount( 1, $data['businessclub'] );
+		$this->assertSame( $sponsor_id, $data['businessclub'][0]['sponsor_id'] );
+		$this->assertSame( 'Voorbeeld & Co', $data['businessclub'][0]['name'] );
+		$this->assertSame( 1, $data['businessclub'][0]['limit'] );
+		$this->assertCount( 1, $data['businessclub'][0]['slots'] );
+		$this->assertSame( 'businessclub', MembershipPassService::get_sponsor_pass_variant( $person_id ) );
+
+		$request = new \WP_REST_Request( 'POST', '/rondo/v1/guest-passes/slots/1' );
+		$request->set_param( 'sponsor_id', $sponsor_id );
+		$response = $server->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$slot = $response->get_data();
+		$this->assertSame( $sponsor_id, Fields::get_for_post( $slot['id'], 'sponsor_id' ) );
+		$this->assertSame( (string) $sponsor_id, get_post_meta( $slot['id'], 'sponsor_id', true ) );
+		$this->assertSame( 'field_guest_pass_sponsor_id', get_post_meta( $slot['id'], '_sponsor_id', true ) );
+		$wire = \Rondo\Fields\Formatter::for_wire( 'rondo_guest_pass', [ 'sponsor_id' => $sponsor_id ] );
+		$this->assertSame( $sponsor_id, $wire['sponsor_id'] );
+		$this->assertSame( [ 'rondo_sponsor' ], \Rondo\Fields\Registry::resolve( 'rondo_guest_pass', 'sponsor_id' )['post_type'] );
+
+		$service = new GuestPassService();
+		$this->assertSame( $slot['id'], $service->ensure_slot( $person_id, 1, $sponsor_id )['id'] );
+		$this->assertWPError( $service->ensure_slot( $person_id, 2, $sponsor_id ) );
+		$this->assertWPError( $service->replace_slot( $person_id, 2, $sponsor_id ) );
+		$this->assertWPError( $service->ensure_slot( $person_id, 1 ) );
+		wp_set_current_user( 0 );
+		Relations::flush_cache();
+		$slot = $service->claim( $this->share_token( $slot['share_url'] ), 'BC Gast' );
+		$this->assertSame( 'active', $slot['status'] );
+		$this->assertSame( 'Voorbeeld & Co', $service->get_pass_data( $slot['id'] )['sponsor_name'] );
+		$this->assertNotWPError( ( new MembershipPassQr() )->issue_for_guest( $slot['id'] ) );
+		wp_set_current_user( $user_id );
+
+		$event = ( new AdmissionService( false ) )->select_match( $this->home_match( 'bc-match', 'AWC O23-1' ) );
+		$first = $this->scan( new AccessEvents(), $event['id'], $this->issue_guest_token( $slot['id'] ) );
+		$this->assertTrue( $first['valid'] );
+		$this->assertTrue( $first['admission']['counted'] );
+		$this->assertSame( 1, $first['stats']['counts']['guest'] );
+	}
+
+	public function test_businessclub_guest_pass_ends_at_second_contact_and_preserves_personal_passes(): void {
+		[ $user_id, $person_id, $sponsor_id ] = $this->create_businessclub_host();
+		wp_set_current_user( $user_id );
+		$service = new GuestPassService();
+		$slot    = $service->ensure_slot( $person_id, 1, $sponsor_id );
+		$token   = $this->share_token( $slot['share_url'] );
+		$service->claim( $token, 'Oorspronkelijke Gast' );
+		$qr         = $this->issue_guest_token( $slot['id'] );
+		$contacts   = Fields::get_for_post( $sponsor_id, 'contacts' );
+		$contacts[] = [
+			'person_id'     => $this->createPerson(),
+			'receives_pass' => true,
+		];
+		$this->assertNotWPError( Relations::set_contacts( $sponsor_id, $contacts ) );
+
+		$this->assertSame( [], $service->get_businessclub_sponsors( $person_id ) );
+		$this->assertWPError( $service->claim( $token, 'Andere Gast' ) );
+		$this->assertWPError( $service->ensure_slot( $person_id, 1, $sponsor_id ) );
+		$this->assertWPError( $service->replace_slot( $person_id, 1, $sponsor_id ) );
+		$this->assertFalse( $service->is_eligible_pass( $service->get_pass_data( $slot['id'] ) ) );
+		$this->assertWPError( ( new MembershipPassQr() )->issue_for_guest( $slot['id'] ) );
+		$event = ( new AdmissionService( false ) )->select_match( $this->home_match( 'bc-ended', 'AWC 1' ) );
+		$scan  = $this->scan( new AccessEvents(), $event['id'], $qr );
+		$this->assertFalse( $scan['valid'] );
+		$this->assertSame( 'host_ineligible', $scan['reason'] );
+		$this->assertSame( 0, $scan['stats']['counts']['guest'] );
+
+		for ( $count = 2; $count <= 5; ++$count ) {
+			foreach ( $contacts as $contact ) {
+				$this->assertSame( 'businessclub', MembershipPassService::get_sponsor_pass_variant( $contact['person_id'] ) );
+				$this->assertSame( [], $service->get_businessclub_sponsors( $contact['person_id'] ) );
+			}
+			$contacts[] = [
+				'person_id'     => $this->createPerson(),
+				'receives_pass' => true,
+			];
+			Relations::set_contacts( $sponsor_id, $contacts );
+		}
+	}
+
+	public function test_company_must_be_active_businessclub_with_exactly_one_pass_enabled_contact(): void {
+		[ , $person_id, $sponsor_id ] = $this->create_businessclub_host();
+		$service                      = new GuestPassService();
+		$this->assertTrue( $service->is_eligible_host( $person_id, $sponsor_id ) );
+
+		Fields::update_for_post( $sponsor_id, 'sponsor_role', 'awc_sponsor' );
+		Relations::flush_cache();
+		$this->assertFalse( $service->is_eligible_host( $person_id, $sponsor_id ) );
+		Fields::update_for_post( $sponsor_id, 'sponsor_role', 'businessclub' );
+		wp_update_post(
+			[
+				'ID'          => $sponsor_id,
+				'post_status' => 'draft',
+			]
+			);
+		Relations::flush_cache();
+		$this->assertFalse( $service->is_eligible_host( $person_id, $sponsor_id ) );
+		wp_update_post(
+			[
+				'ID'          => $sponsor_id,
+				'post_status' => 'publish',
+			]
+			);
+		Relations::set_contacts(
+			$sponsor_id,
+			[
+				[
+					'person_id'     => $person_id,
+					'receives_pass' => false,
+				],
+			]
+			);
+		$this->assertFalse( $service->is_eligible_host( $person_id, $sponsor_id ) );
+		Relations::set_contacts(
+			$sponsor_id,
+			[
+				[
+					'person_id'     => $person_id,
+					'receives_pass' => true,
+				],
+				[
+					'person_id'     => $this->createPerson(),
+					'receives_pass' => false,
+				],
+			]
+			);
+		$this->assertFalse( $service->is_eligible_host( $person_id, $sponsor_id ) );
+		Relations::set_contacts( $sponsor_id, [] );
+		$this->assertFalse( $service->is_eligible_host( $person_id, $sponsor_id ) );
+	}
+
+	public function test_company_guest_slot_cannot_be_accessed_by_another_account_or_invalid_source(): void {
+		[ $user_id, $person_id, $sponsor_id ] = $this->create_businessclub_host();
+		[ , , $other_company ]                = $this->create_businessclub_host();
+		wp_set_current_user( $user_id );
+		$server = $this->bootRestControllers( [ GuestPasses::class ] );
+		foreach ( [ '', '/replace' ] as $suffix ) {
+			foreach ( [ $other_company, $person_id, 9999999, 0, -1, 1.5 ] as $source ) {
+				$request = new \WP_REST_Request( 'POST', '/rondo/v1/guest-passes/slots/1' . $suffix );
+				$request->set_param( 'sponsor_id', $source );
+				$this->assertContains( $server->dispatch( $request )->get_status(), [ 400, 403 ] );
+			}
+			$request = new \WP_REST_Request( 'POST', '/rondo/v1/guest-passes/slots/2' . $suffix );
+			$request->set_param( 'sponsor_id', $sponsor_id );
+			$this->assertSame( 400, $server->dispatch( $request )->get_status() );
+		}
+		wp_set_current_user( 0 );
+		$request = new \WP_REST_Request( 'POST', '/rondo/v1/guest-passes/slots/1' );
+		$request->set_param( 'sponsor_id', $sponsor_id );
+		$this->assertSame( 401, $server->dispatch( $request )->get_status() );
+		$this->assertSame( 401, $server->dispatch( new \WP_REST_Request( 'GET', '/rondo/v1/guest-passes/me' ) )->get_status() );
+	}
+
+	public function test_team_and_company_slots_remain_independent_and_replacement_does_not_reset_quota(): void {
+		[ $user_id, $person_id ] = $this->create_awc_one_player();
+		[ , , $sponsor_id ]      = $this->create_businessclub_host( $person_id );
+		wp_set_current_user( $user_id );
+		$service = new GuestPassService();
+		$team    = $service->ensure_slot( $person_id, 1 );
+		$company = $service->ensure_slot( $person_id, 1, $sponsor_id );
+		$this->assertNotSame( $team['id'], $company['id'] );
+		$this->assertSame( 0, (int) Fields::get_for_post( $team['id'], 'sponsor_id' ) );
+		Fields::delete_for_post( $team['id'], 'sponsor_id' );
+		$this->assertSame( $team['id'], $service->ensure_slot( $person_id, 1 )['id'] );
+		$this->assertCount( 2, $service->get_slots( $person_id ) );
+		$this->assertCount( 1, $service->get_slots( $person_id, $sponsor_id ) );
+		$service->claim( $this->share_token( $team['share_url'] ), 'Teamgast' );
+		$service->claim( $this->share_token( $company['share_url'] ), 'Bedrijfsgast' );
+		$qr    = $this->issue_guest_token( $company['id'] );
+		$event = ( new AdmissionService( false ) )->select_match( $this->home_match( 'bc-and-team', 'AWC 1' ) );
+		$this->scan( new AccessEvents(), $event['id'], $this->issue_guest_token( $team['id'] ) );
+		$scan = $this->scan( new AccessEvents(), $event['id'], $qr );
+		$this->assertTrue( $scan['admission']['counted'] );
+		$this->assertSame( 2, $scan['stats']['counts']['guest'] );
+
+		$replacement = $service->replace_slot( $person_id, 1, $sponsor_id );
+		$this->assertSame( $company['id'], $replacement['id'] );
+		$this->assertNotSame( $company['share_url'], $replacement['share_url'] );
+		$this->assertSame( 'revoked', $this->scan( new AccessEvents(), $event['id'], $qr )['reason'] );
+		$service->claim( $this->share_token( $replacement['share_url'] ), 'Nieuwe Gast' );
+		$scan = $this->scan( new AccessEvents(), $event['id'], $this->issue_guest_token( $replacement['id'] ) );
+		$this->assertTrue( $scan['admission']['duplicate'] );
+		$this->assertSame( 2, $scan['stats']['counts']['guest'] );
+	}
+
+	public function test_two_companies_with_the_same_contact_have_separate_guest_quotas(): void {
+		[ $user_id, $person_id, $first_company ] = $this->create_businessclub_host();
+		[ , , $second_company ]                  = $this->create_businessclub_host( $person_id );
+		wp_set_current_user( $user_id );
+		$service = new GuestPassService();
+		$this->assertCount( 2, $service->get_businessclub_sponsors( $person_id ) );
+		$first  = $service->ensure_slot( $person_id, 1, $first_company );
+		$second = $service->ensure_slot( $person_id, 1, $second_company );
+		$this->assertNotSame( $first['id'], $second['id'] );
+		$service->claim( $this->share_token( $first['share_url'] ), 'Eerste Bedrijfsgast' );
+		$service->claim( $this->share_token( $second['share_url'] ), 'Tweede Bedrijfsgast' );
+		$event = ( new AdmissionService( false ) )->select_match( $this->home_match( 'two-companies', 'AWC 1' ) );
+		$this->scan( new AccessEvents(), $event['id'], $this->issue_guest_token( $first['id'] ) );
+		$scan = $this->scan( new AccessEvents(), $event['id'], $this->issue_guest_token( $second['id'] ) );
+		$this->assertTrue( $scan['admission']['counted'] );
+		$this->assertSame( 2, $scan['stats']['counts']['guest'] );
+	}
+
+	public function test_replacing_company_contact_invalidates_old_pass_without_resetting_match_quota(): void {
+		[ $user_id, $person_id, $sponsor_id ] = $this->create_businessclub_host();
+		wp_set_current_user( $user_id );
+		$service = new GuestPassService();
+		$slot    = $service->ensure_slot( $person_id, 1, $sponsor_id );
+		$service->claim( $this->share_token( $slot['share_url'] ), 'Eerste Gast' );
+		$qr    = $this->issue_guest_token( $slot['id'] );
+		$event = ( new AdmissionService( false ) )->select_match( $this->home_match( 'bc-contact-changed', 'AWC 1' ) );
+		$this->scan( new AccessEvents(), $event['id'], $qr );
+
+		$new_person = $this->createPerson();
+		Relations::set_contacts(
+			$sponsor_id,
+			[
+				[
+					'person_id'     => $new_person,
+					'receives_pass' => true,
+				],
+			]
+			);
+		$this->assertSame( 'host_ineligible', $this->scan( new AccessEvents(), $event['id'], $qr )['reason'] );
+		$new_slot = $service->ensure_slot( $new_person, 1, $sponsor_id );
+		$this->assertNotSame( $slot['id'], $new_slot['id'] );
+		$service->claim( $this->share_token( $new_slot['share_url'] ), 'Tweede Gast' );
+		$scan = $this->scan( new AccessEvents(), $event['id'], $this->issue_guest_token( $new_slot['id'] ) );
+		$this->assertTrue( $scan['admission']['duplicate'] );
+		$this->assertSame( 1, $scan['stats']['counts']['guest'] );
+	}
+
+	private function create_businessclub_host( int $person_id = 0 ): array {
+		$user_id    = $this->createRondoUser();
+		$person_id  = $person_id ?: $this->createPerson( [ 'post_title' => 'BC Contact' ], [ 'person_type' => 'contact' ] );
+		$sponsor_id = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_sponsor',
+				'post_status' => 'publish',
+				'post_title'  => 'Voorbeeld &amp; Co',
+			]
+			);
+		Fields::update_for_post( $sponsor_id, 'sponsor_role', 'businessclub' );
+		$this->assertNotWPError(
+			Relations::set_contacts(
+			$sponsor_id,
+			[
+				[
+					'person_id'     => $person_id,
+					'receives_pass' => true,
+				],
+			]
+			)
+			);
+		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+		return [ $user_id, $person_id, $sponsor_id ];
 	}
 
 	public function test_player_can_claim_two_slots_and_each_counts_once_per_match(): void {
