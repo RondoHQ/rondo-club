@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.169.1] - 2026-11-09
+
+### Fixed
+
+- Prevent automatic volunteer assignments ending after 22:00 for people younger than 18 on the local shift date. Apply the same check to candidate changes and publication of existing proposals, including overnight shifts, while allowing duties ending exactly at 22:00 (feedback #15013).
+
 ## [35.169.0] - 2026-11-09
 
 ### Added

@@ -4,6 +4,7 @@ namespace Rondo\Volunteer;
 
 use Rondo\Core\VolunteerStatus;
 use Rondo\Fields\Fields;
+use Rondo\Fields\Formatter;
 use Rondo\Teams\TeamMatches;
 use Rondo\Training\Schedules;
 final class PlannerAvailability {
@@ -39,6 +40,14 @@ final class PlannerAvailability {
 	}
 	/** Unknown fixtures reserve the day; an unavailable source never means free. */
 	public function reason( int $person, array $interval, array $busy ): ?string {
+		$day = $interval[0]->setTimezone( wp_timezone() )->setTime( 0, 0 );
+		if ( $interval[1] > $day->setTime( 22, 0 ) ) {
+			$birthdate = Formatter::for_wire( 'person', [ 'birthdate' => Fields::get_for_post( $person, 'birthdate' ) ] )['birthdate'];
+			$birth     = $birthdate ? \DateTimeImmutable::createFromFormat( '!Y-m-d', $birthdate, wp_timezone() ) : null;
+			if ( $birth && $birth <= $day && $birth->diff( $day )->y < 18 ) {
+				return 'Jonger dan 18 jaar op de dienstdatum; de dienst eindigt na 22:00';
+			}
+		}
 		foreach ( $busy[ $person ] ?? [] as $other ) {
 			if ( self::overlaps( $interval, $other ) ) {
 				return 'Overlapt met een andere dienst of een ander voorstel';
