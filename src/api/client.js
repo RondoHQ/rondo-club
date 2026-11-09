@@ -619,6 +619,8 @@ export const prmApi = {
   getVolunteerAssignmentShifts: (params) => api.get('/rondo/v1/volunteer-assignments/shifts', { params }),
   assignVolunteerDuty: (data) => api.post('/rondo/v1/volunteer-assignments', data),
   getVolunteerStatistics: (params = {}) => api.get('/rondo/v1/volunteer-statistics', { params }),
+  getVolunteerExclusions: () => api.get('/rondo/v1/volunteer-exclusions'),
+  updateVolunteerExclusion: (personId, data) => api.put(`/rondo/v1/volunteer-exclusions/${personId}`, data),
   getVolunteerExemption: (personId, params = {}) => api.get(`/rondo/v1/volunteer-exemption/${personId}`, { params }),
   updateVolunteerExemption: (personId, data) => api.put(`/rondo/v1/volunteer-exemption/${personId}`, data),
   getVolunteerDataQuality: (category, params = {}) => api.get(`/rondo/v1/volunteer-data-quality/${category}`, { params }),

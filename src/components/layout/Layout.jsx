@@ -94,6 +94,7 @@ const navigation = [
   { name: 'Aanmeldingen', href: '/vrijwilligers/aanmeldingen', icon: ClipboardList, indent: true, requiresVrijwilligers: true },
   { name: 'Taakuitleg', href: '/vrijwilligers/taakuitleg', icon: BookOpen, indent: true, requiresVrijwilligers: true },
   { name: 'Vrijstellingen', href: '/vrijwilligers/vrijstellingen', icon: UsersRound, indent: true, requiresVrijwilligers: true },
+  { name: 'Uitsluitlijst', href: '/vrijwilligers/uitsluitlijst', icon: UsersRound, indent: true, requiresVrijwilligers: true },
   { name: 'Statistieken', href: '/vrijwilligers/statistieken', icon: ChartPie, indent: true, requiresVrijwilligers: true },
   { name: 'Bestuur', href: '/bestuur', icon: UsersRound, requiresBestuur: true },
   { name: 'Sportparkkalender', href: '/bestuur/sportparkkalender', icon: CalendarDays, indent: true, requiresBestuur: true },

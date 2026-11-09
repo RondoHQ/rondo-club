@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.169.0] - 2026-11-09
+
+### Added
+
+- Manage a per-person exclusion list for automatic volunteer planning, with a reason, addition date and an explicit action to lift the exclusion. Exclusions also block candidate changes and publication of existing proposals, while other family members and the volunteer obligation remain eligible (feedback #15011).
+
 ## [35.168.0] - 2026-11-09
 
 ### Added
