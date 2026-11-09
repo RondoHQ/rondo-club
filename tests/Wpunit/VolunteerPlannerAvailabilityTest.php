@@ -79,6 +79,56 @@ class VolunteerPlannerAvailabilityTest extends RondoTestCase {
 		$date = $this->monday->modify( '+' . $days . ' days' )->format( 'Y-m-d' );
 		return [ new \DateTimeImmutable( $date . ' ' . $from, wp_timezone() ), new \DateTimeImmutable( $date . ' ' . $to, wp_timezone() ) ];
 	}
+	public function test_minors_can_finish_at_2200_but_not_later_or_after_midnight(): void {
+		$person = $this->createPerson();
+		$start  = new \DateTimeImmutable( '2032-11-21 20:00:00', wp_timezone() );
+		foreach ( [ '20171121', '2016-11-21', '20151121' ] as $birthdate ) {
+			Fields::update_for_post( $person, 'birthdate', $birthdate );
+			$this->assertNull( ( new PlannerAvailability() )->reason( $person, [ $start, $start->setTime( 22, 0 ) ], [] ) );
+			foreach ( [ '2032-11-21 22:00:01', '2032-11-21 23:59:00', '2032-11-22 00:00:00', '2032-11-22 01:00:00' ] as $end ) {
+				$this->assertStringContainsString( 'Jonger dan 18', ( new PlannerAvailability() )->reason( $person, [ $start, new \DateTimeImmutable( $end, wp_timezone() ) ], [] ), $birthdate . ' / ' . $end );
+			}
+		}
+	}
+
+	public function test_age_is_taken_on_the_local_shift_date_including_the_eighteenth_birthday(): void {
+		$person = $this->createPerson( [], [ 'birthdate' => '2014-11-21' ] );
+		foreach ( [
+			'2032-11-20' => true,
+			'2032-11-21' => false,
+			'2032-11-22' => false,
+		] as $date => $blocked ) {
+			$start  = new \DateTimeImmutable( $date . ' 20:00:00', wp_timezone() );
+			$reason = ( new PlannerAvailability() )->reason( $person, [ $start, $start->setTime( 23, 59 ) ], [] );
+			$this->assertSame( $blocked, $reason !== null, $date );
+		}
+		// Midnight in Amsterdam is still the previous date in UTC.
+		$start = new \DateTimeImmutable( '2032-11-20T23:00:00+00:00' );
+		$end   = new \DateTimeImmutable( '2032-11-21T22:00:00+00:00' );
+		$this->assertNull( ( new PlannerAvailability() )->reason( $person, [ $start, $end ], [] ) );
+	}
+
+	public function test_cutoff_uses_amsterdam_time_in_summer_and_winter(): void {
+		$person = $this->createPerson( [], [ 'birthdate' => '20160101' ] );
+		foreach ( [
+			'2032-07-21' => 20,
+			'2032-11-21' => 21,
+		] as $date => $utc_cutoff ) {
+			$start = new \DateTimeImmutable( $date . 'T18:00:00+00:00' );
+			$end   = $start->setTime( $utc_cutoff, 0 );
+			$this->assertNull( ( new PlannerAvailability() )->reason( $person, [ $start, $end ], [] ) );
+			$this->assertStringContainsString( 'na 22:00', ( new PlannerAvailability() )->reason( $person, [ $start, $end->modify( '+1 minute' ) ], [] ) );
+		}
+	}
+
+	public function test_missing_invalid_and_future_birthdates_are_not_invented_ages(): void {
+		$person = $this->createPerson();
+		$start  = new \DateTimeImmutable( '2032-11-21 20:00:00', wp_timezone() );
+		foreach ( [ '', 'not-a-date', '20150230', '2033-11-21' ] as $birthdate ) {
+			Fields::update_for_post( $person, 'birthdate', $birthdate );
+			$this->assertNull( ( new PlannerAvailability() )->reason( $person, [ $start, $start->setTime( 23, 59 ) ], [] ), $birthdate );
+		}
+	}
 	public function test_training_uses_active_schedule_and_half_hour_margin(): void {
 		$this->assertStringContainsString( 'training', ( new PlannerAvailability() )->reason( $this->person, $this->span( 0, '17:45', '18:15' ), [] ) );
 		$this->assertNull( ( new PlannerAvailability() )->reason( $this->person, $this->span( 0, '16:00', '17:30' ), [] ) );
