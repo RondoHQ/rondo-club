@@ -229,6 +229,11 @@ final class PlannerContext {
 			}
 			foreach ( $unit['candidates'] as $person ) {
 				$person = (int) $person;
+				if ( \Rondo\Fields\Fields::get_for_post( $person, 'planner_excluded' ) ) {
+					$reason                   = 'Op de uitsluitlijst voor automatische indeling';
+					$this->reasons[ $reason ] = ( $this->reasons[ $reason ] ?? 0 ) + 1;
+					continue;
+				}
 				if ( $half === 0 && ! empty( $this->load[ $person ] ) ) {
 					$reason                   = 'Al een dienst afgerond of ingepland dit seizoen';
 					$this->reasons[ $reason ] = ( $this->reasons[ $reason ] ?? 0 ) + 1;
