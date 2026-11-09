@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Preserve private attachment and wallet credential access rules in Nginx, including public OAuth discovery and Apple association routes.
 - Move production hosting and deployment configuration to the isolated `rondo-prod` account on srv1; document the separate site accounts, scheduled WordPress jobs, and retired rollback origins.
 
 ## [35.169.2] - 2026-11-09

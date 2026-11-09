@@ -517,6 +517,7 @@ Administrative access uses `ssh srv1.rondo`; run WordPress commands as the relev
 
 The legacy site remains on `c1130624.sgvps.net`, **port 18765**, at `~/www/stadion.svawc.nl/public_html/`.
 The former production and demo origins are frozen rollback copies, not deployment targets.
+Nginx includes `ops/nginx/wordpress-protection.conf` to preserve private upload and credential protections while allowing OAuth discovery and Apple association files.
 WordPress cron runs through `rondo-wp-cron@prod.timer` and `rondo-wp-cron@demo.timer`; request-triggered cron stays disabled.
 Do not activate either old origin without first stopping writes on srv1 and transferring the latest data back.
 
