@@ -198,6 +198,86 @@ class VolunteerPlannerTest extends RondoTestCase {
 		$this->assertSame( [ $parent ], ShiftAssignments::person_ids( $shift ) );
 	}
 
+	/** A player with a complete schedule and no evening conflicts. */
+	private function evening_player(): array {
+		$shift = $this->shift();
+		$start = PlannerAvailability::interval( $shift )[0]->setTime( 20, 0 );
+		update_post_meta( $shift, 'start_datetime', $start->format( 'Y-m-d H:i:s' ) );
+		update_post_meta( $shift, 'end_datetime', $start->setTime( 23, 59 )->format( 'Y-m-d H:i:s' ) );
+		$person = $this->createPerson(
+			[ 'post_title' => 'Jeugdspeler' ],
+			[
+				'email_1'        => 'jeugd@example.org',
+				'leeftijdsgroep' => 'Onder 19',
+				'birthdate'      => $start->modify( '-17 years' )->format( 'Y-m-d' ),
+			]
+			);
+		$team   = $this->team();
+		$this->set_team( $person, $team );
+		$training = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_training',
+				'post_status' => 'private',
+			]
+			);
+		Fields::update_for_post( $training, 'season', SeasonKey::current( $start->format( 'Y-m-d' ) ) );
+		Fields::update_for_post(
+			$training,
+			'blocks',
+			[
+				[
+					'block_id' => 'youth',
+					'team_ids' => [ $team ],
+					'day'      => 1,
+					'start'    => '10:00',
+					'duration' => 90,
+				],
+			]
+			);
+		update_option( Schedules::ACTIVE, $training );
+		update_post_meta(
+			$team,
+			'_rondo_team_matches_cache',
+			[
+				'season'           => SeasonKey::current( $start->format( 'Y-m-d' ) ),
+				'identity'         => '|',
+				'retry_after'      => time() + HOUR_IN_SECONDS,
+				'duration_version' => 1,
+				'matched'          => true,
+				'stale'            => false,
+				'matchdays'        => [],
+				'matches'          => [],
+			]
+			);
+		return [ $person, $shift ];
+	}
+
+	public function test_generation_leaves_late_shifts_open_for_minors_and_allows_2200(): void {
+		[ $person, $shift ] = $this->evening_player();
+		$id                 = $this->plan();
+		$this->assertEmpty( VolunteerPlanner::data( $id )['rows'][0]['person_id'] );
+		$this->assertSame( [], $this->planner->candidates( $id, 0 ) );
+		$this->assertWPError( $this->planner->edit( $id, 1, 0, $person ) );
+		$start = PlannerAvailability::interval( $shift )[0];
+		update_post_meta( $shift, 'end_datetime', $start->setTime( 22, 0 )->format( 'Y-m-d H:i:s' ) );
+		$this->assertSame( [ $person ], array_column( ( new PlannerContext( current_datetime(), $id ) )->candidates( $shift ), 'person_id' ) );
+	}
+
+	public function test_publication_rechecks_age_for_a_previously_valid_evening_draft(): void {
+		[ $person, $shift ] = $this->evening_player();
+		$start              = PlannerAvailability::interval( $shift )[0];
+		Fields::update_for_post( $person, 'birthdate', $start->modify( '-18 years' )->format( 'Y-m-d' ) );
+		$id = $this->plan();
+		$this->assertSame( $person, VolunteerPlanner::data( $id )['rows'][0]['person_id'] );
+		// Simulate an older proposal, or a corrected birthdate after generation.
+		Fields::update_for_post( $person, 'birthdate', $start->modify( '-17 years' )->format( 'Y-m-d' ) );
+		$this->mail = [];
+		$this->planner->publish( $id, 1, false );
+		$this->assertEmpty( ShiftAssignments::person_ids( $shift ) );
+		$this->assertEmpty( $this->mail );
+		$this->assertNotEmpty( VolunteerPlanner::data( $id )['rows'][0]['issue'] );
+	}
+
 	/** Deliberately give the first hash-ranked candidate no teammate. */
 	public function test_pairs_parents_via_child_teams_before_filling_an_empty_shift(): void {
 		$this->family( 'Anne' );
