@@ -482,7 +482,7 @@ Pushes whose changes are confined to `docs/prd/` are ignored by the CI/deploy wo
 2. A commit on `main` runs `.github/workflows/ci.yml`.
 3. JavaScript lint/build and PHP coding standards must pass.
 4. GitHub Actions builds a production release, deploys it over SSH, clears
-   WordPress and SiteGround caches, and verifies the live version and URL.
+   WordPress caches (and SiteGround caches when available), and verifies the live version and URL.
 5. Wait for the **CI and deploy** workflow to complete successfully before
    presenting verification or UAT steps.
 
@@ -503,18 +503,23 @@ from `main` to restore a previous release.
 
 ### Rondo Club Sites
 
-All three sites are on the same server. SSH always requires **port 18765** and uses key-based auth.
+Production and demo run on **srv1.rondo.club (81.24.6.19), SSH port 22**, under separate service accounts with key-based authentication.
 
 | Site | URL | SSH User | Purpose |
 |------|-----|----------|---------|
-| **Production** | https://rondo.svawc.nl | `u27-qkfuzqfj63zn` | Live site — deploy target, user tests here |
-| **Demo** | https://demo.rondo.club | `u26-b0fnaayuzqqg` | Demo environment |
+| **Production** | https://rondo.svawc.nl | `rondo-prod` | Live site — deploy target, user tests here |
+| **Demo** | https://demo.rondo.club | `rondo-demo` | Demo environment |
 | **Old site** | https://stadion.svawc.nl | `u19-uuugmprbtnev` | Legacy — only access when explicitly asked |
 
-**SSH host:** `c1130624.sgvps.net`
-**SSH port:** `18765`
+Production lives at `/srv/rondo-prod/public_html`; demo lives at `/srv/rondo-demo/public_html`.
+Each theme is at `wp-content/themes/rondo-club`, with atomic releases in the account's `.rondo-releases` directory.
+Administrative access uses `ssh srv1.rondo`; run WordPress commands as the relevant service account.
 
-Each user's WordPress install lives at `~/www/<domain>/public_html/` and the theme at `.../wp-content/themes/rondo-club/`.
+The legacy site remains on `c1130624.sgvps.net`, **port 18765**, at `~/www/stadion.svawc.nl/public_html/`.
+The former production and demo origins are frozen rollback copies, not deployment targets.
+Nginx includes `ops/nginx/wordpress-protection.conf` to preserve private upload and credential protections while allowing OAuth discovery and Apple association files.
+WordPress cron runs through `rondo-wp-cron@prod.timer` and `rondo-wp-cron@demo.timer`; request-triggered cron stays disabled.
+Do not activate either old origin without first stopping writes on srv1 and transferring the latest data back.
 
 ### SSH Access
 
