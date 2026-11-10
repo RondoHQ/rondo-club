@@ -154,7 +154,7 @@ class PersonTypeFilterTest extends RondoTestCase {
 		$this->assertContains( $inactive_businessclub_id, $other_ids );
 	}
 
-	public function test_company_only_contact_uses_company_as_display_name(): void {
+	public function test_hidden_company_contact_retains_its_title_fields_and_direct_access(): void {
 		$contact_id = $this->createPerson(
 			[ 'post_title' => 'Tijdelijke titel' ],
 			[
@@ -168,19 +168,70 @@ class PersonTypeFilterTest extends RondoTestCase {
 
 		$this->assertSame( 'Voorbeeld BV', get_the_title( $contact_id ) );
 
-		$request = new \WP_REST_Request( 'GET' );
-		$request->set_param( 'page', 1 );
-		$request->set_param( 'per_page', 100 );
-		$request->set_param( 'ownership', 'all' );
-		$request->set_param( 'orderby', 'first_name' );
-		$request->set_param( 'order', 'asc' );
-		$request->set_param( 'person_type', 'contact' );
-
-		$data    = $this->controller->get_filtered_people( $request )->get_data();
-		$contact = current( array_filter( $data['people'], static fn( $person ) => $person['id'] === $contact_id ) );
-
-		$this->assertSame( 'Voorbeeld BV', $contact['name'] );
+		$this->assertNotContains( $contact_id, $this->filtered_ids() );
+		$this->assertNotContains( $contact_id, $this->filtered_ids( 'contact' ) );
+		$server   = $this->bootRestControllers( [ People::class ] );
+		$response = $server->dispatch( new \WP_REST_Request( 'GET', '/wp/v2/people/' . $contact_id ) );
+		$this->assertSame( 200, $response->get_status() );
+		$contact = $response->get_data();
+		$this->assertSame( 'Voorbeeld BV', $contact['title']['rendered'] );
 		$this->assertSame( 'Voorbeeld BV', $contact['fields']['company_name'] );
+		$this->assertSame( 'publish', get_post_status( $contact_id ) );
+	}
+
+	public function test_company_exclusion_preserves_named_contacts_counts_and_pagination(): void {
+		$company = [
+			'company_name' => 'A Bedrijf',
+			'person_type'  => 'contact',
+		];
+		$this->createPerson( [ 'post_title' => 'A Bedrijf' ], $company );
+		$this->createPerson(
+			[ 'post_title' => 'B Bedrijf' ],
+			array_merge(
+				$company,
+				[
+					'first_name' => '',
+					'last_name'  => '',
+				]
+			)
+		);
+		$this->createPerson(
+			[ 'post_title' => 'C Bedrijf' ],
+			array_merge(
+				$company,
+				[
+					'first_name' => '  ',
+					'last_name'  => '  ',
+				]
+			)
+		);
+		$first_name = $this->createPerson( [ 'post_title' => 'D Contact' ], array_merge( $company, [ 'first_name' => 'D Contact' ] ) );
+		$last_name  = $this->createPerson( [ 'post_title' => 'E Contact' ], array_merge( $company, [ 'last_name' => 'E Contact' ] ) );
+		$legacy     = $this->createPerson( [ 'post_title' => 'F Legacy' ] );
+
+		$this->assertEqualsCanonicalizing( [ $first_name, $last_name, $legacy ], $this->filtered_ids() );
+		$this->assertEqualsCanonicalizing( [ $first_name, $last_name ], $this->filtered_ids( 'contact' ) );
+
+		$server = $this->bootRestControllers( [ People::class ] );
+		foreach ( [
+			1 => $first_name,
+			2 => $last_name,
+			3 => $legacy,
+		] as $page => $expected_id ) {
+			$request = new \WP_REST_Request( 'GET', '/rondo/v1/people/filtered' );
+			$request->set_query_params(
+				[
+					'page'     => $page,
+					'per_page' => 1,
+				]
+			);
+			$response = $server->dispatch( $request );
+			$this->assertSame( 200, $response->get_status() );
+			$data = $response->get_data();
+			$this->assertSame( 3, $data['total'] );
+			$this->assertSame( 3, $data['total_pages'] );
+			$this->assertSame( [ $expected_id ], array_column( $data['people'], 'id' ) );
+		}
 	}
 
 	public function test_rest_identity_validation_accepts_company_without_first_name(): void {
