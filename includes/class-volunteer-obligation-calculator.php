@@ -7,7 +7,8 @@
  * `no_show`) tally per season.
  *
  * Source of truth: `dienst_shift` posts with `assigned_persons` post_meta
- * containing one or more person IDs from the unit.
+ * containing one or more person IDs from the unit, plus dated administrative
+ * duty credits. Credits follow the same speler/gezin attribution as shifts.
  *
  *   completed → shift.status = 'voltooid' AND person is in assigned_persons
  *                AND person was not marked no-show; or a cancelled shift whose
@@ -348,7 +349,7 @@ class VolunteerObligationCalculator {
 		$tallies = [];
 		foreach ( $person_ids as $pid ) {
 			$tallies[ $pid ] = [
-				'completed' => 0,
+				'completed' => count( VolunteerDutyCredits::for_season( $pid, $season ) ),
 				'pending'   => 0,
 				'no_show'   => 0,
 			];
