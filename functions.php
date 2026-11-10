@@ -1310,10 +1310,12 @@ add_action( 'after_switch_theme', 'rondo_theme_activation' );
  *
  * WordPress only has (meta_id, post_id, meta_key) indexes on postmeta. Dashboard
  * queries that filter by meta_key + meta_value benefit from a composite index.
+ * Person list joins also need post_id + meta_key to avoid scanning every field
+ * of a person once for each joined field (including the pagination count).
  * Runs once per version bump via an option check, and on theme activation.
  */
 function rondo_maybe_add_postmeta_indexes() {
-	$index_version = '1';
+	$index_version = '2';
 	if ( get_option( 'rondo_postmeta_index_version' ) === $index_version ) {
 		return;
 	}
@@ -1321,7 +1323,8 @@ function rondo_maybe_add_postmeta_indexes() {
 	global $wpdb;
 
 	$indexes = [
-		'rondo_meta_key_value' => "ALTER TABLE {$wpdb->postmeta} ADD INDEX rondo_meta_key_value (meta_key(40), meta_value(20))",
+		'rondo_meta_key_value'   => "ALTER TABLE {$wpdb->postmeta} ADD INDEX rondo_meta_key_value (meta_key(40), meta_value(20))",
+		'rondo_post_id_meta_key' => "ALTER TABLE {$wpdb->postmeta} ADD INDEX rondo_post_id_meta_key (post_id, meta_key(191)), ALGORITHM=INPLACE, LOCK=NONE",
 	];
 
 	foreach ( $indexes as $name => $sql ) {
@@ -1337,7 +1340,11 @@ function rondo_maybe_add_postmeta_indexes() {
 
 		if ( ! $existing ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->query( $sql );
+			$added = $wpdb->query( $sql );
+			if ( $added === false ) {
+				// Leave the previous version in place so a failed migration retries.
+				return;
+			}
 		}
 	}
 
