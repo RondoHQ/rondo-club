@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import api from '@/api/client';
+import SearchableSelect from '@/components/SearchableSelect';
 
 const root = '/rondo/v1/match-compensation';
 const statuses = [['', 'Kies status'], ['basis', 'Basis'], ['bank', 'Bank'], ['not_selected', 'Niet in selectie'], ['injured', 'Geblesseerd'], ['suspended', 'Geschorst'], ['other_team', 'Ander team']];
@@ -45,7 +46,7 @@ function Settings({ settings }) {
     </div>)}
     <button type="button" className="btn-secondary" onClick={() => setTeams((old) => [...old, { team_id: 0, scheme: 'jo23' }])}>Team toevoegen</button>
     {assignments.map((assignment, index) => <div key={index} className="grid sm:grid-cols-3 gap-3">
-      <Select label="Registrator" value={assignment.user_id} onChange={(event) => setAssignments((old) => old.map((row, n) => n === index ? { ...row, user_id: Number(event.target.value) } : row))}><option value={0}>Kies een gebruiker</option>{settings.available_users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}</Select>
+      <SearchableSelect label="Registrator" value={assignment.user_id} options={settings.available_users.map((user) => ({ id: user.id, label: user.name }))} placeholder="Zoek een gebruiker op naam..." emptyMessage="Geen gebruikers gevonden." onChange={(userId) => setAssignments((old) => old.map((row, n) => n === index ? { ...row, user_id: userId } : row))} />
       <fieldset className="text-sm"><legend>Toegewezen teams</legend>{teams.filter((team) => team.team_id).map((team) => <label key={team.team_id} className="block mt-2"><input type="checkbox" checked={assignment.teams.includes(team.team_id)} onChange={(event) => setAssignments((old) => old.map((row, n) => n === index ? { ...row, teams: event.target.checked ? [...row.teams, team.team_id] : row.teams.filter((id) => id !== team.team_id) } : row))} /> {settings.available_teams.find((item) => item.id === team.team_id)?.name}</label>)}</fieldset>
       <button type="button" className="btn-tertiary self-end" onClick={() => setAssignments((old) => old.filter((_, n) => n !== index))}>Toewijzing verwijderen</button>
     </div>)}
