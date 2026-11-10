@@ -12,6 +12,23 @@ use WP_REST_Request;
 
 class PersonMergeTest extends RondoTestCase {
 
+	public function test_membership_end_date_is_a_choice_even_when_one_profile_has_no_end_date(): void {
+		foreach ( [ [ null, '2019-06-15', 'primary', null ], [ null, '2019-06-15', 'duplicate', '20190615' ], [ '2019-06-15', null, 'duplicate', null ] ] as [ $primary_date, $duplicate_date, $choice, $expected ] ) {
+			$primary   = $this->createPerson( [], [ 'lid_tot' => $primary_date ] );
+			$duplicate = $this->createPerson( [], [ 'lid_tot' => $duplicate_date ] );
+			$service   = new PersonMergeService();
+			$preview   = $service->preview( $primary, $duplicate );
+			$conflicts = array_column( $preview['conflicts'], null, 'field' );
+			$this->assertArrayHasKey( 'lid_tot', $conflicts );
+			$this->assertContains( 'Geen einddatum', [ $conflicts['lid_tot']['primary_value'], $conflicts['lid_tot']['duplicate_value'] ] );
+			$this->assertNotContains( 'Lid tot', $preview['automatic_changes'] );
+			$this->assertWPError( $service->merge( $primary, $duplicate, [], 1 ) );
+			$this->assertSame( 'publish', get_post_status( $duplicate ) );
+			$this->assertNotWPError( $service->merge( $primary, $duplicate, [ 'lid_tot' => $choice ], 1 ) );
+			$this->assertSame( $expected, Fields::get_for_post( $primary, 'lid_tot' ) ?: null );
+		}
+	}
+
 	public function test_merge_moves_active_and_archived_sponsor_contacts_and_preserves_passes(): void {
 		$primary_id   = $this->createPerson();
 		$duplicate_id = $this->createPerson();

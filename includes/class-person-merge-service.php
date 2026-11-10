@@ -11,6 +11,8 @@ use Rondo\Core\AccessControl;
 use Rondo\Fields\Fields;
 use Rondo\Fields\Formatter;
 use Rondo\Fields\Registry;
+use Rondo\Matches\CompensationAgreements;
+use Rondo\Matches\CompensationService;
 use Rondo\Sponsors\Relations;
 use Rondo\Users\GuardianAccountService;
 use Rondo\Users\UserProvisioning;
@@ -89,7 +91,7 @@ final class PersonMergeService {
 			'blocking_conflicts'     => $plan['blocking_conflicts'],
 			'automatic_changes'      => $plan['automatic_changes'],
 			'automatic_change_count' => count( $plan['automatic_changes'] ),
-			'references'             => $this->reference_summary( $duplicate_id ),
+			'references'             => array_merge( $this->reference_summary( $duplicate_id ), [ 'match_registrations' => count( $plan['compensation_registrations'] ) ] ),
 		];
 	}
 
@@ -143,6 +145,11 @@ final class PersonMergeService {
 					'fields' => $missing,
 				]
 			);
+		}
+
+		$compensation_result = CompensationService::merge_person_data( $primary_id, $duplicate_id, $resolutions[ CompensationAgreements::FIELD ] ?? '' );
+		if ( is_wp_error( $compensation_result ) ) {
+			return $compensation_result;
 		}
 
 		$update_result = Fields::update_many_for_post( $primary_id, $plan['updates'] );
@@ -227,7 +234,7 @@ final class PersonMergeService {
 
 	/**
 	 * @param array<string,string> $resolutions Conflict choices.
-	 * @return array{updates: array<string,mixed>, sponsor_updates: array<int,array>, conflicts: array<int,array<string,mixed>>, blocking_conflicts: array<int,array<string,mixed>>, automatic_changes: string[]}
+	 * @return array{updates: array<string,mixed>, sponsor_updates: array<int,array>, compensation_registrations: int[], conflicts: array<int,array<string,mixed>>, blocking_conflicts: array<int,array<string,mixed>>, automatic_changes: string[]}
 	 */
 	private function build_plan( int $primary_id, int $duplicate_id, array $resolutions ): array {
 		$primary   = Fields::all_for_post( $primary_id );
@@ -239,6 +246,14 @@ final class PersonMergeService {
 		$skip      = array_flip( array_merge( self::EMAIL_FIELDS, self::PHONE_FIELDS ) );
 
 		$this->plan_contact_fields( $primary, $duplicate, $updates, $automatic, $blocking );
+		$compensation_plan = CompensationService::person_merge_plan( $primary_id, $duplicate_id );
+		if ( is_wp_error( $compensation_plan ) ) {
+			$blocking[] = [
+				'field'   => 'match_compensation_references',
+				'label'   => 'Wedstrijdvergoedingen',
+				'message' => $compensation_plan->get_error_message(),
+			];
+		}
 
 		foreach ( Registry::fields_for( 'person' ) as $field => $definition ) {
 			if ( $definition['storage_name'] === null || isset( $skip[ $field ] ) ) {
@@ -248,6 +263,20 @@ final class PersonMergeService {
 			$primary_value   = $primary[ $field ] ?? null;
 			$duplicate_value = $duplicate[ $field ] ?? null;
 			$label           = (string) ( $definition['label'] ?? $field );
+
+			if ( $field === CompensationAgreements::FIELD ) {
+				// Agreements are a governed choice, never a union of overlapping rows.
+				if ( ! $this->values_equal( $definition, $primary_value, $duplicate_value ) ) {
+					$conflicts[] = [
+						'field'           => $field,
+						'label'           => 'Vergoedingsafspraken behouden',
+						'primary_value'   => CompensationAgreements::merge_summary( $primary_id ),
+						'duplicate_value' => CompensationAgreements::merge_summary( $duplicate_id ),
+						'requires_choice' => true,
+					];
+				}
+				continue;
+			}
 
 			if ( $field === 'person_type' ) {
 				$value = $primary_value === 'member' || $duplicate_value === 'member' ? 'member' : 'contact';
@@ -279,11 +308,13 @@ final class PersonMergeService {
 				continue;
 			}
 
-			if ( $this->values_equal( $definition, $primary_value, $duplicate_value ) || $this->is_empty( $duplicate_value ) ) {
+			// An empty membership end date means ongoing membership, not missing data.
+			$preserve_empty = $field === 'lid_tot';
+			if ( $this->values_equal( $definition, $primary_value, $duplicate_value ) || ( ! $preserve_empty && $this->is_empty( $duplicate_value ) ) ) {
 				continue;
 			}
 
-			if ( $this->is_empty( $primary_value ) ) {
+			if ( ! $preserve_empty && $this->is_empty( $primary_value ) ) {
 				$updates[ $field ] = $duplicate_value;
 				$automatic[]       = $label;
 				continue;
@@ -321,11 +352,12 @@ final class PersonMergeService {
 		$sponsor_updates = $this->plan_sponsor_references( $primary_id, $duplicate_id, $blocking );
 
 		return [
-			'updates'            => $updates,
-			'sponsor_updates'    => $sponsor_updates,
-			'conflicts'          => $conflicts,
-			'blocking_conflicts' => $blocking,
-			'automatic_changes'  => array_values( array_unique( $automatic ) ),
+			'updates'                    => $updates,
+			'sponsor_updates'            => $sponsor_updates,
+			'compensation_registrations' => is_wp_error( $compensation_plan ) ? [] : $compensation_plan,
+			'conflicts'                  => $conflicts,
+			'blocking_conflicts'         => $blocking,
+			'automatic_changes'          => array_values( array_unique( $automatic ) ),
 		];
 	}
 
@@ -538,6 +570,9 @@ final class PersonMergeService {
 			$value = Formatter::for_wire( 'person', [ $name => $value ] )[ $name ];
 		} catch ( \Throwable $error ) {
 			// The stored value is still safe to summarize below.
+		}
+		if ( $name === 'lid_tot' && $this->is_empty( $value ) ) {
+			return __( 'Geen einddatum', 'rondo' );
 		}
 		if ( is_bool( $value ) ) {
 			return $value ? __( 'Ja', 'rondo' ) : __( 'Nee', 'rondo' );
