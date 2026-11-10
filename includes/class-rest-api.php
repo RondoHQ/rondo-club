@@ -6,6 +6,7 @@
 namespace Rondo\REST;
 
 use Rondo\Notifications\EmailTemplate;
+use Rondo\Dashboard\DashboardPeople;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -1466,7 +1467,7 @@ class Api extends Base {
 			return rest_ensure_response( $cached );
 		}
 
-		// Consolidated counts: people, volunteers, and open feedback in a single query.
+		// Count visible people, volunteers and open feedback through cached native queries.
 		$counts              = $this->get_dashboard_counts();
 		$total_people        = (int) $counts->total_people;
 		$total_volunteers    = (int) $counts->total_volunteers;
@@ -1486,18 +1487,7 @@ class Api extends Base {
 				'order'                  => 'DESC',
 				'update_post_meta_cache' => true,
 				'no_found_rows'          => true,
-				'meta_query'             => [
-					'relation' => 'OR',
-					[
-						'key'     => 'former_member',
-						'compare' => 'NOT EXISTS',
-					],
-					[
-						'key'     => 'former_member',
-						'value'   => '1',
-						'compare' => '!=',
-					],
-				],
+				'post__in'               => DashboardPeople::active_ids() ?: [ 0 ],
 			]
 		);
 
@@ -1724,52 +1714,61 @@ class Api extends Base {
 		);
 	}
 
-	/**
-	 * Count current volunteers.
-	 *
-	 * Counts published person posts with huidig-vrijwilliger meta set to true,
-	 * excluding former members.
-	 */
-	/**
-	 * Get people, volunteer, and open feedback counts in a single query.
-	 *
-	 * Replaces three separate WP_Query calls with one raw SQL query.
-	 *
-	 * @return object Object with total_people, total_volunteers, open_feedback_count.
-	 */
+	/** Count visible people with independent, WordPress-cacheable queries. */
 	private function get_dashboard_counts() {
-		global $wpdb;
-
-		// Raw SQL bypasses every query filter, so the person scope has to be
-		// applied by hand — otherwise a member who may see nobody is still told
-		// how many people the club has.
-		$visible_person_ids = \Rondo\Core\AccessControl::visible_person_ids_or_null();
-		$person_scope_sql   = '';
-		if ( $visible_person_ids !== null ) {
-			$ids              = implode( ',', array_map( 'absint', $visible_person_ids ?: [ 0 ] ) );
-			$person_scope_sql = " AND ( p.post_type <> 'person' OR p.ID IN ($ids) )";
-		}
-
-		return $wpdb->get_row(
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IDs are absint-cast above.
-			"SELECT
-				SUM(CASE WHEN p.post_type = 'person'
-					AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')
-					THEN 1 ELSE 0 END) AS total_people,
-				SUM(CASE WHEN p.post_type = 'person'
-					AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')
-					AND hv.meta_value = '1'
-					THEN 1 ELSE 0 END) AS total_volunteers,
-				SUM(CASE WHEN p.post_type = 'rondo_feedback'
-					AND (fs.meta_value IS NULL OR fs.meta_value NOT IN ('resolved','declined'))
-					THEN 1 ELSE 0 END) AS open_feedback_count
-			FROM {$wpdb->posts} p
-			LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'
-			LEFT JOIN {$wpdb->postmeta} hv ON p.ID = hv.post_id AND hv.meta_key = 'huidig-vrijwilliger'
-			LEFT JOIN {$wpdb->postmeta} fs ON p.ID = fs.post_id AND fs.meta_key = 'status'
-			WHERE p.post_status = 'publish'
-			AND p.post_type IN ('person', 'rondo_feedback')" . $person_scope_sql
+		// Keep the legacy count semantics: missing, empty and zero mean active.
+		$people     = array_diff(
+			DashboardPeople::ids(),
+			DashboardPeople::ids(
+				[
+					[
+						'key'     => 'former_member',
+						'value'   => [ '', '0' ],
+						'compare' => 'NOT IN',
+					],
+				]
+				)
 		);
+		$volunteers = DashboardPeople::ids(
+			[
+				[
+					'key'   => 'huidig-vrijwilliger',
+					'value' => '1',
+				],
+			]
+			);
+		$feedback   = [];
+		if ( \Rondo\Core\UserRoles::can_access_section( 'feedback' ) ) {
+			$args     = [
+				'post_type'      => 'rondo_feedback',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+			];
+			$feedback = array_diff(
+				get_posts( $args ),
+				get_posts(
+					array_merge(
+					$args,
+					[
+						'meta_query' => [
+							[
+								'key'     => 'status',
+								'value'   => [ 'resolved', 'declined' ],
+								'compare' => 'IN',
+							],
+						],
+					]
+					)
+					)
+			);
+		}
+		return (object) [
+			'total_people'        => count( $people ),
+			'total_volunteers'    => count( array_intersect( $people, $volunteers ) ),
+			'open_feedback_count' => count( $feedback ),
+		];
 	}
 
 	/**
@@ -1922,76 +1921,45 @@ class Api extends Base {
 	 * @return array Array of person summaries with last activity info
 	 */
 	private function get_recently_contacted_people( $limit = 5 ) {
-		global $wpdb;
-
-		// Check if user has access (all approved users see all data)
-		if ( ! is_user_logged_in() ) {
+		if ( ! is_user_logged_in() || $limit <= 0 ) {
+			return [];
+		}
+		$people = DashboardPeople::active_ids();
+		if ( ! $people ) {
 			return [];
 		}
 
-		// Query to get people with their most recent activity date
-		// No post__in filter needed - approved users see all people
-		// Exclude former members from recently contacted
-		$query = $wpdb->prepare(
-			"SELECT c.comment_post_ID as person_id, MAX(cm.meta_value) as last_activity_date
-             FROM {$wpdb->comments} c
-             INNER JOIN {$wpdb->commentmeta} cm ON c.comment_ID = cm.comment_id AND cm.meta_key = 'activity_date'
-             INNER JOIN {$wpdb->posts} p ON c.comment_post_ID = p.ID
-             LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'
-             WHERE c.comment_type = 'rondo_activity'
-             AND c.comment_approved = '1'
-             AND p.post_type = 'person'
-             AND p.post_status = 'publish'
-             AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')
-             GROUP BY c.comment_post_ID
-             ORDER BY last_activity_date DESC
-             LIMIT %d",
-			$limit
-		);
-
-		$results = $wpdb->get_results( $query );
-
-		if ( empty( $results ) ) {
-			return [];
-		}
-
-		$person_ids = array_map(
-			function ( $row ) {
-				return (int) $row->person_id;
-			},
-			$results
-		);
-
-		// Single query with meta cache warmup.
-		$people = get_posts(
-			[
-				'post__in'               => $person_ids,
-				'post_type'              => 'person',
-				'suppress_filters'       => false,
-				'post_status'            => 'publish',
-				'posts_per_page'         => count( $person_ids ),
-				'orderby'                => 'post__in',
-				'update_post_meta_cache' => true,
-				'no_found_rows'          => true,
-			]
-		);
-
-		$people_by_id = [];
-		foreach ( $people as $person ) {
-			$people_by_id[ $person->ID ] = $person;
-		}
-
+		// Order activities first and skip people already found. Each small query
+		// returns the next person's latest activity without a postmeta join/group.
 		$recently_contacted = [];
-		foreach ( $results as $row ) {
-			if ( isset( $people_by_id[ (int) $row->person_id ] ) ) {
-				$summary                       = $this->format_person_summary( $people_by_id[ (int) $row->person_id ] );
-				$summary['last_activity_date'] = $row->last_activity_date;
-				$recently_contacted[]          = $summary;
+		while ( $people && count( $recently_contacted ) < $limit ) {
+			$activities = get_comments(
+				[
+					'type'                      => 'rondo_activity',
+					'status'                    => 'approve',
+					'post__in'                  => $people,
+					'meta_key'                  => 'activity_date',
+					'orderby'                   => [
+						'meta_value' => 'DESC',
+						'comment_ID' => 'DESC',
+					],
+					'number'                    => 1,
+					'update_comment_meta_cache' => true,
+				]
+			);
+			if ( ! $activities ) {
+				break;
 			}
+			$activity                      = $activities[0];
+			$person_id                     = (int) $activity->comment_post_ID;
+			$summary                       = $this->format_person_summary( get_post( $person_id ) );
+			$summary['last_activity_date'] = get_comment_meta( $activity->comment_ID, 'activity_date', true );
+			$recently_contacted[]          = $summary;
+			$people                        = array_values( array_diff( $people, [ $person_id ] ) );
 		}
-
 		return $recently_contacted;
 	}
+
 	/**
 	 * Get club configuration settings
 	 *
