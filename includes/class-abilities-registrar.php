@@ -174,7 +174,8 @@ final class Registrar {
 				__( 'Update a Rondo Record', 'rondo' ),
 				$this->update_record_description(),
 				\WPAgentAbilities\Abilities\Definition::RISK_WRITE,
-				[ $this, 'can_update_record' ],
+				// Discovery has no record input; execution still checks the selected record.
+				fn( $input = null ) => $input === null ? $this->can_read_records() : $this->can_update_record( $input ),
 				[ $this, 'update_record' ],
 				$this->update_record_input_schema(),
 				$this->record_output_schema()
