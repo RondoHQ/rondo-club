@@ -2324,6 +2324,12 @@ class People extends Base {
 		$select_fields .= ', fn.meta_value AS first_name, ix.meta_value AS infix, ln.meta_value AS last_name';
 		$select_fields .= ', tm.meta_value AS team_id';
 
+		// Legacy company-only contacts remain available by ID, but do not belong
+		// in the people directory or its CSV export. Apply this before pagination
+		// and counting; people with a company and either personal name stay visible.
+		$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} company ON p.ID = company.post_id AND company.meta_key = 'company_name'";
+		$where_clauses[] = "(TRIM(COALESCE(company.meta_value, '')) = '' OR TRIM(COALESCE(fn.meta_value, '')) != '' OR TRIM(COALESCE(ln.meta_value, '')) != '')";
+
 		if ( $first_name_filter !== '' ) {
 			$where_clauses[]  = 'fn.meta_value LIKE %s';
 			$prepare_values[] = '%' . $wpdb->esc_like( $first_name_filter ) . '%';
