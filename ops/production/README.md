@@ -71,6 +71,20 @@ Do not enable the unsupported `WP_REDIS_GRACEFUL` option.
 - Theme deploys already run `wp cache flush`; the independent Redis service,
   plugin and drop-in survive atomic theme releases.
 
+## OPcache across releases
+
+Atomic release paths are unique. On 2026-11-10, nine old releases filled the
+256 MiB OPcache and 32 MiB string buffer, preventing the current release from
+being cached. A graceful FPM reload clears that shared cache while allowing
+in-flight requests to finish.
+
+`bin/deploy.sh` now reloads the site's isolated FPM service after activation and
+after rollback. Install `php-deploy-reload.sudoers` as
+`/etc/sudoers.d/rondo-php-deploy-reload` (root:root, 0440), first checking it with
+`visudo -cf`. Each deployment account may reload only its own service. Other
+hosting accounts retain their existing deployment behavior. A failed reload
+fails deployment and triggers rollback; it must not be silently skipped.
+
 Configuration backups from initial rollout are root-only in
 `/etc/rondo/performance-backup-20261110/`. To disable Redis, run `wp redis disable`
 while Redis is healthy, then stop its service. Treat cache disable/flush as a
