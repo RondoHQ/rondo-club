@@ -15,6 +15,7 @@ const REFERENCE_LABELS = {
   invoices: 'facturen',
   cases: 'tuchtzaken',
   sponsors: 'sponsorkoppelingen',
+  match_registrations: 'wedstrijdregistraties',
 };
 
 function PersonSummary({ person, selected, onSelect, label }) {
@@ -100,8 +101,7 @@ export default function PersonMergeModal({ currentPerson, onClose, onMerged }) {
   const [candidate, setCandidate] = useState(null);
   const [keepCurrent, setKeepCurrent] = useState(true);
   const [resolutions, setResolutions] = useState({});
-  const [confirmed, setConfirmed] = useState(false);
-  const [knvbOverrideKey, setKnvbOverrideKey] = useState(null);
+  const [confirmedKey, setConfirmedKey] = useState(null);
   const [submissionError, setSubmissionError] = useState('');
   const deferredSearch = useDeferredValue(search.trim().toLowerCase());
 
@@ -151,7 +151,7 @@ export default function PersonMergeModal({ currentPerson, onClose, onMerged }) {
       const conflictChoices = Object.fromEntries(
         (previewQuery.data?.conflicts || []).map((conflict) => [
           conflict.field,
-          resolutions[conflict.field] || 'primary',
+          resolutions[conflict.field] || (conflict.requires_choice ? '' : 'primary'),
         ])
       );
       return (
@@ -185,16 +185,14 @@ export default function PersonMergeModal({ currentPerson, onClose, onMerged }) {
     setCandidate(person);
     setKeepCurrent(true);
     setResolutions({});
-    setConfirmed(false);
-    setKnvbOverrideKey(null);
+    setConfirmedKey(null);
     setSubmissionError('');
   };
 
   const changePrimary = (value) => {
     setKeepCurrent(value);
     setResolutions({});
-    setConfirmed(false);
-    setKnvbOverrideKey(null);
+    setConfirmedKey(null);
     setSubmissionError('');
   };
 
@@ -211,13 +209,15 @@ export default function PersonMergeModal({ currentPerson, onClose, onMerged }) {
 
   const preview = previewQuery.data;
   const knvbConflict = preview?.blocking_conflicts?.find((conflict) => conflict.field === 'knvb_id');
-  const knvbConflictKey = knvbConflict
-    ? JSON.stringify([primaryId, duplicateId, knvbConflict.primary_value, knvbConflict.duplicate_value])
+  const confirmationKey = preview
+    ? JSON.stringify([primaryId, duplicateId, preview.conflicts, preview.blocking_conflicts, resolutions])
     : null;
-  const overrideKnvbId = knvbConflictKey !== null && knvbOverrideKey === knvbConflictKey;
+  const confirmed = confirmationKey !== null && confirmedKey === confirmationKey;
+  const overrideKnvbId = Boolean(knvbConflict && confirmed);
   const blockers = (preview?.blocking_conflicts || []).filter((conflict) => conflict.field !== 'knvb_id');
-  const hasBlockers = blockers.length > 0 || (knvbConflict && !overrideKnvbId);
-  const canSubmit = preview && !previewQuery.isFetching && !previewQuery.isError && !hasBlockers && confirmed && !mergeMutation.isPending;
+  const hasBlockers = blockers.length > 0;
+  const hasMissingChoices = (preview?.conflicts || []).some((conflict) => conflict.requires_choice && !resolutions[conflict.field]);
+  const canSubmit = preview && !previewQuery.isFetching && !previewQuery.isError && !hasBlockers && !hasMissingChoices && confirmed && !mergeMutation.isPending;
   const referenceEntries = Object.entries(preview?.references || {}).filter(([, count]) => count > 0);
 
   return (
@@ -328,10 +328,11 @@ export default function PersonMergeModal({ currentPerson, onClose, onMerged }) {
                 {preview?.conflicts?.length ? (
                   <section>
                     <h3 className="font-semibold text-gray-900 dark:text-gray-100">Kies bij verschillen</h3>
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">Standaard blijft de waarde van het gekozen hoofdprofiel staan.</p>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">Standaard blijft de waarde van het hoofdprofiel staan.
+                      {preview.conflicts.some((conflict) => conflict.requires_choice) ? ' Voor vergoedingsafspraken maak je zelf een keuze.' : ''}</p>
                     <div className="mt-3 space-y-3">
                       {preview.conflicts.map((conflict) => {
-                        const choice = resolutions[conflict.field] || 'primary';
+                        const choice = resolutions[conflict.field] || (conflict.requires_choice ? '' : 'primary');
                         return (
                           <fieldset key={conflict.field} className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                             <legend className="px-1 text-sm font-semibold text-gray-900 dark:text-gray-100">{conflict.label}</legend>
@@ -345,7 +346,7 @@ export default function PersonMergeModal({ currentPerson, onClose, onMerged }) {
                                     <input type="radio" name={`merge-${conflict.field}`} value={value} checked={choice === value} onChange={() => setResolutions((current) => ({ ...current, [conflict.field]: value }))} className="mt-1" />
                                     <span>
                                       <span className="block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</span>
-                                      <span className="mt-1 block break-words text-sm text-gray-900 dark:text-gray-100">{text || 'Leeg'}</span>
+                                      <span className="mt-1 block whitespace-pre-line break-words text-sm text-gray-900 dark:text-gray-100">{text || 'Leeg'}</span>
                                     </span>
                                   </span>
                                 </label>
@@ -355,29 +356,6 @@ export default function PersonMergeModal({ currentPerson, onClose, onMerged }) {
                         );
                       })}
                     </div>
-                  </section>
-                ) : null}
-
-                {knvbConflict ? (
-                  <section className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200">
-                    <h3 className="font-semibold">Verschillende KNVB-ID’s</h3>
-                    <p className="mt-2">
-                      Het hoofdprofiel behoudt KNVB-ID <strong>{knvbConflict.primary_value}</strong>.
-                      {' '}Het dubbele profiel met KNVB-ID <strong>{knvbConflict.duplicate_value}</strong> gaat naar de prullenbak.
-                    </p>
-                    <label className="mt-3 flex items-start gap-2">
-                      <input
-                        type="checkbox"
-                        checked={overrideKnvbId}
-                        onChange={(event) => {
-                          setKnvbOverrideKey(event.target.checked ? knvbConflictKey : null);
-                          setConfirmed(false);
-                        }}
-                        disabled={mergeMutation.isPending}
-                        className="mt-1"
-                      />
-                      <span>Ik heb gecontroleerd dat dit dezelfde persoon is en wil het verschil in KNVB-ID overrulen.</span>
-                    </label>
                   </section>
                 ) : null}
 
@@ -396,13 +374,37 @@ export default function PersonMergeModal({ currentPerson, onClose, onMerged }) {
                 ) : null}
 
                 {preview && !hasBlockers ? (
-                  <label className="flex items-start gap-3 rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-900/20 dark:text-amber-200">
-                    <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
-                    <span>
-                      <input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} className="mr-2" />
-                      Ik heb gecontroleerd welk profiel blijft bestaan en welke waarden worden bewaard.
-                    </span>
-                  </label>
+                  <section className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-900/20 dark:text-amber-200">
+                    {knvbConflict ? (
+                      <div className="mb-3 flex items-start gap-3">
+                        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+                        <div>
+                          <h3 className="font-semibold">Verschillende KNVB-ID’s</h3>
+                          <p className="mt-1">
+                            Het hoofdprofiel behoudt KNVB-ID <strong>{knvbConflict.primary_value}</strong>.
+                            {' '}Het dubbele profiel met KNVB-ID <strong>{knvbConflict.duplicate_value}</strong> gaat naar de prullenbak.
+                          </p>
+                        </div>
+                      </div>
+                    ) : null}
+                    <label className="flex cursor-pointer items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={confirmed}
+                        onChange={(event) => setConfirmedKey(event.target.checked ? confirmationKey : null)}
+                        disabled={mergeMutation.isPending || previewQuery.isFetching || hasMissingChoices}
+                        className="mt-1 shrink-0"
+                      />
+                      <span>
+                        {knvbConflict
+                          ? 'Dit is dezelfde persoon, ondanks de verschillende KNVB-ID’s. Ik heb gecontroleerd welk profiel en welke gegevens behouden blijven.'
+                          : 'Ik heb gecontroleerd welk profiel en welke gegevens behouden blijven.'}
+                      </span>
+                    </label>
+                    {hasMissingChoices ? (
+                      <p className="mt-2">Kies eerst welke vergoedingsafspraken behouden blijven.</p>
+                    ) : null}
+                  </section>
                 ) : null}
 
                 {submissionError ? <p className="text-sm text-red-600 dark:text-red-400">{submissionError}</p> : null}
