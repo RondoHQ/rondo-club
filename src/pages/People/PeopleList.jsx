@@ -798,6 +798,7 @@ export default function PeopleList() {
   );
 
   const { data, isLoading, isFetching, error } = useFilteredPeople({
+    excludeCompanies: true,
     page,
     perPage: 100,
     ownership: 'all',
@@ -1329,6 +1330,7 @@ export default function PeopleList() {
     setIsExporting(true);
     try {
       const allPeople = await fetchAllFilteredPeople({
+        excludeCompanies: true,
         perPage: 100,
         ownership: 'all',
         modifiedDays: lastModifiedFilter ? parseInt(lastModifiedFilter, 10) : null,
