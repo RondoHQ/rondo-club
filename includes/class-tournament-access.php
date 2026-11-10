@@ -82,21 +82,27 @@ final class TournamentAccess {
 			return false;
 		}
 
-		$ids = get_posts(
-			[
-				'post_type'        => TournamentService::ENTRY_POST_TYPE,
-				'post_status'      => 'publish',
-				'posts_per_page'   => -1,
-				'fields'           => 'ids',
-				'no_found_rows'    => true,
-				'suppress_filters' => true,
-				'meta_query'       => self::assignment_query( $user_id ),
-			]
-		);
-
-		foreach ( $ids as $entry_id ) {
-			if ( self::is_assigned( (int) $entry_id, $user_id ) ) {
-				return true;
+		// Keep separate EXISTS queries indexable instead of OR-ing two joins
+		// across every metadata row belonging to an entry.
+		foreach ( self::assignment_query( $user_id ) as $clause ) {
+			if ( ! is_array( $clause ) ) {
+				continue;
+			}
+			$ids = get_posts(
+				[
+					'post_type'        => TournamentService::ENTRY_POST_TYPE,
+					'post_status'      => 'publish',
+					'posts_per_page'   => -1,
+					'fields'           => 'ids',
+					'no_found_rows'    => true,
+					'suppress_filters' => true,
+					'meta_query'       => [ $clause ],
+				]
+			);
+			foreach ( $ids as $entry_id ) {
+				if ( self::is_assigned( (int) $entry_id, $user_id ) ) {
+					return true;
+				}
 			}
 		}
 		return false;
