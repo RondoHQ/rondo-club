@@ -1,0 +1,25 @@
+[Unit]
+Description=Rondo production Redis object cache
+After=network.target
+
+[Service]
+Type=simple
+User=redis
+Group=rondo-prod
+ExecStart=/usr/bin/redis-server /etc/rondo/redis-prod.conf
+Restart=on-failure
+RestartSec=2
+RuntimeDirectory=rondo-redis-prod
+RuntimeDirectoryMode=0750
+UMask=0007
+MemoryHigh=640M
+MemoryMax=768M
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectSystem=strict
+RestrictAddressFamilies=AF_UNIX
+
+[Install]
+WantedBy=multi-user.target
