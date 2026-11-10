@@ -70,6 +70,21 @@ final class PlannerContext {
 		]
 		);
 		$tokens = [];
+		$people = [];
+		foreach ( $this->units as $unit ) {
+			$people = array_merge( $people, $unit['person_ids'] );
+		}
+		foreach ( array_unique( $people ) as $person ) {
+			foreach ( VolunteerDutyCredits::for_season( (int) $person, $season ) as $credit ) {
+				$date                  = new \DateTimeImmutable( $credit['date'], wp_timezone() );
+				$this->load[ $person ] = ( $this->load[ $person ] ?? 0 ) + 1;
+				$tokens[ $person ][]   = [
+					'completed' => true,
+					'start'     => $date,
+					'half'      => (int) $date->format( 'n' ) >= 7 ? 0 : 1,
+				];
+			}
+		}
 		foreach ( $shifts as $shift ) {
 			$interval  = PlannerAvailability::interval( $shift->ID );
 			$status    = get_post_meta( $shift->ID, 'status', true );

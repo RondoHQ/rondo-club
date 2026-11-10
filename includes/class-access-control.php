@@ -132,7 +132,7 @@ class AccessControl {
 	 * ledenadministratie list renders it as a badge.
 	 */
 	private const SENSITIVE_FIELD_GROUPS = [
-		'planner'    => [ 'planner_excluded', 'planner_exclusion_reason', 'planner_excluded_since' ],
+		'planner'    => [ 'planner_excluded', 'planner_exclusion_reason', 'planner_excluded_since', 'volunteer_duty_credits' ],
 		'engagement' => [ 'role_engagements' ],
 		'bank'       => [ 'iban', 'bank_account_holder', 'nmbrs_name', 'match_compensation_agreements' ],
 		'finance'    => [
