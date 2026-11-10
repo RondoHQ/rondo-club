@@ -2,7 +2,8 @@
 
 These files record the configuration applied to `srv1.rondo` on 2026-11-10.
 They are host configuration, not files automatically installed by theme deployment.
-Production alone uses this cache; demo cannot access its Unix socket.
+Production alone uses this instance; demo cannot access its Unix socket.
+[Demo has a separate Redis instance](../demo/README.md).
 
 ## Choice
 

@@ -1,0 +1,25 @@
+[Unit]
+Description=Rondo demo Redis object cache
+After=network.target
+
+[Service]
+Type=simple
+User=redis
+Group=rondo-demo
+ExecStart=/usr/bin/redis-server /etc/rondo/redis-demo.conf
+Restart=on-failure
+RestartSec=2
+RuntimeDirectory=rondo-redis-demo
+RuntimeDirectoryMode=0750
+UMask=0007
+MemoryHigh=192M
+MemoryMax=256M
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectSystem=strict
+RestrictAddressFamilies=AF_UNIX
+
+[Install]
+WantedBy=multi-user.target
