@@ -10,9 +10,10 @@ const engagementLabels = {
 };
 
 export function RoleEngagementBadges({ data, isStaff }) {
-  const types = data ? Object.keys(engagementLabels).filter(type => data.summary[type] > 0) : [];
-  if (types.length === 0 && !isStaff) return null;
-  return (types.length ? types : ['staff']).map(type => <span key={type} className="inline-flex rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200">{type === 'staff' ? 'Kaderlid' : type === 'unknown' ? 'Kaderlid · functietype onbekend' : engagementLabels[type]}</span>);
+  const hasRoles = data && Object.keys(engagementLabels).some(type => data.summary[type] > 0);
+  if (!hasRoles && !isStaff) return null;
+  const isPaid = data?.summary.employee > 0 || data?.summary.compensated > 0;
+  return <span className="inline-flex rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200">{isPaid ? 'Kaderlid · Betaald' : 'Kaderlid'}</span>;
 }
 
 export function RoleEngagementControl({ personId, role, version, canEdit }) {
