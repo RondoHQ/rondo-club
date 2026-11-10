@@ -110,6 +110,37 @@ clear_remote_caches() {''' + function + '\n}\nclear_remote_caches\n'
         self.assertEqual(6, code)
         self.assertEqual(['cache flush'], calls)
 
+    def php_reload(self, user, failure=0):
+        source = (ROOT / 'bin/deploy.sh').read_text()
+        function = source.split('reload_remote_php() {', 1)[1].split('\n}', 1)[0]
+        self.env.update(DEPLOY_SSH_USER=user, RELOAD_EXIT=str(failure),
+                        CALLS=str(self.base / 'reload-calls'))
+        script = '''retry_remote() { printf '%s\\n' "${@: -1}" >> "$CALLS"; return "$RELOAD_EXIT"; }
+SSH_CMD=(ssh)
+REMOTE_TARGET=unused
+reload_remote_php() {''' + function + '\n}\nreload_remote_php\n'
+        result = subprocess.run(['bash', '-c', script], env=self.env)
+        calls = Path(self.env['CALLS'])
+        return result.returncode, calls.read_text().splitlines() if calls.exists() else []
+
+    def test_each_site_reloads_only_its_own_fpm_service(self):
+        for site in ('prod', 'demo'):
+            with self.subTest(site=site):
+                (self.base / 'reload-calls').unlink(missing_ok=True)
+                code, calls = self.php_reload('rondo-' + site)
+                self.assertEqual(0, code)
+                self.assertEqual(['sudo -n /usr/bin/systemctl reload rondo-php@' + site + '.service'], calls)
+
+    def test_other_hosts_do_not_receive_a_privileged_reload(self):
+        code, calls = self.php_reload('legacy-host-account')
+        self.assertEqual(0, code)
+        self.assertEqual([], calls)
+
+    def test_reload_failure_is_propagated_to_deployment(self):
+        code, calls = self.php_reload('rondo-demo', failure=7)
+        self.assertEqual(7, code)
+        self.assertEqual(1, len(calls))
+
 
 if __name__ == '__main__':
     unittest.main()

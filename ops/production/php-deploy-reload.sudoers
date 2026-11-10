@@ -1,0 +1,3 @@
+# Each account may gracefully reload only its own PHP-FPM service.
+rondo-prod ALL=(root) NOPASSWD: /usr/bin/systemctl reload rondo-php@prod.service
+rondo-demo ALL=(root) NOPASSWD: /usr/bin/systemctl reload rondo-php@demo.service

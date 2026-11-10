@@ -281,6 +281,20 @@ clear_remote_caches() {
         "cd $DEPLOY_REMOTE_WP_PATH && wp cache flush && if wp cli has-command 'sg purge' >/dev/null 2>&1; then wp sg purge; fi"
 }
 
+# Atomic releases use unique paths. Keep old bytecode from filling the FPM
+# cache; resetting OPcache in WP-CLI only affects the separate CLI process.
+# srv1 grants each deployment account permission to reload only its own pool.
+reload_remote_php() {
+    local php_service
+    case "$DEPLOY_SSH_USER" in
+        rondo-prod) php_service="rondo-php@prod.service" ;;
+        rondo-demo) php_service="rondo-php@demo.service" ;;
+        *) return 0 ;;
+    esac
+    retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
+        "sudo -n /usr/bin/systemctl reload $php_service"
+}
+
 cleanup_deployment() {
     local status=$?
     trap - EXIT
@@ -288,6 +302,7 @@ cleanup_deployment() {
     if [ "$DEPLOY_FINISHED" = false ] && [ "$HELPER_UPLOADED" = true ]; then
         echo "Deployment failed; restoring the previous release if activated." >&2
         if remote_release rollback; then
+            reload_remote_php || true
             retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
                 "cd $DEPLOY_REMOTE_WP_PATH && wp rewrite flush --hard" || true
             clear_remote_caches || true
@@ -339,6 +354,7 @@ echo "Preparing and checking the inactive release..."
 remote_release prepare "$REMOTE_ARCHIVE" "$ARCHIVE_SHA" "$PRUNE_DELETED"
 echo "Activating the complete release..."
 remote_release activate
+reload_remote_php
 
 retry_remote "${SSH_CMD[@]}" "$REMOTE_TARGET" \
     "cd $DEPLOY_REMOTE_WP_PATH && wp rewrite flush --hard"
