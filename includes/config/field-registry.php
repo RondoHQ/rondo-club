@@ -1782,6 +1782,58 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
           'type' => 'date_time_picker',
           'wire_format' => 'Y-m-d\\TH:i:sP',
         ),
+        'volunteer_duty_credits' =>
+        array (
+          'canonical_name' => 'volunteer_duty_credits',
+          'storage_name' => 'volunteer_duty_credits',
+          'label' => 'Toegekende diensttegoeden',
+          'type' => 'repeater',
+          'read_only' => true,
+          'sub_fields' =>
+          array (
+            'date' =>
+            array (
+              'canonical_name' => 'date',
+              'storage_name' => 'date',
+              'type' => 'date_picker',
+              'required' => true,
+              'storage_format' => 'Ymd',
+              'wire_format' => 'Y-m-d',
+            ),
+            'reason' =>
+            array (
+              'canonical_name' => 'reason',
+              'storage_name' => 'reason',
+              'type' => 'textarea',
+              'required' => true,
+            ),
+            'reference' =>
+            array (
+              'canonical_name' => 'reference',
+              'storage_name' => 'reference',
+              'type' => 'text',
+              'required' => true,
+            ),
+            'recorded_at' =>
+            array (
+              'canonical_name' => 'recorded_at',
+              'storage_name' => 'recorded_at',
+              'type' => 'date_time_picker',
+              'required' => true,
+              'storage_format' => 'Y-m-d H:i:s',
+              'wire_format' => 'Y-m-d\\TH:i:sP',
+              'timezone' => 'site',
+            ),
+            'recorded_by' =>
+            array (
+              'canonical_name' => 'recorded_by',
+              'storage_name' => 'recorded_by',
+              'type' => 'number',
+              'required' => true,
+              'min' => 1,
+            ),
+          ),
+        ),
         'planner_excluded' =>
         array (
           'canonical_name' => 'planner_excluded',
