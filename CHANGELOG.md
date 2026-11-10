@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [35.170.2] - 2026-11-10
 
+### Changed
+
+- Configure separate Redis object caches for production and demo, shared by each site's web requests and WP-CLI; increase production to six PHP workers with larger OPcache buffers and bounded service memory.
+
 ### Fixed
 
 - Speed up dashboard counts, recent contacts, anniversaries and tournament assignment checks with small native WordPress queries that reuse the object cache, retaining person visibility, former-member exclusions and assignment verification.
@@ -15,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Configure an isolated production Redis object cache shared by web requests and WP-CLI, six PHP workers, and larger OPcache buffers on srv1; retain bounded service memory and separate demo access.
+- Simplify the person profile staff badge to “Kaderlid”, adding “Betaald” only for current employment or compensated volunteer roles; omit unpaid and unclassified labels.
 
 ## [35.170.0] - 2026-11-10
 
