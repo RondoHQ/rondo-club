@@ -26,6 +26,65 @@ final class CompensationAgreements {
 			return $pending['old']; }
 		return Formatter::for_wire( 'person', [ self::FIELD => Fields::get_for_post( $id, self::FIELD ) ] )[ self::FIELD ];
 	}
+
+	/** Describe the actual terms rather than an unhelpful repeater item count. */
+	public static function merge_summary( int $id ): string {
+		$lines = [];
+		foreach ( self::read( $id ) as $row ) {
+			$lines[] = sprintf(
+				'%s: vanaf %s, %s; %s',
+				html_entity_decode( get_the_title( $row['team_id'] ), ENT_QUOTES, 'UTF-8' ),
+				$row['valid_from'],
+				$row['valid_until'] ? 't/m ' . $row['valid_until'] : 'zonder einddatum',
+				$row['payment_route'] === 'payroll' ? 'Nmbrs, personeelsnummer ' . $row['nmbrs_employee_number'] : 'SEPA'
+			);
+		}
+		return $lines ? implode( "\n", $lines ) : 'Geen vergoedingsafspraken';
+	}
+
+	/** Copy one explicitly chosen, existing set under the compensation merge lock. */
+	public static function merge_into( int $primary_id, int $duplicate_id, string $choice ) {
+		$primary   = self::read( $primary_id );
+		$duplicate = self::read( $duplicate_id );
+		if ( $primary === $duplicate ) {
+			return true;
+		}
+		if ( ! current_user_can( 'manage_options' ) || ! PersonBankAccount::can_write( $primary_id ) || ! PersonBankAccount::can_write( $duplicate_id ) ) {
+			return CompensationService::error( 'Geen toegang tot deze afspraken.', 403 );
+		}
+		if ( ! in_array( $choice, [ 'primary', 'duplicate' ], true ) ) {
+			return CompensationService::error( 'Kies welke vergoedingsafspraken behouden blijven.' );
+		}
+		if ( $choice === 'primary' ) {
+			return true;
+		}
+		// These are already validated agreements from the selected person. Keep the
+		// source intact for recovery; never combine independently valid date ranges.
+		self::$writing = true;
+		try {
+			$result = Fields::update_many_for_post( $primary_id, [ self::FIELD => Fields::get_for_post( $duplicate_id, self::FIELD ) ] );
+		} finally {
+			self::$writing = false;
+		}
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		if ( self::read( $primary_id ) !== $duplicate ) {
+			return CompensationService::error( 'De gekozen vergoedingsafspraken konden niet volledig worden overgenomen.', 500 );
+		}
+		add_post_meta(
+			$primary_id,
+			'_match_agreement_audit',
+			[
+				'actor'       => get_current_user_id(),
+				'at'          => current_datetime()->format( DATE_ATOM ),
+				'before_hash' => hash( 'sha256', wp_json_encode( $primary ) ),
+				'after_hash'  => hash( 'sha256', wp_json_encode( $duplicate ) ),
+				'merged_from' => $duplicate_id,
+			]
+		);
+		return true;
+	}
 	public static function people(): array {
 		$people = [];
 		// Separate these conditions: an OR with EXISTS joins every person's meta rows twice.
