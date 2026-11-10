@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.170.8] - 2026-11-10
+
+### Fixed
+
+- Show a clear warning when registering match compensation for cup or friendly matches and disable saving; enforce the same restriction in the API, including Sportlink source checks. League and playoff matches remain supported (feedback #15065).
+
 ## [35.170.7] - 2026-11-10
 
 ### Fixed
