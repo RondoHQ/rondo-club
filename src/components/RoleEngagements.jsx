@@ -12,8 +12,10 @@ const engagementLabels = {
 export function RoleEngagementBadges({ data, isStaff }) {
   const hasRoles = data && Object.keys(engagementLabels).some(type => data.summary[type] > 0);
   if (!hasRoles && !isStaff) return null;
-  const isPaid = data?.summary.employee > 0 || data?.summary.compensated > 0;
-  return <span className="inline-flex rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200">{isPaid ? 'Kaderlid · Betaald' : 'Kaderlid'}</span>;
+  const labels = ['Kaderlid'];
+  if (data?.summary.employee > 0) labels.push('Betaald');
+  if (data?.summary.compensated > 0) labels.push('Vrijwilligersvergoeding');
+  return <span className="inline-flex rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200">{labels.join(' · ')}</span>;
 }
 
 export function RoleEngagementControl({ personId, role, version, canEdit }) {
