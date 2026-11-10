@@ -96,6 +96,65 @@ class MatchCompensationTest extends RondoTestCase {
 		$this->assertNotInstanceOf( \WP_Error::class, $result, is_wp_error( $result ) ? $result->get_error_message() : '' );
 		return $result;
 	}
+	public function test_cup_and_friendly_registrations_are_rejected_without_writes(): void {
+		foreach ( [ 'beker', 'oefen' ] as $category ) {
+			foreach ( [ 'draft', 'completed' ] as $phase ) {
+				$input                       = $this->input();
+				$input['fields']['category'] = $category;
+				$input['fields']['phase']    = $phase;
+				$request                     = new \WP_REST_Request( 'POST', '/rondo/v1/match-compensation/registrations' );
+				$request->set_header( 'Content-Type', 'application/json' );
+				$request->set_body( wp_json_encode( $input ) );
+				$response = rest_do_request( $request );
+				$this->assertSame( 400, $response->get_status() );
+				$this->assertStringContainsString( 'Voor beker- en oefenwedstrijden', $response->get_data()['message'] );
+				$this->assertSame( [], Service::registrations( $this->team ) );
+			}
+		}
+		$input                       = $this->input();
+		$input['fields']['category'] = 'nacompetitie';
+		$registration                = Service::registration( 0, $input );
+		$this->assertNotWPError( $registration );
+		$input['request_id']         = wp_generate_uuid4();
+		$input['expected_version']   = $registration['version'];
+		$input['fields']['category'] = 'beker';
+		$this->assertWPError( Service::registration( $registration['id'], $input ) );
+		$this->assertSame( $registration, Service::record( $registration['id'] ) );
+	}
+
+	public function test_excluded_source_category_cannot_be_overridden_as_competition(): void {
+		$feed = [
+			'matches' => [
+				[
+					'id'          => 'sportlink:cup',
+					'date'        => '2026-09-01',
+					'home'        => true,
+					'home_team'   => 'AWC',
+					'away_team'   => 'Bezoekers',
+					'competition' => 'Beker',
+					'result'      => '3-0',
+					'cancelled'   => false,
+				],
+			],
+			'matched' => true,
+			'stale'   => false,
+		];
+		add_filter(
+			'rondo_match_compensation_feed',
+			static function () use ( &$feed ) {
+				return $feed;
+			},
+			20
+			);
+		foreach ( [ 'Beker', 'Oefenwedstrijd' ] as $category ) {
+			$feed['matches'][0]['competition'] = $category;
+			$result                            = Service::registration( 0, $this->input( 'sportlink:cup' ) );
+			$this->assertWPError( $result );
+			$this->assertStringContainsString( 'Voor beker- en oefenwedstrijden', $result->get_error_message() );
+			$this->assertSame( [], Service::registrations( $this->team ) );
+		}
+	}
+
 	public function test_registration_replay_storage_and_duplicate_prevention(): void {
 		$input = $this->input();
 		$first = Service::registration( 0, $input );

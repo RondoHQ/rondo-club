@@ -124,8 +124,9 @@ function Agreements({ team }) {
   </section>;
 }
 
-function RegistrationForm({ teamId, initial, roster, onSaved }) {
+function RegistrationForm({ teamId, initial, roster, sourceCategory, onSaved }) {
   const [form, setForm] = useState(initial);
+  const excludedCategory = [form.category, sourceCategory].some((value) => ['beker', 'oefen'].includes(value));
   const [search, setSearch] = useState('');
   const [guestSearch, setGuestSearch] = useState('');
   const save = useAction(initial.id ? `/registrations/${initial.id}` : '/registrations', initial.id ? 'patch' : 'post');
@@ -135,11 +136,13 @@ function RegistrationForm({ teamId, initial, roster, onSaved }) {
     if (!form.selection.some((row) => row.person_id === person.id)) update({ selection: [...form.selection, { person_id: person.id, player_name: person.name || person.title?.rendered || '', participation: '', guest }] });
   };
   const submit = (phase) => {
+    if (excludedCategory) return;
     const fields = Object.fromEntries(['source_match_id', 'played_on', 'opponent_name', 'home', 'category', 'home_score', 'away_score', 'selection', 'reason'].map((key) => [key, form[key]]));
     save.mutate({ team_id: teamId, expected_version: initial.version, fields: { ...fields, phase } }, { onSuccess: onSaved });
   };
   return <section className="card p-4 sm:p-6 space-y-4">
     <h2 className="text-lg font-semibold">{initial.id ? 'Registratie aanpassen' : 'Wedstrijd registreren'}</h2>
+    {excludedCategory ? <p role="alert" className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-900/20 dark:text-amber-200">Voor beker- en oefenwedstrijden kun je geen wedstrijdvergoedingen registreren. Kies een competitie- of nacompetitiewedstrijd.</p> : null}
     <div className="grid sm:grid-cols-2 gap-4">
       <Input label="Speeldatum" type="date" value={form.played_on} onChange={(event) => update({ played_on: event.target.value })} />
       <Input label="Tegenstander" value={form.opponent_name} onChange={(event) => update({ opponent_name: event.target.value })} />
@@ -156,7 +159,7 @@ function RegistrationForm({ teamId, initial, roster, onSaved }) {
     {guestSearch.length >= 3 ? <div className="flex flex-wrap gap-2">{guests.data?.map((person) => <button className="btn-secondary" key={person.id} onClick={() => { add(person, true); setGuestSearch(''); }}>{person.title.rendered}</button>)}</div> : null}
     <Input label="Toelichting bij handmatige invoer, afwijking of correctie" value={form.reason} onChange={(event) => update({ reason: event.target.value })} />
     <ErrorMessage error={save.error} />
-    <div className="flex flex-wrap gap-3"><button className="btn-secondary" disabled={save.isPending} onClick={() => submit('draft')}>Concept opslaan</button><button className="btn-primary" disabled={save.isPending} onClick={() => submit('completed')}>Registratie afronden</button><button className="btn-tertiary" onClick={() => onSaved()}>Sluiten</button></div>
+    <div className="flex flex-wrap gap-3"><button className="btn-secondary" disabled={save.isPending || excludedCategory} onClick={() => submit('draft')}>Concept opslaan</button><button className="btn-primary" disabled={save.isPending || excludedCategory} onClick={() => submit('completed')}>Registratie afronden</button><button className="btn-tertiary" onClick={() => onSaved()}>Sluiten</button></div>
   </section>;
 }
 function Registrations({ team }) {
@@ -167,12 +170,12 @@ function Registrations({ team }) {
   const blank = (match) => { const score = match?.result?.trim().match(/^(\d+)\s*-\s*(\d+)$/); return ({ source_match_id: match?.id || `manual:${crypto.randomUUID()}`, played_on: match?.date || today(), opponent_name: match ? (match.home ? match.away_team : match.home_team) : '', home: match?.home ?? true, category: category(match?.competition), home_score: score ? Number(score[1]) : null, away_score: score ? Number(score[2]) : null, selection: [], reason: '' }); };
   return <div className="space-y-4">
     <ErrorMessage error={registrations.error || fixtures.error || roster.error} />
-    <div className="card p-6 space-y-4"><h2 className="text-lg font-semibold">Registraties {team.name}</h2><p className="text-sm text-gray-500">Kies een wedstrijd of voeg deze handmatig toe. Controleer datum, tegenstander, thuis/uit, uitslag en wedstrijdsoort. Geef iedere speler een status en voeg spelers van buiten het team toe als gast. Concepten tellen niet mee; afronden maakt de wedstrijd beschikbaar voor financiën. Beker en oefenwedstrijden tellen niet mee. Het gastlabel bepaalt niet de betaalroute.</p>
+    <div className="card p-6 space-y-4"><h2 className="text-lg font-semibold">Registraties {team.name}</h2><p className="text-sm text-gray-500">Kies een wedstrijd of voeg deze handmatig toe. Controleer datum, tegenstander, thuis/uit, uitslag en wedstrijdsoort. Geef iedere speler een status en voeg spelers van buiten het team toe als gast. Concepten tellen niet mee; afronden maakt de wedstrijd beschikbaar voor financiën. Vergoedingen registreren kan alleen voor competitie- en nacompetitiewedstrijden. Het gastlabel bepaalt niet de betaalroute.</p>
       {registrations.data?.map((record) => <button key={record.id} className="block w-full text-left rounded border p-3 dark:border-gray-700" onClick={() => setSelected(record)}>{record.played_on} · {record.opponent_name} · {record.phase === 'completed' ? 'Afgerond' : 'Concept'}</button>)}
       <Select label="Wedstrijd uit het programma" value="" onChange={(event) => { const match = fixtures.data?.matches.find((match) => String(match.id) === event.target.value); if (match) setSelected(blank(match)); }}><option value="">Kies een wedstrijd</option>{fixtures.data?.matches.filter((match) => !match.cancelled && !registrations.data?.some((record) => String(record.source_match_id) === String(match.id))).map((match) => <option key={match.id} value={match.id}>{match.date} · {match.home_team} - {match.away_team}{match.result ? ` · ${match.result}` : ''}</option>)}</Select>
       <button className="btn-secondary" onClick={() => setSelected(blank())}>Handmatige wedstrijd</button>
     </div>
-    {selected ? <RegistrationForm key={`${selected.id || selected.source_match_id}:${selected.version || 0}`} teamId={team.team_id} initial={selected} roster={roster.data?.current || []} onSaved={() => setSelected(null)} /> : null}
+    {selected ? <RegistrationForm key={`${selected.id || selected.source_match_id}:${selected.version || 0}`} teamId={team.team_id} initial={selected} sourceCategory={category(fixtures.data?.matches.find((match) => String(match.id) === String(selected.source_match_id))?.competition)} roster={roster.data?.current || []} onSaved={() => setSelected(null)} /> : null}
   </div>;
 }
 
