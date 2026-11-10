@@ -512,6 +512,10 @@ class People extends Base {
 				'callback'            => [ $this, 'get_filtered_people' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
+					'exclude_companies'         => [
+						'type'    => 'boolean',
+						'default' => false,
+					],
 					'shift_status'              => [
 						'type' => 'string',
 						'enum' => PeopleShiftProgress::STATUSES,
@@ -2323,6 +2327,15 @@ class People extends Base {
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} tm ON p.ID = tm.post_id AND tm.meta_key = 'team'";
 		$select_fields .= ', fn.meta_value AS first_name, ix.meta_value AS infix, ln.meta_value AS last_name';
 		$select_fields .= ', tm.meta_value AS team_id';
+
+		// Legacy company-only contacts remain available by ID, but do not belong
+		// in the people directory or its CSV export. Apply this before pagination
+		// and counting; people with a company and either personal name stay visible.
+		// Other consumers, including the invoice address book, still need them.
+		if ( $request->get_param( 'exclude_companies' ) ) {
+			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} company ON p.ID = company.post_id AND company.meta_key = 'company_name'";
+			$where_clauses[] = "(TRIM(COALESCE(company.meta_value, '')) = '' OR TRIM(COALESCE(fn.meta_value, '')) != '' OR TRIM(COALESCE(ln.meta_value, '')) != '')";
+		}
 
 		if ( $first_name_filter !== '' ) {
 			$where_clauses[]  = 'fn.meta_value LIKE %s';
