@@ -29,6 +29,39 @@ class RecordUpdateAbilityTest extends RondoTestCase {
 			);
 	}
 
+	public function test_connector_discovery_works_without_input_and_record_permissions_still_apply(): void {
+		require_once dirname( __DIR__ ) . '/fixtures/connector-registry.php';
+		$registry = new \WPAgentAbilities\Abilities\Registry();
+		( new Registrar() )->register_feedback_connector( $registry );
+		$definition = $registry->definitions['update-rondo-record'];
+		$id         = $this->person();
+		$input      = [
+			'id'              => $id,
+			'fields'          => [ 'email_1' => 'new@example.test' ],
+			'expected_fields' => [ 'email_1' => 'old@example.test' ],
+		];
+
+		// AI Connector builds tools/list by calling permissions without arguments.
+		foreach ( $registry->definitions as $registered ) {
+			$this->assertIsBool( call_user_func( $registered->permission_callback ) );
+		}
+		$this->assertTrue( call_user_func( $definition->permission_callback ) );
+		$this->assertTrue( call_user_func( $definition->permission_callback, $input ) );
+		$this->assertFalse( call_user_func( $definition->permission_callback, [] ) );
+
+		foreach ( [ 0, self::factory()->user->create( [ 'role' => 'subscriber' ] ), $this->createRondoUser() ] as $user ) {
+			wp_set_current_user( $user );
+			$this->assertFalse( call_user_func( $definition->permission_callback, $input ) );
+			$result = call_user_func( $definition->execute_callback, $input );
+			$this->assertWPError( $result );
+			$this->assertSame( 'rondo_record_forbidden', $result->get_error_code() );
+			if ( $user === 0 ) {
+				$this->assertFalse( call_user_func( $definition->permission_callback ) );
+			}
+		}
+		$this->assertSame( 'old@example.test', Fields::get_for_post( $id, 'email_1' ) );
+	}
+
 	private function update( int $id, array $fields, ?array $expected = null ) {
 		if ( $expected === null ) {
 			$record = wp_get_ability( 'rondo/get-record' )->execute(
