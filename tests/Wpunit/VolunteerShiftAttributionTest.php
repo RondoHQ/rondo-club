@@ -116,6 +116,32 @@ class VolunteerShiftAttributionTest extends RondoTestCase {
 		$this->assertSame( 'voldaan', $units['speler']['status'] );
 	}
 
+	public function test_manual_credit_and_shifts_share_the_same_speler_first_attribution(): void {
+		$parent = $this->person( 'Senioren' );
+		$this->link_parent_child( $parent, $this->person( 'Onder 12' ) );
+		\Rondo\Fields\Fields::update_for_post(
+			$parent,
+			'volunteer_duty_credits',
+			[
+				[
+					'date'        => '2026-10-25',
+					'reference'   => 'correction-1',
+					'reason'      => 'Geannuleerde dienst',
+					'recorded_at' => '2026-11-10T10:00:00+01:00',
+					'recorded_by' => 1,
+				],
+			]
+			);
+		$this->completed_shift( [ $parent ] );
+		$units = $this->progress_by_kind( $parent );
+		$this->assertSame( 2, $units['speler']['completed_count'] );
+		$this->assertSame( 0, $units['gezin']['completed_count'] );
+		$this->completed_shift( [ $parent ] );
+		$units = $this->progress_by_kind( $parent );
+		$this->assertSame( 2, $units['speler']['completed_count'] );
+		$this->assertSame( 1, $units['gezin']['completed_count'] );
+	}
+
 	public function test_playing_parent_fills_speler_duty_before_gezin(): void {
 		$parent_id = $this->person( 'Senioren', 'Spelende ouder' );
 		$this->link_parent_child( $parent_id, $this->person( 'Onder 12', 'Kind' ) );

@@ -24,7 +24,7 @@ class VolunteerCacheInvalidator {
 		add_action( 'rest_after_insert_person', [ $this, 'invalidate_rest' ], 10, 2 );
 		add_action( 'rest_after_update_person', [ $this, 'invalidate_rest' ], 10, 2 );
 
-		add_action( 'rondo_fields_saved_post', [ $this, 'invalidate_on_field_save' ], 30 );
+		add_action( 'rondo_fields_saved_post', [ $this, 'invalidate_on_field_save' ], 30, 2 );
 	}
 
 	public function invalidate() {
@@ -46,10 +46,16 @@ class VolunteerCacheInvalidator {
 		}
 	}
 
-	public function invalidate_on_field_save( $post_id ) {
+	public function invalidate_on_field_save( $post_id, array $changes = [] ) {
 		if ( get_post_type( (int) $post_id ) !== 'person' ) {
 			return;
 		}
 		$this->invalidate();
+		foreach ( $changes as $change ) {
+			if ( $change[0]['canonical_name'] === 'volunteer_duty_credits' ) {
+				VolunteerObligationCalculator::invalidate_cache();
+				break;
+			}
+		}
 	}
 }
