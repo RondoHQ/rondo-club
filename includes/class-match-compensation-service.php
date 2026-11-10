@@ -10,9 +10,10 @@ use Rondo\Finance\SepaCreditTransfer;
 use Rondo\Teams\TeamMatches;
 
 final class CompensationService {
-	public const CONFIG = 'rondo_match_compensation';
-	public const REG    = 'rondo_match_reg';
-	public const BATCH  = 'rondo_match_batch';
+	public const CONFIG                     = 'rondo_match_compensation';
+	public const REG                        = 'rondo_match_reg';
+	public const BATCH                      = 'rondo_match_batch';
+	private const EXCLUDED_CATEGORY_MESSAGE = 'Voor beker- en oefenwedstrijden kun je geen wedstrijdvergoedingen registreren. Kies een competitie- of nacompetitiewedstrijd.';
 
 	public function __construct() {
 		add_action( 'init', [ self::class, 'register_types' ] );
@@ -349,6 +350,9 @@ final class CompensationService {
 			if ( $data['source_match_id'] === '' || $data['opponent_name'] === '' || ! in_array( $data['phase'], [ 'draft', 'completed' ], true ) || ! is_bool( $data['home'] ?? null ) || ! in_array( $data['category'] ?? '', CompensationCalculator::CATEGORIES, true ) ) {
 				return self::error( 'Vul wedstrijd, tegenstander, thuis/uit en wedstrijdsoort in.' );
 			}
+			if ( in_array( $data['category'], [ 'beker', 'oefen' ], true ) ) {
+				return self::error( self::EXCLUDED_CATEGORY_MESSAGE );
+			}
 				$date = \DateTimeImmutable::createFromFormat( '!Y-m-d', (string) ( $data['played_on'] ?? '' ), wp_timezone() );
 			if ( ! $date || $date->format( 'Y-m-d' ) !== $data['played_on'] || $data['played_on'] < '2026-07-01' || $data['played_on'] >= '2027-07-01' ) {
 				return self::error( 'Kies een speeldatum in seizoen 2026-2027.' );
@@ -477,6 +481,9 @@ final class CompensationService {
 			return self::error( 'De bronwedstrijd ontbreekt of is afgelast; historie blijft bewaard.', 409 );
 		}
 		$category = self::category( (string) ( $match['competition'] ?? '' ) );
+		if ( in_array( $category, [ 'beker', 'oefen' ], true ) ) {
+			return self::error( self::EXCLUDED_CATEGORY_MESSAGE );
+		}
 		if ( $category !== '' && $category !== $data['category'] ) {
 			return self::error( 'De wedstrijdsoort wijkt af van Sportlink.' );
 		}
