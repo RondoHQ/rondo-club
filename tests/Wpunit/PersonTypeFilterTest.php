@@ -26,6 +26,7 @@ class PersonTypeFilterTest extends RondoTestCase {
 		$request->set_param( 'ownership', 'all' );
 		$request->set_param( 'orderby', 'first_name' );
 		$request->set_param( 'order', 'asc' );
+		$request->set_param( 'exclude_companies', true );
 		if ( $person_type !== '' ) {
 			$request->set_param( 'person_type', $person_type );
 		}
@@ -170,7 +171,9 @@ class PersonTypeFilterTest extends RondoTestCase {
 
 		$this->assertNotContains( $contact_id, $this->filtered_ids() );
 		$this->assertNotContains( $contact_id, $this->filtered_ids( 'contact' ) );
-		$server   = $this->bootRestControllers( [ People::class ] );
+		$server  = $this->bootRestControllers( [ People::class ] );
+		$default = $server->dispatch( new \WP_REST_Request( 'GET', '/rondo/v1/people/filtered' ) );
+		$this->assertContains( $contact_id, array_column( $default->get_data()['people'], 'id' ), 'Other API consumers must still receive company contacts.' );
 		$response = $server->dispatch( new \WP_REST_Request( 'GET', '/wp/v2/people/' . $contact_id ) );
 		$this->assertSame( 200, $response->get_status() );
 		$contact = $response->get_data();
@@ -221,8 +224,9 @@ class PersonTypeFilterTest extends RondoTestCase {
 			$request = new \WP_REST_Request( 'GET', '/rondo/v1/people/filtered' );
 			$request->set_query_params(
 				[
-					'page'     => $page,
-					'per_page' => 1,
+					'page'              => $page,
+					'per_page'          => 1,
+					'exclude_companies' => true,
 				]
 			);
 			$response = $server->dispatch( $request );
