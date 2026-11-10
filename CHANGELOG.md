@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Show differing membership end dates as a merge choice, including an explicit “Geen einddatum” option, so an old end date is not silently copied onto an ongoing membership.
+
 - Use one explicit confirmation for person merges, including any different KNVB IDs; changes to the selected profiles or values require confirmation again.
 - Ask which existing match-compensation agreements to keep when they differ, instead of combining protected agreement rows. Move unsettled match registrations with version history, and block merges that would rewrite settled compensation or duplicate participation.
 

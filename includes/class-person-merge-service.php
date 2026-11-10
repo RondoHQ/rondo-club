@@ -308,11 +308,13 @@ final class PersonMergeService {
 				continue;
 			}
 
-			if ( $this->values_equal( $definition, $primary_value, $duplicate_value ) || $this->is_empty( $duplicate_value ) ) {
+			// An empty membership end date means ongoing membership, not missing data.
+			$preserve_empty = $field === 'lid_tot';
+			if ( $this->values_equal( $definition, $primary_value, $duplicate_value ) || ( ! $preserve_empty && $this->is_empty( $duplicate_value ) ) ) {
 				continue;
 			}
 
-			if ( $this->is_empty( $primary_value ) ) {
+			if ( ! $preserve_empty && $this->is_empty( $primary_value ) ) {
 				$updates[ $field ] = $duplicate_value;
 				$automatic[]       = $label;
 				continue;
@@ -568,6 +570,9 @@ final class PersonMergeService {
 			$value = Formatter::for_wire( 'person', [ $name => $value ] )[ $name ];
 		} catch ( \Throwable $error ) {
 			// The stored value is still safe to summarize below.
+		}
+		if ( $name === 'lid_tot' && $this->is_empty( $value ) ) {
+			return __( 'Geen einddatum', 'rondo' );
 		}
 		if ( is_bool( $value ) ) {
 			return $value ? __( 'Ja', 'rondo' ) : __( 'Nee', 'rondo' );
