@@ -349,30 +349,8 @@ class Reminders extends Base {
 		$cutoff       = $today->modify( '+' . max( 0, $days_ahead ) . ' days' );
 		$milestones   = $this->get_anniversary_milestones();
 
-		// Phase 1: Get only person IDs (not full WP_Post objects)
-		$person_ids = get_posts(
-			[
-				'post_type'              => 'person',
-				'post_status'            => 'publish',
-				'posts_per_page'         => -1,
-				'no_found_rows'          => true,
-				'fields'                 => 'ids',
-				'update_post_meta_cache' => false,
-				'update_post_term_cache' => false,
-				'meta_query'             => [
-					'relation' => 'OR',
-					[
-						'key'     => 'former_member',
-						'compare' => 'NOT EXISTS',
-					],
-					[
-						'key'     => 'former_member',
-						'value'   => '1',
-						'compare' => '!=',
-					],
-				],
-			]
-		);
+		// Reuse the visibility-scoped ID sets without a NOT EXISTS/OR join.
+		$person_ids = \Rondo\Dashboard\DashboardPeople::active_ids();
 
 		if ( empty( $person_ids ) ) {
 			return [];
