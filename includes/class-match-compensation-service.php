@@ -530,6 +530,106 @@ final class CompensationService {
 		return false;
 	}
 
+	/** Plan identity-only moves; immutable settlements and ambiguous participation block merging. */
+	public static function person_merge_plan( int $primary_id, int $duplicate_id ) {
+		$registrations = [];
+		foreach ( get_posts(
+			[
+				'post_type'        => [ self::REG, self::BATCH ],
+				'post_status'      => [ 'publish', 'draft' ],
+				'numberposts'      => -1,
+				'suppress_filters' => false,
+			]
+			) as $post ) {
+			$record = self::record( $post->ID );
+			if ( $post->post_type === self::BATCH ) {
+				$snapshots = [ $record ];
+				foreach ( [ '_match_full_rows', '_match_baseline_rows', '_match_full_allocations', '_match_baseline_allocations' ] as $key ) {
+					$snapshots[] = get_post_meta( $post->ID, $key, true );
+				}
+				if ( self::contains_person_reference( $snapshots, $duplicate_id ) ) {
+					return self::error( 'Het dubbele profiel staat in een afrekening van wedstrijdvergoedingen. Laat de financiële administratie dit eerst afhandelen; bestaande afrekeningen worden niet herschreven.', 409 );
+				}
+				continue;
+			}
+			$ids = array_map( 'intval', array_column( $record['selection'] ?? [], 'person_id' ) );
+			if ( ! in_array( $duplicate_id, $ids, true ) ) {
+				continue;
+			}
+			if ( in_array( $primary_id, $ids, true ) ) {
+				return self::error( 'Beide profielen staan in dezelfde wedstrijdregistratie. Kies daar eerst welke deelname behouden blijft.', 409 );
+			}
+			if ( get_post_meta( $post->ID, '_match_pending', true ) || self::locked( $post->ID ) ) {
+				return self::error( 'Een wedstrijdregistratie van het dubbele profiel wordt verwerkt of is afgesloten. Handel dit eerst af bij Wedstrijdvergoedingen.', 409 );
+			}
+			if ( ! self::registrar( (int) $record['team_id'] ) ) {
+				return self::error( 'Geen toegang tot de wedstrijdregistraties van het dubbele profiel.', 403 );
+			}
+			$registrations[] = $post->ID;
+		}
+		$has_agreements = CompensationAgreements::read( $primary_id ) || CompensationAgreements::read( $duplicate_id );
+		if ( $registrations || $has_agreements ) {
+			if ( ! current_user_can( 'manage_options' ) || ! \Rondo\Finance\PersonBankAccount::can_write( $primary_id ) || ! \Rondo\Finance\PersonBankAccount::can_write( $duplicate_id ) ) {
+				return self::error( 'Geen toegang tot de wedstrijdvergoedingen van deze personen.', 403 );
+			}
+		}
+		foreach ( [ $primary_id, $duplicate_id ] as $id ) {
+			if ( metadata_exists( 'post', $id, '_match_agreement_pending' ) ) {
+				return self::error( 'Een vergoedingsafspraak wordt nog verwerkt. Rond die wijziging eerst af.', 409 );
+			}
+		}
+		return $registrations;
+	}
+
+	private static function contains_person_reference( $value, int $id ): bool {
+		if ( ! is_array( $value ) ) {
+			return false;
+		}
+		if ( (int) ( $value['person_id'] ?? 0 ) === $id ) {
+			return true;
+		}
+		foreach ( $value as $child ) {
+			if ( is_array( $child ) && self::contains_person_reference( $child, $id ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Preserve chosen agreement terms and version every moved registration under the finance lock. */
+	public static function merge_person_data( int $primary_id, int $duplicate_id, string $choice ) {
+		return CompensationLock::run(
+			static function () use ( $primary_id, $duplicate_id, $choice ) {
+				$registrations = self::person_merge_plan( $primary_id, $duplicate_id );
+				if ( is_wp_error( $registrations ) ) {
+					return $registrations;
+				}
+				$result = CompensationAgreements::merge_into( $primary_id, $duplicate_id, $choice );
+				if ( is_wp_error( $result ) ) {
+					return $result;
+				}
+				foreach ( $registrations as $id ) {
+					$record = self::record( $id );
+					foreach ( $record['selection'] as &$row ) {
+						if ( (int) $row['person_id'] === $duplicate_id ) {
+							$row['person_id']   = $primary_id;
+							$row['player_name'] = html_entity_decode( get_the_title( $primary_id ), ENT_QUOTES, 'UTF-8' );
+						}
+					}
+					unset( $row );
+					$record['version'] = (int) $record['version'] + 1;
+					$record['reason']  = trim( ( $record['reason'] ?? '' ) . "\n" . sprintf( 'Profiel #%d samengevoegd met #%d.', $duplicate_id, $primary_id ) );
+					unset( $record['id'], $record['last_request_id'] );
+					$result = self::save( $id, $record, wp_generate_uuid4() );
+					if ( is_wp_error( $result ) ) {
+						return $result;
+					}
+				}
+				return true;
+			}
+		);
+	}
+
 	public static function preview( int $team, string $month ) {
 		$rule = self::rule( $team );
 		if ( ! self::finance() || ! $rule ) {

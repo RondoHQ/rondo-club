@@ -134,6 +134,98 @@ class MatchCompensationAgreementsTest extends RondoTestCase {
 	private function act( int $id, string $action, array $input ) {
 		return Service::batch_action( $id, $action, $input + [ 'request_id' => wp_generate_uuid4() ] );
 	}
+	public function test_person_merge_requires_agreement_choice_and_moves_unsettled_participation(): void {
+		$duplicate       = $this->person();
+		$primary_terms   = $this->agreement( 'sepa_guest' );
+		$duplicate_terms = array_merge(
+			$primary_terms,
+			[
+				'valid_from'  => '2026-10-01',
+				'valid_until' => '2027-06-30',
+			]
+			);
+		$this->assertNotWPError( $this->save( $this->person, [ $primary_terms ] ) );
+		$this->assertNotWPError( $this->save( $duplicate, [ $duplicate_terms ] ) );
+		$registration = $this->register( [ $duplicate ], '2026-10-03' );
+		$this->assertNotWPError( $registration );
+		$merge     = new \Rondo\Data\PersonMergeService();
+		$preview   = $merge->preview( $this->person, $duplicate );
+		$conflicts = array_column( $preview['conflicts'], null, 'field' );
+		$this->assertTrue( $conflicts[ Agreements::FIELD ]['requires_choice'] );
+		$this->assertStringContainsString( 'zonder einddatum', $conflicts[ Agreements::FIELD ]['primary_value'] );
+		$this->assertStringContainsString( '2027-06-30', $conflicts[ Agreements::FIELD ]['duplicate_value'] );
+		$this->assertSame( 1, $preview['references']['match_registrations'] );
+		$this->assertSame( [], $preview['blocking_conflicts'] );
+		$missing = $merge->merge( $this->person, $duplicate, [], get_current_user_id() );
+		$this->assertWPError( $missing );
+		$this->assertSame( 'rondo_person_merge_choices_required', $missing->get_error_code() );
+		$this->assertSame( $registration, Service::record( $registration['id'] ) );
+		$this->assertSame( 'publish', get_post_status( $duplicate ) );
+		$result = $merge->merge( $this->person, $duplicate, [ Agreements::FIELD => 'primary' ], get_current_user_id() );
+		$this->assertNotWPError( $result );
+		$this->assertSame( [ $primary_terms ], Agreements::read( $this->person ) );
+		$this->assertSame( [ $duplicate_terms ], Agreements::read( $duplicate ) );
+		$this->assertSame( 'trash', get_post_status( $duplicate ) );
+		$moved = Service::record( $registration['id'] );
+		$this->assertSame( $this->person, $moved['selection'][0]['person_id'] );
+		$this->assertSame( $registration['version'] + 1, $moved['version'] );
+		$this->assertSame( $registration['selection'][0]['participation'], $moved['selection'][0]['participation'] );
+		$this->assertSame( $registration, get_post_meta( $registration['id'], '_match_version_' . $registration['version'], true ) );
+		$this->assertWPError( Fields::update_many_for_post( $this->person, [ Agreements::FIELD => [] ] ) );
+	}
+
+	public function test_person_merge_can_choose_duplicate_terms_without_combining_ranges(): void {
+		$duplicate       = $this->person();
+		$primary_terms   = $this->agreement( 'sepa_guest' );
+		$duplicate_terms = array_merge( $primary_terms, [ 'valid_from' => '2026-10-01' ] );
+		$this->assertNotWPError( $this->save( $this->person, [ $primary_terms ] ) );
+		$this->assertNotWPError( $this->save( $duplicate, [ $duplicate_terms ] ) );
+		$result = ( new \Rondo\Data\PersonMergeService() )->merge( $this->person, $duplicate, [ Agreements::FIELD => 'duplicate' ], get_current_user_id() );
+		$this->assertNotWPError( $result );
+		$this->assertSame( [ $duplicate_terms ], Agreements::read( $this->person ) );
+		$audit = get_post_meta( $this->person, '_match_agreement_audit', false );
+		$this->assertSame( $duplicate, end( $audit )['merged_from'] );
+	}
+
+	public function test_person_merge_only_asks_about_different_existing_agreements(): void {
+		$duplicate = $this->person();
+		$merge     = new \Rondo\Data\PersonMergeService();
+		$this->assertNotContains( Agreements::FIELD, array_column( $merge->preview( $this->person, $duplicate )['conflicts'], 'field' ) );
+		$this->assertNotWPError( $this->save( $duplicate, [ $this->agreement( 'sepa_guest' ) ] ) );
+		$conflicts = array_column( $merge->preview( $this->person, $duplicate )['conflicts'], null, 'field' );
+		$this->assertSame( 'Geen vergoedingsafspraken', $conflicts[ Agreements::FIELD ]['primary_value'] );
+		$this->assertNotWPError( $this->save( $this->person, [ $this->agreement( 'sepa_guest' ) ] ) );
+		$this->assertNotContains( Agreements::FIELD, array_column( $merge->preview( $this->person, $duplicate )['conflicts'], 'field' ) );
+	}
+
+	public function test_person_merge_blocks_settlements_and_duplicate_participation_before_writing(): void {
+		$duplicate = $this->person();
+		$this->assertNotWPError( $this->save( $duplicate, [ $this->agreement( 'sepa_guest' ) ] ) );
+		$registration = $this->register( [ $this->person, $duplicate ] );
+		$this->assertNotWPError( $registration );
+		$merge = new \Rondo\Data\PersonMergeService();
+		$this->assertWPError( $merge->merge( $this->person, $duplicate, [ Agreements::FIELD => 'duplicate' ], get_current_user_id() ) );
+		$this->assertSame( [], Agreements::read( $this->person ) );
+		$this->assertSame( 'publish', get_post_status( $duplicate ) );
+		$this->assertSame( $registration, Service::record( $registration['id'] ) );
+		$registration['selection'] = array_slice( $registration['selection'], 1 );
+		$updated                   = Service::registration(
+			$registration['id'],
+			[
+				'request_id'       => wp_generate_uuid4(),
+				'expected_version' => $registration['version'],
+				'fields'           => [ 'selection' => $registration['selection'] ],
+			]
+			);
+		$this->assertNotWPError( $updated );
+		$batch   = $this->close();
+		$preview = $merge->preview( $this->person, $duplicate );
+		$this->assertNotEmpty( $preview['blocking_conflicts'] );
+		$this->assertWPError( $merge->merge( $this->person, $duplicate, [ Agreements::FIELD => 'duplicate' ], get_current_user_id() ) );
+		$this->assertSame( $batch, Service::record( $batch['id'] ) );
+		$this->assertSame( 'publish', get_post_status( $duplicate ) );
+		$this->assertSame( [], Agreements::read( $this->person ) );
+	}
 	public function test_native_storage_dates_cleanup_overlap_uniqueness_and_stale_write(): void {
 		$a     = $this->agreement();
 		$saved = $this->save( $this->person, [ $a ] );
