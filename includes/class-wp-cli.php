@@ -2176,7 +2176,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 * ## OPTIONS
 		 *
 		 * [--output=<path>]
-		 * : Output file path for the fixture JSON. Defaults to fixtures/demo-fixture.json in theme directory.
+		 * : Output file path for the fixture JSON. Defaults to rondo-private/demo-fixture.json
+		 * : next to the WordPress root, outside the web-served directories. Pass an
+		 * : explicit path to write somewhere else.
 		 *
 		 * ## EXAMPLES
 		 *
@@ -2186,7 +2188,10 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 * @when after_wp_load
 		 */
 		public function export( $args, $assoc_args ) {
-			$default_path = RONDO_THEME_DIR . '/fixtures/demo-fixture.json';
+			// The export is built for sharing with a demo environment, so the
+			// default target must not be web-served: the theme fixtures
+			// directory is reachable over HTTP and .gitignore does not stop that.
+			$default_path = trailingslashit( dirname( untrailingslashit( ABSPATH ) ) ) . 'rondo-private/demo-fixture.json';
 			$output_path  = isset( $assoc_args['output'] ) ? $assoc_args['output'] : $default_path;
 
 			// Ensure output directory exists

@@ -109,21 +109,8 @@ class LettermintMailer {
 				$email->headers( $custom_headers );
 			}
 
-			foreach ( $attachments as $attachment_path ) {
-				$path = is_string( $attachment_path ) ? trim( $attachment_path ) : '';
-				if ( $path === '' || ! is_readable( $path ) ) {
-					continue;
-				}
-
-				$filename = wp_basename( $path );
-				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-				$content = file_get_contents( $path );
-				if ( $content === false ) {
-					continue;
-				}
-
-				$email->attach( $filename, base64_encode( $content ) );
-			}
+			$this->attach_files( $email, $attachments );
+			$this->attach_files( $email, $this->normalize_attachment_list( $atts['embeds'] ?? [] ), true );
 
 			$email->metadata(
 				array_merge(
@@ -142,6 +129,30 @@ class LettermintMailer {
 		} catch ( \Throwable $e ) {
 			error_log( 'Lettermint wp_mail send failed: ' . $e->getMessage() );
 			return false;
+		}
+	}
+
+	/**
+	 * Add regular attachments or WordPress embeds to the API payload.
+	 *
+	 * @param \Lettermint\Endpoints\EmailEndpoint $email  Email being composed.
+	 * @param array                              $files  Local paths, keyed by Content-ID for embeds.
+	 * @param bool                               $inline Whether to attach inline with Content-IDs.
+	 */
+	private function attach_files( \Lettermint\Endpoints\EmailEndpoint $email, array $files, bool $inline = false ): void {
+		foreach ( $files as $cid => $attachment_path ) {
+			$path = is_string( $attachment_path ) ? trim( $attachment_path ) : '';
+			if ( $path === '' || ! is_file( $path ) || ! is_readable( $path ) ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+			$content = file_get_contents( $path );
+			if ( $content === false ) {
+				continue;
+			}
+
+			$email->attach( wp_basename( $path ), base64_encode( $content ), $inline ? (string) $cid : null );
 		}
 	}
 
