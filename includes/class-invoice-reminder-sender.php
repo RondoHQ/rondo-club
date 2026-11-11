@@ -302,15 +302,9 @@ class InvoiceReminderSender {
 			}
 		}
 
-		// Send email via wp_mail, embedding the QR image when present.
-		$qr_embed = $qr_full_path !== null ? InvoiceStorage::embed_callback( $qr_full_path ) : null;
-		if ( $qr_embed !== null ) {
-			add_action( 'phpmailer_init', $qr_embed );
-		}
-		$result = wp_mail( $recipient_emails, $subject, $email_body, $headers );
-		if ( $qr_embed !== null ) {
-			remove_action( 'phpmailer_init', $qr_embed );
-		}
+		// WordPress embeds are available to both PHPMailer and pre_wp_mail transports.
+		$embeds = $qr_full_path !== null ? [ InvoiceStorage::QR_CID => $qr_full_path ] : [];
+		$result = wp_mail( $recipient_emails, $subject, $email_body, $headers, [], $embeds );
 
 		if ( ! $result ) {
 			return new \WP_Error(

@@ -140,23 +140,4 @@ class InvoiceStorage {
 
 		return $filename;
 	}
-
-	/**
-	 * PHPMailer callback that embeds a QR image under self::QR_CID, so
-	 * invoice emails can show the QR code without a public file URL.
-	 *
-	 * Usage: add_action( 'phpmailer_init', InvoiceStorage::embed_callback( $path ) )
-	 * around a wp_mail() call, and remove_action() with the same callback
-	 * immediately afterwards.
-	 *
-	 * @param string $absolute_path Absolute path of the QR PNG.
-	 * @return callable
-	 */
-	public static function embed_callback( string $absolute_path ): callable {
-		return static function ( $phpmailer ) use ( $absolute_path ): void {
-			if ( is_object( $phpmailer ) && method_exists( $phpmailer, 'addEmbeddedImage' ) ) {
-				$phpmailer->addEmbeddedImage( $absolute_path, self::QR_CID, basename( $absolute_path ) );
-			}
-		};
-	}
 }
