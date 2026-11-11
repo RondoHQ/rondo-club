@@ -92,6 +92,10 @@ final class MemberProfileService {
 		set_transient( self::TOKEN_PREFIX . $hash, $payload, self::TOKEN_TTL );
 		update_user_meta( $user_id, self::PENDING_META, $payload );
 
+		// Notify the old address first: mail filters and scanners that track
+		// the verification mail must see that mail last.
+		self::notify_old_address( $payload, false );
+
 		if ( ! self::send_verification_email( $email, $token, $slot, $operation ) ) {
 			self::cancel_email_change( $user_id );
 			return new \WP_Error( 'rondo_email_send_failed', 'De verificatiemail kon niet worden verstuurd.', [ 'status' => 500 ] );
@@ -143,8 +147,13 @@ final class MemberProfileService {
 		delete_user_meta( $user_id, self::PENDING_META );
 	}
 
-	/** Verify a public token and atomically apply the requested email action. */
-	public static function verify_email_token( string $token ) {
+	/**
+	 * Load and validate the pending payload for a token without applying it.
+	 *
+	 * @return array|\WP_Error Payload on success, error when the token is
+	 *                         unknown, stale or no longer matches the profile.
+	 */
+	private static function load_pending_payload( string $token ) {
 		if ( ! preg_match( '/^[a-f0-9]{64}$/', $token ) ) {
 			return new \WP_Error( 'rondo_invalid_email_token', 'Deze verificatielink is ongeldig of verlopen.' );
 		}
@@ -166,12 +175,87 @@ final class MemberProfileService {
 			return new \WP_Error( 'rondo_stale_email_change', 'De e-mailgegevens zijn ondertussen gewijzigd. Vraag een nieuwe verificatielink aan.' );
 		}
 
+		return $payload;
+	}
+
+	/**
+	 * Describe the pending change for a token without applying it.
+	 *
+	 * The confirmation page uses this on GET, so mail scanners and link
+	 * prefetchers can no longer effect the change by opening the link.
+	 *
+	 * @return array|\WP_Error Summary with new_email and slot, or an error.
+	 */
+	public static function peek_email_token( string $token ) {
+		$payload = self::load_pending_payload( $token );
+		if ( is_wp_error( $payload ) ) {
+			return $payload;
+		}
+
+		return [
+			'new_email' => (string) $payload['new_email'],
+			'slot'      => (string) $payload['slot'],
+			'operation' => (string) $payload['operation'],
+		];
+	}
+
+	/** Verify a public token and atomically apply the requested email action. */
+	public static function verify_email_token( string $token ) {
+		$payload = self::load_pending_payload( $token );
+		if ( is_wp_error( $payload ) ) {
+			return $payload;
+		}
+
+		$hash    = hash( 'sha256', $token );
+		$user_id = (int) $payload['user_id'];
+
 		$result = self::apply_verified_email_change( $payload );
 		if ( ! is_wp_error( $result ) ) {
 			delete_transient( self::TOKEN_PREFIX . $hash );
 			delete_user_meta( $user_id, self::PENDING_META );
+			self::notify_old_address( $payload, true );
 		}
 		return $result;
+	}
+
+	/**
+	 * Tell the address being replaced that a change is pending or completed.
+	 *
+	 * The verification mail only reaches the new address; without this the
+	 * owner of the old address hears nothing when a session is misused.
+	 *
+	 * @param array $payload   Pending change payload.
+	 * @param bool  $completed True after the change was applied, false when
+	 *                         it was merely requested.
+	 */
+	private static function notify_old_address( array $payload, bool $completed ): void {
+		$slot      = (string) ( $payload['slot'] ?? 'primary' );
+		$old_email = $slot === 'primary' ? (string) ( $payload['old_primary'] ?? '' ) : (string) ( $payload['old_secondary'] ?? '' );
+		$new_email = (string) ( $payload['new_email'] ?? '' );
+		if ( $old_email === '' || ! is_email( $old_email ) || $old_email === $new_email ) {
+			return;
+		}
+
+		$branding = PublicPageChrome::branding();
+		$subject  = $completed ? 'Je e-mailadres is gewijzigd' : 'Wijziging van je e-mailadres aangevraagd';
+		$body     = $completed
+			? '<p>Het e-mailadres van je Rondo-account is gewijzigd van <strong>' . esc_html( $old_email ) . '</strong> naar <strong>' . esc_html( $new_email ) . '</strong>.</p><p>Heb je dit niet gedaan, neem dan direct contact op met de ledenadministratie.</p>'
+			: '<p>Er is een wijziging aangevraagd voor het e-mailadres van je Rondo-account: van <strong>' . esc_html( $old_email ) . '</strong> naar <strong>' . esc_html( $new_email ) . '</strong>.</p><p>De wijziging gaat pas in als de link in de verificatiemail naar het nieuwe adres wordt bevestigd. Heb je dit niet aangevraagd, dan hoef je niets te doen.</p>';
+		$html     = EmailTemplate::render(
+			[
+				'brand_name'   => $branding['name'],
+				'preheader'    => $subject,
+				'eyebrow'      => 'Mijn gegevens',
+				'heading'      => $subject,
+				'body_html'    => $body,
+				'accent_color' => $branding['accent_color'],
+			]
+		);
+		$headers  = [
+			'Content-Type: text/html; charset=UTF-8',
+			sprintf( 'From: %s <%s>', sanitize_text_field( $branding['name'] ), ActivationService::ACTIVATION_FROM_EMAIL ),
+		];
+		wp_mail( $old_email, $subject, $html, $headers );
 	}
 
 	/** Remove the secondary email immediately and mirror matching child slots. */

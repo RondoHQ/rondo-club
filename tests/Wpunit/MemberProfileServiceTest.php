@@ -66,6 +66,61 @@ class MemberProfileServiceTest extends RondoTestCase {
 		$this->assertSame( '1', get_post_meta( $log[0]->ID, '_rondo_profile_change_verified', true ) );
 	}
 
+	public function test_peek_email_token_does_not_apply_the_change(): void {
+		[ $user_id, $person_id ] = $this->linked_member( 'old@example.com' );
+		$token                   = '';
+		add_filter(
+			'pre_wp_mail',
+			static function ( $return, $atts ) use ( &$token ) {
+				if ( preg_match( '#email-wijzigen/([a-f0-9]{64})#', (string) $atts['message'], $matches ) ) {
+					$token = $matches[1];
+				}
+				return true;
+			},
+			10,
+			2
+		);
+
+		MemberProfileService::request_email_change( $user_id, 'primary', 'new@example.com', '192.0.2.10' );
+
+		$peek = MemberProfileService::peek_email_token( $token );
+		$this->assertIsArray( $peek );
+		$this->assertSame( 'new@example.com', $peek['new_email'] );
+		$this->assertSame( 'old@example.com', Fields::get_for_post( $person_id, 'email_1' ), 'a GET on the verification link must not change anything' );
+
+		$this->assertIsArray( MemberProfileService::verify_email_token( $token ) );
+		$this->assertSame( 'new@example.com', Fields::get_for_post( $person_id, 'email_1' ) );
+	}
+
+	public function test_old_address_is_notified_on_request_and_completion(): void {
+		[ $user_id, $person_id ] = $this->linked_member( 'old@example.com' );
+		$recipients              = [];
+		$token                   = '';
+		add_filter(
+			'pre_wp_mail',
+			static function ( $return, $atts ) use ( &$recipients, &$token ) {
+				foreach ( (array) $atts['to'] as $to ) {
+					$recipients[] = $to;
+				}
+				if ( preg_match( '#email-wijzigen/([a-f0-9]{64})#', (string) $atts['message'], $matches ) ) {
+					$token = $matches[1];
+				}
+				return true;
+			},
+			10,
+			2
+		);
+
+		MemberProfileService::request_email_change( $user_id, 'primary', 'new@example.com', '192.0.2.11' );
+		$this->assertContains( 'new@example.com', $recipients, 'verification goes to the new address' );
+		$this->assertContains( 'old@example.com', $recipients, 'the old address is told a change was requested' );
+
+		$recipients = [];
+		MemberProfileService::verify_email_token( $token );
+		$this->assertContains( 'old@example.com', $recipients, 'the old address is told the change completed' );
+		$this->assertSame( 'new@example.com', Fields::get_for_post( $person_id, 'email_1' ) );
+	}
+
 	public function test_promoting_secondary_email_swaps_both_slots(): void {
 		[ $user_id, $person_id ] = $this->linked_member( 'primary@example.com' );
 		Fields::update_for_post( $person_id, 'email_2', 'second@example.com' );
