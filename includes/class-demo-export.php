@@ -551,6 +551,14 @@ class DemoExport {
 		// Replace addresses.
 		$person['fields']['addresses'] = $this->anonymize_addresses( $person['fields']['addresses'] );
 
+		// Generate a synthetic date from the fixture identity and age group.
+		// Never shift the real date: a public ref would make that reversible.
+		$person['fields']['birthdate'] = $this->synthetic_birthdate_for_demo(
+			$person['fields']['birthdate'] ?? null,
+			$ref,
+			(string) ( $person['fields']['leeftijdsgroep'] ?? '' )
+		);
+
 		// Replace Sportlink fields that contain PII.
 		$person['fields']['knvb_id']      = $this->anonymizer->generate_knvb_id();
 		$person['fields']['freescout_id'] = null; // Strip external system ID.
@@ -562,6 +570,36 @@ class DemoExport {
 		$person['post_meta'] = $this->anonymize_financials( $person['post_meta'] );
 
 		return $person;
+	}
+
+	/**
+	 * Generate a synthetic birthdate independent of the original date.
+	 *
+	 * Only presence and format are retained from the source value. The already
+	 * exported age group keeps youth examples useful; no original date component
+	 * contributes to the generated date. Stable within an export year.
+	 *
+	 * @param mixed  $value     Birthdate value from the export row.
+	 * @param string $ref       Person fixture ref.
+	 * @param string $age_group Already exported age group.
+	 * @return string|null Synthetic date in the input shape, or null for missing/invalid dates.
+	 */
+	private function synthetic_birthdate_for_demo( $value, string $ref, string $age_group ): ?string {
+		if ( ! is_string( $value ) || ! preg_match( '/^(\d{4})(-?)(\d{2})\2(\d{2})$/', $value, $parts )
+			|| ! checkdate( (int) $parts[3], (int) $parts[4], (int) $parts[1] ) ) {
+			return null;
+		}
+
+		$hash = hash( 'sha256', 'demo-birthdate:' . $ref );
+		$age  = 18 + ( hexdec( substr( $hash, 0, 4 ) ) % 53 );
+		if ( preg_match( '/^Onder (\d+)$/i', trim( $age_group ), $group ) && (int) $group[1] >= 5 && (int) $group[1] <= 23 ) {
+			$age = (int) $group[1] - 1;
+		}
+		$year  = (int) wp_date( 'Y' ) - $age;
+		$month = 1 + ( hexdec( substr( $hash, 4, 4 ) ) % 12 );
+		$day   = 1 + ( hexdec( substr( $hash, 8, 4 ) ) % 28 );
+
+		return sprintf( $parts[2] === '' ? '%04d%02d%02d' : '%04d-%02d-%02d', $year, $month, $day );
 	}
 
 	/**
@@ -756,17 +794,22 @@ class DemoExport {
 	private function anonymize_discipline_case( $case ) {
 		$person_ref = $case['fields']['person'] ?? null;
 
-		// Rebuild title with fake name if person ref exists.
+		// Rebuild title with fake name if person ref exists. The real match
+		// description is not embedded: it is free text about a real match.
 		if ( $person_ref ) {
 			$identity   = $this->anonymizer->generate_identity( $person_ref );
 			$name_parts = array_filter( [ $identity['first_name'], $identity['infix'], $identity['last_name'] ] );
 			$fake_name  = implode( ' ', $name_parts );
 
-			$match_description = $case['fields']['match_description'] ?? '';
-			$match_date        = $case['fields']['match_date'] ?? '';
+			$match_date = $case['fields']['match_date'] ?? '';
 
-			$case['title'] = sprintf( '%s - %s - %s', $fake_name, $match_description, $match_date );
+			$case['title'] = sprintf( '%s - %s', $fake_name, $match_date );
 		}
+
+		// Strip the real discipline free text; it describes a real incident
+		// involving a real member. Generic placeholders keep the demo usable.
+		$case['fields']['charge_description']   = 'Demo: tenlastelegging verwijderd';
+		$case['fields']['sanction_description'] = 'Demo: sanctie verwijderd';
 
 		// Randomize dossier_id (7 digits + ".0").
 		$case['fields']['dossier_id'] = sprintf( '%d.0', wp_rand( 1000000, 9999999 ) );
