@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.170.17] - 2026-11-11
+
+### Fixed
+
+- Store invoice PDFs and QR images in private storage outside the web root instead of public uploads, serve them only through the gated download routes, embed the QR image in invoice emails instead of referencing a public URL, deny direct access to the legacy uploads/invoices directory, and make the invoice pdf_path and qr_code_path fields read-only with contained path resolution at every read and delete sink (security audit F-08 and F-09).
+
 ## [35.170.10] - 2026-11-10
 
 ### Fixed
