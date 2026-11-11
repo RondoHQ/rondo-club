@@ -418,18 +418,20 @@ class Lettermint extends Base {
 		$config   = new \Rondo\Config\FinanceConfig();
 		$org_name = $config->get_display_name();
 
-		// Generate a test QR code the same way real invoices do: save PNG to uploads, reference via public URL.
+		// Generate a test QR code and reference it via public URL. This is a
+		// dummy image for a settings preview, not an invoice file, so it lives
+		// outside the (denied) invoices directory.
 		$settings_url = admin_url( 'admin.php?page=rondo#/financien/instellingen' );
 		$qr_code_html = '';
 		$upload_dir   = wp_upload_dir();
-		$invoices_dir = $upload_dir['basedir'] . '/invoices';
-		wp_mkdir_p( $invoices_dir );
+		$test_dir     = $upload_dir['basedir'] . '/rondo-test';
+		wp_mkdir_p( $test_dir );
 
-		$qr_test_path = $invoices_dir . '/qr-test.png';
+		$qr_test_path = $test_dir . '/qr-test.png';
 		$qr_result    = \Rondo\Finance\QrCodeGenerator::generate_to_path( $settings_url, $qr_test_path );
 
 		if ( ! is_wp_error( $qr_result ) ) {
-			$qr_url       = $upload_dir['baseurl'] . '/invoices/qr-test.png';
+			$qr_url       = $upload_dir['baseurl'] . '/rondo-test/qr-test.png';
 			$qr_code_html = '<img src="' . esc_url( $qr_url ) . '" alt="QR Code betaallink" width="200" style="display:block;" />';
 		}
 

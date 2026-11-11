@@ -5,11 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [35.170.11] - 2026-11-11
+## [35.170.20] - 2026-11-11
 
 ### Fixed
 
 - Scope the /reminders REST route results through AccessControl, so full birthdates are only returned for people the requesting user may view, instead of the whole membership to every logged-in user (security audit F-17).
+
+## [35.170.19] - 2026-11-11
+
+### Fixed
+
+- Send private invoice QR images through the native WordPress embeds argument and Lettermint inline attachments, including reminder emails, while retaining PDF attachments.
+
+## [35.170.18] - 2026-11-11
+
+### Fixed
+
+- Replace reversible demo birthdate offsets with synthetic dates independent of the original year, month and day; preserve age-group examples and clear invalid source dates.
+
+## [35.170.17] - 2026-11-11
+
+### Fixed
+
+- Store invoice PDFs and QR images in private storage outside the web root instead of public uploads, serve them only through the gated download routes, embed the QR image in invoice emails instead of referencing a public URL, deny direct access to the legacy uploads/invoices directory, and make the invoice pdf_path and qr_code_path fields read-only with contained path resolution at every read and delete sink (security audit F-08 and F-09).
+
+## [35.170.16] - 2026-11-11
+
+### Fixed
+
+- Anonymize the demo export properly: birthdates are shifted by a per-person year offset, discipline charge and sanction free text is replaced with placeholders and no longer embedded in case titles, and the export default output path moves out of the web-served theme directory to rondo-private/ (security audit F-12).
 
 ## [35.170.10] - 2026-11-10
 
