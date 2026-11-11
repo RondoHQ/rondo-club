@@ -79,18 +79,34 @@ class PersonScopeOnSelfBuiltQueriesTest extends RondoTestCase {
 
 			$author_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 			$visible   = $this->createPerson(
-				[ 'post_author' => $author_id, 'post_title' => 'Zichtbaar Lid' ],
-				[ 'first_name' => 'Zichtbaar', 'last_name' => 'Lid', 'leeftijdsgroep' => 'Onder 13', 'email_1' => 'zichtbaar@voorbeeld.nl' ]
+				[
+					'post_author' => $author_id,
+					'post_title'  => 'Zichtbaar Lid',
+				],
+				[
+					'first_name'     => 'Zichtbaar',
+					'last_name'      => 'Lid',
+					'leeftijdsgroep' => 'Onder 13',
+					'email_1'        => 'zichtbaar@voorbeeld.nl',
+				]
 			);
 			$hidden    = $this->createPerson(
-				[ 'post_author' => $author_id, 'post_title' => 'Verborgen Lid' ],
-				[ 'first_name' => 'Verborgen', 'last_name' => 'Lid', 'leeftijdsgroep' => 'Senioren', 'email_1' => 'verborgen@voorbeeld.nl' ]
+				[
+					'post_author' => $author_id,
+					'post_title'  => 'Verborgen Lid',
+				],
+				[
+					'first_name'     => 'Verborgen',
+					'last_name'      => 'Lid',
+					'leeftijdsgroep' => 'Senioren',
+					'email_1'        => 'verborgen@voorbeeld.nl',
+				]
 			);
 
 			wp_set_current_user( $this->createRondoUser( [ 'role' => $role ] ) );
 
 			$request = new WP_REST_Request( 'GET', '/rondo/v1/search' );
-			$request->set_param( 'q', 'voorbeeld.nl' );
+			$request->set_param( 'q', '@voorbeeld.nl' );
 			$people = $server->dispatch( $request )->get_data()['people'] ?? [];
 			$ids    = array_map( 'intval', wp_list_pluck( $people, 'id' ) );
 
