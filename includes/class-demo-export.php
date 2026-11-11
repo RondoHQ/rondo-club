@@ -551,6 +551,12 @@ class DemoExport {
 		// Replace addresses.
 		$person['fields']['addresses'] = $this->anonymize_addresses( $person['fields']['addresses'] );
 
+		// Shift the birthdate by a per-person whole-year offset. A real
+		// birthdate combined with the kept team/role history and relationship
+		// graph is a strong re-identification set, especially for minors; the
+		// demo importer shifts birthdates by full years in the same way.
+		$person['fields']['birthdate'] = $this->shift_birthdate_for_demo( $person['fields']['birthdate'] ?? null, $ref );
+
 		// Replace Sportlink fields that contain PII.
 		$person['fields']['knvb_id']      = $this->anonymizer->generate_knvb_id();
 		$person['fields']['freescout_id'] = null; // Strip external system ID.
@@ -562,6 +568,46 @@ class DemoExport {
 		$person['post_meta'] = $this->anonymize_financials( $person['post_meta'] );
 
 		return $person;
+	}
+
+	/**
+	 * Shift a birthdate by a deterministic per-person whole-year offset.
+	 *
+	 * The offset derives from the person's fixture ref, so it is stable across
+	 * runs and different for each person, without storing a mapping anywhere.
+	 * Both stored shapes ('Ymd' and 'Y-m-d') are preserved.
+	 *
+	 * @param mixed  $value Birthdate value from the export row.
+	 * @param string $ref   Person fixture ref.
+	 * @return mixed Shifted birthdate in the input shape, or the input
+	 *               unchanged when it is not a parseable date.
+	 */
+	private function shift_birthdate_for_demo( $value, string $ref ) {
+		if ( ! is_string( $value ) || $value === '' ) {
+			return $value;
+		}
+
+		$compact = preg_match( '/^\d{8}$/', $value ) === 1;
+		$date    = \DateTimeImmutable::createFromFormat( $compact ? 'Ymd' : 'Y-m-d', $value );
+		if ( $date === false ) {
+			return $value;
+		}
+
+		$year_offset = ( (int) sprintf( '%u', crc32( $ref ) ) % 11 ) - 5;
+		if ( $year_offset === 0 ) {
+			$year_offset = 3;
+		}
+
+		$new_year = (int) $date->format( 'Y' ) + $year_offset;
+		$month    = $date->format( 'm' );
+		$day      = $date->format( 'd' );
+		if ( $month === '02' && $day === '29' && ! checkdate( 2, 29, $new_year ) ) {
+			$day = '28';
+		}
+
+		return $compact
+			? sprintf( '%04d%s%s', $new_year, $month, $day )
+			: sprintf( '%04d-%s-%s', $new_year, $month, $day );
 	}
 
 	/**
@@ -756,17 +802,22 @@ class DemoExport {
 	private function anonymize_discipline_case( $case ) {
 		$person_ref = $case['fields']['person'] ?? null;
 
-		// Rebuild title with fake name if person ref exists.
+		// Rebuild title with fake name if person ref exists. The real match
+		// description is not embedded: it is free text about a real match.
 		if ( $person_ref ) {
 			$identity   = $this->anonymizer->generate_identity( $person_ref );
 			$name_parts = array_filter( [ $identity['first_name'], $identity['infix'], $identity['last_name'] ] );
 			$fake_name  = implode( ' ', $name_parts );
 
-			$match_description = $case['fields']['match_description'] ?? '';
-			$match_date        = $case['fields']['match_date'] ?? '';
+			$match_date = $case['fields']['match_date'] ?? '';
 
-			$case['title'] = sprintf( '%s - %s - %s', $fake_name, $match_description, $match_date );
+			$case['title'] = sprintf( '%s - %s', $fake_name, $match_date );
 		}
+
+		// Strip the real discipline free text; it describes a real incident
+		// involving a real member. Generic placeholders keep the demo usable.
+		$case['fields']['charge_description']   = 'Demo: tenlastelegging verwijderd';
+		$case['fields']['sanction_description'] = 'Demo: sanctie verwijderd';
 
 		// Randomize dossier_id (7 digits + ".0").
 		$case['fields']['dossier_id'] = sprintf( '%d.0', wp_rand( 1000000, 9999999 ) );
