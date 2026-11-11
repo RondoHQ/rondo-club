@@ -114,7 +114,7 @@ class Feedback extends Base {
 				[
 					'methods'             => \WP_REST_Server::EDITABLE,
 					'callback'            => [ $this, 'update_feedback' ],
-					'permission_callback' => [ $this, 'check_feedback_access' ],
+					'permission_callback' => [ $this, 'check_feedback_edit_access' ],
 					'args'                => [
 						'id' => [
 							'validate_callback' => function ( $param ) {
@@ -126,7 +126,7 @@ class Feedback extends Base {
 				[
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => [ $this, 'delete_feedback' ],
-					'permission_callback' => [ $this, 'check_feedback_access' ],
+					'permission_callback' => [ $this, 'check_feedback_delete_access' ],
 					'args'                => [
 						'id' => [
 							'validate_callback' => function ( $param ) {
@@ -227,6 +227,47 @@ class Feedback extends Base {
 		}
 
 		return $this->check_feedback_permission() || (int) $feedback->post_author === get_current_user_id();
+	}
+
+	/**
+	 * Permission callback for editing a single feedback item.
+	 *
+	 * The read-level section capability is not a write grant: only the author
+	 * and administrators may edit an item. Workflow fields inside the update
+	 * handler stay administrator-only, as before.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return bool True if user can edit the feedback, false otherwise.
+	 */
+	public function check_feedback_edit_access( $request ) {
+		if ( ! is_user_logged_in() ) {
+			return false;
+		}
+
+		$feedback = get_post( $request->get_param( 'id' ) );
+		if ( ! $feedback || $feedback->post_type !== 'rondo_feedback' ) {
+			return false;
+		}
+
+		return current_user_can( 'manage_options' ) || (int) $feedback->post_author === get_current_user_id();
+	}
+
+	/**
+	 * Permission callback for deleting a single feedback item.
+	 *
+	 * Deletion is a force delete that bypasses the trash, so it is an
+	 * administrator action, not part of the read-level section access.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return bool True if user can delete the feedback, false otherwise.
+	 */
+	public function check_feedback_delete_access( $request ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return false;
+		}
+
+		$feedback = get_post( $request->get_param( 'id' ) );
+		return $feedback && $feedback->post_type === 'rondo_feedback';
 	}
 
 	/**
@@ -785,6 +826,16 @@ class Feedback extends Base {
 				'rest_not_found',
 				__( 'Feedback not found.', 'rondo' ),
 				[ 'status' => 404 ]
+			);
+		}
+
+		// Defence in depth alongside the route permission callback: a force
+		// delete must never run on read-level section access alone.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return new \WP_Error(
+				'rest_forbidden',
+				__( 'Only administrators can delete feedback.', 'rondo' ),
+				[ 'status' => 403 ]
 			);
 		}
 
