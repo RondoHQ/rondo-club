@@ -231,16 +231,16 @@ class InvoiceReminderSender {
 		$org_name      = $config->get_display_name();
 		$contact_email = $config->get_contact_email();
 
-		// Build inline QR code HTML via public URL.
+		// Embed the QR code as a CID image; the file lives in private invoice
+		// storage now, so there is no public URL to reference.
 		$qr_code_html = '';
-		$upload_dir   = wp_upload_dir();
+		$qr_full_path = null;
 		$qr_code_path = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'qr_code_path' );
 
 		if ( ! empty( $qr_code_path ) ) {
-			$qr_full_path = $upload_dir['basedir'] . '/' . $qr_code_path;
-			if ( file_exists( $qr_full_path ) ) {
-				$qr_url       = $upload_dir['baseurl'] . '/' . $qr_code_path;
-				$qr_code_html = '<img src="' . esc_url( $qr_url ) . '" alt="QR Code betaallink" width="200" style="display:block;" />';
+			$qr_full_path = InvoiceStorage::resolve( (string) $qr_code_path );
+			if ( $qr_full_path !== null ) {
+				$qr_code_html = '<img src="cid:' . InvoiceStorage::QR_CID . '" alt="QR Code betaallink" width="200" style="display:block;" />';
 			}
 		}
 
@@ -302,8 +302,15 @@ class InvoiceReminderSender {
 			}
 		}
 
-		// Send email via wp_mail.
+		// Send email via wp_mail, embedding the QR image when present.
+		$qr_embed = $qr_full_path !== null ? InvoiceStorage::embed_callback( $qr_full_path ) : null;
+		if ( $qr_embed !== null ) {
+			add_action( 'phpmailer_init', $qr_embed );
+		}
 		$result = wp_mail( $recipient_emails, $subject, $email_body, $headers );
+		if ( $qr_embed !== null ) {
+			remove_action( 'phpmailer_init', $qr_embed );
+		}
 
 		if ( ! $result ) {
 			return new \WP_Error(

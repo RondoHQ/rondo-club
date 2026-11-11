@@ -1389,10 +1389,11 @@ class Invoices extends Base {
 			);
 		}
 
-		$upload_dir = wp_upload_dir();
-		$full_path  = $upload_dir['basedir'] . '/' . $pdf_path;
+		// Resolve through InvoiceStorage: private location first, legacy
+		// uploads as fallback, and never outside the invoice directory.
+		$full_path = \Rondo\Finance\InvoiceStorage::resolve( (string) $pdf_path );
 
-		if ( ! file_exists( $full_path ) ) {
+		if ( $full_path === null ) {
 			return new \WP_Error(
 				'rest_file_not_found',
 				__( 'PDF file not found on disk.', 'rondo' ),
@@ -1439,10 +1440,9 @@ class Invoices extends Base {
 			);
 		}
 
-		$upload_dir = wp_upload_dir();
-		$full_path  = $upload_dir['basedir'] . '/' . $qr_path;
+		$full_path = \Rondo\Finance\InvoiceStorage::resolve( (string) $qr_path );
 
-		if ( ! file_exists( $full_path ) ) {
+		if ( $full_path === null ) {
 			return new \WP_Error(
 				'rest_file_not_found',
 				__( 'QR code file not found on disk.', 'rondo' ),
@@ -2535,9 +2535,10 @@ class Invoices extends Base {
 	private function clear_qr_code( $invoice_id ) {
 		$qr_path = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'qr_code_path' );
 		if ( ! empty( $qr_path ) ) {
-			$upload_dir = wp_upload_dir();
-			$full_path  = $upload_dir['basedir'] . '/' . $qr_path;
-			if ( file_exists( $full_path ) ) {
+			// Only ever unlink a path InvoiceStorage resolves inside the
+			// invoice directory; a stored traversal value deletes nothing.
+			$full_path = \Rondo\Finance\InvoiceStorage::resolve( (string) $qr_path );
+			if ( $full_path !== null ) {
 				unlink( $full_path );
 			}
 			\Rondo\Fields\Fields::update_for_post( $invoice_id, 'qr_code_path', '' );
@@ -2555,9 +2556,8 @@ class Invoices extends Base {
 	private function clear_pdf( $invoice_id ) {
 		$pdf_path = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'pdf_path' );
 		if ( ! empty( $pdf_path ) ) {
-			$upload_dir = wp_upload_dir();
-			$full_path  = $upload_dir['basedir'] . '/' . $pdf_path;
-			if ( file_exists( $full_path ) ) {
+			$full_path = \Rondo\Finance\InvoiceStorage::resolve( (string) $pdf_path );
+			if ( $full_path !== null ) {
 				unlink( $full_path );
 			}
 			\Rondo\Fields\Fields::update_for_post( $invoice_id, 'pdf_path', '' );
