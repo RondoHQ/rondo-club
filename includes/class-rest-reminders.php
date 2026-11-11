@@ -32,14 +32,16 @@ class Reminders extends Base {
 	 * Register custom REST routes for reminders and anniversaries.
 	 */
 	public function register_routes() {
-		// Upcoming reminders
+		// Upcoming reminders. These expose every listed member's full birthdate,
+		// so the route carries the same section gate as /anniversaries instead of
+		// the login-only baseline, and the handler scopes results per person.
 		register_rest_route(
 			'rondo/v1',
 			'/reminders',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_upcoming_reminders' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_jubilarissen_permission' ],
 				'args'                => [
 					'days_ahead' => [
 						'default'           => 30,
@@ -142,6 +144,16 @@ class Reminders extends Base {
 
 		$reminders_handler = new \Rondo\Collaboration\Reminders();
 		$upcoming          = $reminders_handler->get_upcoming_reminders( $days_ahead );
+
+		// The underlying query is unscoped SQL, so apply the same per-person
+		// AccessControl filter the dashboard handler already uses before
+		// returning birthdates.
+		$upcoming = array_values(
+			array_filter(
+				$upcoming,
+				static fn( $item ) => \Rondo\Core\AccessControl::can_view_person( (int) $item['id'] )
+			)
+		);
 
 		return rest_ensure_response( $upcoming );
 	}
