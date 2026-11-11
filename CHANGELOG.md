@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.170.20] - 2026-11-11
+
+### Fixed
+
+- Scope the /reminders REST route results through AccessControl, so full birthdates are only returned for people the requesting user may view, instead of the whole membership to every logged-in user (security audit F-17).
+
 ## [35.170.19] - 2026-11-11
 
 ### Fixed
