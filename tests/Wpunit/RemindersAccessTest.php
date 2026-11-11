@@ -7,10 +7,10 @@ use Rondo\REST\Reminders;
 use Tests\Support\RondoTestCase;
 
 /**
- * The /reminders route returns full birthdates, so it must carry the
- * jubilarissen section gate (like /anniversaries) and scope its results
- * through AccessControl instead of returning every member to any
- * logged-in user.
+ * The /reminders route returns full birthdates. It stays available to
+ * logged-in members, but its results must be scoped through AccessControl:
+ * a user only receives reminders for people they may view, instead of the
+ * whole membership.
  */
 class RemindersAccessTest extends RondoTestCase {
 	private string $role;
@@ -33,15 +33,12 @@ class RemindersAccessTest extends RondoTestCase {
 		parent::tear_down();
 	}
 
-	private function request( string $route ): \WP_REST_Response {
-		return rest_do_request( new \WP_REST_Request( 'GET', $route ) );
-	}
-
-	private function grant( string $cap ): void {
-		get_role( $this->role )->add_cap( $cap );
-		UserRoles::sync_role_capabilities( $this->role );
-		wp_set_current_user( 0 );
-		wp_set_current_user( $this->user_id );
+	private function request( array $params = [] ): \WP_REST_Response {
+		$request = new \WP_REST_Request( 'GET', '/rondo/v1/reminders' );
+		foreach ( $params as $key => $value ) {
+			$request->set_param( $key, $value );
+		}
+		return rest_do_request( $request );
 	}
 
 	private function createBirthdayPerson( string $title, string $age_group ): int {
@@ -52,22 +49,25 @@ class RemindersAccessTest extends RondoTestCase {
 		return $person_id;
 	}
 
-	public function test_reminders_requires_jubilarissen_section(): void {
-		$this->assertSame( 403, $this->request( '/rondo/v1/reminders' )->get_status() );
-
-		$this->grant( 'jubilarissen' );
-		$this->assertSame( 200, $this->request( '/rondo/v1/reminders' )->get_status() );
-	}
-
 	public function test_reminders_results_are_scoped_to_permitted_age_groups(): void {
-		$this->grant( 'jubilarissen' );
 		$visible_id = $this->createBirthdayPerson( 'Visible Kid', 'Onder 11' );
 		$hidden_id  = $this->createBirthdayPerson( 'Hidden Senior', 'Senioren' );
 
-		$response = $this->request( '/rondo/v1/reminders?days_ahead=365' );
+		$response = $this->request( [ 'days_ahead' => 365 ] );
 		$this->assertSame( 200, $response->get_status() );
 		$ids = array_map( 'intval', wp_list_pluck( $response->get_data(), 'id' ) );
 		$this->assertContains( $visible_id, $ids );
 		$this->assertNotContains( $hidden_id, $ids );
+	}
+
+	public function test_plain_member_receives_no_other_members_birthdates(): void {
+		$this->createBirthdayPerson( 'Some Member', 'Onder 11' );
+		$this->createBirthdayPerson( 'Other Member', 'Senioren' );
+
+		wp_set_current_user( $this->createRondoUser() );
+		$response = $this->request( [ 'days_ahead' => 365 ] );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( [], $response->get_data(), 'a plain member has no linked person here, so nobody is in their scope' );
 	}
 }

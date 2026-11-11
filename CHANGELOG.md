@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Gate the /reminders REST route with the jubilarissen section check (as /anniversaries already has) and scope its results through AccessControl, so full birthdates are no longer returned to every logged-in user (security audit F-17).
+- Scope the /reminders REST route results through AccessControl, so full birthdates are only returned for people the requesting user may view, instead of the whole membership to every logged-in user (security audit F-17).
 
 ## [35.170.10] - 2026-11-10
 

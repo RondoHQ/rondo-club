@@ -32,16 +32,16 @@ class Reminders extends Base {
 	 * Register custom REST routes for reminders and anniversaries.
 	 */
 	public function register_routes() {
-		// Upcoming reminders. These expose every listed member's full birthdate,
-		// so the route carries the same section gate as /anniversaries instead of
-		// the login-only baseline, and the handler scopes results per person.
+		// Upcoming reminders. The route stays login-only, as the member-facing
+		// tests encode, but the handler scopes results per person through
+		// AccessControl so birthdates only go to users who may view that person.
 		register_rest_route(
 			'rondo/v1',
 			'/reminders',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_upcoming_reminders' ],
-				'permission_callback' => [ $this, 'check_jubilarissen_permission' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
 					'days_ahead' => [
 						'default'           => 30,
