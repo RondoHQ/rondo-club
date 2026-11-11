@@ -55,7 +55,7 @@ class InvoicePdfDateTest extends RondoTestCase {
 	private function pdf_text( int $id ): string {
 		$result = InvoicePdfGenerator::generate( $id );
 		$this->assertNotWPError( $result );
-		$file          = InvoiceStorage::resolve( (string) $result );
+		$file = InvoiceStorage::resolve( (string) $result );
 		$this->assertNotNull( $file, 'generated PDF must resolve inside invoice storage' );
 		$this->files[] = $file;
 		return ( new Parser() )->parseFile( $file )->getText();
