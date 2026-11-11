@@ -297,16 +297,18 @@ class InvoiceEmailSender {
 			? '<a href="' . esc_url( $payment_link ) . '" style="color:' . esc_attr( EmailTemplate::accent_color() ) . ';text-decoration:underline;">' . esc_html( $payment_link ) . '</a>'
 			: 'Neem contact op voor betaalinformatie.';
 
-		// Build inline QR code HTML via public URL (CID images are blocked by most email clients)
+		// Embed the QR code as a CID image. The file lives in private invoice
+		// storage now, so there is no public URL to reference; the payment
+		// link and button in the same email keep working for clients that
+		// do not display CID images.
 		$qr_code_html = '';
-		$upload_dir   = wp_upload_dir();
+		$qr_full_path = null;
 		$qr_code_path = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'qr_code_path' );
 
 		if ( ! empty( $qr_code_path ) ) {
-			$qr_full_path = $upload_dir['basedir'] . '/' . $qr_code_path;
-			if ( file_exists( $qr_full_path ) ) {
-				$qr_url       = $upload_dir['baseurl'] . '/' . $qr_code_path;
-				$qr_code_html = '<img src="' . esc_url( $qr_url ) . '" alt="QR Code betaallink" width="200" style="display:block;" />';
+			$qr_full_path = InvoiceStorage::resolve( (string) $qr_code_path );
+			if ( $qr_full_path !== null ) {
+				$qr_code_html = '<img src="cid:' . InvoiceStorage::QR_CID . '" alt="QR Code betaallink" width="200" style="display:block;" />';
 			}
 		}
 
@@ -433,14 +435,15 @@ class InvoiceEmailSender {
 
 		// Attach PDF if exists
 		if ( ! empty( $pdf_path ) ) {
-			$full_path = $upload_dir['basedir'] . '/' . $pdf_path;
-			if ( file_exists( $full_path ) ) {
+			$full_path = InvoiceStorage::resolve( (string) $pdf_path );
+			if ( $full_path !== null ) {
 				$attachments[] = $full_path;
 			}
 		}
 
-		// Send email via wp_mail
-		$result = wp_mail( $recipient_emails, $subject, $email_body, $headers, $attachments );
+		// WordPress embeds are available to both PHPMailer and pre_wp_mail transports.
+		$embeds = $qr_full_path !== null ? [ InvoiceStorage::QR_CID => $qr_full_path ] : [];
+		$result = wp_mail( $recipient_emails, $subject, $email_body, $headers, $attachments, $embeds );
 
 		if ( ! $result ) {
 			return new \WP_Error(

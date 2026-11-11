@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Provider-agnostic branded QR code generator.
  *
  * Generates QR codes with the club's accent color and optional logo overlay,
- * saving the PNG to wp-content/uploads/invoices/ and updating the canonical field.
+ * saving the PNG to private invoice storage and updating the canonical field.
  */
 class QrCodeGenerator {
 
@@ -36,23 +36,19 @@ class QrCodeGenerator {
 	 * Generate a branded QR code PNG for a payment URL.
 	 *
 	 * Applies the club accent color to all dark modules and optionally overlays the club logo
-	 * in the center. Saves the PNG to uploads/invoices/ and updates the qr_code_path canonical field.
+	 * in the center. Saves the PNG to private invoice storage and updates the qr_code_path canonical field.
 	 *
 	 * @param string $url        The URL to encode in the QR code.
 	 * @param int    $invoice_id The invoice post ID.
 	 * @return string|\WP_Error Relative path (e.g. 'invoices/qr-F2025-001.png') on success, or WP_Error on failure.
 	 */
 	public static function generate( string $url, int $invoice_id ): string|\WP_Error {
-		$upload_dir   = wp_upload_dir();
-		$invoices_dir = $upload_dir['basedir'] . '/invoices';
-		wp_mkdir_p( $invoices_dir );
-
 		$invoice_number = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_number' );
 		if ( empty( $invoice_number ) ) {
 			$invoice_number = $invoice_id;
 		}
 
-		$full_path = $invoices_dir . '/qr-' . $invoice_number . '.png';
+		$full_path = InvoiceStorage::path_for_write( 'qr-' . $invoice_number . '.png' );
 		$result    = self::generate_to_path( $url, $full_path );
 
 		if ( is_wp_error( $result ) ) {
