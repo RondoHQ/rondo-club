@@ -37,7 +37,7 @@ final class Registry {
 			if ( ! is_array( $config ) ) {
 				throw new RuntimeException( 'The Rondo field registry is invalid.' );
 			}
-			self::$config = $config;
+			self::$config = self::normalize_read_only_flags( $config );
 		}
 
 		if ( ! self::$validated ) {
@@ -46,6 +46,34 @@ final class Registry {
 		}
 
 		return self::$config;
+	}
+
+	/**
+	 * Normalize the legacy ACF spelling `readonly` to the canonical `read_only`.
+	 *
+	 * The write pipeline only honours `read_only`; definitions written with the
+	 * ACF spelling were silently writable. Normalizing at load time fixes every
+	 * current and future definition, including nested sub-fields, instead of
+	 * relying on each definition using the right spelling.
+	 *
+	 * @param array<string,mixed> $node Registry config (sub)tree.
+	 * @return array<string,mixed>
+	 */
+	private static function normalize_read_only_flags( array $node ): array {
+		if ( array_key_exists( 'readonly', $node ) ) {
+			if ( ! array_key_exists( 'read_only', $node ) ) {
+				$node['read_only'] = $node['readonly'];
+			}
+			unset( $node['readonly'] );
+		}
+
+		foreach ( $node as $key => $value ) {
+			if ( is_array( $value ) ) {
+				$node[ $key ] = self::normalize_read_only_flags( $value );
+			}
+		}
+
+		return $node;
 	}
 
 	/**

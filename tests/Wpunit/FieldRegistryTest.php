@@ -121,6 +121,44 @@ class FieldRegistryTest extends RondoTestCase {
 		$this->assertSame( [ [ 'related_person' => 42 ] ], $storage['relationships'] );
 	}
 
+	public function test_no_definition_keeps_the_legacy_readonly_spelling(): void {
+		$found = [];
+		$walk  = static function ( $node ) use ( &$walk, &$found ): void {
+			if ( ! is_array( $node ) ) {
+				return;
+			}
+			if ( array_key_exists( 'readonly', $node ) ) {
+				$found[] = $node['canonical_name'] ?? '(unnamed)';
+			}
+			foreach ( $node as $value ) {
+				$walk( $value );
+			}
+		};
+		$walk( Registry::all() );
+
+		$this->assertSame( [], $found, 'the legacy readonly spelling must be normalized to read_only at load time' );
+	}
+
+	public function test_formerly_writable_read_only_fields_reject_writes(): void {
+		$this->assertNotEmpty( Registry::resolve( 'person', 'birthdate' )['read_only'] ?? null );
+		$this->assertNotEmpty( Registry::resolve( 'rondo_invoice', 'invoice_number' )['read_only'] ?? null );
+
+		foreach (
+			[
+				[ 'person', [ 'birthdate' => '20100101' ] ],
+				[ 'person', [ 'knvb_id' => 'XX12345' ] ],
+				[ 'rondo_invoice', [ 'invoice_number' => '2026F9999' ] ],
+			] as [ $context, $payload ]
+		) {
+			try {
+				Registry::to_storage( $context, $payload );
+				$this->fail( sprintf( 'Writing %s.%s should have been rejected as read-only.', $context, array_key_first( $payload ) ) );
+			} catch ( InvalidArgumentException $error ) {
+				$this->assertStringContainsString( 'is read-only', $error->getMessage() );
+			}
+		}
+	}
+
 	public function test_unknown_write_identifies_the_canonical_field_path(): void {
 		$this->expectException( InvalidArgumentException::class );
 		$this->expectExceptionMessage( 'fields.not_a_field' );
