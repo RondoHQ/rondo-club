@@ -551,11 +551,13 @@ class DemoExport {
 		// Replace addresses.
 		$person['fields']['addresses'] = $this->anonymize_addresses( $person['fields']['addresses'] );
 
-		// Shift the birthdate by a per-person whole-year offset. A real
-		// birthdate combined with the kept team/role history and relationship
-		// graph is a strong re-identification set, especially for minors; the
-		// demo importer shifts birthdates by full years in the same way.
-		$person['fields']['birthdate'] = $this->shift_birthdate_for_demo( $person['fields']['birthdate'] ?? null, $ref );
+		// Generate a synthetic date from the fixture identity and age group.
+		// Never shift the real date: a public ref would make that reversible.
+		$person['fields']['birthdate'] = $this->synthetic_birthdate_for_demo(
+			$person['fields']['birthdate'] ?? null,
+			$ref,
+			(string) ( $person['fields']['leeftijdsgroep'] ?? '' )
+		);
 
 		// Replace Sportlink fields that contain PII.
 		$person['fields']['knvb_id']      = $this->anonymizer->generate_knvb_id();
@@ -571,43 +573,33 @@ class DemoExport {
 	}
 
 	/**
-	 * Shift a birthdate by a deterministic per-person whole-year offset.
+	 * Generate a synthetic birthdate independent of the original date.
 	 *
-	 * The offset derives from the person's fixture ref, so it is stable across
-	 * runs and different for each person, without storing a mapping anywhere.
-	 * Both stored shapes ('Ymd' and 'Y-m-d') are preserved.
+	 * Only presence and format are retained from the source value. The already
+	 * exported age group keeps youth examples useful; no original date component
+	 * contributes to the generated date. Stable within an export year.
 	 *
-	 * @param mixed  $value Birthdate value from the export row.
-	 * @param string $ref   Person fixture ref.
-	 * @return mixed Shifted birthdate in the input shape, or the input
-	 *               unchanged when it is not a parseable date.
+	 * @param mixed  $value     Birthdate value from the export row.
+	 * @param string $ref       Person fixture ref.
+	 * @param string $age_group Already exported age group.
+	 * @return string|null Synthetic date in the input shape, or null for missing/invalid dates.
 	 */
-	private function shift_birthdate_for_demo( $value, string $ref ) {
-		if ( ! is_string( $value ) || $value === '' ) {
-			return $value;
+	private function synthetic_birthdate_for_demo( $value, string $ref, string $age_group ): ?string {
+		if ( ! is_string( $value ) || ! preg_match( '/^(\d{4})(-?)(\d{2})\2(\d{2})$/', $value, $parts )
+			|| ! checkdate( (int) $parts[3], (int) $parts[4], (int) $parts[1] ) ) {
+			return null;
 		}
 
-		$compact = preg_match( '/^\d{8}$/', $value ) === 1;
-		$date    = \DateTimeImmutable::createFromFormat( $compact ? 'Ymd' : 'Y-m-d', $value );
-		if ( $date === false ) {
-			return $value;
+		$hash = hash( 'sha256', 'demo-birthdate:' . $ref );
+		$age  = 18 + ( hexdec( substr( $hash, 0, 4 ) ) % 53 );
+		if ( preg_match( '/^Onder (\d+)$/i', trim( $age_group ), $group ) && (int) $group[1] >= 5 && (int) $group[1] <= 23 ) {
+			$age = (int) $group[1] - 1;
 		}
+		$year  = (int) wp_date( 'Y' ) - $age;
+		$month = 1 + ( hexdec( substr( $hash, 4, 4 ) ) % 12 );
+		$day   = 1 + ( hexdec( substr( $hash, 8, 4 ) ) % 28 );
 
-		$year_offset = ( (int) sprintf( '%u', crc32( $ref ) ) % 11 ) - 5;
-		if ( $year_offset === 0 ) {
-			$year_offset = 3;
-		}
-
-		$new_year = (int) $date->format( 'Y' ) + $year_offset;
-		$month    = $date->format( 'm' );
-		$day      = $date->format( 'd' );
-		if ( $month === '02' && $day === '29' && ! checkdate( 2, 29, $new_year ) ) {
-			$day = '28';
-		}
-
-		return $compact
-			? sprintf( '%04d%s%s', $new_year, $month, $day )
-			: sprintf( '%04d-%s-%s', $new_year, $month, $day );
+		return sprintf( $parts[2] === '' ? '%04d%02d%02d' : '%04d-%02d-%02d', $year, $month, $day );
 	}
 
 	/**

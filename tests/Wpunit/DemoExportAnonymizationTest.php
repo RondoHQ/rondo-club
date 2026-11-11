@@ -27,27 +27,59 @@ class DemoExportAnonymizationTest extends RondoTestCase {
 		return $reflection->invoke( $this->exporter, $argument );
 	}
 
-	public function test_birthdate_is_shifted_and_not_left_real(): void {
-		$person = [
+	private function person( $birthdate ): array {
+		return [
 			'_ref'      => 'person_123',
 			'title'     => 'Echt Persoon',
 			'fields'    => [
-				'first_name' => 'Echt',
-				'last_name'  => 'Persoon',
-				'gender'     => 'M',
-				'birthdate'  => '2012-06-15',
-				'addresses'  => [],
+				'first_name'     => 'Echt',
+				'last_name'      => 'Persoon',
+				'gender'         => 'M',
+				'birthdate'      => $birthdate,
+				'leeftijdsgroep' => 'Onder 13',
+				'addresses'      => [],
 			],
 			'post_meta' => [],
 		];
+	}
 
-		$result = $this->invoke( 'anonymize_person', $person );
+	public function test_birthdate_does_not_depend_on_original_year_month_or_day(): void {
+		$result = $this->invoke( 'anonymize_person', $this->person( '2012-06-15' ) );
+		$other  = $this->invoke( 'anonymize_person', $this->person( '1990-01-03' ) );
 
-		$this->assertNotSame( '2012-06-15', $result['fields']['birthdate'] );
-		$this->assertMatchesRegularExpression( '/^\d{4}-06-15$/', $result['fields']['birthdate'], 'a whole-year shift keeps month and day' );
+		$this->assertSame( $result['fields']['birthdate'], $other['fields']['birthdate'], 'the real date must not contribute to the synthetic date' );
+		$this->assertSame( (int) wp_date( 'Y' ) - 12, (int) substr( $result['fields']['birthdate'], 0, 4 ), 'youth fixtures retain their declared age group' );
+		$this->assertNotSame( '06-15', substr( $result['fields']['birthdate'], 5 ) );
+		$this->assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2}$/', $result['fields']['birthdate'] );
 
-		$again = $this->invoke( 'anonymize_person', $person );
-		$this->assertSame( $result['fields']['birthdate'], $again['fields']['birthdate'], 'the shift is deterministic per person' );
+		$again = $this->invoke( 'anonymize_person', $this->person( '2012-06-15' ) );
+		$this->assertSame( $result['fields']['birthdate'], $again['fields']['birthdate'] );
+	}
+
+	public function test_compact_and_leap_day_inputs_produce_the_same_synthetic_date(): void {
+		$compact = $this->invoke( 'anonymize_person', $this->person( '20120229' ) );
+		$dashed  = $this->invoke( 'anonymize_person', $this->person( '2000-12-31' ) );
+		$this->assertSame( str_replace( '-', '', $dashed['fields']['birthdate'] ), $compact['fields']['birthdate'] );
+	}
+
+	public function test_missing_or_invalid_dates_are_cleared(): void {
+		foreach ( [ null, '', 'personal text', '2011-02-29', '2012-02-30', '2012-0229', [] ] as $value ) {
+			$result = $this->invoke( 'anonymize_person', $this->person( $value ) );
+			$this->assertNull( $result['fields']['birthdate'] );
+		}
+	}
+
+	public function test_different_people_have_varied_valid_birthdays(): void {
+		$dates = [];
+		for ( $i = 1; $i <= 30; $i++ ) {
+			$person         = $this->person( '2012-06-15' );
+			$person['_ref'] = 'person_' . $i;
+			$result         = $this->invoke( 'anonymize_person', $person );
+			$date           = $result['fields']['birthdate'];
+			$this->assertSame( $date, ( new \DateTimeImmutable( $date ) )->format( 'Y-m-d' ) );
+			$dates[] = $date;
+		}
+		$this->assertGreaterThan( 20, count( array_unique( $dates ) ) );
 	}
 
 	public function test_discipline_free_text_is_stripped(): void {
