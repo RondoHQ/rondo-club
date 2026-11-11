@@ -472,7 +472,7 @@ class RabobankPayment {
 	 * Download QR code PNG for a payment request
 	 *
 	 * Fetches the QR code image from the Rabobank API and stores it in
-	 * wp-content/uploads/invoices/ alongside the invoice PDF.
+	 * private invoice storage alongside the invoice PDF.
 	 *
 	 * @param int $invoice_id Invoice post ID.
 	 * @return string|\WP_Error Relative path to QR code on success, WP_Error on failure.
@@ -554,7 +554,7 @@ class RabobankPayment {
 			);
 		}
 
-		// Save PNG to uploads/invoices/
+		// Save PNG to private invoice storage.
 		$png_data = wp_remote_retrieve_body( $response );
 		if ( empty( $png_data ) ) {
 			return new \WP_Error(
@@ -564,15 +564,9 @@ class RabobankPayment {
 			);
 		}
 
-		$upload_dir   = wp_upload_dir();
-		$invoices_dir = $upload_dir['basedir'] . '/invoices';
-		if ( ! file_exists( $invoices_dir ) ) {
-			wp_mkdir_p( $invoices_dir );
-		}
-
 		$invoice_number = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_number' );
 		$filename       = 'qr-' . $invoice_number . '.png';
-		$full_path      = $invoices_dir . '/' . $filename;
+		$full_path      = InvoiceStorage::path_for_write( $filename );
 		$relative_path  = 'invoices/' . $filename;
 
 		$written = file_put_contents( $full_path, $png_data );
