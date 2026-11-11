@@ -1085,12 +1085,26 @@ class AccessControl {
 			return;
 		}
 
-		$meta_query   = $query->get( 'meta_query' ) ?: [];
-		$meta_query[] = [
+		$scope_clause = [
 			'key'     => 'leeftijdsgroep',
 			'value'   => $scope['age_groups'],
 			'compare' => 'IN',
 		];
+
+		$meta_query = $query->get( 'meta_query' ) ?: [];
+		if ( empty( $meta_query ) ) {
+			$meta_query[] = $scope_clause;
+		} else {
+			// Nest the caller's clauses in their own group and AND the scope
+			// clause against it. Appending the clause as a sibling of an OR
+			// query (as the global search subqueries build theirs) would turn
+			// the restriction into an alternative match instead of a limit.
+			$meta_query = [
+				'relation' => 'AND',
+				$meta_query,
+				$scope_clause,
+			];
+		}
 		$query->set( 'meta_query', $meta_query );
 	}
 
