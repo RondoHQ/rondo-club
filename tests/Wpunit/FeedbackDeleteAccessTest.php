@@ -29,7 +29,7 @@ class FeedbackDeleteAccessTest extends RondoTestCase {
 		$this->bootRestControllers( [ Feedback::class ] );
 		add_filter( 'pre_wp_mail', '__return_true' );
 
-		$created = $this->request(
+		$created           = $this->request(
 			'/rondo/v1/feedback',
 			'POST',
 			[
