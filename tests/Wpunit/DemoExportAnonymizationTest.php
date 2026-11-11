@@ -29,9 +29,9 @@ class DemoExportAnonymizationTest extends RondoTestCase {
 
 	public function test_birthdate_is_shifted_and_not_left_real(): void {
 		$person = [
-			'_ref'   => 'person_123',
-			'title'  => 'Echt Persoon',
-			'fields' => [
+			'_ref'      => 'person_123',
+			'title'     => 'Echt Persoon',
+			'fields'    => [
 				'first_name' => 'Echt',
 				'last_name'  => 'Persoon',
 				'gender'     => 'M',
