@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Make the 21 fields defined with the legacy readonly spelling actually read-only: the registry normalizes readonly to read_only at load time and the definitions use the canonical spelling, so Sportlink-owned person fields and invoice_number can no longer be overwritten through the API (security audit F-10).
+- Make invoice_number read-only for API writes: it is generated automatically and flows into generated file names, so its registry definition now uses the read_only spelling the write pipeline honours. The other readonly definitions keep that spelling on purpose: in this registry it is a form hint, not a write guard, and person fields such as birthdate must stay API-writable (security audit F-10, narrowed after CI showed the blanket change breaks intended flows).
 
 ## [35.170.10] - 2026-11-10
 
