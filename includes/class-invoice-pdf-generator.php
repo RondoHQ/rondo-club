@@ -4,7 +4,7 @@
  *
  * Generates PDF documents for invoices using mPDF library.
  * Builds HTML template with club branding, member details, discipline case line items,
- * and payment instructions, then renders to PDF and stores in WordPress uploads.
+ * and payment instructions, then renders to PDF and stores it in private invoice storage.
  *
  * @package Rondo\Finance
  */
@@ -161,11 +161,7 @@ class InvoicePdfGenerator {
 		$qr_code_path    = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'qr_code_path' );
 		$qr_code_abspath = null;
 		if ( ! empty( $qr_code_path ) ) {
-			$upload_dir   = wp_upload_dir();
-			$qr_full_path = $upload_dir['basedir'] . '/' . $qr_code_path;
-			if ( file_exists( $qr_full_path ) ) {
-				$qr_code_abspath = $qr_full_path;
-			}
+			$qr_code_abspath = InvoiceStorage::resolve( (string) $qr_code_path );
 		}
 		if ( $is_paid ) {
 			// Do not show payment QR for already-paid invoices.
@@ -223,17 +219,10 @@ class InvoicePdfGenerator {
 			}
 			$mpdf->WriteHTML( $html );
 
-			// Save PDF to WordPress uploads
-			$upload_dir   = wp_upload_dir();
-			$invoices_dir = $upload_dir['basedir'] . '/invoices';
-
-			// Create invoices directory if it doesn't exist
-			if ( ! file_exists( $invoices_dir ) ) {
-				wp_mkdir_p( $invoices_dir );
-			}
-
+			// Save the PDF to private invoice storage, outside the web root.
+			// The stored relative path keeps its historical shape.
 			$filename      = 'factuur-' . $invoice_number . '.pdf';
-			$full_path     = $invoices_dir . '/' . $filename;
+			$full_path     = InvoiceStorage::path_for_write( $filename );
 			$relative_path = 'invoices/' . $filename;
 
 			$mpdf->Output( $full_path, \Mpdf\Output\Destination::FILE );
