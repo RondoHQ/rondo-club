@@ -92,12 +92,14 @@ final class MemberProfileService {
 		set_transient( self::TOKEN_PREFIX . $hash, $payload, self::TOKEN_TTL );
 		update_user_meta( $user_id, self::PENDING_META, $payload );
 
+		// Notify the old address first: mail filters and scanners that track
+		// the verification mail must see that mail last.
+		self::notify_old_address( $payload, false );
+
 		if ( ! self::send_verification_email( $email, $token, $slot, $operation ) ) {
 			self::cancel_email_change( $user_id );
 			return new \WP_Error( 'rondo_email_send_failed', 'De verificatiemail kon niet worden verstuurd.', [ 'status' => 500 ] );
 		}
-
-		self::notify_old_address( $payload, false );
 
 		return [
 			'pending'    => true,
