@@ -5,6 +5,7 @@ namespace Tests\Wpunit;
 use Rondo\Config\FinanceConfig;
 use Rondo\Fields\Fields;
 use Rondo\Finance\InvoicePdfGenerator;
+use Rondo\Finance\InvoiceStorage;
 use Smalot\PdfParser\Parser;
 use Tests\Support\RondoTestCase;
 
@@ -54,7 +55,8 @@ class InvoicePdfDateTest extends RondoTestCase {
 	private function pdf_text( int $id ): string {
 		$result = InvoicePdfGenerator::generate( $id );
 		$this->assertNotWPError( $result );
-		$file          = wp_upload_dir()['basedir'] . '/' . $result;
+		$file          = InvoiceStorage::resolve( (string) $result );
+		$this->assertNotNull( $file, 'generated PDF must resolve inside invoice storage' );
 		$this->files[] = $file;
 		return ( new Parser() )->parseFile( $file )->getText();
 	}
