@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.170.14] - 2026-11-11
+
+### Fixed
+
+- Make the 21 fields defined with the legacy readonly spelling actually read-only: the registry normalizes readonly to read_only at load time and the definitions use the canonical spelling, so Sportlink-owned person fields and invoice_number can no longer be overwritten through the API (security audit F-10).
+
 ## [35.170.10] - 2026-11-10
 
 ### Fixed
