@@ -1,6 +1,6 @@
 {
   "name": "rondo-club-theme",
-  "version": "35.170.23",
+  "version": "35.170.24",
   "private": true,
   "type": "module",
   "scripts": {
@@ -29,12 +29,12 @@
     "@tiptap/extension-placeholder": "^3.29.2",
     "@tiptap/react": "^3.29.2",
     "@tiptap/starter-kit": "^3.29.2",
-    "@uiw/react-color-sketch": "^2.9.6",
+    "@uiw/react-color-sketch": "^2.10.3",
     "axios": "^1.6.0",
     "clsx": "^2.1.0",
     "date-fns": "^3.2.0",
     "jsqr": "^1.4.0",
-    "lucide-react": "^0.577.0",
+    "lucide-react": "^1.28.0",
     "qrcode": "^1.5.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.8",
