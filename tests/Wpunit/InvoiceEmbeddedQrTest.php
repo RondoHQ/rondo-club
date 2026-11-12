@@ -2,7 +2,8 @@
 
 namespace Tests\Wpunit;
 
-use Lettermint\Client\HttpClient;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Psr7\Response;
 use Lettermint\Lettermint;
 use Rondo\Config\FinanceConfig;
 use Rondo\Fields\Fields;
@@ -64,25 +65,63 @@ class InvoiceEmbeddedQrTest extends RondoTestCase {
 	}
 
 	private function capture_lettermint(): void {
-		$http = $this->createMock( HttpClient::class );
-		$http->method( 'post' )->willReturnCallback(
-			function ( $path, $payload ) {
-				$this->payloads[] = $payload;
-				return [
-					'message_id' => 'test',
-					'status'     => 'pending',
-				];
+		$http = $this->createMock( ClientInterface::class );
+		$http->method( 'request' )->willReturnCallback(
+			function ( $method, $url, $options ) {
+				$this->assertSame( 'POST', $method );
+				$this->assertSame( 'https://api.lettermint.co/v1/send', $url );
+				$this->payloads[] = json_decode( $options['body'], true );
+				return new Response( 200, [ 'Content-Type' => 'application/json' ], '{"message_id":"test","status":"pending"}' );
 			}
 		);
-		$client   = new Lettermint( 'test-no-network' );
-		$property = new \ReflectionProperty( $client, 'httpClient' );
-		$property->setAccessible( true );
-		$property->setValue( $client, $http );
+		$client = new Lettermint( sendingToken: 'test-no-network', httpClient: $http );
 
 		$mailer   = new LettermintMailer();
 		$property = new \ReflectionProperty( $mailer, 'client' );
 		$property->setAccessible( true );
 		$property->setValue( $mailer, $client );
+	}
+
+	public function test_transport_preserves_headers_bodies_and_metadata_without_leaking_to_next_mail(): void {
+		$this->capture_lettermint();
+		$this->assertTrue(
+			wp_mail(
+				'member@example.com',
+				'Verification',
+				'<p>Hello member</p>',
+				[
+					'From: Club <club@example.com>',
+					'Cc: cc@example.com',
+					'Bcc: bcc@example.com',
+					'Reply-To: reply@example.com',
+					'Content-Type: text/html',
+					'X-Lettermint-Route: transactional',
+					'X-Rondo-Email-Tag: verification',
+					'X-Rondo-Metadata: {"source_person_id":123,"flow":"email_verification"}',
+					'X-Custom-Test: retained',
+				]
+			)
+		);
+		$payload = $this->payloads[0];
+		$this->assertSame( 'Club <club@example.com>', $payload['from'] );
+		$this->assertSame( [ 'member@example.com' ], $payload['to'] );
+		$this->assertSame( [ 'cc@example.com' ], $payload['cc'] );
+		$this->assertSame( [ 'bcc@example.com' ], $payload['bcc'] );
+		$this->assertSame( [ 'reply@example.com' ], $payload['reply_to'] );
+		$this->assertSame( '<p>Hello member</p>', $payload['html'] );
+		$this->assertSame( 'Hello member', $payload['text'] );
+		$this->assertSame( 'transactional', $payload['route'] );
+		$this->assertSame( 'verification', $payload['tag'] );
+		$this->assertSame( '123', $payload['metadata']['source_person_id'] );
+		$this->assertSame( 'email_verification', $payload['metadata']['flow'] );
+		$this->assertSame( 'retained', $payload['headers']['x-custom-test'] );
+		$this->assertTrue( wp_mail( 'next@example.com', 'Next', 'Plain body' ) );
+		$next = $this->payloads[1];
+		$this->assertSame( 'Plain body', $next['text'] );
+		foreach ( [ 'cc', 'bcc', 'reply_to', 'html', 'headers', 'route' ] as $key ) {
+			$this->assertArrayNotHasKey( $key, $next );
+		}
+		$this->assertArrayNotHasKey( 'source_person_id', $next['metadata'] );
 	}
 
 	private function assert_qr_payload( array $payload ): void {
