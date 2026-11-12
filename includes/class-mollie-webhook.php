@@ -320,7 +320,7 @@ class MollieWebhook {
 				return;
 			}
 
-			update_post_meta( $invoice_id, '_mollie_payment_method', $paid_payment->method ?? '' );
+			update_post_meta( $invoice_id, '_mollie_payment_method', $this->payment_method_value( $paid_payment ) );
 			update_post_meta( $invoice_id, '_mollie_paid_at', $paid_payment->paidAt ?? '' );
 
 			$dashboard_url = $paid_payment->_links->dashboard->href ?? null;
@@ -364,7 +364,7 @@ class MollieWebhook {
 				return;
 			}
 
-			update_post_meta( $invoice_id, '_installment_' . $n . '_mollie_method', $paid_payment->method ?? '' );
+			update_post_meta( $invoice_id, '_installment_' . $n . '_mollie_method', $this->payment_method_value( $paid_payment ) );
 			update_post_meta( $invoice_id, '_installment_' . $n . '_mollie_paid_at', $paid_payment->paidAt ?? '' );
 			$this->store_consumer_details( $invoice_id, '_installment_' . $n . '_mollie_', $paid_payment );
 
@@ -375,6 +375,12 @@ class MollieWebhook {
 		} catch ( \Throwable $e ) {
 			error_log( 'Mollie webhook: failed to extract installment ' . $n . ' payment details for invoice ' . $invoice_id . ': ' . $e->getMessage() );
 		}
+	}
+
+	/** Convert SDK enum values to the scalar metadata consumed by invoices and statistics. */
+	private function payment_method_value( object $payment ): string {
+		$method = $payment->method ?? '';
+		return $method instanceof \BackedEnum ? $method->value : (string) $method;
 	}
 
 	/** Store payer details together under the payment's own metadata prefix. */
