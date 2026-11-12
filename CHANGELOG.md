@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.170.26] - 2026-11-12
+
+### Fixed
+
+- Resolve four Composer security advisories in development dependencies by updating PHP_CodeSniffer to 3.13.6 and Symfony Filesystem and YAML to 7.4.23.
+
 ## [35.170.25] - 2026-11-12
 
 ### Changed
