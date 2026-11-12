@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.170.24] - 2026-11-12
+
+### Changed
+
+- Update Google API Client to 2.20.1, PDFParser to 2.13.1, the color picker to 2.10.3, and Lucide icons to 1.28.0.
+- Update the pinned PHP setup, Node.js setup, and artifact upload/download GitHub Actions used by CI and production deployment.
+
 ## [35.170.23] - 2026-11-11
 
 ### Fixed
