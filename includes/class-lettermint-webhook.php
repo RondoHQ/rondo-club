@@ -110,11 +110,11 @@ class LettermintWebhook {
 		}
 
 		$payload_raw = (string) $request->get_body();
-		$headers     = $this->flatten_headers( $request->get_headers() );
+		$headers     = $this->normalize_headers( $request->get_headers() );
 
 		try {
 			$verifier = new \Lettermint\Webhook( $secret, LettermintConfig::get_webhook_tolerance() );
-			$event    = $verifier->verifyHeaders( $headers, $payload_raw );
+			$event    = $verifier->verify( $payload_raw, $headers )->toArray();
 		} catch ( \Throwable $e ) {
 			error_log( 'Lettermint webhook: signature verification failed - ' . $e->getMessage() );
 			return new \WP_REST_Response(
@@ -665,71 +665,22 @@ class LettermintWebhook {
 	}
 
 	/**
-	 * Convert request header arrays into scalar map for SDK verifier.
+	 * Normalize WordPress header names without discarding duplicate values.
+	 *
+	 * The SDK accepts value lists and rejects ambiguous signature headers.
 	 *
 	 * @param array $headers REST request headers.
 	 * @return array
 	 */
-	private function flatten_headers( array $headers ): array {
-		$flat = [];
-
-		foreach ( $headers as $key => $value ) {
-			if ( is_array( $value ) ) {
-				$flat[ (string) $key ] = (string) reset( $value );
-			} else {
-				$flat[ (string) $key ] = (string) $value;
-			}
+	private function normalize_headers( array $headers ): array {
+		$normalized = [];
+		foreach ( $headers as $key => $values ) {
+			$name                = str_replace( '_', '-', strtolower( (string) $key ) );
+			$name                = preg_replace( '/^http-/', '', $name );
+			$normalized[ $name ] = array_merge( $normalized[ $name ] ?? [], (array) $values );
 		}
 
-		// WordPress normalizes headers in different ways depending on server stack.
-		// Add canonical Lettermint keys expected by the SDK verifier.
-		$signature = $this->pick_header_value(
-			$flat,
-			[
-				'X-Lettermint-Signature',
-				'x-lettermint-signature',
-				'x_lettermint_signature',
-				'HTTP_X_LETTERMINT_SIGNATURE',
-			]
-		);
-		if ( $signature !== '' ) {
-			$flat['X-Lettermint-Signature'] = $signature;
-		}
-
-		$delivery = $this->pick_header_value(
-			$flat,
-			[
-				'X-Lettermint-Delivery',
-				'x-lettermint-delivery',
-				'x_lettermint_delivery',
-				'HTTP_X_LETTERMINT_DELIVERY',
-			]
-		);
-		if ( $delivery !== '' ) {
-			$flat['X-Lettermint-Delivery'] = $delivery;
-		}
-
-		return $flat;
-	}
-
-	/**
-	 * Pick first non-empty value from candidate header keys.
-	 *
-	 * @param array  $headers    Flattened headers.
-	 * @param string[] $candidates Candidate keys.
-	 * @return string
-	 */
-	private function pick_header_value( array $headers, array $candidates ): string {
-		foreach ( $candidates as $candidate ) {
-			if ( isset( $headers[ $candidate ] ) ) {
-				$value = trim( (string) $headers[ $candidate ] );
-				if ( $value !== '' ) {
-					return $value;
-				}
-			}
-		}
-
-		return '';
+		return $normalized;
 	}
 
 	/**
