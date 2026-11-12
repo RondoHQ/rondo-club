@@ -53,12 +53,12 @@ class LettermintMailer {
 			return null;
 		}
 
-		$client = $this->get_client();
-		if ( ! $client ) {
-			return null;
-		}
-
 		try {
+			$client = $this->get_client();
+			if ( ! $client ) {
+				return null;
+			}
+
 			$headers      = $this->parse_headers( $atts['headers'] ?? [] );
 			$recipients   = $this->normalize_address_list( $atts['to'] ?? [] );
 			$subject      = (string) ( $atts['subject'] ?? '' );
@@ -70,49 +70,49 @@ class LettermintMailer {
 				return false;
 			}
 
-			$email = $client->email
+			$email = $client->emails->compose()
 				->from( $from_details['formatted'] )
 				->to( ...$recipients )
 				->subject( $subject );
 
 			if ( ! empty( $headers['cc'] ) ) {
-				$email->cc( ...$headers['cc'] );
+				$email = $email->cc( ...$headers['cc'] );
 			}
 			if ( ! empty( $headers['bcc'] ) ) {
-				$email->bcc( ...$headers['bcc'] );
+				$email = $email->bcc( ...$headers['bcc'] );
 			}
 			if ( ! empty( $headers['reply_to'] ) ) {
-				$email->replyTo( ...$headers['reply_to'] );
+				$email = $email->replyTo( ...$headers['reply_to'] );
 			}
 
 			$route_override = sanitize_text_field( (string) ( $headers['x_lettermint_route'] ?? '' ) );
 			if ( $route_override !== '' ) {
-				$email->route( $route_override );
+				$email = $email->route( $route_override );
 			}
 
-			$tag = $headers['x_rondo_email_tag'] ?? self::DEFAULT_TAG;
-			$email->tag( sanitize_title( (string) $tag ) );
+			$tag   = $headers['x_rondo_email_tag'] ?? self::DEFAULT_TAG;
+			$email = $email->tag( sanitize_title( (string) $tag ) );
 
 			$content_type = strtolower( trim( (string) ( $headers['content_type'] ?? '' ) ) );
 			if ( $content_type === '' ) {
 				$content_type = 'text/plain';
 			}
 			if ( str_starts_with( $content_type, 'text/html' ) ) {
-				$email->html( $message );
-				$email->text( wp_strip_all_tags( $message ) );
+				$email = $email->html( $message );
+				$email = $email->text( wp_strip_all_tags( $message ) );
 			} else {
-				$email->text( $message );
+				$email = $email->text( $message );
 			}
 
 			$custom_headers = $headers['custom'] ?? [];
 			if ( ! empty( $custom_headers ) ) {
-				$email->headers( $custom_headers );
+				$email = $email->headers( $custom_headers );
 			}
 
-			$this->attach_files( $email, $attachments );
-			$this->attach_files( $email, $this->normalize_attachment_list( $atts['embeds'] ?? [] ), true );
+			$email = $this->attach_files( $email, $attachments );
+			$email = $this->attach_files( $email, $this->normalize_attachment_list( $atts['embeds'] ?? [] ), true );
 
-			$email->metadata(
+			$email = $email->metadata(
 				array_merge(
 					[
 						'site_host'    => (string) wp_parse_url( home_url(), PHP_URL_HOST ),
@@ -135,11 +135,11 @@ class LettermintMailer {
 	/**
 	 * Add regular attachments or WordPress embeds to the API payload.
 	 *
-	 * @param \Lettermint\Endpoints\EmailEndpoint $email  Email being composed.
-	 * @param array                              $files  Local paths, keyed by Content-ID for embeds.
-	 * @param bool                               $inline Whether to attach inline with Content-IDs.
+	 * @param \Lettermint\EmailBuilder $email  Email being composed.
+	 * @param array                    $files  Local paths, keyed by Content-ID for embeds.
+	 * @param bool                     $inline Whether to attach inline with Content-IDs.
 	 */
-	private function attach_files( \Lettermint\Endpoints\EmailEndpoint $email, array $files, bool $inline = false ): void {
+	private function attach_files( \Lettermint\EmailBuilder $email, array $files, bool $inline = false ): \Lettermint\EmailBuilder {
 		foreach ( $files as $cid => $attachment_path ) {
 			$path = is_string( $attachment_path ) ? trim( $attachment_path ) : '';
 			if ( $path === '' || ! is_file( $path ) || ! is_readable( $path ) ) {
@@ -152,8 +152,10 @@ class LettermintMailer {
 				continue;
 			}
 
-			$email->attach( wp_basename( $path ), base64_encode( $content ), $inline ? (string) $cid : null );
+			$email = $email->attach( \Lettermint\Attachment::fromBytes( wp_basename( $path ), $content, contentId: $inline ? (string) $cid : null ) );
 		}
+
+		return $email;
 	}
 
 	/**
@@ -171,7 +173,7 @@ class LettermintMailer {
 			return null;
 		}
 
-		$this->client = new \Lettermint\Lettermint( $token );
+		$this->client = new \Lettermint\Lettermint( sendingToken: $token );
 
 		return $this->client;
 	}

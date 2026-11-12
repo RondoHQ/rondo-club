@@ -138,6 +138,32 @@ class LettermintWebhookTest extends RondoTestCase {
 		$this->assertSame( [], get_option( LettermintWebhook::OPTION_SUPPRESSED_EMAILS, [] ) );
 	}
 
+	public function test_invalid_stale_or_ambiguous_signatures_have_no_side_effects(): void {
+		$secret = 'test-lettermint-secret';
+		update_option( LettermintConfig::OPTION_WEBHOOK_SECRET, $secret );
+		$raw = wp_json_encode(
+			[
+				'event' => 'message.hard_bounced',
+				'id'    => 'evt_rejected',
+				'data'  => [ 'recipient' => 'bounce@example.com' ],
+			]
+			);
+		foreach ( [ 'wrong_secret', 'expired', 'duplicate', 'mismatched_delivery', 'missing_delivery', 'tampered' ] as $case ) {
+			$timestamp = $case === 'expired' ? time() - 3600 : time();
+			$signature = hash_hmac( 'sha256', $timestamp . '.' . $raw, $case === 'wrong_secret' ? 'wrong' : $secret );
+			$request   = new WP_REST_Request( 'POST', '/rondo/v1/lettermint/webhook' );
+			$request->set_body( $case === 'tampered' ? $raw . ' ' : $raw );
+			$header = sprintf( 't=%d,v1=%s', $timestamp, $signature );
+			$request->set_header( 'X-Lettermint-Signature', $case === 'duplicate' ? [ $header, $header ] : $header );
+			if ( $case !== 'missing_delivery' ) {
+				$request->set_header( 'X-Lettermint-Delivery', (string) ( $timestamp + ( $case === 'mismatched_delivery' ? 1 : 0 ) ) );
+			}
+			$this->assertSame( 401, $this->server->dispatch( $request )->get_status(), $case );
+		}
+		$this->assertSame( [], $this->get_tasks_for_event( 'evt_rejected' ) );
+		$this->assertSame( [], get_option( LettermintWebhook::OPTION_SUPPRESSED_EMAILS, [] ) );
+	}
+
 	/**
 	 * Dispatch a signed Lettermint webhook request.
 	 *
