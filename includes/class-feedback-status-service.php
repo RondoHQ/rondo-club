@@ -16,6 +16,50 @@ class StatusService {
 	public const ALLOWED_STATUSES        = [ 'new', 'approved', 'in_progress', 'in_review', 'resolved', 'declined', 'needs_info' ];
 	public const META_RESOLUTION_SUMMARY = '_feedback_resolution_summary';
 	public const META_DECLINE_REASON     = '_feedback_decline_reason';
+	public const META_APPROVED_REVISION  = '_feedback_approved_revision';
+
+	/** Fingerprint the input an operator reviews, excluding workflow bookkeeping. */
+	public static function content_revision( int $id ): string {
+		$post = get_post( $id );
+		$data = [
+			'title'   => $post->post_title ?? '',
+			'content' => $post->post_content ?? '',
+		];
+		foreach ( [ 'feedback_type', 'browser_info', 'app_version', 'url_context', 'steps_to_reproduce', 'expected_behavior', 'actual_behavior', 'use_case' ] as $field ) {
+			$data[ $field ] = \Rondo\Fields\Fields::get_for_post( $id, $field );
+		}
+		foreach ( [ '_feedback_project', '_feedback_agent_plan', FeedbackScreenshot::META ] as $key ) {
+			$data[ $key ] = get_post_meta( $id, $key, true );
+		}
+		$data['comments'] = [];
+		foreach ( get_comments(
+			[
+				'post_id' => $id,
+				'type'    => 'rondo_fb_comment',
+				'status'  => 'approve',
+				'orderby' => 'comment_ID',
+				'order'   => 'ASC',
+			]
+			) as $comment ) {
+			$data['comments'][] = [ $comment->comment_ID, $comment->user_id, $comment->comment_content, get_comment_meta( $comment->comment_ID, '_author_type', true ) ];
+		}
+		return hash( 'sha256', wp_json_encode( $data ) );
+	}
+
+	/** Approval is evidence about one specific revision, never future edits. */
+	public static function record_approval( int $id ): void {
+		update_post_meta( $id, self::META_APPROVED_REVISION, self::content_revision( $id ) );
+	}
+
+	public static function invalidate_approval( int $id, bool $clear_plan = true ): void {
+		delete_post_meta( $id, self::META_APPROVED_REVISION );
+		if ( $clear_plan ) {
+			delete_post_meta( $id, '_feedback_agent_plan' );
+		}
+		if ( in_array( \Rondo\Fields\Fields::get_for_post( $id, 'status' ), [ 'approved', 'in_progress', 'in_review', 'needs_info' ], true ) ) {
+			\Rondo\Fields\Fields::update_for_post( $id, 'status', 'new' );
+		}
+	}
 
 	/**
 	 * Change a feedback item's status.
@@ -70,6 +114,10 @@ class StatusService {
 			'previous_status' => $current_status,
 			'status'          => $new_status,
 		];
+
+		if ( $new_status === 'approved' ) {
+			self::record_approval( $feedback_id );
+		}
 
 		if ( ! $result['changed'] ) {
 			return $result;

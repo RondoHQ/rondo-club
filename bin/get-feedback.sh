@@ -1,4 +1,8 @@
 #!/bin/bash
+# The legacy runner cannot isolate production credentials or enforce a reviewed
+# input revision. Fail before reading .env, acquiring locks or launching agents.
+echo 'The unattended feedback runner is disabled. Process feedback in a reviewed interactive session.' >&2
+exit 1
 #
 # Rondo Club Feedback Agent Script
 # Retrieves feedback items from Rondo Club and processes them with Claude Code.

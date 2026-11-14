@@ -52,8 +52,8 @@ class NewFeedbackEmailTest extends RondoTestCase {
 		$this->assertStringContainsString( '<!doctype html>', $this->sent_mail[0]['message'] );
 		$this->assertStringContainsString( 'Anne Melder (anne@example.com)', $this->sent_mail[0]['message'] );
 		$this->assertStringContainsString( 'Functieverzoek', $this->sent_mail[0]['message'] );
-		$this->assertStringContainsString( 'website', $this->sent_mail[0]['message'] );
-		$this->assertStringContainsString( 'Hoog', $this->sent_mail[0]['message'] );
+		$this->assertStringContainsString( 'rondo-club', $this->sent_mail[0]['message'] );
+		$this->assertStringContainsString( 'Gemiddeld', $this->sent_mail[0]['message'] );
 		$this->assertStringContainsString( 'De planning moet beter werken op een telefoon.', $this->sent_mail[0]['message'] );
 		$this->assertStringContainsString( 'Bekijk feedback', $this->sent_mail[0]['message'] );
 		$this->assertStringContainsString( home_url( '/feedback/' . $feedback_id ), $this->sent_mail[0]['message'] );
