@@ -97,21 +97,24 @@ class SurveysTest extends RondoTestCase {
 			[
 				'role'         => 'administrator',
 				'user_email'   => 'manager@example.org',
-				'display_name' => 'Anne',
+				'display_name' => 'Anne de Vries',
+				'first_name'   => 'Anne',
 			]
 			);
 		wp_set_current_user( $admin );
 		$id               = $this->survey();
 		$server           = $this->bootRestControllers( [ SurveyController::class ] );
 		$content          = [
-			'subject' => 'Jouw mening over {enquete}',
-			'body'    => "Hoi {naam},\n\nHelp onze club. Bedankt!",
+			'subject' => '{voornaam}, jouw mening over {enquete}',
+			'body'    => "Hoi {voornaam},\n\nBeste {naam}, help onze club. Bedankt!",
 		];
 		$request          = new \WP_REST_Request( 'POST', '/rondo/v1/surveys/' . $id . '/email-preview' );
 		$request['email'] = $content;
 		$preview          = $server->dispatch( $request );
 		$this->assertSame( 200, $preview->get_status() );
-		$this->assertStringContainsString( 'Hoi Anne', $preview->get_data()['html'] );
+		$this->assertStringContainsString( 'Hoi Anne,', $preview->get_data()['html'] );
+		$this->assertStringContainsString( 'Beste Anne de Vries', $preview->get_data()['html'] );
+		$this->assertStringStartsWith( 'Anne, jouw mening', $preview->get_data()['subject'] );
 		$this->assertStringContainsString( 'preview=1', $preview->get_data()['html'] );
 		$this->assertStringNotContainsString( 'uitnodiging=', $preview->get_data()['html'] );
 		$messages  = [];
@@ -135,6 +138,71 @@ class SurveysTest extends RondoTestCase {
 		} finally {
 			remove_filter( 'pre_wp_mail', $intercept );
 		}
+	}
+
+	public function test_first_name_uses_member_field_for_existing_invites_and_preserves_compound_names(): void {
+		$id     = $this->survey();
+		$person = $this->createPerson( [], [ 'first_name' => 'Anne Marie' ] );
+		Surveys::prepare(
+			$id,
+			[
+				[
+					'email'     => 'member@example.org',
+					'name'      => 'Anne Marie de Vries',
+					'person_id' => $person,
+				],
+				[
+					'email' => 'manual@example.org',
+					'name'  => 'Jan Jansen',
+				],
+			]
+			);
+		Surveys::save_email(
+			$id,
+			[
+				'subject' => 'Hoi {voornaam}',
+				'body'    => 'Beste {voornaam}, volledige naam: {naam}.',
+			],
+			Surveys::email_settings( Surveys::read( $id ) )
+			);
+		Surveys::queue( $id );
+		$messages  = [];
+		$intercept = static function ( $result, $args ) use ( &$messages ) {
+			$messages[] = $args;
+			return true;
+		};
+		add_filter( 'pre_wp_mail', $intercept, 10, 2 );
+		try {
+			Surveys::deliver();
+			$this->assertCount( 2, $messages );
+			$this->assertSame( 'Hoi Anne Marie', $messages[0]['subject'] );
+			$this->assertStringContainsString( 'Beste Anne Marie, volledige naam: Anne Marie de Vries.', $messages[0]['message'] );
+			$this->assertSame( 'Hoi AWCer', $messages[1]['subject'] );
+			$this->assertStringContainsString( 'volledige naam: Jan Jansen.', $messages[1]['message'] );
+		} finally {
+			remove_filter( 'pre_wp_mail', $intercept );
+		}
+	}
+
+	public function test_first_name_preview_prefers_linked_member_over_account_name(): void {
+		$user   = self::factory()->user->create(
+			[
+				'role'       => 'administrator',
+				'first_name' => 'Accountnaam',
+			]
+			);
+		$person = $this->createPerson( [], [ 'first_name' => 'Anne Marie' ] );
+		update_user_meta( $user, 'rondo_linked_person_id', $person );
+		wp_set_current_user( $user );
+		$server           = $this->bootRestControllers( [ SurveyController::class ] );
+		$request          = new \WP_REST_Request( 'POST', '/rondo/v1/surveys/' . $this->survey() . '/email-preview' );
+		$request['email'] = [
+			'subject' => 'Hoi {voornaam}',
+			'body'    => 'Beste {voornaam}',
+		];
+		$response         = $server->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'Hoi Anne Marie', $response->get_data()['subject'] );
 	}
 
 	public function test_email_settings_are_validated_and_queued_messages_keep_the_approved_copy(): void {
