@@ -733,27 +733,31 @@ class Volunteer extends Base {
 
 		return rest_ensure_response(
 			[
-				'_rondo_private_file' => $path,
-				'mime_type'           => get_post_mime_type( $attachment_id ) ?: 'application/octet-stream',
-				'filename'            => (string) ( get_post_meta( $attachment_id, self::ORIGINAL_NAME_META, true ) ?: basename( $path ) ),
+				'certificate' => true,
 			]
 		);
 	}
 
 	public function serve_private_iva_file( $served, $result, $request, $server ) {
-		$data = $result instanceof \WP_REST_Response ? $result->get_data() : null;
-		if ( ! is_array( $data ) || empty( $data['_rondo_private_file'] ) ) {
+		if ( $served || ! $result instanceof \WP_REST_Response || $result->get_status() !== 200 || $request->get_method() !== 'GET' || ! preg_match( '#^/rondo/v1/iva/(\d+)/certificate/?$#i', $request->get_route(), $matches ) ) {
+			return $served;
+		}
+		// Resolve the identity from the matched route, never from response data.
+		$request = clone $request;
+		$request->set_param( 'person_id', (int) $matches[1] );
+		if ( ! $this->check_iva_certificate_permission( $request ) ) {
+			return $served;
+		}
+		$attachment_id = $this->iva_attachment_id( (int) $matches[1] );
+		$path          = $attachment_id ? (string) get_post_meta( $attachment_id, self::PRIVATE_PATH_META, true ) : '';
+		if ( $path === '' || ! is_file( $path ) || ! is_readable( $path ) ) {
 			return $served;
 		}
 
-		$path = (string) $data['_rondo_private_file'];
-		if ( ! is_readable( $path ) ) {
-			return $served;
-		}
-
-		header( 'Content-Type: ' . sanitize_mime_type( (string) $data['mime_type'] ) );
+		$filename = (string) ( get_post_meta( $attachment_id, self::ORIGINAL_NAME_META, true ) ?: basename( $path ) );
+		header( 'Content-Type: ' . sanitize_mime_type( get_post_mime_type( $attachment_id ) ?: 'application/octet-stream' ) );
 		header( 'Content-Length: ' . filesize( $path ) );
-		header( 'Content-Disposition: inline; filename="' . sanitize_file_name( (string) $data['filename'] ) . '"' );
+		header( 'Content-Disposition: inline; filename="' . sanitize_file_name( $filename ) . '"' );
 		header( 'X-Content-Type-Options: nosniff' );
 		header( 'Cache-Control: private, no-store, max-age=0' );
 		readfile( $path );

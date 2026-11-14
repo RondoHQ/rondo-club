@@ -174,7 +174,12 @@ class Communication extends Base {
 	}
 
 	public function create( $request ) {
-		$data = $request->get_json_params();
+		$data        = $request->get_json_params();
+		$attachments = $this->select_attachments( 0, $data['attachments'] ?? [] );
+		if ( is_wp_error( $attachments ) ) {
+			return $attachments;
+		}
+		$data['attachments'] = $attachments;
 		if ( ! in_array( $data['status'] ?? 'concept', [ 'concept', 'preparing', 'ready' ], true ) ) {
 			return new \WP_Error( 'invalid_status', 'Nieuwe items beginnen met een open status.', [ 'status' => 400 ] );
 		}
@@ -249,6 +254,11 @@ class Communication extends Base {
 		if ( is_wp_error( $error ) ) {
 			return $error;
 		}
+		$attachments = $this->select_attachments( $id, $merged['attachments'] );
+		if ( is_wp_error( $attachments ) ) {
+			return $attachments;
+		}
+		$merged['attachments'] = $attachments;
 
 		wp_update_post(
 			[
@@ -341,7 +351,7 @@ class Communication extends Base {
 				break;
 			case 'duplicate':
 				$copy                 = $item;
-				$copy['attachments']  = get_post_meta( $id, 'attachments', true ) ?: [];
+				$copy['attachments']  = $this->stored_attachments( $id );
 				$copy['title']        = $item['title'] . ' (kopie)';
 				$copy['status']       = 'concept';
 				$copy['planned_date'] = '';
@@ -443,17 +453,75 @@ class Communication extends Base {
 	}
 
 	public function download( $request ) {
-		$attachments = get_post_meta( (int) $request['id'], 'attachments', true );
+		$attachments = $this->stored_attachments( (int) $request['id'] );
 		$key         = sanitize_key( $request['key'] );
 		foreach ( is_array( $attachments ) ? $attachments : [] as $attachment ) {
 			if ( hash_equals( $attachment['key'], $key ) && is_readable( $attachment['path'] ) ) {
 				header( 'Content-Type: ' . $attachment['type'] );
 				header( 'Content-Disposition: inline; filename="' . sanitize_file_name( $attachment['name'] ) . '"' );
+				header( 'X-Content-Type-Options: nosniff' );
+				header( 'Cache-Control: private, no-store, max-age=0' );
 				readfile( $attachment['path'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
 				exit;
 			}
 		}
 		return new \WP_Error( 'attachment_not_found', 'Afbeelding niet gevonden.', [ 'status' => 404 ] );
+	}
+
+	/** Resolve only real image files in this application's upload directory. */
+	private function stored_attachments( int $id ): array {
+		$uploads   = wp_upload_dir();
+		$directory = realpath( trailingslashit( $uploads['basedir'] ) . 'rondo-communication' );
+		if ( $directory === false ) {
+			return [];
+		}
+		$stored = get_post_meta( $id, 'attachments', true );
+		$result = [];
+		$types  = [
+			'jpg'  => 'image/jpeg',
+			'png'  => 'image/png',
+			'webp' => 'image/webp',
+		];
+		foreach ( is_array( $stored ) ? $stored : [] as $attachment ) {
+			if ( ! is_array( $attachment ) || ! is_string( $attachment['key'] ?? null ) || ! preg_match( '/^[a-f0-9]{32}$/D', $attachment['key'] ) ) {
+				continue;
+			}
+			$path = $attachment['path'] ?? '';
+			if ( ! is_string( $path ) || ! is_file( $path ) || is_link( $path ) || ! is_readable( $path ) ) {
+				continue;
+			}
+			$extension = pathinfo( $path, PATHINFO_EXTENSION );
+			$expected  = $directory . '/' . $attachment['key'] . '.' . $extension;
+			if ( ! isset( $types[ $extension ] ) || realpath( $path ) !== $expected || wp_get_image_mime( $expected ) !== $types[ $extension ] ) {
+				continue;
+			}
+			$result[] = [
+				'key'  => $attachment['key'],
+				'path' => $expected,
+				'type' => $types[ $extension ],
+				'name' => sanitize_file_name( (string) ( $attachment['name'] ?? basename( $expected ) ) ),
+				'alt'  => sanitize_text_field( (string) ( $attachment['alt'] ?? '' ) ),
+			];
+		}
+		return $result;
+	}
+
+	/** Public edits may select and describe only uploads already owned by this item. */
+	private function select_attachments( int $id, $selection ) {
+		if ( ! is_array( $selection ) || count( $selection ) > 10 ) {
+			return new \WP_Error( 'invalid_attachments', 'Kies bestaande afbeeldingen van dit item.', [ 'status' => 400 ] );
+		}
+		$existing = array_column( $this->stored_attachments( $id ), null, 'key' );
+		$result   = [];
+		foreach ( $selection as $selected ) {
+			if ( ! is_array( $selected ) || array_key_exists( 'path', $selected ) || ! is_string( $selected['key'] ?? null ) || ! isset( $existing[ $selected['key'] ] ) || isset( $result[ $selected['key'] ] ) || ( isset( $selected['alt'] ) && ! is_string( $selected['alt'] ) ) ) {
+				return new \WP_Error( 'invalid_attachments', 'Kies bestaande afbeeldingen van dit item.', [ 'status' => 400 ] );
+			}
+			$attachment                 = $existing[ $selected['key'] ];
+			$attachment['alt']          = sanitize_text_field( $selected['alt'] ?? $attachment['alt'] );
+			$result[ $selected['key'] ] = $attachment;
+		}
+		return array_values( $result );
 	}
 
 	public function series_action( $request ) {
@@ -829,7 +897,8 @@ class Communication extends Base {
 			foreach ( self::COPY_FIELDS as $field ) {
 				$data[ $field ] = $field === 'channel_ids' ? array_column( $this->channel_rows( $series_id ), 'channel_id' ) : get_post_meta( $series_id, $field, true );
 			}
-			$item_id = $this->insert_item( $data, $series_id, $key );
+			$data['attachments'] = $this->stored_attachments( $series_id );
+			$item_id             = $this->insert_item( $data, $series_id, $key );
 			if ( is_wp_error( $item_id ) ) {
 				delete_option( $lock_key );
 				continue;
@@ -863,7 +932,9 @@ class Communication extends Base {
 	}
 
 	private function update_future_items( int $series_id, int $current_id, array $data ) {
-		$posts = get_posts(
+		// Only propagate the source item's saved uploads, never request descriptors.
+		$data['attachments'] = $this->stored_attachments( $current_id );
+		$posts               = get_posts(
 			[
 				'post_type'      => self::ITEM_TYPE,
 				'post_status'    => 'publish',
@@ -923,7 +994,7 @@ class Communication extends Base {
 		$definitions           = array_column( ClubConfig::get_communication_channels(), null, 'id' );
 		$assignee_id           = (int) ( $fields['assignee_id'] ?? 0 );
 		$series_id             = (int) ( $fields['series_id'] ?? 0 );
-		$attachments           = get_post_meta( $post->ID, 'attachments', true );
+		$attachments           = $this->stored_attachments( $post->ID );
 		$formatted_attachments = [];
 		foreach ( is_array( $attachments ) ? $attachments : [] as $attachment ) {
 			$formatted_attachments[] = [

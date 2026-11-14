@@ -25,6 +25,22 @@ class Feedback extends Base {
 		parent::__construct();
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 		add_filter( 'rest_pre_serve_request', [ $this, 'serve_screenshot' ], 10, 3 );
+		add_filter( 'rest_pre_dispatch', [ $this, 'guard_core_writes' ], 10, 3 );
+	}
+
+	/** Keep member writes on the domain routes where workflow policy is enforced. */
+	public function guard_core_writes( $result, $server, $request ) {
+		if ( current_user_can( 'manage_options' ) || in_array( $request->get_method(), [ 'GET', 'HEAD', 'OPTIONS' ], true ) ) {
+			return $result;
+		}
+		$route   = $request->get_route();
+		$blocked = (bool) preg_match( '#^/wp/v2/feedback(?:/|$)#i', $route );
+		if ( preg_match( '#^/wp/v2/comments(?:/(\d+))?/?$#i', $route, $matches ) ) {
+			$comment = ! empty( $matches[1] ) ? get_comment( (int) $matches[1] ) : null;
+			$blocked = ( $comment && get_post_type( (int) $comment->comment_post_ID ) === 'rondo_feedback' )
+				|| get_post_type( (int) $request->get_param( 'post' ) ) === 'rondo_feedback';
+		}
+		return $blocked ? new \WP_Error( 'rest_forbidden', 'Gebruik de Rondo-feedbackroutes om feedback te wijzigen.', [ 'status' => 403 ] ) : $result;
 	}
 
 	/**
@@ -148,6 +164,20 @@ class Feedback extends Base {
 	 * Allowed project values.
 	 */
 	private const ALLOWED_PROJECTS = [ 'rondo-club', 'rondo-sync', 'website' ];
+	private const WORKFLOW_FIELDS  = [ 'status', 'priority', 'resolution_summary', 'decline_reason', 'project', 'agent_plan', 'agent_branch', 'pr_url' ];
+
+	/** Reject privileged updates before any post, field or upload is changed. */
+	private function check_workflow_fields( $request ) {
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+		foreach ( self::WORKFLOW_FIELDS as $field ) {
+			if ( $request->has_param( $field ) ) {
+				return new \WP_Error( 'rest_forbidden', 'Alleen beheerders kunnen workflowgegevens wijzigen.', [ 'status' => 403 ] );
+			}
+		}
+		return true;
+	}
 
 	private function get_list_args() {
 		return [
@@ -408,6 +438,24 @@ class Feedback extends Base {
 			);
 		}
 
+		if ( current_user_can( 'manage_options' ) ) {
+			foreach ( [
+				'status'   => [ 'new', 'approved' ],
+				'priority' => [ 'low', 'medium', 'high', 'critical' ],
+				'project'  => self::ALLOWED_PROJECTS,
+			] as $field => $allowed ) {
+				if ( $request->has_param( $field ) && ! in_array( $request->get_param( $field ), $allowed, true ) ) {
+					return new \WP_Error(
+						'rest_invalid_param',
+						'Ongeldige workflowwaarde.',
+						[
+							'status' => 400,
+							'field'  => $field,
+						]
+						);
+				}
+			}
+		}
 		$screenshot = FeedbackScreenshot::upload( $request->get_file_params() );
 		if ( is_wp_error( $screenshot ) ) {
 			return $screenshot;
@@ -448,7 +496,7 @@ class Feedback extends Base {
 		\Rondo\Fields\Fields::update_for_post( $post_id, 'feedback_type', $feedback_type );
 
 		// Save project (post meta, defaults to rondo-club)
-		$project = $request->get_param( 'project' );
+		$project = current_user_can( 'manage_options' ) ? $request->get_param( 'project' ) : 'rondo-club';
 		if ( ! empty( $project ) && in_array( $project, self::ALLOWED_PROJECTS, true ) ) {
 			update_post_meta( $post_id, '_feedback_project', $project );
 		} else {
@@ -457,9 +505,9 @@ class Feedback extends Base {
 
 		// Determine default status: admins get 'approved', regular users get 'new'
 		$default_status = current_user_can( 'manage_options' ) ? 'approved' : 'new';
-		$initial_status = $request->get_param( 'status' ) ?? $default_status;
+		$initial_status = current_user_can( 'manage_options' ) ? ( $request->get_param( 'status' ) ?? $default_status ) : 'new';
 		\Rondo\Fields\Fields::update_for_post( $post_id, 'status', $initial_status );
-		\Rondo\Fields\Fields::update_for_post( $post_id, 'priority', $request->get_param( 'priority' ) ?? 'medium' );
+		\Rondo\Fields\Fields::update_for_post( $post_id, 'priority', current_user_can( 'manage_options' ) ? ( $request->get_param( 'priority' ) ?? 'medium' ) : 'medium' );
 		if ( $initial_status === 'resolved' ) {
 			update_post_meta( $post_id, '_feedback_resolved_at', current_time( 'mysql', true ) );
 		}
@@ -504,6 +552,10 @@ class Feedback extends Base {
 			if ( ! empty( $use_case ) ) {
 				\Rondo\Fields\Fields::update_for_post( $post_id, 'use_case', sanitize_textarea_field( $use_case ) );
 			}
+		}
+
+		if ( $initial_status === 'approved' ) {
+			StatusService::record_approval( (int) $post_id );
 		}
 
 		// Notify the site administrator after all feedback fields are available.
@@ -585,7 +637,12 @@ class Feedback extends Base {
 			);
 		}
 
-		$is_admin = current_user_can( 'manage_options' );
+		$is_admin   = current_user_can( 'manage_options' );
+		$permission = $this->check_workflow_fields( $request );
+		if ( is_wp_error( $permission ) ) {
+			return $permission;
+		}
+		$previous_revision = StatusService::content_revision( $feedback_id );
 
 		$files = $request->get_file_params();
 		if ( isset( $files['screenshot'] ) ) {
@@ -600,40 +657,12 @@ class Feedback extends Base {
 
 		// Check field-level permissions for status and priority
 		$new_status = $request->get_param( 'status' );
-		if ( $new_status !== null && ! $is_admin ) {
-			return new \WP_Error(
-				'rest_forbidden',
-				__( 'Only administrators can change feedback status.', 'rondo' ),
-				[ 'status' => 403 ]
-			);
-		}
 
 		$new_priority = $request->get_param( 'priority' );
-		if ( $new_priority !== null && ! $is_admin ) {
-			return new \WP_Error(
-				'rest_forbidden',
-				__( 'Only administrators can change feedback priority.', 'rondo' ),
-				[ 'status' => 403 ]
-			);
-		}
 
 		$resolution_summary = $request->get_param( 'resolution_summary' );
-		if ( $resolution_summary !== null && ! $is_admin ) {
-			return new \WP_Error(
-				'rest_forbidden',
-				__( 'Only administrators can add a feedback resolution summary.', 'rondo' ),
-				[ 'status' => 403 ]
-			);
-		}
 
 		$decline_reason = $request->get_param( 'decline_reason' );
-		if ( $decline_reason !== null && ! $is_admin ) {
-			return new \WP_Error(
-				'rest_forbidden',
-				__( 'Only administrators can add a feedback decline reason.', 'rondo' ),
-				[ 'status' => 403 ]
-			);
-		}
 
 		// Validate field values
 		$feedback_type = $request->get_param( 'feedback_type' );
@@ -797,6 +826,11 @@ class Feedback extends Base {
 			}
 
 			// Return formatted updated feedback
+			if ( $is_admin && $new_status === 'approved' ) {
+				StatusService::record_approval( $feedback_id );
+			} elseif ( ! hash_equals( $previous_revision, StatusService::content_revision( $feedback_id ) ) ) {
+				StatusService::invalidate_approval( $feedback_id, ! ( $is_admin && $request->has_param( 'agent_plan' ) ) );
+			}
 			$feedback  = get_post( $feedback_id );
 			$formatted = $this->format_feedback( $feedback );
 			if ( isset( $status_update['resolution_email'] ) ) {
@@ -891,6 +925,9 @@ class Feedback extends Base {
 		$feedback_id = (int) $request->get_param( 'id' );
 		$content     = wp_kses_post( $request->get_param( 'content' ) );
 		$author_type = sanitize_text_field( $request->get_param( 'author_type' ) ?: 'user' );
+		if ( $author_type === 'agent' && ! current_user_can( 'manage_options' ) ) {
+			return new \WP_Error( 'rest_forbidden', 'Alleen beheerders kunnen namens een agent reageren.', [ 'status' => 403 ] );
+		}
 
 		if ( empty( $content ) ) {
 			return new \WP_Error(
@@ -937,13 +974,8 @@ class Feedback extends Base {
 
 		update_comment_meta( $comment_id, '_author_type', $author_type );
 
-		// When a user replies to needs_info feedback, require re-approval
-		if ( $author_type === 'user' ) {
-			$current_status = \Rondo\Fields\Fields::get_for_post( $feedback_id, 'status' );
-			if ( $current_status === 'needs_info' ) {
-				\Rondo\Fields\Fields::update_for_post( $feedback_id, 'status', 'new' );
-			}
-		}
+		// Every new comment changes the material that was reviewed.
+		StatusService::invalidate_approval( $feedback_id );
 
 		$comment = get_comment( $comment_id );
 
@@ -990,6 +1022,8 @@ class Feedback extends Base {
 			'content'            => $this->sanitize_rich_content( $post->post_content ),
 			'has_screenshot'     => (bool) $screenshot,
 			'screenshot_version' => is_array( $screenshot ) ? hash( 'sha256', wp_json_encode( $screenshot ) ) : '',
+			'content_revision'   => StatusService::content_revision( $post->ID ),
+			'approved_revision'  => (string) get_post_meta( $post->ID, StatusService::META_APPROVED_REVISION, true ),
 			'author'             => [
 				'id'        => $author ? (int) $author->ID : 0,
 				'name'      => $author ? $this->sanitize_text( $author->display_name ) : '',

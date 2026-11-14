@@ -10,6 +10,7 @@ use Tests\Support\RondoTestCase;
 class CommunicationTest extends RondoTestCase {
 	private string $role;
 	private int $user_id;
+	private array $attachment_paths = [];
 
 	protected function set_up(): void {
 		parent::set_up();
@@ -21,6 +22,11 @@ class CommunicationTest extends RondoTestCase {
 	}
 
 	protected function tear_down(): void {
+		foreach ( $this->attachment_paths as $path ) {
+			if ( is_file( $path ) || is_link( $path ) ) {
+				unlink( $path );
+			}
+		}
 		UserRoles::remove_custom_role( $this->role );
 		delete_option( 'rondo_communication_channels' );
 		parent::tear_down();
@@ -524,5 +530,119 @@ class CommunicationTest extends RondoTestCase {
 		$this->assertSame( 'LinkedIn', $channels[0]['label'] );
 		$this->assertTrue( $channels[0]['active'] );
 		$this->assertFalse( $channels[1]['active'] );
+	}
+
+	private function attachment( int $id ): array {
+		$key       = md5( wp_generate_uuid4() );
+		$directory = wp_upload_dir()['basedir'] . '/rondo-communication';
+		wp_mkdir_p( $directory );
+		$path = $directory . '/' . $key . '.png';
+		file_put_contents( $path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRusAAAAASUVORK5CYII=' ) );
+		$this->attachment_paths[] = $path;
+		$attachment               = [
+			'key'  => $key,
+			'path' => $path,
+			'type' => 'image/png',
+			'name' => 'photo.png',
+			'alt'  => '',
+		];
+		update_post_meta( $id, 'attachments', [ $attachment ] );
+		return $attachment;
+	}
+
+	public function test_creation_rejects_attachment_injection_for_items_and_series(): void {
+		$this->grant_access();
+		$before = wp_count_posts( 'rondo_comm_item' )->publish;
+		foreach ( [ 'none', 'monthly' ] as $recurrence ) {
+			$response = $this->request(
+				'/rondo/v1/communications',
+				'POST',
+				[
+					'title'       => 'Injected',
+					'channel'     => 'website',
+					'recurrence'  => $recurrence,
+					'start_date'  => wp_date( 'Y-m-d' ),
+					'attachments' => [
+						[
+							'key'  => str_repeat( 'a', 32 ),
+							'path' => __FILE__,
+							'type' => 'text/html',
+						],
+					],
+				]
+				);
+			$this->assertSame( 400, $response->get_status() );
+		}
+		$this->assertSame( $before, wp_count_posts( 'rondo_comm_item' )->publish );
+	}
+
+	public function test_updates_resolve_owned_keys_and_propagate_safe_uploads(): void {
+		$item       = $this->create_multi(
+			[
+				'recurrence' => 'monthly',
+				'start_date' => wp_date( 'Y-m-01', strtotime( '+1 month' ) ),
+				'end_date'   => wp_date( 'Y-m-01', strtotime( '+2 months' ) ),
+			]
+			);
+		$id         = $item['id'];
+		$file       = $this->attachment( $id );
+		$route      = "/rondo/v1/communications/$id";
+		$other      = $this->create_multi();
+		$other_file = $this->attachment( $other['id'] );
+		foreach ( [ [ $file ], [ [ 'key' => $other_file['key'] ] ], 'invalid', [ false ] ] as $selection ) {
+			$response = $this->request(
+				$route,
+				'PUT',
+				[
+					'title'           => 'Must not change',
+					'attachments'     => $selection,
+					'apply_to_future' => true,
+				]
+				);
+			$this->assertSame( 400, $response->get_status() );
+			$this->assertSame( $item['title'], get_the_title( $id ) );
+		}
+		$response = $this->request(
+			$route,
+			'PUT',
+			[
+				'attachments'     => [
+					[
+						'key'  => $file['key'],
+						'type' => 'text/html',
+						'alt'  => 'Updated description',
+					],
+				],
+				'apply_to_future' => true,
+			]
+			);
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'image/png', $response->get_data()['attachments'][0]['type'] );
+		$this->assertArrayNotHasKey( 'path', $response->get_data()['attachments'][0] );
+		$series_file = get_post_meta( $item['series_id'], 'attachments', true )[0];
+		$this->assertSame( $file['path'], $series_file['path'] );
+		$this->assertSame( 'Updated description', $series_file['alt'] );
+		$copy = $this->request( "$route/action", 'POST', [ 'action' => 'duplicate' ] )->get_data();
+		$this->assertSame( $file['key'], $copy['attachments'][0]['key'] );
+		$this->assertSame( $file['path'], get_post_meta( $copy['id'], 'attachments', true )[0]['path'] );
+		$this->assertSame( [], $this->request( $route, 'PUT', [ 'attachments' => [] ] )->get_data()['attachments'] );
+	}
+
+	public function test_existing_invalid_paths_and_symlinks_cannot_be_downloaded(): void {
+		$id              = $this->create_multi()['id'];
+		$file            = $this->attachment( $id );
+		$outside         = $file;
+		$outside['path'] = __FILE__;
+		update_post_meta( $id, 'attachments', [ $outside ] );
+		$route = "/rondo/v1/communications/$id/attachments/" . $file['key'];
+		$this->assertSame( 404, $this->request( $route )->get_status() );
+		$this->assertSame( [], $this->request( "/rondo/v1/communications/$id" )->get_data()['attachments'] );
+		unlink( $file['path'] );
+		symlink( __FILE__, $file['path'] );
+		update_post_meta( $id, 'attachments', [ $file ] );
+		$this->assertSame( 404, $this->request( $route )->get_status() );
+		unlink( $file['path'] );
+		file_put_contents( $file['path'], '<html>not an image</html>' );
+		$this->assertSame( 404, $this->request( $route )->get_status() );
 	}
 }
