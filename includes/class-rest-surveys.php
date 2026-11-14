@@ -264,7 +264,11 @@ final class SurveyController extends Base {
 		if ( is_wp_error( $email ) ) {
 			return $email;
 		}
-		return Surveys::render_email( $survey, $email, wp_get_current_user()->display_name, add_query_arg( 'preview', '1', Surveys::url( $survey['id'] ) ) );
+		$user       = wp_get_current_user();
+		$person_id  = (int) get_user_meta( $user->ID, 'rondo_linked_person_id', true );
+		$first_name = get_post_type( $person_id ) === 'person' ? (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) : '';
+		$first_name = trim( $first_name ) !== '' ? $first_name : (string) $user->first_name;
+		return Surveys::render_email( $survey, $email, $user->display_name, add_query_arg( 'preview', '1', Surveys::url( $survey['id'] ) ), $first_name );
 	}
 
 	/** Test mail is restricted to the signed-in manager and creates no real invitation. */
