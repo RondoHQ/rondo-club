@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.171.0] - 2026-11-14
+
+### Added
+
+- Select all current, contactable members when preparing survey invitations, with recipient counts, exclusions, and shared-email deduplication.
+- Write and save a survey invitation subject and message with personal placeholders, preview the branded email, and send a test to your own account before sending invitations.
+
+### Changed
+
+- Process queued survey emails in batches of 30 with follow-up runs every minute, keeping the hourly sweep as a fallback.
+- Preserve the approved email text when invitations are queued, so later edits do not change messages waiting for delivery.
+
 ## [35.170.26] - 2026-11-12
 
 ### Fixed
