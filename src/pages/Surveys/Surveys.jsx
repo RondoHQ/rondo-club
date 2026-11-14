@@ -164,7 +164,7 @@ function Invitations({ survey }) {
       {email && <>
         <Field label="Onderwerp"><input className="input w-full" maxLength={200} disabled={busy} value={email.subject} onChange={(e) => setEmailDraft({ ...email, subject: e.target.value })} /></Field>
         <Field label="Bericht"><textarea className="input w-full" rows={9} maxLength={10000} disabled={busy} value={email.body} onChange={(e) => setEmailDraft({ ...email, body: e.target.value })} /></Field>
-        <p className="text-sm text-gray-500">Gebruik {'{voornaam}'}, {'{naam}'}, {'{enquete}'} en {'{club}'} voor de voornaam, volledige naam, enquêtetitel en clubnaam. Zonder bekende voornaam gebruiken we ‘clublid’. De knop met de persoonlijke enquêtelink wordt automatisch toegevoegd.</p>
+        <p className="text-sm text-gray-500">Gebruik {'{voornaam}'}, {'{naam}'}, {'{enquete}'} en {'{club}'} voor de voornaam, volledige naam, enquêtetitel en clubnaam. Zonder bekende voornaam gebruiken we ‘AWCer’. De knop met de persoonlijke enquêtelink wordt automatisch toegevoegd.</p>
         <div className="flex flex-wrap gap-3">
           <button className="btn-secondary" disabled={busy || !emailDirty} onClick={() => mailAction.mutate('save')}>E-mail opslaan</button>
           <button className="btn-secondary" disabled={busy || preview.isPending} onClick={() => preview.mutate(email)}>{preview.isPending ? 'Voorbeeld laden…' : 'Voorbeeld bekijken'}</button>
