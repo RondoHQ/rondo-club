@@ -177,7 +177,7 @@ class SurveysTest extends RondoTestCase {
 			$this->assertCount( 2, $messages );
 			$this->assertSame( 'Hoi Anne Marie', $messages[0]['subject'] );
 			$this->assertStringContainsString( 'Beste Anne Marie, volledige naam: Anne Marie de Vries.', $messages[0]['message'] );
-			$this->assertSame( 'Hoi clublid', $messages[1]['subject'] );
+			$this->assertSame( 'Hoi AWCer', $messages[1]['subject'] );
 			$this->assertStringContainsString( 'volledige naam: Jan Jansen.', $messages[1]['message'] );
 		} finally {
 			remove_filter( 'pre_wp_mail', $intercept );

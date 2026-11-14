@@ -396,7 +396,7 @@ final class Surveys {
 	public static function render_email( array $survey, array $email, string $name, string $url, string $first_name = '' ): array {
 		$values  = [
 			'{naam}'     => $name ?: 'clublid',
-			'{voornaam}' => trim( $first_name ) ?: 'clublid',
+			'{voornaam}' => trim( $first_name ) ?: 'AWCer',
 			'{enquete}'  => $survey['title'],
 			'{club}'     => wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
 		];
