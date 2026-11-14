@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.171.2] - 2026-11-14
+
+### Removed
+
+- Remove production member fee snapshots from planning artifacts and ignore future snapshot files.
+
 ## [35.171.1] - 2026-11-14
 
 ### Added

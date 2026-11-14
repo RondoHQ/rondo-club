@@ -70,3 +70,8 @@ target/
 .cache/
 tmp/
 .impeccable/review/
+
+# Production fee snapshots contain member financial data
+.planning/**/pre-phase-*.json
+.planning/**/post-phase-*.json
+.planning/**/*baseline*.json
