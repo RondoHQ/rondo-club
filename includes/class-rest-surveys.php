@@ -47,16 +47,20 @@ final class SurveyController extends Base {
 				'callback'            => [ $this, $callback ],
 				'permission_callback' => $permission === 'public' ? '__return_true' : [ $this, $permission ],
 				'args'                => [
-					'id'         => [
+					'id'          => [
 						'type'    => 'integer',
 						'minimum' => 1,
 					],
-					'invitation' => [
+					'invitation'  => [
 						'type'      => 'string',
 						'maxLength' => 64,
 					],
-					'action'     => [ 'type' => 'string' ],
-					'person_ids' => [
+					'action'      => [ 'type' => 'string' ],
+					'all_members' => [
+						'type'    => 'boolean',
+						'default' => false,
+					],
+					'person_ids'  => [
 						'type'     => 'array',
 						'maxItems' => 2000,
 						'items'    => [
@@ -64,25 +68,25 @@ final class SurveyController extends Base {
 							'minimum' => 1,
 						],
 					],
-					'version'    => [
+					'version'     => [
 						'type'    => 'integer',
 						'minimum' => 1,
 					],
-					'page'       => [
+					'page'        => [
 						'type'    => 'integer',
 						'minimum' => 1,
 					],
-					'question'   => [ 'type' => 'string' ],
-					'value'      => [ 'type' => 'string' ],
-					'search'     => [
+					'question'    => [ 'type' => 'string' ],
+					'value'       => [ 'type' => 'string' ],
+					'search'      => [
 						'type'      => 'string',
 						'maxLength' => 200,
 					],
-					'challenge'  => [
+					'challenge'   => [
 						'type'      => 'string',
 						'maxLength' => 150,
 					],
-					'website'    => [
+					'website'     => [
 						'type'      => 'string',
 						'maxLength' => 1000,
 					],
@@ -101,6 +105,10 @@ final class SurveyController extends Base {
 		$this->route( '/surveys/(?P<id>\d+)/action', 'POST', 'action', 'can_manage' );
 		$this->route( '/surveys/(?P<id>\d+)/invitations', 'GET', 'invitations', 'can_manage' );
 		$this->route( '/surveys/(?P<id>\d+)/invitations', 'POST', 'prepare', 'can_manage' );
+		$this->route( '/surveys/(?P<id>\d+)/email', 'GET', 'email_settings', 'can_manage' );
+		$this->route( '/surveys/(?P<id>\d+)/email', 'PUT', 'save_email', 'can_manage' );
+		$this->route( '/surveys/(?P<id>\d+)/email-preview', 'POST', 'email_preview', 'can_manage' );
+		$this->route( '/surveys/(?P<id>\d+)/email-test', 'POST', 'email_test', 'can_manage' );
 		$this->route( '/surveys/(?P<id>\d+)/results', 'GET', 'results', 'can_results' );
 		$this->route( '/surveys/(?P<id>\d+)/export', 'GET', 'export', 'can_results' );
 		$this->route( '/public-surveys/(?P<id>\d+)', 'GET', 'public_show', 'public' );
@@ -183,42 +191,96 @@ final class SurveyController extends Base {
 		$id     = (int) $r['id'];
 		$action = (string) $r['action'];
 		if ( in_array( $action, [ 'send', 'remind' ], true ) ) {
-			return Surveys::queue( $id, $action === 'remind' );
+			return Surveys::queue( $id, $action === 'remind', $r['expected_email'] );
 		}
 		$result = Surveys::action( $id, $action );
 		return is_wp_error( $result ) ? $result : [ 'id' => $result ];
 	}
 
+	/** Match the current member list; external contacts and company-only records are excluded. */
+	private function is_current_member( int $id ): bool {
+		return ! \Rondo\Fields\Fields::get_for_post( $id, 'former_member' )
+			&& \Rondo\Fields\Fields::get_for_post( $id, 'person_type' ) !== 'contact'
+			&& ( trim( (string) \Rondo\Fields\Fields::get_for_post( $id, 'company_name' ) ) === ''
+				|| trim( (string) \Rondo\Fields\Fields::get_for_post( $id, 'first_name' ) ) !== ''
+				|| trim( (string) \Rondo\Fields\Fields::get_for_post( $id, 'last_name' ) ) !== '' );
+	}
+
 	public function recipients( $r ) {
+		$all    = (bool) $r['all_members'];
 		$search = sanitize_text_field( $r['search'] ?? '' );
-		if ( mb_strlen( $search ) < 2 ) {
+		if ( ! $all && mb_strlen( $search ) < 2 ) {
 			return [];
 		}
-		$posts  = get_posts(
-			[
-				'post_type'        => 'person',
-				'post_status'      => 'publish',
-				's'                => $search,
-				'numberposts'      => 30,
-				'suppress_filters' => false,
-			]
-			);
 		$out    = [];
 		$access = new \Rondo\Core\AccessControl();
-		foreach ( $posts as $p ) {
-			if ( ! $access->user_can_access_post( $p->ID ) ) {
-				continue;
+		$page   = 1;
+		$limit  = $all ? 250 : 30;
+		do {
+			$posts = get_posts(
+				[
+					'post_type'        => 'person',
+					'post_status'      => 'publish',
+					's'                => $all ? '' : $search,
+					'numberposts'      => $limit,
+					'paged'            => $page++,
+					'orderby'          => 'ID',
+					'order'            => 'ASC',
+					'suppress_filters' => false,
+				]
+			);
+			foreach ( $posts as $p ) {
+				if ( ! $access->user_can_access_post( $p->ID ) || ( $all && ! $this->is_current_member( $p->ID ) ) ) {
+					continue;
+				}
+				$email = CommunicationPolicy::primary_email( $p->ID );
+				if ( $email ) {
+					$out[] = [
+						'id'    => $p->ID,
+						'name'  => \Rondo\Core\PostTitle::plain( $p->ID ),
+						'email' => $email,
+					];
+				}
 			}
-			$email = CommunicationPolicy::primary_email( $p->ID );
-			if ( $email ) {
-				$out[] = [
-					'id'    => $p->ID,
-					'name'  => \Rondo\Core\PostTitle::plain( $p->ID ),
-					'email' => $email,
-				];
-			}
-		}
+		} while ( $all && count( $posts ) === $limit );
 		return $out;
+	}
+
+	public function email_settings( $r ) {
+		$survey = Surveys::read( (int) $r['id'] );
+		return is_wp_error( $survey ) ? $survey : Surveys::email_settings( $survey );
+	}
+
+	public function save_email( $r ) {
+		return Surveys::save_email( (int) $r['id'], $r['email'], $r['expected_email'] );
+	}
+
+	public function email_preview( $r ) {
+		$survey = Surveys::read( (int) $r['id'] );
+		if ( is_wp_error( $survey ) ) {
+			return $survey;
+		}
+		$email = Surveys::validate_email( $r['email'] );
+		if ( is_wp_error( $email ) ) {
+			return $email;
+		}
+		return Surveys::render_email( $survey, $email, wp_get_current_user()->display_name, add_query_arg( 'preview', '1', Surveys::url( $survey['id'] ) ) );
+	}
+
+	/** Test mail is restricted to the signed-in manager and creates no real invitation. */
+	public function email_test( $r ) {
+		$message = $this->email_preview( $r );
+		if ( is_wp_error( $message ) ) {
+			return $message;
+		}
+		$email = wp_get_current_user()->user_email;
+		if ( ! is_email( $email ) ) {
+			return Schema::error( 'Je account heeft geen geldig e-mailadres.' );
+		}
+		if ( ! wp_mail( $email, '[Test] ' . $message['subject'], $message['html'], [ 'Content-Type: text/html; charset=UTF-8' ] ) ) {
+			return Schema::error( 'De testmail kon niet worden verzonden. Probeer het opnieuw.', 502 );
+		}
+		return [ 'sent_to' => $email ];
 	}
 
 	public function prepare( $r ) {
@@ -239,6 +301,9 @@ final class SurveyController extends Base {
 			$person_id = absint( $person_id );
 			if ( get_post_type( $person_id ) !== 'person' || ! $access->user_can_access_post( $person_id ) ) {
 				return Schema::error( 'Geen toegang tot een geselecteerd lid.', 403 );
+			}
+			if ( $r['all_members'] && ! $this->is_current_member( $person_id ) ) {
+				continue;
 			}
 			$email = CommunicationPolicy::primary_email( $person_id );
 			if ( $email ) {
