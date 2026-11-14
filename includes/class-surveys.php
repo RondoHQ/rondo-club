@@ -15,11 +15,13 @@ final class Surveys {
 	const INVITE   = 'rondo_survey_invite';
 	const RESPONSE = 'rondo_survey_reply';
 	const CRON     = 'rondo_survey_deliveries';
+	const BATCH    = 'rondo_survey_delivery_batch';
 
 	public function __construct() {
 		add_action( 'init', [ self::class, 'register' ] );
 		add_filter( 'rondo_fields_validate_value', [ self::class, 'validate_survey_field' ], 10, 3 );
 		add_action( self::CRON, [ self::class, 'deliver' ] );
+		add_action( self::BATCH, [ self::class, 'deliver' ] );
 		add_action(
 			'init',
 			static function () {
@@ -343,13 +345,90 @@ final class Surveys {
 			);
 	}
 
-	public static function queue( int $id, bool $reminder = false ) {
+	/** Defaults keep existing surveys compatible with the original invitation email. */
+	public static function email_settings( array $survey ): array {
+		return $survey['email'] ?? [
+			'subject' => $survey['title'],
+			'body'    => "Hoi {naam},\n\nWe horen graag je mening. Vul onze enquête in via onderstaande link.",
+		];
+	}
+
+	public static function validate_email( $input ) {
+		if ( ! is_array( $input ) || ! is_string( $input['subject'] ?? null ) || ! is_string( $input['body'] ?? null )
+			|| mb_strlen( $input['subject'] ) > 200 || mb_strlen( $input['body'] ) > 10000
+			|| preg_match( '/[\r\n]/', $input['subject'] ) ) {
+			return Schema::error( 'Gebruik een onderwerp van maximaal 200 tekens en een bericht van maximaal 10.000 tekens.' );
+		}
+		$email = [
+			'subject' => sanitize_text_field( $input['subject'] ),
+			'body'    => sanitize_textarea_field( $input['body'] ),
+		];
+		if ( trim( $email['subject'] ) === '' || trim( $email['body'] ) === '' ) {
+			return Schema::error( 'Vul een onderwerp en bericht in.' );
+		}
+		return $email;
+	}
+
+	/** Save email separately so saving a question draft cannot overwrite it. */
+	public static function save_email( int $id, $input, $expected ) {
+		$email = self::validate_email( $input );
+		if ( is_wp_error( $email ) ) {
+			return $email;
+		}
 		return self::locked(
 			'survey:' . $id,
-			static function () use ( $id, $reminder ) {
+			static function () use ( $id, $email, $expected ) {
+				$survey = self::read( $id );
+				if ( is_wp_error( $survey ) ) {
+					return $survey;
+				}
+				if ( $expected !== self::email_settings( $survey ) ) {
+					return Schema::error( 'De e-mail is ondertussen gewijzigd. Vernieuw de pagina.', 409 );
+				}
+				$survey['email'] = $email;
+				$result          = self::write( self::TYPE, $survey, $id );
+				return is_wp_error( $result ) ? $result : $email;
+			}
+		);
+	}
+
+	/** The preview, test and real delivery use the same escaped email renderer. */
+	public static function render_email( array $survey, array $email, string $name, string $url ): array {
+		$values  = [
+			'{naam}'    => $name ?: 'clublid',
+			'{enquete}' => $survey['title'],
+			'{club}'    => wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
+		];
+		$subject = sanitize_text_field( strtr( $email['subject'], $values ) );
+		return [
+			'subject' => $subject,
+			'html'    => EmailTemplate::render(
+				[
+					'heading'   => $subject,
+					'body_html' => EmailTemplate::format_plain_text( strtr( $email['body'], $values ) ),
+					'cta_label' => 'Vul de enquête in',
+					'cta_url'   => $url,
+				]
+			),
+		];
+	}
+
+	private static function schedule_batch(): void {
+		if ( ! wp_next_scheduled( self::BATCH ) ) {
+			wp_schedule_single_event( ( intdiv( time(), 60 ) + 1 ) * 60, self::BATCH );
+		}
+	}
+
+	public static function queue( int $id, bool $reminder = false, $expected_email = null ) {
+		return self::locked(
+			'survey:' . $id,
+			static function () use ( $id, $reminder, $expected_email ) {
 				$s = self::read( $id );
 				if ( is_wp_error( $s ) || ! self::is_open( $s ) ) {
 					return Schema::error( 'De enquête is niet open.', 409 );
+				}
+				if ( $expected_email !== null && $expected_email !== self::email_settings( $s ) ) {
+					return Schema::error( 'De e-mail is ondertussen gewijzigd. Vernieuw het voorbeeld.', 409 );
 				}
 				$count = 0;
 				foreach ( self::children( $id, self::INVITE ) as $post ) {
@@ -359,12 +438,18 @@ final class Surveys {
 					}
 					if ( ( ! $reminder && in_array( $i['status'], [ 'prepared', 'failed' ], true ) ) || ( $reminder && in_array( $i['status'], [ 'sent', 'reminder_failed' ], true ) && ! $i['reminded_at'] ) ) {
 						$i['status'] = $reminder ? 'reminder_queued' : 'queued';
-						$result      = self::write( self::INVITE, $i, $i['id'], $id );
+						if ( ! $reminder ) {
+							$i['email_content'] = self::email_settings( $s );
+						}
+						$result = self::write( self::INVITE, $i, $i['id'], $id );
 						if ( is_wp_error( $result ) ) {
 							return $result;
 						}
 						++$count;
 					}
+				}
+				if ( $count > 0 ) {
+					self::schedule_batch();
 				}
 				return [ 'queued' => $count ];
 			}
@@ -411,16 +496,12 @@ final class Surveys {
 							continue;
 						}
 						--$budget;
-						$html        = EmailTemplate::render(
-						[
-							'heading'      => $s['title'],
-							'body_html'    => EmailTemplate::format_plain_text( ( $i['name'] ? 'Hoi ' . $i['name'] . ",\n\n" : '' ) . ( $reminder ? 'Heb je onze enquête al ingevuld? Je mening is welkom.' : 'We horen graag je mening. Vul onze enquête in via onderstaande link.' ) ),
-							'cta_label'    => 'Vul de enquête in',
-							'cta_url'      => self::url( $s['id'], $i['token'] ),
-							'accent_color' => EmailTemplate::accent_color(),
-						]
-						);
-						$sent        = wp_mail( $i['email'], ( $reminder ? 'Herinnering: ' : '' ) . $s['title'], $html, [ 'Content-Type: text/html; charset=UTF-8' ] );
+						$email       = $reminder ? [
+							'subject' => 'Herinnering: ' . $s['title'],
+							'body'    => "Hoi {naam},\n\nHeb je onze enquête al ingevuld? Je mening is welkom.",
+						] : ( $i['email_content'] ?? self::email_settings( $s ) );
+						$message     = self::render_email( $s, $email, $i['name'], self::url( $s['id'], $i['token'] ) );
+						$sent        = wp_mail( $i['email'], $message['subject'], $message['html'], [ 'Content-Type: text/html; charset=UTF-8' ] );
 						$i['status'] = $sent ? 'sent' : ( $reminder ? 'reminder_failed' : 'failed' );
 						if ( $sent ) {
 							$i[ $reminder ? 'reminded_at' : 'sent_at' ] = gmdate( 'c' );
@@ -429,6 +510,9 @@ final class Surveys {
 					}
 				}
 				);
+		}
+		if ( $budget <= 0 ) {
+			self::schedule_batch();
 		}
 	}
 

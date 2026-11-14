@@ -94,31 +94,91 @@ function Invitations({ survey }) {
   const [recipients, setRecipients] = useState('');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState([]);
+  const [allMembers, setAllMembers] = useState(false);
   const [notice, setNotice] = useState('');
-  const invites = useQuery(query(['survey-invites', survey.id], `${base}/${survey.id}/invitations`));
-  const people = useQuery({ ...query(['survey-recipients', search], `${base}/recipients?search=${encodeURIComponent(search)}`, search.length > 1), placeholderData: [] });
+  const [emailDraft, setEmailDraft] = useState(null);
+  const invitesKey = ['survey-invites', survey.id];
+  const emailKey = ['survey-email', survey.id];
+  const invites = useQuery(query(invitesKey, `${base}/${survey.id}/invitations`));
+  const savedEmail = useQuery(query(emailKey, `${base}/${survey.id}/email`));
+  const email = emailDraft ?? savedEmail.data;
+  const emailDirty = !!email && JSON.stringify(email) !== JSON.stringify(savedEmail.data);
+  const people = useQuery({ ...query(['survey-recipients', search], `${base}/recipients?search=${encodeURIComponent(search)}`, !allMembers && search.length > 1), placeholderData: [] });
+  const all = useMutation({
+    mutationFn: async () => (await api.get(`${base}/recipients?all_members=true`)).data,
+    onSuccess: (rows) => { setSelected(rows); setAllMembers(true); setRecipients(''); setSearch(''); setNotice(''); },
+  });
+  const preview = useMutation({ mutationFn: async (content) => (await api.post(`${base}/${survey.id}/email-preview`, { email: content })).data });
+  const previewCurrent = preview.data && JSON.stringify(preview.variables) === JSON.stringify(email);
+  const mailAction = useMutation({
+    mutationFn: async (action) => action === 'save'
+      ? (await api.put(`${base}/${survey.id}/email`, { email, expected_email: savedEmail.data })).data
+      : (await api.post(`${base}/${survey.id}/email-test`, { email })).data,
+    onSuccess: (result, action) => {
+      if (action === 'save') { client.setQueryData(emailKey, result); setEmailDraft(null); setNotice('E-mail opgeslagen.'); }
+      else setNotice(`Testmail aangeboden voor verzending naar ${result.sent_to}. De knop opent het enquêtevoorbeeld; daarvoor moet je ingelogd zijn.`);
+    },
+  });
   const mutation = useMutation({
     mutationFn: async (action) => {
       if (action === 'prepare') {
         const rows = recipients.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).map((line) => { const parts = line.split(';'); return { email: parts.length > 1 ? parts[1].trim() : line, name: parts.length > 1 ? parts[0].trim() : '' }; });
-        return (await api.post(`${base}/${survey.id}/invitations`, { recipients: rows, person_ids: selected.map((p) => p.id) })).data;
+        // Bounded requests support a whole club without the 2,000-recipient request limit.
+        const ids = selected.map((p) => p.id);
+        for (let offset = 0; offset < Math.max(rows.length, ids.length); offset += 500) {
+          await api.post(`${base}/${survey.id}/invitations`, { recipients: rows.slice(offset, offset + 500), person_ids: ids.slice(offset, offset + 500), all_members: allMembers });
+        }
+        const { data } = await api.get(`${base}/${survey.id}/invitations`);
+        client.setQueryData(invitesKey, data);
+        return { prepared: data.filter((i) => ['prepared', 'failed'].includes(i.status) && !i.completed).length };
       }
-      return (await api.post(`${base}/${survey.id}/action`, { action })).data;
+      return (await api.post(`${base}/${survey.id}/action`, { action, ...(action === 'send' ? { expected_email: savedEmail.data } : {}) })).data;
     },
-    onSuccess: (result) => { setNotice(result.prepared !== undefined ? `${result.prepared} uitnodigingen voorbereid. Er is nog niets verzonden.` : `${result.queued} berichten klaargezet. Rondo verstuurt ze in de achtergrond, uiterlijk bij de volgende uurlijkse verwerking.`); client.invalidateQueries({ queryKey: ['survey-invites', survey.id] }); },
+    onSuccess: (result) => { setNotice(result.prepared !== undefined ? `${result.prepared} uitnodigingen gereed voor verzending. Er is nog niets verzonden.` : `${result.queued} berichten klaargezet. Rondo verwerkt maximaal 30 berichten per minuut in de achtergrond.`); },
+    onSettled: () => client.invalidateQueries({ queryKey: invitesKey }),
   });
+  const busy = mutation.isPending || all.isPending || mailAction.isPending;
+  const isOpen = survey.status === 'published' && (!survey.closes_at || new Date(survey.closes_at) > new Date());
+  const readyCount = invites.data?.filter((i) => ['prepared', 'failed'].includes(i.status) && !i.completed).length || 0;
+  const selectedEmails = new Set(selected.map((p) => p.email.toLowerCase())).size;
   return <div className="space-y-5">
-    <div className="card space-y-4 p-5"><h2 className="font-semibold">Ontvangers voorbereiden</h2><p className="text-sm">Kies leden of voeg e-mailadressen toe. Per e-mailadres wordt één uitnodiging gemaakt. Voorbereiden verstuurt geen mail.</p>
-      <Field label="Zoek een lid op naam"><input className="input w-full" value={search} onChange={(e) => setSearch(e.target.value)} /></Field>
-      <ErrorMessage error={people.error} />
-      {people.data?.length > 0 && <div className="max-h-48 overflow-auto rounded border dark:border-gray-700">{people.data.map((p) => <button type="button" className="block w-full p-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800" key={p.id} onClick={() => { setSelected((rows) => rows.some((row) => row.id === p.id) ? rows : [...rows, p]); setSearch(''); }}>{p.name} — {p.email}</button>)}</div>}
-      {selected.map((p) => <button key={p.id} className="btn-secondary mr-2" onClick={() => setSelected(selected.filter((row) => row.id !== p.id))}>{p.name} ×</button>)}
-      <Field label="Eén ontvanger per regel: e-mailadres of Naam; e-mailadres"><textarea className="input w-full" rows={6} value={recipients} onChange={(e) => setRecipients(e.target.value)} placeholder={'naam@voorbeeld.nl\nJan Jansen; jan@voorbeeld.nl'} /></Field>
-      <button className="btn-secondary" disabled={mutation.isPending || (!recipients.trim() && !selected.length)} onClick={() => mutation.mutate('prepare')}>Uitnodigingen voorbereiden</button>
+    {!isOpen && <p className="rounded-lg bg-amber-50 p-3 text-amber-900">Publiceer de enquête met een toekomstige sluitingsdatum of zonder sluitingsdatum voordat je uitnodigingen voorbereidt of verstuurt.</p>}
+    <div className="card space-y-4 p-5"><h2 className="font-semibold">1. Ontvangers voorbereiden</h2>
+      <p className="text-sm">Alle huidige leden met een geldig e-mailadres, zonder oud-leden, overleden leden en externe contacten. Gedeelde e-mailadressen krijgen samen één uitnodiging en kunnen samen één keer antwoorden.</p>
+      <div className="flex flex-wrap gap-3"><button className="btn-secondary" disabled={busy} onClick={() => all.mutate()}>{all.isPending ? 'Leden ophalen…' : 'Alle leden selecteren'}</button>{(allMembers || selected.length > 0) && <button className="btn-tertiary" disabled={busy} onClick={() => { setAllMembers(false); setSelected([]); }}>Selectie wissen</button>}</div>
+      <ErrorMessage error={all.error} />
+      {(allMembers || selected.length > 0) && <p role="status" className="text-sm">{selected.length} leden geselecteerd · {selectedEmails} unieke e-mailadressen</p>}
+      {!allMembers && <>
+        <Field label="Zoek een lid op naam"><input className="input w-full" disabled={busy} value={search} onChange={(e) => setSearch(e.target.value)} /></Field>
+        <ErrorMessage error={people.error} />
+        {people.data?.length > 0 && <div className="max-h-48 overflow-auto rounded border dark:border-gray-700">{people.data.map((p) => <button type="button" disabled={busy} className="block w-full p-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800" key={p.id} onClick={() => { setSelected((rows) => rows.some((row) => row.id === p.id) ? rows : [...rows, p]); setSearch(''); }}>{p.name} — {p.email}</button>)}</div>}
+        <Field label="Eén ontvanger per regel: e-mailadres of Naam; e-mailadres"><textarea className="input w-full" disabled={busy} rows={4} value={recipients} onChange={(e) => setRecipients(e.target.value)} placeholder={'naam@voorbeeld.nl\nJan Jansen; jan@voorbeeld.nl'} /></Field>
+      </>}
+      {selected.length > 0 && <details><summary className="cursor-pointer text-sm underline">Geselecteerde leden bekijken of aanpassen</summary><div className="mt-2 max-h-64 overflow-auto">{selected.map((p) => <div key={p.id} className="flex items-center justify-between gap-3 border-b py-2 text-sm dark:border-gray-700"><span>{p.name} · {p.email}</span><button className="btn-tertiary" disabled={busy} aria-label={`${p.name} uit selectie verwijderen`} onClick={() => setSelected((rows) => rows.filter((row) => row.id !== p.id))}>Verwijderen</button></div>)}</div></details>}
+      <button className="btn-secondary" disabled={busy || !isOpen || (!recipients.trim() && !selected.length)} onClick={() => mutation.mutate('prepare')}>{mutation.isPending && mutation.variables === 'prepare' ? 'Uitnodigingen voorbereiden…' : 'Uitnodigingen voorbereiden'}</button>
+      <p className="text-sm text-gray-500">Voorbereiden voegt ontvangers toe aan de verzendlijst hieronder en verstuurt geen mail. Eerder voorbereide uitnodigingen blijven in die lijst staan.</p>
     </div>
-    <div className="card space-y-4 p-5"><h2 className="font-semibold">Verzenden</h2><p className="text-sm">Uitnodigingen gebruiken de vragenlijstversie die bij het voorbereiden gepubliceerd was. Herinneringen gaan alleen naar deelnemers die nog niet hebben geantwoord, maximaal één per uitnodiging.</p><div className="flex flex-wrap gap-3"><button className="btn-primary" disabled={mutation.isPending || !invites.data?.some((i) => ['prepared', 'failed'].includes(i.status) && !i.completed)} onClick={() => { if (window.confirm('Alle voorbereide uitnodigingen nu per e-mail verzenden?')) mutation.mutate('send'); }}>Uitnodigingen verzenden</button><button className="btn-secondary" disabled={mutation.isPending || !invites.data?.some((i) => ['sent', 'reminder_failed'].includes(i.status) && !i.completed && !i.reminded_at)} onClick={() => { if (window.confirm('Eén herinnering sturen aan deelnemers die nog niet hebben geantwoord?')) mutation.mutate('remind'); }}>Herinnering verzenden</button><button className="btn-tertiary" onClick={() => invites.refetch()}>Status vernieuwen</button></div>
-      <ErrorMessage error={mutation.error || invites.error} />{notice && <p role="status">{notice}</p>}
+    <div className="card space-y-4 p-5"><h2 className="font-semibold">2. Begeleidende e-mail</h2>
+      <ErrorMessage error={savedEmail.error || mailAction.error || preview.error} />
+      {savedEmail.isPending && <p>E-mail laden…</p>}
+      {email && <>
+        <Field label="Onderwerp"><input className="input w-full" maxLength={200} disabled={busy} value={email.subject} onChange={(e) => setEmailDraft({ ...email, subject: e.target.value })} /></Field>
+        <Field label="Bericht"><textarea className="input w-full" rows={9} maxLength={10000} disabled={busy} value={email.body} onChange={(e) => setEmailDraft({ ...email, body: e.target.value })} /></Field>
+        <p className="text-sm text-gray-500">Gebruik {'{naam}'}, {'{enquete}'} en {'{club}'} voor de naam, enquêtetitel en clubnaam. De knop met de persoonlijke enquêtelink wordt automatisch toegevoegd.</p>
+        <div className="flex flex-wrap gap-3">
+          <button className="btn-secondary" disabled={busy || !emailDirty} onClick={() => mailAction.mutate('save')}>E-mail opslaan</button>
+          <button className="btn-secondary" disabled={busy || preview.isPending} onClick={() => preview.mutate(email)}>{preview.isPending ? 'Voorbeeld laden…' : 'Voorbeeld bekijken'}</button>
+          <button className="btn-secondary" disabled={busy} onClick={() => mailAction.mutate('test')}>Testmail naar mezelf</button>
+        </div>
+        <p className="text-sm text-gray-500">{emailDirty ? 'Sla je wijzigingen op voordat je uitnodigingen verzendt.' : 'E-mail opgeslagen.'} Testmails maken geen uitnodiging of antwoord aan. Herinneringen gebruiken de standaard herinneringstekst.</p>
+        {previewCurrent && <div className="space-y-2"><p className="text-sm"><strong>Onderwerp:</strong> {preview.data.subject}</p><iframe title="Voorbeeld uitnodigingsmail" sandbox="" srcDoc={preview.data.html} className="h-[32rem] w-full rounded-lg border bg-white dark:border-gray-700" /></div>}
+      </>}
     </div>
+    <div className="card space-y-4 p-5"><h2 className="font-semibold">3. Verzenden</h2><p className="text-sm">{readyCount} uitnodigingen gereed voor verzending. Bekijk eerst het e-mailvoorbeeld. Elke uitnodiging gebruikt de vragenlijstversie van het moment van voorbereiden.</p>
+      <div className="flex flex-wrap gap-3"><button className="btn-primary" disabled={busy || !isOpen || !readyCount || !email || emailDirty || !previewCurrent} onClick={() => { if (window.confirm(`${readyCount} voorbereide uitnodigingen verzenden met onderwerp “${preview.data.subject}”?`)) mutation.mutate('send'); }}>Uitnodigingen verzenden ({readyCount})</button><button className="btn-secondary" disabled={busy || !isOpen || !invites.data?.some((i) => ['sent', 'reminder_failed'].includes(i.status) && !i.completed && !i.reminded_at)} onClick={() => { if (window.confirm('Eén herinnering sturen aan deelnemers die nog niet hebben geantwoord?')) mutation.mutate('remind'); }}>Herinnering verzenden</button><button className="btn-tertiary" onClick={() => invites.refetch()}>Status vernieuwen</button></div>
+      <p className="text-sm text-gray-500">Rondo verwerkt maximaal 30 berichten per minuut. Herinneringen gaan alleen naar deelnemers die nog niet hebben geantwoord, maximaal één per uitnodiging.</p>
+    </div>
+    <ErrorMessage error={mutation.error || invites.error} />{notice && <p role="status" className="rounded-lg bg-blue-50 p-3 text-blue-900 dark:bg-blue-950 dark:text-blue-100">{notice}</p>}
     <div className="card overflow-x-auto p-5"><h2 className="mb-3 font-semibold">{invites.data?.length || 0} uitnodigingen · {invites.data?.filter((i) => i.completed).length || 0} ingevuld</h2><table className="w-full text-left text-sm"><thead><tr><th className="p-2">Ontvanger</th><th className="p-2">Status</th><th className="p-2">Ingevuld</th><th className="p-2">Herinnering</th></tr></thead><tbody>{invites.data?.map((i) => <tr className="border-t dark:border-gray-700" key={i.id}><td className="p-2">{i.name}<br />{i.email}</td><td className="p-2">{{ prepared: 'Voorbereid', queued: 'In wachtrij', sending: 'Wordt verstuurd / uitkomst onbekend', sent: 'Verzonden', failed: 'Mislukt', reminder_queued: 'Herinnering in wachtrij', reminder_failed: 'Herinnering mislukt' }[i.status] || i.status}</td><td className="p-2">{i.completed ? 'Ja' : 'Nee'}</td><td className="p-2">{i.reminded_at ? new Date(i.reminded_at).toLocaleDateString('nl-NL') : '—'}</td></tr>)}</tbody></table></div>
   </div>;
 }

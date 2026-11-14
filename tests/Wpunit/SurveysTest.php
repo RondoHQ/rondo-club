@@ -17,6 +17,245 @@ class SurveysTest extends RondoTestCase {
 		return $id;
 	}
 
+	public function test_all_member_selection_excludes_nonmembers_and_rechecks_before_preparing(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$id       = $this->survey();
+		$member   = $this->createPerson(
+			[],
+			[
+				'first_name' => 'Lid',
+				'email_1'    => 'lid@example.org',
+			]
+			);
+		$fallback = $this->createPerson( [], [ 'email_2' => 'tweede@example.org' ] );
+		$this->createPerson(
+			[],
+			[
+				'email_1'       => 'oud@example.org',
+				'former_member' => true,
+			]
+			);
+		$this->createPerson(
+			[],
+			[
+				'email_1'     => 'contact@example.org',
+				'person_type' => 'contact',
+			]
+			);
+		$this->createPerson(
+			[],
+			[
+				'email_1'      => 'bedrijf@example.org',
+				'company_name' => 'Bedrijf',
+			]
+			);
+		$this->createPerson(
+			[],
+			[
+				'email_1'          => 'overleden@example.org',
+				'datum_overlijden' => '20260101',
+			]
+			);
+		$this->createPerson();
+		$this->createPerson( [ 'post_status' => 'draft' ], [ 'email_1' => 'draft@example.org' ] );
+		$server                 = $this->bootRestControllers( [ SurveyController::class ] );
+		$request                = new \WP_REST_Request( 'GET', '/rondo/v1/surveys/recipients' );
+		$request['all_members'] = true;
+		$response               = $server->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( [ $member, $fallback ], array_column( $response->get_data(), 'id' ) );
+		\Rondo\Fields\Fields::update_for_post( $member, 'former_member', true );
+		$request                = new \WP_REST_Request( 'POST', '/rondo/v1/surveys/' . $id . '/invitations' );
+		$request['all_members'] = true;
+		$request['person_ids']  = [ $member, $fallback ];
+		$this->assertSame( 1, $server->dispatch( $request )->get_data()['prepared'] );
+		$invite = Surveys::read( Surveys::children( $id, Surveys::INVITE )[0]->ID, Surveys::INVITE );
+		$this->assertSame( $fallback, $invite['person_id'] );
+		$this->assertSame( 'prepared', $invite['status'] );
+	}
+
+	public function test_all_member_selection_paginates_and_respects_person_scope(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$ids = [];
+		for ( $n = 0; $n < 251; ++$n ) {
+			$ids[] = $this->createPerson( [], [ 'email_1' => 'member' . $n . '@example.org' ] );
+		}
+		$server                 = $this->bootRestControllers( [ SurveyController::class ] );
+		$request                = new \WP_REST_Request( 'GET', '/rondo/v1/surveys/recipients' );
+		$request['all_members'] = true;
+		$this->assertSame( $ids, array_column( $server->dispatch( $request )->get_data(), 'id' ) );
+		$user = $this->createRondoUser();
+		get_user_by( 'id', $user )->add_cap( 'enquetes' );
+		wp_set_current_user( $user );
+		$response = $server->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( [], $response->get_data() );
+	}
+
+	public function test_email_preview_and_test_use_draft_without_creating_invitations(): void {
+		$admin = self::factory()->user->create(
+			[
+				'role'         => 'administrator',
+				'user_email'   => 'manager@example.org',
+				'display_name' => 'Anne',
+			]
+			);
+		wp_set_current_user( $admin );
+		$id               = $this->survey();
+		$server           = $this->bootRestControllers( [ SurveyController::class ] );
+		$content          = [
+			'subject' => 'Jouw mening over {enquete}',
+			'body'    => "Hoi {naam},\n\nHelp onze club. Bedankt!",
+		];
+		$request          = new \WP_REST_Request( 'POST', '/rondo/v1/surveys/' . $id . '/email-preview' );
+		$request['email'] = $content;
+		$preview          = $server->dispatch( $request );
+		$this->assertSame( 200, $preview->get_status() );
+		$this->assertStringContainsString( 'Hoi Anne', $preview->get_data()['html'] );
+		$this->assertStringContainsString( 'preview=1', $preview->get_data()['html'] );
+		$this->assertStringNotContainsString( 'uitnodiging=', $preview->get_data()['html'] );
+		$messages  = [];
+		$intercept = static function ( $result, $args ) use ( &$messages ) {
+			$messages[] = $args;
+			return true;
+		};
+		add_filter( 'pre_wp_mail', $intercept, 10, 2 );
+		try {
+			$request          = new \WP_REST_Request( 'POST', '/rondo/v1/surveys/' . $id . '/email-test' );
+			$request['email'] = $content;
+			$request['to']    = 'someone-else@example.org';
+			$this->assertSame( 'manager@example.org', $server->dispatch( $request )->get_data()['sent_to'] );
+			$this->assertCount( 1, $messages );
+			$this->assertSame( [ 'manager@example.org' ], $messages[0]['to'] );
+			$this->assertSame( $preview->get_data()['html'], $messages[0]['message'] );
+			$this->assertStringStartsWith( '[Test] ', $messages[0]['subject'] );
+			$this->assertCount( 0, Surveys::children( $id, Surveys::INVITE ) );
+			$this->assertCount( 0, Surveys::children( $id, Surveys::RESPONSE ) );
+			$this->assertNotSame( $content, Surveys::email_settings( Surveys::read( $id ) ) );
+		} finally {
+			remove_filter( 'pre_wp_mail', $intercept );
+		}
+	}
+
+	public function test_email_settings_are_validated_and_queued_messages_keep_the_approved_copy(): void {
+		$id      = $this->survey();
+		$default = Surveys::email_settings( Surveys::read( $id ) );
+		$content = [
+			'subject' => 'Laat je horen',
+			'body'    => "Beste {naam},\n\nJouw mening telt bij {club}.",
+		];
+		$this->assertSame( $content, Surveys::save_email( $id, $content, $default ) );
+		Surveys::update(
+			$id,
+			[
+				'intro' => 'Nieuwe introductie',
+				'email' => $default,
+			]
+			);
+		$this->assertSame( $content, Surveys::email_settings( Surveys::read( $id ) ) );
+		$this->assertWPError( Surveys::save_email( $id, $default, $default ) );
+		foreach ( [
+			[
+				'subject' => '',
+				'body'    => 'Bericht',
+			],
+			[
+				'subject' => "Titel\nBcc: bad@example.org",
+				'body'    => 'Bericht',
+			],
+			[
+				'subject' => [],
+				'body'    => 'Bericht',
+			],
+			[
+				'subject' => 'Titel',
+				'body'    => str_repeat( 'a', 10001 ),
+			],
+		] as $invalid ) {
+			$this->assertWPError( Surveys::save_email( $id, $invalid, $content ) );
+		}
+		$ids = Surveys::prepare(
+			$id,
+			[
+				[
+					'email' => 'member@example.org',
+					'name'  => 'Jan',
+				],
+			]
+			);
+		$this->assertWPError( Surveys::queue( $id, false, $default ) );
+		$this->assertSame( 'prepared', Surveys::read( $ids[0], Surveys::INVITE )['status'] );
+		$this->assertSame( 1, Surveys::queue( $id, false, $content )['queued'] );
+		$this->assertSame( $default, Surveys::save_email( $id, $default, $content ) );
+		$messages  = [];
+		$intercept = static function ( $result, $args ) use ( &$messages ) {
+			$messages[] = $args;
+			return true;
+		};
+		add_filter( 'pre_wp_mail', $intercept, 10, 2 );
+		try {
+			Surveys::deliver();
+			Surveys::deliver();
+			$this->assertCount( 1, $messages );
+			$this->assertSame( 'Laat je horen', $messages[0]['subject'] );
+			$this->assertStringContainsString( 'Beste Jan', $messages[0]['message'] );
+			$this->assertStringNotContainsString( '{club}', $messages[0]['message'] );
+			$this->assertStringContainsString( 'uitnodiging=', $messages[0]['message'] );
+		} finally {
+			remove_filter( 'pre_wp_mail', $intercept );
+		}
+	}
+
+	public function test_large_delivery_schedules_followup_batches_without_duplicates(): void {
+		$id         = $this->survey();
+		$recipients = [];
+		for ( $n = 0; $n < 35; ++$n ) {
+			$recipients[] = [ 'email' => 'member' . $n . '@example.org' ];
+		}
+		Surveys::prepare( $id, $recipients );
+		$this->assertSame( 35, Surveys::queue( $id )['queued'] );
+		$this->assertNotFalse( wp_next_scheduled( Surveys::BATCH ) );
+		wp_clear_scheduled_hook( Surveys::BATCH );
+		$sent      = 0;
+		$intercept = static function () use ( &$sent ) {
+			++$sent;
+			return true;
+		};
+		add_filter( 'pre_wp_mail', $intercept );
+		try {
+			Surveys::deliver();
+			$this->assertSame( 30, $sent );
+			$this->assertLessThanOrEqual( time() + 60, wp_next_scheduled( Surveys::BATCH ) );
+			$this->assertNotFalse( wp_next_scheduled( Surveys::BATCH ) );
+			wp_clear_scheduled_hook( Surveys::BATCH );
+			Surveys::deliver();
+			Surveys::deliver();
+			$this->assertSame( 35, $sent );
+			$this->assertFalse( wp_next_scheduled( Surveys::BATCH ) );
+		} finally {
+			remove_filter( 'pre_wp_mail', $intercept );
+		}
+	}
+
+	public function test_new_mail_routes_require_management_permission(): void {
+		$id     = $this->survey();
+		$server = $this->bootRestControllers( [ SurveyController::class ] );
+		$user   = self::factory()->user->create( [ 'role' => 'rondo_user' ] );
+		get_user_by( 'id', $user )->add_cap( 'enquete_resultaten' );
+		foreach ( [
+			0     => 401,
+			$user => 403,
+		] as $user_id => $status ) {
+			wp_set_current_user( $user_id );
+			foreach ( [ [ 'GET', 'email' ], [ 'PUT', 'email' ], [ 'POST', 'email-preview' ], [ 'POST', 'email-test' ] ] as [ $method, $route ] ) {
+				$this->assertSame( $status, $server->dispatch( new \WP_REST_Request( $method, '/rondo/v1/surveys/' . $id . '/' . $route ) )->get_status() );
+			}
+			$request                = new \WP_REST_Request( 'GET', '/rondo/v1/surveys/recipients' );
+			$request['all_members'] = true;
+			$this->assertSame( $status, $server->dispatch( $request )->get_status() );
+		}
+	}
+
 	private function answers( string $route = 'none' ): array {
 		return [
 			'roles'        => [ 'o0', 'o1' ],
