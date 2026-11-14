@@ -393,11 +393,12 @@ final class Surveys {
 	}
 
 	/** The preview, test and real delivery use the same escaped email renderer. */
-	public static function render_email( array $survey, array $email, string $name, string $url ): array {
+	public static function render_email( array $survey, array $email, string $name, string $url, string $first_name = '' ): array {
 		$values  = [
-			'{naam}'    => $name ?: 'clublid',
-			'{enquete}' => $survey['title'],
-			'{club}'    => wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
+			'{naam}'     => $name ?: 'clublid',
+			'{voornaam}' => trim( $first_name ) ?: 'clublid',
+			'{enquete}'  => $survey['title'],
+			'{club}'     => wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
 		];
 		$subject = sanitize_text_field( strtr( $email['subject'], $values ) );
 		return [
@@ -500,7 +501,8 @@ final class Surveys {
 							'subject' => 'Herinnering: ' . $s['title'],
 							'body'    => "Hoi {naam},\n\nHeb je onze enquête al ingevuld? Je mening is welkom.",
 						] : ( $i['email_content'] ?? self::email_settings( $s ) );
-						$message     = self::render_email( $s, $email, $i['name'], self::url( $s['id'], $i['token'] ) );
+						$first_name  = $i['person_id'] ? (string) \Rondo\Fields\Fields::get_for_post( $i['person_id'], 'first_name' ) : '';
+						$message     = self::render_email( $s, $email, $i['name'], self::url( $s['id'], $i['token'] ), $first_name );
 						$sent        = wp_mail( $i['email'], $message['subject'], $message['html'], [ 'Content-Type: text/html; charset=UTF-8' ] );
 						$i['status'] = $sent ? 'sent' : ( $reminder ? 'reminder_failed' : 'failed' );
 						if ( $sent ) {

@@ -22,7 +22,7 @@ api.defaults.adapter = async (config) => {
   else if (path === '/rondo/v1/surveys/1') data = survey;
   else if (path.includes('/recipients?')) data = people;
   else if (path.endsWith('/email')) { if (config.method === 'put') email = input.email; data = email; }
-  else if (path.endsWith('/email-preview')) data = { subject: input.email.subject, html: `<html><body style="padding:24px;font-family:sans-serif"><h1>${escape(input.email.subject)}</h1><p style="white-space:pre-wrap">${escape(input.email.body.replaceAll('{naam}', 'Testbeheerder'))}</p><a href="#">Vul de enquête in</a></body></html>` };
+  else if (path.endsWith('/email-preview')) data = { subject: input.email.subject, html: `<html><body style="padding:24px;font-family:sans-serif"><h1>${escape(input.email.subject)}</h1><p style="white-space:pre-wrap">${escape(input.email.body.replaceAll('{naam}', 'Testbeheerder Jansen').replaceAll('{voornaam}', 'Testbeheerder'))}</p><a href="#">Vul de enquête in</a></body></html>` };
   else if (path.endsWith('/email-test')) data = { sent_to: 'beheerder@example.org' };
   else if (path.endsWith('/invitations')) {
     if (config.method === 'post') {
