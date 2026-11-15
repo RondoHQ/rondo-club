@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import SurveyAnalysis from '../../src/components/surveys/SurveyAnalysis';
 import api from '../../src/api/client';
+import { followupMock } from './survey-followup-mock';
 import './dashboard-preview.css';
 
 // Synthetic browser fixture. All requests are handled locally, including writes.
@@ -26,6 +27,7 @@ const reports = [];
 const summary = (rows) => questions.map((q) => ({ ...q, answered: rows.filter((r) => Object.hasOwn(r.answers, q.id)).length, texts: [], counts: Object.fromEntries(q.options.map((o) => [o.id, rows.filter((r) => [r.answers[q.id]].flat().includes(o.id)).length])) }));
 const rate = (n, d) => d ? Math.round(n / d * 1000) / 10 : null;
 const aggregate = (rows) => ({ total: rows.length, summary: summary(rows), metrics: configuration.profile.metrics.map((m) => { const denominator = rows.filter((r) => r.answers[m.question] && !m.exclude.includes(r.answers[m.question])).length; const count = rows.filter((r) => m.options.includes(r.answers[m.question])).length; return { ...m, count, denominator, rate: rate(count, denominator), error: !m.question || !m.options.length ? 'Koppel de vraag en antwoordopties in Analyse instellen.' : null }; }), comparisons: configuration.profile.comparisons.map((c) => ({ ...c, options: questions.find((q) => q.id === c.outcome)?.options || [], groups: (questions.find((q) => q.id === c.group)?.options || []).map((o) => { const subset = rows.filter((r) => [r.answers[c.group]].flat().includes(o.id)); const s = summary(subset).find((q) => q.id === c.outcome); return { ...o, total: subset.length, answered: s.answered, counts: s.counts, small: true }; }), error: !c.outcome || !c.group ? 'Koppel beide vragen in Analyse instellen.' : null })), themes: configuration.profile.themes.map((t) => ({ ...t, count: rows.filter((r) => r.themes.includes(t.id)).length })) });
+const handleFollowup = followupMock({ questions, replies, flags });
 api.defaults.adapter = async (config) => {
   if (flags.has('error')) throw new Error('De analyse is tijdelijk niet bereikbaar. Probeer het opnieuw.');
   const url = new URL(config.url, 'https://fixture.invalid');
@@ -47,6 +49,8 @@ api.defaults.adapter = async (config) => {
   else if (url.pathname.endsWith('/analysis/source')) result = { row: replies.find((r) => r.id === Number(url.searchParams.get('response_id'))), questions };
   else if (url.pathname.endsWith('/export')) result = { filename: 'fictieve-enquete.csv', csv: 'Inzending\n' + rows.map((r) => r.id).join('\n') };
   else if (config.method === 'put' && url.pathname.endsWith('/analysis')) { configuration = { revision: crypto.randomUUID(), profile: body.profile }; result = configuration; }
+  const followup = handleFollowup(config, url, body);
+  if (followup !== undefined) result = followup;
   return { data: structuredClone(result), status: 200, statusText: 'OK', headers: {}, config };
 };
 createRoot(document.getElementById('root')).render(<BrowserRouter><QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><div className="dashboard-preview-toolbar">Lokale preview · fictieve accommodatie-enquête <button className="ml-3 underline" onClick={() => replies.push({ id: replies.length + 1, answers: { role: ['parent'], rating: 'yes', note: 'Nieuwe fictieve reactie na het openen van de analyse.' }, themes: [] })}>Fictieve inzending toevoegen</button></div><main className="mx-auto max-w-7xl space-y-5 p-4 sm:p-8"><h1 className="text-2xl font-semibold">Samen een betere accommodatie</h1><SurveyAnalysis survey={{ id: 99, current_version: 100, versions: [{ id: 100, date: '2026-11-15 12:00:00' }, { id: 101, date: '2026-11-16 12:00:00' }] }} /></main></QueryClientProvider></BrowserRouter>);
