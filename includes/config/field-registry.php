@@ -5429,4 +5429,5 @@ $config['contexts']['person']['fields']['role_engagements'] = [
 
 $config['contexts'] = array_merge( $config['contexts'], require __DIR__ . '/match-compensation-fields.php' );
 $config['contexts'] = array_merge( $config['contexts'], require __DIR__ . '/kantine-margin-fields.php' );
+$config['contexts'] = array_merge( $config['contexts'], require __DIR__ . '/survey-analysis-fields.php' );
 return $config;

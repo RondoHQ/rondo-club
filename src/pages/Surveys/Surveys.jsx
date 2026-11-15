@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import QRCode from 'qrcode';
+import SurveyAnalysis from '@/components/surveys/SurveyAnalysis';
 import api from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -183,33 +184,6 @@ function Invitations({ survey }) {
   </div>;
 }
 
-function Results({ survey }) {
-  const [version, setVersion] = useState(survey.current_version);
-  const [filter, setFilter] = useState({ question: '', value: '' });
-  const [page, setPage] = useState(1);
-  const [downloadError, setDownloadError] = useState(null);
-  const params = new URLSearchParams({ version, ...filter, page }).toString();
-  const result = useQuery(query(['survey-results', survey.id, params], `${base}/${survey.id}/results?${params}`, !!version));
-  const choices = result.data?.summary.filter((q) => q.type !== 'text') || [];
-  const download = async () => {
-    try {
-      const { data } = await api.get(`${base}/${survey.id}/export?${params}`);
-      const url = URL.createObjectURL(new Blob([data.csv], { type: 'text/csv;charset=utf-8;' }));
-      const a = document.createElement('a'); a.href = url; a.download = data.filename; a.click(); URL.revokeObjectURL(url);
-    } catch (error) { setDownloadError(error); }
-  };
-  return <div className="space-y-5"><div className="card flex flex-wrap items-end gap-4 p-5">
-    <Field label="Vragenlijstversie"><select className="input" value={version} onChange={(e) => { setVersion(Number(e.target.value)); setFilter({ question: '', value: '' }); setPage(1); }}>{survey.versions.map((v, i) => <option key={v.id} value={v.id}>Versie {i + 1} — {new Date(`${v.date.replace(' ', 'T')}Z`).toLocaleString('nl-NL')}</option>)}</select></Field>
-    <Field label="Filter op antwoord"><select className="input max-w-xs" value={filter.question} onChange={(e) => { setFilter({ question: e.target.value, value: '' }); setPage(1); }}><option value="">Alle antwoorden</option>{choices.map((q) => <option key={q.id} value={q.id}>{q.label}</option>)}</select></Field>
-    {filter.question && <Field label="Antwoord"><select className="input max-w-xs" value={filter.value} onChange={(e) => { setFilter({ ...filter, value: e.target.value }); setPage(1); }}><option value="">Alle opties</option>{choices.find((q) => q.id === filter.question)?.options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}</select></Field>}
-    <button className="btn-secondary" disabled={!version || !result.data} onClick={download}>CSV downloaden</button><button className="btn-tertiary" onClick={() => result.refetch()}>Vernieuwen</button>
-  </div><ErrorMessage error={result.error || downloadError} />{!version && <p>Publiceer eerst een vragenlijstversie.</p>}{result.isPending && !!version && <p>Resultaten laden…</p>}
-    {result.data && <><p className="text-lg font-semibold">{result.data.total} inzendingen binnen deze selectie</p><p className="text-sm text-gray-500">Percentages gebruiken het aantal antwoorden op die vraag. Bij meerdere antwoorden kan het totaal boven 100% uitkomen.</p>{result.data.summary.map((q) => <section className="card p-5" key={q.id}><p className="mb-1 text-xs text-gray-500">{q.section}</p><h2 className="font-semibold">{q.label}</h2><p className="mb-3 text-sm text-gray-500">{q.answered} antwoorden</p>{q.type === 'text' ? <ul className="space-y-3">{q.texts.map((text, i) => <li key={i} className="whitespace-pre-wrap border-t pt-2 dark:border-gray-700">{text}</li>)}</ul> : <div className="space-y-3">{q.options.map((o) => { const count = q.counts[o.id] || 0; const percent = q.answered ? Math.round(count / q.answered * 100) : 0; return <div key={o.id}><div className="flex justify-between gap-3 text-sm"><span>{o.label}</span><span className="shrink-0">{count} ({percent}%)</span></div><div className="mt-1 h-2 rounded bg-gray-100 dark:bg-gray-700"><div className="h-2 rounded bg-bright-cobalt" style={{ width: `${percent}%` }} /></div></div>; })}</div>}</section>)}
-      <section className="card space-y-3 p-5"><h2 className="font-semibold">Inzendingen bekijken</h2>{result.data.rows.map((row, i) => <details key={i} className="rounded border p-3 dark:border-gray-700"><summary className="cursor-pointer">Inzending {(page - 1) * 50 + i + 1}{row.respondent ? ` — ${row.respondent.name || row.respondent.email}` : ''}</summary>{row.respondent && <p className="my-2 text-sm">{row.respondent.email}{row.respondent.context ? ` · ${row.respondent.context}` : ''}</p>}<dl className="mt-3 space-y-3">{result.data.summary.filter((q) => Object.hasOwn(row.answers, q.id)).map((q) => <div key={q.id}><dt className="text-sm font-medium">{q.label}</dt><dd className="whitespace-pre-wrap text-sm">{q.type === 'text' ? row.answers[q.id] : [row.answers[q.id]].flat().map((v) => q.options.find((o) => o.id === v)?.label || v).join(', ')}</dd></div>)}</dl></details>)}<div className="flex items-center gap-3"><button className="btn-secondary" disabled={page <= 1} onClick={() => setPage(page - 1)}>Vorige</button><span>{page} / {Math.max(1, result.data.pages)}</span><button className="btn-secondary" disabled={page >= result.data.pages} onClick={() => setPage(page + 1)}>Volgende</button></div></section>
-    </>}
-  </div>;
-}
-
 function Sharing({ survey }) {
   const [qr, setQr] = useState('');
   useEffect(() => { let active = true; QRCode.toDataURL(survey.url, { width: 240 }).then((value) => { if (active) setQr(value); }).catch(() => {}); return () => { active = false; }; }, [survey.url]);
@@ -219,7 +193,9 @@ function Sharing({ survey }) {
 function Detail({ survey, updatedAt }) {
   const client = useQueryClient();
   const navigate = useNavigate();
-  const [tab, setTab] = useState(survey.can_manage ? 'edit' : 'results');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get('tab') || (survey.can_manage ? 'edit' : 'results');
+  const setTab = (value) => setSearchParams((old) => { const next = new URLSearchParams(old); next.set('tab', value); return next; });
   const [notice, setNotice] = useState('');
   const refresh = () => { client.invalidateQueries({ queryKey: ['survey', survey.id] }); client.invalidateQueries({ queryKey: ['surveys'] }); };
   const save = useMutation({ mutationFn: (draft) => api.put(`${base}/${survey.id}`, draft), onSuccess: () => { setNotice('Concept opgeslagen. Gebruik Publiceren om de wijzigingen beschikbaar te maken.'); refresh(); } });
@@ -230,7 +206,7 @@ function Detail({ survey, updatedAt }) {
     <nav aria-label="Enquêteonderdelen" className="flex flex-wrap gap-2 border-b pb-3 dark:border-gray-700">{tabs.map(([value, label]) => <button key={value} className={tab === value ? 'btn-primary' : 'btn-tertiary'} aria-current={tab === value ? 'page' : undefined} onClick={() => setTab(value)}>{label}</button>)}</nav>
     {survey.can_manage && <div hidden={tab !== 'edit'}><Editor key={updatedAt} survey={survey} saved={save.mutate} saving={save.isPending} /></div>}
     {tab === 'preview' && <div className="space-y-3"><p className="text-sm">Dit voorbeeld gebruikt het opgeslagen concept. Doorloop alle routes om de vragenlijst te controleren.</p><iframe title="Voorbeeld van de enquête" src={`${survey.url}?preview=1`} className="h-[75vh] w-full rounded-lg border dark:border-gray-700" /></div>}
-    {tab === 'share' && <Sharing survey={survey} />}{tab === 'invitations' && <Invitations survey={survey} />}{tab === 'results' && <Results key={survey.current_version} survey={survey} />}
+    {tab === 'share' && <Sharing survey={survey} />}{tab === 'invitations' && <Invitations survey={survey} />}{tab === 'results' && <SurveyAnalysis key={survey.current_version} survey={survey} />}
   </div>;
 }
 

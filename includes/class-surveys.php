@@ -46,7 +46,7 @@ final class Surveys {
 	}
 
 	public static function register(): void {
-		foreach ( [ self::TYPE, self::VERSION, self::INVITE, self::RESPONSE ] as $type ) {
+		foreach ( [ self::TYPE, self::VERSION, self::INVITE, self::RESPONSE, Analysis::PROFILE, Analysis::REPORT ] as $type ) {
 			register_post_type(
 				$type,
 				[
