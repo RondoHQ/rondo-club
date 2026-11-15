@@ -1,6 +1,6 @@
 # Herbruikbare enquêteanalyse en vrijwilligersbeleid
 
-**Status:** Voorstel voor uitvoering; implementatie en productie-uitrol nog niet goedgekeurd.
+**Status:** Mijlpaal 1 geïmplementeerd in 35.172.0; mijlpalen 2 en 3 blijven voorstellen.
 **Datum:** 15 november 2026.
 **Scope:** Rondo Club, binnen de bestaande enquêtes en vrijwilligersstatistieken.
 **Codebasis:** `afe8d441` op `main`.
@@ -11,10 +11,9 @@ opvolgen. Een herbruikbaar analyseprofiel bepaalt welke vragen en groepen belang
 zijn. Het vrijwilligersbeleid is de eerste toepassing, inclusief een zelfstandig
 dashboard met actuele Rondo-statistieken en historische dagstanden.
 
-De gebruiker heeft gevraagd dit voorstel en implementatieplan uit te werken. De
-onderstaande product- en architectuurkeuzes zijn voorstellen, geen vastgestelde
-beleidswijzigingen. Een lokale, ongecommitteerde dashboardproef bestaat al; die is
-niet uitgerold en moet vóór gebruik aan deze acceptatiecriteria worden getoetst.
+De gebruiker heeft mijlpaal 1 goedgekeurd voor implementatie en uitrol. De uitwerking
+van mijlpalen 2 en 3 blijft een voorstel. Het dashboard wijzigt geen
+vrijwilligersbeleid; de kostencalculator is uitsluitend een rekenvoorbeeld.
 
 ## Doel en afbakening
 
@@ -74,6 +73,27 @@ Het zelfstandige vrijwilligersdashboard komt onder
 **Beleid**. Een enquête met vrijwilligerscontext gebruikt dezelfde berekeningen en
 weergavecomponenten. Enquêtefilters veranderen de clubbrede Rondo-statistieken niet;
 beide groepen en peildatums blijven expliciet zichtbaar.
+
+## Direction contract
+
+**THESIS:** De Beleid-tab laat bestuursleden de actuele vrijwilligersplicht begrijpen
+en kosten doorrekenen, zonder een losse verzameling grote cijferkaarten.
+
+**OWN-WORLD:** Bestaande Rondo-kaarten, invoervelden, tabs, typografie en
+licht/donker-kleuren vormen de herkenbare statistiekenpagina.
+
+**STORY:** Lees eerst de verplichting en bezetting, verander daarna uren en uurkosten
+voor een direct reagerend rekenvoorbeeld en vergelijk vervolgens de opgeslagen dagstanden.
+
+**FIRST VIEWPORT:** De seizoenskeuze en tabs staan boven een compacte
+kengetallentabel links en de bestaande bezettingsbalken en taakspreiding rechts.
+Daaronder volgen de calculator en horizontaal scrollbare historietabel. Op mobiel
+staan de secties onder elkaar; ontbrekende percentages blijven expliciet benoemd.
+
+**FORM:** Uitbreiding van de bestaande statistiekenpagina in Operate-modus;
+geen nieuwe visuele wereld of concept-seed. De bestaande pagina bepaalt de vorm.
+
+**FINISH:** unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 
 ## Mijlpaal 1 Vrijwilligersdashboard
 

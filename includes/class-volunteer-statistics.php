@@ -21,8 +21,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Builds privacy-safe season statistics from shifts and obligation units.
  */
 final class VolunteerStatistics {
-	private const SHORTAGE_WINDOW_DAYS = 30;
-	private const SHORTAGE_LIMIT       = 12;
+	public const POLICY_DEFINITION_VERSION = 1;
+	private const SHORTAGE_WINDOW_DAYS     = 30;
+	private const SHORTAGE_LIMIT           = 12;
 
 	/**
 	 * Build the complete statistics payload for one sports season.
@@ -120,6 +121,7 @@ final class VolunteerStatistics {
 		$trend = $this->build_trend( $daily_signups );
 		usort( $shortages, static fn( array $a, array $b ): int => strcmp( $a['start_datetime'], $b['start_datetime'] ) );
 		$partition = VolunteerExemptionResolver::partition_units( ( new VolunteerEligibilityService() )->get_eligible_units( $season ), $season );
+		$units     = ( new VolunteerObligationCalculator() )->decorate_units( $partition['active'], $season );
 
 		return [
 			'season'                   => $season,
@@ -131,7 +133,9 @@ final class VolunteerStatistics {
 			'account_trend'            => $this->account_trend( $now ),
 			'undated_assignments'      => $undated_signups,
 			'assignment_distribution'  => $this->assignment_distribution( $assignments_by_person ),
-			'obligation_progress'      => $this->obligation_progress( $season, $partition ),
+			'obligation_progress'      => $this->obligation_progress( $units, count( $partition['exempt'] ) ),
+			'policy'                   => self::policy_summary( $units, $summary['total_capacity'], $summary['total_assignments'] ),
+			'policy_history'           => VolunteerPolicyHistory::for_season( $season ),
 			'by_team'                  => $this->by_team( $partition, $assignments_by_person ),
 			'upcoming_shortages'       => array_slice( $shortages, 0, self::SHORTAGE_LIMIT ),
 			'upcoming_shortages_total' => count( $shortages ),
@@ -381,12 +385,9 @@ final class VolunteerStatistics {
 	 *
 	 * @return array<string, int>
 	 */
-	private function obligation_progress( string $season, array $partition ): array {
-		$active = $partition['active'];
-		$exempt = count( $partition['exempt'] );
-
+	private function obligation_progress( array $active, int $exempt ): array {
 		$calculator = new VolunteerObligationCalculator();
-		$aggregate  = $calculator->aggregate( $calculator->decorate_units( $active, $season ) );
+		$aggregate  = $calculator->aggregate( $active );
 
 		return [
 			'total_units'     => count( $active ) + $exempt,
@@ -400,6 +401,56 @@ final class VolunteerStatistics {
 			'total_completed' => (int) $aggregate['total_completed'],
 			'total_no_show'   => (int) $aggregate['total_no_show'],
 		];
+	}
+
+	/**
+	 * Count fulfilled obligations per unit, so extra work cannot offset another
+	 * family's outstanding duties. Exempt units must be removed by the caller.
+	 *
+	 * @param array $units Decorated, non-exempt obligation units.
+	 * @param int   $capacity Published, non-cancelled season capacity.
+	 * @param int   $assignments Valid assignments to those shifts.
+	 * @return array<string, int|float|null>
+	 */
+	public static function policy_summary( array $units, int $capacity, int $assignments = 0 ): array {
+		$result = [
+			'definition_version' => self::POLICY_DEFINITION_VERSION,
+			'capacity'           => $capacity,
+			'assignments'        => $assignments,
+			'fill_rate'          => $capacity > 0 ? round( 100 * $assignments / $capacity, 1 ) : null,
+			'liable_units'       => 0,
+			'on_track'           => 0,
+			'not_started'        => 0,
+			'required'           => 0,
+			'completed'          => 0,
+			'covered'            => 0,
+			'base_required'      => VolunteerEligibilityService::BASE_OBLIGATION,
+		];
+		foreach ( $units as $unit ) {
+			$required = max( 0, (int) ( $unit['required_count'] ?? 0 ) );
+			if ( $required === 0 ) {
+				continue;
+			}
+			$completed = min( $required, max( 0, (int) ( $unit['completed_count'] ?? 0 ) ) );
+			$covered   = min( $required, $completed + max( 0, (int) ( $unit['pending_count'] ?? 0 ) ) );
+			++$result['liable_units'];
+			$result['required']    += $required;
+			$result['completed']   += $completed;
+			$result['covered']     += $covered;
+			$result['on_track']    += (int) ( $covered === $required );
+			$result['not_started'] += (int) ( $covered === 0 );
+		}
+		$result['open'] = $result['required'] - $result['covered'];
+		foreach ( [
+			'on_track'    => 'liable_units',
+			'not_started' => 'liable_units',
+			'completed'   => 'required',
+			'covered'     => 'required',
+		] as $key => $denominator ) {
+			$result[ $key . '_rate' ] = $result[ $denominator ] > 0 ? round( 100 * $result[ $key ] / $result[ $denominator ], 1 ) : null;
+		}
+		$result['obligation_capacity_rate'] = $capacity > 0 ? min( 100.0, round( 100 * $result['required'] / $capacity, 1 ) ) : null;
+		return $result;
 	}
 
 	/**
