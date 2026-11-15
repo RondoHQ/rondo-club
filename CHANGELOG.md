@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.172.0] - 2026-11-15
+
+### Added
+
+- Add a volunteer policy dashboard with per-unit compliance, task coverage, outstanding obligations and an adjustable paid-staffing cost estimate.
+- Preserve daily aggregate policy snapshots per season, with calculation versions and clear separation from live recalculated figures.
+
+### Fixed
+
+- Cap fulfilled volunteer duties at each unit’s own requirement when reporting policy compliance, so extra work cannot hide another household’s outstanding duties.
+
 ## [35.171.5] - 2026-11-15
 
 ### Fixed

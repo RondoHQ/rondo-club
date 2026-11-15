@@ -8,6 +8,7 @@ use Rondo\REST\Volunteer;
 use Rondo\Volunteer\VolunteerEligibilityService;
 use Rondo\Volunteer\VolunteerObligationCalculator;
 use Rondo\Volunteer\VolunteerStatistics;
+use Rondo\Volunteer\VolunteerPolicyHistory;
 use Tests\Support\RondoTestCase;
 use WP_REST_Request;
 use WP_REST_Server;
@@ -139,10 +140,213 @@ class VolunteerStatisticsTest extends RondoTestCase {
 		$this->assertArrayHasKey( 'obligation_progress', $data );
 		$this->assertArrayHasKey( 'account_trend', $data );
 		$this->assertArrayHasKey( 'by_team', $data );
+		$this->assertArrayHasKey( 'policy', $data );
+		$this->assertArrayHasKey( 'policy_history', $data );
 		foreach ( $data['account_trend'] as $point ) {
 			$this->assertSame( [ 'date', 'count', 'cumulative' ], array_keys( $point ) );
 		}
 		$this->assertArrayNotHasKey( 'people', $data );
+	}
+
+	public function test_policy_caps_extra_work_per_unit_and_honors_different_requirements(): void {
+		$data = VolunteerStatistics::policy_summary(
+			[
+				[
+					'required_count'  => 2,
+					'completed_count' => 6,
+					'pending_count'   => 2,
+				],
+				[
+					'required_count'  => 2,
+					'completed_count' => 0,
+					'pending_count'   => 0,
+				],
+				[
+					'required_count'  => 4,
+					'completed_count' => 1,
+					'pending_count'   => 1,
+				],
+				[
+					'required_count'  => 1,
+					'completed_count' => 0,
+					'pending_count'   => 3,
+				],
+				[
+					'required_count'  => 0,
+					'completed_count' => 10,
+					'pending_count'   => 0,
+				],
+			],
+			20
+		);
+		$this->assertSame( 4, $data['liable_units'] );
+		$this->assertSame( 9, $data['required'] );
+		$this->assertSame( 3, $data['completed'] );
+		$this->assertSame( 5, $data['covered'] );
+		$this->assertSame( 4, $data['open'] );
+		$this->assertSame( 2, $data['on_track'] );
+		$this->assertSame( 1, $data['not_started'] );
+		$this->assertSame( 50.0, $data['on_track_rate'] );
+		$this->assertSame( 25.0, $data['not_started_rate'] );
+		$this->assertSame( 33.3, $data['completed_rate'] );
+		$this->assertSame( 55.6, $data['covered_rate'] );
+		$this->assertSame( 45.0, $data['obligation_capacity_rate'] );
+	}
+
+	public function test_policy_handles_empty_seasons_without_division_by_zero(): void {
+		$data = VolunteerStatistics::policy_summary( [], 0 );
+		$this->assertSame( 0, $data['required'] );
+		$this->assertSame( 0, $data['open'] );
+		$this->assertNull( $data['completed_rate'] );
+		$this->assertNull( $data['on_track_rate'] );
+		$this->assertNull( $data['obligation_capacity_rate'] );
+		$this->assertNull( $data['fill_rate'] );
+	}
+
+	public function test_policy_excludes_exempt_units_from_live_summary(): void {
+		$active = $this->createPerson();
+		$exempt = $this->createPerson();
+		update_post_meta( $active, 'leeftijdsgroep', 'Senioren' );
+		update_post_meta( $exempt, 'leeftijdsgroep', 'Senioren' );
+		update_post_meta( $exempt, 'vrijgesteld_handmatig', '1' );
+		update_post_meta( $exempt, 'vrijstelling_seizoen', $this->season );
+		VolunteerEligibilityService::invalidate_cache();
+		$data = ( new VolunteerStatistics() )->for_season( $this->season );
+		$this->assertSame( 1, $data['policy']['liable_units'] );
+		$this->assertSame( 2, $data['policy']['required'] );
+		$this->assertSame( 2, $data['policy']['open'] );
+	}
+
+	public function test_policy_history_preserves_one_aggregate_observation_per_day_and_season(): void {
+		$key      = VolunteerPolicyHistory::OPTION_PREFIX . $this->season;
+		$previous = [
+			'date' => $this->now->modify( '-1 day' )->format( 'Y-m-d' ),
+			'open' => 17,
+		];
+		update_option( $key, [ $previous ], false );
+		$history = new VolunteerPolicyHistory();
+		$history->capture();
+		$rows = VolunteerPolicyHistory::for_season( $this->season );
+		$this->assertCount( 2, $rows );
+		$this->assertSame( $previous, $rows[0] );
+		$this->assertSame( $this->now->format( 'Y-m-d' ), $rows[1]['date'] );
+		$this->assertArrayHasKey( 'fill_rate', $rows[1] );
+		$this->assertArrayHasKey( 'on_track_rate', $rows[1] );
+		$this->assertSame( VolunteerStatistics::POLICY_DEFINITION_VERSION, $rows[1]['definition_version'] );
+		$this->assertArrayHasKey( 'capacity', $rows[1] );
+		$this->assertArrayHasKey( 'assignments', $rows[1] );
+		$this->assertSame( $rows[1]['date'], substr( $rows[1]['generated_at'], 0, 10 ) );
+		$this->assertArrayNotHasKey( 'by_team', $rows[1] );
+		$this->assertArrayNotHasKey( 'people', $rows[1] );
+		$this->assertArrayNotHasKey( $key, wp_load_alloptions() );
+		$history->capture();
+		$this->assertSame( $rows, VolunteerPolicyHistory::for_season( $this->season ) );
+		$this->assertSame( [], VolunteerPolicyHistory::for_season( '2001-2002' ) );
+		( new VolunteerStatistics() )->for_season( $this->season );
+		$this->assertSame( $rows, VolunteerPolicyHistory::for_season( $this->season ) );
+	}
+
+	public function test_overlapping_policy_jobs_cannot_overwrite_an_observation(): void {
+		$history = new VolunteerPolicyHistory();
+		$key     = VolunteerPolicyHistory::OPTION_PREFIX . $this->season;
+		$nested  = null;
+		$probe   = static function ( $value ) use ( $history, &$nested ) {
+			$nested = $history->capture();
+			return $value;
+		};
+		add_filter( 'pre_update_option_' . $key, $probe );
+		try {
+			$this->assertTrue( $history->capture() );
+		} finally {
+			remove_filter( 'pre_update_option_' . $key, $probe );
+		}
+		$this->assertFalse( $nested );
+		$this->assertCount( 1, VolunteerPolicyHistory::for_season( $this->season ) );
+		$first = VolunteerPolicyHistory::for_season( $this->season );
+		$this->assertTrue( $history->capture() );
+		$this->assertSame( $first, VolunteerPolicyHistory::for_season( $this->season ) );
+	}
+
+	public function test_failed_policy_capture_releases_the_lock_for_retry(): void {
+		$history = new VolunteerPolicyHistory();
+		$key     = VolunteerPolicyHistory::OPTION_PREFIX . $this->season;
+		$fail    = static function () {
+			throw new \RuntimeException( 'Synthetic snapshot failure' );
+		};
+		add_filter( 'pre_update_option_' . $key, $fail );
+		try {
+			$history->capture();
+			$this->fail( 'Expected a simulated storage failure.' );
+		} catch ( \RuntimeException $error ) {
+			$this->assertSame( 'Synthetic snapshot failure', $error->getMessage() );
+		} finally {
+			remove_filter( 'pre_update_option_' . $key, $fail );
+		}
+		$this->assertSame( [], VolunteerPolicyHistory::for_season( $this->season ) );
+		$this->assertTrue( $history->capture() );
+		$this->assertCount( 1, VolunteerPolicyHistory::for_season( $this->season ) );
+	}
+
+	public function test_policy_history_rolls_over_on_the_local_season_boundary_without_backfill(): void {
+		$history = new VolunteerPolicyHistory();
+		$end     = new \DateTimeImmutable( '2002-06-30T23:59:00+02:00' );
+		$start   = new \DateTimeImmutable( '2002-07-01T00:01:00+02:00' );
+		$this->assertTrue( $history->capture( $end ) );
+		$this->assertTrue( $history->capture( $start ) );
+		$this->assertTrue( $history->capture( $start->modify( '+3 days' ) ) );
+		$previous = VolunteerPolicyHistory::for_season( '2001-2002' );
+		$next     = VolunteerPolicyHistory::for_season( '2002-2003' );
+		$this->assertCount( 1, $previous );
+		$this->assertSame( '2002-06-30', $previous[0]['date'] );
+		$this->assertSame( $end->format( DATE_ATOM ), $previous[0]['generated_at'] );
+		$this->assertSame( [ '2002-07-01', '2002-07-04' ], array_column( $next, 'date' ) );
+		$this->assertSame( $start->format( DATE_ATOM ), $next[0]['generated_at'] );
+	}
+
+	public function test_policy_uses_credits_and_no_shows_without_turning_them_into_capacity(): void {
+		$person = $this->createPerson();
+		Fields::update_for_post( $person, 'leeftijdsgroep', 'Senioren' );
+		$type  = $this->create_type( 'Beleidstest', '#123456' );
+		$date  = substr( $this->season, 0, 4 ) . '-07-05';
+		$shift = $this->create_shift( $type, $date . ' 10:00:00', 2, [ $person ], 'voltooid' );
+		update_post_meta( $shift, '_no_show_' . $person, '1' );
+		$this->create_shift( $type, $date . ' 15:00:00', 2, [ $person ], 'geannuleerd' );
+		Fields::update_for_post(
+			$person,
+			'volunteer_duty_credits',
+			[
+				[
+					'date'        => $date,
+					'reference'   => 'synthetic-policy-credit',
+					'reason'      => 'Testcredit',
+					'recorded_at' => $this->now->format( DATE_ATOM ),
+					'recorded_by' => get_current_user_id(),
+				],
+			]
+			);
+		VolunteerEligibilityService::invalidate_cache();
+		VolunteerObligationCalculator::invalidate_cache();
+		$data = ( new VolunteerStatistics() )->for_season( $this->season )['policy'];
+		$this->assertSame( 2, $data['required'] );
+		$this->assertSame( 1, $data['completed'] );
+		$this->assertSame( 1, $data['covered'] );
+		$this->assertSame( 1, $data['open'] );
+		$this->assertSame( 2, $data['capacity'] );
+		$this->assertSame( 1, $data['assignments'] );
+		$this->assertSame( 50.0, $data['fill_rate'] );
+		$this->assertSame( 50.0, $data['completed_rate'] );
+	}
+
+	public function test_policy_cron_registers_once_and_is_removed_on_theme_deactivation(): void {
+		wp_clear_scheduled_hook( VolunteerPolicyHistory::CRON_HOOK );
+		$history = new VolunteerPolicyHistory();
+		$history->register_cron();
+		$first = wp_get_scheduled_event( VolunteerPolicyHistory::CRON_HOOK );
+		$this->assertSame( 'daily', $first->schedule );
+		$history->register_cron();
+		$this->assertSame( $first->timestamp, wp_next_scheduled( VolunteerPolicyHistory::CRON_HOOK ) );
+		VolunteerPolicyHistory::unregister_cron();
+		$this->assertFalse( wp_next_scheduled( VolunteerPolicyHistory::CRON_HOOK ) );
 	}
 
 	private function team_member( int $team_id, ?string $age = 'Senioren', array $position = [] ): int {

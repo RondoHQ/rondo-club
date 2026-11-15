@@ -352,6 +352,7 @@ function rondo_init() {
 
 		// Hourly shift-completion cron.
 		new \Rondo\Volunteer\ShiftScheduler();
+		new \Rondo\Volunteer\VolunteerPolicyHistory();
 
 		// Hourly member reminders and post-shift survey emails.
 		new \Rondo\Volunteer\ShiftEmailScheduler();
@@ -1367,6 +1368,7 @@ function rondo_theme_deactivation() {
 
 	// Clear volunteer shift lifecycle hooks.
 	\Rondo\Volunteer\ShiftScheduler::unregister_cron();
+	\Rondo\Volunteer\VolunteerPolicyHistory::unregister_cron();
 	\Rondo\Volunteer\ShiftEmailScheduler::unregister_cron();
 	\Rondo\Volunteer\WeekendVolunteerMail::unregister_cron();
 	wp_clear_scheduled_hook( \Rondo\Volunteer\VolunteerPlanner::HOOK );

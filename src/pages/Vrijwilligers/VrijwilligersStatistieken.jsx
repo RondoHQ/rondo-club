@@ -16,8 +16,9 @@ import { RoleEngagementStatistics } from '@/components/RoleEngagements';
 import TabButton from '@/components/TabButton';
 import { getSpeeldag } from '@/utils/teamDisplay';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import VolunteerPolicyDashboard from '@/components/volunteers/VolunteerPolicyDashboard';
 
-const STATISTICS_TABS = [{ id: 'overview', label: 'Algemeen' }, { id: 'teams', label: 'Per team' }];
+const STATISTICS_TABS = [{ id: 'overview', label: 'Algemeen' }, { id: 'policy', label: 'Beleid' }, { id: 'teams', label: 'Per team' }];
 
 const CHART_COLORS = ['#0047FF', '#00B8D9', '#7C3AED', '#F59E0B', '#10B981', '#EF4444', '#EC4899', '#64748B'];
 
@@ -405,7 +406,7 @@ export default function VrijwilligersStatistieken() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedSeason = searchParams.get('seizoen') || '';
-  const activeTab = searchParams.get('tab') === 'teams' ? 'teams' : 'overview';
+  const activeTab = STATISTICS_TABS.some((tab) => tab.id === searchParams.get('tab')) ? searchParams.get('tab') : 'overview';
 
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ['volunteer', 'statistics', selectedSeason || 'current'],
@@ -425,10 +426,11 @@ export default function VrijwilligersStatistieken() {
     });
   };
   const setSeason = (season) => updateSearchParam('seizoen', season);
-  const setTab = (tab) => updateSearchParam('tab', tab === 'teams' ? tab : '');
+  const setTab = (tab) => updateSearchParam('tab', tab === 'overview' ? '' : tab);
   const handleTabKeyDown = (event) => {
     let nextTab;
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') nextTab = activeTab === 'teams' ? 'overview' : 'teams';
+    const index = STATISTICS_TABS.findIndex((tab) => tab.id === activeTab);
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') nextTab = STATISTICS_TABS[(index + (event.key === 'ArrowRight' ? 1 : -1) + STATISTICS_TABS.length) % STATISTICS_TABS.length].id;
     else if (event.key === 'Home') nextTab = 'overview';
     else if (event.key === 'End') nextTab = 'teams';
     else return;
@@ -507,7 +509,18 @@ export default function VrijwilligersStatistieken() {
       </div>
 
       <div id={`statistics-panel-${activeTab}`} role="tabpanel" aria-labelledby={`statistics-tab-${activeTab}`} className="space-y-6">
-        {activeTab === 'teams' ? (
+        {activeTab === 'policy' ? (
+          <VolunteerPolicyDashboard data={data}>
+            <section>
+              <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Bezetting per taaksoort</h3>
+              <CoverageBars taskTypes={data.by_task_type} />
+            </section>
+            <section>
+              <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Spreiding over vrijwilligers</h3>
+              <Distribution distribution={data.assignment_distribution} />
+            </section>
+          </VolunteerPolicyDashboard>
+        ) : activeTab === 'teams' ? (
           <Panel title="Overzicht per team" description="Huidige teamleden, inclusief staf, en hun gekoppelde ouders. Mensen en accounts tellen ieder één keer per team mee.">
             <TeamOverview teams={data.by_team || []} />
             <div className="mt-4 space-y-1 text-xs text-gray-500 dark:text-gray-400">
