@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.171.4] - 2026-11-15
+
+### Fixed
+
+- Apply member visibility to media metadata, media-library queries and private photo delivery, including related photos and thumbnails.
+- Restrict generic WordPress comment and metadata access, sanitize historical email HTML, and disable XML-RPC.
+- Enforce sensitive field write permissions, VOG volunteer scope and former-member restrictions across alternate request shapes.
+
+### Changed
+
+- Store new member photos outside the public web directory with random filenames and provide a resumable, checksum-verified migration for existing originals and derivatives.
+- Prevent private member photos from being published as Club TV media.
+
 ## [35.171.3] - 2026-11-14
 
 ### Fixed

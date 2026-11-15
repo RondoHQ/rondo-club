@@ -62,8 +62,8 @@ class PhotoSyncTest extends RondoTestCase {
 		$this->assertSame( 'pending', get_post_meta( $id, PhotoSync::META, true )['state'] );
 		$attachment_id = (int) get_post_thumbnail_id( $id );
 		$this->assertGreaterThan( 0, $attachment_id );
-		$this->assertSame( 'Lars van der Meer', get_the_title( $attachment_id ) );
-		$this->assertStringContainsString( 'lars-van-der-meer', basename( get_attached_file( $attachment_id ) ) );
+		$this->assertSame( 'Ledenfoto', get_the_title( $attachment_id ) );
+		$this->assertMatchesRegularExpression( '/^member-[a-f0-9]{32}\.png$/', basename( get_attached_file( $attachment_id ) ) );
 		$entries = ProfileChangeLog::recent()['items'];
 		$this->assertSame( 'photo', $entries[0]['type'] );
 		$this->assertSame( 'rondo', $entries[0]['source'] );

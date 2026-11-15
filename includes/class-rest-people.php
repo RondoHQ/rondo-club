@@ -1186,18 +1186,8 @@ class People extends Base {
 			return new \WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
-		// Get person's name for filename
-		$full_name = \Rondo\People\PersonName::get( $person_id );
-		$name_slug = sanitize_title( strtolower( $full_name ) );
-
-		// Get file extension
 		$extension = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
-		if ( $extension === 'jpeg' ) {
-			$extension = 'jpg';
-		}
-
-		// Generate filename
-		$filename = ! empty( $name_slug ) ? $name_slug . '.' . $extension : 'person-' . $person_id . '.' . $extension;
+		$filename  = 'member-' . bin2hex( random_bytes( 16 ) ) . '.' . $extension;
 
 		// Load required files
 		require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -1214,7 +1204,7 @@ class People extends Base {
 		];
 
 		// Handle the upload
-		$attachment_id = media_handle_sideload( $file_array, $person_id, $full_name );
+		$attachment_id = \Rondo\Media\MemberMediaMigration::upload( $file_array, $person_id );
 
 		if ( is_wp_error( $attachment_id ) ) {
 			return new \WP_Error( 'upload_failed', $attachment_id->get_error_message(), [ 'status' => 500 ] );
@@ -1472,7 +1462,7 @@ class People extends Base {
 	 */
 	public function block_former_member_edits( $prepared_post, $request ) {
 		// Skip on create (no existing ID) — this hook is about edits.
-		if ( empty( $prepared_post->ID ) ) {
+		if ( is_wp_error( $prepared_post ) || empty( $prepared_post->ID ) ) {
 			return $prepared_post;
 		}
 
@@ -1485,6 +1475,10 @@ class People extends Base {
 		$is_former = (bool) \Rondo\Fields\Fields::get_for_post( $prepared_post->ID, 'former_member' );
 		if ( ! $is_former ) {
 			return $prepared_post;
+		}
+
+		if ( $this->changed_core_post_fields( $prepared_post, (int) $prepared_post->ID ) || $request->has_param( 'featured_media' ) || $request->has_param( 'meta' ) ) {
+			return $this->former_member_readonly_error();
 		}
 
 		$fields = \Rondo\Fields\RestFields::request_payload( $request, 'person' );
@@ -1780,7 +1774,7 @@ class People extends Base {
 		}
 
 		$blocked = [];
-		foreach ( [ 'post_status', 'post_title', 'post_author', 'post_name', 'post_type' ] as $field ) {
+		foreach ( [ 'post_status', 'post_title', 'post_author', 'post_name', 'post_type', 'post_content', 'post_excerpt', 'post_password', 'post_date', 'post_date_gmt', 'post_parent', 'menu_order', 'comment_status', 'ping_status' ] as $field ) {
 			if ( isset( $prepared_post->$field ) && (string) $prepared_post->$field !== (string) $existing->$field ) {
 				$blocked[] = $field;
 			}
@@ -2293,7 +2287,7 @@ class People extends Base {
 
 		// Check if VOG-only user (should only see volunteers)
 		$current_user_id = get_current_user_id();
-		$volunteers_only = user_can( $current_user_id, 'vog' ) && ! user_can( $current_user_id, 'fairplay' );
+		$volunteers_only = \Rondo\Core\AccessControl::is_vog_only_user( $current_user_id );
 
 		// Build query components
 		$select_fields  = 'p.ID, p.post_title, p.post_modified, p.post_author';

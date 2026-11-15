@@ -19,6 +19,20 @@ class Vog extends Base {
 		add_action( 'rest_api_init', [ $this, 'register_response_filters' ] );
 	}
 
+	/** Check every requested person before a bulk operation has side effects. */
+	public function check_vog_people_permission( $request ) {
+		if ( ! $this->check_vog_permission() ) {
+			return false;
+		}
+		foreach ( (array) $request->get_param( 'ids' ) as $id ) {
+			$post = get_post( (int) $id );
+			if ( ! $post || $post->post_type !== 'person' || $post->post_status !== 'publish' || ! \Rondo\Core\AccessControl::can_view_person( (int) $id ) ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	/**
 	 * Register VOG REST routes
 	 */
@@ -104,7 +118,7 @@ class Vog extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'bulk_send_vog_emails' ],
-				'permission_callback' => [ $this, 'check_vog_permission' ],
+				'permission_callback' => [ $this, 'check_vog_people_permission' ],
 				'args'                => [
 					'ids' => [
 						'required'          => true,
@@ -123,7 +137,7 @@ class Vog extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'bulk_mark_vog_justis' ],
-				'permission_callback' => [ $this, 'check_vog_permission' ],
+				'permission_callback' => [ $this, 'check_vog_people_permission' ],
 				'args'                => [
 					'ids' => [
 						'required'          => true,
@@ -142,7 +156,7 @@ class Vog extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'bulk_send_vog_reminders' ],
-				'permission_callback' => [ $this, 'check_vog_permission' ],
+				'permission_callback' => [ $this, 'check_vog_people_permission' ],
 				'args'                => [
 					'ids' => [
 						'required'          => true,
