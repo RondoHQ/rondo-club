@@ -63,6 +63,8 @@ class FieldRegistryTest extends RondoTestCase {
 				'rondo_match_batch',
 				'rondo_purchase',
 				'rondo_kassa_product',
+				'rondo_survey',
+				'rondo_survey_reply',
 			],
 			Registry::contexts()
 		);
