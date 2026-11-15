@@ -144,7 +144,7 @@ function TaskTypeDonut({ taskTypes, total }) {
   );
 }
 
-function CoverageBars({ taskTypes }) {
+export function CoverageBars({ taskTypes }) {
   if (taskTypes.length === 0) {
     return <EmptyState message="Er zijn in dit seizoen nog geen gepubliceerde inschrijftaken." />;
   }
@@ -262,7 +262,7 @@ function CumulativeTrend({ points, generatedAt, singular, plural, emptyMessage, 
   );
 }
 
-function Distribution({ distribution }) {
+export function Distribution({ distribution }) {
   const rows = [
     { key: 'one', label: '1 inschrijftaak', color: '#0047FF' },
     { key: 'two', label: '2 inschrijftaken', color: '#00B8D9' },

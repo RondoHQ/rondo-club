@@ -4,6 +4,8 @@ namespace Rondo\REST;
 
 use Rondo\Surveys\Surveys;
 use Rondo\Surveys\Schema;
+use Rondo\Surveys\Analysis;
+use Rondo\Surveys\AnalysisReports;
 use Rondo\Core\UserRoles;
 use Rondo\People\CommunicationPolicy;
 
@@ -99,6 +101,16 @@ final class SurveyController extends Base {
 		$this->route( '/surveys', 'GET', 'index', 'can_read' );
 		$this->route( '/surveys', 'POST', 'create', 'can_manage' );
 		$this->route( '/surveys/available', 'GET', 'available', 'can_choose' );
+		$this->route( '/surveys/analysis-profiles', 'GET', 'analysis_templates', 'can_results' );
+		$this->route( '/surveys/analysis-profiles', 'POST', 'analysis_save_template', 'can_analyze' );
+		$this->route( '/surveys/(?P<id>\d+)/analysis', 'GET', 'analysis', 'can_results' );
+		$this->route( '/surveys/(?P<id>\d+)/analysis', 'PUT', 'analysis_save', 'can_analyze' );
+		$this->route( '/surveys/(?P<id>\d+)/analysis/texts', 'GET', 'analysis_texts', 'can_results' );
+		$this->route( '/surveys/(?P<id>\d+)/analysis/source', 'GET', 'analysis_source', 'can_results' );
+		$this->route( '/surveys/(?P<id>\d+)/analysis/submissions', 'GET', 'analysis_submissions', 'can_results' );
+		$this->route( '/surveys/(?P<id>\d+)/analysis/labels', 'PUT', 'analysis_labels', 'can_analyze' );
+		$this->route( '/surveys/(?P<id>\d+)/analysis/reports', 'GET', 'analysis_reports', 'can_results' );
+		$this->route( '/surveys/(?P<id>\d+)/analysis/reports', 'POST', 'analysis_report', 'can_analyze' );
 		$this->route( '/surveys/recipients', 'GET', 'recipients', 'can_manage' );
 		$this->route( '/surveys/(?P<id>\d+)', 'GET', 'show', 'can_read' );
 		$this->route( '/surveys/(?P<id>\d+)', 'PUT', 'update', 'can_manage' );
@@ -113,6 +125,98 @@ final class SurveyController extends Base {
 		$this->route( '/surveys/(?P<id>\d+)/export', 'GET', 'export', 'can_results' );
 		$this->route( '/public-surveys/(?P<id>\d+)', 'GET', 'public_show', 'public' );
 		$this->route( '/public-surveys/(?P<id>\d+)', 'POST', 'public_submit', 'public' );
+	}
+
+
+	public function can_analyze(): bool {
+		return $this->can_manage() && $this->can_results();
+	}
+
+	public function analysis_templates() {
+		return Analysis::templates();
+	}
+
+	public function analysis_save_template( $r ) {
+		$id = Analysis::save_template( (array) $r->get_json_params() );
+		return is_wp_error( $id ) ? $id : [ 'id' => $id ];
+	}
+
+	public function analysis( $r ) {
+		$data = $this->result_data( $r );
+		if ( is_wp_error( $data ) ) {
+			return $data; }
+		return Analysis::aggregate( $data ) + [
+			'version'         => $data['version'],
+			'configuration'   => $data['configuration'],
+			'selection'       => $data['selection'],
+			'response'        => $data['response'],
+			'source_revision' => $data['source_revision'],
+			'source_count'    => $data['source_count'],
+			'can_manage'      => $this->can_analyze(),
+			'can_context'     => current_user_can( 'vrijwilligers' ) || current_user_can( 'manage_options' ),
+		];
+	}
+
+	public function analysis_save( $r ) {
+		return Analysis::save_configuration( (int) $r['id'], (array) $r->get_json_params() );
+	}
+
+	public function analysis_texts( $r ) {
+		$data = $this->result_data( $r );
+		return is_wp_error( $data ) ? $data : Analysis::text_page( $data, max( 1, (int) ( $r['page'] ?? 1 ) ) );
+	}
+
+	public function analysis_labels( $r ) {
+		return Analysis::label( (int) $r['id'], (array) $r->get_json_params() );
+	}
+
+	public function analysis_submissions( $r ) {
+		$data = $this->result_data( $r );
+		if ( is_wp_error( $data ) ) {
+			return $data; }
+		$page = max( 1, (int) ( $r['page'] ?? 1 ) );
+		$rows = array_map(
+			static function ( $row ) {
+				unset( $row['labels'], $row['label_revision'] );
+				return $row;
+			},
+			array_slice( $data['rows'], ( $page - 1 ) * 25, 25 )
+			);
+		return [
+			'rows'  => $rows,
+			'page'  => $page,
+			'pages' => (int) ceil( count( $data['rows'] ) / 25 ),
+		];
+	}
+
+	public function analysis_source( $r ) {
+		$id     = (int) $r['id'];
+		$reply  = absint( $r['response_id'] );
+		$row    = Surveys::read( $reply, Surveys::RESPONSE );
+		$survey = Surveys::read( $id );
+		if ( is_wp_error( $survey ) || is_wp_error( $row ) || (int) get_post_field( 'post_parent', $reply ) !== $id ) {
+			return Schema::error( 'Bron niet meer beschikbaar.', 404 );
+		}
+		$publication = Surveys::read( (int) $row['version'], Surveys::VERSION );
+		if ( is_wp_error( $publication ) || (int) get_post_field( 'post_parent', $row['version'] ) !== $id ) {
+			return Schema::error( 'Bron niet meer beschikbaar.', 404 );
+		}
+		if ( ! $survey['linked'] ) {
+			unset( $row['respondent'] ); }
+		return [
+			'row'       => $row,
+			'questions' => array_values( Analysis::questions( $publication['document'] ) ),
+		];
+	}
+
+	public function analysis_reports( $r ) {
+		$data = $this->result_data( $r );
+		return is_wp_error( $data ) ? $data : AnalysisReports::listing( $data );
+	}
+
+	public function analysis_report( $r ) {
+		$id = AnalysisReports::create( (int) $r['id'], (array) $r->get_json_params() );
+		return is_wp_error( $id ) ? $id : [ 'id' => $id ];
 	}
 
 	public function can_choose(): bool {
@@ -341,36 +445,7 @@ final class SurveyController extends Base {
 	}
 
 	private function result_data( $r ) {
-		$s = Surveys::read( (int) $r['id'] );
-		if ( is_wp_error( $s ) ) {
-			return $s;
-		}
-		$version = absint( $r['version'] ?? $s['current_version'] );
-		$v       = Surveys::read( $version, Surveys::VERSION );
-		if ( is_wp_error( $v ) || (int) get_post_field( 'post_parent', $version ) !== $s['id'] ) {
-			return Schema::error( 'Selecteer een gepubliceerde vragenlijstversie.' );
-		}
-		$rows = [];
-		foreach ( Surveys::children( $s['id'], Surveys::RESPONSE ) as $p ) {
-			$row = Surveys::read( $p->ID, Surveys::RESPONSE );
-			if ( (int) $row['version'] !== $version ) {
-				continue;
-			}
-			if ( $r['question'] && $r['value'] ) {
-				$value = $row['answers'][ $r['question'] ] ?? null;
-				if ( is_array( $value ) ? ! in_array( $r['value'], $value, true ) : $value !== $r['value'] ) {
-					continue;
-				}
-			}
-			unset( $row['id'] );
-			$rows[] = $row;
-		}
-		return [
-			'document' => $v['document'],
-			'rows'     => $rows,
-			'version'  => $version,
-			'linked'   => $s['linked'],
-		];
+		return Analysis::select( (int) $r['id'], $r->get_params() );
 	}
 
 	public function results( $r ) {
@@ -378,40 +453,18 @@ final class SurveyController extends Base {
 		if ( is_wp_error( $data ) ) {
 			return $data;
 		}
-		$summary = [];
-		foreach ( $data['document']['sections'] as $section ) {
-			foreach ( $section['questions'] as $q ) {
-				$counts   = array_fill_keys( array_column( $q['options'], 'id' ), 0 );
-				$answered = 0;
-				$texts    = [];
-				foreach ( $data['rows'] as $row ) {
-					if ( ! array_key_exists( $q['id'], $row['answers'] ) ) {
-						continue;
-					}
-					++$answered;
-					$value = $row['answers'][ $q['id'] ];
-					if ( $q['type'] === 'text' ) {
-						$texts[] = $value;
-					} else {
-						foreach ( (array) $value as $choice ) {
-							++$counts[ $choice ];
-						}
-					}
-				}
-				$summary[] = $q + [
-					'section'  => $section['title'],
-					'answered' => $answered,
-					'counts'   => $counts,
-					'texts'    => $texts,
-				];
-			}
-		}
-		$page = max( 1, absint( $r['page'] ?? 1 ) );
+		$summary = Analysis::summary( $data['questions'], $data['rows'], true );
+		$page    = max( 1, absint( $r['page'] ?? 1 ) );
 		return [
 			'version' => $data['version'],
 			'total'   => count( $data['rows'] ),
 			'summary' => $summary,
-			'rows'    => array_slice( $data['rows'], ( $page - 1 ) * 50, 50 ),
+			'rows'    => array_map(
+				static function ( $row ) {
+					unset( $row['labels'], $row['label_revision'] );
+					return $row; },
+				array_slice( $data['rows'], ( $page - 1 ) * 50, 50 )
+				),
 			'page'    => $page,
 			'pages'   => (int) ceil( count( $data['rows'] ) / 50 ),
 		];

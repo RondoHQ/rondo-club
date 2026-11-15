@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.173.0] - 2026-11-15
+
+### Added
+- Reusable survey analysis profiles with explicit question/option mappings, combined answer filters, saved selections, response rates, and cross-tab comparisons.
+- Open-answer search, confirmed themes, and reviewable keyword suggestions with counts per unique submission.
+- Immutable conclusion reports with aggregate evidence, source references, correction versions, and notices when source data changes.
+- Optional volunteer policy context in surveys, using the existing volunteer dashboard and permissions.
+
+### Changed
+- Survey results, analysis, and CSV exports share the same selection and question denominators; open answers and submissions load in bounded pages.
+- Survey analysis changes require both survey management and result access, with revision checks protecting concurrent edits.
+
 ## [35.172.0] - 2026-11-15
 
 ### Added

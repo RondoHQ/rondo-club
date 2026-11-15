@@ -1,6 +1,6 @@
 # Herbruikbare enquêteanalyse en vrijwilligersbeleid
 
-**Status:** Mijlpaal 1 geïmplementeerd in 35.172.0; mijlpalen 2 en 3 blijven voorstellen.
+**Status:** Mijlpaal 1 opgeleverd in 35.172.0; mijlpaal 2 goedgekeurd en in uitvoering; mijlpaal 3 blijft een voorstel.
 **Datum:** 15 november 2026.
 **Scope:** Rondo Club, binnen de bestaande enquêtes en vrijwilligersstatistieken.
 **Codebasis:** `afe8d441` op `main`.
@@ -11,8 +11,8 @@ opvolgen. Een herbruikbaar analyseprofiel bepaalt welke vragen en groepen belang
 zijn. Het vrijwilligersbeleid is de eerste toepassing, inclusief een zelfstandig
 dashboard met actuele Rondo-statistieken en historische dagstanden.
 
-De gebruiker heeft mijlpaal 1 goedgekeurd voor implementatie en uitrol. De uitwerking
-van mijlpalen 2 en 3 blijft een voorstel. Het dashboard wijzigt geen
+De gebruiker heeft mijlpalen 1 en 2 goedgekeurd voor implementatie en uitrol. De uitwerking
+van mijlpaal 3 blijft een voorstel. Het dashboard wijzigt geen
 vrijwilligersbeleid; de kostencalculator is uitsluitend een rekenvoorbeeld.
 
 ## Doel en afbakening
@@ -181,6 +181,27 @@ Een gewijzigde formule krijgt een nieuwe definitieversie; markeer de breuk bij v
   en desktop, in licht en donker thema.
 
 ## Mijlpaal 2 Herbruikbare enquêteanalyse
+
+### Direction contract
+
+**THESIS:** Eén resultaatwerkruimte laat bestuursleden van selectie naar bewijs gaan;
+de bestaande vragenlijsteditor en uitnodigingen houden hun eigen plek.
+
+**OWN-WORLD:** De bestaande Rondo-tabs, formulieren, compacte tabellen, blauwe
+antwoordbalken en licht/donker-kleuren bepalen de vormgeving.
+
+**STORY:** Kies een publicatieversie, verfijn de selectie, vergelijk antwoorden en
+bevestig thema's; leg daarna een conclusie met onveranderlijke cijfers vast.
+
+**FIRST VIEWPORT:** Bovenaan staan versie, selectiefilters en export. Een tweede
+navigatieregel opent Overzicht, Vragen, Open antwoorden en Conclusies. Respons en
+geselecteerde kerncijfers staan als compacte tekstregels; configuratie is een apart
+onderdeel voor beheerders. Op mobiel stapelen de velden en scrollen brede tabellen.
+
+**FORM:** Operate-modus, uitbreiding van de bestaande enquêteresultaten; geen nieuwe
+visuele wereld of concept-seed. Het directe effect van filters is de centrale interactie.
+
+**FINISH:** unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 
 ### Analyseprofielen
 
@@ -445,3 +466,21 @@ ontwikkelaarsdocumentatie wordt volgens de bestaande afspraak door de dagelijkse
 documentatie-automatisering bijgewerkt.
 
 Dit planningdocument vereist geen theme-versieverhoging, changelog of productie-uitrol.
+
+## Implementatiereview mijlpaal 2
+
+De implementatie voor 35.173.0 bevat gedeelde selectie voor analyse, tekstpagina's,
+inzendingen, CSV en rapportbewijs. Een fictieve accommodatie-enquête bewijst dat
+vragen en antwoordopties expliciet te koppelen zijn buiten vrijwilligersbeleid.
+Profielkopieën, bevestigde thema's en rapporten blijven bij hun publicatieversie.
+
+De opt-in benchmark met 5.000 synthetische inzendingen meet 0,078 seconde voor
+selectie en aggregatie en 1.725 bytes voor het aggregatieresultaat (lokale
+WordPress-testomgeving, metadata in de objectcache). Dit is geen netwerktijd:
+open antwoorden worden afzonderlijk in pagina's van maximaal 25 geladen.
+
+Desktop, mobiel (390 px), donker thema, lege selectie, fout/herstel, filters,
+themabevestiging, profielopslag en rapportbewijs zijn met fictieve gegevens
+gecontroleerd. De onafhankelijke eindbeoordeling is afgerond; verversen omvat
+ook tekst- en inzendingsqueries en rapporten gebruiken dezelfde versienaam als
+de vragenlijstkiezer. De actuele productiedataset wordt na uitrol gemeten.
