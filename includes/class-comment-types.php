@@ -60,7 +60,7 @@ class CommentTypes {
 				'type'         => 'string',
 				'description'  => 'Type of activity',
 				'single'       => true,
-				'show_in_rest' => true,
+				'show_in_rest' => false,
 			]
 		);
 
@@ -71,7 +71,7 @@ class CommentTypes {
 				'type'         => 'string',
 				'description'  => 'Date of the activity',
 				'single'       => true,
-				'show_in_rest' => true,
+				'show_in_rest' => false,
 			]
 		);
 
@@ -82,7 +82,7 @@ class CommentTypes {
 				'type'         => 'string',
 				'description'  => 'Time of the activity',
 				'single'       => true,
-				'show_in_rest' => true,
+				'show_in_rest' => false,
 			]
 		);
 
@@ -93,12 +93,7 @@ class CommentTypes {
 				'type'         => 'array',
 				'description'  => 'IDs of other people involved',
 				'single'       => true,
-				'show_in_rest' => [
-					'schema' => [
-						'type'  => 'array',
-						'items' => [ 'type' => 'integer' ],
-					],
-				],
+				'show_in_rest' => false,
 			]
 		);
 
@@ -110,7 +105,7 @@ class CommentTypes {
 				'type'         => 'string',
 				'description'  => 'Email template type (new or renewal)',
 				'single'       => true,
-				'show_in_rest' => true,
+				'show_in_rest' => false,
 			]
 		);
 
@@ -121,7 +116,7 @@ class CommentTypes {
 				'type'         => 'string',
 				'description'  => 'Email recipient address',
 				'single'       => true,
-				'show_in_rest' => true,
+				'show_in_rest' => false,
 			]
 		);
 
@@ -132,7 +127,7 @@ class CommentTypes {
 				'type'         => 'string',
 				'description'  => 'Email subject line',
 				'single'       => true,
-				'show_in_rest' => true,
+				'show_in_rest' => false,
 			]
 		);
 
@@ -143,7 +138,7 @@ class CommentTypes {
 				'type'         => 'string',
 				'description'  => 'Full rendered HTML content of the email',
 				'single'       => true,
-				'show_in_rest' => true,
+				'show_in_rest' => false,
 			]
 		);
 
@@ -155,7 +150,7 @@ class CommentTypes {
 				'type'         => 'string',
 				'description'  => 'Note visibility: private (only author) or shared (anyone who can see the contact)',
 				'single'       => true,
-				'show_in_rest' => true,
+				'show_in_rest' => false,
 			]
 		);
 	}
@@ -668,7 +663,8 @@ class CommentTypes {
 		} elseif ( $type === 'email' ) {
 			$email_fields = [ 'email_template_type', 'email_recipient', 'email_subject', 'email_content_snapshot' ];
 			foreach ( $email_fields as $field ) {
-				$data[ $field ] = get_comment_meta( $comment->comment_ID, $field, true );
+				$value          = get_comment_meta( $comment->comment_ID, $field, true );
+				$data[ $field ] = $field === 'email_content_snapshot' ? wp_kses_post( (string) $value ) : $value;
 			}
 		}
 

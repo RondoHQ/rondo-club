@@ -699,6 +699,9 @@ final class Content {
 		if ( $attachment_id && get_post_type( $attachment_id ) !== 'attachment' ) {
 			return new \WP_Error( 'rondo_signage_media_invalid', __( 'De gekozen media bestaat niet.', 'rondo' ), [ 'status' => 400 ] );
 		}
+		if ( get_post_meta( $attachment_id, \Rondo\Media\MemberMedia::META, true ) || ( new \Rondo\Media\MemberMedia( false ) )->people( $attachment_id ) ) {
+			return new \WP_Error( 'rondo_signage_private_media', 'Ledenfoto’s mogen niet als publieke Club TV-media worden gebruikt.', [ 'status' => 403 ] );
+		}
 		$mime = (string) get_post_mime_type( $attachment_id );
 		if ( in_array( $type, [ 'image', 'sponsor' ], true ) && ! in_array( $mime, self::IMAGE_MIMES, true ) ) {
 			return new \WP_Error( 'rondo_signage_media_type', __( 'Gebruik JPEG, PNG of WebP voor een afbeelding.', 'rondo' ), [ 'status' => 400 ] );
@@ -716,6 +719,9 @@ final class Content {
 	/** Return one versioned public media descriptor. */
 	private function format_media( int $attachment_id ): ?array {
 		if ( ! $attachment_id || get_post_type( $attachment_id ) !== 'attachment' ) {
+			return null;
+		}
+		if ( get_post_meta( $attachment_id, \Rondo\Media\MemberMedia::META, true ) || ( new \Rondo\Media\MemberMedia( false ) )->people( $attachment_id ) ) {
 			return null;
 		}
 		$post     = get_post( $attachment_id );

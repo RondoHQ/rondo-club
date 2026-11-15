@@ -29,6 +29,8 @@ class VogSubmissionTest extends RondoTestCase {
 				'birthdate'  => '1990-01-02',
 			]
 			);
+		// VOG-only reviewers are scoped to current volunteers.
+		update_post_meta( $this->person, 'huidig-vrijwilliger', '1' );
 		update_user_meta( $this->member, 'rondo_linked_person_id', $this->person );
 		$this->reviewer = $this->createRondoUser();
 		get_user_by( 'id', $this->reviewer )->add_cap( 'vog' );

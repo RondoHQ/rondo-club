@@ -225,6 +225,21 @@ final class RestFields {
 			return $this->invalid_field_error( $field, $error->getMessage() );
 		}
 
+		if ( $context === 'person' ) {
+			foreach ( array_keys( $normalized ) as $field ) {
+				if ( ! \Rondo\Core\WordPressAccess::can_write_field( $field, $object_id ) ) {
+					return new WP_Error(
+						'rondo_person_field_scope',
+						'Je mag dit veld niet wijzigen.',
+						[
+							'status'         => 403,
+							'blocked_fields' => [ $field ],
+						]
+						);
+				}
+			}
+		}
+
 		if ( Registry::context_kind( $context ) === 'term' ) {
 			foreach ( $storage as $storage_name => $field_value ) {
 				NativeFieldStorage::write_term( $object_id, Registry::resolve( $context, $storage_name ), $field_value );

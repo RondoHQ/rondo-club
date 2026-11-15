@@ -184,7 +184,7 @@ class AccessControl {
 
 	/** Protect native and custom routes, including direct URLs and nested requests. */
 	public function guard_section_routes( $result, $server, $request ) {
-		$route = $request->get_route();
+		$route = strtolower( $request->get_route() );
 		if ( UserRoles::is_entree() ) {
 			$method = $request->get_method();
 			$read   = in_array( $method, [ 'GET', 'HEAD' ], true );
@@ -411,6 +411,9 @@ class AccessControl {
 	public static function can_edit_person( $person_id, $user_id = null ) {
 		$user_id = $user_id ?? get_current_user_id();
 
+		if ( self::is_vog_only_user( $user_id ) && ! self::can_view_person( $person_id, $user_id ) ) {
+			return false;
+		}
 		if ( self::can_edit_people( $user_id ) ) {
 			return true;
 		}
@@ -560,8 +563,8 @@ class AccessControl {
 	 * @param int|null $user_id User ID (optional, defaults to current user).
 	 * @return bool Whether the user is a VOG-only user.
 	 */
-	private function is_vog_only_user( $user_id = null ) {
-		$user_id = $this->get_user_id( $user_id );
+	public static function is_vog_only_user( $user_id = null ) {
+		$user_id = $user_id ?? get_current_user_id();
 
 		if ( ! $user_id ) {
 			return false;
@@ -1116,6 +1119,20 @@ class AccessControl {
 	 */
 	private static function person_scope( $user_id = null ) {
 		$permitted = self::get_permitted_age_groups( $user_id );
+		if ( self::is_vog_only_user( $user_id ) ) {
+			$ids = get_posts(
+				[
+					'post_type'        => 'person',
+					'post_status'      => 'publish',
+					'posts_per_page'   => -1,
+					'fields'           => 'ids',
+					'suppress_filters' => true,
+					'meta_key'         => 'huidig-vrijwilliger',
+					'meta_value'       => '1',
+				]
+				);
+			return [ 'post__in' => $ids ?: [ 0 ] ];
+		}
 
 		// Management: no narrowing at all.
 		if ( $permitted === null ) {

@@ -292,6 +292,8 @@ function rondo_init() {
 	new AbilityRegistrar();
 	new FormerMemberWorkHistory();
 	new AccessControl();
+	new \Rondo\Core\WordPressAccess();
+	new \Rondo\Media\MemberMedia();
 	new PersonDeletionGuard();
 	new \Rondo\Finance\PersonBankAccount();
 	new \Rondo\Matches\CompensationService();
