@@ -74,7 +74,10 @@ final class MemberMedia {
 			return $this->references;
 		}
 		$this->references = [];
-		$people           = get_posts(
+		$people           = [];
+		// Separate EXISTS queries avoid a Cartesian join of each person's metadata.
+		foreach ( [ '_thumbnail_id', 'photo_gallery' ] as $key ) {
+			$matches = get_posts(
 			[
 				'post_type'        => 'person',
 				'post_status'      => [ 'publish', 'draft', 'private', 'trash' ],
@@ -82,18 +85,16 @@ final class MemberMedia {
 				'fields'           => 'ids',
 				'suppress_filters' => true,
 				'meta_query'       => [
-					'relation' => 'OR',
 					[
-						'key'     => '_thumbnail_id',
-						'compare' => 'EXISTS',
-					],
-					[
-						'key'     => 'photo_gallery',
+						'key'     => $key,
 						'compare' => 'EXISTS',
 					],
 				],
 			]
 			);
+			$people  = array_merge( $people, $matches );
+		}
+		$people = array_values( array_unique( $people ) );
 		update_meta_cache( 'post', $people );
 		foreach ( $people as $person ) {
 			$ids = array_merge( [ (int) get_post_thumbnail_id( $person ) ], (array) get_post_meta( $person, 'photo_gallery', true ) );
