@@ -6,6 +6,8 @@ use Rondo\Surveys\Surveys;
 use Rondo\Surveys\Schema;
 use Rondo\Surveys\Analysis;
 use Rondo\Surveys\AnalysisReports;
+use Rondo\Surveys\Followup;
+use Rondo\Surveys\RoundComparison;
 use Rondo\Core\UserRoles;
 use Rondo\People\CommunicationPolicy;
 
@@ -111,6 +113,16 @@ final class SurveyController extends Base {
 		$this->route( '/surveys/(?P<id>\d+)/analysis/labels', 'PUT', 'analysis_labels', 'can_analyze' );
 		$this->route( '/surveys/(?P<id>\d+)/analysis/reports', 'GET', 'analysis_reports', 'can_results' );
 		$this->route( '/surveys/(?P<id>\d+)/analysis/reports', 'POST', 'analysis_report', 'can_analyze' );
+		$this->route( '/surveys/analysis-owners', 'GET', 'analysis_owners', 'can_analyze' );
+		$this->route( '/surveys/analysis-rounds', 'GET', 'analysis_round_catalog', 'can_results' );
+		$this->route( '/surveys/(?P<id>\d+)/analysis/actions', 'GET', 'analysis_actions', 'can_analyze' );
+		$this->route( '/surveys/(?P<id>\d+)/analysis/actions', 'POST', 'analysis_save_action', 'can_analyze' );
+		$this->route( '/surveys/(?P<id>\d+)/analysis/action-detail', 'GET', 'analysis_action_detail', 'can_analyze' );
+		$this->route( '/surveys/(?P<id>\d+)/analysis/rules', 'GET', 'analysis_rules', 'can_analyze' );
+		$this->route( '/surveys/(?P<id>\d+)/analysis/rules', 'POST', 'analysis_save_rule', 'can_analyze' );
+		$this->route( '/surveys/(?P<id>\d+)/analysis/rules/run', 'POST', 'analysis_run_rule', 'can_analyze' );
+		$this->route( '/surveys/(?P<id>\d+)/analysis/rounds', 'GET', 'analysis_rounds', 'can_results' );
+		$this->route( '/surveys/(?P<id>\d+)/analysis/rounds', 'POST', 'analysis_save_rounds', 'can_analyze' );
 		$this->route( '/surveys/recipients', 'GET', 'recipients', 'can_manage' );
 		$this->route( '/surveys/(?P<id>\d+)', 'GET', 'show', 'can_read' );
 		$this->route( '/surveys/(?P<id>\d+)', 'PUT', 'update', 'can_manage' );
@@ -131,6 +143,27 @@ final class SurveyController extends Base {
 	public function can_analyze(): bool {
 		return $this->can_manage() && $this->can_results();
 	}
+
+	public function analysis_owners() {
+		return Followup::owners(); }
+	public function analysis_round_catalog() {
+		return RoundComparison::catalog(); }
+	public function analysis_actions( $r ) {
+		return Followup::listing( (int) $r['id'], $r->get_params() ); }
+	public function analysis_save_action( $r ) {
+		return Followup::save( (int) $r['id'], (array) $r->get_json_params() ); }
+	public function analysis_action_detail( $r ) {
+		return Followup::detail( (int) $r['id'], (int) $r['version'], (int) $r['action_id'] ); }
+	public function analysis_rules( $r ) {
+		return Followup::rules( (int) $r['id'], (int) $r['version'] ); }
+	public function analysis_save_rule( $r ) {
+		return Followup::save_rule( (int) $r['id'], (array) $r->get_json_params() ); }
+	public function analysis_run_rule( $r ) {
+		return Followup::run_rule( (int) $r['id'], (array) $r->get_json_params() ); }
+	public function analysis_rounds( $r ) {
+		return RoundComparison::listing( (int) $r['id'], (int) $r['version'] ); }
+	public function analysis_save_rounds( $r ) {
+		return RoundComparison::save( (int) $r['id'], (array) $r->get_json_params() ); }
 
 	public function analysis_templates() {
 		return Analysis::templates();

@@ -1,6 +1,6 @@
 # Herbruikbare enquêteanalyse en vrijwilligersbeleid
 
-**Status:** Mijlpaal 1 opgeleverd in 35.172.0; mijlpaal 2 goedgekeurd en in uitvoering; mijlpaal 3 blijft een voorstel.
+**Status:** Mijlpalen 1 en 2 opgeleverd in 35.172.0 en 35.173.0; mijlpaal 3 geïmplementeerd voor 35.174.0.
 **Datum:** 15 november 2026.
 **Scope:** Rondo Club, binnen de bestaande enquêtes en vrijwilligersstatistieken.
 **Codebasis:** `afe8d441` op `main`.
@@ -11,8 +11,7 @@ opvolgen. Een herbruikbaar analyseprofiel bepaalt welke vragen en groepen belang
 zijn. Het vrijwilligersbeleid is de eerste toepassing, inclusief een zelfstandig
 dashboard met actuele Rondo-statistieken en historische dagstanden.
 
-De gebruiker heeft mijlpalen 1 en 2 goedgekeurd voor implementatie en uitrol. De uitwerking
-van mijlpaal 3 blijft een voorstel. Het dashboard wijzigt geen
+De gebruiker heeft alle drie mijlpalen goedgekeurd voor implementatie en uitrol. Het dashboard wijzigt geen
 vrijwilligersbeleid; de kostencalculator is uitsluitend een rekenvoorbeeld.
 
 ## Doel en afbakening
@@ -304,6 +303,22 @@ oplevering bouwt alleen de vrijwilligersmodule en het gemeenschappelijke contrac
 
 ## Mijlpaal 3 Opvolging en enquêterondes
 
+### Direction contract
+
+**THESIS:** Van een beschermd enquêteantwoord naar een toegewezen, controleerbare
+actie; expliciete rondemappings maken verschillen uitlegbaar.
+**MODE / OWN-WORLD:** Operate; uitbreiding van de bestaande Resultaten-tabs,
+Rondo-formulieren, compacte lijsten en tabellen, in licht en donker.
+**FIRST VIEWPORT:** Opvolging begint met eigenaar/status/deadlinefilters en de
+gezamenlijke lijst; een bronactie opent een inline formulier met bron, eigenaar en
+deadline. Rondes begint met vastgelegde meetdefinities en vergelijkbaarheid per ronde.
+**INTERACTION:** Accepteren van een voorstel vereist een interne eigenaar en deadline;
+herhaalde verwerking behoudt hetzelfde voorstel. Mappingwijzigingen tonen opnieuw
+berekende aantallen én redenen waarom een verschil niet berekend kan worden.
+**STATES / BOUNDARY:** Laden, fout/herstel, lege lijst, verlopen deadline, ingetrokken
+rechten, verdwenen bron en onvergelijkbare schaal blijven expliciet. Geen nieuwe
+visuele identiteit, afbeeldingsassets, e-mails of automatische historische acties.
+
 ### Opvolging
 
 Een beheerder maakt vanuit een antwoord, thema of conclusie een actie. Elke actie
@@ -380,7 +395,7 @@ bestaande surveyservice. Voorgestelde nieuwe typen passen binnen WordPress' limi
 | Bevestigde antwoordthema's | Native metadata op bestaande antwoordrecords, via de surveyservice |
 | Conclusie met vastgelegd bewijs | Private CPT `rondo_survey_report`, gekoppeld aan de enquête |
 | Actie of regelvoorstel | Private CPT `rondo_survey_action`, gekoppeld aan enquête en bron |
-| Actiewijzigingen | Private CPT `rondo_survey_event`, gekoppeld aan de actie |
+| Actiewijzigingen | Gevalideerde historie in het private actiedocument, atomair met de wijziging |
 | Vrijwilligersdagstanden | Niet-autoloadende optie per seizoen, uitsluitend aggregaten |
 
 Geen custom tabellen of raw SQL. Registreer nieuwe domeinmetadatavelden in de native
@@ -425,7 +440,7 @@ nieuwe persoonsgegevenskopie buiten WordPress te introduceren.
 
 ### 3 Acties en vergelijkingen
 
-1. Voeg private actie- en wijzigingsrecords, toegangscontrole, toewijzing en deadlines toe.
+1. Voeg private actierecords met atomaire wijzigingshistorie, toegangscontrole, toewijzing en deadlines toe.
 2. Bouw de gezamenlijke opvolglijst en idempotente regels voor voorstellen.
 3. Voeg expliciete ronde-, vraag- en optiemappings toe, inclusief vergelijkbaarheidscontrole.
 4. Verifieer toegangsintrekking, dubbele verwerking, anonieme enquêtes en gewijzigde schalen.
@@ -484,3 +499,28 @@ themabevestiging, profielopslag en rapportbewijs zijn met fictieve gegevens
 gecontroleerd. De onafhankelijke eindbeoordeling is afgerond; verversen omvat
 ook tekst- en inzendingsqueries en rapporten gebruiken dezelfde versienaam als
 de vragenlijstkiezer. De actuele productiedataset wordt na uitrol gemeten.
+
+
+## Implementatiereview mijlpaal 3
+
+De implementatie voor 35.174.0 voegt gedeelde acties, voorstelregels en expliciete
+rondevergelijkingen toe. Acties en hun wijzigingshistorie worden samen atomair
+opgeslagen in een privé WordPress-post. Voorstellen worden uitsluitend op verzoek
+verwerkt in batches van maximaal 100 inzendingen; herhalen maakt geen duplicaten
+voor dezelfde bron en regelversie en opent afgeronde acties niet opnieuw.
+
+Rondevergelijkingen gebruiken afzonderlijke enquêtes, één publicatieversie per
+ronde en expliciete tel- en uitsluitgroepen. Een gewijzigde vraag, schaal,
+antwoordgroep of doelgroep blokkeert het automatische verschil. Periodes en
+doelgroepen zijn beschrijvende metadata; de berekening gebruikt alle antwoorden
+van de gekoppelde publicatieversie.
+
+Verificatie: 1.749 PHP-tests met 12.552 assertions (23 bestaande skips), 148
+JavaScript-tests, PHP coding standards, JavaScript-lint en productiebuild.
+De fictieve accommodatie-enquête dekt desktop, mobiel (390 px), donker thema,
+actiebronnen, filters, voorstelacceptatie, herhaalde verwerking, expliciete
+vergelijkingsmapping, lege werkvoorraden en resultaattoegang zonder beheerrechten.
+De onafhankelijke review leidde tot een mobiele weergave per ronde, waarin
+telling, noemer, percentage, verschil en waarschuwing samen zichtbaar zijn;
+de reviewer heeft deze correctie als opgelost beoordeeld. De productie-uitrol
+maakt geen historische acties of vergelijkingen aan.

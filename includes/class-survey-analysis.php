@@ -207,32 +207,37 @@ final class Analysis {
 		return $summary;
 	}
 
+	public static function metric( array $data, array $metric ): array {
+		$q           = $data['questions'][ $metric['question'] ] ?? null;
+		$error       = ! $q || $q['type'] === 'text' || ! $metric['options'] || array_diff( array_merge( $metric['options'], $metric['exclude'] ), array_column( $q['options'], 'id' ) );
+		$count       = 0;
+		$denominator = 0;
+		if ( ! $error ) {
+			foreach ( $data['rows'] as $row ) {
+				$value = (array) ( $row['answers'][ $q['id'] ] ?? [] );
+				if ( ! $value || array_intersect( $value, $metric['exclude'] ) ) {
+					continue;
+				}
+				++$denominator;
+				$count += (int) (bool) array_intersect( $value, $metric['options'] );
+			}
+		}
+		$result = $metric + [
+			'count'       => $count,
+			'denominator' => $denominator,
+			'rate'        => $error ? null : self::rate( $count, $denominator ),
+			'error'       => $error ? 'Koppel de vraag en antwoordopties in Analyse instellen.' : null,
+		];
+		return $result;
+	}
+
 	/** Aggregates contain no answer text or respondent fields. */
 	public static function aggregate( array $data ): array {
 		$profile   = $data['configuration']['profile'];
 		$questions = $data['questions'];
 		$metrics   = [];
 		foreach ( $profile['metrics'] as $metric ) {
-			$q           = $questions[ $metric['question'] ] ?? null;
-			$error       = ! $q || $q['type'] === 'text' || ! $metric['options'] || array_diff( array_merge( $metric['options'], $metric['exclude'] ), array_column( $q['options'], 'id' ) );
-			$count       = 0;
-			$denominator = 0;
-			if ( ! $error ) {
-				foreach ( $data['rows'] as $row ) {
-					$value = (array) ( $row['answers'][ $q['id'] ] ?? [] );
-					if ( ! $value || array_intersect( $value, $metric['exclude'] ) ) {
-						continue;
-					}
-					++$denominator;
-					$count += (int) (bool) array_intersect( $value, $metric['options'] );
-				}
-			}
-			$metrics[] = $metric + [
-				'count'       => $count,
-				'denominator' => $denominator,
-				'rate'        => $error ? null : self::rate( $count, $denominator ),
-				'error'       => $error ? 'Koppel de vraag en antwoordopties in Analyse instellen.' : null,
-			];
+			$metrics[] = self::metric( $data, $metric );
 		}
 		$comparisons = [];
 		foreach ( $profile['comparisons'] as $comparison ) {

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.174.0] - 2026-11-15
+
+### Added
+- Shared survey follow-up actions linked to answers, confirmed themes or conclusions, with internal owners, deadlines, status filters and an atomic change history.
+- Manually reviewed action proposals from explicit answer options or confirmed themes, processed in bounded batches without duplicate proposals for the same rule version.
+- Comparisons between separate survey rounds with explicit question and answer mappings, visible denominators and percentage-point differences only for compatible measurements.
+
+### Changed
+- Survey follow-up requires both management and result permissions; proposals never send messages or create personal tasks.
+- Changed questions, scales, answer groups or audiences suppress automatic round differences and show a compatibility explanation.
+
 ## [35.173.0] - 2026-11-15
 
 ### Added
