@@ -231,23 +231,25 @@ class ReportAggregator {
 	}
 
 	/**
-	 * Businessclub turnover per day, for monthly invoicing.
+	 * Businessclub costs per day, including Selectie consumption billed to the club.
 	 *
 	 * @return array<int, array{datum: string, bedrag: float, netto: float, btw: float}>
 	 */
 	public static function businessclub_days( array $reports ): array {
 		$days = [];
 		foreach ( $reports as $report ) {
-			$rows = self::omzet_rows( $report['data'], 'categorie', 'Businessclub' );
+			$rows = array_filter(
+				self::omzet_rows( $report['data'], 'categorie' ),
+				static fn( array $row ): bool => in_array( $row['label'], [ 'Businessclub', 'Selectie' ], true )
+			);
 			if ( empty( $rows ) ) {
 				continue;
 			}
-			$row    = $rows[0];
 			$days[] = [
 				'datum'  => substr( $report['period_start'], 0, 10 ),
-				'bedrag' => self::round2( (float) $row['bedrag'] ),
-				'netto'  => self::round2( (float) $row['netto'] ),
-				'btw'    => self::round2( (float) $row['hoog'] + (float) $row['laag'] ),
+				'bedrag' => self::round2( array_sum( array_column( $rows, 'bedrag' ) ) ),
+				'netto'  => self::round2( array_sum( array_column( $rows, 'netto' ) ) ),
+				'btw'    => self::round2( array_sum( array_column( $rows, 'hoog' ) ) + array_sum( array_column( $rows, 'laag' ) ) ),
 			];
 		}
 

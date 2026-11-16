@@ -120,6 +120,58 @@ class TwelveReportAggregatorTest extends RondoTestCase {
 		$this->assertSame( 110.09, $days[1]['netto'] );
 		$this->assertSame( 9.91, $days[1]['btw'] );
 	}
+	public function test_businessclub_billing_combines_selection_and_both_vat_rates(): void {
+		$reports                       = $this->two_reports();
+		$reports[0]['data']['omzet'][] = [
+			'section' => 'categorie',
+			'label'   => 'Selectie',
+			'bedrag'  => 23.0,
+			'netto'   => 20.0,
+			'hoog'    => 2.1,
+			'laag'    => 0.9,
+		];
+		$reports[0]['data']['omzet'][] = [
+			'section' => 'categorie',
+			'label'   => 'Businessclub',
+			'bedrag'  => 10.9,
+			'netto'   => 10.0,
+			'hoog'    => 0.0,
+			'laag'    => 0.9,
+		];
+		$this->assertSame(
+			[
+				'datum'  => '2026-09-29',
+				'bedrag' => 33.9,
+				'netto'  => 30.0,
+				'btw'    => 3.9,
+			],
+			ReportAggregator::businessclub_days( $reports )[0]
+		);
+	}
+
+	public function test_businessclub_billing_includes_selection_only_days_and_corrections(): void {
+		$reports = $this->two_reports();
+		foreach ( $reports as $index => &$report ) {
+			$report['data']['omzet'] = [
+				[
+					'section' => 'categorie',
+					'label'   => 'Selectie',
+					'bedrag'  => $index ? -10.9 : 10.9,
+					'netto'   => $index ? -10.0 : 10.0,
+					'hoog'    => 0.0,
+					'laag'    => $index ? -0.9 : 0.9,
+				],
+			];
+		}
+		unset( $report );
+		$days = ReportAggregator::businessclub_days( $reports );
+		$this->assertCount( 2, $days );
+		$this->assertSame( 10.9, $days[0]['bedrag'] );
+		$this->assertSame( -10.9, $days[1]['bedrag'] );
+		$this->assertSame( -10.0, $days[1]['netto'] );
+		$this->assertSame( -0.9, $days[1]['btw'] );
+	}
+
 	public function test_businessclub_counts_once_as_revenue_per_day_and_month(): void {
 		$reports = $this->two_reports();
 		foreach ( $reports[0]['data']['omzet'] as &$row ) {

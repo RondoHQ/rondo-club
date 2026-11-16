@@ -8,6 +8,39 @@ use Rondo\Finance\MollieConfig;
 use Tests\Support\RondoTestCase;
 
 class TwelveBillingTest extends RondoTestCase {
+	public function test_selection_costs_reach_billing_overview_and_new_invoice_once(): void {
+		$this->configure_mollie_accounts();
+		$first  = $this->report( '2026-09-28', 'business-and-selection' );
+		$second = $this->report( '2026-09-29', 'selection-only' );
+		foreach ( [ $first, $second ] as $id ) {
+			$data = json_decode( get_post_meta( $id, ReportRepository::META_DATA, true ), true );
+			if ( $id === $second ) {
+				$data['omzet'] = array_values( array_filter( $data['omzet'], static fn( $row ) => $row['label'] !== 'Businessclub' ) );
+			}
+			$data['omzet'][] = [
+				'section' => 'categorie',
+				'label'   => 'Selectie',
+				'bedrag'  => 23.0,
+				'netto'   => 20.0,
+				'hoog'    => 2.1,
+				'laag'    => 0.9,
+			];
+			update_post_meta( $id, ReportRepository::META_DATA, wp_slash( wp_json_encode( $data ) ) );
+		}
+		$service  = new BusinessclubInvoicing();
+		$overview = $service->overview();
+		$this->assertSame( 155.0, $overview['available'] );
+		$this->assertSame( [ 132.0, 23.0 ], array_column( $overview['rows'], 'bedrag' ) );
+		$invoice = $service->create_draft_invoice();
+		$this->assertIsInt( $invoice );
+		$this->assertSame( 155.0, (float) \Rondo\Fields\Fields::get_for_post( $invoice, 'total_amount' ) );
+		$items = \Rondo\Fields\Fields::get_for_post( $invoice, 'line_items' );
+		$this->assertSame( [ 120.0, 20.0, 15.0 ], array_map( 'floatval', array_column( $items, 'amount' ) ) );
+		$this->assertSame( [ $first, $second ], get_post_meta( $invoice, BusinessclubInvoicing::REPORTS, true ) );
+		$this->assertSame( 0.0, $service->overview()['available'] );
+		$this->assertInstanceOf( \WP_Error::class, $service->create_draft_invoice() );
+	}
+
 	public function test_billing_endpoint_preserves_address_book_recipient_fields(): void {
 		$this->configure_mollie_accounts();
 		$this->report( '2026-09-29', 'address-book-recipient' );
