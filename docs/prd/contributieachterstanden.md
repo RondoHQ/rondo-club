@@ -249,10 +249,15 @@ escalatie en verschijnen in een werkvoorraad voor adrescontrole of alternatief c
 ### Eindlijst
 
 De fase levert tevens een filter **Vervolgbeoordeling** op, met de resterende vordering,
-gevolgde stappen, ontvangstonderbouwing, afspraken en laatste contact. Een bevoegde
-gebruiker kan een dossierpakket voorbereiden voor een bestuursbesluit of incasso.
+gevolgde stappen, ontvangstonderbouwing, afspraken en laatste contact. Op 18 november
+2026 is vastgesteld dat iedere gebruiker met financiële bewerkrechten (`financieel`)
+een dossierpakket voor incasso mag exporteren, binnen de bestaande dossier- en
+persoonsrechten. Alleen financieel leesrecht is daarvoor onvoldoende. Dezelfde
+werkvoorraad kan worden gebruikt om een bestuursbesluit voor te bereiden.
 Export is een bewuste actie, wordt gelogd en bevat alleen voor die bestemming noodzakelijke
 gegevens. Een export verstuurt niets, beëindigt geen lidmaatschap en wijzigt geen Sportlink-record.
+Het exportrecht geeft geen extra inzage in afgeschermde hulpnotities; die worden niet
+in het incassopakket opgenomen.
 
 ### Acceptatiecriteria fase 2
 
@@ -273,6 +278,8 @@ gegevens. Een export verstuurt niets, beëindigt geen lidmaatschap en wijzigt ge
 - [ ] Meerdere dossiers, ook over pagina's heen, kunnen vanuit één overzicht met bedragen in één keer worden goedgekeurd.
 - [ ] Een gewijzigd saldo, pauze of eerdere kostenboeking tussen voorstel en bevestiging leidt tot overslaan met een reden, niet tot verwerking van een achterhaald voorstel.
 - [ ] De groepsactie toont het resultaat per dossier, bewaart de individuele goedkeuringen en kan zonder dubbele kosten worden hervat na een gedeeltelijke fout.
+- [ ] Iedere gebruiker met `financieel` kan binnen de bestaande dossier- en persoonsrechten een incassopakket exporteren; alleen `financieel_read` is onvoldoende, ook bij directe API-aanroepen.
+- [ ] Incasso-export wordt gelogd en bevat geen afgeschermde hulpnotities.
 - [ ] De eindlijst en export veroorzaken geen overdracht, royement of speelblokkade.
 
 ## Fase 3 Contributieblokkades
@@ -359,7 +366,9 @@ opgeheven; het teamoverzicht toont vervolgens de actuele deelnamestatus.
 ## Rechten en technische aansluiting
 
 De financiële werklijst, tellingen en CSV gebruiken dezelfde bestaande leesrechten en
-persoonsbeperkingen als facturen. Dossiermutaties vereisen `financieel`; het recht om
+persoonsbeperkingen als facturen. Dossiermutaties en dossierexports voor incasso
+vereisen `financieel`. Dit exportrecht staat los van de gewone financiële CSV-export,
+die financieel leesrecht gebruikt. Het recht om
 clubblokkades te besluiten wordt expliciet aan de penningmeester toegewezen en volgt
 niet automatisch uit financieel leesrecht of algemeen financieel schrijfrecht.
 Gedetailleerde hulpinformatie blijft beperkt tot behandelaars.
@@ -450,7 +459,8 @@ een haalbare verbeterdoelstelling vast.
 | Reikwijdte speelblokkade | Vastgesteld op 18 november 2026: wedstrijden én trainingen; zichtbaar in teamoverzicht en kennisgeving aan het lid | Besluit genomen; reglement controleren en uitzonderingen vaststellen vóór activering van fase 3 |
 | Besluitbevoegdheid | Vastgesteld op 18 november 2026: de penningmeester keurt contributieblokkades goed; besluit en actor worden per dossier vastgelegd | Besluit genomen; bevoegdheid toewijzen vóór activering van fase 3 |
 | Regeling en opheffing | Vastgesteld op 18 november 2026: de penningmeester kan bij goedkeuring van een regeling expliciet de bijbehorende blokkade direct opheffen, zonder eerste betaling af te wachten; aanvraag alleen niet voldoende | Besluit genomen; toepassen bij fase 3 en 4 |
-| Bewaartermijnen en export | Club bepaalt bewaartermijnen per dossier- en hulpgegeven en toegestane ontvangers | Opslaan hulpgegevens en dossieroverdracht |
+| Incasso-export | Vastgesteld op 18 november 2026: iedereen met financiële bewerkrechten (`financieel`) mag dossiers voor incasso exporteren, binnen bestaande dossier- en persoonsrechten | Besluit genomen; toepassen bij fase 2 |
+| Bewaartermijnen | Club bepaalt bewaartermijnen per dossier- en hulpgegeven | Opslaan hulpgegevens en dossieroverdracht |
 
 Leg dit vast als één hoofdverzoek met vier bouwfasen. De eindlijst hoort bij fase 2;
 hulp begint eveneens in fase 2, zodat automatische opvolging direct een uitweg biedt.
