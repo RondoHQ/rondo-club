@@ -1,9 +1,9 @@
 # Contributieachterstanden en opvolging
 
-**Status:** Productkeuzes vastgelegd en aangeleverde clubregels gecontroleerd; bevoegdheid en grondslag voor deelnameblokkades vragen nadere besluitvorming. Juridische toets en vaststelling van het reglementsvoorstel staan nog open. Nog niet geïmplementeerd.
+**Status:** Productkeuzes vastgelegd: het bestuur beslist over formele schorsing binnen de bestaande regels. Geen nieuwe schorsingsregeling of statutenwijziging voorgesteld. Juridische toets van de uitvoering blijft open. Nog niet geïmplementeerd.
 **Datum:** 18 november 2026.
-**Aanleiding:** Verzoek van Xander om inzicht, vaste aanmaningen, speelblokkades en ondersteuning bij betalingsproblemen.
-**Volgorde:** Inzicht, automatische opvolging met hulpoptie, speelblokkades, uitgebreidere zelfservice.
+**Aanleiding:** Verzoek van Xander om inzicht, vaste aanmaningen, contributieschorsingen en ondersteuning bij betalingsproblemen.
+**Volgorde:** Inzicht, automatische opvolging met hulpoptie, contributieschorsingen, uitgebreidere zelfservice.
 
 ## Doel en afbakening
 
@@ -31,7 +31,7 @@ Hun aanwezigheid bewijst niet welke instellingen of verzendingen op productie ac
 | Factuurherinneringen | Voor contributie zonder gekozen plan: controle na 14 en 28 dagen sinds verzending | Deze momenten behouden en vervolgstappen toevoegen |
 | Termijnherinneringen | Controle na 14 en 21 dagen achterstand | Deze momenten behouden binnen dezelfde opvolgservice en dossierweergave |
 | Betaalpagina | Planselectie zonder inloggen; 3 en 8 termijnen afhankelijk van instellingen | Hulpaanvraag en verzoek om een afwijkende afspraak |
-| Achterstallige factuurstatus | Houdt rekening met onbetaalde termijnvervaldata | Eén berekening voor bedragen, opvolging en contributieblokkade |
+| Achterstallige factuurstatus | Houdt rekening met onbetaalde termijnvervaldata | Eén berekening voor bedragen, opvolging en contributieschorsing |
 | Financiële rechten | Leesrecht `financieel_read`, schrijfrecht `financieel` | Dezelfde controle voor werklijst, export, uitzonderingen en acties |
 
 De bestaande herinneringspaden worden voor deelnemende contributiefacturen vervangen;
@@ -47,7 +47,7 @@ er komt geen tweede scheduler die dezelfde leden onafhankelijk aanschrijft.
 | Ouderdom achterstand | Kalenderdagen sinds de oudste nog onbetaalde vervaldatum, in de clubtijdzone |
 | Dossier | Opvolging bij één contributiefactuur; de persoonweergave kan meerdere dossiers samen tonen |
 | Opvolgronde | Reeks stappen voor een afgebakende achterstand binnen een dossier |
-| Contributieblokkade | Clubbesluit dat deelname beperkt wegens contributie; geen uitspraak over KNVB-speelgerechtigdheid |
+| Contributieschorsing | Formele schorsing door het bestuur wegens contributieachterstand, met de gevolgen voor lidmaatschapsrechten uit de statuten; geen KNVB-sanctie |
 
 Bedragen worden intern in gehele eurocenten berekend. Hoofdsom, administratiekosten en
 eventuele incassokosten blijven afzonderlijk zichtbaar. Een betaling telt eenmaal mee,
@@ -61,7 +61,7 @@ factuur en termijn; onduidelijke toewijzingen gaan naar de beoordelingslijst.
 Concepten, geannuleerde facturen en losse creditfacturen zijn geen incassodossiers.
 Een toegepaste credit vermindert wel de betreffende vordering. Ontbrekende vervaldata,
 onvolledige betaalschema's of onverklaarde saldi krijgen de status **Controle nodig**;
-ze mogen geen automatische aanmaning of blokkade veroorzaken.
+ze mogen geen automatische aanmaning of schorsing veroorzaken.
 
 ## Fase 1 Inzicht en werklijst
 
@@ -140,7 +140,7 @@ verschuiven lopende rondes niet stilzwijgend.
 | Herinnering | Volgens het toepasselijke schema hierboven | Vriendelijke uitleg, actuele betaallink en hulpoptie |
 | Aanmaning | Volgens het toepasselijke schema; wacht minimaal 14 respectievelijk 7 dagen na bevestigde eerste verzending | Nieuwe betaaloproep en uitleg van mogelijke vervolgstappen |
 | Veertiendagenbrief | Minimaal 14 dagen na bevestigde verzending van de aanmaning | Goedgekeurde brief voor de vastgelegde vordering, na controle van ontvanger en ontvangstproces |
-| Beoordeling | Nadat de geldige brieftermijn volledig verstreken is en achterstand resteert | Werkvoorraad voor persoonlijk contact, speelblokkade of incassobeoordeling |
+| Beoordeling | Nadat de geldige brieftermijn volledig verstreken is en achterstand resteert | Werkvoorraad voor persoonlijk contact, contributieschorsing of incassobeoordeling |
 
 Een datum op zichzelf geeft geen toestemming voor een volgende stap. Vlak voor elke
 actie worden saldo, vervaldata, pauze, ontvanger en eerdere verzending opnieuw gelezen.
@@ -221,7 +221,7 @@ Bewaar de goedkeurder, het tijdstip, de grondslag en het goedgekeurde bedrag per
 met een gezamenlijke verwijzing naar de groepsactie. Dubbel klikken, opnieuw proberen
 of een gedeeltelijk mislukte verwerking mag geen dubbele kosten opleveren. Deze actie
 voegt uitsluitend de goedgekeurde kosten toe; zij verstuurt geen dossiers naar incasso
-en legt geen speelblokkade op.
+en legt geen contributieschorsing op.
 
 ### Pauzeren en hulp vanaf de eerste mail
 
@@ -240,7 +240,7 @@ voor de penningmeester; het systeem hervat niet stilzwijgend een sanctieproces.
 De penningmeester kan ook handmatig pauzeren wegens bezwaar, regeling of fondsenaanvraag.
 Reden, behandelaar en herbeoordelingsdatum zijn verplicht. Hervatten vereist een
 bewuste keuze voor de volgende actie en een nieuwe redelijke reactietermijn. Een
-hulpaanvraag heft een al bestaande speelblokkade niet zelfstandig op; daarvoor geldt
+hulpaanvraag heft een al bestaande contributieschorsing niet zelfstandig op; daarvoor geldt
 het afzonderlijke besluitproces uit fase 3.
 
 Vraag geen inkomensbewijzen of medische gegevens in het formulier. Beperk vrije tekst
@@ -296,90 +296,108 @@ in het incassopakket opgenomen.
 - [ ] De groepsactie toont het resultaat per dossier, bewaart de individuele goedkeuringen en kan zonder dubbele kosten worden hervat na een gedeeltelijke fout.
 - [ ] Iedere gebruiker met `financieel` kan binnen de bestaande dossier- en persoonsrechten een incassopakket exporteren; alleen `financieel_read` is onvoldoende, ook bij directe API-aanroepen.
 - [ ] Incasso-export wordt gelogd en bevat geen afgeschermde hulpnotities.
-- [ ] De eindlijst en export veroorzaken geen overdracht, royement of speelblokkade.
+- [ ] De eindlijst en export veroorzaken geen overdracht, royement of contributieschorsing.
 
-## Fase 3 Contributieblokkades
+## Fase 3 Schorsing door het bestuur
 
-De gewenste productkeuze van 18 november 2026 is een blokkade voor wedstrijden én
-trainingen, goedgekeurd door de penningmeester. De controle van de aangeleverde
-clubregels hieronder laat zien dat dit nog geen vastgestelde zelfstandige bevoegdheid
-van de penningmeester is. Activering vereist een passende rechtsgrond en bevoegdheid;
-de keuze voor de penningmeester blijft het ontwerpdoel. Het bestuur bepaalt ook de
-uitzonderingen en kennisgeving. De veertiendagenbrief legt op zichzelf geen speelverbod op.
+Op 18 november 2026 is gekozen voor een formele schorsing door het bestuur tot
+betaling van de betrokken contributieachterstand, met een uiterste einddatum van
+maximaal één jaar na ingang. De eerdere voorstellen voor een beperkte deelnameblokkade,
+een nieuwe schorsingsregeling en zelfstandige sanctiebevoegdheid voor de penningmeester
+vervallen. De penningmeester blijft verantwoordelijk voor financiële voorbereiding,
+hulpaanvragen, regelingen en goedkeuring van incassokosten.
 
-### Controle van de aangeleverde clubregels
+### Bestaande grondslag en gevolgen
 
 Bronnen: [huishoudelijk reglement oktober 2022](https://www.svawc.nl/wp-content/uploads/huishoudelijk-reglement-versie-oktober-2022_30467_.pdf)
 en [statuten 2021](https://www.svawc.nl/wp-content/uploads/2024/10/AWC-statuten-2021-ocr.pdf),
 gelezen op 18 november 2026. Een aanvullend tuchtreglement of later besluit is niet
-meegeleverd. Het huishoudelijk reglement heeft op pagina 1 nog de aanduiding Concept 1,
-maar vermeldt op pagina 7 vaststelling op 14 november 2022; de geldende versie moet
-voor definitieve besluitvorming worden bevestigd.
+meegeleverd. Het HR heeft op pagina 1 nog de aanduiding Concept 1, maar vermeldt op
+pagina 7 vaststelling op 14 november 2022; bevestig vóór toepassing de geldende versie.
 
-| Bepaling | Gevolg voor het voorstel |
+| Bepaling | Gevolg voor de uitvoering |
 |---|---|
-| HR 6.2 en 6.7 | Recht op trainingen en wedstrijden, plus plicht tot tijdige contributiebetaling |
-| Statuten 6.3 en HR 7.6 | Sancties zijn bestuursbevoegdheid, behoudens een toepasselijke tuchtrechtelijke aanwijzing |
-| Statuten 6.4.a.4 en 6.5 | Wedstrijdverbod is expliciet; schorsing raakt alle lidmaatschapsrechten behalve beroep en duurt maximaal een jaar. Een beperkte blokkade voor wedstrijden én trainingen vraagt verduidelijking |
-| HR 10.4 en statuten 11.2–11.4 | Financieel beheer of een vertegenwoordigingsvolmacht bewijst geen zelfstandige bevoegdheid tot sanctiebesluiten |
-| Statuten 6.8 en HR 7.9 | Statuten: één maand vanaf ontvangst; HR: zes maanden na oplegging. Tegenstrijdige beroepsteksten herstellen, rekening houdend met een eventueel tuchtreglement |
-| Statuten 6.4.b–c | Schriftelijke kennisgeving en een publicatiebepaling; verhouding tot beperkte zichtbaarheid en privacy meenemen in de juridische toets |
-| HR 9.11 | Bestuur besluit met meerderheid van geldige stemmen bij aanwezigheid van een meerderheid van de bestuursleden; over personen wordt schriftelijk gestemd |
-| HR 21 en statuten 22 | Reglementswijziging via ALV; reglement mag niet met statuten botsen |
+| Statuten 6.3 en HR 7.6 | Het bestuur beslist over sancties, tenzij een toepasselijk tuchtreglement anders bepaalt |
+| Statuten 6.5 en 17.1 | Schorsing raakt de lidmaatschapsrechten, inclusief wedstrijden, trainingen, stemrecht en gewone ALV-toegang; toegang voor behandeling van het eigen beroep blijft mogelijk |
+| Statuten 6.5 | De schorsing duurt maximaal één jaar; geen onbeperkte status tot betaling |
+| HR 9.11 | Meerderheid van het bestuur aanwezig, meerderheid van geldige stemmen voor het besluit; over personen schriftelijk stemmen |
+| Statuten 6.8 en HR 7.9 | Eén maand vanaf ontvangst tegenover zes maanden na oplegging; deze tegenstrijdigheid afzonderlijk corrigeren, rekening houdend met eventueel toepasselijk tuchtrecht |
+| Statuten 6.4.b–c | Schriftelijke kennisgeving en een publicatiebepaling; passende uitvoering en privacy meenemen in de juridische toets |
 
-Uitwerking staat in [het concept voor de ALV](contributiebeleid-reglementsvoorstel.md).
-Dat bevat een specifieke contributieprocedure, beroep, aanwijzing van de penningmeester
-en een voorgestelde statutaire verduidelijking voor de beperkte deelnameblokkade.
-De stukken zijn voorstellen, geen al genomen verenigingsbesluiten.
+Voor de bestaande bestuursbevoegdheid is geen nieuwe schorsingsregeling nodig.
+De voorgestelde [bestuursprocedure](contributiebeleid-reglementsvoorstel.md) werkt
+voorbereiding, besluitregistratie en uitvoering uit. Zij bevat geen nieuwe sanctie,
+ALV-aanwijzing van de penningmeester of statutenwijziging. Correctie van de beroepstekst
+is een afzonderlijk onderhoudspunt, geen nieuwe grondslag voor deze bevoegdheid.
 
-### Besluit en uitvoering
+### Voorbereiding en besluitregistratie
 
-In de eerste uitvoering ontstaat na het volledig doorlopen traject een
-**Blokkade beoordelen**-regel. De penningmeester ziet de actuele achterstand,
-ontvangstonderbouwing, contacthistorie en eventuele afspraken en bevestigt het besluit.
-Het besluit legt reden, reikwijdte, ingangsdatum, einddatum, bevoegde beslisser,
-grondslag van de bevoegdheid, kennisgeving en beroepsmogelijkheid vast. Volledig
-automatisch blokkeren is een afzonderlijke latere beleidskeuze, geen standaardinstelling.
+Na het volledige opvolgtraject ontstaat **Schorsing ter beoordeling bestuur**.
+De penningmeester bereidt per lid de achterstand, gevolgde stappen, ontvangstgegevens,
+reactie van het lid en eventuele afspraken voor. Een verlopen termijn of financieel
+account geeft geen bevoegdheid om zelf te schorsen.
 
-Trainers en leiders zien in hun eigen teamoverzicht alleen **Deelname geblokkeerd**
-met de toelichting **Geen wedstrijden of trainingen**, de ingangsdatum en een
-verwijzing naar de clubcontactpersoon. De kennisgeving aan het lid vermeldt eveneens
-dat zowel wedstrijden als trainingen onder de blokkade vallen. Coördinatoren zien dit
-alleen binnen hun toegewezen teams of leeftijdsgroepen. Financiële redenen, bedragen,
-achterstandsduur, hulpaanvragen en regelingdetails ontbreken ook in hun API-respons.
-De blokkade geldt voor de betreffende speler in alle relevante teams, niet voor
-broers, zussen of andere leden met dezelfde betaler.
+Het bestuur neemt een gemotiveerd individueel besluit volgens de bestaande procedure.
+Rondo registreert de besluitdatum, verwijzing naar de notulen, beslissend orgaan,
+betrokken vordering, ingangsdatum, uiterste einddatum en voorwaarden voor eerder einde.
+Ook kennisgeving, ontvangstgegevens en informatie over beroep worden vastgelegd.
+Een bevoegde registrator verwerkt het genomen bestuursbesluit; die registratie is
+geen vervanging voor het besluit. Zonder besluitreferentie kan de status niet actief worden.
 
-De contributieblokkade verwijst naar de concrete vordering waarop het besluit berust.
-Zodra die vordering is voldaan, vervalt deze blokkade automatisch na verwerking van
-de betaling. Andere achterstanden vereisen hun eigen geldige besluitgrond.
+### Zichtbaarheid en lidmaatschapsrechten
 
-Op 18 november 2026 is vastgesteld dat de penningmeester bij goedkeuring van een
-betalingsregeling direct de bijbehorende contributieblokkade kan opheffen, zonder op
-de eerste afgesproken betaling te wachten. De opheffing is een expliciete keuze bij
-de goedkeuring van de regeling en wordt met actor, tijdstip en verwijzing naar de
-afspraak in het dossier vastgelegd. Alleen een aanvraag of goedkeuring van een
-regeling zonder deze keuze heft de blokkade niet op.
+Trainers en leiders zien binnen hun teams **Geschorst**, met de toelichting **Geen
+wedstrijden of trainingen**, de ingangsdatum en een clubcontactpersoon. Coördinatoren
+zien dit binnen hun bestaande teams of leeftijdsgroepen. Financiële redenen, bedragen
+en hulpinformatie ontbreken ook in hun API-respons. Andere gezinsleden worden niet geraakt.
 
-Een dagelijkse controle herstelt gemiste statusupdates. Tijdelijke uitzonderingen
-vereisen een reden en einddatum. Opheffing van een contributieblokkade verwijdert geen
-andere clubblokkade of bondsschorsing. Het ontbreken van deze blokkade wordt dus niet
-als algemene verklaring **Speelgerechtigd** gepresenteerd. Er gaat geen automatische
-wijziging naar Sportlink of wedstrijdopstellingen.
+De kennisgeving aan het lid beschrijft de formele schorsing en alle toepasselijke
+gevolgen, inclusief de rechten rond de ALV. Bevoegde bestuurs- en secretariaatsgebruikers
+kunnen de actieve schorsing raadplegen voor controle van stemrecht en ALV-toegang.
+Dit project bouwt geen nieuwe ALV-stemmodule. De bestaande beroepsmogelijkheid en
+contact-, hulp- en betaalmogelijkheden blijven bereikbaar. Het dossier onderscheidt
+het eigen beroep van gewone deelname aan verenigingsactiviteiten.
+
+De beperkte teamweergave vervangt niet de bestaande statutaire kennisgevings- of
+publicatieplicht. Laat vóór activering vastleggen hoe daaraan binnen de geldende
+regels en privacyvereisten wordt voldaan; Rondo publiceert niet zelfstandig financiële
+informatie op een openbare website.
+
+### Einde van de schorsing
+
+Het bestuursbesluit bepaalt dat de schorsing eerder eindigt zodra de betrokken
+contributieachterstand is voldaan. Rondo verwerkt die voorwaarde automatisch na
+bevestigde betaling. Toekomstige termijnen verhinderen het einde niet. Ook op de
+vastgelegde uiterste einddatum eindigt deze schorsing, ongeacht een resterende schuld;
+vervolgmaatregelen vragen een afzonderlijk rechtsgeldig besluit.
+
+De mogelijkheid om bij een goedgekeurde regeling direct te stoppen blijft behouden
+als het bestuursbesluit dit uitdrukkelijk als beëindigingsvoorwaarde bevat. Dan kan
+de penningmeester bij goedkeuring van de regeling kiezen die voorwaarde te laten
+intreden, zonder de eerste betaling af te wachten. Rondo registreert de afspraak,
+keuze en koppeling aan het bestuursbesluit. Ontbreekt die voorwaarde, dan legt de
+penningmeester de gewenste opheffing aan het bestuur voor. Een hulpaanvraag of alleen
+het vastleggen van een regeling heft de schorsing niet automatisch op.
+
+Een dagelijkse controle herstelt gemiste updates binnen 24 uur. Betaling en het
+bereiken van de einddatum blijven ook tijdens een noodstop verwerkt worden. Een
+nieuwe achterstand laat een beëindigde schorsing niet vanzelf herleven. Andere
+clubsancties of bondsschorsingen blijven intact; het einde van deze schorsing is
+geen algemene verklaring van speelgerechtigdheid. Sportlink wordt niet automatisch gewijzigd.
 
 ### Acceptatiecriteria fase 3
 
-- [ ] Zonder vastgesteld beleid en expliciete activering kan geen contributieblokkade ontstaan.
-- [ ] Goedkeuring door de penningmeester wordt pas actief na rechtsgeldige toekenning van die bevoegdheid; een financieel account alleen volstaat niet. Besluit, bevoegdheidsgrondslag en beroepsmogelijkheid worden vastgelegd.
-- [ ] De blokkade omvat wedstrijden én trainingen; teamoverzicht en kennisgeving aan het lid noemen beide expliciet.
-- [ ] De toepasselijke sanctiegrondslag, einddatum en beroepsprocedure zijn vastgelegd; een beperkte deelnameblokkade verandert geen overige lidmaatschapsrechten.
-- [ ] Betaalde, gepauzeerde of onduidelijke dossiers leveren geen automatische blokkadevoorstellen op.
-- [ ] Trainers buiten het betrokken team krijgen geen blokkadegegevens, ook niet via directe API-aanroepen.
-- [ ] De teamrespons bevat geen financiële details of hulpinformatie.
-- [ ] Verwerkte betaling van de betrokken vordering heft de blokkade direct op; gemiste updates worden binnen 24 uur hersteld.
-- [ ] De penningmeester kan bij goedkeuring van een betalingsregeling expliciet kiezen voor directe opheffing van de bijbehorende contributieblokkade, ook vóór de eerste betaling; zonder die keuze blijft de blokkade staan.
-- [ ] Toekomstige termijnen verhinderen de opheffing van de contributieblokkade niet; andere blokkadegronden blijven intact.
-- [ ] Handmatige uitzondering, kennisgeving en opheffing zijn herleidbaar in het dossier.
+- [ ] Alleen een geregistreerd bestuursbesluit met besluitreferentie kan een schorsing activeren; financiële rechten alleen zijn onvoldoende, ook via de API.
+- [ ] Het besluit bevat een ingangsdatum, een einddatum uiterlijk één jaar later, de betrokken vordering en voorwaarden voor eerder einde.
+- [ ] De kennisgeving beschrijft formele schorsing, gevolgen voor lidmaatschapsrechten en de toepasselijke beroepsprocedure.
+- [ ] Teamgebruikers zien binnen hun scope de schorsing zonder financiële details; bestuur en secretariaat kunnen de status voor ALV-rechten raadplegen.
+- [ ] Beroep, contact, hulp en betalen blijven bereikbaar tijdens de schorsing.
+- [ ] Betaalde, gepauzeerde of onduidelijke dossiers leiden niet automatisch tot een schorsingsvoorstel.
+- [ ] Betaling van de betrokken achterstand beëindigt de schorsing overeenkomstig het bestuursbesluit; toekomstige termijnen verhinderen dit niet.
+- [ ] De uiterste einddatum beëindigt de schorsing ook bij resterende schuld; geen automatische verlenging.
+- [ ] Direct einde bij een goedgekeurde regeling vereist de vastgelegde bestuursvoorwaarde én de expliciete keuze van de penningmeester; anders is een bestuursbesluit over opheffing nodig.
+- [ ] Een nieuwe achterstand heractiveert geen eerdere schorsing; andere sancties blijven intact.
+- [ ] Gemiste statusupdates worden binnen 24 uur hersteld, ook tijdens een noodstop.
 
 ## Fase 4 Afwijkende termijnregelingen aanvragen
 
@@ -394,14 +412,16 @@ betaallinks mogen daarna geen achterhaald bedrag innen; dit moet vóór activeri
 deze fase zijn opgelost in de betaalverwerking. Bij afwijzing krijgt de aanvrager
 uitleg en een expliciete nieuwe reactietermijn vóór hervatting.
 
-Als er een bijbehorende contributieblokkade actief is, biedt het beoordelingsscherm
-de penningmeester de keuze **Regeling goedkeuren en blokkade opheffen**, naast alleen
-de regeling goedkeuren. De bevestiging aan het lid vermeldt of de blokkade is
-opgeheven; het teamoverzicht toont vervolgens de actuele deelnamestatus.
+Bij een actieve contributieschorsing toont het beoordelingsscherm of het
+bestuursbesluit einde bij een goedgekeurde regeling toestaat. Alleen dan kan de
+penningmeester **Regeling goedkeuren en schorsing beëindigen** kiezen. Anders kan de
+regeling worden goedgekeurd en de opheffing aan het bestuur worden voorgelegd.
+De bevestiging aan het lid vermeldt of de schorsing daadwerkelijk is geëindigd;
+teamoverzicht en bestuurlijke status tonen vervolgens dezelfde actuele situatie.
 
 ### Acceptatiecriteria fase 4
 
-- [ ] Een aanvraag wijzigt geen saldo, betaalschema of speelblokkade zonder beoordeling.
+- [ ] Een aanvraag wijzigt geen saldo, betaalschema of contributieschorsing zonder beoordeling.
 - [ ] Een goedgekeurd schema sluit exact aan op de resterende hoofdsom en overeengekomen kosten.
 - [ ] Reeds betaalde termijnen worden niet opnieuw gefactureerd of aangemaand.
 - [ ] Oude links en overlappende aanvragen veroorzaken geen dubbele of verkeerde inning.
@@ -413,9 +433,10 @@ opgeheven; het teamoverzicht toont vervolgens de actuele deelnamestatus.
 De financiële werklijst, tellingen en CSV gebruiken dezelfde bestaande leesrechten en
 persoonsbeperkingen als facturen. Dossiermutaties en dossierexports voor incasso
 vereisen `financieel`. Dit exportrecht staat los van de gewone financiële CSV-export,
-die financieel leesrecht gebruikt. Het recht om
-clubblokkades te besluiten wordt expliciet aan de penningmeester toegewezen en volgt
-niet automatisch uit financieel leesrecht of algemeen financieel schrijfrecht.
+die financieel leesrecht gebruikt. Alleen aangewezen registratoren kunnen een
+genomen bestuursbesluit over schorsing verwerken; dit is geen zelfstandige
+sanctiebevoegdheid en volgt niet automatisch uit financiële rechten. Bevoegde
+bestuurs- en secretariaatsgebruikers kunnen de schorsingsstatus voor hun taak lezen.
 Gedetailleerde hulpinformatie blijft beperkt tot behandelaars.
 
 Publieke toegang wordt per factuur via het bestaande geheime token begrensd. Een token
@@ -430,7 +451,7 @@ geen eigen databasetabellen of directe SQL-mutaties. De precieze velden en endpo
 worden bij implementatie uitgewerkt binnen deze randvoorwaarden.
 
 De berekening van achterstanden wordt gedeeld door statistieken, dossier, scheduler
-en blokkadebeoordeling. Betaalstatus blijft gescheiden van opvolgstatus en clubbesluit;
+en schorsingsbeoordeling. Betaalstatus blijft gescheiden van opvolgstatus en clubbesluit;
 de bestaande factuurstatussen worden niet vervangen door bijvoorbeeld **Aanmaning**.
 Een fout in mailverwerking mag de verwerking van een ontvangen betaling nooit blokkeren.
 
@@ -482,8 +503,8 @@ alle vrije hulpnotities zonder onderscheid even lang te bewaren.
 7. Activeer fase 3 pas na beleidsvaststelling en aantoonbaar correcte werking van fase 2.
    Bouw fase 4 daarna als uitbreiding van de bestaande hulpafhandeling.
 
-Een noodstop stopt nieuwe mails en blokkadebesluiten. Betalingsverwerking, inzage,
-hulpontvangst en het opheffen van voldane contributieblokkades blijven werken. Bewaar
+Een noodstop stopt nieuwe mails en schorsingsbesluiten. Betalingsverwerking, inzage,
+hulpontvangst en het opheffen van voldane contributieschorsingen blijven werken. Bewaar
 dossierhistorie bij stoppen of herstarten en voorkom een automatische inhaalslag.
 
 Test bij implementatie minimaal datumgrenzen en zomer-/wintertijd, deelbetalingen,
@@ -501,7 +522,7 @@ Dit planningdocument zelf vereist geen themaversie, changelog of productiedeploy
 - De penningmeester kan per team en leeftijdscategorie de achterstand zonder handmatige lijst samenstellen.
 - Er zijn geen dubbele opvolgmails en geen escalaties op basis van onzekere gegevens.
 - Nieuwe hulpaanvragen hebben een eigenaar en worden binnen de afgesproken termijn beoordeeld.
-- Iedere contributieblokkade is herleidbaar en wordt tijdig opgeheven zodra de grond vervalt.
+- Iedere contributieschorsing is herleidbaar en wordt tijdig opgeheven zodra de grond vervalt.
 
 Meet per maand aantallen achterstandsleden, achterstallige hoofdsom, ouderdom,
 betalingen na iedere stap, hulpaanvragen, verlopen beoordelingen en handmatige
@@ -516,9 +537,9 @@ een haalbare verbeterdoelstelling vast.
 | Behandeling hulp | Vastgesteld op 18 november 2026: de penningmeester beoordeelt binnen vijf werkdagen; verdere aanmaningen en escalatie pauzeren tot beoordeling | Besluit genomen; toepassen bij fase 2 |
 | Betalingsplichtige en briefproces | Vastgesteld op 18 november 2026: eenmalige juridische toets van standaardbrief en verzendwijze, inclusief ontvangstregistratie; daarna automatische verzending voor dossiers die aan de voorwaarden voldoen, met vastgestelde betalingsplichtige | Besluit genomen; juridische toets nog uitvoeren vóór activering van de WIK-stap |
 | Incassokosten | Vastgesteld op 18 november 2026: expliciete goedkeuring door de penningmeester; meerdere geselecteerde dossiers in één keer goedkeuren met vooraf zichtbare bedragen en registratie per dossier | Besluit genomen; berekeningsregels toetsen vóór kosten opnemen of innen |
-| Reikwijdte speelblokkade | Productkeuze: wedstrijden én trainingen; zichtbaar in teamoverzicht en kennisgeving aan het lid | Clubregels gecontroleerd; passende grondslag en uitzonderingen vaststellen vóór fase 3 |
-| Besluitbevoegdheid | Productkeuze: de penningmeester keurt contributieblokkades goed; besluit en actor worden per dossier vastgelegd | Huidige stukken geven die zelfstandige bevoegdheid niet; rechtsgeldige aanwijzing nodig vóór fase 3 |
-| Regeling en opheffing | Vastgesteld op 18 november 2026: de penningmeester kan bij goedkeuring van een regeling expliciet de bijbehorende blokkade direct opheffen, zonder eerste betaling af te wachten; aanvraag alleen niet voldoende | Besluit genomen; toepassen bij fase 3 en 4 |
+| Reikwijdte contributieschorsing | Herzien op 18 november 2026: formele schorsing volgens bestaande statuten, met gevolgen voor alle toepasselijke lidmaatschapsrechten en maximaal één jaar | Geen nieuwe beperkte deelnameblokkade of statutenwijziging; uitvoeren volgens bestaande procedure |
+| Besluitbevoegdheid | Herzien op 18 november 2026: het bestuur beslist; penningmeester bereidt voor en bevoegde registrator legt genomen besluit vast | Besluit genomen; geen zelfstandige sanctiebevoegdheid voor de penningmeester |
+| Regeling en opheffing | Direct einde bij een goedgekeurde regeling kan als het bestuursbesluit deze voorwaarde bevat en de penningmeester daarvoor expliciet kiest; anders beslist het bestuur over opheffing | Eerder gekozen mogelijkheid behouden binnen de nieuwe bestuursroute |
 | Incasso-export | Vastgesteld op 18 november 2026: iedereen met financiële bewerkrechten (`financieel`) mag dossiers voor incasso exporteren, binnen bestaande dossier- en persoonsrechten | Besluit genomen; toepassen bij fase 2 |
 | Bewaartermijnen | Vastgesteld op 18 november 2026: bewaartermijnen voor dossiers en hulpaanvragen meenemen in dezelfde juridische toets als standaardbrief en verzendwijze | Besluit genomen; concrete termijnen en verwerking vaststellen vóór activering van de betreffende opslag |
 
