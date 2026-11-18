@@ -1,6 +1,6 @@
 # Contributieachterstanden en opvolging
 
-**Status:** Voorstel ter bespreking; herinneringsintervallen en behandeling van hulpaanvragen vastgesteld, overige beleidskeuzes nog open. Nog niet geïmplementeerd.
+**Status:** Gedeeltelijk vastgesteld; de besluitstatus per onderwerp staat bij de beleidskeuzes. Nog niet geïmplementeerd.
 **Datum:** 18 november 2026.
 **Aanleiding:** Verzoek van Xander om inzicht, vaste aanmaningen, speelblokkades en ondersteuning bij betalingsproblemen.
 **Volgorde:** Inzicht, automatische opvolging met hulpoptie, speelblokkades, uitgebreidere zelfservice.
@@ -161,9 +161,15 @@ verzenddatum is daarom onvoldoende om de einddatum vast te stellen. Deelbetaling
 en hun ontvangstdatum zijn relevant voor de verdere beoordeling van kosten.
 Zie de [aanbeveling van Rechtspraak over de veertiendagenbrief](https://www.rechtspraak.nl/voor-advocaten-en-juristen/reglementen-procedures-en-formulieren/civiel/tarieven-kosten-vergoedingen/aanbeveling-14-dagenbrief).
 
-Voor activering van deze stap moeten de brieftekst, toepasselijkheid op de contributievordering,
-identiteit van de betalingsplichtige, verzendwijze en omgang met ontvangstbewijs zijn
-beoordeeld. Een oudercontact is niet automatisch de juridisch betalingsplichtige.
+Op 18 november 2026 is gekozen voor een eenmalige juridische toets van de standaardbrief
+en de manier van versturen, inclusief de registratie van ontvangst, vóór activering.
+Die toets moet vaststellen of deze werkwijze geschikt is om later incassokosten voor
+de contributievordering te kunnen rekenen. Na goedkeuring verstuurt Rondo de brief
+automatisch bij dossiers die aan de voorwaarden voldoen; afzonderlijke goedkeuring
+van iedere brief is niet vereist. De juridische toets zelf is nog niet uitgevoerd.
+
+Per dossier moet de identiteit van de betalingsplichtige zijn vastgesteld.
+Een oudercontact is niet automatisch de juridisch betalingsplichtige.
 Onzekerheid over ontvanger of ontvangst leidt tot **Controle nodig**. Een technisch
 afgeleverde e-mail bewijst op zichzelf niet dat aan alle vereisten is voldaan.
 
@@ -233,6 +239,7 @@ gegevens. Een export verstuurt niets, beëindigt geen lidmaatschap en wijzigt ge
 - [ ] Herhaalde hulpaanvragen creëren geen dubbele dossiers en verlengen de pauzedatum niet.
 - [ ] Na een storing blijven de volledige intervallen tussen vervolgstappen behouden.
 - [ ] Nieuwe termijnen veranderen een al verstuurde veertiendagenbrief niet.
+- [ ] De veertiendagenbrief kan pas na vastgelegde juridische goedkeuring van de standaardbrief en verzendwijze worden geactiveerd; daarna is geen afzonderlijke goedkeuring per brief nodig bij dossiers die aan de voorwaarden voldoen.
 - [ ] Onbekende ontvangst of betalingsplichtige verhindert automatische afronding van de briefstap.
 - [ ] Het logboek kan reconstrueren welke tekst, bedragen en beleidsversie voor een besluit zijn gebruikt.
 - [ ] De eindlijst en export veroorzaken geen overdracht, royement of speelblokkade.
@@ -390,7 +397,7 @@ een haalbare verbeterdoelstelling vast.
 |---|---|---|
 | Herinneringsintervallen | Vastgesteld op 18 november 2026: 7 dagen na verval, daarna telkens 14 dagen na bevestigde verzending van de vorige stap; alleen bij resterende achterstand en zonder pauze | Besluit genomen; toepassen bij fase 2 |
 | Behandeling hulp | Vastgesteld op 18 november 2026: de penningmeester beoordeelt binnen vijf werkdagen; verdere aanmaningen en escalatie pauzeren tot beoordeling | Besluit genomen; toepassen bij fase 2 |
-| Betalingsplichtige en briefproces | Vastgelegde identiteit, goedgekeurde tekst en onderbouwde ontvangsttermijn | WIK-stap in fase 2 |
+| Betalingsplichtige en briefproces | Vastgesteld op 18 november 2026: eenmalige juridische toets van standaardbrief en verzendwijze, inclusief ontvangstregistratie; daarna automatische verzending voor dossiers die aan de voorwaarden voldoen, met vastgestelde betalingsplichtige | Besluit genomen; juridische toets nog uitvoeren vóór activering van de WIK-stap |
 | Incassokosten | Voorstel ter beoordeling; geen automatische boeking in de eerste versie | Kosten opnemen of innen |
 | Reikwijdte speelblokkade | Bestuur specificeert wedstrijden, trainingen en eventuele uitzonderingen | Fase 3 |
 | Besluitbevoegdheid | Individuele beoordeling door aangewezen functionaris | Fase 3 |
