@@ -1,6 +1,6 @@
 # Contributieachterstanden en opvolging
 
-**Status:** Besproken productkeuzes vastgesteld; juridische toets, reglementcontrole en uitwerking van clubuitzonderingen staan nog open. Nog niet geïmplementeerd.
+**Status:** Productkeuzes vastgelegd en aangeleverde clubregels gecontroleerd; bevoegdheid en grondslag voor deelnameblokkades vragen nadere besluitvorming. Juridische toets en vaststelling van het reglementsvoorstel staan nog open. Nog niet geïmplementeerd.
 **Datum:** 18 november 2026.
 **Aanleiding:** Verzoek van Xander om inzicht, vaste aanmaningen, speelblokkades en ondersteuning bij betalingsproblemen.
 **Volgorde:** Inzicht, automatische opvolging met hulpoptie, speelblokkades, uitgebreidere zelfservice.
@@ -28,8 +28,8 @@ Hun aanwezigheid bewijst niet welke instellingen of verzendingen op productie ac
 | Onderdeel | Bestaand gedrag | Uitbreiding |
 |---|---|---|
 | Betaalstatistieken | Ontvangsten, betaalstatussen en termijnregelingen | Achterstandsbedragen, uitsplitsingen en een exporteerbare werklijst |
-| Factuurherinneringen | Voor contributie zonder gekozen plan: controle na 14 en 28 dagen sinds verzending | Instelbare opvolging vanaf de toepasselijke vervaldatum |
-| Termijnherinneringen | Controle na 14 en 21 dagen achterstand | Dezelfde opvolgregels en dossierweergave als hele facturen |
+| Factuurherinneringen | Voor contributie zonder gekozen plan: controle na 14 en 28 dagen sinds verzending | Deze momenten behouden en vervolgstappen toevoegen |
+| Termijnherinneringen | Controle na 14 en 21 dagen achterstand | Deze momenten behouden binnen dezelfde opvolgservice en dossierweergave |
 | Betaalpagina | Planselectie zonder inloggen; 3 en 8 termijnen afhankelijk van instellingen | Hulpaanvraag en verzoek om een afwijkende afspraak |
 | Achterstallige factuurstatus | Houdt rekening met onbetaalde termijnvervaldata | Eén berekening voor bedragen, opvolging en contributieblokkade |
 | Financiële rechten | Leesrecht `financieel_read`, schrijfrecht `financieel` | Dezelfde controle voor werklijst, export, uitzonderingen en acties |
@@ -113,17 +113,32 @@ formule-invoer in tekstcellen zodat namen en opmerkingen geen spreadsheetformule
 
 ### Opvolgstappen en vastgestelde timing
 
-De beginwaarden voor de herinneringsintervallen zijn op 18 november 2026 door Joost
-vastgesteld: 7 dagen na de vervaldatum, vervolgens telkens 14 dagen na bevestigde
-verzending van de vorige stap. Ze gelden zolang achterstand resteert en het dossier
-niet gepauzeerd is. De overige voorwaarden voor de veertiendagenbrief blijven gelden.
-De penningmeester kan de intervallen instellen; iedere nieuwe ronde bewaart de gebruikte
-beleidsversie. Wijzigingen schuiven lopende rondes niet stilzwijgend naar voren.
+Op 18 november 2026 is na vergelijking met productie gekozen om de bestaande
+herinneringsmomenten te behouden. Dit vervangt het eerdere voorstel met een eerste
+herinnering zeven dagen na de vervaldatum. De productie-instelling voor de algemene
+betaaltermijn was bij deze controle 14 dagen; de vervaldatum van de factuur of termijn
+zelf blijft bepalend voor de opeisbaarheid.
+
+| Moment | Factuur zonder gekozen betaalplan | Gemiste termijn |
+|---|---|---|
+| Eerste herinnering | 14 dagen na factuurverzending | 14 dagen na termijnvervaldatum |
+| Tweede herinnering, in de nieuwe flow de aanmaning | 28 dagen na factuurverzending, minimaal 14 dagen na de eerste herinnering | 21 dagen na termijnvervaldatum, minimaal 7 dagen na de eerste herinnering |
+| Veertiendagenbrief | Minimaal 14 dagen na bevestigde verzending van de aanmaning; normaal dag 42 na factuurverzending | Minimaal 14 dagen na bevestigde verzending van de aanmaning; normaal dag 35 na termijnvervaldatum |
+
+De aanmaning vervangt de tweede herinnering op hetzelfde moment; er komt geen extra
+mail tussen. Bij een afwijkende betaalafspraak wordt niet vóór de geldende vervaldatum
+geëscaleerd. Een eerste herinnering op de vervaldag meldt dat betaling vandaag wordt
+verwacht en noemt het lid nog niet achterstallig. Aanmaning en verdere escalatie
+vereisen werkelijke achterstand en ontbreken van een pauze.
+
+De penningmeester kan de intervallen binnen het vastgestelde clubbeleid instellen.
+Iedere ronde bewaart de beleidsversie en het toepasselijke schema. Wijzigingen
+verschuiven lopende rondes niet stilzwijgend.
 
 | Stap | Start en voorwaarden | Resultaat |
 |---|---|---|
-| Herinnering | 7 dagen na de toepasselijke vervaldatum | Vriendelijke uitleg, actuele betaallink en hulpoptie |
-| Aanmaning | Minimaal 14 dagen na bevestigde verzending van de herinnering | Nieuwe betaaloproep en uitleg van mogelijke vervolgstappen |
+| Herinnering | Volgens het toepasselijke schema hierboven | Vriendelijke uitleg, actuele betaallink en hulpoptie |
+| Aanmaning | Volgens het toepasselijke schema; wacht minimaal 14 respectievelijk 7 dagen na bevestigde eerste verzending | Nieuwe betaaloproep en uitleg van mogelijke vervolgstappen |
 | Veertiendagenbrief | Minimaal 14 dagen na bevestigde verzending van de aanmaning | Goedgekeurde brief voor de vastgelegde vordering, na controle van ontvanger en ontvangstproces |
 | Beoordeling | Nadat de geldige brieftermijn volledig verstreken is en achterstand resteert | Werkvoorraad voor persoonlijk contact, speelblokkade of incassobeoordeling |
 
@@ -261,7 +276,8 @@ in het incassopakket opgenomen.
 
 ### Acceptatiecriteria fase 2
 
-- [ ] Hele facturen en gemiste termijnen gebruiken dezelfde configureerbare opvolgregels.
+- [ ] Dezelfde opvolgservice behoudt beide schema's: factuurherinneringen na 14 en 28 dagen sinds verzending, termijnherinneringen na 14 en 21 dagen sinds verval; de veertiendagenbrief volgt minimaal 14 dagen na de aanmaning.
+- [ ] Een eerste herinnering op de vervaldag noemt geen achterstand; een latere afgesproken vervaldatum verhindert voortijdige escalatie.
 - [ ] Een deelnemende factuur krijgt geen extra herinnering uit de oude schedulers.
 - [ ] Gelijktijdige cron- en handmatige acties veroorzaken maximaal één bevestigde verzending per geplande actie.
 - [ ] Een mislukte of onzekere mail laat de ronde niet doorgaan naar een zwaardere stap.
@@ -284,17 +300,45 @@ in het incassopakket opgenomen.
 
 ## Fase 3 Contributieblokkades
 
-Op 18 november 2026 is vastgesteld dat een contributieblokkade zowel wedstrijden als
-trainingen omvat. Xander controleert vóór activering of het huishoudelijk reglement
-deze reikwijdte ondersteunt. Op dezelfde datum is vastgesteld dat de penningmeester
-contributieblokkades mag goedkeuren. Het bestuur bepaalt welke uitzonderingen gelden
-en hoe het lid hierover wordt geïnformeerd. Deze clubregels staan los van de wettelijke
-voorwaarden voor incassokosten; een veertiendagenbrief legt op zichzelf geen speelverbod op.
+De gewenste productkeuze van 18 november 2026 is een blokkade voor wedstrijden én
+trainingen, goedgekeurd door de penningmeester. De controle van de aangeleverde
+clubregels hieronder laat zien dat dit nog geen vastgestelde zelfstandige bevoegdheid
+van de penningmeester is. Activering vereist een passende rechtsgrond en bevoegdheid;
+de keuze voor de penningmeester blijft het ontwerpdoel. Het bestuur bepaalt ook de
+uitzonderingen en kennisgeving. De veertiendagenbrief legt op zichzelf geen speelverbod op.
+
+### Controle van de aangeleverde clubregels
+
+Bronnen: [huishoudelijk reglement oktober 2022](https://www.svawc.nl/wp-content/uploads/huishoudelijk-reglement-versie-oktober-2022_30467_.pdf)
+en [statuten 2021](https://www.svawc.nl/wp-content/uploads/2024/10/AWC-statuten-2021-ocr.pdf),
+gelezen op 18 november 2026. Een aanvullend tuchtreglement of later besluit is niet
+meegeleverd. Het huishoudelijk reglement heeft op pagina 1 nog de aanduiding Concept 1,
+maar vermeldt op pagina 7 vaststelling op 14 november 2022; de geldende versie moet
+voor definitieve besluitvorming worden bevestigd.
+
+| Bepaling | Gevolg voor het voorstel |
+|---|---|
+| HR 6.2 en 6.7 | Recht op trainingen en wedstrijden, plus plicht tot tijdige contributiebetaling |
+| Statuten 6.3 en HR 7.6 | Sancties zijn bestuursbevoegdheid, behoudens een toepasselijke tuchtrechtelijke aanwijzing |
+| Statuten 6.4.a.4 en 6.5 | Wedstrijdverbod is expliciet; schorsing raakt alle lidmaatschapsrechten behalve beroep en duurt maximaal een jaar. Een beperkte blokkade voor wedstrijden én trainingen vraagt verduidelijking |
+| HR 10.4 en statuten 11.2–11.4 | Financieel beheer of een vertegenwoordigingsvolmacht bewijst geen zelfstandige bevoegdheid tot sanctiebesluiten |
+| Statuten 6.8 en HR 7.9 | Statuten: één maand vanaf ontvangst; HR: zes maanden na oplegging. Tegenstrijdige beroepsteksten herstellen, rekening houdend met een eventueel tuchtreglement |
+| Statuten 6.4.b–c | Schriftelijke kennisgeving en een publicatiebepaling; verhouding tot beperkte zichtbaarheid en privacy meenemen in de juridische toets |
+| HR 9.11 | Bestuur besluit met meerderheid van geldige stemmen bij aanwezigheid van een meerderheid van de bestuursleden; over personen wordt schriftelijk gestemd |
+| HR 21 en statuten 22 | Reglementswijziging via ALV; reglement mag niet met statuten botsen |
+
+Uitwerking staat in [het concept voor de ALV](contributiebeleid-reglementsvoorstel.md).
+Dat bevat een specifieke contributieprocedure, beroep, aanwijzing van de penningmeester
+en een voorgestelde statutaire verduidelijking voor de beperkte deelnameblokkade.
+De stukken zijn voorstellen, geen al genomen verenigingsbesluiten.
+
+### Besluit en uitvoering
 
 In de eerste uitvoering ontstaat na het volledig doorlopen traject een
 **Blokkade beoordelen**-regel. De penningmeester ziet de actuele achterstand,
 ontvangstonderbouwing, contacthistorie en eventuele afspraken en bevestigt het besluit.
-Het besluit legt reden, reikwijdte, ingangsdatum, actor en kennisgeving vast. Volledig
+Het besluit legt reden, reikwijdte, ingangsdatum, einddatum, bevoegde beslisser,
+grondslag van de bevoegdheid, kennisgeving en beroepsmogelijkheid vast. Volledig
 automatisch blokkeren is een afzonderlijke latere beleidskeuze, geen standaardinstelling.
 
 Trainers en leiders zien in hun eigen teamoverzicht alleen **Deelname geblokkeerd**
@@ -326,8 +370,9 @@ wijziging naar Sportlink of wedstrijdopstellingen.
 ### Acceptatiecriteria fase 3
 
 - [ ] Zonder vastgesteld beleid en expliciete activering kan geen contributieblokkade ontstaan.
-- [ ] Iedere contributieblokkade vereist een vastgelegd besluit van de penningmeester; gebruikers zonder die bevoegdheid kunnen ook via de API geen blokkade goedkeuren.
+- [ ] Goedkeuring door de penningmeester wordt pas actief na rechtsgeldige toekenning van die bevoegdheid; een financieel account alleen volstaat niet. Besluit, bevoegdheidsgrondslag en beroepsmogelijkheid worden vastgelegd.
 - [ ] De blokkade omvat wedstrijden én trainingen; teamoverzicht en kennisgeving aan het lid noemen beide expliciet.
+- [ ] De toepasselijke sanctiegrondslag, einddatum en beroepsprocedure zijn vastgelegd; een beperkte deelnameblokkade verandert geen overige lidmaatschapsrechten.
 - [ ] Betaalde, gepauzeerde of onduidelijke dossiers leveren geen automatische blokkadevoorstellen op.
 - [ ] Trainers buiten het betrokken team krijgen geen blokkadegegevens, ook niet via directe API-aanroepen.
 - [ ] De teamrespons bevat geen financiële details of hulpinformatie.
@@ -400,6 +445,9 @@ met de gegevens gebeurt. Maak daarbij onderscheid tussen financiële dossiergege
 brief- en beslisgeschiedenis en de inhoud van hulpaanvragen. De uitkomst wordt verwerkt
 in het ontwerp en de acceptatiecriteria voordat de betreffende opslag actief wordt.
 Dit besluit stelt nog geen concrete bewaartermijn vast en voert geen verwijdering uit.
+De aangeleverde statuten noemen voor administratieve bescheiden al zeven jaar
+(artikelen 10.2 en 12.6; ook HR 12.7). Dit is input voor de toets en geen reden om
+alle vrije hulpnotities zonder onderscheid even lang te bewaren.
 
 | Bestaande bron | Aansluiting |
 |---|---|
@@ -464,12 +512,12 @@ een haalbare verbeterdoelstelling vast.
 
 | Keuze | Uitgangspunt en besluitstatus | Nodig vóór |
 |---|---|---|
-| Herinneringsintervallen | Vastgesteld op 18 november 2026: 7 dagen na verval, daarna telkens 14 dagen na bevestigde verzending van de vorige stap; alleen bij resterende achterstand en zonder pauze | Besluit genomen; toepassen bij fase 2 |
+| Herinneringsintervallen | Herzien op 18 november 2026: bestaande momenten behouden; facturen 14/28 dagen na verzending, gemiste termijnen 14/21 dagen na verval; veertiendagenbrief minimaal 14 dagen na de tweede herinnering/aanmaning | Besluit genomen; toepassen bij fase 2 |
 | Behandeling hulp | Vastgesteld op 18 november 2026: de penningmeester beoordeelt binnen vijf werkdagen; verdere aanmaningen en escalatie pauzeren tot beoordeling | Besluit genomen; toepassen bij fase 2 |
 | Betalingsplichtige en briefproces | Vastgesteld op 18 november 2026: eenmalige juridische toets van standaardbrief en verzendwijze, inclusief ontvangstregistratie; daarna automatische verzending voor dossiers die aan de voorwaarden voldoen, met vastgestelde betalingsplichtige | Besluit genomen; juridische toets nog uitvoeren vóór activering van de WIK-stap |
 | Incassokosten | Vastgesteld op 18 november 2026: expliciete goedkeuring door de penningmeester; meerdere geselecteerde dossiers in één keer goedkeuren met vooraf zichtbare bedragen en registratie per dossier | Besluit genomen; berekeningsregels toetsen vóór kosten opnemen of innen |
-| Reikwijdte speelblokkade | Vastgesteld op 18 november 2026: wedstrijden én trainingen; zichtbaar in teamoverzicht en kennisgeving aan het lid | Besluit genomen; reglement controleren en uitzonderingen vaststellen vóór activering van fase 3 |
-| Besluitbevoegdheid | Vastgesteld op 18 november 2026: de penningmeester keurt contributieblokkades goed; besluit en actor worden per dossier vastgelegd | Besluit genomen; bevoegdheid toewijzen vóór activering van fase 3 |
+| Reikwijdte speelblokkade | Productkeuze: wedstrijden én trainingen; zichtbaar in teamoverzicht en kennisgeving aan het lid | Clubregels gecontroleerd; passende grondslag en uitzonderingen vaststellen vóór fase 3 |
+| Besluitbevoegdheid | Productkeuze: de penningmeester keurt contributieblokkades goed; besluit en actor worden per dossier vastgelegd | Huidige stukken geven die zelfstandige bevoegdheid niet; rechtsgeldige aanwijzing nodig vóór fase 3 |
 | Regeling en opheffing | Vastgesteld op 18 november 2026: de penningmeester kan bij goedkeuring van een regeling expliciet de bijbehorende blokkade direct opheffen, zonder eerste betaling af te wachten; aanvraag alleen niet voldoende | Besluit genomen; toepassen bij fase 3 en 4 |
 | Incasso-export | Vastgesteld op 18 november 2026: iedereen met financiële bewerkrechten (`financieel`) mag dossiers voor incasso exporteren, binnen bestaande dossier- en persoonsrechten | Besluit genomen; toepassen bij fase 2 |
 | Bewaartermijnen | Vastgesteld op 18 november 2026: bewaartermijnen voor dossiers en hulpaanvragen meenemen in dezelfde juridische toets als standaardbrief en verzendwijze | Besluit genomen; concrete termijnen en verwerking vaststellen vóór activering van de betreffende opslag |
