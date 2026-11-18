@@ -1,6 +1,6 @@
 # Contributieachterstanden en opvolging
 
-**Status:** Voorstel ter bespreking, nog niet geïmplementeerd.
+**Status:** Voorstel ter bespreking; herinneringsintervallen vastgesteld, overige beleidskeuzes nog open. Nog niet geïmplementeerd.
 **Datum:** 18 november 2026.
 **Aanleiding:** Verzoek van Xander om inzicht, vaste aanmaningen, speelblokkades en ondersteuning bij betalingsproblemen.
 **Volgorde:** Inzicht, automatische opvolging met hulpoptie, speelblokkades, uitgebreidere zelfservice.
@@ -111,13 +111,16 @@ formule-invoer in tekstcellen zodat namen en opmerkingen geen spreadsheetformule
 
 ## Fase 2 Automatische opvolging en hulp
 
-### Voorgestelde stappen
+### Opvolgstappen en vastgestelde timing
 
-De intervallen hieronder zijn bespreekbare beginwaarden. De penningmeester kan ze
-instellen; iedere nieuwe ronde bewaart de gebruikte beleidsversie. Wijzigingen schuiven
-lopende rondes niet stilzwijgend naar voren.
+De beginwaarden voor de herinneringsintervallen zijn op 18 november 2026 door Joost
+vastgesteld: 7 dagen na de vervaldatum, vervolgens telkens 14 dagen na bevestigde
+verzending van de vorige stap. Ze gelden zolang achterstand resteert en het dossier
+niet gepauzeerd is. De overige voorwaarden voor de veertiendagenbrief blijven gelden.
+De penningmeester kan de intervallen instellen; iedere nieuwe ronde bewaart de gebruikte
+beleidsversie. Wijzigingen schuiven lopende rondes niet stilzwijgend naar voren.
 
-| Stap | Voorgestelde start | Resultaat |
+| Stap | Start en voorwaarden | Resultaat |
 |---|---|---|
 | Herinnering | 7 dagen na de toepasselijke vervaldatum | Vriendelijke uitleg, actuele betaallink en hulpoptie |
 | Aanmaning | Minimaal 14 dagen na bevestigde verzending van de herinnering | Nieuwe betaaloproep en uitleg van mogelijke vervolgstappen |
@@ -382,9 +385,9 @@ een haalbare verbeterdoelstelling vast.
 
 ## Beleidskeuzes vóór activering
 
-| Keuze | Voorgesteld uitgangspunt | Nodig vóór |
+| Keuze | Uitgangspunt en besluitstatus | Nodig vóór |
 |---|---|---|
-| Herinneringsintervallen | 7 dagen na verval, daarna telkens minimaal 14 dagen tussen stappen | Verzenden in fase 2 |
+| Herinneringsintervallen | Vastgesteld op 18 november 2026: 7 dagen na verval, daarna telkens 14 dagen na bevestigde verzending van de vorige stap; alleen bij resterende achterstand en zonder pauze | Besluit genomen; toepassen bij fase 2 |
 | Behandeling hulp | Binnen vijf werkdagen; escalatie gepauzeerd tot beoordeling | Hulpoptie in fase 2 |
 | Betalingsplichtige en briefproces | Vastgelegde identiteit, goedgekeurde tekst en onderbouwde ontvangsttermijn | WIK-stap in fase 2 |
 | Incassokosten | Voorstel ter beoordeling; geen automatische boeking in de eerste versie | Kosten opnemen of innen |
