@@ -1,6 +1,6 @@
 # Contributieachterstanden en opvolging
 
-**Status:** Gedeeltelijk vastgesteld; de besluitstatus per onderwerp staat bij de beleidskeuzes. Nog niet geïmplementeerd.
+**Status:** Besproken productkeuzes vastgesteld; juridische toets, reglementcontrole en uitwerking van clubuitzonderingen staan nog open. Nog niet geïmplementeerd.
 **Datum:** 18 november 2026.
 **Aanleiding:** Verzoek van Xander om inzicht, vaste aanmaningen, speelblokkades en ondersteuning bij betalingsproblemen.
 **Volgorde:** Inzicht, automatische opvolging met hulpoptie, speelblokkades, uitgebreidere zelfservice.
@@ -218,8 +218,8 @@ zonder een toezegging dat het lid daarvoor in aanmerking komt.
 Op 18 november 2026 is vastgesteld dat de penningmeester nieuwe hulpaanvragen binnen
 vijf werkdagen beoordeelt. Een nieuwe aanvraag krijgt een ontvangstbevestiging,
 behandelaar en beoordelingsdatum. Verdere aanmaningen en automatische escalatie
-pauzeren vanaf de aanvraag tot de beoordeling. Herhaalde inzendingen vullen dezelfde open aanvraag aan en
-verlengen de beoordelingsdatum niet. Bij overschrijding wordt het dossier zichtbaar
+pauzeren vanaf de aanvraag tot de beoordeling. Herhaalde inzendingen vullen dezelfde
+open aanvraag aan en verlengen de beoordelingsdatum niet. Bij overschrijding wordt het dossier zichtbaar
 voor de penningmeester; het systeem hervat niet stilzwijgend een sanctieproces.
 
 De penningmeester kan ook handmatig pauzeren wegens bezwaar, regeling of fondsenaanvraag.
@@ -389,6 +389,18 @@ en blokkadebeoordeling. Betaalstatus blijft gescheiden van opvolgstatus en clubb
 de bestaande factuurstatussen worden niet vervangen door bijvoorbeeld **Aanmaning**.
 Een fout in mailverwerking mag de verwerking van een ontvangen betaling nooit blokkeren.
 
+### Bewaartermijnen
+
+Op 18 november 2026 is vastgesteld dat de bewaartermijnen voor dossiers en hulpaanvragen
+meegaan in dezelfde juridische toets als de standaardbrief en verzendwijze. De concrete
+termijnen worden dus vóór activering vastgesteld op basis van die toets.
+
+Leg per gegevenssoort vast welke termijn geldt, wanneer die begint en wat na afloop
+met de gegevens gebeurt. Maak daarbij onderscheid tussen financiële dossiergegevens,
+brief- en beslisgeschiedenis en de inhoud van hulpaanvragen. De uitkomst wordt verwerkt
+in het ontwerp en de acceptatiecriteria voordat de betreffende opslag actief wordt.
+Dit besluit stelt nog geen concrete bewaartermijn vast en voert geen verwijdering uit.
+
 | Bestaande bron | Aansluiting |
 |---|---|
 | `src/pages/Finance/Betaalstatistieken.jsx` | Overzicht en werklijst |
@@ -460,7 +472,7 @@ een haalbare verbeterdoelstelling vast.
 | Besluitbevoegdheid | Vastgesteld op 18 november 2026: de penningmeester keurt contributieblokkades goed; besluit en actor worden per dossier vastgelegd | Besluit genomen; bevoegdheid toewijzen vóór activering van fase 3 |
 | Regeling en opheffing | Vastgesteld op 18 november 2026: de penningmeester kan bij goedkeuring van een regeling expliciet de bijbehorende blokkade direct opheffen, zonder eerste betaling af te wachten; aanvraag alleen niet voldoende | Besluit genomen; toepassen bij fase 3 en 4 |
 | Incasso-export | Vastgesteld op 18 november 2026: iedereen met financiële bewerkrechten (`financieel`) mag dossiers voor incasso exporteren, binnen bestaande dossier- en persoonsrechten | Besluit genomen; toepassen bij fase 2 |
-| Bewaartermijnen | Club bepaalt bewaartermijnen per dossier- en hulpgegeven | Opslaan hulpgegevens en dossieroverdracht |
+| Bewaartermijnen | Vastgesteld op 18 november 2026: bewaartermijnen voor dossiers en hulpaanvragen meenemen in dezelfde juridische toets als standaardbrief en verzendwijze | Besluit genomen; concrete termijnen en verwerking vaststellen vóór activering van de betreffende opslag |
 
 Leg dit vast als één hoofdverzoek met vier bouwfasen. De eindlijst hoort bij fase 2;
 hulp begint eveneens in fase 2, zodat automatische opvolging direct een uitweg biedt.
