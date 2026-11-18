@@ -175,11 +175,38 @@ afgeleverde e-mail bewijst op zichzelf niet dat aan alle vereisten is voldaan.
 
 Bewaar de exacte brief, de genoemde vordering, ontvanger, verzendgegevens en onderbouwing
 van de ontvangst en deadline. De wettelijke minimumtermijn is niet verkortbaar via een
-instelling. De eerste versie stelt incassokosten uitsluitend ter beoordeling voor;
-automatische berekening en boeking vereisen eerst vastgelegde regels voor onder meer
-deelbetalingen en opeenvolgende gemiste termijnen. Tot die beoordeling worden geen
-kosten automatisch toegevoegd. Incassokosten zijn geen voorwaarde voor het aflopen
-van de gewone herinnerings- en aanmaningsstappen.
+instelling. Het berekenen van een kostenvoorstel vereist eerst vastgelegde, getoetste
+regels voor onder meer deelbetalingen en opeenvolgende gemiste termijnen. Incassokosten
+zijn geen voorwaarde voor het aflopen van de gewone herinnerings- en aanmaningsstappen.
+
+### Incassokosten goedkeuren voor meerdere dossiers
+
+Op 18 november 2026 is vastgesteld dat de penningmeester incassokosten expliciet moet
+goedkeuren, met de mogelijkheid om meerdere dossiers in één handeling goed te keuren.
+Rondo voegt geen incassokosten toe op basis van alleen een verstreken termijn.
+
+De werklijst biedt selectievakjes en de actie **Incassokosten goedkeuren**. De
+penningmeester kan afzonderlijke dossiers, een pagina of expliciet alle gefilterde
+dossiers selecteren. Toon steeds het aantal geselecteerde dossiers, ook over pagina's
+heen. Een gewijzigde filter wist de selectie om onbedoelde goedkeuring te voorkomen.
+
+Vóór bevestiging toont één overzicht per dossier het lid, factuurnummer, de resterende
+hoofdsom, voorgestelde incassokosten en het nieuwe totaal, plus het totaal aan toe te
+voegen kosten voor de selectie. Toon ook waarom een dossier niet in aanmerking komt.
+De penningmeester kan dossiers uitvinken en bevestigt de resterende selectie één keer;
+er volgt geen aparte bevestigingsdialoog voor ieder dossier.
+
+Direct vóór verwerking controleert Rondo per dossier opnieuw het saldo, de brieftermijn,
+eventuele pauze en eerdere kostenboekingen. Dossiers die sinds het getoonde voorstel
+zijn veranderd of niet meer voldoen, worden overgeslagen met een concrete reden en
+moeten opnieuw worden beoordeeld. Ongewijzigde, geschikte dossiers kunnen wel worden
+verwerkt. Het resultaat toont welke dossiers verwerkt, overgeslagen of mislukt zijn.
+
+Bewaar de goedkeurder, het tijdstip, de grondslag en het goedgekeurde bedrag per dossier,
+met een gezamenlijke verwijzing naar de groepsactie. Dubbel klikken, opnieuw proberen
+of een gedeeltelijk mislukte verwerking mag geen dubbele kosten opleveren. Deze actie
+voegt uitsluitend de goedgekeurde kosten toe; zij verstuurt geen dossiers naar incasso
+en legt geen speelblokkade op.
 
 ### Pauzeren en hulp vanaf de eerste mail
 
@@ -242,6 +269,10 @@ gegevens. Een export verstuurt niets, beëindigt geen lidmaatschap en wijzigt ge
 - [ ] De veertiendagenbrief kan pas na vastgelegde juridische goedkeuring van de standaardbrief en verzendwijze worden geactiveerd; daarna is geen afzonderlijke goedkeuring per brief nodig bij dossiers die aan de voorwaarden voldoen.
 - [ ] Onbekende ontvangst of betalingsplichtige verhindert automatische afronding van de briefstap.
 - [ ] Het logboek kan reconstrueren welke tekst, bedragen en beleidsversie voor een besluit zijn gebruikt.
+- [ ] Incassokosten worden alleen na expliciete goedkeuring door de penningmeester toegevoegd.
+- [ ] Meerdere dossiers, ook over pagina's heen, kunnen vanuit één overzicht met bedragen in één keer worden goedgekeurd.
+- [ ] Een gewijzigd saldo, pauze of eerdere kostenboeking tussen voorstel en bevestiging leidt tot overslaan met een reden, niet tot verwerking van een achterhaald voorstel.
+- [ ] De groepsactie toont het resultaat per dossier, bewaart de individuele goedkeuringen en kan zonder dubbele kosten worden hervat na een gedeeltelijke fout.
 - [ ] De eindlijst en export veroorzaken geen overdracht, royement of speelblokkade.
 
 ## Fase 3 Contributieblokkades
@@ -398,7 +429,7 @@ een haalbare verbeterdoelstelling vast.
 | Herinneringsintervallen | Vastgesteld op 18 november 2026: 7 dagen na verval, daarna telkens 14 dagen na bevestigde verzending van de vorige stap; alleen bij resterende achterstand en zonder pauze | Besluit genomen; toepassen bij fase 2 |
 | Behandeling hulp | Vastgesteld op 18 november 2026: de penningmeester beoordeelt binnen vijf werkdagen; verdere aanmaningen en escalatie pauzeren tot beoordeling | Besluit genomen; toepassen bij fase 2 |
 | Betalingsplichtige en briefproces | Vastgesteld op 18 november 2026: eenmalige juridische toets van standaardbrief en verzendwijze, inclusief ontvangstregistratie; daarna automatische verzending voor dossiers die aan de voorwaarden voldoen, met vastgestelde betalingsplichtige | Besluit genomen; juridische toets nog uitvoeren vóór activering van de WIK-stap |
-| Incassokosten | Voorstel ter beoordeling; geen automatische boeking in de eerste versie | Kosten opnemen of innen |
+| Incassokosten | Vastgesteld op 18 november 2026: expliciete goedkeuring door de penningmeester; meerdere geselecteerde dossiers in één keer goedkeuren met vooraf zichtbare bedragen en registratie per dossier | Besluit genomen; berekeningsregels toetsen vóór kosten opnemen of innen |
 | Reikwijdte speelblokkade | Bestuur specificeert wedstrijden, trainingen en eventuele uitzonderingen | Fase 3 |
 | Besluitbevoegdheid | Individuele beoordeling door aangewezen functionaris | Fase 3 |
 | Regeling en opheffing | Goedkeuring kan opheffing toestaan; aanvraag alleen niet | Fase 3 en 4 |
