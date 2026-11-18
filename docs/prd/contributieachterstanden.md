@@ -1,6 +1,6 @@
 # Contributieachterstanden en opvolging
 
-**Status:** Voorstel ter bespreking; herinneringsintervallen vastgesteld, overige beleidskeuzes nog open. Nog niet geïmplementeerd.
+**Status:** Voorstel ter bespreking; herinneringsintervallen en behandeling van hulpaanvragen vastgesteld, overige beleidskeuzes nog open. Nog niet geïmplementeerd.
 **Datum:** 18 november 2026.
 **Aanleiding:** Verzoek van Xander om inzicht, vaste aanmaningen, speelblokkades en ondersteuning bij betalingsproblemen.
 **Volgorde:** Inzicht, automatische opvolging met hulpoptie, speelblokkades, uitgebreidere zelfservice.
@@ -182,9 +182,10 @@ Een lid kan een terugbelverzoek, betalingsprobleem of bezwaar doorgeven. Toon do
 club beheerde verwijzingen naar Jeugdfonds Sport & Cultuur en gemeentelijke regelingen,
 zonder een toezegging dat het lid daarvoor in aanmerking komt.
 
-Een nieuwe hulpaanvraag krijgt een ontvangstbevestiging, behandelaar en voorgestelde
-beoordelingsdatum binnen vijf werkdagen. In afwachting van beoordeling pauzeert de
-automatische escalatie. Herhaalde inzendingen vullen dezelfde open aanvraag aan en
+Op 18 november 2026 is vastgesteld dat de penningmeester nieuwe hulpaanvragen binnen
+vijf werkdagen beoordeelt. Een nieuwe aanvraag krijgt een ontvangstbevestiging,
+behandelaar en beoordelingsdatum. Verdere aanmaningen en automatische escalatie
+pauzeren vanaf de aanvraag tot de beoordeling. Herhaalde inzendingen vullen dezelfde open aanvraag aan en
 verlengen de beoordelingsdatum niet. Bij overschrijding wordt het dossier zichtbaar
 voor de penningmeester; het systeem hervat niet stilzwijgend een sanctieproces.
 
@@ -228,7 +229,7 @@ gegevens. Een export verstuurt niets, beëindigt geen lidmaatschap en wijzigt ge
 - [ ] Een mislukte of onzekere mail laat de ronde niet doorgaan naar een zwaardere stap.
 - [ ] Een betaling vóór verzending onderdrukt de mail; herhaalde betaalmeldingen blijven zonder dubbele boeking.
 - [ ] Een betaling van de achterstand stopt die ronde, ook als toekomstige termijnen nog openstaan.
-- [ ] Pauze en hulpaanvraag voorkomen escalatie; verlopen beoordelingsdata blijven zichtbaar.
+- [ ] Een hulpaanvraag krijgt een beoordelingsdatum binnen vijf werkdagen en pauzeert verdere aanmaningen en escalatie tot beoordeling door de penningmeester; verlopen beoordelingsdata blijven zichtbaar.
 - [ ] Herhaalde hulpaanvragen creëren geen dubbele dossiers en verlengen de pauzedatum niet.
 - [ ] Na een storing blijven de volledige intervallen tussen vervolgstappen behouden.
 - [ ] Nieuwe termijnen veranderen een al verstuurde veertiendagenbrief niet.
@@ -388,7 +389,7 @@ een haalbare verbeterdoelstelling vast.
 | Keuze | Uitgangspunt en besluitstatus | Nodig vóór |
 |---|---|---|
 | Herinneringsintervallen | Vastgesteld op 18 november 2026: 7 dagen na verval, daarna telkens 14 dagen na bevestigde verzending van de vorige stap; alleen bij resterende achterstand en zonder pauze | Besluit genomen; toepassen bij fase 2 |
-| Behandeling hulp | Binnen vijf werkdagen; escalatie gepauzeerd tot beoordeling | Hulpoptie in fase 2 |
+| Behandeling hulp | Vastgesteld op 18 november 2026: de penningmeester beoordeelt binnen vijf werkdagen; verdere aanmaningen en escalatie pauzeren tot beoordeling | Besluit genomen; toepassen bij fase 2 |
 | Betalingsplichtige en briefproces | Vastgelegde identiteit, goedgekeurde tekst en onderbouwde ontvangsttermijn | WIK-stap in fase 2 |
 | Incassokosten | Voorstel ter beoordeling; geen automatische boeking in de eerste versie | Kosten opnemen of innen |
 | Reikwijdte speelblokkade | Bestuur specificeert wedstrijden, trainingen en eventuele uitzonderingen | Fase 3 |
