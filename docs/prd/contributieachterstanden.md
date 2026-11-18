@@ -301,9 +301,14 @@ broers, zussen of andere leden met dezelfde betaler.
 
 De contributieblokkade verwijst naar de concrete vordering waarop het besluit berust.
 Zodra die vordering is voldaan, vervalt deze blokkade automatisch na verwerking van
-de betaling. Andere achterstanden vereisen hun eigen geldige besluitgrond. Een
-goedgekeurde regeling kan op grond van clubbeleid aanleiding zijn om een blokkade
-eerder op te heffen; alleen een aanvraag is daarvoor onvoldoende.
+de betaling. Andere achterstanden vereisen hun eigen geldige besluitgrond.
+
+Op 18 november 2026 is vastgesteld dat de penningmeester bij goedkeuring van een
+betalingsregeling direct de bijbehorende contributieblokkade kan opheffen, zonder op
+de eerste afgesproken betaling te wachten. De opheffing is een expliciete keuze bij
+de goedkeuring van de regeling en wordt met actor, tijdstip en verwijzing naar de
+afspraak in het dossier vastgelegd. Alleen een aanvraag of goedkeuring van een
+regeling zonder deze keuze heft de blokkade niet op.
 
 Een dagelijkse controle herstelt gemiste statusupdates. Tijdelijke uitzonderingen
 vereisen een reden en einddatum. Opheffing van een contributieblokkade verwijdert geen
@@ -320,6 +325,7 @@ wijziging naar Sportlink of wedstrijdopstellingen.
 - [ ] Trainers buiten het betrokken team krijgen geen blokkadegegevens, ook niet via directe API-aanroepen.
 - [ ] De teamrespons bevat geen financiële details of hulpinformatie.
 - [ ] Verwerkte betaling van de betrokken vordering heft de blokkade direct op; gemiste updates worden binnen 24 uur hersteld.
+- [ ] De penningmeester kan bij goedkeuring van een betalingsregeling expliciet kiezen voor directe opheffing van de bijbehorende contributieblokkade, ook vóór de eerste betaling; zonder die keuze blijft de blokkade staan.
 - [ ] Toekomstige termijnen verhinderen de opheffing van de contributieblokkade niet; andere blokkadegronden blijven intact.
 - [ ] Handmatige uitzondering, kennisgeving en opheffing zijn herleidbaar in het dossier.
 
@@ -335,6 +341,11 @@ bevestiging aan de betalingsplichtige. Reeds betaalde bedragen blijven behouden.
 betaallinks mogen daarna geen achterhaald bedrag innen; dit moet vóór activering van
 deze fase zijn opgelost in de betaalverwerking. Bij afwijzing krijgt de aanvrager
 uitleg en een expliciete nieuwe reactietermijn vóór hervatting.
+
+Als er een bijbehorende contributieblokkade actief is, biedt het beoordelingsscherm
+de penningmeester de keuze **Regeling goedkeuren en blokkade opheffen**, naast alleen
+de regeling goedkeuren. De bevestiging aan het lid vermeldt of de blokkade is
+opgeheven; het teamoverzicht toont vervolgens de actuele deelnamestatus.
 
 ### Acceptatiecriteria fase 4
 
@@ -438,7 +449,7 @@ een haalbare verbeterdoelstelling vast.
 | Incassokosten | Vastgesteld op 18 november 2026: expliciete goedkeuring door de penningmeester; meerdere geselecteerde dossiers in één keer goedkeuren met vooraf zichtbare bedragen en registratie per dossier | Besluit genomen; berekeningsregels toetsen vóór kosten opnemen of innen |
 | Reikwijdte speelblokkade | Vastgesteld op 18 november 2026: wedstrijden én trainingen; zichtbaar in teamoverzicht en kennisgeving aan het lid | Besluit genomen; reglement controleren en uitzonderingen vaststellen vóór activering van fase 3 |
 | Besluitbevoegdheid | Vastgesteld op 18 november 2026: de penningmeester keurt contributieblokkades goed; besluit en actor worden per dossier vastgelegd | Besluit genomen; bevoegdheid toewijzen vóór activering van fase 3 |
-| Regeling en opheffing | Goedkeuring kan opheffing toestaan; aanvraag alleen niet | Fase 3 en 4 |
+| Regeling en opheffing | Vastgesteld op 18 november 2026: de penningmeester kan bij goedkeuring van een regeling expliciet de bijbehorende blokkade direct opheffen, zonder eerste betaling af te wachten; aanvraag alleen niet voldoende | Besluit genomen; toepassen bij fase 3 en 4 |
 | Bewaartermijnen en export | Club bepaalt bewaartermijnen per dossier- en hulpgegeven en toegestane ontvangers | Opslaan hulpgegevens en dossieroverdracht |
 
 Leg dit vast als één hoofdverzoek met vier bouwfasen. De eindlijst hoort bij fase 2;
