@@ -279,12 +279,13 @@ gegevens. Een export verstuurt niets, beëindigt geen lidmaatschap en wijzigt ge
 
 Op 18 november 2026 is vastgesteld dat een contributieblokkade zowel wedstrijden als
 trainingen omvat. Xander controleert vóór activering of het huishoudelijk reglement
-deze reikwijdte ondersteunt. Het bestuur bepaalt wie het besluit mag nemen, welke
-uitzonderingen gelden en hoe het lid hierover wordt geïnformeerd. Deze clubregels staan los van de wettelijke
+deze reikwijdte ondersteunt. Op dezelfde datum is vastgesteld dat de penningmeester
+contributieblokkades mag goedkeuren. Het bestuur bepaalt welke uitzonderingen gelden
+en hoe het lid hierover wordt geïnformeerd. Deze clubregels staan los van de wettelijke
 voorwaarden voor incassokosten; een veertiendagenbrief legt op zichzelf geen speelverbod op.
 
-Voorgestelde eerste uitvoering: na het volledig doorlopen traject ontstaat een
-**Blokkade beoordelen**-regel. Een bevoegde functionaris ziet de actuele achterstand,
+In de eerste uitvoering ontstaat na het volledig doorlopen traject een
+**Blokkade beoordelen**-regel. De penningmeester ziet de actuele achterstand,
 ontvangstonderbouwing, contacthistorie en eventuele afspraken en bevestigt het besluit.
 Het besluit legt reden, reikwijdte, ingangsdatum, actor en kennisgeving vast. Volledig
 automatisch blokkeren is een afzonderlijke latere beleidskeuze, geen standaardinstelling.
@@ -313,7 +314,7 @@ wijziging naar Sportlink of wedstrijdopstellingen.
 ### Acceptatiecriteria fase 3
 
 - [ ] Zonder vastgesteld beleid en expliciete activering kan geen contributieblokkade ontstaan.
-- [ ] In de eerste uitvoering is een vastgelegd individueel besluit verplicht.
+- [ ] Iedere contributieblokkade vereist een vastgelegd besluit van de penningmeester; gebruikers zonder die bevoegdheid kunnen ook via de API geen blokkade goedkeuren.
 - [ ] De blokkade omvat wedstrijden én trainingen; teamoverzicht en kennisgeving aan het lid noemen beide expliciet.
 - [ ] Betaalde, gepauzeerde of onduidelijke dossiers leveren geen automatische blokkadevoorstellen op.
 - [ ] Trainers buiten het betrokken team krijgen geen blokkadegegevens, ook niet via directe API-aanroepen.
@@ -348,8 +349,9 @@ uitleg en een expliciete nieuwe reactietermijn vóór hervatting.
 
 De financiële werklijst, tellingen en CSV gebruiken dezelfde bestaande leesrechten en
 persoonsbeperkingen als facturen. Dossiermutaties vereisen `financieel`; het recht om
-clubblokkades te besluiten wordt expliciet toegewezen en volgt niet automatisch uit
-financieel leesrecht. Gedetailleerde hulpinformatie blijft beperkt tot behandelaars.
+clubblokkades te besluiten wordt expliciet aan de penningmeester toegewezen en volgt
+niet automatisch uit financieel leesrecht of algemeen financieel schrijfrecht.
+Gedetailleerde hulpinformatie blijft beperkt tot behandelaars.
 
 Publieke toegang wordt per factuur via het bestaande geheime token begrensd. Een token
 geeft geen toegang tot andere gezinsleden, interne notities of export. Inzendingen
@@ -435,7 +437,7 @@ een haalbare verbeterdoelstelling vast.
 | Betalingsplichtige en briefproces | Vastgesteld op 18 november 2026: eenmalige juridische toets van standaardbrief en verzendwijze, inclusief ontvangstregistratie; daarna automatische verzending voor dossiers die aan de voorwaarden voldoen, met vastgestelde betalingsplichtige | Besluit genomen; juridische toets nog uitvoeren vóór activering van de WIK-stap |
 | Incassokosten | Vastgesteld op 18 november 2026: expliciete goedkeuring door de penningmeester; meerdere geselecteerde dossiers in één keer goedkeuren met vooraf zichtbare bedragen en registratie per dossier | Besluit genomen; berekeningsregels toetsen vóór kosten opnemen of innen |
 | Reikwijdte speelblokkade | Vastgesteld op 18 november 2026: wedstrijden én trainingen; zichtbaar in teamoverzicht en kennisgeving aan het lid | Besluit genomen; reglement controleren en uitzonderingen vaststellen vóór activering van fase 3 |
-| Besluitbevoegdheid | Individuele beoordeling door aangewezen functionaris | Fase 3 |
+| Besluitbevoegdheid | Vastgesteld op 18 november 2026: de penningmeester keurt contributieblokkades goed; besluit en actor worden per dossier vastgelegd | Besluit genomen; bevoegdheid toewijzen vóór activering van fase 3 |
 | Regeling en opheffing | Goedkeuring kan opheffing toestaan; aanvraag alleen niet | Fase 3 en 4 |
 | Bewaartermijnen en export | Club bepaalt bewaartermijnen per dossier- en hulpgegeven en toegestane ontvangers | Opslaan hulpgegevens en dossieroverdracht |
 
