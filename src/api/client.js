@@ -573,6 +573,7 @@ export const prmApi = {
     return api.post('/rondo/v1/twelve/margins/preview', data, { headers: { 'Content-Type': undefined } });
   },
   getKantinePurchasePdfUrl: (id) => `${(window.rondoConfig?.apiUrl || '/wp-json/').replace(/\/?$/, '/')}rondo/v1/twelve/margins/invoice/${id}/pdf?_wpnonce=${window.rondoConfig?.nonce || ''}`,
+  syncTwelve: () => api.post('/rondo/v1/twelve/sync'),
   setTwelveSchedule: (data) => api.post('/rondo/v1/twelve/schedule', data),
   setTwelveProductGroup: (data) => api.post('/rondo/v1/twelve/product-groups', data),
   createTwelveInvoice: (data) => api.post('/rondo/v1/twelve/billing', data),

@@ -44,6 +44,83 @@ class TwelveReportsRestTest extends RondoTestCase {
 		$this->assertSame( 403, $server->dispatch( $request )->get_status() );
 	}
 
+	public function test_manual_sync_requires_admin_even_with_kassa_access(): void {
+		$server = $this->bootRestControllers( [ TwelveReports::class ] );
+		$user   = $this->user( UserRoles::ROLE_NAME );
+		( new \WP_User( $user ) )->add_cap( 'kassaomzet' );
+		foreach ( [ 0, $user, $this->user( 'rondo_bestuur' ) ] as $user_id ) {
+			wp_set_current_user( $user_id );
+			foreach ( [ 'GET', 'POST' ] as $method ) {
+				$response = $server->dispatch( new \WP_REST_Request( $method, '/rondo/v1/twelve/sync' ) );
+				$this->assertSame( $user_id ? 403 : 401, $response->get_status() );
+			}
+		}
+	}
+
+	public function test_manual_sync_proxies_fixed_command_and_handles_failures(): void {
+		if ( ! defined( 'RONDO_SYNC_URL' ) ) {
+			define( 'RONDO_SYNC_URL', 'https://sync.example.test' );
+		}
+		if ( ! defined( 'RONDO_SYNC_API_KEY' ) ) {
+			define( 'RONDO_SYNC_API_KEY', 'test-only-key' );
+		}
+		$server = $this->bootRestControllers( [ TwelveReports::class ] );
+		wp_set_current_user( $this->user( 'administrator' ) );
+		$cases = [
+			[
+				'POST',
+				200,
+				[
+					'ok'       => true,
+					'pipeline' => 'twelve',
+				],
+				200,
+			],
+			[
+				'GET',
+				200,
+				[
+					'running'  => false,
+					'last_run' => null,
+				],
+				200,
+			],
+			[ 'POST', 409, [ 'ok' => false ], 409 ],
+			[ 'POST', 500, [ 'error' => 'private server details' ], 502 ],
+			[ 'POST', 200, [ 'ok' => false ], 502 ],
+			[ 'GET', 200, null, 502 ],
+			[ 'POST', 0, null, 502 ],
+		];
+		foreach ( $cases as [ $method, $status, $body, $expected ] ) {
+			$http = function ( $pre, $args, $url ) use ( $method, $status, $body ) {
+				if ( ! str_ends_with( $url, '/api/sync/twelve' ) ) {
+					return $pre;
+				}
+				$this->assertSame( rtrim( RONDO_SYNC_URL, '/' ) . '/api/sync/twelve', $url );
+				$this->assertSame( $method, $args['method'] );
+				$this->assertSame( RONDO_SYNC_API_KEY, $args['headers']['X-Sync-API-Key'] );
+				$this->assertSame( 0, $args['redirection'] );
+				return $status ? [
+					'response' => [ 'code' => $status ],
+					'body'     => wp_json_encode( $body ),
+				] : new \WP_Error( 'timeout', 'private connection details' );
+			};
+			add_filter( 'pre_http_request', $http, 10, 3 );
+			try {
+				$response = $server->dispatch( new \WP_REST_Request( $method, '/rondo/v1/twelve/sync' ) );
+				$this->assertSame( $expected, $response->get_status() );
+				if ( $expected === 200 ) {
+					$this->assertSame( $body, $response->get_data() );
+					$this->assertSame( 'private, no-store', $response->get_headers()['Cache-Control'] );
+				} else {
+					$this->assertStringNotContainsString( 'private', wp_json_encode( $response->get_data() ) );
+				}
+			} finally {
+				remove_filter( 'pre_http_request', $http, 10 );
+			}
+		}
+	}
+
 	public function test_summary_and_categories(): void {
 		$this->import_fixture_report();
 		$server = $this->bootRestControllers( [ TwelveReports::class ] );
