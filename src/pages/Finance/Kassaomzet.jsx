@@ -8,6 +8,7 @@ import { formatCurrency } from '@/utils/formatters';
 import Omzetontwikkeling from './Omzetontwikkeling';
 import ProductIndeling from './ProductIndeling';
 import TwelveSchedule from './TwelveSchedule';
+import TwelveSyncButton from './TwelveSyncButton';
 import KantineDrukte from './KantineDrukte';
 import KantineMargins from './KantineMargins';
 import InvoiceContactPicker from '@/components/finance/InvoiceContactPicker';
@@ -90,6 +91,7 @@ export default function Kassaomzet() {
 
   return <div className="space-y-6 text-gray-900 dark:text-gray-100">
     <div className="flex flex-wrap justify-between items-center gap-4"><div><h1 className="text-2xl font-semibold">Kassaomzet</h1><p className="text-sm text-gray-500 dark:text-gray-400">Omzet en verbruik in de kantine</p></div>{tab !== 'margins' && tab !== 'business' && tab !== 'trend' && tab !== 'groups' && tab !== 'schedule' && tab !== 'activity' && <label className="flex items-center gap-3 text-sm">Maand<input type="month" className="input" value={month} onChange={event => { if (event.target.value) { setMonth(event.target.value); setSelectedDay(null); } }} /></label>}</div>
+    {user?.is_admin && <TwelveSyncButton />}
     <div className="flex flex-wrap gap-6 border-b border-gray-200 dark:border-gray-700" role="tablist" aria-label="Kassaoverzichten">{[...tabs, ...(user?.is_admin ? [['groups', 'Productindeling'], ['schedule', 'Synchronisatie']] : [])].map(([key, label]) => <button key={key} type="button" id={`kassa-tab-${key}`} role="tab" aria-controls={`kassa-panel-${key}`} aria-selected={tab === key} onClick={() => { setTab(key); action.reset(); }} className={`pb-3 border-b-2 text-sm font-medium ${tab === key ? 'border-electric-cyan text-cyan-800 dark:text-cyan-200' : 'border-transparent text-gray-500 dark:text-gray-400'}`}>{label}</button>)}</div>
     {action.isError && <p role="alert" className="text-red-700 dark:text-red-300">{action.error?.response?.data?.message || 'De factuuractie is mislukt. Probeer opnieuw; het concept blijft behouden.'}</p>}
     {tab === 'margins' ? <section id="kassa-panel-margins" role="tabpanel" aria-labelledby="kassa-tab-margins"><KantineMargins /></section> : tab === 'activity' ? <section id="kassa-panel-activity" role="tabpanel" aria-labelledby="kassa-tab-activity"><KantineDrukte /></section> : tab === 'schedule' && user?.is_admin ? <section id="kassa-panel-schedule" role="tabpanel" aria-labelledby="kassa-tab-schedule"><TwelveSchedule /></section> : tab === 'groups' && user?.is_admin ? <section id="kassa-panel-groups" role="tabpanel" aria-labelledby="kassa-tab-groups"><ProductIndeling /></section> : tab === 'trend' ? <section id="kassa-panel-trend" role="tabpanel" aria-labelledby="kassa-tab-trend"><Omzetontwikkeling /></section> : active.isPending ? <p role="status">Rapportages laden…</p> : active.isError ? <div className={panelClass}><p role="alert">Rapportages konden niet worden geladen.</p><button className="btn-secondary mt-3" onClick={() => active.refetch()}>Opnieuw proberen</button></div> : <section id={`kassa-panel-${tab}`} role="tabpanel" aria-labelledby={`kassa-tab-${tab}`} className="space-y-5">

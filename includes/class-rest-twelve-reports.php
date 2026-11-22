@@ -80,6 +80,16 @@ class TwelveReports extends Base {
 			]
 		);
 
+		register_rest_route(
+			'rondo/v1',
+			'/twelve/sync',
+			[
+				'methods'             => 'GET, POST',
+				'permission_callback' => fn() => $this->check_kassa_permission() && current_user_can( 'manage_options' ),
+				'callback'            => [ $this, 'sync_twelve' ],
+			]
+		);
+
 		$range_args = [
 			'from' => [
 				'required'          => false,
@@ -272,6 +282,41 @@ class TwelveReports extends Base {
 				],
 			]
 		);
+	}
+
+	/**
+	 * Start a recent-data sync or read its status without exposing sync credentials.
+	 *
+	 * @param \WP_REST_Request $request REST request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function sync_twelve( $request ) {
+		if ( ! defined( 'RONDO_SYNC_URL' ) || ! defined( 'RONDO_SYNC_API_KEY' ) ) {
+			return new \WP_Error( 'twelve_sync_not_configured', 'Synchronisatie is niet ingesteld.', [ 'status' => 503 ] );
+		}
+		$response = wp_remote_request(
+			rtrim( RONDO_SYNC_URL, '/' ) . '/api/sync/twelve',
+			[
+				'method'      => $request->get_method(),
+				'headers'     => [ 'X-Sync-API-Key' => RONDO_SYNC_API_KEY ],
+				'timeout'     => 10,
+				'redirection' => 0,
+			]
+		);
+		if ( is_wp_error( $response ) ) {
+			return new \WP_Error( 'twelve_sync_unavailable', 'De synchronisatieserver is niet bereikbaar. Probeer opnieuw.', [ 'status' => 502 ] );
+		}
+		$status = wp_remote_retrieve_response_code( $response );
+		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( $status === 409 ) {
+			return new \WP_Error( 'twelve_sync_running', 'Er loopt al een synchronisatie.', [ 'status' => 409 ] );
+		}
+		if ( $status !== 200 || ! is_array( $data ) || ( $request->get_method() === 'POST' ? empty( $data['ok'] ) : ! isset( $data['running'] ) ) ) {
+			return new \WP_Error( 'twelve_sync_failed', 'Synchronisatie kon niet worden gestart of gecontroleerd. Probeer opnieuw.', [ 'status' => 502 ] );
+		}
+		$result = rest_ensure_response( $data );
+		$result->header( 'Cache-Control', 'private, no-store' );
+		return $result;
 	}
 
 	/** Club-specific opening windows; end 24 is midnight following that day. */
