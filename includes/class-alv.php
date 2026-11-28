@@ -10,10 +10,12 @@ use WP_Error;
 use WP_REST_Response;
 
 class Alv {
+	private Publications $publications;
+
 	private const MEMBERSHIP_META = [ 'type-lid', 'former_member', 'lid-sinds', 'lid-tot' ];
 
 	public function __construct() {
-		new Publications( $this );
+		$this->publications = new Publications( $this );
 		add_action( 'rest_api_init', [ $this, 'routes' ] );
 		add_filter( 'rest_post_dispatch', [ $this, 'private_response' ], 10, 3 );
 		add_action( 'rondo_alv_start', [ $this, 'freeze_due' ] );
@@ -403,14 +405,16 @@ class Alv {
 			}
 			$questions[] = $question;
 		}
+		$admin = current_user_can( 'manage_options' );
+		$draft = $admin ? $this->publications->draft( (int) $row->id, $meeting['publication'] ?? [] ) : null;
 		$pages = [];
 		$tree  = $meeting['publication']['live']['pages'] ?? [];
-		if ( $member || current_user_can( 'manage_options' ) ) {
+		if ( $member || $admin ) {
 			$tree = array_values( $tree );
 		} else {
 			$tree = [];
 		}
-		foreach ( isset( $meeting['publication']['live'] ) ? [] : $meeting['pages'] as $key => $page ) {
+		foreach ( ( $draft !== null || isset( $meeting['publication']['live'] ) ) ? [] : $meeting['pages'] as $key => $page ) {
 			if ( $staff && ( $rights['edit'] || $rights['approve'] || $rights['publish'] ) ) {
 				$version = $page['current'];
 			} elseif ( $member && isset( $page['published'] ) ) {
@@ -426,7 +430,8 @@ class Alv {
 			'questions'       => $questions,
 			'pages'           => $pages,
 			'tree'            => $tree,
-			'admin_pages_url' => current_user_can( 'manage_options' ) ? admin_url( 'admin.php?page=rondo-alv-pages&meeting=' . (int) $row->id ) : null,
+			'draft_tree'      => $draft,
+			'admin_pages_url' => $admin ? admin_url( 'admin.php?page=rondo-alv-pages&meeting=' . (int) $row->id ) : null,
 			'wordpress_pages' => isset( $meeting['publication']['root'] ),
 			'frozen'          => (bool) $row->frozen,
 		];

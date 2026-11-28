@@ -217,6 +217,7 @@ function Secretary({ meeting, act, pending }) {
 
 export default function Alv({ secretary = false }) {
   const { id, pageId } = useParams();
+  const [publishedPreview, setPublishedPreview] = useState(false);
   const navigate = useNavigate();
   const client = useQueryClient();
   const url = id ? `${endpoint}/${id}` : endpoint;
@@ -239,6 +240,8 @@ export default function Alv({ secretary = false }) {
   if (query.isError || !query.data) return <p role="alert">{query.error?.response?.data?.message ?? 'De ALV kon niet worden geladen.'}</p>;
   const { meetings, rights, timezone } = query.data;
   const meeting = id ? meetings[0] : null;
+  const showingDraft = !publishedPreview && Array.isArray(meeting?.draft_tree);
+  const documentTree = showingDraft ? meeting.draft_tree : meeting?.tree;
   const closedQuestions = meeting?.questions.filter((question) => question.state === 'closed') ?? [];
 
   if (secretary) {
@@ -319,8 +322,16 @@ export default function Alv({ secretary = false }) {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">ALV-pagina’s</h2>
             {meeting.admin_pages_url && <a className="underline" href={meeting.admin_pages_url}>ALV-pagina’s beheren in WordPress</a>}
-            {meeting.tree?.length > 0 && <Publication pages={meeting.tree} meetingId={id} selectedId={pageId} />}
-            {meeting.pages.length === 0 && !meeting.tree?.length && <p>Er zijn geen pagina’s beschikbaar.</p>}
+            {Array.isArray(meeting.draft_tree) && (
+              <div className="flex flex-wrap items-center gap-3">
+                <p role="status">{showingDraft ? 'Conceptweergave · alleen voor beheerders' : 'Gepubliceerde ledenweergave'}</p>
+                <button type="button" className="btn-secondary" onClick={() => setPublishedPreview(!publishedPreview)}>
+                  {showingDraft ? 'Bekijk gepubliceerde versie' : 'Bekijk concept'}
+                </button>
+              </div>
+            )}
+            {documentTree?.length > 0 && <Publication pages={documentTree} meetingId={id} selectedId={pageId} />}
+            {meeting.pages.length === 0 && !documentTree?.length && <p>Er zijn geen pagina’s beschikbaar.</p>}
             {meeting.pages.map((page) => (
               <Page key={page.id} page={page} rights={meeting.wordpress_pages ? {} : rights} closedQuestions={closedQuestions} act={act} pending={pending} />
             ))}

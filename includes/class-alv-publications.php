@@ -117,6 +117,7 @@ class Publications {
 			}
 			echo '</ul>';
 			$this->form( $id, 'upload', 'Afgeschermde PDF toevoegen', $snapshot['pages'] );
+			$this->form( $id, 'sync_links', 'Oude PDF-links vervangen door afgeschermde links' );
 			$hash = $this->fingerprint( $snapshot );
 			if ( ( $publication['live']['hash'] ?? '' ) === $hash ) {
 				echo '<p>Deze versie is gepubliceerd voor leden.</p>';
@@ -193,6 +194,15 @@ class Publications {
 		return true;
 	}
 
+	/** Return the latest saved WordPress pages only to publication administrators. */
+	public function draft( int $meeting, array $publication ): ?array {
+		if ( ! current_user_can( 'manage_options' ) || empty( $publication['root'] ) ) {
+			return null;
+		}
+		$snapshot = $this->snapshot( $meeting, $publication );
+		return is_wp_error( $snapshot ) ? null : array_values( $snapshot['pages'] );
+	}
+
 	private function snapshot( int $meeting, array $publication ) {
 		$root      = (int) $publication['root'];
 		$posts     = get_posts(
@@ -232,12 +242,7 @@ class Publications {
 				$file_ids[] = $file['id'];
 				$files[]    = $file + [ 'url' => $this->pdf_url( $meeting, $file['id'] ) ];
 			}
-			foreach ( array_reverse( $files ) as $file ) {
-				if ( stripos( $file['title'], 'verslag-kascommissie' ) === 0 ) {
-					$html = preg_replace( '#<a\b[^>]*href="https://[^"]+\.claudeusercontent\.com/[^"]*/verslag-kascommissie-2025-2026\.pdf"[^>]*>(.*?)</a>#i', '<a href="' . esc_url( $file['url'] ) . '">$1</a>', $html );
-					break;
-				}
-			}
+			$html         = $this->replace_audit_link( $html, $files );
 			$pages[ $id ] = [
 				'id'     => $id,
 				'parent' => (int) $post->post_parent,
@@ -254,6 +259,33 @@ class Publications {
 			'pages' => $pages,
 			'files' => $file_ids,
 		];
+	}
+
+	private function replace_audit_link( string $html, array $files ): string {
+		foreach ( array_reverse( $files ) as $file ) {
+			if ( stripos( $file['title'], 'verslag-kascommissie' ) === 0 ) {
+				return preg_replace_callback(
+					'~(<a\b[^>]*\bhref=)(["\'])https://[^"\']+\.claudeusercontent\.com/[^"\']*/verslag-kascommissie-2025-2026\.pdf\2~i',
+					static fn( $match ) => $match[1] . $match[2] . esc_url( $file['url'] ) . $match[2],
+					$html
+				);
+			}
+		}
+		return $html;
+	}
+
+	private function persist_audit_link( int $page, array $files ) {
+		$post = get_post( $page );
+		$html = $this->replace_audit_link( $post->post_content, $files );
+		return $html === $post->post_content ? true : wp_update_post(
+			wp_slash(
+				[
+					'ID'           => $page,
+					'post_content' => $html,
+				]
+				),
+			true
+		);
 	}
 
 	private function fingerprint( array $snapshot ): string {
@@ -289,6 +321,16 @@ class Publications {
 						return $file;
 					}
 					$publication['attachments'][ $page ][] = $file;
+					$files                                 = array_merge( $snapshot['pages'][ $page ]['files'], [ $file + [ 'url' => $this->pdf_url( $id, $file['id'] ) ] ] );
+					return $this->persist_audit_link( $page, $files );
+				}
+				if ( $action === 'sync_links' ) {
+					foreach ( $snapshot['pages'] as $entry ) {
+						$result = $this->persist_audit_link( $entry['id'], $entry['files'] );
+						if ( is_wp_error( $result ) ) {
+							return $result;
+						}
+					}
 					return true;
 				}
 				$hash = $this->fingerprint( $snapshot );
