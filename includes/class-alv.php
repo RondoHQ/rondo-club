@@ -96,11 +96,11 @@ class Alv {
 		}
 		$table    = $this->table( 'meetings' );
 		$rows     = $id
-			? $wpdb->get_results( $wpdb->prepare( "SELECT id, document FROM $table WHERE id = %d", $id ) )
-			: $wpdb->get_results( "SELECT id, document FROM $table ORDER BY starts DESC" );
+			? $wpdb->get_results( $wpdb->prepare( "SELECT id, starts, document FROM $table WHERE id = %d", $id ) )
+			: $wpdb->get_results( "SELECT id, starts, document FROM $table ORDER BY starts DESC" );
 		$meetings = [];
 		foreach ( $rows as $row ) {
-			$meetings[ (int) $row->id ] = json_decode( $row->document, true, 512, JSON_THROW_ON_ERROR );
+			$meetings[ (int) $row->id ] = json_decode( $row->document, true, 512, JSON_THROW_ON_ERROR ) + [ 'starts' => (int) $row->starts ];
 		}
 		return $meetings;
 	}
@@ -389,9 +389,6 @@ class Alv {
 			$question['voted']    = in_array( $key, $votes, true );
 			$before_start         = time() < (int) $row->starts;
 			$question['can_vote'] = $eligible && $before_start;
-			if ( $rights['manage'] && $question['state'] === 'draft' ) {
-				$question['can_open'] = $before_start;
-			}
 			if ( $question['state'] === 'open' ) {
 				$question['ends'] = (int) $row->starts;
 				if ( ! $before_start ) {
@@ -518,7 +515,7 @@ class Alv {
 		if ( $action === 'vote' ) {
 			return $this->vote( $meeting, $row, $request, $person );
 		}
-		if ( in_array( $action, [ 'reschedule', 'question', 'open', 'delete_question', 'edit_question', 'move_question' ], true ) ) {
+		if ( in_array( $action, [ 'reschedule', 'question', 'delete_question', 'edit_question', 'move_question' ], true ) ) {
 			if ( ! $rights['manage'] ) {
 				return $this->error( 'Je mag deze stemming niet beheren.', 403 );
 			}
@@ -642,12 +639,7 @@ class Alv {
 			return [ 'ok' => true ];
 		}
 
-		if ( $question['state'] !== 'draft' || time() >= (int) $row->starts ) {
-			return $this->error( 'Open de stemming vóór de ALV-start.' );
-		}
-		$question['state']            = 'open';
-		$meeting['questions'][ $key ] = $question;
-		return [ 'ok' => true ];
+		return $this->error( 'Onbekende stemvraagactie.', 400 );
 	}
 
 	private function vote( array $meeting, $row, $request, int $person ) {
