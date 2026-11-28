@@ -44,7 +44,7 @@ function Question({ question, manage, act, pending, embedded = false, preview = 
   return (
     <article className={embedded ? 'space-y-3 rounded-lg border border-slate-200 bg-white p-4 text-slate-900' : 'card space-y-3 p-5'}>
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <h3 className="font-semibold">{question.title}</h3>
+        <h3 className={embedded ? 'text-lg font-semibold leading-snug text-slate-900' : 'font-semibold'}>{question.title}</h3>
         {order && (
           <div className="flex gap-2" role="group" aria-label={`Volgorde van ${question.title}`}>
             <button type="button" className="btn-secondary" aria-label={`Verplaats omhoog: ${question.title}`} disabled={pending || order.first} onClick={() => act('move_question', { question: question.id, direction: 'up' })}>↑ Omhoog</button>
@@ -52,7 +52,7 @@ function Question({ question, manage, act, pending, embedded = false, preview = 
           </div>
         )}
       </div>
-      <p className="text-sm text-gray-500">
+      <p className={embedded ? 'text-sm text-slate-600' : 'text-sm text-gray-500'}>
         {question.secret ? 'Geheime stemming' : 'Open stemming'} · {status[question.state]}
       </p>
       {manage && <p>Uitgebrachte stemmen {question.turnout}</p>}
