@@ -4,6 +4,7 @@ namespace Rondo\Alv;
 
 use Rondo\Fields\Fields;
 use Rondo\Fields\Formatter;
+use Rondo\People\PersonName;
 use Rondo\Core\UserRoles;
 use WP_Error;
 use WP_REST_Response;
@@ -85,15 +86,15 @@ class Alv {
 	}
 
 	private function is_member( int $id, string $date ): bool {
-		$type = strtolower( trim( (string) Fields::get_for_post( $id, 'type_lid' ) ) );
-		if ( ! in_array( $type, [ 'bondslid', 'verenigingslid' ], true ) || Fields::get_for_post( $id, 'former_member' ) ) {
+		$type = strtolower( trim( (string) Fields::try_get_for_post( $id, 'type_lid' ) ) );
+		if ( ! in_array( $type, [ 'bondslid', 'verenigingslid' ], true ) || Fields::try_get_for_post( $id, 'former_member' ) ) {
 			return false;
 		}
 		$dates = Formatter::for_wire(
 			'person',
 			[
-				'lid_sinds' => Fields::get_for_post( $id, 'lid_sinds' ),
-				'lid_tot'   => Fields::get_for_post( $id, 'lid_tot' ),
+				'lid_sinds' => Fields::try_get_for_post( $id, 'lid_sinds' ),
+				'lid_tot'   => Fields::try_get_for_post( $id, 'lid_tot' ),
 			]
 		);
 		return ( empty( $dates['lid_sinds'] ) || $dates['lid_sinds'] <= $date )
@@ -367,9 +368,9 @@ class Alv {
 					}
 					if ( ! $question['secret'] ) {
 						$question['open_votes'] = array_map(
-							static fn( $vote ) => [
+							fn( $vote ) => [
 								'id'     => (int) $vote->person_id,
-								'name'   => \Rondo\People\PersonName::get( (int) $vote->person_id ),
+								'name'   => $this->person_name( (int) $vote->person_id ),
 								'choice' => (int) $vote->choice,
 							],
 							$wpdb->get_results( $wpdb->prepare( "SELECT person_id, choice FROM $table WHERE meeting_id = %d AND question_id = %s", $row->id, $key ) ) ?? []
@@ -402,9 +403,9 @@ class Alv {
 			$accounts         = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT meta_value FROM $wpdb->usermeta WHERE meta_key = %s", 'rondo_linked_person_id' ) );
 			$linked           = array_fill_keys( array_map( 'intval', $accounts ), true );
 			$detail['roster'] = array_map(
-				static fn( $id ) => [
+				fn( $id ) => [
 					'id'     => $id,
-					'name'   => \Rondo\People\PersonName::get( $id ),
+					'name'   => $this->person_name( $id ),
 					'linked' => isset( $linked[ $id ] ),
 				],
 				$ids
@@ -412,6 +413,10 @@ class Alv {
 			usort( $detail['roster'], static fn( $a, $b ) => strnatcasecmp( $a['name'], $b['name'] ) );
 		}
 		return $detail;
+	}
+
+	private function person_name( int $id ): string {
+		return get_post_type( $id ) === 'person' ? PersonName::get( $id ) : 'Verwijderde persoon #' . $id;
 	}
 
 	private function totals( int $id, string $key, array $question ) {
