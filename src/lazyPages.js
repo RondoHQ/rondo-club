@@ -89,3 +89,5 @@ export const AccountSwitcher = lazy(() => import('@/pages/AccountSwitcher'));
 export const ClubDirectory = lazy(() => import('./pages/ClubDirectory'));
 
 export const Surveys = lazy(() => import('@/pages/Surveys/Surveys'));
+
+export const Alv = lazy(() => import('@/pages/Alv/Alv'));
