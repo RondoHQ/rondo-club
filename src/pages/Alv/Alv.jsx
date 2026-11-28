@@ -122,15 +122,14 @@ function VotingDialog({ questions, act, pending, error, onClose }) {
   useEffect(() => {
     const element = dialog.current;
     if (element && !element.open) element.showModal();
-    return () => element?.close();
   }, []);
 
   return (
     <dialog ref={dialog} aria-labelledby="alv-voting-title" onClose={onClose}
-      className="fixed inset-0 m-auto max-h-[85dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-xl border border-slate-200 bg-white p-5 text-slate-900 shadow-xl backdrop:bg-slate-950/60 sm:p-6">
+      className="fixed inset-0 m-auto max-h-[85dvh] w-11/12 max-w-xl overflow-y-auto rounded-xl border border-slate-200 bg-white p-5 text-slate-900 shadow-xl backdrop:bg-slate-950/60 sm:p-6">
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2 id="alv-voting-title" className="text-xl font-semibold">Stemmen</h2>
-        <button type="button" className="btn-secondary" onClick={onClose}>Sluiten</button>
+        <button type="button" className="btn-secondary" onClick={() => dialog.current?.close()}>Sluiten</button>
       </div>
       {error && <p role="alert" className="mb-3 text-red-700">{error}</p>}
       {question ? (
