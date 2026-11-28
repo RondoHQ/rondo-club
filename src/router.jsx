@@ -697,6 +697,8 @@ const router = wrapCreateBrowserRouter(createBrowserRouter)([
 
           { path: 'communicatie', element: <CapabilityRoute checkAccess={canAccessCommunication}><Communication /></CapabilityRoute> },
           { path: 'alv/:id?', element: <Alv /> },
+          { path: 'alv/:id/pagina/:pageId', element: <Alv /> },
+          { path: 'alv/:id/secretaris', element: <Alv secretary /> },
           { path: 'communicatie/enquetes', element: <CapabilityRoute checkAccess={(user) => user?.can_access_enquetes || user?.can_access_enquete_resultaten}><Surveys /></CapabilityRoute> },
           { path: 'communicatie/enquetes/:id', element: <CapabilityRoute checkAccess={(user) => user?.can_access_enquetes || user?.can_access_enquete_resultaten}><Surveys /></CapabilityRoute> },
           { path: 'communicatie/planning', element: <CapabilityRoute checkAccess={(user) => user?.can_access_communicatie}><Planning /></CapabilityRoute> },
