@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Let ALV managers delete draft voting questions before they are opened.
 
+### Changed
+
+- Close all online votes automatically when the ALV starts and include ballots cast with an active membership at the time of voting.
+
 ## [35.178.0] - 2026-11-28
 
 ### Added

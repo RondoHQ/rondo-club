@@ -198,6 +198,15 @@ class Alv {
 				$meeting['frozen_at'] = time();
 				$row->frozen          = 1;
 			}
+			if ( time() >= (int) $row->starts ) {
+				foreach ( $meeting['questions'] as &$question ) {
+					if ( $question['state'] === 'open' ) {
+						$question['state'] = 'closed';
+						$question['ends']  = (int) $row->starts;
+					}
+				}
+				unset( $question );
+			}
 			$result = $action( $meeting, $row );
 			if ( is_wp_error( $result ) ) {
 				return $result;
@@ -277,7 +286,7 @@ class Alv {
 				}
 			}
 			$input += array_fill_keys(
-				[ 'action', 'title', 'starts', 'ends', 'options', 'secret', 'question', 'choice', 'page', 'version', 'html', 'result_question', 'person', 'present' ],
+				[ 'action', 'title', 'starts', 'options', 'secret', 'question', 'choice', 'page', 'version', 'html', 'result_question', 'person', 'present' ],
 				null
 			);
 			$result = $id
@@ -298,7 +307,7 @@ class Alv {
 		}
 		foreach ( $rows as $row ) {
 			$meeting  = json_decode( $row->document, true, 512, JSON_THROW_ON_ERROR );
-			$eligible = $person && in_array( $person, $meeting['roster'] ?? [], true );
+			$eligible = time() < (int) $row->starts ? $member : $person && in_array( $person, $meeting['roster'] ?? [], true );
 			if ( ! $member && ! $staff && ! $eligible ) {
 				continue;
 			}
@@ -378,9 +387,16 @@ class Alv {
 			}
 			$question['id']       = $key;
 			$question['voted']    = in_array( $key, $votes, true );
-			$question['can_vote'] = $eligible;
-			if ( $question['state'] === 'open' && time() >= $question['ends'] ) {
-				$question['state'] = 'expired';
+			$before_start         = time() < (int) $row->starts;
+			$question['can_vote'] = $eligible && $before_start;
+			if ( $rights['manage'] && $question['state'] === 'draft' ) {
+				$question['can_open'] = $before_start;
+			}
+			if ( $question['state'] === 'open' ) {
+				$question['ends'] = (int) $row->starts;
+				if ( ! $before_start ) {
+					$question['state'] = 'closed';
+				}
 			}
 			if ( $rights['manage'] ) {
 				$question['turnout'] = (int) $wpdb->get_var(
@@ -438,7 +454,7 @@ class Alv {
 			'frozen'          => (bool) $row->frozen,
 		];
 		if ( $rights['manage'] ) {
-			$ids              = $meeting['roster'] ?? $this->roster( (int) $row->starts );
+			$ids              = $meeting['roster'] ?? $this->roster( time() );
 			$accounts         = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT meta_value FROM $wpdb->usermeta WHERE meta_key = %s", 'rondo_linked_person_id' ) );
 			$linked           = array_fill_keys( array_map( 'intval', $accounts ), true );
 			$detail['roster'] = array_map(
@@ -452,7 +468,7 @@ class Alv {
 			usort( $detail['roster'], static fn( $a, $b ) => strnatcasecmp( $a['name'], $b['name'] ) );
 		}
 		if ( $rights['secretary'] ) {
-			$roster       = $meeting['roster'] ?? $this->roster( (int) $row->starts );
+			$roster       = $meeting['roster'] ?? $this->roster( time() );
 			$participants = $wpdb->get_results(
 				$wpdb->prepare( "SELECT person_id, question_id FROM $table WHERE meeting_id = %d", $row->id )
 			);
@@ -460,7 +476,7 @@ class Alv {
 			foreach ( $participants as $participant ) {
 				$by_person[ (int) $participant->person_id ][] = $participant->question_id;
 			}
-			$people              = array_unique( array_merge( $roster, array_keys( $meeting['attendance'] ?? [] ) ) );
+			$people              = array_unique( array_merge( $roster, array_keys( $meeting['attendance'] ?? [] ), array_keys( $by_person ) ) );
 			$detail['secretary'] = [
 				'questions' => array_filter( array_map( static fn( $question ) => $question['state'] === 'draft' ? null : $question['title'], $meeting['questions'] ) ),
 				'people'    => array_map(
@@ -502,7 +518,7 @@ class Alv {
 		if ( $action === 'vote' ) {
 			return $this->vote( $meeting, $row, $request, $person );
 		}
-		if ( in_array( $action, [ 'reschedule', 'question', 'open', 'close', 'delete_question' ], true ) ) {
+		if ( in_array( $action, [ 'reschedule', 'question', 'open', 'delete_question' ], true ) ) {
 			if ( ! $rights['manage'] ) {
 				return $this->error( 'Je mag deze stemming niet beheren.', 403 );
 			}
@@ -582,19 +598,10 @@ class Alv {
 			return [ 'ok' => true ];
 		}
 
-		if ( $action === 'open' ) {
-			$ends = $this->start_time( $request['ends'] );
-			if ( ! $row->frozen || $question['state'] !== 'draft' || $ends <= time() ) {
-				return $this->error( 'Open de stemming na de ALV-start en kies een toekomstige sluitingstijd.' );
-			}
-			$question['ends']  = $ends;
-			$question['state'] = 'open';
-		} else {
-			if ( $question['state'] !== 'open' ) {
-				return $this->error( 'De stemming kan niet worden gesloten.' );
-			}
-			$question['state'] = 'closed';
+		if ( $question['state'] !== 'draft' || time() >= (int) $row->starts ) {
+			return $this->error( 'Open de stemming vóór de ALV-start.' );
 		}
+		$question['state']            = 'open';
 		$meeting['questions'][ $key ] = $question;
 		return [ 'ok' => true ];
 	}
@@ -603,19 +610,22 @@ class Alv {
 		global $wpdb;
 		$key      = (string) $request['question'];
 		$question = $meeting['questions'][ $key ] ?? null;
-		if ( ! $person || ! in_array( $person, $meeting['roster'] ?? [], true ) ) {
-			return $this->error( 'Je staat niet op de stemlijst.', 403 );
-		}
-		$table = $this->table( 'participation' );
-		if ( $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM $table WHERE meeting_id = %d AND question_id = %s AND person_id = %d", $row->id, $key, $person ) ) ) {
+		$table    = $this->table( 'participation' );
+		if ( $person && $wpdb->get_var( $wpdb->prepare( "SELECT 1 FROM $table WHERE meeting_id = %d AND question_id = %s AND person_id = %d", $row->id, $key, $person ) ) ) {
 			return [ 'received' => true ];
 		}
-		if ( ! $question || $question['state'] !== 'open' || time() >= $question['ends'] ) {
+		if ( ! $question || $question['state'] !== 'open' || time() >= (int) $row->starts ) {
 			return $this->error( 'De stemming is gesloten.' );
+		}
+		if ( ! $person || ! $this->is_member( $person, wp_date( 'Y-m-d' ) ) ) {
+			return $this->error( 'Je hebt een actief lidmaatschap nodig om te stemmen.', 403 );
 		}
 		$choice = filter_var( $request['choice'], FILTER_VALIDATE_INT );
 		if ( $choice === false || ! isset( $question['options'][ $choice ] ) ) {
 			return $this->error( 'Kies een geldige antwoordoptie.', 400 );
+		}
+		if ( time() >= (int) $row->starts ) {
+			return $this->error( 'De stemming is gesloten.' );
 		}
 		$previous = $wpdb->suppress_errors( true );
 		try {
