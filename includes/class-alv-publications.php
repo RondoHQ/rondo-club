@@ -82,6 +82,9 @@ class Publications {
 			echo '<p><label>' . esc_html( $label_text ) . ' <select name="page">';
 
 			foreach ( $pages as $page ) {
+				if ( $action === 'front' && ! empty( $page['hidden'] ) ) {
+					continue;
+				}
 				echo '<option value="' . esc_attr( (string) $page['id'] ) . '"' . selected( $selected, $page['id'], false ) . '>' . esc_html( $page['title'] ) . '</option>';
 			}
 			echo '</select></label>';
@@ -89,6 +92,13 @@ class Publications {
 				echo ' <label>PDF (max. 5 MB) <input type="file" name="pdf" accept="application/pdf,.pdf" required></label>';
 			}
 			echo '</p>';
+		}
+		if ( $action === 'navigation' ) {
+			echo '<fieldset><legend>Toon in de boom</legend>';
+			foreach ( $pages as $page ) {
+				echo '<p><label><input type="checkbox" name="visible[]" value="' . esc_attr( (string) $page['id'] ) . '"' . checked( empty( $page['hidden'] ), true, false ) . '> ' . esc_html( $page['title'] ) . '</label></p>';
+			}
+			echo '</fieldset>';
 		}
 		submit_button( $label, $action === 'publish' ? 'primary' : 'secondary', 'submit', true );
 		echo '</form>';
@@ -115,6 +125,9 @@ class Publications {
 			echo '<p>Wijzig de pagina’s en hun bovenliggende pagina in WordPress. De leden zien de laatst gepubliceerde versie van de hele structuur.</p>';
 			echo '<p><a href="' . esc_url( admin_url( 'post-new.php?post_type=' . self::PAGE ) ) . '">Pagina toevoegen</a> · <a href="' . esc_url( admin_url( 'edit.php?post_type=' . self::PAGE ) ) . '">Alle WordPress-ALV-pagina’s beheren</a></p><ul>';
 			foreach ( $snapshot['pages'] as $page ) {
+				if ( ! empty( $page['hidden'] ) ) {
+					continue;
+				}
 				echo '<li style="margin-left:' . esc_attr( (string) ( 20 * $page['depth'] ) ) . 'px"><a href="' . esc_url( get_edit_post_link( $page['id'], 'raw' ) ) . '">' . esc_html( $page['title'] ) . '</a>';
 				foreach ( $page['files'] as $file ) {
 					echo ' · <a href="' . esc_url( $file['url'] ) . '">' . esc_html( $file['title'] ) . '</a>';
@@ -122,7 +135,11 @@ class Publications {
 				echo '<details><summary>Voorvertoning</summary>' . wp_kses_post( $page['html'] ) . '</details></li>';
 			}
 			echo '</ul>';
-			$this->form( $id, 'front', 'Hoofdpagina opslaan', $snapshot['pages'], '', $snapshot['front'] ?? $publication['root'] );
+			echo '<details><summary>Boom aanpassen</summary>';
+			$this->form( $id, 'navigation', 'Boom opslaan', $snapshot['pages'] );
+			echo '</details>';
+			$visible = array_filter( $snapshot['pages'], static fn( $page ) => empty( $page['hidden'] ) );
+			$this->form( $id, 'front', 'Hoofdpagina opslaan', $snapshot['pages'], '', $snapshot['front'] ?? (int) array_key_first( $visible ) );
 			echo '<p>Voeg <code>[alv_stemmingen]</code> toe op een eigen regel in een ALV-pagina om de stemmingen daar weer te geven.</p>';
 			$this->form( $id, 'upload', 'Afgeschermde PDF toevoegen', $snapshot['pages'] );
 			$this->form( $id, 'sync_links', 'Oude PDF-links vervangen door afgeschermde links' );
@@ -263,12 +280,22 @@ class Publications {
 				$stack[] = [ $child, $depth + 1 ];
 			}
 		}
+		$hidden = $publication['hidden'] ?? [];
+		$level  = [];
+		foreach ( $pages as $id => &$entry ) {
+			$entry['depth'] = $level[ $entry['parent'] ] ?? 0;
+			if ( in_array( $id, $hidden, true ) ) {
+				$entry['hidden'] = true;
+			}
+			$level[ $id ] = $entry['depth'] + ( empty( $entry['hidden'] ) ? 1 : 0 );
+		}
+		unset( $entry );
 		$snapshot = [
 			'pages' => $pages,
 			'files' => $file_ids,
 		];
 		$front    = (int) ( $publication['front'] ?? $root );
-		if ( $front !== $root && isset( $pages[ $front ] ) ) {
+		if ( $front !== $root && isset( $pages[ $front ] ) && empty( $pages[ $front ]['hidden'] ) ) {
 			$snapshot['front'] = $front;
 		}
 		return $snapshot;
@@ -314,9 +341,10 @@ class Publications {
 		$action   = isset( $_POST['operation'] ) ? sanitize_key( wp_unslash( $_POST['operation'] ) ) : '';
 		$page     = isset( $_POST['page'] ) ? absint( $_POST['page'] ) : 0;
 		$expected = isset( $_POST['snapshot'] ) ? sanitize_text_field( wp_unslash( $_POST['snapshot'] ) ) : '';
+		$visible  = isset( $_POST['visible'] ) && is_array( $_POST['visible'] ) ? array_map( 'absint', $_POST['visible'] ) : [];
 		$result   = $this->alv->locked(
 			$id,
-			function ( &$meeting ) use ( $id, $action, $page, $expected ) {
+			function ( &$meeting ) use ( $id, $action, $page, $expected, $visible ) {
 				if ( $action === 'initialize' ) {
 					return $this->initialize( $meeting );
 				}
@@ -328,8 +356,16 @@ class Publications {
 				if ( is_wp_error( $snapshot ) ) {
 					return $snapshot;
 				}
+				if ( $action === 'navigation' ) {
+					$ids = array_keys( $snapshot['pages'] );
+					if ( ! array_intersect( $ids, $visible ) ) {
+						return new \WP_Error( 'rondo_alv_navigation', 'Laat ten minste één ALV-pagina zichtbaar.' );
+					}
+					$publication['hidden'] = array_values( array_diff( $ids, $visible ) );
+					return true;
+				}
 				if ( $action === 'front' ) {
-					if ( ! isset( $snapshot['pages'][ $page ] ) ) {
+					if ( ! isset( $snapshot['pages'][ $page ] ) || ! empty( $snapshot['pages'][ $page ]['hidden'] ) ) {
 						return new \WP_Error( 'rondo_alv_front', 'Kies een pagina uit deze ALV.' );
 					}
 					$publication['front'] = $page;

@@ -177,14 +177,15 @@ function EmbeddedVoting({ meeting, timezone, act, pending, preview }) {
 }
 
 function Publication({ pages, meetingId, selectedId, frontId, voting, publishedPreview = false }) {
-  const current = pages.find((page) => String(page.id) === selectedId)
-    ?? pages.find((page) => page.id === frontId) ?? pages[0];
+  const visiblePages = pages.filter((page) => !page.hidden);
+  const current = visiblePages.find((page) => String(page.id) === selectedId)
+    ?? visiblePages.find((page) => page.id === frontId) ?? visiblePages[0];
   if (!current) return null;
   return (
     <section className="space-y-4">
       <nav aria-label="ALV-stukken">
         <ul className="space-y-1">
-          {pages.map((page) => (
+          {visiblePages.map((page) => (
             <li key={page.id} style={{ marginInlineStart: `${page.depth}rem` }}>
               <Link aria-current={page.id === current.id ? 'page' : undefined} className="underline" to={`/alv/${meetingId}/pagina/${page.id}${publishedPreview ? '?weergave=leden' : ''}`}>{page.title}</Link>
             </li>
@@ -281,7 +282,7 @@ export default function Alv({ secretary = false }) {
   const pagePath = pageId ? `/alv/${id}/pagina/${pageId}` : `/alv/${id}`;
   const documentTree = showingDraft ? meeting.draft_tree : meeting?.tree;
   const frontId = showingDraft ? meeting.draft_front : meeting?.published_front;
-  const votingEmbedded = documentTree?.some((page) => votingShortcode.test(page.html));
+  const votingEmbedded = documentTree?.some((page) => !page.hidden && votingShortcode.test(page.html));
   const closedQuestions = meeting?.questions.filter((question) => question.state === 'closed') ?? [];
 
   if (secretary) {

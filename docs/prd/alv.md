@@ -50,7 +50,8 @@ volledige versie en vervalt zodra pagina’s of bijlagen veranderen. Eén
 publicatieactie vervangt de complete ledenweergave.
 
 Kies in het ALV-beheer één hoofdpagina uit de hiërarchie. Rondo opent die
-pagina standaard bij de ALV. Zet `[alv_stemmingen]` op een eigen regel om
+pagina standaard bij de ALV. Via **Boom aanpassen** kunnen tussenpagina’s uit
+het overzicht worden gehaald, terwijl hun onderliggende stukken zichtbaar blijven. Zet `[alv_stemmingen]` op een eigen regel om
 de stemvragen op die plek te tonen. Stemrecht blijft gekoppeld aan de
 vastgelegde stemlijst.
 
