@@ -515,7 +515,7 @@ class Alv {
 		if ( $action === 'vote' ) {
 			return $this->vote( $meeting, $row, $request, $person );
 		}
-		if ( in_array( $action, [ 'reschedule', 'question', 'delete_question', 'edit_question', 'move_question' ], true ) ) {
+		if ( in_array( $action, [ 'reschedule', 'question', 'delete_question', 'edit_question', 'move_question', 'draft_question' ], true ) ) {
 			if ( ! $rights['manage'] ) {
 				return $this->error( 'Je mag deze stemming niet beheren.', 403 );
 			}
@@ -631,6 +631,15 @@ class Alv {
 			}
 			return [ 'ok' => true ];
 		}
+		if ( $action === 'draft_question' ) {
+			if ( $question['state'] !== 'open' || time() >= (int) $row->starts || $this->turnout( (int) $row->id, $key ) !== 0 ) {
+				return $this->error( 'Alleen een open stemvraag zonder uitgebrachte stemmen kan terug naar concept.' );
+			}
+			$meeting['questions'][ $key ]['state']    = 'draft';
+			$meeting['questions'][ $key ]['revision'] = wp_generate_uuid4();
+			return [ 'ok' => true ];
+		}
+
 		if ( $action === 'delete_question' ) {
 			if ( $question['state'] !== 'draft' ) {
 				return $this->error( 'Alleen conceptvragen kunnen worden verwijderd.' );
