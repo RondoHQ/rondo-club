@@ -502,7 +502,7 @@ class Alv {
 		if ( $action === 'vote' ) {
 			return $this->vote( $meeting, $row, $request, $person );
 		}
-		if ( in_array( $action, [ 'reschedule', 'question', 'open', 'close' ], true ) ) {
+		if ( in_array( $action, [ 'reschedule', 'question', 'open', 'close', 'delete_question' ], true ) ) {
 			if ( ! $rights['manage'] ) {
 				return $this->error( 'Je mag deze stemming niet beheren.', 403 );
 			}
@@ -574,6 +574,14 @@ class Alv {
 		if ( ! $question ) {
 			return $this->error( 'Stemvraag niet gevonden.', 404 );
 		}
+		if ( $action === 'delete_question' ) {
+			if ( $question['state'] !== 'draft' ) {
+				return $this->error( 'Alleen conceptvragen kunnen worden verwijderd.' );
+			}
+			unset( $meeting['questions'][ $key ] );
+			return [ 'ok' => true ];
+		}
+
 		if ( $action === 'open' ) {
 			$ends = $this->start_time( $request['ends'] );
 			if ( ! $row->frozen || $question['state'] !== 'draft' || $ends <= time() ) {

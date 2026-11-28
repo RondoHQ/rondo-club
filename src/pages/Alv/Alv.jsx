@@ -75,6 +75,11 @@ function Question({ question, manage, timezone, act, pending, embedded = false, 
         <form className="flex flex-wrap items-end gap-3" onSubmit={(event) => act('open', { ...fields(event), question: question.id })}>
           <label>Sluiting ({timezone})<input type="datetime-local" className="input block" name="ends" required /></label>
           <button className="btn-primary" disabled={pending}>Stemming openen</button>
+          <button type="button" className="btn-secondary" disabled={pending} onClick={() => {
+            if (window.confirm(`Wil je de conceptvraag “${question.title}” verwijderen?`)) {
+              act('delete_question', { question: question.id });
+            }
+          }}>Conceptvraag verwijderen</button>
         </form>
       )}
       {manage && ['open', 'expired'].includes(question.state) && (
