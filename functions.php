@@ -286,6 +286,7 @@ function rondo_init() {
 	\Rondo\Data\SecretMigration::run();
 	new PostTypes();
 	new \Rondo\Surveys\Surveys();
+	new \Rondo\Alv\Alv();
 	new \Rondo\Surveys\PublicSurveyPage();
 	new Taxonomies();
 	new \Rondo\Fields\FieldSchema();

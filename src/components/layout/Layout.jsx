@@ -70,6 +70,7 @@ import '@/styles/app-shell-brand.css';
 
 const navigation = [
   { name: 'Mijn inschrijftaken', href: '/vrijwillig?tab=mine', icon: HeartHandshake, personal: true },
+  { name: 'ALV', href: '/alv', icon: CalendarDays, personal: true },
   { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, requiresLinkedPerson: true, personal: true },
   { name: 'Mijn commissies', href: '/mijn-commissies', icon: Users, requiresMyCommittees: true, personal: true },
   { name: 'Mijn team', href: '/mijn-team', icon: Shield, requiresMyTeams: true, personal: true },
@@ -806,6 +807,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback, showFeedbackIntro, 
     if (path.startsWith('/feedback')) return 'Feedback';
     if (path.startsWith('/communicatie/nieuwsbrief-instellingen')) return 'Nieuwsbriefinstellingen';
     if (/^\/communicatie\/planning\/\d+\/nieuwsbrief/.test(path)) return 'Nieuwsbrief';
+    if (path === '/alv' || path.startsWith('/alv/')) return 'ALV';
     if (path.startsWith('/communicatie/enquetes')) return 'Enquêtes';
     if (path.startsWith('/communicatie/planning')) return 'Planning';
     if (path.startsWith('/communicatie')) return 'Communicatie';

@@ -44,6 +44,10 @@ class UserRoles {
 		'enquetes'           => 'Enquêtes beheren',
 		'enquete_resultaten' => 'Enquêteresultaten bekijken en exporteren',
 		'kassaomzet'         => 'Kassaomzet bekijken',
+		'rondo_alv_manage'   => 'ALV-stemmingen beheren',
+		'rondo_alv_edit'     => 'ALV-pagina’s redigeren',
+		'rondo_alv_approve'  => 'ALV-pagina’s goedkeuren',
+		'rondo_alv_publish'  => 'ALV-pagina’s publiceren',
 	];
 
 	/** Check one independently assignable section capability. */
