@@ -42,19 +42,25 @@ conclusie desgewenst vast in de tekst bij de uitslag.
 
 ## Ledenpagina’s
 
-Een redacteur maakt een HTML-concept of een pagina met de vastgestelde uitslag.
-De server schoont HTML op. Een specifieke versie doorloopt concept, ter
-goedkeuring, goedgekeurd en gepubliceerd. Bij wijzigingen blijft de vorige
-gepubliceerde versie zichtbaar voor leden totdat de nieuwe versie is
-goedgekeurd en gepubliceerd. Standaard kunnen het bestuur en beheerders
-stemmen beheren en pagina’s redigeren. Goedkeuren en publiceren zijn standaard
-beheerdersrechten, met afzonderlijk toekenbare WordPress-capabilities
-`rondo_alv_approve` en `rondo_alv_publish`. Redactie en stembeheer hebben ook
-elk een afzonderlijke capability.
+Beheerders beheren de hiërarchie in WordPress onder **ALV-pagina’s**. Een ALV
+heeft een hoofdpagina met onderliggende pagina’s voor bijvoorbeeld de agenda,
+het jaar en de financiën. Bestaande Rondo-concepten kunnen eenmaal worden
+overgenomen. WordPress bewaart de bewerkbare versie. Goedkeuring geldt voor de
+volledige versie en vervalt zodra pagina’s of bijlagen veranderen. Eén
+publicatieactie vervangt de complete ledenweergave.
 
-Leden lezen gepubliceerde pagina’s in Persoonlijk → ALV, op basis van hun huidige
-lidmaatschap. De ALV-module biedt geen openbare publicatie of upload van
-bijlagen.
+PDF’s tot 5 MB zijn per pagina toe te voegen in het ALV-beheer. Rondo bewaart
+de bestanden buiten de openbare mediabibliotheek. De download controleert
+lidmaatschap en of de specifieke PDF in de live versie staat. Beheerders
+kunnen ook conceptbijlagen bekijken.
+
+## Presentielijst en stemdeelname
+
+Het recht **ALV-presentielijst en stemdeelname beheren** geeft toegang tot de
+secretarispagina in Rondo. Daar kan de secretaris leden op de stemlijst als
+aanwezig afvinken, overige aanwezigen bij naam registreren en per stemvraag
+zien wie al heeft gestemd. De pagina toont deelname en aanwezigheid. De
+stemkeuzes worden via deze pagina niet opgevraagd.
 
 ## Proefvergadering
 

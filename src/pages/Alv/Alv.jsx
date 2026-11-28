@@ -142,8 +142,81 @@ function Page({ page, rights, closedQuestions, act, pending }) {
   );
 }
 
-export default function Alv() {
-  const { id } = useParams();
+function Publication({ pages, meetingId, selectedId }) {
+  const current = pages.find((page) => String(page.id) === selectedId) ?? pages[0];
+  if (!current) return null;
+  return (
+    <section className="space-y-4">
+      <nav aria-label="ALV-stukken">
+        <ul className="space-y-1">
+          {pages.map((page) => (
+            <li key={page.id} style={{ marginInlineStart: `${page.depth}rem` }}>
+              <Link aria-current={page.id === current.id ? 'page' : undefined} className="underline" to={`/alv/${meetingId}/pagina/${page.id}`}>{page.title}</Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <article className="card space-y-3 p-5">
+        <h2 className="text-lg font-semibold">{current.title}</h2>
+        <div className="prose max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: current.html }} />
+        {current.files.length > 0 && (
+          <ul className="space-y-1">
+            {current.files.map((file) => <li key={file.id}><a className="underline" href={file.url}>{file.title}</a></li>)}
+          </ul>
+        )}
+      </article>
+    </section>
+  );
+}
+
+function Secretary({ meeting, act, pending }) {
+  const [search, setSearch] = useState('');
+  const [presentOnly, setPresentOnly] = useState(false);
+  const [question, setQuestion] = useState('');
+  const { people, guests, questions } = meeting.secretary;
+  const visible = people.filter((person) => (!presentOnly || person.present)
+    && person.name.toLocaleLowerCase('nl-NL').includes(search.trim().toLocaleLowerCase('nl-NL')));
+  return (
+    <section className="space-y-4">
+      <p>{people.filter((person) => person.present).length + guests.length} aanwezig</p>
+      <div className="flex flex-wrap items-end gap-4">
+        <label>Zoek op naam<input className="input block" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
+        <label>Stemvraag
+          <select className="input block" value={question} onChange={(event) => setQuestion(event.target.value)}>
+            <option value="">Alle stemvragen</option>
+            {Object.entries(questions).map(([id, title]) => <option value={id} key={id}>{title}</option>)}
+          </select>
+        </label>
+        <label className="flex items-center gap-2"><input type="checkbox" checked={presentOnly} onChange={(event) => setPresentOnly(event.target.checked)} />Alleen aanwezigen</label>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead><tr><th>Naam</th><th>Aanwezig</th><th>Stemdeelname</th></tr></thead>
+          <tbody>
+            {visible.map((person) => (
+              <tr key={person.id} className="border-b">
+                <th scope="row" className="py-2 font-normal">{person.name}</th>
+                <td><input type="checkbox" aria-label={`Aanwezig: ${person.name}`} checked={person.present} disabled={pending} onChange={(event) => act('attendance', { person: person.id, present: event.target.checked })} /></td>
+                <td>{person.eligible ? (question ? (person.voted.includes(question) ? 'Gestemd' : 'Nog niet gestemd') : `${person.voted.length} van ${Object.keys(questions).length}`) : 'Geen stemrecht'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="card space-y-3 p-4">
+        <h2 className="font-semibold">Overige aanwezigen</h2>
+        <form className="flex flex-wrap items-end gap-2" onSubmit={(event) => act('guest_add', fields(event))}>
+          <label>Naam<input className="input block" name="title" required /></label>
+          <button className="btn-secondary" disabled={pending}>Aanwezige toevoegen</button>
+        </form>
+        <ul>{guests.map((guest) => <li key={guest.id} className="flex items-center justify-between gap-2 py-2">{guest.name}<button type="button" className="btn-secondary" disabled={pending} onClick={() => act('guest_remove', { person: guest.id })}>Verwijderen</button></li>)}</ul>
+      </div>
+    </section>
+  );
+}
+
+export default function Alv({ secretary = false }) {
+  const { id, pageId } = useParams();
   const navigate = useNavigate();
   const client = useQueryClient();
   const url = id ? `${endpoint}/${id}` : endpoint;
@@ -167,6 +240,17 @@ export default function Alv() {
   const { meetings, rights, timezone } = query.data;
   const meeting = id ? meetings[0] : null;
   const closedQuestions = meeting?.questions.filter((question) => question.state === 'closed') ?? [];
+
+  if (secretary) {
+    return (
+      <div className="space-y-5">
+        <Link className="underline" to={`/alv/${id}`}>Terug naar de ALV</Link>
+        <h1 className="text-2xl font-semibold">Presentielijst en stemdeelname</h1>
+        {mutation.isError && <p role="alert">{mutation.error?.response?.data?.message ?? 'De wijziging kon niet worden opgeslagen.'}</p>}
+        {meeting?.secretary ? <Secretary meeting={meeting} act={act} pending={pending} /> : <p>Je hebt geen toegang tot de presentielijst.</p>}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -194,6 +278,7 @@ export default function Alv() {
       ) : (
         <>
           <p>Start {localTime(meeting.starts, timezone)}</p>
+          {meeting.secretary && <Link className="btn-secondary inline-flex" to={`/alv/${id}/secretaris`}>Presentielijst en stemdeelname</Link>}
           {rights.manage && (
             <section className="card space-y-3 p-5">
               <h2 className="font-semibold">Stemlijst</h2>
@@ -233,11 +318,13 @@ export default function Alv() {
           )}
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">ALV-pagina’s</h2>
-            {meeting.pages.length === 0 && <p>Er zijn geen pagina’s beschikbaar.</p>}
+            {meeting.admin_pages_url && <a className="underline" href={meeting.admin_pages_url}>ALV-pagina’s beheren in WordPress</a>}
+            {meeting.tree?.length > 0 && <Publication pages={meeting.tree} meetingId={id} selectedId={pageId} />}
+            {meeting.pages.length === 0 && !meeting.tree?.length && <p>Er zijn geen pagina’s beschikbaar.</p>}
             {meeting.pages.map((page) => (
-              <Page key={page.id} page={page} rights={rights} closedQuestions={closedQuestions} act={act} pending={pending} />
+              <Page key={page.id} page={page} rights={meeting.wordpress_pages ? {} : rights} closedQuestions={closedQuestions} act={act} pending={pending} />
             ))}
-            {rights.edit && (
+            {rights.edit && !meeting.wordpress_pages && (
               <details className="card p-5">
                 <summary>Nieuwe ALV-pagina</summary>
                 <PageForm closedQuestions={closedQuestions} act={act} pending={pending} />

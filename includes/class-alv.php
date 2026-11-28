@@ -13,6 +13,7 @@ class Alv {
 	private const MEMBERSHIP_META = [ 'type-lid', 'former_member', 'lid-sinds', 'lid-tot' ];
 
 	public function __construct() {
+		new Publications( $this );
 		add_action( 'rest_api_init', [ $this, 'routes' ] );
 		add_filter( 'rest_post_dispatch', [ $this, 'private_response' ], 10, 3 );
 		add_action( 'rondo_alv_start', [ $this, 'freeze_due' ] );
@@ -23,7 +24,7 @@ class Alv {
 		add_filter( 'pre_delete_post', [ $this, 'before_person_delete' ], 10, 2 );
 	}
 
-	private function table( string $name ): string {
+	public function table( string $name ): string {
 		global $wpdb;
 		return $wpdb->prefix . 'rondo_alv_' . $name;
 	}
@@ -73,11 +74,33 @@ class Alv {
 	private function permissions(): array {
 		$board = UserRoles::can_access_board();
 		return [
-			'manage'  => $board || UserRoles::can_access_section( 'rondo_alv_manage' ),
-			'edit'    => $board || UserRoles::can_access_section( 'rondo_alv_edit' ),
-			'approve' => UserRoles::can_access_section( 'rondo_alv_approve' ),
-			'publish' => UserRoles::can_access_section( 'rondo_alv_publish' ),
+			'manage'    => $board || UserRoles::can_access_section( 'rondo_alv_manage' ),
+			'edit'      => $board || UserRoles::can_access_section( 'rondo_alv_edit' ),
+			'approve'   => UserRoles::can_access_section( 'rondo_alv_approve' ),
+			'publish'   => UserRoles::can_access_section( 'rondo_alv_publish' ),
+			'secretary' => UserRoles::can_access_section( 'rondo_alv_secretary' ),
 		];
+	}
+
+	public function current_member(): bool {
+		$id = $this->person();
+		return $id && $this->is_member( $id, wp_date( 'Y-m-d' ) );
+	}
+
+	public function meeting_documents( int $id = 0 ): array {
+		global $wpdb;
+		if ( get_option( 'rondo_alv_schema' ) !== '1' ) {
+			return [];
+		}
+		$table    = $this->table( 'meetings' );
+		$rows     = $id
+			? $wpdb->get_results( $wpdb->prepare( "SELECT id, document FROM $table WHERE id = %d", $id ) )
+			: $wpdb->get_results( "SELECT id, document FROM $table ORDER BY starts DESC" );
+		$meetings = [];
+		foreach ( $rows as $row ) {
+			$meetings[ (int) $row->id ] = json_decode( $row->document, true, 512, JSON_THROW_ON_ERROR );
+		}
+		return $meetings;
 	}
 
 	private function person(): int {
@@ -153,7 +176,7 @@ class Alv {
 		return true;
 	}
 
-	private function locked( int $id, callable $action ) {
+	public function locked( int $id, callable $action ) {
 		global $wpdb;
 		$table = $this->table( 'meetings' );
 		if ( $wpdb->query( 'START TRANSACTION' ) === false ) {
@@ -252,7 +275,7 @@ class Alv {
 				}
 			}
 			$input += array_fill_keys(
-				[ 'action', 'title', 'starts', 'ends', 'options', 'secret', 'question', 'choice', 'page', 'version', 'html', 'result_question' ],
+				[ 'action', 'title', 'starts', 'ends', 'options', 'secret', 'question', 'choice', 'page', 'version', 'html', 'result_question', 'person', 'present' ],
 				null
 			);
 			$result = $id
@@ -381,7 +404,13 @@ class Alv {
 			$questions[] = $question;
 		}
 		$pages = [];
-		foreach ( $meeting['pages'] as $key => $page ) {
+		$tree  = $meeting['publication']['live']['pages'] ?? [];
+		if ( $member || current_user_can( 'manage_options' ) ) {
+			$tree = array_values( $tree );
+		} else {
+			$tree = [];
+		}
+		foreach ( isset( $meeting['publication']['live'] ) ? [] : $meeting['pages'] as $key => $page ) {
 			if ( $staff && ( $rights['edit'] || $rights['approve'] || $rights['publish'] ) ) {
 				$version = $page['current'];
 			} elseif ( $member && isset( $page['published'] ) ) {
@@ -393,10 +422,13 @@ class Alv {
 			$pages[]       = $version;
 		}
 		$detail = [
-			'eligible'  => $eligible,
-			'questions' => $questions,
-			'pages'     => $pages,
-			'frozen'    => (bool) $row->frozen,
+			'eligible'        => $eligible,
+			'questions'       => $questions,
+			'pages'           => $pages,
+			'tree'            => $tree,
+			'admin_pages_url' => current_user_can( 'manage_options' ) ? admin_url( 'admin.php?page=rondo-alv-pages&meeting=' . (int) $row->id ) : null,
+			'wordpress_pages' => isset( $meeting['publication']['root'] ),
+			'frozen'          => (bool) $row->frozen,
 		];
 		if ( $rights['manage'] ) {
 			$ids              = $meeting['roster'] ?? $this->roster( (int) $row->starts );
@@ -411,6 +443,32 @@ class Alv {
 				$ids
 			);
 			usort( $detail['roster'], static fn( $a, $b ) => strnatcasecmp( $a['name'], $b['name'] ) );
+		}
+		if ( $rights['secretary'] ) {
+			$roster       = $meeting['roster'] ?? $this->roster( (int) $row->starts );
+			$participants = $wpdb->get_results(
+				$wpdb->prepare( "SELECT person_id, question_id FROM $table WHERE meeting_id = %d", $row->id )
+			);
+			$by_person    = [];
+			foreach ( $participants as $participant ) {
+				$by_person[ (int) $participant->person_id ][] = $participant->question_id;
+			}
+			$people              = array_unique( array_merge( $roster, array_keys( $meeting['attendance'] ?? [] ) ) );
+			$detail['secretary'] = [
+				'questions' => array_filter( array_map( static fn( $question ) => $question['state'] === 'draft' ? null : $question['title'], $meeting['questions'] ) ),
+				'people'    => array_map(
+					fn( $id ) => [
+						'id'       => $id,
+						'name'     => $this->person_name( $id ),
+						'present'  => isset( $meeting['attendance'][ $id ] ),
+						'eligible' => in_array( $id, $roster, true ),
+						'voted'    => $by_person[ $id ] ?? [],
+					],
+					$people
+					),
+				'guests'    => array_values( $meeting['guests'] ?? [] ),
+			];
+			usort( $detail['secretary']['people'], static fn( $a, $b ) => strnatcasecmp( $a['name'], $b['name'] ) );
 		}
 		return $detail;
 	}
@@ -442,6 +500,41 @@ class Alv {
 				return $this->error( 'Je mag deze stemming niet beheren.', 403 );
 			}
 			return $this->manage( $meeting, $row, $request, $action );
+		}
+		if ( in_array( $action, [ 'attendance', 'guest_add', 'guest_remove' ], true ) ) {
+			if ( ! $rights['secretary'] ) {
+				return $this->error( 'Je mag de presentielijst niet beheren.', 403 );
+			}
+			if ( $action === 'guest_remove' ) {
+				unset( $meeting['guests'][ (string) $request['person'] ] );
+			} elseif ( $action === 'guest_add' ) {
+				$name = sanitize_text_field( (string) $request['title'] );
+				if ( $name === '' || strlen( $name ) > 200 ) {
+					return $this->error( 'Vul de naam van de aanwezige in.', 400 );
+				}
+				$key                       = wp_generate_uuid4();
+				$meeting['guests'][ $key ] = [
+					'id'   => $key,
+					'name' => $name,
+				];
+			} else {
+				$id = (int) $request['person'];
+				if ( get_post_type( $id ) !== 'person' && ! isset( $meeting['attendance'][ $id ] ) ) {
+					return $this->error( 'Persoon niet gevonden.', 404 );
+				}
+				if ( rest_sanitize_boolean( $request['present'] ) ) {
+					$meeting['attendance'][ $id ] = [
+						'at' => time(),
+						'by' => get_current_user_id(),
+					];
+				} else {
+					unset( $meeting['attendance'][ $id ] );
+				}
+			}
+			return [ 'ok' => true ];
+		}
+		if ( isset( $meeting['publication']['root'] ) ) {
+			return $this->error( 'Bewerk en publiceer deze ALV-pagina’s in WordPress.' );
 		}
 		return $this->page( $meeting, (int) $row->id, $request, $rights, $action );
 	}

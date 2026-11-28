@@ -35,19 +35,20 @@ class UserRoles {
 
 	/** Independent section rights; never confer club-wide person access. */
 	public const SECTION_CAPABILITIES = [
-		'wedstrijdzaken'     => 'Wedstrijdprogramma op dashboard',
-		'teams'              => 'Alle teams',
-		'commissies'         => 'Commissies',
-		'jubilarissen'       => 'Jubilarissen',
-		'feedback'           => 'Feedbackoverzicht',
-		'communicatie'       => 'Communicatieplanning',
-		'enquetes'           => 'Enquêtes beheren',
-		'enquete_resultaten' => 'Enquêteresultaten bekijken en exporteren',
-		'kassaomzet'         => 'Kassaomzet bekijken',
-		'rondo_alv_manage'   => 'ALV-stemmingen beheren',
-		'rondo_alv_edit'     => 'ALV-pagina’s redigeren',
-		'rondo_alv_approve'  => 'ALV-pagina’s goedkeuren',
-		'rondo_alv_publish'  => 'ALV-pagina’s publiceren',
+		'wedstrijdzaken'      => 'Wedstrijdprogramma op dashboard',
+		'teams'               => 'Alle teams',
+		'commissies'          => 'Commissies',
+		'jubilarissen'        => 'Jubilarissen',
+		'feedback'            => 'Feedbackoverzicht',
+		'communicatie'        => 'Communicatieplanning',
+		'enquetes'            => 'Enquêtes beheren',
+		'enquete_resultaten'  => 'Enquêteresultaten bekijken en exporteren',
+		'kassaomzet'          => 'Kassaomzet bekijken',
+		'rondo_alv_manage'    => 'ALV-stemmingen beheren',
+		'rondo_alv_edit'      => 'ALV-pagina’s redigeren',
+		'rondo_alv_approve'   => 'ALV-pagina’s goedkeuren',
+		'rondo_alv_secretary' => 'ALV-presentielijst en stemdeelname beheren',
+		'rondo_alv_publish'   => 'ALV-pagina’s publiceren',
 	];
 
 	/** Check one independently assignable section capability. */
