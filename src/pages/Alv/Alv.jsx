@@ -87,6 +87,9 @@ function Question({ question, manage, act, pending, embedded = false, preview = 
           }}>Conceptvraag verwijderen</button>
         </div>
       )}
+      {manage && question.state === 'open' && question.can_edit && (
+        <button type="button" className="btn-secondary" disabled={pending} onClick={() => act('draft_question', { question: question.id })}>Terug naar concept</button>
+      )}
       {manage && question.can_edit && (
         <details>
           <summary className="cursor-pointer font-medium">Stemvraag bewerken</summary>
