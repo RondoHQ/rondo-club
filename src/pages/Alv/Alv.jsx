@@ -55,7 +55,7 @@ function Question({ question, manage, act, pending, embedded = false, preview = 
         <form className="space-y-3" onSubmit={(event) => {
           event.preventDefault();
           if (choice !== '' && window.confirm('Wil je deze stem definitief uitbrengen?')) {
-            act('vote', { question: question.id, choice: Number(choice) });
+            act('vote', { question: question.id, choice: Number(choice), version: question.revision });
           }
         }}>
           <fieldset>
@@ -79,6 +79,17 @@ function Question({ question, manage, act, pending, embedded = false, preview = 
             }
           }}>Conceptvraag verwijderen</button>
         </div>
+      )}
+      {manage && question.can_edit && (
+        <details>
+          <summary className="cursor-pointer font-medium">Stemvraag bewerken</summary>
+          <form className="mt-3 space-y-3" onSubmit={(event) => act('edit_question', { ...fields(event), question: question.id, version: question.revision })}>
+            <label className="block">Vraag<input className="input block w-full" name="title" defaultValue={question.title} required /></label>
+            <label className="block">Eén antwoordoptie per regel<textarea className="input block w-full" name="options" rows={4} defaultValue={question.options.join('\n')} required /></label>
+            <label className="flex items-center gap-2"><input type="checkbox" name="secret" value="1" defaultChecked={question.secret} />Geheime stemming</label>
+            <button className="btn-primary" disabled={pending}>Wijzigingen opslaan</button>
+          </form>
+        </details>
       )}
       {manage && question.open_votes?.length > 0 && (
         <details>
@@ -169,7 +180,7 @@ function EmbeddedVoting({ meeting, act, pending, preview }) {
       {questions.some((question) => question.state === 'open') && <p>Online stemmen sluit bij de start van de ALV.</p>}
       {questions.length === 0 && <p>Er zijn geen stemvragen beschikbaar.</p>}
       {questions.map((question) => (
-        <Question key={question.id} question={question} embedded preview={preview} act={act} pending={pending} />
+        <Question key={`${question.id}:${question.revision ?? ''}`} question={question} embedded preview={preview} act={act} pending={pending} />
       ))}
     </section>
   );
@@ -266,6 +277,9 @@ export default function Alv({ secretary = false }) {
   });
   const mutation = useMutation({
     mutationFn: async ({ action, ...data }) => (await api.post(url, { action, ...data })).data,
+    onError: async (error) => {
+      if (error.response?.status === 409) await client.invalidateQueries({ queryKey: ['alv', id] });
+    },
     onSuccess: async (data) => {
       if (!id && data.id) navigate(`/alv/${data.id}`);
       await client.invalidateQueries({ queryKey: ['alv'] });
@@ -386,7 +400,7 @@ export default function Alv({ secretary = false }) {
               {(rights.manage || meeting.questions.some((question) => question.state === 'open')) && <p className="text-sm text-gray-500">Alle stemvragen sluiten bij de start van de ALV.</p>}
               {meeting.questions.length === 0 && <p>Er zijn nog geen stemvragen.</p>}
               {meeting.questions.map((question) => (
-                <Question key={question.id} question={question} manage={rights.manage} act={act} pending={pending} />
+                <Question key={`${question.id}:${question.revision ?? ''}`} question={question} manage={rights.manage} act={act} pending={pending} />
               ))}
               {rights.manage && (
                 <form className="card space-y-3 p-5" onSubmit={(event) => act('question', fields(event))}>

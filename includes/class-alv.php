@@ -399,9 +399,9 @@ class Alv {
 				}
 			}
 			if ( $rights['manage'] ) {
-				$question['turnout'] = (int) $wpdb->get_var(
-					$wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE meeting_id = %d AND question_id = %s", $row->id, $key )
-				);
+				$turnout              = $this->turnout( (int) $row->id, $key );
+				$question['turnout']  = $turnout;
+				$question['can_edit'] = $turnout === 0 && ( $question['state'] === 'draft' || ( $question['state'] === 'open' && $before_start ) );
 				if ( $question['state'] === 'closed' ) {
 					$totals = $this->totals( (int) $row->id, $key, $question );
 					if ( ! is_wp_error( $totals ) ) {
@@ -518,7 +518,7 @@ class Alv {
 		if ( $action === 'vote' ) {
 			return $this->vote( $meeting, $row, $request, $person );
 		}
-		if ( in_array( $action, [ 'reschedule', 'question', 'open', 'delete_question' ], true ) ) {
+		if ( in_array( $action, [ 'reschedule', 'question', 'open', 'delete_question', 'edit_question' ], true ) ) {
 			if ( ! $rights['manage'] ) {
 				return $this->error( 'Je mag deze stemming niet beheren.', 403 );
 			}
@@ -562,6 +562,13 @@ class Alv {
 		return $this->page( $meeting, (int) $row->id, $request, $rights, $action );
 	}
 
+	private function turnout( int $id, string $question ): ?int {
+		global $wpdb;
+		$table = $this->table( 'participation' );
+		$count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $table WHERE meeting_id = %d AND question_id = %s", $id, $question ) );
+		return $count === null ? null : (int) $count;
+	}
+
 	private function manage( array &$meeting, $row, $request, string $action ) {
 		if ( $action === 'reschedule' ) {
 			$starts = $this->start_time( $request['starts'] );
@@ -571,22 +578,38 @@ class Alv {
 			$row->starts = $starts;
 			return [ 'ok' => true ];
 		}
-		if ( $action === 'question' ) {
+		$key      = (string) $request['question'];
+		$question = $meeting['questions'][ $key ] ?? null;
+		if ( $action === 'edit_question' ) {
+			if ( ! $question ) {
+				return $this->error( 'Stemvraag niet gevonden.', 404 );
+			}
+			$editable = $question['state'] === 'draft' || ( $question['state'] === 'open' && time() < (int) $row->starts );
+			if ( ! $editable || $this->turnout( (int) $row->id, $key ) !== 0 ) {
+				return $this->error( 'Deze stemvraag kan niet meer worden aangepast.' );
+			}
+			if ( (string) $request['version'] !== ( $question['revision'] ?? '' ) ) {
+				return $this->error( 'De stemvraag is gewijzigd. Vernieuw de pagina en probeer opnieuw.' );
+			}
+		}
+		if ( $action === 'question' || $action === 'edit_question' ) {
 			$title   = sanitize_text_field( (string) $request['title'] );
 			$options = array_values( array_filter( array_map( 'sanitize_text_field', explode( "\n", (string) $request['options'] ) ), 'strlen' ) );
 			if ( $title === '' || count( $options ) < 2 || count( $options ) > 30 || count( array_unique( $options ) ) !== count( $options ) ) {
 				return $this->error( 'Vul een vraag en 2 tot 30 verschillende antwoordopties in.', 400 );
 			}
-			$meeting['questions'][ wp_generate_uuid4() ] = [
-				'title'   => $title,
-				'options' => $options,
-				'secret'  => rest_sanitize_boolean( $request['secret'] ),
-				'state'   => 'draft',
-			];
+			$question = array_replace(
+				$action === 'edit_question' ? $question : [ 'state' => 'draft' ],
+				[
+					'title'    => $title,
+					'options'  => $options,
+					'secret'   => rest_sanitize_boolean( $request['secret'] ),
+					'revision' => wp_generate_uuid4(),
+				]
+			);
+			$meeting['questions'][ $action === 'edit_question' ? $key : wp_generate_uuid4() ] = $question;
 			return [ 'ok' => true ];
 		}
-		$key      = (string) $request['question'];
-		$question = $meeting['questions'][ $key ] ?? null;
 		if ( ! $question ) {
 			return $this->error( 'Stemvraag niet gevonden.', 404 );
 		}
@@ -619,6 +642,9 @@ class Alv {
 		}
 		if ( ! $person || ! $this->is_member( $person, wp_date( 'Y-m-d' ) ) ) {
 			return $this->error( 'Je hebt een actief lidmaatschap nodig om te stemmen.', 403 );
+		}
+		if ( (string) $request['version'] !== ( $question['revision'] ?? '' ) ) {
+			return $this->error( 'De stemvraag is gewijzigd. Controleer de nieuwe opties en maak opnieuw een keuze.' );
 		}
 		$choice = filter_var( $request['choice'], FILTER_VALIDATE_INT );
 		if ( $choice === false || ! isset( $question['options'][ $choice ] ) ) {
