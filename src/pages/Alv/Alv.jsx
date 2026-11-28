@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
 
@@ -142,7 +142,7 @@ function Page({ page, rights, closedQuestions, act, pending }) {
   );
 }
 
-function Publication({ pages, meetingId, selectedId }) {
+function Publication({ pages, meetingId, selectedId, publishedPreview = false }) {
   const current = pages.find((page) => String(page.id) === selectedId) ?? pages[0];
   if (!current) return null;
   return (
@@ -151,7 +151,7 @@ function Publication({ pages, meetingId, selectedId }) {
         <ul className="space-y-1">
           {pages.map((page) => (
             <li key={page.id} style={{ marginInlineStart: `${page.depth}rem` }}>
-              <Link aria-current={page.id === current.id ? 'page' : undefined} className="underline" to={`/alv/${meetingId}/pagina/${page.id}`}>{page.title}</Link>
+              <Link aria-current={page.id === current.id ? 'page' : undefined} className="underline" to={`/alv/${meetingId}/pagina/${page.id}${publishedPreview ? '?weergave=leden' : ''}`}>{page.title}</Link>
             </li>
           ))}
         </ul>
@@ -217,7 +217,7 @@ function Secretary({ meeting, act, pending }) {
 
 export default function Alv({ secretary = false }) {
   const { id, pageId } = useParams();
-  const [publishedPreview, setPublishedPreview] = useState(false);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const client = useQueryClient();
   const url = id ? `${endpoint}/${id}` : endpoint;
@@ -240,7 +240,10 @@ export default function Alv({ secretary = false }) {
   if (query.isError || !query.data) return <p role="alert">{query.error?.response?.data?.message ?? 'De ALV kon niet worden geladen.'}</p>;
   const { meetings, rights, timezone } = query.data;
   const meeting = id ? meetings[0] : null;
-  const showingDraft = !publishedPreview && Array.isArray(meeting?.draft_tree);
+  const hasDraft = Array.isArray(meeting?.draft_tree);
+  const publishedPreview = hasDraft && searchParams.get('weergave') === 'leden';
+  const showingDraft = hasDraft && !publishedPreview;
+  const pagePath = pageId ? `/alv/${id}/pagina/${pageId}` : `/alv/${id}`;
   const documentTree = showingDraft ? meeting.draft_tree : meeting?.tree;
   const closedQuestions = meeting?.questions.filter((question) => question.state === 'closed') ?? [];
 
@@ -251,6 +254,22 @@ export default function Alv({ secretary = false }) {
         <h1 className="text-2xl font-semibold">Presentielijst en stemdeelname</h1>
         {mutation.isError && <p role="alert">{mutation.error?.response?.data?.message ?? 'De wijziging kon niet worden opgeslagen.'}</p>}
         {meeting?.secretary ? <Secretary meeting={meeting} act={act} pending={pending} /> : <p>Je hebt geen toegang tot de presentielijst.</p>}
+      </div>
+    );
+  }
+
+  if (publishedPreview) {
+    return (
+      <div className="space-y-5">
+        <Link className="underline" to={pagePath}>Terug naar concept</Link>
+        <h1 className="text-2xl font-semibold">{meeting.title}</h1>
+        <p>Start {localTime(meeting.starts, timezone)}</p>
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">ALV-pagina’s</h2>
+          {meeting.tree?.length > 0 ? (
+            <Publication pages={meeting.tree} meetingId={id} selectedId={pageId} publishedPreview />
+          ) : <p>Er zijn geen ALV-pagina’s gepubliceerd.</p>}
+        </section>
       </div>
     );
   }
@@ -322,12 +341,10 @@ export default function Alv({ secretary = false }) {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">ALV-pagina’s</h2>
             {meeting.admin_pages_url && <a className="underline" href={meeting.admin_pages_url}>ALV-pagina’s beheren in WordPress</a>}
-            {Array.isArray(meeting.draft_tree) && (
+            {showingDraft && (
               <div className="flex flex-wrap items-center gap-3">
-                <p role="status">{showingDraft ? 'Conceptweergave · alleen voor beheerders' : 'Gepubliceerde ledenweergave'}</p>
-                <button type="button" className="btn-secondary" onClick={() => setPublishedPreview(!publishedPreview)}>
-                  {showingDraft ? 'Bekijk gepubliceerde versie' : 'Bekijk concept'}
-                </button>
+                <p>Conceptweergave · alleen voor beheerders</p>
+                <Link className="btn-secondary" to={`${pagePath}?weergave=leden`}>Bekijk gepubliceerde versie</Link>
               </div>
             )}
             {documentTree?.length > 0 && <Publication pages={documentTree} meetingId={id} selectedId={pageId} />}
