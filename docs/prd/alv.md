@@ -49,6 +49,11 @@ overgenomen. WordPress bewaart de bewerkbare versie. Goedkeuring geldt voor de
 volledige versie en vervalt zodra pagina’s of bijlagen veranderen. Eén
 publicatieactie vervangt de complete ledenweergave.
 
+Kies in het ALV-beheer één hoofdpagina uit de hiërarchie. Rondo opent die
+pagina standaard bij de ALV. Zet `[alv_stemmingen]` op een eigen regel om
+de stemvragen op die plek te tonen. Stemrecht blijft gekoppeld aan de
+vastgelegde stemlijst.
+
 PDF’s tot 5 MB zijn per pagina toe te voegen in het ALV-beheer. Rondo bewaart
 de bestanden buiten de openbare mediabibliotheek. De download controleert
 lidmaatschap en of de specifieke PDF in de live versie staat. Beheerders

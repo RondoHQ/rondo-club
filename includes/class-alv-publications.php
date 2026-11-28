@@ -70,19 +70,25 @@ class Publications {
 		return admin_url( 'admin-post.php?action=rondo_alv_pdf&meeting=' . $meeting . '&pdf=' . $pdf );
 	}
 
-	private function form( int $id, string $action, string $label, array $pages = [], string $hash = '' ): void {
+	private function form( int $id, string $action, string $label, array $pages = [], string $hash = '', int $selected = 0 ): void {
 		echo '<form method="post" enctype="multipart/form-data" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		wp_nonce_field( 'rondo_alv_publications_' . $id );
 		echo '<input type="hidden" name="action" value="rondo_alv_publications">';
 		echo '<input type="hidden" name="meeting" value="' . esc_attr( (string) $id ) . '">';
 		echo '<input type="hidden" name="operation" value="' . esc_attr( $action ) . '">';
 		echo '<input type="hidden" name="snapshot" value="' . esc_attr( $hash ) . '">';
-		if ( $action === 'upload' ) {
-			echo '<p><label>Pagina <select name="page">';
+		if ( in_array( $action, [ 'upload', 'front' ], true ) ) {
+			$label_text = $action === 'front' ? 'Hoofdpagina' : 'Pagina';
+			echo '<p><label>' . esc_html( $label_text ) . ' <select name="page">';
+
 			foreach ( $pages as $page ) {
-				echo '<option value="' . esc_attr( (string) $page['id'] ) . '">' . esc_html( $page['title'] ) . '</option>';
+				echo '<option value="' . esc_attr( (string) $page['id'] ) . '"' . selected( $selected, $page['id'], false ) . '>' . esc_html( $page['title'] ) . '</option>';
 			}
-			echo '</select></label> <label>PDF (max. 5 MB) <input type="file" name="pdf" accept="application/pdf,.pdf" required></label></p>';
+			echo '</select></label>';
+			if ( $action === 'upload' ) {
+				echo ' <label>PDF (max. 5 MB) <input type="file" name="pdf" accept="application/pdf,.pdf" required></label>';
+			}
+			echo '</p>';
 		}
 		submit_button( $label, $action === 'publish' ? 'primary' : 'secondary', 'submit', true );
 		echo '</form>';
@@ -116,6 +122,8 @@ class Publications {
 				echo '<details><summary>Voorvertoning</summary>' . wp_kses_post( $page['html'] ) . '</details></li>';
 			}
 			echo '</ul>';
+			$this->form( $id, 'front', 'Hoofdpagina opslaan', $snapshot['pages'], '', $snapshot['front'] ?? $publication['root'] );
+			echo '<p>Voeg <code>[alv_stemmingen]</code> toe op een eigen regel in een ALV-pagina om de stemmingen daar weer te geven.</p>';
 			$this->form( $id, 'upload', 'Afgeschermde PDF toevoegen', $snapshot['pages'] );
 			$this->form( $id, 'sync_links', 'Oude PDF-links vervangen door afgeschermde links' );
 			$hash = $this->fingerprint( $snapshot );
@@ -200,7 +208,7 @@ class Publications {
 			return null;
 		}
 		$snapshot = $this->snapshot( $meeting, $publication );
-		return is_wp_error( $snapshot ) ? null : array_values( $snapshot['pages'] );
+		return is_wp_error( $snapshot ) ? null : $snapshot;
 	}
 
 	private function snapshot( int $meeting, array $publication ) {
@@ -255,10 +263,15 @@ class Publications {
 				$stack[] = [ $child, $depth + 1 ];
 			}
 		}
-		return [
+		$snapshot = [
 			'pages' => $pages,
 			'files' => $file_ids,
 		];
+		$front    = (int) ( $publication['front'] ?? $root );
+		if ( $front !== $root && isset( $pages[ $front ] ) ) {
+			$snapshot['front'] = $front;
+		}
+		return $snapshot;
 	}
 
 	private function replace_audit_link( string $html, array $files ): string {
@@ -314,6 +327,13 @@ class Publications {
 				$snapshot    = $this->snapshot( $id, $publication );
 				if ( is_wp_error( $snapshot ) ) {
 					return $snapshot;
+				}
+				if ( $action === 'front' ) {
+					if ( ! isset( $snapshot['pages'][ $page ] ) ) {
+						return new \WP_Error( 'rondo_alv_front', 'Kies een pagina uit deze ALV.' );
+					}
+					$publication['front'] = $page;
+					return true;
 				}
 				if ( $action === 'upload' && isset( $snapshot['pages'][ $page ] ) ) {
 					$file = $this->upload( $id );
