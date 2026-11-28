@@ -38,15 +38,14 @@ function Result({ result }) {
   );
 }
 
-function Question({ question, manage, timezone, act, pending, embedded = false, preview = false }) {
+function Question({ question, manage, act, pending, embedded = false, preview = false }) {
   const [choice, setChoice] = useState('');
-  const status = { draft: 'Concept', open: 'Open', expired: 'Stemtermijn voorbij', closed: 'Gesloten' };
+  const status = { draft: 'Concept', open: 'Open', closed: 'Gesloten' };
   return (
     <article className={embedded ? 'space-y-3 rounded-lg border border-slate-200 bg-white p-4 text-slate-900' : 'card space-y-3 p-5'}>
       <h3 className="font-semibold">{question.title}</h3>
       <p className="text-sm text-gray-500">
         {question.secret ? 'Geheime stemming' : 'Open stemming'} · {status[question.state]}
-        {question.ends && <> · Tot {localTime(question.ends, timezone)}</>}
       </p>
       {manage && <p>Uitgebrachte stemmen {question.turnout}</p>}
       {manage && question.totals && <Result result={question} />}
@@ -72,15 +71,14 @@ function Question({ question, manage, timezone, act, pending, embedded = false, 
         </form>
       )}
       {manage && question.state === 'draft' && (
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(event) => act('open', { ...fields(event), question: question.id })}>
-          <label>Sluiting ({timezone})<input type="datetime-local" className="input block" name="ends" required /></label>
-          <button className="btn-primary" disabled={pending}>Stemming openen</button>
-        </form>
-      )}
-      {manage && ['open', 'expired'].includes(question.state) && (
-        <button className="btn-secondary" disabled={pending} onClick={() => {
-          if (window.confirm('Wil je de stemming definitief sluiten?')) act('close', { question: question.id });
-        }}>Stemming sluiten</button>
+        <div className="flex flex-wrap gap-3">
+          <button type="button" className="btn-primary" disabled={pending || !question.can_open} onClick={() => act('open', { question: question.id })}>Stemming openen</button>
+          <button type="button" className="btn-secondary" disabled={pending} onClick={() => {
+            if (window.confirm(`Wil je de conceptvraag “${question.title}” verwijderen?`)) {
+              act('delete_question', { question: question.id });
+            }
+          }}>Conceptvraag verwijderen</button>
+        </div>
       )}
       {manage && question.open_votes?.length > 0 && (
         <details>
@@ -163,14 +161,15 @@ function PublicationContent({ html, voting }) {
   );
 }
 
-function EmbeddedVoting({ meeting, timezone, act, pending, preview }) {
+function EmbeddedVoting({ meeting, act, pending, preview }) {
   const questions = (preview || meeting.eligible) ? meeting.questions.filter((question) => question.state !== 'draft') : [];
   return (
     <section className="not-prose my-6 space-y-3" aria-label="Stemmingen">
       <h3 className="text-lg font-semibold">Stemmingen</h3>
+      {questions.some((question) => question.state === 'open') && <p>Online stemmen sluit bij de start van de ALV.</p>}
       {questions.length === 0 && <p>Er zijn geen stemvragen beschikbaar.</p>}
       {questions.map((question) => (
-        <Question key={question.id} question={question} embedded preview={preview} timezone={timezone} act={act} pending={pending} />
+        <Question key={question.id} question={question} embedded preview={preview} act={act} pending={pending} />
       ))}
     </section>
   );
@@ -233,7 +232,9 @@ function Secretary({ meeting, act, pending }) {
               <tr key={person.id} className="border-b">
                 <th scope="row" className="py-2 font-normal">{person.name}</th>
                 <td><input type="checkbox" aria-label={`Aanwezig: ${person.name}`} checked={person.present} disabled={pending} onChange={(event) => act('attendance', { person: person.id, present: event.target.checked })} /></td>
-                <td>{person.eligible ? (question ? (person.voted.includes(question) ? 'Gestemd' : 'Nog niet gestemd') : `${person.voted.length} van ${Object.keys(questions).length}`) : 'Geen stemrecht'}</td>
+                <td>{question
+                  ? (person.voted.includes(question) ? 'Gestemd' : person.eligible ? 'Nog niet gestemd' : 'Geen stemrecht')
+                  : (person.eligible || person.voted.length > 0) ? `${person.voted.length} van ${Object.keys(questions).length}` : 'Geen stemrecht'}</td>
               </tr>
             ))}
           </tbody>
@@ -305,7 +306,7 @@ export default function Alv({ secretary = false }) {
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">ALV-pagina’s</h2>
           {meeting.tree?.length > 0 ? (
-            <Publication pages={meeting.tree} meetingId={id} selectedId={pageId} frontId={frontId} voting={<EmbeddedVoting meeting={meeting} timezone={timezone} preview />} publishedPreview />
+            <Publication pages={meeting.tree} meetingId={id} selectedId={pageId} frontId={frontId} voting={<EmbeddedVoting meeting={meeting} preview />} publishedPreview />
           ) : <p>Er zijn geen ALV-pagina’s gepubliceerd.</p>}
         </section>
       </div>
@@ -347,7 +348,7 @@ export default function Alv({ secretary = false }) {
                 <Link className="btn-secondary" to={`${pagePath}?weergave=leden`}>Bekijk gepubliceerde versie</Link>
               </div>
             )}
-            {documentTree?.length > 0 && <Publication pages={documentTree} meetingId={id} selectedId={pageId} frontId={frontId} voting={<EmbeddedVoting meeting={meeting} timezone={timezone} act={act} pending={pending} preview={showingDraft} />} />}
+            {documentTree?.length > 0 && <Publication pages={documentTree} meetingId={id} selectedId={pageId} frontId={frontId} voting={<EmbeddedVoting meeting={meeting} act={act} pending={pending} preview={showingDraft} />} />}
             {meeting.pages.length === 0 && !documentTree?.length && <p>Er zijn geen pagina’s beschikbaar.</p>}
             {meeting.pages.map((page) => (
               <Page key={page.id} page={page} rights={meeting.wordpress_pages ? {} : rights} closedQuestions={closedQuestions} act={act} pending={pending} />
@@ -382,9 +383,10 @@ export default function Alv({ secretary = false }) {
           {(rights.manage || (meeting.eligible && !votingEmbedded)) && (
             <section className="space-y-3">
               <h2 className="text-lg font-semibold">Stemmingen</h2>
+              {(rights.manage || meeting.questions.some((question) => question.state === 'open')) && <p className="text-sm text-gray-500">Alle stemvragen sluiten bij de start van de ALV.</p>}
               {meeting.questions.length === 0 && <p>Er zijn nog geen stemvragen.</p>}
               {meeting.questions.map((question) => (
-                <Question key={question.id} question={question} manage={rights.manage} timezone={timezone} act={act} pending={pending} />
+                <Question key={question.id} question={question} manage={rights.manage} act={act} pending={pending} />
               ))}
               {rights.manage && (
                 <form className="card space-y-3 p-5" onSubmit={(event) => act('question', fields(event))}>
