@@ -143,8 +143,12 @@ class Publications {
 			echo '<p>Voeg <code>[alv_stemmingen]</code> toe op een eigen regel in een ALV-pagina om de stemmingen daar weer te geven.</p>';
 			$this->form( $id, 'upload', 'Afgeschermde PDF toevoegen', $snapshot['pages'] );
 			$this->form( $id, 'sync_links', 'Oude PDF-links vervangen door afgeschermde links' );
-			$hash = $this->fingerprint( $snapshot );
-			if ( ( $publication['live']['hash'] ?? '' ) === $hash ) {
+			$hash            = $this->fingerprint( $snapshot );
+			$has_draft_votes = time() < $meeting['starts'] && in_array( 'draft', array_column( $meeting['questions'], 'state' ), true );
+			if ( $has_draft_votes ) {
+				echo '<p>Bij publicatie gaan alle conceptstemvragen tegelijk open. Online stemmen sluit bij de start van de ALV.</p>';
+			}
+			if ( ( $publication['live']['hash'] ?? '' ) === $hash && ! $has_draft_votes ) {
 				echo '<p>Deze versie is gepubliceerd voor leden.</p>';
 			} elseif ( ( $publication['approved']['hash'] ?? '' ) === $hash ) {
 				echo '<p>Deze versie is goedgekeurd.</p>';
@@ -344,7 +348,7 @@ class Publications {
 		$visible  = isset( $_POST['visible'] ) && is_array( $_POST['visible'] ) ? array_map( 'absint', $_POST['visible'] ) : [];
 		$result   = $this->alv->locked(
 			$id,
-			function ( &$meeting ) use ( $id, $action, $page, $expected, $visible ) {
+			function ( &$meeting, $row ) use ( $id, $action, $page, $expected, $visible ) {
 				if ( $action === 'initialize' ) {
 					return $this->initialize( $meeting );
 				}
@@ -402,11 +406,7 @@ class Publications {
 					return true;
 				}
 				if ( $action === 'publish' && ( $publication['approved']['hash'] ?? '' ) === $hash ) {
-					$publication['live'] = $snapshot + [
-						'hash' => $hash,
-						'by'   => get_current_user_id(),
-						'at'   => time(),
-					];
+					$this->publish( $meeting, $snapshot, $hash, (int) $row->starts );
 					return true;
 				}
 				return new \WP_Error( 'rondo_alv_publication', 'Controleer en keur deze versie goed voordat je publiceert.' );
@@ -424,6 +424,23 @@ class Publications {
 		}
 		wp_safe_redirect( $this->url( $id ) );
 		exit;
+	}
+
+	private function publish( array &$meeting, array $snapshot, string $hash, int $starts ): void {
+		$now                            = time();
+		$meeting['publication']['live'] = $snapshot + [
+			'hash' => $hash,
+			'by'   => get_current_user_id(),
+			'at'   => $now,
+		];
+		if ( $now < $starts ) {
+			foreach ( $meeting['questions'] as &$question ) {
+				if ( $question['state'] === 'draft' ) {
+					$question['state'] = 'open';
+				}
+			}
+			unset( $question );
+		}
 	}
 
 	private function upload( int $meeting ) {

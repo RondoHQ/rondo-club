@@ -80,7 +80,6 @@ function Question({ question, manage, act, pending, embedded = false, preview = 
       )}
       {manage && question.state === 'draft' && (
         <div className="flex flex-wrap gap-3">
-          <button type="button" className="btn-primary" disabled={pending || !question.can_open} onClick={() => act('open', { question: question.id })}>Stemming openen</button>
           <button type="button" className="btn-secondary" disabled={pending} onClick={() => {
             if (window.confirm(`Wil je de conceptvraag “${question.title}” verwijderen?`)) {
               act('delete_question', { question: question.id });
@@ -406,6 +405,9 @@ export default function Alv({ secretary = false }) {
             <section className="space-y-3">
               <h2 className="text-lg font-semibold">Stemmingen</h2>
               {(rights.manage || meeting.questions.some((question) => question.state === 'open')) && <p className="text-sm text-gray-500">Alle stemvragen sluiten bij de start van de ALV.</p>}
+              {rights.manage && meeting.questions.some((question) => question.state === 'draft') && (
+                <p className="text-sm text-gray-500">Conceptvragen openen tegelijk zodra de hele ALV voor leden wordt gepubliceerd.</p>
+              )}
               {meeting.questions.length === 0 && <p>Er zijn nog geen stemvragen.</p>}
               {meeting.questions.map((question, index) => (
                 <Question key={`${question.id}:${question.revision ?? ''}`} question={question} manage={rights.manage} act={act} pending={pending} order={rights.manage && meeting.questions.length > 1 ? { first: index === 0, last: index === meeting.questions.length - 1 } : null} />

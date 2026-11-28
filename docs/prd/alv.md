@@ -25,8 +25,8 @@ Huishoudtoegang geeft geen stemrecht namens een ander.
 ## Stemming
 
 Stemvragen krijgen vaste antwoordopties en een open of geheime stemvorm. De
-beheerder kan conceptvragen verwijderen of vóór de ALV openen. Alle open
-stemvragen sluiten automatisch bij de ingestelde ALV-start. Rondo controleert
+beheerder kan conceptvragen verwijderen. Bij publicatie van de hele ALV vóór
+de start openen alle conceptvragen tegelijk. Alle open stemvragen sluiten automatisch bij de ingestelde ALV-start. Rondo controleert
 het actieve lidmaatschap bij het uitbrengen van de stem. Een geldig uitgebrachte
 stem blijft meetellen als het lidmaatschap daarna eindigt. Deelname is uniek per
 vergadering, vraag en persoon.
