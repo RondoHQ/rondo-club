@@ -111,6 +111,46 @@ function Question({ question, manage, act, pending, embedded = false, preview = 
   );
 }
 
+function VotingDialog({ questions, act, pending, error, onClose }) {
+  const dialog = useRef(null);
+  const [selectedId, setSelectedId] = useState(null);
+  const remaining = questions.filter((question) => !question.voted);
+  const selected = remaining.findIndex((question) => question.id === selectedId);
+  const index = Math.max(0, selected);
+  const question = remaining[index];
+
+  useEffect(() => {
+    const element = dialog.current;
+    if (element && !element.open) element.showModal();
+    return () => element?.close();
+  }, []);
+
+  return (
+    <dialog ref={dialog} aria-labelledby="alv-voting-title" onClose={onClose}
+      className="fixed inset-0 m-auto max-h-[85dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-xl border border-slate-200 bg-white p-5 text-slate-900 shadow-xl backdrop:bg-slate-950/60 sm:p-6">
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <h2 id="alv-voting-title" className="text-xl font-semibold">Stemmen</h2>
+        <button type="button" className="btn-secondary" onClick={onClose}>Sluiten</button>
+      </div>
+      {error && <p role="alert" className="mb-3 text-red-700">{error}</p>}
+      {question ? (
+        <div className="space-y-4">
+          <p role="status" className="text-sm text-slate-600">{questions.length - remaining.length} van {questions.length} stemmen ontvangen</p>
+          <Question key={`${question.id}:${question.revision ?? ''}`} question={question} embedded act={act} pending={pending} />
+          {remaining.length > 1 && (
+            <div className="flex justify-between gap-3">
+              <button type="button" className="btn-secondary" disabled={pending || index === 0} onClick={() => setSelectedId(remaining[index - 1].id)}>Vorige vraag</button>
+              <button type="button" className="btn-secondary" disabled={pending || index === remaining.length - 1} onClick={() => setSelectedId(remaining[index + 1].id)}>Volgende vraag</button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <p role="status">{questions.length ? 'Al je stemmen zijn ontvangen.' : 'Er zijn geen open stemvragen meer.'}</p>
+      )}
+    </dialog>
+  );
+}
+
 function PageForm({ page, closedQuestions, pending, act }) {
   return (
     <form className="space-y-3" onSubmit={(event) => act('save_page', {
@@ -276,6 +316,7 @@ function Secretary({ meeting, act, pending }) {
 export default function Alv({ secretary = false }) {
   const { id, pageId } = useParams();
   const [searchParams] = useSearchParams();
+  const [votingOpen, setVotingOpen] = useState(false);
   const navigate = useNavigate();
   const client = useQueryClient();
   const url = id ? `${endpoint}/${id}` : endpoint;
@@ -308,6 +349,7 @@ export default function Alv({ secretary = false }) {
   const documentTree = showingDraft ? meeting.draft_tree : meeting?.tree;
   const frontId = showingDraft ? meeting.draft_front : meeting?.published_front;
   const votingEmbedded = documentTree?.some((page) => !page.hidden && votingShortcode.test(page.html));
+  const votingQuestions = meeting?.questions.filter((question) => question.state === 'open' && question.can_vote) ?? [];
   const closedQuestions = meeting?.questions.filter((question) => question.state === 'closed') ?? [];
 
   if (secretary) {
@@ -362,7 +404,20 @@ export default function Alv({ secretary = false }) {
         </>
       ) : (
         <>
-          <p>Start {localTime(meeting.starts, timezone)}</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <p>Start {localTime(meeting.starts, timezone)}</p>
+            {votingQuestions.length > 0 && (
+              <button type="button" className="btn-primary" aria-haspopup="dialog" onClick={() => {
+                mutation.reset();
+                setVotingOpen(true);
+              }}>Stemmen</button>
+            )}
+          </div>
+          {votingOpen && (
+            <VotingDialog questions={votingQuestions} act={act} pending={pending}
+              error={mutation.isError ? (mutation.error?.response?.data?.message ?? 'Je stem kon niet worden opgeslagen.') : null}
+              onClose={() => setVotingOpen(false)} />
+          )}
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">ALV-pagina’s</h2>
             {meeting.admin_pages_url && <a className="underline" href={meeting.admin_pages_url}>ALV-pagina’s beheren in WordPress</a>}

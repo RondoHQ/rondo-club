@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Return an open ALV voting question to draft before the meeting if no ballots were cast.
+- Offer a voting dialog at the top of the ALV to complete open questions one at a time.
 
 ## [35.178.4] - 2026-11-28
 
