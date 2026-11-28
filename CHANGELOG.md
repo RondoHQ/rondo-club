@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [35.178.0] - 2026-11-28
+
+### Added
+
+- Choose a front page for each ALV and insert voting on any ALV document using `[alv_stemmingen]`.
+
+### Changed
+
+- Render ALV documents on a white paper surface with more reading space.
+
 ## [35.177.2] - 2026-11-28
 
 ### Fixed

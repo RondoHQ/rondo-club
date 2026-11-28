@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
@@ -37,20 +38,21 @@ function Result({ result }) {
   );
 }
 
-function Question({ question, manage, timezone, act, pending }) {
+function Question({ question, manage, timezone, act, pending, embedded = false, preview = false }) {
   const [choice, setChoice] = useState('');
   const status = { draft: 'Concept', open: 'Open', expired: 'Stemtermijn voorbij', closed: 'Gesloten' };
   return (
-    <article className="card space-y-3 p-5">
+    <article className={embedded ? 'space-y-3 rounded-lg border border-slate-200 bg-white p-4 text-slate-900' : 'card space-y-3 p-5'}>
       <h3 className="font-semibold">{question.title}</h3>
       <p className="text-sm text-gray-500">
         {question.secret ? 'Geheime stemming' : 'Open stemming'} · {status[question.state]}
         {question.ends && <> · Tot {localTime(question.ends, timezone)}</>}
       </p>
       {manage && <p>Uitgebrachte stemmen {question.turnout}</p>}
-      {question.totals && <Result result={question} />}
-      {question.voted && <p role="status">Je stem is ontvangen.</p>}
-      {question.state === 'open' && question.can_vote && !question.voted && (
+      {manage && question.totals && <Result result={question} />}
+      {!preview && question.voted && <p role="status">Je stem is ontvangen.</p>}
+      {preview && question.state === 'open' && <ul className="list-inside list-disc">{question.options.map((option) => <li key={option}>{option}</li>)}</ul>}
+      {!preview && question.state === 'open' && question.can_vote && !question.voted && (
         <form className="space-y-3" onSubmit={(event) => {
           event.preventDefault();
           if (choice !== '' && window.confirm('Wil je deze stem definitief uitbrengen?')) {
@@ -80,7 +82,7 @@ function Question({ question, manage, timezone, act, pending }) {
           if (window.confirm('Wil je de stemming definitief sluiten?')) act('close', { question: question.id });
         }}>Stemming sluiten</button>
       )}
-      {question.open_votes?.length > 0 && (
+      {manage && question.open_votes?.length > 0 && (
         <details>
           <summary>Individuele stemmen</summary>
           <ul>{question.open_votes.map((vote) => <li key={vote.id}>{vote.name} · {question.options[vote.choice]}</li>)}</ul>
@@ -142,23 +144,57 @@ function Page({ page, rights, closedQuestions, act, pending }) {
   );
 }
 
-function Publication({ pages, meetingId, selectedId, publishedPreview = false }) {
-  const current = pages.find((page) => String(page.id) === selectedId) ?? pages[0];
+const votingShortcode = /<p(?:\s[^>]*)?>\s*\[alv_stemmingen\]\s*<\/p>|(^|>|\n)[ \t]*\[alv_stemmingen\][ \t]*(?=<|$|\n)/i;
+
+function PublicationContent({ html, voting }) {
+  const content = useRef(null);
+  const [target, setTarget] = useState(null);
+  const markup = useMemo(() => ({
+    __html: html.replace(votingShortcode, (_, prefix = '') => `${prefix}<span class="block" data-alv-votes></span>`),
+  }), [html]);
+  useEffect(() => {
+    setTarget(content.current?.querySelector('[data-alv-votes]') ?? null);
+  }, [markup]);
+  return (
+    <>
+      <div ref={content} className="prose max-w-none overflow-x-auto" dangerouslySetInnerHTML={markup} />
+      {target && voting && createPortal(voting, target)}
+    </>
+  );
+}
+
+function EmbeddedVoting({ meeting, timezone, act, pending, preview }) {
+  const questions = (preview || meeting.eligible) ? meeting.questions.filter((question) => question.state !== 'draft') : [];
+  return (
+    <section className="not-prose my-6 space-y-3" aria-label="Stemmingen">
+      <h3 className="text-lg font-semibold">Stemmingen</h3>
+      {questions.length === 0 && <p>Er zijn geen stemvragen beschikbaar.</p>}
+      {questions.map((question) => (
+        <Question key={question.id} question={question} embedded preview={preview} timezone={timezone} act={act} pending={pending} />
+      ))}
+    </section>
+  );
+}
+
+function Publication({ pages, meetingId, selectedId, frontId, voting, publishedPreview = false }) {
+  const visiblePages = pages.filter((page) => !page.hidden);
+  const current = visiblePages.find((page) => String(page.id) === selectedId)
+    ?? visiblePages.find((page) => page.id === frontId) ?? visiblePages[0];
   if (!current) return null;
   return (
     <section className="space-y-4">
       <nav aria-label="ALV-stukken">
         <ul className="space-y-1">
-          {pages.map((page) => (
+          {visiblePages.map((page) => (
             <li key={page.id} style={{ marginInlineStart: `${page.depth}rem` }}>
               <Link aria-current={page.id === current.id ? 'page' : undefined} className="underline" to={`/alv/${meetingId}/pagina/${page.id}${publishedPreview ? '?weergave=leden' : ''}`}>{page.title}</Link>
             </li>
           ))}
         </ul>
       </nav>
-      <article className="card space-y-3 p-5">
-        <h2 className="text-lg font-semibold">{current.title}</h2>
-        <div className="prose max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: current.html }} />
+      <article className="space-y-5 rounded-md border border-slate-200 bg-white p-6 text-slate-900 shadow-sm sm:p-10">
+        <h2 className="text-2xl font-semibold tracking-tight">{current.title}</h2>
+        <PublicationContent key={current.id} html={current.html} voting={voting} />
         {current.files.length > 0 && (
           <ul className="space-y-1">
             {current.files.map((file) => <li key={file.id}><a className="underline" href={file.url}>{file.title}</a></li>)}
@@ -245,6 +281,8 @@ export default function Alv({ secretary = false }) {
   const showingDraft = hasDraft && !publishedPreview;
   const pagePath = pageId ? `/alv/${id}/pagina/${pageId}` : `/alv/${id}`;
   const documentTree = showingDraft ? meeting.draft_tree : meeting?.tree;
+  const frontId = showingDraft ? meeting.draft_front : meeting?.published_front;
+  const votingEmbedded = documentTree?.some((page) => !page.hidden && votingShortcode.test(page.html));
   const closedQuestions = meeting?.questions.filter((question) => question.state === 'closed') ?? [];
 
   if (secretary) {
@@ -267,7 +305,7 @@ export default function Alv({ secretary = false }) {
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">ALV-pagina’s</h2>
           {meeting.tree?.length > 0 ? (
-            <Publication pages={meeting.tree} meetingId={id} selectedId={pageId} publishedPreview />
+            <Publication pages={meeting.tree} meetingId={id} selectedId={pageId} frontId={frontId} voting={<EmbeddedVoting meeting={meeting} timezone={timezone} preview />} publishedPreview />
           ) : <p>Er zijn geen ALV-pagina’s gepubliceerd.</p>}
         </section>
       </div>
@@ -300,6 +338,27 @@ export default function Alv({ secretary = false }) {
       ) : (
         <>
           <p>Start {localTime(meeting.starts, timezone)}</p>
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold">ALV-pagina’s</h2>
+            {meeting.admin_pages_url && <a className="underline" href={meeting.admin_pages_url}>ALV-pagina’s beheren in WordPress</a>}
+            {showingDraft && (
+              <div className="flex flex-wrap items-center gap-3">
+                <p>Conceptweergave · alleen voor beheerders</p>
+                <Link className="btn-secondary" to={`${pagePath}?weergave=leden`}>Bekijk gepubliceerde versie</Link>
+              </div>
+            )}
+            {documentTree?.length > 0 && <Publication pages={documentTree} meetingId={id} selectedId={pageId} frontId={frontId} voting={<EmbeddedVoting meeting={meeting} timezone={timezone} act={act} pending={pending} preview={showingDraft} />} />}
+            {meeting.pages.length === 0 && !documentTree?.length && <p>Er zijn geen pagina’s beschikbaar.</p>}
+            {meeting.pages.map((page) => (
+              <Page key={page.id} page={page} rights={meeting.wordpress_pages ? {} : rights} closedQuestions={closedQuestions} act={act} pending={pending} />
+            ))}
+            {rights.edit && !meeting.wordpress_pages && (
+              <details className="card p-5">
+                <summary>Nieuwe ALV-pagina</summary>
+                <PageForm closedQuestions={closedQuestions} act={act} pending={pending} />
+              </details>
+            )}
+          </section>
           {meeting.secretary && <Link className="btn-secondary inline-flex" to={`/alv/${id}/secretaris`}>Presentielijst en stemdeelname</Link>}
           {rights.manage && (
             <section className="card space-y-3 p-5">
@@ -320,7 +379,7 @@ export default function Alv({ secretary = false }) {
               </details>
             </section>
           )}
-          {(rights.manage || meeting.eligible) && (
+          {(rights.manage || (meeting.eligible && !votingEmbedded)) && (
             <section className="space-y-3">
               <h2 className="text-lg font-semibold">Stemmingen</h2>
               {meeting.questions.length === 0 && <p>Er zijn nog geen stemvragen.</p>}
@@ -338,27 +397,7 @@ export default function Alv({ secretary = false }) {
               )}
             </section>
           )}
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">ALV-pagina’s</h2>
-            {meeting.admin_pages_url && <a className="underline" href={meeting.admin_pages_url}>ALV-pagina’s beheren in WordPress</a>}
-            {showingDraft && (
-              <div className="flex flex-wrap items-center gap-3">
-                <p>Conceptweergave · alleen voor beheerders</p>
-                <Link className="btn-secondary" to={`${pagePath}?weergave=leden`}>Bekijk gepubliceerde versie</Link>
-              </div>
-            )}
-            {documentTree?.length > 0 && <Publication pages={documentTree} meetingId={id} selectedId={pageId} />}
-            {meeting.pages.length === 0 && !documentTree?.length && <p>Er zijn geen pagina’s beschikbaar.</p>}
-            {meeting.pages.map((page) => (
-              <Page key={page.id} page={page} rights={meeting.wordpress_pages ? {} : rights} closedQuestions={closedQuestions} act={act} pending={pending} />
-            ))}
-            {rights.edit && !meeting.wordpress_pages && (
-              <details className="card p-5">
-                <summary>Nieuwe ALV-pagina</summary>
-                <PageForm closedQuestions={closedQuestions} act={act} pending={pending} />
-              </details>
-            )}
-          </section>
+
         </>
       )}
     </div>
