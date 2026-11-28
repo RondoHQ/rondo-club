@@ -38,12 +38,20 @@ function Result({ result }) {
   );
 }
 
-function Question({ question, manage, act, pending, embedded = false, preview = false }) {
+function Question({ question, manage, act, pending, embedded = false, preview = false, order }) {
   const [choice, setChoice] = useState('');
   const status = { draft: 'Concept', open: 'Open', closed: 'Gesloten' };
   return (
     <article className={embedded ? 'space-y-3 rounded-lg border border-slate-200 bg-white p-4 text-slate-900' : 'card space-y-3 p-5'}>
-      <h3 className="font-semibold">{question.title}</h3>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <h3 className="font-semibold">{question.title}</h3>
+        {order && (
+          <div className="flex gap-2" role="group" aria-label={`Volgorde van ${question.title}`}>
+            <button type="button" className="btn-secondary" aria-label={`Verplaats omhoog: ${question.title}`} disabled={pending || order.first} onClick={() => act('move_question', { question: question.id, direction: 'up' })}>↑ Omhoog</button>
+            <button type="button" className="btn-secondary" aria-label={`Verplaats omlaag: ${question.title}`} disabled={pending || order.last} onClick={() => act('move_question', { question: question.id, direction: 'down' })}>↓ Omlaag</button>
+          </div>
+        )}
+      </div>
       <p className="text-sm text-gray-500">
         {question.secret ? 'Geheime stemming' : 'Open stemming'} · {status[question.state]}
       </p>
@@ -399,8 +407,8 @@ export default function Alv({ secretary = false }) {
               <h2 className="text-lg font-semibold">Stemmingen</h2>
               {(rights.manage || meeting.questions.some((question) => question.state === 'open')) && <p className="text-sm text-gray-500">Alle stemvragen sluiten bij de start van de ALV.</p>}
               {meeting.questions.length === 0 && <p>Er zijn nog geen stemvragen.</p>}
-              {meeting.questions.map((question) => (
-                <Question key={`${question.id}:${question.revision ?? ''}`} question={question} manage={rights.manage} act={act} pending={pending} />
+              {meeting.questions.map((question, index) => (
+                <Question key={`${question.id}:${question.revision ?? ''}`} question={question} manage={rights.manage} act={act} pending={pending} order={rights.manage && meeting.questions.length > 1 ? { first: index === 0, last: index === meeting.questions.length - 1 } : null} />
               ))}
               {rights.manage && (
                 <form className="card space-y-3 p-5" onSubmit={(event) => act('question', fields(event))}>

@@ -286,7 +286,7 @@ class Alv {
 				}
 			}
 			$input += array_fill_keys(
-				[ 'action', 'title', 'starts', 'options', 'secret', 'question', 'choice', 'page', 'version', 'html', 'result_question', 'person', 'present' ],
+				[ 'action', 'title', 'starts', 'options', 'secret', 'question', 'choice', 'page', 'version', 'html', 'result_question', 'person', 'present', 'direction' ],
 				null
 			);
 			$result = $id
@@ -518,7 +518,7 @@ class Alv {
 		if ( $action === 'vote' ) {
 			return $this->vote( $meeting, $row, $request, $person );
 		}
-		if ( in_array( $action, [ 'reschedule', 'question', 'open', 'delete_question', 'edit_question' ], true ) ) {
+		if ( in_array( $action, [ 'reschedule', 'question', 'open', 'delete_question', 'edit_question', 'move_question' ], true ) ) {
 			if ( ! $rights['manage'] ) {
 				return $this->error( 'Je mag deze stemming niet beheren.', 403 );
 			}
@@ -612,6 +612,27 @@ class Alv {
 		}
 		if ( ! $question ) {
 			return $this->error( 'Stemvraag niet gevonden.', 404 );
+		}
+		if ( $action === 'move_question' ) {
+			$offset = [
+				'up'   => -1,
+				'down' => 1,
+			][ (string) $request['direction'] ] ?? null;
+			if ( $offset === null ) {
+				return $this->error( 'Kies omhoog of omlaag.', 400 );
+			}
+			$keys        = array_keys( $meeting['questions'] );
+			$index       = array_search( $key, $keys, true );
+			$destination = $index + $offset;
+			if ( isset( $keys[ $destination ] ) ) {
+				[ $keys[ $index ], $keys[ $destination ] ] = [ $keys[ $destination ], $keys[ $index ] ];
+				$questions                                 = [];
+				foreach ( $keys as $id ) {
+					$questions[ $id ] = $meeting['questions'][ $id ];
+				}
+				$meeting['questions'] = $questions;
+			}
+			return [ 'ok' => true ];
 		}
 		if ( $action === 'delete_question' ) {
 			if ( $question['state'] !== 'draft' ) {
